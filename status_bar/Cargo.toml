@@ -27,4 +27,5 @@ gtk4-layer-shell = { version = "0.1.5", optional = true }
 tonic-build = "0.9.2"
 
 [features]
+default = ["layer-shell"]
 layer-shell = ["gtk4-layer-shell"]
