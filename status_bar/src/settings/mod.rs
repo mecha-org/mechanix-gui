@@ -98,7 +98,6 @@ pub struct Modules {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ClockModule {
     pub format: String,
-    pub is_24h_clock: bool,
 }
 
 /// Bluetooth module
@@ -175,7 +174,6 @@ impl Default for Modules {
         Self {
             clock: ClockModule {
                 format: "[hour repr:12]:[minute] [period]".to_string(),
-                is_24h_clock: false,
             },
             bluetooth: BluetoothModule {
                 icon: BluetoothIconPaths {

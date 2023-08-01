@@ -22,7 +22,6 @@ layout:
 modules:
   clock:
     format: "%I:%M %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
-    is_24h_clock: true
   bluetooth:
     icon:
       on: ./src/assets/pngs/bluetooth_on.png
