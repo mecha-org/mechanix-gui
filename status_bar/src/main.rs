@@ -15,6 +15,10 @@ pub mod errors;
 
 use crate::settings::StatusBarSettings;
 use crate::theme::StatusBarTheme;
+// #[allow(non_snake_case)]
+// pub mod networkmanager {
+//     tonic::include_proto!("networkmanager");
+// }
 
 /// # Status Bar state
 ///
@@ -82,6 +86,58 @@ struct AppWidgets {
     wifi_image: gtk::Image,
 }
 
+#[cfg(not(feature = "layer-shell"))]
+fn init_window(settings: StatusBarSettings) -> gtk::Window {
+    let window_settings = settings.window;
+    let window = gtk::Window::builder()
+        .title(settings.title)
+        .default_width(window_settings.size.0)
+        .default_height(window_settings.size.1)
+        .css_classes(["window"])
+        .build();
+    window
+}
+
+#[cfg(feature = "layer-shell")]
+fn init_window(settings: StatusBarSettings) -> gtk::Window {
+    let window_settings = settings.window;
+    let window = gtk::Window::builder()
+        .title(settings.title)
+        .default_width(window_settings.size.0)
+        .default_height(window_settings.size.1)
+        .css_classes(["window"])
+        .build();
+
+    gtk4_layer_shell::init_for_window(&window);
+
+    // Display above normal windows
+    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
+
+    // Push other windows out of the way
+    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
+
+    // The margins are the gaps around the window's edges
+    // Margins and anchors can be set like this...
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+
+    // ... or like this
+    // Anchors are if the window is pinned to each edge of the output
+    let anchors = [
+        (gtk4_layer_shell::Edge::Left, true),
+        (gtk4_layer_shell::Edge::Right, true),
+        (gtk4_layer_shell::Edge::Top, false),
+        (gtk4_layer_shell::Edge::Bottom, true),
+    ];
+
+    for (anchor, state) in anchors {
+        gtk4_layer_shell::set_anchor(&window, anchor, state);
+    }
+
+    window
+}
+
 impl SimpleComponent for StatusBar {
     /// The type of the messages that this component can receive.
     type Input = Message;
@@ -115,13 +171,7 @@ impl SimpleComponent for StatusBar {
             "theme initialized for status bar: {:?}", custom_theme
         );
 
-        let window_settings = settings.window;
-        let window = gtk::Window::builder()
-            .title(settings.title)
-            .default_width(window_settings.size.0)
-            .default_height(window_settings.size.1)
-            .css_classes(["window"])
-            .build();
+        let window = init_window(settings);
         window
     }
 
