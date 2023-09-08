@@ -1,0 +1,7 @@
+{
+    // set coonfig for apply clippy on rust and auto save on vscode
+    "[rust]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    },
+}
