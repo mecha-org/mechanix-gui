@@ -19,3 +19,5 @@ Cargo.lock
 /target
 
 *.yaml
+
+.DS_Store
