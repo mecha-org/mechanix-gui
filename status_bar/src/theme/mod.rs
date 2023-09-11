@@ -170,7 +170,7 @@ pub fn read_theme_yml() -> Result<StatusBarTheme> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
-    info!("theme file location - {:?}", file_path);
+    info!(task = "read_theme", "theme file location - {:?}", file_path);
 
     // open file
     let theme_file_handle = match File::open(file_path) {

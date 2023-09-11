@@ -27,7 +27,7 @@ pub fn main() -> iced::Result {
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt()
         .pretty()
-        .with_env_filter("status_bar=trace")
+        .with_env_filter("mecha_status_bar=trace")
         .with_thread_names(true)
         .init();
 
@@ -38,6 +38,8 @@ pub fn main() -> iced::Result {
         }
     };
 
+    info!(task = "initalize_settings", "settings initialized for status bar: {:?}", settings);
+
     let _custom_theme = match theme::read_theme_yml() {
         Ok(theme) => theme,
         Err(_) => {
@@ -45,7 +47,7 @@ pub fn main() -> iced::Result {
         }
     };
 
-    info!("Settings initialized for status bar {:?}", settings);
+    info!(task = "initalize_theme", "theme initialized for status bar: {:?}", _custom_theme);
 
     let window_settings = settings.window;
     let app_settings = settings.app;
@@ -96,8 +98,8 @@ struct StatusBar {
 pub enum Message {
     TimeTick(OffsetDateTime),
     WifiStrengthUpdate(i8),
-    BluetoothStateUpdate(i8),
-    BatteryLeveleUpdate(u8)
+    BluetoothStatusUpdate(i8),
+    BatteryStatusUpdate(u8)
 }
 
 #[derive(Debug, Clone)]
@@ -164,11 +166,11 @@ impl Application for StatusBar {
                 self.wifi_strength = strength;
                 Command::none()
             }
-            Message::BluetoothStateUpdate(state) => {
+            Message::BluetoothStatusUpdate(state) => {
                 self.bluetooth_state = state;
                 Command::none()
             }
-            Message::BatteryLeveleUpdate(state) => {
+            Message::BatteryStatusUpdate(state) => {
                 self.battery_level = state;
                 Command::none()
             }
@@ -236,18 +238,39 @@ impl Application for StatusBar {
         });
         let s2 = iced::time::every(std::time::Duration::from_secs(1)).map(|_| {
             let wifi_strengths: Vec<i8> = vec![-1, 0, 11, 21, 41, 81];
-            let x = (time::OffsetDateTime::now_local().unwrap().second()) % 6;
+            let x = match time::OffsetDateTime::now_local() {
+                Ok(time) => {
+                    time.second() % 6
+                },
+                Err(_) => {
+                    0
+                }
+            };
             Message::WifiStrengthUpdate(wifi_strengths[x as usize],)
         });
         let s3 = iced::time::every(std::time::Duration::from_secs(1)).map(|_| {
             let bluetooth_states: Vec<i8> = vec![-1, 0, 1];
-            let x = (time::OffsetDateTime::now_local().unwrap().second()) % 3;
-            Message::BluetoothStateUpdate(bluetooth_states[x as usize],)
+            let x = match time::OffsetDateTime::now_local() {
+                Ok(time) => {
+                    time.second() % 3
+                },
+                Err(_) => {
+                    0
+                }
+            };
+            Message::BluetoothStatusUpdate(bluetooth_states[x as usize],)
         });
         let s4 = iced::time::every(std::time::Duration::from_secs(1)).map(|_| {
             let states: Vec<i8> = vec![0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-            let x = (time::OffsetDateTime::now_local().unwrap().second()) % 10;
-            Message::BatteryLeveleUpdate(states[x as usize] as u8,)
+            let x = match time::OffsetDateTime::now_local() {
+                Ok(time) => {
+                    time.second() % 10
+                },
+                Err(_) => {
+                    0
+                }
+            };
+            Message::BatteryStatusUpdate(states[x as usize] as u8,)
         });
         Subscription::batch([s1, s2, s3, s4])
     }

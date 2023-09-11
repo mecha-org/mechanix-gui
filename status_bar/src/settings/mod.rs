@@ -229,7 +229,7 @@ pub fn read_settings_yml() -> Result<StatusBarSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
-    info!("settings file location - {:?}", file_path);
+    info!(task = "read_settings", "settings file location - {:?}", file_path);
 
     // open file
     let settings_file_handle = match File::open(file_path) {
