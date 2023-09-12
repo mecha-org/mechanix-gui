@@ -8,7 +8,7 @@ use tracing::error;
 #[derive(Debug, Default, Clone, Copy)]
 pub enum StatusBarErrorCodes {
     #[default]
-    GenericError,
+    UnknownError,
     SettingsReadError,
     SettingsParseError,
     ThemeReadError,
@@ -18,7 +18,7 @@ pub enum StatusBarErrorCodes {
 impl fmt::Display for StatusBarErrorCodes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            StatusBarErrorCodes::GenericError => write!(f, "GenericError"),
+            StatusBarErrorCodes::UnknownError => write!(f, "UnknownError"),
             StatusBarErrorCodes::SettingsReadError => write!(f, "SettingsReadError"),
             StatusBarErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
             StatusBarErrorCodes::ThemeReadError => write!(f, "ThemeReadError"),

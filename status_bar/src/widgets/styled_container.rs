@@ -3,11 +3,11 @@ use iced::widget::container;
 use iced_style::container::Appearance;
 use iced_style::Theme;
 
-pub struct CustomContainer {
+pub struct StyledContainer {
     appearance: Appearance,
 }
 
-impl CustomContainer {
+impl StyledContainer {
     pub fn new(params: Appearance) -> Self {
         Self {
             appearance: params
@@ -15,7 +15,7 @@ impl CustomContainer {
     }
 }
 
-impl container::StyleSheet for CustomContainer {
+impl container::StyleSheet for StyledContainer {
     type Style = Theme;
 
     fn appearance(&self, style: &Self::Style) -> Appearance {

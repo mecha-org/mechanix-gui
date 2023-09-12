@@ -1,5 +1,5 @@
 #![deny(clippy::all)]
-use std::fs;
+use std::{fs, time::SystemTime};
 use iced::{executor, widget::{container, row, Text, column, text}, window, Application, Element, Settings, Background, Color, Alignment, Renderer};
 
 use iced_native::{Command, Length, Subscription, Theme};
@@ -13,12 +13,19 @@ use time::{format_description, OffsetDateTime};
 mod settings;
 mod widgets;
 mod theme;
-use tracing::info;
+use tracing::{info, error};
 use crate::settings::Modules;
 use crate::theme::StatusBarTheme;
-use crate::widgets::custom_container::CustomContainer;
+use crate::widgets::styled_container::StyledContainer;
 
 pub mod errors;
+
+fn get_sys_time_in_secs() -> u64 {
+    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n) => n.as_secs(),
+        Err(_) => 1,
+    }
+}
 
 
 /// Initialize the application with settings, and starts
@@ -85,9 +92,47 @@ struct StatusBar {
     settings: StatusBarSettings,
     current_time: OffsetDateTime,
     custom_theme: StatusBarTheme,
-    wifi_strength: i8,
-    bluetooth_state: i8,
-    battery_level: u8
+    wifi_state: WifiState,
+    bluetooth_state: BluetoothState,
+    battery_state: BatteryState
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum WifiConnectedState {
+    Low,
+    Weak,
+    Good,
+    Strong
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum WifiState {
+    On,
+    Off,
+    Connected(WifiConnectedState)
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BluetoothState {
+    On,
+    Off,
+    Connected
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BatteryState {
+    Level0,
+    Level10,
+    Level20,
+    Level30,
+    Level40,
+    Level50,
+    Level60,
+    Level70,
+    Level80,
+    Level90,
+    Level100
+
 }
 
 /// ## Message
@@ -97,18 +142,18 @@ struct StatusBar {
 #[derive(Debug, Clone, Copy)]
 pub enum Message {
     TimeTick(OffsetDateTime),
-    WifiStrengthUpdate(i8),
-    BluetoothStatusUpdate(i8),
-    BatteryStatusUpdate(u8)
+    WifiStateUpdate(WifiState),
+    BluetoothStateUpdate(BluetoothState),
+    BatteryStatusUpdate(BatteryState)
 }
 
 #[derive(Debug, Clone)]
 pub struct GenerateLayout {
     pub modules: Modules,
     pub current_time: OffsetDateTime,
-    pub wifi_strength: i8,
-    pub bluetooth_state: i8,
-    pub battery_level: u8
+    pub wifi_state: WifiState,
+    pub bluetooth_state: BluetoothState,
+    pub battery_state: BatteryState
 }
 
 /// # Top-level Application implementation for Iced
@@ -142,9 +187,9 @@ impl Application for StatusBar {
             custom_theme,
             current_time: OffsetDateTime::now_local()
             .unwrap_or_else(|_| OffsetDateTime::now_utc()),
-            wifi_strength: -1,
-            bluetooth_state: -1,
-            battery_level: 0
+            wifi_state: WifiState::Off,
+            bluetooth_state: BluetoothState::Off,
+            battery_state: BatteryState::Level0
         }, Command::none())
     }
 
@@ -162,16 +207,16 @@ impl Application for StatusBar {
                 }
                 Command::none()
             }
-            Message::WifiStrengthUpdate(strength) => {
-                self.wifi_strength = strength;
+            Message::WifiStateUpdate(strength) => {
+                self.wifi_state = strength;
                 Command::none()
             }
-            Message::BluetoothStatusUpdate(state) => {
+            Message::BluetoothStateUpdate(state) => {
                 self.bluetooth_state = state;
                 Command::none()
             }
             Message::BatteryStatusUpdate(state) => {
-                self.battery_level = state;
+                self.battery_state = state;
                 Command::none()
             }
         }
@@ -180,27 +225,33 @@ impl Application for StatusBar {
     fn view(&self) -> Element<Message> {
         let current_time_format = &self.settings.modules.clock.format;
         let format_description = format_description::parse(current_time_format).unwrap();
-        let _formatted_time = self.current_time.format(&format_description).unwrap();
+        let _formatted_time = match self.current_time.format(&format_description){
+            Ok(t) => t,
+            Err(e) => {
+                error!("error while formatting time {}", e);
+                String::from("")
+            },
+        };
         let left_row = generate_modules(GenerateLayout{
             modules: self.settings.modules.clone(),
             current_time: self.current_time,
-            wifi_strength: self.wifi_strength,
+            wifi_state: self.wifi_state,
             bluetooth_state: self.bluetooth_state,
-            battery_level: self.battery_level,
+            battery_state: self.battery_state,
         }, self.settings.layout.left.clone());
         let center_row = generate_modules(GenerateLayout{
             modules: self.settings.modules.clone(),
             current_time: self.current_time,
-            wifi_strength: self.wifi_strength,
+            wifi_state: self.wifi_state,
             bluetooth_state: self.bluetooth_state,
-            battery_level: self.battery_level,
+            battery_state: self.battery_state,
         }, self.settings.layout.center.clone());
         let right_row = generate_modules(GenerateLayout{
             modules: self.settings.modules.clone(),
             current_time: self.current_time,
-            wifi_strength: self.wifi_strength,
+            wifi_state: self.wifi_state,
             bluetooth_state: self.bluetooth_state,
-            battery_level: self.battery_level,
+            battery_state: self.battery_state,
         }, self.settings.layout.right.clone());
 
         let row_content = row![
@@ -217,7 +268,7 @@ impl Application for StatusBar {
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(15)
-            .style(iced::theme::Container::Custom(Box::new(CustomContainer::new(Appearance{
+            .style(iced::theme::Container::Custom(Box::new(StyledContainer::new(Appearance{
                 background: Option::from(Background::Color(Color::from_rgb8(background_color[0], background_color[1], background_color[2]))),
                 ..Default::default()
             }))))
@@ -237,40 +288,19 @@ impl Application for StatusBar {
             )
         });
         let s2 = iced::time::every(std::time::Duration::from_secs(1)).map(|_| {
-            let wifi_strengths: Vec<i8> = vec![-1, 0, 11, 21, 41, 81];
-            let x = match time::OffsetDateTime::now_local() {
-                Ok(time) => {
-                    time.second() % 6
-                },
-                Err(_) => {
-                    0
-                }
-            };
-            Message::WifiStrengthUpdate(wifi_strengths[x as usize],)
+            let wifi_states = vec![WifiState::Off, WifiState::On, WifiState::Connected(WifiConnectedState::Low),WifiState::Connected(WifiConnectedState::Weak), WifiState::Connected(WifiConnectedState::Good),WifiState::Connected(WifiConnectedState::Strong) ];
+            let x = get_sys_time_in_secs() as usize % wifi_states.len();
+            Message::WifiStateUpdate(wifi_states[x])
         });
         let s3 = iced::time::every(std::time::Duration::from_secs(1)).map(|_| {
-            let bluetooth_states: Vec<i8> = vec![-1, 0, 1];
-            let x = match time::OffsetDateTime::now_local() {
-                Ok(time) => {
-                    time.second() % 3
-                },
-                Err(_) => {
-                    0
-                }
-            };
-            Message::BluetoothStatusUpdate(bluetooth_states[x as usize],)
+            let bluetooth_states = vec![BluetoothState::Off, BluetoothState::On, BluetoothState::Connected];
+            let x = get_sys_time_in_secs() as usize % bluetooth_states.len();
+            Message::BluetoothStateUpdate(bluetooth_states[x])
         });
         let s4 = iced::time::every(std::time::Duration::from_secs(1)).map(|_| {
-            let states: Vec<i8> = vec![0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-            let x = match time::OffsetDateTime::now_local() {
-                Ok(time) => {
-                    time.second() % 10
-                },
-                Err(_) => {
-                    0
-                }
-            };
-            Message::BatteryStatusUpdate(states[x as usize] as u8,)
+            let battery_states = vec![BatteryState::Level0, BatteryState::Level10,BatteryState::Level20, BatteryState::Level30,BatteryState::Level40,BatteryState::Level50,BatteryState::Level60,BatteryState::Level70,BatteryState::Level80,BatteryState::Level90,BatteryState::Level100];
+            let x = get_sys_time_in_secs() as usize % battery_states.len();
+            Message::BatteryStatusUpdate(battery_states[x])
         });
         Subscription::batch([s1, s2, s3, s4])
     }
@@ -283,42 +313,123 @@ fn generate_modules(layout_details: GenerateLayout, layout: Vec<String>) -> iced
         let format_description = format_description::parse(current_time_format).unwrap();
         let formatted_time = layout_details.current_time.format(&format_description).unwrap();
         match layout_item.as_str() {
-            "clock" => { data_row = data_row.push( Text::new(formatted_time.to_owned()).size(18))},
+            "clock" => { data_row = data_row.push( Text::new(formatted_time).size(18))},
             "wifi" => {
-                match layout_details.wifi_strength {
-                    -1 => { data_row = data_row.push(image( &layout_details.modules.wifi.icon.off)); }
-                    0 => { data_row = data_row.push(image(&layout_details.modules.wifi.icon.off)); }
-                    1..=20 => { data_row = data_row.push(image(&layout_details.modules.wifi.icon.low)); }
-                    21..=40 => { data_row = data_row.push(image(&layout_details.modules.wifi.icon.weak)); }
-                    41..=80 => { data_row = data_row.push(image(&layout_details.modules.wifi.icon.good)); }
-                    81..=100 => { data_row = data_row.push(image(&layout_details.modules.wifi.icon.strong)); }
-                    _ => {  }
+                match layout_details.wifi_state {
+                    WifiState::Off => { 
+                        if let Some(icon) = layout_details.modules.wifi.icon.off.clone() {
+                            info!("wifi icon path is {}", icon);
+                            data_row = data_row.push(image(&icon));
+                        }
+                    }
+                    WifiState::On => { 
+                        if let Some(icon) = layout_details.modules.wifi.icon.off.clone() {
+                            info!("wifi icon path is {}", icon);
+                            data_row = data_row.push(image(&icon));
+                        } 
+                    }
+                    WifiState::Connected(WifiConnectedState::Low) => { 
+                        if let Some(icon) = layout_details.modules.wifi.icon.low.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                    }
+                    WifiState::Connected(WifiConnectedState::Weak) => { 
+                        if let Some(icon) = layout_details.modules.wifi.icon.weak.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                    }
+                    WifiState::Connected(WifiConnectedState::Good) => { 
+                        if let Some(icon) = layout_details.modules.wifi.icon.good.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                    }
+                    WifiState::Connected(WifiConnectedState::Strong) => { 
+                        if let Some(icon) = layout_details.modules.wifi.icon.strong.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                    }
                 }
-            },
+            }
+            ,
             "bluetooth" => {
                 match layout_details.bluetooth_state {
-                    -1 => { data_row = data_row.push(image(&layout_details.modules.bluetooth.icon.off)); }
-                    0 => { data_row = data_row.push(image(&layout_details.modules.bluetooth.icon.on)); }
-                    1 => { data_row = data_row.push(image(&layout_details.modules.bluetooth.icon.connected)); }
-                    _ => {}
+                    BluetoothState::Off => { 
+                        if let Some(icon) = layout_details.modules.bluetooth.icon.off.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        } 
+                    }
+                    BluetoothState::On => { 
+                        if let Some(icon) = layout_details.modules.bluetooth.icon.on.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        } 
+                    }
+                    BluetoothState::Connected => { 
+                        if let Some(icon) = layout_details.modules.bluetooth.icon.connected.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        } 
+                     }
                 }
-            },
+            }
+            ,
             "battery" => {
-                match layout_details.battery_level {
-                    0..=9 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_0)); }
-                    10..=19 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_10)); }
-                    20..=29 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_20)); }
-                    30..=39 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_30)); }
-                    40..=49 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_40)); }
-                    50..=59 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_50)); }
-                    60..=69 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_60)); }
-                    70..=79 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_70)); }
-                    80..=89 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_80)); }
-                    90..=99 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_90)); }
-                    100 => { data_row = data_row.push(image(&layout_details.modules.battery.icon.level_100)); }
-                    _ => {}
+                match layout_details.battery_state {
+                    BatteryState::Level0 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_0.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        } 
+                    }
+                    BatteryState::Level10 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_10.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level20 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_20.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level30 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_30.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level40 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_40.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level50 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_50.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level60 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_60.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level70 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_70.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level80 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_80.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level90 => { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_90.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
+                     BatteryState::Level100=> { 
+                        if let Some(icon) = layout_details.modules.battery.icon.level_100.clone() {
+                            data_row = data_row.push(image(&icon)); 
+                        }
+                     }
                 }
-            },
+            },            
             "window_title" => {
                 data_row = data_row.push(text("App title"));
             },

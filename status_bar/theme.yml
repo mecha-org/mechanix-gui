@@ -1,9 +1,9 @@
 theme:
   font:
     heading:
-      path: "src/assets/fonts/space-grotesk.ttf"
+      path: ./src/assets/fonts/space-grotesk.ttf
     default:
-      path: "src/assets/fonts/space-grotesk.ttf"
+      path: ./src/assets/fonts/space-grotesk.ttf
   font_size:
     h0: 40
     h1: 32
@@ -22,5 +22,5 @@ theme:
   background:
     default:
       color: [5, 7, 10]
-      image: "./assets/background.png"
+      image: ""
       fill: Centered

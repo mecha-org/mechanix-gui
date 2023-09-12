@@ -161,7 +161,7 @@ pub fn read_theme_path_from_args() -> Option<String> {
 /// 
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_theme_yml() -> Result<StatusBarTheme> {
-    let mut file_path = PathBuf::from(std::env::var("STATUS_BAR_THEME_PATH")
+    let mut file_path = PathBuf::from(std::env::var("MECHA_STATUS_BAR_THEME_PATH")
         .unwrap_or(String::from("theme.yml"))); // Get path of the library
 
     // read from args

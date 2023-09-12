@@ -124,34 +124,34 @@ pub struct BatteryModule {
 /// Icon paths for bluetooth module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BluetoothIconPaths {
-    pub on: String,
-    pub off: String,
-    pub connected: String,
+    pub on: Option<String>,
+    pub off: Option<String>,
+    pub connected: Option<String>,
 }
 
 /// Icon paths for wifi module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct WifiIconPaths {
-    pub off: String,
-    pub low: String,
-    pub weak: String,
-    pub good: String,
-    pub strong: String,
+    pub off: Option<String>,
+    pub low: Option<String>,
+    pub weak: Option<String>,
+    pub good: Option<String>,
+    pub strong: Option<String>,
 }
 /// Icon paths for battery module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BatteryIconPaths {
-    pub level_100: String,
-    pub level_90: String,
-    pub level_80: String,
-    pub level_70: String,
-    pub level_60: String,
-    pub level_50: String,
-    pub level_40: String,
-    pub level_30: String,
-    pub level_20: String,
-    pub level_10: String,
-    pub level_0: String,
+    pub level_100: Option<String>,
+    pub level_90: Option<String>,
+    pub level_80: Option<String>,
+    pub level_70: Option<String>,
+    pub level_60: Option<String>,
+    pub level_50: Option<String>,
+    pub level_40: Option<String>,
+    pub level_30: Option<String>,
+    pub level_20: Option<String>,
+    pub level_10: Option<String>,
+    pub level_0: Option<String>,
 }
 
 impl Default for WindowSettings {
@@ -176,27 +176,27 @@ impl Default for WindowSettings {
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            clock: ClockModule { format: "".to_string(), is_24h_clock: false },
-            bluetooth: BluetoothModule { icon: BluetoothIconPaths { on: "".to_string(), off: "".to_string(), connected: "".to_string() } },
+            clock: ClockModule { format: "[hour repr:12]:[minute] [period]".to_string(), is_24h_clock: false },
+            bluetooth: BluetoothModule { icon: BluetoothIconPaths { on: None, off: None, connected: None } },
             wifi: WifiModule { icon: WifiIconPaths {
-                off: "".to_string(),
-                low: "".to_string(),
-                weak: "".to_string(),
-                good: "".to_string(),
-                strong: "".to_string(),
+                off: None,
+                low: None,
+                weak: None,
+                good: None,
+                strong: None,
             } },
             battery: BatteryModule { icon: BatteryIconPaths {
-                level_100: "".to_string(),
-                level_90: "".to_string(),
-                level_80: "".to_string(),
-                level_70: "".to_string(),
-                level_60: "".to_string(),
-                level_50: "".to_string(),
-                level_40: "".to_string(),
-                level_30: "".to_string(),
-                level_20: "".to_string(),
-                level_10: "".to_string(),
-                level_0: "".to_string(),
+                level_100: None,
+                level_90: None,
+                level_80: None,
+                level_70: None,
+                level_60: None,
+                level_50: None,
+                level_40: None,
+                level_30: None,
+                level_20: None,
+                level_10: None,
+                level_0: None,
             } },
         }
     }
@@ -220,7 +220,7 @@ pub fn read_settings_path_from_args() -> Option<String> {
 /// 
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<StatusBarSettings> {
-    let mut file_path = PathBuf::from(std::env::var("STATUS_BAR_SETTINGS_PATH")
+    let mut file_path = PathBuf::from(std::env::var("MECHA_STATUS_BAR_SETTINGS_PATH")
         .unwrap_or(String::from("settings.yml"))); // Get path of the library
 
     // read from args
