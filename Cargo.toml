@@ -1,6 +1,6 @@
 [workspace]
 default-members = ["status_bar"]
-members = ["status_bar"]
+members = ["status_bar", "app_dock"]
 resolver = "2"
 
 [workspace.package]
