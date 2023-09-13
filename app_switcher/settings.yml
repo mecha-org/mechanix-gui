@@ -1,0 +1,53 @@
+title: App Switcher  # Empty
+app:
+  id: app-switcher   # app-switcher
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size: [480, 430]  # [1024, 768]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 100]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+layout:
+  grid: ["Wifi", "Bluetooth", "Battery", "Auto Rotate", "Settings", "Running Apps", "CPU", "Memory", "Sound", "Brightness"]
+modules:
+  cpu:
+    title: "CPU"
+    icon:
+      low: ./src/assets/pngs/cpu_low.png
+      medium: ./src/assets/pngs/cpu_medium.png
+      high: ./src/assets/pngs/cpu_high.png
+  memory:
+    title: "Memory"
+    total: "4GB"
+    icon:
+      low: ./src/assets/pngs/memory_low.png
+      medium: ./src/assets/pngs/memory_medium.png
+      high: ./src/assets/pngs/memory_high.png
+  home:
+    title: "Home"
+    icon:
+      default: ./src/assets/pngs/home.png
+  close_all:
+    title: "Close All"
+    icon:
+      default: ./src/assets/pngs/close_all.png
+  no_apps:
+    title: "No Apps"
+    icon:
+      default: ./src/assets/pngs/device.png
+  close:
+    title: "Close"
+    icon:
+      default: ./src/assets/pngs/close.png
+
+
+
+
