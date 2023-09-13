@@ -1,0 +1,26 @@
+theme:
+  font:
+    heading:
+      path: ./src/assets/fonts/space-grotesk.ttf
+    default:
+      path: Space Grotesk
+  font_size:
+    h0: 40
+    h1: 32
+    h2: 26
+    h3: 22
+    h4: 20
+    h5: 18
+    h6: 16
+    default: 14
+    sm: 12
+    xs: 11
+  colors:
+    text: rgba(255, 255, 255, 1)
+    primary: rgba(255, 255, 255, 1)
+    accent: rgba(0, 0, 255, 1)
+  background:
+    default:
+      color: [5, 7, 10]
+      image: ./src/assets/pngs/background.png
+      fill: Centered
