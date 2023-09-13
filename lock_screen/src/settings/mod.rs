@@ -1,30 +1,30 @@
-use crate::errors::{AppDockError, AppDockErrorCodes};
+use crate::errors::{LockScreenError, LockScreenErrorCodes};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use tracing::{info, debug};
 use std::{env, fs::File, path::PathBuf};
 use anyhow::bail;
 
-/// # App Dock Settings
+/// # LockScreen Settings
 /// 
 /// Struct representing the settings.yml configuration file,
-/// this file lets you control the behavior of the app dock, 
+/// this file lets you control the behavior of the lock screen, 
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct AppDockSettings {
+pub struct LockScreenSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
     pub title: String,  // Sets the window title
     pub layout: LayoutSettings,
-    pub modules: Modules
+    pub modules: Modules,
 }
 
-impl Default for AppDockSettings {
+impl Default for LockScreenSettings {
     fn default() -> Self {
         Self {
             app: AppSettings::default(),
             window: WindowSettings::default(),
-            title: String::from("App Dock"),
+            title: String::from("Lock Screen"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
         }
@@ -46,7 +46,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            id: Some(String::from("app-dock")),
+            id: Some(String::from("lock-screen")),
             text_multithreading: false,
             antialiasing: false,
             try_opengles_first: true
@@ -54,20 +54,14 @@ impl Default for AppSettings {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct WindowSize {
-   pub default: (u32, u32),
-    pub minimized: (u32, u32),
-    pub maximized: (u32, u32),
-    pub other: (u32, u32)
-}
+
 /// # Window Settings
 /// 
 /// Part of the settings.yml to control the behavior of 
 /// the application window
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct WindowSettings {
-    pub size: WindowSize,   // Size of the window
+    pub size: (u32, u32),   // Size of the window
     pub position: (i32, i32),   // Default position to start window
     pub min_size: Option<(u32, u32)>,    // Minimum size the window can be resized to
     pub max_size: Option<(u32, u32)>,   // Maximum size the window can be resized to
@@ -82,52 +76,65 @@ pub struct WindowSettings {
 /// # Layout Settings
 ///
 /// Part of the settings.yml to control the behavior of
-/// the layout of options in the app dock.
+/// the layout of options in the lock screen.
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[derive(Default)]
 pub struct LayoutSettings {
-    pub left: Vec<String>, //Items that will in left side of app dock
-    pub center: Vec<String>, //Items that will in center of app dock
-    pub right: Vec<String>, //Items that will in right side of app dock
+    pub grid: Vec<String>, //Items that will in grid
 }
 
-/// # Modules
-///
-/// App that will be visible in app drawer
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct App {
-    pub app_id: String,
-    pub name: String,
-    pub alias: String,
-    pub icon: String
+pub struct AutoRotateIconPaths {
+    pub portrait: String,
+    pub landscape: String,
 }
-/// # Modules
-///
-/// App that will be visible in app drawer
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct Home {
-    pub icon: Option<String>,
+pub struct DefaultIconPaths {
+    pub default: Option<String>,
+}
+
+/// # Modules
+///
+/// Options that will be visible in lock screen
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct HomeModule {
+    pub icon: DefaultIconPaths,
+    pub title: String,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BackSpaceModule {
+    pub icon: DefaultIconPaths,
+    pub title: String,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct LockModule {
+    pub icon: DefaultIconPaths,
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct PasswordConfigsModule {
+    pub keys_allowed: Vec<String>,
+    pub password_length: usize,
 }
 
 
 /// # Modules
 ///
-/// Options that will be visible in dock
+/// Options that will be visible in lock screen
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Modules {
-    pub pinned_apps: Vec<App>,
-    pub home: Home
+    pub home: HomeModule,
+    pub back_space: BackSpaceModule,
+    pub lock: LockModule,
+    pub password_configs: PasswordConfigsModule
 }
 
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: WindowSize{
-                default: (1024, 768),
-                minimized: (1024, 768),
-                maximized: (1024, 768),
-                other: (1024, 768),
-            },
+            size: (1024, 768),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -141,13 +148,21 @@ impl Default for WindowSettings {
     }
 }
 
-
+impl Default for LayoutSettings {
+    fn default() -> Self {
+        Self {
+            grid: vec![],
+        }
+    }
+}
 
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            pinned_apps: vec![],
-            home: Home { icon: None },
+            home: HomeModule { icon: DefaultIconPaths { default: None }, title: "".to_string() },
+            back_space: BackSpaceModule { icon: DefaultIconPaths { default: None }, title: "".to_string() },
+            lock: LockModule { icon: DefaultIconPaths { default: None } },
+            password_configs: PasswordConfigsModule { keys_allowed: vec![], password_length: 0 },
         }
     }
 }
@@ -158,19 +173,19 @@ impl Default for Modules {
 pub fn read_settings_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 && (args[1] == "-s" || args[1] == "--settings") {
-        debug!("Using settings path from argument - {}", args[2]);
-        return Some(args[2].clone());
+        debug!("using settings path from argument - {}", args[2]);
+        return Some(String::from(args[2].clone()));
     }
     None
 }
 
 /// # Reads Settings YML 
 /// 
-/// Reads the `settings.yml` and parsers to AppDockSettings
+/// Reads the `settings.yml` and parsers to LockScreenSettings
 /// 
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
-pub fn read_settings_yml() -> Result<AppDockSettings> {
-    let mut file_path = PathBuf::from(std::env::var("MECHA_APP_DOCK_SETTINGS_PATH")
+pub fn read_settings_yml() -> Result<LockScreenSettings> {
+    let mut file_path = PathBuf::from(std::env::var("MECHA_LOCK_SCREEN_SETTINGS_PATH")
         .unwrap_or(String::from("settings.yml"))); // Get path of the library
 
     // read from args
@@ -185,20 +200,20 @@ pub fn read_settings_yml() -> Result<AppDockSettings> {
     let settings_file_handle = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
-            bail!(AppDockError::new(
-                AppDockErrorCodes::SettingsReadError,
-                format!("cannot read the settings.yml in the path - {}", e),
+            bail!(LockScreenError::new(
+                LockScreenErrorCodes::SettingsReadError,
+                format!("cannot read the settings.yml in the path - {}", e.to_string()),
             ));
         }
     };
 
     // read and parse
-    let config: AppDockSettings = match serde_yaml::from_reader(settings_file_handle) {
+    let config: LockScreenSettings = match serde_yaml::from_reader(settings_file_handle) {
         Ok(config) => config,
         Err(e) => {
-            bail!(AppDockError::new(
-                AppDockErrorCodes::SettingsParseError,
-                format!("error parsing the settings.yml - {}", e),
+            bail!(LockScreenError::new(
+                LockScreenErrorCodes::SettingsParseError,
+                format!("error parsing the settings.yml - {}", e.to_string()),
             ));
         }
     };

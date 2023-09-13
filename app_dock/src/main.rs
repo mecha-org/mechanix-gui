@@ -173,7 +173,7 @@ impl Application for AppDock {
                             .duration_since(UNIX_EPOCH)
                             .expect("time went backwards");
                         let in_ms = since_the_epoch.as_millis();
-                        info!("button pressed at {} released at {} diff is {}",self.drawer_launcher_pressed_at, in_ms, in_ms - self.drawer_launcher_pressed_at);
+                        info!(task = "dock released", "button pressed at {} released at {} diff is {}",self.drawer_launcher_pressed_at, in_ms, in_ms - self.drawer_launcher_pressed_at);
                         if in_ms - self.drawer_launcher_pressed_at > 500 {
                             self.dock_state = DockState::HOME;
                             return Command::batch([window::resize(Size::new(self.settings.window.size.other.0, self.settings.window.size.other.1))]);
