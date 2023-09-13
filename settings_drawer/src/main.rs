@@ -5,9 +5,9 @@ use iced_aw::wrap::Wrap;
 use iced_style::container::Appearance;
 use tracing::info;
 
-use settings::ActionBarSettings;
+use settings::SettingsDrawerSettings;
 use crate::settings::Modules;
-use crate::theme::ActionBarTheme;
+use crate::theme::SettingsDrawerTheme;
 use crate::widgets::action_widget::{Message as PercentageWidgetMessage, PercentageWidget};
 use crate::widgets::styled_container::StyledContainer;
 use crate::widgets::slider_widget::{Message as SliderWidgetMessage, SliderWidget};
@@ -25,27 +25,27 @@ pub fn main() -> iced::Result {
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt()
         .pretty()
-        .with_env_filter("mecha_action_bar=trace")
+        .with_env_filter("mecha_settings_drawer=trace")
         .with_thread_names(true)
         .init();
 
     let settings = match settings::read_settings_yml() {
         Ok(settings) => settings,
         Err(_) => {
-            ActionBarSettings::default()
+            SettingsDrawerSettings::default()
         }
     };
 
-    info!(task = "initalize_settings", "settings initialized for action bar: {:?}", settings);
+    info!(task = "initalize_settings", "settings initialized for settings drawer: {:?}", settings);
 
     let custom_theme = match theme::read_theme_yml() {
         Ok(theme) => theme,
         Err(_) => {
-            ActionBarTheme::default()
+            SettingsDrawerTheme::default()
         }
     };
 
-    info!(task = "initalize_theme", "theme initialized for action bar: {:?}", custom_theme);
+    info!(task = "initalize_theme", "theme initialized for settings drawer: {:?}", custom_theme);
 
     let window_settings = settings.window;
     let app_settings = settings.app;
@@ -100,8 +100,8 @@ pub enum BluetoothState{
 ///
 /// This struct is the state definition of the entire application
 struct Launcher {
-    settings: ActionBarSettings,
-    custom_theme: ActionBarTheme,
+    settings: SettingsDrawerSettings,
+    custom_theme: SettingsDrawerTheme,
     wifi_state: WifiState,
     bluetooth_state: BluetoothState,
     battery_action: PercentageWidget,
@@ -156,13 +156,13 @@ impl Application for Launcher {
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => {
-                ActionBarSettings::default()
+                SettingsDrawerSettings::default()
             }
         };
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => {
-                ActionBarTheme::default()
+                SettingsDrawerTheme::default()
             }
         };
 
@@ -358,24 +358,5 @@ impl Application for Launcher {
     }
 }
 
-// fn generate_apps_ui(apps: App) -> Element<'static, Message, Renderer> {
-//     let app_name = text(&apps.name).size(11);
-//     column![ image(&apps.icon).height(90).width(98), app_name].spacing(12).align_items(Alignment::Center).into()
-// }
-// fn generate_apps_grid<'a>(
-//     apps: Vec<App>,
-//     search_text: String
-// ) -> Element<'static, Message, Renderer> {
-//     let wrapped_apps =
-//         Wrap::with_elements(apps.into_iter().filter(|app| app.name.to_lowercase().starts_with(&search_text)).map(|app| generate_apps_ui(app)).collect())
-//             .line_spacing(16.0)
-//             .spacing(14.0);
-//             // .padding(5.0);;
-//     let scrollable_apps = Scrollable::new(wrapped_apps).direction(Direction::Vertical(Properties::new().scroller_width(0).width(0)));
-//     column!(scrollable_apps)
-//         .width(Length::Fill)
-//         .padding(Padding::from([10, 0]))
-//         .into()
-// }
 
 

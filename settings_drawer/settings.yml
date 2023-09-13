@@ -1,6 +1,6 @@
-title: Action Bar  # Empty
+title: Settings Drawer  # Empty
 app:
-  id: action-bar    # launcher
+  id: settings-drawer    # launcher
   text_multithreading: true   # false
   antialiasing: true    # false
   try_opengles_first: true    # false

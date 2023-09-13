@@ -1,17 +1,17 @@
-use crate::errors::{ActionBarError, ActionBarErrorCodes};
+use crate::errors::{SettingsDrawerError, SettingsDrawerErrorCodes};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use tracing::{info, debug};
 use std::{env, fs::File, path::PathBuf};
 use anyhow::bail;
 
-/// # Action Bar Settings
+/// # Settings Drawer Settings
 /// 
 /// Struct representing the settings.yml configuration file,
-/// this file lets you control the behavior of the Action bar, 
+/// this file lets you control the behavior of the Settings drawer, 
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct ActionBarSettings {
+pub struct SettingsDrawerSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
     pub title: String,  // Sets the window title
@@ -19,12 +19,12 @@ pub struct ActionBarSettings {
     pub modules: Modules,
 }
 
-impl Default for ActionBarSettings {
+impl Default for SettingsDrawerSettings {
     fn default() -> Self {
         Self {
             app: AppSettings::default(),
             window: WindowSettings::default(),
-            title: String::from("Action Bar"),
+            title: String::from("Settings Drawer"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
         }
@@ -46,7 +46,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            id: Some(String::from("action-bar")),
+            id: Some(String::from("settings-drawer")),
             text_multithreading: false,
             antialiasing: false,
             try_opengles_first: true
@@ -76,7 +76,7 @@ pub struct WindowSettings {
 /// # Layout Settings
 ///
 /// Part of the settings.yml to control the behavior of
-/// the layout of options in the action bar.
+/// the layout of options in the settings drawer.
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct LayoutSettings {
     pub grid: Vec<String>, //Items that will in grid
@@ -133,7 +133,7 @@ pub struct CommonLowMediumHighPaths {
 
 /// # Modules Definitions
 ///
-/// Options that will be visible in action bar
+/// Options that will be visible in settings drawer
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BluetoothModule {
     pub icon: BluetoothIconPaths,
@@ -196,7 +196,7 @@ pub struct BrightnessModule {
 
 /// # Modules
 ///
-/// Options that will be visible in actions
+/// Options that will be visible in settings drawer
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Modules {
     pub wifi: WifiModule,
@@ -320,11 +320,11 @@ pub fn read_settings_path_from_args() -> Option<String> {
 
 /// # Reads Settings YML 
 /// 
-/// Reads the `settings.yml` and parsers to ActionBarSettings
+/// Reads the `settings.yml` and parsers to SettingsDrawerSettings
 /// 
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
-pub fn read_settings_yml() -> Result<ActionBarSettings> {
-    let mut file_path = PathBuf::from(std::env::var("MECHA_ACTION_BAR_SETTINGS_PATH")
+pub fn read_settings_yml() -> Result<SettingsDrawerSettings> {
+    let mut file_path = PathBuf::from(std::env::var("MECHA_SETTINGS_DRAWER_SETTINGS_PATH")
         .unwrap_or(String::from("settings.yml"))); // Get path of the library
 
     // read from args
@@ -339,19 +339,19 @@ pub fn read_settings_yml() -> Result<ActionBarSettings> {
     let settings_file_handle = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
-            bail!(ActionBarError::new(
-                ActionBarErrorCodes::SettingsReadError,
+            bail!(SettingsDrawerError::new(
+                SettingsDrawerErrorCodes::SettingsReadError,
                 format!("cannot read the settings.yml in the path - {}", e.to_string()),
             ));
         }
     };
 
     // read and parse
-    let config: ActionBarSettings = match serde_yaml::from_reader(settings_file_handle) {
+    let config: SettingsDrawerSettings = match serde_yaml::from_reader(settings_file_handle) {
         Ok(config) => config,
         Err(e) => {
-            bail!(ActionBarError::new(
-                ActionBarErrorCodes::SettingsParseError,
+            bail!(SettingsDrawerError::new(
+                SettingsDrawerErrorCodes::SettingsParseError,
                 format!("error parsing the settings.yml - {}", e.to_string()),
             ));
         }

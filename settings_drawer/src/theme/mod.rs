@@ -1,4 +1,4 @@
-use crate::errors::{ActionBarError, ActionBarErrorCodes};
+use crate::errors::{SettingsDrawerError, SettingsDrawerErrorCodes};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use tracing::{info, debug};
@@ -9,9 +9,9 @@ use anyhow::bail;
 /// 
 /// Struct representing the theme.yml configuration file,
 /// this file lets you control the appearance and theme
-/// of the action bar
+/// of the settings drawer
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct ActionBarTheme {
+pub struct SettingsDrawerTheme {
     pub font: FontSettings, // Font Settings
     pub colors: ColorSettings, // Color Settings
     pub font_size: FontSizeSettings, // Font Size Settings
@@ -19,10 +19,10 @@ pub struct ActionBarTheme {
 }
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ThemeConfigs {
-    pub theme: ActionBarTheme, // Theme configs
+    pub theme: SettingsDrawerTheme, // Theme configs
 }
 
-impl Default for ActionBarTheme {
+impl Default for SettingsDrawerTheme {
     fn default() -> Self {
         Self {
             font: FontSettings::default(),
@@ -35,7 +35,7 @@ impl Default for ActionBarTheme {
 
 /// # Font Settings
 /// 
-/// Declares all the fonts needed for the action bar with their 
+/// Declares all the fonts needed for the settings drawer with their 
 /// paths (relative to the binary)
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct FontSettings {
@@ -171,11 +171,11 @@ pub fn read_theme_path_from_args() -> Option<String> {
 
 /// # Reads Theme YML 
 /// 
-/// Reads the `theme.yml` and parsers to ActionBarTheme
+/// Reads the `theme.yml` and parsers to SettingsDrawerTheme
 /// 
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
-pub fn read_theme_yml() -> Result<ActionBarTheme> {
-    let mut file_path = PathBuf::from(std::env::var("MECHA_ACTION_BAR_THEME_PATH")
+pub fn read_theme_yml() -> Result<SettingsDrawerTheme> {
+    let mut file_path = PathBuf::from(std::env::var("MECHA_SETTINGS_DRAWER_THEME_PATH")
         .unwrap_or(String::from("theme.yml"))); // Get path of the library
 
     // read from args
@@ -190,8 +190,8 @@ pub fn read_theme_yml() -> Result<ActionBarTheme> {
     let theme_file_handle = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
-            bail!(ActionBarError::new(
-                ActionBarErrorCodes::ThemeReadError,
+            bail!(SettingsDrawerError::new(
+                SettingsDrawerErrorCodes::ThemeReadError,
                 format!("cannot read the theme.yml in the path - {}", e.to_string()),
             ));
         }
@@ -201,8 +201,8 @@ pub fn read_theme_yml() -> Result<ActionBarTheme> {
     let config: ThemeConfigs = match serde_yaml::from_reader(theme_file_handle) {
         Ok(config) => config,
         Err(e) => {
-            bail!(ActionBarError::new(
-                ActionBarErrorCodes::ThemeParseError,
+            bail!(SettingsDrawerError::new(
+                SettingsDrawerErrorCodes::ThemeParseError,
                 format!("error parsing the theme.yml - {}", e.to_string()),
             ));
         }

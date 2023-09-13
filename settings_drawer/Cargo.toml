@@ -1,6 +1,6 @@
 [package]
-name = "mecha_action_bar"
-description = "Action Bar for Mecha Launcher, supports wlroots based compositors"
+name = "mecha_settings_drawer"
+description = "Settings Drawer for Mecha Launcher, supports wlroots based compositors"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -12,7 +12,7 @@ homepage.workspace = true
 anyhow = "1.0.71"
 iced = { version = "0.10.0", features = ["canvas", "tokio", "debug", "image"] }
 iced_native = "0.10.3"
-iced_style = "*"
+iced_style = "0.9.0"
 rand = "0.8.5"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
