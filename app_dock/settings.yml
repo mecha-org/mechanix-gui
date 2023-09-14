@@ -1,0 +1,50 @@
+title: App Dock  # Empty
+app:
+  id: app-dock    # launcher
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size:
+    default: [480, 100] # [1024, 768]
+    minimized: [480, 100]
+    maximized: [480, 235]
+    other: [480, 88]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 60]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+layout:
+  left: []
+  center: []
+  right: []
+modules:
+  pinned_apps:
+    - app_id: drawer_launcher
+      name: Drawer Launcher
+      alias: drawer_launcher
+      icon: ./src/assets/pngs/drawer_launcher.png
+    - app_id: chromium
+      name: Chromium
+      alias: chromium
+      icon: ./src/assets/pngs/chromium.png
+    - app_id: mecha_connect
+      name: Mecha Connect
+      alias: mecha-connect
+      icon: ./src/assets/pngs/mecha_connect.png
+    - app_id: test
+      name: Kitty
+      alias: kitty
+      icon: ./src/assets/pngs/kitty.png
+    - app_id: test
+      name: Camera
+      alias: camera
+      icon: ./src/assets/pngs/camera.png
+  home:
+    icon: ./src/assets/pngs/home.png
+

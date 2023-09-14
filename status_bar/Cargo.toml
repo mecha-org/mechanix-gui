@@ -1,0 +1,22 @@
+[package]
+name = "mecha_status_bar"
+description = "Status Bar for Mecha Launcher, supports wlroots based compositors"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+anyhow = "1.0.71"
+iced = { version = "0.9.0", features = ["canvas", "tokio", "debug", "image", "glow"] }
+iced_native = "0.10.3"
+iced_style = { version = "0.8.0" }
+rand = "0.8.5"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+time = { version = "0.3.5", features = ["local-offset", "formatting", "parsing" ] }
+lazy_static = "1.4.0"

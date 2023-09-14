@@ -1,0 +1,14 @@
+[workspace]
+default-members = ["status_bar"]
+members = ["status_bar", "app_dock", "settings_drawer", "app_switcher", "app_drawer", "lock_screen", "action_bar"]
+resolver = "2"
+
+[workspace.package]
+version = "1.0.0"
+authors = ["Akshay Raina <akshayr@mechasystems.com", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+documentation = "https://docs.mecha.so"
+description = "Collection of UI elements for a UI Shell for Mecha devices, supports wlroots based compositors"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"

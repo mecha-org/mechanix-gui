@@ -1,0 +1,36 @@
+title: Action Bar  # Empty
+app:
+  id: action-bar    # action-bar
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size:
+    default: [480, 72] # [1024, 768]
+    minimized: [480, 100]
+    maximized: [480, 235]
+    other: [480, 88]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 60]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+layout:
+  left: ["Settings"]
+  center: ["Home"]
+  right: ["Keyboard"]
+modules:
+  settings:
+    title: "Settings"
+    icon: ./src/assets/pngs/settings.png
+  home:
+    title: "Home"
+    icon: ./src/assets/pngs/home.png
+  keyboard:
+    title: "Keyboard"
+    icon: ./src/assets/pngs/keyboard.png
+
