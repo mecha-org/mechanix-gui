@@ -143,8 +143,6 @@ impl Application for AppDock {
             }
         };
 
-        //let font_load_command = iced::font::load(get_static_cow_from_asset(include_bytes!("../src/assets/fonts/spaces-grotesk.ttf")));
-
         (AppDock {
             settings,
             custom_theme,
