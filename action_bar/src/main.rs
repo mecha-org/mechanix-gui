@@ -1,10 +1,9 @@
 use std::fs;
 
-use iced::{Alignment, Application, Background, Color, Element, executor, Settings, widget::{container, image}, window};
+use iced::{Alignment, Application, Background, Color, Element, executor, Settings, widget::{container, image}, window, Font};
 use iced::{Command, Length, Subscription, Theme};
 use iced::widget::{Column, MouseArea, row, Text};
 use iced_style::container::Appearance;
-use lazy_static::lazy_static;
 use tracing::info;
 
 use settings::ActionBarSettings;
@@ -50,9 +49,21 @@ pub fn main() -> iced::Result {
     let window_settings = settings.window;
     let app_settings = settings.app;
     let position = window_settings.position;
-    lazy_static! {
-        static ref FONT_DATA: Vec<u8> = fs::read("src/assets/fonts/spaces-grotesk.ttf").expect("Failed to read font data");
-    }
+
+    let default_font_family = match custom_theme.font.default {
+        Some(font) => match font.name {
+            Some(font_name) => Box::leak(font_name.into_boxed_str()),
+            None => "SansSerif",
+        },
+        None => "SansSerif",
+    };
+    
+    let default_font: Font = Font {
+        family: iced::font::Family::Name(default_font_family),
+        weight: iced::font::Weight::Light,
+        stretch: iced::font::Stretch::Normal,
+        monospaced: false,
+    };
 
     ActionBar::run(Settings {
         window: window::Settings {
@@ -71,7 +82,7 @@ pub fn main() -> iced::Result {
         //text_multithreading: app_settings.text_multithreading,
         antialiasing: app_settings.antialiasing,
         //try_opengles_first: app_settings.try_opengles_first,
-        // default_font: Some(&FONT_DATA),
+        default_font,
         ..Settings::default()
     })
 }

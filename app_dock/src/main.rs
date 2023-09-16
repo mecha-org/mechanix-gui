@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use iced::{executor, widget::{container, Scrollable, row, column, image}, window, Application, Element, Settings, Background, Color, Alignment, Renderer, Size};
 use iced::widget::mouse_area;
 use iced::widget::scrollable::{Direction, Properties};
-use iced::{Command, Length, Subscription, Theme};
+use iced::{Command, Length, Subscription, Theme, Font};
 use settings::AppDockSettings;
 
 use iced_style::container::Appearance;
@@ -41,21 +41,32 @@ pub fn main() -> iced::Result {
 
     info!(task = "init_settings", "settings initialized for app dock {:?}", settings);
 
-    let _custom_theme = match theme::read_theme_yml() {
+    let custom_theme = match theme::read_theme_yml() {
         Ok(theme) => theme,
         Err(_) => {
             AppDockThemeTheme::default()
         }
     };
 
-    info!(task = "init_theme", "theme initialized for app dock {:?}", _custom_theme);
+    info!(task = "init_theme", "theme initialized for app dock {:?}", custom_theme);
 
     let window_settings = settings.window;
     let app_settings = settings.app;
     let position = window_settings.position;
-    lazy_static! {
-        static ref FONT_DATA: Vec<u8> = fs::read("src/assets/fonts/spaces-grotesk.ttf").expect("Failed to read font data");
-    }
+    let default_font_family = match custom_theme.font.default {
+        Some(font) => match font.name {
+            Some(font_name) => Box::leak(font_name.into_boxed_str()),
+            None => "SansSerif",
+        },
+        None => "SansSerif",
+    };
+    
+    let default_font: Font = Font {
+        family: iced::font::Family::Name(default_font_family),
+        weight: iced::font::Weight::Light,
+        stretch: iced::font::Stretch::Normal,
+        monospaced: false,
+    };
 
     AppDock::run(Settings {
         window: window::Settings {
@@ -74,7 +85,7 @@ pub fn main() -> iced::Result {
         //text_multithreading: app_settings.text_multithreading,
         antialiasing: app_settings.antialiasing,
         //try_opengles_first: app_settings.try_opengles_first,
-        // default_font: Some(&FONT_DATA),
+        default_font,
         ..Settings::default()
     })
 }

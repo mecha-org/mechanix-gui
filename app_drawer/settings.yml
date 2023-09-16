@@ -16,9 +16,9 @@ window:
   always_on_top: false    # false
   icon_path: null # Todo
 layout:
-  left: ["clock"]
-  center: ["window_title"]
-  right: ["wifi", "bluetooth", "battery",]
+  left: []
+  center: []
+  right: []
 modules:
   apps:
     - app_id: chromium

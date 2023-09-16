@@ -56,8 +56,16 @@ pub fn main() -> iced::Result {
     let app_settings = settings.app;
     let position = window_settings.position;
 
-    let SPACE_GROTESK_FONT: Font = Font {
-        family: iced::font::Family::Name("Space Grotesk"),
+    let default_font_family = match custom_theme.font.default {
+        Some(font) => match font.name {
+            Some(font_name) => Box::leak(font_name.into_boxed_str()),
+            None => "SansSerif",
+        },
+        None => "SansSerif",
+    };
+    
+    let default_font: Font = Font {
+        family: iced::font::Family::Name(default_font_family),
         weight: iced::font::Weight::Light,
         stretch: iced::font::Stretch::Normal,
         monospaced: false,
@@ -79,9 +87,8 @@ pub fn main() -> iced::Result {
         id: app_settings.id,
         //text_multithreading: app_settings.text_multithreading,
         antialiasing: app_settings.antialiasing,
-        default_font: SPACE_GROTESK_FONT,
+        default_font,
         //try_opengles_first: app_settings.try_opengles_first,
-        // default_font: Some(&FONT_DATA),
         ..Settings::default()
     })
 }
@@ -160,8 +167,7 @@ impl Application for LockScreen {
             password: String::from(""),
             is_user_authenticating: false,
             is_authentication_failed: false,
-        }, Command::batch([iced::font::load(include_bytes!("./assets/fonts/space-grotesk.ttf").as_slice())
-            .map(Message::FontLoaded)]), )
+        }, Command::none(), )
     }
 
     fn title(&self) -> String {

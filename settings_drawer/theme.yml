@@ -1,9 +1,9 @@
 theme:
   font:
     heading:
-      path: ./src/assets/fonts/space-grotesk.ttf
+      name: Space Grotesk
     default:
-      path: Space Grotesk
+      name: Space Grotesk
   font_size:
     h0: 40
     h1: 32
