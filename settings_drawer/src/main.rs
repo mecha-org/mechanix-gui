@@ -51,19 +51,28 @@ pub fn main() -> iced::Result {
     let app_settings = settings.app;
     let position = window_settings.position;
 
-    let default_font_family = match custom_theme.font.default {
-        Some(font) => match font.name {
-            Some(font_name) => Box::leak(font_name.into_boxed_str()),
-            None => "SansSerif",
-        },
-        None => "SansSerif",
+    let mut default_font: Font = Font {
+        family: iced::font::Family::SansSerif,
+        ..Default::default()
     };
-    
-    let default_font: Font = Font {
-        family: iced::font::Family::Name(default_font_family),
-        weight: iced::font::Weight::Light,
-        stretch: iced::font::Stretch::Normal,
-        monospaced: false,
+
+    //Check if there is defaut font added in theme.yml then make that default
+    match custom_theme.font.default {
+        Some(font) => match font.name {
+            Some(font_name) => match font_name.len() > 0 {
+                true => {
+                    default_font = Font {
+                        family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
+                        weight: iced::font::Weight::Light,
+                        stretch: iced::font::Stretch::Normal,
+                        monospaced: false,
+                    };
+                },
+                false => ()
+            },
+            None => (),
+        },
+        None => (),
     };
 
     Launcher::run(Settings {
