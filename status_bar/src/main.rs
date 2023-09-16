@@ -1,5 +1,6 @@
 #![deny(clippy::all)]
 use std::time::SystemTime;
+use font_loader::system_fonts;
 use iced::{Theme, executor, widget::{image, container, row, Text, column, text}, window, Application, Element, Settings, Background, Color, Alignment, Renderer, Font, Command, Length, Subscription};
 use settings::StatusBarSettings;
 use iced_style::container::Appearance;
@@ -64,12 +65,18 @@ pub fn main() -> iced::Result {
         Some(font) => match font.name {
             Some(font_name) => match font_name.len() > 0 {
                 true => {
-                    default_font = Font {
-                        family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
-                        weight: iced::font::Weight::Light,
-                        stretch: iced::font::Stretch::Normal,
-                        monospaced: false,
-                    };
+                    let property = system_fonts::FontPropertyBuilder::new().family(&font_name).build();
+                    match system_fonts::get(&property){
+                        Some(_) => {
+                            default_font = Font {
+                                family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
+                                weight: iced::font::Weight::Light,
+                                stretch: iced::font::Stretch::Normal,
+                                monospaced: false,
+                            };
+                        },
+                        None => (),
+                    }
                 },
                 false => ()
             },

@@ -1,3 +1,4 @@
+use font_loader::system_fonts;
 use iced::{Application, Background, Color, Element, executor, Font, Settings, widget::{column, container, Scrollable}, window};
 use iced::{Command, Length, Subscription, Theme};
 use iced::widget::scrollable::{Direction, Properties};
@@ -61,12 +62,18 @@ pub fn main() -> iced::Result {
         Some(font) => match font.name {
             Some(font_name) => match font_name.len() > 0 {
                 true => {
-                    default_font = Font {
-                        family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
-                        weight: iced::font::Weight::Light,
-                        stretch: iced::font::Stretch::Normal,
-                        monospaced: false,
-                    };
+                    let property = system_fonts::FontPropertyBuilder::new().family(&font_name).build();
+                    match system_fonts::get(&property){
+                        Some(_) => {
+                            default_font = Font {
+                                family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
+                                weight: iced::font::Weight::Light,
+                                stretch: iced::font::Stretch::Normal,
+                                monospaced: false,
+                            };
+                        },
+                        None => (),
+                    }
                 },
                 false => ()
             },

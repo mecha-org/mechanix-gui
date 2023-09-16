@@ -20,3 +20,4 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 time = { version = "0.3.5", features = ["local-offset", "formatting", "parsing" ] }
 iced_aw = "0.6.0"
+font-loader = "0.11.0"

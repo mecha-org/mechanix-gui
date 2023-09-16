@@ -2,6 +2,7 @@
 use std::borrow::Cow;
 use std::fs;
 use std::time::{SystemTime, UNIX_EPOCH};
+use font_loader::system_fonts;
 use iced::{executor, widget::{container, Scrollable, row, column, image}, window, Application, Element, Settings, Background, Color, Alignment, Renderer, Size};
 use iced::widget::mouse_area;
 use iced::widget::scrollable::{Direction, Properties};
@@ -62,12 +63,18 @@ pub fn main() -> iced::Result {
         Some(font) => match font.name {
             Some(font_name) => match font_name.len() > 0 {
                 true => {
-                    default_font = Font {
-                        family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
-                        weight: iced::font::Weight::Light,
-                        stretch: iced::font::Stretch::Normal,
-                        monospaced: false,
-                    };
+                    let property = system_fonts::FontPropertyBuilder::new().family(&font_name).build();
+                    match system_fonts::get(&property){
+                        Some(_) => {
+                            default_font = Font {
+                                family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
+                                weight: iced::font::Weight::Light,
+                                stretch: iced::font::Stretch::Normal,
+                                monospaced: false,
+                            };
+                        },
+                        None => (),
+                    }
                 },
                 false => ()
             },
