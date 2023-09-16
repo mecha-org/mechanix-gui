@@ -1,3 +1,4 @@
+use font_loader::system_fonts;
 use iced::{Application, Background, Color, Element, executor, Font, Settings, widget::{column, container, Scrollable}, window};
 use iced::{Command, Length, Subscription, Theme};
 use iced::widget::scrollable::{Direction, Properties};
@@ -51,11 +52,34 @@ pub fn main() -> iced::Result {
     let app_settings = settings.app;
     let position = window_settings.position;
 
-    let SPACE_GROTESK_FONT: Font = Font {
-        family: iced::font::Family::Name("Space Grotesk"),
-        weight: iced::font::Weight::Light,
-        stretch: iced::font::Stretch::Normal,
-        monospaced: false,
+    let mut default_font: Font = Font {
+        family: iced::font::Family::SansSerif,
+        ..Default::default()
+    };
+
+    //Check if there is defaut font added in theme.yml then make that default
+    match custom_theme.font.default {
+        Some(font) => match font.name {
+            Some(font_name) => match font_name.len() > 0 {
+                true => {
+                    let property = system_fonts::FontPropertyBuilder::new().family(&font_name).build();
+                    match system_fonts::get(&property){
+                        Some(_) => {
+                            default_font = Font {
+                                family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
+                                weight: iced::font::Weight::Light,
+                                stretch: iced::font::Stretch::Normal,
+                                monospaced: false,
+                            };
+                        },
+                        None => (),
+                    }
+                },
+                false => ()
+            },
+            None => (),
+        },
+        None => (),
     };
 
     Launcher::run(Settings {
@@ -74,9 +98,8 @@ pub fn main() -> iced::Result {
         id: app_settings.id,
         //text_multithreading: app_settings.text_multithreading,
         antialiasing: app_settings.antialiasing,
-        default_font: SPACE_GROTESK_FONT,
+        default_font,
         //try_opengles_first: app_settings.try_opengles_first,
-        // default_font: Some(&FONT_DATA),
         ..Settings::default()
     })
 }
@@ -183,8 +206,7 @@ impl Application for Launcher {
             brigtness_action: SliderWidget::new(modules.brightness.title.to_owned(), "".to_string(), 70.0),
             wifi_state: WifiState::Off,
             bluetooth_state: BluetoothState::Off,
-        }, Command::batch([iced::font::load(include_bytes!("./assets/fonts/space-grotesk.ttf").as_slice())
-            .map(Message::FontLoaded)]), )
+        }, Command::none(), )
     }
 
     fn title(&self) -> String {

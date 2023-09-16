@@ -1,11 +1,11 @@
 use std::fs;
+use font_loader::system_fonts;
 use iced::{executor, widget::{image, container, Scrollable, text, row, column}, window, Application, Element, Settings, Background, Color, Alignment, Font, Renderer, Padding};
 use iced::{Command, Length, Subscription, Theme};
 use iced::widget::text_input;
 use iced::widget::scrollable::{Direction, Properties};
 use settings::AppDrawerSettings;
 use iced_style::container::Appearance;
-use lazy_static::lazy_static;
 use iced_aw::wrap::Wrap;
 use iced_style::core::BorderRadius;
 
@@ -52,9 +52,36 @@ pub fn main() -> iced::Result {
     let window_settings = settings.window;
     let app_settings = settings.app;
     let position = window_settings.position;
-    lazy_static! {
-        static ref FONT_DATA: Vec<u8> = fs::read("src/assets/fonts/spaces-grotesk.ttf").expect("Failed to read font data");
-    }
+    
+    let mut default_font: Font = Font {
+        family: iced::font::Family::SansSerif,
+        ..Default::default()
+    };
+
+    //Check if there is defaut font added in theme.yml then make that default
+    match custom_theme.font.default {
+        Some(font) => match font.name {
+            Some(font_name) => match font_name.len() > 0 {
+                true => {
+                    let property = system_fonts::FontPropertyBuilder::new().family(&font_name).build();
+                    match system_fonts::get(&property){
+                        Some(_) => {
+                            default_font = Font {
+                                family: iced::font::Family::Name(Box::leak(font_name.into_boxed_str())),
+                                weight: iced::font::Weight::Light,
+                                stretch: iced::font::Stretch::Normal,
+                                monospaced: false,
+                            };
+                        },
+                        None => (),
+                    }
+                },
+                false => ()
+            },
+            None => (),
+        },
+        None => (),
+    };
 
     AppDrawer::run(Settings {
         window: window::Settings {
@@ -73,7 +100,7 @@ pub fn main() -> iced::Result {
         //text_multithreading: app_settings.text_multithreading,
         antialiasing: app_settings.antialiasing,
         //try_opengles_first: app_settings.try_opengles_first,
-        // default_font: Some(&FONT_DATA),
+        default_font,
         ..Settings::default()
     })
 }

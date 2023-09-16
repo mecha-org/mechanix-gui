@@ -1,4 +1,4 @@
-use iced::Color;
+use iced::{Color, BorderRadius};
 use iced::widget::container;
 use iced_style::container::Appearance;
 use iced_style::Theme;
@@ -22,8 +22,8 @@ impl container::StyleSheet for StyledContainer {
         match style {
             Theme::Light => Appearance {
                 text_color: None,
-                background: Color::TRANSPARENT.into(),
-                border_radius: 4.0,
+                background: Some(iced::Background::Color(Color::TRANSPARENT)),
+                border_radius: BorderRadius::from(4.0),
                 border_width: 2.0,
                 border_color: Color::TRANSPARENT,
             },

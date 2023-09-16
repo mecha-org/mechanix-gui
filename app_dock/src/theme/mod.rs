@@ -43,7 +43,7 @@ pub struct FontSettings {
 //// Corresponds to a single font, and its path
 #[derive(Debug, Deserialize, Clone, Serialize, Default)]
 pub struct Font {
-    pub path: Option<String>
+    pub name: Option<String>
 }
 
 /// # Background Settings
