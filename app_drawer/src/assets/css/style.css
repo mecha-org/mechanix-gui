@@ -1,5 +1,5 @@
 .window {
-    background: rgba(5, 7, 10, 1);
+    background-color: rgba(5, 7, 10, 1);
     font-family: 'Space Grotesk';
     padding: 9px 18px;
     min-width: 100%;
@@ -14,8 +14,8 @@
 .app {}
 
 .app-image {
-    min-width: 96px;
-    min-height: 96px;
+    min-width: 104px;
+    min-height: 104px;
     margin-bottom: 14px;
 }
 
