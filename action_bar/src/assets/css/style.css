@@ -1,0 +1,22 @@
+.window {
+    background: rgba(5, 7, 10, 1);
+    font-family: 'Space Grotesk';
+    padding: 12px 20px;
+    min-width: 100%;
+    color: #E4E7EE;
+}
+
+.container {
+    min-width: 100%;
+}
+
+.action-img {}
+
+.action-button {
+    min-width: 48px;
+    min-height: 48px;
+    border-radius: 10px;
+    padding: 0px;
+    border: none;
+    background: none;
+}

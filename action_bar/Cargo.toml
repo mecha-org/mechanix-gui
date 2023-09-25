@@ -1,0 +1,19 @@
+[package]
+name = "mecha_action_bar"
+description = "Action Bar for Mecha Launcher, supports wlroots based compositors"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+[dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+relm4 = "0.7.0-alpha.1"
+relm4-components = "0.7.0-alpha.1"
+relm4-macros = "0.7.0-alpha.1"
