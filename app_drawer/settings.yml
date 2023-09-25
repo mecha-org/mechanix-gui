@@ -1,0 +1,90 @@
+title: App Drawer  # Empty
+app:
+  id: app.drawer    # app-drawer
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size: [480, 440]  # [1024, 768]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 40]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+layout:
+  left: []
+  center: []
+  right: []
+modules:
+  apps:
+    - app_id: chromium
+      name: Chromium
+      alias: chromium
+      icon: ./src/assets/pngs/chromium.png
+    - app_id: mecha_connect
+      name: Mecha Connect
+      alias: mecha-connect
+      icon: ./src/assets/pngs/mecha_connect.png
+    - app_id: test
+      name: Kitty
+      alias: kitty
+      icon: ./src/assets/pngs/kitty.png
+    - app_id: test
+      name: Camera
+      alias: camera
+      icon: ./src/assets/pngs/camera.png
+    - app_id: chromium
+      name: Chromium
+      alias: chromium
+      icon: ./src/assets/pngs/chromium.png
+    - app_id: mecha_connect
+      name: Mecha Connect
+      alias: mecha-connect
+      icon: ./src/assets/pngs/mecha_connect.png
+    - app_id: test
+      name: Kitty
+      alias: kitty
+      icon: ./src/assets/pngs/kitty.png
+    - app_id: test
+      name: Camera
+      alias: camera
+      icon: ./src/assets/pngs/camera.png
+    - app_id: chromium
+      name: Chromium
+      alias: chromium
+      icon: ./src/assets/pngs/chromium.png
+    - app_id: mecha_connect
+      name: Mecha Connect
+      alias: mecha-connect
+      icon: ./src/assets/pngs/mecha_connect.png
+    - app_id: test
+      name: Kitty
+      alias: kitty
+      icon: ./src/assets/pngs/kitty.png
+    - app_id: test
+      name: Camera
+      alias: camera
+      icon: ./src/assets/pngs/camera.png
+    - app_id: chromium
+      name: Chromium
+      alias: chromium
+      icon: ./src/assets/pngs/chromium.png
+    - app_id: mecha_connect
+      name: Mecha Connect
+      alias: mecha-connect
+      icon: ./src/assets/pngs/mecha_connect.png
+    - app_id: test
+      name: Kitty
+      alias: kitty
+      icon: ./src/assets/pngs/kitty.png
+    - app_id: test
+      name: Camera
+      alias: camera
+      icon: ./src/assets/pngs/camera.png
+
+
+
