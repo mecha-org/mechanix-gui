@@ -1,0 +1,79 @@
+.window {
+    background: rgba(5, 7, 10, 1);
+    font-family: 'Space Grotesk';
+    padding: 12px 20px;
+    color: #E4E7EE;
+}
+
+.home-container {
+    min-width: 100%;
+    min-height: 100%;
+}
+
+.lock-button {
+    min-width: 100px;
+    min-height: 100px;
+    padding: 0px;
+    margin: 0px;
+    background: none;
+    margin-top: 80px;
+}
+
+.user-auth-container {
+    min-width: 100%;
+    min-height: 100%;
+}
+
+.password-key-box {
+    border-radius: 16px;
+    border: 2px solid #202431;
+    background: rgba(32, 36, 49, 0.50);
+}
+
+.password-key-button {
+    background: none;
+    border: none;
+}
+
+.password-key-label-button {
+    min-width: 78px;
+    min-height: 78px;
+}
+
+.password-key-icon-button {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 0px;
+    margin: 0px;
+}
+
+.password-key-label {
+    color: #FFF;
+    text-align: center;
+    font-family: Space Grotesk;
+    font-size: 40px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+}
+
+.password-text-box {
+    padding-top: 25px;
+    padding-bottom: 10px;
+}
+
+.password-text {
+    min-height: 10px;
+    min-width: 10px;
+    border-radius: 50%;
+    border: 2px solid #565E76;
+}
+
+.password-text-filled {
+    background-color: #FFFFFF;
+    border: 2px solid #FFFFFF;
+}
+
+.password-invalid-label {
+    padding-bottom: 15px;
+}
