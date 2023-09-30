@@ -1,0 +1,22 @@
+.window {
+    background: rgba(5, 7, 10, 1);
+    font-family: 'Space Grotesk';
+    padding: 12px 20px;
+    color: #E4E7EE;
+}
+
+.container {}
+
+.apps-list {}
+
+.app-button {
+    background: none;
+    border: none;
+}
+
+.app-button-icon {
+    min-width: 68px;
+    min-height: 68px;
+    padding: 0px;
+    margin: 0px;
+}
