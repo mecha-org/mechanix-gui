@@ -127,8 +127,8 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
     let anchors = [
         (gtk4_layer_shell::Edge::Left, true),
         (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, false),
-        (gtk4_layer_shell::Edge::Bottom, true),
+        (gtk4_layer_shell::Edge::Top, true),
+        (gtk4_layer_shell::Edge::Bottom,  false),
     ];
 
     for (anchor, state) in anchors {
