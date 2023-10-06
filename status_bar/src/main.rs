@@ -260,18 +260,21 @@ impl AsyncComponent for StatusBar {
         let wifi_file = gio::File::for_path("src/assets/pngs/wifi_strong.png");
         let wifi_asset_paintable = gdk::Texture::from_file(&wifi_file).unwrap();
         let wifi_image = gtk::Image::builder()
+            .css_classes(["icon"])
             .paintable(&wifi_asset_paintable)
             .build();
 
         let bluetooth_file = gio::File::for_path("src/assets/pngs/bluetooth_connected.png");
         let bluetooth_asset_paintable = gdk::Texture::from_file(&bluetooth_file).unwrap();
         let bluetooth_image = gtk::Image::builder()
+            .css_classes(["icon"])
             .paintable(&bluetooth_asset_paintable)
             .build();
 
         let battery_file = gio::File::for_path("src/assets/pngs/battery_70.png");
         let battery_asset_paintable = gdk::Texture::from_file(&battery_file).unwrap();
         let battery_image = gtk::Image::builder()
+            .css_classes(["icon"])
             .paintable(&battery_asset_paintable)
             .build();
 
