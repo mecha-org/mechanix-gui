@@ -1,0 +1,2 @@
+[env]
+GRPC_SERVER_URL = "http://192.168.29.157:50052"

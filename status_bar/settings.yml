@@ -31,6 +31,7 @@ modules:
   wifi:
     icon:
       off: ./src/assets/pngs/wifi_off.png
+      on: ./src/assets/pngs/wifi_on.png
       low: ./src/assets/pngs/wifi_low.png
       weak: ./src/assets/pngs/wifi_weak.png
       good: ./src/assets/pngs/wifi_good.png
