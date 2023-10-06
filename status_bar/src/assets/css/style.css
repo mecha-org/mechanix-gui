@@ -22,5 +22,9 @@
     font-style: normal;
     font-weight: 500;
     line-height: normal;
+}
 
+.icon {
+    min-width: 21px;
+    min-height: 21px;
 }
