@@ -98,7 +98,6 @@ pub struct Modules {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ClockModule {
     pub format: String,
-    pub is_24h_clock: bool,
 }
 
 /// Bluetooth module
@@ -131,6 +130,7 @@ pub struct BluetoothIconPaths {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct WifiIconPaths {
     pub off: Option<String>,
+    pub on: Option<String>,
     pub low: Option<String>,
     pub weak: Option<String>,
     pub good: Option<String>,
@@ -174,7 +174,6 @@ impl Default for Modules {
         Self {
             clock: ClockModule {
                 format: "[hour repr:12]:[minute] [period]".to_string(),
-                is_24h_clock: false,
             },
             bluetooth: BluetoothModule {
                 icon: BluetoothIconPaths {
@@ -186,6 +185,7 @@ impl Default for Modules {
             wifi: WifiModule {
                 icon: WifiIconPaths {
                     off: None,
+                    on: None,
                     low: None,
                     weak: None,
                     good: None,
@@ -251,6 +251,7 @@ pub fn read_settings_yml() -> Result<StatusBarSettings> {
             bail!(StatusBarError::new(
                 StatusBarErrorCodes::SettingsReadError,
                 format!("Cannot read the settings.yml in the path - {}", e),
+                true
             ));
         }
     };
@@ -262,6 +263,7 @@ pub fn read_settings_yml() -> Result<StatusBarSettings> {
             bail!(StatusBarError::new(
                 StatusBarErrorCodes::SettingsParseError,
                 format!("Error parsing the settings.yml - {}", e),
+                true
             ));
         }
     };

@@ -21,8 +21,7 @@ layout:
   right: ["wifi", "bluetooth", "battery",]
 modules:
   clock:
-    format: "%I:%M:%S %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
-    is_24h_clock: true
+    format: "%I:%M %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
     icon:
       on: ./src/assets/pngs/bluetooth_on.png
@@ -31,6 +30,7 @@ modules:
   wifi:
     icon:
       off: ./src/assets/pngs/wifi_off.png
+      on: ./src/assets/pngs/wifi_on.png
       low: ./src/assets/pngs/wifi_low.png
       weak: ./src/assets/pngs/wifi_weak.png
       good: ./src/assets/pngs/wifi_good.png

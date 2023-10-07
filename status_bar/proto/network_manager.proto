@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package networkmanager;
+
+// The wifi service definition.
+service NetworkManagerService {
+  // Retrieve a wifi list
+  rpc ScanWirelessNetwork(Empty) returns (ScanResults) {}
+  // Retrieve a known wifi list
+  rpc ScanKnownWirelessNetwork(Empty) returns (NetworkResults) {}
+  // Connect to a wifi network
+  rpc ConnectWirelessNetwork(WifiConnectRequest) returns (WifiConnectResponse) {}
+  // Remove a wifi network
+  rpc DisconnectWirelessNetwork(RemoveNetworkRequest) returns (RemoveNetworkResponse) {}
+  // Retrieve the Wi-Fi status
+  rpc GetWifiStatus(Empty) returns (WifiStatusResponse) {}
+  // Retrive Current Network
+  rpc GetCurrentNetwork(Empty) returns (ScanResult) {}
+}
+
+// Empty message
+message Empty {}
+
+// Request message for connecting to a wifi network
+message WifiConnectRequest {
+  string ssid = 1;
+  string psk = 2;
+}
+
+// Response message for wifi connection
+message WifiConnectResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// The response details of a wifi scan
+message ScanResult {
+    string mac = 1;
+    string frequency = 2;
+    int32 signal = 3;
+    string flags = 4;
+    string name = 5;
+}
+
+// Response message for a wifi scan
+message ScanResults {
+  repeated ScanResult results = 1;
+}
+
+// Network result message
+message NetworkResult {
+  int32 network_id = 1;
+  string ssid = 2;
+  string flags = 3;
+}
+
+// Response message for known wifi list
+message NetworkResults {
+  repeated NetworkResult results = 1;
+}
+
+// Request message for removing a wifi network
+message RemoveNetworkRequest {
+  int32 network_id = 1;
+}
+
+// Response message for removing a wifi network
+message RemoveNetworkResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Response message for Wi-Fi status
+message WifiStatusResponse {
+  bool wifi_on = 1;
+}
