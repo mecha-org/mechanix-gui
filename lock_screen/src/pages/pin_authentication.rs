@@ -20,7 +20,7 @@ pub struct Settings {
 }
 
 //Model
-pub struct UserAuthentication {
+pub struct PinAuthentication {
     settings: Settings,
     password: String,
     is_authentication_failed: bool,
@@ -29,7 +29,7 @@ pub struct UserAuthentication {
 }
 
 //Widgets
-pub struct UserAuthenticationWidgets {
+pub struct PinAuthenticationWidgets {
     password_invalid_label: gtk::Label,
 }
 
@@ -41,12 +41,12 @@ pub enum Message {
     HomeIconPressed,
 }
 
-impl SimpleComponent for UserAuthentication {
+impl SimpleComponent for PinAuthentication {
     type Init = Settings;
     type Input = Message;
     type Output = Message;
     type Root = gtk::Box;
-    type Widgets = UserAuthenticationWidgets;
+    type Widgets = PinAuthenticationWidgets;
 
     fn init_root() -> Self::Root {
         gtk::Box::builder()
@@ -131,7 +131,7 @@ impl SimpleComponent for UserAuthentication {
         root.append(&password_invalid_label);
         root.append(password_keys.widget());
 
-        let model = UserAuthentication {
+        let model = PinAuthentication {
             settings: init,
             password: "".to_string(),
             is_authentication_failed: false,
@@ -139,7 +139,7 @@ impl SimpleComponent for UserAuthentication {
             password_keys,
         };
 
-        let widgets = UserAuthenticationWidgets {
+        let widgets = PinAuthenticationWidgets {
             password_invalid_label,
         };
 

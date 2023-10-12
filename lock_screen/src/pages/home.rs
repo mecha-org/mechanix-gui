@@ -10,6 +10,7 @@ use tracing::info;
 
 pub struct Settings {
     pub lock_icon: Option<String>,
+    pub password_icon: Option<String>,
 }
 
 pub struct HomePage {}
@@ -48,10 +49,44 @@ impl SimpleComponent for HomePage {
                     .build();
                 lock_screen_button.set_child(Some(&lock_screen_image));
                 lock_screen_button.connect_clicked(clone!(@strong sender => move |_| {
-                    sender.output(Message::ChangeScreen(Screens::PasswordScreen));
-                    sender.input(Message::ChangeScreen(Screens::LockScreen));
+                    sender.output(Message::ChangeScreen(Screens::PinScreen));
+                    //sender.input(Message::ChangeScreen(Screens::LockScreen));
                 }));
-                root.append(&lock_screen_button);
+                let lock_screen_box = gtk::Box::builder()
+                    .orientation(gtk::Orientation::Vertical)
+                    .valign(gtk::Align::Center)
+                    .halign(gtk::Align::Center)
+                    .hexpand(true)
+                    .vexpand(true)
+                    .css_classes(["lock-screen-box"])
+                    .build();
+                lock_screen_box.append(&lock_screen_button);
+                root.append(&lock_screen_box);
+            }
+            None => (),
+        }
+
+        match init.password_icon.to_owned() {
+            Some(icon) => {
+                let icon_file = gio::File::for_path(icon);
+                let asset_paintable = gdk::Texture::from_file(&icon_file).unwrap();
+                let image = gtk::Image::builder().paintable(&asset_paintable).build();
+
+                let password_button = gtk::Button::builder()
+                    .vexpand(false)
+                    .css_classes(["password-home-button"])
+                    .build();
+                password_button.set_child(Some(&image));
+                password_button.connect_clicked(clone!(@strong sender => move |_| {
+                    sender.output(Message::ChangeScreen(Screens::PasswordScreen));
+                }));
+                let footer = gtk::Box::builder()
+                    .orientation(gtk::Orientation::Horizontal)
+                    .valign(gtk::Align::End)
+                    .vexpand(true)
+                    .build();
+                footer.append(&password_button);
+                root.append(&footer);
             }
             None => (),
         }
@@ -65,8 +100,6 @@ impl SimpleComponent for HomePage {
 
     fn init_root() -> Self::Root {
         gtk::Box::builder()
-            .valign(gtk::Align::Center)
-            .halign(gtk::Align::Center)
             .orientation(gtk::Orientation::Vertical)
             .css_classes(["home-container"])
             .build()
