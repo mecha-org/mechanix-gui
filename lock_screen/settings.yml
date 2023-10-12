@@ -32,6 +32,15 @@ modules:
   lock:
     icon:
       default: ./src/assets/pngs/lock_animation.png
+  back:
+    icon:
+      default: ./src/assets/pngs/back.png
+  submit:
+    icon:
+      default: ./src/assets/pngs/submit.png
+  home_password:
+    icon:
+      default: ./src/assets/pngs/home_password.png
 
 
 

@@ -1,8 +1,10 @@
 .window {
-    background: rgba(5, 7, 10, 1);
+    background: rgba(5, 7, 10, 0.9);
     font-family: 'Space Grotesk';
     padding: 12px 20px;
     color: #E4E7EE;
+    min-width: 100%;
+    min-height: 100%;
 }
 
 .home-container {
@@ -10,9 +12,14 @@
     min-height: 100%;
 }
 
+.lock-screen-box {
+    min-width: 100%;
+    min-height: 100%;
+}
+
 .lock-button {
-    min-width: 100px;
-    min-height: 100px;
+    min-width: 120px;
+    min-height: 120px;
     padding: 0px;
     margin: 0px;
     background: none;
@@ -76,4 +83,74 @@
 
 .password-invalid-label {
     padding-bottom: 15px;
+}
+
+.password-auth-container {
+    min-width: 70%;
+    min-height: 70%;
+}
+
+entry {
+    background: #15171D;
+    color: #E4E7EE;
+    outline-offset: 0px;
+    outline-style: solid;
+    outline-color: #3283E8;
+    outline-width: thin;
+    padding: 12px 18px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+}
+
+/* .search-input:hover {
+    border: none;
+} */
+
+entry :focus {
+    /* border: 0px solid #3283E8; */
+    background: rgba(0, 20, 61, 0.40);
+}
+
+.search-input::placeholder {
+    color: #565E76;
+    font-size: 30px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 16px;
+}
+
+.login-label {
+    color: #FAFBFC;
+    font-size: 21px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    margin-top: 10px;
+    margin-bottom: 14px;
+}
+
+.back-button {
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 9px;
+    border: 1px solid #15171D;
+    background: #15171D;
+    box-shadow: 0px 4.80001px 4.80001px 0px rgba(31, 33, 35, 0.35);
+}
+
+.submit-button {
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 9px;
+    border: 1px solid #15171D;
+    background: #15171D;
+    box-shadow: 0px 4.80001px 4.80001px 0px rgba(31, 33, 35, 0.35);
+}
+
+.password-home-button {
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 9px;
+    border: 0.857px solid #15171D;
+    background: #15171D;
 }
