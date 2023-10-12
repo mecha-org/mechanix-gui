@@ -64,22 +64,20 @@ fn init_window(settings: ActionBarSettings) -> gtk::Window {
     // Display above normal windows
     gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
 
-    // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
-
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 18);
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
     let anchors = [
         (gtk4_layer_shell::Edge::Left, true),
         (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, false),
+        (gtk4_layer_shell::Edge::Top, false),
+        (gtk4_layer_shell::Edge::Bottom, true),
     ];
 
     for (anchor, state) in anchors {

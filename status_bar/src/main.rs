@@ -5,7 +5,7 @@ use chrono::Local;
 use grpc::battery_client::BatteryManagerClient;
 use gtk::{
     gdk, gio, glib,
-    prelude::{BoxExt, GtkWindowExt},
+    prelude::{BoxExt, GtkWindowExt, WidgetExt},
 };
 use relm4::{
     async_trait::async_trait, gtk, tokio, ComponentParts, ComponentSender, RelmApp, RelmWidgetExt,
@@ -43,6 +43,7 @@ struct StatusBar {
     wifi_state: WifiState,
     bluetooth_state: BluetoothState,
     battery_state: BatteryState,
+    window: gtk::Window
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -129,10 +130,11 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
     gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
-    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
+    // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
+
 
     // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
+    gtk4_layer_shell::set_exclusive_zone(&window, window_settings.size.1);
 
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
@@ -217,15 +219,6 @@ impl AsyncComponent for StatusBar {
         let init_state_values = match init_state_values_response {
             Ok(r) => r,
             Err(e) => InitValues::default(),
-        };
-
-        let model = StatusBar {
-            settings: settings.clone(),
-            custom_theme,
-            current_time: current_time(modules.clock.format.as_str()),
-            wifi_state: init_state_values.wifi_state,
-            bluetooth_state: init_state_values.bluetooth_state,
-            battery_state: init_state_values.battery_state,
         };
 
         let main_box = gtk::Box::builder()
@@ -354,6 +347,16 @@ impl AsyncComponent for StatusBar {
 
         window.set_child(Some(&main_box));
 
+        let model = StatusBar {
+            settings: settings.clone(),
+            custom_theme,
+            current_time: current_time(modules.clock.format.as_str()),
+            wifi_state: init_state_values.wifi_state,
+            bluetooth_state: init_state_values.bluetooth_state,
+            battery_state: init_state_values.battery_state,
+            window
+        };
+
         let widgets = AppWidgets {
             clock_label,
             wifi_image,
@@ -411,6 +414,7 @@ impl AsyncComponent for StatusBar {
         match message {
             Message::TimeTick(time) => {
                 self.current_time = time;
+                self.window.set_visible(!self.window.get_visible());
             }
             Message::WifiStateUpdate(state) => {
                 self.wifi_state = state;
