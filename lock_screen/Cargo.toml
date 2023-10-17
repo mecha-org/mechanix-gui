@@ -1,12 +1,13 @@
 [package]
 name = "mecha_lock_screen"
 description = "Lock Screen for Mecha Launcher, supports wlroots based compositors"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
+version = "1.0.0"
+authors = ["Akshay Raina <akshayr@mechasystems.com", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+documentation = "https://docs.mecha.so"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"
 
 [dependencies]
 anyhow = "1.0.71"
