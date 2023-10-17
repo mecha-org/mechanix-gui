@@ -91,29 +91,29 @@ fn init_window(settings: LockScreenSettings) -> gtk::Window {
         .css_classes(["window"])
         .build();
 
-    gtk4_layer_shell::init_for_window(&window);
+        gtk4_layer_shell::init_for_window(&window);
 
-    // Display above normal windows
-    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
+        // Display above normal windows
+        gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
+    
+        // The margins are the gaps around the window's edges
+        // Margins and anchors can be set like this...
+        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
+        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
+        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
 
-    // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
-
-    // The margins are the gaps around the window's edges
-    // Margins and anchors can be set like this...
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
-
-    // ... or like this
-    // Anchors are if the window is pinned to each edge of the output
-    let anchors = [
-        (gtk4_layer_shell::Edge::Left, true),
-        (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, true),
-    ];
+        gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
+    
+    
+        // ... or like this
+        // Anchors are if the window is pinned to each edge of the output
+        let anchors = [
+            (gtk4_layer_shell::Edge::Left, true),
+            (gtk4_layer_shell::Edge::Right, true),
+            (gtk4_layer_shell::Edge::Top, true),
+            (gtk4_layer_shell::Edge::Bottom, true),
+        ];
 
     for (anchor, state) in anchors {
         gtk4_layer_shell::set_anchor(&window, anchor, state);

@@ -31,7 +31,10 @@ modules:
     password_length: 4
   lock:
     icon:
-      default: ./src/assets/pngs/lock_animation.png
+      default: ./src/assets/pngs/lock.png
+  unlock:
+    icon:
+      default: ./src/assets/pngs/unlock.png    
   back:
     icon:
       default: ./src/assets/pngs/back.png
@@ -41,6 +44,12 @@ modules:
   home_password:
     icon:
       default: ./src/assets/pngs/home_password.png
+  peek_password:
+    icon:
+      default: ./src/assets/pngs/peek_password.png
+  un_peek_password:
+    icon:
+      default: ./src/assets/pngs/un_peek_password.png    
 
 
 

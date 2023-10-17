@@ -5,7 +5,7 @@ app:
   antialiasing: true    # false
   try_opengles_first: true    # false
 window:
-  size: [480, 50]  # [1024, 768]
+  size: [480, 37]  # [1024, 768]
   position: [0, 0]  # [0, 0]
   min_size: [480, 40]  # None
   max_size: null    # None

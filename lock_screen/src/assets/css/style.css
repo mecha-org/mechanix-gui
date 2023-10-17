@@ -1,7 +1,6 @@
 .window {
-    background: rgba(5, 7, 10, 0.9);
+    background: rgba(5, 7, 10, 0.2);
     font-family: 'Space Grotesk';
-    padding: 12px 20px;
     color: #E4E7EE;
     min-width: 100%;
     min-height: 100%;
@@ -13,28 +12,28 @@
 }
 
 .lock-screen-box {
-    min-width: 100%;
-    min-height: 100%;
+    
 }
 
 .lock-button {
-    min-width: 120px;
-    min-height: 120px;
+    min-width: 90px;
+    min-height: 90px;
     padding: 0px;
     margin: 0px;
     background: none;
-    margin-top: 80px;
 }
 
-.user-auth-container {
+.pin-auth-container {
     min-width: 100%;
     min-height: 100%;
+    background: rgba(0,0,0,0.5);
+    padding: 10px 20px;
 }
 
 .password-key-box {
     border-radius: 16px;
-    border: 2px solid #202431;
-    background: rgba(32, 36, 49, 0.50);
+    border: 1px solid #000000;
+    background: rgba(0,0,0,0.6);
 }
 
 .password-key-button {
@@ -43,8 +42,8 @@
 }
 
 .password-key-label-button {
-    min-width: 78px;
-    min-height: 78px;
+    min-width: 90px;
+    min-height: 90px;
 }
 
 .password-key-icon-button {
@@ -55,13 +54,17 @@
 }
 
 .password-key-label {
-    color: #FFF;
+    color: #E4E9EE;
     text-align: center;
     font-family: Space Grotesk;
     font-size: 40px;
     font-style: normal;
     font-weight: 700;
     line-height: normal;
+}
+
+.password-key-focus {
+    color: #FDFDFD;
 }
 
 .password-text-box {
@@ -86,20 +89,24 @@
 }
 
 .password-auth-container {
-    min-width: 70%;
-    min-height: 70%;
+    min-width: 100%;
+    min-height: 100%;
+    padding: 0px 20px;
 }
 
 entry {
     background: #15171D;
     color: #E4E7EE;
-    outline-offset: 0px;
+    outline: none;
+    border: none;
+    /* outline-offset: 0px;
     outline-style: solid;
     outline-color: #3283E8;
-    outline-width: thin;
-    padding: 12px 18px;
+    outline-width: thin; */
+    padding: 0px;
     border-radius: 4px;
-    margin-bottom: 14px;
+    /* margin-bottom: 14px; */
+    /* border: 1px solid #000000; */
 }
 
 /* .search-input:hover {
@@ -108,7 +115,7 @@ entry {
 
 entry :focus {
     /* border: 0px solid #3283E8; */
-    background: rgba(0, 20, 61, 0.40);
+    /* background: rgba(0, 20, 61, 0.40); */
 }
 
 .search-input::placeholder {
@@ -147,10 +154,55 @@ entry :focus {
     box-shadow: 0px 4.80001px 4.80001px 0px rgba(31, 33, 35, 0.35);
 }
 
-.password-home-button {
-    min-width: 38px;
-    min-height: 38px;
+/* .password-home-icon {
+
+} */
+
+/* .password-home-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 10px;
     border-radius: 9px;
-    border: 0.857px solid #15171D;
+    border: 1px solid #000000;
+    background: rgba(0,0,0,0.6);
+} */
+
+.footer{
+
+}
+
+/* .password-home-button-pressing {
+    background: rgba(0,0,0,0.8);
+} */
+
+.icon-button-root-default {
+    padding: 15px;
+}
+
+.icon-button-container-default {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 10px;
+    border-radius: 9px;
+    border: 1px solid #000000;
+    background: rgba(0,0,0,0.6);
+}
+
+.icon-button-container-pressing-default {
+    background: rgba(0,0,0,0.8);
+}
+
+.icon-button-icon-default {
+
+}
+
+.icon-input-root-default {
+    padding: 14px 12px;
+    border-radius: 4px;
     background: #15171D;
+    border: 1px solid #000000;
+}
+
+.icon-input-icon-default {
+    padding: 10px;
 }

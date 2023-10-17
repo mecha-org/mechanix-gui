@@ -51,7 +51,7 @@ impl SimpleComponent for PinAuthentication {
     fn init_root() -> Self::Root {
         gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
-            .css_classes(["user-auth-container"])
+            .css_classes(["pin-auth-container"])
             .build()
     }
 
@@ -70,7 +70,7 @@ impl SimpleComponent for PinAuthentication {
                 .min_children_per_line(4)
                 .selection_mode(gtk::SelectionMode::None)
                 .row_spacing(5)
-                .column_spacing(14)
+                .column_spacing(5)
                 .build(),
         )
         .launch()

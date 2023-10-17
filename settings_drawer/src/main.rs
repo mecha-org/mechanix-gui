@@ -194,7 +194,7 @@ impl SimpleComponent for SettingsDrawer {
                 .min_children_per_line(4)
                 .selection_mode(gtk::SelectionMode::None)
                 .row_spacing(7)
-                .column_spacing(7)
+                .column_spacing(6)
                 .homogeneous(true)
                 .build(),
         )

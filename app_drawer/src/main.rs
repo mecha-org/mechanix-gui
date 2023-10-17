@@ -192,7 +192,7 @@ impl SimpleComponent for AppDrawer {
             .max_children_per_line(30)
             .min_children_per_line(4)
             .selection_mode(gtk::SelectionMode::None)
-            .row_spacing(5)
+            .row_spacing(10)
             .build();
 
         modules.apps.into_iter().for_each(|app| {
@@ -257,7 +257,13 @@ fn main() {
 }
 
 fn generate_apps_ui(app: App) -> gtk::Box {
-    let app_name_label = gtk::Label::new(Some(&app.name));
+    let app_name_label = gtk::Label::builder()
+    .label(&app.name)
+    .wrap(true)
+    .css_classes(["app-name-label"])
+    .build();
+    
+    // new(Some());
     let app_icon_file = gio::File::for_path(app.icon);
     let app_icon_paintable = gdk::Texture::from_file(&app_icon_file).unwrap();
     let app_icon = gtk::Image::builder()

@@ -33,10 +33,18 @@ modules:
       name: Kitty
       alias: kitty
       icon: ./src/assets/pngs/kitty.png
+    - app_id: chromium
+      name: Chromium World
+      alias: chromium
+      icon: ./src/assets/pngs/chromium.png
+    - app_id: mecha_connect
+      name: Mecha Connect
+      alias: mecha-connect
+      icon: ./src/assets/pngs/mecha_connect.png
     - app_id: test
-      name: Camera
-      alias: camera
-      icon: ./src/assets/pngs/camera.png
+      name: Kitty
+      alias: kitty
+      icon: ./src/assets/pngs/kitty.png
     - app_id: chromium
       name: Chromium
       alias: chromium
@@ -49,10 +57,6 @@ modules:
       name: Kitty
       alias: kitty
       icon: ./src/assets/pngs/kitty.png
-    - app_id: test
-      name: Camera
-      alias: camera
-      icon: ./src/assets/pngs/camera.png
     - app_id: chromium
       name: Chromium
       alias: chromium
@@ -65,26 +69,6 @@ modules:
       name: Kitty
       alias: kitty
       icon: ./src/assets/pngs/kitty.png
-    - app_id: test
-      name: Camera
-      alias: camera
-      icon: ./src/assets/pngs/camera.png
-    - app_id: chromium
-      name: Chromium
-      alias: chromium
-      icon: ./src/assets/pngs/chromium.png
-    - app_id: mecha_connect
-      name: Mecha Connect
-      alias: mecha-connect
-      icon: ./src/assets/pngs/mecha_connect.png
-    - app_id: test
-      name: Kitty
-      alias: kitty
-      icon: ./src/assets/pngs/kitty.png
-    - app_id: test
-      name: Camera
-      alias: camera
-      icon: ./src/assets/pngs/camera.png
 
 
 

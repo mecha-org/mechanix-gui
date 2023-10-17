@@ -1,5 +1,5 @@
 .window {
-    background: rgba(5, 7, 10, 0.9);
+    background: rgba(5, 7, 10, 0.7);
     font-family: 'Space Grotesk';
     padding: 9px 18px;
     min-width: 100%;
@@ -13,15 +13,17 @@
 
 .grid-item {}
 
-.settings-button {
+.settings-button-box {
+    min-width: 81px;
+    min-height: 81px;
+    padding: 9px;
     border-radius: 8px;
-    background: #15171D;
+    border: 1px solid #000000;
+    background: rgba(0,0,0,0.5);
 }
 
-.settings-button-box {
-    min-width: 75px;
-    min-height: 75px;
-    padding: 4px;
+.settings-button-box-pressing {
+    background: rgba(29,23,29,0.5);
 }
 
 .settings-button-box-slider {

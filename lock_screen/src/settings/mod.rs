@@ -130,6 +130,16 @@ pub struct PasswordConfigsModule {
     pub password_length: usize,
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct PeekPasswordModule {
+    pub icon: DefaultIconPaths,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct UnPeekPasswordModule {
+    pub icon: DefaultIconPaths,
+}
+
 /// # Modules
 ///
 /// Options that will be visible in lock screen
@@ -142,6 +152,8 @@ pub struct Modules {
     pub submit: SubmitModule,
     pub home_password: HomePasswordModule,
     pub password_configs: PasswordConfigsModule,
+    pub peek_password: PeekPasswordModule,
+    pub un_peek_password: UnPeekPasswordModule,
 }
 
 impl Default for WindowSettings {
@@ -186,6 +198,12 @@ impl Default for Modules {
                 icon: DefaultIconPaths { default: None },
             },
             home_password: HomePasswordModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            peek_password: PeekPasswordModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            un_peek_password: UnPeekPasswordModule {
                 icon: DefaultIconPaths { default: None },
             },
         }

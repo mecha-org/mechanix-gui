@@ -127,7 +127,7 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
         .css_classes(["window"])
         .build();
 
-    gtk4_layer_shell::init_for_window(&window);
+    gtk4_layer_shell::init_for_window(&window); 
 
     // Display above normal windows
     // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
@@ -399,7 +399,7 @@ impl AsyncComponent for StatusBar {
             glib::ControlFlow::Continue
         };
 
-        glib::timeout_add_seconds_local(1, tick);
+        //glib::timeout_add_seconds_local(1, tick);
 
         AsyncComponentParts { model, widgets }
     }
@@ -414,7 +414,6 @@ impl AsyncComponent for StatusBar {
         match message {
             Message::TimeTick(time) => {
                 self.current_time = time;
-                self.window.set_visible(!self.window.get_visible());
             }
             Message::WifiStateUpdate(state) => {
                 self.wifi_state = state;
