@@ -25,22 +25,22 @@ modules:
       title: Drawer Launcher
       alias: drawer_launcher
       icon: ./src/assets/pngs/drawer_launcher.png
-    # - app_id: chromium
-    #   title: Chromium
-    #   alias: chromium
-    #   icon: ./src/assets/pngs/chromium.png
-    # - app_id: mecha_connect
-    #   title: Mecha Connect
-    #   alias: mecha-connect
-    #   icon: ./src/assets/pngs/mecha_connect.png
-    # - app_id: test
-    #   title: Kitty
-    #   alias: kitty
-    #   icon: ./src/assets/pngs/kitty.png
-    # - app_id: test
-    #   title: Camera
-    #   alias: camera
-    #   icon: ./src/assets/pngs/camera.png
+    - app_id: chromium
+      title: Chromium
+      alias: chromium
+      icon: ./src/assets/pngs/chromium.png
+    - app_id: mecha_connect
+      title: Mecha Connect
+      alias: mecha-connect
+      icon: ./src/assets/pngs/mecha_connect.png
+    - app_id: test
+      title: Kitty
+      alias: kitty
+      icon: ./src/assets/pngs/kitty.png
+    - app_id: test
+      title: Camera
+      alias: camera
+      icon: ./src/assets/pngs/camera.png
   home:
     title: Home
     icon: ./src/assets/pngs/home.png

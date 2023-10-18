@@ -150,6 +150,7 @@ impl SimpleComponent for AppDock {
             gtk::Box::builder()
                 .valign(gtk::Align::Start)
                 .halign(gtk::Align::Start)
+                .spacing(14)
                 .css_classes(["apps-list"])
                 .build(),
         )
