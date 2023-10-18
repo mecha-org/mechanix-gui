@@ -149,6 +149,7 @@ impl SimpleComponent for AppDock {
         let mut pinned_apps: FactoryVecDeque<App> = FactoryVecDeque::builder(
             gtk::Box::builder()
                 .valign(gtk::Align::Start)
+                .halign(gtk::Align::Start)
                 .css_classes(["apps-list"])
                 .build(),
         )
