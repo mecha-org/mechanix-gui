@@ -1,15 +1,12 @@
 .window {
     background-color: rgba(5, 7, 10, 0.9);
     font-family: 'Space Grotesk';
-    padding: 10px 18px 18px 18px;
+    padding: 10px 18px 30px 18px;
     min-width: 100%;
     color: #E4E7EE;
 }
 
-.container {
-    min-width: 100%;
-    min-height: 100%;
-}
+.container {}
 
 .app {}
 
@@ -49,6 +46,24 @@
     line-height: 16px;
 }
 
-.app-name-label{
+.app-name-label {
     font-size: 12px;
+}
+
+.scrollable {
+    margin-top: 10px;
+    min-width: 340px;
+    min-height: 340px;
+}
+
+.icon-input-root-default {
+    padding: 6px 4px;
+    border-radius: 4px;
+    background: #15171D;
+    border: 1px solid #000000;
+}
+
+.icon-input-root-focused-default {
+    /* border: 1px solid #3283E8; */
+    background: rgba(34, 37, 45, 0.4);
 }

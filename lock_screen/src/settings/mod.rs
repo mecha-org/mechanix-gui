@@ -111,6 +111,10 @@ pub struct LockModule {
     pub icon: DefaultIconPaths,
 }
 #[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct UnlockModule {
+    pub icon: DefaultIconPaths,
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BackModule {
     pub icon: DefaultIconPaths,
 }
@@ -148,6 +152,7 @@ pub struct Modules {
     pub home: HomeModule,
     pub back_space: BackSpaceModule,
     pub lock: LockModule,
+    pub unlock: UnlockModule,
     pub back: BackModule,
     pub submit: SubmitModule,
     pub home_password: HomePasswordModule,
@@ -185,6 +190,9 @@ impl Default for Modules {
                 title: "".to_string(),
             },
             lock: LockModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            unlock: UnlockModule {
                 icon: DefaultIconPaths { default: None },
             },
             password_configs: PasswordConfigsModule {

@@ -1,14 +1,20 @@
-use gtk::{
-    gdk, gio, glib,
-    prelude::{BoxExt, GtkWindowExt},
+use gtk::{gdk, gio, glib, prelude::*, subclass::*};
+use relm4::{
+    gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
+    RelmWidgetExt, SimpleComponent,
 };
-use relm4::{gtk, ComponentParts, ComponentSender, RelmApp, RelmWidgetExt, SimpleComponent};
 use relm4::{
     gtk::{
         glib::clone,
         prelude::{EditableExt, EditableExtManual, EntryExt, ObjectExt},
     },
     RelmRemoveAllExt,
+};
+
+use custom_widgets::icon_input::{
+    IconInput, IconInputCss, IconPosition as IconInputIconPosition,
+    IconSettings as IconInputIconSettings, InitSettings as IconInputSettings,
+    InputMessage as IconInputInputMessage, OutputMessage as IconInputOutputMessage,
 };
 
 mod settings;
@@ -40,6 +46,7 @@ pub enum Message {
 
 struct AppWidgets {
     apps_grid: gtk::FlowBox,
+    search_input: Controller<IconInput>,
 }
 
 #[cfg(not(feature = "layer-shell"))]
@@ -154,6 +161,8 @@ impl SimpleComponent for AppDrawer {
 
         let container_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
+            .vexpand(true)
+            .hexpand(true)
             .css_classes(["container"])
             .build();
 
@@ -175,7 +184,7 @@ impl SimpleComponent for AppDrawer {
             sender.input(Message::SearchTextChanged(new_name));
         }));
 
-        let search_icon_file = gio::File::for_path("src/assets/pngs/search_icon.png");
+        let search_icon_file = gio::File::for_path("src/assets/pngs/search.png");
         let search_icon_paintable = gdk::Texture::from_file(&search_icon_file).unwrap();
         let search_icon = gtk::Image::builder()
             .paintable(&search_icon_paintable)
@@ -185,7 +194,34 @@ impl SimpleComponent for AppDrawer {
         search_box.append(&search_icon);
         search_box.append(&search_input);
 
-        container_box.append(&search_box);
+        let search_icon = match modules.search.icon.default {
+            Some(icon) => Option::from(IconInputIconSettings {
+                path: icon,
+                position: IconInputIconPosition::Left,
+            }),
+            None => None,
+        };
+
+        let clear_icon = match modules.clear.icon.default {
+            Some(icon) => Option::from(IconInputIconSettings {
+                path: icon,
+                position: IconInputIconPosition::Right,
+            }),
+            None => None,
+        };
+
+        let search_input = IconInput::builder()
+            .launch(IconInputSettings {
+                clear_icon: clear_icon,
+                icon: search_icon,
+                placeholder: Option::from("Seach Application".to_string()),
+                css: IconInputCss::default(),
+            })
+            .forward(sender.input_sender(), |msg| match msg {
+                IconInputOutputMessage::InputChange(text) => Message::SearchTextChanged(text),
+            });
+
+        container_box.append(search_input.widget());
 
         let apps_grid = gtk::FlowBox::builder()
             .valign(gtk::Align::Start)
@@ -204,14 +240,19 @@ impl SimpleComponent for AppDrawer {
             .hscrollbar_policy(gtk::PolicyType::Never) // Disable horizontal scrolling
             .min_content_width(360)
             .min_content_height(360)
+            .css_classes(["scrollable"])
             .child(&apps_grid)
             .build();
 
         container_box.append(&scrolled_window);
+        container_box.set_focus_child(Option::from(&scrolled_window));
 
         window.set_child(Some(&container_box));
 
-        let widgets = AppWidgets { apps_grid };
+        let widgets = AppWidgets {
+            apps_grid,
+            search_input,
+        };
 
         ComponentParts { model, widgets }
     }
@@ -257,12 +298,18 @@ fn main() {
 }
 
 fn generate_apps_ui(app: App) -> gtk::Box {
+    let max_lenth = 15;
+    let max_len_app_name = match app.name.len() > max_lenth {
+        true => max_lenth,
+        false => app.name.len(),
+    };
+    let app_name = &app.name[0..max_len_app_name];
     let app_name_label = gtk::Label::builder()
-    .label(&app.name)
-    .wrap(true)
-    .css_classes(["app-name-label"])
-    .build();
-    
+        .label(app_name)
+        .wrap(true)
+        .css_classes(["app-name-label"])
+        .build();
+
     // new(Some());
     let app_icon_file = gio::File::for_path(app.icon);
     let app_icon_paintable = gdk::Texture::from_file(&app_icon_file).unwrap();

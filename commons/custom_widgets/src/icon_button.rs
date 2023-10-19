@@ -27,6 +27,7 @@ impl Default for IconButtonCss {
 #[derive(Debug)]
 pub struct InitSettings {
     pub icon: Option<String>,
+    pub toggle_icon: Option<String>,
     pub css: IconButtonCss,
 }
 
@@ -48,6 +49,7 @@ pub struct IconButton {
 
 pub struct ComponentWidgets {
     container_box: gtk::Box,
+    icon_image: gtk::Image,
 }
 
 impl SimpleComponent for IconButton {
@@ -94,21 +96,17 @@ impl SimpleComponent for IconButton {
         }
 
         let icon = init.icon.clone();
+        let icon_image = gtk::Image::builder().hexpand(true).vexpand(true).build();
         match icon.to_owned() {
             Some(icon) => {
                 let icon_file = gio::File::for_path(icon);
                 let asset_paintable = gdk::Texture::from_file(&icon_file).unwrap();
-                let image = gtk::Image::builder()
-                    .paintable(&asset_paintable)
-                    .hexpand(true)
-                    .vexpand(true)
-                    .build();
-
+                icon_image.set_paintable(Option::from(&asset_paintable));
                 match init.css.icon.to_owned() {
-                    Some(css) => image.set_css_classes(&[css.join(",").as_str()]),
+                    Some(css) => icon_image.set_css_classes(&[css.join(",").as_str()]),
                     None => (),
                 };
-                container_box.append(&image);
+                container_box.append(&icon_image);
                 let left_click_gesture = GestureClick::builder().button(0).build();
                 left_click_gesture.connect_pressed(clone!(@strong sender => move |this, _, _,_| {
                 info!("gesture button pressed is {}", this.current_button());
@@ -133,7 +131,10 @@ impl SimpleComponent for IconButton {
             is_in_pressing_state: false,
         };
 
-        let widgets = ComponentWidgets { container_box };
+        let widgets = ComponentWidgets {
+            container_box,
+            icon_image,
+        };
 
         ComponentParts { model, widgets }
     }
@@ -154,10 +155,22 @@ impl SimpleComponent for IconButton {
     fn update_view(&self, widgets: &mut Self::Widgets, sender: relm4::ComponentSender<Self>) {
         match self.settings.css.container_pressing.to_owned() {
             Some(css) => {
-                widgets.container_box.set_class_active(
-                    &css.as_str(),
-                    self.is_in_pressing_state,
-                );
+                widgets
+                    .container_box
+                    .set_class_active(&css.as_str(), self.is_in_pressing_state);
+            }
+            None => (),
+        }
+        match self.settings.toggle_icon.to_owned() {
+            Some(icon) => match self.is_in_pressing_state {
+                true => {
+                    widgets.icon_image.set_file(Option::from(icon.as_str()));
+                }
+                false => {
+                    widgets
+                        .icon_image
+                        .set_file(Option::from(self.settings.icon.clone().unwrap().as_str()));
+                }
             },
             None => (),
         }
@@ -167,3 +180,14 @@ impl SimpleComponent for IconButton {
         info!("icon button sutdown called");
     }
 }
+
+// fn load_image(icon: String, hexpand: bool, vexpand: bool) -> gtk::Image {
+//     let icon_file = gio::File::for_path(icon);
+//     let asset_paintable = gdk::Texture::from_file(&icon_file).unwrap();
+//     let image = gtk::Image::builder()
+//         .hexpand(hexpand)
+//         .vexpand(vexpand)
+//         .build();
+//     image.set_paintable(Option::from(&asset_paintable));
+//     image
+// }

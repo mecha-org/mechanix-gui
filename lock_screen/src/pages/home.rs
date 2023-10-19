@@ -6,13 +6,14 @@ use relm4::{
 
 use crate::Screens;
 use custom_widgets::icon_button::{
-    IconButton, InitSettings as IconButtonStetings, InputMessage as IconButtonInputMessage,
-    OutputMessage as IconButtonOutputMessage, IconButtonCss,
+    IconButton, IconButtonCss, InitSettings as IconButtonStetings,
+    InputMessage as IconButtonInputMessage, OutputMessage as IconButtonOutputMessage,
 };
 use tracing::info;
 
 pub struct Settings {
     pub lock_icon: Option<String>,
+    pub unlock_icon: Option<String>,
     pub password_icon: Option<String>,
 }
 
@@ -50,7 +51,8 @@ impl SimpleComponent for HomePage {
         let password_screen_btn = IconButton::builder()
             .launch(IconButtonStetings {
                 icon: init.password_icon.to_owned(),
-                css: IconButtonCss::default()
+                toggle_icon: None,
+                css: IconButtonCss::default(),
             })
             .forward(sender.input_sender(), |msg| {
                 info!("msg is {:?}", msg);
@@ -64,7 +66,8 @@ impl SimpleComponent for HomePage {
         let unlock_btn = IconButton::builder()
             .launch(IconButtonStetings {
                 icon: init.lock_icon.to_owned(),
-                css: IconButtonCss::default()
+                toggle_icon: init.unlock_icon.to_owned(),
+                css: IconButtonCss::default(),
             })
             .forward(sender.input_sender(), |msg| {
                 info!("msg is {:?}", msg);

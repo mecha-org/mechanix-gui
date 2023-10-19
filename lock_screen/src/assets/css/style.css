@@ -11,9 +11,7 @@
     min-height: 100%;
 }
 
-.lock-screen-box {
-    
-}
+.lock-screen-box {}
 
 .lock-button {
     min-width: 90px;
@@ -26,14 +24,14 @@
 .pin-auth-container {
     min-width: 100%;
     min-height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     padding: 10px 20px;
 }
 
 .password-key-box {
     border-radius: 16px;
     border: 1px solid #000000;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .password-key-button {
@@ -95,7 +93,7 @@
 }
 
 entry {
-    background: #15171D;
+    background: transparent;
     color: #E4E7EE;
     outline: none;
     border: none;
@@ -114,8 +112,23 @@ entry {
 } */
 
 entry :focus {
+    background: transparent;
+    outline: none;
+    border: none;
     /* border: 0px solid #3283E8; */
     /* background: rgba(0, 20, 61, 0.40); */
+}
+
+entry :focus-visible {
+    background: transparent;
+    outline: none;
+    border: none;
+}
+
+entry :focus-within {
+    background: transparent;
+    outline: none;
+    border: none;
 }
 
 .search-input::placeholder {
@@ -167,9 +180,7 @@ entry :focus {
     background: rgba(0,0,0,0.6);
 } */
 
-.footer{
-
-}
+.footer {}
 
 /* .password-home-button-pressing {
     background: rgba(0,0,0,0.8);
@@ -185,22 +196,25 @@ entry :focus {
     padding: 10px;
     border-radius: 9px;
     border: 1px solid #000000;
-    background: rgba(0,0,0,0.6);
+    background: rgba(0, 0, 0, 0.6);
 }
 
 .icon-button-container-pressing-default {
-    background: rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.8);
 }
 
-.icon-button-icon-default {
-
-}
+.icon-button-icon-default {}
 
 .icon-input-root-default {
     padding: 14px 12px;
     border-radius: 4px;
     background: #15171D;
     border: 1px solid #000000;
+}
+
+.icon-input-root-focused-default {
+    border: 1px solid #3283E8;
+    background: rgba(0, 20, 61, 0.4);
 }
 
 .icon-input-icon-default {

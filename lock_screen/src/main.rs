@@ -91,29 +91,28 @@ fn init_window(settings: LockScreenSettings) -> gtk::Window {
         .css_classes(["window"])
         .build();
 
-        gtk4_layer_shell::init_for_window(&window);
+    gtk4_layer_shell::init_for_window(&window);
 
-        // Display above normal windows
-        gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
-    
-        // The margins are the gaps around the window's edges
-        // Margins and anchors can be set like this...
-        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
-        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
-        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
-        gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
+    // Display above normal windows
+    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
 
-        gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
-    
-    
-        // ... or like this
-        // Anchors are if the window is pinned to each edge of the output
-        let anchors = [
-            (gtk4_layer_shell::Edge::Left, true),
-            (gtk4_layer_shell::Edge::Right, true),
-            (gtk4_layer_shell::Edge::Top, true),
-            (gtk4_layer_shell::Edge::Bottom, true),
-        ];
+    // The margins are the gaps around the window's edges
+    // Margins and anchors can be set like this...
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
+
+    gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
+
+    // ... or like this
+    // Anchors are if the window is pinned to each edge of the output
+    let anchors = [
+        (gtk4_layer_shell::Edge::Left, true),
+        (gtk4_layer_shell::Edge::Right, true),
+        (gtk4_layer_shell::Edge::Top, true),
+        (gtk4_layer_shell::Edge::Bottom, true),
+    ];
 
     for (anchor, state) in anchors {
         gtk4_layer_shell::set_anchor(&window, anchor, state);
@@ -165,6 +164,8 @@ impl SimpleComponent for LockScreen {
         window: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let icon_theme = gtk::IconTheme::builder().build();
+        info!("icon paths are {:?}", icon_theme.resource_path());
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => LockScreenSettings::default(),
@@ -184,6 +185,7 @@ impl SimpleComponent for LockScreen {
         let home_page = HomePage::builder()
             .launch(HomePageSettings {
                 lock_icon: modules.lock.icon.default.to_owned(),
+                unlock_icon: modules.unlock.icon.default.to_owned(),
                 password_icon: modules.home_password.icon.default.to_owned(),
             })
             .forward(

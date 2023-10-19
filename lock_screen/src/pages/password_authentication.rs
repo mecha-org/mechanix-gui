@@ -2,6 +2,7 @@ use std::{env, os::unix::net::UnixStream};
 
 use anyhow::bail;
 use anyhow::Result;
+use custom_widgets::icon_input::IconPosition;
 use gtk::{
     gdk, gio,
     glib::clone,
@@ -17,20 +18,27 @@ use crate::{
     errors::{LockScreenError, LockScreenErrorCodes},
     settings::{LayoutSettings, Modules},
 };
+use custom_widgets::{
+    icon_button::{
+        IconButton, IconButtonCss, InitSettings as IconButtonStetings,
+        InputMessage as IconButtonInputMessage, OutputMessage as IconButtonOutputMessage,
+    },
+    icon_input::{
+        IconInput, IconInputCss, IconSettings as IconInputIconSettings,
+        InitSettings as IconInputSettings, InputMessage as IconInputInputMessage,
+        OutputMessage as IconInputOutputMessage,
+    },
+    icon_input_password::{
+        IconInputPassword, IconInputPasswordCss, InitSettings as IconInputPasswordSettings,
+        InputMessage as IconInputPasswordInputMessage,
+        OutputMessage as IconInputPasswordOutputMessage,
+    },
+};
 use greetd_ipc::{
     codec::SyncCodec, AuthMessageType, ErrorType, Request as GreetdRequest,
     Response as GreetdResponse,
 };
 use tracing::info;
-use custom_widgets::{icon_button::{
-    IconButton, InitSettings as IconButtonStetings, InputMessage as IconButtonInputMessage,
-    OutputMessage as IconButtonOutputMessage, IconButtonCss
-},
-icon_input::{
-    IconInput, InitSettings as IconInputStetings, InputMessage as IconInputInputMessage,
-    OutputMessage as IconInputOutputMessage, IconInputCss
-}
-};
 
 //Init Settings
 pub struct Settings {
@@ -49,10 +57,10 @@ pub struct PasswordAuthentication {
 //Widgets
 pub struct PasswordAuthenticationWidgets {
     username_input: Controller<IconInput>,
-    password_input: Controller<IconInput>,
+    password_input: Controller<IconInputPassword>,
     login_res_label: gtk::Label,
     back_button: Controller<IconButton>,
-    submit_button: Controller<IconButton>
+    submit_button: Controller<IconButton>,
 }
 
 //Messages
@@ -99,70 +107,48 @@ impl SimpleComponent for PasswordAuthentication {
             .halign(gtk::Align::Start)
             .build();
 
-        // let username_input = gtk::Entry::builder().placeholder_text("Username").build();
-
-        // let password_input = gtk::PasswordEntry::builder()
-        //     .placeholder_text("Password")
-        //     .show_peek_icon(true)
-        //     .build();
         let login_res_label = gtk::Label::builder().build();
 
         let username_input = IconInput::builder()
-        .launch(IconInputStetings {
-            icon: None,
-            toggle_icon: None,
-            placeholder: Option::from("Username".to_string()),
-            css: IconInputCss::default()
-        })
-        .forward(sender.input_sender(), |msg| {
-            info!("msg is {:?}", msg);
-            match msg {
-                IconInputOutputMessage::InputChange(text) => {
-                    Message::UsernameChange(text)
-                }
-            }
-        });
+            .launch(IconInputSettings {
+                clear_icon: None,
+                icon: None,
+                placeholder: Option::from("Username".to_string()),
+                css: IconInputCss::default(),
+            })
+            .forward(sender.input_sender(), |msg| match msg {
+                IconInputOutputMessage::InputChange(text) => Message::UsernameChange(text),
+            });
 
-        let password_input = IconInput::builder()
-        .launch(IconInputStetings {
-            icon: modules.peek_password.icon.default.to_owned(),
-            toggle_icon: None,
-            placeholder: Option::from("Password".to_string()),
-            css: IconInputCss::default()
-        })
-        .forward(sender.input_sender(), |msg| {
-            info!("msg is {:?}", msg);
-            match msg {
-                IconInputOutputMessage::InputChange(text) => {
-                    Message::PasswordChange(text)
-                }
-            }
-        });
+        let password_input = IconInputPassword::builder()
+            .launch(IconInputPasswordSettings {
+                icon: modules.peek_password.icon.default.to_owned(),
+                toggle_icon: None,
+                placeholder: Option::from("Password".to_string()),
+                css: IconInputPasswordCss::default(),
+            })
+            .forward(sender.input_sender(), |msg| match msg {
+                IconInputPasswordOutputMessage::InputChange(text) => Message::PasswordChange(text),
+            });
 
         let back_button = IconButton::builder()
             .launch(IconButtonStetings {
                 icon: modules.back.icon.default.to_owned(),
-                css: IconButtonCss::default()
+                toggle_icon: None,
+                css: IconButtonCss::default(),
             })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    IconButtonOutputMessage::Clicked => {
-                        Message::BackPressed
-                    }
-                }
+            .forward(sender.input_sender(), |msg| match msg {
+                IconButtonOutputMessage::Clicked => Message::BackPressed,
             });
 
         let submit_button = IconButton::builder()
             .launch(IconButtonStetings {
                 icon: modules.submit.icon.default.to_owned(),
-                css: IconButtonCss::default()
+                toggle_icon: None,
+                css: IconButtonCss::default(),
             })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    IconButtonOutputMessage::Clicked => Message::Submit,
-                }
+            .forward(sender.input_sender(), |msg| match msg {
+                IconButtonOutputMessage::Clicked => Message::Submit,
             });
         let submit_button_widget = submit_button.widget();
         submit_button_widget.set_hexpand(true);
@@ -175,23 +161,13 @@ impl SimpleComponent for PasswordAuthentication {
         footer.append(back_button.widget());
         footer.append(submit_button_widget);
 
-        // username_input.connect_changed(clone!(@strong sender => move |entry| {
-        //     info!("username change called {}", entry.text());
-        //     sender.input(Message::UsernameChange(entry.text().into()));
-        // }));
-
-        // password_input.connect_changed(clone!(@strong sender => move |entry| {
-        //     sender.input(Message::PasswordChange(entry.text().into()));
-
-        // }));
-
         let form_box = gtk::Box::builder()
-        .orientation(gtk::Orientation::Vertical)
-        .css_classes(["password-auth-container"])
-        .vexpand(false)
-        .hexpand(false)
-        .spacing(16)
-        .build();
+            .orientation(gtk::Orientation::Vertical)
+            .css_classes(["password-auth-container"])
+            .vexpand(false)
+            .hexpand(false)
+            .spacing(16)
+            .build();
 
         // form_box.append(test_input.widget());
         form_box.append(&login_label);
@@ -215,7 +191,7 @@ impl SimpleComponent for PasswordAuthentication {
             password_input,
             login_res_label,
             back_button,
-            submit_button
+            submit_button,
         };
 
         ComponentParts { model, widgets }
@@ -239,7 +215,7 @@ impl SimpleComponent for PasswordAuthentication {
             }
             Message::BackPressed => {
                 sender.output_sender().send(Message::BackPressed);
-            },
+            }
         }
     }
 

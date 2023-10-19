@@ -91,12 +91,28 @@ pub struct App {
     pub icon: String,
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct SearchModule {
+    pub icon: DefaultIconPaths,
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct ClearModule {
+    pub icon: DefaultIconPaths,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct DefaultIconPaths {
+    pub default: Option<String>,
+}
+
 /// # Modules
 ///
 /// Options that will be visible in app drawer
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Modules {
     pub apps: Vec<App>,
+    pub search: SearchModule,
+    pub clear: ClearModule,
 }
 
 impl Default for WindowSettings {
@@ -128,7 +144,15 @@ impl Default for LayoutSettings {
 
 impl Default for Modules {
     fn default() -> Self {
-        Self { apps: vec![] }
+        Self {
+            apps: vec![],
+            search: SearchModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            clear: ClearModule {
+                icon: DefaultIconPaths { default: None },
+            },
+        }
     }
 }
 

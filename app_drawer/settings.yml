@@ -34,7 +34,7 @@ modules:
       alias: kitty
       icon: ./src/assets/pngs/kitty.png
     - app_id: chromium
-      name: Chromium World
+      name: Chromium World Chromium World 
       alias: chromium
       icon: ./src/assets/pngs/chromium.png
     - app_id: mecha_connect
@@ -69,6 +69,12 @@ modules:
       name: Kitty
       alias: kitty
       icon: ./src/assets/pngs/kitty.png
+  search:
+    icon:
+      default: ./src/assets/pngs/search.png    
+  clear:
+    icon:
+      default: ./src/assets/pngs/clear.png    
 
 
 
