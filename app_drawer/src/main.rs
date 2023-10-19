@@ -75,6 +75,8 @@ fn init_window(settings: AppDrawerSettings) -> gtk::Window {
 
     gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
 
+    gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
+
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
@@ -171,29 +173,6 @@ impl SimpleComponent for AppDrawer {
             .css_classes(["search-box"])
             .build();
 
-        let search_input = gtk::Entry::builder()
-            .placeholder_text("Seach Application")
-            .hexpand(true)
-            .css_classes(["search-input", "search-input:focus"])
-            .focusable(false)
-            .build();
-
-        search_input.connect_changed(clone!(@strong sender => move |entry| {
-            entry.grab_focus_without_selecting();
-            let new_name: String = entry.text().into();
-            sender.input(Message::SearchTextChanged(new_name));
-        }));
-
-        let search_icon_file = gio::File::for_path("src/assets/pngs/search.png");
-        let search_icon_paintable = gdk::Texture::from_file(&search_icon_file).unwrap();
-        let search_icon = gtk::Image::builder()
-            .paintable(&search_icon_paintable)
-            .css_classes(["search-icon"])
-            .build();
-
-        search_box.append(&search_icon);
-        search_box.append(&search_input);
-
         let search_icon = match modules.search.icon.default {
             Some(icon) => Option::from(IconInputIconSettings {
                 path: icon,
@@ -214,7 +193,7 @@ impl SimpleComponent for AppDrawer {
             .launch(IconInputSettings {
                 clear_icon: clear_icon,
                 icon: search_icon,
-                placeholder: Option::from("Seach Application".to_string()),
+                placeholder: Option::from("Search Application".to_string()),
                 css: IconInputCss::default(),
             })
             .forward(sender.input_sender(), |msg| match msg {

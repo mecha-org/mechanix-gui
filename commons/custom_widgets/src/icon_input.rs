@@ -78,6 +78,7 @@ pub struct ComponentWidgets {
     container_box: gtk::Box,
     icon_image: gtk::Image,
     root: gtk::Box,
+    clear_icon_image: gtk::Image
 }
 
 impl SimpleComponent for IconInput {
@@ -181,7 +182,11 @@ impl SimpleComponent for IconInput {
             None => (),
         }
 
-        let clear_icon_image = gtk::Image::builder().hexpand(false).vexpand(false).build();
+        let clear_icon_image = gtk::Image::builder()
+        .visible(false)
+        .hexpand(false)
+        .vexpand(false)
+        .build();
         match init.clear_icon.clone() {
             Some(icon) => {
                 let icon_file = gio::File::for_path(icon.path);
@@ -217,6 +222,7 @@ impl SimpleComponent for IconInput {
             container_box,
             icon_image,
             root: root.clone(),
+            clear_icon_image
         };
 
         ComponentParts { model, widgets }
@@ -249,6 +255,7 @@ impl SimpleComponent for IconInput {
                 .set_class_active(&css.join(",").as_str(), self.is_focused),
             None => (),
         }
+        widgets.clear_icon_image.set_visible(self.is_focused);
     }
 
     fn shutdown(&mut self, widgets: &mut Self::Widgets, output: relm4::Sender<Self::Output>) {
