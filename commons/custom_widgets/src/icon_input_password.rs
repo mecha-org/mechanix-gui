@@ -116,12 +116,10 @@ impl SimpleComponent for IconInputPassword {
         let event_controller = gtk::EventControllerFocus::builder().build();
 
         event_controller.connect_enter(clone!(@strong sender => move |_| {
-            println!("input focused");
             sender.input(InputMessage::InputFocusEnter);
         }));
 
         event_controller.connect_leave(clone!(@strong sender => move |_| {
-            println!("input focus left");
             sender.input(InputMessage::InputFocusLeave);
         }));
 
