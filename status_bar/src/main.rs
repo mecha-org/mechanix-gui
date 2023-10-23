@@ -2,6 +2,7 @@ use std::{default, time::SystemTime};
 
 use anyhow::bail;
 use chrono::Local;
+use custom_utils::get_image_from_path;
 use grpc::battery_client::BatteryManagerClient;
 use gtk::{
     gdk, gio, glib,
@@ -43,7 +44,7 @@ struct StatusBar {
     wifi_state: WifiState,
     bluetooth_state: BluetoothState,
     battery_state: BatteryState,
-    window: gtk::Window
+    window: gtk::Window,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -127,11 +128,10 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
         .css_classes(["window"])
         .build();
 
-    gtk4_layer_shell::init_for_window(&window); 
+    gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
     // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
-
 
     // Push other windows out of the way
     gtk4_layer_shell::set_exclusive_zone(&window, window_settings.size.1);
@@ -250,26 +250,9 @@ impl AsyncComponent for StatusBar {
         let clock_label = gtk::Label::new(Some(&formatted_time));
         clock_label.set_class_active("clock", true);
 
-        let wifi_file = gio::File::for_path("src/assets/pngs/wifi_strong.png");
-        let wifi_asset_paintable = gdk::Texture::from_file(&wifi_file).unwrap();
-        let wifi_image = gtk::Image::builder()
-            .css_classes(["icon"])
-            .paintable(&wifi_asset_paintable)
-            .build();
-
-        let bluetooth_file = gio::File::for_path("src/assets/pngs/bluetooth_connected.png");
-        let bluetooth_asset_paintable = gdk::Texture::from_file(&bluetooth_file).unwrap();
-        let bluetooth_image = gtk::Image::builder()
-            .css_classes(["icon"])
-            .paintable(&bluetooth_asset_paintable)
-            .build();
-
-        let battery_file = gio::File::for_path("src/assets/pngs/battery_70.png");
-        let battery_asset_paintable = gdk::Texture::from_file(&battery_file).unwrap();
-        let battery_image = gtk::Image::builder()
-            .css_classes(["icon"])
-            .paintable(&battery_asset_paintable)
-            .build();
+        let wifi_image = get_image_from_path(modules.wifi.icon.strong, &["icon"]);
+        let bluetooth_image = get_image_from_path(modules.bluetooth.icon.connected, &["icon"]);
+        let battery_image = get_image_from_path(modules.battery.icon.level_70, &["icon"]);
 
         let layout = settings.clone().layout;
 
@@ -354,7 +337,7 @@ impl AsyncComponent for StatusBar {
             wifi_state: init_state_values.wifi_state,
             bluetooth_state: init_state_values.bluetooth_state,
             battery_state: init_state_values.battery_state,
-            window
+            window,
         };
 
         let widgets = AppWidgets {
@@ -554,8 +537,10 @@ fn main() {
         .with_env_filter("mecha_status_bar=trace")
         .with_thread_names(true)
         .init();
-    let app = RelmApp::new("status.bar");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("mecha.status.bar");
+    let assets_base_path =
+        std::env::var("MECHA_STATUS_BAR_ASSETS_PATH").unwrap_or(String::from(""));
+    relm4::set_global_css_from_file(assets_base_path + "/css/style.css");
     app.run_async::<StatusBar>(());
 }
 

@@ -1,0 +1,15 @@
+[package]
+name = "app_manager"
+version.workspace = true
+authors.workspace = true
+documentation.workspace = true
+description.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+dbus = "0.9"

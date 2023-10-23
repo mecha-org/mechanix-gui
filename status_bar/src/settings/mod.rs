@@ -216,6 +216,7 @@ impl Default for Modules {
 /// Reads the `-s` or `--settings` argument for the path
 pub fn read_settings_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
+    info!("args are {:?}", args);
     if args.len() > 2 && (args[1] == "-s" || args[1] == "--settings") {
         debug!("Using settings path from argument - {}", args[2]);
         return Some(args[2].clone());

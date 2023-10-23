@@ -4,6 +4,8 @@ app:
   text_multithreading: true   # false
   antialiasing: true    # false
   try_opengles_first: true    # false
+assets: 
+  default: /Users/akshayraina/Mecha/mecha-launcher/status_bar
 window:
   size: [480, 37]  # [1024, 768]
   position: [0, 0]  # [0, 0]
@@ -24,27 +26,27 @@ modules:
     format: "%I:%M %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
     icon:
-      on: ./src/assets/pngs/bluetooth_on.png
-      off: ./src/assets/pngs/bluetooth_off.png
-      connected: ./src/assets/pngs/bluetooth_connected.png
+      on: /pngs/bluetooth_on.png
+      off: /pngs/bluetooth_off.png
+      connected: /pngs/bluetooth_connected.png
   wifi:
     icon:
-      off: ./src/assets/pngs/wifi_off.png
-      on: ./src/assets/pngs/wifi_on.png
-      low: ./src/assets/pngs/wifi_low.png
-      weak: ./src/assets/pngs/wifi_weak.png
-      good: ./src/assets/pngs/wifi_good.png
-      strong: ./src/assets/pngs/wifi_strong.png
+      off: /pngs/wifi_off.png
+      on: /pngs/wifi_on.png
+      low: /pngs/wifi_low.png
+      weak: /pngs/wifi_weak.png
+      good: /pngs/wifi_good.png
+      strong: /pngs/wifi_strong.png
   battery:
     icon:
-      level_100: ./src/assets/pngs/battery_100.png
-      level_90: ./src/assets/pngs/battery_90.png
-      level_80: ./src/assets/pngs/battery_80.png
-      level_70: ./src/assets/pngs/battery_70.png
-      level_60: ./src/assets/pngs/battery_60.png
-      level_50: ./src/assets/pngs/battery_50.png
-      level_40: ./src/assets/pngs/battery_40.png
-      level_30: ./src/assets/pngs/battery_30.png
-      level_20: ./src/assets/pngs/battery_20.png
-      level_10: ./src/assets/pngs/battery_10.png
-      level_0: ./src/assets/pngs/battery_0.png
+      level_100: /pngs/battery_100.png
+      level_90: /pngs/battery_90.png
+      level_80: /pngs/battery_80.png
+      level_70: /pngs/battery_70.png
+      level_60: /pngs/battery_60.png
+      level_50: /pngs/battery_50.png
+      level_40: /pngs/battery_40.png
+      level_30: /pngs/battery_30.png
+      level_20: /pngs/battery_20.png
+      level_10: /pngs/battery_10.png
+      level_0: /pngs/battery_0.png
