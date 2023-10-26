@@ -16,7 +16,7 @@ window:
   always_on_top: false    # false
   icon_path: null # Todo
 css:
-  default: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/css/style.css
+  default: /home/user/.mecha/app_drawer/src/assets/css/style.css
 layout:
   left: []
   center: []
@@ -26,57 +26,57 @@ modules:
     - app_id: chromium
       name: Chromium
       alias: chromium
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/chromium.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/chromium.png
     - app_id: mecha_connect
       name: Mecha Connect
       alias: mecha-connect
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/mecha_connect.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/mecha_connect.png
     - app_id: test
       name: Kitty
       alias: kitty
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/kitty.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/kitty.png
     - app_id: chromium
       name: Chromium World Chromium World 
       alias: chromium
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/chromium.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/chromium.png
     - app_id: mecha_connect
       name: Mecha Connect
       alias: mecha-connect
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/mecha_connect.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/mecha_connect.png
     - app_id: test
       name: Kitty
       alias: kitty
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/kitty.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/kitty.png
     - app_id: chromium
       name: Chromium
       alias: chromium
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/chromium.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/chromium.png
     - app_id: mecha_connect
       name: Mecha Connect
       alias: mecha-connect
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/mecha_connect.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/mecha_connect.png
     - app_id: test
       name: Kitty
       alias: kitty
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/kitty.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/kitty.png
     - app_id: chromium
       name: Chromium
       alias: chromium
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/chromium.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/chromium.png
     - app_id: mecha_connect
       name: Mecha Connect
       alias: mecha-connect
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/mecha_connect.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/mecha_connect.png
     - app_id: test
       name: Kitty
       alias: kitty
-      icon: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/kitty.png
+      icon: /home/user/.mecha/app_drawer/src/assets/pngs/kitty.png
   search:
     icon:
-      default: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/search.png    
+      default: /home/user/.mecha/app_drawer/src/assets/pngs/search.png    
   clear:
     icon:
-      default: /home/parallels/Mecha/mecha-launcher/app_drawer/src/assets/pngs/clear.png    
+      default: /home/user/.mecha/app_drawer/src/assets/pngs/clear.png    
 
 
 

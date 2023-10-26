@@ -16,7 +16,7 @@ window:
   always_on_top: false    # false
   icon_path: null # Todo
 css:
-  default: /home/parallels/Mecha/mecha-launcher/app_dock/src/assets/css/style.css
+  default: /home/user/.mecha/app_dock/src/assets/css/style.css
 layout:
   left: []
   center: []
@@ -26,24 +26,24 @@ modules:
     - app_id: drawer_launcher
       title: Drawer Launcher
       alias: drawer_launcher
-      icon: /home/parallels/Mecha/mecha-launcher/app_dock/src/assets/pngs/drawer_launcher.png
+      icon: /home/user/.mecha/app_dock/src/assets/pngs/drawer_launcher.png
     - app_id: chromium
       title: Chromium
       alias: chromium
-      icon: /home/parallels/Mecha/mecha-launcher/app_dock/src/assets/pngs/chromium.png
+      icon: /home/user/.mecha/app_dock/src/assets/pngs/chromium.png
     - app_id: mecha_connect
       title: Mecha Connect
       alias: mecha-connect
-      icon: /home/parallels/Mecha/mecha-launcher/app_dock/src/assets/pngs/mecha_connect.png
+      icon: /home/user/.mecha/app_dock/src/assets/pngs/mecha_connect.png
     - app_id: test
       title: Kitty
       alias: kitty
-      icon: /home/parallels/Mecha/mecha-launcher/app_dock/src/assets/pngs/kitty.png
+      icon: /home/user/.mecha/app_dock/src/assets/pngs/kitty.png
     - app_id: test
       title: Camera
       alias: camera
-      icon: /home/parallels/Mecha/mecha-launcher/app_dock/src/assets/pngs/camera.png
+      icon: /home/user/.mecha/app_dock/src/assets/pngs/camera.png
   home:
     title: Home
-    icon: /home/parallels/Mecha/mecha-launcher/app_dock/src/assets/pngs/home.png
+    icon: /home/user/.mecha/app_dock/src/assets/pngs/home.png
 

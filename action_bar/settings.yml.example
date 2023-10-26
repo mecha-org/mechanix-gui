@@ -16,7 +16,7 @@ window:
   always_on_top: false    # false
   icon_path: null # Todo
 css:
-  default: /home/parallels/Mecha/mecha-launcher/action_bar/src/assets/css/style.css
+  default: /home/user/.mecha/action_bar/src/assets/css/style.css
 layout:
   left: ["Settings"]
   center: ["Home"]
@@ -24,11 +24,11 @@ layout:
 modules:
   settings:
     title: "Settings"
-    icon: /home/parallels/Mecha/mecha-launcher/action_bar/src/assets/pngs/settings.png
+    icon: /home/user/.mecha/action_bar/src/assets/pngs/settings.png
   home:
     title: "Home"
-    icon: /home/parallels/Mecha/mecha-launcher/action_bar/src/assets/pngs/home.png
+    icon: /home/user/.mecha/action_bar/src/assets/pngs/home.png
   keyboard:
     title: "Keyboard"
-    icon: /home/parallels/Mecha/mecha-launcher/action_bar/src/assets/pngs/keyboard.png
+    icon: /home/user/.mecha/action_bar/src/assets/pngs/keyboard.png
 

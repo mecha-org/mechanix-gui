@@ -1,0 +1,90 @@
+title: Settings Drawer  # Empty
+app:
+  id: settings-drawer    # launcher
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size: [480, 430]  # [1024, 768]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 100]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+css:
+  default: /home/user/.mecha/settings_drawer/src/assets/css/style.css  
+layout:
+  grid: ["Wifi", "Bluetooth", "Battery", "Auto Rotate", "Settings", "Running Apps", "CPU", "Memory", "Sound", "Brightness"]
+modules:
+  wifi:
+    title: "Wifi"
+    icon:
+      off: /home/user/.mecha/settings_drawer/src/assets/pngs/wifi_off.png
+      on: /home/user/.mecha/settings_drawer/src/assets/pngs/wifi_on.png
+      low: /home/user/.mecha/settings_drawer/src/assets/pngs/wifi_low.png
+      weak: /home/user/.mecha/settings_drawer/src/assets/pngs/wifi_weak.png
+      good: /home/user/.mecha/settings_drawer/src/assets/pngs/wifi_good.png
+      strong: /home/user/.mecha/settings_drawer/src/assets/pngs/wifi_strong.png
+  bluetooth:
+    title: "Bluetooth"
+    icon:
+      on: /home/user/.mecha/settings_drawer/src/assets/pngs/bluetooth_on.png
+      off: /home/user/.mecha/settings_drawer/src/assets/pngs/bluetooth_off.png
+      connected: /home/user/.mecha/settings_drawer/src/assets/pngs/bluetooth_connected.png
+  battery:
+    title: "Battery"
+    icon:
+      level_100: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_100.png
+      level_90: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_90.png
+      level_80: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_80.png
+      level_70: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_70.png
+      level_60: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_60.png
+      level_50: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_50.png
+      level_40: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_40.png
+      level_30: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_30.png
+      level_20: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_20.png
+      level_10: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_10.png
+      level_0: /home/user/.mecha/settings_drawer/src/assets/pngs/battery_0.png
+  auto_rotate:
+    title: "Auto Rotate"
+    icon:
+      portrait: /home/user/.mecha/settings_drawer/src/assets/pngs/auto_rotate_portrait.png
+      landscape: /home/user/.mecha/settings_drawer/src/assets/pngs/auto_rotate_landscape.png
+  settings:
+    title: "Settings"
+    icon:
+      default: /home/user/.mecha/settings_drawer/src/assets/pngs/settings.png
+  running_apps:
+    title: "Running Apps"
+    icon:
+      low: /home/user/.mecha/settings_drawer/src/assets/pngs/running_apps_low.png
+      medium: /home/user/.mecha/settings_drawer/src/assets/pngs/running_apps_medium.png
+      high: /home/user/.mecha/settings_drawer/src/assets/pngs/running_apps_high.png
+  cpu:
+    title: "CPU"
+    icon:
+      low: /home/user/.mecha/settings_drawer/src/assets/pngs/cpu_low.png
+      medium: /home/user/.mecha/settings_drawer/src/assets/pngs/cpu_medium.png
+      high: /home/user/.mecha/settings_drawer/src/assets/pngs/cpu_high.png
+  memory:
+    title: "Memory"
+    icon:
+      low: /home/user/.mecha/settings_drawer/src/assets/pngs/memory_low.png
+      medium: /home/user/.mecha/settings_drawer/src/assets/pngs/memory_medium.png
+      high: /home/user/.mecha/settings_drawer/src/assets/pngs/memory_high.png
+  sound:
+    title: "Sound"
+    icon:
+      low: /home/user/.mecha/settings_drawer/src/assets/pngs/sound_low.png
+      medium: /home/user/.mecha/settings_drawer/src/assets/pngs/sound_medium.png
+      high: /home/user/.mecha/settings_drawer/src/assets/pngs/sound_high.png
+  brightness:
+    title: "Brightness"
+    icon:
+      low: /home/user/.mecha/settings_drawer/src/assets/pngs/brightness_low.png
+      medium: /home/user/.mecha/settings_drawer/src/assets/pngs/brightness_medium.png
+      high: /home/user/.mecha/settings_drawer/src/assets/pngs/brightness_high.png
