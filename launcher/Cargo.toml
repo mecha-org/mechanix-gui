@@ -1,0 +1,26 @@
+[package]
+name = "mecha_launcher"
+version.workspace = true
+authors.workspace = true
+documentation.workspace = true
+description.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+dbus = "0.9"
+dbus-crossroads = "0.5"
+envmnt = "0.10.4"
+mecha_status_bar = { path = "../status_bar"}
+relm4 = "0.7.0-beta.1"
+relm4-components = "0.7.0-beta.1"
+relm4-macros = "0.7.0-beta.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

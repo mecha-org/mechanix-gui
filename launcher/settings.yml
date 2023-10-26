@@ -1,0 +1,43 @@
+components:
+  status_bar:
+    enabled: true
+    bin_path: "/home/parallels/Mecha/mecha-launcher/target/debug/mecha_status_bar"
+    settings_path: "/home/parallels/Mecha/mecha-launcher/status_bar/settings.yml"
+  app_drawer:
+    enabled: true
+    bin_path: "/home/parallels/Mecha/mecha-launcher/target/debug/mecha_app_drawer"
+    settings_path: "/home/parallels/Mecha/mecha-launcher/app_drawer/settings.yml"
+  settings_panel:
+    enabled: true
+    bin_path: "/home/parallels/Mecha/mecha-launcher/target/debug/mecha_settings_drawer"
+    settings_path: "/home/parallels/Mecha/mecha-launcher/settings_drawer/settings.yml"
+  action_bar:
+    enabled: true
+    bin_path: "/home/parallels/Mecha/mecha-launcher/target/debug/mecha_action_bar"
+    settings_path: "/home/parallels/Mecha/mecha-launcher/action_bar/settings.yml"
+  app_dock:
+    enabled: true
+    bin_path: "/home/parallels/Mecha/mecha-launcher/target/debug/mecha_app_dock"
+    settings_path: "/home/parallels/Mecha/mecha-launcher/app_dock/settings.yml"
+  lock_screen:
+    enabled: true
+    bin_path: "/home/parallels/Mecha/mecha-launcher/target/debug/mecha_lock_screen"
+    settings_path: "/home/parallels/Mecha/mecha-launcher/lock_screen/settings.yml"
+  app_widget:
+    enabled: true
+    bin_path: "/home/parallels/Mecha/mecha-launcher/target/debug/mecha_app_dock"
+    settings_path: "/home/parallels/Mecha/mecha-launcher/target/debug/status_bar"
+osk:
+  enabled: true
+  name: wvkbd
+  path: "/usr/bin/wvkbd"
+events:
+  - kind: touch.swipe_top
+    trigger: settings_panel.open
+    args: []
+  - kind: touch.swipe_bottom
+    trigger: action_bar.open
+    args: []
+  - kind: key.ctrl+enter
+    trigger: app_drawer.open
+    args: []

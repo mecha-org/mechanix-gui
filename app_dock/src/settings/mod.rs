@@ -17,6 +17,7 @@ pub struct AppDockSettings {
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
+    pub css: CssConfigs
 }
 
 impl Default for AppDockSettings {
@@ -27,6 +28,7 @@ impl Default for AppDockSettings {
             title: String::from("App Dock"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
+            css: CssConfigs::default()
         }
     }
 }
@@ -89,6 +91,20 @@ pub struct LayoutSettings {
     pub center: Vec<String>, //Items that will in center of app dock
     pub right: Vec<String>,  //Items that will in right side of app dock
 }
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CssConfigs {
+    pub default: String,
+}
+
+impl Default for CssConfigs {
+    fn default() -> Self {
+        Self { 
+            default: "".to_string() 
+        }
+    }
+}
+
 
 /// # Modules
 ///
@@ -154,7 +170,7 @@ pub fn read_settings_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 && (args[1] == "-s" || args[1] == "--settings") {
         debug!("Using settings path from argument - {}", args[2]);
-        return Some(args[2].clone());
+        return Some(String::from(args[2].clone()));
     }
     None
 }

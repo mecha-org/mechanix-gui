@@ -148,6 +148,10 @@ impl SimpleComponent for AppDrawer {
             Ok(settings) => settings,
             Err(_) => AppDrawerSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => AppDrawerTheme::default(),
@@ -271,8 +275,7 @@ fn main() {
         .with_thread_names(true)
         .init();
 
-    let app = RelmApp::new("app.drawer");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("app.drawer").with_args(vec![]);
     app.run::<AppDrawer>(());
 }
 

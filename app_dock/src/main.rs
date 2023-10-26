@@ -139,6 +139,10 @@ impl SimpleComponent for AppDock {
             Ok(settings) => settings,
             Err(_) => AppDockSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => AppDockTheme::default(),
@@ -223,12 +227,7 @@ fn main() {
         .with_env_filter("mecha_app_dock=trace")
         .with_thread_names(true)
         .init();
-
-    let settings = match settings::read_settings_yml() {
-        Ok(settings) => settings,
-        Err(_) => AppDockSettings::default(),
-    };
-    let app = RelmApp::new("app.dock");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    
+    let app = RelmApp::new("app.dock").with_args(vec![]);
     app.run::<AppDock>(());
 }

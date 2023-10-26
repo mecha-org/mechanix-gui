@@ -17,6 +17,7 @@ pub struct SettingsDrawerSettings {
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
+    pub css: CssConfigs
 }
 
 impl Default for SettingsDrawerSettings {
@@ -27,6 +28,7 @@ impl Default for SettingsDrawerSettings {
             title: String::from("Settings Drawer"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
+            css: CssConfigs::default()
         }
     }
 }
@@ -80,6 +82,20 @@ pub struct WindowSettings {
 pub struct LayoutSettings {
     pub grid: Vec<String>, //Items that will in grid
 }
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CssConfigs {
+    pub default: String,
+}
+
+impl Default for CssConfigs {
+    fn default() -> Self {
+        Self { 
+            default: "".to_string() 
+        }
+    }
+}
+
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BluetoothIconPaths {
@@ -331,9 +347,10 @@ impl Default for Modules {
 /// Reads the `-s` or `--settings` argument for the path
 pub fn read_settings_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
-    if args.len() > 2 && (args[1] == "-s" || args[1] == "--settings") {
+    println!("args are {:?}", args);
+    if args.len() > 1 && (args[1] == "-s" || args[1] == "--settings") {
         debug!("Using settings path from argument - {}", args[2]);
-        return Some(String::from(args[2].clone()));
+        return Some(args[2].clone());
     }
     None
 }

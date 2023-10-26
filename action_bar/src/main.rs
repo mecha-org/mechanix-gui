@@ -134,6 +134,10 @@ impl SimpleComponent for ActionBar {
             Ok(settings) => settings,
             Err(_) => ActionBarSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => ActionBarTheme::default(),
@@ -251,8 +255,7 @@ fn main() {
         .with_env_filter("mecha_action_bar=trace")
         .with_thread_names(true)
         .init();
-    let app = RelmApp::new("action.bar");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("action.bar").with_args(vec![]);
     app.run::<ActionBar>(());
 }
 

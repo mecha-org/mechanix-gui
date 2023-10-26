@@ -15,41 +15,43 @@ window:
   transparent: true    # false
   always_on_top: false    # false
   icon_path: null # Todo
+css:
+  default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/css/style.css
 layout:
   grid: ["1", "2", "3", "4", "5", "6", "7", "8", "Home", "9", "0", "Back Space"]
 modules:
   home:
     title: "Home"
     icon:
-      default: ./src/assets/pngs/home.png
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/home.png
   back_space:
     title: "Back Space"
     icon:
-      default: ./src/assets/pngs/back_space.png
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/back_space.png
   password_configs:
     keys_allowed: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
     password_length: 4
   lock:
     icon:
-      default: ./src/assets/pngs/lock.png
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/lock.png
   unlock:
     icon:
-      default: ./src/assets/pngs/unlock.png    
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/unlock.png    
   back:
     icon:
-      default: ./src/assets/pngs/back.png
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/back.png
   submit:
     icon:
-      default: ./src/assets/pngs/submit.png
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/submit.png
   home_password:
     icon:
-      default: ./src/assets/pngs/home_password.png
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/home_password.png
   peek_password:
     icon:
-      default: ./src/assets/pngs/peek_password.png
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/peek_password.png
   un_peek_password:
     icon:
-      default: ./src/assets/pngs/un_peek_password.png    
+      default: /home/parallels/Mecha/mecha-launcher/lock_screen/src/assets/pngs/un_peek_password.png    
 
 
 

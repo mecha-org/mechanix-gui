@@ -17,6 +17,7 @@ pub struct AppDrawerSettings {
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
+    pub css: CssConfigs
 }
 
 impl Default for AppDrawerSettings {
@@ -27,6 +28,7 @@ impl Default for AppDrawerSettings {
             title: String::from("App Drawer"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
+            css: CssConfigs::default()
         }
     }
 }
@@ -81,6 +83,20 @@ pub struct LayoutSettings {
     pub left: Vec<String>,   //Items that will in left side of app drawer
     pub center: Vec<String>, //Items that will in center of app drawer
     pub right: Vec<String>,  //Items that will in right side of app drawer
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CssConfigs {
+    pub default: String,
+}
+
+impl Default for CssConfigs {
+    fn default() -> Self {
+        Self { 
+            default: "".to_string() 
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]

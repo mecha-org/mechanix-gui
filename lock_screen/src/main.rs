@@ -170,6 +170,10 @@ impl SimpleComponent for LockScreen {
             Ok(settings) => settings,
             Err(_) => LockScreenSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => LockScreenTheme::default(),
@@ -294,7 +298,6 @@ fn main() {
         .with_env_filter("mecha_lock_screen=trace")
         .with_thread_names(true)
         .init();
-    let app = RelmApp::new("lock.screen");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("lock.screen").with_args(vec![]);
     app.run::<LockScreen>(());
 }
