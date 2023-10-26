@@ -1,20 +1,28 @@
-use gtk::{
-    gdk, gio,
-    glib::clone,
-    prelude::{BoxExt, ButtonExt},
+use gtk::{gdk, gio, glib::clone, prelude::*, subclass::*};
+use relm4::{
+    gtk::{self, gdk::BUTTON_PRIMARY, GestureClick},
+    Component, ComponentController, ComponentParts, ComponentSender, Controller, SimpleComponent,
 };
-use relm4::{gtk, ComponentParts, ComponentSender, SimpleComponent};
 
 use crate::Screens;
+use custom_widgets::icon_button::{
+    IconButton, IconButtonCss, InitSettings as IconButtonStetings,
+    InputMessage as IconButtonInputMessage, OutputMessage as IconButtonOutputMessage,
+};
 use tracing::info;
 
 pub struct Settings {
     pub lock_icon: Option<String>,
+    pub unlock_icon: Option<String>,
+    pub password_icon: Option<String>,
 }
 
 pub struct HomePage {}
 
-pub struct HomePageWidgets {}
+pub struct HomePageWidgets {
+    password_screen_btn: Controller<IconButton>,
+    unlock_btn: Controller<IconButton>,
+}
 
 #[derive(Debug)]
 pub enum Message {
@@ -33,40 +41,66 @@ impl SimpleComponent for HomePage {
         root: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        match init.lock_icon.to_owned() {
-            Some(icon) => {
-                let lock_screen_icon_file = gio::File::for_path(icon);
-                let lock_screen_asset_paintable =
-                    gdk::Texture::from_file(&lock_screen_icon_file).unwrap();
-                let lock_screen_image = gtk::Image::builder()
-                    .paintable(&lock_screen_asset_paintable)
-                    .build();
+        let footer = gtk::Box::builder()
+            .orientation(gtk::Orientation::Horizontal)
+            .css_classes(["footer"])
+            .valign(gtk::Align::End)
+            .vexpand(true)
+            .build();
 
-                let lock_screen_button = gtk::Button::builder()
-                    .vexpand(false)
-                    .css_classes(["lock-button"])
-                    .build();
-                lock_screen_button.set_child(Some(&lock_screen_image));
-                lock_screen_button.connect_clicked(clone!(@strong sender => move |_| {
-                    sender.output(Message::ChangeScreen(Screens::PasswordScreen));
-                    sender.input(Message::ChangeScreen(Screens::LockScreen));
-                }));
-                root.append(&lock_screen_button);
-            }
-            None => (),
-        }
+        let password_screen_btn = IconButton::builder()
+            .launch(IconButtonStetings {
+                icon: init.password_icon.to_owned(),
+                toggle_icon: None,
+                css: IconButtonCss::default(),
+            })
+            .forward(sender.input_sender(), |msg| {
+                info!("msg is {:?}", msg);
+                match msg {
+                    IconButtonOutputMessage::Clicked => {
+                        Message::ChangeScreen(Screens::PasswordScreen)
+                    }
+                }
+            });
+
+        let unlock_btn = IconButton::builder()
+            .launch(IconButtonStetings {
+                icon: init.lock_icon.to_owned(),
+                toggle_icon: init.unlock_icon.to_owned(),
+                css: IconButtonCss::default(),
+            })
+            .forward(sender.input_sender(), |msg| {
+                info!("msg is {:?}", msg);
+                match msg {
+                    IconButtonOutputMessage::Clicked => Message::ChangeScreen(Screens::PinScreen),
+                }
+            });
+        let unlock_btn_widget = unlock_btn.widget();
+        unlock_btn_widget.set_hexpand(true);
+        unlock_btn_widget.set_halign(gtk::Align::End);
+
+        footer.append(password_screen_btn.widget());
+        footer.append(unlock_btn_widget);
+        root.append(&footer);
 
         let model = HomePage {};
-        let widgets = HomePageWidgets {};
+        let widgets = HomePageWidgets {
+            password_screen_btn,
+            unlock_btn,
+        };
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, _message: Self::Input, _sender: ComponentSender<Self>) {}
+    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+        match message {
+            Message::ChangeScreen(screen) => {
+                sender.output_sender().send(Message::ChangeScreen(screen));
+            }
+        }
+    }
 
     fn init_root() -> Self::Root {
         gtk::Box::builder()
-            .valign(gtk::Align::Center)
-            .halign(gtk::Align::Center)
             .orientation(gtk::Orientation::Vertical)
             .css_classes(["home-container"])
             .build()

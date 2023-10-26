@@ -17,6 +17,7 @@ pub struct LockScreenSettings {
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
+    pub css: CssConfigs
 }
 
 impl Default for LockScreenSettings {
@@ -27,6 +28,7 @@ impl Default for LockScreenSettings {
             title: String::from("Lock Screen"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
+            css: CssConfigs::default()
         }
     }
 }
@@ -76,11 +78,24 @@ pub struct WindowSettings {
 ///
 /// Part of the settings.yml to control the behavior of
 /// the layout of options in the lock screen.
-#[derive(Debug, Deserialize, Clone, Serialize)]
-#[derive(Default)]
+#[derive(Debug, Deserialize, Clone, Serialize, Default)]
 pub struct LayoutSettings {
     pub grid: Vec<String>, //Items that will in grid
 }
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CssConfigs {
+    pub default: String,
+}
+
+impl Default for CssConfigs {
+    fn default() -> Self {
+        Self { 
+            default: "".to_string() 
+        }
+    }
+}
+
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct AutoRotateIconPaths {
@@ -111,11 +126,38 @@ pub struct BackSpaceModule {
 pub struct LockModule {
     pub icon: DefaultIconPaths,
 }
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct UnlockModule {
+    pub icon: DefaultIconPaths,
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BackModule {
+    pub icon: DefaultIconPaths,
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct SubmitModule {
+    pub icon: DefaultIconPaths,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct HomePasswordModule {
+    pub icon: DefaultIconPaths,
+}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct PasswordConfigsModule {
     pub keys_allowed: Vec<String>,
     pub password_length: usize,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct PeekPasswordModule {
+    pub icon: DefaultIconPaths,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct UnPeekPasswordModule {
+    pub icon: DefaultIconPaths,
 }
 
 /// # Modules
@@ -126,7 +168,13 @@ pub struct Modules {
     pub home: HomeModule,
     pub back_space: BackSpaceModule,
     pub lock: LockModule,
+    pub unlock: UnlockModule,
+    pub back: BackModule,
+    pub submit: SubmitModule,
+    pub home_password: HomePasswordModule,
     pub password_configs: PasswordConfigsModule,
+    pub peek_password: PeekPasswordModule,
+    pub un_peek_password: UnPeekPasswordModule,
 }
 
 impl Default for WindowSettings {
@@ -146,8 +194,6 @@ impl Default for WindowSettings {
     }
 }
 
-
-
 impl Default for Modules {
     fn default() -> Self {
         Self {
@@ -162,9 +208,27 @@ impl Default for Modules {
             lock: LockModule {
                 icon: DefaultIconPaths { default: None },
             },
+            unlock: UnlockModule {
+                icon: DefaultIconPaths { default: None },
+            },
             password_configs: PasswordConfigsModule {
                 keys_allowed: vec![],
                 password_length: 0,
+            },
+            back: BackModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            submit: SubmitModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            home_password: HomePasswordModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            peek_password: PeekPasswordModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            un_peek_password: UnPeekPasswordModule {
+                icon: DefaultIconPaths { default: None },
             },
         }
     }
@@ -176,8 +240,8 @@ impl Default for Modules {
 pub fn read_settings_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 && (args[1] == "-s" || args[1] == "--settings") {
-        debug!("using settings path from argument - {}", args[2]);
-        return Some(args[2].clone());
+        debug!("Using settings path from argument - {}", args[2]);
+        return Some(String::from(args[2].clone()));
     }
     None
 }
@@ -209,10 +273,7 @@ pub fn read_settings_yml() -> Result<LockScreenSettings> {
         Err(e) => {
             bail!(LockScreenError::new(
                 LockScreenErrorCodes::SettingsReadError,
-                format!(
-                    "cannot read the settings.yml in the path - {}",
-                    e
-                ),
+                format!("cannot read the settings.yml in the path - {}", e),
             ));
         }
     };

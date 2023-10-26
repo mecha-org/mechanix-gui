@@ -107,16 +107,15 @@ fn init_window(settings: SettingsDrawerSettings) -> gtk::Window {
     gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
-    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
-
-    // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
+    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
 
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
+
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
@@ -124,7 +123,7 @@ fn init_window(settings: SettingsDrawerSettings) -> gtk::Window {
         (gtk4_layer_shell::Edge::Left, true),
         (gtk4_layer_shell::Edge::Right, true),
         (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, false),
+        (gtk4_layer_shell::Edge::Bottom, true),
     ];
 
     for (anchor, state) in anchors {
@@ -181,6 +180,10 @@ impl SimpleComponent for SettingsDrawer {
             Ok(settings) => settings,
             Err(_) => SettingsDrawerSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => SettingsDrawerTheme::default(),
@@ -195,7 +198,7 @@ impl SimpleComponent for SettingsDrawer {
                 .min_children_per_line(4)
                 .selection_mode(gtk::SelectionMode::None)
                 .row_spacing(7)
-                .column_spacing(7)
+                .column_spacing(6)
                 .homogeneous(true)
                 .build(),
         )
@@ -345,7 +348,6 @@ fn main() {
         .with_thread_names(true)
         .init();
 
-    let app = RelmApp::new("app.drawer");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("app.drawer").with_args(vec![]);
     app.run::<SettingsDrawer>(());
 }

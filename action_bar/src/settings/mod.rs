@@ -17,6 +17,7 @@ pub struct ActionBarSettings {
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
+    pub css: CssConfigs,
 }
 
 impl Default for ActionBarSettings {
@@ -27,6 +28,7 @@ impl Default for ActionBarSettings {
             title: String::from("Action Bar"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
+            css: CssConfigs::default()
         }
     }
 }
@@ -82,6 +84,20 @@ pub struct LayoutSettings {
     pub center: Vec<String>, //Items that will in center of action bar
     pub right: Vec<String>,  //Items that will in right side of action bar
 }
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CssConfigs {
+    pub default: String,
+}
+
+impl Default for CssConfigs {
+    fn default() -> Self {
+        Self { 
+            default: "".to_string() 
+        }
+    }
+}
+
 
 /// # Modules
 ///
@@ -166,7 +182,7 @@ impl Default for Modules {
 pub fn read_settings_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 && (args[1] == "-s" || args[1] == "--settings") {
-        debug!("using settings path from argument - {}", args[2]);
+        debug!("Using settings path from argument - {}", args[2]);
         return Some(String::from(args[2].clone()));
     }
     None

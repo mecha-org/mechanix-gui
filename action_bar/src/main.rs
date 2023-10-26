@@ -64,22 +64,20 @@ fn init_window(settings: ActionBarSettings) -> gtk::Window {
     // Display above normal windows
     gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
 
-    // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
-
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 18);
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
     let anchors = [
         (gtk4_layer_shell::Edge::Left, true),
         (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, false),
+        (gtk4_layer_shell::Edge::Top, false),
+        (gtk4_layer_shell::Edge::Bottom, true),
     ];
 
     for (anchor, state) in anchors {
@@ -136,6 +134,10 @@ impl SimpleComponent for ActionBar {
             Ok(settings) => settings,
             Err(_) => ActionBarSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => ActionBarTheme::default(),
@@ -253,8 +255,7 @@ fn main() {
         .with_env_filter("mecha_action_bar=trace")
         .with_thread_names(true)
         .init();
-    let app = RelmApp::new("action.bar");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("action.bar").with_args(vec![]);
     app.run::<ActionBar>(());
 }
 

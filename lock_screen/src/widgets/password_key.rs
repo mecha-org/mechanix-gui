@@ -1,9 +1,9 @@
 use gtk::{
     gdk, gio,
-    prelude::{BoxExt, ButtonExt},
+    prelude::*,
 };
 
-use relm4::factory::{DynamicIndex, FactoryComponent, FactorySender};
+use relm4::{factory::{DynamicIndex, FactoryComponent, FactorySender}, gtk::GestureClick};
 use relm4::gtk::glib::clone;
 use relm4::{gtk, RelmWidgetExt};
 
@@ -13,6 +13,12 @@ use tracing::info;
 #[derive(Clone, Debug)]
 pub enum Message {
     WidgetClicked(String),
+}
+
+#[derive(Clone, Debug)]
+pub enum InputMessage {
+    Pressed,
+    Released
 }
 
 /// Configuration for the password key widget
@@ -26,16 +32,22 @@ pub struct PasswordKeySettings {
 #[derive(PartialEq, Eq, Hash, Default, Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct PasswordKey {
     pub settings: PasswordKeySettings,
+    pub is_pressing: bool,
+}
+
+#[derive(Debug)]
+pub struct PasswordKeyWidgets {
+    password_key_label: gtk::Label
 }
 
 // #[relm4::factory(pub(crate))]
 impl FactoryComponent for PasswordKey {
     type Init = PasswordKeySettings;
-    type Input = ();
+    type Input = InputMessage;
     type Output = Message;
     type CommandOutput = ();
     type ParentWidget = gtk::FlowBox;
-    type Widgets = ();
+    type Widgets = PasswordKeyWidgets;
     type Root = gtk::Box;
     type Index = DynamicIndex;
 
@@ -49,11 +61,19 @@ impl FactoryComponent for PasswordKey {
     }
 
     fn init_model(value: Self::Init, _index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
-        Self { settings: value }
+        Self { settings: value, is_pressing: false }
     }
 
     fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
         info!("password key update message {:?}", msg);
+        match msg {
+            InputMessage::Pressed => {
+                self.is_pressing = true;
+            },
+            InputMessage::Released => {
+                self.is_pressing = false;
+            },
+        }
     }
 
     fn init_widgets(
@@ -64,11 +84,15 @@ impl FactoryComponent for PasswordKey {
         sender: FactorySender<Self>,
     ) -> Self::Widgets {
         let label = gtk::Label::builder()
+            .valign(gtk::Align::Center)
+            .halign(gtk::Align::Center)
+            .vexpand(true)
+            .hexpand(true)
             .label(&self.settings.key)
             .css_classes(["password-key-label"])
             .build();
 
-        let action_button = gtk::Button::builder()
+        let action_button = gtk::Box::builder()
             .css_classes(["password-key-button"])
             .vexpand(false)
             .build();
@@ -79,21 +103,46 @@ impl FactoryComponent for PasswordKey {
                 let icon_asset_paintable = gdk::Texture::from_file(&icon_file).unwrap();
                 let icon_image = gtk::Image::builder()
                     .paintable(&icon_asset_paintable)
+                    .vexpand(true)
+                    .hexpand(true)
                     .build();
-                action_button.set_child(Some(&icon_image));
+                action_button.append(&icon_image);
                 action_button.set_class_active("password-key-icon-button", true);
             }
             None => {
-                action_button.set_child(Some(&label));
+                action_button.append(&label);
                 action_button.set_class_active("password-key-label-button", true);
                 root.set_class_active("password-key-box", true);
             }
         }
-
         root.append(&action_button);
-        let key = self.settings.key.to_owned();
-        action_button.connect_clicked(clone!(@strong sender, @strong key => move |_| {
-            sender.output(Message::WidgetClicked(key.to_owned()));
+        let left_click_gesture = GestureClick::builder().button(0).build();
+        left_click_gesture.connect_pressed(clone!(@strong sender => move |this, _, _,_| {
+        info!("gesture button pressed is {}", this.current_button());
+            sender.input_sender().send(InputMessage::Pressed);
+
         }));
+
+        let key = self.settings.key.to_owned();
+        left_click_gesture.connect_released(clone!(@strong sender => move |this, _, _,_| {
+                info!("gesture button released is {}", this.current_button());
+                sender.input_sender().send(InputMessage::Released);
+                sender.output(Message::WidgetClicked(key.to_owned()));
+        }));
+        root.add_controller(left_click_gesture);
+        // action_button.connect_clicked(clone!(@strong sender, @strong key => move |_| {
+        //     sender.output(Message::WidgetClicked(key.to_owned()));
+        // }));
+
+        let widgets = PasswordKeyWidgets {
+            password_key_label: label
+        };
+
+        widgets
     }
+
+    fn update_view(&self, widgets: &mut Self::Widgets, sender: FactorySender<Self>) {
+        widgets.password_key_label.set_class_active("password-key-focus", self.is_pressing);
+    }
+    
 }

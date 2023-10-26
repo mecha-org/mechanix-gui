@@ -1,22 +1,19 @@
 .window {
-    background-color: rgba(5, 7, 10, 1);
+    background-color: rgba(9, 12, 19, 1);
     font-family: 'Space Grotesk';
-    padding: 9px 18px;
+    padding: 10px 18px 30px 18px;
     min-width: 100%;
     color: #E4E7EE;
 }
 
-.container {
-    min-width: 100%;
-    min-height: 100%;
-}
+.container {}
 
 .app {}
 
 .app-image {
-    min-width: 104px;
-    min-height: 104px;
-    margin-bottom: 14px;
+    min-width: 88px;
+    min-height: 88px;
+    margin-bottom: 4px;
 }
 
 .search-box {
@@ -47,4 +44,27 @@
     font-style: normal;
     font-weight: 400;
     line-height: 16px;
+}
+
+.app-name-label {
+    font-size: 12px;
+}
+
+.scrollable {
+    margin-top: 10px;
+    min-width: 300px;
+    min-height: 300px;
+    margin-bottom: 10px;
+}
+
+.icon-input-root-default {
+    padding: 6px 4px;
+    border-radius: 4px;
+    background: rgba(34, 37, 44, 1);
+    border: 1px solid #000000;
+}
+
+.icon-input-root-focused-default {
+    /* border: 1px solid #3283E8; */
+    background: rgba(34, 37, 45, 0.4);
 }

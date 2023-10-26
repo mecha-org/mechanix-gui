@@ -1,9 +1,9 @@
 use gtk::{
     gdk, gio,
-    prelude::{BoxExt, ButtonExt},
+    prelude::*,
 };
 
-use relm4::factory::{DynamicIndex, FactoryComponent, FactorySender};
+use relm4::{factory::{DynamicIndex, FactoryComponent, FactorySender}, gtk::GestureClick};
 use relm4::gtk::glib::clone;
 use relm4::{gtk, RelmWidgetExt};
 
@@ -27,6 +27,8 @@ pub enum MessageInput {
     ValueChanged(Option<i8>),
     IconChanged(Option<String>),
     TitleChanged(String),
+    Pressed,
+    Released
 }
 
 /// Configuration for the password key widget
@@ -43,11 +45,13 @@ pub struct BasicWidgetSettings {
 #[derive(Default, Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct BasicWidget {
     pub settings: BasicWidgetSettings,
+    pub is_pressing: bool
 }
 
 pub struct BasicWidgetWidgets {
     title_label: gtk::Label,
     value_label: gtk::Label,
+    settings_button_box: gtk::Box
 }
 
 // #[relm4::factory(pub(crate))]
@@ -73,7 +77,7 @@ impl FactoryComponent for BasicWidget {
     }
 
     fn init_model(value: Self::Init, _index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
-        Self { settings: value }
+        Self { settings: value, is_pressing: false }
     }
 
     fn update(&mut self, msg: Self::Input, _sender: FactorySender<Self>) {
@@ -82,7 +86,14 @@ impl FactoryComponent for BasicWidget {
             MessageInput::TitleChanged(title) => {
                 self.settings.title = title;
             }
-            _ => {}
+            MessageInput::Pressed => {
+                self.is_pressing = true;
+            },
+            MessageInput::Released => {
+                self.is_pressing = false;
+            },
+            MessageInput::ValueChanged(_) => (),
+            MessageInput::IconChanged(_) => (),
         }
     }
 
@@ -101,15 +112,31 @@ impl FactoryComponent for BasicWidget {
             .vexpand(true)
             .build();
 
-        let settings_button = gtk::Button::builder()
-            .css_classes(["settings-button"])
-            .vexpand(false)
-            .build();
+        // let settings_button = gtk::Button::builder()
+        //     .css_classes(["settings-button"])
+        //     .vexpand(false)
+        //     .build();
 
         let settings_button_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .css_classes(["settings-button-box"])
             .build();
+
+        let left_click_gesture = GestureClick::builder().button(0).build();
+        left_click_gesture.connect_pressed(clone!(@strong sender => move |this, _, _,_| {
+        info!("gesture button pressed is {}", this.current_button());
+                sender.input_sender().send(MessageInput::Pressed);
+    
+        }));
+    
+        let title = self.settings.title.to_owned();
+            left_click_gesture.connect_released(clone!(@strong sender, @strong title, @strong parent_index => move |this, _, _,_| {
+                    info!("gesture button released is {}", this.current_button());
+                    sender.input_sender().send(MessageInput::Released);
+                    sender.output(MessageOutput::WidgetClicked(parent_index.current_index(), title.to_owned()));
+            }));
+
+        settings_button_box.add_controller(left_click_gesture);    
 
         match &self.settings.widget_type {
             BasicWidgetType::Slider => {
@@ -167,22 +194,23 @@ impl FactoryComponent for BasicWidget {
 
         settings_button_box.append(&title_label);
 
-        settings_button.set_child(Some(&settings_button_box));
-        root.append(&settings_button);
+        root.append(&settings_button_box);
         let title = self.settings.title.to_owned();
-        settings_button.connect_clicked(
-            clone!(@strong sender, @strong title, @strong parent_index  => move |_| {
-                sender.output(MessageOutput::WidgetClicked(parent_index.current_index(), title.to_owned()));
-            }),
-        );
+ //       settings_button.connect_clicked(
+        //     clone!(@strong sender, @strong title, @strong parent_index  => move |_| {
+        //         sender.output(MessageOutput::WidgetClicked(parent_index.current_index(), title.to_owned()));
+        //     }),
+        // );
 
         BasicWidgetWidgets {
             title_label,
             value_label,
+            settings_button_box
         }
     }
 
     fn update_view(&self, widgets: &mut Self::Widgets, sender: FactorySender<Self>) {
         widgets.title_label.set_label(&self.settings.title);
+        widgets.settings_button_box.set_class_active("settings-button-box-pressing",self.is_pressing);
     }
 }

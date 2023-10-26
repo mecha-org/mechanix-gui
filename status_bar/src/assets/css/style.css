@@ -1,9 +1,9 @@
 .window {
-    background: rgba(5, 7, 10, 1);
+    background: rgba(5, 7, 10, 0);
     font-family: 'Space Grotesk';
-    padding: 9px 18px;
+    padding: 0px 18px;
     min-width: 100%;
-    color: #E4E7EE;
+    color: #FFFFFF;
 }
 
 .container {
@@ -18,9 +18,9 @@
 .right {}
 
 .clock {
-    font-size: 14px;
+    font-size: 16px;
     font-style: normal;
-    font-weight: 500;
+    font-weight: 600;
     line-height: normal;
 }
 

@@ -17,6 +17,7 @@ pub struct StatusBarSettings {
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
+    pub css: CssConfigs
 }
 
 impl Default for StatusBarSettings {
@@ -27,6 +28,7 @@ impl Default for StatusBarSettings {
             title: String::from("Status Bar"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
+            css: CssConfigs::default()
         }
     }
 }
@@ -92,6 +94,19 @@ pub struct Modules {
     pub bluetooth: BluetoothModule,
     pub wifi: WifiModule,
     pub battery: BatteryModule,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CssConfigs {
+    pub default: String,
+}
+
+impl Default for CssConfigs {
+    fn default() -> Self {
+        Self { 
+            default: "".to_string() 
+        }
+    }
 }
 
 /// Clock module
@@ -216,7 +231,8 @@ impl Default for Modules {
 /// Reads the `-s` or `--settings` argument for the path
 pub fn read_settings_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
-    if args.len() > 2 && (args[1] == "-s" || args[1] == "--settings") {
+    println!("args are {:?}", args);
+    if args.len() > 1 && (args[1] == "-s" || args[1] == "--settings") {
         debug!("Using settings path from argument - {}", args[2]);
         return Some(args[2].clone());
     }
@@ -267,6 +283,8 @@ pub fn read_settings_yml() -> Result<StatusBarSettings> {
             ));
         }
     };
+
+    info!("settings read is {:?}", config);
 
     Ok(config)
 }

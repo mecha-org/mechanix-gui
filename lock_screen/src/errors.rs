@@ -3,7 +3,7 @@ use std::fmt;
 use tracing::error;
 
 /// # Lock screen error codes
-/// 
+///
 /// Implements standard errors for the lock screen
 #[derive(Debug, Default, Clone, Copy)]
 pub enum LockScreenErrorCodes {
@@ -13,6 +13,14 @@ pub enum LockScreenErrorCodes {
     SettingsParseError,
     ThemeReadError,
     ThemeParseError,
+    FindLoginManagerUrlError,
+    LoginManagerStreamConnectError,
+    StreamWriteUsernameError,
+    StreamReadEnterPasswordError,
+    StreamWritePasswordError,
+    StreamReadCaptchaError,
+    StreamWriteCaptchaError,
+    StreamReadAuthResponseError,
 }
 
 impl fmt::Display for LockScreenErrorCodes {
@@ -23,12 +31,34 @@ impl fmt::Display for LockScreenErrorCodes {
             LockScreenErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
             LockScreenErrorCodes::ThemeReadError => write!(f, "ThemeReadError"),
             LockScreenErrorCodes::ThemeParseError => write!(f, "ThemeParseError"),
+            LockScreenErrorCodes::FindLoginManagerUrlError => write!(f, "FindLoginManagerUrlError"),
+            LockScreenErrorCodes::LoginManagerStreamConnectError => {
+                write!(f, "LoginManagerStreamConnectError")
+            }
+            LockScreenErrorCodes::StreamWriteUsernameError => {
+                write!(f, "StreamWriteUsernameError")
+            }
+            LockScreenErrorCodes::StreamReadEnterPasswordError => {
+                write!(f, "StreamReadEnterPasswordError")
+            }
+            LockScreenErrorCodes::StreamWritePasswordError => {
+                write!(f, "StreamWritePasswordError")
+            }
+            LockScreenErrorCodes::StreamReadCaptchaError => {
+                write!(f, "StreamReadCaptchaError")
+            }
+            LockScreenErrorCodes::StreamWriteCaptchaError => {
+                write!(f, "StreamWriteCaptchaError")
+            }
+            LockScreenErrorCodes::StreamReadAuthResponseError => {
+                write!(f, "StreamReadAuthResponseError")
+            }
         }
     }
 }
 
 /// # LockScreenError
-/// 
+///
 /// Implements a standard error type for all lock screen related errors
 /// includes the error code (`LockScreenErrorCodes`) and a message
 #[derive(Debug, Default)]
@@ -40,10 +70,7 @@ pub struct LockScreenError {
 impl LockScreenError {
     pub fn new(code: LockScreenErrorCodes, message: String) -> Self {
         error!("error: (code: {:?}, message: {})", code, message);
-        Self {
-            code,
-            message,
-        }
+        Self { code, message }
     }
 }
 

@@ -1,14 +1,20 @@
-use gtk::{
-    gdk, gio, glib,
-    prelude::{BoxExt, GtkWindowExt},
+use gtk::{gdk, gio, glib, prelude::*, subclass::*};
+use relm4::{
+    gtk, Component, ComponentController, ComponentParts, ComponentSender, Controller, RelmApp,
+    RelmWidgetExt, SimpleComponent,
 };
-use relm4::{gtk, ComponentParts, ComponentSender, RelmApp, RelmWidgetExt, SimpleComponent};
 use relm4::{
     gtk::{
         glib::clone,
         prelude::{EditableExt, EditableExtManual, EntryExt, ObjectExt},
     },
     RelmRemoveAllExt,
+};
+
+use custom_widgets::icon_input::{
+    IconInput, IconInputCss, IconPosition as IconInputIconPosition,
+    IconSettings as IconInputIconSettings, InitSettings as IconInputSettings,
+    InputMessage as IconInputInputMessage, OutputMessage as IconInputOutputMessage,
 };
 
 mod settings;
@@ -40,6 +46,7 @@ pub enum Message {
 
 struct AppWidgets {
     apps_grid: gtk::FlowBox,
+    search_input: Controller<IconInput>,
 }
 
 #[cfg(not(feature = "layer-shell"))]
@@ -66,16 +73,15 @@ fn init_window(settings: AppDrawerSettings) -> gtk::Window {
 
     gtk4_layer_shell::init_for_window(&window);
 
-    // Display above normal windows
-    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
+    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
 
-    // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
+    gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
 
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
 
     // ... or like this
@@ -84,7 +90,7 @@ fn init_window(settings: AppDrawerSettings) -> gtk::Window {
         (gtk4_layer_shell::Edge::Left, true),
         (gtk4_layer_shell::Edge::Right, true),
         (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, false),
+        (gtk4_layer_shell::Edge::Bottom, true),
     ];
 
     for (anchor, state) in anchors {
@@ -142,6 +148,10 @@ impl SimpleComponent for AppDrawer {
             Ok(settings) => settings,
             Err(_) => AppDrawerSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => AppDrawerTheme::default(),
@@ -157,6 +167,8 @@ impl SimpleComponent for AppDrawer {
 
         let container_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
+            .vexpand(true)
+            .hexpand(true)
             .css_classes(["container"])
             .build();
 
@@ -165,37 +177,41 @@ impl SimpleComponent for AppDrawer {
             .css_classes(["search-box"])
             .build();
 
-        let search_input = gtk::Entry::builder()
-            .placeholder_text("Seach Application")
-            .hexpand(true)
-            .css_classes(["search-input", "search-input:focus"])
-            .focusable(false)
-            .build();
+        let search_icon = match modules.search.icon.default {
+            Some(icon) => Option::from(IconInputIconSettings {
+                path: icon,
+                position: IconInputIconPosition::Left,
+            }),
+            None => None,
+        };
 
-        search_input.connect_changed(clone!(@strong sender => move |entry| {
-            entry.grab_focus_without_selecting();
-            let new_name: String = entry.text().into();
-            sender.input(Message::SearchTextChanged(new_name));
-        }));
+        let clear_icon = match modules.clear.icon.default {
+            Some(icon) => Option::from(IconInputIconSettings {
+                path: icon,
+                position: IconInputIconPosition::Right,
+            }),
+            None => None,
+        };
 
-        let search_icon_file = gio::File::for_path("src/assets/pngs/search_icon.png");
-        let search_icon_paintable = gdk::Texture::from_file(&search_icon_file).unwrap();
-        let search_icon = gtk::Image::builder()
-            .paintable(&search_icon_paintable)
-            .css_classes(["search-icon"])
-            .build();
+        let search_input = IconInput::builder()
+            .launch(IconInputSettings {
+                clear_icon: clear_icon,
+                icon: search_icon,
+                placeholder: Option::from("Search Application".to_string()),
+                css: IconInputCss::default(),
+            })
+            .forward(sender.input_sender(), |msg| match msg {
+                IconInputOutputMessage::InputChange(text) => Message::SearchTextChanged(text),
+            });
 
-        search_box.append(&search_icon);
-        search_box.append(&search_input);
-
-        container_box.append(&search_box);
+        container_box.append(search_input.widget());
 
         let apps_grid = gtk::FlowBox::builder()
             .valign(gtk::Align::Start)
             .max_children_per_line(30)
             .min_children_per_line(4)
             .selection_mode(gtk::SelectionMode::None)
-            .row_spacing(5)
+            .row_spacing(10)
             .build();
 
         modules.apps.into_iter().for_each(|app| {
@@ -207,14 +223,19 @@ impl SimpleComponent for AppDrawer {
             .hscrollbar_policy(gtk::PolicyType::Never) // Disable horizontal scrolling
             .min_content_width(360)
             .min_content_height(360)
+            .css_classes(["scrollable"])
             .child(&apps_grid)
             .build();
 
         container_box.append(&scrolled_window);
+        container_box.set_focus_child(Option::from(&scrolled_window));
 
         window.set_child(Some(&container_box));
 
-        let widgets = AppWidgets { apps_grid };
+        let widgets = AppWidgets {
+            apps_grid,
+            search_input,
+        };
 
         ComponentParts { model, widgets }
     }
@@ -254,13 +275,24 @@ fn main() {
         .with_thread_names(true)
         .init();
 
-    let app = RelmApp::new("app.drawer");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("app.drawer").with_args(vec![]);
     app.run::<AppDrawer>(());
 }
 
 fn generate_apps_ui(app: App) -> gtk::Box {
-    let app_name_label = gtk::Label::new(Some(&app.name));
+    let max_lenth = 15;
+    let max_len_app_name = match app.name.len() > max_lenth {
+        true => max_lenth,
+        false => app.name.len(),
+    };
+    let app_name = &app.name[0..max_len_app_name];
+    let app_name_label = gtk::Label::builder()
+        .label(app_name)
+        .wrap(true)
+        .css_classes(["app-name-label"])
+        .build();
+
+    // new(Some());
     let app_icon_file = gio::File::for_path(app.icon);
     let app_icon_paintable = gdk::Texture::from_file(&app_icon_file).unwrap();
     let app_icon = gtk::Image::builder()

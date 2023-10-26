@@ -2,10 +2,14 @@ use std::{default, time::SystemTime};
 
 use anyhow::bail;
 use chrono::Local;
+use custom_utils::get_image_from_path;
+use dbus::message::MatchRule;
+use dbus::nonblock;
+use dbus_tokio::connection;
 use grpc::battery_client::BatteryManagerClient;
 use gtk::{
     gdk, gio, glib,
-    prelude::{BoxExt, GtkWindowExt},
+    prelude::{BoxExt, GtkWindowExt, WidgetExt},
 };
 use relm4::{
     async_trait::async_trait, gtk, tokio, ComponentParts, ComponentSender, RelmApp, RelmWidgetExt,
@@ -16,6 +20,7 @@ use relm4::{
     gtk::prelude::ObjectExt,
     AsyncComponentSender,
 };
+use std::time::Duration;
 
 mod settings;
 mod theme;
@@ -36,13 +41,14 @@ use crate::theme::StatusBarTheme;
 /// # Status Bar state
 ///
 /// This struct is the state definition of the entire application
-struct StatusBar {
-    settings: StatusBarSettings,
-    current_time: String,
-    custom_theme: StatusBarTheme,
-    wifi_state: WifiState,
-    bluetooth_state: BluetoothState,
-    battery_state: BatteryState,
+pub struct StatusBar {
+    pub settings: StatusBarSettings,
+    pub current_time: String,
+    pub custom_theme: StatusBarTheme,
+    pub wifi_state: WifiState,
+    pub bluetooth_state: BluetoothState,
+    pub battery_state: BatteryState,
+    pub window: gtk::Window,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -97,11 +103,11 @@ pub enum Message {
     BatteryStatusUpdate(BatteryState),
 }
 
-struct AppWidgets {
-    clock_label: gtk::Label,
-    wifi_image: gtk::Image,
-    bluetooth_image: gtk::Image,
-    battery_image: gtk::Image,
+pub struct AppWidgets {
+    pub clock_label: gtk::Label,
+    pub wifi_image: gtk::Image,
+    pub bluetooth_image: gtk::Image,
+    pub battery_image: gtk::Image,
 }
 
 #[cfg(not(feature = "layer-shell"))]
@@ -129,10 +135,10 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
     gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
-    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
+    // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
 
     // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
+    gtk4_layer_shell::set_exclusive_zone(&window, window_settings.size.1);
 
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
@@ -168,9 +174,11 @@ impl AsyncComponent for StatusBar {
     type Root = gtk::Window;
     /// A data structure that contains the widgets that you will need to update.
     type Widgets = AppWidgets;
-    type CommandOutput = ();
+
+    type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
+        println!("init_root started");
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => StatusBarSettings::default(),
@@ -201,10 +209,14 @@ impl AsyncComponent for StatusBar {
         window: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
+        info!("dbus init stated");
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => StatusBarSettings::default(),
         };
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => StatusBarTheme::default(),
@@ -217,15 +229,6 @@ impl AsyncComponent for StatusBar {
         let init_state_values = match init_state_values_response {
             Ok(r) => r,
             Err(e) => InitValues::default(),
-        };
-
-        let model = StatusBar {
-            settings: settings.clone(),
-            custom_theme,
-            current_time: current_time(modules.clock.format.as_str()),
-            wifi_state: init_state_values.wifi_state,
-            bluetooth_state: init_state_values.bluetooth_state,
-            battery_state: init_state_values.battery_state,
         };
 
         let main_box = gtk::Box::builder()
@@ -257,26 +260,9 @@ impl AsyncComponent for StatusBar {
         let clock_label = gtk::Label::new(Some(&formatted_time));
         clock_label.set_class_active("clock", true);
 
-        let wifi_file = gio::File::for_path("src/assets/pngs/wifi_strong.png");
-        let wifi_asset_paintable = gdk::Texture::from_file(&wifi_file).unwrap();
-        let wifi_image = gtk::Image::builder()
-            .css_classes(["icon"])
-            .paintable(&wifi_asset_paintable)
-            .build();
-
-        let bluetooth_file = gio::File::for_path("src/assets/pngs/bluetooth_connected.png");
-        let bluetooth_asset_paintable = gdk::Texture::from_file(&bluetooth_file).unwrap();
-        let bluetooth_image = gtk::Image::builder()
-            .css_classes(["icon"])
-            .paintable(&bluetooth_asset_paintable)
-            .build();
-
-        let battery_file = gio::File::for_path("src/assets/pngs/battery_70.png");
-        let battery_asset_paintable = gdk::Texture::from_file(&battery_file).unwrap();
-        let battery_image = gtk::Image::builder()
-            .css_classes(["icon"])
-            .paintable(&battery_asset_paintable)
-            .build();
+        let wifi_image = get_image_from_path(modules.wifi.icon.strong, &["icon"]);
+        let bluetooth_image = get_image_from_path(modules.bluetooth.icon.connected, &["icon"]);
+        let battery_image = get_image_from_path(modules.battery.icon.level_70, &["icon"]);
 
         let layout = settings.clone().layout;
 
@@ -354,6 +340,16 @@ impl AsyncComponent for StatusBar {
 
         window.set_child(Some(&main_box));
 
+        let model = StatusBar {
+            settings: settings.clone(),
+            custom_theme,
+            current_time: current_time(modules.clock.format.as_str()),
+            wifi_state: init_state_values.wifi_state,
+            bluetooth_state: init_state_values.bluetooth_state,
+            battery_state: init_state_values.battery_state,
+            window,
+        };
+
         let widgets = AppWidgets {
             clock_label,
             wifi_image,
@@ -361,42 +357,98 @@ impl AsyncComponent for StatusBar {
             battery_image,
         };
 
-        let tick = move || {
-            let sender_clone = sender.clone();
-            let format = modules.clock.format.clone();
-            tokio::spawn(async move {
-                let _ = sender_clone
-                    .input_sender()
-                    .send(Message::TimeTick(current_time(format.as_str())));
+        // let tick = move || {
+        //     let sender_clone = sender.clone();
+        //     let format = modules.clock.format.clone();
+        //     tokio::spawn(async move {
+        //         let _ = sender_clone
+        //             .input_sender()
+        //             .send(Message::TimeTick(current_time(format.as_str())));
 
-                let init_state_values_response = get_init_data().await;
+        //         let init_state_values_response = get_init_data().await;
 
-                let init_state_values = match init_state_values_response {
-                    Ok(r) => r,
-                    Err(_) => InitValues::default(),
-                };
+        //         let init_state_values = match init_state_values_response {
+        //             Ok(r) => r,
+        //             Err(_) => InitValues::default(),
+        //         };
 
-                let _ = sender_clone
-                    .input_sender()
-                    .send(Message::WifiStateUpdate(init_state_values.wifi_state));
+        //         let _ = sender_clone
+        //             .input_sender()
+        //             .send(Message::WifiStateUpdate(init_state_values.wifi_state));
 
-                let _ = sender_clone
-                    .input_sender()
-                    .send(Message::BluetoothStateUpdate(
-                        init_state_values.bluetooth_state,
-                    ));
+        //         let _ = sender_clone
+        //             .input_sender()
+        //             .send(Message::BluetoothStateUpdate(
+        //                 init_state_values.bluetooth_state,
+        //             ));
 
-                let _ = sender_clone
-                    .input_sender()
-                    .send(Message::BatteryStatusUpdate(
-                        init_state_values.battery_state,
-                    ));
-            });
+        //         let _ = sender_clone
+        //             .input_sender()
+        //             .send(Message::BatteryStatusUpdate(
+        //                 init_state_values.battery_state,
+        //             ));
+        //     });
 
-            glib::ControlFlow::Continue
-        };
+        //     glib::ControlFlow::Continue
+        // };
 
-        glib::timeout_add_seconds_local(1, tick);
+        println!("dbus before connection");
+
+        // match connection::new_session_sync() {
+        //     Ok(r) => {
+        //         println!("dbus session created");
+        //         let (resource, conn) = r;
+        //         let _handle = tokio::spawn(async {
+        //             let err = resource.await;
+        //             panic!("Lost connection to D-Bus: {}", err);
+        //         });
+        //         println!("dbus handle created");
+        //         sender.command(|out, shutdown| {
+        //             shutdown
+        //                 .register(async move {
+        //                     let mut interval = tokio::time::interval(Duration::from_secs(2));
+
+        //                     let calls = async move {
+        //                         loop {
+        //                             interval.tick().await;
+        //                         }
+        //                     };
+        //                     let mr = MatchRule::new_signal("com.example.dbustest", "HelloHappened");
+        //                     println!("mr is {:?}", mr);
+        //                     let cc = match conn.add_match(mr).await {
+        //                         Ok(r2) => r2,
+        //                         Err(err) => {
+        //                             println!("dbus error {:?}", err.message());
+        //                             return;
+        //                         }
+        //                     }
+        //                     .cb(move |_, (source,): (String,)| {
+        //                         println!("cb called");
+        //                         println!("dbus Hello from {} happened on the bus!", source);
+        //                         out.send(Message::TimeTick(source.clone())).unwrap();
+        //                         true
+        //                     });
+        //                     calls.await;
+        //                     match conn.remove_match(cc.token()).await {
+        //                         Ok(r) => {
+        //                             println!("handle connection success");
+        //                         }
+        //                         Err(e) => {
+        //                             println!("handle connection failed")
+        //                         }
+        //                     }
+        //                 })
+        //                 .drop_on_shutdown()
+        //         });
+        //         // Needed here to ensure the "incoming_signal" object is not dropped too early
+        //     }
+        //     Err(_) => {
+        //         println!("dbus session create error");
+        //     }
+        // }
+        // println!("dbus after connection");
+
+        //glib::timeout_add_seconds_local(1, tick);
 
         AsyncComponentParts { model, widgets }
     }
@@ -541,6 +593,15 @@ impl AsyncComponent for StatusBar {
             }
         }
     }
+
+    async fn update_cmd(
+        &mut self,
+        message: Self::CommandOutput,
+        sender: AsyncComponentSender<Self>,
+        root: &Self::Root,
+    ) {
+        println!("update_cmd message {:?}", message);
+    }
 }
 
 fn main() {
@@ -551,8 +612,7 @@ fn main() {
         .with_env_filter("mecha_status_bar=trace")
         .with_thread_names(true)
         .init();
-    let app = RelmApp::new("status.bar");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("mecha.status.bar").with_args(vec![]);
     app.run_async::<StatusBar>(());
 }
 

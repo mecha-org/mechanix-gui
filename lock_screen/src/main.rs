@@ -11,9 +11,13 @@ mod theme;
 mod widgets;
 use pages::{
     home::{HomePage, Message as HomePageMessage, Settings as HomePageSettings},
-    user_authentication::{
-        Message as UserAuthenticationMessage, Settings as UserAuthenticationSettings,
-        UserAuthentication,
+    password_authentication::{
+        Message as PasswordAuthenticationMessage, PasswordAuthentication,
+        Settings as PasswordAuthenticationSettings,
+    },
+    pin_authentication::{
+        Message as PinAuthenticationMessage, PinAuthentication,
+        Settings as PinAuthenticationSettings,
     },
 };
 use tracing::{error, info};
@@ -30,13 +34,15 @@ struct LockScreen {
     custom_theme: LockScreenTheme,
     current_screen: Screens,
     home_page: Controller<HomePage>,
-    user_authentication_page: Controller<UserAuthentication>,
+    pin_authentication_page: Controller<PinAuthentication>,
+    password_authentication_page: Controller<PasswordAuthentication>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Screens {
     LockScreen,
     PasswordScreen,
+    PinScreen,
 }
 
 impl fmt::Display for Screens {
@@ -44,6 +50,7 @@ impl fmt::Display for Screens {
         match self {
             Screens::LockScreen => write!(f, "lock_screen"),
             Screens::PasswordScreen => write!(f, "password_screen"),
+            Screens::PinScreen => write!(f, "pin_screen"),
         }
     }
 }
@@ -87,16 +94,16 @@ fn init_window(settings: LockScreenSettings) -> gtk::Window {
     gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
-    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
-
-    // Push other windows out of the way
-    gtk4_layer_shell::auto_exclusive_zone_enable(&window);
+    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
 
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
+
+    gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
@@ -104,7 +111,7 @@ fn init_window(settings: LockScreenSettings) -> gtk::Window {
         (gtk4_layer_shell::Edge::Left, true),
         (gtk4_layer_shell::Edge::Right, true),
         (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, false),
+        (gtk4_layer_shell::Edge::Bottom, true),
     ];
 
     for (anchor, state) in anchors {
@@ -157,10 +164,16 @@ impl SimpleComponent for LockScreen {
         window: &Self::Root,
         sender: ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
+        let icon_theme = gtk::IconTheme::builder().build();
+        info!("icon paths are {:?}", icon_theme.resource_path());
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => LockScreenSettings::default(),
         };
+
+        let css = settings.css.clone();
+        relm4::set_global_css_from_file(css.default);
+
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
             Err(_) => LockScreenTheme::default(),
@@ -176,6 +189,8 @@ impl SimpleComponent for LockScreen {
         let home_page = HomePage::builder()
             .launch(HomePageSettings {
                 lock_icon: modules.lock.icon.default.to_owned(),
+                unlock_icon: modules.unlock.icon.default.to_owned(),
+                password_icon: modules.home_password.icon.default.to_owned(),
             })
             .forward(
                 sender.input_sender(),
@@ -184,8 +199,8 @@ impl SimpleComponent for LockScreen {
                 }),
             );
 
-        let user_authentication_page = UserAuthentication::builder()
-            .launch(UserAuthenticationSettings {
+        let pin_authentication_page = PinAuthentication::builder()
+            .launch(PinAuthenticationSettings {
                 modules: modules.clone(),
                 layout: layout.clone(),
             })
@@ -194,7 +209,23 @@ impl SimpleComponent for LockScreen {
                 clone!(@strong modules => move|msg| {
                     info!("auth page message to parent {:?}", msg);
                     match msg {
-                       UserAuthenticationMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
+                       PinAuthenticationMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
+                        _ => Message::Dummy
+                    }
+                }),
+            );
+
+        let password_authentication_page = PasswordAuthentication::builder()
+            .launch(PasswordAuthenticationSettings {
+                modules: modules.clone(),
+                layout: layout.clone(),
+            })
+            .forward(
+                sender.input_sender(),
+                clone!(@strong modules => move|msg| {
+                    info!("auth page message to parent {:?}", msg);
+                    match msg {
+                        PasswordAuthenticationMessage::BackPressed => Message::ChangeScreen(Screens::LockScreen),
                         _ => Message::Dummy
                     }
                 }),
@@ -208,7 +239,13 @@ impl SimpleComponent for LockScreen {
 
         //Adding auth screeen in stack
         screens_stack.add_named(
-            user_authentication_page.widget(),
+            pin_authentication_page.widget(),
+            Option::from(Screens::PinScreen.to_string().as_str()),
+        );
+
+        //Adding password screeen in stack
+        screens_stack.add_named(
+            password_authentication_page.widget(),
             Option::from(Screens::PasswordScreen.to_string().as_str()),
         );
 
@@ -225,7 +262,8 @@ impl SimpleComponent for LockScreen {
             custom_theme,
             current_screen,
             home_page,
-            user_authentication_page,
+            pin_authentication_page,
+            password_authentication_page,
         };
 
         let widgets = AppWidgets { screens_stack };
@@ -260,7 +298,6 @@ fn main() {
         .with_env_filter("mecha_lock_screen=trace")
         .with_thread_names(true)
         .init();
-    let app = RelmApp::new("lock.screen");
-    relm4::set_global_css_from_file("src/assets/css/style.css");
+    let app = RelmApp::new("lock.screen").with_args(vec![]);
     app.run::<LockScreen>(());
 }

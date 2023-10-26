@@ -15,6 +15,8 @@ window:
   transparent: true    # false
   always_on_top: false    # false
   icon_path: null # Todo
+css:
+  default: /home/user/.mecha/action_bar/src/assets/css/style.css
 layout:
   left: ["Settings"]
   center: ["Home"]
@@ -22,11 +24,11 @@ layout:
 modules:
   settings:
     title: "Settings"
-    icon: ./src/assets/pngs/settings.png
+    icon: /home/user/.mecha/action_bar/src/assets/pngs/settings.png
   home:
     title: "Home"
-    icon: ./src/assets/pngs/home.png
+    icon: /home/user/.mecha/action_bar/src/assets/pngs/home.png
   keyboard:
     title: "Keyboard"
-    icon: ./src/assets/pngs/keyboard.png
+    icon: /home/user/.mecha/action_bar/src/assets/pngs/keyboard.png
 
