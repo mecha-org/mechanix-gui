@@ -63,31 +63,31 @@ impl SimpleComponent for PinAuthentication {
         let modules = init.modules.clone();
         let layout = init.layout.clone();
 
-        let mut password_keys: FactoryVecDeque<PasswordKey> = FactoryVecDeque::builder(
-            gtk::FlowBox::builder()
-                .valign(gtk::Align::Start)
-                .max_children_per_line(30)
-                .min_children_per_line(4)
-                .selection_mode(gtk::SelectionMode::None)
-                .row_spacing(5)
-                .column_spacing(5)
-                .build(),
-        )
-        .launch()
-        .forward(
-            sender.input_sender(),
-            clone!(@strong modules => move|msg| match msg {
-                PasswordKeyMessage::WidgetClicked(key) => {
-                    if key == modules.home.title {
-                        Message::HomeIconPressed
-                    } else if key == modules.back_space.title {
-                        return Message::BackSpacePressed
-                    } else {
-                        return Message::PasswordKeyPressed(key);
+        let mut password_keys: FactoryVecDeque<PasswordKey> = FactoryVecDeque::builder()
+            .launch(
+                gtk::FlowBox::builder()
+                    .valign(gtk::Align::Start)
+                    .max_children_per_line(30)
+                    .min_children_per_line(4)
+                    .selection_mode(gtk::SelectionMode::None)
+                    .row_spacing(5)
+                    .column_spacing(5)
+                    .build(),
+            )
+            .forward(
+                sender.input_sender(),
+                clone!(@strong modules => move|msg| match msg {
+                    PasswordKeyMessage::WidgetClicked(key) => {
+                        if key == modules.home.title {
+                            Message::HomeIconPressed
+                        } else if key == modules.back_space.title {
+                            return Message::BackSpacePressed
+                        } else {
+                            return Message::PasswordKeyPressed(key);
+                        }
                     }
-                }
-            }),
-        );
+                }),
+            );
 
         layout.grid.into_iter().for_each(|key| {
             let mut icon: Option<String> = None;
@@ -105,17 +105,17 @@ impl SimpleComponent for PinAuthentication {
                 .push_back(PasswordKeySettings { key, icon });
         });
 
-        let mut password_texts = FactoryVecDeque::builder(
-            gtk::Box::builder()
-                .orientation(gtk::Orientation::Horizontal)
-                .css_classes(["password-text-box"])
-                .halign(gtk::Align::Center)
-                .hexpand(true)
-                .spacing(16)
-                .build(),
-        )
-        .launch()
-        .detach();
+        let mut password_texts = FactoryVecDeque::builder()
+            .launch(
+                gtk::Box::builder()
+                    .orientation(gtk::Orientation::Horizontal)
+                    .css_classes(["password-text-box"])
+                    .halign(gtk::Align::Center)
+                    .hexpand(true)
+                    .spacing(16)
+                    .build(),
+            )
+            .detach();
 
         for i in 0..modules.password_configs.password_length {
             password_texts

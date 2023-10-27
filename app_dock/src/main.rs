@@ -150,37 +150,37 @@ impl SimpleComponent for AppDock {
 
         let modules = settings.modules.clone();
 
-        let mut pinned_apps: FactoryVecDeque<App> = FactoryVecDeque::builder(
-            gtk::Box::builder()
-                .valign(gtk::Align::Start)
-                .halign(gtk::Align::Start)
-                .spacing(14)
-                .css_classes(["apps-list"])
-                .build(),
-        )
-        .launch()
-        .forward(
-            sender.input_sender(),
-            clone!(@strong modules => move|msg| {
+        let mut pinned_apps: FactoryVecDeque<App> = FactoryVecDeque::builder()
+            .launch(
+                gtk::Box::builder()
+                    .valign(gtk::Align::Start)
+                    .halign(gtk::Align::Start)
+                    .spacing(14)
+                    .css_classes(["apps-list"])
+                    .build(),
+            )
+            .forward(
+                sender.input_sender(),
+                clone!(@strong modules => move|msg| {
 
-                info!("app widget forwarded message is {:?}", msg);
-                return match msg {
-                AppMessage::WidgetPressed(key) => {
-                    if key == modules.home.title {
-                        Message::HomePressed
-                    }  else {
-                        return Message::AppClicked(key);
-                    }
-                },
-                AppMessage::WidgetLongPressed(key) => {
-                    if key == modules.home.title {
-                        Message::HomePressed
-                    }  else {
-                        return Message::AppClicked(key);
-                    }
-                },
-            }}),
-        );
+                    info!("app widget forwarded message is {:?}", msg);
+                    return match msg {
+                    AppMessage::WidgetPressed(key) => {
+                        if key == modules.home.title {
+                            Message::HomePressed
+                        }  else {
+                            return Message::AppClicked(key);
+                        }
+                    },
+                    AppMessage::WidgetLongPressed(key) => {
+                        if key == modules.home.title {
+                            Message::HomePressed
+                        }  else {
+                            return Message::AppClicked(key);
+                        }
+                    },
+                }}),
+            );
 
         modules.pinned_apps.into_iter().for_each(|pinned_app| {
             pinned_apps.guard().push_back(AppSettings {
@@ -227,7 +227,7 @@ fn main() {
         .with_env_filter("mecha_app_dock=trace")
         .with_thread_names(true)
         .init();
-    
+
     let app = RelmApp::new("app.dock").with_args(vec![]);
     app.run::<AppDock>(());
 }
