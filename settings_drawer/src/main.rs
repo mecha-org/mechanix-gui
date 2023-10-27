@@ -116,7 +116,6 @@ fn init_window(settings: SettingsDrawerSettings) -> gtk::Window {
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
 
-
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
     let anchors = [
@@ -191,23 +190,23 @@ impl SimpleComponent for SettingsDrawer {
 
         let modules = settings.modules.clone();
 
-        let mut setting_actions: FactoryVecDeque<BasicWidget> = FactoryVecDeque::builder(
-            gtk::FlowBox::builder()
-                .valign(gtk::Align::Start)
-                .max_children_per_line(30)
-                .min_children_per_line(4)
-                .selection_mode(gtk::SelectionMode::None)
-                .row_spacing(7)
-                .column_spacing(6)
-                .homogeneous(true)
-                .build(),
-        )
-        .launch()
-        .forward(sender.input_sender(), |msg| match msg {
-            BasicWidgetMessageOutput::WidgetClicked(index, widget) => {
-                Message::WidgetClicked(index, widget)
-            }
-        });
+        let mut setting_actions: FactoryVecDeque<BasicWidget> = FactoryVecDeque::builder()
+            .launch(
+                gtk::FlowBox::builder()
+                    .valign(gtk::Align::Start)
+                    .max_children_per_line(30)
+                    .min_children_per_line(4)
+                    .selection_mode(gtk::SelectionMode::None)
+                    .row_spacing(7)
+                    .column_spacing(6)
+                    .homogeneous(true)
+                    .build(),
+            )
+            .forward(sender.input_sender(), |msg| match msg {
+                BasicWidgetMessageOutput::WidgetClicked(index, widget) => {
+                    Message::WidgetClicked(index, widget)
+                }
+            });
 
         let layout = settings.layout.clone();
 
