@@ -49,7 +49,7 @@ struct AppWidgets {
     search_input: Controller<IconInput>,
 }
 
-#[cfg(not(feature = "layer-shell"))]
+// #[cfg(not(feature = "layer-shell"))]
 fn init_window(settings: AppDrawerSettings) -> gtk::Window {
     let window_settings = settings.window;
     let window = gtk::Window::builder()
@@ -61,44 +61,44 @@ fn init_window(settings: AppDrawerSettings) -> gtk::Window {
     window
 }
 
-#[cfg(feature = "layer-shell")]
-fn init_window(settings: AppDrawerSettings) -> gtk::Window {
-    let window_settings = settings.window;
-    let window = gtk::Window::builder()
-        .title(settings.title)
-        .default_width(window_settings.size.0)
-        .default_height(window_settings.size.1)
-        .css_classes(["window"])
-        .build();
+// #[cfg(feature = "layer-shell")]
+// fn init_window(settings: AppDrawerSettings) -> gtk::Window {
+//     let window_settings = settings.window;
+//     let window = gtk::Window::builder()
+//         .title(settings.title)
+//         .default_width(window_settings.size.0)
+//         .default_height(window_settings.size.1)
+//         .css_classes(["window"])
+//         .build();
 
-    gtk4_layer_shell::init_for_window(&window);
+//     gtk4_layer_shell::init_for_window(&window);
 
-    gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
+//     gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Top);
 
-    gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
+//     gtk4_layer_shell::set_keyboard_mode(&window, gtk4_layer_shell::KeyboardMode::OnDemand);
 
-    // The margins are the gaps around the window's edges
-    // Margins and anchors can be set like this...
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+//     // The margins are the gaps around the window's edges
+//     // Margins and anchors can be set like this...
+//     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
+//     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
+//     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 0);
+//     gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
 
-    // ... or like this
-    // Anchors are if the window is pinned to each edge of the output
-    let anchors = [
-        (gtk4_layer_shell::Edge::Left, true),
-        (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, true),
-    ];
+//     // ... or like this
+//     // Anchors are if the window is pinned to each edge of the output
+//     let anchors = [
+//         (gtk4_layer_shell::Edge::Left, true),
+//         (gtk4_layer_shell::Edge::Right, true),
+//         (gtk4_layer_shell::Edge::Top, true),
+//         (gtk4_layer_shell::Edge::Bottom, true),
+//     ];
 
-    for (anchor, state) in anchors {
-        gtk4_layer_shell::set_anchor(&window, anchor, state);
-    }
+//     for (anchor, state) in anchors {
+//         gtk4_layer_shell::set_anchor(&window, anchor, state);
+//     }
 
-    window
-}
+//     window
+// }
 
 impl SimpleComponent for AppDrawer {
     /// The type of the messages that this component can receive.
