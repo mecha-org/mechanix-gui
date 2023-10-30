@@ -55,6 +55,7 @@ impl FactoryComponent for PasswordKey {
         gtk::Box::builder()
             .vexpand(false)
             .hexpand(false)
+            .css_classes(["password-key-box"])
             .halign(gtk::Align::Center)
             .valign(gtk::Align::Center)
             .build()
@@ -93,7 +94,6 @@ impl FactoryComponent for PasswordKey {
             .build();
 
         let action_button = gtk::Box::builder()
-            .css_classes(["password-key-button"])
             .vexpand(false)
             .build();
 
@@ -103,16 +103,16 @@ impl FactoryComponent for PasswordKey {
                 let icon_asset_paintable = gdk::Texture::from_file(&icon_file).unwrap();
                 let icon_image = gtk::Image::builder()
                     .paintable(&icon_asset_paintable)
+                    .valign(gtk::Align::Center)
+                    .halign(gtk::Align::Center)
+                    .css_classes(["password-key-icon"])
                     .vexpand(true)
                     .hexpand(true)
                     .build();
                 action_button.append(&icon_image);
-                action_button.set_class_active("password-key-icon-button", true);
             }
             None => {
                 action_button.append(&label);
-                action_button.set_class_active("password-key-label-button", true);
-                root.set_class_active("password-key-box", true);
             }
         }
         root.append(&action_button);

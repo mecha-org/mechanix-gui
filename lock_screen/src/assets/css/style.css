@@ -32,25 +32,14 @@
     border-radius: 16px;
     /* border: 1px solid #000000; */
     background: rgba(0, 0, 0, 0.6);
-}
-
-.password-key-button {
-    background: none;
-    border: none;
-}
-
-.password-key-label-button {
     min-width: 90px;
     min-height: 90px;
 }
 
-.password-key-icon-button {
-    min-width: 48px;
-    min-height: 48px;
-    padding: 0px;
-    margin: 0px;
+.password-key-icon{
+    min-width: 40px;
+    min-height: 40px;
 }
-
 .password-key-label {
     color: #E4E9EE;
     text-align: center;

@@ -123,7 +123,7 @@ impl SimpleComponent for PasswordAuthentication {
         let password_input = IconInputPassword::builder()
             .launch(IconInputPasswordSettings {
                 icon: modules.peek_password.icon.default.to_owned(),
-                toggle_icon: None,
+                toggle_icon: modules.un_peek_password.icon.default.to_owned(),
                 placeholder: Option::from("Password".to_string()),
                 css: IconInputPasswordCss::default(),
             })
