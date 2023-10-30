@@ -18,12 +18,12 @@
     min-height: 81px;
     padding: 9px;
     border-radius: 8px;
-    border: 1px solid #000000;
-    background: rgba(0,0,0,0.5);
+    /* border: 1px solid #000000; */
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .settings-button-box-pressing {
-    background: rgba(29,23,29,0.5);
+    background: rgba(29, 23, 29, 0.5);
 }
 
 .settings-button-box-slider {

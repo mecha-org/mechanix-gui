@@ -61,7 +61,7 @@
     padding: 6px 4px;
     border-radius: 4px;
     background: rgba(34, 37, 44, 1);
-    border: 1px solid #000000;
+    /* border: 1px solid #000000; */
 }
 
 .icon-input-root-focused-default {
