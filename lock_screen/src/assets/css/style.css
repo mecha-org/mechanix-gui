@@ -30,7 +30,7 @@
 
 .password-key-box {
     border-radius: 16px;
-    border: 1px solid #000000;
+    /* border: 1px solid #000000; */
     background: rgba(0, 0, 0, 0.6);
 }
 
@@ -74,12 +74,12 @@
     min-height: 10px;
     min-width: 10px;
     border-radius: 50%;
-    border: 2px solid #565E76;
+    /* border: 2px solid #565E76; */
 }
 
 .password-text-filled {
     background-color: #FFFFFF;
-    border: 2px solid #FFFFFF;
+    /* border: 2px solid #FFFFFF; */
 }
 
 .password-invalid-label {
@@ -153,7 +153,7 @@ entry :focus-within {
     min-width: 38px;
     min-height: 38px;
     border-radius: 9px;
-    border: 1px solid #15171D;
+    /* border: 1px solid #15171D; */
     background: #15171D;
     box-shadow: 0px 4.80001px 4.80001px 0px rgba(31, 33, 35, 0.35);
 }
@@ -162,7 +162,7 @@ entry :focus-within {
     min-width: 38px;
     min-height: 38px;
     border-radius: 9px;
-    border: 1px solid #15171D;
+    /* border: 1px solid #15171D; */
     background: #15171D;
     box-shadow: 0px 4.80001px 4.80001px 0px rgba(31, 33, 35, 0.35);
 }
@@ -177,9 +177,10 @@ entry :focus-within {
     padding: 10px;
     border-radius: 9px;
     border: 1px solid #000000;
-    background: rgba(0,0,0,0.6);
-} */
+background: rgba(0, 0, 0, 0.6);
+}
 
+*/
 .footer {}
 
 /* .password-home-button-pressing {
@@ -195,7 +196,7 @@ entry :focus-within {
     min-height: 36px;
     padding: 10px;
     border-radius: 9px;
-    border: 1px solid #000000;
+    /* border: 1px solid #000000; */
     background: rgba(0, 0, 0, 0.6);
 }
 
@@ -209,11 +210,11 @@ entry :focus-within {
     padding: 14px 12px;
     border-radius: 4px;
     background: #15171D;
-    border: 1px solid #000000;
+    /* border: 1px solid #000000; */
 }
 
 .icon-input-root-focused-default {
-    border: 1px solid #3283E8;
+    /* border: 1px solid #3283E8; */
     background: rgba(0, 20, 61, 0.4);
 }
 
