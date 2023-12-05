@@ -3,9 +3,6 @@ use std::{default, time::SystemTime};
 use anyhow::bail;
 use chrono::Local;
 use custom_utils::get_image_from_path;
-use dbus::message::MatchRule;
-use dbus::nonblock;
-use dbus_tokio::connection;
 use grpc::battery_client::BatteryManagerClient;
 use gtk::{
     gdk, gio, glib,
@@ -20,12 +17,14 @@ use relm4::{
     gtk::prelude::ObjectExt,
     AsyncComponentSender,
 };
+use services::zbus::ZbusServiceHandle;
 use std::time::Duration;
 
 mod settings;
 mod theme;
 use tracing::{error, info};
 pub mod errors;
+mod services;
 
 mod grpc;
 use crate::errors::{StatusBarError, StatusBarErrorCodes};
@@ -101,6 +100,8 @@ pub enum Message {
     WifiStateUpdate(WifiState),
     BluetoothStateUpdate(BluetoothState),
     BatteryStatusUpdate(BatteryState),
+    Show,
+    Hide,
 }
 
 pub struct AppWidgets {
@@ -209,7 +210,6 @@ impl AsyncComponent for StatusBar {
         window: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
-        info!("dbus init stated");
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => StatusBarSettings::default(),
@@ -357,98 +357,9 @@ impl AsyncComponent for StatusBar {
             battery_image,
         };
 
-        // let tick = move || {
-        //     let sender_clone = sender.clone();
-        //     let format = modules.clock.format.clone();
-        //     tokio::spawn(async move {
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::TimeTick(current_time(format.as_str())));
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
 
-        //         let init_state_values_response = get_init_data().await;
-
-        //         let init_state_values = match init_state_values_response {
-        //             Ok(r) => r,
-        //             Err(_) => InitValues::default(),
-        //         };
-
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::WifiStateUpdate(init_state_values.wifi_state));
-
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::BluetoothStateUpdate(
-        //                 init_state_values.bluetooth_state,
-        //             ));
-
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::BatteryStatusUpdate(
-        //                 init_state_values.battery_state,
-        //             ));
-        //     });
-
-        //     glib::ControlFlow::Continue
-        // };
-
-        println!("dbus before connection");
-
-        // match connection::new_session_sync() {
-        //     Ok(r) => {
-        //         println!("dbus session created");
-        //         let (resource, conn) = r;
-        //         let _handle = tokio::spawn(async {
-        //             let err = resource.await;
-        //             panic!("Lost connection to D-Bus: {}", err);
-        //         });
-        //         println!("dbus handle created");
-        //         sender.command(|out, shutdown| {
-        //             shutdown
-        //                 .register(async move {
-        //                     let mut interval = tokio::time::interval(Duration::from_secs(2));
-
-        //                     let calls = async move {
-        //                         loop {
-        //                             interval.tick().await;
-        //                         }
-        //                     };
-        //                     let mr = MatchRule::new_signal("com.example.dbustest", "HelloHappened");
-        //                     println!("mr is {:?}", mr);
-        //                     let cc = match conn.add_match(mr).await {
-        //                         Ok(r2) => r2,
-        //                         Err(err) => {
-        //                             println!("dbus error {:?}", err.message());
-        //                             return;
-        //                         }
-        //                     }
-        //                     .cb(move |_, (source,): (String,)| {
-        //                         println!("cb called");
-        //                         println!("dbus Hello from {} happened on the bus!", source);
-        //                         out.send(Message::TimeTick(source.clone())).unwrap();
-        //                         true
-        //                     });
-        //                     calls.await;
-        //                     match conn.remove_match(cc.token()).await {
-        //                         Ok(r) => {
-        //                             println!("handle connection success");
-        //                         }
-        //                         Err(e) => {
-        //                             println!("handle connection failed")
-        //                         }
-        //                     }
-        //                 })
-        //                 .drop_on_shutdown()
-        //         });
-        //         // Needed here to ensure the "incoming_signal" object is not dropped too early
-        //     }
-        //     Err(_) => {
-        //         println!("dbus session create error");
-        //     }
-        // }
-        // println!("dbus after connection");
-
-        //glib::timeout_add_seconds_local(1, tick);
+        init_services(sender).await;
 
         AsyncComponentParts { model, widgets }
     }
@@ -472,6 +383,12 @@ impl AsyncComponent for StatusBar {
             }
             Message::BatteryStatusUpdate(state) => {
                 self.battery_state = state;
+            }
+            Message::Show => {
+                self.window.set_visible(true);
+            }
+            Message::Hide => {
+                self.window.set_visible(false);
             }
         }
     }
@@ -853,4 +770,13 @@ async fn get_battery_data() -> anyhow::Result<BatteryState> {
     };
 
     Ok(battery_state)
+}
+
+async fn init_services(sender: relm4::Sender<Message>) {
+    let mut zbus_handle = ZbusServiceHandle::new();
+
+    let _ = relm4::spawn_local(async move {
+        println!("Starting zbus service");
+        zbus_handle.run(sender).await;
+    });
 }
