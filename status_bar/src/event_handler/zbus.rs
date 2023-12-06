@@ -32,17 +32,15 @@ pub struct ZbusServiceHandle {
     // receiver: mpsc::Receiver<ServiceMessage>,
 }
 
-#[dbus_interface(name = "org.zbus.StatusBar")]
+#[dbus_interface(name = "org.mechanics.StatusBar")]
 impl ZbusHandler {
     // Can be `async` as well.
     fn show(&mut self) {
-        println!("show called");
-        self.sender.send(Message::Show);
+        let _ = self.sender.send(Message::Show);
     }
 
     fn hide(&mut self) {
-        println!("hide called");
-        self.sender.send(Message::Hide);
+        let _ = self.sender.send(Message::Hide);
     }
 }
 
@@ -56,17 +54,17 @@ impl ZbusServiceHandle {
     pub async fn run(&mut self, sender: Sender<Message>) {
         let connection = Connection::session().await.unwrap();
         // setup the server
-        connection
+        let _ = connection
             .object_server()
             .at(
-                "/org/zbus/StatusBar",
+                "/org/mechanics/StatusBar",
                 ZbusHandler {
                     sender: sender.clone(),
                 },
             )
             .await;
         // before requesting the name
-        connection.request_name("org.zbus.StatusBar").await;
+        let _ = connection.request_name("org.mechanics.StatusBar").await;
 
         loop {
             // do something else, wait forever or timeout here:

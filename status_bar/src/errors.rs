@@ -16,7 +16,7 @@ pub enum StatusBarErrorCodes {
     InitNetworkManagerClient,
     InitBluetoothManagerClient,
     InitBatteryManagerClient,
-    GetWifiStatusError,
+    GetWirelessStatusError,
     GetBluetoothStatusError,
     GetBatteryStatusError,
 }
@@ -34,7 +34,7 @@ impl fmt::Display for StatusBarErrorCodes {
                 write!(f, "InitBluetoothManagerClient")
             }
             StatusBarErrorCodes::InitBatteryManagerClient => write!(f, "InitBatteryManagerClient"),
-            StatusBarErrorCodes::GetWifiStatusError => write!(f, "GetWifiStatusError"),
+            StatusBarErrorCodes::GetWirelessStatusError => write!(f, "GetWirelessStatusError"),
             StatusBarErrorCodes::GetBluetoothStatusError => write!(f, "GetBluetoothStatusError"),
             StatusBarErrorCodes::GetBatteryStatusError => write!(f, "GetBatteryStatusError"),
         }

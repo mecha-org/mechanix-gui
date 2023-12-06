@@ -92,7 +92,7 @@ pub struct LayoutSettings {
 pub struct Modules {
     pub clock: ClockModule,
     pub bluetooth: BluetoothModule,
-    pub wifi: WifiModule,
+    pub wireless: WirelessModule,
     pub battery: BatteryModule,
 }
 
@@ -121,10 +121,10 @@ pub struct BluetoothModule {
     pub icon: BluetoothIconPaths,
 }
 
-/// Wifi module
+/// Wireless module
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct WifiModule {
-    pub icon: WifiIconPaths,
+pub struct WirelessModule {
+    pub icon: WirelessIconPaths,
 }
 
 /// Battery module
@@ -141,9 +141,9 @@ pub struct BluetoothIconPaths {
     pub connected: Option<String>,
 }
 
-/// Icon paths for wifi module
+/// Icon paths for wireless module
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct WifiIconPaths {
+pub struct WirelessIconPaths {
     pub off: Option<String>,
     pub on: Option<String>,
     pub low: Option<String>,
@@ -197,8 +197,8 @@ impl Default for Modules {
                     connected: None,
                 },
             },
-            wifi: WifiModule {
-                icon: WifiIconPaths {
+            wireless: WirelessModule {
+                icon: WirelessIconPaths {
                     off: None,
                     on: None,
                     low: None,
