@@ -1,12 +1,11 @@
-use std::{default, time::SystemTime};
 
-use anyhow::bail;
+
+
 use chrono::Local;
 use custom_utils::get_image_from_path;
 use event_handler::zbus::ZbusServiceHandle;
-use grpc::battery_client::BatteryManagerClient;
+
 use gtk::{
-    gdk, gio, glib,
     prelude::{BoxExt, GtkWindowExt, WidgetExt},
 };
 use modules::{
@@ -15,12 +14,11 @@ use modules::{
     wireless::handler::WirelessServiceHandle,
 };
 use relm4::{
-    async_trait::async_trait, gtk, tokio, ComponentParts, ComponentSender, RelmApp, RelmWidgetExt,
+    async_trait::async_trait, gtk, tokio, RelmApp, RelmWidgetExt,
     SimpleComponent,
 };
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
-    gtk::prelude::ObjectExt,
     AsyncComponentSender,
 };
 use std::time::Duration;
@@ -28,13 +26,13 @@ use tokio::time;
 
 mod settings;
 mod theme;
-use tracing::{error, info};
+use tracing::{info};
 pub mod errors;
 mod event_handler;
 mod modules;
 
 mod grpc;
-use crate::errors::{StatusBarError, StatusBarErrorCodes};
+
 use crate::settings::StatusBarSettings;
 use crate::theme::StatusBarTheme;
 // #[allow(non_snake_case)]
@@ -208,8 +206,8 @@ impl AsyncComponent for StatusBar {
             "theme initialized for status bar: {:?}", custom_theme
         );
 
-        let window = init_window(settings);
-        window
+        
+        init_window(settings)
     }
 
     /// Initialize the UI and model.
@@ -409,7 +407,7 @@ impl AsyncComponent for StatusBar {
     fn update_view(&self, widgets: &mut Self::Widgets, _sender: AsyncComponentSender<Self>) {
         widgets
             .clock_label
-            .set_label(&format!("{}", self.current_time));
+            .set_label(&self.current_time.to_string());
 
         let modules = self.settings.modules.clone();
         info!("wireless state is {:?}", self.wireless_state);
@@ -466,57 +464,57 @@ impl AsyncComponent for StatusBar {
 
         match self.battery_state {
             BatteryState::Level0 => {
-                if let Some(icon) = modules.battery.icon.level_0.clone() {
+                if let Some(icon) = modules.battery.icon.level_0 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level10 => {
-                if let Some(icon) = modules.battery.icon.level_10.clone() {
+                if let Some(icon) = modules.battery.icon.level_10 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level20 => {
-                if let Some(icon) = modules.battery.icon.level_20.clone() {
+                if let Some(icon) = modules.battery.icon.level_20 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level30 => {
-                if let Some(icon) = modules.battery.icon.level_30.clone() {
+                if let Some(icon) = modules.battery.icon.level_30 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level40 => {
-                if let Some(icon) = modules.battery.icon.level_40.clone() {
+                if let Some(icon) = modules.battery.icon.level_40 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level50 => {
-                if let Some(icon) = modules.battery.icon.level_50.clone() {
+                if let Some(icon) = modules.battery.icon.level_50 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level60 => {
-                if let Some(icon) = modules.battery.icon.level_60.clone() {
+                if let Some(icon) = modules.battery.icon.level_60 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level70 => {
-                if let Some(icon) = modules.battery.icon.level_70.clone() {
+                if let Some(icon) = modules.battery.icon.level_70 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level80 => {
-                if let Some(icon) = modules.battery.icon.level_80.clone() {
+                if let Some(icon) = modules.battery.icon.level_80 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level90 => {
-                if let Some(icon) = modules.battery.icon.level_90.clone() {
+                if let Some(icon) = modules.battery.icon.level_90 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level100 => {
-                if let Some(icon) = modules.battery.icon.level_100.clone() {
+                if let Some(icon) = modules.battery.icon.level_100 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
@@ -530,8 +528,8 @@ impl AsyncComponent for StatusBar {
     async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        sender: AsyncComponentSender<Self>,
-        root: &Self::Root,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
     ) {
         println!("update_cmd message {:?}", message);
     }
@@ -601,7 +599,7 @@ async fn init_services(settings: StatusBarSettings, sender: relm4::Sender<Messag
     });
 
     let mut window_manager_service_handle = WindowManagerServiceHandle::new();
-    let sender_clone_5 = sender.clone();
+    let sender_clone_5 = sender;
     let _ = relm4::spawn_local(async move {
         println!("Starting window manager service");
         window_manager_service_handle.run(sender_clone_5).await;

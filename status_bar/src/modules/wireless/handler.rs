@@ -38,7 +38,7 @@ impl WirelessServiceHandle {
                 Ok(wireless_status) => {
                     let _ = sender.send(Message::WirelessStateUpdate(wireless_status));
                 }
-                Err(e) => {}
+                Err(_e) => {}
             };
         }
     }

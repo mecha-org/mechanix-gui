@@ -38,7 +38,7 @@ impl BatteryServiceHandle {
                 Ok(battery_status) => {
                     let _ = sender.send(Message::BatteryStatusUpdate(battery_status));
                 }
-                Err(e) => {}
+                Err(_e) => {}
             };
         }
     }

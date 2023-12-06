@@ -26,10 +26,10 @@ impl BatteryManagerClient {
 
     pub async fn get_battery_status(
         &mut self,
-    ) -> Result<(GetPowerSupplyInfoResponse), Box<dyn std::error::Error>> {
+    ) -> Result<GetPowerSupplyInfoResponse, Box<dyn std::error::Error>> {
         let request = tonic::Request::new(Empty {});
         let response = self.client.get_power_supply_info(request).await?;
         println!("bluetooth response is {:?}", response);
-        Ok((response.into_inner()))
+        Ok(response.into_inner())
     }
 }

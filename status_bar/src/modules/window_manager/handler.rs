@@ -38,7 +38,7 @@ impl WindowManagerServiceHandle {
                 Ok(current_window) => {
                     let _ = sender.send(Message::CurrentWindowTitleUpdate(current_window));
                 }
-                Err(e) => {}
+                Err(_e) => {}
             };
         }
     }

@@ -52,7 +52,7 @@ pub struct StatusBarError {
 }
 
 impl StatusBarError {
-    pub fn new(code: StatusBarErrorCodes, message: String, capture_error: bool) -> Self {
+    pub fn new(code: StatusBarErrorCodes, message: String, _capture_error: bool) -> Self {
         error!("Error: (code: {:?}, message: {})", code, message);
         Self { code, message }
     }

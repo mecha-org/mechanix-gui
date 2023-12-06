@@ -10,7 +10,7 @@ pub use networkmanager::{
     WifiConnectRequest,
 };
 
-use self::networkmanager::{NetworkResult, ScanResult, WifiStatusResponse};
+use self::networkmanager::{ScanResult};
 
 pub struct NetworkManagerClient {
     client: NetworkManagerServiceClient<Channel>,
@@ -67,37 +67,37 @@ impl NetworkManagerClient {
 
     pub async fn get_wireless_network_status(
         &mut self,
-    ) -> Result<(ExtendedWifiStatusResponse), Box<dyn std::error::Error>> {
+    ) -> Result<ExtendedWifiStatusResponse, Box<dyn std::error::Error>> {
         let request = tonic::Request::new(Empty {});
         let response = self.client.get_wifi_status(request).await?;
         //println!("Network Status Response: {:?}", response.into_inner());
         let wifi_status = response.into_inner();
         let request2 = tonic::Request::new(Empty {});
-        let mut current_network: Option<ScanResult> = match wifi_status.wifi_on {
+        let current_network: Option<ScanResult> = match wifi_status.wifi_on {
             true => {
                 let response2 = self.client.get_current_network(request2).await;
-                let current_network = match response2 {
+                
+                match response2 {
                     Ok(r) => Option::from(r.into_inner()),
                     Err(_) => None,
-                };
-                current_network
+                }
             }
             false => None,
         };
 
-        Ok((ExtendedWifiStatusResponse {
+        Ok(ExtendedWifiStatusResponse {
             wifi_on: wifi_status.wifi_on,
-            current_network: current_network,
-        }))
+            current_network,
+        })
     }
 
     pub async fn get_current_wireless_network(
         &mut self,
-    ) -> Result<(ScanResult), Box<dyn std::error::Error>> {
+    ) -> Result<ScanResult, Box<dyn std::error::Error>> {
         let request = tonic::Request::new(Empty {});
         let response = self.client.get_current_network(request).await?;
         //println!("Network Status Response: {:?}", response.into_inner());
 
-        Ok((response.into_inner()))
+        Ok(response.into_inner())
     }
 }

@@ -37,7 +37,7 @@ impl BluetoothServiceHandle {
                 Ok(bluetooth_status) => {
                     let _ = sender.send(Message::BluetoothStateUpdate(bluetooth_status));
                 }
-                Err(e) => {}
+                Err(_e) => {}
             };
         }
     }

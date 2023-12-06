@@ -27,10 +27,10 @@ impl BluetoothManagerClient {
 
     pub async fn get_bluetooth_status(
         &mut self,
-    ) -> Result<(BluetoothStatus), Box<dyn std::error::Error>> {
+    ) -> Result<BluetoothStatus, Box<dyn std::error::Error>> {
         let request = tonic::Request::new(Empty {});
         let response = self.client.get_bluetooth_status(request).await?;
         println!("bluetooth response is {:?}", response);
-        Ok((response.into_inner()))
+        Ok(response.into_inner())
     }
 }
