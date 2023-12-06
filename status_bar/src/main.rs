@@ -1,22 +1,14 @@
-
-
-
 use chrono::Local;
 use custom_utils::get_image_from_path;
 use event_handler::zbus::ZbusServiceHandle;
 
-use gtk::{
-    prelude::{BoxExt, GtkWindowExt, WidgetExt},
-};
+use gtk::prelude::{BoxExt, GtkWindowExt, WidgetExt};
 use modules::{
     battery::handler::BatteryServiceHandle, bluetooth::handler::BluetoothServiceHandle,
     clock::handler::ClockServiceHandle, window_manager::handler::WindowManagerServiceHandle,
     wireless::handler::WirelessServiceHandle,
 };
-use relm4::{
-    async_trait::async_trait, gtk, tokio, RelmApp, RelmWidgetExt,
-    SimpleComponent,
-};
+use relm4::{async_trait::async_trait, gtk, tokio, RelmApp, RelmWidgetExt, SimpleComponent};
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
     AsyncComponentSender,
@@ -26,12 +18,10 @@ use tokio::time;
 
 mod settings;
 mod theme;
-use tracing::{info};
+use tracing::info;
 pub mod errors;
 mod event_handler;
 mod modules;
-
-mod grpc;
 
 use crate::settings::StatusBarSettings;
 use crate::theme::StatusBarTheme;
@@ -206,7 +196,6 @@ impl AsyncComponent for StatusBar {
             "theme initialized for status bar: {:?}", custom_theme
         );
 
-        
         init_window(settings)
     }
 
