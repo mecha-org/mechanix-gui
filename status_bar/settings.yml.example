@@ -20,7 +20,7 @@ css:
 layout:
   left: ["clock"]
   center: ["window_title"]
-  right: ["wifi", "bluetooth", "battery",]
+  right: ["wireless", "bluetooth", "battery",]
 modules:
   clock:
     format: "%I:%M %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
@@ -29,14 +29,14 @@ modules:
       on: /home/user/.mecha/status_bar/src/assets/pngs/bluetooth_on.png"
       off: /home/user/.mecha/status_bar/src/assets/pngs/bluetooth_off.png
       connected: /home/user/.mecha/status_bar/src/assets/pngs/bluetooth_connected.png
-  wifi:
+  wireless:
     icon:
-      off: /home/user/.mecha/status_bar/src/assets/pngs/wifi_off.png
-      on: /home/user/.mecha/status_bar/src/assets/pngs/wifi_on.png
-      low: /home/user/.mecha/status_bar/src/assets/pngs/wifi_low.png
-      weak: /home/user/.mecha/status_bar/src/assets/pngs/wifi_weak.png
-      good: /home/user/.mecha/status_bar/src/assets/pngs/wifi_good.png
-      strong: /home/user/.mecha/status_bar/src/assets/pngs/wifi_strong.png
+      off: /home/user/.mecha/status_bar/src/assets/pngs/wireless_off.png
+      on: /home/user/.mecha/status_bar/src/assets/pngs/wireless_on.png
+      low: /home/user/.mecha/status_bar/src/assets/pngs/wireless_low.png
+      weak: /home/user/.mecha/status_bar/src/assets/pngs/wireless_weak.png
+      good: /home/user/.mecha/status_bar/src/assets/pngs/wireless_good.png
+      strong: /home/user/.mecha/status_bar/src/assets/pngs/wireless_strong.png
   battery:
     icon:
       level_100: /home/user/.mecha/status_bar/src/assets/pngs/battery_100.png

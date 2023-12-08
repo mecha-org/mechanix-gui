@@ -1,36 +1,36 @@
-use std::{default, time::SystemTime};
-
-use anyhow::bail;
 use chrono::Local;
 use custom_utils::get_image_from_path;
-use dbus::message::MatchRule;
-use dbus::nonblock;
-use dbus_tokio::connection;
-use grpc::battery_client::BatteryManagerClient;
+use echo_client::EchoClient;
+use event_handler::zbus::ZbusServiceHandle;
+
+use gtk::gdk;
 use gtk::{
-    gdk, gio, glib,
+    ffi,
+    gdk::{
+        prelude::{DisplayExt, MonitorExt, SurfaceExt},
+        Display,
+    },
     prelude::{BoxExt, GtkWindowExt, WidgetExt},
 };
-use relm4::{
-    async_trait::async_trait, gtk, tokio, ComponentParts, ComponentSender, RelmApp, RelmWidgetExt,
-    SimpleComponent,
+use modules::{
+    battery::handler::BatteryServiceHandle, bluetooth::handler::BluetoothServiceHandle,
+    clock::handler::ClockServiceHandle, window::handler::WindowServiceHandle,
+    wireless::handler::WirelessServiceHandle,
 };
+use process::is_app_already_running;
+use relm4::{async_trait::async_trait, gtk, tokio, RelmApp, RelmWidgetExt, SimpleComponent};
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
-    gtk::prelude::ObjectExt,
     AsyncComponentSender,
 };
-use std::time::Duration;
 
 mod settings;
 mod theme;
-use tracing::{error, info};
+use tracing::info;
 pub mod errors;
+mod event_handler;
+mod modules;
 
-mod grpc;
-use crate::errors::{StatusBarError, StatusBarErrorCodes};
-use crate::grpc::bluetooth_client::BluetoothManagerClient;
-use crate::grpc::network_client::NetworkManagerClient;
 use crate::settings::StatusBarSettings;
 use crate::theme::StatusBarTheme;
 // #[allow(non_snake_case)]
@@ -45,14 +45,15 @@ pub struct StatusBar {
     pub settings: StatusBarSettings,
     pub current_time: String,
     pub custom_theme: StatusBarTheme,
-    pub wifi_state: WifiState,
+    pub wireless_state: WirelessState,
     pub bluetooth_state: BluetoothState,
     pub battery_state: BatteryState,
     pub window: gtk::Window,
+    pub current_window_title: String,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum WifiConnectedState {
+pub enum WirelessConnectedState {
     Low,
     Weak,
     Good,
@@ -60,11 +61,12 @@ pub enum WifiConnectedState {
 }
 
 #[derive(Default, Debug, Clone, Copy)]
-pub enum WifiState {
+pub enum WirelessState {
     On,
     #[default]
     Off,
-    Connected(WifiConnectedState),
+    Connected(WirelessConnectedState),
+    NotFound,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -73,6 +75,7 @@ pub enum BluetoothState {
     #[default]
     Off,
     Connected,
+    NotFound,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -89,6 +92,7 @@ pub enum BatteryState {
     Level80,
     Level90,
     Level100,
+    NotFound,
 }
 
 /// ## Message
@@ -98,16 +102,21 @@ pub enum BatteryState {
 #[derive(Debug, Clone)]
 pub enum Message {
     TimeTick(String),
-    WifiStateUpdate(WifiState),
+    WirelessStateUpdate(WirelessState),
     BluetoothStateUpdate(BluetoothState),
     BatteryStatusUpdate(BatteryState),
+    CurrentWindowTitleUpdate(String),
+    TopLevelActiveUpdate(bool),
+    Show,
+    Hide,
 }
 
 pub struct AppWidgets {
     pub clock_label: gtk::Label,
-    pub wifi_image: gtk::Image,
+    pub wireless_image: gtk::Image,
     pub bluetooth_image: gtk::Image,
     pub battery_image: gtk::Image,
+    pub current_window_title_label: gtk::Label,
 }
 
 #[cfg(not(feature = "layer-shell"))]
@@ -115,48 +124,115 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
     let window_settings = settings.window;
     let window = gtk::Window::builder()
         .title(settings.title)
-        .default_width(window_settings.size.0)
-        .default_height(window_settings.size.1)
         .css_classes(["window"])
         .build();
+
+    match window_settings.width {
+        Some(v) => {
+            window.set_default_width(v);
+        }
+        None => {
+            window.set_hexpand(true);
+        }
+    }
+
+    match window_settings.height {
+        Some(v) => {
+            window.set_default_height(v);
+        }
+        None => {
+            window.set_vexpand(true);
+        }
+    }
     window
 }
 
 #[cfg(feature = "layer-shell")]
 fn init_window(settings: StatusBarSettings) -> gtk::Window {
+    use relm4::gtk::{
+        gdk::DisplayManager,
+        prelude::{NativeExt, SurfaceExt},
+    };
+
     let window_settings = settings.window;
     let window = gtk::Window::builder()
         .title(settings.title)
-        .default_width(window_settings.size.0)
-        .default_height(window_settings.size.1)
         .css_classes(["window"])
         .build();
+
+    match window_settings.width {
+        Some(v) => {
+            window.set_default_width(v);
+        }
+        None => {}
+    }
+
+    match window_settings.height {
+        Some(v) => {
+            window.set_default_height(v);
+            // Push other windows out of the way
+            gtk4_layer_shell::set_exclusive_zone(&window, v);
+        }
+        None => {}
+    }
 
     gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
     // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
 
-    // Push other windows out of the way
-    gtk4_layer_shell::set_exclusive_zone(&window, window_settings.size.1);
-
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+    match window_settings.layer_shell.margin.top {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.right {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.left {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
+    }
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
-    let anchors = [
-        (gtk4_layer_shell::Edge::Left, true),
-        (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, false),
-    ];
-
-    for (anchor, state) in anchors {
-        gtk4_layer_shell::set_anchor(&window, anchor, state);
+    match window_settings.layer_shell.anchor.top {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.right {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.left {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
     }
 
     window
@@ -178,7 +254,7 @@ impl AsyncComponent for StatusBar {
     type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
-        println!("init_root started");
+        info!("init_root started");
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => StatusBarSettings::default(),
@@ -199,8 +275,7 @@ impl AsyncComponent for StatusBar {
             "theme initialized for status bar: {:?}", custom_theme
         );
 
-        let window = init_window(settings);
-        window
+        init_window(settings)
     }
 
     /// Initialize the UI and model.
@@ -209,11 +284,11 @@ impl AsyncComponent for StatusBar {
         window: Self::Root,
         sender: AsyncComponentSender<Self>,
     ) -> AsyncComponentParts<Self> {
-        info!("dbus init stated");
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => StatusBarSettings::default(),
         };
+
         let css = settings.css.clone();
         relm4::set_global_css_from_file(css.default);
 
@@ -224,15 +299,9 @@ impl AsyncComponent for StatusBar {
 
         let modules = settings.modules.clone();
 
-        let init_state_values_response = get_init_data().await;
-
-        let init_state_values = match init_state_values_response {
-            Ok(r) => r,
-            Err(e) => InitValues::default(),
-        };
-
         let main_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Horizontal)
+            .hexpand(true)
             .css_classes(["container"])
             .build();
 
@@ -256,17 +325,22 @@ impl AsyncComponent for StatusBar {
             .spacing(16)
             .build();
 
-        let formatted_time = current_time(modules.clock.format.as_str());
+        let formatted_time = String::from("");
         let clock_label = gtk::Label::new(Some(&formatted_time));
         clock_label.set_class_active("clock", true);
 
-        let wifi_image = get_image_from_path(modules.wifi.icon.strong, &["icon"]);
+        let wireless_image = get_image_from_path(modules.wireless.icon.strong, &["icon"]);
         let bluetooth_image = get_image_from_path(modules.bluetooth.icon.connected, &["icon"]);
         let battery_image = get_image_from_path(modules.battery.icon.level_70, &["icon"]);
 
         let layout = settings.clone().layout;
 
-        let window_title_label = gtk::Label::new(Some(&""));
+        let current_window_title = String::from("");
+        let current_window_title_label = gtk::Label::builder()
+            .label(&current_window_title)
+            .halign(gtk::Align::Center)
+            .hexpand(true)
+            .build();
 
         //Generate left layout
         for layout_item in layout.left.iter() {
@@ -274,8 +348,8 @@ impl AsyncComponent for StatusBar {
                 "clock" => {
                     left_box.append(&clock_label);
                 }
-                "wifi" => {
-                    left_box.append(&wifi_image);
+                "wireless" => {
+                    left_box.append(&wireless_image);
                 }
                 "bluetooth" => {
                     left_box.append(&bluetooth_image);
@@ -284,7 +358,7 @@ impl AsyncComponent for StatusBar {
                     left_box.append(&battery_image);
                 }
                 "window_title" => {
-                    left_box.append(&window_title_label);
+                    left_box.append(&current_window_title_label);
                 }
                 _ => println!("Component not found for: {}", layout_item),
             }
@@ -296,8 +370,8 @@ impl AsyncComponent for StatusBar {
                 "clock" => {
                     center_box.append(&clock_label);
                 }
-                "wifi" => {
-                    center_box.append(&wifi_image);
+                "wireless" => {
+                    center_box.append(&wireless_image);
                 }
                 "bluetooth" => {
                     center_box.append(&bluetooth_image);
@@ -306,7 +380,7 @@ impl AsyncComponent for StatusBar {
                     center_box.append(&battery_image);
                 }
                 "window_title" => {
-                    center_box.append(&window_title_label);
+                    center_box.append(&current_window_title_label);
                 }
                 _ => println!("Component not found for: {}", layout_item),
             }
@@ -318,8 +392,8 @@ impl AsyncComponent for StatusBar {
                 "clock" => {
                     right_box.append(&clock_label);
                 }
-                "wifi" => {
-                    right_box.append(&wifi_image);
+                "wireless" => {
+                    right_box.append(&wireless_image);
                 }
                 "bluetooth" => {
                     right_box.append(&bluetooth_image);
@@ -328,7 +402,7 @@ impl AsyncComponent for StatusBar {
                     right_box.append(&battery_image);
                 }
                 "window_title" => {
-                    right_box.append(&window_title_label);
+                    right_box.append(&current_window_title_label);
                 }
                 _ => println!("Component not found for: {}", layout_item),
             }
@@ -343,112 +417,25 @@ impl AsyncComponent for StatusBar {
         let model = StatusBar {
             settings: settings.clone(),
             custom_theme,
-            current_time: current_time(modules.clock.format.as_str()),
-            wifi_state: init_state_values.wifi_state,
-            bluetooth_state: init_state_values.bluetooth_state,
-            battery_state: init_state_values.battery_state,
+            current_time: formatted_time,
+            wireless_state: WirelessState::default(),
+            bluetooth_state: BluetoothState::default(),
+            battery_state: BatteryState::default(),
             window,
+            current_window_title,
         };
 
         let widgets = AppWidgets {
             clock_label,
-            wifi_image,
+            wireless_image,
             bluetooth_image,
             battery_image,
+            current_window_title_label,
         };
 
-        // let tick = move || {
-        //     let sender_clone = sender.clone();
-        //     let format = modules.clock.format.clone();
-        //     tokio::spawn(async move {
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::TimeTick(current_time(format.as_str())));
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
 
-        //         let init_state_values_response = get_init_data().await;
-
-        //         let init_state_values = match init_state_values_response {
-        //             Ok(r) => r,
-        //             Err(_) => InitValues::default(),
-        //         };
-
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::WifiStateUpdate(init_state_values.wifi_state));
-
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::BluetoothStateUpdate(
-        //                 init_state_values.bluetooth_state,
-        //             ));
-
-        //         let _ = sender_clone
-        //             .input_sender()
-        //             .send(Message::BatteryStatusUpdate(
-        //                 init_state_values.battery_state,
-        //             ));
-        //     });
-
-        //     glib::ControlFlow::Continue
-        // };
-
-        println!("dbus before connection");
-
-        // match connection::new_session_sync() {
-        //     Ok(r) => {
-        //         println!("dbus session created");
-        //         let (resource, conn) = r;
-        //         let _handle = tokio::spawn(async {
-        //             let err = resource.await;
-        //             panic!("Lost connection to D-Bus: {}", err);
-        //         });
-        //         println!("dbus handle created");
-        //         sender.command(|out, shutdown| {
-        //             shutdown
-        //                 .register(async move {
-        //                     let mut interval = tokio::time::interval(Duration::from_secs(2));
-
-        //                     let calls = async move {
-        //                         loop {
-        //                             interval.tick().await;
-        //                         }
-        //                     };
-        //                     let mr = MatchRule::new_signal("com.example.dbustest", "HelloHappened");
-        //                     println!("mr is {:?}", mr);
-        //                     let cc = match conn.add_match(mr).await {
-        //                         Ok(r2) => r2,
-        //                         Err(err) => {
-        //                             println!("dbus error {:?}", err.message());
-        //                             return;
-        //                         }
-        //                     }
-        //                     .cb(move |_, (source,): (String,)| {
-        //                         println!("cb called");
-        //                         println!("dbus Hello from {} happened on the bus!", source);
-        //                         out.send(Message::TimeTick(source.clone())).unwrap();
-        //                         true
-        //                     });
-        //                     calls.await;
-        //                     match conn.remove_match(cc.token()).await {
-        //                         Ok(r) => {
-        //                             println!("handle connection success");
-        //                         }
-        //                         Err(e) => {
-        //                             println!("handle connection failed")
-        //                         }
-        //                     }
-        //                 })
-        //                 .drop_on_shutdown()
-        //         });
-        //         // Needed here to ensure the "incoming_signal" object is not dropped too early
-        //     }
-        //     Err(_) => {
-        //         println!("dbus session create error");
-        //     }
-        // }
-        // println!("dbus after connection");
-
-        //glib::timeout_add_seconds_local(1, tick);
+        init_services(settings, sender).await;
 
         AsyncComponentParts { model, widgets }
     }
@@ -464,14 +451,26 @@ impl AsyncComponent for StatusBar {
             Message::TimeTick(time) => {
                 self.current_time = time;
             }
-            Message::WifiStateUpdate(state) => {
-                self.wifi_state = state;
+            Message::WirelessStateUpdate(state) => {
+                self.wireless_state = state;
             }
             Message::BluetoothStateUpdate(state) => {
                 self.bluetooth_state = state;
             }
             Message::BatteryStatusUpdate(state) => {
                 self.battery_state = state;
+            }
+            Message::Show => {
+                self.window.set_visible(true);
+            }
+            Message::Hide => {
+                self.window.set_visible(false);
+            }
+            Message::CurrentWindowTitleUpdate(window_title) => {
+                self.current_window_title = window_title;
+            }
+            Message::TopLevelActiveUpdate(is_active) => {
+                self.window.set_class_active("window-active", is_active);
             }
         }
     }
@@ -480,44 +479,54 @@ impl AsyncComponent for StatusBar {
     fn update_view(&self, widgets: &mut Self::Widgets, _sender: AsyncComponentSender<Self>) {
         widgets
             .clock_label
-            .set_label(&format!("{}", self.current_time));
+            .set_label(&self.current_time.to_string());
 
         let modules = self.settings.modules.clone();
-        info!("wifi state is {:?}", self.wifi_state);
-        match self.wifi_state {
-            WifiState::Off => {
-                if let Some(icon) = modules.wifi.icon.off.clone() {
-                    widgets.wifi_image.set_file(Some(&icon));
+        info!("wireless state is {:?}", self.wireless_state);
+        match self.wireless_state {
+            WirelessState::NotFound => {
+                if let Some(icon) = modules.wireless.icon.not_found.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
                 }
             }
-            WifiState::On => {
-                if let Some(icon) = modules.wifi.icon.on.clone() {
-                    widgets.wifi_image.set_file(Some(&icon));
+            WirelessState::Off => {
+                if let Some(icon) = modules.wireless.icon.off.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
                 }
             }
-            WifiState::Connected(WifiConnectedState::Low) => {
-                if let Some(icon) = modules.wifi.icon.low.clone() {
-                    widgets.wifi_image.set_file(Some(&icon));
+            WirelessState::On => {
+                if let Some(icon) = modules.wireless.icon.on.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
                 }
             }
-            WifiState::Connected(WifiConnectedState::Weak) => {
-                if let Some(icon) = modules.wifi.icon.weak.clone() {
-                    widgets.wifi_image.set_file(Some(&icon));
+            WirelessState::Connected(WirelessConnectedState::Low) => {
+                if let Some(icon) = modules.wireless.icon.low.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
                 }
             }
-            WifiState::Connected(WifiConnectedState::Good) => {
-                if let Some(icon) = modules.wifi.icon.good.clone() {
-                    widgets.wifi_image.set_file(Some(&icon));
+            WirelessState::Connected(WirelessConnectedState::Weak) => {
+                if let Some(icon) = modules.wireless.icon.weak.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
                 }
             }
-            WifiState::Connected(WifiConnectedState::Strong) => {
-                if let Some(icon) = modules.wifi.icon.strong.clone() {
-                    widgets.wifi_image.set_file(Some(&icon));
+            WirelessState::Connected(WirelessConnectedState::Good) => {
+                if let Some(icon) = modules.wireless.icon.good.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
+                }
+            }
+            WirelessState::Connected(WirelessConnectedState::Strong) => {
+                if let Some(icon) = modules.wireless.icon.strong.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
                 }
             }
         }
 
         match self.bluetooth_state {
+            BluetoothState::NotFound => {
+                if let Some(icon) = modules.bluetooth.icon.not_found.clone() {
+                    widgets.bluetooth_image.set_file(Some(&icon));
+                }
+            }
             BluetoothState::Off => {
                 if let Some(icon) = modules.bluetooth.icon.off.clone() {
                     widgets.bluetooth_image.set_file(Some(&icon));
@@ -536,75 +545,112 @@ impl AsyncComponent for StatusBar {
         }
 
         match self.battery_state {
+            BatteryState::NotFound => {
+                if let Some(icon) = modules.battery.icon.not_found {
+                    widgets.battery_image.set_file(Some(&icon));
+                }
+            }
             BatteryState::Level0 => {
-                if let Some(icon) = modules.battery.icon.level_0.clone() {
+                if let Some(icon) = modules.battery.icon.level_0 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level10 => {
-                if let Some(icon) = modules.battery.icon.level_10.clone() {
+                if let Some(icon) = modules.battery.icon.level_10 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level20 => {
-                if let Some(icon) = modules.battery.icon.level_20.clone() {
+                if let Some(icon) = modules.battery.icon.level_20 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level30 => {
-                if let Some(icon) = modules.battery.icon.level_30.clone() {
+                if let Some(icon) = modules.battery.icon.level_30 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level40 => {
-                if let Some(icon) = modules.battery.icon.level_40.clone() {
+                if let Some(icon) = modules.battery.icon.level_40 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level50 => {
-                if let Some(icon) = modules.battery.icon.level_50.clone() {
+                if let Some(icon) = modules.battery.icon.level_50 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level60 => {
-                if let Some(icon) = modules.battery.icon.level_60.clone() {
+                if let Some(icon) = modules.battery.icon.level_60 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level70 => {
-                if let Some(icon) = modules.battery.icon.level_70.clone() {
+                if let Some(icon) = modules.battery.icon.level_70 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level80 => {
-                if let Some(icon) = modules.battery.icon.level_80.clone() {
+                if let Some(icon) = modules.battery.icon.level_80 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level90 => {
-                if let Some(icon) = modules.battery.icon.level_90.clone() {
+                if let Some(icon) = modules.battery.icon.level_90 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
             BatteryState::Level100 => {
-                if let Some(icon) = modules.battery.icon.level_100.clone() {
+                if let Some(icon) = modules.battery.icon.level_100 {
                     widgets.battery_image.set_file(Some(&icon));
                 }
             }
         }
+
+        widgets
+            .current_window_title_label
+            .set_label(&self.current_window_title);
     }
 
     async fn update_cmd(
         &mut self,
         message: Self::CommandOutput,
-        sender: AsyncComponentSender<Self>,
-        root: &Self::Root,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
     ) {
         println!("update_cmd message {:?}", message);
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let command_index = args.iter().position(|arg| arg == "-cmd");
+    match command_index {
+        Some(index) => match args.get(index + 1) {
+            Some(cmd) => {
+                match EchoClient::echo(
+                    "org.mechanics.StatusBar",
+                    "/org/mechanics/StatusBar",
+                    "org.mechanics.StatusBar",
+                    cmd,
+                )
+                .await
+                {
+                    Ok(r) => {
+                        println!("echo success");
+                    }
+                    Err(e) => {
+                        println!("echo failed {}", e);
+                    }
+                };
+                return;
+            }
+            None => (),
+        },
+        None => (),
+    }
+
     // Enables logger
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt()
@@ -616,241 +662,48 @@ fn main() {
     app.run_async::<StatusBar>(());
 }
 
-fn current_time(format_string: &str) -> String {
-    format!("{}", Local::now().format(format_string))
-}
+async fn init_services(settings: StatusBarSettings, sender: relm4::Sender<Message>) {
+    let mut zbus_service_handle = ZbusServiceHandle::new();
+    let sender_clone_1 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting zbus service");
+        zbus_service_handle.run(sender_clone_1).await;
+    });
 
-fn get_sys_time_in_secs() -> u64 {
-    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(n) => n.as_secs(),
-        Err(_) => 1,
-    }
-}
+    let mut wireless_service_handle = WirelessServiceHandle::new();
+    let sender_clone_2 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting wireless service");
+        wireless_service_handle.run(sender_clone_2).await;
+    });
 
-#[derive(Default, Debug, Clone)]
-struct InitValues {
-    wifi_state: WifiState,
-    battery_state: BatteryState,
-    bluetooth_state: BluetoothState,
-}
+    let mut bluetooth_service_handle = BluetoothServiceHandle::new();
+    let sender_clone_3 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting bluetooth service");
+        bluetooth_service_handle.run(sender_clone_3).await;
+    });
 
-async fn get_init_data() -> anyhow::Result<InitValues> {
-    let wifi_state = match get_wifi_data().await {
-        Ok(r) => r,
-        Err(_) => WifiState::Off,
-    };
+    let mut battery_service_handle = BatteryServiceHandle::new();
+    let sender_clone_4 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting battery service");
+        battery_service_handle.run(sender_clone_4).await;
+    });
 
-    let bluetooth_state = match get_bluetooth_data().await {
-        Ok(r) => r,
-        Err(_) => BluetoothState::Off,
-    };
+    let mut clock_service_handle = ClockServiceHandle::new();
+    let sender_clone_4 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting clock");
+        clock_service_handle
+            .run(settings.modules.clock.format, sender_clone_4)
+            .await;
+    });
 
-    let battery_state = match get_battery_data().await {
-        Ok(r) => r,
-        Err(_) => BatteryState::Level0,
-    };
-
-    Ok(InitValues {
-        wifi_state,
-        bluetooth_state,
-        battery_state,
-        ..Default::default()
-    })
-}
-
-async fn get_network_client() -> anyhow::Result<NetworkManagerClient> {
-    let url = match std::env::var("GRPC_SERVER_URL") {
-        Ok(r) => r,
-        Err(_) => "".to_string(),
-    };
-    let network_manager_client_response = NetworkManagerClient::new(url).await;
-    let network_manager_client = match network_manager_client_response {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::InitNetworkManagerClient,
-                format!("unable to create network manager client error - {}", e),
-                true
-            ));
-        }
-    };
-    Ok(network_manager_client)
-}
-
-async fn get_bluetooth_client() -> anyhow::Result<BluetoothManagerClient> {
-    let url = match std::env::var("GRPC_SERVER_URL") {
-        Ok(r) => r,
-        Err(_) => "".to_string(),
-    };
-    let bluetooth_manager_client_response = BluetoothManagerClient::new(url).await;
-    let bluetooth_manager_client = match bluetooth_manager_client_response {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::InitBluetoothManagerClient,
-                format!("unable to create bluetooth manager client error - {}", e),
-                true
-            ));
-        }
-    };
-    Ok(bluetooth_manager_client)
-}
-
-async fn get_battery_client() -> anyhow::Result<BatteryManagerClient> {
-    let url = match std::env::var("GRPC_SERVER_URL") {
-        Ok(r) => r,
-        Err(_) => "".to_string(),
-    };
-    let battery_manager_client_response = BatteryManagerClient::new(url).await;
-    let battery_manager_client = match battery_manager_client_response {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::InitBatteryManagerClient,
-                format!("unable to create battery manager client error - {}", e),
-                true
-            ));
-        }
-    };
-    Ok(battery_manager_client)
-}
-
-async fn get_wifi_data() -> anyhow::Result<WifiState> {
-    let mut network_manager_client = match get_network_client().await {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::InitNetworkManagerClient,
-                format!("unable to create network manager client error - {}", e),
-                true
-            ));
-        }
-    };
-
-    let wifi_status_response = network_manager_client.get_wireless_network_status().await;
-    let wifi_status = match wifi_status_response {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::GetWifiStatusError,
-                format!("unable to get wireless network status error - {}", e),
-                true
-            ));
-        }
-    };
-
-    let mut wifi_state = match wifi_status.wifi_on {
-        true => WifiState::On,
-        false => WifiState::Off,
-    };
-
-    match wifi_status.current_network {
-        Some(current_network) => {
-            if current_network.signal <= -80 {
-                wifi_state = WifiState::Connected(WifiConnectedState::Low);
-            } else if current_network.signal <= -60 {
-                wifi_state = WifiState::Connected(WifiConnectedState::Weak);
-            } else if current_network.signal <= -40 {
-                wifi_state = WifiState::Connected(WifiConnectedState::Good);
-            } else {
-                wifi_state = WifiState::Connected(WifiConnectedState::Strong);
-            }
-        }
-        None => {}
-    }
-
-    // let current_wireless_response = network_manager_client.get_current_wireless_network().await;
-    // let current_wireless_network = match current_wireless_response {
-    //     Ok(r) => Option::from(r),
-    //     Err(e) => {
-    //         bail!(StatusBarError::new(
-    //             StatusBarErrorCodes::GetWifiStatusError,
-    //             format!("unable to get wireless network status error - {}", e),
-    //             true
-    //         ));
-    //     }
-    // };
-
-    // match current_wireless_network {
-    //     Some(_) => {
-    //         wifi_state = WifiState::Connected(WifiConnectedState::Strong);
-    //     }
-    //     None => {}
-    // }
-
-    Ok(wifi_state)
-}
-
-async fn get_bluetooth_data() -> anyhow::Result<BluetoothState> {
-    let mut bluetooth_manager_client = match get_bluetooth_client().await {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::InitBluetoothManagerClient,
-                format!("unable to create bluetooth manager client error - {}", e),
-                true
-            ));
-        }
-    };
-    let bluetooth_status_response = bluetooth_manager_client.get_bluetooth_status().await;
-    let bluetooth_status = match bluetooth_status_response {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::GetBluetoothStatusError,
-                format!("unable to get bluetooth status error - {}", e),
-                true
-            ));
-        }
-    };
-
-    let bluetooth_state = match bluetooth_status.enabled {
-        true => BluetoothState::On,
-        false => BluetoothState::Off,
-    };
-
-    Ok(bluetooth_state)
-}
-
-async fn get_battery_data() -> anyhow::Result<BatteryState> {
-    let mut battery_manager_client = match get_battery_client().await {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::InitBatteryManagerClient,
-                format!("unable to create battery manager client error - {}", e),
-                true
-            ));
-        }
-    };
-    let battery_status_response = battery_manager_client.get_battery_status().await;
-    let battery_status = match battery_status_response {
-        Ok(r) => r,
-        Err(e) => {
-            bail!(StatusBarError::new(
-                StatusBarErrorCodes::GetBatteryStatusError,
-                format!("unable to get battery status error - {}", e),
-                true
-            ));
-        }
-    };
-
-    let battery_capacity = battery_status.capacity.parse::<u8>().unwrap();
-
-    let battery_state = match battery_capacity {
-        0..=9 => BatteryState::Level0,
-        10..=19 => BatteryState::Level10,
-        20..=29 => BatteryState::Level20,
-        30..=39 => BatteryState::Level30,
-        40..=49 => BatteryState::Level40,
-        50..=59 => BatteryState::Level50,
-        60..=69 => BatteryState::Level60,
-        70..=79 => BatteryState::Level70,
-        80..=89 => BatteryState::Level80,
-        90..=99 => BatteryState::Level90,
-        100 => BatteryState::Level100,
-        _ => BatteryState::Level100,
-    };
-
-    Ok(battery_state)
+    let mut window_manager_service_handle = WindowServiceHandle::new();
+    let sender_clone_5 = sender;
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting window manager service");
+        window_manager_service_handle.run(sender_clone_5).await;
+    });
 }

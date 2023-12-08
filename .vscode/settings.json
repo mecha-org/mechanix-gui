@@ -1,3 +1,5 @@
 {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "statiolake.vscode-rustfmt",
     "rust-analyzer.cargo.noDefaultFeatures": true,
 }
