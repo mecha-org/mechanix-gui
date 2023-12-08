@@ -1,112 +1,59 @@
-use std::borrow::Cow;
 use std::fmt;
-use std::sync::Arc;
 
-pub use std::error::Error as StdError;
+use tracing::error;
 
-/// Result type returned from functions that can have our `Error`s.
-pub type Result<T, E = Error> = std::result::Result<T, E>;
-
-type ErrorMsg = Cow<'static, str>;
-
-/// Error type
-#[derive(Debug, Clone)]
-pub struct Error {
-    pub message: Option<ErrorMsg>,
-    pub cause: Option<Arc<dyn StdError + Send + Sync + 'static>>,
+/// # battery module Error Codes
+///
+/// Implements standard errors for the battery module
+#[derive(Debug, Default, Clone, Copy)]
+pub enum WlrootsErrorCodes {
+    #[default]
+    UnknownError,
+    ConnectWaylandServerError,
+    ConnectionError,
+    WaylandCompositorSupportError,
+    WaylandServerFlushingError,
+    ToplevelManagerFinishedError,
 }
 
-impl Error {
-    pub fn new<T: Into<ErrorMsg>>(message: T) -> Self {
-        Self {
-            message: Some(message.into()),
-            cause: None,
-        }
-    }
-}
-
-pub trait ErrorContext<T> {
-    fn error<M: Into<ErrorMsg>>(self, message: M) -> Result<T>;
-    fn or_error<M: Into<ErrorMsg>, F: FnOnce() -> M>(self, f: F) -> Result<T>;
-}
-
-impl<T, E: StdError + Send + Sync + 'static> ErrorContext<T> for Result<T, E> {
-    fn error<M: Into<ErrorMsg>>(self, message: M) -> Result<T> {
-        self.map_err(|e| Error {
-            message: Some(message.into()),
-            cause: Some(Arc::new(e)),
-        })
-    }
-
-    fn or_error<M: Into<ErrorMsg>, F: FnOnce() -> M>(self, f: F) -> Result<T> {
-        self.map_err(|e| Error {
-            message: Some(f().into()),
-            cause: Some(Arc::new(e)),
-        })
-    }
-}
-
-impl<T> ErrorContext<T> for Option<T> {
-    fn error<M: Into<ErrorMsg>>(self, message: M) -> Result<T> {
-        self.ok_or_else(|| Error {
-            message: Some(message.into()),
-            cause: None,
-        })
-    }
-
-    fn or_error<M: Into<ErrorMsg>, F: FnOnce() -> M>(self, f: F) -> Result<T> {
-        self.ok_or_else(|| Error {
-            message: Some(f().into()),
-            cause: None,
-        })
-    }
-}
-
-impl fmt::Display for Error {
+impl fmt::Display for WlrootsErrorCodes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.message.as_deref().unwrap_or("Error"))?;
-
-        if let Some(cause) = &self.cause {
-            write!(f, ". Cause: {cause}")?;
+        match self {
+            WlrootsErrorCodes::UnknownError => write!(f, "UnknownError"),
+            WlrootsErrorCodes::ConnectWaylandServerError => write!(f, "ConnectWaylandServerError"),
+            WlrootsErrorCodes::ConnectionError => write!(f, "ConnectionError"),
+            WlrootsErrorCodes::WaylandCompositorSupportError => {
+                write!(f, "WaylandCompositorSupportError")
+            }
+            WlrootsErrorCodes::WaylandServerFlushingError => {
+                write!(f, "WaylandServerFlushingError")
+            }
+            WlrootsErrorCodes::ToplevelManagerFinishedError => {
+                write!(f, "ToplevelManagerFinishedError")
+            }
         }
-
-        Ok(())
     }
 }
 
-impl From<Error> for zbus::fdo::Error {
-    fn from(err: Error) -> Self {
-        Self::Failed(err.to_string())
+/// # WlrootsError
+///
+/// Implements a standard error type for all status bar related errors
+/// includes the error code (`WlrootsErrorCodes`) and a message
+#[derive(Debug, Default)]
+pub struct WlrootsError {
+    pub code: WlrootsErrorCodes,
+    pub message: String,
+}
+
+impl WlrootsError {
+    pub fn new(code: WlrootsErrorCodes, message: String, _capture_error: bool) -> Self {
+        error!("Error: (code: {:?}, message: {})", code, message);
+        Self { code, message }
     }
 }
 
-impl StdError for Error {}
-
-pub trait ToSerdeError<T> {
-    fn serde_error<E: serde::de::Error>(self) -> Result<T, E>;
-}
-
-impl<T, F> ToSerdeError<T> for Result<T, F>
-where
-    F: fmt::Display,
-{
-    fn serde_error<E: serde::de::Error>(self) -> Result<T, E> {
-        self.map_err(E::custom)
+impl std::fmt::Display for WlrootsError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(code: {:?}, message: {})", self.code, self.message)
     }
 }
-
-pub struct BoxErrorWrapper(pub Box<dyn StdError + Send + Sync + 'static>);
-
-impl fmt::Debug for BoxErrorWrapper {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Debug::fmt(&self.0, f)
-    }
-}
-
-impl fmt::Display for BoxErrorWrapper {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::Display::fmt(&self.0, f)
-    }
-}
-
-impl StdError for BoxErrorWrapper {}

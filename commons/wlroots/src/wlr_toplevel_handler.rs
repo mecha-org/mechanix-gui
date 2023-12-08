@@ -5,9 +5,12 @@ use std::time::Duration;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{select, time};
+use tracing::info;
 use wayrs_client::global::GlobalsExt;
 use wayrs_client::{Connection, EventCtx};
 use wayrs_protocols::wlr_foreign_toplevel_management_unstable_v1::*;
+
+use crate::errors::{WlrootsError, WlrootsErrorCodes};
 
 #[derive(Default, Debug, Clone)]
 pub struct Toplevel {
@@ -92,43 +95,71 @@ impl WlrToplevelHandler {
         &mut self,
         mut toplevel_message_rx: Receiver<WlrToplevelHandlerMessage>,
     ) -> Result<()> {
+        let target = "wlr_toplevel_handler";
+        let task = "run";
         // create new connection
         let (mut conn, globals) = match Connection::async_connect_and_collect_globals().await {
             Ok((c, g)) => (c, g),
-            Err(err) => bail!(Error::msg(format!(
-                "error connecting to the wayland server, internal - {}",
-                err
-            ))),
+            Err(err) => bail!(WlrootsError::new(
+                WlrootsErrorCodes::ConnectWaylandServerError,
+                format!("error connecting to the wayland server, internal - {}", err),
+                true
+            )),
         };
 
         // setup the callback
         let _ = match globals
             .bind_with_cb(&mut conn, 1..=3, toplevel_manager_cb) {
                 Ok(x) => x,
-                Err(err) => bail!(Error::msg(format!("wayland compositor does not support wlr-foreign-toplevel-management [v1.0-v3.0], internal - {}", err))),
+                Err(err) => bail!(WlrootsError::new(
+                    WlrootsErrorCodes::WaylandCompositorSupportError,
+                    format!("wayland compositor does not support wlr-foreign-toplevel-management [v1.0-v3.0], internal - {}", err),
+                    true
+                )),
         };
 
         // flush event queue
         let _ = match conn.async_flush().await {
             Ok(x) => x,
-            Err(err) => bail!(Error::msg(format!(
-                "error from wayland server in flushing event queue, internal - {}",
-                err
-            ))),
+            Err(err) => bail!(WlrootsError::new(
+                WlrootsErrorCodes::WaylandServerFlushingError,
+                format!(
+                    "error from wayland server in flushing event queue, internal - {}",
+                    err
+                ),
+                true
+            )),
         };
 
         // wait for messages
         loop {
             select! {
                 _ = conn.async_recv_events() => {
-                    println!("foreign_toplevel_manager_v1:message");
+                    info!(target, task,"foreign_toplevel_manager_v1:message");
                     conn.dispatch_events(&mut self.state);
                     if let Some(err) = self.state.conn_error.take() {
-                        bail!(Error::msg(format!("foreign toplevel manager is finished, internal -{}", err)))
+                        bail!(WlrootsError::new(
+                            WlrootsErrorCodes::ToplevelManagerFinishedError,
+                            format!(
+                                "foreign toplevel manager is finished, internal -{}",
+                                err
+                            ),
+                            true
+                        ))
+
                     }
+
+
                     let _ = match conn.async_flush().await {
                         Ok(x) => x,
-                        Err(err) => bail!(Error::msg(format!("error from wayland server in flushing event queue, internal - {}", err)))
+                        Err(err) => bail!(WlrootsError::new(
+                            WlrootsErrorCodes::WaylandServerFlushingError,
+                            format!(
+                                "error from wayland server in flushing event queue, internal - {}",
+                                err
+                            ),
+                            true
+                        ))
                     };
                 }
                 msg = toplevel_message_rx.recv() => {
@@ -136,23 +167,28 @@ impl WlrToplevelHandler {
                         continue;
                     }
 
-                    let _ = match msg.unwrap() {
-                        WlrToplevelHandlerMessage::GetActiveToplevelTitle { reply_to } => {
-                            let active_title = self.get_active_toplevel_title();
-                            let _ = reply_to.send(active_title);
-                        },
-                        WlrToplevelHandlerMessage::GetActiveToplevelAppId { reply_to } => {
-                            let active_app_id = self.get_active_toplevel_app_id();
-                            let _ = reply_to.send(active_app_id);
-                        },
-                        WlrToplevelHandlerMessage::GetToplevels { reply_to } => {
-                            let top_levels = self.get_toplevels();
-                            let _ = reply_to.send(top_levels);
-                        },
-                        WlrToplevelHandlerMessage::GetActiveToplevel { reply_to } => {
-                            let top_level = self.get_active_toplevel();
-                            let _ = reply_to.send(top_level);
-                        },
+                    match msg {
+                        Some(_) => {
+                            let _ = match msg.unwrap() {
+                                WlrToplevelHandlerMessage::GetActiveToplevelTitle { reply_to } => {
+                                    let active_title = self.get_active_toplevel_title();
+                                    let _ = reply_to.send(active_title);
+                                },
+                                WlrToplevelHandlerMessage::GetActiveToplevelAppId { reply_to } => {
+                                    let active_app_id = self.get_active_toplevel_app_id();
+                                    let _ = reply_to.send(active_app_id);
+                                },
+                                WlrToplevelHandlerMessage::GetToplevels { reply_to } => {
+                                    let top_levels = self.get_toplevels();
+                                    let _ = reply_to.send(top_levels);
+                                },
+                                WlrToplevelHandlerMessage::GetActiveToplevel { reply_to } => {
+                                    let top_level = self.get_active_toplevel();
+                                    let _ = reply_to.send(top_level);
+                                },
+                            };
+                        }
+                        None => ()
                     };
                 }
             }
@@ -166,7 +202,11 @@ impl WlrToplevelHandler {
         let conn_err = &self.state.conn_error;
 
         if conn_err.is_some() {
-            bail!(Error::msg("wayland connection error"));
+            bail!(WlrootsError::new(
+                WlrootsErrorCodes::ConnectionError,
+                format!("wayland connection error in get active toplevel title",),
+                true
+            ));
         }
         Ok(active_title.clone())
     }
@@ -176,7 +216,11 @@ impl WlrToplevelHandler {
         let conn_err = &self.state.conn_error;
 
         if conn_err.is_some() {
-            bail!(Error::msg("wayland connection error"));
+            bail!(WlrootsError::new(
+                WlrootsErrorCodes::ConnectionError,
+                format!("wayland connection error in get active toplevel app id",),
+                true
+            ));
         }
         Ok(active_app_id.clone())
     }
@@ -186,7 +230,11 @@ impl WlrToplevelHandler {
         let conn_err = &self.state.conn_error;
 
         if conn_err.is_some() {
-            bail!(Error::msg("wayland connection error"));
+            bail!(WlrootsError::new(
+                WlrootsErrorCodes::ConnectionError,
+                format!("wayland connection error in get toplevels",),
+                true
+            ));
         }
 
         Ok(toplevel_map.values().cloned().collect::<Vec<Toplevel>>())
@@ -197,7 +245,11 @@ impl WlrToplevelHandler {
         let conn_err = &self.state.conn_error;
 
         if conn_err.is_some() {
-            bail!(Error::msg("wayland connection error"));
+            bail!(WlrootsError::new(
+                WlrootsErrorCodes::ConnectionError,
+                format!("wayland connection error in get active toplevel",),
+                true
+            ));
         }
 
         let active_toplevel = toplevel_map.values().cloned().find(|t| t.is_active);
@@ -231,11 +283,16 @@ impl ServiceHandler for WlrToplevelHandler {
 }
 
 fn toplevel_manager_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelManagerV1>) {
+    let target = "wlr_toplevel_handler";
+    let task = "toplevel_manager_cb";
     use zwlr_foreign_toplevel_manager_v1::Event;
     match ctx.event {
         Event::Toplevel(toplevel) => {
-            println!("foreign_toplevel_manager_v1:toplevel {:?}", toplevel);
-            toplevel.set_fullscreen(ctx.conn, None);
+            info!(
+                target,
+                task, "foreign_toplevel_manager_v1:toplevel {:?}", toplevel
+            );
+            //toplevel.set_fullscreen(ctx.conn, None);
             let toplevel_event_tx = ctx.state.toplevel_event_tx.clone();
             tokio::task::spawn(async move {
                 let _ = toplevel_event_tx
@@ -246,7 +303,7 @@ fn toplevel_manager_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelManag
             ctx.conn.set_callback_for(toplevel, toplevel_cb);
         }
         Event::Finished => {
-            println!("foreign_toplevel_manager_v1:finished");
+            info!(target, task, "foreign_toplevel_manager_v1:finished");
             ctx.state.conn_error = Some(Error::msg(String::from("unexpected 'finished' event")));
             ctx.conn.break_dispatch_loop();
         }
@@ -255,6 +312,8 @@ fn toplevel_manager_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelManag
 }
 
 fn toplevel_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelHandleV1>) {
+    let target = "wlr_toplevel_handler";
+    let task = "toplevel_cb";
     use zwlr_foreign_toplevel_handle_v1::Event;
     let toplevel_event_tx = ctx.state.toplevel_event_tx.clone();
     let Some(toplevel) = ctx.state.toplevels.get_mut(&ctx.proxy) else {
@@ -267,30 +326,43 @@ fn toplevel_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelHandleV1>) {
         });
     };
 
-    println!("foreign_toplevel_handle_v1:event");
+    info!(target, task, "foreign_toplevel_handle_v1:event");
 
     match ctx.event {
         Event::AppId(app_id) => {
             let app_id_str: String = String::from_utf8_lossy(app_id.as_bytes()).into();
             toplevel.app_id = Some(app_id_str.clone());
-            println!(
+            info!(
+                target,
+                task,
                 "foreign_toplevel_handle_v1:app_id proxy={:?} app_id={:?}",
-                ctx.proxy, app_id_str
+                ctx.proxy,
+                app_id_str
             );
         }
         Event::Title(title) => {
             let title_str: String = String::from_utf8_lossy(title.as_bytes()).into();
             toplevel.title = Some(title_str.clone());
-            println!(
+            info!(
+                target,
+                task,
                 "foreign_toplevel_handle_v1:title proxy={:?} title={:?}",
-                ctx.proxy, title_str
+                ctx.proxy,
+                title_str
             );
         }
         Event::State(state) => {
-            let title_str = toplevel.title.clone().unwrap_or(String::new());
-            println!(
+            let title_str = match toplevel.title.clone() {
+                Some(v) => v,
+                None => String::new(),
+            };
+            info!(
+                target,
+                task,
                 "foreign_toplevel_handle_v1:state proxy={:?} title={} state={:?}",
-                ctx.proxy, title_str, state
+                ctx.proxy,
+                title_str,
+                state
             );
 
             let is_active = state
@@ -304,11 +376,17 @@ fn toplevel_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelHandleV1>) {
             toplevel.is_active = is_active;
         }
         Event::Closed => {
-            let title_str = toplevel.title.clone().unwrap_or(String::new());
+            let title_str = match toplevel.title.clone() {
+                Some(v) => v,
+                None => String::new(),
+            };
 
-            println!(
+            info!(
+                target,
+                task,
                 "zwlr_foreign_toplevel_handle_v1:closed proxy={:?} title={}",
-                ctx.proxy, title_str
+                ctx.proxy,
+                title_str
             );
             if ctx.state.active_toplevel == Some(ctx.proxy) {
                 ctx.state.active_toplevel = None;
@@ -321,17 +399,22 @@ fn toplevel_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelHandleV1>) {
             send_toplevel_event_tx_message.clone()(WlrToplevelEvent::ToplevelClosed);
         }
         Event::Done => {
-            let title_str = toplevel.title.clone().unwrap_or(String::new());
+            let title_str = match toplevel.title.clone() {
+                Some(v) => v,
+                None => String::new(),
+            };
 
-            println!(
+            info!(
+                target,
+                task,
                 "zwlr_foreign_toplevel_handle_v1:done proxy={:?} title={}",
-                ctx.proxy, title_str
+                ctx.proxy,
+                title_str
             );
             if toplevel.is_active {
                 ctx.state.active_toplevel = Some(ctx.proxy);
-                ctx.state.active_toplevel_title = Some(toplevel.title.clone().unwrap_or_default());
-                ctx.state.active_toplevel_app_id =
-                    Some(toplevel.app_id.clone().unwrap_or_default());
+                ctx.state.active_toplevel_title = toplevel.title.clone();
+                ctx.state.active_toplevel_app_id = toplevel.app_id.clone();
 
                 send_toplevel_event_tx_message.clone()(WlrToplevelEvent::ToplevelActive);
             } else if ctx.state.active_toplevel == Some(ctx.proxy) {
