@@ -1,20 +1,28 @@
 use chrono::Local;
 use custom_utils::get_image_from_path;
+use echo_client::EchoClient;
 use event_handler::zbus::ZbusServiceHandle;
 
-use gtk::prelude::{BoxExt, GtkWindowExt, WidgetExt};
+use gtk::gdk;
+use gtk::{
+    ffi,
+    gdk::{
+        prelude::{DisplayExt, MonitorExt, SurfaceExt},
+        Display,
+    },
+    prelude::{BoxExt, GtkWindowExt, WidgetExt},
+};
 use modules::{
     battery::handler::BatteryServiceHandle, bluetooth::handler::BluetoothServiceHandle,
-    clock::handler::ClockServiceHandle, window_manager::handler::WindowManagerServiceHandle,
+    clock::handler::ClockServiceHandle, window::handler::WindowServiceHandle,
     wireless::handler::WirelessServiceHandle,
 };
+use process::is_app_already_running;
 use relm4::{async_trait::async_trait, gtk, tokio, RelmApp, RelmWidgetExt, SimpleComponent};
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
     AsyncComponentSender,
 };
-use std::time::Duration;
-use tokio::time;
 
 mod settings;
 mod theme;
@@ -58,6 +66,7 @@ pub enum WirelessState {
     #[default]
     Off,
     Connected(WirelessConnectedState),
+    NotFound,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -66,6 +75,7 @@ pub enum BluetoothState {
     #[default]
     Off,
     Connected,
+    NotFound,
 }
 
 #[derive(Default, Debug, Clone, Copy)]
@@ -82,6 +92,7 @@ pub enum BatteryState {
     Level80,
     Level90,
     Level100,
+    NotFound,
 }
 
 /// ## Message
@@ -95,6 +106,7 @@ pub enum Message {
     BluetoothStateUpdate(BluetoothState),
     BatteryStatusUpdate(BatteryState),
     CurrentWindowTitleUpdate(String),
+    TopLevelActiveUpdate(bool),
     Show,
     Hide,
 }
@@ -112,48 +124,115 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
     let window_settings = settings.window;
     let window = gtk::Window::builder()
         .title(settings.title)
-        .default_width(window_settings.size.0)
-        .default_height(window_settings.size.1)
         .css_classes(["window"])
         .build();
+
+    match window_settings.width {
+        Some(v) => {
+            window.set_default_width(v);
+        }
+        None => {
+            window.set_hexpand(true);
+        }
+    }
+
+    match window_settings.height {
+        Some(v) => {
+            window.set_default_height(v);
+        }
+        None => {
+            window.set_vexpand(true);
+        }
+    }
     window
 }
 
 #[cfg(feature = "layer-shell")]
 fn init_window(settings: StatusBarSettings) -> gtk::Window {
+    use relm4::gtk::{
+        gdk::DisplayManager,
+        prelude::{NativeExt, SurfaceExt},
+    };
+
     let window_settings = settings.window;
     let window = gtk::Window::builder()
         .title(settings.title)
-        .default_width(window_settings.size.0)
-        .default_height(window_settings.size.1)
         .css_classes(["window"])
         .build();
+
+    match window_settings.width {
+        Some(v) => {
+            window.set_default_width(v);
+        }
+        None => {}
+    }
+
+    match window_settings.height {
+        Some(v) => {
+            window.set_default_height(v);
+            // Push other windows out of the way
+            gtk4_layer_shell::set_exclusive_zone(&window, v);
+        }
+        None => {}
+    }
 
     gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
     // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
 
-    // Push other windows out of the way
-    gtk4_layer_shell::set_exclusive_zone(&window, window_settings.size.1);
-
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
+    match window_settings.layer_shell.margin.top {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.right {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.left {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
+    }
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
-    let anchors = [
-        (gtk4_layer_shell::Edge::Left, true),
-        (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, true),
-        (gtk4_layer_shell::Edge::Bottom, false),
-    ];
-
-    for (anchor, state) in anchors {
-        gtk4_layer_shell::set_anchor(&window, anchor, state);
+    match window_settings.layer_shell.anchor.top {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.right {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.left {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
     }
 
     window
@@ -175,7 +254,7 @@ impl AsyncComponent for StatusBar {
     type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
-        println!("init_root started");
+        info!("init_root started");
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => StatusBarSettings::default(),
@@ -209,6 +288,7 @@ impl AsyncComponent for StatusBar {
             Ok(settings) => settings,
             Err(_) => StatusBarSettings::default(),
         };
+
         let css = settings.css.clone();
         relm4::set_global_css_from_file(css.default);
 
@@ -245,7 +325,7 @@ impl AsyncComponent for StatusBar {
             .spacing(16)
             .build();
 
-        let formatted_time = current_time(modules.clock.format.as_str());
+        let formatted_time = String::from("");
         let clock_label = gtk::Label::new(Some(&formatted_time));
         clock_label.set_class_active("clock", true);
 
@@ -337,7 +417,7 @@ impl AsyncComponent for StatusBar {
         let model = StatusBar {
             settings: settings.clone(),
             custom_theme,
-            current_time: current_time(modules.clock.format.as_str()),
+            current_time: formatted_time,
             wireless_state: WirelessState::default(),
             bluetooth_state: BluetoothState::default(),
             battery_state: BatteryState::default(),
@@ -389,6 +469,9 @@ impl AsyncComponent for StatusBar {
             Message::CurrentWindowTitleUpdate(window_title) => {
                 self.current_window_title = window_title;
             }
+            Message::TopLevelActiveUpdate(is_active) => {
+                self.window.set_class_active("window-active", is_active);
+            }
         }
     }
 
@@ -401,6 +484,11 @@ impl AsyncComponent for StatusBar {
         let modules = self.settings.modules.clone();
         info!("wireless state is {:?}", self.wireless_state);
         match self.wireless_state {
+            WirelessState::NotFound => {
+                if let Some(icon) = modules.wireless.icon.not_found.clone() {
+                    widgets.wireless_image.set_file(Some(&icon));
+                }
+            }
             WirelessState::Off => {
                 if let Some(icon) = modules.wireless.icon.off.clone() {
                     widgets.wireless_image.set_file(Some(&icon));
@@ -434,6 +522,11 @@ impl AsyncComponent for StatusBar {
         }
 
         match self.bluetooth_state {
+            BluetoothState::NotFound => {
+                if let Some(icon) = modules.bluetooth.icon.not_found.clone() {
+                    widgets.bluetooth_image.set_file(Some(&icon));
+                }
+            }
             BluetoothState::Off => {
                 if let Some(icon) = modules.bluetooth.icon.off.clone() {
                     widgets.bluetooth_image.set_file(Some(&icon));
@@ -452,6 +545,11 @@ impl AsyncComponent for StatusBar {
         }
 
         match self.battery_state {
+            BatteryState::NotFound => {
+                if let Some(icon) = modules.battery.icon.not_found {
+                    widgets.battery_image.set_file(Some(&icon));
+                }
+            }
             BatteryState::Level0 => {
                 if let Some(icon) = modules.battery.icon.level_0 {
                     widgets.battery_image.set_file(Some(&icon));
@@ -524,7 +622,35 @@ impl AsyncComponent for StatusBar {
     }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let command_index = args.iter().position(|arg| arg == "-cmd");
+    match command_index {
+        Some(index) => match args.get(index + 1) {
+            Some(cmd) => {
+                match EchoClient::echo(
+                    "org.mechanics.StatusBar",
+                    "/org/mechanics/StatusBar",
+                    "org.mechanics.StatusBar",
+                    cmd,
+                )
+                .await
+                {
+                    Ok(r) => {
+                        println!("echo success");
+                    }
+                    Err(e) => {
+                        println!("echo failed {}", e);
+                    }
+                };
+                return;
+            }
+            None => (),
+        },
+        None => (),
+    }
+
     // Enables logger
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt()
@@ -536,61 +662,48 @@ fn main() {
     app.run_async::<StatusBar>(());
 }
 
-fn current_time(format_string: &str) -> String {
-    format!("{}", Local::now().format(format_string))
-}
-
-async fn init_clock(format: &str, sender: relm4::Sender<Message>) {
-    let mut interval = time::interval(Duration::from_secs(1));
-    loop {
-        interval.tick().await;
-        let time = format!("{}", Local::now().format(format));
-        let _ = sender.send(Message::TimeTick(time));
-    }
-}
-
 async fn init_services(settings: StatusBarSettings, sender: relm4::Sender<Message>) {
-    let mut zbus_handle = ZbusServiceHandle::new();
+    let mut zbus_service_handle = ZbusServiceHandle::new();
     let sender_clone_1 = sender.clone();
     let _ = relm4::spawn_local(async move {
-        println!("Starting zbus service");
-        zbus_handle.run(sender_clone_1).await;
+        info!(task = "init_services", "Starting zbus service");
+        zbus_service_handle.run(sender_clone_1).await;
     });
 
     let mut wireless_service_handle = WirelessServiceHandle::new();
     let sender_clone_2 = sender.clone();
     let _ = relm4::spawn_local(async move {
-        println!("Starting wireless service");
+        info!(task = "init_services", "Starting wireless service");
         wireless_service_handle.run(sender_clone_2).await;
     });
 
     let mut bluetooth_service_handle = BluetoothServiceHandle::new();
     let sender_clone_3 = sender.clone();
     let _ = relm4::spawn_local(async move {
-        println!("Starting bluetooth service");
+        info!(task = "init_services", "Starting bluetooth service");
         bluetooth_service_handle.run(sender_clone_3).await;
     });
 
     let mut battery_service_handle = BatteryServiceHandle::new();
     let sender_clone_4 = sender.clone();
     let _ = relm4::spawn_local(async move {
-        println!("Starting battery service");
+        info!(task = "init_services", "Starting battery service");
         battery_service_handle.run(sender_clone_4).await;
     });
 
     let mut clock_service_handle = ClockServiceHandle::new();
     let sender_clone_4 = sender.clone();
     let _ = relm4::spawn_local(async move {
-        println!("Starting clock");
+        info!(task = "init_services", "Starting clock");
         clock_service_handle
             .run(settings.modules.clock.format, sender_clone_4)
             .await;
     });
 
-    let mut window_manager_service_handle = WindowManagerServiceHandle::new();
+    let mut window_manager_service_handle = WindowServiceHandle::new();
     let sender_clone_5 = sender;
     let _ = relm4::spawn_local(async move {
-        println!("Starting window manager service");
+        info!(task = "init_services", "Starting window manager service");
         window_manager_service_handle.run(sender_clone_5).await;
     });
 }

@@ -2,8 +2,12 @@
     background: rgba(5, 7, 10, 0);
     font-family: 'Space Grotesk';
     padding: 0px 18px;
-    min-width: 100%;
     color: #FFFFFF;
+    min-width: 100%;
+}
+
+.window-active {
+    background: rgba(5, 7, 10, 1);
 }
 
 .container {

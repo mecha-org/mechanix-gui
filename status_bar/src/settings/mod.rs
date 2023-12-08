@@ -17,7 +17,7 @@ pub struct StatusBarSettings {
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
-    pub css: CssConfigs
+    pub css: CssConfigs,
 }
 
 impl Default for StatusBarSettings {
@@ -28,7 +28,7 @@ impl Default for StatusBarSettings {
             title: String::from("Status Bar"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
-            css: CssConfigs::default()
+            css: CssConfigs::default(),
         }
     }
 }
@@ -62,7 +62,8 @@ impl Default for AppSettings {
 /// the application window
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct WindowSettings {
-    pub size: (i32, i32),             // Size of the window
+    pub height: Option<i32>,          // height of the window
+    pub width: Option<i32>,           // width of the window
     pub position: (i32, i32),         // Default position to start window
     pub min_size: Option<(u32, u32)>, // Minimum size the window can be resized to
     pub max_size: Option<(u32, u32)>, // Maximum size the window can be resized to
@@ -72,6 +73,7 @@ pub struct WindowSettings {
     pub transparent: bool,            // Enables transparency
     pub always_on_top: bool,          // Forces window to be always on top
     pub icon_path: Option<String>,
+    pub layer_shell: WindowLayerShellSettings,
 }
 
 /// # Layout Settings
@@ -103,8 +105,59 @@ pub struct CssConfigs {
 
 impl Default for CssConfigs {
     fn default() -> Self {
-        Self { 
-            default: "".to_string() 
+        Self {
+            default: "".to_string(),
+        }
+    }
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct WindowLayerShellSettings {
+    pub margin: LayerShellMargin,
+    pub anchor: LayerShellAnchor,
+}
+
+impl Default for WindowLayerShellSettings {
+    fn default() -> Self {
+        Self {
+            margin: LayerShellMargin::default(),
+            anchor: LayerShellAnchor::default(),
+        }
+    }
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct LayerShellMargin {
+    pub top: Option<i32>,
+    pub right: Option<i32>,
+    pub bottom: Option<i32>,
+    pub left: Option<i32>,
+}
+
+impl Default for LayerShellMargin {
+    fn default() -> Self {
+        Self {
+            top: None,
+            right: None,
+            bottom: None,
+            left: None,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct LayerShellAnchor {
+    pub top: Option<bool>,
+    pub right: Option<bool>,
+    pub bottom: Option<bool>,
+    pub left: Option<bool>,
+}
+
+impl Default for LayerShellAnchor {
+    fn default() -> Self {
+        Self {
+            top: None,
+            right: None,
+            bottom: None,
+            left: None,
         }
     }
 }
@@ -139,6 +192,7 @@ pub struct BluetoothIconPaths {
     pub on: Option<String>,
     pub off: Option<String>,
     pub connected: Option<String>,
+    pub not_found: Option<String>,
 }
 
 /// Icon paths for wireless module
@@ -150,6 +204,7 @@ pub struct WirelessIconPaths {
     pub weak: Option<String>,
     pub good: Option<String>,
     pub strong: Option<String>,
+    pub not_found: Option<String>,
 }
 /// Icon paths for battery module
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -165,12 +220,14 @@ pub struct BatteryIconPaths {
     pub level_20: Option<String>,
     pub level_10: Option<String>,
     pub level_0: Option<String>,
+    pub not_found: Option<String>,
 }
 
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            height: None,
+            width: None,
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -180,6 +237,7 @@ impl Default for WindowSettings {
             transparent: false,
             always_on_top: false,
             icon_path: None,
+            layer_shell: WindowLayerShellSettings::default(),
         }
     }
 }
@@ -195,6 +253,7 @@ impl Default for Modules {
                     on: None,
                     off: None,
                     connected: None,
+                    not_found: None,
                 },
             },
             wireless: WirelessModule {
@@ -205,6 +264,7 @@ impl Default for Modules {
                     weak: None,
                     good: None,
                     strong: None,
+                    not_found: None,
                 },
             },
             battery: BatteryModule {
@@ -220,6 +280,7 @@ impl Default for Modules {
                     level_20: None,
                     level_10: None,
                     level_0: None,
+                    not_found: None,
                 },
             },
         }

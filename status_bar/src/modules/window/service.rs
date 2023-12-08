@@ -1,8 +1,8 @@
 use anyhow::Result;
 
-pub struct WindowManagerService {}
+pub struct WindowService {}
 
-impl WindowManagerService {
+impl WindowService {
     pub async fn get_current_window() -> Result<String> {
         //add gtk window code here
 

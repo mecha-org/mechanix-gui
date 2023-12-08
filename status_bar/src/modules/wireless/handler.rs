@@ -5,6 +5,7 @@ use tokio::{sync::oneshot, time};
 use crate::Message;
 
 use super::service::WirelessService;
+use tracing::error;
 
 #[derive(Debug)]
 pub enum ServiceMessage {
@@ -31,6 +32,7 @@ impl WirelessServiceHandle {
     }
 
     pub async fn run(&mut self, sender: Sender<Message>) {
+        let task = "run";
         let mut interval = time::interval(Duration::from_secs(5));
         loop {
             interval.tick().await;
@@ -38,7 +40,9 @@ impl WirelessServiceHandle {
                 Ok(wireless_status) => {
                     let _ = sender.send(Message::WirelessStateUpdate(wireless_status));
                 }
-                Err(_e) => {}
+                Err(e) => {
+                    error!(task, "error while getting wireless status {}", e);
+                }
             };
         }
     }

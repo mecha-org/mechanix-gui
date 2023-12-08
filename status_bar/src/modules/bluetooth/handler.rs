@@ -3,7 +3,8 @@ use std::time::Duration;
 use tokio::{sync::oneshot, time};
 
 use super::service::BluetoothService;
-use crate::Message;
+use crate::{BluetoothState, Message};
+use tracing::error;
 
 #[derive(Debug)]
 pub enum ServiceMessage {
@@ -30,6 +31,7 @@ impl BluetoothServiceHandle {
     }
 
     pub async fn run(&mut self, sender: Sender<Message>) {
+        let task = "run";
         let mut interval = time::interval(Duration::from_secs(5));
         loop {
             interval.tick().await;
@@ -37,7 +39,10 @@ impl BluetoothServiceHandle {
                 Ok(bluetooth_status) => {
                     let _ = sender.send(Message::BluetoothStateUpdate(bluetooth_status));
                 }
-                Err(_e) => {}
+                Err(e) => {
+                    error!(task, "error while getting bluetooth status {}", e);
+                    let _ = sender.send(Message::BluetoothStateUpdate(BluetoothState::NotFound));
+                }
             };
         }
     }

@@ -2,9 +2,10 @@ use relm4::Sender;
 use std::time::Duration;
 use tokio::{sync::oneshot, time};
 
-use crate::Message;
+use crate::{BatteryState, Message};
 
 use super::service::BatteryService;
+use tracing::{error, info};
 
 #[derive(Debug)]
 pub enum ServiceMessage {
@@ -38,7 +39,10 @@ impl BatteryServiceHandle {
                 Ok(battery_status) => {
                     let _ = sender.send(Message::BatteryStatusUpdate(battery_status));
                 }
-                Err(_e) => {}
+                Err(e) => {
+                    error!("error while getting battery status {}", e);
+                    let _ = sender.send(Message::BatteryStatusUpdate(BatteryState::NotFound));
+                }
             };
         }
     }
