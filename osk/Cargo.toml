@@ -13,3 +13,9 @@ homepage.workspace = true
 [dependencies]
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+echo_client = { path = "../commons/echo_client"}
+services = { path = "../commons/services"}
+zbus = "3.14.1"
+tokio = { version = "1.33", features = ["full"] }
+anyhow = "1.0.71"
+tonic = "0.9.2"
