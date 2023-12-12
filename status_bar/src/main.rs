@@ -17,7 +17,6 @@ use modules::{
     clock::handler::ClockServiceHandle, window::handler::WindowServiceHandle,
     wireless::handler::WirelessServiceHandle,
 };
-use process::is_app_already_running;
 use relm4::{async_trait::async_trait, gtk, tokio, RelmApp, RelmWidgetExt, SimpleComponent};
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},

@@ -16,6 +16,7 @@ use crate::errors::{WlrootsError, WlrootsErrorCodes};
 pub struct Toplevel {
     title: Option<String>,
     app_id: Option<String>,
+    state: Option<Vec<u8>>,
     is_active: bool,
 }
 
@@ -370,9 +371,15 @@ fn toplevel_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelHandleV1>) {
                 .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
                 .any(|s| s == zwlr_foreign_toplevel_handle_v1::State::Activated as u32);
 
+            // let is_minimized = state
+            // .chunks_exact(4)
+            // .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
+            // .any(|s| s == zwlr_foreign_toplevel_handle_v1::State::Minimized as u32);
+
             if is_active {
                 send_toplevel_event_tx_message(WlrToplevelEvent::ToplevelActive);
             }
+            toplevel.state = Some(state);
             toplevel.is_active = is_active;
         }
         Event::Closed => {

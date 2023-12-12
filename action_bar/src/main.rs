@@ -1,17 +1,28 @@
+use echo_client::EchoClient;
+use event_handler::zbus::ZbusServiceHandle;
 use gtk::{
     gdk, gio, glib,
     prelude::{BoxExt, ButtonExt, GtkWindowExt},
 };
-use relm4::{gtk::prelude::ObjectExt, RelmSetChildExt};
+use modules::input::handler::InputServiceHandle;
+use process::ChildProcessManager;
+use relm4::{
+    async_trait::async_trait,
+    component::{AsyncComponent, AsyncComponentParts},
+    gtk::prelude::{ObjectExt, WidgetExt},
+    AsyncComponentSender, RelmSetChildExt,
+};
 use relm4::{
     gtk::{self, glib::clone},
-    ComponentParts, ComponentSender, RelmApp, RelmWidgetExt, SimpleComponent,
+    ComponentParts, ComponentSender, RelmApp, RelmWidgetExt,
 };
 
 mod settings;
 mod theme;
 use tracing::{error, info};
 pub mod errors;
+mod event_handler;
+mod modules;
 
 use crate::settings::ActionBarSettings;
 use crate::theme::ActionBarTheme;
@@ -22,6 +33,7 @@ use crate::theme::ActionBarTheme;
 struct ActionBar {
     settings: ActionBarSettings,
     custom_theme: ActionBarTheme,
+    window: gtk::Window,
 }
 
 /// ## Message
@@ -33,6 +45,10 @@ pub enum Message {
     SettingsPressed,
     HomePressed,
     KeyBoardPressed,
+    Show,
+    Hide,
+    ShowKeyboard,
+    HideKeyboard,
 }
 
 struct AppWidgets {}
@@ -66,28 +82,63 @@ fn init_window(settings: ActionBarSettings) -> gtk::Window {
 
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 18);
+    match window_settings.layer_shell.margin.top {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.right {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.left {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
+    }
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
-    let anchors = [
-        (gtk4_layer_shell::Edge::Left, true),
-        (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, false),
-        (gtk4_layer_shell::Edge::Bottom, true),
-    ];
-
-    for (anchor, state) in anchors {
-        gtk4_layer_shell::set_anchor(&window, anchor, state);
+    match window_settings.layer_shell.anchor.top {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.right {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.left {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
     }
 
     window
 }
 
-impl SimpleComponent for ActionBar {
+#[async_trait(?Send)]
+impl AsyncComponent for ActionBar {
     /// The type of the messages that this component can receive.
     type Input = Message;
     /// The type of the messages that this component can send.
@@ -98,6 +149,8 @@ impl SimpleComponent for ActionBar {
     type Root = gtk::Window;
     /// A data structure that contains the widgets that you will need to update.
     type Widgets = AppWidgets;
+
+    type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
         let settings = match settings::read_settings_yml() {
@@ -125,11 +178,11 @@ impl SimpleComponent for ActionBar {
     }
 
     /// Initialize the UI and model.
-    fn init(
+    async fn init(
         _: Self::Init,
-        window: &Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> relm4::ComponentParts<Self> {
+        window: Self::Root,
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => ActionBarSettings::default(),
@@ -144,11 +197,6 @@ impl SimpleComponent for ActionBar {
         };
 
         let modules = settings.modules.clone();
-
-        let model = ActionBar {
-            settings: settings.clone(),
-            custom_theme,
-        };
 
         let main_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Horizontal)
@@ -229,25 +277,76 @@ impl SimpleComponent for ActionBar {
 
         window.set_child(Some(&main_box));
 
+        let model = ActionBar {
+            settings: settings.clone(),
+            custom_theme,
+            window,
+        };
+
         let widgets = AppWidgets {};
 
-        ComponentParts { model, widgets }
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
+
+        init_services(settings, sender).await;
+
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         info!("update message is {:?}", message);
         match message {
             Message::SettingsPressed => {}
             Message::HomePressed => {}
             Message::KeyBoardPressed => {}
+            Message::Show => {
+                self.window.set_visible(true);
+            }
+            Message::Hide => {
+                self.window.set_visible(false);
+            }
+            Message::ShowKeyboard => {}
+            Message::HideKeyboard => {}
         }
     }
 
     /// Update the view to represent the updated model.
-    fn update_view(&self, widgets: &mut Self::Widgets, _sender: ComponentSender<Self>) {}
+    fn update_view(&self, widgets: &mut Self::Widgets, _sender: AsyncComponentSender<Self>) {}
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let command_index = args.iter().position(|arg| arg == "-cmd");
+    match command_index {
+        Some(index) => match args.get(index + 1) {
+            Some(cmd) => {
+                match EchoClient::echo(
+                    "org.mechanics.ActionBar",
+                    "/org/mechanics/ActionBar",
+                    "org.mechanics.ActionBar",
+                    cmd,
+                )
+                .await
+                {
+                    Ok(r) => {
+                        println!("echo success");
+                    }
+                    Err(e) => {
+                        println!("echo failed {}", e);
+                    }
+                };
+                return;
+            }
+            None => (),
+        },
+        None => (),
+    }
+
     // Enables logger
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt()
@@ -256,7 +355,7 @@ fn main() {
         .with_thread_names(true)
         .init();
     let app = RelmApp::new("action.bar").with_args(vec![]);
-    app.run::<ActionBar>(());
+    app.run_async::<ActionBar>(());
 }
 
 pub fn generate_image(path: String) -> gtk::Image {
@@ -267,4 +366,30 @@ pub fn generate_image(path: String) -> gtk::Image {
         .css_classes(["action-img"])
         .build();
     image
+}
+
+async fn init_services(settings: ActionBarSettings, sender: relm4::Sender<Message>) {
+    let mut zbus_service_handle = ZbusServiceHandle::new();
+    let sender_clone_1 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting zbus service");
+        zbus_service_handle.run(sender_clone_1).await;
+    });
+
+    //this service is listening for keyboard events
+    let mut window_manager_service_handle = InputServiceHandle::new();
+    let sender_clone_2 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting input service");
+        window_manager_service_handle.run(sender_clone_2).await;
+    });
+
+    let mut child_process_manager_service_handle = ChildProcessManager::new();
+    let sender_clone_3 = sender;
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting input service");
+        child_process_manager_service_handle
+            .spawn("wvkbd-mobintl", &[])
+            .await;
+    });
 }
