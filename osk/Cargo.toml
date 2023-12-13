@@ -13,9 +13,17 @@ homepage.workspace = true
 [dependencies]
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+sentry-tracing = {version= "0.31.0"}
+sentry = { version = "0.31.0",features = ["backtrace", "anyhow"] }
+sentry-anyhow = { version= "0.31.1", features = ["backtrace"]}
+axum-tracing-opentelemetry = "0.13.1"
+init-tracing-opentelemetry = { version = "0.12.0", features = ["otlp", "tracing_subscriber_ext"] }
+tracing-opentelemetry-instrumentation-sdk = "0.12.0"
 echo_client = { path = "../commons/echo_client"}
 services = { path = "../commons/services"}
 zbus = "3.14.1"
 tokio = { version = "1.33", features = ["full"] }
 anyhow = "1.0.71"
 tonic = "0.9.2"
+nix = {version = "0.27.1", features = ["signal"]}
+libc = "0.2.151"
