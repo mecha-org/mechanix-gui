@@ -43,7 +43,7 @@ impl ZbusHandler {
             .sender
             .send(ChildProcessMessage::Signal {
                 process_name: String::from(PROCESS_NAME),
-                code: SIGUSR1,
+                code: SIGUSR2,
             })
             .await;
     }
@@ -53,7 +53,7 @@ impl ZbusHandler {
             .sender
             .send(ChildProcessMessage::Signal {
                 process_name: String::from(PROCESS_NAME),
-                code: SIGUSR2,
+                code: SIGUSR1,
             })
             .await;
     }

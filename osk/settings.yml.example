@@ -1,0 +1,6 @@
+title: Osk  # Empty
+bins:
+  keyboard:
+    kind: wvkbd
+    bin: wvkbd-mobintl
+    conf:

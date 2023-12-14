@@ -1,40 +1,74 @@
 use anyhow::Result;
+use echo_client::EchoClient;
 use event_handler::zbus::ZbusServiceHandle;
-use init_tracing_opentelemetry::tracing_subscriber_ext::{
-    build_logger_text, build_loglevel_filter_layer, build_otel_layer,
-};
 use process::handler::{ChildProcessHandle, ChildProcessMessage};
-use sentry_tracing::{self, EventFilter};
 use std::error::Error;
 use tokio::{sync::mpsc, task};
-use tracing::info;
+use tracing::{error, info};
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
+mod errors;
 mod event_handler;
 mod process;
+mod settings;
+
+use settings::OskSettings;
 
 const CHANNEL_SIZE: usize = 1;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let command_index = args.iter().position(|arg| arg == "-cmd");
+    match command_index {
+        Some(index) => match args.get(index + 1) {
+            Some(cmd) => {
+                match EchoClient::echo(
+                    "org.mechanics.Osk",
+                    "/org/mechanics/Osk",
+                    "org.mechanics.Osk",
+                    cmd,
+                )
+                .await
+                {
+                    Ok(r) => {
+                        info!("osk echo success");
+                    }
+                    Err(e) => {
+                        error!("osk echo failed {}", e);
+                    }
+                };
+                return;
+            }
+            None => (),
+        },
+        None => (),
+    };
+
     println!("Hello, world!");
-    let subscriber = tracing_subscriber::registry()
-        .with(sentry_tracing::layer().event_filter(|_| EventFilter::Ignore))
-        .with(build_loglevel_filter_layer()) //temp for terminal log
-        .with(build_logger_text()) //temp for terminal log
-        .with(build_otel_layer().unwrap()); // trace collection layer
-    tracing::subscriber::set_global_default(subscriber).unwrap();
+    tracing_subscriber::fmt()
+        .pretty()
+        .with_env_filter("osk=trace")
+        .with_thread_names(true)
+        .init();
     tracing::info!(
         //sample log
         task = "tracing_setup",
         result = "success",
         "tracing set up",
     );
-    let _ = init_services().await;
-    Ok(())
+
+    let settings = match settings::read_settings_yml() {
+        Ok(settings) => settings,
+        Err(_) => OskSettings::default(),
+    };
+
+    let _ = init_services(settings).await;
 }
 
-async fn init_services() -> Result<bool> {
+async fn init_services(settings: OskSettings) -> Result<bool> {
     info!("init service init");
+
+    let keyboard_settings = settings.bins.keyboard.clone();
 
     //process
     let (child_process_t, child_process_tx) = init_child_process_handle().await;
@@ -43,15 +77,19 @@ async fn init_services() -> Result<bool> {
 
     let event_handler_t = init_event_handler(child_process_tx.clone()).await;
 
-    info!("sending message to osk as chilf process");
-    let _ = child_process_tx
-        .send(ChildProcessMessage::Spawn {
-            //process_name: String::from("osk"),
-            process_name: String::from("osk"),
-            command: String::from("gnome-calculator"),
-            args: vec![],
-        })
-        .await;
+    info!("sending message to child process manager to start osk as child process");
+    match keyboard_settings.bin {
+        Some(bin) => {
+            let _ = child_process_tx
+                .send(ChildProcessMessage::Spawn {
+                    process_name: String::from("osk"),
+                    command: bin,
+                    args: vec![],
+                })
+                .await;
+        }
+        None => (),
+    }
 
     child_process_t.await.unwrap();
 

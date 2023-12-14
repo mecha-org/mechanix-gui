@@ -113,7 +113,6 @@ impl ChildProcessHandle {
 #[async_trait]
 impl ServiceHandler for ChildProcessHandle {
     async fn start(&mut self) -> Result<bool> {
-        // Start if device is provisioned
         Ok(true)
     }
 
