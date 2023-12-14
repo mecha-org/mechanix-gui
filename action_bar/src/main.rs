@@ -1,3 +1,6 @@
+use std::process::Command;
+
+use anyhow::{bail, Result};
 use echo_client::EchoClient;
 use event_handler::zbus::ZbusServiceHandle;
 use gtk::{
@@ -5,7 +8,6 @@ use gtk::{
     prelude::{BoxExt, ButtonExt, GtkWindowExt},
 };
 use modules::input::handler::InputServiceHandle;
-use process::ChildProcessManager;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
@@ -16,16 +18,23 @@ use relm4::{
     gtk::{self, glib::clone},
     ComponentParts, ComponentSender, RelmApp, RelmWidgetExt,
 };
+use tokio::sync::{
+    mpsc::{self, Sender},
+    oneshot,
+};
 
 mod settings;
 mod theme;
-use tracing::{error, info};
+use tracing::{debug, error, info};
+use wlroots::wlr_toplevel_handler::{
+    WlrToplevelHandler, WlrToplevelHandlerMessage, WlrToplevelHandlerOptions,
+};
 pub mod errors;
 mod event_handler;
 mod modules;
 
-use crate::settings::ActionBarSettings;
-use crate::theme::ActionBarTheme;
+use crate::{errors::ActionBarError, settings::ActionBarSettings};
+use crate::{errors::ActionBarErrorCodes, theme::ActionBarTheme};
 
 /// # Action bar state
 ///
@@ -34,6 +43,7 @@ struct ActionBar {
     settings: ActionBarSettings,
     custom_theme: ActionBarTheme,
     window: gtk::Window,
+    toplevel_message_tx: Sender<WlrToplevelHandlerMessage>,
 }
 
 /// ## Message
@@ -44,7 +54,7 @@ struct ActionBar {
 pub enum Message {
     SettingsPressed,
     HomePressed,
-    KeyBoardPressed,
+    ToggleKeyboard,
     Show,
     Hide,
     ShowKeyboard,
@@ -238,7 +248,7 @@ impl AsyncComponent for ActionBar {
                     match modules.keyboard.icon.clone() {
                         Some(icon) => {
                             icon_path = Some(icon);
-                            message = Some(Message::KeyBoardPressed);
+                            message = Some(Message::ToggleKeyboard);
                         }
                         None => (),
                     }
@@ -276,18 +286,18 @@ impl AsyncComponent for ActionBar {
             });
 
         window.set_child(Some(&main_box));
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
+
+        let (toplevel_message_tx) = init_services(settings.clone(), sender).await;
 
         let model = ActionBar {
             settings: settings.clone(),
             custom_theme,
             window,
+            toplevel_message_tx,
         };
 
         let widgets = AppWidgets {};
-
-        let sender: relm4::Sender<Message> = sender.input_sender().clone();
-
-        init_services(settings, sender).await;
 
         AsyncComponentParts { model, widgets }
     }
@@ -300,17 +310,83 @@ impl AsyncComponent for ActionBar {
     ) {
         info!("update message is {:?}", message);
         match message {
-            Message::SettingsPressed => {}
-            Message::HomePressed => {}
-            Message::KeyBoardPressed => {}
+            Message::SettingsPressed => match &self.settings.bins.settings_app.bin {
+                Some(bin) => {
+                    match spawn_command(bin, &[]) {
+                        Ok(r) => {
+                            info!("settings app opened successfully");
+                        }
+                        Err(e) => {
+                            error!("settings app start error {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
+            Message::HomePressed => {
+                let (tx, rx) = oneshot::channel();
+                debug!("sending message to wayland to minimize all top level");
+                let _ = self
+                    .toplevel_message_tx
+                    .send(WlrToplevelHandlerMessage::MinimizeAllTopLevel { reply_to: tx })
+                    .await;
+                info!("message sent to wayland to minmize all top level");
+                let res = rx.await.expect("no reply from service");
+
+                match res {
+                    Ok(r) => {
+                        info!("minimize response from wayland {:?}", r);
+                    }
+                    Err(e) => {
+                        error!("minimize error from wayland {}", e);
+                    }
+                }
+            }
+            Message::ToggleKeyboard => match &self.settings.bins.osk.bin {
+                Some(bin) => {
+                    match execute_command(bin, &["-cmd", "Toggle"]) {
+                        Ok(r) => {
+                            info!("keyboard toggled successfully");
+                        }
+                        Err(e) => {
+                            error!("keyboard while toggling keyboard {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
             Message::Show => {
                 self.window.set_visible(true);
             }
             Message::Hide => {
                 self.window.set_visible(false);
             }
-            Message::ShowKeyboard => {}
-            Message::HideKeyboard => {}
+            Message::ShowKeyboard => match &self.settings.bins.osk.bin {
+                Some(bin) => {
+                    match execute_command(bin, &["-cmd", "Show"]) {
+                        Ok(r) => {
+                            info!("keyboard showed successfully");
+                        }
+                        Err(e) => {
+                            error!("keyboard while showing keyboard {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
+            Message::HideKeyboard => match &self.settings.bins.osk.bin {
+                Some(bin) => {
+                    match execute_command(bin, &["-cmd", "Hide"]) {
+                        Ok(r) => {
+                            info!("keyboard hided successfully");
+                        }
+                        Err(e) => {
+                            error!("keyboard while hiding keyboard {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
         }
     }
 
@@ -368,7 +444,10 @@ pub fn generate_image(path: String) -> gtk::Image {
     image
 }
 
-async fn init_services(settings: ActionBarSettings, sender: relm4::Sender<Message>) {
+async fn init_services(
+    settings: ActionBarSettings,
+    sender: relm4::Sender<Message>,
+) -> (Sender<WlrToplevelHandlerMessage>) {
     let mut zbus_service_handle = ZbusServiceHandle::new();
     let sender_clone_1 = sender.clone();
     let _ = relm4::spawn_local(async move {
@@ -384,12 +463,51 @@ async fn init_services(settings: ActionBarSettings, sender: relm4::Sender<Messag
         window_manager_service_handle.run(sender_clone_2).await;
     });
 
-    let mut child_process_manager_service_handle = ChildProcessManager::new();
-    let sender_clone_3 = sender;
+    let (toplevel_message_tx, toplevel_message_rx) = mpsc::channel(32);
+    let (toplevel_event_tx, mut toplevel_event_rx) = mpsc::channel(32);
+
+    let mut wlr_toplevel_handler =
+        WlrToplevelHandler::new(WlrToplevelHandlerOptions { toplevel_event_tx });
+
     let _ = relm4::spawn_local(async move {
-        info!(task = "init_services", "Starting input service");
-        child_process_manager_service_handle
-            .spawn("wvkbd-mobintl", &[])
-            .await;
+        let _ = wlr_toplevel_handler.run(toplevel_message_rx).await;
     });
+
+    (toplevel_message_tx)
+}
+
+fn execute_command(command: &str, args: &[&str]) -> Result<bool> {
+    let output = match Command::new(command).args(args).output() {
+        Ok(output) => output,
+        Err(e) => {
+            bail!(ActionBarError::new(
+                ActionBarErrorCodes::CommandExecuteError,
+                format!("failed to execute command: {}", e),
+            ))
+        }
+    };
+
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr);
+        bail!(ActionBarError::new(
+            ActionBarErrorCodes::CommandExecuteOutputError,
+            format!("failed to get output from command: {}", error),
+        ))
+    }
+
+    Ok(true)
+}
+
+fn spawn_command(command: &str, args: &[&str]) -> Result<bool> {
+    let child = match Command::new(command).args(args).spawn() {
+        Ok(output) => output,
+        Err(e) => {
+            bail!(ActionBarError::new(
+                ActionBarErrorCodes::CommandExecuteError,
+                format!("failed to execute command: {}", e),
+            ))
+        }
+    };
+
+    Ok(true)
 }

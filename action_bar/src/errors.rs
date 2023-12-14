@@ -3,7 +3,7 @@ use std::fmt;
 use tracing::error;
 
 /// # ActionBar Error Codes
-/// 
+///
 /// Implements standard errors for the action bar
 #[derive(Debug, Default, Clone, Copy)]
 pub enum ActionBarErrorCodes {
@@ -13,6 +13,8 @@ pub enum ActionBarErrorCodes {
     SettingsParseError,
     ThemeReadError,
     ThemeParseError,
+    CommandExecuteError,
+    CommandExecuteOutputError,
 }
 
 impl fmt::Display for ActionBarErrorCodes {
@@ -23,12 +25,18 @@ impl fmt::Display for ActionBarErrorCodes {
             ActionBarErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
             ActionBarErrorCodes::ThemeReadError => write!(f, "ThemeReadError"),
             ActionBarErrorCodes::ThemeParseError => write!(f, "ThemeParseError"),
+            ActionBarErrorCodes::CommandExecuteError => {
+                write!(f, "CommandExecuteError")
+            }
+            ActionBarErrorCodes::CommandExecuteOutputError => {
+                write!(f, "CommandExecuteOutputError")
+            }
         }
     }
 }
 
 /// # ActionBarError
-/// 
+///
 /// Implements a standard error type for all action bar related errors
 /// includes the error code (`ActionBarErrorCodes`) and a message
 #[derive(Debug, Default)]

@@ -18,6 +18,7 @@ pub struct ActionBarSettings {
     pub layout: LayoutSettings,
     pub modules: Modules,
     pub css: CssConfigs,
+    pub bins: Bins,
 }
 
 impl Default for ActionBarSettings {
@@ -29,6 +30,7 @@ impl Default for ActionBarSettings {
             layout: LayoutSettings::default(),
             modules: Modules::default(),
             css: CssConfigs::default(),
+            bins: Bins::default(),
         }
     }
 }
@@ -224,6 +226,35 @@ impl Default for Modules {
                 title: "Keyboard".to_string(),
                 icon: None,
             },
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Bin {
+    pub bin: Option<String>,
+    pub conf: Option<String>,
+}
+
+impl Default for Bin {
+    fn default() -> Self {
+        Self {
+            bin: None,
+            conf: None,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Bins {
+    pub osk: Bin,
+    pub settings_app: Bin,
+}
+impl Default for Bins {
+    fn default() -> Self {
+        Self {
+            osk: Bin::default(),
+            settings_app: Bin::default(),
         }
     }
 }

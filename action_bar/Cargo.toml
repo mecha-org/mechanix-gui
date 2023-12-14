@@ -25,6 +25,7 @@ zbus = "3.14.1"
 wayland-client = "0.31.1"
 wlroots = { path = "../commons/wlroots"}
 process = { path = "../commons/process"}
+services = { path = "../commons/services"}
 
 [build-dependencies]
 tonic-build = "0.9.2"
