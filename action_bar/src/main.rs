@@ -406,6 +406,7 @@ async fn main() {
                     "/org/mechanics/ActionBar",
                     "org.mechanics.ActionBar",
                     cmd,
+                    (),
                 )
                 .await
                 {
@@ -456,12 +457,12 @@ async fn init_services(
     });
 
     //this service is listening for keyboard events
-    let mut window_manager_service_handle = InputServiceHandle::new();
-    let sender_clone_2 = sender.clone();
-    let _ = relm4::spawn_local(async move {
-        info!(task = "init_services", "Starting input service");
-        window_manager_service_handle.run(sender_clone_2).await;
-    });
+    // let mut window_manager_service_handle = InputServiceHandle::new();
+    // let sender_clone_2 = sender.clone();
+    // let _ = relm4::spawn_local(async move {
+    //     info!(task = "init_services", "Starting input service");
+    //     window_manager_service_handle.run(sender_clone_2).await;
+    // });
 
     let (toplevel_message_tx, toplevel_message_rx) = mpsc::channel(32);
     let (toplevel_event_tx, mut toplevel_event_rx) = mpsc::channel(32);

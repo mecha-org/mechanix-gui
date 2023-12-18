@@ -20,6 +20,7 @@ relm4-macros = "0.7.0-beta.1"
 tonic = "0.9.2"
 # gtk4-layer-shell = { version = "0.1.5", optional = true }
 custom_widgets = { path = "../commons/custom_widgets"}
+serde_ini = "0.2.0"
 
 [build-dependencies]
 tonic-build = "0.9.2"

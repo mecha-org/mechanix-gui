@@ -633,6 +633,7 @@ async fn main() {
                     "/org/mechanics/StatusBar",
                     "org.mechanics.StatusBar",
                     cmd,
+                    (),
                 )
                 .await
                 {

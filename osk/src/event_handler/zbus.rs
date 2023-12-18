@@ -1,5 +1,7 @@
+use echo_client::EchoClient;
 use libc::{SIGRTMIN, SIGUSR1, SIGUSR2};
 use tokio::sync::mpsc;
+use tracing::{error, info};
 use zbus::{dbus_interface, Connection};
 
 use crate::process::handler::ChildProcessMessage;
@@ -39,23 +41,48 @@ const PROCESS_NAME: &str = "osk";
 impl ZbusHandler {
     // Can be `async` as well.
     async fn show(&self) {
-        let _ = self
-            .sender
-            .send(ChildProcessMessage::Signal {
-                process_name: String::from(PROCESS_NAME),
-                code: SIGUSR2,
-            })
-            .await;
+        // let _ = self
+        //     .sender
+        //     .send(ChildProcessMessage::Signal {
+        //         process_name: String::from(PROCESS_NAME),
+        //         code: SIGUSR2,
+        //     })
+        //     .await;
+        let b = 'b';
+        match EchoClient::echo(
+            "sm.puri.OSK0",
+            "/sm/puri/OSK0",
+            "sm.puri.OSK0",
+            "GetVisible",
+            (),
+        )
+        .await
+        {
+            Ok(r) => {
+                info!("squeeboard res {}", r);
+            }
+            Err(e) => {
+                error!("squeboard error {}", e);
+            }
+        };
     }
 
     async fn hide(&mut self) {
-        let _ = self
-            .sender
-            .send(ChildProcessMessage::Signal {
-                process_name: String::from(PROCESS_NAME),
-                code: SIGUSR1,
-            })
-            .await;
+        // let _ = self
+        //     .sender
+        //     .send(ChildProcessMessage::Signal {
+        //         process_name: String::from(PROCESS_NAME),
+        //         code: SIGUSR1,
+        //     })
+        //     .await;
+        let _ = EchoClient::echo(
+            "sm.puri.OSK0",
+            "/sm/puri/OSK0",
+            "sm.puri.OSK0",
+            "SetVisible",
+            (false),
+        )
+        .await;
     }
 
     async fn toggle(&mut self) {
