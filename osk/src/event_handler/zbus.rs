@@ -53,8 +53,8 @@ impl ZbusHandler {
             "sm.puri.OSK0",
             "/sm/puri/OSK0",
             "sm.puri.OSK0",
-            "GetVisible",
-            (),
+            "SetVisible",
+            (true),
         )
         .await
         {
@@ -86,13 +86,41 @@ impl ZbusHandler {
     }
 
     async fn toggle(&mut self) {
-        let _ = self
-            .sender
-            .send(ChildProcessMessage::Signal {
-                process_name: String::from(PROCESS_NAME),
-                code: SIGRTMIN(),
-            })
-            .await;
+        // let _ = self
+        //     .sender
+        //     .send(ChildProcessMessage::Signal {
+        //         process_name: String::from(PROCESS_NAME),
+        //         code: SIGRTMIN(),
+        //     })
+        //     .await;
+        let is_keyboard_visible_op: Option<bool> = match EchoClient::echo_property(
+            "sm.puri.OSK0",
+            "/sm/puri/OSK0",
+            "sm.puri.OSK0",
+            "Visible",
+        )
+        .await
+        {
+            Ok(r) => Some(r),
+            Err(e) => {
+                error!("error while getting visible status {}", e);
+                None
+            }
+        };
+
+        match is_keyboard_visible_op {
+            Some(is_keyboard_visible) => {
+                let _ = EchoClient::echo(
+                    "sm.puri.OSK0",
+                    "/sm/puri/OSK0",
+                    "sm.puri.OSK0",
+                    "SetVisible",
+                    (!is_keyboard_visible),
+                )
+                .await;
+            }
+            None => (),
+        }
     }
 }
 
