@@ -1,23 +1,43 @@
 use anyhow::{bail, Result};
+use daemon::handler::{DaemonHandle, DaemonMessage};
 use echo_client::EchoClient;
-use event_handler::zbus::ZbusServiceHandle;
-use process::handler::{ChildProcessHandle, ChildProcessMessage};
-use std::error::Error;
-use tokio::{sync::mpsc, task};
+use handlers::{
+    background::handler::{BackgroundHandler, BackgroundHandlerMessage},
+    zbus::zbus::ZbusServiceHandle,
+};
+use serde::Serialize;
+use std::{error::Error, process::Command};
+use tokio::{
+    sync::{self, broadcast, mpsc},
+    task,
+};
 use tracing::{error, info};
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 mod errors;
-mod event_handler;
-mod process;
+mod handlers;
 mod settings;
 
-use settings::{BackgroundDaemon, BackgroundSettings};
+use settings::BackgroundSettings;
+
+use crate::errors::{BackgroundError, BackgroundErrorCodes};
 
 const CHANNEL_SIZE: usize = 1;
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt()
+        .pretty()
+        .with_env_filter("background=trace")
+        .with_thread_names(true)
+        .init();
+    tracing::info!(
+        //sample log
+        task = "tracing_setup",
+        result = "success",
+        "tracing set up",
+    );
     let args: Vec<String> = std::env::args().collect();
+    info!("args are {:?}", args);
     let command_index = args.iter().position(|arg| arg == "-cmd");
     match command_index {
         Some(index) => match args.get(index + 1) {
@@ -27,7 +47,11 @@ async fn main() {
                     "/org/mechanics/Background",
                     "org.mechanics.Background",
                     cmd,
-                    (args.get(index + 2).unwrap_or(&String::from(""))),
+                    (
+                        args.get(index + 2).unwrap_or(&String::from("")),
+                        args.get(index + 3).unwrap_or(&String::from("")),
+                        args.get(index + 4).unwrap_or(&String::from("")).as_str() == "true",
+                    ),
                 )
                 .await
                 {
@@ -40,23 +64,14 @@ async fn main() {
                 };
                 return;
             }
-            None => (),
+            None => {
+                return;
+            }
         },
         None => (),
     };
 
     println!("Hello, world!");
-    tracing_subscriber::fmt()
-        .pretty()
-        .with_env_filter("background=trace")
-        .with_thread_names(true)
-        .init();
-    tracing::info!(
-        //sample log
-        task = "tracing_setup",
-        result = "success",
-        "tracing set up",
-    );
 
     let settings = match settings::read_settings_yml() {
         Ok(settings) => settings,
@@ -69,34 +84,24 @@ async fn main() {
 async fn init_services(settings: BackgroundSettings) -> Result<bool> {
     info!("init service init");
 
-    let default_background_daemon_op = settings
-        .bins
-        .background_daemons
-        .into_iter()
-        .find(|daemon| daemon.is_default);
+    //background handler
+    let (background_handler_th, background_handler_tx) =
+        init_background_handler(settings.clone()).await;
 
-    let background_daemon = match default_background_daemon_op {
-        Some(default_background_daemon) => default_background_daemon,
-        None => {
-            bail!("Default background daemon not found");
-        }
-    };
+    // background daemon handler
+    let (daemon_handler_th, daemon_handler_tx) =
+        init_daemon_handler(background_handler_tx.clone()).await;
 
-    //process
-    let (child_process_t, child_process_tx) = init_child_process_handle().await;
-
-    //zbus event manager
-
-    let event_handler_t =
-        init_event_handler(child_process_tx.clone(), background_daemon.clone()).await;
+    //zbus event handler
+    let zbus_handler_th = init_zbus_handler(background_handler_tx.clone()).await;
 
     info!("sending message to child process manager to start bin as child process");
-    match background_daemon.bin {
+    match &settings.provider.bin {
         Some(bin) => {
-            let _ = child_process_tx
-                .send(ChildProcessMessage::Spawn {
-                    process_name: String::from(background_daemon.kind.unwrap_or_default()),
-                    command: bin,
+            let _ = daemon_handler_tx
+                .send(DaemonMessage::Spawn {
+                    process_name: String::from(&settings.provider.kind.unwrap_or_default()),
+                    command: String::from(bin),
                     args: vec![],
                 })
                 .await;
@@ -104,31 +109,45 @@ async fn init_services(settings: BackgroundSettings) -> Result<bool> {
         None => (),
     }
 
-    child_process_t.await.unwrap();
+    background_handler_th.await.unwrap();
 
-    event_handler_t.await.unwrap();
+    daemon_handler_th.await.unwrap();
+
+    zbus_handler_th.await.unwrap();
 
     Ok(true)
 }
 
-async fn init_child_process_handle() -> (task::JoinHandle<()>, mpsc::Sender<ChildProcessMessage>) {
-    let (child_process_tx, child_process_rx) = mpsc::channel(32);
+async fn init_background_handler(
+    background_settings: BackgroundSettings,
+) -> (
+    task::JoinHandle<()>,
+    broadcast::Sender<BackgroundHandlerMessage>,
+) {
+    let (tx, rx) = broadcast::channel(128);
 
-    let child_process_t =
-        tokio::spawn(async move { ChildProcessHandle::new().run(child_process_rx).await });
+    let th = tokio::spawn(async move {
+        tokio::spawn(async move { BackgroundHandler::new().run(rx, background_settings).await });
+    });
 
-    (child_process_t, child_process_tx)
+    (th, tx)
 }
 
-async fn init_event_handler(
-    child_process_tx: mpsc::Sender<ChildProcessMessage>,
-    background_daemon: BackgroundDaemon,
+async fn init_daemon_handler(
+    background_handler_tx: broadcast::Sender<BackgroundHandlerMessage>,
+) -> (task::JoinHandle<()>, mpsc::Sender<DaemonMessage>) {
+    let (tx, rx) = mpsc::channel(32);
+
+    let th = tokio::spawn(async move { DaemonHandle::new().run(rx).await });
+
+    (th, tx)
+}
+
+async fn init_zbus_handler(
+    background_handler_tx: broadcast::Sender<BackgroundHandlerMessage>,
 ) -> task::JoinHandle<()> {
-    let event_handler_t = tokio::spawn(async move {
-        ZbusServiceHandle::new(background_daemon)
-            .run(child_process_tx)
-            .await
-    });
+    let event_handler_t =
+        tokio::spawn(async move { ZbusServiceHandle::new(background_handler_tx).run().await });
 
     event_handler_t
 }

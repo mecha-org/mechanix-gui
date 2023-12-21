@@ -26,7 +26,7 @@ tokio = { version = "1.33", features = ["full"] }
 gtk4-layer-shell = { version = "0.1.5", optional = true }
 custom_utils = { path = "../commons/custom_utils"}
 wlroots = { path = "../commons/wlroots"}
-process = { path = "../commons/process"}
+daemon = { path = "../commons/daemon"}
 echo_client = { path = "../commons/echo_client"}
 zbus = "3.14.1"
 mecha_battery_ctl = { path = "../../mecha-ctl/mecha-ctl/libs/battery-ctl" }

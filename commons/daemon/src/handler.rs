@@ -6,13 +6,13 @@ use tokio::{
     process::{Child, Command},
     select,
     signal::unix::SignalKind,
-    sync::mpsc,
+    sync::{broadcast, mpsc},
 };
 use tonic::async_trait;
 use tracing::{error, info};
 
 #[derive(Debug)]
-pub enum ChildProcessMessage {
+pub enum DaemonMessage {
     Spawn {
         process_name: String,
         command: String,
@@ -24,27 +24,27 @@ pub enum ChildProcessMessage {
     },
 }
 
-pub struct ChildProcessesState {
-    child_processes: HashMap<String, Child>,
+pub struct DaemonState {
+    processes: HashMap<String, Child>,
 }
 
-pub struct ChildProcessHandle {
+pub struct DaemonHandle {
     status: ServiceStatus,
-    state: ChildProcessesState,
+    state: DaemonState,
 }
 
-impl ChildProcessHandle {
+impl DaemonHandle {
     pub fn new() -> Self {
         Self {
             status: ServiceStatus::INACTIVE,
-            state: ChildProcessesState {
-                child_processes: HashMap::new(),
+            state: DaemonState {
+                processes: HashMap::new(),
             },
         }
     }
 
-    pub async fn run(&mut self, mut message_rx: mpsc::Receiver<ChildProcessMessage>) {
-        info!("ChildProcessHandle run called");
+    pub async fn run(&mut self, mut message_rx: mpsc::Receiver<DaemonMessage>) {
+        info!("DaemonHandle run called");
         // start the service
         //let _ = &self.start().await;
 
@@ -58,12 +58,12 @@ impl ChildProcessHandle {
                     }
 
                     match msg.unwrap() {
-                        ChildProcessMessage::Spawn { process_name, command, args } => {
-                            println!("ChildProcessHandle run received Spawn {} {} {:?}", process_name, command, args);
+                        DaemonMessage::Spawn { process_name, command, args } => {
+                            println!("DaemonHandle run received Spawn {} {} {:?}", process_name, command, args);
                             let _ = self.spawn(&process_name, &command, &[]).await;
                          }
-                        ChildProcessMessage::Signal { process_name, code } => {
-                            println!("ChildProcessHandle run received Signal {} {:?}", process_name, code);
+                        DaemonMessage::Signal { process_name, code } => {
+                            println!("DaemonHandle run received Signal {} {:?}", process_name, code);
                             let _ = self.signal(&process_name, code).await;
                         }
                     };
@@ -73,9 +73,9 @@ impl ChildProcessHandle {
     }
 }
 
-impl ChildProcessHandle {
+impl DaemonHandle {
     pub async fn spawn(&mut self, process_name: &str, command: &str, args: &[&str]) {
-        info!("ChildProcessHandle spawn {} {:?}", process_name, args);
+        info!("DaemonHandle spawn {} {:?}", process_name, args);
 
         let child = Command::new(command)
             .args(args)
@@ -86,20 +86,17 @@ impl ChildProcessHandle {
         info!("child process started with id {:?}", child.id());
 
         self.state
-            .child_processes
+            .processes
             .insert(String::from(process_name), child);
     }
 
     pub async fn signal(&mut self, process_name: &str, process_signal: i32) {
-        info!(
-            "ChildProcessHandle signal {} {:?}",
-            process_name, process_signal
-        );
+        info!("DaemonHandle signal {} {:?}", process_name, process_signal);
     }
 }
 
 #[async_trait]
-impl ServiceHandler for ChildProcessHandle {
+impl ServiceHandler for DaemonHandle {
     async fn start(&mut self) -> Result<bool> {
         Ok(true)
     }

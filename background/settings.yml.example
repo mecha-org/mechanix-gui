@@ -1,8 +1,7 @@
-title: Background  # Empwvkbdty
-bins:
-  background_daemons:
-    - kind: swww-daemon
-      bin: swww-daemon
-      conf:
-      change_bg_command: swww img $path_to_image
-      is_default: true
+title: Background  # Background
+background:
+  path: 
+  mode: top
+provider:
+  kind: swww-daemon
+  bin: /usr/local/bin/swww-daemon

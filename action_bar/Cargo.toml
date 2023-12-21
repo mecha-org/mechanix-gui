@@ -24,7 +24,7 @@ echo_client = { path = "../commons/echo_client"}
 zbus = "3.14.1"
 wayland-client = "0.31.1"
 wlroots = { path = "../commons/wlroots"}
-process = { path = "../commons/process"}
+daemon = { path = "../commons/daemon"}
 services = { path = "../commons/services"}
 
 [build-dependencies]

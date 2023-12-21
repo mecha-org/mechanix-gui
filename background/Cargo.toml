@@ -15,10 +15,11 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 echo_client = { path = "../commons/echo_client"}
 services = { path = "../commons/services"}
+daemon = { path = "../commons/daemon"}
+command = { path = "../commons/command"}
 zbus = "3.14.1"
 tokio = { version = "1.33", features = ["full"] }
 anyhow = "1.0.71"
 tonic = "0.9.2"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
-

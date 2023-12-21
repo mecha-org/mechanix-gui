@@ -12,6 +12,8 @@ pub enum BackgroundErrorCodes {
     SettingsReadError,
     SettingsParseError,
     CommandExecuteError,
+    SettingsSerializeError,
+    SettingsWriteError,
 }
 
 impl fmt::Display for BackgroundErrorCodes {
@@ -21,6 +23,8 @@ impl fmt::Display for BackgroundErrorCodes {
             BackgroundErrorCodes::SettingsReadError => write!(f, "SettingsReadError"),
             BackgroundErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
             BackgroundErrorCodes::CommandExecuteError => write!(f, "CommandExecuteError"),
+            BackgroundErrorCodes::SettingsSerializeError => write!(f, "SettingsSerializeError"),
+            BackgroundErrorCodes::SettingsWriteError => write!(f, "SettingsWriteError"),
         }
     }
 }

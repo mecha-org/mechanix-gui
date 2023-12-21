@@ -2,6 +2,7 @@ use crate::errors::{BackgroundError, BackgroundErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::io::Write;
 use std::{env, fs::File, path::PathBuf};
 use tracing::{debug, info};
 
@@ -12,27 +13,12 @@ use tracing::{debug, info};
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BackgroundSettings {
-    pub bins: Bins,
+    pub title: Option<String>,
+    pub background: Background,
+    pub provider: Provider,
 }
 
 impl Default for BackgroundSettings {
-    fn default() -> Self {
-        Self {
-            bins: Bins::default(),
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct BackgroundDaemon {
-    pub kind: Option<String>,
-    pub bin: Option<String>,
-    pub conf: Option<String>,
-    pub change_bg_command: Option<String>,
-    pub is_default: bool,
-}
-
-impl Default for BackgroundDaemon {
     fn default() -> Self {
         Self {
             ..Default::default()
@@ -41,13 +27,29 @@ impl Default for BackgroundDaemon {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct Bins {
-    pub background_daemons: Vec<BackgroundDaemon>,
+pub struct Background {
+    pub path: Option<String>,
+    pub mode: Option<String>,
 }
-impl Default for Bins {
+
+impl Default for Background {
     fn default() -> Self {
         Self {
-            background_daemons: vec![],
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Provider {
+    pub kind: Option<String>,
+    pub bin: Option<String>,
+}
+
+impl Default for Provider {
+    fn default() -> Self {
+        Self {
+            ..Default::default()
         }
     }
 }
@@ -113,4 +115,63 @@ pub fn read_settings_yml() -> Result<BackgroundSettings> {
     info!("settings read is {:?}", config);
 
     Ok(config)
+}
+
+pub fn update_settings(settings: BackgroundSettings) -> Result<bool> {
+    let yaml_string = match serde_yaml::to_string(&settings) {
+        Ok(v) => v,
+        Err(e) => {
+            bail!(BackgroundError::new(
+                BackgroundErrorCodes::SettingsSerializeError,
+                format!(
+                    "failed to serialize updated settings to YAML {}",
+                    e.to_string()
+                ),
+                true
+            ))
+        }
+    };
+
+    let mut file_path = PathBuf::from(
+        std::env::var("MECHA_BACKGROUND_SETTINGS_PATH").unwrap_or(String::from("settings.yml")),
+    ); // Get path of the library
+
+    // read from args
+    let file_path_in_args = read_settings_path_from_args();
+    if file_path_in_args.is_some() {
+        file_path = PathBuf::from(file_path_in_args.unwrap());
+    }
+
+    info!(
+        task = "update_settings",
+        "settings file location - {:?}", file_path
+    );
+
+    // open file
+    let mut settings_file_handle = match File::create(file_path) {
+        Ok(file) => file,
+        Err(e) => {
+            bail!(BackgroundError::new(
+                BackgroundErrorCodes::SettingsReadError,
+                format!("Cannot read the settings.yml in the path - {}", e),
+                true
+            ));
+        }
+    };
+
+    match settings_file_handle.write_all(yaml_string.as_bytes()) {
+        Ok(v) => v,
+        Err(e) => {
+            bail!(BackgroundError::new(
+                BackgroundErrorCodes::SettingsWriteError,
+                format!(
+                    "failed to write updated setting settings to file {}",
+                    e.to_string()
+                ),
+                true
+            ))
+        }
+    };
+
+    Ok(true)
 }
