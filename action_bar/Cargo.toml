@@ -26,6 +26,7 @@ wayland-client = "0.31.1"
 wlroots = { path = "../commons/wlroots"}
 daemon = { path = "../commons/daemon"}
 services = { path = "../commons/services"}
+command = { path = "../commons/command"}
 
 [build-dependencies]
 tonic-build = "0.9.2"

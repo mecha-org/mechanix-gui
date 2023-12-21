@@ -71,8 +71,6 @@ async fn main() {
         None => (),
     };
 
-    println!("Hello, world!");
-
     let settings = match settings::read_settings_yml() {
         Ok(settings) => settings,
         Err(_) => BackgroundSettings::default(),

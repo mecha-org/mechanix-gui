@@ -1,6 +1,7 @@
 use std::process::Command;
 
 use anyhow::{bail, Result};
+use command::{execute_command, spawn_command};
 use echo_client::EchoClient;
 use event_handler::zbus::ZbusServiceHandle;
 use gtk::{
@@ -475,40 +476,4 @@ async fn init_services(
     });
 
     (toplevel_message_tx)
-}
-
-fn execute_command(command: &str, args: &[&str]) -> Result<bool> {
-    let output = match Command::new(command).args(args).output() {
-        Ok(output) => output,
-        Err(e) => {
-            bail!(ActionBarError::new(
-                ActionBarErrorCodes::CommandExecuteError,
-                format!("failed to execute command: {}", e),
-            ))
-        }
-    };
-
-    if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr);
-        bail!(ActionBarError::new(
-            ActionBarErrorCodes::CommandExecuteOutputError,
-            format!("failed to get output from command: {}", error),
-        ))
-    }
-
-    Ok(true)
-}
-
-fn spawn_command(command: &str, args: &[&str]) -> Result<bool> {
-    let child = match Command::new(command).args(args).spawn() {
-        Ok(output) => output,
-        Err(e) => {
-            bail!(ActionBarError::new(
-                ActionBarErrorCodes::CommandExecuteError,
-                format!("failed to execute command: {}", e),
-            ))
-        }
-    };
-
-    Ok(true)
 }
