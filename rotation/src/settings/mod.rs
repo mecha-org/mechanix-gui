@@ -27,12 +27,50 @@ impl Default for RotationSettings {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Rotation {
     pub enabled: bool,
+    pub configs: RotationConfigs,
 }
 
 impl Default for Rotation {
     fn default() -> Self {
         Self {
             ..Default::default()
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct RotationConfigs {
+    pub oneshot: bool,
+    pub sleep: i32,
+    pub display: String,
+    pub touchscreens: Vec<String>,
+    pub hooks: Vec<String>,
+    pub beforehooks: Vec<String>,
+    pub disable_keyboard: bool,
+    pub threshold: f32,
+    pub invert_x: bool,
+    pub invert_y: bool,
+    pub invert_z: bool,
+    pub invert_xy: String,
+    pub normalization_factor: Option<f32>,
+}
+
+impl Default for RotationConfigs {
+    fn default() -> Self {
+        Self {
+            oneshot: false,
+            sleep: 1,
+            display: "WL-1".to_string(),
+            touchscreens: vec![],
+            hooks: vec![],
+            beforehooks: vec![],
+            disable_keyboard: false,
+            threshold: 0.5,
+            invert_x: true,
+            invert_y: true,
+            invert_z: true,
+            invert_xy: "xy".to_string(),
+            normalization_factor: None,
         }
     }
 }

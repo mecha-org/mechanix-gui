@@ -6,26 +6,25 @@ use tokio::{
 };
 use tonic::async_trait;
 use tracing::info;
+use wayland_client::protocol::wl_output::Transform;
 
 use crate::{
+    backends::Orientation,
     handlers::{
         rotation::service::{
             change_rotation, dispatch_rotation_status, set_default_rotation, DispatchRotationParams,
         },
         wlroots::service::rotate,
     },
-    settings::RotationSettings,
+    settings::{RotationConfigs, RotationSettings},
 };
 
 #[derive(Debug, Clone)]
-pub enum RotationDirection {
-    Left,
-    Right,
-}
-
-#[derive(Debug, Clone)]
 pub enum WlrootsHandlerMessage {
-    Rotate(RotationDirection),
+    Rotate {
+        orientation: Orientation,
+        rotation_configs: RotationConfigs,
+    },
 }
 
 pub struct WlrootsHandler {
@@ -49,8 +48,8 @@ impl WlrootsHandler {
                         }
                         info!("WlrootsHandler runner msg received {:?}", msg);
                         match msg.unwrap() {
-                            WlrootsHandlerMessage::Rotate(direction) => {
-                                let _ = rotate(direction);
+                            WlrootsHandlerMessage::Rotate{orientation, rotation_configs} => {
+                                let _ = rotate(orientation, rotation_configs);
                             }
 
                         };

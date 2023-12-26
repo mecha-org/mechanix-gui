@@ -14,7 +14,7 @@ use crate::{
         },
         wlroots::handler::WlrootsHandlerMessage,
     },
-    settings::RotationSettings,
+    settings::{RotationConfigs, RotationSettings},
 };
 
 pub struct RotationHandler {
@@ -42,7 +42,7 @@ impl RotationHandler {
     ) {
         // start the service
         let _ = &self.start().await;
-        let mut timer = tokio::time::interval(std::time::Duration::from_secs(1));
+        let mut timer = tokio::time::interval(std::time::Duration::from_secs(3));
         loop {
             select! {
                         msg = rotation_handler_rx.recv() => {
@@ -64,6 +64,7 @@ impl RotationHandler {
                             if rotation_settings.rotation.enabled {
                                let _ = dispatch_rotation_status(DispatchRotationParams {
                                     wlroots_sender_tx: self.wlroots_sender_tx.clone(),
+                                    rotation_configs: rotation_settings.rotation.configs.clone()
                                 }).await;
                         } else {
                             info!("Rotation is not enabled");

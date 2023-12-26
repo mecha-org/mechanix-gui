@@ -12,6 +12,7 @@ use tokio::{
 };
 use tracing::{error, info};
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
+mod backends;
 mod errors;
 mod handlers;
 mod settings;
@@ -102,9 +103,7 @@ async fn init_services(settings: RotationSettings) -> Result<bool> {
 async fn init_wlroots_handler() -> (task::JoinHandle<()>, mpsc::Sender<WlrootsHandlerMessage>) {
     let (tx, rx) = mpsc::channel(128);
 
-    let th = tokio::spawn(async move {
-        tokio::spawn(async move { WlrootsHandler::new().run(rx).await });
-    });
+    let th = tokio::spawn(async move { WlrootsHandler::new().run(rx).await });
 
     (th, tx)
 }
@@ -119,11 +118,9 @@ async fn init_rotation_handler(
     let (tx, rx) = broadcast::channel(128);
 
     let th = tokio::spawn(async move {
-        tokio::spawn(async move {
-            RotationHandler::new(wlroots_handler_tx)
-                .run(rx, settings)
-                .await
-        });
+        RotationHandler::new(wlroots_handler_tx)
+            .run(rx, settings)
+            .await
     });
 
     (th, tx)
