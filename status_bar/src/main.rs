@@ -166,6 +166,8 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
         None => {}
     }
 
+    gtk4_layer_shell::init_for_window(&window);
+
     match window_settings.height {
         Some(v) => {
             window.set_default_height(v);
@@ -174,8 +176,6 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
         }
         None => {}
     }
-
-    gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
     // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);

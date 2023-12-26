@@ -25,13 +25,13 @@ futures = "0.3"
 tokio = { version = "1.33", features = ["full"] }
 gtk4-layer-shell = { version = "0.1.5", optional = true }
 custom_utils = { path = "../commons/custom_utils"}
-wlroots = { path = "../commons/wlroots"}
 daemon = { path = "../commons/daemon"}
 echo_client = { path = "../commons/echo_client"}
 zbus = "3.14.1"
 mecha_battery_ctl = { path = "../../mecha-ctl/mecha-ctl/libs/battery-ctl" }
 mecha_network_ctl = { path = "../../mecha-ctl/mecha-ctl/libs/wireless-ctl" }
 mecha_bluetooth_ctl = { path = "../../mecha-ctl/mecha-ctl/libs/bluetooth-ctl" }
+zwlr-foreign-toplevel-v1-async = { path = "../../wayland-protocols-async/zwlr-foreign-toplevel-v1-async" }
 
 [build-dependencies]
 tonic-build = "0.9.2"

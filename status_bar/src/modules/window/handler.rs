@@ -1,17 +1,8 @@
 use relm4::Sender;
-use std::time::Duration;
-use tokio::{
-    sync::{mpsc, oneshot},
-    time,
-};
-use wlroots::wlr_toplevel_handler::{
-    WlrToplevelHandler, WlrToplevelHandlerMessage, WlrToplevelHandlerOptions,
-};
+use tokio::sync::{mpsc, oneshot};
+use zwlr_foreign_toplevel_v1_async::handler::{ToplevelEvent, ToplevelHandler, ToplevelWState};
 
 use crate::Message;
-
-use super::service::WindowService;
-use tracing::error;
 
 #[derive(Debug)]
 pub enum ServiceMessage {
@@ -38,60 +29,56 @@ impl WindowServiceHandle {
     }
 
     pub async fn run(&mut self, sender: Sender<Message>) {
-        let (toplevel_message_tx, toplevel_message_rx) = mpsc::channel(32);
-        let (toplevel_event_tx, mut toplevel_event_rx) = mpsc::channel(32);
+        // create mpsc channel for interacting with the toplevel handler
+        let (toplevel_msg_tx, toplevel_msg_rx) = mpsc::channel(128);
 
-        let mut wlr_toplevel_handler =
-            WlrToplevelHandler::new(WlrToplevelHandlerOptions { toplevel_event_tx });
+        // create mpsc channel for receiving events from the toplevel handler
+        let (toplevel_event_tx, mut toplevel_event_rx) = mpsc::channel(128);
 
-        let wlr_thread = tokio::spawn(async move {
-            let _ = wlr_toplevel_handler.run(toplevel_message_rx).await;
+        // create the handler instance
+        let mut toplevel_handler = ToplevelHandler::new(toplevel_event_tx);
+
+        // start the toplevel handler
+        let toplevel_t = tokio::spawn(async move {
+            let _ = toplevel_handler.run(toplevel_msg_rx).await;
         });
 
-        while let Some(message) = toplevel_event_rx.recv().await {
-            println!("main: toplevel event = {:?}", message);
+        // receive all toplevel events
+        let toplevel_event_t = tokio::spawn(async move {
+            loop {
+                let msg = toplevel_event_rx.recv().await;
+                if msg.is_none() {
+                    continue;
+                }
 
-            // get active window/toplevel title
-            let (tx, rx) = oneshot::channel();
-            let _ = toplevel_message_tx
-                .send(WlrToplevelHandlerMessage::GetActiveToplevelTitle { reply_to: tx })
-                .await;
+                match msg.unwrap() {
+                    ToplevelEvent::Done {
+                        key,
+                        title,
+                        app_id,
+                        state,
+                    } => {
+                        let mut window_title = "".to_string();
 
-            let res = rx.await.expect("no reply from service");
-
-            match res {
-                Ok(active_toplevel_title_op) => match active_toplevel_title_op {
-                    Some(active_toplevel_title) => {
-                        let _ =
-                            sender.send(Message::CurrentWindowTitleUpdate(active_toplevel_title));
+                        match state {
+                            Some(top_level_state) => {
+                                if top_level_state.contains(&ToplevelWState::Activated) {
+                                    window_title = title.clone();
+                                }
+                            }
+                            None => (),
+                        }
+                        let _ = sender.send(Message::CurrentWindowTitleUpdate(window_title));
                     }
-                    None => (),
-                },
-                Err(e) => {
-                    error!("error while getting top level window title: {}", e)
+                    ToplevelEvent::Closed { key } => {
+                        let _ = sender.send(Message::CurrentWindowTitleUpdate("".to_string()));
+                    }
+                    _ => {}
                 }
             }
-
-            // get all open toplevels
-            let (tx, rx) = oneshot::channel();
-            let _ = toplevel_message_tx
-                .send(WlrToplevelHandlerMessage::GetActiveToplevel { reply_to: tx })
-                .await;
-
-            let res = rx.await.expect("no reply from service");
-            match res {
-                Ok(active_toplevel_op) => {
-                    let _ =
-                        sender.send(Message::TopLevelActiveUpdate(active_toplevel_op.is_some()));
-                }
-                Err(e) => {
-                    error!("error while getting top level window title: {}", e);
-                    let _ = sender.send(Message::TopLevelActiveUpdate(false));
-                }
-            }
-        }
-
-        wlr_thread.await.unwrap();
+        });
+        let _ = toplevel_t.await.unwrap();
+        let _ = toplevel_event_t.await.unwrap();
     }
 
     pub fn stop(&mut self) {
