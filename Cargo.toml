@@ -1,6 +1,6 @@
 [workspace]
 default-members = ["status_bar"]
-members = ["status_bar", "app_drawer", "action_bar", "lock_screen", "app_dock", "settings_drawer", "commons/custom_widgets", "launcher", "commons/custom_utils", "commons/wlroots", "commons/daemon", "commons/echo_client", "osk", "commons/services", "background", "rotation", "commons/command"]
+members = ["status_bar", "app_drawer", "action_bar", "lock_screen", "app_dock", "settings_drawer", "commons/custom_widgets", "launcher", "commons/custom_utils", "commons/wlroots", "commons/daemon", "commons/echo_client", "osk", "commons/services", "background", "rotation", "commons/command", "homescreen"]
 resolver = "2"
 
 [workspace.package]
