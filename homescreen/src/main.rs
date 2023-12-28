@@ -3,11 +3,9 @@ use std::fs::{self, read_dir, File};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use crate::services::app_manager::{AppManagerMessage, AppManagerService};
 use anyhow::{bail, Result};
 use gtk::{gdk, gio, glib, prelude::*, subclass::*};
-use handlers::toplevels::handler::{
-    ServiceMessage as ToplevelServiceHandleMessage, ToplevelServiceHandle,
-};
 use relm4::component::{AsyncComponent, AsyncComponentParts};
 use relm4::gtk::GestureClick;
 use relm4::{
@@ -21,6 +19,7 @@ use relm4::{
 use relm4::{
     gtk, AsyncComponentSender, Component, Controller, RelmApp, RelmWidgetExt, SimpleComponent,
 };
+
 use std::str::FromStr;
 use tokio::sync::oneshot;
 use tokio::{sync::mpsc, task};
@@ -31,7 +30,7 @@ mod theme;
 use settings::App;
 use tracing::{error, info};
 pub mod errors;
-mod handlers;
+mod services;
 
 use crate::errors::{HomescreenError, HomescreenErrorCodes};
 use crate::settings::HomescreenSettings;
@@ -180,7 +179,7 @@ struct Homescreen {
     search_text: String,
     apps: Vec<App>,
     filtered_apps: Vec<App>,
-    top_level_service_sender: mpsc::Sender<ToplevelServiceHandleMessage>,
+    app_manager_sender: mpsc::Sender<AppManagerMessage>,
 }
 
 /// ## Message
@@ -190,7 +189,7 @@ struct Homescreen {
 #[derive(Debug, Clone)]
 pub enum Message {
     SearchTextChanged(String),
-    AppClicked(String),
+    AppClicked(String, String),
 }
 
 struct AppWidgets {
@@ -365,7 +364,7 @@ impl AsyncComponent for Homescreen {
 
         window.set_child(Some(&container_box));
 
-        let (top_level_service_sender) = init_services().await;
+        let (app_manager_sender) = init_services().await;
 
         let model = Homescreen {
             settings: settings.clone(),
@@ -373,7 +372,7 @@ impl AsyncComponent for Homescreen {
             search_text: String::from(""),
             apps: apps.clone(),
             filtered_apps: apps.clone(),
-            top_level_service_sender,
+            app_manager_sender,
         };
 
         let widgets = AppWidgets { apps_grid };
@@ -397,86 +396,86 @@ impl AsyncComponent for Homescreen {
                     .filter(|app| app.name.to_lowercase().starts_with(&self.search_text))
                     .collect();
             }
-            Message::AppClicked(app_id) => {
+            Message::AppClicked(app_id, start_command) => {
                 let (tx, rx) = oneshot::channel();
 
                 let _ = self
-                    .top_level_service_sender
-                    .send(ToplevelServiceHandleMessage::IsAppOnTopLevel {
+                    .app_manager_sender
+                    .send(AppManagerMessage::LaunchApp {
                         app_id: app_id.clone(),
+                        start_command,
                         reply_to: tx,
                     })
                     .await;
 
-                let reply =
-                    rx.await.unwrap_or(Err(
-                        Status::unavailable("top level service unavailable").into()
-                    ));
+                let reply = rx
+                    .await
+                    .unwrap_or(Err(Status::unavailable("app manager unavailable").into()));
 
-                let is_app_open = match reply {
+                let app_launched = match reply {
                     Ok(v) => v,
                     Err(e) => {
-                        error!("error while getting top level exists {}", e);
+                        error!("error while launching app {}", e);
                         false
                     }
                 };
 
-                info!("app open is  {}", is_app_open);
+                info!("app_launched is  {}", app_launched);
 
-                if !is_app_open {
-                    let app_op = self.apps.iter().find(|app| app.app_id == app_id.as_str());
-                    match app_op {
-                        Some(app) => match &app.start_command {
-                            Some(start_command) => {
-                                let main_command: Vec<&str> = start_command.split(" ").collect();
-                                let args: Vec<&str> = main_command.clone()[1..]
-                                    .iter()
-                                    .filter(|&&arg| arg != "%u" && arg != "%U" && arg != "%F")
-                                    .cloned()
-                                    .collect();
-                                match spawn_command(main_command[0], &args) {
-                                    Ok(_) => {
-                                        info!("app started successfully {}", app_id);
-                                    }
-                                    Err(e) => {
-                                        error!("error while starting app app_id {} command {} error {}", app_id, start_command, e)
-                                    }
-                                };
-                            }
-                            None => {
-                                error!("Message::AppClicked start command not found for app with app_id {}", app_id)
-                            }
-                        },
-                        None => {
-                            error!("Message::AppClicked app not found with app_id {}", app_id)
-                        }
-                    }
-                } else {
-                    //Send event to open existing one
-                    let (tx, rx) = oneshot::channel();
+                // if !is_app_open {
+                //     let app_op = self.apps.iter().find(|app| app.app_id == app_id.as_str());
+                //     match app_op {
+                //         Some(app) => match &app.start_command {
+                //             Some(start_command) => {
+                //                 let main_command: Vec<&str> = start_command.split(" ").collect();
+                //                 let args: Vec<&str> = main_command.clone()[1..]
+                //                     .iter()
+                //                     .filter(|&&arg| arg != "%u" && arg != "%U" && arg != "%F")
+                //                     .cloned()
+                //                     .collect();
+                //                 match spawn_command(main_command[0], &args) {
+                //                     Ok(_) => {
+                //                         info!("app started successfully {}", app_id);
+                //                     }
+                //                     Err(e) => {
+                //                         error!("error while starting app app_id {} command {} error {}", app_id, start_command, e)
+                //                     }
+                //                 };
+                //             }
+                //             None => {
+                //                 error!("Message::AppClicked start command not found for app with app_id {}", app_id)
+                //             }
+                //         },
+                //         None => {
+                //             error!("Message::AppClicked app not found with app_id {}", app_id)
+                //         }
+                //     }
+                // } else {
+                //     //Send event to open existing one
+                //     let (tx, rx) = oneshot::channel();
 
-                    let _ = self
-                        .top_level_service_sender
-                        .send(ToplevelServiceHandleMessage::ActivateApp {
-                            app_id,
-                            reply_to: tx,
-                        })
-                        .await;
+                //     let _ = self
+                //         .top_level_service_sender
+                //         .send(AppManagerMessage::ActivateApp {
+                //             app_id,
+                //             reply_to: tx,
+                //         })
+                //         .await;
 
-                    let reply = rx
-                        .await
-                        .unwrap_or(Err(
-                            Status::unavailable("top level service unavailable").into()
-                        ));
+                //     let reply = rx
+                //         .await
+                //         .unwrap_or(Err(
+                //             Status::unavailable("top level service unavailable").into()
+                //         ));
 
-                    let activated_app = match reply {
-                        Ok(v) => v,
-                        Err(e) => {
-                            error!("error while getting activating app {}", e);
-                            false
-                        }
-                    };
-                }
+                //     let activated_app = match reply {
+                //         Ok(v) => v,
+                //         Err(e) => {
+                //             error!("error while getting activating app {}", e);
+                //             false
+                //         }
+                //     };
+                // }
             }
         }
     }
@@ -549,7 +548,7 @@ fn generate_apps_ui(app: &App, sender: relm4::Sender<Message>) -> gtk::Box {
     left_click_gesture.connect_released(clone!(@strong app => move |this, _, _,_| {
             info!("gesture button released is {}", this.current_button());
             info!("app_is is {}", app.app_id);
-            let _ = sender.send(Message::AppClicked(app.app_id.clone()));
+            let _ = sender.send(Message::AppClicked(app.app_id.clone(), app.start_command.clone().unwrap_or("".to_string())));
 
     }));
     app_box.add_controller(left_click_gesture);
@@ -570,22 +569,16 @@ fn spawn_command(command: &str, args: &[&str]) -> Result<bool> {
     Ok(true)
 }
 
-async fn init_services() -> (mpsc::Sender<ToplevelServiceHandleMessage>) {
-    let (top_level_service_handle_t, top_level_service_handle_tx) =
-        init_top_level_service_handle().await;
+async fn init_services() -> (mpsc::Sender<AppManagerMessage>) {
+    let (app_manager_t, app_manager_tx) = init_app_manager().await;
 
-    (top_level_service_handle_tx)
+    (app_manager_tx)
 }
 
-async fn init_top_level_service_handle() -> (
-    glib::JoinHandle<()>,
-    mpsc::Sender<ToplevelServiceHandleMessage>,
-) {
+async fn init_app_manager() -> (glib::JoinHandle<()>, mpsc::Sender<AppManagerMessage>) {
     let (tx, rx) = mpsc::channel(32);
 
-    let tx_clone = tx.clone();
-
-    let t = relm4::spawn_local(async move { ToplevelServiceHandle::new().run(tx_clone, rx).await });
+    let t = relm4::spawn_local(async move { AppManagerService::new().run(rx).await });
 
     (t, tx)
 }
