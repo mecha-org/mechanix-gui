@@ -1,6 +1,8 @@
 use relm4::Sender;
 use tokio::sync::{mpsc, oneshot};
-use zwlr_foreign_toplevel_v1_async::handler::{ToplevelEvent, ToplevelHandler, ToplevelWState};
+use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::{
+    ToplevelEvent, ToplevelHandler, ToplevelWState,
+};
 
 use crate::Message;
 

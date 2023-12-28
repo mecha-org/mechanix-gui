@@ -10,7 +10,7 @@ use tokio::{
 };
 use tonic::{async_trait, Status};
 use tracing::{debug, error, info};
-use zwlr_foreign_toplevel_v1_async::{
+use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::{
     errors::{ToplevelHandlerError, ToplevelHandlerErrorCodes},
     handler::{ToplevelEvent, ToplevelHandler, ToplevelKey, ToplevelMessage, ToplevelWState},
 };
