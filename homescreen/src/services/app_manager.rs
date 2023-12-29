@@ -83,6 +83,11 @@ impl AppManagerService {
                     debug!("event received {:?}", event);
 
                     match event.unwrap() {
+                        ToplevelEvent::Created {
+                            key,
+                        } => {
+                            let _ = &self.set_instance_fullscreen(key).await;
+                        }
                         ToplevelEvent::Done {
                             key,
                             title,
@@ -221,6 +226,38 @@ impl AppManagerService {
         instances.insert(new_instance, ());
         self.apps.insert(app_id, instances);
         Ok(true)
+    }
+
+    pub async fn set_instance_fullscreen(&mut self, instance: ToplevelKey) -> Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self
+            .top_level_sender
+            .as_ref()
+            .unwrap()
+            .send(ToplevelMessage::SetFullscreen {
+                key: instance,
+                reply_to: tx,
+            })
+            .await;
+
+        let reply = match rx.await {
+            Ok(v) => v,
+            Err(e) => Err(ToplevelHandlerError::new(
+                ToplevelHandlerErrorCodes::UnknownError,
+                "unable to connect to top level hanler".to_string(),
+            )),
+        };
+        let is_set_app_fullscreen = match reply {
+            Ok(v) => v,
+            Err(e) => {
+                error!("error while setting app fullscreen {}", e);
+                false
+            }
+        };
+
+        info!("is set app fullscreen {}", is_set_app_fullscreen);
+
+        Ok(is_set_app_fullscreen)
     }
 
     pub fn get_all_apps(&self) -> Result<HashMap<String, HashMap<ToplevelKey, ()>>> {
