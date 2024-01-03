@@ -27,4 +27,5 @@ glob = "0.3.1"
 wayland-client = "0.31.0"
 wayland-protocols-wlr = { version = "0.2.0", features = ["client"] }
 regex = "1"
+wayland-protocols-async = { path = "../../wayland-protocols-async" }
 

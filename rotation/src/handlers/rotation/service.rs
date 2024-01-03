@@ -10,14 +10,19 @@ use glob::glob;
 use tokio::sync::mpsc;
 use tracing::{error, info};
 use wayland_client::protocol::wl_output::Transform;
+#[derive(Debug, Clone)]
+pub struct Orientation {
+    pub vector: (f32, f32),
+    pub wayland_state: Transform,
+    pub x_state: &'static str,
+    pub matrix: [&'static str; 9],
+}
 
 use crate::{
-    backends::{
-        sway::SwayBackend, wlroots::WaylandBackend, xorg::XorgBackend, DisplayManager, Orientation,
-    },
+    backends::{sway::SwayBackend, wlroots::WaylandBackend, xorg::XorgBackend, DisplayManager},
     handlers::{
         rotation::errors::{RotationHandlerError, RotationHandlerErrorCodes},
-        wlroots::handler::WlrootsHandlerMessage,
+        transform::handler::WlrootsHandlerMessage,
     },
     settings::{update_settings, RotationConfigs, RotationSettings},
 };
@@ -130,6 +135,12 @@ pub async fn dispatch_rotation_status(
                 format!("Unable to get current orientation state: {}", e),
                 true
             ))
+            // Orientation {
+            //     vector: (0.0, 1.0),
+            //     wayland_state: Transform::_180,
+            //     x_state: "inverted",
+            //     matrix: ["-1", "0", "1", "0", "-1", "1", "0", "0", "1"],
+            // }
         }
     };
 
@@ -144,8 +155,8 @@ pub async fn dispatch_rotation_status(
         let _ = dispatch_rotation_params
             .wlroots_sender_tx
             .send(WlrootsHandlerMessage::Rotate {
-                orientation: current_orientation,
-                rotation_configs: rotation_configs.clone(),
+                output_name: rotation_configs.display.clone(),
+                transform: current_orientation.wayland_state,
             })
             .await;
     }

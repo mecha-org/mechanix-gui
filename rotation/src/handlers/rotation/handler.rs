@@ -12,7 +12,7 @@ use crate::{
         rotation::service::{
             change_rotation, dispatch_rotation_status, set_default_rotation, DispatchRotationParams,
         },
-        wlroots::handler::WlrootsHandlerMessage,
+        transform::handler::WlrootsHandlerMessage,
     },
     settings::{RotationConfigs, RotationSettings},
 };

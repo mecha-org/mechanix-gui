@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use echo_client::EchoClient;
 use handlers::{
     rotation::handler::{RotationHandler, RotationHandlerMessage},
-    wlroots::handler::{WlrootsHandler, WlrootsHandlerMessage},
+    transform::handler::{WlrootsHandler, WlrootsHandlerMessage},
     zbus::zbus::ZbusServiceHandle,
 };
 use std::error::Error;

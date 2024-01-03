@@ -8,7 +8,7 @@ window:
   size: [480, 440]
   position: [0, 0]  # [0, 0]
   min_size: [480, 440]  # None
-  max_size: null    # None
+  max_size: null    # 
   visible: true   # true
   resizable: true   # true
   decorations: true   # true
