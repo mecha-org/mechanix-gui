@@ -1,0 +1,131 @@
+.window {
+  background: rgba(5, 7, 10, 0.85);
+  font-family: "Space Grotesk";
+  padding: 12px 20px;
+  color: #e4e7ee;
+}
+
+.container {
+}
+
+.cpu-box {
+  min-width: 50%;
+}
+
+.memory-box {
+  min-width: 50%;
+}
+
+.cpu-icon {
+  min-width: 18px;
+  min-height: 18px;
+}
+.memory-icon {
+  min-width: 18px;
+  min-height: 18px;
+}
+
+.cpu-label {
+  color: #848da6;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  margin-left: 4px;
+}
+.cpu-value {
+  color: #fafbfc;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  margin-left: 4px;
+}
+
+.memory-label {
+  color: #848da6;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-left: 4px;
+}
+.memory-value {
+  color: #fafbfc;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-left: 4px;
+}
+
+.apps-list {
+  margin-top: 30px;
+}
+
+.app-instance-icon {
+}
+
+.app-instance-title {
+  color: #848da6;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-top: 10px;
+}
+
+.app-name {
+  color: #c5c8cf;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  margin-top: 10px;
+}
+
+.app-instance-icon-box {
+  background: #05070a;
+  min-width: 220px;
+  min-height: 220px;
+  border-radius: 0px 0px 14px 14px;
+  /* border: 1px solid #15171d; */
+}
+
+.app-instance-icon-box-header {
+  background: #05070a;
+  min-width: 220px;
+  border-radius: 14px 14px 0px 0px;
+}
+
+.app-instance-close-btn {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.footer {
+}
+
+/* .password-home-button-pressing {
+    background: rgba(0,0,0,0.8);
+} */
+
+.icon-button-root-default {
+  padding: 0px;
+}
+
+.icon-button-container-default {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 10px;
+  border-radius: 9px;
+  /* border: 1px solid #000000; */
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.icon-button-container-pressing-default {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.icon-button-icon-default {
+}

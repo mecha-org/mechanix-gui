@@ -2,4 +2,7 @@
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "statiolake.vscode-rustfmt",
     "rust-analyzer.cargo.noDefaultFeatures": false,
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
 }

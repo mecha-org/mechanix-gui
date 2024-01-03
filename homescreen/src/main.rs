@@ -555,20 +555,6 @@ fn generate_apps_ui(app: &App, sender: relm4::Sender<Message>) -> gtk::Box {
     app_box
 }
 
-fn spawn_command(command: &str, args: &[&str]) -> Result<bool> {
-    let child = match Command::new(command).args(args).spawn() {
-        Ok(output) => output,
-        Err(e) => {
-            bail!(HomescreenError::new(
-                HomescreenErrorCodes::CommandExecuteError,
-                format!("failed to execute command: {}", e),
-            ))
-        }
-    };
-
-    Ok(true)
-}
-
 async fn init_services() -> (mpsc::Sender<AppManagerMessage>) {
     let (app_manager_t, app_manager_tx) = init_app_manager().await;
 
