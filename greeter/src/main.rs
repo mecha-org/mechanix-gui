@@ -59,18 +59,18 @@ pub struct Greeter {
 
 #[derive(Debug, Clone)]
 pub enum Screens {
-    LockScreen,
+    HomeScreen,
     PasswordScreen,
-    PinScreen,
+    PinScreen { username: Option<String> },
     PowerOptions,
 }
 
 impl fmt::Display for Screens {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Screens::LockScreen => write!(f, "lock_screen"),
+            Screens::HomeScreen => write!(f, "home_screen"),
             Screens::PasswordScreen => write!(f, "password_screen"),
-            Screens::PinScreen => write!(f, "pin_screen"),
+            Screens::PinScreen { username } => write!(f, "pin_screen"),
             Screens::PowerOptions => write!(f, "power_options"),
         }
     }
@@ -250,6 +250,7 @@ impl AsyncComponent for Greeter {
             layout.clone(),
             sender.input_sender().clone(),
             None,
+            None,
         );
 
         let password_authentication_page = create_password_authentication_page(
@@ -262,7 +263,7 @@ impl AsyncComponent for Greeter {
         //Adding home page screeen in stack
         screens_stack.add_named(
             home_page.widget(),
-            Option::from(Screens::LockScreen.to_string().as_str()),
+            Option::from(Screens::HomeScreen.to_string().as_str()),
         );
 
         screens_stack.add_named(
@@ -273,7 +274,7 @@ impl AsyncComponent for Greeter {
         //Adding auth screeen in stack
         screens_stack.add_named(
             pin_authentication_page.widget(),
-            Option::from(Screens::PinScreen.to_string().as_str()),
+            Option::from(Screens::PinScreen { username: None }.to_string().as_str()),
         );
 
         //Adding password screeen in stack
@@ -282,7 +283,7 @@ impl AsyncComponent for Greeter {
             Option::from(Screens::PasswordScreen.to_string().as_str()),
         );
 
-        let current_screen = Screens::LockScreen;
+        let current_screen = Screens::HomeScreen;
 
         //Setting current active screen in stack
         screens_stack.set_visible_child_name(&current_screen.to_string());
@@ -319,24 +320,29 @@ impl AsyncComponent for Greeter {
         info!("Update message is {:?}", message);
         match message {
             Message::ChangeScreen(screen) => {
-                match screen {
-                    Screens::PinScreen => {
+                match &screen {
+                    Screens::PinScreen { username } => {
                         self.pin_authentication_page.detach_runtime();
                         let pin_authentication_page = create_pin_authentication_page(
                             self.settings.modules.clone(),
                             self.settings.layout.clone(),
                             sender.input_sender().clone(),
                             self.login_handler_sender.clone(),
+                            username.clone(),
                         );
                         self.screens_stack.remove(
                             &self
                                 .screens_stack
-                                .child_by_name(Screens::PinScreen.to_string().as_str())
+                                .child_by_name(
+                                    Screens::PinScreen { username: None }.to_string().as_str(),
+                                )
                                 .unwrap(),
                         );
                         self.screens_stack.add_named(
                             pin_authentication_page.widget(),
-                            Option::from(Screens::PinScreen.to_string().as_str()),
+                            Option::from(
+                                Screens::PinScreen { username: None }.to_string().as_str(),
+                            ),
                         );
                         self.pin_authentication_page = pin_authentication_page;
 
@@ -414,7 +420,7 @@ impl AsyncComponent for Greeter {
                     .sender()
                     .send(PasswordAuthenticationMessage::Command(message));
             }
-            Screens::PinScreen => {
+            Screens::PinScreen { username: None } => {
                 let _ = self
                     .pin_authentication_page
                     .sender()
@@ -442,17 +448,19 @@ fn create_pin_authentication_page(
     layout: LayoutSettings,
     sender: relm4::Sender<Message>,
     login_handler_sender: Option<mpsc::Sender<LoginHandlerMessage>>,
+    username: Option<String>,
 ) -> AsyncController<PinAuthentication> {
     let pin_authentication_page = PinAuthentication::builder()
         .launch(PinAuthenticationSettings {
             modules: modules,
             layout: layout,
             login_handler_sender,
+            username: username.unwrap_or("".to_string()),
         })
         .forward(&sender, move |msg| {
             info!("pin page message to parent {:?}", msg);
             match msg {
-                PinAuthenticationMessage::BackPressed => Message::ChangeScreen(Screens::LockScreen),
+                PinAuthenticationMessage::BackPressed => Message::ChangeScreen(Screens::HomeScreen),
                 _ => Message::Dummy,
             }
         });
@@ -475,7 +483,7 @@ fn create_password_authentication_page(
             info!("password page message to parent {:?}", msg);
             match msg {
                 PasswordAuthenticationMessage::BackPressed => {
-                    Message::ChangeScreen(Screens::LockScreen)
+                    Message::ChangeScreen(Screens::HomeScreen)
                 }
                 _ => Message::Dummy,
             }

@@ -82,7 +82,7 @@ impl SimpleComponent for PowerOptions {
             .forward(sender.input_sender(), |msg| {
                 info!("msg is {:?}", msg);
                 match msg {
-                    IconButtonOutputMessage::Clicked => Message::ChangeScreen(Screens::LockScreen),
+                    IconButtonOutputMessage::Clicked => Message::ChangeScreen(Screens::HomeScreen),
                 }
             });
         footer.append(close_btn.widget());

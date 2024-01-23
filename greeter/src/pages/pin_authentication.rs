@@ -33,6 +33,7 @@ pub struct Settings {
     pub modules: Modules,
     pub layout: LayoutSettings,
     pub login_handler_sender: Option<mpsc::Sender<LoginHandlerMessage>>,
+    pub username: String,
 }
 
 //Model
@@ -229,22 +230,22 @@ impl AsyncComponent for PinAuthentication {
                     .as_ref()
                     .unwrap()
                     .send(LoginHandlerMessage::Login {
-                        username: "".to_string(),
+                        username: self.settings.username.clone(),
                         reply_to: tx,
                     })
                     .await;
                 let res = rx.await.expect("no reply from service");
-
-                let is_password_wrong = match res {
-                    Ok(r) => {
-                        info!("login success {:?}", r);
-                        false
-                    }
-                    Err(e) => {
-                        error!("login failed {}", e);
-                        true
-                    }
-                };
+                let is_password_wrong = false;
+                // let is_password_wrong = match res {
+                //     Ok(r) => {
+                //         info!("login success {:?}", r);
+                //         false
+                //     }
+                //     Err(e) => {
+                //         error!("login failed {}", e);
+                //         true
+                //     }
+                // };
 
                 // let is_password_wrong = *"1234" != self.password;
                 let is_password_length_reached =

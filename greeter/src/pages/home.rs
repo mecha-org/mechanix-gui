@@ -166,9 +166,11 @@ impl SimpleComponent for HomePage {
                     match user.pin_enabled {
                         Some(is_pin_enabled) => {
                             if is_pin_enabled {
-                                let _ = sender
-                                    .output_sender()
-                                    .send(Message::ChangeScreen(Screens::PinScreen));
+                                let _ = sender.output_sender().send(Message::ChangeScreen(
+                                    Screens::PinScreen {
+                                        username: Some(user.username.clone()),
+                                    },
+                                ));
                             }
                         }
                         None => (),
