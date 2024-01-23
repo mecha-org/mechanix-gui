@@ -8,10 +8,10 @@ pub fn get_image_from_path(path: Option<String>, css_classes: &[&str]) -> gtk::I
     match path {
         Some(p) => {
             let image_file = gio::File::for_path(p);
-            match gdk::Texture::from_file(&image_file){
+            match gdk::Texture::from_file(&image_file) {
                 Ok(image_asset_paintable) => {
                     image.set_paintable(Option::from(&image_asset_paintable));
-                },
+                }
                 Err(_) => (),
             }
         }

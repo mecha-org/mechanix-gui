@@ -18,6 +18,7 @@ pub struct ActionBarSettings {
     pub layout: LayoutSettings,
     pub modules: Modules,
     pub css: CssConfigs,
+    pub bins: Bins,
 }
 
 impl Default for ActionBarSettings {
@@ -28,7 +29,8 @@ impl Default for ActionBarSettings {
             title: String::from("Action Bar"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
-            css: CssConfigs::default()
+            css: CssConfigs::default(),
+            bins: Bins::default(),
         }
     }
 }
@@ -72,6 +74,58 @@ pub struct WindowSettings {
     pub transparent: bool,            // Enables transparency
     pub always_on_top: bool,          // Forces window to be always on top
     pub icon_path: Option<String>,
+    pub layer_shell: WindowLayerShellSettings,
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct WindowLayerShellSettings {
+    pub margin: LayerShellMargin,
+    pub anchor: LayerShellAnchor,
+}
+
+impl Default for WindowLayerShellSettings {
+    fn default() -> Self {
+        Self {
+            margin: LayerShellMargin::default(),
+            anchor: LayerShellAnchor::default(),
+        }
+    }
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct LayerShellMargin {
+    pub top: Option<i32>,
+    pub right: Option<i32>,
+    pub bottom: Option<i32>,
+    pub left: Option<i32>,
+}
+
+impl Default for LayerShellMargin {
+    fn default() -> Self {
+        Self {
+            top: None,
+            right: None,
+            bottom: None,
+            left: None,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct LayerShellAnchor {
+    pub top: Option<bool>,
+    pub right: Option<bool>,
+    pub bottom: Option<bool>,
+    pub left: Option<bool>,
+}
+
+impl Default for LayerShellAnchor {
+    fn default() -> Self {
+        Self {
+            top: None,
+            right: None,
+            bottom: None,
+            left: None,
+        }
+    }
 }
 
 /// # Layout Settings
@@ -92,12 +146,11 @@ pub struct CssConfigs {
 
 impl Default for CssConfigs {
     fn default() -> Self {
-        Self { 
-            default: "".to_string() 
+        Self {
+            default: "".to_string(),
         }
     }
 }
-
 
 /// # Modules
 ///
@@ -143,6 +196,7 @@ impl Default for WindowSettings {
             transparent: false,
             always_on_top: false,
             icon_path: None,
+            layer_shell: WindowLayerShellSettings::default(),
         }
     }
 }
@@ -172,6 +226,35 @@ impl Default for Modules {
                 title: "Keyboard".to_string(),
                 icon: None,
             },
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Bin {
+    pub bin: Option<String>,
+    pub conf: Option<String>,
+}
+
+impl Default for Bin {
+    fn default() -> Self {
+        Self {
+            bin: None,
+            conf: None,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Bins {
+    pub osk: Bin,
+    pub settings_app: Bin,
+}
+impl Default for Bins {
+    fn default() -> Self {
+        Self {
+            osk: Bin::default(),
+            settings_app: Bin::default(),
         }
     }
 }

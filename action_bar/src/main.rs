@@ -1,20 +1,41 @@
+use std::process::Command;
+
+use anyhow::{bail, Result};
+use command::{execute_command, spawn_command};
+use echo_client::EchoClient;
+use event_handler::zbus::ZbusServiceHandle;
 use gtk::{
     gdk, gio, glib,
     prelude::{BoxExt, ButtonExt, GtkWindowExt},
 };
-use relm4::{gtk::prelude::ObjectExt, RelmSetChildExt};
+use modules::input::handler::InputServiceHandle;
+use relm4::{
+    async_trait::async_trait,
+    component::{AsyncComponent, AsyncComponentParts},
+    gtk::prelude::{ObjectExt, WidgetExt},
+    AsyncComponentSender, RelmSetChildExt,
+};
 use relm4::{
     gtk::{self, glib::clone},
-    ComponentParts, ComponentSender, RelmApp, RelmWidgetExt, SimpleComponent,
+    ComponentParts, ComponentSender, RelmApp, RelmWidgetExt,
+};
+use tokio::sync::{
+    mpsc::{self, Sender},
+    oneshot,
 };
 
 mod settings;
 mod theme;
-use tracing::{error, info};
+use tracing::{debug, error, info};
+use wlroots::wlr_toplevel_handler::{
+    WlrToplevelHandler, WlrToplevelHandlerMessage, WlrToplevelHandlerOptions,
+};
 pub mod errors;
+mod event_handler;
+mod modules;
 
-use crate::settings::ActionBarSettings;
-use crate::theme::ActionBarTheme;
+use crate::{errors::ActionBarError, settings::ActionBarSettings};
+use crate::{errors::ActionBarErrorCodes, theme::ActionBarTheme};
 
 /// # Action bar state
 ///
@@ -22,6 +43,8 @@ use crate::theme::ActionBarTheme;
 struct ActionBar {
     settings: ActionBarSettings,
     custom_theme: ActionBarTheme,
+    window: gtk::Window,
+    toplevel_message_tx: Sender<WlrToplevelHandlerMessage>,
 }
 
 /// ## Message
@@ -32,7 +55,11 @@ struct ActionBar {
 pub enum Message {
     SettingsPressed,
     HomePressed,
-    KeyBoardPressed,
+    ToggleKeyboard,
+    Show,
+    Hide,
+    ShowKeyboard,
+    HideKeyboard,
 }
 
 struct AppWidgets {}
@@ -66,28 +93,63 @@ fn init_window(settings: ActionBarSettings) -> gtk::Window {
 
     // The margins are the gaps around the window's edges
     // Margins and anchors can be set like this...
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, 0);
-    gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, 18);
+    match window_settings.layer_shell.margin.top {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.right {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.margin.left {
+        Some(v) => {
+            gtk4_layer_shell::set_margin(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
+    }
 
     // ... or like this
     // Anchors are if the window is pinned to each edge of the output
-    let anchors = [
-        (gtk4_layer_shell::Edge::Left, true),
-        (gtk4_layer_shell::Edge::Right, true),
-        (gtk4_layer_shell::Edge::Top, false),
-        (gtk4_layer_shell::Edge::Bottom, true),
-    ];
-
-    for (anchor, state) in anchors {
-        gtk4_layer_shell::set_anchor(&window, anchor, state);
+    match window_settings.layer_shell.anchor.top {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Top, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.right {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Right, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.bottom {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Bottom, v);
+        }
+        None => (),
+    }
+    match window_settings.layer_shell.anchor.left {
+        Some(v) => {
+            gtk4_layer_shell::set_anchor(&window, gtk4_layer_shell::Edge::Left, v);
+        }
+        None => (),
     }
 
     window
 }
 
-impl SimpleComponent for ActionBar {
+#[async_trait(?Send)]
+impl AsyncComponent for ActionBar {
     /// The type of the messages that this component can receive.
     type Input = Message;
     /// The type of the messages that this component can send.
@@ -98,6 +160,8 @@ impl SimpleComponent for ActionBar {
     type Root = gtk::Window;
     /// A data structure that contains the widgets that you will need to update.
     type Widgets = AppWidgets;
+
+    type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
         let settings = match settings::read_settings_yml() {
@@ -125,11 +189,11 @@ impl SimpleComponent for ActionBar {
     }
 
     /// Initialize the UI and model.
-    fn init(
+    async fn init(
         _: Self::Init,
-        window: &Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> relm4::ComponentParts<Self> {
+        window: Self::Root,
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
             Err(_) => ActionBarSettings::default(),
@@ -144,11 +208,6 @@ impl SimpleComponent for ActionBar {
         };
 
         let modules = settings.modules.clone();
-
-        let model = ActionBar {
-            settings: settings.clone(),
-            custom_theme,
-        };
 
         let main_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Horizontal)
@@ -190,7 +249,7 @@ impl SimpleComponent for ActionBar {
                     match modules.keyboard.icon.clone() {
                         Some(icon) => {
                             icon_path = Some(icon);
-                            message = Some(Message::KeyBoardPressed);
+                            message = Some(Message::ToggleKeyboard);
                         }
                         None => (),
                     }
@@ -228,26 +287,144 @@ impl SimpleComponent for ActionBar {
             });
 
         window.set_child(Some(&main_box));
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
+
+        let (toplevel_message_tx) = init_services(settings.clone(), sender).await;
+
+        let model = ActionBar {
+            settings: settings.clone(),
+            custom_theme,
+            window,
+            toplevel_message_tx,
+        };
 
         let widgets = AppWidgets {};
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, _sender: ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        _sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         info!("update message is {:?}", message);
         match message {
-            Message::SettingsPressed => {}
-            Message::HomePressed => {}
-            Message::KeyBoardPressed => {}
+            Message::SettingsPressed => match &self.settings.bins.settings_app.bin {
+                Some(bin) => {
+                    match spawn_command(bin, &[]) {
+                        Ok(r) => {
+                            info!("settings app opened successfully");
+                        }
+                        Err(e) => {
+                            error!("settings app start error {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
+            Message::HomePressed => {
+                let (tx, rx) = oneshot::channel();
+                debug!("sending message to wayland to minimize all top level");
+                let _ = self
+                    .toplevel_message_tx
+                    .send(WlrToplevelHandlerMessage::MinimizeAllTopLevel { reply_to: tx })
+                    .await;
+                info!("message sent to wayland to minmize all top level");
+                let res = rx.await.expect("no reply from service");
+
+                match res {
+                    Ok(r) => {
+                        info!("minimize response from wayland {:?}", r);
+                    }
+                    Err(e) => {
+                        error!("minimize error from wayland {}", e);
+                    }
+                }
+            }
+            Message::ToggleKeyboard => match &self.settings.bins.osk.bin {
+                Some(bin) => {
+                    match execute_command(bin, &["-cmd", "Toggle"]) {
+                        Ok(r) => {
+                            info!("keyboard toggled successfully");
+                        }
+                        Err(e) => {
+                            error!("keyboard while toggling keyboard {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
+            Message::Show => {
+                self.window.set_visible(true);
+            }
+            Message::Hide => {
+                self.window.set_visible(false);
+            }
+            Message::ShowKeyboard => match &self.settings.bins.osk.bin {
+                Some(bin) => {
+                    match execute_command(bin, &["-cmd", "Show"]) {
+                        Ok(r) => {
+                            info!("keyboard showed successfully");
+                        }
+                        Err(e) => {
+                            error!("keyboard while showing keyboard {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
+            Message::HideKeyboard => match &self.settings.bins.osk.bin {
+                Some(bin) => {
+                    match execute_command(bin, &["-cmd", "Hide"]) {
+                        Ok(r) => {
+                            info!("keyboard hided successfully");
+                        }
+                        Err(e) => {
+                            error!("keyboard while hiding keyboard {}", e);
+                        }
+                    };
+                }
+                None => {}
+            },
         }
     }
 
     /// Update the view to represent the updated model.
-    fn update_view(&self, widgets: &mut Self::Widgets, _sender: ComponentSender<Self>) {}
+    fn update_view(&self, widgets: &mut Self::Widgets, _sender: AsyncComponentSender<Self>) {}
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let command_index = args.iter().position(|arg| arg == "-cmd");
+    match command_index {
+        Some(index) => match args.get(index + 1) {
+            Some(cmd) => {
+                match EchoClient::echo(
+                    "org.mechanics.ActionBar",
+                    "/org/mechanics/ActionBar",
+                    "org.mechanics.ActionBar",
+                    cmd,
+                    (),
+                )
+                .await
+                {
+                    Ok(r) => {
+                        println!("echo success");
+                    }
+                    Err(e) => {
+                        println!("echo failed {}", e);
+                    }
+                };
+                return;
+            }
+            None => (),
+        },
+        None => (),
+    }
+
     // Enables logger
     // install global collector configured based on RUST_LOG env var.
     tracing_subscriber::fmt()
@@ -256,7 +433,7 @@ fn main() {
         .with_thread_names(true)
         .init();
     let app = RelmApp::new("action.bar").with_args(vec![]);
-    app.run::<ActionBar>(());
+    app.run_async::<ActionBar>(());
 }
 
 pub fn generate_image(path: String) -> gtk::Image {
@@ -267,4 +444,36 @@ pub fn generate_image(path: String) -> gtk::Image {
         .css_classes(["action-img"])
         .build();
     image
+}
+
+async fn init_services(
+    settings: ActionBarSettings,
+    sender: relm4::Sender<Message>,
+) -> (Sender<WlrToplevelHandlerMessage>) {
+    let mut zbus_service_handle = ZbusServiceHandle::new();
+    let sender_clone_1 = sender.clone();
+    let _ = relm4::spawn_local(async move {
+        info!(task = "init_services", "Starting zbus service");
+        zbus_service_handle.run(sender_clone_1).await;
+    });
+
+    //this service is listening for keyboard events
+    // let mut window_manager_service_handle = InputServiceHandle::new();
+    // let sender_clone_2 = sender.clone();
+    // let _ = relm4::spawn_local(async move {
+    //     info!(task = "init_services", "Starting input service");
+    //     window_manager_service_handle.run(sender_clone_2).await;
+    // });
+
+    let (toplevel_message_tx, toplevel_message_rx) = mpsc::channel(32);
+    let (toplevel_event_tx, mut toplevel_event_rx) = mpsc::channel(32);
+
+    let mut wlr_toplevel_handler =
+        WlrToplevelHandler::new(WlrToplevelHandlerOptions { toplevel_event_tx });
+
+    let _ = relm4::spawn_local(async move {
+        let _ = wlr_toplevel_handler.run(toplevel_message_rx).await;
+    });
+
+    (toplevel_message_tx)
 }

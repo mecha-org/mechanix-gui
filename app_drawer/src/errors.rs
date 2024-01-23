@@ -3,7 +3,7 @@ use std::fmt;
 use tracing::error;
 
 /// # App Drawer Error Codes
-/// 
+///
 /// Implements standard errors for the app drawer
 #[derive(Debug, Default, Clone, Copy)]
 pub enum AppDrawerErrorCodes {
@@ -13,6 +13,7 @@ pub enum AppDrawerErrorCodes {
     SettingsParseError,
     ThemeReadError,
     ThemeParseError,
+    CommandExecuteError,
 }
 
 impl fmt::Display for AppDrawerErrorCodes {
@@ -23,12 +24,13 @@ impl fmt::Display for AppDrawerErrorCodes {
             AppDrawerErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
             AppDrawerErrorCodes::ThemeReadError => write!(f, "ThemeReadError"),
             AppDrawerErrorCodes::ThemeParseError => write!(f, "ThemeParseError"),
+            AppDrawerErrorCodes::CommandExecuteError => write!(f, "CommandExecuteError"),
         }
     }
 }
 
 /// # AppDrawerError
-/// 
+///
 /// Implements a standard error type for all app drawer related errors
 /// includes the error code (`AppDrawerErrorCodes`) and a message
 #[derive(Debug, Default)]

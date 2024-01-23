@@ -1,11 +1,10 @@
 use anyhow::{bail, Error, Result};
 use async_trait::async_trait;
 use std::collections::HashMap;
-use std::time::Duration;
 use tokio::sync::mpsc::{Receiver, Sender};
 use tokio::sync::{mpsc, oneshot};
 use tokio::{select, time};
-use tracing::info;
+use tracing::{debug, info};
 use wayrs_client::global::GlobalsExt;
 use wayrs_client::{Connection, EventCtx};
 use wayrs_protocols::wlr_foreign_toplevel_management_unstable_v1::*;
@@ -16,6 +15,7 @@ use crate::errors::{WlrootsError, WlrootsErrorCodes};
 pub struct Toplevel {
     title: Option<String>,
     app_id: Option<String>,
+    state: Option<Vec<u8>>,
     is_active: bool,
 }
 
@@ -61,6 +61,9 @@ pub enum WlrToplevelHandlerMessage {
     },
     GetActiveToplevel {
         reply_to: oneshot::Sender<Result<Option<Toplevel>>>,
+    },
+    MinimizeAllTopLevel {
+        reply_to: oneshot::Sender<Result<Option<bool>>>,
     },
 }
 
@@ -186,6 +189,35 @@ impl WlrToplevelHandler {
                                     let top_level = self.get_active_toplevel();
                                     let _ = reply_to.send(top_level);
                                 },
+                                WlrToplevelHandlerMessage::MinimizeAllTopLevel { reply_to } => {
+                                    let success: bool =
+                                    match self.get_toplevels_map() {
+                                        Ok(top_levels) => {
+                                            top_levels.into_iter().for_each(
+                                                |(top_level_handle, top_level)| match &top_level.state {
+                                                    Some(state) => {
+                                                        let is_minimized = state
+                                                            .chunks_exact(4)
+                                                            .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
+                                                            .any(|s| {
+                                                                s == zwlr_foreign_toplevel_handle_v1::State::Minimized
+                                                                    as u32
+                                                            });
+                                                        if !is_minimized{
+                                                            top_level_handle.set_minimized(&mut conn);
+                                                        }
+                                                    }
+                                                    None => {
+                                                        debug!("top level apps not found ");
+                                                    }
+                                                },
+                                            );
+                                            true
+                                        }
+                                        Err(_) => false,
+                                    };
+                                    let _ = reply_to.send(Ok(Some(success)));
+                                }
                             };
                         }
                         None => ()
@@ -238,6 +270,21 @@ impl WlrToplevelHandler {
         }
 
         Ok(toplevel_map.values().cloned().collect::<Vec<Toplevel>>())
+    }
+
+    pub fn get_toplevels_map(&self) -> Result<&HashMap<ZwlrForeignToplevelHandleV1, Toplevel>> {
+        let toplevel_map: &HashMap<ZwlrForeignToplevelHandleV1, Toplevel> = &self.state.toplevels;
+        let conn_err = &self.state.conn_error;
+
+        if conn_err.is_some() {
+            bail!(WlrootsError::new(
+                WlrootsErrorCodes::ConnectionError,
+                format!("wayland connection error in get toplevels",),
+                true
+            ));
+        }
+
+        Ok(toplevel_map)
     }
 
     pub fn get_active_toplevel(&self) -> Result<Option<Toplevel>> {
@@ -370,9 +417,15 @@ fn toplevel_cb(ctx: EventCtx<ConnectionContext, ZwlrForeignToplevelHandleV1>) {
                 .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
                 .any(|s| s == zwlr_foreign_toplevel_handle_v1::State::Activated as u32);
 
+            // let is_minimized = state
+            // .chunks_exact(4)
+            // .map(|b| u32::from_ne_bytes(b.try_into().unwrap()))
+            // .any(|s| s == zwlr_foreign_toplevel_handle_v1::State::Minimized as u32);
+
             if is_active {
                 send_toplevel_event_tx_message(WlrToplevelEvent::ToplevelActive);
             }
+            toplevel.state = Some(state);
             toplevel.is_active = is_active;
         }
         Event::Closed => {

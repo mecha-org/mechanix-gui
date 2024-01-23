@@ -15,4 +15,6 @@ wayrs-protocols = { version = "0.12", features = ["wlr-foreign-toplevel-manageme
 zbus = "3.14.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+wayland-client = "0.31.1"
+wayland-protocols-misc = { version = "0.2.0", features = ["client"] }
 

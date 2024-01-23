@@ -1,0 +1,32 @@
+title: App Switcher  # Empty
+app:
+  id: app-switcher   # launcher
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window: 
+  size: [480, 440]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 440]  # None
+  max_size: null    # 
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+css:
+  default: /home/users/app_switcher/src/assets/css/style.css
+modules:
+  cpu:
+    title: CPU
+    icon: /home/users/app_switcher/src/assets/pngs/cpu.png
+  memory:
+    title: MEM
+    icon: /home/users/app_switcher/src/assets/pngs/memory.png
+  home:
+    icon: /home/users/app_switcher/src/assets/pngs/home.png
+  close:
+    icon: /home/users/app_switcher/src/assets/pngs/close.png 
+  close_all:
+    icon: /home/users/app_switcher/src/assets/pngs/close_all.png

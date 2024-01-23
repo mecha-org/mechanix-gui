@@ -43,8 +43,10 @@ pub struct InitSettings {
 pub enum InputMessage {
     ToggleViewPassword,
     InputChange(String),
+    PlaceHolderChange(String),
     InputFocusEnter,
     InputFocusLeave,
+    Clear,
 }
 
 #[derive(Debug)]
@@ -56,6 +58,7 @@ pub struct IconInputPassword {
     settings: InitSettings,
     is_text_visible: bool,
     is_focused: bool,
+    input: gtk::Entry,
 }
 
 pub struct ComponentWidgets {
@@ -178,6 +181,7 @@ impl SimpleComponent for IconInputPassword {
             settings: init,
             is_text_visible: false,
             is_focused: false,
+            input: input.clone(),
         };
 
         let widgets = ComponentWidgets {
@@ -206,6 +210,12 @@ impl SimpleComponent for IconInputPassword {
             }
             InputMessage::InputFocusLeave => {
                 self.is_focused = false;
+            }
+            InputMessage::Clear => {
+                self.input.set_text("");
+            }
+            InputMessage::PlaceHolderChange(placeholder) => {
+                self.input.set_placeholder_text(Some(&placeholder));
             }
         }
     }

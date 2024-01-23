@@ -1,0 +1,7 @@
+title: Background  # Background
+background:
+  path: 
+  mode: top
+provider:
+  kind: swww-daemon
+  bin: /usr/local/bin/swww-daemon

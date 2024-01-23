@@ -1,0 +1,13 @@
+users:
+  - name: "Mecha user"
+    username: "mechauser"
+    avatar: /home/user/greeter/assets/pngs/default_user_avatar.png
+    pin_enabled: true
+  - name: "Custom"
+    username: "custom"
+    avatar: /home/user/greeter/assets/pngs/custom_user_avatar.png
+    pin_enabled: false   
+
+
+
+

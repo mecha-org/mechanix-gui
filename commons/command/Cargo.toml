@@ -1,0 +1,15 @@
+[package]
+name = "command"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.75"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

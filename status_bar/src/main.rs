@@ -17,7 +17,6 @@ use modules::{
     clock::handler::ClockServiceHandle, window::handler::WindowServiceHandle,
     wireless::handler::WirelessServiceHandle,
 };
-use process::is_app_already_running;
 use relm4::{async_trait::async_trait, gtk, tokio, RelmApp, RelmWidgetExt, SimpleComponent};
 use relm4::{
     component::{AsyncComponent, AsyncComponentParts},
@@ -167,6 +166,8 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
         None => {}
     }
 
+    gtk4_layer_shell::init_for_window(&window);
+
     match window_settings.height {
         Some(v) => {
             window.set_default_height(v);
@@ -175,8 +176,6 @@ fn init_window(settings: StatusBarSettings) -> gtk::Window {
         }
         None => {}
     }
-
-    gtk4_layer_shell::init_for_window(&window);
 
     // Display above normal windows
     // gtk4_layer_shell::set_layer(&window, gtk4_layer_shell::Layer::Overlay);
@@ -634,6 +633,7 @@ async fn main() {
                     "/org/mechanics/StatusBar",
                     "org.mechanics.StatusBar",
                     cmd,
+                    (),
                 )
                 .await
                 {
