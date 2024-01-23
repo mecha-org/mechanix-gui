@@ -60,6 +60,8 @@ pub enum InputMessage {
     InputFocusEnter,
     InputFocusLeave,
     Clear,
+    SetEditable(bool),
+    PlaceHolderChange(String),
 }
 
 #[derive(Debug)]
@@ -72,13 +74,15 @@ pub struct IconInput {
     view_password: bool,
     is_focused: bool,
     input: gtk::Entry,
+    is_editable: bool,
 }
 
 pub struct ComponentWidgets {
     container_box: gtk::Box,
     icon_image: gtk::Image,
     root: gtk::Box,
-    clear_icon_image: gtk::Image
+    clear_icon_image: gtk::Image,
+    input: gtk::Entry,
 }
 
 impl SimpleComponent for IconInput {
@@ -181,10 +185,10 @@ impl SimpleComponent for IconInput {
         }
 
         let clear_icon_image = gtk::Image::builder()
-        .visible(false)
-        .hexpand(false)
-        .vexpand(false)
-        .build();
+            .visible(false)
+            .hexpand(false)
+            .vexpand(false)
+            .build();
         match init.clear_icon.clone() {
             Some(icon) => {
                 let icon_file = gio::File::for_path(icon.path);
@@ -213,14 +217,16 @@ impl SimpleComponent for IconInput {
             settings: init,
             view_password: false,
             is_focused: false,
-            input,
+            is_editable: true,
+            input: input.clone(),
         };
 
         let widgets = ComponentWidgets {
             container_box,
             icon_image,
             root: root.clone(),
-            clear_icon_image
+            clear_icon_image,
+            input: input,
         };
 
         ComponentParts { model, widgets }
@@ -243,6 +249,12 @@ impl SimpleComponent for IconInput {
             InputMessage::Clear => {
                 self.input.set_text("");
             }
+            InputMessage::SetEditable(value) => {
+                self.is_editable = value;
+            }
+            InputMessage::PlaceHolderChange(placeholder) => {
+                self.input.set_placeholder_text(Some(&placeholder));
+            }
         }
     }
 
@@ -254,6 +266,7 @@ impl SimpleComponent for IconInput {
             None => (),
         }
         widgets.clear_icon_image.set_visible(self.is_focused);
+        widgets.input.set_editable(self.is_editable);
     }
 
     fn shutdown(&mut self, widgets: &mut Self::Widgets, output: relm4::Sender<Self::Output>) {
