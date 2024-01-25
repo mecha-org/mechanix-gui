@@ -1,12 +1,12 @@
 [package]
 name = "mecha_greeter"
-description = "Greeter"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
+documentation = "https://docs.mecha.so"
+description = "Collection of UI elements for a UI Shell for Mecha devices, supports wlroots based compositors"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"
 
 [dependencies]
 anyhow = "1.0.71"

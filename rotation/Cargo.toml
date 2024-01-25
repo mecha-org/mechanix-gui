@@ -1,12 +1,12 @@
 [package]
 name = "rotation"
 description = "Rotation service used to rotate screen"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
+documentation = "https://docs.mecha.so"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -27,5 +27,5 @@ glob = "0.3.1"
 wayland-client = "0.31.0"
 wayland-protocols-wlr = { version = "0.2.0", features = ["client"] }
 regex = "1"
-wayland-protocols-async = { path = "../../wayland-protocols-async" }
+wayland-protocols-async = "1.0.0"
 

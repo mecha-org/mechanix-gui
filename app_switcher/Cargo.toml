@@ -1,12 +1,12 @@
 [package]
 name = "mecha_app_switcher"
 description = "App switcher for Mecha Launcher, supports wlroots based compositors"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
+documentation = "https://docs.mecha.so"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"
 
 [dependencies]
 anyhow = "1.0.71"
@@ -20,7 +20,7 @@ relm4-macros = "0.7.0-beta.1"
 tonic = "0.9.2"
 #gtk4-layer-shell = { version = "0.1.5", optional = true }
 tokio = { version = "1.33", features = ["full"] }
-wayland-protocols-async = { path = "../../wayland-protocols-async" }
+wayland-protocols-async = "1.0.0"
 services = { path = "../commons/services"}
 command = { path = "../commons/command"}
 custom_utils = { path = "../commons/custom_utils"}
