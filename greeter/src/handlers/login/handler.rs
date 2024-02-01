@@ -118,7 +118,11 @@ impl LoginHandler {
     }
     async fn start_session(&mut self, sender: &AsyncComponentSender<Greeter>) {
         let environment = vec![];
-        let cmd = vec!["gnome-calculator".to_string()];
+        let args: Vec<String> = std::env::args().collect();
+        let mut cmd = vec![];
+        if args.len() > 5 && (args[5] == "-c" || args[5] == "--command") {
+            cmd = vec![String::from(args[6].clone())];
+        }
         // Start the session.
         let response = self
             .greetd_client
