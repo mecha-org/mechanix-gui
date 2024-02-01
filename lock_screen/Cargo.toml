@@ -6,7 +6,7 @@ authors = ["Akshay Raina <akshayr@mechasystems.com", "Shoaib Merchant <shoaibm@m
 documentation = "https://docs.mecha.so"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/mecha-org/mecha-launcher"
+repository = "https://github.com/mecha-org/mechanics-shell"
 homepage = "https://mecha.so"
 
 [dependencies]
