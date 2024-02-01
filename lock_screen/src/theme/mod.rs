@@ -1,53 +1,67 @@
 use crate::errors::{LockScreenError, LockScreenErrorCodes};
+use anyhow::bail;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use tracing::{info, debug};
 use std::{env, fs::File, path::PathBuf};
-use anyhow::bail;
+use tracing::{debug, info};
 
 /// # Theme Settings
-/// 
+///
 /// Struct representing the theme.yml configuration file,
 /// this file lets you control the appearance and theme
 /// of the lock screen
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[derive(Default)]
 pub struct LockScreenTheme {
-    pub font: FontSettings, // Font Settings
-    pub colors: ColorSettings, // Color Settings
-    pub font_size: FontSizeSettings, // Font Size Settings
-    pub background: BackgroundSettings,  // Background Settings
+    pub font: FontSettings,             // Font Settings
+    pub colors: ColorSettings,          // Color Settings
+    pub font_size: FontSizeSettings,    // Font Size Settings
+    pub background: BackgroundSettings, // Background Settings
 }
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ThemeConfigs {
     pub theme: LockScreenTheme, // Theme configs
 }
 
-
-
-/// # Font Settings
-/// 
-/// Declares all the fonts needed for the lock screen with their 
-/// paths (relative to the binary)
-#[derive(Debug, Deserialize, Clone, Serialize)]
-#[derive(Default)]
-pub struct FontSettings {
-    pub heading: Option<Font>,
-    pub default: Option<Font>
+impl Default for LockScreenTheme {
+    fn default() -> Self {
+        Self {
+            font: FontSettings::default(),
+            colors: ColorSettings::default(),
+            font_size: FontSizeSettings::default(),
+            background: BackgroundSettings::default(),
+        }
+    }
 }
 
+/// # Font Settings
+///
+/// Declares all the fonts needed for the lock screen with their
+/// paths (relative to the binary)
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct FontSettings {
+    pub heading: Option<Font>,
+    pub default: Option<Font>,
+}
 
+impl Default for FontSettings {
+    fn default() -> Self {
+        Self {
+            heading: None,
+            default: None,
+        }
+    }
+}
 
 //// # Font
-//// 
+////
 //// Corresponds to a single font, and its path
 #[derive(Debug, Deserialize, Clone, Serialize, Default)]
 pub struct Font {
-    pub name: Option<String>
+    pub name: Option<String>,
 }
 
 /// # Background Settings
-/// 
+///
 /// Declares the background configuration
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct FontSizeSettings {
@@ -95,25 +109,24 @@ impl Default for FontSizeSettings {
             h6: Some(16.0),
             default: Some(14.0),
             sm: Some(12.0),
-            xs: Some(11.)
+            xs: Some(11.),
         }
     }
 }
 
-
 /// # Background Settings
-/// 
-/// Declares all the font sizes needed by 
+///
+/// Declares all the font sizes needed by
 /// the application
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BackgroundSettings {
-    pub default: Option<Background>
+    pub default: Option<Background>,
 }
 
 impl Default for BackgroundSettings {
     fn default() -> Self {
         Self {
-            default: Some(Background::default())
+            default: Some(Background::default()),
         }
     }
 }
@@ -128,9 +141,9 @@ pub struct Background {
 impl Default for Background {
     fn default() -> Self {
         Self {
-            color: [0, 0, 0 ],
+            color: [0, 0, 0],
             image: None,
-            fill: Some(BackgroundFillType::Cover)
+            fill: Some(BackgroundFillType::Cover),
         }
     }
 }
@@ -140,29 +153,30 @@ pub enum BackgroundFillType {
     #[default]
     Centered,
     Stretch,
-    Cover
+    Cover,
 }
 
 /// # Reads Theme path from arg
-/// 
+///
 /// Reads the `-t` or `--theme` argument for the path
 pub fn read_theme_path_from_args() -> Option<String> {
     let args: Vec<String> = env::args().collect();
     if args.len() > 2 && (args[1] == "-t" || args[1] == "--theme") {
         debug!("using theme path from argument - {}", args[2]);
-        return Some(args[2].clone());
+        return Some(String::from(args[2].clone()));
     }
     None
 }
 
-/// # Reads Theme YML 
-/// 
+/// # Reads Theme YML
+///
 /// Reads the `theme.yml` and parsers to LockScreenTheme
-/// 
+///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_theme_yml() -> Result<LockScreenTheme> {
-    let mut file_path = PathBuf::from(std::env::var("MECHA_LOCK_SCREEN_THEME_PATH")
-        .unwrap_or(String::from("theme.yml"))); // Get path of the library
+    let mut file_path = PathBuf::from(
+        std::env::var("MECHA_LOCK_SCREEN_THEME_PATH").unwrap_or(String::from("theme.yml")),
+    ); // Get path of the library
 
     // read from args
     let file_path_in_args = read_theme_path_from_args();
@@ -178,7 +192,7 @@ pub fn read_theme_yml() -> Result<LockScreenTheme> {
         Err(e) => {
             bail!(LockScreenError::new(
                 LockScreenErrorCodes::ThemeReadError,
-                format!("cannot read the theme.yml in the path - {}", e),
+                format!("cannot read the theme.yml in the path - {}", e.to_string()),
             ));
         }
     };
@@ -189,11 +203,10 @@ pub fn read_theme_yml() -> Result<LockScreenTheme> {
         Err(e) => {
             bail!(LockScreenError::new(
                 LockScreenErrorCodes::ThemeParseError,
-                format!("error parsing the theme.yml - {}", e),
+                format!("error parsing the theme.yml - {}", e.to_string()),
             ));
         }
     };
 
     Ok(config.theme)
 }
-
