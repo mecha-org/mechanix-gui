@@ -101,7 +101,7 @@ impl SimpleComponent for HomePage {
                 };
             });
 
-        let user_settings = match read_users_yml("users.yml") {
+        let user_settings = match read_users_yml() {
             Ok(v) => v,
             Err(e) => {
                 error!("error while reading users.yml {}", e);

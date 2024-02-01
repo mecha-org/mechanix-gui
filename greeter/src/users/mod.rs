@@ -35,8 +35,28 @@ impl Default for UsersSettings {
     }
 }
 
-pub fn read_users_yml(path: &str) -> Result<UsersSettings> {
-    let mut file_path = PathBuf::from(path); // Get path of the library
+/// # Reads Users path from arg
+///
+/// Reads the `-u` or `--users` argument for the path
+pub fn read_users_path_from_args() -> Option<String> {
+    let args: Vec<String> = env::args().collect();
+    if args.len() > 3 && (args[3] == "-u" || args[3] == "--users") {
+        debug!("Using settings path from argument - {}", args[2]);
+        return Some(String::from(args[4].clone()));
+    }
+    None
+}
+
+pub fn read_users_yml() -> Result<UsersSettings> {
+    let mut file_path = PathBuf::from(
+        std::env::var("MECHA_GREETER_USERS_PATH").unwrap_or(String::from("users.yml")),
+    ); // Get path of the library
+
+    // read from args
+    let file_path_in_args = read_users_path_from_args();
+    if file_path_in_args.is_some() {
+        file_path = PathBuf::from(file_path_in_args.unwrap());
+    }
 
     info!(task = "read_users_yml", "file location - {:?}", file_path);
 
