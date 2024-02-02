@@ -1,12 +1,13 @@
 [package]
 name = "mecha_status_bar"
 description = "Status Bar for Mecha Launcher, supports wlroots based compositors"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
+version = "1.0.0"
+authors = ["Akshay Raina <akshayr@mechasystems.com", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+documentation = "https://docs.mecha.so"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"
 
 [dependencies]
 anyhow = "1.0.71"
@@ -28,10 +29,10 @@ custom_utils = { path = "../commons/custom_utils"}
 daemon = { path = "../commons/daemon"}
 echo_client = { path = "../commons/echo_client"}
 zbus = "3.14.1"
-mecha_battery_ctl = { path = "../../mecha-ctl/mecha-ctl/libs/battery-ctl" }
-mecha_network_ctl = { path = "../../mecha-ctl/mecha-ctl/libs/wireless-ctl" }
-mecha_bluetooth_ctl = { path = "../../mecha-ctl/mecha-ctl/libs/bluetooth-ctl" }
-wayland-protocols-async = { path = "../../wayland-protocols-async" }
+mecha_battery_ctl = "0.1.0"
+mecha_bluetooth_ctl = "0.1.0"
+mecha_network_ctl = "0.1.1"
+wayland-protocols-async = "1.0.0"
 
 [build-dependencies]
 tonic-build = "0.9.2"

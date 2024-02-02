@@ -3,7 +3,7 @@ use crate::{
     BluetoothState,
 };
 use anyhow::{bail, Result};
-use mecha_bluetooth_ctl::BluetoothController;
+use mecha_bluetooth_ctl::BluetoothControl;
 use tracing::{debug, error, info};
 
 pub struct BluetoothService {}
@@ -12,7 +12,7 @@ impl BluetoothService {
     pub async fn get_bluetooth_status() -> Result<BluetoothState> {
         let task = "get_bluetooth_status";
 
-        let bluetooth_contoller = match BluetoothController::new().await {
+        let bluetooth_contoller = match BluetoothControl::new().await {
             Ok(r) => r,
             Err(e) => {
                 bail!(BluetoothServiceError::new(

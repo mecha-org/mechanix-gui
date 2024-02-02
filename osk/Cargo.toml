@@ -1,12 +1,12 @@
 [package]
 name = "osk"
 description = "On screen keyboard"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
+documentation = "https://docs.mecha.so"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
