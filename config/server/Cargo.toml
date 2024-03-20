@@ -1,0 +1,13 @@
+[package]
+name = "mechanix-config-server"
+description = "Configuration server for Mechanix shell, running on zmq"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]

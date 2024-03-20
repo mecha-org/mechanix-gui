@@ -1,0 +1,16 @@
+[package]
+name = "mechanix-settings-app"
+version = "0.1.0"
+authors = [
+    "Divya Khanani <divyak@mechasystems.com>",
+    "Akshay Raina <akshayr@mechasystems.com>",
+    "Sweta Rohit <swetar@mechasystems.com>"
+]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+categories = ["gui"]
+keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
+
+[dependencies]
