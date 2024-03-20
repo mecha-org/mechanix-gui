@@ -1,0 +1,13 @@
+[package]
+name = "mechanix-lock-screen"
+description = "Lock screen component for the Mechanix shell"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
