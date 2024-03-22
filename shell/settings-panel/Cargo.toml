@@ -16,7 +16,7 @@ serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-echo_client = { path = "../commons/echo_client"}
+echo_client = { path = "../commons/echo-client"}
 tokio = { version = "1.33", features = ["full"] }
 zbus = "3.14.1"
 chrono = "0.4.31"

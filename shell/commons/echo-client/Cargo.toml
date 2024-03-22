@@ -1,0 +1,19 @@
+[package]
+name = "echo_client"
+description = "Echo client for the Mechanix shell"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+zbus = "3.14.1"
+anyhow = "1.0.71"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+zvariant = "3.15.0"
+serde = { version = "1.0.163", features = ["derive"] }
