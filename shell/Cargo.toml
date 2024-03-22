@@ -24,6 +24,10 @@ members = [
     "wallpaper-daemon"
 ]
 
+[[bin]]
+name = "app-drawer"
+path = "app-drawer/src/main.rs"
+
 [workspace.package]
 version = "0.1.0"
 authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]

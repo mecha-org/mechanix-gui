@@ -13,6 +13,10 @@ keywords.workspace = true
 [workspace]
 members = ["cli", "client", "server"]
 
+[[bin]]
+name = "mechanix-config"
+path = "cli/src/main.rs"
+
 [workspace.package]
 version = "0.1.0"
 authors = ["Dhruvesh Baria <dhruveshb@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]

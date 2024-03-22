@@ -26,6 +26,10 @@ members = [
     "ctl/users"
 ]
 
+[[bin]]
+name ="mechanix-services-zbus"
+path = "server/zbus/src/main.rs"
+
 [workspace.package]
 version = "0.1.0"
 authors = ["Dhruvesh Baria <dhruveshb@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]

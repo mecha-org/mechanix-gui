@@ -10,4 +10,8 @@ homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
+[[bin]]
+name = "mechanix-grpc-services"
+path = "src/main.rs"
+
 [dependencies]
