@@ -1,0 +1,58 @@
+title: Lock Screen  # Empty
+app:
+  id: lock-screen    # lock-screen
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size: [480, 430]  # [1024, 768]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 100]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+css:
+  default: /home/user/.mecha/lock_screen/src/assets/css/style.css
+layout:
+  grid: ["1", "2", "3", "4", "5", "6", "7", "8", "Home", "9", "0", "Back Space"]
+modules:
+  home:
+    title: "Home"
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/home.png
+  back_space:
+    title: "Back Space"
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/back_space.png
+  password_configs:
+    keys_allowed: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+    password_length: 4
+  lock:
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/lock.png
+  unlock:
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/unlock.png    
+  back:
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/back.png
+  submit:
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/submit.png
+  home_password:
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/home_password.png
+  peek_password:
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/peek_password.png
+  un_peek_password:
+    icon:
+      default: /home/user/.mecha/lock_screen/src/assets/pngs/un_peek_password.png    
+
+
+
+
