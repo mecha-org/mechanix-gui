@@ -1,6 +1,6 @@
 [package]
-name = "mechanix-app-drawer"
-description = "App drawer component for the Mechanix shell"
+name = "mechanix-settings-panel"
+description = "Settings panel component for the Mechanix shell"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -11,3 +11,16 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+echo_client = { path = "../commons/echo_client"}
+tokio = { version = "1.33", features = ["full"] }
+zbus = "3.14.1"
+chrono = "0.4.31"
+image = { version = "*", default-features = false, features = ["png", "jpeg"] }
+mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", branch= "dev", version = "0.1.0" }
+mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", branch = "dev", version = "0.1.0" }
+mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", branch = "dev", version = "0.1.0" }

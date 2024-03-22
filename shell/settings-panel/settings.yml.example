@@ -1,0 +1,97 @@
+title: Settings Panel  # Empty
+app:
+  id: settings-panel    # launcher
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size: [480, 430]  # [1024, 768]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 100]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+fonts: 
+  "SpaceGrotesk-Bold": "/home/settings-panel/assets/fonts/SpaceGrotesk-Bold.ttf"
+  "SpaceGrotesk-Light": "/home/settings-panel/assets/fonts/SpaceGrotesk-Light.ttf"
+  "SpaceGrotesk-Medium": "/home/settings-panel/assets/fonts/SpaceGrotesk-Medium.ttf"
+  "SpaceGrotesk-Regular": "/home/settings-panel/assets/fonts/SpaceGrotesk-Regular.ttf"
+  "SpaceGrotesk-SemiBold": "/home/settings-panel/assets/fonts/SpaceGrotesk-SemiBold.ttf"
+layout:
+  grid: ["Wireless", "Bluetooth", "Battery", "Auto Rotate", "Settings", "Running Apps", "CPU", "Memory", "Sound", "Brightness"]
+modules:
+  wireless:
+    title: "Wireless"
+    icon:
+      off: /home/settings-panel/assets/icons/wireless/wireless_off.svg
+      on: /home/settings-panel/assets/icons/wireless/wireless_on.svg
+      low: /home/settings-panel/assets/icons/wireless/wireless_low.svg
+      weak: /home/settings-panel/assets/icons/wireless/wireless_weak.svg
+      good: /home/settings-panel/assets/icons/wireless/wireless_good.svg
+      strong: /home/settings-panel/assets/icons/wireless/wireless_strong.svg
+      not_found: /home/settings-panel/assets/icons/wireless/wireless_not_found.svg
+  bluetooth:
+    title: "Bluetooth"
+    icon:
+      on: /home/settings-panel/assets/icons/bluetooth/on.svg
+      off: /home/settings-panel/assets/icons/bluetooth/off.svg
+      connected: /home/settings-panel/assets/icons/bluetooth/connected.svg
+      not_found: /home/settings-panel/assets/icons/bluetooth/not_found.svg
+  battery:
+    title: "Battery"
+    icon:
+      level_100: /home/settings-panel/assets/icons/battery/battery_100.svg
+      level_90: /home/settings-panel/assets/icons/battery/battery_90.svg
+      level_80: /home/settings-panel/assets/icons/battery/battery_80.svg
+      level_70: /home/settings-panel/assets/icons/battery/battery_70.svg
+      level_60: /home/settings-panel/assets/icons/battery/battery_60.svg
+      level_50: /home/settings-panel/assets/icons/battery/battery_50.svg
+      level_40: /home/settings-panel/assets/icons/battery/battery_40.svg
+      level_30: /home/settings-panel/assets/icons/battery/battery_30.svg
+      level_20: /home/settings-panel/assets/icons/battery/battery_20.svg
+      level_10: /home/settings-panel/assets/icons/battery/battery_10.svg
+      level_0: /home/settings-panel/assets/icons/battery/battery_0.svg
+      not_found: /home/settings-panel/assets/icons/battery/battery_not_found.svg
+  rotation:
+    title: "Auto Rotate"
+    icon:
+      portrait: /home/settings-panel/assets/icons/rotation/portrait.svg
+      landscape: /home/settings-panel/assets/icons/rotation/landscape.svg
+  settings:
+    title: "Settings"
+    icon:
+      default: /home/settings-panel/assets/icons/settings/settings.svg
+  running_apps:
+    title: "Running Apps"
+    icon:
+      low: /home/settings-panel/assets/icons/running_apps/low.svg
+      medium: /home/settings-panel/assets/icons/running_apps/medium.svg
+      high: /home/settings-panel/assets/icons/running_apps/high.svg
+  cpu:
+    title: "CPU"
+    icon:
+      low: /home/settings-panel/assets/icons/cpu/low.svg
+      medium: /home/settings-panel/assets/icons/cpu/medium.svg
+      high: /home/settings-panel/assets/icons/cpu/high.svg
+  memory:
+    title: "Memory"
+    icon:
+      low: /home/settings-panel/assets/icons/memory/low.svg
+      medium: /home/settings-panel/assets/icons/memory/medium.svg
+      high: /home/settings-panel/assets/icons/memory/high.svg
+  sound:
+    title: "Sound"
+    icon:
+      low: /home/settings-panel/assets/icons/sound/low.svg
+      medium: /home/settings-panel/assets/icons/sound/medium.svg
+      high: /home/settings-panel/assets/icons/sound/high.svg
+  brightness:
+    title: "Brightness"
+    icon:
+      low: /home/settings-panel/assets/icons/brightness/low.svg
+      medium: /home/settings-panel/assets/icons/brightness/medium.svg
+      high: /home/settings-panel/assets/icons/brightness/high.svg
