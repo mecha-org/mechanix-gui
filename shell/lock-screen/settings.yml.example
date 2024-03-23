@@ -1,0 +1,49 @@
+title: Lock Screen  # Empty
+app:
+  id: lock-screen    # lock-screen
+  text_multithreading: true   # false
+  antialiasing: true    # false
+  try_opengles_first: true    # false
+window:
+  size: [480, 480]  # [1024, 768]
+  position: [0, 0]  # [0, 0]
+  min_size: [480, 100]  # None
+  max_size: null    # None
+  visible: true   # true
+  resizable: true   # true
+  decorations: true   # true
+  transparent: true    # false
+  always_on_top: false    # false
+  icon_path: null # Todo
+fonts: 
+  "SpaceGrotesk-Bold": "/home/lock-screen/assets/fonts/SpaceGrotesk-Bold.ttf"
+  "SpaceGrotesk-Light": "/home/lock-screen/assets/fonts/SpaceGrotesk-Light.ttf"
+  "SpaceGrotesk-Medium": "/home/lock-screen/assets/fonts/SpaceGrotesk-Medium.ttf"
+  "SpaceGrotesk-Regular": "/home/lock-screen/assets/fonts/SpaceGrotesk-Regular.ttf"
+  "SpaceGrotesk-SemiBold": "/home/lock-screen/assets/fonts/SpaceGrotesk-SemiBold.ttf"
+layout:
+  grid: ["1", "2", "3", "4", "5", "6", "7", "8", "Home", "9", "0", "Back Space"]
+modules:
+  home:
+    title: "Home"
+    icon:
+      default: /home/lock-screen/assets/pngs/home.png
+  back_space:
+    title: "Back Space"
+    icon:
+      default: /home/lock-screen/assets/icons/backspace.svg
+  password_configs:
+    keys_allowed: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+    password_length: 4
+  back:
+    icon:
+      default: /home/lock-screen/assets/icons/back.svg
+  lock:
+    icon:
+      default: /home/lock-screen/assets/icons/lock.svg
+  unlock:
+    icon:
+      default: /home/lock-screen/assets/icons/unlock.svg
+  background:
+    icon:
+      default: /home/lock-screen/assets/icons/background.png

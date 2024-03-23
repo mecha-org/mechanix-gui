@@ -1,6 +1,6 @@
 [package]
-name = "mechanix-settings-panel"
-description = "Settings panel component for the Mechanix shell"
+name = "mechanix-app-drawer"
+description = "App Drawer component for the Mechanix shell"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
