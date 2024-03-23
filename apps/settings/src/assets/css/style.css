@@ -1,0 +1,571 @@
+.window {
+    background: #05070A;
+    font-family: 'Space Grotesk';
+    color: #E4E7EE;
+    min-width: 100%;
+    min-height: 100%;
+}
+
+.home-container {
+    min-width: 100%;
+    min-height: 100%;
+}
+
+.lock-screen-box {}
+
+.lock-button {
+    min-width: 90px;
+    min-height: 90px;
+    padding: 0px;
+    margin: 0px;
+    background: none;
+}
+
+/* settings page css starts  */
+.page-container {
+    min-width: 100%;
+    min-height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+}
+
+.header {
+    padding: 0px 0px 18px 0px;
+}
+
+.header-title {
+    color: #FFF;
+    font-family: Space Grotesk;
+    font-size: 21px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.header-icon {
+    min-height: 42px;
+    min-width: 42px;
+}
+/* settings page css ends */
+
+
+/* footer css starts */
+.footer {
+    min-height: 64px;
+    padding: 8px 0px;
+}
+
+.footer-btn-box {
+    padding: 17px 14px; 
+    border-radius: 12px;
+    background: #15171D; 
+}
+ 
+/* footer css ends */
+
+
+/* Network, About, Date-Time, Ethernet, etc css  */
+.settings-item-details-box {
+    padding: 0px 20px 0px 20px;
+    border-radius: 6px;
+    background: #15171D;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    margin-bottom: 16px;
+}
+
+.settings-item-details-box-row {
+    border-bottom: 1px solid #202431;
+    padding: 16px 0px 16px 0px;
+}
+
+.settings-item-details-box-row-key {
+    color: #FAFBFC;
+    font-family: Space Grotesk;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.settings-item-details-box-row-value {
+    color: #848DA6;
+    font-family: Space Grotesk;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: normal;
+}
+
+/* Manage network page  */ 
+.list-label {
+    margin-bottom: 6px;
+}
+
+/* custom widgets css */
+.custom-item-box {
+    border-radius: 4px;
+    background: #15171D;
+    min-height: 60px;
+    min-width: 100%;
+    padding: 0px 10px;
+    margin-bottom: 10px;
+}
+
+.custom-item-name {
+    color: #E4E9EE;
+    font-family: Space Grotesk;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    margin-left: 6px;
+}
+
+.custom-item-box-focus {
+    color: #FDFDFD;
+}
+
+.custom-connected-icon {
+    min-width: 20px;
+    min-height: 20px;
+    margin-right: 8px;
+}
+
+.custom-private-icon {
+    min-width: 20px;
+    min-height: 20px;
+    margin-right: 8px;
+}
+
+.custom-strength-icon {
+    min-width: 20px;
+    min-height: 20px;
+    margin-right: 8px;
+}
+
+.custom-info-icon {
+    min-width: 20px;
+    min-height: 20px;
+    margin-right: 8px;
+}
+
+.password-key-box {
+    border-radius: 4px;
+    /* border: 1px solid #000000; */
+    background: #15171D;
+    min-height: 66px;
+    padding: 0px 12px;
+}
+
+.password-key-icon {
+    min-width: 20px;
+    min-height: 20px;
+}
+
+.password-key-label {
+    color: #E4E9EE;
+    font-family: Space Grotesk;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    margin-left: 6px;
+}
+
+.password-key-focus {
+    color: #FDFDFD;
+}
+
+.password-text-box {
+    padding-top: 25px;
+    padding-bottom: 10px;
+}
+
+.password-text {
+    min-height: 10px;
+    min-width: 10px;
+    border-radius: 50%;
+    /* border: 2px solid #565E76; */
+}
+
+.password-text-filled {
+    background-color: #FFFFFF;
+    /* border: 2px solid #FFFFFF; */
+}
+
+.password-invalid-label {
+    padding-bottom: 15px;
+}
+
+.password-auth-container {
+    min-width: 100%;
+    min-height: 100%;
+    padding: 0px 20px;
+}
+
+entry {
+    background: transparent;
+    color: #E4E7EE;
+    outline: none;
+    border: none;
+    /* outline-offset: 0px;
+    outline-style: solid;
+    outline-color: #3283E8;
+    outline-width: thin; */
+    padding: 0px;
+    border-radius: 4px;
+    /* margin-bottom: 14px; */
+    /* border: 1px solid #000000; */
+}
+
+/* .search-input:hover {
+    border: none;
+} */
+
+entry :focus {
+    background: transparent;
+    outline: none;
+    border: none;
+    /* border: 0px solid #3283E8; */
+    /* background: rgba(0, 20, 61, 0.40); */
+}
+
+entry :focus-visible {
+    background: transparent;
+    outline: none;
+    border: none;
+}
+
+entry :focus-within {
+    background: transparent;
+    outline: none;
+    border: none;
+}
+
+.search-input::placeholder {
+    color: #565E76;
+    font-size: 30px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 16px;
+}
+
+.login-label {
+    color: #FAFBFC;
+    font-size: 21px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    margin-top: 10px;
+    margin-bottom: 14px;
+}
+
+/* .password-home-icon {
+
+} */
+
+/* .password-home-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 10px;
+    border-radius: 9px;
+    border: 1px solid #000000;
+background: rgba(0, 0, 0, 0.6);
+}
+
+*/
+
+
+/* .password-home-button-pressing {
+    background: rgba(0,0,0,0.8);
+} */ 
+
+.icon-button-root-default {
+    padding: 0px;
+
+}
+
+.icon-button-container-default {
+    padding: 10px;
+    border-radius: 6px;
+    background: rgba(21, 23, 29, 1);
+    /* border: 1px solid #000000; */
+}
+
+.icon-button-container-pressing-default {
+    background: rgb(39, 41, 51);
+}
+
+.icon-button-icon-default {
+    min-width: 30px;
+    min-height: 30px;
+}
+
+.icon-input-root-default {
+    padding: 14px 12px;
+    border-radius: 4px;
+    background: #15171D;
+    /* border: 1px solid #000000; */
+}
+
+.icon-input-root-focused-default {
+    /* .icon-input-root-focused-default { */
+    /* border: 1px solid #3283E8; */
+    background: rgba(0, 20, 61, 0.4);
+}
+
+.icon-input-icon-default {
+    padding: 10px;
+}
+
+.custom-list-item-box {
+    min-height: 60px;
+    min-width: 100%;
+    padding: 0px 20px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    background: #15171D;
+}
+
+.custom-list-item-box-label {
+    color: #FAFBFC;
+    font-family: Space Grotesk;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.custom-list-item-box-focus {
+    color: #FDFDFD;
+}
+
+.custom-list-item-box-start-icon {
+    min-width: 20px;
+    min-height: 20px;
+}
+
+.custom-list-item-box-end-icon {
+    min-width: 20px;
+    min-height: 20px;
+}
+
+
+.add-network-name-label {
+    color: #848DA6;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 14px;
+    margin-bottom: 8px;
+}
+
+.add-network-password-label {
+    color: #848DA6;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 14px;
+    margin-bottom: 8px;
+    margin-top: 30px;
+}
+
+.bluetooth-details-list-label {
+    color: #848DA6;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 14px;
+    margin-bottom: 6px;
+}
+
+.bluetooth-details-device-type-box {
+    padding: 22px 18px;
+    border-radius: 4px;
+    background: #15171D;
+}
+
+.bluetooth-details-device-type-value {
+    color: #FAFBFC;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+}
+
+.bluetooth-details-forget-btn-box {
+    padding: 20px 14px;
+    border-radius: 8px;
+    background: #15171D;
+    box-shadow: 0px 6.40002px 6.40002px 0px rgba(9, 14, 19, 0.55);
+    margin-top: 32px;
+}
+
+.bluetooth-details-forget-btn-text {
+    color: #E4002B;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+
+.text-14-label {
+    color: #848DA6;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 18px;
+    margin-bottom: 8px;
+}
+
+.bluetooth-pair-request-list-label {
+    color: #848DA6;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 18px;
+    margin-bottom: 32px;
+}
+
+.bluetooth-pair-request-box {
+    padding: 20px 16px;
+    border-radius: 4px;
+    background: #15171D;
+}
+
+.bluetooth-pair-request-value {
+    color: #FFF;
+    font-size: 26px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    letter-spacing: 1.68px;
+}
+
+.custom-list-radio-button {
+    min-height: 20px;
+    min-width: 100%;
+    padding: 20px 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    background: #15171D;
+}
+
+
+.custom-list-radio-button-description {
+    color: #848DA6;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 18px;
+    margin-top: 8px;
+}
+
+.custom-list-radio-button-label {
+    color: #848DA6;
+    font-size: 18px;
+    font-weight: 100;
+    font-style: normal;
+    line-height: normal;
+}
+
+.custom-list-radio-button-label-active {
+    color: #FAFBFC;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: normal;
+}
+
+.cancel-btn-txt {
+    color: #FFF;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: normal;
+    min-width: 185px;
+    min-height: 40px;
+}
+
+.save-btn-txt {
+    color: #2D8AFF;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+    min-width: 185px;
+    min-height: 40px;
+}
+ 
+/* security page, date-time starts */
+.custom-switch {
+    background-color: #7a7878;
+}
+
+.custom-switch:checked {
+    background-color: #0064CF;
+}
+
+.custom-switch-text {
+    color: #FAFBFC; 
+    font-weight: 700;
+    line-height: normal; 
+    font-size: 18px; 
+}
+
+.reset-pin-btn-box {
+    border-radius: 8px;
+    background: #15171D;
+    padding: 20px 14px;
+    margin: 30px 0px;
+}
+
+.reset-pin-btn-text {
+    color: #3283E8;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: normal;
+}
+/* security page ends */
+
+/* display page, sound page  */
+.custom-scale trough highlight {
+    background-color: #0064CF ;
+}
+
+/* battery-page */
+.custom-levelbar {
+    min-height: 20px;
+    min-width: 20px;  
+    margin: 30px 0px;
+}
+
+.custom-levelbar trough block.filled {
+    background-color:  #34C759;
+}
+
+
+/* date, time css  */
+.margin-x-10 {
+    margin: 0px 10px;
+}
+
+.set-time-box {
+    margin: 15px 15px;
+    padding: 15px;
+    font-weight: 500;
+}
+
+.time-dropdown-width {
+    min-width: 100px;
+    min-height: 50px;
+}
+
+.custom-calendar grid label.day-number.today {
+    background-color: #0064CF;
+}
+
+.custom-calendar grid label.day-number:focus {
+    background-color: #e95420;
+}
