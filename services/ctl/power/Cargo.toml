@@ -1,5 +1,5 @@
 [package]
-name = "mechanix_power_ctl"
+name = "mechanix-power-ctl"
 description = "Power controller for Mechanix services"
 version.workspace = true
 edition.workspace = true

@@ -15,7 +15,11 @@ name = "mechanix-zbus-services"
 path = "src/main.rs"
 
 [dependencies]
-tokio = { version = "1", features = ["full"] }
-anyhow = "1.0"
+tokio.workspace = true
+anyhow.workspace = true
 zbus = { version = "4.1.2", features = ["tokio"] }
-mechanix_bluetooth_ctl = { path = "../../ctl/bluetooth" }
+mechanix-bluetooth-ctl = { path = "../../ctl/bluetooth" }
+mechanix-network-ctl = { path = "../../ctl/network" }
+mechanix-power-ctl = { path = "../../ctl/power" }
+mechanix-display-ctl = { path = "../../ctl/display" }
+
