@@ -1,4 +1,4 @@
-use display::Display;
+use mechanix_display_ctl::Display;
 use zbus::{fdo::Error as ZbusError, interface};
 
 pub struct DisplayBusInterface {}

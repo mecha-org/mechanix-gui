@@ -4,7 +4,7 @@ use zbus::{
     zvariant::{DeserializeDict, SerializeDict, Type},
 };
 
-use wireless::wireless::WirelessNetworkControl;
+use mechanix_network_ctl::wireless::WirelessNetworkControl;
 pub struct WirelessBusInterface {}
 
 #[derive(DeserializeDict, SerializeDict, Type)]

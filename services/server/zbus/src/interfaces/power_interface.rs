@@ -4,7 +4,7 @@ use zbus::{
     zvariant::{DeserializeDict, SerializeDict, Type},
 };
 
-use power::Power;
+use mechanix_power_ctl::Power;
 
 pub struct PowerBusInterface {}
 

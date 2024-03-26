@@ -4,7 +4,7 @@ use zbus::{
     zvariant::{DeserializeDict, SerializeDict, Type},
 };
 
-use bt::Bluetooth;
+use mechanix_bluetooth_ctl::Bluetooth;
 pub struct BluetoothBusInterface {}
 
 #[derive(DeserializeDict, SerializeDict, Type)]
