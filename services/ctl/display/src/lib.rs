@@ -1,14 +1,7 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+#![deny(clippy::all)]
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod errors;
+pub use errors::{DisplayError, DisplayErrorCodes};
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+mod display;
+pub use display::Display;
