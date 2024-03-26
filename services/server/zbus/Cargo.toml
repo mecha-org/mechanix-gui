@@ -10,5 +10,12 @@ homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
-[dependencies]
+[[bin]]
+name = "mechanix-zbus-services"
+path = "src/main.rs"
 
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0"
+zbus = { version = "4.1.2", features = ["tokio"] }
+mechanix_bluetooth_ctl = { path = "../../ctl/bluetooth" }
