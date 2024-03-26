@@ -1,0 +1,10 @@
+pub mod battery;
+pub mod bluetooth;
+pub mod brightness;
+pub mod cpu;
+pub mod memory;
+pub mod rotation;
+pub mod running_apps;
+pub mod settings;
+pub mod sound;
+pub mod wireless;
