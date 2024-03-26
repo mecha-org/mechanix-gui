@@ -1,5 +1,5 @@
 [package]
-name = "mechanix-bluetooth-ctl"
+name = "mechanix_bluetooth_ctl"
 description = "Bluetooth controller for Mechanix services"
 version.workspace = true
 edition.workspace = true
@@ -11,3 +11,7 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+bluer = { version = "0.17.1", features = ["full"] }
+anyhow = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3.30"
