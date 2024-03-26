@@ -21,7 +21,8 @@ members = [
     "rotate-daemon",
     "settings-panel",
     "status-bar",
-    "wallpaper-daemon"
+    "wallpaper-daemon",
+    "commons/*"
 ]
 
 [[bin]]

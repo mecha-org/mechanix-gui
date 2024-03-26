@@ -11,3 +11,16 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = "0.4.31"
+tokio = { version = "1.33", features = ["full"] }
+echo_client = { path = "../commons/echo-client"}
+zbus = "3.14.1"
+wayland-protocols-async = "1.0.0"
+mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", branch= "dev", version = "0.1.0" }
+mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", branch = "dev", version = "0.1.0" }
+mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", branch = "dev", version = "0.1.0" }
