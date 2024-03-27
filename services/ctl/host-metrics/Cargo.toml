@@ -1,20 +1,18 @@
 [package]
-name = "mechanix-network-ctl"
-description = "Network controller for Mechanix services"
+name = "mechanix-host-metrics"
 version.workspace = true
-edition.workspace = true
 authors.workspace = true
+edition.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [dependencies]
 tokio.workspace = true
 anyhow.workspace = true
 tracing.workspace = true
-tokio-util  ={ version = "0", features = ["codec"] }
-futures = "0"
-mockall = "0.11.4"
-wifi-ctrl = "0.2.4"
+sysinfo = "0.30.7"
