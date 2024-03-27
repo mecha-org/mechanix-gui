@@ -9,3 +9,6 @@ pub use power_interface::PowerBusInterface;
 
 mod display_interface;
 pub use display_interface::DisplayBusInterface;
+
+mod host_metrics;
+pub use host_metrics::HostMetricsBusInterface;
