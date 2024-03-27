@@ -13,6 +13,7 @@ keywords.workspace = true
 [dependencies]
 tokio.workspace = true
 anyhow.workspace = true
+tracing.workspace = true
 tokio-util  ={ version = "0", features = ["codec"] }
 futures = "0"
 mockall = "0.11.4"
