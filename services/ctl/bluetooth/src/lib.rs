@@ -1,3 +1,2 @@
 mod bluetooth;
-pub use bluetooth::{Bluetooth, BluetoothAdapterInfo,BluetoothDeviceInfo};
-
+pub use bluetooth::{Bluetooth, BluetoothAdapterInfo, BluetoothDeviceInfo};

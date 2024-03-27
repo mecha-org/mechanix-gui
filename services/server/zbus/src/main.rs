@@ -1,10 +1,11 @@
-use std::future::pending;
 use anyhow::Result;
+use std::future::pending;
 use zbus::connection;
 mod interfaces;
 
 use interfaces::{
-    BluetoothBusInterface, DisplayBusInterface, PowerBusInterface, WirelessBusInterface,HostMetricsBusInterface
+    BluetoothBusInterface, DisplayBusInterface, HostMetricsBusInterface, PowerBusInterface,
+    WirelessBusInterface,
 };
 
 #[tokio::main]

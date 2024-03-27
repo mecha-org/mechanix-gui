@@ -16,9 +16,15 @@ pub enum WirelessNetworkErrorCodes {
 impl std::fmt::Display for WirelessNetworkErrorCodes {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            WirelessNetworkErrorCodes::NoWirelessNetworkFound => write!(f, "NoWirelessNetworkFound"),
-            WirelessNetworkErrorCodes::UnableToTurnOnWirelessNetwork => write!(f, "UnableToTurnOnWirelessNetwork"),
-            WirelessNetworkErrorCodes::UnableToTurnOffWirelessNetwork => write!(f, "UnableToTurnOffWirelessNetwork"),
+            WirelessNetworkErrorCodes::NoWirelessNetworkFound => {
+                write!(f, "NoWirelessNetworkFound")
+            }
+            WirelessNetworkErrorCodes::UnableToTurnOnWirelessNetwork => {
+                write!(f, "UnableToTurnOnWirelessNetwork")
+            }
+            WirelessNetworkErrorCodes::UnableToTurnOffWirelessNetwork => {
+                write!(f, "UnableToTurnOffWirelessNetwork")
+            }
             WirelessNetworkErrorCodes::UnableToConnectToWirelessNetwork => {
                 write!(f, "UnableToConnectToWirelessNetwork")
             }

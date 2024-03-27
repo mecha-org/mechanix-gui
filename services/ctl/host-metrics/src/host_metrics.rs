@@ -1,6 +1,4 @@
-use std::net;
-
-use sysinfo::{Disks, MacAddr, NetworkData, Networks, System};
+use sysinfo::{Disks, MacAddr, Networks, System};
 
 pub struct HostMetrics {}
 

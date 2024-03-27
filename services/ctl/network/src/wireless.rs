@@ -30,16 +30,10 @@ impl WirelessNetworkControl {
 
         // Check if the stdout contains "wlp2s0"
         if stdout.contains("wlp2s0") {
-            info!(
-                task = "wireless_network_status",
-                "wireless network is up"
-            );
+            info!(task = "wireless_network_status", "wireless network is up");
             true
         } else {
-            info!(
-                task = "wireless_network_status",
-                "wireless network is down"
-            );
+            info!(task = "wireless_network_status", "wireless network is down");
             false
         }
     }
@@ -218,7 +212,7 @@ impl WirelessNetworkControl {
         }
     }
 
-    pub async fn connect(&self,ssid: &str, psk: &str) -> Result<()> {
+    pub async fn connect(&self, ssid: &str, psk: &str) -> Result<()> {
         trace!(
             task = "connect_wireless_network",
             "starting wireless network connection"
