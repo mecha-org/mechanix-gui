@@ -61,7 +61,7 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
         with:
-            manifest-file: .release-please-manifest.json
+           branch: dev-v1
         
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
