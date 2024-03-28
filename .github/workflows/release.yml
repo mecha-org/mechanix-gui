@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - dev-v1
+  release:
+    types: [ created, edited ]
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
