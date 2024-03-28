@@ -11,3 +11,7 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+bluer = { version = "0.17.1", features = ["full"] }
+anyhow = "1.0"
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3.30"
