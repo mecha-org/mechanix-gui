@@ -61,7 +61,7 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
         with:
-            path: "services/server/zbus"
+            manifest-file: .release-please-manifest.json
         
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
