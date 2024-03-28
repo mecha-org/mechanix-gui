@@ -23,7 +23,6 @@ jobs:
       - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          path: 'servcies'  
           token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
           release-type: rust
 
@@ -61,7 +60,9 @@ jobs:
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
-
+        with:
+            path: "services/server/zbus"
+        
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
         with:
