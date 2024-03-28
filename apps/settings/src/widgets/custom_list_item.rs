@@ -16,6 +16,7 @@ pub enum Message {
 pub enum InputMessage {
     Pressed,
     Released,
+    ValueChanged(String)
 }
 
 /// Configuration for the password key widget
@@ -37,6 +38,7 @@ pub(crate) struct CustomListItem {
 #[derive(Debug)]
 pub struct CustomListItemWidgets {
     container: gtk::Box,
+    value: gtk::Label
 }
 
 // #[relm4::factory(pub(crate))]
@@ -122,9 +124,6 @@ impl SimpleComponent for CustomListItem {
                 let _ = sender.output(Message::WidgetClicked);
         }));
         root.add_controller(left_click_gesture);
-        // action_button.connect_clicked(clone!(@strong sender, @strong key => move |_| {
-        //     sender.output(Message::WidgetClicked(key.to_owned()));
-        // }));
 
         let model = CustomListItem {
             settings: CustomListItemSettings {
@@ -138,6 +137,7 @@ impl SimpleComponent for CustomListItem {
 
         let widgets = CustomListItemWidgets {
             container: root.clone(),
+            value
         };
 
         ComponentParts { widgets, model }
@@ -152,6 +152,9 @@ impl SimpleComponent for CustomListItem {
             InputMessage::Released => {
                 self.is_pressing = false;
             }
+            InputMessage::ValueChanged(value) => {
+                self.settings.value = value.clone();
+            }
         }
     }
 
@@ -163,5 +166,6 @@ impl SimpleComponent for CustomListItem {
         widgets
             .container
             .set_class_active("custom-list-item-box-focus", self.is_pressing);
+        widgets.value.set_label(&self.settings.value)
     }
 }
