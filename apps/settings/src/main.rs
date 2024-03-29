@@ -1,7 +1,7 @@
 use std::fmt;
 use gtk::{glib::clone, prelude::GtkWindowExt};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncComponentParts, AsyncController };
-use relm4::{async_trait::async_trait};
+use relm4::async_trait::async_trait;
 use relm4::{gtk, AsyncComponentSender, RelmApp};
 use relm4::{Component, ComponentController, Controller};
 
@@ -131,12 +131,12 @@ struct LockScreen {
     connect_bluetooth_page: Controller<ConnectBluetoothPage>,
     bluetooth_pair_request_page: Controller<BluetoothPairRequestPage>,
     display_page: Controller<DisplayPage>,
-    screen_timeout_page: Controller<ScreenTimeoutPage>,
+    screen_timeout_page: AsyncController<ScreenTimeoutPage>,
     sound_page: Controller<SoundPage>,
-    performance_mode_page: Controller<PerformanceModePage>,
+    performance_mode_page: AsyncController<PerformanceModePage>,
     security_page: Controller<SecurityPage>,
     lock_timeout_page: Controller<LockTimeoutPage>,
-    battery_page: Controller<BatteryPage>,
+    battery_page: AsyncController<BatteryPage>,
     reset_pin_page: Controller<ResetPinPage>,
     date_time_page: Controller<DateTimePage>,
     set_time_page: Controller<SetTimePage>,
@@ -230,7 +230,8 @@ impl fmt::Display for Screens {
 pub enum Message {
     ChangeScreen(Screens),
     GoBack,
-    Dummy
+    Dummy,
+    UpdateView
 
 }
 
@@ -762,7 +763,7 @@ impl AsyncComponent for LockScreen {
             Option::from(Screens::Display.to_string().as_str()),
         );
 
-        let battery_page: Controller<BatteryPage> = BatteryPage::builder()
+        let battery_page: AsyncController<BatteryPage> = BatteryPage::builder()
             .launch(BatteryPageSettings {
                 modules: modules.clone(),
                 layout: layout.clone(),
@@ -786,7 +787,7 @@ impl AsyncComponent for LockScreen {
             Option::from(Screens::Battery.to_string().as_str()),
         );
 
-        let screen_timeout_page: Controller<ScreenTimeoutPage> = ScreenTimeoutPage::builder()
+        let screen_timeout_page: AsyncController<ScreenTimeoutPage> = ScreenTimeoutPage::builder()
             .launch(ScreenTimeoutPageSettings {
                 modules: modules.clone(),
                 layout: layout.clone(),
@@ -799,7 +800,6 @@ impl AsyncComponent for LockScreen {
                     match msg { 
                         // back -> Display or Battery
                         ScreenTimeoutPageMessage::BackPressed => Message::GoBack,
-                        ScreenTimeoutPageMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
                         _ => Message::Dummy
                     }
                 }),
@@ -833,7 +833,7 @@ impl AsyncComponent for LockScreen {
             Option::from(Screens::Sound.to_string().as_str()),
         );
 
-        let performance_mode_page: Controller<PerformanceModePage> = PerformanceModePage::builder()
+        let performance_mode_page: AsyncController<PerformanceModePage> = PerformanceModePage::builder()
             .launch(PerformanceModePageSettings {
                 modules: modules.clone(),
                 layout: layout.clone(),
@@ -846,7 +846,6 @@ impl AsyncComponent for LockScreen {
                     match msg {
                         // back -> Battery
                         PerformanceModePageMessage::BackPressed => Message::GoBack,
-                        PerformanceModePageMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
                             _ => Message::Dummy
                     }
                 }),
@@ -996,7 +995,7 @@ impl AsyncComponent for LockScreen {
                     _ => Message::Dummy
                 }
             }),
-        );
+        );  
         screens_stack.add_named(
             set_date_page.widget(),
             Option::from(Screens::SetDate.to_string().as_str()),
@@ -1082,13 +1081,16 @@ impl AsyncComponent for LockScreen {
             Message::ChangeScreen(screen) => {
                 // self.previous_screen = Some(self.current_screen.clone());
                 self.previous_screen.push(self.current_screen.clone());
-                self.current_screen = screen; 
-            
+                self.current_screen = screen;
+                update_screen_view(&self);
+               
             }
             Message::GoBack => {
                 if let Some(previous_screen) = self.previous_screen.pop() {
-                self.current_screen = previous_screen;
+                    self.current_screen = previous_screen;
+                    update_screen_view(&self);
                 }
+                
             }
             _ => (),
         }
@@ -1100,6 +1102,11 @@ impl AsyncComponent for LockScreen {
         widgets
             .screens_stack
             .set_visible_child_name(self.current_screen.to_string().as_str());
+
+        // match widgets.screens_stack.last_child() {
+        //     Some(value)=>{ value.emit(, args) }
+        //     None => {} }
+
     }
          }
 
@@ -1123,5 +1130,49 @@ fn main() {
 
     app.run_async::<LockScreen>(());
 
+    
+}
+
+fn update_screen_view(app: &LockScreen) {
+    match app.current_screen {
+        Screens::LockScreen => {},
+        Screens::PasswordScreen => {},
+        Screens::PinScreen => {},
+        Screens::Home => {},
+        Screens::Settings => {},
+        Screens::Network => {},
+        Screens::ManageNetworks => {},
+        Screens::NetworkDetails => {},
+        Screens::ConnectNetwork => {},
+        Screens::AddNetwork => {},
+        Screens::ManageBluetooth => {},
+        Screens::BluetoothDetails => {},
+        Screens::ConnectBluetooth => {},
+        Screens::BluetoothPairRequest => {},
+        Screens::Display => {},
+        Screens::ScreenTimeout => {
+            app.screen_timeout_page.emit(ScreenTimeoutPageMessage::UpdateView);
+        },
+        Screens::Sound => {},
+        Screens::PerformanceMode => {
+            app.performance_mode_page.emit(PerformanceModePageMessage::UpdateView);
+        },
+        Screens::Security => {},
+        Screens::LockTimeout => {},
+        Screens::Battery => {
+            app.battery_page.emit(BatteryPageMessage::UpdateView);
+        },
+        Screens::ResetPin => {},
+        Screens::DateTime => {},
+        Screens::SetTime => {},
+        Screens::SetDate => {},
+        Screens::About => {},
+        Screens::IPSettings => {},
+        Screens::Ethernet => {},
+        Screens::DNSPage => {},
+        Screens::ProtocolModes => {},
+        Screens::ProtocolDetails => {},
+    }
+        
     
 }

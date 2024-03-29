@@ -17,7 +17,7 @@ pub struct DeviceInfo {
     default_service = "mechanix.services.deviceinfo",
     default_path = "/org/mechanix/services/deviceinfo"
 )]
-trait DisplayInfoBusInterface {
+trait DeviceInfoBusInterface {
     async fn get_distro_info(&self) -> Result<DeviceInfo>;
 }
 
@@ -26,7 +26,7 @@ trait DisplayInfoBusInterface {
 impl DeviceInfo {
     pub async fn get_device_info_service() -> Result<DeviceInfo> {
         let connection = Connection::session().await?;
-        let proxy = DisplayInfoBusInterfaceProxy::new(&connection).await?;
+        let proxy = DeviceInfoBusInterfaceProxy::new(&connection).await?;
         let reply =  proxy.get_distro_info().await?;
         info!("Distro reply: {:?}", reply);
         Ok(reply)

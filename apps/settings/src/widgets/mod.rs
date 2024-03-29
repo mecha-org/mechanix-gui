@@ -6,3 +6,6 @@ pub mod menu_item;
 pub mod password_key;
 pub mod password_text;
 pub mod header;
+pub mod scrolled_box;
+pub mod layout;
+pub mod footer;
