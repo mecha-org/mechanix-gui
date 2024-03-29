@@ -119,4 +119,4 @@ jobs:
         with:
           files: |
             mecha*/mecha*
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.actor_id }}
