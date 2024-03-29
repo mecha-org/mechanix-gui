@@ -3,6 +3,7 @@ name: Release
 on:
   push:
     branches:
+      - dev-v1
       - main
   release:
     types: [created, edited]
