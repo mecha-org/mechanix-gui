@@ -80,11 +80,11 @@ jobs:
       - name: List Artifacts
         run: |
           ls -l
-            
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
-          files: mechanix-zbus-services*
+          files: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
           tag_name: "v.0.0.1"
