@@ -28,10 +28,10 @@ jobs:
             os: ubuntu-latest
             name: mechanix-zbus-services-x86_64-unknown-linux-musl.tar.gz
 
-          - target: Debian
+          - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
+            name: mechanix-zbus-services-x86_64-unknown-linux-gnu.deb
             package: mechanix-zbus-services
-            name: mechanix-zbus-services-Debian.deb   
 
           # - target: aarch64-unknown-linux-musl
           #   os: ubuntu-latest
@@ -63,8 +63,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install -y libdbus-1-dev pkg-config
-          rustup -y update 
-          cargo install cargo-deb
 
       - name: Build | Build [Cross]
         if: matrix.os == 'ubuntu-latest'
@@ -80,8 +78,10 @@ jobs:
             cd -          
 
       - name: Build | Build [Deb]
-        if: matrix.os == 'ubuntu-latest' && matrix.target == 'Debian'
+        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
         run: |
+          rustup update
+          cargo install cargo-deb
           cd services
           cargo deb -p ${{ matrix.package }}    
 
