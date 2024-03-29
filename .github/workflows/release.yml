@@ -97,5 +97,4 @@ jobs:
         with:
           files: |
             mecha*/mecha*
-          tag_name: ${{ github.base_ref }}
-          release_name: Release ${{ github.base_ref }}
+          tag_name: ${{ github.head_ref }}
