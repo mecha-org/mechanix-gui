@@ -77,12 +77,10 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
 
-      - name: Create Checksums
+      - name: List Artifacts
         run: |
-          for file in mechanix-zbus-services*; do
-            openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"
-          done
-
+          ls -l
+            
       - name: Create Release
         uses: softprops/action-gh-release@v1
         env:
