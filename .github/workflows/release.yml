@@ -53,6 +53,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+
           target: ${{ matrix.target }}
 
       - name: Setup | Install cross [Linux]
@@ -62,6 +63,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install -y libdbus-1-dev pkg-config
+          rustup -y update 
           cargo install cargo-deb
 
       - name: Build | Build [Cross]
