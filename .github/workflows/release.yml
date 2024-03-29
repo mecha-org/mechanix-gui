@@ -71,7 +71,7 @@ jobs:
           cargo build --release --target ${{ matrix.target }}
 
       - name: Post Build | Prepare artifacts [-nix]
-        if: matrix.os == 'ubuntu-latest' && matrix.name != 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
+        if: matrix.os == 'ubuntu-latest' && !matrix.package
         run: |
             cd services/target/${{ matrix.target }}/release/
             tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
