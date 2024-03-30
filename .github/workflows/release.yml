@@ -54,7 +54,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt install dkpg
           dpkg --add-architecture armhf
           sudo apt install -y libdbus-1-dev pkg-config
 
