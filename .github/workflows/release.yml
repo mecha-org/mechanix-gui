@@ -54,7 +54,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          dpkg --add-architecture armhf
+          sudo dpkg --add-architecture armhf
           sudo apt install -y libdbus-1-dev pkg-config
 
       - name: Build | Build [Cross]
