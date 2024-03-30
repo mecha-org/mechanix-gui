@@ -55,10 +55,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo dpkg --add-architecture armhf
-          sudo apt update
-          sudo apt-get update
+          sudo apt-get update 
           sudo apt-get install -y curl git build-essential
           sudo apt-get install -y libc6-armhf-cross libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
+          sudo apt-get install -y libdbus-1-dev libdbus-1-dev:armhf
 
 
       - name: Build | Build [Cross]
