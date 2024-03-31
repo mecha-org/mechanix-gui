@@ -19,7 +19,6 @@ jobs:
           sudo apt upgrade
           sudo apt-get install -y curl git build-essential
           sudo apt-get install -y libc6-arm64-cross libc6-dev-arm64-cross gcc-aarch64-linux-gnu libdbus-1-dev pkg-config
-
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /usr/local/bin/rustup.sh
@@ -27,7 +26,6 @@ jobs:
           rustup default stable
           rustup target add x86_64-unknown-linux-gnu
           rustup target add aarch64-unknown-linux-gnu
-
       - name: Build [aarch64-unknown-linux-gnu]
         continue-on-error: true
         run: |
