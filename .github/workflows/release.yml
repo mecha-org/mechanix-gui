@@ -3,7 +3,7 @@ name: Cross-Compile
 on:
   push:
     branches:
-      - main
+      - dev-v1
 
 jobs:
   build:
