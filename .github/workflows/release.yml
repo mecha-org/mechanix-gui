@@ -32,10 +32,9 @@ jobs:
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
-
-      - name: Pull Latest changes 
-        run: |
-          git pull origin $(git branch --show-current)
+        with:
+          ref: ${{ github.head_ref }}
+      
 
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
@@ -77,8 +76,9 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd services/target/debian/
-          mv mechanix*.deb ../../../${{ matrix.name }}
+          mv mechanix*.deb ../../../
           cd -
+
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
         with:
