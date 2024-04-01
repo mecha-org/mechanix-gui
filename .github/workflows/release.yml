@@ -82,8 +82,8 @@ jobs:
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: mechanix*
-          
+          name: mecha*
+          path: mecha*
 
   # Create GitHub release with Rust build targets and release notes
   github_release:
