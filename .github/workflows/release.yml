@@ -96,5 +96,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
-          files: ./*
+          files: mechanix-*/mechanix-*
           tag_name: Release ${{ github.head_ref }}
