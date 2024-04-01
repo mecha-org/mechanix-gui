@@ -26,7 +26,7 @@ members = [
 ]
 
 [[bin]]
-name = "app-drawer"
+name = "mechanix-app-drawer"
 path = "app-drawer/src/main.rs"
 
 [workspace.package]
