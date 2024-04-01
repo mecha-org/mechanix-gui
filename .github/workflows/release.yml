@@ -75,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.name }}
-          path: ./*
+          path: ./mechanix*
           
 
   github_release:
