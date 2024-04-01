@@ -66,7 +66,7 @@ jobs:
             cd services/target/${{ matrix.target }}/release/
             tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
             cd -
-              
+
             cd services/target/debian/
             tar czvf ../../../mechanix-zbus-services-arm64.deb mechanix-zbus-services*
             cd -    
@@ -75,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.name }}
-          path: ./*.tar.gz ./*.deb
+          path: ./*
           
 
   github_release:
