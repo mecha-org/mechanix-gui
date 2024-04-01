@@ -24,10 +24,13 @@ jobs:
             os: ubuntu-latest
             name: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
 
+
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: mechanix-zbus-services-_arm64.deb
+            # use wildcard to match the actual name
+            name: mechanix-zbus-services-arm64.deb
             package: mechanix-zbus-services
+
 
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -63,14 +66,14 @@ jobs:
             tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
             cd -          
       - name: Build | Build [Deb]
-        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
+        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-arm64.deb'
         run: |
           rustup update
           cargo install cargo-deb
           cd services
           cargo deb -p ${{ matrix.package }}    
       - name: Post Build | Prepare artifacts [-nix]
-        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
+        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-arm64.deb'
         run: |
             cd services/target/debian/
             tar czvf ../../../${{ matrix.name }} mechanix-zbus-services*
