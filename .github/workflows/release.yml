@@ -48,6 +48,10 @@ jobs:
             ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
             echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> $GITHUB_ENV   
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "dhruveshb@mechasystems.com"     
+
       - name: Install dependencies
         run: |
           sudo apt install -y libdbus-1-dev pkg-config
