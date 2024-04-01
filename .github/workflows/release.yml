@@ -33,6 +33,10 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
+      - name: Pull Latest changes 
+        run: |
+          git pull origin $(git branch --show-current)
+
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
         with:
@@ -73,7 +77,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd services/target/debian/
-          tar czvf ../../../${{ matrix.name }} mechanix-zbus-services*
+          mv mechanix*.deb ../../../${{ matrix.name }}
           cd -
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
