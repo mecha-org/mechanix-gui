@@ -62,7 +62,7 @@ jobs:
           cd -
 
       - name: Build | Build [Deb]
-        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           rustup update
           cargo install cargo-deb
@@ -70,7 +70,7 @@ jobs:
           cargo deb -p ${{ matrix.package }}
 
       - name: Post Build | Prepare artifacts [-nix]
-        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           cd services/target/debian/
           tar czvf ../../../${{ matrix.name }} mechanix-zbus-services*
