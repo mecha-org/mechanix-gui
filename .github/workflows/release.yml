@@ -97,5 +97,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
           files: |
-            mechanix*
+            *.tar.gz
+            *.deb
           tag_name: Release ${{ github.head_ref }}
