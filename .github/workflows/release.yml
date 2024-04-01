@@ -38,15 +38,11 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
 
-      - name: Setup | Install cross [Linux]
-        if: matrix.os == 'ubuntu-latest'
-        uses: taiki-e/install-action@cross
-
       - name: Install dependencies
         run: |
           sudo apt install -y libdbus-1-dev pkg-config
 
-      - name: Build | Build [Cross]
+      - name: Build | Build [tar.gz]
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd services
