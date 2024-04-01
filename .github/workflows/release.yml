@@ -75,8 +75,8 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.name }}
-          path: ./*.tar.gz
-          path: ./*.deb
+          path: ./*.tar.gz ./*.deb
+          
 
   github_release:
     name: Create GitHub Release
