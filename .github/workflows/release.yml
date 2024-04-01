@@ -23,6 +23,10 @@ jobs:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             name: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
+
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: mechanix-zbus-services-_arm64.deb
             package: mechanix-zbus-services
 
     runs-on: ${{ matrix.os }}
@@ -32,9 +36,6 @@ jobs:
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-      
 
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
@@ -50,40 +51,35 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install -y libdbus-1-dev pkg-config
-
       - name: Build | Build [Cross]
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd services
           cargo build --release --target ${{ matrix.target }}
-
       - name: Post Build | Prepare artifacts [-nix]
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && !matrix.package
         run: |
-          cd services/target/${{ matrix.target }}/release/
-          tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
-          cd -
-
+            cd services/target/${{ matrix.target }}/release/
+            tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
+            cd -          
       - name: Build | Build [Deb]
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
         run: |
           rustup update
           cargo install cargo-deb
           cd services
-          cargo deb -p ${{ matrix.package }}
-
+          cargo deb -p ${{ matrix.package }}    
       - name: Post Build | Prepare artifacts [-nix]
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.name == 'mechanix-zbus-services-x86_64-unknown-linux-gnu.deb'
         run: |
-          cd services/target/debian/
-          mv *.deb ../../../
-          cd -
-
+            cd services/target/debian/
+            tar czvf ../../../${{ matrix.name }} mechanix-zbus-services*
+            cd -    
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: mecha*
-          path: mecha*
+          name: ${{ matrix.name }}
+          path: ${{ matrix.name }}
 
   # Create GitHub release with Rust build targets and release notes
   github_release:
@@ -97,7 +93,6 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
-
 
       - name: Create Release
         id: create_release
