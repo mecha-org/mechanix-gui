@@ -76,7 +76,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd services/target/debian/
-          mv mechanix*.deb ../../../
+          mv *.deb ../../../
           cd -
 
       - name: Release | Upload artifacts
@@ -97,6 +97,8 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
+        with:
+          name: mechanix*
 
       - name: Create Release
         id: create_release
