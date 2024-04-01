@@ -82,8 +82,8 @@ jobs:
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.name }}
-          path: ${{ matrix.name }}
+          name: mechanix*
+          
 
   # Create GitHub release with Rust build targets and release notes
   github_release:
@@ -97,8 +97,7 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
-        with:
-          name: mechanix*
+
 
       - name: Create Release
         id: create_release
