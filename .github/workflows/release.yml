@@ -39,9 +39,10 @@ jobs:
           target: ${{ matrix.target }}
       
       - name: setup | SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.PRIVATE_KEY }}   
+        run: |
+          eval `ssh-agent -s`
+          ssh-add - <<< '${{ secrets.PRIVATE_SSH_KEY }}' 
+         
 
       - name: Install dependencies
         run: |
