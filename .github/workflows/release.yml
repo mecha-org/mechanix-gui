@@ -19,9 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-unknown-linux-gnu
+          - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
+            name: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
             package: mechanix-zbus-services
 
     runs-on: ${{ matrix.os }}
@@ -54,24 +54,25 @@ jobs:
           rustup update
           cargo install cargo-deb
           cd services
-          cargo deb -p ${{ matrix.package }}
+          cargo deb -p ${{ matrix.package }}    
 
       - name: Post Build | Prepare artifacts [-nix]
         if: matrix.os == 'ubuntu-latest'
         run: |
-          cd services/target/${{ matrix.target }}/release/
-          tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
-          cd -
+            cd services/target/${{ matrix.target }}/release/
+            tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
+            cd -
 
-          cd services/target/debian/
-          tar czvf ../../../mechanix-zbus-services-arm64.deb mechanix-zbus-services*
-          cd -
+            cd services/target/debian/
+            mv *.deb ../../../
+            cd -    
 
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.name }}
           path: ./mechanix*
+          
 
   github_release:
     name: Create GitHub Release
