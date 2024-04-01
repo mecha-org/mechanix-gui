@@ -92,10 +92,9 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
-          files: |
-            ./mechanix*
+          files: ./*
           tag_name: Release ${{ github.head_ref }}
