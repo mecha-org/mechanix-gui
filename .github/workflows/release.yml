@@ -65,8 +65,8 @@ jobs:
         run: |
             cd services/target/${{ matrix.target }}/release/
             tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
-            mv ../../../../${{ matrix.name }} ../../../../
             cd -
+              
             cd services/target/debian/
             tar czvf ../../../mechanix-zbus-services-arm64.deb mechanix-zbus-services*
             cd -    
