@@ -241,11 +241,11 @@ jobs:
       #     mv *.deb ../../../
       #     cd -
 
-      # - name: Release | Upload artifacts
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: ${{ matrix.name }}
-      #     path: ./mechanix*
+      - name: Release | Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}
+          path: ./mechanix*
 
   github_release:
     name: Create GitHub Release
