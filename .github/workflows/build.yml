@@ -46,6 +46,18 @@ jobs:
         run: |
           sudo apt install -y libdbus-1-dev pkg-config
 
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "dhruveshb-mecha"
+          git config --global user.email "dhruveshb@mechasystems.com"    
+
       # # mechanix-zbus-services
       # - name: Build | Build [mechanix-zbus-services]
       #   if: matrix.os == 'ubuntu-latest'
@@ -79,8 +91,6 @@ jobs:
         continue-on-error: true
         run: |
           cd shell/greeter
-          echo "https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com" >> $HOME/.git-credentials
-          git config --global credential.helper store
           cargo build --release --target ${{ matrix.target }}
       - name: Build | Deb [mechanix-greeter]
         if: matrix.os == 'ubuntu-latest'
