@@ -58,6 +58,10 @@ jobs:
           git config --global user.name "dhruveshb-mecha"
           git config --global user.email "dhruveshb@mechasystems.com"    
 
+      - name: Git Clone
+        run: |
+          git clone git@github.com:mecha-org/mechactl.git   
+
       # # mechanix-zbus-services
       # - name: Build | Build [mechanix-zbus-services]
       #   if: matrix.os == 'ubuntu-latest'
