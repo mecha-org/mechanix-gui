@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - dev-v1
+      - build-workflow
   release:
     types: [created, edited]
 env:
