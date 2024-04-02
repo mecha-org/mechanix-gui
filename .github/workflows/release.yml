@@ -9,7 +9,9 @@ on:
       - completed
 jobs:
   build:
-    uses: ./github-actions/build.yml
+    - name: Local Workflow location access 
+      uses: actions/checkout@v4
+      uses: ./.github-actions/build.yml
 
   github_release:
     needs: build
