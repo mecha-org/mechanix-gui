@@ -47,6 +47,10 @@ jobs:
         run: |
           sudo apt install -y libdbus-1-dev pkg-config
 
+      - name: Setup Cargo Deb
+        run: |
+          cargo install cargo-deb   
+
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
