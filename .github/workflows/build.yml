@@ -30,24 +30,11 @@ jobs:
     continue-on-error: true
     env:
       RUSTFLAGS: ${{ matrix.rustflags || '' }}
+      GITHUB_USERNAME: dhruveshb-mecha
+      GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
-
-      - name: git clone repo
-        continue-on-error: true
-        run: |
-          git clone git@github.com:mecha-org/mctk.git
-
-      - name: SSH config
-        run: |
-          eval `ssh-agent -s`
-          ssh-add - <<< '${{ secrets.SSH_PRIVATE_KEY }}'
-
-      - name: git clone repo
-        continue-on-error: true
-        run: |
-          git clone git@github.com:mecha-org/mctk.git
 
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
@@ -92,6 +79,8 @@ jobs:
         continue-on-error: true
         run: |
           cd shell/greeter
+          echo "https://$GITHUB_USERNAME:$GITHUB_TOKEN@github.com" >> $HOME/.git-credentials
+          git config --global credential.helper store
           cargo build --release --target ${{ matrix.target }}
       - name: Build | Deb [mechanix-greeter]
         if: matrix.os == 'ubuntu-latest'
