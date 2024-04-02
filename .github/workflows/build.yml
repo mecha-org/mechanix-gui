@@ -33,17 +33,16 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
+      - name: SSH config
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Setup | Rust
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
           target: ${{ matrix.target }}
-
-      - name:  Configure SSH
-        run: |
-          eval `ssh-agent -s`
-          ssh-add - <<< '${{ secrets.SSH_PRIVATE_KEY }}'
-        
 
       - name: Install dependencies
         run: |
@@ -71,12 +70,12 @@ jobs:
       #     cd services/target/${{ matrix.target }}/release/
       #     tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
       #     cd -
-            
+
       #     cd services/target/debian/
       #     mv *.deb ../../../
       #     cd -
 
-        # mechanix-greeter
+      # mechanix-greeter
       - name: Build | Build [mechanix-greeter]
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
