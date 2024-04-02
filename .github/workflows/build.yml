@@ -2,6 +2,7 @@ name: Build and Release
 on:
   push:
     branches:
+      - main
       - dev-v1
   release:
     types: [created, edited]
