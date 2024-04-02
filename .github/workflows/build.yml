@@ -99,7 +99,6 @@
           with:
             name: ${{ matrix.name }}
             path: ./mechanix*
-            
   github_release:
     needs: build
     name: Create GitHub Release
