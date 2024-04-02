@@ -13,6 +13,7 @@ env:
   RUST_BACKTRACE: short
   RUSTUP_MAX_RETRIES: 10
   MACOSX_DEPLOYMENT_TARGET: 10.7
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
 
 jobs:
   github_build:
@@ -47,18 +48,18 @@ jobs:
           sudo apt install -y libdbus-1-dev pkg-config
 
       - name: Set up SSH key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Setup Git
         run: |
           git config --global user.name "dhruveshb-mecha"
           git config --global user.email "dhruveshb@mechasystems.com"    
 
-      - name: Git Clone
-        run: |
-          git clone git@github.com:mecha-org/mechactl.git   
+ 
 
       # # mechanix-zbus-services
       # - name: Build | Build [mechanix-zbus-services]
@@ -93,6 +94,7 @@ jobs:
         continue-on-error: true
         run: |
           cd shell/greeter
+          cargo --config net.git-fetch-with-cli=true fetch
           cargo build --release --target ${{ matrix.target }}
       - name: Build | Deb [mechanix-greeter]
         if: matrix.os == 'ubuntu-latest'
