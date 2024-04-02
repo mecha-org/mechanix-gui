@@ -1,24 +1,27 @@
-use gtk::prelude::*;
-use relm4::{
-    gtk::{self},
-    Component, ComponentController, ComponentParts, ComponentSender, SimpleComponent, Controller,
-};
+use std::collections::HashMap;
+
 use crate::{
+    modules::power::service::Power,
     settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::{
         custom_list_radio_button::{
-            CustomListRadioButton, CustomListRadioButtonSettings,
+            CustomListRadioButton, CustomListRadioButtonSettings, InputMessage,
             Message as CustomListRadioButtonMessage,
         },
-        menu_item::{MenuItem, MenuItemSettings, Message as MenuItemMessage},
+        header::Header,
     },
 };
 use custom_widgets::icon_button::{
     IconButton, IconButtonCss, InitSettings as IconButtonStetings,
     InputMessage as IconButtonInputMessage, OutputMessage as IconButtonOutputMessage,
 };
-
-use tracing::info;
+use gtk::prelude::*;
+use relm4::{
+    async_trait::async_trait,
+    component::{AsyncComponent, AsyncComponentParts},
+    gtk, AsyncComponentSender, Component, ComponentBuilder, ComponentController, Controller,
+};
+use tracing::{error, info};
 
 //Init Settings
 pub struct Settings {
@@ -30,21 +33,23 @@ pub struct Settings {
 //Model
 pub struct PerformanceModePage {
     settings: Settings,
+    selected_value: String,
 }
 
 //Widgets
 pub struct PerformanceModePageWidgets {
     back_button: Controller<IconButton>,
     submit_button: Controller<IconButton>,
+    radi_button_list: HashMap<String, Controller<CustomListRadioButton>>,
 }
 
 //Messages
 #[derive(Debug)]
 pub enum Message {
-    MenuItemPressed(String),
     BackPressed,
-    HomeIconPressed,
-    SubmitPressed
+    SubmitPressed,
+    SelectedValueChanged(String),
+    UpdateView,
 }
 
 pub struct SettingItem {
@@ -53,12 +58,14 @@ pub struct SettingItem {
     end_icon: Option<String>,
 }
 
-impl SimpleComponent for PerformanceModePage {
+#[async_trait(?Send)]
+impl AsyncComponent for PerformanceModePage {
     type Init = Settings;
     type Input = Message;
     type Output = Message;
     type Root = gtk::Box;
     type Widgets = PerformanceModePageWidgets;
+    type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
         gtk::Box::builder()
@@ -67,89 +74,36 @@ impl SimpleComponent for PerformanceModePage {
             .build()
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let modules = init.modules.clone();
         let layout = init.layout.clone();
         let widget_configs = init.widget_configs.clone();
 
-        let header_title = gtk::Label::builder()
-            .label("Performance Mode")
-            .css_classes(["header-title"])
-            .build();
-
-        let header = gtk::Box::builder()
-            .orientation(gtk::Orientation::Horizontal)
-            .css_classes(["header"])
-            .build();
-
-        header.append(&header_title);
-
-        let screen_off_timeout_items = gtk::Box::builder()
+        let radio_button_group = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .build();
 
-        let low = CustomListRadioButton::builder()
-            .launch(CustomListRadioButtonSettings {
-                text: "Low".to_string(),
-                active_icon: widget_configs.radio_item.active_icon.clone(),
-                inactive_icon: widget_configs.radio_item.inactive_icon.clone(),
-                is_active: false,
-                ..Default::default()
-            })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    CustomListRadioButtonMessage::WidgetClicked => Message::HomeIconPressed,
-                }
-            });
+        let names = vec!["Low", "Balanced", "High"];
+        // let mut radio_buttons  = Vec::new();
 
-        let balanced = CustomListRadioButton::builder()
-            .launch(CustomListRadioButtonSettings {
-                text: "Balanced".to_string(),
-                active_icon: widget_configs.radio_item.active_icon.clone(),
-                inactive_icon: widget_configs.radio_item.inactive_icon.clone(),
-                is_active: true,
-                ..Default::default()
-            })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    CustomListRadioButtonMessage::WidgetClicked => Message::HomeIconPressed,
-                }
-            });
-        let high = CustomListRadioButton::builder()
-            .launch(CustomListRadioButtonSettings {
-                text: "High".to_string(),
-                active_icon: widget_configs.radio_item.active_icon.clone(),
-                inactive_icon: widget_configs.radio_item.inactive_icon.clone(),
-                is_active: false,
-                description_text: Some("<span foreground='red'>**</span> Higher performance will use battery faster and \nincrease the temperature of the device significantly. \nCheck ambient temperature before proceeding.".to_string())
-            })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    CustomListRadioButtonMessage::WidgetClicked => Message::HomeIconPressed,
-                }
-            });
+        let mut radio_buttons = HashMap::new();
 
-        let low_widget = low.widget();
-        let balanced_widget = balanced.widget();
-        let high_widget = high.widget();
-
-        screen_off_timeout_items.append(low_widget);
-        screen_off_timeout_items.append(balanced_widget);
-        screen_off_timeout_items.append(high_widget);
-
-        root.append(&header);
+        for name in names.iter() {
+            let radio_button = get_radio_button(name, &widget_configs, &sender);
+            let radio_button_widget = radio_button.widget();
+            radio_button_group.append(radio_button_widget);
+            // radio_buttons.push(radio_button);
+            radio_buttons.insert(name.to_string(), radio_button);
+        }
 
         let scrollable_content = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .build();
-        scrollable_content.append(&screen_off_timeout_items);
+        scrollable_content.append(&radio_button_group);
 
         let scrolled_window = gtk::ScrolledWindow::builder()
             .hscrollbar_policy(gtk::PolicyType::Never) // Disable horizontal scrolling
@@ -157,7 +111,6 @@ impl SimpleComponent for PerformanceModePage {
             .min_content_height(360)
             .child(&scrollable_content)
             .build();
-        root.append(&scrolled_window);
 
         let footer = gtk::Box::builder()
             .orientation(gtk::Orientation::Horizontal)
@@ -193,31 +146,119 @@ impl SimpleComponent for PerformanceModePage {
         submit_button_widget.set_halign(gtk::Align::End);
 
         footer.append(submit_button_widget);
+
+        let header = Header::builder().launch("Performance Mode".to_owned());
+        root.append(header.widget());
+        root.append(&scrolled_window);
         root.append(&footer);
 
-        let model = PerformanceModePage { settings: init };
+        let model = PerformanceModePage {
+            settings: init,
+            selected_value: "".to_owned(),
+        };
 
         let widgets = PerformanceModePageWidgets {
             back_button,
             submit_button,
+            radi_button_list: radio_buttons,
         };
 
-        ComponentParts { model, widgets }
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
+        get_info(sender).await;
+
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         info!("Update message is {:?}", message);
         match message {
-            Message::MenuItemPressed(key) => {}
             Message::BackPressed => {
-                sender.output(Message::BackPressed);
+                let _ = sender.output(Message::BackPressed);
             }
-            Message::HomeIconPressed => {
-                sender.output(Message::HomeIconPressed);
+            Message::SubmitPressed => {
+                let input_sender: relm4::Sender<Message> = sender.input_sender().clone();
+                set_cpu_governor(input_sender, __self.selected_value.clone()).await;
+                let _ = sender.output(Message::SubmitPressed);
             }
-            Message::SubmitPressed => {}
+            Message::SelectedValueChanged(value) => {
+                __self.selected_value = value.clone();
+            }
+            Message::UpdateView => {
+                let sender: relm4::Sender<Message> = sender.input_sender().clone();
+                get_info(sender).await;
+            }
         }
     }
 
-    fn update_view(&self, widgets: &mut Self::Widgets, sender: ComponentSender<Self>) {}
+    fn update_view(&self, widgets: &mut Self::Widgets, sender: AsyncComponentSender<Self>) {
+        for (key, radio_button) in widgets.radi_button_list.iter() {
+            let selected_value = &self.selected_value;
+            if selected_value.eq(key) {
+                radio_button.emit(InputMessage::ChangeActiveValue(true));
+            } else {
+                radio_button.emit(InputMessage::ChangeActiveValue(false));
+            }
+        }
+    }
+}
+
+fn get_radio_button(
+    text: &str,
+    widget_configs: &WidgetConfigs,
+    sender: &AsyncComponentSender<PerformanceModePage>,
+) -> Controller<CustomListRadioButton> {
+    let mut payload = CustomListRadioButtonSettings {
+        text: text.to_string(),
+        active_icon: widget_configs.radio_item.active_icon.clone(),
+        inactive_icon: widget_configs.radio_item.inactive_icon.clone(),
+        is_active: false,
+        ..Default::default()
+    };
+
+    match text {
+        "High" => {
+            payload.description_text = Some("<span foreground='red'>**</span> Higher performance will use battery faster and \nincrease the temperature of the device significantly. \nCheck ambient temperature before proceeding.".to_string())
+
+        },
+        _ => {}
+    };
+
+    let new_text = text.to_string().clone();
+    CustomListRadioButton::builder()
+        .launch(payload)
+        .forward(sender.input_sender(), move |msg| {
+            info!("msg is {:?}", msg);
+            match msg {
+                CustomListRadioButtonMessage::WidgetClicked => {
+                    Message::SelectedValueChanged(new_text.to_owned())
+                }
+            }
+        })
+}
+
+async fn get_info(sender: relm4::Sender<Message>) {
+    match Power::get_performance_mode().await {
+        Ok(value) => {
+            let _ = sender.send(Message::SelectedValueChanged(value));
+        }
+        Err(e) => {
+            error!("Error getting device oem info: {}", e);
+        }
+    };
+}
+
+async fn set_cpu_governor(sender: relm4::Sender<Message>, value: String) {
+    match Power::set_cpu_governor(&value).await {
+        Ok(value) => {
+            let _ = sender.send(Message::BackPressed);
+        }
+        Err(e) => {
+            error!("Error getting device oem info: {}", e);
+        }
+    };
 }

@@ -148,7 +148,7 @@ impl AsyncComponent for AboutPage {
             serial_no: serial_label,
         };
         let sender: relm4::Sender<Message> = sender.input_sender().clone();
-        init_services(sender).await;
+        get_device_info(sender).await;
         AsyncComponentParts { model, widgets }
     }
 
@@ -186,7 +186,7 @@ impl AsyncComponent for AboutPage {
     }
 }
 
-async fn init_services(sender: relm4::Sender<Message>) {
+async fn get_device_info(sender: relm4::Sender<Message>) {
     match DeviceInfo::get_device_info_service().await {
         Ok(device_info) => {
             info!("Distro info: {:?}", device_info);

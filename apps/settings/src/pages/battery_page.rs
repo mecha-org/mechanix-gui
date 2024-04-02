@@ -1,22 +1,28 @@
 use gtk::prelude::*;
-use custom_utils::get_image_from_path;
 use relm4::{
+    async_trait::async_trait,
+    component::{AsyncComponent, AsyncComponentParts},
     gtk::{self},
-    Component, ComponentController, ComponentParts, ComponentSender, SimpleComponent, Controller,
+    AsyncComponentSender, Component, ComponentController, Controller,
 };
 
 use crate::{
+    modules::power::service::Power,
     settings::{LayoutSettings, Modules, WidgetConfigs},
-    widgets::custom_list_item::{
-            CustomListItem, CustomListItemSettings, Message as CustomListItemMessage,
-        },
+    widgets::{
+        custom_list_item::{
+            CustomListItem, CustomListItemSettings, InputMessage as ListItemInputMessage,
+            Message as CustomListItemMessage,
+        }, footer::{Footer, FooterInit, FooterMessage}, header::Header, layout::{Layout, LayoutInit, LayoutMessage}, scrolled_box::ScrolledBox
+    },
 };
 
 use custom_widgets::icon_button::{
-    IconButton, IconButtonCss, InitSettings as IconButtonStetings, OutputMessage as IconButtonOutputMessage,
+    IconButton, IconButtonCss, InitSettings as IconButtonStetings,
+    OutputMessage as IconButtonOutputMessage,
 };
 
-use tracing::info;
+use tracing::{error, info};
 
 //Init Settings
 pub struct Settings {
@@ -28,34 +34,40 @@ pub struct Settings {
 //Model
 pub struct BatteryPage {
     settings: Settings,
+    battery_level: u8,
+    screen_off_timeout: String,
+    performance_mode: String,
 }
 
 //Widgets
 pub struct BatteryPageWidgets {
-    back_button: Controller<IconButton>,
+    // back_button: Controller<IconButton>,
+    battery_percentage_level: gtk::LevelBar,
+    battery_performance_mode: Controller<CustomListItem>,
+    screen_off_timeout: Controller<CustomListItem>,
+    screen_layout: Controller<Layout>
 }
 
 //Messages
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Message {
-    MenuItemPressed(String),
     BackPressed,
     ScreenTimeoutOpted,
-    PerformanceOpted
+    PerformanceOpted,
+    BatteryLevelChanged(u8),
+    PerformanceModeChanged(String),
+    ScreenTimeoutChanged(String),
+    UpdateView,
 }
 
-pub struct SettingItem {
-    text: String,
-    start_icon: Option<String>,
-    end_icon: Option<String>,
-}
-
-impl SimpleComponent for BatteryPage {
+#[async_trait(?Send)]
+impl AsyncComponent for BatteryPage {
     type Init = Settings;
     type Input = Message;
     type Output = Message;
     type Root = gtk::Box;
     type Widgets = BatteryPageWidgets;
+    type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
         gtk::Box::builder()
@@ -64,28 +76,14 @@ impl SimpleComponent for BatteryPage {
             .build()
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
-        let modules = init.modules.clone();
-        let layout = init.layout.clone();
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
+        // let modules = init.modules.clone();
+        // let layout = init.layout.clone();
         let widget_configs = init.widget_configs.clone();
-
-        let header_title = gtk::Label::builder()
-            .label("Battery")
-            .css_classes(["header-title"])
-            .build();
-        let header_icon = get_image_from_path(
-            modules.pages_settings.battery.display_icon.clone(),
-            &["header-icon"],
-        );
-        let header = gtk::Box::builder()
-            .orientation(gtk::Orientation::Horizontal)
-            .css_classes(["header"])
-            .build();
-        header.append(&header_title);
 
         let battery_label = gtk::Label::builder()
             .label("Battery Percentage")
@@ -93,12 +91,12 @@ impl SimpleComponent for BatteryPage {
             .build();
 
         let battery_percentage_level = gtk::LevelBar::builder()
-        .min_value(0.0)
-        .max_value(100.0)
-        .value(70.0)
-        .orientation(gtk::Orientation::Horizontal) 
-        .css_classes(["custom-levelbar"])
-        .build();
+            .min_value(0.0)
+            .max_value(100.0)
+            .value(70.0)
+            .orientation(gtk::Orientation::Horizontal)
+            .css_classes(["custom-levelbar"])
+            .build();
 
         let battery_items = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
@@ -113,36 +111,29 @@ impl SimpleComponent for BatteryPage {
             })
             .forward(sender.input_sender(), |msg| {
                 info!("msg is {:?}", msg);
-                println!("BATTERY PAGE - SCREEN clicked {:?}", msg);
-                match msg { 
+                match msg {
                     CustomListItemMessage::WidgetClicked => Message::ScreenTimeoutOpted,
                 }
             });
 
-        let screen_off_timeout_widget = screen_off_timeout.widget();
-
         let battery_performance_mode = CustomListItem::builder()
-        .launch(CustomListItemSettings {
-            start_icon: None,
-            text: "Performance Mode".to_string(),
-            value: "Balenced".to_owned(),
-            end_icon: widget_configs.menu_item.end_icon.clone(),
-        })
-        .forward(sender.input_sender(), |msg| {
-            info!("msg is {:?}", msg);
-            match msg {
-                CustomListItemMessage::WidgetClicked => Message::PerformanceOpted,
-            }
-        });
-        let battery_performance_mode_widget = battery_performance_mode.widget();
-
-
+            .launch(CustomListItemSettings {
+                start_icon: None,
+                text: "Performance Mode".to_string(),
+                value: "Balenced".to_owned(),
+                end_icon: widget_configs.menu_item.end_icon.clone(),
+            })
+            .forward(sender.input_sender(), |msg| {
+                info!("msg is {:?}", msg);
+                match msg {
+                    CustomListItemMessage::WidgetClicked => Message::PerformanceOpted,
+                }
+            });
+        
         battery_items.append(&battery_percentage_level);
-        battery_items.append(screen_off_timeout_widget);
-        battery_items.append(battery_performance_mode_widget);
+        battery_items.append(screen_off_timeout.widget());
+        battery_items.append(battery_performance_mode.widget());
         // battery_items.append(&screen_off_timeout_widget.clone());
-
-        root.append(&header);
 
         let scrollable_content = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
@@ -150,50 +141,53 @@ impl SimpleComponent for BatteryPage {
         scrollable_content.append(&battery_label);
         scrollable_content.append(&battery_items);
 
-        let scrolled_window = gtk::ScrolledWindow::builder()
-            .hscrollbar_policy(gtk::PolicyType::Never) // Disable horizontal scrolling
-            .min_content_width(360)
-            .min_content_height(360)
-            .child(&scrollable_content)
-            .build();
-        root.append(&scrolled_window);
+       
 
-        let footer = gtk::Box::builder()
-        .orientation(gtk::Orientation::Horizontal)
-        .css_classes(["footer"])
-        .hexpand(true)
-        .vexpand(true)
-        .valign(gtk::Align::End)
-        .build();
+        let screen_layout = Layout::builder().launch(LayoutInit {
+            title: "Battery".to_owned(),
+            content: scrollable_content,
+            footer_config: widget_configs.footer,
+        }).forward(sender.input_sender(), |msg| {
+            println!("Batery callback {:?}", msg);
+            match msg {
+        
+            LayoutMessage::BackPressed => Message::BackPressed,
+        }});
 
-        let back_button = IconButton::builder()
-            .launch(IconButtonStetings {
-                icon: widget_configs.footer.back_icon.to_owned(),
-                toggle_icon: None,
-                css: IconButtonCss::default(),
-            })
-            .forward(sender.input_sender(), |msg| match msg {
-                IconButtonOutputMessage::Clicked => Message::BackPressed,
-            });
+        root.append(screen_layout.widget());
 
-        footer.append(back_button.widget());
-
-        root.append(&footer);
-
-        let model = BatteryPage { settings: init };
-
-        let widgets = BatteryPageWidgets {
-            back_button
+        let model = BatteryPage {
+            settings: init,
+            battery_level: 0,
+            performance_mode: "".to_owned(),
+            screen_off_timeout: "".to_owned(),
         };
 
-        ComponentParts { model, widgets }
+        let widgets = BatteryPageWidgets {
+            // back_button,
+            screen_layout,
+            battery_percentage_level,
+            battery_performance_mode,
+            screen_off_timeout,
+        };
+
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
+        get_info(sender).await;
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
-        info!("battery page - msg - Update message is {:?}", message);
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        // info!("battery page - msg - Update message is {:?}", message);
+        // let sender_1: relm4::Sender<Message> = sender.input_sender().clone();
+        // get_info(sender_1).await;
         match message {
-            Message::MenuItemPressed(key) => {}
             Message::BackPressed => {
+                println!("Batery BackPressed");
                 let _ = sender.output(Message::BackPressed);
             }
             Message::ScreenTimeoutOpted => {
@@ -202,8 +196,71 @@ impl SimpleComponent for BatteryPage {
             Message::PerformanceOpted => {
                 let _ = sender.output(Message::PerformanceOpted);
             }
+            Message::BatteryLevelChanged(value) => {
+                __self.battery_level = value.clone();
+                let _ = sender.output(Message::BatteryLevelChanged(value));
+            }
+            Message::PerformanceModeChanged(value) => {
+                __self.performance_mode = value.clone();
+                let _ = sender.output(Message::PerformanceModeChanged(value));
+            }
+            Message::ScreenTimeoutChanged(value) => {
+                __self.screen_off_timeout = value.clone();
+                let _ = sender.output(Message::ScreenTimeoutChanged(value));
+            }
+            Message::UpdateView => {
+                let sender: relm4::Sender<Message> = sender.input_sender().clone();
+                get_info(sender).await;
+            }
         }
     }
 
-    fn update_view(&self, widgets: &mut Self::Widgets, sender: ComponentSender<Self>) {}
+    fn update_view(&self, widgets: &mut Self::Widgets, sender: AsyncComponentSender<Self>) {
+        info!("About- Update view");
+        widgets
+            .battery_percentage_level
+            .set_value(self.battery_level as f64);
+
+        widgets
+            .battery_performance_mode
+            .emit(ListItemInputMessage::ValueChanged(
+                self.performance_mode.to_owned(),
+            ));
+        widgets
+            .screen_off_timeout
+            .emit(ListItemInputMessage::ValueChanged(
+                self.screen_off_timeout.to_string(),
+            ))
+    }
+}
+
+async fn get_info(sender: relm4::Sender<Message>) {
+    match Power::get_battery_status().await {
+        Ok(status) => {
+            let _ = sender.send(Message::BatteryLevelChanged(status));
+        }
+        Err(e) => {
+            error!("Error getting device oem info: {}", e);
+        }
+    };
+
+    match Power::get_screen_timeout().await {
+        Ok(value) => {
+           
+            let _ = sender.send(Message::ScreenTimeoutChanged(value));
+        }
+        Err(e) => {
+            error!("Error getting device oem info: {}", e);
+        }
+    };
+
+    match Power::get_performance_mode().await {
+        Ok(value) => {
+           
+            let _ = sender.send(Message::PerformanceModeChanged(value));
+        }
+        Err(e) => {
+            error!("Error getting device oem info: {}", e);
+        }
+    };
 }
