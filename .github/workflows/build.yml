@@ -42,7 +42,7 @@ jobs:
       - name:  Configure SSH
         run: |
           eval `ssh-agent -s`
-          ssh-add - <<< '${{ secrets.PRIVATE_SSH_KEY }}'
+          ssh-add - <<< '${{ secrets.SSH_PRIVATE_KEY }}'
         
 
       - name: Install dependencies
