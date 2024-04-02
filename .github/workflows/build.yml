@@ -1,114 +1,118 @@
----
-  name: Build
-  on:
-    push:
-      branches:
-        - dev-v1
-        - main
-  env:
-    CARGO_INCREMENTAL: 0
-    CARGO_NET_RETRY: 10
-    RUST_BACKTRACE: short
-    RUSTUP_MAX_RETRIES: 10
-    MACOSX_DEPLOYMENT_TARGET: 10.7
-  jobs:
-    github_build:
-      name: Build release binaries
-      strategy:
-        fail-fast: false
-        matrix:
-          include:
-            - target: x86_64-unknown-linux-gnu
-              os: ubuntu-latest
-              name: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
-              package: mechanix-zbus-services
-      runs-on: ${{ matrix.os }}
-      continue-on-error: true
-      env:
-        RUSTFLAGS: ${{ matrix.rustflags || '' }}
-      steps:
-        - name: Setup | Checkout
-          uses: actions/checkout@v4
-        - name: Setup | Rust
-          uses: dtolnay/rust-toolchain@master
-          with:
-            toolchain: stable
-            target: ${{ matrix.target }}
-        - name: Add SSH Private Key
-          uses: webfactory/ssh-agent@v0.9.0
-          with:
-            ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-        - name: Install dependencies
-          run: |
-            sudo apt install -y libdbus-1-dev pkg-config
-        - name: Build | Build [mechanix-zbus-services]
-          if: matrix.os == 'ubuntu-latest'
-          continue-on-error: true
-          run: |
-            cd services
-            cargo build --release --target ${{ matrix.target }}
-        - name: Build | Deb [mechanix-zbus-services]
-          if: matrix.os == 'ubuntu-latest'
-          continue-on-error: true
-          run: |
-            rustup update
-            cargo install cargo-deb
-            cd services
-            cargo deb -p ${{ matrix.package }}
-        - name: Post Build | Prepare artifacts [mechanix-zbus-services]
-          if: matrix.os == 'ubuntu-latest'
-          continue-on-error: true
-          run: |
-            cd services/target/${{ matrix.target }}/release/
-            tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
-            cd -
-  
-            cd services/target/debian/
-            mv *.deb ../../../
-            cd -
-        - name: Build | Build [mechanix-app-drawer]
-          if: matrix.os == 'ubuntu-latest'
-          continue-on-error: true
-          run: |
-            cd shell
-            cargo build --release --target ${{ matrix.target }}
-        - name: Build | Deb [mechanix-app-drawer]
-          if: matrix.os == 'ubuntu-latest'
-          continue-on-error: true
-          run: |
-            cd shell
-            cargo deb -p mechanix-app-drawer
-        - name: Post Build | Prepare artifacts [mechanix-app-drawer]
-          if: matrix.os == 'ubuntu-latest'
-          continue-on-error: true
-          run: >
-            cd shell/target/${{ matrix.target }}/release/
-  
-            tar czvf ../../../../mechanix-app-drawer-x86_64-unknown-linux-gnu.tar.gz mechanix-app-drawer
-  
-            cd -
-  
-  
-            cd shell/target/debian/
-  
-            mv *.deb ../../../
-  
-            cd -  
-        - name: Release | Upload artifacts
-          uses: actions/upload-artifact@v3
-          with:
-            name: ${{ matrix.name }}
-            path: ./mechanix*
+name: Build and Release
+on:
+  push:
+    branches:
+      - dev-v1
+  release:
+    types: [created, edited]
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTUP_MAX_RETRIES: 10
+  MACOSX_DEPLOYMENT_TARGET: 10.7
+
+jobs:
+  github_build:
+    name: Build release binaries
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
+            package: mechanix-zbus-services
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    env:
+      RUSTFLAGS: ${{ matrix.rustflags || '' }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup | Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - name: Add SSH Private Key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt install -y libdbus-1-dev pkg-config
+      # mechanix-zbus-services 
+      - name: Build | Build [mechanix-zbus-services]
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          cd services
+          cargo build --release --target ${{ matrix.target }}
+      - name: Build | Deb [mechanix-zbus-services]
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          rustup update
+          cargo install cargo-deb
+          cd services
+          cargo deb -p ${{ matrix.package }}
+      - name: Post Build | Prepare artifacts [mechanix-zbus-services]
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          cd services/target/${{ matrix.target }}/release/
+          tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
+          cd -
+          cd services/target/debian/
+          mv *.deb ../../../
+          cd -
+       # mechanix-app-drawer      
+      - name: Build | Build [mechanix-app-drawer]
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          cd shell
+          cargo build --release --target ${{ matrix.target }}
+      - name: Build | Deb [mechanix-app-drawer]
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          cd shell
+          cargo deb -p mechanix-app-drawer
+      - name: Post Build | Prepare artifacts [mechanix-app-drawer]
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: |
+          cd shell/target/${{ matrix.target }}/release/
+          tar czvf ../../../../mechanix-app-drawer-x86_64-unknown-linux-gnu.tar.gz mechanix-app-drawer
+          cd -
+          
+          cd shell/target/debian/
+          mv *.deb ../../../
+          cd -  
+      - name: Release | Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}
+          path: ./mechanix*
+
   github_release:
-    needs: build
     name: Create GitHub Release
+    needs: github_build
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
+
       - name: Download artifacts
         uses: actions/download-artifact@v3
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
@@ -117,4 +121,3 @@
         with:
           files: mechanix-*/mechanix-*
           tag_name: Release-${{ github.run_id }}
-  
