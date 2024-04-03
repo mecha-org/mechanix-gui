@@ -103,6 +103,7 @@ jobs:
   github_release:
     name: Release binaries
     runs-on: ubuntu-latest
+    
     steps:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v3
