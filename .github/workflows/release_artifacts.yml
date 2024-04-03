@@ -7,11 +7,11 @@ on:
         "Build and Release Shell Binaries",
       ]
     types: [completed]
-    branches: [build-workflow, main, dev-v1]
 
 jobs:
   github_release:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v3
