@@ -96,6 +96,7 @@ jobs:
           path: ./mechanix*
 
   github_release:
+    needs: github_build
     name: Release binaries
     runs-on: ubuntu-latest
     
