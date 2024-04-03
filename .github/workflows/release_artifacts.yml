@@ -1,10 +1,14 @@
-name: Create GitHub Release
+name: Release Artifacts
 on:
   workflow_run:
-    workflows: ["Build and Release Services Binaries", "Build and Release Shell Binaries"]
+    workflows:
+      [
+        "Build and Release Services Binaries",
+        "Build and Release Shell Binaries",
+      ]
     types:
       - completed
-    branches: [build-workflow]
+    branches: [build-workflow, main, dev-v1]
 
 jobs:
   github_release:
