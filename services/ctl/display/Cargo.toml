@@ -1,0 +1,15 @@
+[package]
+name = "mechanix-display-ctl"
+description = "Display controller for Mechanix services"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = { version = "1.0.75", features = ["backtrace"] }
+tracing = "0.1"

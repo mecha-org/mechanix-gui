@@ -1,0 +1,26 @@
+[package]
+name = "mechanix-zbus-services"
+description = "Zbus interface for Mechanix services"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[[bin]]
+name = "mechanix-zbus-services"
+path = "src/main.rs"
+
+[dependencies]
+tokio.workspace = true
+anyhow.workspace = true
+zbus = { version = "4.1.2", features = ["tokio"] }
+mechanix-bluetooth-ctl = { path = "../../ctl/bluetooth" }
+mechanix-network-ctl = { path = "../../ctl/network" }
+mechanix-power-ctl = { path = "../../ctl/power" }
+mechanix-display-ctl = { path = "../../ctl/display" }
+mechanix-host-metrics = { path = "../../ctl/host-metrics" }
+

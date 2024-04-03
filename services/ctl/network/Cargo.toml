@@ -1,0 +1,20 @@
+[package]
+name = "mechanix-network-ctl"
+description = "Network controller for Mechanix services"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+tokio.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tokio-util  ={ version = "0", features = ["codec"] }
+futures = "0"
+mockall = "0.11.4"
+wifi-ctrl = "0.2.4"

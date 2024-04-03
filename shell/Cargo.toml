@@ -1,0 +1,42 @@
+[package]
+name = "mechanix-shell"
+description = "Touch optimized GUI shell for handheld devices running on wayland compositors"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[workspace]
+members = [
+    "app-drawer",
+    "greeter",
+    "home-screen",
+    "keyboard",
+    "lock-screen",
+    "polkit-agent",
+    "rotate-daemon",
+    "settings-panel",
+    "status-bar",
+    "wallpaper-daemon",
+    "commons/*"
+]
+
+[[bin]]
+name = "mechanix-app-drawer"
+path = "app-drawer/src/main.rs"
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+categories = ["gui"]
+keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
+
+[workspace.dependencies]

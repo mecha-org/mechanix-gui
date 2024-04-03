@@ -1,0 +1,46 @@
+[workspace]
+resolver = "2"
+members = [
+    "server/zbus",
+    "server/grpc",
+    "ctl/bluetooth",
+    "ctl/date-time",
+    "ctl/display",
+    "ctl/keyboard",
+    "ctl/language",
+    "ctl/network",
+    "ctl/power",
+    "ctl/sharing",
+    "ctl/sound",
+    "ctl/users",
+    "ctl/host-metrics",
+]
+default-members = ["server/zbus"]
+
+
+[workspace.package]
+version = "0.1.0"
+authors = [
+    "Dhruvesh Baria <dhruveshb@mechasystems.com>",
+    "Shoaib Merchant <shoaibm@mechasystems.com>",
+]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+categories = ["gui"]
+keywords = [
+    "linux",
+    "shell",
+    "mobile",
+    "gui",
+    "ui",
+    "graphics",
+    "interface",
+    "widgets",
+]
+
+[workspace.dependencies]
+anyhow = "1"
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1.40"

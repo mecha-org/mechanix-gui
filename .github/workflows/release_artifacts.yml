@@ -1,0 +1,26 @@
+name: Release Artifacts
+on:
+  workflow_run:
+    workflows:
+      [
+        "Build and Release Services Binaries",
+        "Build and Release Shell Binaries",
+      ]
+    types: [completed]
+    branches: [build-workflow, main, dev-v1]
+
+jobs:
+  github_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
+        with:
+          files: mechanix-*/mechanix-*
+          tag_name: Release-${{ github.run_id }}
