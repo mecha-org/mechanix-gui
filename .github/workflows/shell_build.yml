@@ -28,12 +28,17 @@ jobs:
             package: mechanix-greeter
             path: shell/greeter
 
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: mechanix-app-drawer-x86_64-unknown-linux-gnu.tar.gz
+            package: mechanix-app-drawer
+            path: shell/app-drawer
+
+
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     env:
       RUSTFLAGS: ${{ matrix.rustflags || '' }}
-      GITHUB_USERNAME: dhruveshb-mecha
-      GITHUB_TOKEN: ${{ secrets.TOKEN_GITHUB }}
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
