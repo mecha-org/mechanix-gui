@@ -100,24 +100,3 @@ jobs:
           name: ${{ matrix.name }}
           path: ./mechanix*
 
-  github_release:
-    name: Create GitHub Release
-    needs: github_build
-    permissions: write-all
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Setup | Checkout
-        uses: actions/checkout@v4
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
-        with:
-          files: mechanix-*/mechanix-*
-          tag_name: Release-${{ github.run_id }}
