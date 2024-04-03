@@ -81,8 +81,8 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
-          cd shell/greeter
-          cargo deb -p mechanix-greeter
+          cd ${{ matrix.path }}
+          cargo deb -p ${{ matrix.package }} 
 
       - name: Post Build | Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
