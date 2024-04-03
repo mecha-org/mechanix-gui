@@ -95,7 +95,7 @@ jobs:
           cd -
 
       - name: Release | Upload artifacts
-        uses: aactions/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
           path: ./mechanix*
