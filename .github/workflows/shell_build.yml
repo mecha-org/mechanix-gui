@@ -34,7 +34,6 @@ jobs:
             package: mechanix-app-drawer
             path: shell/app-drawer
 
-
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     env:
@@ -77,13 +76,15 @@ jobs:
           cd ${{ matrix.path }}
           cargo --config net.git-fetch-with-cli=true fetch
           cargo build --release --target ${{ matrix.target }}
-      - name: Build | Deb [mechanix-greeter]
+
+      - name: Build | Deb [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
           cd shell/greeter
           cargo deb -p mechanix-greeter
-      - name: Post Build | Prepare artifacts [mechanix-greeter]
+
+      - name: Post Build | Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
@@ -94,131 +95,6 @@ jobs:
           cd shell/target/debian/
           mv *.deb ../../../
           cd -
-
-      #   # mechanix-home-screen
-      # - name: Build | Build [mechanix-home-screen]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/home-screen
-      #     cargo build --release --target ${{ matrix.target }}
-      # - name: Build | Deb [mechanix-home-screen]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell
-      #     cargo deb -p mechanix-home-screen
-      # - name: Post Build | Prepare artifacts [mechanix-home-screen]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/target/${{ matrix.target }}/release/
-      #     tar czvf ../../../../mechanix-home-screen-x86_64-unknown-linux-gnu.tar.gz mechanix-home-screen
-      #     cd -
-
-      #     cd shell/target/debian/
-      #     mv *.deb ../../../
-      #     cd -
-
-      #   # mechanix-lock-screen
-      # - name: Build | Build [mechanix-lock-screen]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/lock-screen
-      #     cargo build --release --target ${{ matrix.target }}
-      # - name: Build | Deb [mechanix-lock-screen]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell
-      #     cargo deb -p mechanix-lock-screen]
-      # - name: Post Build | Prepare artifacts [mechanix-lock-screen]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/target/${{ matrix.target }}/release/
-      #     tar czvf ../../../../mechanix-lock-screen-x86_64-unknown-linux-gnu.tar.gz mechanix-lock-screen
-      #     cd -
-
-      #     cd shell/target/debian/
-      #     mv *.deb ../../../
-      #     cd -
-
-      #   # mechanix-status-bar
-      # - name: Build | Build [mechanix-status-bar]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/lock-screen
-      #     cargo build --release --target ${{ matrix.target }}
-      # - name: Build | Deb [mechanix-status-bar]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell
-      #     cargo deb -p mechanix-status-bar
-      # - name: Post Build | Prepare artifacts [mechanix-status-bar]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/target/${{ matrix.target }}/release/
-      #     tar czvf ../../../../mechanix-status-bar-x86_64-unknown-linux-gnu.tar.gz mechanix-status-bar
-      #     cd -
-
-      #     cd shell/target/debian/
-      #     mv *.deb ../../../
-      #     cd -
-
-      #   # mechanix-settings-panel
-      # - name: Build | Build [mechanix-settings-panel]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/lock-screen
-      #     cargo build --release --target ${{ matrix.target }}
-      # - name: Build | Deb [mechanix-settings-panel]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell
-      #     cargo deb -p mechanix-settings-panel
-      # - name: Post Build | Prepare artifacts [mechanix-settings-panel]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/target/${{ matrix.target }}/release/
-      #     tar czvf ../../../../mechanix-settings-panel-x86_64-unknown-linux-gnu.tar.gz mechanix-settings-panel
-      #     cd -
-
-      #     cd shell/target/debian/
-      #     mv *.deb ../../../
-      #     cd -
-
-      #   # mechanix-app-drawer
-      # - name: Build | Build [mechanix-app-drawer]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/lock-screen
-      #     cargo build --release --target ${{ matrix.target }}
-      # - name: Build | Deb [mechanix-app-drawer]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell
-      #     cargo deb -p mechanix-app-drawer
-      # - name: Post Build | Prepare artifacts [mechanix-app-drawer]
-      #   if: matrix.os == 'ubuntu-latest'
-      #   continue-on-error: true
-      #   run: |
-      #     cd shell/target/${{ matrix.target }}/release/
-      #     tar czvf ../../../../mechanix-app-drawer-x86_64-unknown-linux-gnu.tar.gz mechanix-app-drawer
-      #     cd -
-
-      #     cd shell/target/debian/
-      #     mv *.deb ../../../
-      #     cd -
 
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
