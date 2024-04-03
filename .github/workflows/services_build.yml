@@ -22,9 +22,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: x86_64-unknown-linux-gnu
+          - target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
-            name: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
+            name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
             package: mechanix-zbus-services
 
     runs-on: ${{ matrix.os }}
@@ -45,6 +45,16 @@ jobs:
       - name: Install dependencies
         run: sudo apt install -y libdbus-1-dev pkg-config
 
+      - name: Setup | Install cross [Linux]
+        if: matrix.os == 'ubuntu-latest'
+        uses: taiki-e/install-action@cross
+
+      - name: Install dependencies
+        continue-on-error: true
+        run: |
+          sudo apt update
+          sudo apt install -y libdbus-1-dev libdbus-1-3 pkg-config
+
       - name: Setup Cargo Deb
         run: |
           rustup update
@@ -57,25 +67,20 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Setup Git
-        run: |
-          git config --global user.name "${{ vars.GIT_USER_NAME }}"
-          git config --global user.email "${{ vars.GIT_EMAIL }}"
-
       # mechanix-zbus-services
       - name: Build | Build [mechanix-zbus-services]
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
           cd services
-          cargo build --release --target ${{ matrix.target }}
+          cross build --release --target ${{ matrix.target }}
 
       - name: Build | Deb [mechanix-zbus-services]
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
           cd services
-          cargo deb -p ${{ matrix.package }}
+          cargo deb -p ${{ matrix.package }} --target=${{ matrix.target }}
 
       - name: Post Build | Prepare artifacts [mechanix-zbus-services]
         if: matrix.os == 'ubuntu-latest'
@@ -99,7 +104,7 @@ jobs:
     needs: github_build
     name: Release binaries
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v3
