@@ -4,8 +4,7 @@ on:
     workflows: ["Build and Release Services Binaries", "Build and Release Shell Binaries"]
     types:
       - completed
-    branches:
-      - build-workflow  
+    branches: [build-workflow]
 
 jobs:
   github_release:
