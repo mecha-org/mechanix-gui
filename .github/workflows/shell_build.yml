@@ -61,11 +61,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Setup Git
-        run: |
-          git config --global user.name "${{ vars.GIT_USER_NAME }}"
-          git config --global user.email "${{ vars.GIT_EMAIL }}"
-
       # mechanix-greeter
       - name: Build | Build [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
@@ -108,22 +103,6 @@ jobs:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
 
-      - name: Set up Git
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-
-      - name: Bump version and push tag
-        run: |
-          git fetch --unshallow
-          VERSION=$(git describe --tags --abbrev=0)
-          IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
-          PATCH=${VERSION_PARTS[2]}
-          NEW_PATCH=$((PATCH + 1))
-          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$NEW_PATCH"
-          git tag $NEW_VERSION
-          git push --tags
-
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
@@ -131,4 +110,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
           files: mechanix-*/mechanix-*
-          tag_name: ${{ steps.bump.outputs.new_version }}
+          tag_name: v.1.0.${{ github.run_number }}
