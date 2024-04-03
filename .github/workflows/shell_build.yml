@@ -95,7 +95,7 @@ jobs:
           cd -
 
       - name: Release | Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: aactions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
           path: ./mechanix*
@@ -106,7 +106,23 @@ jobs:
     needs: github_build
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
+
+      - name: Set up Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Bump version and push tag
+        run: |
+          git fetch --unshallow
+          VERSION=$(git describe --tags --abbrev=0)
+          IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
+          PATCH=${VERSION_PARTS[2]}
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$NEW_PATCH"
+          git tag $NEW_VERSION
+          git push --tags
 
       - name: Create Release
         id: create_release
@@ -115,4 +131,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
           files: mechanix-*/mechanix-*
-          tag_name: Release-${{ github.run_id }}
+          tag_name: ${{ steps.bump.outputs.new_version }}
