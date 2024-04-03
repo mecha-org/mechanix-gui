@@ -66,8 +66,8 @@ jobs:
 
       - name: Setup Git
         run: |
-          git config --global user.name ${{ env.GIT_USER_NAME }}"
-          git config --global user.email ${{ env.GIT_EMAIL }}"
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ env.GIT_EMAIL }}"
 
       # mechanix-greeter
       - name: Build | Build [${{ matrix.package }}]
