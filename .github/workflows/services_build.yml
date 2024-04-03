@@ -43,11 +43,11 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Install dependencies
-        run: |
-          sudo apt install -y libdbus-1-dev pkg-config
+        run: sudo apt install -y libdbus-1-dev pkg-config
 
       - name: Setup Cargo Deb
         run: |
+          rustup update
           cargo install cargo-deb
 
       - name: Set up SSH key
@@ -59,8 +59,8 @@ jobs:
 
       - name: Setup Git
         run: |
-          git config --global user.name "${{ env.GIT_USER_NAME }}"
-          git config --global user.email "${{ env.GIT_EMAIL }}"
+          git config --global user.name "${{ vars.GIT_USER_NAME }}"
+          git config --global user.email "${{ vars.GIT_EMAIL }}"
 
       # mechanix-zbus-services
       - name: Build | Build [mechanix-zbus-services]
@@ -69,14 +69,14 @@ jobs:
         run: |
           cd services
           cargo build --release --target ${{ matrix.target }}
+          
       - name: Build | Deb [mechanix-zbus-services]
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
-          rustup update
-          cargo install cargo-deb
           cd services
           cargo deb -p ${{ matrix.package }}
+
       - name: Post Build | Prepare artifacts [mechanix-zbus-services]
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true

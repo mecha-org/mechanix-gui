@@ -49,12 +49,10 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Install dependencies
-        run: |
-          sudo apt install -y libdbus-1-dev pkg-config
+        run: sudo apt install -y libdbus-1-dev pkg-config
 
       - name: Setup Cargo Deb
-        run: |
-          cargo install cargo-deb
+        run: cargo install cargo-deb
 
       - name: Set up SSH key
         run: |
@@ -65,8 +63,8 @@ jobs:
 
       - name: Setup Git
         run: |
-          git config --global user.name "${{ env.GIT_USER_NAME }}"
-          git config --global user.email "${{ env.GIT_EMAIL }}"
+          git config --global user.name "${{ vars.GIT_USER_NAME }}"
+          git config --global user.email "${{ vars.GIT_EMAIL }}"
 
       # mechanix-greeter
       - name: Build | Build [${{ matrix.package }}]
@@ -82,7 +80,7 @@ jobs:
         continue-on-error: true
         run: |
           cd ${{ matrix.path }}
-          cargo deb -p ${{ matrix.package }} 
+          cargo deb -p ${{ matrix.package }}
 
       - name: Post Build | Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
