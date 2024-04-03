@@ -6,8 +6,7 @@ on:
         "Build and Release Services Binaries",
         "Build and Release Shell Binaries",
       ]
-    types:
-      - completed
+    types: [completed]
     branches: [build-workflow, main, dev-v1]
 
 jobs:
