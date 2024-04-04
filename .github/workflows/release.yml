@@ -23,4 +23,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
           files: mechanix-*/mechanix-*
-          tag_name: v1.0.${{ github.run_id }}
+          tag_name: v1.0.${{ github.run_number }}
