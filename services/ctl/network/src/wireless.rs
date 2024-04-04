@@ -1,16 +1,24 @@
 use anyhow::{bail, Result};
 use std::process::Command;
 use tracing::{error as trace_error, info, trace};
-use wifi_ctrl::sta::{self, NetworkResult, ScanResult};
+use wifi_ctrl::{
+    ap::Status,
+    sta::{self, NetworkResult, ScanResult},
+};
 
 use crate::errors::{WirelessNetworkError, WirelessNetworkErrorCodes};
 
-pub struct WirelessNetworkControl;
+pub struct WirelessNetworkControl {
+    pub path: String,
+}
 
 impl WirelessNetworkControl {
-    pub fn new() -> Self {
+    pub fn new(path: &str) -> Self {
         trace!(task = "wireless network instance", "init");
-        Self
+        // Check if the path is valid
+        WirelessNetworkControl {
+            path: String::from(path),
+        }
     }
 
     pub async fn status(&self) -> bool {
@@ -18,23 +26,86 @@ impl WirelessNetworkControl {
             task = "wireless_network_status",
             "checking wireless network status"
         );
-        let output = Command::new("ifconfig")
+
+        let output = Command::new("nmcli")
+            .arg("r")
             .output()
-            .expect("Failed to execute ifconfig command");
+            .expect("failed to execute nmcli");
+
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let lines: Vec<&str> = output_str.lines().collect();
+
+        if lines.len() > 1 {
+            let wifi_status: Vec<&str> = lines[1].split_whitespace().collect();
+            return wifi_status[1] == "enabled";
+        }
+
+        false
+    }
+
+    pub async fn enable(&self) -> Result<()> {
+        trace!(
+            task = "enable_wireless_network",
+            "enabling wireless network"
+        );
+        let output = Command::new("nmcli")
+            .args(&["radio", "wifi", "on"])
+            .output()
+            .expect("Failed to execute nmcli command");
 
         info!(
-            task = "wireless_network_status",
+            task = "enable_wireless_network",
             "stdout: {:?}", output.stdout
         );
-        let stdout = String::from_utf8(output.stdout).expect("Failed to convert stdout to string");
 
-        // Check if the stdout contains "wlp2s0"
-        if stdout.contains("wlp2s0") {
-            info!(task = "wireless_network_status", "wireless network is up");
-            true
+        if output.status.success() {
+            info!(
+                task = "enable_wireless_network",
+                "wireless network is enabled"
+            );
+            Ok(())
         } else {
-            info!(task = "wireless_network_status", "wireless network is down");
-            false
+            trace_error!(
+                task = "enable_wireless_network",
+                "unable to enable wireless network"
+            );
+            bail!(WirelessNetworkError::new(
+                WirelessNetworkErrorCodes::UnableToTurnOnWirelessNetwork,
+                "unable to enable wireless network".to_string(),
+            ))
+        }
+    }
+
+    pub async fn disable(&self) -> Result<()> {
+        trace!(
+            task = "disable_wireless_network",
+            "disabling wireless network"
+        );
+        let output = Command::new("nmcli")
+            .args(&["radio", "wifi", "off"])
+            .output()
+            .expect("Failed to execute nmcli command");
+
+        info!(
+            task = "disable_wireless_network",
+            "stdout: {:?}", output.stdout
+        );
+
+        if output.status.success() {
+            info!(
+                task = "disable_wireless_network",
+                "wireless network is disabled"
+            );
+            Ok(())
+        } else {
+            trace_error!(
+                task = "disable_wireless_network",
+                "unable to disable wireless network"
+            );
+            bail!(WirelessNetworkError::new(
+                WirelessNetworkErrorCodes::UnableToTurnOffWirelessNetwork,
+                "unable to disable wireless network".to_string(),
+            ))
         }
     }
 
@@ -61,7 +132,7 @@ impl WirelessNetworkControl {
             }
         };
 
-        let proposed_path = format!("/var/run/wpa_supplicant/wlp2s0");
+        let proposed_path = self.path.clone();
         setup.set_socket_path(proposed_path);
 
         let broadcast = setup.get_broadcast_receiver();
@@ -110,7 +181,7 @@ impl WirelessNetworkControl {
         Ok(scan.to_vec())
     }
 
-    pub async fn known_network() -> Result<Vec<NetworkResult>> {
+    pub async fn known_network(path: &str) -> Result<Vec<NetworkResult>> {
         trace!(
             task = "get_known_wireless_networks",
             "starting wireless network connection"
@@ -132,7 +203,7 @@ impl WirelessNetworkControl {
                 ))
             }
         };
-        let proposed_path = format!("/var/run/wpa_supplicant/wlp2s0");
+        let proposed_path = format!("{}", path);
         setup.set_socket_path(proposed_path);
 
         let broadcast = setup.get_broadcast_receiver();
@@ -183,7 +254,7 @@ impl WirelessNetworkControl {
 
     // we need to write function that return the currnet wireless network name if it is connected to wireless network or else none, how we're going to do that is we use get_known_wireless_networks function to get the list of all the known wireless network networks and from that reult we can filter the list that has  "flags": "[CURRENT]" and return the ssid of that network or else return none
     pub async fn info(&self) -> Result<ScanResult> {
-        let known_wifi_list = WirelessNetworkControl::known_network().await?;
+        let known_wifi_list = WirelessNetworkControl::known_network(&self.path).await?;
         let current_wifi = known_wifi_list.iter().find(|&x| x.flags == "[CURRENT]");
 
         //take ssid for current wireless network and find that in scan_networks list and return that network or else return an error with matching error code
@@ -236,7 +307,7 @@ impl WirelessNetworkControl {
             }
         };
 
-        let proposed_path = format!("/var/run/wpa_supplicant/wlp2s0");
+        let proposed_path = self.path.clone();
         setup.set_socket_path(proposed_path);
 
         let broadcast = setup.get_broadcast_receiver();
@@ -377,7 +448,7 @@ impl WirelessNetworkControl {
     }
 
     // remove wireless network from known networks using network id
-    pub async fn remove_wireless_network(network_id: usize) -> Result<()> {
+    pub async fn remove_wireless_network(path: &str, network_id: usize) -> Result<()> {
         trace!(
             task = "remove_wireless_network",
             "removing wireless network"
@@ -404,7 +475,7 @@ impl WirelessNetworkControl {
             }
         };
 
-        let proposed_path = format!("/var/run/wpa_supplicant/wlp2s0");
+        let proposed_path = format!("{}", path);
         setup.set_socket_path(proposed_path);
 
         let broadcast = setup.get_broadcast_receiver();
@@ -457,6 +528,81 @@ impl WirelessNetworkControl {
         while let Ok(broadcast) = broadcast_receiver.recv().await {
             info!("Broadcast: {:?}", broadcast);
         }
+        Ok(())
+    }
+
+    pub async fn select_wireless_network(path: &str, network_id: usize) -> Result<()> {
+        trace!(
+            task = "select_wireless_network",
+            "selecting wireless network"
+        );
+
+        let mut setup = match sta::WifiSetup::new() {
+            Ok(setup) => {
+                info!(
+                    task = "select_wireless_network",
+                    "wireless network setup successful"
+                );
+                setup
+            }
+            Err(e) => {
+                trace_error!(
+                    task = "select_wireless_network",
+                    "unable to get wireless network status: {}",
+                    e
+                );
+                bail!(WirelessNetworkError::new(
+                    WirelessNetworkErrorCodes::UnableToGetWirelessNetworkStatus,
+                    format!("unable to get wireless network status: {}", e),
+                ))
+            }
+        };
+
+        let proposed_path = format!("{}", path);
+        setup.set_socket_path(proposed_path);
+
+        let broadcast = setup.get_broadcast_receiver();
+        let requester = setup.get_request_client();
+        let runtime = setup.complete();
+
+        let (_runtime, remove_network, _broadcast) = tokio::join!(
+            async move {
+                if let Err(e) = runtime.run().await {
+                    trace_error!(task = "select_wireless_network", "error: {}", e);
+                }
+            },
+            WirelessNetworkControl::select_network(requester, network_id),
+            WirelessNetworkControl::broadcast_listener(broadcast),
+        );
+
+        //use remove_network to remove the wireless network or else return an error with matching error code
+        let wireless_network_list = match remove_network {
+            Ok(wireless_network_list) => {
+                info!(
+                    task = "select_wireless_network",
+                    "wireless network list: {:?}", wireless_network_list
+                );
+                wireless_network_list
+            }
+            Err(e) => {
+                trace_error!(
+                    task = "select_wireless_network",
+                    "unable to get wireless network status: {}",
+                    e
+                );
+                bail!(WirelessNetworkError::new(
+                    WirelessNetworkErrorCodes::UnableToRemoveWirelessNetwork,
+                    format!("unable to remove wireless network {}", e),
+                ))
+            }
+        };
+        Ok(wireless_network_list)
+    }
+
+    async fn select_network(requester: sta::RequestClient, network_id: usize) -> Result<()> {
+        trace!(task = "select_network", "selecting wireless network");
+        requester.select_network(network_id).await?;
+        requester.shutdown().await?;
         Ok(())
     }
 }
