@@ -3,8 +3,7 @@ on:
   workflow_run:
     workflows:
       [
-        "Build and Release Services Binaries",
-        "Build and Release Shell Binaries",
+        "Build and Release Services Binaries"
       ]
     types:
       - completed
@@ -24,4 +23,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
         with:
           files: mechanix-*/mechanix-*
-          tag_name: Release-${{ github.run_id }}
+          tag_name: v1.0.${{ github.run_id }}
