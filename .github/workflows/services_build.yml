@@ -5,8 +5,7 @@ on:
       - main
       - dev-v1
       - build-workflow
-  release:
-    types: [created, edited]
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_NET_RETRY: 10
@@ -94,20 +93,20 @@ jobs:
           name: ${{ matrix.package }}
           path: ./mechanix*
 
-  github_release:
-    needs: github_build
-    name: Release binaries
-    runs-on: ubuntu-latest
+  # github_release:
+  #   needs: github_build
+  #   name: Release binaries
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v3
+  #   steps:
+  #     - name: Download all workflow run artifacts
+  #       uses: actions/download-artifact@v3
 
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
-        with:
-          files: mechanix-*/mechanix-*
-          tag_name: Release-${{ github.run_id }}
+  #     - name: Create Release
+  #       id: create_release
+  #       uses: softprops/action-gh-release@v2
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
+  #       with:
+  #         files: mechanix-*/mechanix-*
+  #         tag_name: Release-${{ github.run_id }}
