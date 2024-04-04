@@ -22,9 +22,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: aarch64-unknown-linux-gnu
+          - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
+            name: mechanix-zbus-services-x86_64-unknown-linux-gnu.tar.gz
             package: mechanix-zbus-services
 
     runs-on: ${{ matrix.os }}
@@ -49,12 +49,6 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: taiki-e/install-action@cross
 
-      - name: Install dependencies
-        continue-on-error: true
-        run: |
-          sudo apt update
-          sudo apt install -y libdbus-1-dev libdbus-1-3 pkg-config
-
       - name: Setup Cargo Deb
         run: |
           rustup update
@@ -73,7 +67,7 @@ jobs:
         continue-on-error: true
         run: |
           cd services
-          cross build --release --target ${{ matrix.target }}
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Build | Deb [mechanix-zbus-services]
         if: matrix.os == 'ubuntu-latest'
@@ -86,12 +80,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
-          cd services/target/${{ matrix.target }}/release/
-          tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
+          tar czvf ${{matrix.name}} shell/target/${{ matrix.target }}/release/${{ matrix.package }}
           cd -
 
-          cd services/target/debian/
-          mv *.deb ../../../
+          mv *.deb service/target/debian/
           cd -
 
       - name: Release | Upload artifacts

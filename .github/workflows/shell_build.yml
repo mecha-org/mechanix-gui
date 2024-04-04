@@ -54,16 +54,6 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
 
-      - name: Setup | Install cross [Linux]
-        if: matrix.os == 'ubuntu-latest'
-        uses: taiki-e/install-action@cross
-
-      - name: Install dependencies
-        continue-on-error: true
-        run: |
-          sudo apt update
-          sudo apt install -y libdbus-1-dev libdbus-1-3 pkg-config
-
       - name: Setup Cargo Deb
         run: cargo install cargo-deb
 
@@ -81,7 +71,7 @@ jobs:
         run: |
           cd ${{ matrix.path }}
           cargo --config net.git-fetch-with-cli=true fetch
-          cross build --release --target ${{ matrix.target }}
+          cargo build --release --target ${{ matrix.target }}
 
       - name: Build | Deb [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
@@ -94,12 +84,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
-          cd shell/target/${{ matrix.target }}/release/
-          tar czvf ../../../../${{matrix.name}} ${{ matrix.package }}
+          tar czvf ${{matrix.name}}  shell/target/${{ matrix.target }}/release/${{ matrix.package }}
           cd -
 
-          cd shell/target/debian/
-          mv *.deb ../../../
+          mv *.deb shell/target/debian/
           cd -
 
       - name: Release | Upload artifacts
