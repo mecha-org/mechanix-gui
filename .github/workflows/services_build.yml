@@ -80,7 +80,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         continue-on-error: true
         run: |
-          tar czvf ${{matrix.name}} shell/target/${{ matrix.target }}/release/${{ matrix.package }}
+          tar czvf ${{matrix.name}} -C services/target/${{ matrix.target }}/release/ ${{ matrix.package }}
           cd -
 
           mv *.deb service/target/debian/
@@ -89,7 +89,7 @@ jobs:
       - name: Release | Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.name }}
+          name: ${{ matrix.package }}
           path: ./mechanix*
 
   github_release:

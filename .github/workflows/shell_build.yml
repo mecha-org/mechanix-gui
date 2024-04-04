@@ -22,23 +22,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - target: x86_64-unknown-linux-gnu
-          #   os: ubuntu-latest
-          #   name: mechanix-greeter-x86_64-unknown-linux-gnu.tar.gz
-          #   package: mechanix-greeter
-          #   path: shell/greeter
-
-          - target: aarch64-unknown-linux-gnu
+          - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
-            name: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
+            name: mechanix-greeter-x86_64-unknown-linux-gnu.tar.gz
             package: mechanix-greeter
             path: shell/greeter
 
-          # - target: x86_64-unknown-linux-gnu
-          #   os: ubuntu-latest
-          #   name: mechanix-app-drawer-x86_64-unknown-linux-gnu.tar.gz
-          #   package: mechanix-app-drawer
-          #   path: shell/app-drawer
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            name: mechanix-app-drawer-x86_64-unknown-linux-gnu.tar.gz
+            package: mechanix-app-drawer
+            path: shell/app-drawer
 
     runs-on: ${{ matrix.os }}
     continue-on-error: true
@@ -82,9 +76,8 @@ jobs:
 
       - name: Post Build | Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
-        continue-on-error: true
         run: |
-          tar czvf ${{matrix.name}}  shell/target/${{ matrix.target }}/release/${{ matrix.package }}
+          tar czvf ${{matrix.name}} -C shell/target/${{ matrix.target }}/release/ ${{ matrix.package }}
           cd -
 
           mv *.deb shell/target/debian/
