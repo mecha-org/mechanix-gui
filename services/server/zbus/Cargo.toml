@@ -23,4 +23,6 @@ mechanix-network-ctl = { path = "../../ctl/network" }
 mechanix-power-ctl = { path = "../../ctl/power" }
 mechanix-display-ctl = { path = "../../ctl/display" }
 mechanix-host-metrics = { path = "../../ctl/host-metrics" }
+serde_yaml = "0.9.25"
+serde = { version = "1.0.164", features = ["derive"] }
 

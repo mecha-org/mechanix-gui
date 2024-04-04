@@ -285,15 +285,11 @@ impl Bluetooth {
     }
 
     pub async fn add_bluetooth(&self, address: &str) -> BlurResult<()> {
-
-        let device = DeviceProperty::Name("".to_string());
-        
-
-        // let address = Address::from_str(address)?;
-        // let (_session, adapter) = get_session_adapter(self.bind).await?;
-        // let dev = find_device(&adapter, address).await?;
-        // connect(&dev).await?;
-
+        //convert address to blur::Address
+        let address = Address::from_str(address)?;
+        let (_session, adapter) = get_session_adapter(self.bind).await?;
+        let dev = find_device(&adapter, address).await?;
+        connect(&dev).await?;
         Ok(())
     }
 
