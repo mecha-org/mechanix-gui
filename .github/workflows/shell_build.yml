@@ -77,7 +77,8 @@ jobs:
       - name: Post Build | Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-latest'
         run: |
-          tar czvf ${{matrix.name}} -C shell/target/${{ matrix.target }}/release/ ${{ matrix.package }}
+          cd shell/target/${{ matrix.target }}/release/
+          tar czvf ../../../../${{matrix.name}} ${{ matrix.package }}
           cd -
 
           mv *.deb shell/target/debian/
