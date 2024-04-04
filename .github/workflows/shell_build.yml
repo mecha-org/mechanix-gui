@@ -80,8 +80,9 @@ jobs:
           cd shell/target/${{ matrix.target }}/release/
           tar czvf ../../../../${{matrix.name}} ${{ matrix.package }}
           cd -
-
-          mv *.deb shell/target/debian/
+          
+          cd shell/target/debian/  
+          mv *.deb ../../../
           cd -
 
       - name: Release | Upload artifacts

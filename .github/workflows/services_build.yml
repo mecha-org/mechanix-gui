@@ -83,8 +83,9 @@ jobs:
           cd services/target/${{ matrix.target }}/release/
           tar czvf ../../../../${{ matrix.name }} mechanix-zbus-services
           cd -
-
-          mv *.deb service/target/debian/
+          
+          cd services/target/debian/
+          mv *.deb ../../../
           cd -
 
       - name: Release | Upload artifacts
