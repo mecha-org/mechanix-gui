@@ -81,8 +81,8 @@ jobs:
           tar czvf ../../../../${{matrix.name}} ${{ matrix.package }}
           cd -
           
-          cd shell/target/debian/  
-          mv *.deb ../../../
+          cd shell/target/${{ matrix.target }}/debian/
+          mv *.deb ../../../../
           cd -
 
       - name: Release | Upload artifacts
