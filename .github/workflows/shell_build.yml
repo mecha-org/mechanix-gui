@@ -108,6 +108,10 @@ jobs:
           cargo deb --no-build --target ${{matrix.target}} --package ${{ matrix.package }}
           ls -la
 
+      - name: List contents
+        run: |
+          find shell/target/ -type f -print
+
       - name: Post Build | Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-22.04'
         run: |
