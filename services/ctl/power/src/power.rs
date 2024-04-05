@@ -4,6 +4,8 @@ use std::{
     path::Path,
 };
 
+use system_shutdown::{hibernate, reboot, shutdown};
+
 use battery::Manager;
 pub struct Power {
     battery: battery::Battery,
@@ -112,5 +114,37 @@ impl Power {
         buffer.trim().to_string(); // Remove leading/trailing whitespace
 
         Ok(buffer)
+    }
+
+    //power off the system
+    pub fn power_off(&self) -> Result<(), std::io::Error> {
+        match shutdown() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to power off",
+            )),
+        }
+    }
+    //reboot the system
+    pub fn reboot(&self) -> Result<(), std::io::Error> {
+        match reboot() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to reboot",
+            )),
+        }
+    }
+
+    //suspend the system
+    pub fn suspend(&self) -> Result<(), std::io::Error> {
+        match hibernate() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to suspend",
+            )),
+        }
     }
 }
