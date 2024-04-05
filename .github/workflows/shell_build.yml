@@ -41,10 +41,10 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust 1.77.0
+      - name: Install Rust 1.74.0
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          rustup default 1.77.0
+          rustup default 1.74.0
 
 
       - name: Setup | Install cross [Linux]
