@@ -48,7 +48,7 @@ jobs:
 
 
       - name: Setup | Install cross [Linux]
-        run:  taiki-e/install-action@cross
+        uses: taiki-e/install-action@cross
 
       - name: Setup Cargo Deb
         run: cargo install cargo-deb
