@@ -120,7 +120,7 @@ jobs:
           cd -
 
           cd shell/target/${{ matrix.target }}/debian/
-          mv *.deb ../../../../
+          mv *.deb ../../../
           cd -
 
       - name: Release | Upload artifacts
