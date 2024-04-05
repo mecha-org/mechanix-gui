@@ -79,7 +79,7 @@ jobs:
         run: sudo apt update
           
       - name: Install package
-        run: sudo apt install libasound2-dev:arm64
+        run: sudo apt install libwayland-dev:arm64 libxkbcommon-dev:arm64
 
       - name: Set up SSH key
         run: |
