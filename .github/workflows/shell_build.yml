@@ -48,7 +48,7 @@ jobs:
 
 
       - name: Setup | Install cross [Linux]
-        run: cargo install cross --git https://github.com/cross-rs/cross
+        run:  taiki-e/install-action@cross
 
       - name: Setup Cargo Deb
         run: cargo install cargo-deb
