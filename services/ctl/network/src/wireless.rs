@@ -1,10 +1,7 @@
 use anyhow::{bail, Result};
 use std::process::Command;
 use tracing::{error as trace_error, info, trace};
-use wifi_ctrl::{
-    ap::Status,
-    sta::{self, NetworkResult, ScanResult},
-};
+use wifi_ctrl::sta::{self, NetworkResult, ScanResult};
 
 use crate::errors::{WirelessNetworkError, WirelessNetworkErrorCodes};
 
