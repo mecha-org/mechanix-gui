@@ -29,9 +29,9 @@ jobs:
 
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-22.04
-            name: mechanix-app-drawer-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-app-drawer
-            path: shell/app-drawer
+            name: mechanix-settings-panel-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-settings-panel
+            path: shell/settings-panel
 
     runs-on: ${{ matrix.os }}
     continue-on-error: true
