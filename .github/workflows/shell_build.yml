@@ -77,7 +77,7 @@ jobs:
         run: sudo apt update
 
       - name: Install package
-        run: sudo apt install libwayland-dev:arm64 libxkbcommon-dev:arm64 libwayland-client-dev:arm64 libwayland-client0:arm64
+        run: sudo apt install libwayland-dev:arm64 libxkbcommon-dev:arm64 libwayland-client0:arm64
 
       - name: Set up SSH key
         run: |
