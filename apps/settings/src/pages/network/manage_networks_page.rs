@@ -1,20 +1,25 @@
-use gtk::prelude::*;
-use relm4::{
-    gtk::{self},
-    Component, ComponentController, ComponentParts, ComponentSender, SimpleComponent, Controller,
-};
 use crate::{
-    settings::{LayoutSettings, Modules, WidgetConfigs},
+    modules::wireless::service::{WirelessInfoResponse, WirelessScanListResponse, WirelessService},
+    settings::{LayoutSettings, Modules, NetworkItemWidgetConfigs, WidgetConfigs},
     widgets::custom_network_item::{
         CustomNetworkItem, CustomNetworkItemSettings, Message as CustomNetworkItemMessage,
-    },
+    }
 };
 use custom_widgets::icon_button::{
     IconButton, IconButtonCss, InitSettings as IconButtonStetings,
     InputMessage as IconButtonInputMessage, OutputMessage as IconButtonOutputMessage,
 };
+use gtk::prelude::*;
+use relm4::{
+    async_trait::async_trait,
+    component::{AsyncComponent, AsyncComponentParts},
+    gtk::{self, glib::clone},
+    AsyncComponentSender, Component, ComponentController, Controller, RelmRemoveAllExt,
+};
 
-use tracing::info;
+use tracing::{error, info};
+
+use super::connect_network_page::{ConnectNetworkPage,  Settings as ConnectNetworkPageSettings,Message as ConnectNetworkPageMessage,};
 
 //Init Settings
 pub struct Settings {
@@ -26,12 +31,16 @@ pub struct Settings {
 //Model
 pub struct ManageNetworksPage {
     settings: Settings,
+    network_list: Vec<WirelessInfoResponse>,
+    selected_network: WirelessInfoResponse
+    
 }
 
 //Widgets
 pub struct ManageNetworksPageWidgets {
     back_button: Controller<IconButton>,
     submit_button: Controller<IconButton>,
+    networks_list: gtk::Box,
 }
 
 //Messages
@@ -41,6 +50,11 @@ pub enum Message {
     KnownNetworkPressed,
     AvailableNetworkPressed,
     AddNetworkPressed,
+    NetworkListChanged(WirelessScanListResponse),
+    NetworkPressed(String),
+    SelectedNetworkChanged(WirelessInfoResponse),
+    Dummy
+
 }
 
 pub struct SettingItem {
@@ -49,12 +63,14 @@ pub struct SettingItem {
     end_icon: Option<String>,
 }
 
-impl SimpleComponent for ManageNetworksPage {
+#[async_trait(?Send)]
+impl AsyncComponent for ManageNetworksPage {
     type Init = Settings;
     type Input = Message;
     type Output = Message;
     type Root = gtk::Box;
     type Widgets = ManageNetworksPageWidgets;
+    type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
         gtk::Box::builder()
@@ -63,11 +79,11 @@ impl SimpleComponent for ManageNetworksPage {
             .build()
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let modules = init.modules.clone();
         let layout = init.layout.clone();
         let widget_configs = init.widget_configs.clone();
@@ -86,6 +102,10 @@ impl SimpleComponent for ManageNetworksPage {
             .label("Known Networks")
             .css_classes(["list-label"])
             .halign(gtk::Align::Start)
+            .build();
+
+        let networks_list = gtk::Box::builder()
+            .orientation(gtk::Orientation::Vertical)
             .build();
 
         let known_networks_list = gtk::Box::builder()
@@ -155,7 +175,7 @@ impl SimpleComponent for ManageNetworksPage {
             .forward(sender.input_sender(), |msg| {
                 info!("msg is {:?}", msg);
                 match msg {
-                    CustomNetworkItemMessage::WidgetClicked => Message::AvailableNetworkPressed,
+                    CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
                 }
             });
 
@@ -173,7 +193,7 @@ impl SimpleComponent for ManageNetworksPage {
             .forward(sender.input_sender(), |msg| {
                 info!("msg is {:?}", msg);
                 match msg {
-                    CustomNetworkItemMessage::WidgetClicked => Message::AvailableNetworkPressed,
+                    CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
                 }
             });
 
@@ -185,6 +205,7 @@ impl SimpleComponent for ManageNetworksPage {
         let scrollable_content = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .build();
+        scrollable_content.append(&networks_list);
         scrollable_content.append(&known_networks_label);
         scrollable_content.append(&known_networks_list);
         scrollable_content.append(&available_networks_label);
@@ -199,12 +220,12 @@ impl SimpleComponent for ManageNetworksPage {
         root.append(&scrolled_window);
 
         let footer = gtk::Box::builder()
-        .orientation(gtk::Orientation::Horizontal)
-        .css_classes(["footer"])
-        .vexpand(true)
-        .hexpand(true)
-        .valign(gtk::Align::End)
-        .build();
+            .orientation(gtk::Orientation::Horizontal)
+            .css_classes(["footer"])
+            .vexpand(true)
+            .hexpand(true)
+            .valign(gtk::Align::End)
+            .build();
 
         let back_button = IconButton::builder()
             .launch(IconButtonStetings {
@@ -233,19 +254,32 @@ impl SimpleComponent for ManageNetworksPage {
 
         footer.append(submit_button_widget);
 
+
         root.append(&footer);
 
-        let model = ManageNetworksPage { settings: init };
+        let model = ManageNetworksPage {
+            settings: init,
+            network_list: vec![],
+            selected_network: WirelessInfoResponse::default()
+        };
 
         let widgets = ManageNetworksPageWidgets {
             back_button,
             submit_button,
+            networks_list
         };
 
-        ComponentParts { model, widgets }
+        let sender: relm4::Sender<Message> = sender.input_sender().clone();
+        get_info(sender).await;   
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+    async fn update(
+        &mut self,
+        message: Self::Input,
+        sender: AsyncComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
         info!("Update message is {:?}", message);
         match message {
             Message::BackPressed => {
@@ -260,8 +294,71 @@ impl SimpleComponent for ManageNetworksPage {
             Message::AddNetworkPressed => {
                 let _ = sender.output(Message::AddNetworkPressed);
             }
+            Message::NetworkListChanged(value) => {
+                self.network_list = value.wireless_network.clone();
+            }
+            Message::NetworkPressed(value) => match value.as_str() {
+                "known" => {
+                    let _ = sender.output(Message::KnownNetworkPressed);
+                }
+                "available" => {
+                    let _ = sender.output(Message::KnownNetworkPressed);
+                }
+                _ => {}
+            },
+            Message::SelectedNetworkChanged(value) => {
+                self.selected_network = value.clone();
+
+                let _ = sender.output(Message::AvailableNetworkPressed);
+                let _ = sender.output(Message::SelectedNetworkChanged(value));
+                // self.show_password = true;
+            }
+            Message::Dummy => {
+
+            }
         }
     }
 
-    fn update_view(&self, widgets: &mut Self::Widgets, sender: ComponentSender<Self>) {}
+    fn update_view(&self, widgets: &mut Self::Widgets, sender: AsyncComponentSender<Self>) {
+
+        widgets.networks_list.remove_all();
+        for network in <Vec<WirelessInfoResponse> as Clone>::clone(&self.network_list).into_iter() {
+            println!("::: {:?}", network);
+
+            let available_network_1 = CustomNetworkItem::builder()
+            .launch(CustomNetworkItemSettings {
+                name: network.name.to_string(),
+                is_connected: false,
+                is_private: true,
+                strength: 80,
+                connected_icon: self.settings.widget_configs.network_item.connected_icon.clone(),
+                private_icon: self.settings.widget_configs.network_item.private_icon.clone(),
+                strength_icon: self.settings.widget_configs.network_item.wifi_100_icon.clone(),
+                info_icon: self.settings.widget_configs.network_item.info_icon.clone(),
+            })
+            .forward(sender.input_sender(), move |msg| {
+                info!("msg is {:?}", msg);
+                match msg {
+                    CustomNetworkItemMessage::WidgetClicked => Message::SelectedNetworkChanged(network.clone()),
+                }
+            });
+            widgets.networks_list.append(available_network_1.widget());
+
+
+
+
+        }       
+
+    }
+}
+
+async fn get_info(sender: relm4::Sender<Message>) {
+    match WirelessService::scan().await {
+        Ok(value) => {
+            let _ = sender.send(Message::NetworkListChanged(value));
+        }
+        Err(e) => {
+            error!("Error getting device oem info: {}", e);
+        }
+    };
 }

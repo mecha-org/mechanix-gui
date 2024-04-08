@@ -13,13 +13,8 @@ use crate::{
         custom_list_item::{
             CustomListItem, CustomListItemSettings, InputMessage as ListItemInputMessage,
             Message as CustomListItemMessage,
-        }, footer::{Footer, FooterInit, FooterMessage}, header::Header, layout::{Layout, LayoutInit, LayoutMessage}, scrolled_box::ScrolledBox
+        }, layout::{Layout, LayoutInit, LayoutMessage},
     },
-};
-
-use custom_widgets::icon_button::{
-    IconButton, IconButtonCss, InitSettings as IconButtonStetings,
-    OutputMessage as IconButtonOutputMessage,
 };
 
 use tracing::{error, info};

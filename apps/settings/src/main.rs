@@ -1,5 +1,6 @@
 use std::fmt;
 use gtk::{glib::clone, prelude::GtkWindowExt};
+use modules::wireless::service::WirelessInfoResponse;
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncComponentParts, AsyncController };
 use relm4::async_trait::async_trait;
 use relm4::{gtk, AsyncComponentSender, RelmApp};
@@ -12,9 +13,7 @@ mod settings;
 mod theme;
 mod widgets;
 use pages::{
-    add_network_page::{
-        AddNetworkPage, Message as AddNetworkPageMessage, Settings as AddNetworkPageSettings,
-    },
+   
     bluetooth_details_page::{
         BluetoothDetailsPage, Message as BluetoothDetailsPageMessage,
         Settings as BluetoothDetailsPageSettings,
@@ -27,10 +26,7 @@ use pages::{
         ConnectBluetoothPage, Message as ConnectBluetoothPageMessage,
         Settings as ConnectBluetoothPageSettings,
     },
-    connect_network_page::{
-        ConnectNetworkPage, Message as ConnectNetworkPageMessage,
-        Settings as ConnectNetworkPageSettings,
-    },
+    
     display_page::{DisplayPage, Message as DisplayPageMessage, Settings as DisplayPageSettings},
     battery_page::{BatteryPage, Message as BatteryPageMessage, Settings as BatteryPageSettings},
     home::{HomePage, Message as HomePageMessage, Settings as HomePageSettings},
@@ -44,26 +40,38 @@ use pages::{
         ManageBluetoothPage, Message as ManageBluetoothPageMessage,
         Settings as ManageBluetoothPageSettings,
     },
-    manage_networks_page::{
-        ManageNetworksPage, Message as ManageNetworksPageMessage,
-        Settings as ManageNetworksPageSettings,
-    },
-    network_details_page::{
-        Message as NetworkDetailsPageMessage, NetworkDetailsPage,
-        Settings as NetworkDetailsPageSettings,
-    },
-    networks_page::{
-        Message as NetworksPageMessage, NetworksPage, Settings as NetworksPageSettings,
+    
+    network::{
+        network_page::{
+            Message as NetworkPageMessage, NetworkPage, Settings as NetworkPageSettings,
+        },
+        ethernet_page::{
+            Message as EthernetPageMessage, EthernetPage, Settings as EthernetPageSettings,
+        },
+        dns_page::{
+            Message as DNSPageMessage, DNSPage, Settings as DNSPageSettings,
+        },
+        manage_networks_page::{
+            ManageNetworksPage, Message as ManageNetworkPageMessage,
+            Settings as ManageNetworkPageSettings,
+        },
+        network_details_page::{
+            Message as NetworkDetailsPageMessage, NetworkDetailsPage,
+            Settings as NetworkDetailsPageSettings,
+        },
+        add_network_page::{
+            AddNetworkPage, Message as AddNetworkPageMessage, Settings as AddNetworkPageSettings,
+        },
+        connect_network_page::{
+            ConnectNetworkPage, Message as ConnectNetworkPageMessage,
+            Settings as ConnectNetworkPageSettings,
+        },
     },
     ip_settings_page::{
         Message as IPSettingsPageMessage, IPSettingsPage, Settings as IPSettingsPageSettings,
     },
-    ethernet_page::{
-        Message as EthernetPageMessage, EthernetPage, Settings as EthernetPageSettings,
-    },
-    dns_page::{
-        Message as DNSPageMessage, DNSPage, Settings as DNSPageSettings,
-    },
+    
+   
     protocol_modes_page::{
         Message as ProtocolModesPageMessage, ProtocolModesPage, Settings as ProtocolModesPageSettings,
     },
@@ -121,10 +129,10 @@ struct LockScreen {
     custom_theme: LockScreenTheme,
     home_page: Controller<HomePage>,
     settings_page: Controller<SettingsPage>,
-    network_page: Controller<NetworksPage>,
-    manage_networks_page: Controller<ManageNetworksPage>,
+    network_page: AsyncController<NetworkPage>,
+    manage_networks_page: AsyncController<ManageNetworksPage>,
     network_details_page: Controller<NetworkDetailsPage>,
-    connect_network_page: Controller<ConnectNetworkPage>,
+    connect_network_page: AsyncController<ConnectNetworkPage>,
     add_network_page: Controller<AddNetworkPage>,
     manage_bluetooth_page: Controller<ManageBluetoothPage>,
     bluetooth_details_page: Controller<BluetoothDetailsPage>,
@@ -146,7 +154,9 @@ struct LockScreen {
     protocol_modes_page: Controller<ProtocolModesPage>,
     protocol_details_page: Controller<ProtocolDetailsPage>,
     ethernet_page: Controller<EthernetPage>,
-    dns_page: Controller<DNSPage>
+    dns_page: Controller<DNSPage>,
+
+    selected_network: WirelessInfoResponse,
 }
 
 #[derive(Debug, Clone)]
@@ -231,7 +241,8 @@ pub enum Message {
     ChangeScreen(Screens),
     GoBack,
     Dummy,
-    UpdateView
+    UpdateView,
+    SelectedNetworkChanged(WirelessInfoResponse)
 
 }
 
@@ -398,8 +409,8 @@ impl AsyncComponent for LockScreen {
             Option::from(Screens::Settings.to_string().as_str()),
         );
 
-        let network_page = NetworksPage::builder()
-            .launch(NetworksPageSettings {
+        let network_page = NetworkPage::builder()
+            .launch(NetworkPageSettings {
                 modules: modules.clone(),
                 layout: layout.clone(),
                 widget_configs: widget_configs.clone()
@@ -410,13 +421,13 @@ impl AsyncComponent for LockScreen {
                     info!("network_page - auth page message to parent {:?}", msg);
                     println!("network_page - auth page message to parent {:?}", msg);
                     match msg {
-                        NetworksPageMessage::BackPressed => Message::GoBack,
-                        NetworksPageMessage::EnableNetworkPressed => Message::ChangeScreen(Screens::NetworkDetails),
-                        NetworksPageMessage::ManageNetworkPressed => Message::ChangeScreen(Screens::ManageNetworks),
-                        NetworksPageMessage::IpSettingsPressed => Message::ChangeScreen(Screens::IPSettings),
-                        NetworksPageMessage::EthernetPressed => Message::ChangeScreen(Screens::Ethernet),
-                        NetworksPageMessage::DNSPressed => Message::ChangeScreen(Screens::DNSPage),
-                        NetworksPageMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
+                        NetworkPageMessage::BackPressed => Message::GoBack,
+                        NetworkPageMessage::EnableNetworkPressed => Message::ChangeScreen(Screens::NetworkDetails),
+                        NetworkPageMessage::ManageNetworkPressed => Message::ChangeScreen(Screens::ManageNetworks),
+                        NetworkPageMessage::IpSettingsPressed => Message::ChangeScreen(Screens::IPSettings),
+                        NetworkPageMessage::EthernetPressed => Message::ChangeScreen(Screens::Ethernet),
+                        NetworkPageMessage::DNSPressed => Message::ChangeScreen(Screens::DNSPage),
+                        NetworkPageMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
                         _ => Message::Dummy
                     }
                 }),
@@ -427,8 +438,33 @@ impl AsyncComponent for LockScreen {
             Option::from(Screens::Network.to_string().as_str()),
         );
 
-        let manage_networks_page: Controller<ManageNetworksPage> = ManageNetworksPage::builder()
-            .launch(ManageNetworksPageSettings {
+
+        let connect_network_page: AsyncController<ConnectNetworkPage> = ConnectNetworkPage::builder()
+            .launch(ConnectNetworkPageSettings {
+                modules: modules.clone(),
+                layout: layout.clone(),
+                widget_configs: widget_configs.clone()
+            })
+            .forward(
+                sender.input_sender(),
+                clone!(@strong modules => move|msg| {
+                    info!("auth page message to parent {:?}", msg);
+                    match msg {
+                        // back -> ManageNetworks 
+                        ConnectNetworkPageMessage::BackPressed => Message::GoBack,
+                        ConnectNetworkPageMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
+                        _ => Message::Dummy
+                    }
+                }),
+            );
+
+        screens_stack.add_named(
+            connect_network_page.widget(),
+            Option::from(Screens::ConnectNetwork.to_string().as_str()),
+        );
+
+        let manage_networks_page: AsyncController<ManageNetworksPage> = ManageNetworksPage::builder()
+            .launch(ManageNetworkPageSettings {
                 modules: modules.clone(),
                 layout: layout.clone(),
                 widget_configs: widget_configs.clone()
@@ -438,12 +474,16 @@ impl AsyncComponent for LockScreen {
                 clone!(@strong modules => move|msg| {
                     info!("manage_networks_page - auth page message to parent {:?}", msg);
                     match msg {
-                        ManageNetworksPageMessage::BackPressed => Message::GoBack,
-                        ManageNetworksPageMessage::KnownNetworkPressed => 
+                        ManageNetworkPageMessage::BackPressed => Message::GoBack,
+                        ManageNetworkPageMessage::KnownNetworkPressed => 
                         Message::ChangeScreen(Screens::NetworkDetails),
-                        ManageNetworksPageMessage::AvailableNetworkPressed => 
-                        Message::ChangeScreen(Screens::ConnectNetwork),
-                        ManageNetworksPageMessage::AddNetworkPressed => Message::ChangeScreen(Screens::AddNetwork), 
+                        ManageNetworkPageMessage::AvailableNetworkPressed =>{
+                            Message::ChangeScreen(Screens::ConnectNetwork)
+                        }
+                        ManageNetworkPageMessage::SelectedNetworkChanged(value) => {
+                            Message::SelectedNetworkChanged(value)
+                        },
+                        ManageNetworkPageMessage::AddNetworkPressed => Message::ChangeScreen(Screens::AddNetwork), 
                         _ => Message::Dummy
                     }
                 }),
@@ -594,29 +634,6 @@ impl AsyncComponent for LockScreen {
             Option::from(Screens::NetworkDetails.to_string().as_str()),
         );
 
-        let connect_network_page: Controller<ConnectNetworkPage> = ConnectNetworkPage::builder()
-            .launch(ConnectNetworkPageSettings {
-                modules: modules.clone(),
-                layout: layout.clone(),
-                widget_configs: widget_configs.clone()
-            })
-            .forward(
-                sender.input_sender(),
-                clone!(@strong modules => move|msg| {
-                    info!("auth page message to parent {:?}", msg);
-                    match msg {
-                        // back -> ManageNetworks 
-                        ConnectNetworkPageMessage::BackPressed => Message::GoBack,
-                        ConnectNetworkPageMessage::HomeIconPressed => Message::ChangeScreen(Screens::LockScreen),
-                        _ => Message::Dummy
-                    }
-                }),
-            );
-
-        screens_stack.add_named(
-            connect_network_page.widget(),
-            Option::from(Screens::ConnectNetwork.to_string().as_str()),
-        );
 
         let add_network_page: Controller<AddNetworkPage> = AddNetworkPage::builder()
             .launch(AddNetworkPageSettings {
@@ -1067,7 +1084,9 @@ impl AsyncComponent for LockScreen {
             protocol_modes_page,
             protocol_details_page,
             ethernet_page,
-            dns_page
+            dns_page,
+
+            selected_network: WirelessInfoResponse::default()
         };
 
         let widgets = AppWidgets { screens_stack };
@@ -1091,7 +1110,10 @@ impl AsyncComponent for LockScreen {
                     update_screen_view(&self);
                 }
                 
-            }
+            },
+            Message::SelectedNetworkChanged(value) =>{
+                self.selected_network = value.clone()
+            },
             _ => (),
         }
     }
@@ -1107,8 +1129,17 @@ impl AsyncComponent for LockScreen {
         //     Some(value)=>{ value.emit(, args) }
         //     None => {} }
 
+        match self.current_screen {
+            Screens::ConnectNetwork => {
+                self.connect_network_page.emit(ConnectNetworkPageMessage::ConnectToNetworkChanged(self.selected_network.clone()))
+            },
+            _ => {
+
+            }
+        }
+
     }
-         }
+}
 
 fn main() {
     // Enables logger
@@ -1140,10 +1171,14 @@ fn update_screen_view(app: &LockScreen) {
         Screens::PinScreen => {},
         Screens::Home => {},
         Screens::Settings => {},
-        Screens::Network => {},
+        Screens::Network => {
+            app.network_page.emit(NetworkPageMessage::UpdateView);
+        },
         Screens::ManageNetworks => {},
         Screens::NetworkDetails => {},
-        Screens::ConnectNetwork => {},
+        Screens::ConnectNetwork => {
+            
+        },
         Screens::AddNetwork => {},
         Screens::ManageBluetooth => {},
         Screens::BluetoothDetails => {},
