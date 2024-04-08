@@ -1,3 +1,11 @@
+use std::{
+    fs::File,
+    io::{BufReader, Read, Write},
+    path::Path,
+};
+
+use system_shutdown::{hibernate, reboot, shutdown};
+
 use battery::Manager;
 pub struct Power {
     battery: battery::Battery,
@@ -45,6 +53,98 @@ impl Power {
             serial_number: self.battery.serial_number(),
             technology: self.battery.technology().to_string(),
             state: self.battery.state().to_string(),
+        }
+    }
+
+    pub fn get_battery_percentage(&self) -> f32 {
+        self.battery.state_of_charge().value * 100.0
+    }
+
+    // we need to get all available governors form  reading this file /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors and list it
+    pub fn get_available_governors() -> Result<Vec<String>, std::io::Error> {
+        let governor_path =
+            Path::new("/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors");
+
+        let mut governors = Vec::new();
+        let file = File::open(governor_path)?;
+        let mut reader = BufReader::new(file);
+
+        let mut buffer = String::new();
+        reader.read_to_string(&mut buffer)?;
+
+        for governor in buffer.split_whitespace() {
+            governors.push(governor.to_string());
+        }
+
+        Ok(governors)
+    }
+
+    //get current governor by reading this file /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    pub fn get_current_cpu_governor() -> Result<String, std::io::Error> {
+        let governor_path = Path::new("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+
+        let mut buffer = String::new();
+        let file = File::open(governor_path)?;
+        let mut reader = BufReader::new(file);
+
+        reader.read_to_string(&mut buffer)?;
+        buffer.trim().to_string(); // Remove leading/trailing whitespace
+
+        Ok(buffer)
+    }
+
+    // we need to set the cpu governor by writing to this file /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    pub fn set_cpu_governor(&self, governor: &str) -> Result<(), std::io::Error> {
+        let governor_path = Path::new("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+        let mut file = File::create(governor_path)?;
+        file.write_all(governor.as_bytes())?;
+
+        Ok(())
+    }
+
+    //get cpu frequency by reading this file /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq
+    pub fn get_cpu_frequency() -> Result<String, std::io::Error> {
+        let frequency_path = Path::new("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq");
+
+        let mut buffer = String::new();
+        let file = File::open(frequency_path)?;
+        let mut reader = BufReader::new(file);
+
+        reader.read_to_string(&mut buffer)?;
+        buffer.trim().to_string(); // Remove leading/trailing whitespace
+
+        Ok(buffer)
+    }
+
+    //power off the system
+    pub fn power_off(&self) -> Result<(), std::io::Error> {
+        match shutdown() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to power off",
+            )),
+        }
+    }
+    //reboot the system
+    pub fn reboot(&self) -> Result<(), std::io::Error> {
+        match reboot() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to reboot",
+            )),
+        }
+    }
+
+    //suspend the system
+    pub fn suspend(&self) -> Result<(), std::io::Error> {
+        match hibernate() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to suspend",
+            )),
         }
     }
 }

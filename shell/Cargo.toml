@@ -26,7 +26,7 @@ members = [
 ]
 
 [[bin]]
-name = "app-drawer"
+name = "mechanix-app-drawer"
 path = "app-drawer/src/main.rs"
 
 [workspace.package]
@@ -38,6 +38,13 @@ repository = "https://github.com/mecha-org/mechanix-gui"
 homepage = "https://mecha.so"
 categories = ["gui"]
 keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
+
+
+[workspace.metadata.cross.target.aarch64-unknown-linux-gnu]
+pre-build = [
+    "dpkg --add-architecture $CROSS_DEB_ARCH", 
+    "apt-get update && apt-get --assume-yes install libwayland-dev libwayland-dev:$CROSS_DEB_ARCH libxkbcommon-dev:$CROSS_DEB_ARCH"
+]
 
 [workspace.dependencies]
 mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "5c853e7b7ee5a2637dee3120e4bfc078c33f537d" }

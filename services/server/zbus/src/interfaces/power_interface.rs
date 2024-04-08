@@ -2,9 +2,11 @@ use zbus::{
     fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
+    Connection,
 };
 
 use mechanix_power_ctl::Power;
+use zbus_polkit::policykit1::{AuthorityProxy, CheckAuthorizationFlags, Subject};
 
 pub struct PowerBusInterface {}
 
@@ -46,32 +48,116 @@ impl PowerBusInterface {
         Ok(info)
     }
 
+    //get battery percentage
+    pub async fn get_battery_percentage(&self) -> Result<f32, ZbusError> {
+        let power = Power::new();
+        let percentage = power.get_battery_percentage();
+        Ok(percentage)
+    }
+
     //set cpu governor
     pub async fn set_cpu_governor(&self, governor: &str) -> Result<(), ZbusError> {
         let power = Power::new();
-        //power.set_cpu_governor(governor);
+        let _ = power.set_cpu_governor(governor);
         Ok(())
     }
 
     //get cpu governor
-    pub async fn get_cpu_governor(&self) -> Result<String, ZbusError> {
-        let power = Power::new();
-        //let governor = power.get_cpu_governor();
-        Ok("".to_string())
+    pub async fn get_cpu_governor(&self) -> Result<Vec<String>, ZbusError> {
+        let governor = Power::get_available_governors();
+        Ok(governor.unwrap_or(vec![]))
+    }
+
+    //get current cpu governor
+    pub async fn get_current_cpu_governor(&self) -> Result<String, ZbusError> {
+        let governor = match Power::get_current_cpu_governor() {
+            Ok(governor) => governor,
+            Err(_) => "".to_string(),
+        };
+
+        Ok(governor)
     }
 
     //get cpu frequency
     pub async fn get_cpu_frequency(&self) -> Result<String, ZbusError> {
-        let power = Power::new();
-        //let frequency = power.get_cpu_frequency();
-        Ok("".to_string())
+        let frequency = match Power::get_cpu_frequency() {
+            Ok(frequency) => frequency,
+            Err(_) => "".to_string(),
+        };
+        Ok(frequency)
     }
 
-    //set cpu frequency
+    #[cfg(feature = "auth")]
+    pub async fn power_off(&self) -> Result<(), ZbusError> {
+        let _ = match authorized().await.unwrap() {
+            true => {
+                let power = Power::new();
+                let _ = power.power_off();
+            }
+            false => return Err(ZbusError::Failed("Not authorized".to_string())),
+        };
 
-    pub async fn set_cpu_frequency(&self, frequency: &str) -> Result<(), ZbusError> {
-        let power = Power::new();
-        //power.set_cpu_frequency(frequency);
         Ok(())
     }
+
+    #[cfg(not(feature = "auth"))]
+    pub async fn power_off(&self) -> Result<(), ZbusError> {
+        let power = Power::new();
+        let _ = power.power_off();
+        Ok(())
+    }
+
+    #[cfg(feature = "auth")]
+    pub async fn reboot(&self) -> Result<(), ZbusError> {
+        let _ = match authorized().await.unwrap() {
+            true => {
+                let power = Power::new();
+                let _ = power.reboot();
+            }
+            false => return Err(ZbusError::Failed("Not authorized".to_string())),
+        };
+        Ok(())
+    }
+
+    #[cfg(not(feature = "auth"))]
+    pub async fn reboot(&self) -> Result<(), ZbusError> {
+        let power = Power::new();
+        let _ = power.reboot();
+        Ok(())
+    }
+
+    #[cfg(feature = "auth")]
+    pub async fn suspend(&self) -> Result<(), ZbusError> {
+        let _ = match authorized().await.unwrap() {
+            true => {
+                let power = Power::new();
+                let _ = power.suspend();
+            }
+            false => return Err(ZbusError::Failed("Not authorized".to_string())),
+        };
+        Ok(())
+    }
+
+    #[cfg(not(feature = "auth"))]
+    pub async fn suspend(&self) -> Result<(), ZbusError> {
+        let power = Power::new();
+        let _ = power.suspend();
+        Ok(())
+    }
+}
+
+async fn authorized() -> Result<bool, Box<dyn std::error::Error>> {
+    let connection = Connection::system().await?;
+    let proxy = AuthorityProxy::new(&connection).await?;
+    let subject = Subject::new_for_owner(std::process::id(), None, None)?;
+    let result = proxy
+        .check_authorization(
+            &subject,
+            "org.mechanix.services.Power",
+            &std::collections::HashMap::new(),
+            CheckAuthorizationFlags::AllowUserInteraction.into(),
+            "",
+        )
+        .await?;
+    Ok(result.is_authorized)
 }

@@ -74,6 +74,23 @@ impl BluetoothBusInterface {
         Ok(result)
     }
 
+    pub async fn is_connected(&self) -> Result<i8, ZbusError> {
+        let bluetooth = Bluetooth::new();
+
+        let result = match bluetooth.is_connected().await {
+            Ok(status) => status,
+            Err(_) => {
+                return Err(ZbusError::Failed(
+                    "Failed to get bluetooth connection status".to_string(),
+                ));
+            }
+        };
+
+        let result = if result { 1 } else { 0 };
+
+        Ok(result)
+    }
+
     pub async fn enable(&self) -> Result<(), ZbusError> {
         let bluetooth = Bluetooth::new();
         match bluetooth.enable().await {
