@@ -1,2 +1,2 @@
 mod config;
-pub use config::BaseConfig;
+pub use config::read_configs_yml;

@@ -1,9 +1,9 @@
 use anyhow::Result;
-use std::{fs::File, future::pending, io::BufReader};
+use std::future::pending;
 use zbus::connection;
 mod config;
 mod interfaces;
-use config::BaseConfig;
+use config::read_configs_yml;
 
 use interfaces::{
     BluetoothBusInterface, DisplayBusInterface, HostMetricsBusInterface, PowerBusInterface,
@@ -12,11 +12,13 @@ use interfaces::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    
-    let profile_file = File::open("./services_config.yml").expect("Failed to open config file");
-    let reader = BufReader::new(profile_file);
-
-    let config: BaseConfig = serde_yaml::from_reader(reader).expect("unable to rad yaml file");
+    let config = match read_configs_yml() {
+        Ok(config) => config,
+        Err(e) => {
+            eprintln!("Error reading configs: {}", e);
+            std::process::exit(1);
+        }
+    };
 
     let bluetooth_bus = BluetoothBusInterface {};
     let _bluetooth_bus_connection = connection::Builder::system()?

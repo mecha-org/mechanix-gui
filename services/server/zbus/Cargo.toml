@@ -26,6 +26,7 @@ mechanix-host-metrics = { path = "../../ctl/host-metrics" }
 serde_yaml = "0.9.25"
 serde = { version = "1.0.164", features = ["derive"] }
 zbus_polkit = { version = "4.0.0", features = ["tokio"] }
+tracing.workspace = true
 
 [features]
 default = ["auth"]
