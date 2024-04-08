@@ -2,6 +2,7 @@ use futures::{pin_mut, stream::SelectAll, FutureExt, StreamExt, TryFutureExt};
 use std::{
     collections::{HashMap, HashSet},
     fmt::{Display, Formatter, Result as FmtResult},
+    process::Command,
     str::FromStr,
     time::Duration,
 };
@@ -203,9 +204,38 @@ impl Bluetooth {
     }
 
     pub async fn status(&self) -> BlurResult<i8> {
-        let (_session, adapter) = get_session_adapter(self.bind).await?;
-        let status = if adapter.is_powered().await? { 1 } else { 0 };
+        let bluetooth_info = self.get_adapter_info().await?;
+
+        let mut status = 0;
+        for info in bluetooth_info {
+            if info.powered {
+                status = 1;
+            }
+        }
         Ok(status)
+    }
+
+    pub async fn is_connected(&self) -> BlurResult<bool> {
+        let output = Command::new("bluetoothctl")
+            .arg("devices")
+            .arg("Connected")
+            .output()
+            .expect("failed to execute process");
+
+        if output.status.success() {
+            let devices = String::from_utf8_lossy(&output.stdout);
+            if devices.trim().is_empty() {
+                Ok(false)
+            } else {
+                Ok(true)
+            }
+        } else {
+            Err(format!(
+                "Error running bluetoothctl: {}",
+                String::from_utf8_lossy(&output.stderr)
+            )
+            .into())
+        }
     }
 
     pub async fn enable(&self) -> BlurResult<()> {
