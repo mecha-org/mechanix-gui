@@ -28,7 +28,7 @@ use pages::{
     },
     
     display_page::{DisplayPage, Message as DisplayPageMessage, Settings as DisplayPageSettings},
-    battery_page::{BatteryPage, Message as BatteryPageMessage, Settings as BatteryPageSettings},
+    
     home::{HomePage, Message as HomePageMessage, Settings as HomePageSettings},
     lock_timeout_page::{
         LockTimeoutPage, Message as LockTimeoutPageMessage, Settings as LockTimeoutPageSettings,
@@ -82,18 +82,22 @@ use pages::{
         Message as PasswordAuthenticationMessage, PasswordAuthentication,
         Settings as PasswordAuthenticationSettings,
     },
-    performance_mode_page::{
-        Message as PerformanceModePageMessage, PerformanceModePage,
-        Settings as PerformanceModePageSettings,
+    battery::{ 
+        battery_page::{BatteryPage, Message as BatteryPageMessage, Settings as BatteryPageSettings},
+        performance_mode_page::{
+            Message as PerformanceModePageMessage, PerformanceModePage,
+            Settings as PerformanceModePageSettings,
+        },
+        screen_timeout_page::{
+            Message as ScreenTimeoutPageMessage, ScreenTimeoutPage,
+            Settings as ScreenTimeoutPageSettings,
+        },
     },
     pin_authentication::{
         Message as PinAuthenticationMessage, PinAuthentication,
         Settings as PinAuthenticationSettings,
     },
-    screen_timeout_page::{
-        Message as ScreenTimeoutPageMessage, ScreenTimeoutPage,
-        Settings as ScreenTimeoutPageSettings,
-    },
+   
     security_page::{
         Message as SecurityPageMessage, SecurityPage, Settings as SecurityPageSettings,
     },
