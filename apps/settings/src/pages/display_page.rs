@@ -1,21 +1,23 @@
 use gtk::prelude::*;
-use custom_utils::get_image_from_path;
 use relm4::{
+    async_trait::async_trait,
+    component::{AsyncComponent, AsyncComponentParts},
     gtk::{self},
-    Component, ComponentController, ComponentParts, ComponentSender, SimpleComponent, Controller,
+    AsyncComponentSender, Component, ComponentController, Controller,
 };
+use custom_utils::get_image_from_path;
+
 use crate::{
-    settings::{LayoutSettings, Modules, WidgetConfigs},
-    widgets::custom_list_item::{
+    modules::display::service::Display, settings::{LayoutSettings, Modules, WidgetConfigs}, widgets::{custom_list_item::{
             CustomListItem, CustomListItemSettings, Message as CustomListItemMessage,
-        },
+        }, layout::{Layout, LayoutInit, LayoutMessage}}
 };
 
 use custom_widgets::icon_button::{
     IconButton, IconButtonCss, InitSettings as IconButtonStetings, OutputMessage as IconButtonOutputMessage,
 };
 
-use tracing::info;
+use tracing::{info, error};
 
 //Init Settings
 pub struct Settings {
@@ -27,11 +29,13 @@ pub struct Settings {
 //Model
 pub struct DisplayPage {
     settings: Settings,
+    brightness_percentage: u8
 }
 
 //Widgets
 pub struct DisplayPageWidgets {
-    back_button: Controller<IconButton>,
+    screen_layout: Controller<Layout>,
+    brightness_scale: gtk::Scale
 }
 
 //Messages
@@ -40,6 +44,9 @@ pub enum Message {
     MenuItemPressed(String),
     BackPressed,
     ScreenTimeoutOpted,
+    DisplayBrightnessChanged(u8),
+    DisplayBrightnessUpdated(u8),
+    UpdateView
 }
 
 pub struct SettingItem {
@@ -48,12 +55,14 @@ pub struct SettingItem {
     end_icon: Option<String>,
 }
 
-impl SimpleComponent for DisplayPage {
+#[async_trait(?Send)]
+impl AsyncComponent for DisplayPage {
     type Init = Settings;
     type Input = Message;
     type Output = Message;
     type Root = gtk::Box;
     type Widgets = DisplayPageWidgets;
+    type CommandOutput = Message;
 
     fn init_root() -> Self::Root {
         gtk::Box::builder()
@@ -62,31 +71,22 @@ impl SimpleComponent for DisplayPage {
             .build()
     }
 
-    fn init(
+    async fn init(
         init: Self::Init,
         root: Self::Root,
-        sender: ComponentSender<Self>,
-    ) -> ComponentParts<Self> {
+        sender: AsyncComponentSender<Self>,
+    ) -> AsyncComponentParts<Self> {
         let modules = init.modules.clone();
         let layout = init.layout.clone();
         let widget_configs = init.widget_configs.clone();
 
-        let header_title = gtk::Label::builder()
-            .label("Display")
-            .css_classes(["header-title"])
-            .build(); 
-        let header = gtk::Box::builder()
-            .orientation(gtk::Orientation::Horizontal)
-            .css_classes(["header"])
-            .build(); 
-        header.append(&header_title);
 
         let brigntness_label = gtk::Label::builder()
             .label("Brigtness CHECK")
             .halign(gtk::Align::Start)
             .build();
 
-        let brigtness_scale = gtk::Scale::builder()
+        let brightness_scale = gtk::Scale::builder()
             .draw_value(true)
             .adjustment(
                 &gtk::Adjustment::builder()
@@ -101,6 +101,14 @@ impl SimpleComponent for DisplayPage {
             .value_pos(gtk::PositionType::Right)
             .css_classes(["custom-scale"])
             .build();
+
+        let input_sender  = sender.input_sender().clone();
+             // Connect to the value_changed signal of the scale widget
+        brightness_scale.connect_value_changed(move |scale| {
+            let value = scale.value();
+            // Send a message with the new value to update function
+            input_sender.emit(Message::DisplayBrightnessUpdated(value as u8));
+        });
 
 
         let brigtness_items = gtk::Box::builder()
@@ -123,11 +131,10 @@ impl SimpleComponent for DisplayPage {
             });
 
         let screen_off_timeout_widget = screen_off_timeout.widget();
-        brigtness_items.append(&brigtness_scale);
+        brigtness_items.append(&brightness_scale);
         brigtness_items.append(screen_off_timeout_widget);
         // brigtness_items.append(&screen_off_timeout_widget.clone());
 
-        root.append(&header);
 
         let scrollable_content = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
@@ -135,46 +142,32 @@ impl SimpleComponent for DisplayPage {
         scrollable_content.append(&brigntness_label);
         scrollable_content.append(&brigtness_items);
 
-        let scrolled_window = gtk::ScrolledWindow::builder()
-            .hscrollbar_policy(gtk::PolicyType::Never) // Disable horizontal scrolling
-            .min_content_width(360)
-            .min_content_height(360)
-            .child(&scrollable_content)
-            .build();
-        root.append(&scrolled_window);
-      
-        let footer = gtk::Box::builder()
-        .orientation(gtk::Orientation::Horizontal)
-        .css_classes(["footer"])
-        .hexpand(true)
-        .vexpand(true)
-        .valign(gtk::Align::End)
-        .build();
 
-        let back_button = IconButton::builder()
-            .launch(IconButtonStetings {
-                icon: widget_configs.footer.back_icon.to_owned(),
-                toggle_icon: None,
-                css: IconButtonCss::default(),
-            })
-            .forward(sender.input_sender(), |msg| match msg {
-                IconButtonOutputMessage::Clicked => Message::BackPressed,
-            });
+        let screen_layout = Layout::builder().launch(LayoutInit {
+            title: "Display".to_owned(),
+            content: scrollable_content,
+            footer_config: widget_configs.footer,
+        }).forward(sender.input_sender(), |msg| {
+            println!("Batery callback {:?}", msg);
+            match msg {
+        
+            LayoutMessage::BackPressed => Message::BackPressed,
+        }});
 
-        footer.append(back_button.widget());
+        root.append(screen_layout.widget());
 
-        root.append(&footer);
 
-        let model = DisplayPage { settings: init };
+        let model = DisplayPage { settings: init, brightness_percentage: 0 };
 
         let widgets = DisplayPageWidgets {
-            back_button
+            screen_layout,
+            brightness_scale
         };
 
-        ComponentParts { model, widgets }
+        AsyncComponentParts { model, widgets }
     }
 
-    fn update(&mut self, message: Self::Input, sender: ComponentSender<Self>) {
+    async fn update(&mut self, message: Self::Input, sender: AsyncComponentSender<Self>,  _root: &Self::Root,) {
         info!("dispay msg - Update message is {:?}", message);
         match message {
             Message::MenuItemPressed(key) => {}
@@ -184,8 +177,41 @@ impl SimpleComponent for DisplayPage {
             Message::ScreenTimeoutOpted => {
                 let _ = sender.output(Message::ScreenTimeoutOpted);
             }
+            Message::DisplayBrightnessChanged(value) => {
+                __self.brightness_percentage = value.clone();
+            }
+            Message::DisplayBrightnessUpdated(value) => {
+                set_birghtness_percentage(value.clone());
+            }
+            Message::UpdateView => {
+                let sender: relm4::Sender<Message> = sender.input_sender().clone();
+                get_info(sender).await;
+            }
         }
     }
 
-    fn update_view(&self, widgets: &mut Self::Widgets, sender: ComponentSender<Self>) {}
+    fn update_view(&self, widgets: &mut Self::Widgets, sender: AsyncComponentSender<Self>) {
+
+        widgets
+        .brightness_scale
+        .set_value(self.brightness_percentage as f64);
+    }
+}
+
+
+async fn get_info(sender: relm4::Sender<Message>) {
+    println!("in display page");
+    match Display::get_brightness_percentage().await {
+        Ok(status) => {
+            let _ = sender.send(Message::DisplayBrightnessChanged(status));
+        }
+        Err(e) => {
+            error!("Error get_brightness_percentage: {}", e);
+        }
+    };
+}
+
+
+async fn set_birghtness_percentage(value: u8) { 
+    
 }

@@ -24,11 +24,10 @@ pub struct Power;
 
 impl Power {
     pub async fn get_battery_percentage() -> Result<f32> {
-        println!(":::::get_battery_percentage reply: ");
         let connection = Connection::system().await?;
         let proxy = PowerBusInterfaceProxy::new(&connection).await?;
         let reply =  proxy.get_battery_percentage().await?;
-        println!(":::::get_battery_percentage reply: {:?}", reply);
+        info!(":::::get_battery_percentage reply: {:?}", reply);
         Ok(reply)
     }
 
@@ -42,7 +41,7 @@ impl Power {
             "conservative\n" => "Balanced",
             _=> ""
         };
-        println!("get performance reply: {:?}", reply);
+        info!("get performance reply: {:?}", reply);
         Ok(result.to_string())
     }
 
@@ -60,7 +59,7 @@ impl Power {
         };
 
         let reply =  proxy.set_cpu_governor(value_map).await?;
-        println!("get performance reply: {:?}", reply);
+        info!("get performance reply: {:?}", reply);
         Ok(reply)
     }
 }

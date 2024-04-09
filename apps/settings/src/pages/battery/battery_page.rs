@@ -230,7 +230,6 @@ impl AsyncComponent for BatteryPage {
 }
 
 async fn get_info(sender: relm4::Sender<Message>) {
-    println!("in battery page");
     match Power::get_battery_percentage().await {
         Ok(status) => {
             let _ = sender.send(Message::BatteryLevelChanged(status));

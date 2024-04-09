@@ -142,7 +142,7 @@ struct LockScreen {
     bluetooth_details_page: Controller<BluetoothDetailsPage>,
     connect_bluetooth_page: Controller<ConnectBluetoothPage>,
     bluetooth_pair_request_page: Controller<BluetoothPairRequestPage>,
-    display_page: Controller<DisplayPage>,
+    display_page: AsyncController<DisplayPage>,
     screen_timeout_page: AsyncController<ScreenTimeoutPage>,
     sound_page: Controller<SoundPage>,
     performance_mode_page: AsyncController<PerformanceModePage>,
@@ -761,7 +761,7 @@ impl AsyncComponent for LockScreen {
             Option::from(Screens::BluetoothPairRequest.to_string().as_str()),
         );
 
-        let display_page: Controller<DisplayPage> = DisplayPage::builder()
+        let display_page: AsyncController<DisplayPage> = DisplayPage::builder()
             .launch(DisplayPageSettings {
                 modules: modules.clone(),
                 layout: layout.clone(),
@@ -1188,7 +1188,9 @@ fn update_screen_view(app: &LockScreen) {
         Screens::BluetoothDetails => {},
         Screens::ConnectBluetooth => {},
         Screens::BluetoothPairRequest => {},
-        Screens::Display => {},
+        Screens::Display => {
+            app.display_page.emit(DisplayPageMessage::UpdateView);
+        },
         Screens::ScreenTimeout => {
             app.screen_timeout_page.emit(ScreenTimeoutPageMessage::UpdateView);
         },
