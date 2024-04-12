@@ -10,6 +10,7 @@ use tracing::info;
 #[derive(Clone, Debug)]
 pub enum Message {
     WidgetClicked,
+    InfoWidgetClicked
 }
 
 #[derive(Clone, Debug)]
@@ -41,6 +42,7 @@ pub(crate) struct CustomNetworkItem {
 #[derive(Debug)]
 pub struct CustomNetworkItemWidgets {
     container: gtk::Box,
+    network_info_button: gtk::Box,
 }
 
 // #[relm4::factory(pub(crate))]
@@ -111,33 +113,44 @@ impl SimpleComponent for CustomNetworkItem {
             None => (),
         }
 
+        let network_info_button = gtk::Box::builder().vexpand(false).build();
         match init.info_icon.clone() {
             Some(icon) => {
                 let info_icon_image =
                     get_image_from_path(Some(icon), &["custom-info-icon"]);
-                network_item_button.append(&info_icon_image);
+                    network_info_button.append(&info_icon_image);
             }
             None => (),
         }
 
         root.append(&network_item_button);
+        root.append(&network_info_button);
+
         let left_click_gesture = GestureClick::builder().button(0).build();
         left_click_gesture.connect_pressed(clone!(@strong sender => move |this, _, _,_| {
         info!("gesture button pressed is {}", this.current_button());
-            sender.input_sender().send(InputMessage::Pressed);
+           let _ = sender.input_sender().send(InputMessage::Pressed);
 
         }));
 
-        let key = init.name.to_owned();
+
         left_click_gesture.connect_released(clone!(@strong sender => move |this, _, _,_| {
                 info!("gesture button released is {}", this.current_button());
-                sender.input_sender().send(InputMessage::Released);
-                sender.output(Message::WidgetClicked);
+                let _ =  sender.input_sender().send(InputMessage::Released);
+                let _ =  sender.output(Message::WidgetClicked);
         }));
-        root.add_controller(left_click_gesture);
-        // network_item_button.connect_clicked(clone!(@strong sender, @strong key => move |_| {
-        //     sender.output(Message::WidgetClicked(key.to_owned()));
-        // }));
+        network_item_button.add_controller(left_click_gesture);
+
+
+
+
+        let right_click_gesture = GestureClick::builder().button(0).build();
+        right_click_gesture.connect_released(clone!(@strong sender => move |this, _, _,_| {
+                println!("=> right_click_gesture button released is {}", this.current_button());
+                let _ =  sender.output(Message::InfoWidgetClicked);
+        }));
+        network_info_button.add_controller(right_click_gesture);
+
 
         let model = CustomNetworkItem {
             settings: CustomNetworkItemSettings {
@@ -155,6 +168,8 @@ impl SimpleComponent for CustomNetworkItem {
 
         let widgets = CustomNetworkItemWidgets {
             container: root.clone(),
+            network_info_button
+
         };
 
         ComponentParts { widgets, model }

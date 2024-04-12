@@ -9,14 +9,15 @@ use tracing::info;
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    WidgetClicked,
+    WidgetClicked
 }
 
 #[derive(Clone, Debug)]
 pub enum InputMessage {
     Pressed,
     Released,
-    ValueChanged(String)
+    ValueChanged(String),
+    StatusChanged(bool)
 }
 
 /// Configuration for the password key widget
@@ -26,6 +27,7 @@ pub struct CustomListItemSettings {
     pub text: String,
     pub value: String,
     pub end_icon: Option<String>,
+   
 }
 
 /// Password Key component.
@@ -33,12 +35,16 @@ pub struct CustomListItemSettings {
 pub(crate) struct CustomListItem {
     pub settings: CustomListItemSettings,
     pub is_pressing: bool,
+    pub disabled: bool,
 }
 
 #[derive(Debug)]
 pub struct CustomListItemWidgets {
     container: gtk::Box,
-    value: gtk::Label
+    value: gtk::Label,
+    label: gtk::Label,
+    left_click_gesture: GestureClick
+
 }
 
 // #[relm4::factory(pub(crate))]
@@ -110,6 +116,9 @@ impl SimpleComponent for CustomListItem {
         }
 
         root.append(&action_button);
+
+
+        // adding click event
         let left_click_gesture = GestureClick::builder().button(0).build();
         left_click_gesture.connect_pressed(clone!(@strong sender => move |this, _, _,_| {
         info!("gesture button pressed is {}", this.current_button());
@@ -117,13 +126,25 @@ impl SimpleComponent for CustomListItem {
 
         }));
 
-        let key = init.text.to_owned();
         left_click_gesture.connect_released(clone!(@strong sender => move |this, _, _,_| {
                 info!("gesture button released is {}", this.current_button());
                 let _ = sender.input_sender().send(InputMessage::Released);
                 let _ = sender.output(Message::WidgetClicked);
         }));
-        root.add_controller(left_click_gesture);
+        root.add_controller(left_click_gesture.clone());
+
+
+        // // handle disabled state on init
+        // match init.disabled {
+        //     true => {
+        //         label.add_css_class("disabled");
+        //     },
+        //     false => {
+        //         root.add_controller(left_click_gesture);
+        //     },
+        // }
+       
+        
 
         let model = CustomListItem {
             settings: CustomListItemSettings {
@@ -131,13 +152,17 @@ impl SimpleComponent for CustomListItem {
                 text: init.text,
                 value: init.value,
                 end_icon: init.end_icon,
+                
             },
             is_pressing: false,
+            disabled: false,
         };
 
         let widgets = CustomListItemWidgets {
             container: root.clone(),
-            value
+            value,
+            label,
+            left_click_gesture
         };
 
         ComponentParts { widgets, model }
@@ -155,6 +180,9 @@ impl SimpleComponent for CustomListItem {
             InputMessage::ValueChanged(value) => {
                 self.settings.value = value.clone();
             }
+            InputMessage::StatusChanged(value) => {
+                self.disabled = value.clone();
+            }
         }
     }
 
@@ -166,6 +194,20 @@ impl SimpleComponent for CustomListItem {
         widgets
             .container
             .set_class_active("custom-list-item-box-focus", self.is_pressing);
-        widgets.value.set_label(&self.settings.value)
+
+        widgets.value.set_label(&self.settings.value);
+
+
+        // handle status change
+        match self.disabled {
+            true => {
+                widgets.label.add_css_class("disabled");
+                widgets.container.remove_controller(&widgets.left_click_gesture);
+            }
+            false => {
+                widgets.label.remove_css_class("disabled");
+                widgets.container.add_controller(widgets.left_click_gesture.clone());
+            }
+        }
     }
 }
