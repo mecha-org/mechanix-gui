@@ -187,6 +187,7 @@ pub struct WirelessModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct BatteryModule {
     pub icon: BatteryIconPaths,
+    pub charging_icon: BatteryIconPaths,
 }
 
 /// Icon paths for bluetooth module
@@ -272,6 +273,20 @@ impl Default for Modules {
             },
             battery: BatteryModule {
                 icon: BatteryIconPaths {
+                    level_100: None,
+                    level_90: None,
+                    level_80: None,
+                    level_70: None,
+                    level_60: None,
+                    level_50: None,
+                    level_40: None,
+                    level_30: None,
+                    level_20: None,
+                    level_10: None,
+                    level_0: None,
+                    not_found: None,
+                },
+                charging_icon: BatteryIconPaths {
                     level_100: None,
                     level_90: None,
                     level_80: None,

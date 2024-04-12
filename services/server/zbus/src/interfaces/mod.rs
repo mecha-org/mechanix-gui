@@ -2,7 +2,9 @@ mod bluetooth_interface;
 pub use bluetooth_interface::BluetoothBusInterface;
 
 mod wireless_interface;
-pub use wireless_interface::WirelessBusInterface;
+pub use wireless_interface::{
+    WirelessBusInterface, WirelessInfoResponse, WirelessScanListResponse,
+};
 
 mod power_interface;
 pub use power_interface::PowerBusInterface;

@@ -2,49 +2,28 @@ use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::S
 use std::time::Duration;
 use tokio::{sync::oneshot, time};
 
-use crate::Message;
+use crate::{AppMessage, Message};
 
 use super::{component::ClockMessage, service::ClockService};
 
 #[derive(Debug)]
-pub enum ServiceMessage {
-    Start { respond_to: oneshot::Sender<u32> },
-    Stop { respond_to: oneshot::Sender<u32> },
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum ServiceStatus {
-    INACTIVE = 0,
-    STARTED = 1,
-    STOPPED = -1,
-}
 
 pub struct ClockServiceHandle {
-    status: ServiceStatus,
+    app_channel: Sender<AppMessage>,
 }
 
 impl ClockServiceHandle {
-    pub fn new() -> Self {
-        Self {
-            status: ServiceStatus::INACTIVE,
-        }
+    pub fn new(app_channel: Sender<AppMessage>) -> Self {
+        Self { app_channel }
     }
 
-    pub async fn run(&mut self, format: String, sender: Sender<Message>) {
+    pub async fn run(&mut self, format: String) {
         let mut interval = time::interval(Duration::from_secs(1));
         loop {
             interval.tick().await;
-            let _ = sender.send(Message::TimeTick {
+            let _ = self.app_channel.send(AppMessage::Clock {
                 current_time: ClockService::get_current_time(&format),
             });
         }
-    }
-
-    pub fn stop(&mut self) {
-        self.status = ServiceStatus::STOPPED;
-    }
-
-    pub fn start(&mut self) {
-        self.status = ServiceStatus::STARTED;
     }
 }

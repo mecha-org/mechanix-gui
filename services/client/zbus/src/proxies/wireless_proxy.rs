@@ -1,0 +1,76 @@
+use mechanix_zbus_services::{WirelessInfoResponse, WirelessScanListResponse};
+use zbus::{proxy, Connection, Result};
+
+#[proxy(
+    interface = "org.mechanix.services.Wireless",
+    default_service = "org.mechanix.services.Wireless",
+    default_path = "/org/mechanix/services/Wireless"
+)]
+trait Wireless {
+    async fn scan(&self) -> Result<WirelessScanListResponse>;
+    async fn info(&self) -> Result<WirelessInfoResponse>;
+    async fn status(&self) -> Result<bool>;
+    async fn enable(&self) -> Result<bool>;
+    async fn disable(&self) -> Result<bool>;
+    async fn connect(&self, ssid: &str, password: &str) -> Result<()>;
+    async fn disconnect(&self, ssid: &str) -> Result<()>;
+}
+
+pub struct WirelessService;
+
+impl WirelessService {
+    pub async fn scan() -> Result<WirelessScanListResponse> {
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply = proxy.scan().await?;
+        Ok(reply)
+    }
+
+    pub async fn info() -> Result<WirelessInfoResponse> {
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply = proxy.info().await?;
+        Ok(reply)
+    }
+
+    pub async fn wifi_status() -> Result<bool> {
+        let connection = Connection::system().await?;
+
+        let proxy = WirelessProxy::new(&connection).await?;
+
+        let reply = proxy.status().await?;
+        Ok(reply)
+    }
+
+    pub async fn enable_wifi() -> Result<bool> {
+        let connection = Connection::system().await?;
+
+        let proxy = WirelessProxy::new(&connection).await?;
+
+        let reply = proxy.enable().await?;
+        Ok(reply)
+    }
+
+    pub async fn disable_wifi() -> Result<bool> {
+        let connection = Connection::system().await?;
+
+        let proxy = WirelessProxy::new(&connection).await?;
+
+        let reply = proxy.disable().await?;
+        Ok(reply)
+    }
+
+    pub async fn connect_to_network(ssid: &str, password: &str) -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply = proxy.connect(ssid, password).await?;
+        Ok(())
+    }
+
+    pub async fn disconnect(value: &str) -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply = proxy.disconnect(value).await?;
+        Ok(reply)
+    }
+}

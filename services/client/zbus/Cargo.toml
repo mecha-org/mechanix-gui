@@ -1,0 +1,20 @@
+[package]
+name = "mechanix_zbus_client"
+description = "Zbus client for Mechanix zbus services"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+zbus.workspace = true
+tracing.workspace = true
+serde.workspace = true
+mechanix_zbus_services.workspace = true
+
+

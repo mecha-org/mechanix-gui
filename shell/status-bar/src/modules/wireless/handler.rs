@@ -1,59 +1,39 @@
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::time::Duration;
-use tokio::{sync::oneshot, time};
+use tokio::time;
 
-use crate::Message;
+use crate::{types::WirelessStatus, AppMessage};
 
-use super::{component::WirelessMessage, service::WirelessService};
+use super::service::WirelessService;
 use tracing::error;
 
-#[derive(Debug)]
-pub enum ServiceMessage {
-    Start { respond_to: oneshot::Sender<u32> },
-    Stop { respond_to: oneshot::Sender<u32> },
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum ServiceStatus {
-    INACTIVE = 0,
-    STARTED = 1,
-    STOPPED = -1,
-}
-
 pub struct WirelessServiceHandle {
-    status: ServiceStatus,
+    app_channel: Sender<AppMessage>,
 }
 
 impl WirelessServiceHandle {
-    pub fn new() -> Self {
-        Self {
-            status: ServiceStatus::INACTIVE,
-        }
+    pub fn new(app_channel: Sender<AppMessage>) -> Self {
+        Self { app_channel }
     }
 
-    pub async fn run(&mut self, sender: Sender<Message>) {
+    pub async fn run(&mut self) {
         let task = "run";
         let mut interval = time::interval(Duration::from_secs(1));
         loop {
             interval.tick().await;
             match WirelessService::get_wireless_status().await {
                 Ok(wireless_status) => {
-                    let _ = sender.send(Message::Wireless {
+                    let _ = self.app_channel.send(AppMessage::Wireless {
                         status: wireless_status,
                     });
                 }
                 Err(e) => {
                     error!(task, "error while getting wireless status {}", e);
+                    let _ = self.app_channel.send(AppMessage::Wireless {
+                        status: WirelessStatus::NotFound,
+                    });
                 }
             };
         }
-    }
-
-    pub fn stop(&mut self) {
-        self.status = ServiceStatus::STOPPED;
-    }
-
-    pub fn start(&mut self) {
-        self.status = ServiceStatus::STARTED;
     }
 }

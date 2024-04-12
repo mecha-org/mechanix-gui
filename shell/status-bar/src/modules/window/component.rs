@@ -26,12 +26,11 @@ impl Component for WindowTitleComponent {
                 // .bg(0xFF00FFFF)
                 ,
                 [
-                    size: [215, 24],
+                    size: [235, 24],
                 ],
             )
             .push(node!(Text::new(
                 txt!(self.current_window_title.clone()))
-                .style("font", "SpaceGrotesk-Bold")
                 .style("color",Color::rgb(255., 255., 255.))
                 .style("size", 14.0)
                 .style("h_alignment", HorizontalPosition::Center),

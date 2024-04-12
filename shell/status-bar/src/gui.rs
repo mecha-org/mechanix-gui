@@ -1,7 +1,9 @@
+use std::any::Any;
 use std::fmt;
 
 use mctk_core::component::RootComponent;
 use mctk_core::layout::Alignment;
+use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::{component, Color};
 use mctk_core::{
     component::Component, lay, node, rect, size, size_pct, state_component_impl, widgets::Div, Node,
@@ -12,6 +14,10 @@ use mctk_core::reexports::glutin::prelude::*;
 
 use crate::modules::clock::component::ClockComponent;
 use crate::modules::window::component::WindowTitleComponent;
+use crate::types::{
+    BatteryLevel, BatteryStatus, BluetoothStatus, WirelessConnectedState, WirelessStatus,
+};
+use crate::AppMessage;
 use crate::{
     modules::{
         battery::component::BatteryComponent,
@@ -31,84 +37,13 @@ use crate::theme::{self, StatusBarTheme};
 /// Each of them are handled in the ``impl Application()::update()``
 #[derive(Debug, Clone)]
 pub enum Message {
-    TimeTick { current_time: String },
+    Clock { current_time: String },
     Wireless { status: WirelessStatus },
     Bluetooth { status: BluetoothStatus },
-    Battery { level: BatteryLevel },
-    Window { title: String },
+    Battery { level: u8, status: BatteryStatus },
+    Window { title: String, activated: bool },
     Show,
     Hide,
-}
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum WirelessConnectedState {
-    Low,
-    Weak,
-    Good,
-    Strong,
-}
-
-#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum WirelessStatus {
-    On,
-    #[default]
-    Off,
-    Connected(WirelessConnectedState),
-    NotFound,
-}
-
-impl fmt::Display for WirelessStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            WirelessStatus::On => write!(f, "WirelessOn"),
-            WirelessStatus::Off => write!(f, "WirelessOff"),
-            WirelessStatus::Connected(state) => write!(f, "WirelessConnected({:?})", state),
-            WirelessStatus::NotFound => write!(f, "WirelessNotFound"),
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum BluetoothStatus {
-    On,
-    #[default]
-    Off,
-    Connected,
-    NotFound,
-}
-
-impl fmt::Display for BluetoothStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            BluetoothStatus::On => write!(f, "BluetoothOn"),
-            BluetoothStatus::Off => write!(f, "BluetoothOff"),
-            BluetoothStatus::Connected => write!(f, "BluetoothConnected"),
-            BluetoothStatus::NotFound => write!(f, "BluetoothNotFound"),
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum BatteryLevel {
-    #[default]
-    Level0,
-    Level10,
-    Level20,
-    Level30,
-    Level40,
-    Level50,
-    Level60,
-    Level70,
-    Level80,
-    Level90,
-    Level100,
-    NotFound,
-}
-
-impl fmt::Display for BatteryLevel {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(self, f)
-    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -137,9 +72,9 @@ pub struct StatusBar {}
 impl Component for StatusBar {
     fn init(&mut self) {
         self.state = Some(StatusBarState {
-            battery_level: BatteryLevel::Level100,
-            wireless_status: WirelessStatus::Connected(WirelessConnectedState::Strong),
-            bluetooth_status: BluetoothStatus::Connected,
+            battery_level: BatteryLevel::default(),
+            wireless_status: WirelessStatus::default(),
+            bluetooth_status: BluetoothStatus::default(),
             current_time: String::from(""),
             current_window_title: String::from(""),
             is_any_window_maximized: false,
@@ -157,8 +92,7 @@ impl Component for StatusBar {
             node!(
                 Div::new().bg(bg_color),
                 lay![
-                    wrap: true,
-                    padding: [12, 24],
+                    padding: [12, 14, 0, 0],
                     size_pct: [100],
                     axis_alignment: Alignment::Start,
                     // cross_alignment: Alignment::SpaceBetween
@@ -202,9 +136,9 @@ impl Component for StatusBar {
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
-        //println!("App was sent: {:?}", message.downcast_ref::<Message>());
+        // println!("App was sent: {:?}", message.downcast_ref::<Message>());
         match message.downcast_ref::<Message>() {
-            Some(Message::TimeTick { current_time }) => {
+            Some(Message::Clock { current_time }) => {
                 self.state_mut().current_time = current_time.clone();
             }
             Some(Message::Wireless { status }) => {
@@ -213,11 +147,45 @@ impl Component for StatusBar {
             Some(Message::Bluetooth { status }) => {
                 self.state_mut().bluetooth_status = status.clone();
             }
-            Some(Message::Battery { level }) => {
-                self.state_mut().battery_level = level.clone();
+            Some(Message::Battery { level, status }) => {
+                let is_charging = *status == BatteryStatus::Charging;
+                let battery_level = if is_charging {
+                    match level {
+                        0..=9 => BatteryLevel::ChargingLevel0,
+                        10..=19 => BatteryLevel::ChargingLevel10,
+                        20..=29 => BatteryLevel::ChargingLevel20,
+                        30..=39 => BatteryLevel::ChargingLevel30,
+                        40..=49 => BatteryLevel::ChargingLevel40,
+                        50..=59 => BatteryLevel::ChargingLevel50,
+                        60..=69 => BatteryLevel::ChargingLevel60,
+                        70..=79 => BatteryLevel::ChargingLevel70,
+                        80..=89 => BatteryLevel::ChargingLevel80,
+                        90..=99 => BatteryLevel::ChargingLevel90,
+                        100 => BatteryLevel::ChargingLevel100,
+                        _ => BatteryLevel::NotFound,
+                    }
+                } else {
+                    match level {
+                        0..=9 => BatteryLevel::Level0,
+                        10..=19 => BatteryLevel::Level10,
+                        20..=29 => BatteryLevel::Level20,
+                        30..=39 => BatteryLevel::Level30,
+                        40..=49 => BatteryLevel::Level40,
+                        50..=59 => BatteryLevel::Level50,
+                        60..=69 => BatteryLevel::Level60,
+                        70..=79 => BatteryLevel::Level70,
+                        80..=89 => BatteryLevel::Level80,
+                        90..=99 => BatteryLevel::Level90,
+                        100 => BatteryLevel::Level100,
+                        _ => BatteryLevel::NotFound,
+                    }
+                };
+
+                self.state_mut().battery_level = battery_level;
             }
-            Some(Message::Window { title }) => {
+            Some(Message::Window { title, activated }) => {
                 self.state_mut().current_window_title = title.clone();
+                self.state_mut().is_any_window_maximized = *activated;
             }
             _ => (),
         }
@@ -225,4 +193,6 @@ impl Component for StatusBar {
     }
 }
 
-impl RootComponent for StatusBar {}
+impl RootComponent<AppMessage> for StatusBar {
+    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {}
+}

@@ -1,23 +1,15 @@
-use std::{collections::HashMap, sync::mpsc::Sender};
+use std::collections::HashMap;
 
 use mctk_core::{
     component::Component,
     lay,
     layout::Alignment,
-    node, rect, size, size_pct,
-    widgets::{Div, Image, Svg},
-    Node,
+    node, size,
+    widgets::{Div, Svg},
+    Color, Node,
 };
 
-use crate::{
-    gui::{BatteryLevel, Message},
-    settings::BatteryIconPaths,
-};
-
-#[derive(Debug, Clone)]
-pub enum BatteryMessage {
-    BatteryLevelUpdate(BatteryLevel),
-}
+use crate::{settings::BatteryIconPaths, types::BatteryLevel};
 
 #[derive(Debug)]
 pub struct BatteryComponent {
@@ -29,7 +21,7 @@ impl Component for BatteryComponent {
         Some(
             node!(
                 Div::new()
-                //  .bg(0xFF00FFFF)
+                // .bg(Color::LIGHT_GREY)
                 ,
                 [
                     size: [24, 24],
@@ -40,7 +32,7 @@ impl Component for BatteryComponent {
             .push(node!(
                 Svg::new(self.level.to_string()),
                 lay![
-                    size: [16, 20],
+                    size: [20, 20],
                 ],
             )),
         )
@@ -93,6 +85,53 @@ pub fn get_battery_icons_map(icon_paths: BatteryIconPaths) -> HashMap<String, St
     }
     if let Some(value) = &icon_paths.level_100 {
         assets.insert(BatteryLevel::Level100.to_string(), value.clone());
+    }
+
+    assets
+}
+
+pub fn get_battery_icons_charging_map(icon_paths: BatteryIconPaths) -> HashMap<String, String> {
+    let mut assets = HashMap::new();
+
+    if let Some(value) = &icon_paths.level_0 {
+        assets.insert(BatteryLevel::ChargingLevel0.to_string(), value.clone());
+    }
+
+    if let Some(value) = &icon_paths.level_10 {
+        assets.insert(BatteryLevel::ChargingLevel10.to_string(), value.clone());
+    }
+
+    if let Some(value) = &icon_paths.level_20 {
+        assets.insert(BatteryLevel::ChargingLevel20.to_string(), value.clone());
+    }
+
+    if let Some(value) = &icon_paths.level_30 {
+        assets.insert(BatteryLevel::ChargingLevel30.to_string(), value.clone());
+    }
+
+    if let Some(value) = &icon_paths.level_40 {
+        assets.insert(BatteryLevel::ChargingLevel40.to_string(), value.clone());
+    }
+
+    if let Some(value) = &icon_paths.level_50 {
+        assets.insert(BatteryLevel::ChargingLevel50.to_string(), value.clone());
+    }
+
+    if let Some(value) = &icon_paths.level_60 {
+        assets.insert(BatteryLevel::ChargingLevel60.to_string(), value.clone());
+    }
+    if let Some(value) = &icon_paths.level_70 {
+        assets.insert(BatteryLevel::ChargingLevel70.to_string(), value.clone());
+    }
+
+    if let Some(value) = &icon_paths.level_80 {
+        assets.insert(BatteryLevel::ChargingLevel80.to_string(), value.clone());
+    }
+    if let Some(value) = &icon_paths.level_90 {
+        assets.insert(BatteryLevel::ChargingLevel90.to_string(), value.clone());
+    }
+    if let Some(value) = &icon_paths.level_100 {
+        assets.insert(BatteryLevel::ChargingLevel100.to_string(), value.clone());
     }
 
     assets
