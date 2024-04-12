@@ -513,6 +513,8 @@ background: rgba(0, 0, 0, 0.6);
     font-size: 18px; 
 }
 
+
+
 .reset-pin-btn-box {
     border-radius: 8px;
     background: #15171D;
@@ -568,4 +570,14 @@ background: rgba(0, 0, 0, 0.6);
 
 .custom-calendar grid label.day-number:focus {
     background-color: #e95420;
+}
+
+
+
+.disabled {
+    color: #424753;
+}
+
+.hide {
+    display: none;
 }

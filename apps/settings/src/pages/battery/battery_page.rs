@@ -29,7 +29,7 @@ pub struct Settings {
 //Model
 pub struct BatteryPage {
     settings: Settings,
-    battery_level: u8,
+    battery_level: f32,
     screen_off_timeout: String,
     performance_mode: String,
 }
@@ -49,7 +49,7 @@ pub enum Message {
     BackPressed,
     ScreenTimeoutOpted,
     PerformanceOpted,
-    BatteryLevelChanged(u8),
+    BatteryLevelChanged(f32),
     PerformanceModeChanged(String),
     ScreenTimeoutChanged(String),
     UpdateView,
@@ -153,7 +153,7 @@ impl AsyncComponent for BatteryPage {
 
         let model = BatteryPage {
             settings: init,
-            battery_level: 0,
+            battery_level: 0.0,
             performance_mode: "".to_owned(),
             screen_off_timeout: "".to_owned(),
         };
@@ -230,7 +230,7 @@ impl AsyncComponent for BatteryPage {
 }
 
 async fn get_info(sender: relm4::Sender<Message>) {
-    match Power::get_battery_status().await {
+    match Power::get_battery_percentage().await {
         Ok(status) => {
             let _ = sender.send(Message::BatteryLevelChanged(status));
         }
@@ -239,15 +239,15 @@ async fn get_info(sender: relm4::Sender<Message>) {
         }
     };
 
-    match Power::get_screen_timeout().await {
-        Ok(value) => {
+    // match Power::get_screen_timeout().await {
+    //     Ok(value) => {
            
-            let _ = sender.send(Message::ScreenTimeoutChanged(value));
-        }
-        Err(e) => {
-            error!("Error getting device oem info: {}", e);
-        }
-    };
+    //         let _ = sender.send(Message::ScreenTimeoutChanged(value));
+    //     }
+    //     Err(e) => {
+    //         error!("Error getting device oem info: {}", e);
+    //     }
+    // };
 
     match Power::get_performance_mode().await {
         Ok(value) => {
