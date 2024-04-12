@@ -285,5 +285,5 @@ busctl --system call org.mechanix.services.HostMetrics /org/mechanix/services/Ho
 ## Run Dbus Server
 
 ```bash
-sudo ./mechanix-zbus-services -c "path/to/services-config.yml"
+sudo ./mechanix-zbus-server -c "path/to/services-config.yml"
 ```

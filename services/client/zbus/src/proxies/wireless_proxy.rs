@@ -1,4 +1,4 @@
-use mechanix_zbus_services::{
+use mechanix_zbus_server::{
     KnownNetworkListResponse, WirelessInfoResponse, WirelessScanListResponse,
 };
 use tracing::info;

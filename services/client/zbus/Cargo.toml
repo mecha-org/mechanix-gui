@@ -15,5 +15,5 @@ anyhow.workspace = true
 zbus.workspace = true
 tracing.workspace = true
 serde.workspace = true
-mechanix-zbus-services = { path = "../../server/zbus" }
+mechanix-zbus-server = { path = "../../server/zbus" }
 
