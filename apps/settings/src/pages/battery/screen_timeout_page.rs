@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 use crate::{
-    modules::power::service::Power,
     settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::{
         custom_list_radio_button::{
@@ -17,11 +14,13 @@ use custom_widgets::icon_button::{
     OutputMessage as IconButtonOutputMessage,
 };
 use gtk::prelude::*;
+use mechanix_zbus_client::power::Power;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
     gtk, AsyncComponentSender, Component, ComponentController, Controller,
 };
+use std::collections::HashMap;
 use tracing::{error, info};
 
 //Init Settings
@@ -167,12 +166,10 @@ impl AsyncComponent for ScreenTimeoutPage {
     ) {
         info!("Update message is {:?}", message);
         match message {
-           
             Message::BackPressed => {
                 let _ = sender.output(Message::BackPressed);
             }
             Message::SubmitPressed => {
-               
                 let input_sender: relm4::Sender<Message> = sender.input_sender().clone();
                 set_screen_timeout(input_sender, __self.selected_value.clone()).await;
                 let _ = sender.output(Message::SubmitPressed);
@@ -204,7 +201,7 @@ impl AsyncComponent for ScreenTimeoutPage {
 async fn get_info(sender: relm4::Sender<Message>) {
     // match Power::get_screen_timeout().await {
     //     Ok(value) => {
-            
+
     //         let _ = sender.send(Message::SelectedValueChanged(value));
     //     }
     //     Err(e) => {
@@ -216,7 +213,7 @@ async fn get_info(sender: relm4::Sender<Message>) {
 async fn set_screen_timeout(sender: relm4::Sender<Message>, value: String) {
     // match Power::set_screen_timeout(get_screen_timeout_in_seconds(&value)).await {
     //     Ok(value) => {
-            
+
     //         let _ = sender.send(Message::BackPressed);
     //     }
     //     Err(e) => {

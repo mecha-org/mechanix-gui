@@ -9,7 +9,7 @@ pub struct WirelessBusInterface {
     pub path: String,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type)]
+#[derive(Debug, DeserializeDict, SerializeDict, Type, Clone, Default)]
 // `Type` treats `WirelessInfoResponse` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct WirelessInfoResponse {
@@ -20,14 +20,14 @@ pub struct WirelessInfoResponse {
     pub name: String,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug)]
 // `Type` treats `WirelessScanResponse` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct WirelessScanListResponse {
     pub wireless_network: Vec<WirelessInfoResponse>,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
 /// A known WiFi network.
 #[zvariant(signature = "a{sv}")]
 pub struct KnownNetworkResponse {
@@ -36,7 +36,7 @@ pub struct KnownNetworkResponse {
     pub flags: String,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
 /// A known WiFi networkList
 #[zvariant(signature = "a{sv}")]
 pub struct KnownNetworkListResponse {

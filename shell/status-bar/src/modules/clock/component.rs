@@ -1,7 +1,9 @@
 use mctk_core::{
     component::Component,
-    lay, node, rect, size, size_pct,
-    style::Styled,
+    lay,
+    layout::Alignment,
+    node, rect, size, size_pct,
+    style::{FontWeight, HorizontalPosition, Styled},
     txt,
     widgets::{Div, Text},
     Color, Node,
@@ -22,18 +24,22 @@ impl Component for ClockComponent {
         Some(
             node!(
                 Div::new()
-                // .bg(0xFF00FFFF)
+                // .bg(Color::RED)
                 ,
                 [
                     size: [80, 24],
+                    padding: [ 3., 0., 1., 0. ]
                 ],
             )
-            .push(node!(Text::new(
-                 txt!(self.current_time.clone()))
-                 .style("font", "SpaceGrotesk-Bold")
-                 .style("color",Color::rgb(255., 255., 255.))
-                 .style("size", 14.0),
-                [size_pct: [100.0, Auto]])),
+            .push(node!(
+                Text::new(txt!(self.current_time.clone()))
+                    .style("color", Color::WHITE)
+                    .style("size", 15.0)
+                    .style("font_weight", FontWeight::Semibold),
+                lay![
+                    size_pct: [100],
+                ]
+            )),
         )
     }
 }

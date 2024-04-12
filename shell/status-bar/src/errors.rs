@@ -52,9 +52,20 @@ pub struct StatusBarError {
 }
 
 impl StatusBarError {
-    pub fn new(code: StatusBarErrorCodes, message: String, _capture_error: bool) -> Self {
-        error!("Error: (code: {:?}, message: {})", code, message);
-        Self { code, message }
+    pub fn new<S: Into<String> + Clone>(
+        code: StatusBarErrorCodes,
+        message: S,
+        _capture_error: bool,
+    ) -> Self {
+        error!(
+            "Error: (code: {:?}, message: {})",
+            code,
+            message.clone().into()
+        );
+        Self {
+            code,
+            message: message.into(),
+        }
     }
 }
 

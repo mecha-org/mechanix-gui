@@ -1,5 +1,5 @@
 [package]
-name = "mechanix-zbus-services"
+name = "mechanix_zbus_services"
 description = "Zbus interface for Mechanix services"
 version.workspace = true
 edition.workspace = true
@@ -24,7 +24,7 @@ mechanix-power-ctl = { path = "../../ctl/power" }
 mechanix-display-ctl = { path = "../../ctl/display" }
 mechanix-host-metrics = { path = "../../ctl/host-metrics" }
 serde_yaml = "0.9.25"
-serde = { version = "1.0.164", features = ["derive"] }
+serde.workspace = true
 zbus_polkit = { version = "4.0.0", features = ["tokio"] }
 tracing.workspace = true
 

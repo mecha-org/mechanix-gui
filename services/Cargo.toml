@@ -44,3 +44,6 @@ keywords = [
 anyhow = "1"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1.40"
+zbus = { version = "4.1.2", features = ["tokio"] }
+serde = { version = "1.0.164", features = ["derive"] }
+mechanix_zbus_services = { path = "./server/zbus" }

@@ -1,59 +1,40 @@
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
-use std::time::Duration;
-use tokio::{sync::oneshot, time};
+use std::{io, str::FromStr, time::Duration};
+use tokio::time;
 
-use crate::{BatteryLevel, Message};
+use crate::{types::BatteryStatus, AppMessage};
 
-use super::{component::BatteryMessage, service::BatteryService};
+use super::service::BatteryService;
 use tracing::{error, info};
 
-#[derive(Debug)]
-pub enum ServiceMessage {
-    Start { respond_to: oneshot::Sender<u32> },
-    Stop { respond_to: oneshot::Sender<u32> },
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum ServiceStatus {
-    INACTIVE = 0,
-    STARTED = 1,
-    STOPPED = -1,
-}
-
 pub struct BatteryServiceHandle {
-    status: ServiceStatus,
+    app_channel: Sender<AppMessage>,
 }
 
 impl BatteryServiceHandle {
-    pub fn new() -> Self {
-        Self {
-            status: ServiceStatus::INACTIVE,
-        }
+    pub fn new(app_channel: Sender<AppMessage>) -> Self {
+        Self { app_channel }
     }
 
-    pub async fn run(&mut self, sender: Sender<Message>) {
+    pub async fn run(&mut self) {
         let mut interval = time::interval(Duration::from_secs(1));
         loop {
             interval.tick().await;
-            match BatteryService::get_battery_status().await {
-                Ok(level) => {
-                    let _ = sender.send(Message::Battery { level });
+            match BatteryService::get_battery_level().await {
+                Ok((capacity, status)) => {
+                    let _ = self.app_channel.send(AppMessage::Battery {
+                        level: capacity,
+                        status: BatteryStatus::from_str(status.as_ref()).unwrap(),
+                    });
                 }
                 Err(e) => {
                     error!("error while getting battery level {}", e);
-                    let _ = sender.send(Message::Battery {
-                        level: BatteryLevel::NotFound,
+                    let _ = self.app_channel.send(AppMessage::Battery {
+                        level: 0,
+                        status: BatteryStatus::Unknown,
                     });
                 }
             };
         }
-    }
-
-    pub fn stop(&mut self) {
-        self.status = ServiceStatus::STOPPED;
-    }
-
-    pub fn start(&mut self) {
-        self.status = ServiceStatus::STARTED;
     }
 }

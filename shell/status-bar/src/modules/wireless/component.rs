@@ -6,12 +6,12 @@ use mctk_core::{
     layout::Alignment,
     node, rect, size, size_pct,
     widgets::{Div, Image, Svg},
-    Node,
+    Color, Node,
 };
 
 use crate::{
-    gui::{WirelessConnectedState, WirelessStatus},
     settings::WirelessIconPaths,
+    types::{WirelessConnectedState, WirelessStatus},
 };
 
 #[derive(Debug, Clone)]
@@ -29,7 +29,7 @@ impl Component for WirelessComponent {
         Some(
             node!(
                 Div::new()
-                //  .bg(0xFF00FFFF)
+                // .bg(Color::RED)
                 ,
                 [
                     size: [24, 24],
@@ -40,7 +40,7 @@ impl Component for WirelessComponent {
             .push(node!(
                 Svg::new(self.status.to_string()),
                 lay![
-                    size: [24, 24],
+                    size: [20, 20],
                 ],
             )),
         )

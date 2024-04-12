@@ -1,6 +1,5 @@
 use std::fmt;
 use gtk::{glib::clone, prelude::GtkWindowExt};
-use modules::wireless::service::WirelessInfoResponse;
 use pages::network::network_details_page::WirelessDetails;
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncComponentParts, AsyncController };
 use relm4::async_trait::async_trait;

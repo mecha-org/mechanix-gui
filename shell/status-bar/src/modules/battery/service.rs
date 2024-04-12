@@ -1,36 +1,38 @@
 use crate::{
+    errors::StatusBarError,
     modules::battery::errors::{BatteryServiceError, BatteryServiceErrorCodes},
-    BatteryLevel,
 };
 
+use crate::errors::StatusBarErrorCodes::GetBatteryStatusError;
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
+use mechanix_zbus_client::power::Power;
 use tracing::{debug, error, info};
 
 pub struct BatteryService {}
 
 impl BatteryService {
-    pub async fn get_battery_status() -> Result<BatteryLevel> {
-        let task = "get_battery_status";
+    pub async fn get_battery_level() -> Result<(u8, String)> {
+        let task = "get_battery_level";
 
-        let battery_percentages = vec![0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-
-        let capacity = battery_percentages[(Local::now().second() % 11) as usize];
-
-        let battery_state = match capacity {
-            0..=9 => BatteryLevel::Level0,
-            10..=19 => BatteryLevel::Level10,
-            20..=29 => BatteryLevel::Level20,
-            30..=39 => BatteryLevel::Level30,
-            40..=49 => BatteryLevel::Level40,
-            50..=59 => BatteryLevel::Level50,
-            60..=69 => BatteryLevel::Level60,
-            70..=79 => BatteryLevel::Level70,
-            80..=89 => BatteryLevel::Level80,
-            90..=99 => BatteryLevel::Level90,
-            100 => BatteryLevel::Level100,
-            _ => BatteryLevel::Level100,
+        let capacity = match Power::get_battery_percentage().await {
+            Ok(p) => p,
+            Err(e) => bail!(StatusBarError::new(
+                GetBatteryStatusError,
+                e.to_string(),
+                false,
+            )),
         };
-        Ok(battery_state)
+
+        let status = match Power::get_battery_status().await {
+            Ok(s) => s,
+            Err(e) => bail!(StatusBarError::new(
+                GetBatteryStatusError,
+                e.to_string(),
+                false,
+            )),
+        };
+
+        Ok((capacity as u8, status))
     }
 }

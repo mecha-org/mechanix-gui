@@ -2,12 +2,14 @@ use std::collections::HashMap;
 
 use mctk_core::{
     component::Component,
-    lay, node, rect, size, size_pct,
+    lay,
+    layout::Alignment,
+    node, rect, size, size_pct,
     widgets::{Div, Svg},
-    Node,
+    Color, Node,
 };
 
-use crate::{gui::BluetoothStatus, settings::BluetoothIconPaths};
+use crate::{settings::BluetoothIconPaths, types::BluetoothStatus};
 
 #[derive(Debug, Clone)]
 pub enum BluetoothMessage {
@@ -23,16 +25,18 @@ impl Component for BluetoothComponent {
         Some(
             node!(
                 Div::new()
-                // .bg(0xFF00FFFF)
+                // .bg(Color::LIGHT_GREY)
                 ,
                 [
                     size: [24, 24],
+                    cross_alignment: Alignment::Center,
+                    axis_alignment: Alignment::Center,
                 ],
             )
             .push(node!(
                 Svg::new(self.status.to_string()),
                 lay![
-                    size: [24, 24],
+                    size: [20, 20],
                 ],
             )),
         )
