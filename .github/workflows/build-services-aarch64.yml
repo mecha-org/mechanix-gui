@@ -3,7 +3,10 @@ on:
   push:
     branches:
       - main
-      - dev-build
+      - dev
+    paths:
+      - 'services/**'
+      - '.github/workflows/build-services-aarch64.yml'
 
 env:
   CARGO_INCREMENTAL: 0
