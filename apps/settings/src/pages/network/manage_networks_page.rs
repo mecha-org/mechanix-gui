@@ -1,25 +1,32 @@
 use crate::{
-    modules::wireless::service::{WirelessInfoResponse, WirelessScanListResponse, WirelessService},
-    settings::{LayoutSettings, Modules, NetworkItemWidgetConfigs, WidgetConfigs},
+    modules::wireless::service::{
+        KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
+        WirelessScanListResponse, WirelessService,
+    },
+    settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::custom_network_item::{
         CustomNetworkItem, CustomNetworkItemSettings, Message as CustomNetworkItemMessage,
-    }
+    },
 };
 use custom_widgets::icon_button::{
     IconButton, IconButtonCss, InitSettings as IconButtonStetings,
-    InputMessage as IconButtonInputMessage, OutputMessage as IconButtonOutputMessage,
+    OutputMessage as IconButtonOutputMessage,
 };
 use gtk::prelude::*;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
-    gtk::{self, glib::clone},
+    gtk::{
+        self,
+        glib::{self},
+    },
     AsyncComponentSender, Component, ComponentController, Controller, RelmRemoveAllExt,
 };
-
+use std::time::Duration;
+use tokio::time;
 use tracing::{error, info};
 
-use super::connect_network_page::{ConnectNetworkPage,  Settings as ConnectNetworkPageSettings,Message as ConnectNetworkPageMessage,};
+use super::network_details_page::WirelessDetails;
 
 //Init Settings
 pub struct Settings {
@@ -31,16 +38,18 @@ pub struct Settings {
 //Model
 pub struct ManageNetworksPage {
     settings: Settings,
-    network_list: Vec<WirelessInfoResponse>,
-    selected_network: WirelessInfoResponse
-    
+    available_networks: Vec<WirelessInfoResponse>,
+    known_networks: Vec<KnownNetworkResponse>,
+    selected_network: WirelessDetails,
+    handle: Option<glib::JoinHandle<()>>,
 }
 
 //Widgets
 pub struct ManageNetworksPageWidgets {
     back_button: Controller<IconButton>,
     submit_button: Controller<IconButton>,
-    networks_list: gtk::Box,
+    known_networks_box: gtk::Box,
+    available_networks_box: gtk::Box,
 }
 
 //Messages
@@ -50,11 +59,13 @@ pub enum Message {
     KnownNetworkPressed,
     AvailableNetworkPressed,
     AddNetworkPressed,
-    NetworkListChanged(WirelessScanListResponse),
-    NetworkPressed(String),
-    SelectedNetworkChanged(WirelessInfoResponse),
-    Dummy
+    AvailableNetworkListChanged(WirelessScanListResponse),
+    KnownNetworkListChanged(KnownNetworkListResponse),
 
+    SelectedKnownNetworkChanged(WirelessDetails),
+    SelectedNetworkChanged(WirelessDetails),
+    NetworkDetailClicked(WirelessDetails),
+    UpdateView,
 }
 
 pub struct SettingItem {
@@ -108,48 +119,48 @@ impl AsyncComponent for ManageNetworksPage {
             .orientation(gtk::Orientation::Vertical)
             .build();
 
-        let known_networks_list = gtk::Box::builder()
+        let known_networks_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .build();
 
-        let known_network_1 = CustomNetworkItem::builder()
-            .launch(CustomNetworkItemSettings {
-                name: "Actonate 5g".to_string(),
-                is_connected: true,
-                is_private: true,
-                strength: 80,
-                connected_icon: widget_configs.network_item.connected_icon.clone(),
-                private_icon: widget_configs.network_item.private_icon.clone(),
-                strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
-                info_icon: widget_configs.network_item.info_icon.clone(),
-            })
-            .forward(sender.input_sender(), |msg| {
-                info!("Actonate 5g - info click- msg is {:?}", msg);
-                match msg {
-                    CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
-                }
-            });
+        // let known_network_1 = CustomNetworkItem::builder()
+        //     .launch(CustomNetworkItemSettings {
+        //         name: "Actonate 5g".to_string(),
+        //         is_connected: true,
+        //         is_private: true,
+        //         strength: 80,
+        //         connected_icon: widget_configs.network_item.connected_icon.clone(),
+        //         private_icon: widget_configs.network_item.private_icon.clone(),
+        //         strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
+        //         info_icon: widget_configs.network_item.info_icon.clone(),
+        //     })
+        //     .forward(sender.input_sender(), |msg| {
+        //         info!("Actonate 5g - info click- msg is {:?}", msg);
+        //         match msg {
+        //             CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
+        //         }
+        //     });
 
-        let known_network_2 = CustomNetworkItem::builder()
-            .launch(CustomNetworkItemSettings {
-                name: "Actonate 2g".to_string(),
-                is_connected: false,
-                is_private: true,
-                strength: 80,
-                connected_icon: widget_configs.network_item.connected_icon.clone(),
-                private_icon: widget_configs.network_item.private_icon.clone(),
-                strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
-                info_icon: widget_configs.network_item.info_icon.clone(),
-            })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
-                }
-            });
+        // let known_network_2 = CustomNetworkItem::builder()
+        //     .launch(CustomNetworkItemSettings {
+        //         name: "Actonate 2g".to_string(),
+        //         is_connected: false,
+        //         is_private: true,
+        //         strength: 80,
+        //         connected_icon: widget_configs.network_item.connected_icon.clone(),
+        //         private_icon: widget_configs.network_item.private_icon.clone(),
+        //         strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
+        //         info_icon: widget_configs.network_item.info_icon.clone(),
+        //     })
+        //     .forward(sender.input_sender(), |msg| {
+        //         info!("msg is {:?}", msg);
+        //         match msg {
+        //             CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
+        //         }
+        //     });
 
-        known_networks_list.append(known_network_1.widget());
-        known_networks_list.append(known_network_2.widget());
+        // known_networks_list.append(known_network_1.widget());
+        // known_networks_list.append(known_network_2.widget());
 
         let available_networks_label = gtk::Label::builder()
             .label("Available Networks")
@@ -157,48 +168,48 @@ impl AsyncComponent for ManageNetworksPage {
             .halign(gtk::Align::Start)
             .build();
 
-        let available_networks_list = gtk::Box::builder()
+        let available_networks_box = gtk::Box::builder()
             .orientation(gtk::Orientation::Vertical)
             .build();
 
-        let available_network_1 = CustomNetworkItem::builder()
-            .launch(CustomNetworkItemSettings {
-                name: "Mecha 5g".to_string(),
-                is_connected: false,
-                is_private: true,
-                strength: 80,
-                connected_icon: widget_configs.network_item.connected_icon.clone(),
-                private_icon: widget_configs.network_item.private_icon.clone(),
-                strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
-                info_icon: widget_configs.network_item.info_icon.clone(),
-            })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
-                }
-            });
+        // let available_network_1 = CustomNetworkItem::builder()
+        //     .launch(CustomNetworkItemSettings {
+        //         name: "Mecha 5g".to_string(),
+        //         is_connected: false,
+        //         is_private: true,
+        //         strength: 80,
+        //         connected_icon: widget_configs.network_item.connected_icon.clone(),
+        //         private_icon: widget_configs.network_item.private_icon.clone(),
+        //         strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
+        //         info_icon: widget_configs.network_item.info_icon.clone(),
+        //     })
+        //     .forward(sender.input_sender(), |msg| {
+        //         info!("msg is {:?}", msg);
+        //         match msg {
+        //             CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
+        //         }
+        //     });
 
-        let available_network_2 = CustomNetworkItem::builder()
-            .launch(CustomNetworkItemSettings {
-                name: "Mecha 5g".to_string(),
-                is_connected: false,
-                is_private: false,
-                strength: 80,
-                connected_icon: widget_configs.network_item.connected_icon.clone(),
-                private_icon: widget_configs.network_item.private_icon.clone(),
-                strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
-                info_icon: widget_configs.network_item.info_icon.clone(),
-            })
-            .forward(sender.input_sender(), |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
-                }
-            });
+        // let available_network_2 = CustomNetworkItem::builder()
+        //     .launch(CustomNetworkItemSettings {
+        //         name: "Mecha 5g".to_string(),
+        //         is_connected: false,
+        //         is_private: false,
+        //         strength: 80,
+        //         connected_icon: widget_configs.network_item.connected_icon.clone(),
+        //         private_icon: widget_configs.network_item.private_icon.clone(),
+        //         strength_icon: widget_configs.network_item.wifi_100_icon.clone(),
+        //         info_icon: widget_configs.network_item.info_icon.clone(),
+        //     })
+        //     .forward(sender.input_sender(), |msg| {
+        //         info!("msg is {:?}", msg);
+        //         match msg {
+        //             CustomNetworkItemMessage::WidgetClicked => Message::KnownNetworkPressed,
+        //         }
+        //     });
 
-        available_networks_list.append(available_network_1.widget());
-        available_networks_list.append(available_network_2.widget());
+        // available_networks_list.append(available_network_1.widget());
+        // available_networks_list.append(available_network_2.widget());
 
         root.append(&header);
 
@@ -207,9 +218,9 @@ impl AsyncComponent for ManageNetworksPage {
             .build();
         scrollable_content.append(&networks_list);
         scrollable_content.append(&known_networks_label);
-        scrollable_content.append(&known_networks_list);
+        scrollable_content.append(&known_networks_box);
         scrollable_content.append(&available_networks_label);
-        scrollable_content.append(&available_networks_list);
+        scrollable_content.append(&available_networks_box);
 
         let scrolled_window = gtk::ScrolledWindow::builder()
             .hscrollbar_policy(gtk::PolicyType::Never) // Disable horizontal scrolling
@@ -254,23 +265,25 @@ impl AsyncComponent for ManageNetworksPage {
 
         footer.append(submit_button_widget);
 
-
         root.append(&footer);
 
         let model = ManageNetworksPage {
             settings: init,
-            network_list: vec![],
-            selected_network: WirelessInfoResponse::default()
+            known_networks: vec![],
+            available_networks: vec![],
+            selected_network: WirelessDetails::default(),
+            handle: None,
         };
 
         let widgets = ManageNetworksPageWidgets {
             back_button,
             submit_button,
-            networks_list
+            known_networks_box,
+            available_networks_box,
         };
 
         let sender: relm4::Sender<Message> = sender.input_sender().clone();
-        get_info(sender).await;   
+        get_info(sender).await;
         AsyncComponentParts { model, widgets }
     }
 
@@ -283,82 +296,271 @@ impl AsyncComponent for ManageNetworksPage {
         info!("Update message is {:?}", message);
         match message {
             Message::BackPressed => {
+                self.handle
+                    .take()
+                    .unwrap()
+                    .into_source_id()
+                    .unwrap()
+                    .remove();
+                println!("<<<<<<<<<<<<<<<< Scan info Endded >>>>>>>>>>>>>>>>>");
+                println!(" ");
                 let _ = sender.output(Message::BackPressed);
             }
             Message::KnownNetworkPressed => {
+                let _ = sender.output(Message::SelectedNetworkChanged(
+                    self.selected_network.clone(),
+                ));
                 let _ = sender.output(Message::KnownNetworkPressed);
             }
-            Message::AvailableNetworkPressed => {
-                let _ = sender.output(Message::AvailableNetworkPressed);
+            Message::NetworkDetailClicked(value) => {
+                println!("=> NetworkDetailClicked {:?}", value);
+                self.handle
+                    .take()
+                    .unwrap()
+                    .into_source_id()
+                    .unwrap()
+                    .remove();
+                println!("<<<<<<<<<<<<<<<< Scan info Endded >>>>>>>>>>>>>>>>>");
+                println!(" ");
+                let _ = sender.output(Message::SelectedNetworkChanged(value.clone()));
+                let _ = sender.output(Message::KnownNetworkPressed);
             }
             Message::AddNetworkPressed => {
+                self.handle
+                    .take()
+                    .unwrap()
+                    .into_source_id()
+                    .unwrap()
+                    .remove();
+                println!("<<<<<<<<<<<<<<<< Scan info Endded >>>>>>>>>>>>>>>>>");
+                println!(" ");
                 let _ = sender.output(Message::AddNetworkPressed);
             }
-            Message::NetworkListChanged(value) => {
-                self.network_list = value.wireless_network.clone();
+            Message::AvailableNetworkListChanged(value) => {
+                self.available_networks = value.wireless_network.clone();
             }
-            Message::NetworkPressed(value) => match value.as_str() {
-                "known" => {
-                    let _ = sender.output(Message::KnownNetworkPressed);
-                }
-                "available" => {
-                    let _ = sender.output(Message::KnownNetworkPressed);
-                }
-                _ => {}
-            },
+            Message::KnownNetworkListChanged(value) => {
+                self.known_networks = value.known_network.clone();
+            }
             Message::SelectedNetworkChanged(value) => {
+                self.handle
+                    .take()
+                    .unwrap()
+                    .into_source_id()
+                    .unwrap()
+                    .remove();
+                println!("<<<<<<<<<<<<<<<< Scan info Endded >>>>>>>>>>>>>>>>>");
+                println!(" ");
                 self.selected_network = value.clone();
-
-                let _ = sender.output(Message::AvailableNetworkPressed);
+                
                 let _ = sender.output(Message::SelectedNetworkChanged(value));
+                let _ = sender.output(Message::AvailableNetworkPressed);
                 // self.show_password = true;
             }
-            Message::Dummy => {
+            Message::SelectedKnownNetworkChanged(network_details) => {
 
+                if network_details.flags.contains("[CURRENT]") {
+                    self.handle
+                        .take()
+                        .unwrap()
+                        .into_source_id()
+                        .unwrap()
+                        .remove();
+                    println!("<<<<<<<<<<<<<<<< Scan info Endded >>>>>>>>>>>>>>>>>");
+                    println!(" ");
+                    let _ = sender.output(Message::SelectedNetworkChanged(network_details.clone()));
+                    let _ = sender.output(Message::KnownNetworkPressed);
+                } else {
+                    let _ =
+                        WirelessService::connect_to_known_network(network_details.network_id.as_str()).await;
+                }
             }
+            Message::UpdateView => {
+
+                self.handle = Some(relm4::spawn_local(async move {
+                    loop {
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                        let sender: relm4::Sender<Message> = sender.input_sender().clone();
+                        get_info(sender).await;
+                    }
+                }));
+            }
+            _ => {}
         }
     }
 
     fn update_view(&self, widgets: &mut Self::Widgets, sender: AsyncComponentSender<Self>) {
-
-        widgets.networks_list.remove_all();
-        for network in <Vec<WirelessInfoResponse> as Clone>::clone(&self.network_list).into_iter() {
-            println!("::: {:?}", network);
-
-            let available_network_1 = CustomNetworkItem::builder()
-            .launch(CustomNetworkItemSettings {
-                name: network.name.to_string(),
-                is_connected: false,
-                is_private: true,
-                strength: 80,
-                connected_icon: self.settings.widget_configs.network_item.connected_icon.clone(),
-                private_icon: self.settings.widget_configs.network_item.private_icon.clone(),
-                strength_icon: self.settings.widget_configs.network_item.wifi_100_icon.clone(),
-                info_icon: self.settings.widget_configs.network_item.info_icon.clone(),
-            })
-            .forward(sender.input_sender(), move |msg| {
-                info!("msg is {:?}", msg);
-                match msg {
-                    CustomNetworkItemMessage::WidgetClicked => Message::SelectedNetworkChanged(network.clone()),
+        widgets.known_networks_box.remove_all();
+        for network in <Vec<KnownNetworkResponse> as Clone>::clone(&self.known_networks).into_iter()
+        {
+            let mut network_details = WirelessInfoResponse::default();
+            match self
+                .available_networks
+                .iter()
+                .find(|i| i.name == network.ssid)
+            {
+                Some(value) => {
+                    network_details = value.clone();
                 }
-            });
-            widgets.networks_list.append(available_network_1.widget());
+                None => {}
+            }
 
+            let sender_obj = sender.clone();
+            let network_item =
+                get_known_network_list_item(&self, network, network_details.clone(), sender_obj);
+            widgets.known_networks_box.append(network_item.widget());
+        }
 
+        widgets.available_networks_box.remove_all();
+        for network in
+            <Vec<WirelessInfoResponse> as Clone>::clone(&self.available_networks).into_iter()
+        {
+            if self.known_networks.iter().any(|i| i.ssid == network.name) {
+                continue;
+            }
 
-
-        }       
-
+            let sender_obj = sender.clone();
+            let network_item = get_network_list_item(&self, network, sender_obj);
+            widgets.available_networks_box.append(network_item.widget());
+        }
     }
 }
 
 async fn get_info(sender: relm4::Sender<Message>) {
-    match WirelessService::scan().await {
+    println!("<<<<<<<<<<<<<<<< Scan info >>>>>>>>>>>>>>>>>");
+    match WirelessService::known_networks().await {
         Ok(value) => {
-            let _ = sender.send(Message::NetworkListChanged(value));
+            let _ = sender.send(Message::KnownNetworkListChanged(value));
         }
         Err(e) => {
-            error!("Error getting device oem info: {}", e);
+            error!("Error getting known_networks info: {}", e);
         }
     };
+
+    match WirelessService::scan().await {
+        Ok(value) => {
+            let _ = sender.send(Message::AvailableNetworkListChanged(value));
+        }
+        Err(e) => {
+            error!("Error getting scan info: {}", e);
+        }
+    };
+}
+
+fn get_network_list_item(
+    network_page: &ManageNetworksPage,
+    network: WirelessInfoResponse,
+    sender: AsyncComponentSender<ManageNetworksPage>,
+) -> Controller<CustomNetworkItem> {
+
+    let details = WirelessDetails{
+        network_id: "".to_string(),
+        mac: network.mac.to_string(),
+        frequency: network.frequency.to_string(),
+        signal: network.signal.to_string(),
+        flags: network.flags.to_string(),
+        name: network.name.to_string(),
+    };
+    CustomNetworkItem::builder()
+        .launch(CustomNetworkItemSettings {
+            name: network.name.to_string(),
+            is_connected: false,
+            is_private: true,
+            strength: 80,
+            connected_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .connected_icon
+                .clone(),
+            private_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .private_icon
+                .clone(),
+            strength_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .wifi_100_icon
+                .clone(),
+            info_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .info_icon
+                .clone(),
+        })
+        .forward(sender.input_sender(), move |msg| {
+            info!("msg is {:?}", msg);
+            match msg {
+                CustomNetworkItemMessage::WidgetClicked => {
+                    Message::SelectedNetworkChanged(details.clone())
+                }
+                CustomNetworkItemMessage::InfoWidgetClicked => {
+                    Message::NetworkDetailClicked(details.clone())
+                }
+            }
+        })
+}
+
+fn get_known_network_list_item(
+    network_page: &ManageNetworksPage,
+    network: KnownNetworkResponse,
+    network_details: WirelessInfoResponse,
+    sender: AsyncComponentSender<ManageNetworksPage>,
+) -> Controller<CustomNetworkItem> {
+    let is_connected = network.flags.contains("[CURRENT]");
+    let details = WirelessDetails{
+        network_id: network.network_id,
+        mac: network_details.mac.to_string(),
+        frequency: network_details.frequency.to_string(),
+        signal: network_details.signal.to_string(),
+        flags: network_details.flags.to_string(),
+        name: network_details.name.to_string(),
+    };
+
+    CustomNetworkItem::builder()
+        .launch(CustomNetworkItemSettings {
+            name: network_details.name.to_string(),
+            is_connected: is_connected,
+            is_private: true,
+            strength: 80,
+            connected_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .connected_icon
+                .clone(),
+            private_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .private_icon
+                .clone(),
+            strength_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .wifi_100_icon
+                .clone(),
+            info_icon: network_page
+                .settings
+                .widget_configs
+                .network_item
+                .info_icon
+                .clone(),
+        })
+        .forward(sender.input_sender(), move |msg| {
+            info!("msg is {:?}", msg);
+            match msg {
+                CustomNetworkItemMessage::WidgetClicked => {
+                    Message::SelectedKnownNetworkChanged(details.clone())
+                }
+                CustomNetworkItemMessage::InfoWidgetClicked => {
+                    Message::NetworkDetailClicked(details.clone())
+                }
+            }
+        })
 }

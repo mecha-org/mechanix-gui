@@ -2,10 +2,9 @@ use gtk::prelude::*;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
-    gtk::{self, glib::clone},
-    AsyncComponentSender, Component, ComponentController, Controller, RelmRemoveAllExt,
+    gtk,
+    AsyncComponentSender, Component, ComponentController, Controller, 
 };
-
 
 use crate::{
     modules::wireless::service::{WirelessInfoResponse, WirelessService},
@@ -22,7 +21,9 @@ use custom_widgets::{
     },
 };
 
-use tracing::info;
+use tracing::{error, info};
+
+use super::network_details_page::WirelessDetails;
 
 //Init Settings
 pub struct Settings {
@@ -34,7 +35,7 @@ pub struct Settings {
 //Model
 pub struct ConnectNetworkPage {
     settings: Settings,
-    selected_network: WirelessInfoResponse,
+    selected_network: WirelessDetails,
     password: String,
 }
 
@@ -53,8 +54,9 @@ pub enum Message {
     BackPressed,
     HomeIconPressed,
     PasswordChange(String),
-    ConnectToNetworkChanged(WirelessInfoResponse),
+    ConnectToNetworkChanged(WirelessDetails),
     SubmitChanged,
+    NetworkConnected,
 }
 
 pub struct SettingItem {
@@ -151,7 +153,7 @@ impl AsyncComponent for ConnectNetworkPage {
 
         let model = ConnectNetworkPage {
             settings: init,
-            selected_network: WirelessInfoResponse::default(),
+            selected_network: WirelessDetails::default(),
             password: "".to_string(),
         };
 
@@ -173,33 +175,50 @@ impl AsyncComponent for ConnectNetworkPage {
     ) {
         info!("Update message is {:?}", message);
         match message {
-            Message::MenuItemPressed(key) => {}
+            Message::MenuItemPressed(_key) => {}
             Message::BackPressed => {
                 let _ = sender.output(Message::BackPressed);
             }
             Message::HomeIconPressed => {
-                sender.output(Message::HomeIconPressed);
+                let _ = sender.output(Message::HomeIconPressed);
             }
             Message::PasswordChange(text) => {
                 self.password = text.clone();
             }
-            Message::ConnectToNetworkChanged(value) => self.selected_network = value.clone(),
+            Message::ConnectToNetworkChanged(value) => {
+                // if value.name.eq(&self.selected_network.name){
+
+                // } else {
+                    self.selected_network = value.clone();
+                    self.password = "".to_string();
+                // }
+
+            },
             Message::SubmitChanged => {
                 println!(
                     "connect to network {:?} {:?}",
                     self.selected_network.name.as_str(),
                     self.password.as_str()
                 );
-                WirelessService::connect_to_network(
+                match WirelessService::connect_to_network(
                     self.selected_network.name.as_str(),
                     self.password.as_str(),
                 )
-                .await;
+                .await
+                {
+                    Ok(()) => {
+                        let _ = sender.output(Message::BackPressed);
+                    }
+                    Err(e) => {
+                        error!("Error getting known_networks info: {}", e);
+                    }
+                }
             }
+            _ => {}
         }
     }
 
-    fn update_view(&self, widgets: &mut Self::Widgets, sender: AsyncComponentSender<Self>) {
+    fn update_view(&self, widgets: &mut Self::Widgets, _sender: AsyncComponentSender<Self>) {
         widgets
             .network_name
             .set_label(self.selected_network.name.as_str());

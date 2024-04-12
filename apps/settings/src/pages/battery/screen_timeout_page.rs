@@ -202,27 +202,27 @@ impl AsyncComponent for ScreenTimeoutPage {
 }
 
 async fn get_info(sender: relm4::Sender<Message>) {
-    match Power::get_screen_timeout().await {
-        Ok(value) => {
+    // match Power::get_screen_timeout().await {
+    //     Ok(value) => {
             
-            let _ = sender.send(Message::SelectedValueChanged(value));
-        }
-        Err(e) => {
-            error!("Error getting device get_screen_timeout: {}", e);
-        }
-    };
+    //         let _ = sender.send(Message::SelectedValueChanged(value));
+    //     }
+    //     Err(e) => {
+    //         error!("Error getting device get_screen_timeout: {}", e);
+    //     }
+    // };
 }
 
 async fn set_screen_timeout(sender: relm4::Sender<Message>, value: String) {
-    match Power::set_screen_timeout(get_screen_timeout_in_seconds(&value)).await {
-        Ok(value) => {
+    // match Power::set_screen_timeout(get_screen_timeout_in_seconds(&value)).await {
+    //     Ok(value) => {
             
-            let _ = sender.send(Message::BackPressed);
-        }
-        Err(e) => {
-            error!("Error getting device set_screen_timeout: {}", e);
-        }
-    };
+    //         let _ = sender.send(Message::BackPressed);
+    //     }
+    //     Err(e) => {
+    //         error!("Error getting device set_screen_timeout: {}", e);
+    //     }
+    // };
 }
 
 fn get_radio_button(

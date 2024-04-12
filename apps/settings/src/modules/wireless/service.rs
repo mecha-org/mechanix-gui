@@ -21,6 +21,21 @@ pub struct WirelessScanListResponse {
     pub wireless_network: Vec<WirelessInfoResponse>,
 }
 
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, Default)]
+/// A known WiFi network.
+#[zvariant(signature = "a{sv}")]
+pub struct KnownNetworkResponse {
+    pub network_id: String,
+    pub ssid: String,
+    pub flags: String,
+}
+
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, Default)]
+/// A known WiFi networkList
+#[zvariant(signature = "a{sv}")]
+pub struct KnownNetworkListResponse {
+    pub known_network: Vec<KnownNetworkResponse>,
+}
 
 
 #[proxy(
@@ -30,11 +45,15 @@ pub struct WirelessScanListResponse {
 )]
 trait Wireless {
     async fn scan(&self) -> Result<WirelessScanListResponse>;
+    async fn known_networks(&self) -> Result<KnownNetworkListResponse>;
+    async fn select_network(&self, network_id: &str) ->Result<()>;
+
     async fn info(&self) -> Result<WirelessInfoResponse>;
     async fn status(&self) -> Result<bool>;
     async fn enable(&self) -> Result<bool>;
     async fn disable(&self) -> Result<bool>;
     async fn connect(&self, ssid: &str, password: &str) ->Result<()>;
+
     async fn disconnect(&self, ssid: &str) ->Result<()>;
 
     
@@ -49,7 +68,15 @@ impl WirelessService {
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
         let reply =  proxy.scan().await?;
-        println!("scan network reply: {:?}", reply);
+        info!("scan network reply: {:?}", reply);
+        Ok(reply)
+    }
+
+    pub async fn known_networks() -> Result<KnownNetworkListResponse> {
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply =  proxy.known_networks().await?;
+        info!("known_networks  reply: {:?}", reply);
         Ok(reply)
     }
 
@@ -57,40 +84,40 @@ impl WirelessService {
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
         let reply =  proxy.info().await?;
-        println!("current connected wifi : {:?}", reply);
+        info!("current connected wifi : {:?}", reply);
         Ok(reply)
     }
 
     pub async fn wifi_status() -> Result<bool> {
-        println!("In wireless status call:: ");
+        info!("In wireless status call:: ");
         let connection = Connection::system().await?;
 
         let proxy = WirelessProxy::new(&connection).await?;
 
         let reply =  proxy.status().await?;
-        println!("status reply: {:?}", reply);
+        info!("wifi_status reply: {:?}", reply);
         Ok(reply)
     }
 
     pub async fn enable_wifi() -> Result<bool> {
-        println!("In wireless status call:: ");
+        info!("In wireless status call:: ");
         let connection = Connection::system().await?;
 
         let proxy = WirelessProxy::new(&connection).await?;
 
         let reply =  proxy.enable().await?;
-        println!("enable_wifi reply: {:?}", reply);
+        info!("enable_wifi reply: {:?}", reply);
         Ok(reply)
     }
 
     pub async fn disable_wifi() -> Result<bool> {
-        println!("In wireless status call:: ");
+        info!("In wireless status call:: ");
         let connection = Connection::system().await?;
 
         let proxy = WirelessProxy::new(&connection).await?;
 
         let reply =  proxy.disable().await?;
-        println!("disable_wifi reply: {:?}", reply);
+        info!("disable_wifi reply: {:?}", reply);
         Ok(reply)
     }
 
@@ -100,17 +127,25 @@ impl WirelessService {
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
         let reply =  proxy.connect(ssid, password).await?;
-        println!("get performance reply: {:?}", reply);
+        info!("get performance reply: {:?}", reply);
         Ok(())
     }
 
+    pub async fn connect_to_known_network(network_id: &str) -> Result<()> {
+
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply =  proxy.select_network(network_id).await?;
+        info!("get performance reply: {:?}", reply);
+        Ok(())
+    }
 
     pub async fn disconnect(value: &str) -> Result<()> {
 
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
         let reply =  proxy.disconnect(value).await?;
-        println!("get performance reply: {:?}", reply);
+        println!("get disconnect reply: {:?}", reply);
         Ok(reply)
     }
 }
