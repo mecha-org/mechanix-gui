@@ -4,7 +4,6 @@ on:
     branches:
       - main
       - dev-build
-      - build-workflow
 
 env:
   CARGO_INCREMENTAL: 0
@@ -39,19 +38,19 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           rustup default 1.75.0
-      - name: Setup | Install cross [Linux]
+      - name: Install cross
         uses: taiki-e/install-action@cross
 
-      - name: Setup Cargo Deb
+      - name: Install cargo-deb
         run: cargo install cargo-deb
 
-      - name: Install GCC for ARM64
+      - name: Install gcc for arm64
         run: sudo apt install gcc-11-aarch64-linux-gnu
 
-      - name: Add ARM64 architecture
+      - name: Add arm64 architecture
         run: sudo dpkg --add-architecture arm64
 
-      - name: Create sources.list file
+      - name: Create sources.list
         run: |
           sudo touch /etc/apt/sources.list.d/arm-cross-compile-sources.list
           echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
@@ -64,6 +63,7 @@ jobs:
       - name: Update default sources.list
         run: |
           sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+
       - name: Update apt
         run: sudo apt update
 
@@ -74,14 +74,14 @@ jobs:
           libxkbcommon-dev:arm64 \
           libdbus-1-dev:arm64
 
-      - name: Set up SSH key
+      - name: Set up Git SSH key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Build | Build [${{ matrix.package }}]
+      - name: Build [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-22.04'
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
@@ -89,9 +89,9 @@ jobs:
         run: |
           cd ${{ matrix.path }}
           cargo --config net.git-fetch-with-cli=true fetch
-          cross build --release --target ${{ matrix.target }}
+          cross build --release --target ${{ matrix.target }} --package ${{ matrix.package }}
           ls -la
-      - name: Build | Deb [${{ matrix.package }}]
+      - name: Package deb [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-22.04'
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
@@ -100,7 +100,7 @@ jobs:
           cd ${{ matrix.path }}
           cargo deb --no-build --target ${{matrix.target}} --package ${{ matrix.package }}
           ls -la
-      - name: Post Build | Prepare artifacts [${{ matrix.package }}]
+      - name: Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-22.04'
         run: |
           cd services/target/${{ matrix.target }}/release/
@@ -109,7 +109,7 @@ jobs:
           cd services/target/${{ matrix.target }}/debian/
           mv *.deb ../../../../
           cd -
-      - name: Release | Upload artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
@@ -123,7 +123,7 @@ jobs:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
 
-      - name: Create Release
+      - name: Push release
         id: create_release
         uses: softprops/action-gh-release@v2
         env:
