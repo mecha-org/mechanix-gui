@@ -1,3 +1,3 @@
 [target.aarch64-unknown-linux-gnu]
-objcopy = { path ="aarch64-linux-gnu-objcopy" }
-strip = { path ="aarch64-linux-gnu-strip" }
+objcopy = { path = "aarch64-linux-gnu-objcopy" }
+strip = { path = "aarch64-linux-gnu-strip" }

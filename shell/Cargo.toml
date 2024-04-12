@@ -39,15 +39,8 @@ homepage = "https://mecha.so"
 categories = ["gui"]
 keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
 
-
-[workspace.metadata.cross.target.aarch64-unknown-linux-gnu]
-pre-build = [
-    "dpkg --add-architecture $CROSS_DEB_ARCH", 
-    "apt-get update && apt-get --assume-yes install libwayland-dev libwayland-dev:$CROSS_DEB_ARCH libxkbcommon-dev:$CROSS_DEB_ARCH"
-]
-
 [workspace.dependencies]
 mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "724667e9f5ccf14045c9e777e3f184bd150ef1e5" }
 mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "724667e9f5ccf14045c9e777e3f184bd150ef1e5" }
 mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "724667e9f5ccf14045c9e777e3f184bd150ef1e5" }
-mechanix_zbus_client = { path = "../services/client/zbus" }
+mechanix-zbus-client = { path = "../services/client/zbus" }
