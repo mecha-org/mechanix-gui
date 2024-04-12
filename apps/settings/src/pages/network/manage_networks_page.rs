@@ -1,8 +1,4 @@
 use crate::{
-    modules::wireless::service::{
-        KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
-        WirelessScanListResponse, WirelessService,
-    },
     settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::custom_network_item::{
         CustomNetworkItem, CustomNetworkItemSettings, Message as CustomNetworkItemMessage,
@@ -13,6 +9,10 @@ use custom_widgets::icon_button::{
     OutputMessage as IconButtonOutputMessage,
 };
 use gtk::prelude::*;
+use mechanix_zbus_client::wireless::{
+    KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse, WirelessScanListResponse,
+    WirelessService,
+};
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
@@ -352,13 +352,12 @@ impl AsyncComponent for ManageNetworksPage {
                 println!("<<<<<<<<<<<<<<<< Scan info Endded >>>>>>>>>>>>>>>>>");
                 println!(" ");
                 self.selected_network = value.clone();
-                
+
                 let _ = sender.output(Message::SelectedNetworkChanged(value));
                 let _ = sender.output(Message::AvailableNetworkPressed);
                 // self.show_password = true;
             }
             Message::SelectedKnownNetworkChanged(network_details) => {
-
                 if network_details.flags.contains("[CURRENT]") {
                     self.handle
                         .take()
@@ -371,12 +370,13 @@ impl AsyncComponent for ManageNetworksPage {
                     let _ = sender.output(Message::SelectedNetworkChanged(network_details.clone()));
                     let _ = sender.output(Message::KnownNetworkPressed);
                 } else {
-                    let _ =
-                        WirelessService::connect_to_known_network(network_details.network_id.as_str()).await;
+                    let _ = WirelessService::connect_to_known_network(
+                        network_details.network_id.as_str(),
+                    )
+                    .await;
                 }
             }
             Message::UpdateView => {
-
                 self.handle = Some(relm4::spawn_local(async move {
                     loop {
                         tokio::time::sleep(Duration::from_secs(5)).await;
@@ -452,8 +452,7 @@ fn get_network_list_item(
     network: WirelessInfoResponse,
     sender: AsyncComponentSender<ManageNetworksPage>,
 ) -> Controller<CustomNetworkItem> {
-
-    let details = WirelessDetails{
+    let details = WirelessDetails {
         network_id: "".to_string(),
         mac: network.mac.to_string(),
         frequency: network.frequency.to_string(),
@@ -512,7 +511,7 @@ fn get_known_network_list_item(
     sender: AsyncComponentSender<ManageNetworksPage>,
 ) -> Controller<CustomNetworkItem> {
     let is_connected = network.flags.contains("[CURRENT]");
-    let details = WirelessDetails{
+    let details = WirelessDetails {
         network_id: network.network_id,
         mac: network_details.mac.to_string(),
         frequency: network_details.frequency.to_string(),

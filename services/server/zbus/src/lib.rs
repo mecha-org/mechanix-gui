@@ -1,2 +1,4 @@
 mod interfaces;
-pub use interfaces::{WirelessInfoResponse, WirelessScanListResponse};
+pub use interfaces::{
+    KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse, WirelessScanListResponse,
+};

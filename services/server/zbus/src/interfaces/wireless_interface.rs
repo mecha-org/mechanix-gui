@@ -27,7 +27,7 @@ pub struct WirelessScanListResponse {
     pub wireless_network: Vec<WirelessInfoResponse>,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
 /// A known WiFi network.
 #[zvariant(signature = "a{sv}")]
 pub struct KnownNetworkResponse {
@@ -36,7 +36,7 @@ pub struct KnownNetworkResponse {
     pub flags: String,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
 /// A known WiFi networkList
 #[zvariant(signature = "a{sv}")]
 pub struct KnownNetworkListResponse {

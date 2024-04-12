@@ -1,16 +1,6 @@
 use std::time::Duration;
 
-use gtk::{glib::clone, prelude::*};
-use relm4::{
-    async_trait::async_trait,
-    component::{AsyncComponent, AsyncComponentParts},
-    gtk::{self, ffi::GtkSwitch, GestureClick},
-    AsyncComponentSender, Component, ComponentController, ComponentParts, ComponentSender,
-    Controller,
-};
-
 use crate::{
-    modules::wireless::service::{WirelessInfoResponse, WirelessService},
     settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::{
         self,
@@ -22,6 +12,15 @@ use crate::{
     },
 };
 use custom_utils::get_image_from_path;
+use gtk::{glib::clone, prelude::*};
+use mechanix_zbus_client::wireless::{WirelessInfoResponse, WirelessService};
+use relm4::{
+    async_trait::async_trait,
+    component::{AsyncComponent, AsyncComponentParts},
+    gtk::{self, ffi::GtkSwitch, GestureClick},
+    AsyncComponentSender, Component, ComponentController, ComponentParts, ComponentSender,
+    Controller,
+};
 use tracing::{error, info};
 
 use super::{manage_networks_page::ManageNetworksPage, network_details_page::WirelessDetails};
@@ -52,8 +51,7 @@ pub struct NetworkPageWidgets {
     enable_network_text: gtk::Label,
     manage_networks: Controller<CustomListItem>,
     toggle_wifi_spinner: gtk::Spinner,
-    toggle_wifi_row: gtk::Box
-
+    toggle_wifi_row: gtk::Box,
 }
 
 //Messages
@@ -141,7 +139,6 @@ impl Component for NetworkPage {
             .css_classes(["custom-list-item-box-label", "disabled"])
             .build();
 
-
         let toggle_wifi_spinner = gtk::Spinner::builder()
             .css_classes(["blue", "hide"])
             .height_request(25)
@@ -153,12 +150,10 @@ impl Component for NetworkPage {
         let style_context = switch.style_context();
         style_context.add_class("custom-switch");
         switch.set_visible(false);
-        
 
         toggle_wifi_row.append(&enable_network_text);
         toggle_wifi_row.append(&switch);
         toggle_wifi_row.append(&toggle_wifi_spinner);
-
 
         let wifi_click_gesture = GestureClick::builder().button(0).build();
         wifi_click_gesture.connect_pressed(clone!(@strong sender => move |this, _, _,_| {
@@ -294,7 +289,7 @@ impl Component for NetworkPage {
             enable_network_text,
             manage_networks,
             toggle_wifi_spinner,
-            toggle_wifi_row
+            toggle_wifi_row,
         };
 
         // let sender: relm4::Sender<Message> = sender.input_sender().clone();
@@ -407,7 +402,7 @@ impl Component for NetworkPage {
                 });
             }
             Message::ConnectedNetworkClicked => {
-                let details = WirelessDetails{
+                let details = WirelessDetails {
                     network_id: "".to_string(),
                     mac: self.connected_network.mac.to_string(),
                     frequency: self.connected_network.frequency.to_string(),
@@ -415,10 +410,8 @@ impl Component for NetworkPage {
                     flags: self.connected_network.flags.to_string(),
                     name: self.connected_network.name.to_string(),
                 };
-            
-                let _ = sender.output(Message::SelectedNetworkChanged(
-                    details
-                ));
+
+                let _ = sender.output(Message::SelectedNetworkChanged(details));
                 let _ = sender.output(Message::EnableNetworkPressed);
             }
 
@@ -483,7 +476,6 @@ impl Component for NetworkPage {
                 widgets.enable_network_text.add_css_class("disabled");
                 widgets.toggle_wifi_spinner.show();
                 widgets.wifi_switch.set_visible(false);
-
             }
             false => {
                 widgets.enable_network_text.remove_css_class("disabled");

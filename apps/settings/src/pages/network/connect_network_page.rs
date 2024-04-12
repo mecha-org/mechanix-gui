@@ -1,15 +1,12 @@
 use gtk::prelude::*;
+use mechanix_zbus_client::wireless::WirelessService;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
-    gtk,
-    AsyncComponentSender, Component, ComponentController, Controller, 
+    gtk, AsyncComponentSender, Component, ComponentController, Controller,
 };
 
-use crate::{
-    modules::wireless::service::{WirelessInfoResponse, WirelessService},
-    settings::{LayoutSettings, Modules, WidgetConfigs},
-};
+use crate::settings::{LayoutSettings, Modules, WidgetConfigs};
 use custom_widgets::{
     icon_button::{
         IconButton, IconButtonCss, InitSettings as IconButtonStetings,
@@ -189,11 +186,10 @@ impl AsyncComponent for ConnectNetworkPage {
                 // if value.name.eq(&self.selected_network.name){
 
                 // } else {
-                    self.selected_network = value.clone();
-                    self.password = "".to_string();
+                self.selected_network = value.clone();
+                self.password = "".to_string();
                 // }
-
-            },
+            }
             Message::SubmitChanged => {
                 println!(
                     "connect to network {:?} {:?}",

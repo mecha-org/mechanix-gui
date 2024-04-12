@@ -1,4 +1,7 @@
-use mechanix_zbus_services::{WirelessInfoResponse, WirelessScanListResponse};
+use mechanix_zbus_services::{
+    KnownNetworkListResponse, WirelessInfoResponse, WirelessScanListResponse,
+};
+use tracing::info;
 use zbus::{proxy, Connection, Result};
 
 #[proxy(
@@ -8,11 +11,15 @@ use zbus::{proxy, Connection, Result};
 )]
 trait Wireless {
     async fn scan(&self) -> Result<WirelessScanListResponse>;
+    async fn known_networks(&self) -> Result<KnownNetworkListResponse>;
+    async fn select_network(&self, network_id: &str) -> Result<()>;
+
     async fn info(&self) -> Result<WirelessInfoResponse>;
     async fn status(&self) -> Result<bool>;
     async fn enable(&self) -> Result<bool>;
     async fn disable(&self) -> Result<bool>;
     async fn connect(&self, ssid: &str, password: &str) -> Result<()>;
+
     async fn disconnect(&self, ssid: &str) -> Result<()>;
 }
 
@@ -23,6 +30,13 @@ impl WirelessService {
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
         let reply = proxy.scan().await?;
+        Ok(reply)
+    }
+
+    pub async fn known_networks() -> Result<KnownNetworkListResponse> {
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply = proxy.known_networks().await?;
         Ok(reply)
     }
 
@@ -64,6 +78,13 @@ impl WirelessService {
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
         let reply = proxy.connect(ssid, password).await?;
+        Ok(())
+    }
+
+    pub async fn connect_to_known_network(network_id: &str) -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = WirelessProxy::new(&connection).await?;
+        let reply = proxy.select_network(network_id).await?;
         Ok(())
     }
 

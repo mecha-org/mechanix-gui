@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 use crate::{
-    modules::power::service::Power,
     settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::{
         custom_list_radio_button::{
@@ -16,11 +13,13 @@ use custom_widgets::icon_button::{
     InputMessage as IconButtonInputMessage, OutputMessage as IconButtonOutputMessage,
 };
 use gtk::prelude::*;
+use mechanix_zbus_client::power::Power;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
     gtk, AsyncComponentSender, Component, ComponentBuilder, ComponentController, Controller,
 };
+use std::collections::HashMap;
 use tracing::{error, info};
 
 //Init Settings

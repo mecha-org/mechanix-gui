@@ -33,6 +33,6 @@ impl BatteryService {
             )),
         };
 
-        Ok((capacity, status))
+        Ok((capacity as u8, status))
     }
 }

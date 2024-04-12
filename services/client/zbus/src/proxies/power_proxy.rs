@@ -9,9 +9,9 @@ use zbus::{proxy, Connection, Result};
 trait PowerBusInterface {
     async fn get_battery_status(&self) -> Result<String>;
     async fn get_battery_percentage(&self) -> Result<f32>;
-    async fn get_screen_timeout(&self) -> Result<u32>;
-    async fn get_cpu_governor(&self) -> Result<String>;
-    async fn set_screen_timeout(&self, value: u32) -> Result<u32>;
+    // async fn get_screen_timeout(&self) -> Result<u32>;
+    async fn get_current_cpu_governor(&self) -> Result<String>;
+    // async fn set_screen_timeout(&self, value: u32) ->Result<u32>;
     async fn set_cpu_governor(&self, value: &str) -> Result<String>;
 }
 
@@ -24,40 +24,25 @@ impl Power {
         let reply = proxy.get_battery_status().await?;
         Ok(reply)
     }
-
-    pub async fn get_screen_timeout() -> Result<String> {
+    pub async fn get_battery_percentage() -> Result<f32> {
         let connection = Connection::system().await?;
         let proxy = PowerBusInterfaceProxy::new(&connection).await?;
-        let reply = proxy.get_screen_timeout().await?;
-        let result = format!("{}s", reply);
-        Ok(result)
+        let reply = proxy.get_battery_percentage().await?;
+        Ok(reply)
     }
 
     pub async fn get_performance_mode() -> Result<String> {
         let connection = Connection::system().await?;
         let proxy = PowerBusInterfaceProxy::new(&connection).await?;
-        let reply = proxy.get_cpu_governor().await?;
+        let reply = proxy.get_current_cpu_governor().await?;
         let result = match reply.as_str() {
-            "performance" => "High",
-            "powersave" => "Low",
-            "ondemand" => "Balanced",
+            "performance\n" => "High",
+            "powersave\n" => "Low",
+            "conservative\n" => "Balanced",
             _ => "",
         };
+        info!("get performance reply: {:?}", reply);
         Ok(result.to_string())
-    }
-
-    pub async fn set_screen_timeout(value: u32) -> Result<String> {
-        let connection = Connection::system().await?;
-        let proxy = PowerBusInterfaceProxy::new(&connection).await?;
-        let reply = match proxy.set_screen_timeout(value).await {
-            Ok(value) => value,
-            Err(e) => {
-                print!("error {:?}", e);
-                0
-            }
-        };
-        let result = format!("{}s", reply);
-        Ok(result)
     }
 
     pub async fn set_cpu_governor(value: &str) -> Result<String> {
@@ -67,18 +52,12 @@ impl Power {
         let value_map = match value {
             "High" => "performance",
             "Low" => "powersave",
-            "Balanced" => "ondemand",
+            "Balanced" => "conservative",
             _ => "",
         };
 
         let reply = proxy.set_cpu_governor(value_map).await?;
+        info!("get performance reply: {:?}", reply);
         Ok(reply)
-    }
-
-    pub async fn get_battery_percentage() -> Result<u8> {
-        let connection = Connection::system().await?;
-        let proxy = PowerBusInterfaceProxy::new(&connection).await?;
-        let reply = proxy.get_battery_percentage().await?;
-        Ok(reply.round() as u8)
     }
 }
