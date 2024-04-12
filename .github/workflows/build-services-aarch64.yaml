@@ -1,4 +1,4 @@
-name: Shell - Build aarch64
+name: Services - Build aarch64
 on:
   push:
     branches:
@@ -23,9 +23,9 @@ jobs:
         include:
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-22.04
-            name: mechanix-status-bar-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-status-bar
-            path: shell
+            name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-zbus-services
+            path: services
 
     runs-on: ${{ matrix.os }}
     continue-on-error: false
@@ -70,7 +70,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install \
-          libdbus-1-dev \
+          libwayland-dev:arm64 \
+          libxkbcommon-dev:arm64 \
           libdbus-1-dev:arm64
 
       - name: Set up SSH key
@@ -79,7 +80,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
-      # mechanix-greeter
+
       - name: Build | Build [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-22.04'
         env:
@@ -102,10 +103,10 @@ jobs:
       - name: Post Build | Prepare artifacts [${{ matrix.package }}]
         if: matrix.os == 'ubuntu-22.04'
         run: |
-          cd shell/target/${{ matrix.target }}/release/
+          cd services/target/${{ matrix.target }}/release/
           tar czvf ../../../../${{matrix.name}} ${{ matrix.package }}
           cd -
-          cd shell/target/${{ matrix.target }}/debian/
+          cd services/target/${{ matrix.target }}/debian/
           mv *.deb ../../../../
           cd -
       - name: Release | Upload artifacts
