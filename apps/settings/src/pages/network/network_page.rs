@@ -1,4 +1,5 @@
 use gtk::{glib::clone, prelude::*};
+use mechanix_zbus_client::wireless::{WirelessInfoResponse, WirelessService};
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
@@ -7,12 +8,13 @@ use relm4::{
 };
 
 use crate::{
-    modules::wireless::service::{WirelessInfoResponse, WirelessService},
     settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::{
-        self, custom_list_item::{
+        self,
+        custom_list_item::{
             CustomListItem, CustomListItemSettings, Message as CustomListItemMessage,
-        }, layout::{Layout, LayoutInit, LayoutMessage}
+        },
+        layout::{Layout, LayoutInit, LayoutMessage},
     },
 };
 use custom_utils::get_image_from_path;
@@ -37,7 +39,7 @@ pub struct NetworkPageWidgets {
     screen_layout: Controller<Layout>,
     connected_network_label: gtk::Label,
     wifi_switch: gtk::Switch,
-    connected_network: gtk::Box
+    connected_network: gtk::Box,
 }
 
 //Messages
@@ -133,8 +135,6 @@ impl AsyncComponent for NetworkPage {
         //     let _ = sender.input(Message::WifiStateToggle);
         // }));
         toggle_wifi_row.add_controller(wifi_click_gesture);
-
-
 
         network_details.append(&toggle_wifi_row);
 
@@ -257,7 +257,7 @@ impl AsyncComponent for NetworkPage {
             screen_layout,
             wifi_switch: switch,
             connected_network_label: enabled_network_text,
-            connected_network: enabled_network_row
+            connected_network: enabled_network_row,
         };
 
         let sender: relm4::Sender<Message> = sender.input_sender().clone();
@@ -298,7 +298,6 @@ impl AsyncComponent for NetworkPage {
             // }
             Message::WifiStatusChanged(value) => {
                 self.wifi_status = value.clone();
-                
             }
             Message::WifiStateToggle => {
                 self.wifi_status = !self.wifi_status;
@@ -308,10 +307,8 @@ impl AsyncComponent for NetworkPage {
                     true => {
                         match WirelessService::enable_wifi().await {
                             Ok(_status) => {
-
                                 let sender: relm4::Sender<Message> = sender.input_sender().clone();
                                 get_connected_network(sender).await;
-                                
                             }
                             Err(e) => {
                                 error!("Error enable_wifi: {}", e);
@@ -327,7 +324,6 @@ impl AsyncComponent for NetworkPage {
                         };
                     }
                 }
-
             }
             Message::ListItemPressed(value) => match value.as_str() {
                 "ethernet" => {
@@ -360,17 +356,16 @@ impl AsyncComponent for NetworkPage {
         widgets.wifi_switch.set_active(self.wifi_status.clone());
 
         match self.wifi_status {
-            true => {
-
-            },
+            true => {}
             false => {
                 widgets.connected_network.set_visible(false);
-            },
+            }
         };
-        widgets.connected_network_label.set_label(self.connected_network.name.as_str());
+        widgets
+            .connected_network_label
+            .set_label(self.connected_network.name.as_str());
         match self.connected_network.name.is_empty() {
             false => {
-               
                 widgets.connected_network.set_visible(true);
             }
             true => {
@@ -378,8 +373,7 @@ impl AsyncComponent for NetworkPage {
             }
         }
 
-        // 
-        
+        //
     }
 }
 
@@ -411,21 +405,19 @@ async fn get_info(sender: relm4::Sender<Message>) {
         Ok(status) => {
             let _ = sender.send(Message::WifiStatusChanged(status));
             match status {
-                true => {get_connected_network(sender).await;},
-                false => {},
+                true => {
+                    get_connected_network(sender).await;
+                }
+                false => {}
             }
-
         }
         Err(e) => {
             error!("Error getting device oem info: {}", e);
         }
     };
-
-    
-    
 }
 
-async fn get_connected_network(sender: relm4::Sender<Message>){
+async fn get_connected_network(sender: relm4::Sender<Message>) {
     match WirelessService::info().await {
         Ok(value) => {
             let _ = sender.send(Message::ConnectedNetworkChanged(value));

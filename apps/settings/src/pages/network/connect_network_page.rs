@@ -1,4 +1,5 @@
 use gtk::prelude::*;
+use mechanix_zbus_client::wireless::{WirelessInfoResponse, WirelessService};
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
@@ -6,11 +7,7 @@ use relm4::{
     AsyncComponentSender, Component, ComponentController, Controller, RelmRemoveAllExt,
 };
 
-
-use crate::{
-    modules::wireless::service::{WirelessInfoResponse, WirelessService},
-    settings::{LayoutSettings, Modules, WidgetConfigs},
-};
+use crate::settings::{LayoutSettings, Modules, WidgetConfigs};
 use custom_widgets::{
     icon_button::{
         IconButton, IconButtonCss, InitSettings as IconButtonStetings,

@@ -1,4 +1,5 @@
 use gtk::prelude::*;
+use mechanix_zbus_client::power::Power;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},
@@ -7,13 +8,13 @@ use relm4::{
 };
 
 use crate::{
-    modules::power::service::Power,
     settings::{LayoutSettings, Modules, WidgetConfigs},
     widgets::{
         custom_list_item::{
             CustomListItem, CustomListItemSettings, InputMessage as ListItemInputMessage,
             Message as CustomListItemMessage,
-        }, layout::{Layout, LayoutInit, LayoutMessage},
+        },
+        layout::{Layout, LayoutInit, LayoutMessage},
     },
 };
 
@@ -40,7 +41,7 @@ pub struct BatteryPageWidgets {
     battery_percentage_level: gtk::LevelBar,
     battery_performance_mode: Controller<CustomListItem>,
     screen_off_timeout: Controller<CustomListItem>,
-    screen_layout: Controller<Layout>
+    screen_layout: Controller<Layout>,
 }
 
 //Messages
@@ -124,7 +125,7 @@ impl AsyncComponent for BatteryPage {
                     CustomListItemMessage::WidgetClicked => Message::PerformanceOpted,
                 }
             });
-        
+
         battery_items.append(&battery_percentage_level);
         battery_items.append(screen_off_timeout.widget());
         battery_items.append(battery_performance_mode.widget());
@@ -136,18 +137,18 @@ impl AsyncComponent for BatteryPage {
         scrollable_content.append(&battery_label);
         scrollable_content.append(&battery_items);
 
-       
-
-        let screen_layout = Layout::builder().launch(LayoutInit {
-            title: "Battery".to_owned(),
-            content: scrollable_content,
-            footer_config: widget_configs.footer,
-        }).forward(sender.input_sender(), |msg| {
-            println!("Batery callback {:?}", msg);
-            match msg {
-        
-            LayoutMessage::BackPressed => Message::BackPressed,
-        }});
+        let screen_layout = Layout::builder()
+            .launch(LayoutInit {
+                title: "Battery".to_owned(),
+                content: scrollable_content,
+                footer_config: widget_configs.footer,
+            })
+            .forward(sender.input_sender(), |msg| {
+                println!("Batery callback {:?}", msg);
+                match msg {
+                    LayoutMessage::BackPressed => Message::BackPressed,
+                }
+            });
 
         root.append(screen_layout.widget());
 
@@ -230,7 +231,7 @@ impl AsyncComponent for BatteryPage {
 }
 
 async fn get_info(sender: relm4::Sender<Message>) {
-    match Power::get_battery_status().await {
+    match Power::get_battery_percentage().await {
         Ok(status) => {
             let _ = sender.send(Message::BatteryLevelChanged(status));
         }
@@ -241,7 +242,6 @@ async fn get_info(sender: relm4::Sender<Message>) {
 
     match Power::get_screen_timeout().await {
         Ok(value) => {
-           
             let _ = sender.send(Message::ScreenTimeoutChanged(value));
         }
         Err(e) => {
@@ -251,7 +251,6 @@ async fn get_info(sender: relm4::Sender<Message>) {
 
     match Power::get_performance_mode().await {
         Ok(value) => {
-           
             let _ = sender.send(Message::PerformanceModeChanged(value));
         }
         Err(e) => {

@@ -1,6 +1,6 @@
 use std::fmt;
 use gtk::{glib::clone, prelude::GtkWindowExt};
-use modules::wireless::service::WirelessInfoResponse;
+use mechanix_zbus_client::wireless::WirelessInfoResponse;
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncComponentParts, AsyncController };
 use relm4::async_trait::async_trait;
 use relm4::{gtk, AsyncComponentSender, RelmApp};
