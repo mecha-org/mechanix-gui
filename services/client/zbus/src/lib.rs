@@ -2,7 +2,7 @@ mod proxies;
 
 pub mod wireless {
     use crate::proxies;
-    pub use mechanix_zbus_services::{
+    pub use mechanix_zbus_server::{
         KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
         WirelessScanListResponse,
     };

@@ -1,0 +1,134 @@
+name: Shell - Build aarch64
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'shell/**'
+      - '.github/workflows/build-shell-aarch64.yml'
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTUP_MAX_RETRIES: 10
+  MACOSX_DEPLOYMENT_TARGET: 10.7
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04
+            name: mechanix-status-bar-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-status-bar
+            path: shell
+
+    runs-on: ${{ matrix.os }}
+    continue-on-error: false
+    env:
+      RUSTFLAGS: ${{ matrix.rustflags || '' }}
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.75.0
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          rustup default 1.75.0
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Install gcc for arm64
+        run: sudo apt install gcc-11-aarch64-linux-gnu
+
+      - name: Add arm64 architecture
+        run: sudo dpkg --add-architecture arm64
+
+      - name: Create sources.list
+        run: |
+          sudo touch /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy universe" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates universe" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+      - name: Update default sources.list
+        run: |
+          sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
+      - name: Update apt
+        run: sudo apt update
+
+      - name: Install dependencies
+        run: |
+          sudo apt install \
+          libdbus-1-dev \
+          libdbus-1-dev:arm64
+
+      - name: Set up Git SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+      # mechanix-greeter
+      - name: Build [${{ matrix.package }}]
+        if: matrix.os == 'ubuntu-22.04'
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        continue-on-error: true
+        run: |
+          cd ${{ matrix.path }}
+          cargo --config net.git-fetch-with-cli=true fetch
+          cross build --release --target ${{ matrix.target }} --package ${{ matrix.package }}
+          ls -la
+      - name: Package deb [${{ matrix.package }}]
+        if: matrix.os == 'ubuntu-22.04'
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        continue-on-error: true
+        run: |
+          cd ${{ matrix.path }}
+          cargo deb --no-build --target ${{matrix.target}} --package ${{ matrix.package }}
+          ls -la
+      - name: Prepare artifacts [${{ matrix.package }}]
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          cd shell/target/${{ matrix.target }}/release/
+          tar czvf ../../../../${{matrix.name}} ${{ matrix.package }}
+          cd -
+          cd shell/target/${{ matrix.target }}/debian/
+          mv *.deb ../../../../
+          cd -
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ./mechanix*
+
+  release:
+    name: Release
+    runs-on: ubuntu-22.04
+    needs: build
+    steps:
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Push release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
+        with:
+          files: mechanix-*/mechanix-*
+          tag_name: v.1.0.${{ github.run_number }}
