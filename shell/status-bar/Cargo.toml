@@ -31,7 +31,7 @@ name = "mechanix-status-bar"
 depends = "$auto"
 assets = [
     # binary
-    ["../target/release/mechanix-status-bar", "/usr/bin/", "755"],
+    ["../target/aarch64-unknown-linux-gnu/release/mechanix-status-bar", "/usr/bin/", "755"],
     #fonts
     ["src/assets/fonts/*", "/usr/share/mechanix-status-bar/assets/fonts/", "644"],
     # battery icons
