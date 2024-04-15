@@ -25,3 +25,23 @@ mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 mechanix-zbus-client = { workspace = true }
+
+[package.metadata.deb]
+name = "mechanix-status-bar"
+depends = "$auto"
+assets = [
+    # binary
+    ["../target/release/mechanix-status-bar", "/usr/bin/", "755"],
+    #fonts
+    ["src/assets/fonts/*", "/usr/share/mechanix-status-bar/assets/fonts/", "644"],
+    # battery icons
+    ["src/assets/icons/battery/*", "/usr/share/mechanix-status-bar/assets/icons/battery/", "644"],
+    # battery-charging icons
+    ["src/assets/icons/battery/charging/*", "/usr/share/mechanix-status-bar/assets/icons/battery/charging/", "644"],
+    # bluetooth-icons
+    ["src/assets/icons/bluetooth/*", "/usr/share/mechanix-status-bar/assets/icons/bluetooth/", "644"],
+    # wireless
+    ["src/assets/icons/wireless/*", "/usr/share/mechanix-status-bar/assets/icons/wireless/", "644"],
+    # settings
+    ["settings.yml.example", "/etc/mechanix-gui/shell/status-bar/", "644"],
+]

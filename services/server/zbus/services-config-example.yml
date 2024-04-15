@@ -4,4 +4,3 @@ interfaces:
      device: /sys/class/backlight/backlight/brightness
    network:
     device: /var/run/wpa_supplicant/wlp2s0
-  
