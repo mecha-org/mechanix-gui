@@ -22,8 +22,8 @@ jobs:
         include:
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-22.04
-            name: mmechanix-zbus-server-aarch64-unknown-linux-gnu.tar.gz
-            package: mmechanix-zbus-server
+            name: mechanix-zbus-server-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-zbus-server
             path: services
 
     runs-on: ${{ matrix.os }}
