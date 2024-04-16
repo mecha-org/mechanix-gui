@@ -12,7 +12,7 @@ pub struct WirelessService {}
 impl WirelessService {
     pub async fn get_wireless_status() -> Result<WirelessStatus> {
         let task = "get_wireless_status";
-        let wireless_on = match WirelessZbusClient::wifi_status().await {
+        let wireless_on = match WirelessZbusClient::wireless_status().await {
             Ok(v) => v,
             Err(e) => bail!(StatusBarError::new(
                 StatusBarErrorCodes::GetWirelessStatusError,

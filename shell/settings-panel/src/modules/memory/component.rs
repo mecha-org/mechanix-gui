@@ -7,7 +7,10 @@ use mctk_core::{
     Node,
 };
 
-use crate::{settings::CommonLowMediumHighPaths, widgets::clickable_setting::ClickableSetting};
+use crate::{
+    settings::CommonLowMediumHighPaths,
+    widgets::clickable_setting::{ClickableSetting, SettingText},
+};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum MemoryUsage {
@@ -32,7 +35,7 @@ pub enum MemoryMessage {
 }
 #[derive(Debug)]
 pub struct MemoryComponent {
-    pub usage: i32,
+    pub usage: u64,
 }
 
 impl Component for MemoryComponent {
@@ -43,12 +46,27 @@ impl Component for MemoryComponent {
             MemoryUsage::Medium.to_string()
         };
 
+        let mut unit = "".to_string();
+        let mut memory_used = "".to_string();
+        let memory_b: u64 = self.usage;
+        if memory_b < 1000000000 {
+            // Convert to MB
+            let memory_mb = memory_b as f64 / 1000000.0;
+            memory_used = format!("{:.0}", memory_mb.clone());
+            unit = "MB".to_string();
+        } else {
+            // Convert to GB
+            let memory_gb = memory_b as f64 / 1000000000.0;
+            memory_used = format!("{:.2}", memory_gb);
+            unit = "GB".to_string();
+        }
+
         Some(node!(ClickableSetting::new(
             icon,
             "Memory".to_string(),
-            format!("{} %", self.usage),
-            "SpaceGrotesk-Medium".to_string()
-        )))
+            SettingText::Subscript(memory_used.to_string(), unit.to_string()),
+        )
+        .click_disabled(true)))
     }
 }
 

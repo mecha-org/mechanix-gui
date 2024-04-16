@@ -20,7 +20,10 @@ echo_client = { path = "../commons/echo-client"}
 tokio = { version = "1.33", features = ["full"] }
 zbus = "3.14.1"
 chrono = "0.4.31"
-image = { version = "*", default-features = false, features = ["png", "jpeg"] }
+image = { workspace = true }
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
+mechanix_zbus_client = { workspace = true }
+futures = { workspace = true }
+wayland-protocols-async = { workspace = true }

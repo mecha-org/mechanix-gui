@@ -7,7 +7,10 @@ use mctk_core::{
     Node,
 };
 
-use crate::{settings::RotationIconPaths, widgets::clickable_setting::ClickableSetting};
+use crate::{
+    settings::RotationIconPaths,
+    widgets::clickable_setting::{ClickableSetting, SettingText},
+};
 
 #[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum RotationStatus {
@@ -34,6 +37,7 @@ pub enum RotationMessage {
 #[derive(Debug)]
 pub struct RotationComponent {
     pub status: RotationStatus,
+    pub loading: bool,
 }
 
 impl Component for RotationComponent {
@@ -41,8 +45,7 @@ impl Component for RotationComponent {
         Some(node!(ClickableSetting::new(
             RotationStatus::Portrait.to_string(),
             "Auto Rotate".to_string(),
-            "".to_string(),
-            "SpaceGrotesk-Medium".to_string()
+            SettingText::Normal("".to_string()),
         )))
     }
 }

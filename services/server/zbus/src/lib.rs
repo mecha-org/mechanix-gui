@@ -1,4 +1,5 @@
 mod interfaces;
 pub use interfaces::{
-    KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse, WirelessScanListResponse,
+    KnownNetworkListResponse, KnownNetworkResponse, MemoryInfoResponse, WirelessInfoResponse,
+    WirelessScanListResponse,
 };

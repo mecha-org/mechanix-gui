@@ -7,7 +7,10 @@ use mctk_core::{
     Node,
 };
 
-use crate::{settings::SettingsIconPaths, widgets::clickable_setting::ClickableSetting};
+use crate::{
+    settings::SettingsIconPaths,
+    widgets::clickable_setting::{ClickableSetting, SettingText},
+};
 
 #[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum SettingsStatus {
@@ -35,9 +38,9 @@ impl Component for SettingsComponent {
         Some(node!(ClickableSetting::new(
             SettingsStatus::Default.to_string(),
             "Settings".to_string(),
-            "".to_string(),
-            "SpaceGrotesk-Medium".to_string()
-        )))
+            SettingText::Normal("".to_string()),
+        )
+        .click_disabled(true)))
     }
 }
 

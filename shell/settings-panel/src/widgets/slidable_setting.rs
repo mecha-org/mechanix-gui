@@ -1,7 +1,7 @@
 use mctk_core::{
     component::{Component, Message},
     lay, msg, node, rect, size, size_pct,
-    style::{Styled, VerticalPosition},
+    style::{FontWeight, Styled, VerticalPosition},
     txt,
     widgets::{Div, RoundedRect, Slider, Svg, Text},
     Color, Node,
@@ -15,7 +15,6 @@ pub struct SlidableSetting {
     pub icon: String,
     pub text: String,
     pub value: i32,
-    pub font: String,
     pub on_slide: Option<Box<dyn Fn(i32) -> Message + Send + Sync>>,
 }
 
@@ -28,12 +27,11 @@ impl std::fmt::Debug for SlidableSetting {
 }
 
 impl SlidableSetting {
-    pub fn new(icon: String, text: String, value: i32, font: String) -> Self {
+    pub fn new(icon: String, text: String, value: i32) -> Self {
         Self {
             icon,
             text,
             value,
-            font,
             on_slide: None,
         }
     }
@@ -62,8 +60,8 @@ impl Component for SlidableSetting {
         Some(
             node!(
                 RoundedRect{
-                    background_color: Color::rgb(21., 23., 29.),
-                    border_color: Color::rgb(21., 23., 29.),
+                    background_color: Color::rgba(22., 23., 23., 0.90),
+                    border_color: Color::TRANSPARENT,
                     border_width: 1.,
                     radius: (8., 8., 8. ,8.)
                 }
@@ -82,17 +80,14 @@ impl Component for SlidableSetting {
                 ],
             ))
             .push(node!(Slider::new(self.value).on_slide(Box::new(|value| msg!(SlidableSettingMessage::ValueChanged(value)))), [
-                size_pct: [100.0, 29]
+                size_pct: [100, Auto],
+                margin: [6, 0, 18, 0],
             ]))
-            .push(node!(
-            Text::new(txt!(self.text.clone()))
-                .style("font", "SpaceGrotesk-Medium")
-                .style("color",Color::rgb(197., 200., 207.))
+            .push(node!(Text::new(txt!(self.text.clone()))
+                .style("color", Color::rgb(197., 200., 207.))
                 .style("size", 12.0)
-                .style("v_alignment", VerticalPosition::Bottom),
-            [
-                size_pct: [100.0, Auto]
-            ])),
+                .style("font_weight", FontWeight::Medium)
+               ,)),
         )
     }
 }

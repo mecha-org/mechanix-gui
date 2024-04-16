@@ -13,6 +13,17 @@ pub enum SettingsPanelErrorCodes {
     SettingsParseError,
     ThemeReadError,
     ThemeParseError,
+    GetWirelessStatusError,
+    GetBluetoothStatusError,
+    GetCpuUsageError,
+    GetMemoryInfoError,
+    GetBrightnessError,
+    SetBrightnessError,
+    GetBatteryStatusError,
+    EnableWireless,
+    DisableWireless,
+    EnableBluetooth,
+    DisableBluetooth,
 }
 
 impl fmt::Display for SettingsPanelErrorCodes {
@@ -23,6 +34,19 @@ impl fmt::Display for SettingsPanelErrorCodes {
             SettingsPanelErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
             SettingsPanelErrorCodes::ThemeReadError => write!(f, "ThemeReadError"),
             SettingsPanelErrorCodes::ThemeParseError => write!(f, "ThemeParseError"),
+            SettingsPanelErrorCodes::GetBluetoothStatusError => {
+                write!(f, "GetBluetoothStatusError")
+            }
+            SettingsPanelErrorCodes::GetWirelessStatusError => write!(f, "GetWirelessStatusError"),
+            SettingsPanelErrorCodes::GetCpuUsageError => write!(f, "GetCpuUsageError"),
+            SettingsPanelErrorCodes::GetMemoryInfoError => write!(f, "GetMemoryInfoError"),
+            SettingsPanelErrorCodes::GetBrightnessError => write!(f, "GetBrightnessError"),
+            SettingsPanelErrorCodes::SetBrightnessError => write!(f, "SetBrightnessError"),
+            SettingsPanelErrorCodes::EnableWireless => write!(f, "EnableWireless"),
+            SettingsPanelErrorCodes::DisableWireless => write!(f, "DisableWireless"),
+            SettingsPanelErrorCodes::EnableBluetooth => write!(f, "EnableBluetooth"),
+            SettingsPanelErrorCodes::DisableBluetooth => write!(f, "DisableBluetooth"),
+            SettingsPanelErrorCodes::GetBatteryStatusError => write!(f, "GetBatteryStatusError"),
         }
     }
 }

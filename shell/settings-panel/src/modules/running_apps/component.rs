@@ -7,7 +7,10 @@ use mctk_core::{
     Node,
 };
 
-use crate::{settings::CommonLowMediumHighPaths, widgets::clickable_setting::ClickableSetting};
+use crate::{
+    settings::CommonLowMediumHighPaths,
+    widgets::clickable_setting::{ClickableSetting, SettingText},
+};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum RunningAppsStatus {
@@ -46,9 +49,9 @@ impl Component for RunningAppsComponent {
         Some(node!(ClickableSetting::new(
             icon,
             "Running Apps".to_string(),
-            format!("{}", self.count),
-            "SpaceGrotesk-Medium".to_string()
-        )))
+            SettingText::Bold(self.count.to_string()),
+        )
+        .click_disabled(true)))
     }
 }
 
