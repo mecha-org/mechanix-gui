@@ -1,13 +1,9 @@
 users:
   - name: "Mecha user"
     username: "mecha"
-    avatar: /home/user/greeter/assets/pngs/default_user_avatar.png
-    pin_enabled: true
+    avatar: /usr/share/mechanix/shell/greeter/assets/icons/avatar/mecha.svg
+    pin_enabled: false
   - name: "Custom"
     username: "custom"
-    avatar: /home/user/greeter/assets/pngs/custom_user_avatar.png
-    pin_enabled: false   
-
-
-
-
+    avatar: /usr/share/mechanix/shell/greeter/assets/icons/avatar/custom.svg
+    pin_enabled: false
