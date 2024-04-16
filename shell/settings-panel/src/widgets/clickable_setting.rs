@@ -1,5 +1,6 @@
 use mctk_core::event::MouseUp;
-use mctk_core::style::{Styled, VerticalPosition};
+use mctk_core::layout::{Alignment, Direction, PositionType};
+use mctk_core::style::{FontWeight, Styled, VerticalPosition};
 use mctk_core::{
     component::{Component, Message},
     event::{Click, Event, MouseDown},
@@ -12,14 +13,23 @@ use mctk_macros::{component, state_component_impl};
 #[derive(Debug, Default)]
 struct ClickableSettingState {
     pressing: bool,
+    click_disabled: bool,
+    loading: bool,
+    disabled: bool,
+}
+
+#[derive(Debug, Clone)]
+pub enum SettingText {
+    Normal(String),
+    Subscript(String, String),
+    Bold(String),
 }
 
 #[component(State = "ClickableSettingState")]
 pub struct ClickableSetting {
     pub icon: String,
     pub text_1: String,
-    pub text_2: String,
-    pub font: String,
+    pub text_2: SettingText,
     pub on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
 }
 
@@ -32,12 +42,11 @@ impl std::fmt::Debug for ClickableSetting {
 }
 
 impl ClickableSetting {
-    pub fn new(icon: String, text_1: String, text_2: String, font: String) -> Self {
+    pub fn new(icon: String, text_1: String, text_2: SettingText) -> Self {
         Self {
             icon,
             text_1,
             text_2,
-            font,
             on_click: None,
             state: Some(ClickableSettingState::default()),
             dirty: false,
@@ -48,13 +57,30 @@ impl ClickableSetting {
         self.on_click = Some(on_click);
         self
     }
+
+    pub fn click_disabled(mut self, click_disabled: bool) -> Self {
+        self.state_mut().click_disabled = click_disabled;
+        self
+    }
+
+    pub fn loading(mut self, loading: bool) -> Self {
+        self.state_mut().loading = loading;
+        self
+    }
+
+    pub fn disabled(mut self, disabled: bool) -> Self {
+        self.state_mut().disabled = disabled;
+        self
+    }
 }
 
 #[state_component_impl(ClickableSettingState)]
 impl Component for ClickableSetting {
     fn on_click(&mut self, event: &mut Event<Click>) {
         if let Some(f) = &self.on_click {
-            event.emit(f());
+            if !self.state_ref().click_disabled && !self.state_ref().loading {
+                event.emit(f());
+            }
         }
     }
 
@@ -67,17 +93,72 @@ impl Component for ClickableSetting {
     }
 
     fn view(&self) -> Option<Node> {
-        let bg_color = if self.state_ref().pressing {
-            Color::rgba(29., 23., 29., 0.5)
+        let bg_color = if self.state_ref().pressing && !self.state_ref().click_disabled {
+            Color::rgba(55., 55., 56., 0.95)
         } else {
-            Color::rgb(21., 23., 29.)
+            Color::rgba(22., 23., 23., 0.90)
+        };
+
+        let mut text_2_node = node!(
+            Div::new(),
+            lay![
+                size: [Auto, 26],
+                margin: [0, 0, 0, 0],
+                direction: Direction::Row,
+                cross_alignment: Alignment::End,
+
+            ]
+        );
+
+        match self.text_2.clone() {
+            SettingText::Normal(text) => {
+                text_2_node = text_2_node.push(node!(
+                    Text::new(txt!(text.clone()))
+                        .style("color", Color::rgb(197., 200., 207.))
+                        .style("size", 12.0)
+                        .style("font_weight", FontWeight::Normal),
+                    lay![]
+                ));
+            }
+            SettingText::Subscript(text, subscript) => {
+                text_2_node = text_2_node.push(node!(Text::new(txt!(text))
+                    .style("color", Color::WHITE)
+                    .style("size", 20.0)
+                    .style("font_weight", FontWeight::Normal)));
+                text_2_node = text_2_node.push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [Auto, 100],
+                            cross_alignment: Alignment::End,
+                            padding: [0., 2., 2., 0.]
+                        ]
+                    )
+                    .push(node!(Text::new(txt!(subscript))
+                        .style("color", Color::rgb(197., 200., 207.))
+                        .style("size", 12.0)
+                        .style("font_weight", FontWeight::Normal),)),
+                );
+            }
+            SettingText::Bold(text) => {
+                text_2_node = text_2_node.push(node!(Text::new(txt!(text))
+                    .style("color", Color::WHITE)
+                    .style("size", 20.0)
+                    .style("font_weight", FontWeight::Normal)));
+            }
+        }
+
+        let text_1_color = if self.state_ref().disabled {
+            Color::rgba(197., 200., 207., 0.40)
+        } else {
+            Color::rgb(197., 200., 207.)
         };
 
         Some(
             node!(
                 RoundedRect{
                     background_color: bg_color,
-                    border_color: Color::rgb(21., 23., 29.),
+                    border_color: Color::TRANSPARENT,
                     border_width: 1.,
                     radius: (8., 8., 8. ,8.)
                 }
@@ -95,23 +176,13 @@ impl Component for ClickableSetting {
                     margin: [0, 0, 8, 0]
                 ],
             ))
-            .push(node!(
-            Text::new(txt!(self.text_2.clone()))
-                .style("font", "SpaceGrotesk-Medium")
-                .style("color",Color::rgb(255., 255., 255.))
-                .style("size", 18.0),
-            [
-                size_pct: [100.0, Auto],
-            ]))
-            .push(node!(
-            Text::new(txt!(self.text_1.clone()))
-                .style("font", "SpaceGrotesk-Medium")
-                .style("color",Color::rgb(197., 200., 207.))
+            .push(text_2_node)
+            .push(node!(Text::new(txt!(self.text_1.clone()))
+                .style("color", text_1_color)
                 .style("size", 12.0)
-                .style("v_alignment", VerticalPosition::Bottom),
-            [
-                size_pct: [100.0, Auto]
-            ])),
+                //.style("font_weight", FontWeight::Medium)
+                .style("font_weight", FontWeight::Normal)
+                .style("v_alignment", VerticalPosition::Bottom),)),
         )
     }
 }

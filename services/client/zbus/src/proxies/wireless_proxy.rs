@@ -1,4 +1,4 @@
-use mechanix_zbus_server::{
+use mechanix_zbus_services::{
     KnownNetworkListResponse, WirelessInfoResponse, WirelessScanListResponse,
 };
 use tracing::info;
@@ -47,7 +47,7 @@ impl WirelessService {
         Ok(reply)
     }
 
-    pub async fn wifi_status() -> Result<bool> {
+    pub async fn wireless_status() -> Result<bool> {
         let connection = Connection::system().await?;
 
         let proxy = WirelessProxy::new(&connection).await?;
@@ -56,7 +56,7 @@ impl WirelessService {
         Ok(reply)
     }
 
-    pub async fn enable_wifi() -> Result<bool> {
+    pub async fn enable_wireless() -> Result<bool> {
         let connection = Connection::system().await?;
 
         let proxy = WirelessProxy::new(&connection).await?;
@@ -65,7 +65,7 @@ impl WirelessService {
         Ok(reply)
     }
 
-    pub async fn disable_wifi() -> Result<bool> {
+    pub async fn disable_wireless() -> Result<bool> {
         let connection = Connection::system().await?;
 
         let proxy = WirelessProxy::new(&connection).await?;

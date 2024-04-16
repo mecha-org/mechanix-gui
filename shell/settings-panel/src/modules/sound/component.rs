@@ -39,8 +39,6 @@ pub struct SoundComponent {
 
 impl Component for SoundComponent {
     fn view(&self) -> Option<Node> {
-        println!("SoundComponent view {}", self.value);
-
         let icon = if self.value < 10 {
             SoundValue::Low.to_string()
         } else {
@@ -51,7 +49,6 @@ impl Component for SoundComponent {
             icon,
             "Sound".to_string(),
             self.value,
-            "SpaceGrotesk-Medium".to_string()
         )
         .on_slide(Box::new(|value| msg!(Message::Sound { value })))))
     }

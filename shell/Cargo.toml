@@ -43,5 +43,8 @@ keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "w
 mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "ca18a1f56d1d86be7dcc5080f12d458aae6718d6" }
 mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "ca18a1f56d1d86be7dcc5080f12d458aae6718d6" }
 mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "ca18a1f56d1d86be7dcc5080f12d458aae6718d6" }
-mechanix-zbus-client = { path = "../services/client/zbus" }
+mechanix_zbus_client = { path = "../services/client/zbus" }
 smithay-client-toolkit = "0.18.0"
+image = { version = "*", default-features = false, features = ["png", "jpeg"] }
+futures = "0.3.30"
+wayland-protocols-async = "1.0.0"

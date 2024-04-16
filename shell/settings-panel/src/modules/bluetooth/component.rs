@@ -10,28 +10,9 @@ use mctk_core::{
 use crate::{
     gui::{Message, SettingNames},
     settings::BluetoothIconPaths,
-    widgets::clickable_setting::ClickableSetting,
+    types::BluetoothStatus,
+    widgets::clickable_setting::{ClickableSetting, SettingText},
 };
-
-#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum BluetoothStatus {
-    On,
-    #[default]
-    Off,
-    Connected,
-    NotFound,
-}
-
-impl fmt::Display for BluetoothStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            BluetoothStatus::On => write!(f, "BluetoothOn"),
-            BluetoothStatus::Off => write!(f, "BluetoothOff"),
-            BluetoothStatus::Connected => write!(f, "BluetoothConnected"),
-            BluetoothStatus::NotFound => write!(f, "BluetoothNotFound"),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum BluetoothMessage {
@@ -40,19 +21,26 @@ pub enum BluetoothMessage {
 #[derive(Debug)]
 pub struct BluetoothComponent {
     pub status: BluetoothStatus,
+    pub loading: bool,
 }
 
 impl Component for BluetoothComponent {
     fn view(&self) -> Option<Node> {
+        let bluetooth_off = match self.status {
+            BluetoothStatus::Off => true,
+            BluetoothStatus::NotFound => true,
+            _ => false,
+        };
+
         Some(node!(ClickableSetting::new(
             self.status.to_string(),
             "Bluetooth".to_string(),
-            "".to_string(),
-            "SpaceGrotesk-Medium".to_string()
+            SettingText::Normal("".to_string()),
         )
         .on_click(Box::new(|| msg!(Message::SettingClicked(
             SettingNames::Bluetooth
-        ))))))
+        ))))
+        .disabled(bluetooth_off)))
     }
 }
 

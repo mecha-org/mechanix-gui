@@ -4,45 +4,125 @@ mod gui;
 mod modules;
 mod settings;
 mod theme;
+mod types;
 mod widgets;
 
-use std::collections::HashMap;
 use std::time::Duration;
+use std::{collections::HashMap, env};
+use tokio::{
+    runtime::Builder,
+    sync::{mpsc::Receiver, oneshot},
+};
 
 use event_handler::zbus::ZbusServiceHandle;
 use gui::SettingsPanel;
 use mctk_core::{
     msg,
-    reexports::smithay_client_toolkit::{
-        reexports::calloop::{
-            self,
-            channel::Sender,
-            timer::{TimeoutAction, Timer},
+    reexports::{
+        cosmic_text,
+        smithay_client_toolkit::{
+            reexports::calloop::{
+                self,
+                channel::Sender,
+                timer::{TimeoutAction, Timer},
+            },
+            shell::wlr_layer,
         },
-        shell::wlr_layer,
     },
 };
 use mctk_smithay::{layer_surface::LayerOptions, WindowOptions};
 use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
 
 use modules::{
-    battery::component::get_battery_icons_map, bluetooth::component::get_bluetooth_icons_map,
-    brightness::component::get_brightness_icons_map, cpu::component::get_cpu_icons_map,
-    memory::component::get_memory_icons_map, rotation::component::get_rotation_icons_map,
+    battery::component::get_battery_icons_map,
+    bluetooth::component::get_bluetooth_icons_map,
+    brightness::component::get_brightness_icons_map,
+    cpu::{component::get_cpu_icons_map, handler::CpuServiceHandle},
+    memory::{component::get_memory_icons_map, handler::MemoryServiceHandle},
+    rotation::component::get_rotation_icons_map,
     running_apps::component::get_running_apps_icons_map,
-    settings::component::get_settings_icons_map, sound::component::get_sound_icons_map,
+    settings::component::get_settings_icons_map,
+    sound::component::get_sound_icons_map,
     wireless::component::get_wireless_icons_map,
 };
+use modules::{
+    battery::handler::BatteryServiceHandle, running_apps::handler::RunningAppsServiceHandle,
+};
+use modules::{
+    bluetooth::handler::BluetoothServiceHandle, brightness::handler::BrightnessServiceHandle,
+};
+use modules::{sound::handler::SoundServiceHandle, wireless::handler::WirelessServiceHandle};
 use settings::SettingsPanelSettings;
+use std::thread::{self, JoinHandle};
 use theme::SettingsPanelTheme;
+use tokio::sync::mpsc;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
+use types::{BatteryStatus, BluetoothStatus, WirelessStatus};
 
 use crate::gui::Message;
 
+#[derive(Debug)]
+pub enum WirelessMessage {
+    Status { status: WirelessStatus },
+    Toggle { value: Option<bool> },
+}
+
+#[derive(Debug)]
+pub enum BluetoothMessage {
+    Status { status: BluetoothStatus },
+    Toggle { value: Option<bool> },
+}
+
+#[derive(Debug)]
+pub enum BatteryMessage {
+    Status { level: u8, status: BatteryStatus },
+}
+
+#[derive(Debug)]
+pub enum CpuMessage {
+    Usage { usage: f32 },
+}
+
+#[derive(Debug)]
+pub enum MemoryMessage {
+    Usage { used: u64, total: u64 },
+}
+
+#[derive(Debug)]
+pub enum RunningAppsMessage {
+    Count { count: i32 },
+}
+
+#[derive(Debug)]
+pub enum RotationMessage {}
+
+#[derive(Debug)]
+pub enum SoundMessage {
+    Value { value: i32 },
+    Change { value: i32 },
+}
+
+#[derive(Debug)]
+pub enum BrightnessMessage {
+    Value { value: u8 },
+    Change { value: u8 },
+}
+
+#[derive(Debug)]
+pub enum AppMessage {
+    Wireless { message: WirelessMessage },
+    Bluetooth { message: BluetoothMessage },
+    Battery { message: BatteryMessage },
+    Cpu { message: CpuMessage },
+    Memory { message: MemoryMessage },
+    Sound { message: SoundMessage },
+    Brightness { message: BrightnessMessage },
+    RunningApps { message: RunningAppsMessage },
+}
+
 // Layer Surface App
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
     tracing_subscriber::fmt()
         .compact()
@@ -97,44 +177,156 @@ async fn main() -> anyhow::Result<()> {
     let namespace = settings.app.id.clone().unwrap_or_default();
 
     let layer_shell_opts = LayerOptions {
-        anchor: wlr_layer::Anchor::TOP | wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT,
+        anchor: wlr_layer::Anchor::BOTTOM | wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT,
         layer: wlr_layer::Layer::Overlay,
         keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
         namespace: Some(namespace.clone()),
         zone: window_opts.height as i32,
     };
 
+    let mut fonts = cosmic_text::fontdb::Database::new();
+    fonts.load_system_fonts();
+
+    let (app_channel, app_receiver) = calloop::channel::channel();
+    let app_channel2 = app_channel.clone();
     let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::layer_window::LayerWindow::open_blocking::<SettingsPanel>(
+        mctk_smithay::layer_window::LayerWindow::open_blocking::<SettingsPanel, AppMessage>(
             LayerWindowParams {
                 title: settings.title.clone(),
                 namespace,
                 window_opts,
                 fonts,
                 assets,
-                layer_shell_opts,
                 svgs,
+                layer_shell_opts,
             },
+            Some(app_channel),
         );
 
     let handle = event_loop.handle();
 
-    //subscribe to events channel
-    let (channel_tx, channel_rx) = calloop::channel::channel();
     let window_tx_2 = window_tx.clone();
-    let _ = handle.insert_source(channel_rx, move |event, _, app| {
+    // create mpsc channel for interacting with the input_method handler
+    let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
+    let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
+    let (rotation_msg_tx, rotation_msg_rx) = mpsc::channel(128);
+    let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
+    let (sound_msg_tx, sound_msg_rx) = mpsc::channel(128);
+
+    let _ = handle.insert_source(app_receiver, move |event, _, _| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
-            calloop::channel::Event::Msg(msg) => {
-                let _ = window_tx_2
-                    .clone()
-                    .send(WindowMessage::Send { message: msg!(msg) });
-            }
+            calloop::channel::Event::Msg(msg) => match msg {
+                AppMessage::Wireless { message } => match message {
+                    WirelessMessage::Status { status } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Wireless { status }),
+                        });
+                    }
+                    WirelessMessage::Toggle { .. } => {
+                        let wireless_msg_tx_cloned = wireless_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            //let (tx, rx) = oneshot::channel();
+                            let res = wireless_msg_tx_cloned.clone().send(message).await;
+                            //let res = rx.await.expect("no reply from service");
+                        });
+                    }
+                },
+                AppMessage::Bluetooth { message } => match message {
+                    BluetoothMessage::Status { status } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Bluetooth { status }),
+                        });
+                    }
+                    BluetoothMessage::Toggle { .. } => {
+                        let bluetooth_msg_tx_cloned = bluetooth_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            //let (tx, rx) = oneshot::channel();
+                            let res = bluetooth_msg_tx_cloned.clone().send(message).await;
+                            //let res = rx.await.expect("no reply from service");
+                        });
+                    }
+                },
+                AppMessage::Battery { message } => match message {
+                    BatteryMessage::Status { level, status } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Battery { level, status }),
+                        });
+                    }
+                },
+                AppMessage::Cpu { message } => match message {
+                    CpuMessage::Usage { usage } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Cpu {
+                                usage: usage as i32
+                            }),
+                        });
+                    }
+                },
+                AppMessage::Memory { message } => match message {
+                    MemoryMessage::Usage { used, total } => {
+                        let usage = used as f32 / total as f32 * 100.;
+                        //println!("MemoryMessage::Usage {} {} {} ", used, total, usage);
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Memory { usage: used }),
+                        });
+                    }
+                },
+                AppMessage::Brightness { message } => match message {
+                    BrightnessMessage::Value { value } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Brightness {
+                                value: value as i32
+                            }),
+                        });
+                    }
+                    BrightnessMessage::Change { .. } => {
+                        let brightness_msg_tx_cloned = brightness_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            //let (tx, rx) = oneshot::channel();
+                            let res = brightness_msg_tx_cloned.clone().send(message).await;
+                            //let res = rx.await.expect("no reply from service");
+                        });
+                    }
+                },
+                AppMessage::Sound { message } => match message {
+                    SoundMessage::Value { value } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Sound {
+                                value: value as i32
+                            }),
+                        });
+                    }
+                    SoundMessage::Change { .. } => {
+                        let sound_msg_tx_cloned = sound_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            //let (tx, rx) = oneshot::channel();
+                            let res = sound_msg_tx_cloned.clone().send(message).await;
+                            //let res = rx.await.expect("no reply from service");
+                        });
+                    }
+                },
+                AppMessage::RunningApps { message } => match message {
+                    RunningAppsMessage::Count { count } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::RunningApps { count }),
+                        });
+                    }
+                },
+                _ => (),
+            },
             calloop::channel::Event::Closed => {}
         };
     });
 
-    init_services(channel_tx).await;
+    init_services(
+        app_channel2,
+        wireless_msg_rx,
+        bluetooth_msg_rx,
+        rotation_msg_rx,
+        brightness_msg_rx,
+        sound_msg_rx,
+    );
 
     loop {
         event_loop
@@ -146,11 +338,90 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn init_services(sender: Sender<Message>) {
-    let mut zbus_service_handle = ZbusServiceHandle::new();
-    let sender_clone_1 = sender.clone();
-    let _ = tokio::spawn(async move {
-        info!(task = "init_services", "Starting zbus service");
-        zbus_service_handle.run(sender_clone_1).await;
-    });
+fn init_services(
+    app_channel: Sender<AppMessage>,
+    wireless_msg_rx: Receiver<WirelessMessage>,
+    bluetooth_msg_rx: Receiver<BluetoothMessage>,
+    rotation_msg_rx: Receiver<RotationMessage>,
+    brightness_msg_rx: Receiver<BrightnessMessage>,
+    sound_msg_rx: Receiver<SoundMessage>,
+) -> JoinHandle<()> {
+    thread::spawn(move || {
+        let runtime = Builder::new_multi_thread()
+            .worker_threads(1)
+            .enable_all()
+            .build()
+            .unwrap();
+
+        let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
+        let bluetooth_f = run_bluetooth_handler(app_channel.clone(), bluetooth_msg_rx);
+        let battery_f = run_battery_handler(app_channel.clone());
+        let running_apps_f = run_running_apps_handler(app_channel.clone());
+        let cpu_f = run_cpu_handler(app_channel.clone());
+        let memory_f = run_memory_handler(app_channel.clone());
+        let brightness_f = run_brightness_handler(app_channel.clone(), brightness_msg_rx);
+        let sound_f = run_sound_handler(app_channel.clone(), sound_msg_rx);
+
+        runtime
+            .block_on(runtime.spawn(async move {
+                tokio::join!(
+                    wireless_f,
+                    bluetooth_f,
+                    battery_f,
+                    running_apps_f,
+                    cpu_f,
+                    memory_f,
+                    brightness_f,
+                    sound_f
+                )
+            }))
+            .unwrap();
+    })
+}
+
+async fn run_wireless_handler(
+    app_channel: Sender<AppMessage>,
+    wireless_msg_rx: Receiver<WirelessMessage>,
+) {
+    let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
+    wireless_service_handle.run(wireless_msg_rx).await;
+}
+
+async fn run_bluetooth_handler(
+    app_channel: Sender<AppMessage>,
+    bluetooth_msg_rx: Receiver<BluetoothMessage>,
+) {
+    let mut bluetooth_service_handle = BluetoothServiceHandle::new(app_channel);
+    bluetooth_service_handle.run(bluetooth_msg_rx).await;
+}
+
+async fn run_battery_handler(app_channel: Sender<AppMessage>) {
+    let mut battery_service_handle = BatteryServiceHandle::new(app_channel);
+    battery_service_handle.run().await;
+}
+
+async fn run_running_apps_handler(app_channel: Sender<AppMessage>) {
+    let mut running_apps_service_handle = RunningAppsServiceHandle::new(app_channel);
+    running_apps_service_handle.run().await;
+}
+
+async fn run_cpu_handler(app_channel: Sender<AppMessage>) {
+    let mut cpu_service_handle = CpuServiceHandle::new(app_channel);
+    cpu_service_handle.run().await;
+}
+
+async fn run_memory_handler(app_channel: Sender<AppMessage>) {
+    let mut memory_service_handle = MemoryServiceHandle::new(app_channel);
+    memory_service_handle.run().await;
+}
+async fn run_brightness_handler(
+    app_channel: Sender<AppMessage>,
+    brightness_msg_rx: Receiver<BrightnessMessage>,
+) {
+    let mut brightness_service_handle = BrightnessServiceHandle::new(app_channel);
+    brightness_service_handle.run(brightness_msg_rx).await;
+}
+async fn run_sound_handler(app_channel: Sender<AppMessage>, sound_msg_rx: Receiver<SoundMessage>) {
+    let mut sound_service_handle = SoundServiceHandle::new(app_channel);
+    sound_service_handle.run(sound_msg_rx).await;
 }

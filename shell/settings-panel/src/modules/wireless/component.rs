@@ -12,36 +12,9 @@ use mctk_core::{
 use crate::{
     gui::{Message, SettingNames},
     settings::WirelessIconPaths,
-    widgets::clickable_setting::ClickableSetting,
+    types::{WirelessConnectedState, WirelessInfo, WirelessStatus},
+    widgets::clickable_setting::{ClickableSetting, SettingText},
 };
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum WirelessConnectedState {
-    Low,
-    Weak,
-    Good,
-    Strong,
-}
-
-#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum WirelessStatus {
-    On,
-    #[default]
-    Off,
-    Connected(WirelessConnectedState),
-    NotFound,
-}
-
-impl fmt::Display for WirelessStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            WirelessStatus::On => write!(f, "WirelessOn"),
-            WirelessStatus::Off => write!(f, "WirelessOff"),
-            WirelessStatus::Connected(state) => write!(f, "WirelessConnected({:?})", state),
-            WirelessStatus::NotFound => write!(f, "WirelessNotFound"),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum WirelessMessage {
@@ -51,19 +24,37 @@ pub enum WirelessMessage {
 #[derive(Debug)]
 pub struct WirelessComponent {
     pub status: WirelessStatus,
+    pub loading: bool,
 }
 
 impl Component for WirelessComponent {
     fn view(&self) -> Option<Node> {
+        let mut ssid = "".to_string();
+        let mut frequency = "".to_string();
+        let icon = self.status.to_string();
+        match self.status.clone() {
+            WirelessStatus::Connected(_, wireless_info) => {
+                ssid = wireless_info.ssid;
+                let freq = wireless_info.frequency.parse::<i32>().unwrap();
+                frequency = format!("{:.1} {}", freq as f32 / 1000., "GHz");
+            }
+            _ => (),
+        }
+        ssid = if ssid.len() > 11 {
+            ssid[..11].to_owned()
+        } else {
+            ssid
+        };
+
         Some(node!(ClickableSetting::new(
-            WirelessStatus::On.to_string(),
-            "Actonate Wi-fi".to_string(),
-            "".to_string(),
-            "SpaceGrotesk-Medium".to_string()
+            icon,
+            frequency,
+            SettingText::Normal(ssid),
         )
         .on_click(Box::new(|| msg!(Message::SettingClicked(
             SettingNames::Wireless
-        ))))))
+        ))))
+        .loading(self.loading)))
     }
 }
 
@@ -84,27 +75,31 @@ pub fn get_wireless_icons_map(icon_paths: WirelessIconPaths) -> HashMap<String, 
 
     if let Some(value) = &icon_paths.weak {
         assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Weak).to_string(),
+            WirelessStatus::Connected(WirelessConnectedState::Weak, WirelessInfo::default())
+                .to_string(),
             value.clone(),
         );
     }
 
     if let Some(value) = &icon_paths.low {
         assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Low).to_string(),
+            WirelessStatus::Connected(WirelessConnectedState::Low, WirelessInfo::default())
+                .to_string(),
             value.clone(),
         );
     }
 
     if let Some(value) = &icon_paths.good {
         assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Good).to_string(),
+            WirelessStatus::Connected(WirelessConnectedState::Good, WirelessInfo::default())
+                .to_string(),
             value.clone(),
         );
     }
     if let Some(value) = &icon_paths.strong {
         assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Strong).to_string(),
+            WirelessStatus::Connected(WirelessConnectedState::Strong, WirelessInfo::default())
+                .to_string(),
             value.clone(),
         );
     }

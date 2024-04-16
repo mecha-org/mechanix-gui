@@ -1,5 +1,5 @@
 [package]
-name = "mechanix-zbus-client"
+name = "mechanix_zbus_client"
 description = "Zbus client for Mechanix zbus services"
 version.workspace = true
 edition.workspace = true
@@ -15,5 +15,6 @@ anyhow.workspace = true
 zbus.workspace = true
 tracing.workspace = true
 serde.workspace = true
-mechanix-zbus-server = { path = "../../server/zbus" }
+mechanix_zbus_services.workspace = true
+
 

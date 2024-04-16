@@ -24,4 +24,4 @@ wayland-protocols-async = "1.0.0"
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
-mechanix-zbus-client = { workspace = true }
+mechanix_zbus_client = { workspace = true }

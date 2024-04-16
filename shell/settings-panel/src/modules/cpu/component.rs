@@ -7,7 +7,10 @@ use mctk_core::{
     Node,
 };
 
-use crate::{settings::CommonLowMediumHighPaths, widgets::clickable_setting::ClickableSetting};
+use crate::{
+    settings::CommonLowMediumHighPaths,
+    widgets::clickable_setting::{ClickableSetting, SettingText},
+};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum CpuUsage {
@@ -26,10 +29,6 @@ impl fmt::Display for CpuUsage {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum CpuMessage {
-    CpuUsageUpdate(i32),
-}
 #[derive(Debug)]
 pub struct CpuComponent {
     pub usage: i32,
@@ -46,9 +45,9 @@ impl Component for CpuComponent {
         Some(node!(ClickableSetting::new(
             icon,
             "CPU".to_string(),
-            format!("{} %", self.usage),
-            "SpaceGrotesk-Medium".to_string()
-        )))
+            SettingText::Subscript(self.usage.to_string(), "%".to_string()),
+        )
+        .click_disabled(true)))
     }
 }
 

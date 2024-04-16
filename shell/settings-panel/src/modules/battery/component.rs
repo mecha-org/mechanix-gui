@@ -10,50 +10,34 @@ use mctk_core::{
 };
 
 use crate::{
-    gui::Message, settings::BatteryIconPaths, widgets::clickable_setting::ClickableSetting,
+    gui::Message,
+    settings::BatteryIconPaths,
+    types::BatteryLevel,
+    widgets::clickable_setting::{ClickableSetting, SettingText},
 };
-
-#[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub enum BatteryLevel {
-    #[default]
-    Level0,
-    Level10,
-    Level20,
-    Level30,
-    Level40,
-    Level50,
-    Level60,
-    Level70,
-    Level80,
-    Level90,
-    Level100,
-    NotFound,
-}
-
-impl fmt::Display for BatteryLevel {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::Debug::fmt(self, f)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum BatteryMessage {
-    BatteryLevelUpdate(BatteryLevel),
-}
 
 #[derive(Debug)]
 pub struct BatteryComponent {
     pub level: BatteryLevel,
+    pub percentage: u8,
 }
 
 impl Component for BatteryComponent {
     fn view(&self) -> Option<Node> {
+        let mut percentage = "".to_string();
+        let mut subscript = "".to_string();
+
+        if self.percentage > 0 {
+            percentage = self.percentage.to_string();
+            subscript = "%".to_string();
+        }
+
         Some(node!(ClickableSetting::new(
             self.level.to_string(),
             "Battery".to_string(),
-            "65".to_string(),
-            "SpaceGrotesk-Medium".to_string()
-        )))
+            SettingText::Subscript(percentage, subscript),
+        )
+        .click_disabled(true)))
     }
 }
 

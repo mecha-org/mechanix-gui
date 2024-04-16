@@ -1,59 +1,73 @@
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::time::Duration;
-use tokio::{sync::oneshot, time};
+use tokio::{
+    sync::{mpsc, oneshot},
+    time,
+};
+use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::{
+    ToplevelEvent, ToplevelHandler, ToplevelMessage, ToplevelWState,
+};
 
 use tracing::error;
 
-use crate::gui::Message;
+use crate::{gui::Message, AppMessage, RunningAppsMessage};
 
 use super::service::RunningAppsService;
 
-#[derive(Debug)]
-pub enum ServiceMessage {
-    Start { respond_to: oneshot::Sender<u32> },
-    Stop { respond_to: oneshot::Sender<u32> },
-}
-
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum ServiceStatus {
-    INACTIVE = 0,
-    STARTED = 1,
-    STOPPED = -1,
-}
-
 pub struct RunningAppsServiceHandle {
-    status: ServiceStatus,
+    app_channel: Sender<AppMessage>,
 }
 
 impl RunningAppsServiceHandle {
-    pub fn new() -> Self {
-        Self {
-            status: ServiceStatus::INACTIVE,
-        }
+    pub fn new(app_channel: Sender<AppMessage>) -> Self {
+        Self { app_channel }
     }
 
-    pub async fn run(&mut self, sender: Sender<Message>) {
+    pub async fn run(&mut self) {
         let task = "run";
+        println!("RunningAppsServiceHandle::run()");
+        // create mpsc channel for interacting with the toplevel handler
+        let (toplevel_msg_tx, toplevel_msg_rx) = mpsc::channel(128);
+
+        // create mpsc channel for receiving events from the toplevel handler
+        let (toplevel_event_tx, mut toplevel_event_rx) = mpsc::channel(128);
+
+        // create the handler instance
+        let mut toplevel_handler = ToplevelHandler::new(toplevel_event_tx);
+
+        // start the toplevel handler
+        std::thread::spawn(move || {
+            let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
+            let _ = runtime.block_on(toplevel_handler.run(toplevel_msg_rx));
+        });
+
         let mut interval = time::interval(Duration::from_secs(1));
         loop {
             interval.tick().await;
-            match RunningAppsService::get_running_apps_status().await {
-                Ok(count) => {
-                    let _ = sender.send(Message::RunningApps { count });
+            let (tx, rx) = oneshot::channel();
+            let _ = toplevel_msg_tx
+                .send(ToplevelMessage::GetToplevels { reply_to: tx })
+                .await;
+
+            match rx.await {
+                Ok(top_levels) => {
+                    // println!(
+                    //     "RunningAppsServiceHandle::run() top level count{}",
+                    //     top_levels.len()
+                    // );
+                    let _ = self.app_channel.send(AppMessage::RunningApps {
+                        message: RunningAppsMessage::Count {
+                            count: top_levels.len() as i32,
+                        },
+                    });
                 }
                 Err(e) => {
-                    error!(task, "error while getting Rotation status {}", e);
-                    let _ = sender.send(Message::RunningApps { count: 0 });
+                    error!(task, "error while getting running apps {}", e);
+                    let _ = self.app_channel.send(AppMessage::RunningApps {
+                        message: RunningAppsMessage::Count { count: 0 },
+                    });
                 }
             };
         }
-    }
-
-    pub fn stop(&mut self) {
-        self.status = ServiceStatus::STOPPED;
-    }
-
-    pub fn start(&mut self) {
-        self.status = ServiceStatus::STARTED;
     }
 }

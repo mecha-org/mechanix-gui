@@ -49,7 +49,6 @@ impl Component for BrightnessComponent {
             icon,
             "Brightness".to_string(),
             self.value,
-            "SpaceGrotesk-Medium".to_string()
         )
         .on_slide(Box::new(|value| msg!(Message::Brightness { value })))))
     }

@@ -8,6 +8,8 @@ use zbus::{proxy, Connection, Result};
 trait Bluetooth {
     async fn status(&self) -> Result<i8>;
     async fn is_connected(&self) -> Result<i8>;
+    async fn enable(&self) -> Result<()>;
+    async fn disable(&self) -> Result<()>;
 }
 
 pub struct BluetoothService;
@@ -24,7 +26,20 @@ impl BluetoothService {
         let connection = Connection::system().await?;
         let proxy = BluetoothProxy::new(&connection).await?;
         let reply = proxy.status().await?;
+        Ok(reply)
+    }
 
+    pub async fn enable_bluetooth() -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = BluetoothProxy::new(&connection).await?;
+        let reply = proxy.enable().await?;
+        Ok(reply)
+    }
+
+    pub async fn disable_bluetooth() -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = BluetoothProxy::new(&connection).await?;
+        let reply = proxy.disable().await?;
         Ok(reply)
     }
 }
