@@ -5,8 +5,8 @@ on:
       - main
       - dev
     paths:
-      - 'shell/**'
-      - '.github/workflows/build-shell-aarch64.yml'
+      - "shell/**"
+      - ".github/workflows/build-shell-aarch64.yml"
 
 env:
   CARGO_INCREMENTAL: 0
@@ -33,7 +33,13 @@ jobs:
             os: ubuntu-22.04
             name: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
             package: mechanix-greeter
-            path: shell  
+            path: shell
+
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04
+            name: mechanix-settings-panel-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-settings-panel
+            path: shell
 
     runs-on: ${{ matrix.os }}
     continue-on-error: false
