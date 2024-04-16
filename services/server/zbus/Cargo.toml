@@ -34,11 +34,11 @@ auth = []
 
 
 [package.metadata.deb]
-name = "mechanix-zbus-server"
+name = "mechanix-zbus-services"
 depends = "$auto"
 assets = [
     # binary
-    ["../../target/aarch64-unknown-linux-gnu/release/mechanix-zbus-server", "/usr/bin/", "755"],
+    ["../../target/aarch64-unknown-linux-gnu/release/mechanix-zbus-services", "/usr/bin/", "755"],
     #dbus-conf
     ["./mecha-services-dbus.conf", "/etc/dbus-1/system.d/", "644"], 
     # settings
