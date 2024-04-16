@@ -1,0 +1,7 @@
+/target
+/.idea
+**/.DS_Store
+.env
+settings.yml
+users.yml
+theme.yml
