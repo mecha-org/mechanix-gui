@@ -29,6 +29,12 @@ jobs:
             package: mechanix-status-bar
             path: shell
 
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04
+            name: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-greeter
+            path: shell  
+
     runs-on: ${{ matrix.os }}
     continue-on-error: false
     env:
