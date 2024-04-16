@@ -18,10 +18,36 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 chrono = "0.4.31"
 tokio = { version = "1.33", features = ["full"] }
-echo_client = { path = "../commons/echo-client"}
+echo_client = { path = "../commons/echo-client" }
 zbus = "3.14.1"
 wayland-protocols-async = "1.0.0"
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 mechanix-zbus-client = { workspace = true }
+
+
+[package.metadata.deb]
+name = "mechanix-status-bar"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/aarch64-unknown-linux-gnu/release/mechanix-status-bar",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix-status-bar/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/status-bar/settings.yml",
+        "644",
+    ],
+]
