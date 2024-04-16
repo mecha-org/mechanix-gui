@@ -40,7 +40,7 @@ assets = [
     #assets
     [
         "src/assets/**/*",
-        "/usr/share/mechanix-status-bar/assets/",
+        "/usr/share/mechanix/shell/status-bar/asset",
         "644",
     ],
 
