@@ -92,7 +92,7 @@ impl Component for StatusBar {
             node!(
                 Div::new().bg(bg_color),
                 lay![
-                    padding: [12, 14, 0, 0],
+                    padding: [6, 14, 4, 0],
                     size_pct: [100],
                     axis_alignment: Alignment::Start,
                     // cross_alignment: Alignment::SpaceBetween
