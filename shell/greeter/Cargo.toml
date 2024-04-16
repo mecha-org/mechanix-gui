@@ -23,3 +23,34 @@ mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 smithay-client-toolkit = { workspace = true }
 futures = "0.3.30"
+
+[package.metadata.deb]
+assets = [
+    # binary
+    [
+        "../target/aarch64-unknown-linux-gnu/release/mechanix-greeter",
+        "/usr/bin/mechanix-greeter",
+        "755",
+    ],
+
+    # service
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/greeter/settings.yml",
+        "644",
+    ],
+
+    # user-settings
+    [
+        "users.yml.example",
+        "/etc/mechanix/shell/greeter/users.yml",
+        "644",
+    ],
+
+    # assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/greeter/assets",
+        "644",
+    ],
+]
