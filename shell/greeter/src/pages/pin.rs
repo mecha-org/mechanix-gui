@@ -134,6 +134,7 @@ impl Component for Pin {
                     direction: Column,
                     //axis_alignment: Stretch,
                     cross_alignment: Stretch,
+                    padding: [ 30, 0, 0, 0 ]
                 ]
             )
             .push(

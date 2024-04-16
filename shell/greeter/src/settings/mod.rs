@@ -153,6 +153,11 @@ pub struct HideModule {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BackgroundModule {
+    pub icon: DefaultIconPaths,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct PowerModule {
     pub icon: DefaultIconPaths,
 }
@@ -211,6 +216,7 @@ pub struct Modules {
     pub un_peek_password: UnPeekPasswordModule,
     pub show: ShowModule,
     pub hide: HideModule,
+    pub background: BackgroundModule,
 }
 
 impl Default for WindowSettings {
@@ -285,6 +291,9 @@ impl Default for Modules {
                 icon: DefaultIconPaths { default: None },
             },
             hide: HideModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            background: BackgroundModule {
                 icon: DefaultIconPaths { default: None },
             },
         }

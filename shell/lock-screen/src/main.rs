@@ -11,13 +11,16 @@ use std::time::Duration;
 use gui::LockScreen;
 use mctk_core::{
     msg,
-    reexports::smithay_client_toolkit::{
-        reexports::calloop::{
-            self,
-            channel::Sender,
-            timer::{TimeoutAction, Timer},
+    reexports::{
+        cosmic_text,
+        smithay_client_toolkit::{
+            reexports::calloop::{
+                self,
+                channel::Sender,
+                timer::{TimeoutAction, Timer},
+            },
+            shell::wlr_layer,
         },
-        shell::wlr_layer,
     },
 };
 use mctk_smithay::{
@@ -31,6 +34,9 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 use crate::gui::Message;
+
+#[derive(Debug)]
+pub enum AppMessage {}
 
 // Layer Surface App
 #[tokio::main]
@@ -61,8 +67,6 @@ async fn main() -> anyhow::Result<()> {
         scale_factor: 1.0,
     };
 
-    let mut fonts: HashMap<String, String> = settings.fonts.clone();
-
     let mut assets: HashMap<String, String> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
 
@@ -90,6 +94,9 @@ async fn main() -> anyhow::Result<()> {
 
     let namespace = settings.app.id.clone();
 
+    let mut fonts = cosmic_text::fontdb::Database::new();
+    fonts.load_system_fonts();
+
     // let layer_shell_opts = LayerOptions {
     //     anchor: wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
     //     layer: wlr_layer::Layer::Overlay,
@@ -99,7 +106,7 @@ async fn main() -> anyhow::Result<()> {
     // };
     let (session_lock_tx, session_lock_rx) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::lock_window::SessionLockWindow::open_blocking::<LockScreen>(
+        mctk_smithay::lock_window::SessionLockWindow::open_blocking::<LockScreen, AppMessage>(
             SessionLockWindowParams {
                 // title: "LockScreen".to_string(),
                 // namespace,
@@ -111,6 +118,7 @@ async fn main() -> anyhow::Result<()> {
                 // layer_shell_opts,
                 svgs,
             },
+            None,
         );
 
     let handle = event_loop.handle();

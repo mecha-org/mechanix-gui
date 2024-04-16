@@ -145,8 +145,6 @@ fn main() -> anyhow::Result<()> {
         scale_factor: 1.0,
     };
 
-    let fonts: HashMap<String, String> = settings.fonts.clone();
-
     let mut assets: HashMap<String, String> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
 

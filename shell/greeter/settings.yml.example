@@ -5,7 +5,7 @@ app:
   antialiasing: true # false
   try_opengles_first: true # false
 window:
-  size: [480, 430] # [1024, 768]
+  size: [480, 480] # [1024, 768]
   position: [0, 0] # [0, 0]
   min_size: [480, 100] # None
   max_size: null # None
@@ -73,3 +73,6 @@ modules:
   hide:
     icon:
       default: /usr/share/mechanix/shell/greeter/assets/icons/hide.svg
+  background:
+    icon:
+      default: /usr/share/mechanix/shell/greeter/assets/icons/mecha-background-grayscale.png
