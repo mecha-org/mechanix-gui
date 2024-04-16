@@ -1,12 +1,12 @@
-title: Status Bar  # Empty
+title: Status Bar # Empty
 app:
-  id: status.bar    # Status bar
-  text_multithreading: true   # false
-  antialiasing: true    # false
-  try_opengles_first: true    # false
+  id: status.bar # Status bar
+  text_multithreading: true # false
+  antialiasing: true # false
+  try_opengles_first: true # false
 window:
   size: 480 # 480
-  height: 37  # 37
+  height: 34 # 37
   width: 480
   layer_shell:
     margin:
@@ -19,56 +19,70 @@ window:
       right: true
       bottom: false
       left: true
-  position: [0, 0]  # [0, 0]
-  min_size: [480, 40]  # None
-  max_size: null    # None
-  visible: true   # true
-  resizable: true   # true
-  decorations: true   # true
-  transparent: true    # false
-  always_on_top: false    # false
+  position: [0, 0] # [0, 0]
+  min_size: [480, 40] # None
+  max_size: null # None
+  visible: true # true
+  resizable: true # true
+  decorations: true # true
+  transparent: true # false
+  always_on_top: false # false
   icon_path: null # Todo
-fonts: 
-  "SpaceGrotesk-Bold": "/home/status-bar/assets/fonts/SpaceGrotesk-Bold.ttf"
-  "SpaceGrotesk-Light": "/home/status-bar/assets/fonts/SpaceGrotesk-Light.ttf"
-  "SpaceGrotesk-Medium": "/home/status-bar/assets/fonts/SpaceGrotesk-Medium.ttf"
-  "SpaceGrotesk-Regular": "/home/status-bar/assets/fonts/SpaceGrotesk-Regular.ttf"
-  "SpaceGrotesk-SemiBold": "/home/status-bar/assets/fonts/SpaceGrotesk-SemiBold.ttf"
+fonts:
+  "SpaceGrotesk-Bold": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Bold.ttf"
+  "SpaceGrotesk-Light": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Light.ttf"
+  "SpaceGrotesk-Medium": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Medium.ttf"
+  "SpaceGrotesk-Regular": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Regular.ttf"
+  "SpaceGrotesk-SemiBold": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-SemiBold.ttf"
 css:
-  default: /home/status-bar/assets/css/style.css
+  default: /usr/share/mechanix/shell/status-bar/assets/css/style.css
 layout:
   left: ["clock"]
   center: ["window_title"]
-  right: ["wireless", "bluetooth", "battery",]
+  right: ["wireless", "bluetooth", "battery"]
 modules:
   clock:
     format: "%I:%M %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
     icon:
-      on: /home/status-bar/assets/icons/bluetooth/bluetooth_on.svg
-      off: /home/status-bar/assets/icons/bluetooth/bluetooth_off.svg
-      connected: /home/status-bar/assets/icons/bluetooth/bluetooth_connected.svg
-      not_found: /home/status-bar/assets/icons/bluetooth/bluetooth_not_found.svg
+      on: /usr/share/mechanix/shell/status-bar/assets/icons/bluetooth/bluetooth_on.svg
+      off: /usr/share/mechanix/shell/status-bar/assets/icons/bluetooth/bluetooth_off.svg
+      connected: /usr/share/mechanix/shell/status-bar/assets/icons/bluetooth/bluetooth_connected.svg
+      not_found: /usr/share/mechanix/shell/status-bar/assets/icons/bluetooth/bluetooth_not_found.svg
   wireless:
     icon:
-      off: /home/status-bar/assets/icons/wireless/wireless_off.svg
-      on: /home/status-bar/assets/icons/wireless/wireless_on.svg
-      low: /home/status-bar/assets/icons/wireless/wireless_low.svg
-      weak: /home/status-bar/assets/icons/wireless/wireless_weak.svg
-      good: /home/status-bar/assets/icons/wireless/wireless_good.svg
-      strong: /home/status-bar/assets/icons/wireless/wireless_strong.svg
-      not_found: /home/status-bar/assets/icons/wireless/wireless_not_found.svg
+      off: /usr/share/mechanix/shell/status-bar/assets/icons/wireless/wireless_off.svg
+      on: /usr/share/mechanix/shell/status-bar/assets/icons/wireless/wireless_on.svg
+      low: /usr/share/mechanix/shell/status-bar/assets/icons/wireless/wireless_low.svg
+      weak: /usr/share/mechanix/shell/status-bar/assets/icons/wireless/wireless_weak.svg
+      good: /usr/share/mechanix/shell/status-bar/assets/icons/wireless/wireless_good.svg
+      strong: /usr/share/mechanix/shell/status-bar/assets/icons/wireless/wireless_strong.svg
+      not_found: /usr/share/mechanix/shell/status-bar/assets/icons/wireless/wireless_not_found.svg
   battery:
     icon:
-      level_100: /home/status-bar/assets/icons/battery/battery_100.svg
-      level_90: /home/status-bar/assets/icons/battery/battery_90.svg
-      level_80: /home/status-bar/assets/icons/battery/battery_80.svg
-      level_70: /home/status-bar/assets/icons/battery/battery_70.svg
-      level_60: /home/status-bar/assets/icons/battery/battery_60.svg
-      level_50: /home/status-bar/assets/icons/battery/battery_50.svg
-      level_40: /home/status-bar/assets/icons/battery/battery_40.svg
-      level_30: /home/status-bar/assets/icons/battery/battery_30.svg
-      level_20: /home/status-bar/assets/icons/battery/battery_20.svg
-      level_10: /home/status-bar/assets/icons/battery/battery_10.svg
-      level_0: /home/status-bar/assets/icons/battery/battery_0.svg
-      not_found: /home/status-bar/assets/icons/battery/battery_not_found.svg
+      level_100: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_100.svg
+      level_90: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_90.svg
+      level_80: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_80.svg
+      level_70: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_70.svg
+      level_60: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_60.svg
+      level_50: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_50.svg
+      level_40: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_40.svg
+      level_30: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_30.svg
+      level_20: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_20.svg
+      level_10: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_10.svg
+      level_0: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_0.svg
+      not_found: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_not_found.svg
+      battery:
+    charging_icon:
+      level_100: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_100.svg
+      level_90: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_90.svg
+      level_80: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_80.svg
+      level_70: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_70.svg
+      level_60: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_60.svg
+      level_50: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_50.svg
+      level_40: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_40.svg
+      level_30: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_30.svg
+      level_20: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_20.svg
+      level_10: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_10.svg
+      level_0: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_0.svg
+      not_found: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_not_found.svg

@@ -9,8 +9,10 @@ use crate::users::{self, UsersSettings};
 use crate::{AppMessage, AuthSubmit, LoginHandlerEvents, Prompt};
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
-use mctk_core::widgets::{Carousel, Image};
-use mctk_core::{component, layout, Color};
+use mctk_core::reexports::femtovg::CompositeOperation;
+use mctk_core::renderables::{Image, Renderable};
+use mctk_core::widgets::Carousel;
+use mctk_core::{component, layout, Color, Scale, AABB};
 use mctk_core::{
     component::Component,
     event::{Event, Tick},
@@ -159,19 +161,39 @@ impl Component for Greeter {
         });
     }
 
+    fn render(&mut self, context: component::RenderContext) -> Option<Vec<Renderable>> {
+        let width = context.aabb.width();
+        let height = context.aabb.height();
+        let AABB { pos, .. } = context.aabb;
+        let mut rs = vec![];
+
+        let image = Image::new(pos, Scale { width, height }, "background")
+            .composite_operation(CompositeOperation::DestinationOver);
+
+        rs.push(Renderable::Image(image));
+
+        Some(rs)
+    }
+
     fn view(&self) -> Option<Node> {
         let pin = self.state_ref().pin.clone();
         let current_route = self.state_ref().current_route.clone();
         let users = self.state_ref().users_settings.users.clone();
         let error_message = self.state_ref().error_message.clone();
         let node = match current_route {
-            Routes::Users => node!(Users { users }, lay![size_pct: [100]]),
+            Routes::Users => node!(
+                Users { users },
+                lay![
+                    size_pct: [100],
+                ]
+            ),
 
             Routes::Password(route) => match route {
                 PasswordAuthRoute::Username => node!(
                     Username {},
                     lay![
-                        size_pct: [100]
+                        size_pct: [100],
+
                     ]
                 ),
                 PasswordAuthRoute::Password { .. } => node!(
@@ -179,7 +201,8 @@ impl Component for Greeter {
                         default_value: self.state_ref().password.clone()
                     },
                     lay![
-                        size_pct: [100]
+                        size_pct: [100],
+
                     ]
                 ),
                 PasswordAuthRoute::Captcha { message } => node!(
@@ -189,7 +212,8 @@ impl Component for Greeter {
                         default_value: self.state_ref().captcha.clone()
                     },
                     lay![
-                        size_pct: [100]
+                        size_pct: [100],
+
                     ]
                 ),
             },
@@ -198,7 +222,9 @@ impl Component for Greeter {
                 Pin {
                     pin_length: pin.len()
                 },
-                lay![size_pct: [100]]
+                lay![
+                    size_pct: [100],
+                ]
             ),
 
             Routes::PowerOptions => node!(PowerOptions {}, lay![size_pct: [100]]),
@@ -293,7 +319,12 @@ impl Component for Greeter {
                             self.state_mut().current_route = Routes::Users;
                         }
                         PasswordAuthRoute::Password { .. } => {
+                            if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                                let _ =
+                                    app_channel.send(AppMessage::AuthSubmit(AuthSubmit::Cancel));
+                            };
                             self.state_mut().current_route = Routes::Users;
+
                             // self.state_mut().current_route =
                             //     Routes::Password(PasswordAuthRoute::Username);
                         }

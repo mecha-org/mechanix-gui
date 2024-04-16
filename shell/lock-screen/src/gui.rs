@@ -4,6 +4,7 @@ use crate::components::unlock_button::UnlockButton;
 use crate::pages::pin::Pin;
 use crate::settings::{self, LockScreenSettings};
 use crate::theme::{self, LockScreenTheme};
+use crate::AppMessage;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -191,8 +192,8 @@ impl Component for LockScreen {
     }
 }
 
-impl RootComponent for LockScreen {
-    fn root(&mut self, w: &dyn Any) {
+impl RootComponent<AppMessage> for LockScreen {
+    fn root(&mut self, w: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
         let session_lock_window = w.downcast_ref::<SessionLockWindow>();
         if session_lock_window.is_some() {
             self.state_mut().session_lock_sender = Some(session_lock_window.unwrap().sender());

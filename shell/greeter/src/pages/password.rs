@@ -104,9 +104,10 @@ impl Component for Username {
             node!(
                 Div::new().bg(Color::rgba(0., 0., 0., 0.80)),
                 lay![
-                size_pct: [100]
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
+                    size_pct: [100]
+                    direction: Direction::Column,
+                    cross_alignment: Alignment::Stretch,
+                    padding: [ 30, 0, 0, 0 ]
                 ]
             )
             .push(label)
@@ -208,9 +209,10 @@ impl Component for Password {
             node!(
                 Div::new().bg(Color::rgba(0., 0., 0., 0.80)),
                 lay![
-                size_pct: [100]
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
+                    size_pct: [100]
+                    direction: Direction::Column,
+                    cross_alignment: Alignment::Stretch,
+                    padding: [ 30, 0, 0, 0 ]
                 ]
             )
             .push(label)

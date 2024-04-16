@@ -100,6 +100,7 @@ impl Component for Users {
                     size_pct: [100],
                     // cross_alignment: Stretch,
                     direction: Direction::Column,
+                    padding: [ 30, 0, 0, 0 ]
                 ]
             )
             .push(users_list), // .push(footer),
