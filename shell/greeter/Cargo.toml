@@ -23,6 +23,7 @@ mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 smithay-client-toolkit = { workspace = true }
 futures = "0.3.30"
+image = { workspace = true }
 
 [package.metadata.deb]
 assets = [

@@ -95,7 +95,7 @@ impl Component for Users {
 
         Some(
             node!(
-                Div::new().bg(Color::rgba(0., 0., 0., 0.80)),
+                Div::new().bg(Color::TRANSPARENT),
                 lay![
                     size_pct: [100],
                     // cross_alignment: Stretch,
