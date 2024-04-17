@@ -23,3 +23,28 @@ wayland-protocols-async = "1.0.0"
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
+
+[package.metadata.deb]
+name = "mechanix-lock-screen"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/aarch64-unknown-linux-gnu/release/mechanix-lock-screen",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/lock-screen/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/lock-screen/settings.yml",
+        "644",
+    ],
+]
