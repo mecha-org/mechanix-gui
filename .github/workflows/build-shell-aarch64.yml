@@ -41,6 +41,12 @@ jobs:
             package: mechanix-settings-panel
             path: shell
 
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-22.04
+            name: mechanix-lock-screen-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-lock-screen
+            path: shell  
+
     runs-on: ${{ matrix.os }}
     continue-on-error: false
     env:
