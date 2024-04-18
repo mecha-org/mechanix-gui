@@ -1,9 +1,11 @@
 use crate::components::overlay::Overlay;
 use crate::components::pin_indicators::MAX_PIN_LENGTH;
+use crate::components::status_bar::StatusBar;
 use crate::components::unlock_button::UnlockButton;
 use crate::pages::pin::Pin;
 use crate::settings::{self, LockScreenSettings};
 use crate::theme::{self, LockScreenTheme};
+use crate::types::{BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus};
 use crate::AppMessage;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
@@ -36,6 +38,10 @@ pub enum Message {
     BackspaceClicked,
     BackClicked,
     ChangeRoute(Routes),
+    Clock { current_time: String },
+    Wireless { status: WirelessStatus },
+    Bluetooth { status: BluetoothStatus },
+    Battery { level: u8, status: BatteryStatus },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -63,6 +69,10 @@ pub struct LockScreenState {
     current_route: Routes,
     pin: String,
     session_lock_sender: Option<Sender<SessionLockMessage>>,
+    battery_level: BatteryLevel,
+    wireless_status: WirelessStatus,
+    bluetooth_status: BluetoothStatus,
+    current_time: String,
 }
 
 #[component(State = "LockScreenState")]
@@ -101,6 +111,10 @@ impl Component for LockScreen {
             current_route: Routes::default(),
             pin: String::new(),
             session_lock_sender: None,
+            battery_level: BatteryLevel::default(),
+            wireless_status: WirelessStatus::default(),
+            bluetooth_status: BluetoothStatus::default(),
+            current_time: String::from(""),
         });
     }
 
@@ -108,7 +122,8 @@ impl Component for LockScreen {
         let unlock_pressing_time = self.state_ref().unlock_pressing_time;
         let pin = self.state_ref().pin.clone();
         let current_route = self.state_ref().current_route;
-        let node = match current_route {
+
+        let screen = match current_route {
             Routes::Unlock => node!(
                 Overlay::new(unlock_pressing_time),
                 lay!(size_pct: [100],
@@ -126,7 +141,26 @@ impl Component for LockScreen {
                 lay![size_pct: [100]]
             ),
         };
-        Some(node)
+        Some(
+            node!(
+                Div::new(),
+                lay![
+                    cross_alignment: Alignment::Stretch,
+                    axis_alignment: Alignment::Stretch,
+                    size_pct: [100]
+                ]
+            )
+            .push(node!(
+                StatusBar {
+                    battery_level: self.state_ref().battery_level.clone(),
+                    wireless_status: self.state_ref().wireless_status.clone(),
+                    bluetooth_status: self.state_ref().bluetooth_status.clone(),
+                    current_time: self.state_ref().current_time.clone(),
+                },
+                lay![size: [Auto, 34]]
+            ))
+            .push(screen),
+        )
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
@@ -185,6 +219,51 @@ impl Component for LockScreen {
             Some(Message::ChangeRoute(route)) => {
                 println!("change route ");
                 self.state_mut().current_route = *route;
+            }
+            Some(Message::Clock { current_time }) => {
+                self.state_mut().current_time = current_time.clone();
+            }
+            Some(Message::Wireless { status }) => {
+                self.state_mut().wireless_status = status.clone();
+            }
+            Some(Message::Bluetooth { status }) => {
+                self.state_mut().bluetooth_status = status.clone();
+            }
+            Some(Message::Battery { level, status }) => {
+                let is_charging = *status == BatteryStatus::Charging;
+                let battery_level = if is_charging {
+                    match level {
+                        0..=9 => BatteryLevel::ChargingLevel0,
+                        10..=19 => BatteryLevel::ChargingLevel10,
+                        20..=29 => BatteryLevel::ChargingLevel20,
+                        30..=39 => BatteryLevel::ChargingLevel30,
+                        40..=49 => BatteryLevel::ChargingLevel40,
+                        50..=59 => BatteryLevel::ChargingLevel50,
+                        60..=69 => BatteryLevel::ChargingLevel60,
+                        70..=79 => BatteryLevel::ChargingLevel70,
+                        80..=89 => BatteryLevel::ChargingLevel80,
+                        90..=99 => BatteryLevel::ChargingLevel90,
+                        100 => BatteryLevel::ChargingLevel100,
+                        _ => BatteryLevel::NotFound,
+                    }
+                } else {
+                    match level {
+                        0..=9 => BatteryLevel::Level0,
+                        10..=19 => BatteryLevel::Level10,
+                        20..=29 => BatteryLevel::Level20,
+                        30..=39 => BatteryLevel::Level30,
+                        40..=49 => BatteryLevel::Level40,
+                        50..=59 => BatteryLevel::Level50,
+                        60..=69 => BatteryLevel::Level60,
+                        70..=79 => BatteryLevel::Level70,
+                        80..=89 => BatteryLevel::Level80,
+                        90..=99 => BatteryLevel::Level90,
+                        100 => BatteryLevel::Level100,
+                        _ => BatteryLevel::NotFound,
+                    }
+                };
+
+                self.state_mut().battery_level = battery_level;
             }
             _ => (),
         }

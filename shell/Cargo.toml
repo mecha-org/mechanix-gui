@@ -48,3 +48,4 @@ smithay-client-toolkit = "0.18.0"
 image = { version = "0.24.9", features = ["png", "jpeg"] }
 futures = "0.3.30"
 wayland-protocols-async = "1.0.0"
+chrono = "0.4.31"

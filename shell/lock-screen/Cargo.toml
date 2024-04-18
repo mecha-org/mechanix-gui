@@ -23,6 +23,8 @@ wayland-protocols-async = "1.0.0"
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
+mechanix_zbus_client = { workspace = true }
+chrono = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-lock-screen"
