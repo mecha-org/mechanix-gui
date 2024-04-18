@@ -21,8 +21,7 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - target: aarch64-unknown-linux-gnu
-            name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
+          - name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
             package: mechanix-zbus-services
             path: services
 
@@ -48,8 +47,6 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install \
-          libwayland-dev \
-          libxkbcommon-dev \
           libdbus-1-dev
 
       - name: Set up Git SSH key
