@@ -3,10 +3,7 @@ on:
   push:
     branches:
       - main
-      - dev
-    paths:
-      - 'services/**'
-      - '.github/workflows/build-services-aarch64.yml'
+      - dev-build
 
 env:
   CARGO_INCREMENTAL: 0
@@ -24,9 +21,9 @@ jobs:
       matrix:
         include:
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-22.04
-            name: mechanix-zbus-server-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-zbus-server
+            os: ubuntu-20.04
+            name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-zbus-services
             path: services
 
     runs-on: ${{ matrix.os }}
@@ -56,13 +53,13 @@ jobs:
       - name: Create sources.list
         run: |
           sudo touch /etc/apt/sources.list.d/arm-cross-compile-sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy main restricted" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates main restricted" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy universe" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates universe" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-updates multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
-          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ jammy-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal main restricted" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-updates main restricted" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal universe" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-updates universe" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-updates multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ focal-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list.d/arm-cross-compile-sources.list
       - name: Update default sources.list
         run: |
           sudo sed -i 's/^deb /deb [arch=amd64] /' /etc/apt/sources.list
