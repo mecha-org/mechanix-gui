@@ -1,5 +1,5 @@
 [package]
-name = "mechanix-zbus-client"
+name = "mechanix_zbus_client"
 description = "Zbus client for Mechanix zbus services"
 version.workspace = true
 edition.workspace = true
