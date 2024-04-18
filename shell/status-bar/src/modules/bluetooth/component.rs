@@ -29,8 +29,9 @@ impl Component for BluetoothComponent {
                 ,
                 [
                     size: [24, 24],
-                    cross_alignment: Alignment::Center,
-                    axis_alignment: Alignment::Center,
+                    // cross_alignment: Alignment::Center,
+                    // axis_alignment: Alignment::Center,
+                    padding: [1, 2, 1, 2]
                 ],
             )
             .push(node!(
