@@ -29,7 +29,7 @@ image = { workspace = true }
 assets = [
     # binary
     [
-        "../target/aarch64-unknown-linux-gnu/release/mechanix-greeter",
+        "../target/release/mechanix-greeter",
         "/usr/bin/mechanix-greeter",
         "755",
     ],
