@@ -2,6 +2,7 @@ use crate::components::pinned_app::PinnedApp;
 use crate::settings::{self, HomescreenSettings};
 use crate::theme::{self, HomescreenTheme};
 use crate::AppMessage;
+use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -69,7 +70,8 @@ impl Component for Homescreen {
 
     fn view(&self) -> Option<Node> {
         let mut pinned_apps_list_node = node!(
-            Carousel::new().scroll_x(),
+            // Carousel::new().scroll_x(),
+            Div::new(),
             lay![
                 padding: [10, 16, 10, 0],
                 size_pct: [100, Auto],
@@ -112,7 +114,7 @@ impl Component for Homescreen {
                 node!(
                     Div::new().bg(Color::rgba(5., 7., 10., 0.45)),
                     lay![
-                        size: [Auto, 100]
+                        size: [Auto, 88]
                     ]
                 )
                 .push(pinned_apps_list_node),
@@ -125,6 +127,18 @@ impl Component for Homescreen {
         match message.downcast_ref::<Message>() {
             Some(Message::AppClicked { app_id }) => {
                 println!("app clicked {:?}", app_id);
+                let apps = self.state_ref().settings.modules.apps.clone();
+                let app = apps.into_iter().find(|app| app.app_id == *app_id).unwrap();
+                if !app.run_command.is_empty() {
+                    let command_data: Vec<&str> = app.run_command.split(" ").collect();
+                    let command = command_data[0];
+                    let args: Vec<&str> = command_data.clone()[1..]
+                        .iter()
+                        .filter(|&&arg| arg != "%u" && arg != "%U" && arg != "%F")
+                        .cloned()
+                        .collect();
+                    let _ = spawn_command(command, &args);
+                }
             }
             _ => (),
         }
