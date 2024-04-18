@@ -28,6 +28,7 @@ pub fn execute_command(command: &str, args: &[&str]) -> Result<bool> {
 }
 
 pub fn spawn_command(command: &str, args: &[&str]) -> Result<bool> {
+    println!("spawning command {:?} args {:?}", command, args);
     let child = match Command::new(command).args(args).spawn() {
         Ok(output) => output,
         Err(e) => {

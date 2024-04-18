@@ -88,7 +88,7 @@ pub struct App {
     pub app_id: String,
     pub name: String,
     pub icon: Option<String>,
-    pub start_command: Option<String>,
+    pub run_command: String,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]

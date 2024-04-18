@@ -21,15 +21,20 @@ layout:
   right: []
 modules:
   apps:
+    - app_id: mecha-connect
+      name: Mecha Connect
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-connect.png
+      run_command: mecha-connect
+    - app_id: mecha-llama
+      name: Mecha LLama
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-llama.png
+      run_command: mecha-vision
+    - app_id: mecha-vision
+      name: Mecha Vision
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-vision.png
+      run_command:
     - app_id: chromium
       name: Chromium
-      alias: chromium
       icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/chromium.png
-    - app_id: mechanix-app-drawer
-      name: Mechanix app drawer
-      alias: mechanix-app-drawer
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/app_drawer.svg
-    - app_id: connect
-      name: Mecha Connect
-      alias: connect
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/connect.png
+      run_command: chromium
+
