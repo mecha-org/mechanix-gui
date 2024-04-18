@@ -16,12 +16,13 @@ env:
 
 jobs:
   build:
-    name: ${{ matrix.package }}
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: true
       matrix:
         include:
-          - package: mechanix-zbus-services
+          - name: Zbus Services
+            package: mechanix-zbus-services
             artifact: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
             path: services
 

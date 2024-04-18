@@ -16,28 +16,33 @@ env:
 
 jobs:
   build:
-    name: ${{ matrix.package }}
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: true
       matrix:
         include:
-          - package: mechanix-status-bar
+          - name: Status Bar
+            package: mechanix-status-bar
             artifact: mechanix-status-bar-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - package: mechanix-greeter
+          - name: Greeter
+            package: mechanix-greeter
             artifact: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - package: mechanix-settings-panel
+          - name: Settings Panel
+            package: mechanix-settings-panel
             artifact: mechanix-settings-panel-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - package: mechanix-lock-screen
+          - name: Lock Screen
+            package: mechanix-lock-screen
             artifact: mechanix-lock-screen-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - package: mechanix-home-screen
+          - name: Home Screen
+            package: mechanix-home-screen
             artifact: mechanix-home-screen-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
