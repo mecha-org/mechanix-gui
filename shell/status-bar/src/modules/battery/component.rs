@@ -4,7 +4,7 @@ use mctk_core::{
     component::Component,
     lay,
     layout::Alignment,
-    node, size,
+    node, rect, size,
     widgets::{Div, Svg},
     Color, Node,
 };
@@ -25,8 +25,9 @@ impl Component for BatteryComponent {
                 ,
                 [
                     size: [24, 24],
-                    cross_alignment: Alignment::Center,
-                    axis_alignment: Alignment::Center,
+                    // cross_alignment: Alignment::Center,
+                    // axis_alignment: Alignment::Center,
+                    padding: [1, 2, 1, 2]
                 ],
             )
             .push(node!(
