@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      - dev-build
+      - dev
 
 env:
   CARGO_INCREMENTAL: 0
