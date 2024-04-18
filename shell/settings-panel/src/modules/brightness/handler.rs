@@ -23,7 +23,7 @@ impl BrightnessServiceHandle {
 
     pub async fn run(&mut self, mut brightness_msg_rx: Receiver<BrightnessMessage>) {
         let task = "run";
-        let mut interval = time::interval(Duration::from_secs(1));
+        let mut interval = time::interval(Duration::from_secs(5));
         loop {
             select! {
                 tick = interval.tick() => {
@@ -51,6 +51,7 @@ impl BrightnessServiceHandle {
                     match msg.unwrap() {
                         BrightnessMessage::Change { value } => {
                             println!("BrightnessServiceHandle::run() value {:?}", value);
+                            interval.reset();
                             let _ = BrightnessService::set_brightness_value(value as u8).await;
                         }
                         _ => ()
