@@ -30,6 +30,11 @@ pub enum SettingNames {
     Bluetooth,
     Rotation,
 }
+#[derive(Debug, Clone)]
+pub enum SliderSettingsNames {
+    Brightness { value: i32 },
+    Sound { value: i32 },
+}
 
 /// ## Message
 ///
@@ -50,6 +55,7 @@ pub enum Message {
     Show,
     Hide,
     SettingClicked(SettingNames),
+    SliderChanged(SliderSettingsNames),
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -83,6 +89,7 @@ pub struct SettingsPanelState {
     brightness_value: i32,
     loading: Loading,
     app_channel: Option<Sender<AppMessage>>,
+    visible: bool,
 }
 
 #[component(State = "SettingsPanelState")]
@@ -107,11 +114,15 @@ impl Component for SettingsPanel {
             brightness_value: 0,
             loading: Loading::default(),
             app_channel: None,
+            visible: true,
         })
     }
 
     fn view(&self) -> Option<Node> {
         let bg_color = Color::rgba(5., 7., 10., 0.85);
+        if !self.state_ref().visible {
+            return Some(node!(Div::new(), lay![size: [0, 0]]));
+        };
 
         Some(
             node!(
@@ -239,13 +250,6 @@ impl Component for SettingsPanel {
             }
             Some(Message::Brightness { value }) => {
                 self.state_mut().brightness_value = *value as i32;
-                if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                    let _ = app_channel.send(AppMessage::Brightness {
-                        message: BrightnessMessage::Change {
-                            value: *value as u8,
-                        },
-                    });
-                }
             }
             Some(Message::SettingClicked(settings_name)) => {
                 println!("setting clicked: {:?}", settings_name);
@@ -285,6 +289,19 @@ impl Component for SettingsPanel {
                     SettingNames::Rotation => {}
                 }
             }
+            Some(Message::SliderChanged(settings_name)) => match settings_name {
+                SliderSettingsNames::Brightness { value } => {
+                    self.state_mut().brightness_value = *value;
+                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                        let _ = app_channel.send(AppMessage::Brightness {
+                            message: BrightnessMessage::Change {
+                                value: *value as u8,
+                            },
+                        });
+                    }
+                }
+                SliderSettingsNames::Sound { .. } => {}
+            },
             Some(Message::Cpu { usage }) => {
                 self.state_mut().cpu_usage = *usage;
             }
@@ -293,6 +310,12 @@ impl Component for SettingsPanel {
             }
             Some(Message::RunningApps { count }) => {
                 self.state_mut().running_apps_count = *count;
+            }
+            Some(Message::Show) => {
+                self.state_mut().visible = true;
+            }
+            Some(Message::Hide) => {
+                self.state_mut().visible = true;
             }
             _ => (),
         };

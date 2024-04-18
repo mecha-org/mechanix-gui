@@ -24,6 +24,13 @@ use std::any::Any;
 use std::time::{Duration, Instant};
 use std::{collections::HashMap, fmt};
 
+#[derive(Debug, Clone)]
+pub enum PinKey {
+    Home,
+    Backspace,
+    Text { key: String },
+}
+
 /// ## Message
 ///
 /// These are the events (or messages) that update state.
@@ -34,7 +41,7 @@ pub enum Message {
     Hide,
     UnlockPressed,
     UnlockReleased,
-    PinKeyClicked(String),
+    PinKeyClicked(PinKey),
     BackspaceClicked,
     BackClicked,
     ChangeRoute(Routes),
@@ -135,11 +142,17 @@ impl Component for LockScreen {
                 .on_release(Box::new(|| msg!(Message::UnlockReleased))))),
 
             Routes::Pin => node!(
+                Overlay::new(0),
+                lay!(size_pct: [100],
+                            axis_alignment: Alignment::Center,
+                            cross_alignment: Alignment::Center)
+            )
+            .push(node!(
                 Pin {
                     pin_length: pin.len()
                 },
                 lay![size_pct: [100]]
-            ),
+            )),
         };
         Some(
             node!(
@@ -191,30 +204,32 @@ impl Component for LockScreen {
                     }
                 }
             }
-            Some(Message::PinKeyClicked(key)) => {
-                println!("pin key clicked {:?}", key);
-                let updated_pin = [self.state_ref().pin.clone(), key.to_string()].join("");
-                self.state_mut().pin = updated_pin.clone();
+            Some(Message::PinKeyClicked(pin_key)) => {
+                println!("pin key clicked {:?}", pin_key);
+                match pin_key {
+                    PinKey::Text { key } => {
+                        let updated_pin = [self.state_ref().pin.clone(), key.to_string()].join("");
+                        self.state_mut().pin = updated_pin.clone();
 
-                if updated_pin.len() == MAX_PIN_LENGTH {
-                    let is_pin_correct = updated_pin == "0000";
-                    if is_pin_correct {
-                        let _ = unlock(self.state_ref().session_lock_sender.clone());
+                        if updated_pin.len() == MAX_PIN_LENGTH {
+                            let is_pin_correct = updated_pin == "0000";
+                            if is_pin_correct {
+                                let _ = unlock(self.state_ref().session_lock_sender.clone());
+                            }
+                        };
                     }
-                };
-            }
-            Some(Message::BackspaceClicked) => {
-                println!("backspace clicked ");
-                let mut pin = self.state_ref().pin.clone();
-                if pin.len() > 0 {
-                    pin.pop();
-                    self.state_mut().pin = pin;
+                    PinKey::Home => {
+                        self.state_mut().current_route = Routes::Unlock;
+                        self.state_mut().pin = String::new();
+                    }
+                    PinKey::Backspace => {
+                        let mut pin = self.state_ref().pin.clone();
+                        if pin.len() > 0 {
+                            pin.pop();
+                            self.state_mut().pin = pin;
+                        }
+                    }
                 }
-            }
-            Some(Message::BackClicked) => {
-                println!("back clicked ");
-                self.state_mut().pin = String::new();
-                self.state_mut().current_route = Routes::Unlock;
             }
             Some(Message::ChangeRoute(route)) => {
                 println!("change route ");

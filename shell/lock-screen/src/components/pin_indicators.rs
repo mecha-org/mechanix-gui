@@ -23,9 +23,9 @@ impl Component for PinIndicators {
                     } else {
                         Color::TRANSPARENT
                     })
-                    .border(Color::WHITE, 2., (5., 5., 5., 5.)),
+                    .border(Color::WHITE, 2., (6., 6., 6., 6.)),
                 lay![
-                    size: [10, 10],
+                    size: [12, 12],
                     margin: [0., 8.]
                 ],
             )
