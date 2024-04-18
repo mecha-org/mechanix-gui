@@ -16,35 +16,33 @@ env:
 
 jobs:
   build:
-    name: Build
+    name: ${{ matrix.package }}
     strategy:
       fail-fast: true
       matrix:
         include:
-          - name: mechanix-status-bar-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-status-bar
+          - package: mechanix-status-bar
+            artifact: mechanix-status-bar-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - name: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-greeter
+          - package: mechanix-greeter
+            artifact: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - name: mechanix-settings-panel-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-settings-panel
+          - package: mechanix-settings-panel
+            artifact: mechanix-settings-panel-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - name: mechanix-lock-screen-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-lock-screen
+          - package: mechanix-lock-screen
+            artifact: mechanix-lock-screen-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - name: mechanix-home-screen-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-home-screen
+          - package: mechanix-home-screen
+            artifact: mechanix-home-screen-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
-    env:
-      RUSTFLAGS: ${{ matrix.rustflags || '' }}
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
@@ -89,15 +87,12 @@ jobs:
 
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
-          cd shell/target/release/
-          tar czvf ../../../${{matrix.name}} ${{ matrix.package }}
-          cd -
-          cd shell/target/debian/
-          mv *.deb ../../../
-          cd -
+          mkdir build
+          cp ${{ matrix.path }}/target/release/${{ matrix.package }} ./build
+          cp ${{ matrix.path }}/target/debian/*.deb ./build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: ./mechanix*
+          name: ${{ matrix.artifact }}
+          path: ./build/*

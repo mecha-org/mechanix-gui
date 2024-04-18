@@ -16,19 +16,17 @@ env:
 
 jobs:
   build:
-    name: Build
+    name: ${{ matrix.package }}
     strategy:
       fail-fast: true
       matrix:
         include:
-          - name: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
-            package: mechanix-zbus-services
+          - package: mechanix-zbus-services
+            artifact: mechanix-zbus-services-aarch64-unknown-linux-gnu.tar.gz
             path: services
 
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
-    env:
-      RUSTFLAGS: ${{ matrix.rustflags || '' }}
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
@@ -71,16 +69,12 @@ jobs:
           
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
-          cd services/target/release/
-          tar czvf ../../../${{matrix.name}} ${{ matrix.package }}
-          cd -
-          cd services/target/debian/
-          mv *.deb ../../../
-          cd -
+          mkdir build
+          cp ${{ matrix.path }}/target/release/${{ matrix.package }} ./build
+          cp ${{ matrix.path }}/target/debian/*.deb ./build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
+          name: ${{ matrix.artifact }}
           path: ./mechanix*
-
