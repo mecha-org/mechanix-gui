@@ -13,7 +13,6 @@ use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
 use mctk_core::reexports::femtovg::CompositeOperation;
 use mctk_core::renderables::{Image, Renderable};
-use mctk_core::widgets::Carousel;
 use mctk_core::{component, layout, Color, Scale, AABB};
 use mctk_core::{
     component::Component,
