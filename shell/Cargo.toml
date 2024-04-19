@@ -40,9 +40,9 @@ categories = ["gui"]
 keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
 
 [workspace.dependencies]
-mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63889573c67ebe73b1cba5205f147a66210dec04" }
-mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63889573c67ebe73b1cba5205f147a66210dec04" }
-mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63889573c67ebe73b1cba5205f147a66210dec04" }
+mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "6f4e5060140707ef653988ddf33ec02e74d2882d" }
+mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "6f4e5060140707ef653988ddf33ec02e74d2882d" }
+mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "6f4e5060140707ef653988ddf33ec02e74d2882d" }
 mechanix_zbus_client = { path = "../services/client/zbus" }
 smithay-client-toolkit = "0.18.0"
 image = { version = "0.24.9", features = ["png", "jpeg"] }

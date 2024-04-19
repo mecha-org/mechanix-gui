@@ -1,4 +1,4 @@
-use mctk_core::event::MouseUp;
+use mctk_core::event::{MouseUp, TouchDown, TouchUp};
 use mctk_core::layout::{Alignment, Direction, PositionType};
 use mctk_core::style::{FontWeight, Styled, VerticalPosition};
 use mctk_core::{
@@ -89,6 +89,14 @@ impl Component for ClickableSetting {
     }
 
     fn on_mouse_up(&mut self, _event: &mut Event<MouseUp>) {
+        self.state_mut().pressing = false;
+    }
+
+    fn on_touch_down(&mut self, _event: &mut Event<TouchDown>) {
+        self.state_mut().pressing = true;
+    }
+
+    fn on_touch_up(&mut self, _event: &mut Event<TouchUp>) {
         self.state_mut().pressing = false;
     }
 
