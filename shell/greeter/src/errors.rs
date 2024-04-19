@@ -23,6 +23,12 @@ pub enum GreeterErrorCodes {
     StreamReadCaptchaError,
     StreamWriteCaptchaError,
     StreamReadAuthResponseError,
+    InitNetworkManagerClient,
+    InitBluetoothManagerClient,
+    InitBatteryManagerClient,
+    GetWirelessStatusError,
+    GetBluetoothStatusError,
+    GetBatteryStatusError,
 }
 
 impl fmt::Display for GreeterErrorCodes {
@@ -61,6 +67,14 @@ impl fmt::Display for GreeterErrorCodes {
             GreeterErrorCodes::StreamReadAuthResponseError => {
                 write!(f, "StreamReadAuthResponseError")
             }
+            GreeterErrorCodes::InitNetworkManagerClient => write!(f, "InitNetworkManagerClient"),
+            GreeterErrorCodes::InitBluetoothManagerClient => {
+                write!(f, "InitBluetoothManagerClient")
+            }
+            GreeterErrorCodes::InitBatteryManagerClient => write!(f, "InitBatteryManagerClient"),
+            GreeterErrorCodes::GetWirelessStatusError => write!(f, "GetWirelessStatusError"),
+            GreeterErrorCodes::GetBluetoothStatusError => write!(f, "GetBluetoothStatusError"),
+            GreeterErrorCodes::GetBatteryStatusError => write!(f, "GetBatteryStatusError"),
         }
     }
 }

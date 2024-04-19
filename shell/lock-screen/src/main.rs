@@ -52,7 +52,6 @@ use crate::gui::Message;
 #[derive(Debug)]
 pub enum AppMessage {
     Clock { current_time: String },
-    Window { title: String, activated: bool },
     Wireless { status: WirelessStatus },
     Bluetooth { status: BluetoothStatus },
     Battery { level: u8, status: BatteryStatus },
