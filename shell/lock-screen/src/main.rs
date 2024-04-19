@@ -104,6 +104,10 @@ async fn main() -> anyhow::Result<()> {
         svgs.insert("back_icon".to_string(), icon);
     }
 
+    if let Some(icon) = modules.home.icon.default {
+        svgs.insert("home_icon".to_string(), icon);
+    }
+
     if let Some(icon) = modules.back_space.icon.default {
         svgs.insert("backspace_icon".to_string(), icon);
     }

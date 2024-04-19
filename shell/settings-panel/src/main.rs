@@ -7,6 +7,7 @@ mod theme;
 mod types;
 mod widgets;
 
+use echo_client::EchoClient;
 use std::time::Duration;
 use std::{collections::HashMap, env};
 use tokio::{
@@ -119,10 +120,22 @@ pub enum AppMessage {
     Sound { message: SoundMessage },
     Brightness { message: BrightnessMessage },
     RunningApps { message: RunningAppsMessage },
+    Show,
+    Hide,
 }
 
 // Layer Surface App
 fn main() -> anyhow::Result<()> {
+    let args: Vec<String> = std::env::args().collect();
+    let cmd_index = args.iter().position(|arg| arg == "-cmd");
+    if let Some(index) = cmd_index {
+        if let Some(command) = args.get(index + 1) {
+            futures::executor::block_on(async move {
+                let _ = echo(command).await;
+            });
+            return Ok(());
+        }
+    };
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
     tracing_subscriber::fmt()
         .compact()
@@ -139,9 +152,11 @@ fn main() -> anyhow::Result<()> {
     //     Err(_) => SettingsPanelTheme::default(),
     // };
 
+    let width = settings.window.size.0 as u32;
+    let height = settings.window.size.1 as u32;
     let window_opts = WindowOptions {
-        height: settings.window.size.1 as u32,
-        width: settings.window.size.0 as u32,
+        height,
+        width,
         scale_factor: 1.0,
     };
 
@@ -179,7 +194,7 @@ fn main() -> anyhow::Result<()> {
         layer: wlr_layer::Layer::Overlay,
         keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
         namespace: Some(namespace.clone()),
-        zone: window_opts.height as i32,
+        zone: 0 as i32,
     };
 
     let mut fonts = cosmic_text::fontdb::Database::new();
@@ -192,7 +207,7 @@ fn main() -> anyhow::Result<()> {
             LayerWindowParams {
                 title: settings.title.clone(),
                 namespace,
-                window_opts,
+                window_opts: window_opts,
                 fonts,
                 assets,
                 svgs,
@@ -311,6 +326,19 @@ fn main() -> anyhow::Result<()> {
                         });
                     }
                 },
+                AppMessage::Show => {
+                    println!("AppMessage::Show");
+                    let _ = window_tx_2
+                        .clone()
+                        .send(WindowMessage::Resize { width, height });
+                }
+                AppMessage::Hide => {
+                    println!("AppMessage::Hide");
+                    let _ = window_tx_2.clone().send(WindowMessage::Resize {
+                        width: 1,
+                        height: 1,
+                    });
+                }
                 _ => (),
             },
             calloop::channel::Event::Closed => {}
@@ -359,6 +387,7 @@ fn init_services(
         let memory_f = run_memory_handler(app_channel.clone());
         let brightness_f = run_brightness_handler(app_channel.clone(), brightness_msg_rx);
         let sound_f = run_sound_handler(app_channel.clone(), sound_msg_rx);
+        //let zbus_f = run_zbus_handler(app_channel.clone());
 
         runtime
             .block_on(runtime.spawn(async move {
@@ -370,7 +399,8 @@ fn init_services(
                     cpu_f,
                     memory_f,
                     brightness_f,
-                    sound_f
+                    sound_f,
+                    //zbus_f
                 )
             }))
             .unwrap();
@@ -422,4 +452,29 @@ async fn run_brightness_handler(
 async fn run_sound_handler(app_channel: Sender<AppMessage>, sound_msg_rx: Receiver<SoundMessage>) {
     let mut sound_service_handle = SoundServiceHandle::new(app_channel);
     sound_service_handle.run(sound_msg_rx).await;
+}
+
+async fn run_zbus_handler(app_channel: Sender<AppMessage>) {
+    let mut zbus_service_handle = ZbusServiceHandle::new(app_channel);
+    zbus_service_handle.run().await;
+}
+
+async fn echo(cmd: &str) {
+    let echo_res = EchoClient::echo(
+        "org.mechanix.shell.SettingsPanel",
+        "/org/mechanix/shell/SettingsPanel",
+        "org.mechanix.shell.SettingsPanel",
+        cmd,
+        (),
+    )
+    .await;
+
+    match echo_res {
+        Ok(_) => {
+            println!("echo success");
+        }
+        Err(e) => {
+            println!("echo failed with error {}", e);
+        }
+    };
 }

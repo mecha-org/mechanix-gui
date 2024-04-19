@@ -9,7 +9,10 @@ use mctk_core::{
     Color, Node,
 };
 
-use crate::{components::pin_indicators::PinIndicators, gui::Message};
+use crate::{
+    components::pin_indicators::PinIndicators,
+    gui::{Message, PinKey},
+};
 
 pub struct Pin {
     pub pin_length: usize,
@@ -25,7 +28,20 @@ impl std::fmt::Debug for Pin {
 
 impl Component for Pin {
     fn view(&self) -> Option<Node> {
-        let pin_keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+        let pin_keys = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "home",
+            "9",
+            "0",
+            "backspace",
+        ];
 
         let mut pin_buttons = node!(
             Div::new(),
@@ -38,29 +54,59 @@ impl Component for Pin {
         );
 
         for (i, pin_key) in pin_keys.into_iter().enumerate() {
-            let pin_node: Node = node!(
-                Button::new(txt!(pin_key))
-                    .on_click(Box::new(|| msg!(Message::PinKeyClicked(
-                        pin_key.to_string()
-                    ))))
-                    .style("h_alignment", HorizontalPosition::Center)
-                    .style("radius", 12.)
-                    .style("text_color", Color::WHITE)
-                    .style("font_size", 32.)
-                    .style("active_color", Color::rgb(15., 16., 21.))
-                    .style("background_color", Color::rgb(21., 23., 29.)),
-                lay![
-                    size: [64, 64],
-                    margin: [10],
-                ],
-            )
+            let pin_node: Node = (if pin_key == "home" {
+                node!(
+                    IconButton::new("home_icon")
+                        .on_click(Box::new(|| msg!(Message::PinKeyClicked(PinKey::Home))))
+                        .style("h_alignment", HorizontalPosition::Center)
+                        .style("radius", 20.)
+                        .style("padding", 22.)
+                        .style("active_color", Color::rgba(255., 255., 255., 0.50))
+                        .style("background_color", Color::rgba(42., 42., 44., 0.90)),
+                    lay![
+                        size: [80, 80],
+                        margin: [10],
+                    ],
+                )
+            } else if pin_key == "backspace" {
+                node!(
+                    IconButton::new("backspace_icon")
+                        .on_click(Box::new(|| msg!(Message::PinKeyClicked(PinKey::Backspace))))
+                        .style("h_alignment", HorizontalPosition::Center)
+                        .style("radius", 20.)
+                        .style("padding", 22.)
+                        .style("active_color", Color::rgba(255., 255., 255., 0.50))
+                        .style("background_color", Color::rgba(42., 42., 44., 0.90)),
+                    lay![
+                        size: [80, 80],
+                        margin: [10],
+                    ],
+                )
+            } else {
+                node!(
+                    Button::new(txt!(pin_key))
+                        .on_click(Box::new(|| msg!(Message::PinKeyClicked(PinKey::Text {
+                            key: pin_key.to_string()
+                        }))))
+                        .style("h_alignment", HorizontalPosition::Center)
+                        .style("radius", 20.)
+                        .style("text_color", Color::WHITE)
+                        .style("font_size", 32.)
+                        .style("active_color", Color::rgba(255., 255., 255., 0.50))
+                        .style("background_color", Color::rgba(42., 42., 44., 0.90)),
+                    lay![
+                        size: [80, 80],
+                        margin: [10],
+                    ],
+                )
+            })
             .key(i as u64);
             pin_buttons = pin_buttons.push(pin_node);
         }
 
         Some(
             node!(
-                Div::new().bg(Color::BLACK),
+                Div::new(),
                 lay![
                     size_pct: [100],
                     direction: Column,
@@ -82,42 +128,9 @@ impl Component for Pin {
                 )
                 .push(node!(PinIndicators {
                     pin_length: self.pin_length,
-                }))
-                .push(node!(
-                    IconButton::new("backspace_icon")
-                        .on_click(Box::new(|| msg!(Message::BackspaceClicked)))
-                        .style("h_alignment", HorizontalPosition::Right)
-                        .style("background_color", Color::TRANSPARENT)
-                        .style("active_color", Color::TRANSPARENT),
-                    lay![
-                        size: [32, 32],
-                        position_type: Absolute,
-                        position: [0.0, Auto, Auto, 0.0]
-                    ]
-                )),
+                })),
             )
-            .push(pin_buttons)
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size: [Auto, 80]
-                    ],
-                )
-                .push(node!(
-                    IconButton::new("back_icon".to_string())
-                        .on_click(Box::new(|| msg!(Message::BackClicked)))
-                        // .style("h_alignment", HorizontalPosition::Center)
-                        .style("radius", 12.)
-                        .style("active_color", Color::rgb(15., 16., 21.))
-                        .style("padding", 10.)
-                        .style("background_color", Color::rgb(21., 23., 29.)),
-                    lay![
-                        size: [64, 64],
-                        margin: [0., 20.],
-                    ],
-                )),
-            ),
+            .push(pin_buttons),
         )
     }
 }

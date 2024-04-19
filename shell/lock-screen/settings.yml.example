@@ -27,7 +27,7 @@ modules:
   home:
     title: "Home"
     icon:
-      default: /usr/share/mechanix/shell/lock-screen/assets/pngs/home.png
+      default: /usr/share/mechanix/shell/lock-screen/assets/icons/home.svg
   back_space:
     title: "Back Space"
     icon:
