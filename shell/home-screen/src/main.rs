@@ -82,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
 
     let layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
-        layer: wlr_layer::Layer::Overlay,
+        layer: wlr_layer::Layer::Bottom,
         keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
         namespace: Some(namespace.clone()),
         zone: 0 as i32,
