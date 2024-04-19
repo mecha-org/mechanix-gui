@@ -37,4 +37,8 @@ modules:
       name: Chromium
       icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/chromium.png
       run_command: chromium
+    - app_id: firefox
+      name: firefox
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/firefox.png
+      run_command: firefox-esr
 
