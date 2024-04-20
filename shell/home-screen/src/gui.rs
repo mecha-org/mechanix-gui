@@ -129,15 +129,11 @@ impl Component for Homescreen {
                 println!("app clicked {:?}", app_id);
                 let apps = self.state_ref().settings.modules.apps.clone();
                 let app = apps.into_iter().find(|app| app.app_id == *app_id).unwrap();
-                if !app.run_command.is_empty() {
-                    let command_data: Vec<&str> = app.run_command.split(" ").collect();
-                    let command = command_data[0];
-                    let args: Vec<&str> = command_data.clone()[1..]
-                        .iter()
-                        .filter(|&&arg| arg != "%u" && arg != "%U" && arg != "%F")
-                        .cloned()
-                        .collect();
-                    let _ = spawn_command(command, &args);
+                let run_command = app.run_command;
+                if !run_command.is_empty() {
+                    let command = run_command[0].clone();
+                    let args: Vec<String> = run_command.clone()[1..].to_vec();
+                    let _ = spawn_command(command, args);
                 }
             }
             _ => (),
