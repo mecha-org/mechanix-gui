@@ -50,7 +50,7 @@ impl BrightnessServiceHandle {
 
                     match msg.unwrap() {
                         BrightnessMessage::Change { value } => {
-                            println!("BrightnessServiceHandle::run() value {:?}", value);
+                            println!("BrightnessServiceHandle::run() BrightnessMessage::Change {:?}", value);
                             interval.reset();
                             let _ = BrightnessService::set_brightness_value(value as u8).await;
                         }
