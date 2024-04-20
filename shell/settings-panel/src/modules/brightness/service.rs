@@ -33,6 +33,11 @@ impl BrightnessService {
 
     pub async fn set_brightness_value(value: u8) -> Result<()> {
         let task = "set_brightness_value";
+        println!(
+            "BrightnessService::set_brightness_value() {:?} converted value {:?}",
+            value,
+            (value as f32 / 100. * 254.) as u8
+        );
         match Display::set_brightness_percentage((value as f32 / 100. * 254.) as u8).await {
             Ok(v) => v,
             Err(e) => bail!(SettingsPanelError::new(

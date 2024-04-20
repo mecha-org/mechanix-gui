@@ -48,6 +48,7 @@ impl Component for SlidableSetting {
         match msg.downcast_ref::<SlidableSettingMessage>() {
             Some(SlidableSettingMessage::ValueChanged(value)) => {
                 if let Some(slide_fn) = &self.on_slide {
+                    println!("SlidableSetting::update() {}", *value);
                     m.push(slide_fn(*value));
                 }
             }
