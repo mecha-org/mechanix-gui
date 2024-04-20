@@ -5,7 +5,7 @@ use anyhow::{bail, Result};
 use crate::errors::{CommandError, CommandErrorCodes};
 mod errors;
 
-pub fn execute_command(command: &str, args: &[&str]) -> Result<bool> {
+pub fn execute_command(command: String, args: Vec<String>) -> Result<bool> {
     let output = match Command::new(command).args(args).output() {
         Ok(output) => output,
         Err(e) => {
@@ -27,7 +27,7 @@ pub fn execute_command(command: &str, args: &[&str]) -> Result<bool> {
     Ok(true)
 }
 
-pub fn spawn_command(command: &str, args: &[&str]) -> Result<bool> {
+pub fn spawn_command(command: String, args: Vec<String>) -> Result<bool> {
     println!("spawning command {:?} args {:?}", command, args);
     let child = match Command::new(command).args(args).spawn() {
         Ok(output) => output,
