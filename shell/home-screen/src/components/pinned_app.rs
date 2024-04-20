@@ -52,7 +52,7 @@ impl Component for PinnedApp {
                     IconType::Png
                 })
                 .style("background_color", Color::rgb(21., 23., 29.))
-                .style("active_color", Color::rgba(255., 255., 255., 0.80))
+                .style("active_color", Color::rgba(42., 42., 44., 0.80))
                 .style("padding", 11.)
                 .style("radius", 12.),
             lay![
