@@ -36,7 +36,7 @@ modules:
     - app_id: chromium
       name: Chromium
       icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/chromium.png
-      run_command: chromium
+      run_command: chromium --user-agent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36" --ozone-platform=wayland
     - app_id: firefox
       name: firefox
       icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/firefox.png
