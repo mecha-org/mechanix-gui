@@ -51,7 +51,7 @@ impl Component for SlidableSetting {
                     m.push(slide_fn(*value));
                 }
             }
-            None => panic!(),
+            _ => (),
         }
         m
     }
