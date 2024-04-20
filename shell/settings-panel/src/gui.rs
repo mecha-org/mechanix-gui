@@ -17,9 +17,12 @@ use crate::{AppMessage, BluetoothMessage, BrightnessMessage, WirelessMessage};
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
+use mctk_core::style::Styled;
+use mctk_core::widgets::{Button, IconButton};
 use mctk_core::{component, layout, Color};
 use mctk_core::{
-    component::Component, lay, node, rect, size, size_pct, state_component_impl, widgets::Div, Node,
+    component::Component, lay, msg, node, rect, size, size_pct, state_component_impl, txt,
+    widgets::Div, Node,
 };
 use std::any::Any;
 use std::{collections::HashMap, fmt};
@@ -56,6 +59,7 @@ pub enum Message {
     Hide,
     SettingClicked(SettingNames),
     SliderChanged(SliderSettingsNames),
+    SlideUp,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -196,6 +200,13 @@ impl Component for SettingsPanel {
                     value: self.state_ref().brightness_value,
                 },
                 lay![margin: rect!(5.5, 7., 5.5, 0.)]
+            ))
+            .push(node!(
+                SlideLine {},
+                lay![
+                    position_type: Absolute,
+                    position: [Auto, Auto, 20.0, 184.0],
+                ]
             )),
         )
     }
@@ -317,6 +328,9 @@ impl Component for SettingsPanel {
             Some(Message::Hide) => {
                 self.state_mut().visible = true;
             }
+            Some(Message::SlideUp) => {
+                std::process::exit(0);
+            }
             _ => (),
         };
         vec![]
@@ -325,5 +339,37 @@ impl Component for SettingsPanel {
 impl RootComponent<AppMessage> for SettingsPanel {
     fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
         self.state_mut().app_channel = app_channel;
+    }
+}
+
+#[derive(Debug)]
+pub struct SlideLine {}
+
+impl Component for SlideLine {
+    fn on_click(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Click>) {
+        event.emit(msg!(Message::SlideUp));
+    }
+
+    fn view(&self) -> Option<Node> {
+        Some(
+            node!(
+                Div::new().bg(Color::TRANSPARENT),
+                lay![
+                    axis_alignment: Alignment::Center,
+                    cross_alignment: Alignment::Center,
+                    size: [110, 30]
+                ],
+            )
+            .push(node!(
+                Button::new(txt!(""))
+                    .style("background_color", Color::rgb(129., 129., 129.))
+                    .style("active_color", Color::rgb(129., 129., 129.))
+                    .style("radius", 2.)
+                    .on_click(Box::new(|| msg!(Message::SlideUp))),
+                lay![
+                    size: [80, 6],
+                ]
+            )),
+        )
     }
 }

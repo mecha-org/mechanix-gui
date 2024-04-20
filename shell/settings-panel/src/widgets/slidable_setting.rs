@@ -82,7 +82,8 @@ impl Component for SlidableSetting {
             ))
             .push(node!(Slider::new(self.value).on_slide(Box::new(|value| msg!(SlidableSettingMessage::ValueChanged(value)))), [
                 size_pct: [100, Auto],
-                margin: [6, 10, 18, 10],
+                margin: [1, 10, 15, 10],
+                padding: [ 3, 0, 3, 0 ]
             ]))
             .push(node!(Text::new(txt!(self.text.clone()))
                 .style("color", Color::rgb(197., 200., 207.))
