@@ -36,7 +36,7 @@ modules:
       run_command: [
         "sh", 
         "-c",
-        "mecha-llama"
+        "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland https://mecha-voice-ai-demo.vercel.app/"
       ]
     - app_id: mecha-vision
       name: Mecha Vision
@@ -44,19 +44,34 @@ modules:
       run_command: [
         "sh", 
         "-c",
-        "mecha-vision"
+        "LD_LIBRARY_PATH=/home/mecha/.pipeless /home/mecha/.pipeless/pipeless add stream --input-uri 'v4l2' --output-uri 'screen' --frame-path 'cats'"
       ]
-    - app_id: chromium
-      name: Chromium
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/chromium.png
-      run_command:
-        [
-          "sh",
-          "-c",
-          "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland",
-        ]
-    - app_id: firefox
-      name: firefox
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/firefox.png
-      run_command: ["sh", "-c", firefox-esr]
-
+    - app_id: mecha-terminal
+      name: Terminal
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-terminal.png
+      run_command: [
+        "sh", 
+        "-c",
+        "alacritty"
+      ]
+    - app_id: mecha-gaming
+      name: Mecha Vision
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-gaming.png
+      run_command: [
+        "sh", 
+        "-c",
+        "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland https://guccigrip.gucci.com/"
+      ]
+#    - app_id: chromium
+#      name: Chromium
+#      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/chromium.png
+#      run_command:
+#        [
+#          "sh",
+#          "-c",
+#          "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland chrome://gpu",
+#        ]
+#    - app_id: firefox
+#      name: firefox
+#      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/firefox.png
+#      run_command: ["sh", "-c", firefox-esr]
