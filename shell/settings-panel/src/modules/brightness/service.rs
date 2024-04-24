@@ -38,7 +38,7 @@ impl BrightnessService {
             value,
             (value as f32 / 100. * 254.) as u8
         );
-        match Display::set_brightness_percentage((value as f32 / 100. * 254.) as u8).await {
+        match Display::set_brightness_percentage((value as f32 / 100. * 254.).max(5.) as u8).await {
             Ok(v) => v,
             Err(e) => bail!(SettingsPanelError::new(
                 SettingsPanelErrorCodes::SetBrightnessError,
