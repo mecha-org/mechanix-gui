@@ -31,9 +31,7 @@ use crate::gui::Message;
 #[derive(Debug)]
 enum AppMessage {}
 
-// Layer Surface App
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
     tracing_subscriber::fmt()
         .compact()
@@ -119,8 +117,6 @@ async fn main() -> anyhow::Result<()> {
         };
     });
 
-    init_services(channel_tx).await;
-
     loop {
         event_loop
             .dispatch(Duration::from_millis(16), &mut app)
@@ -130,5 +126,3 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-
-async fn init_services(sender: Sender<Message>) {}

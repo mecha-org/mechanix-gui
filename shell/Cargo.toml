@@ -26,8 +26,8 @@ members = [
 ]
 
 [[bin]]
-name = "mechanix-app-drawer"
-path = "app-drawer/src/main.rs"
+name = "mechanix-wallpaper-daemon"
+path = "wallpaper-daemon/src/main.rs"
 
 [workspace.package]
 version = "0.1.0"
@@ -49,3 +49,6 @@ image = { version = "0.24.9", features = ["png", "jpeg"] }
 futures = "0.3.30"
 wayland-protocols-async = "1.0.0"
 chrono = "0.4.31"
+command = { path = "./commons/command"}
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
