@@ -168,7 +168,8 @@ impl Component for ClickableSetting {
                     background_color: bg_color,
                     border_color: Color::TRANSPARENT,
                     border_width: 1.,
-                    radius: (8., 8., 8. ,8.)
+                    radius: (8., 8., 8. ,8.),
+                    scissor: None
                 }
                 ,
                 [

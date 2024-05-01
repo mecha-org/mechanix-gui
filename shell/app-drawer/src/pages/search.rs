@@ -17,10 +17,16 @@ pub struct Search {
 impl Component for Search {
     fn view(&self) -> Option<node::Node> {
         let mut filtered_apps = node!(
-            Div::new(),
+            Div::new()
+                .scroll_y()
+                .style("bar_width", 0.)
+                .style("bar_color", Color::TRANSPARENT)
+                .style("bar_background_color", Color::TRANSPARENT),
             lay![
                 padding: [10, 20, 0, 0],
                 direction: Direction::Column,
+                size_pct: [100, 62],
+                axis_alignment: Alignment::Start,
             ]
         );
 

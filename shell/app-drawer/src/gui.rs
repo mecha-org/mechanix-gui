@@ -78,7 +78,7 @@ impl Component for AppDrawer {
         let mut apps = vec![];
 
         if let Ok(desktop_entries) = DesktopEntries::new() {
-            apps = desktop_entries.entries[..8].to_vec();
+            apps = desktop_entries.entries.to_vec();
         };
 
         println!("apps are {:?}", apps);

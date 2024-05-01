@@ -42,11 +42,14 @@ impl Component for AppList {
 
     fn view(&self) -> Option<mctk_core::Node> {
         let mut apps_list_node = node!(
-            // Carousel::new().scroll_x(),
-            Div::new().scroll_y(),
+            Div::new()
+                .scroll_y()
+                .style("bar_width", 0.)
+                .style("bar_color", Color::TRANSPARENT)
+                .style("bar_background_color", Color::TRANSPARENT),
             lay![
                 padding: [8, 16, 0, 0],
-                size_pct: [100, 80],
+                size_pct: [100, 81],
                 axis_alignment: Alignment::Start,
                 direction: Row,
                 wrap: true,
