@@ -64,7 +64,8 @@ impl Component for SlidableSetting {
                     background_color: Color::rgba(22., 23., 23., 0.90),
                     border_color: Color::TRANSPARENT,
                     border_width: 1.,
-                    radius: (8., 8., 8. ,8.)
+                    radius: (8., 8., 8. ,8.),
+                    scissor: None
                 }
                 ,
                 [

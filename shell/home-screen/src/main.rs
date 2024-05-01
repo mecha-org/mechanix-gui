@@ -13,7 +13,10 @@ use mctk_core::{
     reexports::{
         cosmic_text,
         smithay_client_toolkit::{
-            reexports::calloop::{self, channel::Sender},
+            reexports::calloop::{
+                self,
+                channel::{Event, Sender},
+            },
             shell::wlr_layer,
         },
     },
@@ -31,9 +34,7 @@ use crate::gui::Message;
 #[derive(Debug)]
 enum AppMessage {}
 
-// Layer Surface App
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
     tracing_subscriber::fmt()
         .compact()
@@ -107,7 +108,7 @@ async fn main() -> anyhow::Result<()> {
     //subscribe to events channel
     let (channel_tx, channel_rx) = calloop::channel::channel();
     let window_tx_2 = window_tx.clone();
-    let _ = handle.insert_source(channel_rx, move |event, _, app| {
+    let _ = handle.insert_source(channel_rx, move |event: Event<AppMessage>, _, app| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
             calloop::channel::Event::Msg(msg) => {
@@ -119,8 +120,6 @@ async fn main() -> anyhow::Result<()> {
         };
     });
 
-    init_services(channel_tx).await;
-
     loop {
         event_loop
             .dispatch(Duration::from_millis(16), &mut app)
@@ -130,5 +129,3 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-
-async fn init_services(sender: Sender<Message>) {}
