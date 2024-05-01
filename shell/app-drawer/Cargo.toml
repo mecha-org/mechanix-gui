@@ -28,7 +28,7 @@ depends = "$auto"
 assets = [
     # binary
     [
-        "../target/aarch64-unknown-linux-gnu/release/mechanix-app-drawer",
+        "../target/release/mechanix-app-drawer",
         "/usr/bin/",
         "755",
     ],
