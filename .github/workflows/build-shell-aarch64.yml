@@ -46,6 +46,11 @@ jobs:
             artifact: mechanix-home-screen-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
+          - name: App Drawer
+            package: mechanix-app-drawer
+            artifact: mechanix-app-drawer-aarch64-unknown-linux-gnu.tar.gz
+            path: shell
+
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
     steps:
