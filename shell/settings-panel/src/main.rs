@@ -8,6 +8,7 @@ mod types;
 mod widgets;
 
 use echo_client::EchoClient;
+use modules::battery::component::get_battery_icons_charging_map;
 use std::time::Duration;
 use std::{collections::HashMap, env};
 use tokio::{
@@ -166,6 +167,7 @@ fn main() -> anyhow::Result<()> {
     let modules = settings.modules.clone();
 
     let battery_assets = get_battery_icons_map(modules.battery.icon);
+    let battery_charging_assets = get_battery_icons_charging_map(modules.battery.charging_icon);
     let bluetooth_assets = get_bluetooth_icons_map(modules.bluetooth.icon);
     let wireless_assets = get_wireless_icons_map(modules.wireless.icon);
     let rotation_assets = get_rotation_icons_map(modules.rotation.icon);
@@ -177,6 +179,7 @@ fn main() -> anyhow::Result<()> {
     let brightness_assets = get_brightness_icons_map(modules.brightness.icon);
 
     svgs.extend(battery_assets);
+    svgs.extend(battery_charging_assets);
     svgs.extend(wireless_assets);
     svgs.extend(bluetooth_assets);
     svgs.extend(rotation_assets);

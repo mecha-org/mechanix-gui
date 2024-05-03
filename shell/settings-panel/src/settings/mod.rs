@@ -167,6 +167,7 @@ pub struct WirelessModule {
 pub struct BatteryModule {
     pub icon: BatteryIconPaths,
     pub title: String,
+    pub charging_icon: BatteryIconPaths,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -291,6 +292,20 @@ impl Default for Modules {
                     not_found: None,
                 },
                 title: "Battery".to_string(),
+                charging_icon: BatteryIconPaths {
+                    level_100: None,
+                    level_90: None,
+                    level_80: None,
+                    level_70: None,
+                    level_60: None,
+                    level_50: None,
+                    level_40: None,
+                    level_30: None,
+                    level_20: None,
+                    level_10: None,
+                    level_0: None,
+                    not_found: None,
+                },
             },
             rotation: RotationModule {
                 icon: RotationIconPaths {
@@ -376,15 +391,13 @@ pub fn read_settings_yml() -> Result<SettingsPanelSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
-    info!(
-        task = "read_settings",
-        "settings file location - {:?}", file_path
-    );
+    println!("settings file location - {:?}", file_path);
 
     // open file
     let settings_file_handle = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
+            println!("settings read error {:?}", e.to_string());
             bail!(SettingsPanelError::new(
                 SettingsPanelErrorCodes::SettingsReadError,
                 format!(
@@ -399,6 +412,7 @@ pub fn read_settings_yml() -> Result<SettingsPanelSettings> {
     let config: SettingsPanelSettings = match serde_yaml::from_reader(settings_file_handle) {
         Ok(config) => config,
         Err(e) => {
+            println!("settings parse error {:?}", e.to_string());
             bail!(SettingsPanelError::new(
                 SettingsPanelErrorCodes::SettingsParseError,
                 format!("error parsing the settings.yml - {}", e.to_string()),
