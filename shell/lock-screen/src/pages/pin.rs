@@ -47,8 +47,7 @@ impl Component for Pin {
             Div::new(),
             lay![
                 wrap: true,
-                size: [Auto],
-                padding: [20, 40, 20, 40],
+                size_pct: [100, Auto],
                 axis_alignment: Alignment::Center,
             ],
         );
@@ -110,26 +109,18 @@ impl Component for Pin {
                 lay![
                     size_pct: [100],
                     direction: Column,
-                    //axis_alignment: Stretch,
-                    cross_alignment: Stretch,
+                    axis_alignment: Alignment::Center,
+                    cross_alignment: Alignment::Center,
                 ]
             )
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Center,
-                        cross_alignment: Alignment::Center,
-                        margin: [60, 20, 0, 28],
-                        padding: [10, 0, 10, 0]
-                    ],
-                )
-                .push(node!(PinIndicators {
+            .push(node!(
+                PinIndicators {
                     pin_length: self.pin_length,
-                })),
-            )
+                },
+                lay![
+                    margin: [0, 0, 28, 0]
+                ]
+            ))
             .push(pin_buttons),
         )
     }

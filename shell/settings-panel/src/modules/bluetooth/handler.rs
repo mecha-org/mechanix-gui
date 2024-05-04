@@ -1,3 +1,4 @@
+use futures::StreamExt;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::time::Duration;
 use tokio::time;
@@ -19,27 +20,33 @@ impl BluetoothServiceHandle {
     pub async fn run(&mut self, mut bluetooth_msg_rx: Receiver<BluetoothMessage>) {
         println!("BluetoothServiceHandle::run()");
         let task = "run";
-        let mut interval = time::interval(Duration::from_secs(1));
+        let mut stream_res = BluetoothService::get_notification_stream().await;
+
+        if let Err(e) = stream_res.as_ref() {
+            println!("error while getting bluetooth stream {:?}", e.to_string());
+            let _ = self.app_channel.send(AppMessage::Bluetooth {
+                message: BluetoothMessage::Status {
+                    status: BluetoothStatus::NotFound,
+                },
+            });
+            return;
+        }
         loop {
             select! {
-                tick = interval.tick() => {
-                    match BluetoothService::get_bluetooth_status().await {
-                        Ok(bluetooth_status) => {
-                            let _ = self.app_channel.send(AppMessage::Bluetooth {
-                                message: BluetoothMessage::Status {
-                                    status: bluetooth_status,
-                                },
-                            });
-                        }
-                        Err(e) => {
-                            // error!(task, "error while getting bluetooth status {}", e);
-                            let _ = self.app_channel.send(AppMessage::Bluetooth {
-                                message: BluetoothMessage::Status {
-                                    status: BluetoothStatus::NotFound,
-                                },
-                            });
-                        }
-                    };
+                signal = stream_res.as_mut().unwrap().next() => {
+                    if signal.is_none() {
+                        continue;
+                    }
+
+                    if let Ok(args) = signal.unwrap().args() {
+                        let notification_event = args.event;
+                        // let _ = self.app_channel.send(AppMessage::Bluetooth {
+                        //     message: BluetoothMessage::Status {
+                        //         status: bluetooth_status,
+                        //     },
+                        // });
+                    }
+
                 }
 
                 msg = bluetooth_msg_rx.recv() => {

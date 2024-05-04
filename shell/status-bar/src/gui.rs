@@ -92,46 +92,56 @@ impl Component for StatusBar {
             node!(
                 Div::new().bg(bg_color),
                 lay![
-                    padding: [6, 14, 5, 0],
+                    padding: [6, 14, 5, 10],
                     size_pct: [100],
-                    axis_alignment: Alignment::Start,
-                    // cross_alignment: Alignment::SpaceBetween
+                    axis_alignment: Alignment::Stretch,
+                    //  cross_alignment: Alignment::SpaceBetween
                 ]
             )
-            .push(node!(
-                ClockComponent {
-                    current_time: self.state_ref().current_time.clone(),
-                },
-                lay![
-                    margin: [0,  0],
-                ]
-            ))
-            .push(node!(
-                WindowTitleComponent {
-                    current_window_title: self.state_ref().current_window_title.clone(),
-                },
-                lay![
-                    margin: [0, 14],
-                ]
-            ))
-            .push(node!(
-                WirelessComponent {
-                    status: self.state_ref().wireless_status,
-                },
-                lay![margin: [0, 0]]
-            ))
-            .push(node!(
-                BluetoothComponent {
-                    status: self.state_ref().bluetooth_status,
-                },
-                lay![margin: [0, 14]]
-            ))
-            .push(node!(
-                BatteryComponent {
-                    level: self.state_ref().battery_level,
-                },
-                lay![margin: [0, 0]]
-            )),
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [50],
+                        axis_alignment: Alignment::Start
+                    ],
+                )
+                .push(node!(
+                    ClockComponent {
+                        current_time: self.state_ref().current_time.clone(),
+                    },
+                    lay![
+                        margin: [0,  0],
+                    ]
+                )),
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [50],
+                        axis_alignment: Alignment::End
+                    ]
+                )
+                .push(node!(
+                    WirelessComponent {
+                        status: self.state_ref().wireless_status,
+                    },
+                    lay![margin: [0, 0]]
+                ))
+                .push(node!(
+                    BluetoothComponent {
+                        status: self.state_ref().bluetooth_status,
+                    },
+                    lay![margin: [0, 14]]
+                ))
+                .push(node!(
+                    BatteryComponent {
+                        level: self.state_ref().battery_level,
+                    },
+                    lay![margin: [0, 0]]
+                )),
+            ),
         )
     }
 
@@ -148,35 +158,34 @@ impl Component for StatusBar {
                 self.state_mut().bluetooth_status = status.clone();
             }
             Some(Message::Battery { level, status }) => {
-                let is_charging = *status == BatteryStatus::Charging;
-                let battery_level = if is_charging {
+                let battery_level = if *status == BatteryStatus::Unknown {
+                    BatteryLevel::NotFound
+                } else if *status == BatteryStatus::Charging {
                     match level {
-                        0..=9 => BatteryLevel::ChargingLevel0,
-                        10..=19 => BatteryLevel::ChargingLevel10,
-                        20..=29 => BatteryLevel::ChargingLevel20,
-                        30..=39 => BatteryLevel::ChargingLevel30,
-                        40..=49 => BatteryLevel::ChargingLevel40,
+                        0..=9 => BatteryLevel::ChargingLevel10,
+                        10..=19 => BatteryLevel::ChargingLevel20,
+                        20..=34 => BatteryLevel::ChargingLevel30,
+                        35..=49 => BatteryLevel::ChargingLevel40,
                         50..=59 => BatteryLevel::ChargingLevel50,
                         60..=69 => BatteryLevel::ChargingLevel60,
                         70..=79 => BatteryLevel::ChargingLevel70,
                         80..=89 => BatteryLevel::ChargingLevel80,
-                        90..=99 => BatteryLevel::ChargingLevel90,
-                        100 => BatteryLevel::ChargingLevel100,
+                        90..=94 => BatteryLevel::ChargingLevel90,
+                        95..=100 => BatteryLevel::ChargingLevel100,
                         _ => BatteryLevel::NotFound,
                     }
                 } else {
                     match level {
-                        0..=9 => BatteryLevel::Level0,
-                        10..=19 => BatteryLevel::Level10,
-                        20..=29 => BatteryLevel::Level20,
-                        30..=39 => BatteryLevel::Level30,
-                        40..=49 => BatteryLevel::Level40,
+                        0..=9 => BatteryLevel::Level10,
+                        10..=19 => BatteryLevel::Level20,
+                        20..=34 => BatteryLevel::Level30,
+                        35..=49 => BatteryLevel::Level40,
                         50..=59 => BatteryLevel::Level50,
                         60..=69 => BatteryLevel::Level60,
                         70..=79 => BatteryLevel::Level70,
                         80..=89 => BatteryLevel::Level80,
-                        90..=99 => BatteryLevel::Level90,
-                        100 => BatteryLevel::Level100,
+                        90..=94 => BatteryLevel::Level90,
+                        95..=100 => BatteryLevel::Level100,
                         _ => BatteryLevel::NotFound,
                     }
                 };

@@ -27,6 +27,7 @@ mctk_macros = { workspace = true }
 mechanix_zbus_client = { workspace = true }
 futures = { workspace = true }
 wayland-protocols-async = { workspace = true }
+command = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-settings-panel"

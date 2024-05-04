@@ -1,3 +1,4 @@
+use futures::StreamExt;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::time::Duration;
 use tokio::time;
@@ -17,23 +18,23 @@ impl WirelessServiceHandle {
     }
 
     pub async fn run(&mut self) {
-        let task = "run";
-        let mut interval = time::interval(Duration::from_secs(1));
-        loop {
-            interval.tick().await;
-            match WirelessService::get_wireless_status().await {
-                Ok(wireless_status) => {
-                    let _ = self.app_channel.send(AppMessage::Wireless {
-                        status: wireless_status,
-                    });
-                }
-                Err(e) => {
-                    error!(task, "error while getting wireless status {}", e);
-                    let _ = self.app_channel.send(AppMessage::Wireless {
-                        status: WirelessStatus::NotFound,
-                    });
-                }
-            };
+        let mut stream_res = WirelessService::get_notification_stream().await;
+
+        if let Err(e) = stream_res.as_ref() {
+            error!("error while getting wireless stream {}", e);
+            let _ = self.app_channel.send(AppMessage::Wireless {
+                status: WirelessStatus::NotFound,
+            });
+            return;
+        }
+
+        while let Some(signal) = stream_res.as_mut().unwrap().next().await {
+            if let Ok(args) = signal.args() {
+                let notification_event = args.event;
+                // let _ = self.app_channel.send(AppMessage::Wireless {
+                //     status: wireless_status,
+                // });
+            }
         }
     }
 }

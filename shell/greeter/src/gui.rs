@@ -310,35 +310,34 @@ impl Component for Greeter {
                 self.state_mut().bluetooth_status = status.clone();
             }
             Some(Message::Battery { level, status }) => {
-                let is_charging = *status == BatteryStatus::Charging;
-                let battery_level = if is_charging {
+                let battery_level = if *status == BatteryStatus::Unknown {
+                    BatteryLevel::NotFound
+                } else if *status == BatteryStatus::Charging {
                     match level {
-                        0..=9 => BatteryLevel::ChargingLevel0,
-                        10..=19 => BatteryLevel::ChargingLevel10,
-                        20..=29 => BatteryLevel::ChargingLevel20,
-                        30..=39 => BatteryLevel::ChargingLevel30,
-                        40..=49 => BatteryLevel::ChargingLevel40,
+                        0..=9 => BatteryLevel::ChargingLevel10,
+                        10..=19 => BatteryLevel::ChargingLevel20,
+                        20..=34 => BatteryLevel::ChargingLevel30,
+                        35..=49 => BatteryLevel::ChargingLevel40,
                         50..=59 => BatteryLevel::ChargingLevel50,
                         60..=69 => BatteryLevel::ChargingLevel60,
                         70..=79 => BatteryLevel::ChargingLevel70,
                         80..=89 => BatteryLevel::ChargingLevel80,
-                        90..=99 => BatteryLevel::ChargingLevel90,
-                        100 => BatteryLevel::ChargingLevel100,
+                        90..=94 => BatteryLevel::ChargingLevel90,
+                        95..=100 => BatteryLevel::ChargingLevel100,
                         _ => BatteryLevel::NotFound,
                     }
                 } else {
                     match level {
-                        0..=9 => BatteryLevel::Level0,
-                        10..=19 => BatteryLevel::Level10,
-                        20..=29 => BatteryLevel::Level20,
-                        30..=39 => BatteryLevel::Level30,
-                        40..=49 => BatteryLevel::Level40,
+                        0..=9 => BatteryLevel::Level10,
+                        10..=19 => BatteryLevel::Level20,
+                        20..=34 => BatteryLevel::Level30,
+                        35..=49 => BatteryLevel::Level40,
                         50..=59 => BatteryLevel::Level50,
                         60..=69 => BatteryLevel::Level60,
                         70..=79 => BatteryLevel::Level70,
                         80..=89 => BatteryLevel::Level80,
-                        90..=99 => BatteryLevel::Level90,
-                        100 => BatteryLevel::Level100,
+                        90..=94 => BatteryLevel::Level90,
+                        95..=100 => BatteryLevel::Level100,
                         _ => BatteryLevel::NotFound,
                     }
                 };

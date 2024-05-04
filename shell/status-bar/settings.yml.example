@@ -29,11 +29,6 @@ window:
   always_on_top: false # false
   icon_path: null # Todo
 fonts:
-  "SpaceGrotesk-Bold": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Bold.ttf"
-  "SpaceGrotesk-Light": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Light.ttf"
-  "SpaceGrotesk-Medium": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Medium.ttf"
-  "SpaceGrotesk-Regular": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-Regular.ttf"
-  "SpaceGrotesk-SemiBold": "/usr/share/mechanix/shell/status-bar/assets/fonts/SpaceGrotesk-SemiBold.ttf"
 css:
   default: /usr/share/mechanix/shell/status-bar/assets/css/style.css
 layout:
@@ -72,7 +67,6 @@ modules:
       level_10: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_10.svg
       level_0: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_0.svg
       not_found: /usr/share/mechanix/shell/status-bar/assets/icons/battery/battery_not_found.svg
-      battery:
     charging_icon:
       level_100: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_100.svg
       level_90: /usr/share/mechanix/shell/status-bar/assets/icons/battery/charging/battery_90.svg

@@ -8,12 +8,13 @@ use crate::modules::running_apps::component::RunningAppsComponent;
 use crate::modules::settings::component::SettingsComponent;
 use crate::modules::sound::component::SoundComponent;
 use crate::modules::wireless::component::WirelessComponent;
-use crate::settings::SettingsPanelSettings;
+use crate::settings::{self, SettingsPanelSettings};
 use crate::theme::{self, SettingsPanelTheme};
 use crate::types::{
     BatteryLevel, BatteryStatus, BluetoothStatus, WirelessConnectedState, WirelessStatus,
 };
 use crate::{AppMessage, BluetoothMessage, BrightnessMessage, WirelessMessage};
+use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -32,6 +33,7 @@ pub enum SettingNames {
     Wireless,
     Bluetooth,
     Rotation,
+    Settings,
 }
 #[derive(Debug, Clone)]
 pub enum SliderSettingsNames {
@@ -103,8 +105,12 @@ pub struct SettingsPanel {}
 #[state_component_impl(SettingsPanelState)]
 impl Component for SettingsPanel {
     fn init(&mut self) {
+        let settings = match settings::read_settings_yml() {
+            Ok(settings) => settings,
+            Err(_) => SettingsPanelSettings::default(),
+        };
         self.state = Some(SettingsPanelState {
-            settings: SettingsPanelSettings::default(),
+            settings,
             custom_theme: SettingsPanelTheme::default(),
             battery_percentage: 0,
             battery_level: BatteryLevel::Level0,
@@ -221,35 +227,34 @@ impl Component for SettingsPanel {
                 self.state_mut().bluetooth_status = status.clone();
             }
             Some(Message::Battery { level, status }) => {
-                let is_charging = *status == BatteryStatus::Charging;
-                let battery_level = if is_charging {
+                let battery_level = if *status == BatteryStatus::Unknown {
+                    BatteryLevel::NotFound
+                } else if *status == BatteryStatus::Charging {
                     match level {
-                        0..=9 => BatteryLevel::ChargingLevel0,
-                        10..=19 => BatteryLevel::ChargingLevel10,
-                        20..=29 => BatteryLevel::ChargingLevel20,
-                        30..=39 => BatteryLevel::ChargingLevel30,
-                        40..=49 => BatteryLevel::ChargingLevel40,
+                        0..=9 => BatteryLevel::ChargingLevel10,
+                        10..=19 => BatteryLevel::ChargingLevel20,
+                        20..=34 => BatteryLevel::ChargingLevel30,
+                        35..=49 => BatteryLevel::ChargingLevel40,
                         50..=59 => BatteryLevel::ChargingLevel50,
                         60..=69 => BatteryLevel::ChargingLevel60,
                         70..=79 => BatteryLevel::ChargingLevel70,
                         80..=89 => BatteryLevel::ChargingLevel80,
-                        90..=99 => BatteryLevel::ChargingLevel90,
-                        100 => BatteryLevel::ChargingLevel100,
+                        90..=94 => BatteryLevel::ChargingLevel90,
+                        95..=100 => BatteryLevel::ChargingLevel100,
                         _ => BatteryLevel::NotFound,
                     }
                 } else {
                     match level {
-                        0..=9 => BatteryLevel::Level0,
-                        10..=19 => BatteryLevel::Level10,
-                        20..=29 => BatteryLevel::Level20,
-                        30..=39 => BatteryLevel::Level30,
-                        40..=49 => BatteryLevel::Level40,
+                        0..=9 => BatteryLevel::Level10,
+                        10..=19 => BatteryLevel::Level20,
+                        20..=34 => BatteryLevel::Level30,
+                        35..=49 => BatteryLevel::Level40,
                         50..=59 => BatteryLevel::Level50,
                         60..=69 => BatteryLevel::Level60,
                         70..=79 => BatteryLevel::Level70,
                         80..=89 => BatteryLevel::Level80,
-                        90..=99 => BatteryLevel::Level90,
-                        100 => BatteryLevel::Level100,
+                        90..=94 => BatteryLevel::Level90,
+                        95..=100 => BatteryLevel::Level100,
                         _ => BatteryLevel::NotFound,
                     }
                 };
@@ -298,6 +303,22 @@ impl Component for SettingsPanel {
                         }
                     }
                     SettingNames::Rotation => {}
+                    SettingNames::Settings => {
+                        let run_command = self
+                            .state_ref()
+                            .settings
+                            .modules
+                            .settings
+                            .run_command
+                            .clone();
+                        println!("run_command {:?}", run_command);
+                        if !run_command.is_empty() {
+                            let command = run_command[0].clone();
+                            let args: Vec<String> = run_command.clone()[1..].to_vec();
+                            println!("command {:?} args {:?}", command, args);
+                            let _ = spawn_command(command, args);
+                        }
+                    }
                 }
             }
             Some(Message::SliderChanged(settings_name)) => match settings_name {

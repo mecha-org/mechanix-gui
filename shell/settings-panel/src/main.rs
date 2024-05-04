@@ -1,5 +1,4 @@
 mod errors;
-mod event_handler;
 mod gui;
 mod modules;
 mod settings;
@@ -8,6 +7,7 @@ mod types;
 mod widgets;
 
 use echo_client::EchoClient;
+use modules::battery::component::get_battery_icons_charging_map;
 use std::time::Duration;
 use std::{collections::HashMap, env};
 use tokio::{
@@ -15,7 +15,6 @@ use tokio::{
     sync::{mpsc::Receiver, oneshot},
 };
 
-use event_handler::zbus::ZbusServiceHandle;
 use gui::SettingsPanel;
 use mctk_core::{
     msg,
@@ -126,16 +125,6 @@ pub enum AppMessage {
 
 // Layer Surface App
 fn main() -> anyhow::Result<()> {
-    let args: Vec<String> = std::env::args().collect();
-    let cmd_index = args.iter().position(|arg| arg == "-cmd");
-    if let Some(index) = cmd_index {
-        if let Some(command) = args.get(index + 1) {
-            futures::executor::block_on(async move {
-                let _ = echo(command).await;
-            });
-            return Ok(());
-        }
-    };
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
     tracing_subscriber::fmt()
         .compact()
@@ -166,6 +155,7 @@ fn main() -> anyhow::Result<()> {
     let modules = settings.modules.clone();
 
     let battery_assets = get_battery_icons_map(modules.battery.icon);
+    let battery_charging_assets = get_battery_icons_charging_map(modules.battery.charging_icon);
     let bluetooth_assets = get_bluetooth_icons_map(modules.bluetooth.icon);
     let wireless_assets = get_wireless_icons_map(modules.wireless.icon);
     let rotation_assets = get_rotation_icons_map(modules.rotation.icon);
@@ -177,6 +167,7 @@ fn main() -> anyhow::Result<()> {
     let brightness_assets = get_brightness_icons_map(modules.brightness.icon);
 
     svgs.extend(battery_assets);
+    svgs.extend(battery_charging_assets);
     svgs.extend(wireless_assets);
     svgs.extend(bluetooth_assets);
     svgs.extend(rotation_assets);
@@ -387,7 +378,6 @@ fn init_services(
         let memory_f = run_memory_handler(app_channel.clone());
         let brightness_f = run_brightness_handler(app_channel.clone(), brightness_msg_rx);
         let sound_f = run_sound_handler(app_channel.clone(), sound_msg_rx);
-        //let zbus_f = run_zbus_handler(app_channel.clone());
 
         runtime
             .block_on(runtime.spawn(async move {
@@ -400,7 +390,6 @@ fn init_services(
                     memory_f,
                     brightness_f,
                     sound_f,
-                    //zbus_f
                 )
             }))
             .unwrap();
@@ -452,29 +441,4 @@ async fn run_brightness_handler(
 async fn run_sound_handler(app_channel: Sender<AppMessage>, sound_msg_rx: Receiver<SoundMessage>) {
     let mut sound_service_handle = SoundServiceHandle::new(app_channel);
     sound_service_handle.run(sound_msg_rx).await;
-}
-
-async fn run_zbus_handler(app_channel: Sender<AppMessage>) {
-    let mut zbus_service_handle = ZbusServiceHandle::new(app_channel);
-    zbus_service_handle.run().await;
-}
-
-async fn echo(cmd: &str) {
-    let echo_res = EchoClient::echo(
-        "org.mechanix.shell.SettingsPanel",
-        "/org/mechanix/shell/SettingsPanel",
-        "org.mechanix.shell.SettingsPanel",
-        cmd,
-        (),
-    )
-    .await;
-
-    match echo_res {
-        Ok(_) => {
-            println!("echo success");
-        }
-        Err(e) => {
-            println!("echo failed with error {}", e);
-        }
-    };
 }

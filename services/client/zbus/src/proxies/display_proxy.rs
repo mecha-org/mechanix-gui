@@ -1,5 +1,9 @@
+use serde::{Deserialize, Serialize};
 use tracing::info;
-use zbus::{proxy, Connection, Result};
+use zbus::{proxy, zvariant::Type, Connection, Result};
+
+#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]
+pub struct NotificationEvent {}
 
 #[proxy(
     interface = "org.mechanix.services.Display",
@@ -11,6 +15,8 @@ trait DisplayBusInterface {
     async fn set_brightness(&self, value: u8) -> Result<()>;
     // async fn get_screen_timeout(&self) -> Result<u32>;
     // async fn set_screen_timeout(&self, value: u32) ->Result<u32>;
+    #[zbus(signal)]
+    async fn notification(&self, event: NotificationEvent) -> Result<()>;
 }
 
 pub struct Display;
@@ -53,4 +59,11 @@ impl Display {
     //     let result = format!("{}s", reply);
     //     Ok(result)
     // }
+
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let connection = Connection::system().await?;
+        let proxy = DisplayBusInterfaceProxy::new(&connection).await?;
+        let stream = proxy.receive_notification().await?;
+        Ok(stream)
+    }
 }
