@@ -130,28 +130,29 @@ impl Component for LockScreen {
         let pin = self.state_ref().pin.clone();
         let current_route = self.state_ref().current_route;
 
-        let screen = match current_route {
-            Routes::Unlock => node!(
-                Overlay::new(unlock_pressing_time),
-                lay!(size_pct: [100],
-                            axis_alignment: Alignment::Center,
-                            cross_alignment: Alignment::Center)
-            )
-            .push(node!(UnlockButton::new(unlock_pressing_time)
-                .on_press(Box::new(|| msg!(Message::UnlockPressed)))
-                .on_release(Box::new(|| msg!(Message::UnlockReleased))))),
+        let overlay_node = node!(
+            Overlay::new(unlock_pressing_time),
+            lay! [
+                size: [Auto],
+                axis_alignment: Alignment::Center,
+                cross_alignment: Alignment::Center,
+            ]
+        );
 
-            Routes::Pin => node!(
-                Overlay::new(0),
-                lay!(size_pct: [100],
-                            axis_alignment: Alignment::Center,
-                            cross_alignment: Alignment::Center)
-            )
-            .push(node!(
+        let screen = match current_route {
+            Routes::Unlock => overlay_node.push(node!(UnlockButton::new(unlock_pressing_time)
+                .on_press(Box::new(|| msg!(Message::UnlockPressed)))
+                .on_release(Box::new(|| msg!(Message::UnlockReleased))),)),
+
+            Routes::Pin => overlay_node.push(node!(
                 Pin {
                     pin_length: pin.len()
                 },
-                lay![size_pct: [100]]
+                lay![
+                    size_pct: [100],
+                    axis_alignment: Alignment::Center,
+                    cross_alignment: Alignment::Center
+                ]
             )),
         };
         Some(
@@ -160,7 +161,8 @@ impl Component for LockScreen {
                 lay![
                     cross_alignment: Alignment::Stretch,
                     axis_alignment: Alignment::Stretch,
-                    size_pct: [100]
+                    size_pct: [100],
+                    direction: layout::Direction::Column
                 ]
             )
             .push(node!(
