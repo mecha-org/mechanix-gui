@@ -25,6 +25,7 @@ mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 mechanix_zbus_client = { workspace = true }
 chrono = { workspace = true }
+futures = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-lock-screen"

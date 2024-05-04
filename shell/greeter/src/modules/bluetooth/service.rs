@@ -3,7 +3,9 @@ use crate::{
     types::BluetoothStatus,
 };
 use anyhow::{bail, Result};
-use mechanix_zbus_client::bluetooth::BluetoothService as BluetoothZbusClient;
+use mechanix_zbus_client::bluetooth::{
+    BluetoothService as BluetoothZbusClient, NotificationStream,
+};
 use tracing::{debug, error, info};
 
 pub struct BluetoothService {}
@@ -37,5 +39,10 @@ impl BluetoothService {
         } else {
             return Ok(BluetoothStatus::On);
         };
+    }
+
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let stream = BluetoothZbusClient::get_notification_stream().await?;
+        Ok(stream)
     }
 }

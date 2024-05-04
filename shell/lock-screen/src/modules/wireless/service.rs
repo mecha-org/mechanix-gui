@@ -3,7 +3,7 @@ use crate::modules::wireless::errors::{WirelessServiceError, WirelessServiceErro
 use crate::types::{WirelessConnectedState, WirelessStatus};
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_zbus_client::wireless::WirelessService as WirelessZbusClient;
+use mechanix_zbus_client::wireless::{NotificationStream, WirelessService as WirelessZbusClient};
 use tracing::{debug, error, info};
 
 pub struct WirelessService {}
@@ -44,5 +44,10 @@ impl WirelessService {
         };
 
         Ok(wireless_status)
+    }
+
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let stream = WirelessZbusClient::get_notification_stream().await?;
+        Ok(stream)
     }
 }

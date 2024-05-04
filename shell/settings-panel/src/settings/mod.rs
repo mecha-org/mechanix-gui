@@ -180,6 +180,7 @@ pub struct RotationModule {
 pub struct SettingsModule {
     pub icon: SettingsIconPaths,
     pub title: String,
+    pub run_command: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -317,6 +318,7 @@ impl Default for Modules {
             settings: SettingsModule {
                 icon: SettingsIconPaths { default: None },
                 title: "Settings".to_string(),
+                run_command: vec![],
             },
             running_apps: RunningAppsModule {
                 icon: CommonLowMediumHighPaths {
@@ -419,6 +421,8 @@ pub fn read_settings_yml() -> Result<SettingsPanelSettings> {
             ));
         }
     };
+
+    println!("config {:?}", config);
 
     Ok(config)
 }

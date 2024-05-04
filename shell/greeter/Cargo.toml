@@ -22,7 +22,7 @@ mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 smithay-client-toolkit = { workspace = true }
-futures = "0.3.30"
+futures = { workspace = true }
 image = { workspace = true }
 mechanix_zbus_client = { workspace = true }
 chrono = { workspace = true }

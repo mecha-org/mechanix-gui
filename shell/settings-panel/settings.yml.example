@@ -91,6 +91,11 @@ modules:
       low: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/low.svg
       medium: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/medium.svg
       high: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/high.svg
+    run_command: [
+        "sh", 
+        "-c",
+        "mecha-settings -s /usr/share/mecha/settings/settings.yml"
+    ]
   cpu:
     title: "CPU"
     icon:

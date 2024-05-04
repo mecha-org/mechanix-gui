@@ -6,7 +6,7 @@ use crate::{
 use crate::errors::StatusBarErrorCodes::GetBatteryStatusError;
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_zbus_client::power::Power;
+use mechanix_zbus_client::power::{NotificationStream, Power};
 use tracing::{debug, error, info};
 
 pub struct BatteryService {}
@@ -34,5 +34,10 @@ impl BatteryService {
         };
 
         Ok((capacity as u8, status))
+    }
+
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let stream = Power::get_notification_stream().await?;
+        Ok(stream)
     }
 }

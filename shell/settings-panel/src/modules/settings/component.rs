@@ -2,12 +2,13 @@ use std::{collections::HashMap, fmt};
 
 use mctk_core::{
     component::Component,
-    lay, node, rect, size, size_pct,
+    lay, msg, node, rect, size, size_pct,
     widgets::{Div, Image},
     Node,
 };
 
 use crate::{
+    gui::{Message, SettingNames},
     settings::SettingsIconPaths,
     widgets::clickable_setting::{ClickableSetting, SettingText},
 };
@@ -40,7 +41,9 @@ impl Component for SettingsComponent {
             "Settings".to_string(),
             SettingText::Normal("".to_string()),
         )
-        .click_disabled(true)))
+        .on_click(Box::new(|| msg!(Message::SettingClicked(
+            SettingNames::Settings
+        ))))))
     }
 }
 

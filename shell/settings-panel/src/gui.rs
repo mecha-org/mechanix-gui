@@ -8,12 +8,13 @@ use crate::modules::running_apps::component::RunningAppsComponent;
 use crate::modules::settings::component::SettingsComponent;
 use crate::modules::sound::component::SoundComponent;
 use crate::modules::wireless::component::WirelessComponent;
-use crate::settings::SettingsPanelSettings;
+use crate::settings::{self, SettingsPanelSettings};
 use crate::theme::{self, SettingsPanelTheme};
 use crate::types::{
     BatteryLevel, BatteryStatus, BluetoothStatus, WirelessConnectedState, WirelessStatus,
 };
 use crate::{AppMessage, BluetoothMessage, BrightnessMessage, WirelessMessage};
+use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -32,6 +33,7 @@ pub enum SettingNames {
     Wireless,
     Bluetooth,
     Rotation,
+    Settings,
 }
 #[derive(Debug, Clone)]
 pub enum SliderSettingsNames {
@@ -103,8 +105,12 @@ pub struct SettingsPanel {}
 #[state_component_impl(SettingsPanelState)]
 impl Component for SettingsPanel {
     fn init(&mut self) {
+        let settings = match settings::read_settings_yml() {
+            Ok(settings) => settings,
+            Err(_) => SettingsPanelSettings::default(),
+        };
         self.state = Some(SettingsPanelState {
-            settings: SettingsPanelSettings::default(),
+            settings,
             custom_theme: SettingsPanelTheme::default(),
             battery_percentage: 0,
             battery_level: BatteryLevel::Level0,
@@ -297,6 +303,22 @@ impl Component for SettingsPanel {
                         }
                     }
                     SettingNames::Rotation => {}
+                    SettingNames::Settings => {
+                        let run_command = self
+                            .state_ref()
+                            .settings
+                            .modules
+                            .settings
+                            .run_command
+                            .clone();
+                        println!("run_command {:?}", run_command);
+                        if !run_command.is_empty() {
+                            let command = run_command[0].clone();
+                            let args: Vec<String> = run_command.clone()[1..].to_vec();
+                            println!("command {:?} args {:?}", command, args);
+                            let _ = spawn_command(command, args);
+                        }
+                    }
                 }
             }
             Some(Message::SliderChanged(settings_name)) => match settings_name {

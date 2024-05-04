@@ -25,6 +25,7 @@ mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 mechanix_zbus_client = { workspace = true }
+futures-util = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-status-bar"
