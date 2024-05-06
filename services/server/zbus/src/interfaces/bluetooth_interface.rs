@@ -2,9 +2,14 @@ use zbus::{
     fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
+    Connection, SignalContext,
 };
 
+use tokio::time::{self, Duration};
+
 use mechanix_bluetooth_ctl::Bluetooth;
+
+#[derive(Clone, Copy)]
 pub struct BluetoothBusInterface {}
 
 #[derive(DeserializeDict, SerializeDict, Type)]
@@ -56,6 +61,14 @@ pub struct BluetoothAdapterInfoResponse {
 #[zvariant(signature = "a{sv}")]
 pub struct BluetoothAdapterInfoListResponse {
     pub bluetooth_adapter_info: Vec<BluetoothAdapterInfoResponse>,
+}
+
+#[derive(DeserializeDict, SerializeDict, Type)]
+// `Type` treats `BluetoothNotificationEvent` is an alias for `a{sv}`.
+#[zvariant(signature = "a{sv}")]
+pub struct BluetoothNotificationEvent {
+    pub is_connected: bool,
+    pub is_enabled: bool,
 }
 
 #[interface(name = "org.mechanix.services.Bluetooth")]
@@ -159,6 +172,56 @@ impl BluetoothBusInterface {
                 return Err(ZbusError::Failed(
                     "Failed to disconnect from bluetooth device".to_string(),
                 ));
+            }
+        }
+    }
+
+    #[zbus(signal)]
+    async fn notification(
+        &self,
+        ctxt: &SignalContext<'_>,
+        event: BluetoothNotificationEvent,
+    ) -> Result<(), zbus::Error>;
+
+    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
+        let mut interval = time::interval(Duration::from_secs(15));
+        let mut previous_is_enable: Option<bool> = None;
+        let mut previous_is_connected: Option<bool> = None;
+
+        loop {
+            interval.tick().await;
+            let bluetooth = Bluetooth::new();
+
+            // Check Bluetooth power status
+            let is_enable = match bluetooth.status().await {
+                Ok(status) => status == 1,
+                Err(e) => {
+                    previous_is_enable.unwrap_or(false) // Use previous value or default to false
+                }
+            };
+
+            // Check Bluetooth connection status
+            let is_connected = bluetooth.is_connected().await.unwrap_or_else(|e| {
+                previous_is_connected.unwrap_or(false) // Use previous value or default to false
+            });
+
+            // Send signal if there's a change in status
+            if previous_is_enable != Some(is_enable) || previous_is_connected != Some(is_connected)
+            {
+                let ctxt = SignalContext::new(
+                    &Connection::system().await?,
+                    "/org/mechanix/services/Bluetooth",
+                )?;
+                self.notification(
+                    &ctxt,
+                    BluetoothNotificationEvent {
+                        is_connected: is_connected,
+                        is_enabled: is_enable,
+                    },
+                )
+                .await?;
+                previous_is_enable = Some(is_enable);
+                previous_is_connected = Some(is_connected);
             }
         }
     }
