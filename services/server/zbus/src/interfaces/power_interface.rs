@@ -23,6 +23,14 @@ pub struct BatteryInfoResponse {
     pub state: String,
 }
 
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, PartialEq)]
+// `Type` treats `NotificationEvent` is an alias for `a{sv}`.
+#[zvariant(signature = "a{sv}")]
+pub struct PowerNotificationEvent {
+    pub status: String,
+    pub percentage: f32,
+}
+
 #[interface(name = "org.mechanix.services.Power")]
 impl PowerBusInterface {
     pub async fn get_battery_status(&self) -> Result<String, ZbusError> {
@@ -32,10 +40,10 @@ impl PowerBusInterface {
     }
 
     #[zbus(signal)]
-    pub async fn battery_status_signal(
+    async fn notification(
         &self,
         ctxt: &SignalContext<'_>,
-        status: String,
+        event: PowerNotificationEvent,
     ) -> Result<(), zbus::Error>;
 
     pub async fn get_battery_info(&self) -> Result<BatteryInfoResponse, ZbusError> {
@@ -49,36 +57,6 @@ impl PowerBusInterface {
             state: info.state,
         })
     }
-
-    #[zbus(signal)]
-    pub async fn battery_info_signal(
-        &self,
-        ctxt: &SignalContext<'_>,
-        info: BatteryInfoResponse,
-    ) -> Result<(), zbus::Error>;
-
-    // #[zbus(property)]
-    // pub async fn battery_percentage(&self) -> Result<f32, ZbusError> {
-    //     let power = Power::new();
-    //     let percentage = power.get_battery_percentage();
-    //     Ok(percentage)
-    // }
-
-    // #[zbus(signal)]
-    // pub async fn battery_percentage_signal(
-    //     &self,
-    //     ctxt: &SignalContext<'_>,
-    //     percentage: f32,
-    // ) -> Result<(), zbus::Error>;
-
-    // pub async fn call_battery_percentage(
-    //     &mut self,
-    //     percentage: f32,
-    //     #[zbus(signal_context)] ctxt: SignalContext<'_>,
-    // ) {
-    //     println!("Battery percentage ======> {}", percentage);
-    //     let _ = Self::battery_percentage_signal(&self, &ctxt, percentage.clone()).await;
-    // }
 
     //all battery info
     pub async fn info(&self) -> Result<String, ZbusError> {
@@ -101,47 +79,37 @@ impl PowerBusInterface {
         Ok(percentage)
     }
 
-    #[zbus(signal)]
-    pub async fn battery_percentage_signal(
-        &self,
-        ctxt: &SignalContext<'_>,
-        percentage: f32,
-    ) -> Result<(), zbus::Error>;
-
-    // events for all signals to be emitted battery_status_signal, battery_info_signal, battery_percentage_signal
-    pub async fn power_events(&self) -> Result<(), ZbusError> {
+    // events for all signals to be emitted notification
+    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
         let mut interval = time::interval(Duration::from_secs(1));
         let mut previous_percentage: Option<f32> = None;
         let mut previous_status: Option<String> = None;
-        let mut previous_info: Option<BatteryInfoResponse> = None;
 
         loop {
             interval.tick().await;
+            let power = Power::new();
+            let current_percentage = power.get_battery_percentage();
+            let current_status = power.get_battery_status();
             let ctxt =
                 SignalContext::new(&Connection::system().await?, "/org/mechanix/services/Power")?;
 
-            let current_percentage = self.get_battery_percentage().await?;
-            if previous_percentage != Some(current_percentage) {
-                println!("Battery percentage changed: {}", current_percentage);
-                self.battery_percentage_signal(&ctxt, current_percentage)
-                    .await?;
+            // Check if the current percentage has changed from the previous percentage
+            if previous_percentage != Some(current_percentage)
+                || previous_status != Some(current_status.clone())
+            {
+                // If there's a change, emit the notification signal
+                self.notification(
+                    &ctxt,
+                    PowerNotificationEvent {
+                        status: current_status.clone(),
+                        percentage: current_percentage,
+                    },
+                )
+                .await?;
+
+                // Update the previous values to the current ones
                 previous_percentage = Some(current_percentage);
-            }
-
-            let current_status = self.get_battery_status().await?;
-            if previous_status.as_ref() != Some(&current_status) {
-                println!("Battery status changed: {}", current_status);
-                self.battery_status_signal(&ctxt, current_status.clone())
-                    .await?;
                 previous_status = Some(current_status);
-            }
-
-            let current_info = self.get_battery_info().await?;
-            if previous_info.as_ref() != Some(&current_info) {
-                println!("Battery info changed: {:?}", current_info);
-                self.battery_info_signal(&ctxt, current_info.clone())
-                    .await?;
-                previous_info = Some(current_info);
             }
         }
     }
