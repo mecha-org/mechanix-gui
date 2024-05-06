@@ -1,4 +1,5 @@
 use anyhow::Result;
+use tokio::task::JoinHandle;
 use zbus::connection;
 mod config;
 mod interfaces;
@@ -19,6 +20,8 @@ async fn main() -> Result<()> {
         }
     };
 
+    let mut handles: Vec<JoinHandle<()>> = Vec::new();
+
     let bluetooth_bus = BluetoothBusInterface {};
     let _bluetooth_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.Bluetooth")?
@@ -26,14 +29,30 @@ async fn main() -> Result<()> {
         .build()
         .await?;
 
+    let _bluetooth_handle = tokio::spawn(async move {
+        if let Err(e) = bluetooth_bus.send_notification_stream().await {
+            println!("Error in bluetooth notification stream: {}", e);
+        }
+    });
+
+    handles.push(_bluetooth_handle);
+
     let wireless_bus = WirelessBusInterface {
         path: config.interfaces.network.device.clone(),
     };
     let _wireless_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.Wireless")?
-        .serve_at("/org/mechanix/services/Wireless", wireless_bus)?
+        .serve_at("/org/mechanix/services/Wireless", wireless_bus.clone())?
         .build()
         .await?;
+
+    let wireless_handle = tokio::spawn(async move {
+        if let Err(e) = wireless_bus.clone().send_notification_stream().await {
+            println!("Error in wireless notification stream: {}", e);
+        }
+    });
+
+    handles.push(wireless_handle);
 
     let power_bus = PowerBusInterface {};
     let _power_bus_connection = connection::Builder::system()?
@@ -42,7 +61,13 @@ async fn main() -> Result<()> {
         .build()
         .await?;
 
-    power_bus.power_events().await?;
+    let power_handle = tokio::spawn(async move {
+        if let Err(e) = power_bus.send_notification_stream().await {
+            println!("Error in power notification stream: {}", e)
+        }
+    });
+
+    handles.push(power_handle);
 
     let display_bus = DisplayBusInterface {
         path: config.interfaces.display.device.clone(),
@@ -60,17 +85,9 @@ async fn main() -> Result<()> {
         .build()
         .await?;
 
-    // let mut interval = time::interval(Duration::from_secs(1));
-
-    // loop {
-    //     interval.tick().await;
-    //     let ctxt = SignalContext::new(&_power_bus_connection, "/org/mechanix/services/Power")?;
-    //     let percentage = 100.00;
-    //     // println!("Battery percentage: {}", percentage);
-    //     power_bus
-    //         .battery_percentage_signal(&ctxt, percentage.clone())
-    //         .await?;
-    // }
+    for handle in handles {
+        handle.await?;
+    }
 
     Ok(())
 }
