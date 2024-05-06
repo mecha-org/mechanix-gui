@@ -1,10 +1,14 @@
+use tokio::time::{self, Duration};
 use zbus::{
     fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
+    Connection, SignalContext,
 };
 
 use mechanix_network_ctl::wireless::WirelessNetworkControl;
+
+#[derive(Clone)]
 pub struct WirelessBusInterface {
     pub path: String,
 }
@@ -41,6 +45,15 @@ pub struct KnownNetworkResponse {
 #[zvariant(signature = "a{sv}")]
 pub struct KnownNetworkListResponse {
     pub known_network: Vec<KnownNetworkResponse>,
+}
+
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
+/// A wireless notification event.
+#[zvariant(signature = "a{sv}")]
+pub struct WirelessNotificationEvent {
+    pub signal_strength: String,
+    pub is_connected: bool,
+    pub is_enabled: bool,
 }
 
 #[interface(name = "org.mechanix.services.Wireless")]
@@ -106,6 +119,78 @@ impl WirelessBusInterface {
         };
 
         Ok(wifi_result)
+    }
+
+    #[zbus(signal)]
+    async fn notification(
+        &self,
+        ctxt: &SignalContext<'_>,
+        event: WirelessNotificationEvent,
+    ) -> Result<(), zbus::Error>;
+
+    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
+        let mut interval = time::interval(Duration::from_secs(15));
+        let mut previous_is_enabled: Option<bool> = None;
+        let mut previous_is_connected: Option<bool> = None;
+        let mut previous_signal_strength: Option<String> = None;
+
+        loop {
+            interval.tick().await;
+
+            let wireless = WirelessNetworkControl::new(self.path.as_str());
+
+            // Check if WiFi is enabled
+            let is_enabled = wireless.status().await;
+
+            let is_connected;
+            let signal_strength;
+
+            // If WiFi is enabled, check if it's connected and get signal strength
+            if is_enabled {
+                //get wifi info
+                let wifi_info = wireless.info().await;
+
+                //if it returns an error, set is_connected to false
+                if wifi_info.is_err() {
+                    is_connected = false;
+                    signal_strength = "".to_string();
+                } else {
+                    let wifi_info = wifi_info.unwrap();
+                    is_connected = true;
+                    signal_strength = wifi_info.signal.clone().to_string();
+                }
+
+            // Replace with actual field
+            } else {
+                is_connected = false;
+                signal_strength = "".to_string();
+            }
+
+            // Trigger notification if any value has changed
+            if previous_is_enabled != Some(is_enabled)
+                || previous_is_connected != Some(is_connected)
+                || previous_signal_strength != Some(signal_strength.clone())
+            {
+                let ctxt = SignalContext::new(
+                    &Connection::system().await?,
+                    "/org/mechanix/services/Wireless",
+                )?;
+                self.notification(
+                    &ctxt,
+                    WirelessNotificationEvent {
+                        signal_strength: signal_strength.clone(),
+                        is_connected,
+                        is_enabled,
+                    },
+                )
+                .await?;
+
+                // Update previous values
+                previous_is_enabled = Some(is_enabled);
+                previous_is_connected = Some(is_connected);
+                previous_signal_strength = Some(signal_strength);
+            }
+        }
     }
 
     pub async fn scan(&self) -> Result<WirelessScanListResponse, ZbusError> {
