@@ -1,5 +1,4 @@
 use anyhow::Result;
-use std::future::pending;
 use zbus::connection;
 mod config;
 mod interfaces;
@@ -43,6 +42,8 @@ async fn main() -> Result<()> {
         .build()
         .await?;
 
+    power_bus.power_events().await?;
+
     let display_bus = DisplayBusInterface {
         path: config.interfaces.display.device.clone(),
     };
@@ -59,6 +60,17 @@ async fn main() -> Result<()> {
         .build()
         .await?;
 
-    pending::<()>().await;
+    // let mut interval = time::interval(Duration::from_secs(1));
+
+    // loop {
+    //     interval.tick().await;
+    //     let ctxt = SignalContext::new(&_power_bus_connection, "/org/mechanix/services/Power")?;
+    //     let percentage = 100.00;
+    //     // println!("Battery percentage: {}", percentage);
+    //     power_bus
+    //         .battery_percentage_signal(&ctxt, percentage.clone())
+    //         .await?;
+    // }
+
     Ok(())
 }

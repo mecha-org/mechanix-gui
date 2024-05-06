@@ -73,9 +73,21 @@ impl HostMetricsBusInterface {
         Ok(disk_info)
     }
 
-    pub async fn get_network_usage(&self) -> Result<f32, ZbusError> {
+    pub async fn get_network_usage(&self) -> Result<Vec<NetworkDataInfo>, ZbusError> {
         let host_metrics = HostMetrics::new();
-        let network_usage = host_metrics.cpu_usage();
+        let network_usage = host_metrics.network_usage();
+
+        // convert network_usage to NetworkDataInfo
+        let network_usage: Vec<NetworkDataInfo> = network_usage
+            .iter()
+            .map(|data| NetworkDataInfo {
+                interface_name: data.interface_name.clone(),
+                mac_address: data.mac_address.to_string(),
+                received: data.received,
+                transmitted: data.transmitted,
+            })
+            .collect();
+
         Ok(network_usage)
     }
 
