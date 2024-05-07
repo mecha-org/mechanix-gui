@@ -15,6 +15,6 @@ anyhow.workspace = true
 zbus.workspace = true
 tracing.workspace = true
 serde.workspace = true
-mechanix_zbus_services.workspace = true
+mechanix-zbus-services.workspace = true
 
 
