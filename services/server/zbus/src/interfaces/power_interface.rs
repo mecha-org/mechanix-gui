@@ -1,16 +1,18 @@
+use tokio::{time, time::Duration};
 use zbus::{
     fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
-    Connection,
+    Connection, SignalContext,
 };
 
 use mechanix_power_ctl::Power;
 use zbus_polkit::policykit1::{AuthorityProxy, CheckAuthorizationFlags, Subject};
 
+#[derive(Clone, Copy)]
 pub struct PowerBusInterface {}
 
-#[derive(DeserializeDict, SerializeDict, Type)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, PartialEq)]
 // `Type` treats `BatteryInfoResponse` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct BatteryInfoResponse {
@@ -21,6 +23,14 @@ pub struct BatteryInfoResponse {
     pub state: String,
 }
 
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, PartialEq)]
+// `Type` treats `NotificationEvent` is an alias for `a{sv}`.
+#[zvariant(signature = "a{sv}")]
+pub struct PowerNotificationEvent {
+    pub status: String,
+    pub percentage: f32,
+}
+
 #[interface(name = "org.mechanix.services.Power")]
 impl PowerBusInterface {
     pub async fn get_battery_status(&self) -> Result<String, ZbusError> {
@@ -28,6 +38,13 @@ impl PowerBusInterface {
         let status = power.get_battery_status();
         Ok(status)
     }
+
+    #[zbus(signal)]
+    async fn notification(
+        &self,
+        ctxt: &SignalContext<'_>,
+        event: PowerNotificationEvent,
+    ) -> Result<(), zbus::Error>;
 
     pub async fn get_battery_info(&self) -> Result<BatteryInfoResponse, ZbusError> {
         let power = Power::new();
@@ -48,11 +65,53 @@ impl PowerBusInterface {
         Ok(info)
     }
 
+    #[zbus(signal)]
+    pub async fn info_signal(
+        &self,
+        ctxt: &SignalContext<'_>,
+        info: String,
+    ) -> Result<(), zbus::Error>;
+
     //get battery percentage
     pub async fn get_battery_percentage(&self) -> Result<f32, ZbusError> {
         let power = Power::new();
         let percentage = power.get_battery_percentage();
         Ok(percentage)
+    }
+
+    // events for all signals to be emitted notification
+    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
+        let mut interval = time::interval(Duration::from_secs(1));
+        let mut previous_percentage: Option<f32> = None;
+        let mut previous_status: Option<String> = None;
+
+        loop {
+            interval.tick().await;
+            let power = Power::new();
+            let current_percentage = power.get_battery_percentage();
+            let current_status = power.get_battery_status();
+            let ctxt =
+                SignalContext::new(&Connection::system().await?, "/org/mechanix/services/Power")?;
+
+            // Check if the current percentage has changed from the previous percentage
+            if previous_percentage != Some(current_percentage)
+                || previous_status != Some(current_status.clone())
+            {
+                // If there's a change, emit the notification signal
+                self.notification(
+                    &ctxt,
+                    PowerNotificationEvent {
+                        status: current_status.clone(),
+                        percentage: current_percentage,
+                    },
+                )
+                .await?;
+
+                // Update the previous values to the current ones
+                previous_percentage = Some(current_percentage);
+                previous_status = Some(current_status);
+            }
+        }
     }
 
     //set cpu governor

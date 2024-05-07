@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::future::pending;
+use tokio::task::JoinHandle;
 use zbus::connection;
 mod config;
 mod interfaces;
@@ -20,6 +20,8 @@ async fn main() -> Result<()> {
         }
     };
 
+    let mut handles: Vec<JoinHandle<()>> = Vec::new();
+
     let bluetooth_bus = BluetoothBusInterface {};
     let _bluetooth_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.Bluetooth")?
@@ -27,14 +29,30 @@ async fn main() -> Result<()> {
         .build()
         .await?;
 
+    let _bluetooth_handle = tokio::spawn(async move {
+        if let Err(e) = bluetooth_bus.send_notification_stream().await {
+            println!("Error in bluetooth notification stream: {}", e);
+        }
+    });
+
+    handles.push(_bluetooth_handle);
+
     let wireless_bus = WirelessBusInterface {
         path: config.interfaces.network.device.clone(),
     };
     let _wireless_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.Wireless")?
-        .serve_at("/org/mechanix/services/Wireless", wireless_bus)?
+        .serve_at("/org/mechanix/services/Wireless", wireless_bus.clone())?
         .build()
         .await?;
+
+    let wireless_handle = tokio::spawn(async move {
+        if let Err(e) = wireless_bus.clone().send_notification_stream().await {
+            println!("Error in wireless notification stream: {}", e);
+        }
+    });
+
+    handles.push(wireless_handle);
 
     let power_bus = PowerBusInterface {};
     let _power_bus_connection = connection::Builder::system()?
@@ -42,6 +60,14 @@ async fn main() -> Result<()> {
         .serve_at("/org/mechanix/services/Power", power_bus)?
         .build()
         .await?;
+
+    let power_handle = tokio::spawn(async move {
+        if let Err(e) = power_bus.send_notification_stream().await {
+            println!("Error in power notification stream: {}", e)
+        }
+    });
+
+    handles.push(power_handle);
 
     let display_bus = DisplayBusInterface {
         path: config.interfaces.display.device.clone(),
@@ -55,10 +81,22 @@ async fn main() -> Result<()> {
     let host_metrics_bus = HostMetricsBusInterface {};
     let _host_metrics_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.HostMetrics")?
-        .serve_at("/org/mechanix/services/HostMetrics", host_metrics_bus)?
+        .serve_at(
+            "/org/mechanix/services/HostMetrics",
+            host_metrics_bus.clone(),
+        )?
         .build()
         .await?;
 
-    pending::<()>().await;
+    let _host_metrics_handle = tokio::spawn(async move {
+        if let Err(e) = host_metrics_bus.clone().send_notification_stream().await {
+            println!("Error in host_metrics_handle notification stream: {}", e)
+        }
+    });
+
+    for handle in handles {
+        handle.await?;
+    }
+
     Ok(())
 }
