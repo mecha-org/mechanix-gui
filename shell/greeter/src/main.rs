@@ -2,9 +2,11 @@ mod components;
 mod errors;
 mod gui;
 mod handlers;
+mod modules;
 mod pages;
 mod settings;
 mod theme;
+mod types;
 mod users;
 
 use std::collections::HashMap;
@@ -19,6 +21,13 @@ use mctk_smithay::{
     layer_surface::LayerOptions, lock_window::SessionLockWindowParams, WindowOptions,
 };
 use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
+use modules::battery::component::{get_battery_icons_charging_map, get_battery_icons_map};
+use modules::battery::handler::BatteryServiceHandle;
+use modules::bluetooth::component::get_bluetooth_icons_map;
+use modules::bluetooth::handler::BluetoothServiceHandle;
+use modules::clock::handler::ClockServiceHandle;
+use modules::wireless::component::get_wireless_icons_map;
+use modules::wireless::handler::WirelessServiceHandle;
 use smithay_client_toolkit::reexports::calloop::{self, channel::Sender};
 
 use settings::GreeterSettings;
@@ -28,6 +37,7 @@ use tokio::runtime::Builder;
 use tokio::sync::{mpsc, oneshot};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
+use types::{BatteryStatus, BluetoothStatus, WirelessStatus};
 use users::UsersSettings;
 
 use crate::gui::Message;
@@ -59,6 +69,10 @@ pub enum LoginHandlerEvents {
 pub enum AppMessage {
     LoginEvents(LoginHandlerEvents),
     AuthSubmit(AuthSubmit),
+    Clock { current_time: String },
+    Wireless { status: WirelessStatus },
+    Bluetooth { status: BluetoothStatus },
+    Battery { level: u8, status: BatteryStatus },
 }
 
 // Layer Surface App
@@ -164,6 +178,18 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
+    let modules = settings.modules.clone();
+
+    let battery_assets = get_battery_icons_map(modules.battery.icon);
+    let battery_charging_assets = get_battery_icons_charging_map(modules.battery.charging_icon);
+    let bluetooth_assets = get_bluetooth_icons_map(modules.bluetooth.icon);
+    let wireless_assets = get_wireless_icons_map(modules.wireless.icon);
+
+    svgs.extend(battery_assets);
+    svgs.extend(battery_charging_assets);
+    svgs.extend(wireless_assets);
+    svgs.extend(bluetooth_assets);
+
     let namespace = "mctk.lock.screeen".to_string();
 
     let layer_shell_opts = LayerOptions {
@@ -260,6 +286,27 @@ fn main() -> anyhow::Result<()> {
                             message: msg!(LoginHandlerEvents::from(login_event)),
                         });
                     }
+                    AppMessage::Clock { current_time } => {
+                        //println!("AppMessage::Clock {:?}", current_time);
+                        let _ = window_tx_2.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Clock { current_time }),
+                        });
+                    }
+                    AppMessage::Wireless { status } => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Wireless { status }),
+                        });
+                    }
+                    AppMessage::Bluetooth { status } => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Bluetooth { status }),
+                        });
+                    }
+                    AppMessage::Battery { level, status } => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Battery { level, status }),
+                        });
+                    }
                 }
 
                 // AppMessage::Test => {
@@ -272,7 +319,7 @@ fn main() -> anyhow::Result<()> {
         };
     });
 
-    init_services(greeter_msg_rx, app_channel2);
+    init_services(greeter_msg_rx, settings, app_channel2);
 
     loop {
         event_loop
@@ -286,6 +333,7 @@ fn main() -> anyhow::Result<()> {
 
 fn init_services(
     greeter_msg_rx: mpsc::Receiver<LoginHandlerMessage>,
+    settings: GreeterSettings,
     app_channel: Sender<AppMessage>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
@@ -295,10 +343,17 @@ fn init_services(
             .build()
             .unwrap();
 
-        let future1 = run_login_handler(greeter_msg_rx, app_channel);
+        let login_f = run_login_handler(greeter_msg_rx, app_channel.clone());
+        let time_format = settings.modules.clock.format.clone();
+        let clock_f = run_clock_handler(time_format, app_channel.clone());
+        let wireless_f = run_wireless_handler(app_channel.clone());
+        let bluetooth_f = run_bluetooth_handler(app_channel.clone());
+        let battery_f = run_battery_handler(app_channel.clone());
 
         runtime
-            .block_on(runtime.spawn(async move { tokio::join!(future1) }))
+            .block_on(runtime.spawn(async move {
+                tokio::join!(login_f, clock_f, wireless_f, bluetooth_f, battery_f)
+            }))
             .unwrap();
     })
 }
@@ -312,4 +367,24 @@ async fn run_login_handler(
 
     // start the login handler
     let _ = login_handler.unwrap().run(msg_rx, app_channel_tx).await;
+}
+
+async fn run_clock_handler(time_format: String, app_channel: Sender<AppMessage>) {
+    let mut clock_service_handle = ClockServiceHandle::new(app_channel);
+    clock_service_handle.run(time_format).await;
+}
+
+async fn run_wireless_handler(app_channel: Sender<AppMessage>) {
+    let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
+    wireless_service_handle.run().await;
+}
+
+async fn run_bluetooth_handler(app_channel: Sender<AppMessage>) {
+    let mut bluetooth_service_handle = BluetoothServiceHandle::new(app_channel);
+    bluetooth_service_handle.run().await;
+}
+
+async fn run_battery_handler(app_channel: Sender<AppMessage>) {
+    let mut battery_service_handle = BatteryServiceHandle::new(app_channel);
+    battery_service_handle.run().await;
 }

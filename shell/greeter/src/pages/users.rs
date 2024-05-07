@@ -71,27 +71,64 @@ impl Component for Users {
             ]
         ));
 
-        let mut users_list = node!(
-            Carousel::new().scroll_x(),
-            lay![
-                padding: [14, 24, 18, 0],
-                margin: [20, 0, 0, 0],
-                size_pct: [100, Auto],
-                direction: Row,
-            ]
-        );
-        // .push(node!(UserCard::new("First", "card")))
-        // .push(node!(UserCard::new("Second", "card")));
-        // .push(node!(Div::new().bg(Color::RED), [size: [100], margin: [10]]))
-        // .push(node!(Div::new().bg(Color::GREEN), [size: [100]]));
+        // let mut users_list = node!(
+        //     Carousel::new().scroll_x(),
+        //     lay![
+        //         padding: [14, 24, 18, 0],
+        //         margin: [20, 0, 0, 0],
+        //         size_pct: [100, Auto],
+        //         direction: Row,
+        //     ]
+        // );
 
-        for (i, user) in self.users.clone().into_iter().enumerate() {
-            users_list = users_list.push(node!(UserCard::new(
-                user.name.clone().unwrap(),
-                user.username.clone()
-            )
-            .on_click(Box::new(move || { msg!(PasswordAuthMessage::Submit) })),));
-        }
+        // for (i, user) in self.users.clone().into_iter().enumerate() {
+        //     users_list = users_list.push(node!(UserCard::new(
+        //         user.name.clone().unwrap(),
+        //         user.username.clone()
+        //     )
+        //     .on_click(Box::new(move || { msg!(PasswordAuthMessage::Submit) })),));
+        // }
+
+        let users_list = node!(
+            Div::new(),
+            lay![
+                // padding: [14, 24, 18, 0],
+                // margin: [20, 0, 0, 0],
+                size_pct: [100],
+                direction: Row,
+                cross_alignment: Alignment::Center,
+                axis_alignment: Alignment::Center
+            ]
+        )
+        .push(node!(
+            Div::new().bg(Color::rgba(22., 23., 23., 0.95)).border(
+                Color::TRANSPARENT,
+                1.,
+                (0., 16., 16., 0.)
+            ),
+            lay![
+                 size: [80, 253],
+                 margin: [0., 0., 0., 0],
+            ]
+        ))
+        .push(node!(
+            UserCard::new("Mecha", "mecha")
+                .on_click(Box::new(move || { msg!(PasswordAuthMessage::Submit) })),
+            lay![
+                  margin: [0, 34, 0, 34]
+            ]
+        ))
+        .push(node!(
+            Div::new().bg(Color::rgba(22., 23., 23., 0.95)).border(
+                Color::TRANSPARENT,
+                1.,
+                (16., 0., 0., 16.)
+            ),
+            lay![
+                 size: [70, 253],
+                 margin: [0., 0., 0., 0],
+            ]
+        ));
 
         Some(
             node!(

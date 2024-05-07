@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_zbus_client::host_metrics::{HostMetrics, MemoryInfoResponse};
+use mechanix_zbus_client::host_metrics::{HostMetrics, MemoryInfoResponse, NotificationStream};
 use tracing::{debug, error, info};
 
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
@@ -25,5 +25,10 @@ impl MemoryService {
             }
         };
         Ok(memory_info)
+    }
+
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let stream = HostMetrics::get_notification_stream().await?;
+        Ok(stream)
     }
 }

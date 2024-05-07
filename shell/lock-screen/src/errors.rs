@@ -13,6 +13,12 @@ pub enum LockScreenErrorCodes {
     SettingsParseError,
     ThemeReadError,
     ThemeParseError,
+    InitNetworkManagerClient,
+    InitBluetoothManagerClient,
+    InitBatteryManagerClient,
+    GetWirelessStatusError,
+    GetBluetoothStatusError,
+    GetBatteryStatusError,
 }
 
 impl fmt::Display for LockScreenErrorCodes {
@@ -23,6 +29,14 @@ impl fmt::Display for LockScreenErrorCodes {
             LockScreenErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
             LockScreenErrorCodes::ThemeReadError => write!(f, "ThemeReadError"),
             LockScreenErrorCodes::ThemeParseError => write!(f, "ThemeParseError"),
+            LockScreenErrorCodes::InitNetworkManagerClient => write!(f, "InitNetworkManagerClient"),
+            LockScreenErrorCodes::InitBluetoothManagerClient => {
+                write!(f, "InitBluetoothManagerClient")
+            }
+            LockScreenErrorCodes::InitBatteryManagerClient => write!(f, "InitBatteryManagerClient"),
+            LockScreenErrorCodes::GetWirelessStatusError => write!(f, "GetWirelessStatusError"),
+            LockScreenErrorCodes::GetBluetoothStatusError => write!(f, "GetBluetoothStatusError"),
+            LockScreenErrorCodes::GetBatteryStatusError => write!(f, "GetBatteryStatusError"),
         }
     }
 }

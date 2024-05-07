@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_zbus_client::display::Display;
+use mechanix_zbus_client::display::{Display, NotificationStream};
 use tracing::{debug, error, info};
 
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
@@ -28,12 +28,17 @@ impl BrightnessService {
             }
         };
 
-        Ok(brightness / 255 * 100)
+        Ok((brightness as f32 / 254. * 100.) as u8)
     }
 
     pub async fn set_brightness_value(value: u8) -> Result<()> {
         let task = "set_brightness_value";
-        match Display::set_brightness_percentage(value / 100 * 255).await {
+        println!(
+            "BrightnessService::set_brightness_value() {:?} converted value {:?}",
+            value,
+            (value as f32 / 100. * 254.) as u8
+        );
+        match Display::set_brightness_percentage((value as f32 / 100. * 254.).max(5.) as u8).await {
             Ok(v) => v,
             Err(e) => bail!(SettingsPanelError::new(
                 SettingsPanelErrorCodes::SetBrightnessError,
@@ -42,5 +47,10 @@ impl BrightnessService {
         };
 
         Ok(())
+    }
+
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let stream = Display::get_notification_stream().await?;
+        Ok(stream)
     }
 }

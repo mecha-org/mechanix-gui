@@ -8,7 +8,9 @@ use mctk_core::{
 };
 
 use crate::{
-    gui::Message, settings::CommonLowMediumHighPaths, widgets::slidable_setting::SlidableSetting,
+    gui::{Message, SliderSettingsNames},
+    settings::CommonLowMediumHighPaths,
+    widgets::slidable_setting::SlidableSetting,
 };
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -50,7 +52,9 @@ impl Component for BrightnessComponent {
             "Brightness".to_string(),
             self.value,
         )
-        .on_slide(Box::new(|value| msg!(Message::Brightness { value })))))
+        .on_slide(Box::new(|value| msg!(Message::SliderChanged(
+            SliderSettingsNames::Brightness { value }
+        ))))))
     }
 }
 

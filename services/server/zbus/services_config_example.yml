@@ -1,7 +1,0 @@
-name: mecha-comet-m-gen1
-interfaces:
-   display: 
-     device: /sys/class/backlight/backlight/brightness
-   network:
-    device: /var/run/wpa_supplicant/wlp2s0
-  

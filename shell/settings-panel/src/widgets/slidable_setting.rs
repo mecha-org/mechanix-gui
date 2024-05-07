@@ -48,10 +48,11 @@ impl Component for SlidableSetting {
         match msg.downcast_ref::<SlidableSettingMessage>() {
             Some(SlidableSettingMessage::ValueChanged(value)) => {
                 if let Some(slide_fn) = &self.on_slide {
+                    println!("SlidableSetting::update() {}", *value);
                     m.push(slide_fn(*value));
                 }
             }
-            None => panic!(),
+            _ => (),
         }
         m
     }
@@ -63,7 +64,8 @@ impl Component for SlidableSetting {
                     background_color: Color::rgba(22., 23., 23., 0.90),
                     border_color: Color::TRANSPARENT,
                     border_width: 1.,
-                    radius: (8., 8., 8. ,8.)
+                    radius: (8., 8., 8. ,8.),
+                    scissor: None
                 }
                 ,
                 [
@@ -76,12 +78,13 @@ impl Component for SlidableSetting {
                 Svg::new(self.icon.to_string()),
                 lay![
                     size: [32, 32],
-                    margin: [0, 0, 8, 0]
+                    margin: [0, 0, 4, 0]
                 ],
             ))
             .push(node!(Slider::new(self.value).on_slide(Box::new(|value| msg!(SlidableSettingMessage::ValueChanged(value)))), [
                 size_pct: [100, Auto],
-                margin: [6, 0, 18, 0],
+                margin: [1, 10, 10, 10],
+                padding: [ 7, 0, 8, 0 ]
             ]))
             .push(node!(Text::new(txt!(self.text.clone()))
                 .style("color", Color::rgb(197., 200., 207.))

@@ -194,6 +194,68 @@ pub struct UnPeekPasswordModule {
     pub icon: DefaultIconPaths,
 }
 
+/// Clock module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct ClockModule {
+    pub format: String,
+}
+
+/// Bluetooth module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BluetoothModule {
+    pub icon: BluetoothIconPaths,
+}
+
+/// Wireless module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct WirelessModule {
+    pub icon: WirelessIconPaths,
+}
+
+/// Battery module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BatteryModule {
+    pub icon: BatteryIconPaths,
+    pub charging_icon: BatteryIconPaths,
+}
+
+/// Icon paths for bluetooth module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BluetoothIconPaths {
+    pub on: Option<String>,
+    pub off: Option<String>,
+    pub connected: Option<String>,
+    pub not_found: Option<String>,
+}
+
+/// Icon paths for wireless module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct WirelessIconPaths {
+    pub off: Option<String>,
+    pub on: Option<String>,
+    pub low: Option<String>,
+    pub weak: Option<String>,
+    pub good: Option<String>,
+    pub strong: Option<String>,
+    pub not_found: Option<String>,
+}
+/// Icon paths for battery module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BatteryIconPaths {
+    pub level_100: Option<String>,
+    pub level_90: Option<String>,
+    pub level_80: Option<String>,
+    pub level_70: Option<String>,
+    pub level_60: Option<String>,
+    pub level_50: Option<String>,
+    pub level_40: Option<String>,
+    pub level_30: Option<String>,
+    pub level_20: Option<String>,
+    pub level_10: Option<String>,
+    pub level_0: Option<String>,
+    pub not_found: Option<String>,
+}
+
 /// # Modules
 ///
 /// Options that will be visible in Greeter
@@ -217,6 +279,10 @@ pub struct Modules {
     pub show: ShowModule,
     pub hide: HideModule,
     pub background: BackgroundModule,
+    pub clock: ClockModule,
+    pub bluetooth: BluetoothModule,
+    pub wireless: WirelessModule,
+    pub battery: BatteryModule,
 }
 
 impl Default for WindowSettings {
@@ -295,6 +361,58 @@ impl Default for Modules {
             },
             background: BackgroundModule {
                 icon: DefaultIconPaths { default: None },
+            },
+            clock: ClockModule {
+                format: "[hour repr:12]:[minute] [period]".to_string(),
+            },
+            bluetooth: BluetoothModule {
+                icon: BluetoothIconPaths {
+                    on: None,
+                    off: None,
+                    connected: None,
+                    not_found: None,
+                },
+            },
+            wireless: WirelessModule {
+                icon: WirelessIconPaths {
+                    off: None,
+                    on: None,
+                    low: None,
+                    weak: None,
+                    good: None,
+                    strong: None,
+                    not_found: None,
+                },
+            },
+            battery: BatteryModule {
+                icon: BatteryIconPaths {
+                    level_100: None,
+                    level_90: None,
+                    level_80: None,
+                    level_70: None,
+                    level_60: None,
+                    level_50: None,
+                    level_40: None,
+                    level_30: None,
+                    level_20: None,
+                    level_10: None,
+                    level_0: None,
+                    not_found: None,
+                },
+                charging_icon: BatteryIconPaths {
+                    level_100: None,
+                    level_90: None,
+                    level_80: None,
+                    level_70: None,
+                    level_60: None,
+                    level_50: None,
+                    level_40: None,
+                    level_30: None,
+                    level_20: None,
+                    level_10: None,
+                    level_0: None,
+                    not_found: None,
+                },
             },
         }
     }

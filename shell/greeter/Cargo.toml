@@ -22,14 +22,16 @@ mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 smithay-client-toolkit = { workspace = true }
-futures = "0.3.30"
+futures = { workspace = true }
 image = { workspace = true }
+mechanix_zbus_client = { workspace = true }
+chrono = { workspace = true }
 
 [package.metadata.deb]
 assets = [
     # binary
     [
-        "../target/aarch64-unknown-linux-gnu/release/mechanix-greeter",
+        "../target/release/mechanix-greeter",
         "/usr/bin/mechanix-greeter",
         "755",
     ],

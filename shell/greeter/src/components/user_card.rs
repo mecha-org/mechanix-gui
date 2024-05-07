@@ -63,7 +63,7 @@ impl Component for UserCard {
                 ),
                 lay![
                      size: [272, 329],
-                     margin: [0., 0., 0., 24],
+                     margin: [0., 0., 0., 0],
                      cross_alignment: Alignment::Center,
                      axis_alignment: Alignment::Center,
                      direction: Direction::Column

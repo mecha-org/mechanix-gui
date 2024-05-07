@@ -31,7 +31,7 @@ impl Display {
     pub fn set_brightness(&self, brightness: u8) -> Result<()> {
         trace!(task = "set_display_brightness", "init");
         // Check if the brightness value is valid
-        if brightness > 244 {
+        if brightness > 254 {
             warn!(task = "set_display_brightness", "invalid brightness value");
             bail!(DisplayError::new(
                 DisplayErrorCodes::InvalidBrightnessValueError,

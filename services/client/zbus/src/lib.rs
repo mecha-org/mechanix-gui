@@ -6,26 +6,26 @@ pub mod wireless {
         KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
         WirelessScanListResponse,
     };
-    pub use proxies::wireless_proxy::WirelessService;
+    pub use proxies::wireless_proxy::{NotificationStream, WirelessService};
 }
 
 pub mod power {
     use crate::proxies;
-    pub use proxies::power_proxy::Power;
+    pub use proxies::power_proxy::{NotificationStream, Power};
 }
 
 pub mod bluetooth {
     use crate::proxies;
-    pub use proxies::bluetooth_proxy::BluetoothService;
+    pub use proxies::bluetooth_proxy::{BluetoothService, NotificationStream};
 }
 
 pub mod host_metrics {
     use crate::proxies;
     pub use mechanix_zbus_services::MemoryInfoResponse;
-    pub use proxies::host_metrics::HostMetrics;
+    pub use proxies::host_metrics::{HostMetrics, NotificationStream};
 }
 
 pub mod display {
     use crate::proxies;
-    pub use proxies::display_proxy::Display;
+    pub use proxies::display_proxy::{Display, NotificationStream};
 }

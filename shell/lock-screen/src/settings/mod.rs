@@ -34,6 +34,169 @@ impl Default for LockScreenSettings {
     }
 }
 
+/// Clock module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct ClockModule {
+    pub format: String,
+}
+
+/// Bluetooth module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BluetoothModule {
+    pub icon: BluetoothIconPaths,
+}
+
+/// Wireless module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct WirelessModule {
+    pub icon: WirelessIconPaths,
+}
+
+/// Battery module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BatteryModule {
+    pub icon: BatteryIconPaths,
+    pub charging_icon: BatteryIconPaths,
+}
+
+/// Icon paths for bluetooth module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BluetoothIconPaths {
+    pub on: Option<String>,
+    pub off: Option<String>,
+    pub connected: Option<String>,
+    pub not_found: Option<String>,
+}
+
+/// Icon paths for wireless module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct WirelessIconPaths {
+    pub off: Option<String>,
+    pub on: Option<String>,
+    pub low: Option<String>,
+    pub weak: Option<String>,
+    pub good: Option<String>,
+    pub strong: Option<String>,
+    pub not_found: Option<String>,
+}
+/// Icon paths for battery module
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BatteryIconPaths {
+    pub level_100: Option<String>,
+    pub level_90: Option<String>,
+    pub level_80: Option<String>,
+    pub level_70: Option<String>,
+    pub level_60: Option<String>,
+    pub level_50: Option<String>,
+    pub level_40: Option<String>,
+    pub level_30: Option<String>,
+    pub level_20: Option<String>,
+    pub level_10: Option<String>,
+    pub level_0: Option<String>,
+    pub not_found: Option<String>,
+}
+
+/// # Modules
+///
+/// Options that will be visible in lock screen
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Modules {
+    pub clock: ClockModule,
+    pub bluetooth: BluetoothModule,
+    pub wireless: WirelessModule,
+    pub battery: BatteryModule,
+    pub home: HomeModule,
+    pub back_space: BackSpaceModule,
+    pub lock: LockModule,
+    pub unlock: UnlockModule,
+    pub back: BackModule,
+    pub background: BackgroundModule,
+    pub password_configs: PasswordConfigsModule,
+}
+
+impl Default for Modules {
+    fn default() -> Self {
+        Self {
+            home: HomeModule {
+                icon: DefaultIconPaths { default: None },
+                title: "".to_string(),
+            },
+            back_space: BackSpaceModule {
+                icon: DefaultIconPaths { default: None },
+                title: "".to_string(),
+            },
+            back: BackModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            lock: LockModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            unlock: UnlockModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            background: BackgroundModule {
+                icon: DefaultIconPaths { default: None },
+            },
+            password_configs: PasswordConfigsModule {
+                keys_allowed: vec![],
+                password_length: 0,
+            },
+            clock: ClockModule {
+                format: "[hour repr:12]:[minute] [period]".to_string(),
+            },
+            bluetooth: BluetoothModule {
+                icon: BluetoothIconPaths {
+                    on: None,
+                    off: None,
+                    connected: None,
+                    not_found: None,
+                },
+            },
+            wireless: WirelessModule {
+                icon: WirelessIconPaths {
+                    off: None,
+                    on: None,
+                    low: None,
+                    weak: None,
+                    good: None,
+                    strong: None,
+                    not_found: None,
+                },
+            },
+            battery: BatteryModule {
+                icon: BatteryIconPaths {
+                    level_100: None,
+                    level_90: None,
+                    level_80: None,
+                    level_70: None,
+                    level_60: None,
+                    level_50: None,
+                    level_40: None,
+                    level_30: None,
+                    level_20: None,
+                    level_10: None,
+                    level_0: None,
+                    not_found: None,
+                },
+                charging_icon: BatteryIconPaths {
+                    level_100: None,
+                    level_90: None,
+                    level_80: None,
+                    level_70: None,
+                    level_60: None,
+                    level_50: None,
+                    level_40: None,
+                    level_30: None,
+                    level_20: None,
+                    level_10: None,
+                    level_0: None,
+                    not_found: None,
+                },
+            },
+        }
+    }
+}
+
 /// # App Settings
 ///
 /// Struct part of settings.yml to control the application
@@ -135,20 +298,6 @@ pub struct PasswordConfigsModule {
     pub password_length: usize,
 }
 
-/// # Modules
-///
-/// Options that will be visible in lock screen
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct Modules {
-    pub home: HomeModule,
-    pub back_space: BackSpaceModule,
-    pub lock: LockModule,
-    pub unlock: UnlockModule,
-    pub back: BackModule,
-    pub background: BackgroundModule,
-    pub password_configs: PasswordConfigsModule,
-}
-
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
@@ -169,37 +318,6 @@ impl Default for WindowSettings {
 impl Default for LayoutSettings {
     fn default() -> Self {
         Self { grid: vec![] }
-    }
-}
-
-impl Default for Modules {
-    fn default() -> Self {
-        Self {
-            home: HomeModule {
-                icon: DefaultIconPaths { default: None },
-                title: "".to_string(),
-            },
-            back_space: BackSpaceModule {
-                icon: DefaultIconPaths { default: None },
-                title: "".to_string(),
-            },
-            back: BackModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            lock: LockModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            unlock: UnlockModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            background: BackgroundModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            password_configs: PasswordConfigsModule {
-                keys_allowed: vec![],
-                password_length: 0,
-            },
-        }
     }
 }
 

@@ -1,4 +1,4 @@
-use mctk_core::event::MouseUp;
+use mctk_core::event::{MouseUp, TouchDown, TouchUp};
 use mctk_core::layout::{Alignment, Direction, PositionType};
 use mctk_core::style::{FontWeight, Styled, VerticalPosition};
 use mctk_core::{
@@ -92,6 +92,14 @@ impl Component for ClickableSetting {
         self.state_mut().pressing = false;
     }
 
+    fn on_touch_down(&mut self, _event: &mut Event<TouchDown>) {
+        self.state_mut().pressing = true;
+    }
+
+    fn on_touch_up(&mut self, _event: &mut Event<TouchUp>) {
+        self.state_mut().pressing = false;
+    }
+
     fn view(&self) -> Option<Node> {
         let bg_color = if self.state_ref().pressing && !self.state_ref().click_disabled {
             Color::rgba(55., 55., 56., 0.95)
@@ -160,7 +168,8 @@ impl Component for ClickableSetting {
                     background_color: bg_color,
                     border_color: Color::TRANSPARENT,
                     border_width: 1.,
-                    radius: (8., 8., 8. ,8.)
+                    radius: (8., 8., 8. ,8.),
+                    scissor: None
                 }
                 ,
                 [

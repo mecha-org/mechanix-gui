@@ -8,18 +8,22 @@ use crate::modules::running_apps::component::RunningAppsComponent;
 use crate::modules::settings::component::SettingsComponent;
 use crate::modules::sound::component::SoundComponent;
 use crate::modules::wireless::component::WirelessComponent;
-use crate::settings::SettingsPanelSettings;
+use crate::settings::{self, SettingsPanelSettings};
 use crate::theme::{self, SettingsPanelTheme};
 use crate::types::{
     BatteryLevel, BatteryStatus, BluetoothStatus, WirelessConnectedState, WirelessStatus,
 };
 use crate::{AppMessage, BluetoothMessage, BrightnessMessage, WirelessMessage};
+use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
+use mctk_core::style::Styled;
+use mctk_core::widgets::{Button, IconButton};
 use mctk_core::{component, layout, Color};
 use mctk_core::{
-    component::Component, lay, node, rect, size, size_pct, state_component_impl, widgets::Div, Node,
+    component::Component, lay, msg, node, rect, size, size_pct, state_component_impl, txt,
+    widgets::Div, Node,
 };
 use std::any::Any;
 use std::{collections::HashMap, fmt};
@@ -29,6 +33,12 @@ pub enum SettingNames {
     Wireless,
     Bluetooth,
     Rotation,
+    Settings,
+}
+#[derive(Debug, Clone)]
+pub enum SliderSettingsNames {
+    Brightness { value: i32 },
+    Sound { value: i32 },
 }
 
 /// ## Message
@@ -50,6 +60,8 @@ pub enum Message {
     Show,
     Hide,
     SettingClicked(SettingNames),
+    SliderChanged(SliderSettingsNames),
+    SlideUp,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -83,6 +95,7 @@ pub struct SettingsPanelState {
     brightness_value: i32,
     loading: Loading,
     app_channel: Option<Sender<AppMessage>>,
+    visible: bool,
 }
 
 #[component(State = "SettingsPanelState")]
@@ -92,8 +105,12 @@ pub struct SettingsPanel {}
 #[state_component_impl(SettingsPanelState)]
 impl Component for SettingsPanel {
     fn init(&mut self) {
+        let settings = match settings::read_settings_yml() {
+            Ok(settings) => settings,
+            Err(_) => SettingsPanelSettings::default(),
+        };
         self.state = Some(SettingsPanelState {
-            settings: SettingsPanelSettings::default(),
+            settings,
             custom_theme: SettingsPanelTheme::default(),
             battery_percentage: 0,
             battery_level: BatteryLevel::Level0,
@@ -107,11 +124,15 @@ impl Component for SettingsPanel {
             brightness_value: 0,
             loading: Loading::default(),
             app_channel: None,
+            visible: true,
         })
     }
 
     fn view(&self) -> Option<Node> {
         let bg_color = Color::rgba(5., 7., 10., 0.85);
+        if !self.state_ref().visible {
+            return Some(node!(Div::new(), lay![size: [0, 0]]));
+        };
 
         Some(
             node!(
@@ -185,6 +206,13 @@ impl Component for SettingsPanel {
                     value: self.state_ref().brightness_value,
                 },
                 lay![margin: rect!(5.5, 7., 5.5, 0.)]
+            ))
+            .push(node!(
+                SlideLine {},
+                lay![
+                    position_type: Absolute,
+                    position: [Auto, Auto, 20.0, 184.0],
+                ]
             )),
         )
     }
@@ -199,35 +227,34 @@ impl Component for SettingsPanel {
                 self.state_mut().bluetooth_status = status.clone();
             }
             Some(Message::Battery { level, status }) => {
-                let is_charging = *status == BatteryStatus::Charging;
-                let battery_level = if is_charging {
+                let battery_level = if *status == BatteryStatus::Unknown {
+                    BatteryLevel::NotFound
+                } else if *status == BatteryStatus::Charging {
                     match level {
-                        0..=9 => BatteryLevel::ChargingLevel0,
-                        10..=19 => BatteryLevel::ChargingLevel10,
-                        20..=29 => BatteryLevel::ChargingLevel20,
-                        30..=39 => BatteryLevel::ChargingLevel30,
-                        40..=49 => BatteryLevel::ChargingLevel40,
+                        0..=9 => BatteryLevel::ChargingLevel10,
+                        10..=19 => BatteryLevel::ChargingLevel20,
+                        20..=34 => BatteryLevel::ChargingLevel30,
+                        35..=49 => BatteryLevel::ChargingLevel40,
                         50..=59 => BatteryLevel::ChargingLevel50,
                         60..=69 => BatteryLevel::ChargingLevel60,
                         70..=79 => BatteryLevel::ChargingLevel70,
                         80..=89 => BatteryLevel::ChargingLevel80,
-                        90..=99 => BatteryLevel::ChargingLevel90,
-                        100 => BatteryLevel::ChargingLevel100,
+                        90..=94 => BatteryLevel::ChargingLevel90,
+                        95..=100 => BatteryLevel::ChargingLevel100,
                         _ => BatteryLevel::NotFound,
                     }
                 } else {
                     match level {
-                        0..=9 => BatteryLevel::Level0,
-                        10..=19 => BatteryLevel::Level10,
-                        20..=29 => BatteryLevel::Level20,
-                        30..=39 => BatteryLevel::Level30,
-                        40..=49 => BatteryLevel::Level40,
+                        0..=9 => BatteryLevel::Level10,
+                        10..=19 => BatteryLevel::Level20,
+                        20..=34 => BatteryLevel::Level30,
+                        35..=49 => BatteryLevel::Level40,
                         50..=59 => BatteryLevel::Level50,
                         60..=69 => BatteryLevel::Level60,
                         70..=79 => BatteryLevel::Level70,
                         80..=89 => BatteryLevel::Level80,
-                        90..=99 => BatteryLevel::Level90,
-                        100 => BatteryLevel::Level100,
+                        90..=94 => BatteryLevel::Level90,
+                        95..=100 => BatteryLevel::Level100,
                         _ => BatteryLevel::NotFound,
                     }
                 };
@@ -239,13 +266,6 @@ impl Component for SettingsPanel {
             }
             Some(Message::Brightness { value }) => {
                 self.state_mut().brightness_value = *value as i32;
-                if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                    let _ = app_channel.send(AppMessage::Brightness {
-                        message: BrightnessMessage::Change {
-                            value: *value as u8,
-                        },
-                    });
-                }
             }
             Some(Message::SettingClicked(settings_name)) => {
                 println!("setting clicked: {:?}", settings_name);
@@ -283,8 +303,37 @@ impl Component for SettingsPanel {
                         }
                     }
                     SettingNames::Rotation => {}
+                    SettingNames::Settings => {
+                        let run_command = self
+                            .state_ref()
+                            .settings
+                            .modules
+                            .settings
+                            .run_command
+                            .clone();
+                        println!("run_command {:?}", run_command);
+                        if !run_command.is_empty() {
+                            let command = run_command[0].clone();
+                            let args: Vec<String> = run_command.clone()[1..].to_vec();
+                            println!("command {:?} args {:?}", command, args);
+                            let _ = spawn_command(command, args);
+                        }
+                    }
                 }
             }
+            Some(Message::SliderChanged(settings_name)) => match settings_name {
+                SliderSettingsNames::Brightness { value } => {
+                    self.state_mut().brightness_value = *value;
+                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                        let _ = app_channel.send(AppMessage::Brightness {
+                            message: BrightnessMessage::Change {
+                                value: *value as u8,
+                            },
+                        });
+                    }
+                }
+                SliderSettingsNames::Sound { .. } => {}
+            },
             Some(Message::Cpu { usage }) => {
                 self.state_mut().cpu_usage = *usage;
             }
@@ -294,6 +343,15 @@ impl Component for SettingsPanel {
             Some(Message::RunningApps { count }) => {
                 self.state_mut().running_apps_count = *count;
             }
+            Some(Message::Show) => {
+                self.state_mut().visible = true;
+            }
+            Some(Message::Hide) => {
+                self.state_mut().visible = true;
+            }
+            Some(Message::SlideUp) => {
+                std::process::exit(0);
+            }
             _ => (),
         };
         vec![]
@@ -302,5 +360,37 @@ impl Component for SettingsPanel {
 impl RootComponent<AppMessage> for SettingsPanel {
     fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
         self.state_mut().app_channel = app_channel;
+    }
+}
+
+#[derive(Debug)]
+pub struct SlideLine {}
+
+impl Component for SlideLine {
+    fn on_click(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Click>) {
+        event.emit(msg!(Message::SlideUp));
+    }
+
+    fn view(&self) -> Option<Node> {
+        Some(
+            node!(
+                Div::new().bg(Color::TRANSPARENT),
+                lay![
+                    axis_alignment: Alignment::Center,
+                    cross_alignment: Alignment::Center,
+                    size: [110, 30]
+                ],
+            )
+            .push(node!(
+                Button::new(txt!(""))
+                    .style("background_color", Color::rgb(129., 129., 129.))
+                    .style("active_color", Color::rgb(129., 129., 129.))
+                    .style("radius", 2.)
+                    .on_click(Box::new(|| msg!(Message::SlideUp))),
+                lay![
+                    size: [80, 6],
+                ]
+            )),
+        )
     }
 }

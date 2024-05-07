@@ -1,5 +1,9 @@
 use mechanix_zbus_services::MemoryInfoResponse;
-use zbus::{proxy, Connection, Result};
+use serde::{Deserialize, Serialize};
+use zbus::{proxy, zvariant::Type, Connection, Result};
+
+#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]
+pub struct NotificationEvent {}
 
 #[proxy(
     interface = "org.mechanix.services.HostMetrics",
@@ -9,6 +13,8 @@ use zbus::{proxy, Connection, Result};
 trait HostMetricsBusInterface {
     async fn get_cpu_usage(&self) -> Result<f32>;
     async fn get_memory_info(&self) -> Result<MemoryInfoResponse>;
+    #[zbus(signal)]
+    async fn notification(&self, event: NotificationEvent) -> Result<()>;
 }
 
 pub struct HostMetrics;
@@ -26,5 +32,12 @@ impl HostMetrics {
         let proxy = HostMetricsBusInterfaceProxy::new(&connection).await?;
         let reply = proxy.get_memory_info().await?;
         Ok(reply)
+    }
+
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let connection = Connection::system().await?;
+        let proxy = HostMetricsBusInterfaceProxy::new(&connection).await?;
+        let stream = proxy.receive_notification().await?;
+        Ok(stream)
     }
 }

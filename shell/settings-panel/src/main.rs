@@ -1,5 +1,4 @@
 mod errors;
-mod event_handler;
 mod gui;
 mod modules;
 mod settings;
@@ -7,6 +6,8 @@ mod theme;
 mod types;
 mod widgets;
 
+use echo_client::EchoClient;
+use modules::battery::component::get_battery_icons_charging_map;
 use std::time::Duration;
 use std::{collections::HashMap, env};
 use tokio::{
@@ -14,7 +15,6 @@ use tokio::{
     sync::{mpsc::Receiver, oneshot},
 };
 
-use event_handler::zbus::ZbusServiceHandle;
 use gui::SettingsPanel;
 use mctk_core::{
     msg,
@@ -119,6 +119,8 @@ pub enum AppMessage {
     Sound { message: SoundMessage },
     Brightness { message: BrightnessMessage },
     RunningApps { message: RunningAppsMessage },
+    Show,
+    Hide,
 }
 
 // Layer Surface App
@@ -139,9 +141,11 @@ fn main() -> anyhow::Result<()> {
     //     Err(_) => SettingsPanelTheme::default(),
     // };
 
+    let width = settings.window.size.0 as u32;
+    let height = settings.window.size.1 as u32;
     let window_opts = WindowOptions {
-        height: settings.window.size.1 as u32,
-        width: settings.window.size.0 as u32,
+        height,
+        width,
         scale_factor: 1.0,
     };
 
@@ -151,6 +155,7 @@ fn main() -> anyhow::Result<()> {
     let modules = settings.modules.clone();
 
     let battery_assets = get_battery_icons_map(modules.battery.icon);
+    let battery_charging_assets = get_battery_icons_charging_map(modules.battery.charging_icon);
     let bluetooth_assets = get_bluetooth_icons_map(modules.bluetooth.icon);
     let wireless_assets = get_wireless_icons_map(modules.wireless.icon);
     let rotation_assets = get_rotation_icons_map(modules.rotation.icon);
@@ -162,6 +167,7 @@ fn main() -> anyhow::Result<()> {
     let brightness_assets = get_brightness_icons_map(modules.brightness.icon);
 
     svgs.extend(battery_assets);
+    svgs.extend(battery_charging_assets);
     svgs.extend(wireless_assets);
     svgs.extend(bluetooth_assets);
     svgs.extend(rotation_assets);
@@ -176,10 +182,10 @@ fn main() -> anyhow::Result<()> {
 
     let layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::BOTTOM | wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT,
-        layer: wlr_layer::Layer::Overlay,
+        layer: wlr_layer::Layer::Top,
         keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
         namespace: Some(namespace.clone()),
-        zone: window_opts.height as i32,
+        zone: 0 as i32,
     };
 
     let mut fonts = cosmic_text::fontdb::Database::new();
@@ -192,7 +198,7 @@ fn main() -> anyhow::Result<()> {
             LayerWindowParams {
                 title: settings.title.clone(),
                 namespace,
-                window_opts,
+                window_opts: window_opts,
                 fonts,
                 assets,
                 svgs,
@@ -311,6 +317,19 @@ fn main() -> anyhow::Result<()> {
                         });
                     }
                 },
+                AppMessage::Show => {
+                    println!("AppMessage::Show");
+                    let _ = window_tx_2
+                        .clone()
+                        .send(WindowMessage::Resize { width, height });
+                }
+                AppMessage::Hide => {
+                    println!("AppMessage::Hide");
+                    let _ = window_tx_2.clone().send(WindowMessage::Resize {
+                        width: 1,
+                        height: 1,
+                    });
+                }
                 _ => (),
             },
             calloop::channel::Event::Closed => {}
@@ -370,7 +389,7 @@ fn init_services(
                     cpu_f,
                     memory_f,
                     brightness_f,
-                    sound_f
+                    sound_f,
                 )
             }))
             .unwrap();

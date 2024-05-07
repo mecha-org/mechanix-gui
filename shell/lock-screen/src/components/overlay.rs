@@ -36,7 +36,8 @@ impl Overlay {
 impl Component for Overlay {
     fn render(&mut self, context: RenderContext) -> Option<Vec<Renderable>> {
         let width = context.aabb.width();
-        let height = context.aabb.height();
+        //height of status bar 34.
+        let height = context.aabb.height() + 34.;
         let AABB { pos, .. } = context.aabb;
         let mut rs = vec![];
 
