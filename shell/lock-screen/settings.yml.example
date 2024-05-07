@@ -41,7 +41,7 @@ modules:
       default: /usr/share/mechanix/shell/lock-screen/assets/icons/unlock.svg
   background:
     icon:
-      default: /usr/share/mechanix/shell/lock-screen/assets/icons/mecha-background-grayscale.png
+      default: /usr/share/mechanix/shell/lock-screen/assets/icons/mecha-background-color.png
   clock:
     format: "%I:%M %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:

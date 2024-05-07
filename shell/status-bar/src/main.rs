@@ -16,6 +16,7 @@ use mctk_core::{
             shell::wlr_layer,
         },
     },
+    types::AssetParams,
 };
 use mctk_smithay::{layer_surface::LayerOptions, WindowOptions};
 use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
@@ -78,7 +79,7 @@ fn main() -> anyhow::Result<()> {
     let mut fonts = cosmic_text::fontdb::Database::new();
     fonts.load_system_fonts();
 
-    let assets: HashMap<String, String> = HashMap::new();
+    let assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
 
     let modules = settings.modules.clone();
