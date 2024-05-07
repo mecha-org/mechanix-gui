@@ -2,10 +2,14 @@ use zbus::{
     fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
+    Connection, SignalContext,
 };
+
+use tokio::time::{self, Duration};
 
 use mechanix_host_metrics::HostMetrics;
 
+#[derive(Clone)]
 pub struct HostMetricsBusInterface {}
 
 #[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, PartialEq)]
@@ -44,6 +48,15 @@ pub struct NetworkDataInfo {
     pub mac_address: String,
     pub received: u64,
     pub transmitted: u64,
+}
+
+#[derive(DeserializeDict, SerializeDict, Type)]
+// `Type` treats `HostMetricsNotificationEvents` is an alias for `a{sv}`.
+#[zvariant(signature = "a{sv}")]
+pub struct HostMetricsNotificationEvent {
+    pub cpu_usage: f32,
+    pub total_memory: u64,
+    pub available_memory: u64,
 }
 
 #[interface(name = "org.mechanix.services.HostMetrics")]
@@ -153,5 +166,61 @@ impl HostMetricsBusInterface {
         }
 
         Ok(network_data_info)
+    }
+
+    // notification signal
+    #[zbus(signal)]
+    async fn notification(
+        &self,
+        ctxt: &SignalContext<'_>,
+        event: HostMetricsNotificationEvent,
+    ) -> Result<(), zbus::Error>;
+
+    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
+        let mut interval = time::interval(Duration::from_secs(10));
+
+        let mut previous_cpu_usage: Option<f32> = None;
+        let mut previous_total_memory: Option<u64> = None;
+        let mut previous_available_memory: Option<u64> = None;
+
+        loop {
+            interval.tick().await;
+            let host_metrics = HostMetrics::new();
+
+            let cpu_usage;
+            let total_memory;
+            let available_memory;
+
+            cpu_usage = host_metrics.cpu_usage();
+            total_memory = host_metrics.memory_info().total_memory;
+            available_memory = host_metrics.memory_info().used_memory;
+
+            // Check if there's a change in any of the values
+            if previous_cpu_usage != Some(cpu_usage)
+                || previous_total_memory != Some(total_memory)
+                || previous_available_memory != Some(available_memory)
+            {
+                // Trigger the notification here
+
+                let ctxt = SignalContext::new(
+                    &Connection::system().await?,
+                    "/org/mechanix/services/HostMetrics",
+                )?;
+                self.notification(
+                    &ctxt,
+                    HostMetricsNotificationEvent {
+                        cpu_usage,
+                        total_memory,
+                        available_memory,
+                    },
+                )
+                .await?;
+
+                // Update the previous values
+                previous_cpu_usage = Some(cpu_usage);
+                previous_total_memory = Some(total_memory);
+                previous_available_memory = Some(available_memory);
+            }
+        }
     }
 }

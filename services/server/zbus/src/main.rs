@@ -81,9 +81,18 @@ async fn main() -> Result<()> {
     let host_metrics_bus = HostMetricsBusInterface {};
     let _host_metrics_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.HostMetrics")?
-        .serve_at("/org/mechanix/services/HostMetrics", host_metrics_bus)?
+        .serve_at(
+            "/org/mechanix/services/HostMetrics",
+            host_metrics_bus.clone(),
+        )?
         .build()
         .await?;
+
+    let _host_metrics_handle = tokio::spawn(async move {
+        if let Err(e) = host_metrics_bus.clone().send_notification_stream().await {
+            println!("Error in host_metrics_handle notification stream: {}", e)
+        }
+    });
 
     for handle in handles {
         handle.await?;
