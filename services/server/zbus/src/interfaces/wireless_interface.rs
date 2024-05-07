@@ -1,10 +1,14 @@
+use tokio::time::{self, Duration};
 use zbus::{
     fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
+    Connection, SignalContext,
 };
 
 use mechanix_network_ctl::wireless::WirelessNetworkControl;
+
+#[derive(Clone)]
 pub struct WirelessBusInterface {
     pub path: String,
 }
@@ -41,6 +45,17 @@ pub struct KnownNetworkResponse {
 #[zvariant(signature = "a{sv}")]
 pub struct KnownNetworkListResponse {
     pub known_network: Vec<KnownNetworkResponse>,
+}
+
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
+/// A wireless notification event.
+#[zvariant(signature = "a{sv}")]
+pub struct WirelessNotificationEvent {
+    pub signal_strength: String,
+    pub is_connected: bool,
+    pub is_enabled: bool,
+    pub frequency: String,
+    pub ssid: String,
 }
 
 #[interface(name = "org.mechanix.services.Wireless")]
@@ -106,6 +121,89 @@ impl WirelessBusInterface {
         };
 
         Ok(wifi_result)
+    }
+
+    #[zbus(signal)]
+    async fn notification(
+        &self,
+        ctxt: &SignalContext<'_>,
+        event: WirelessNotificationEvent,
+    ) -> Result<(), zbus::Error>;
+
+    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
+        let mut interval = time::interval(Duration::from_secs(15));
+        let mut previous_is_enabled: Option<bool> = None;
+        let mut previous_is_connected: Option<bool> = None;
+        let mut previous_signal_strength: Option<String> = None;
+        let mut previous_frequency: Option<String> = None;
+        let mut previous_ssid: Option<String> = None;
+
+        loop {
+            interval.tick().await;
+            let wireless = WirelessNetworkControl::new(self.path.as_str());
+
+            // Check if WiFi is enabled
+            let is_enabled = wireless.status().await;
+
+            let is_connected;
+            let signal_strength;
+            let ssid;
+            let frequency;
+
+            // If WiFi is enabled, check if it's connected and get signal strength, SSID, and frequency
+            if is_enabled {
+                let wifi_info = wireless.info().await;
+
+                if let Ok(info) = wifi_info {
+                    is_connected = true;
+                    signal_strength = info.frequency.clone();
+                    ssid = info.name.clone(); // Assuming `ssid` is a field in the info struct
+                    frequency = info.frequency.clone(); // Assuming `frequency` is a field in the info struct
+                } else {
+                    is_connected = false;
+                    signal_strength = "".to_string();
+                    ssid = "".to_string();
+                    frequency = "".to_string();
+                }
+            } else {
+                is_connected = false;
+                signal_strength = "".to_string();
+                ssid = "".to_string();
+                frequency = "".to_string();
+            }
+
+            // Trigger notification if any value has changed
+            if previous_is_enabled != Some(is_enabled)
+                || previous_is_connected != Some(is_connected)
+                || previous_signal_strength != Some(signal_strength.clone())
+                || previous_ssid != Some(ssid.clone())
+                || previous_frequency != Some(frequency.clone())
+            {
+                let ctxt = SignalContext::new(
+                    &Connection::system().await?,
+                    "/org/mechanix/services/Wireless",
+                )?;
+                self.notification(
+                    &ctxt,
+                    WirelessNotificationEvent {
+                        signal_strength: signal_strength.clone(),
+                        is_connected,
+                        is_enabled,
+                        // Add ssid and frequency to the event
+                        ssid: ssid.clone(),
+                        frequency: frequency.clone(),
+                    },
+                )
+                .await?;
+
+                // Update previous values
+                previous_is_enabled = Some(is_enabled);
+                previous_is_connected = Some(is_connected);
+                previous_signal_strength = Some(signal_strength);
+                previous_ssid = Some(ssid);
+                previous_frequency = Some(frequency);
+            }
+        }
     }
 
     pub async fn scan(&self) -> Result<WirelessScanListResponse, ZbusError> {
