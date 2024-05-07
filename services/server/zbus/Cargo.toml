@@ -27,9 +27,8 @@ serde_yaml = "0.9.25"
 serde.workspace = true
 zbus_polkit = { version = "4.0.0", features = ["tokio"] }
 tracing.workspace = true
-async-std = "1.12.0"
+
 
 [features]
 default = ["auth"]
 auth = []
-
