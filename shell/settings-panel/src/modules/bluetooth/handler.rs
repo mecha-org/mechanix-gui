@@ -18,12 +18,29 @@ impl BluetoothServiceHandle {
     }
 
     pub async fn run(&mut self, mut bluetooth_msg_rx: Receiver<BluetoothMessage>) {
-        println!("BluetoothServiceHandle::run()");
         let task = "run";
+        match BluetoothService::get_bluetooth_status().await {
+            Ok(bluetooth_status) => {
+                let _ = self.app_channel.send(AppMessage::Bluetooth {
+                    message: BluetoothMessage::Status {
+                        status: bluetooth_status,
+                    },
+                });
+            }
+            Err(e) => {
+                error!(task, "error while getting bluetooth status {}", e);
+                let _ = self.app_channel.send(AppMessage::Bluetooth {
+                    message: BluetoothMessage::Status {
+                        status: BluetoothStatus::NotFound,
+                    },
+                });
+            }
+        };
+
         let mut stream_res = BluetoothService::get_notification_stream().await;
 
         if let Err(e) = stream_res.as_ref() {
-            println!("error while getting bluetooth stream {:?}", e.to_string());
+            error!(task, "error while getting bluetooth stream {}", e);
             let _ = self.app_channel.send(AppMessage::Bluetooth {
                 message: BluetoothMessage::Status {
                     status: BluetoothStatus::NotFound,
@@ -31,6 +48,7 @@ impl BluetoothServiceHandle {
             });
             return;
         }
+
         loop {
             select! {
                 signal = stream_res.as_mut().unwrap().next() => {
@@ -39,12 +57,18 @@ impl BluetoothServiceHandle {
                     }
 
                     if let Ok(args) = signal.unwrap().args() {
-                        let notification_event = args.event;
-                        // let _ = self.app_channel.send(AppMessage::Bluetooth {
-                        //     message: BluetoothMessage::Status {
-                        //         status: bluetooth_status,
-                        //     },
-                        // });
+                        let event = args.event;
+                        let mut status = BluetoothStatus::Off;
+
+                        if event.is_enabled {
+                            status = BluetoothStatus::On;
+                        }
+
+                        if event.is_connected {
+                            status = BluetoothStatus::Connected
+                        }
+
+                        let _ = self.app_channel.send(AppMessage::Bluetooth { message: BluetoothMessage::Status {status }});
                     }
 
                 }

@@ -1,12 +1,10 @@
 use mechanix_zbus_services::{
-    KnownNetworkListResponse, WirelessInfoResponse, WirelessScanListResponse,
+    KnownNetworkListResponse, WirelessInfoResponse, WirelessNotificationEvent,
+    WirelessScanListResponse,
 };
 use serde::{Deserialize, Serialize};
 use tracing::info;
-use zbus::{proxy, zvariant::Type, Connection, Result};
-
-#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]
-pub struct NotificationEvent {}
+use zbus::{proxy, zvariant::Type, Connection, Result, SignalContext};
 
 #[proxy(
     interface = "org.mechanix.services.Wireless",
@@ -26,7 +24,7 @@ trait Wireless {
 
     async fn disconnect(&self, ssid: &str) -> Result<()>;
     #[zbus(signal)]
-    async fn notification(&self, event: NotificationEvent) -> Result<()>;
+    async fn notification(&self, event: WirelessNotificationEvent) -> Result<()>;
 }
 
 pub struct WirelessService;

@@ -1,3 +1,4 @@
+use mechanix_zbus_services::PowerNotificationEvent;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use zbus::{proxy, zvariant::Type, Connection, Result};
@@ -18,7 +19,7 @@ trait PowerBusInterface {
     // async fn set_screen_timeout(&self, value: u32) ->Result<u32>;
     async fn set_cpu_governor(&self, value: &str) -> Result<String>;
     #[zbus(signal)]
-    async fn notification(&self, event: NotificationEvent) -> Result<()>;
+    async fn notification(&self, event: PowerNotificationEvent) -> Result<(), zbus::Error>;
 }
 
 pub struct Power;

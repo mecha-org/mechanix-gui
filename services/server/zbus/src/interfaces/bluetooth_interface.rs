@@ -63,7 +63,7 @@ pub struct BluetoothAdapterInfoListResponse {
     pub bluetooth_adapter_info: Vec<BluetoothAdapterInfoResponse>,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type)]
+#[derive(Debug, DeserializeDict, SerializeDict, Type)]
 // `Type` treats `BluetoothNotificationEvent` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct BluetoothNotificationEvent {

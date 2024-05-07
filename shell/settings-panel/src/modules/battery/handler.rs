@@ -38,11 +38,30 @@ impl BatteryServiceHandle {
     }
 
     pub async fn run(&mut self) {
-        println!("BatteryServiceHandle::run()");
+        match BatteryService::get_battery_level().await {
+            Ok((capacity, status)) => {
+                let _ = self.app_channel.send(AppMessage::Battery {
+                    message: BatteryMessage::Status {
+                        level: capacity,
+                        status: BatteryStatus::from_str(status.as_ref()).unwrap(),
+                    },
+                });
+            }
+            Err(e) => {
+                error!("error while getting battery level {}", e);
+                let _ = self.app_channel.send(AppMessage::Battery {
+                    message: BatteryMessage::Status {
+                        level: 0,
+                        status: BatteryStatus::Unknown,
+                    },
+                });
+            }
+        };
+
         let mut stream_res = BatteryService::get_notification_stream().await;
 
         if let Err(e) = stream_res.as_ref() {
-            error!("error while getting battery level {}", e);
+            error!("error while getting battery stream {}", e);
             let _ = self.app_channel.send(AppMessage::Battery {
                 message: BatteryMessage::Status {
                     level: 0,
@@ -54,13 +73,13 @@ impl BatteryServiceHandle {
 
         while let Some(signal) = stream_res.as_mut().unwrap().next().await {
             if let Ok(args) = signal.args() {
-                let notification_event = args.event;
-                // let _ = self.app_channel.send(AppMessage::Battery {
-                //     message: BatteryMessage::Status {
-                //         level: capacity,
-                //         status: BatteryStatus::from_str(status.as_ref()).unwrap(),
-                //     },
-                // });
+                let event = args.event;
+                let _ = self.app_channel.send(AppMessage::Battery {
+                    message: BatteryMessage::Status {
+                        level: event.percentage as u8,
+                        status: BatteryStatus::from_str(&event.status).unwrap(),
+                    },
+                });
             }
         }
     }
