@@ -217,12 +217,6 @@ pub async fn power_event_notification_stream(
                 )
                 .await?;
 
-            // println notification
-            println!(
-                "Battery Status: {}, Battery Percentage: {}%",
-                current_status, current_percentage
-            );
-
             // Update the previous values to the current ones
             previous_percentage = Some(current_percentage);
             previous_status = Some(current_status);

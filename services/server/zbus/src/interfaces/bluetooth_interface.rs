@@ -63,7 +63,7 @@ pub struct BluetoothAdapterInfoListResponse {
     pub bluetooth_adapter_info: Vec<BluetoothAdapterInfoResponse>,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug)]
 // `Type` treats `BluetoothNotificationEvent` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct BluetoothNotificationEvent {
@@ -257,11 +257,6 @@ pub async fn bluetooth_event_notification_stream(
                     },
                 )
                 .await?;
-
-            println!(
-                "Bluetooth status: {}, Connected: {}",
-                is_enable, is_connected,
-            );
 
             previous_is_enable = Some(is_enable);
             previous_is_connected = Some(is_connected);
