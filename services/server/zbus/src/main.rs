@@ -10,6 +10,11 @@ use interfaces::{
     WirelessBusInterface,
 };
 
+use interfaces::{
+    bluetooth_event_notification_stream, host_metrics_event_notification_stream,
+    power_event_notification_stream, wireless_event_notification_stream,
+};
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = match read_configs_yml() {
@@ -30,7 +35,9 @@ async fn main() -> Result<()> {
         .await?;
 
     let _bluetooth_handle = tokio::spawn(async move {
-        if let Err(e) = bluetooth_bus.send_notification_stream().await {
+        if let Err(e) =
+            bluetooth_event_notification_stream(&bluetooth_bus, &_bluetooth_bus_connection).await
+        {
             println!("Error in bluetooth notification stream: {}", e);
         }
     });
@@ -47,7 +54,13 @@ async fn main() -> Result<()> {
         .await?;
 
     let wireless_handle = tokio::spawn(async move {
-        if let Err(e) = wireless_bus.clone().send_notification_stream().await {
+        if let Err(e) = wireless_event_notification_stream(
+            config.interfaces.network.device.clone(),
+            &wireless_bus,
+            &_wireless_bus_connection,
+        )
+        .await
+        {
             println!("Error in wireless notification stream: {}", e);
         }
     });
@@ -55,14 +68,14 @@ async fn main() -> Result<()> {
     handles.push(wireless_handle);
 
     let power_bus = PowerBusInterface {};
-    let _power_bus_connection = connection::Builder::system()?
+    let power_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.Power")?
         .serve_at("/org/mechanix/services/Power", power_bus)?
         .build()
         .await?;
 
     let power_handle = tokio::spawn(async move {
-        if let Err(e) = power_bus.send_notification_stream().await {
+        if let Err(e) = power_event_notification_stream(&power_bus, &power_bus_connection).await {
             println!("Error in power notification stream: {}", e)
         }
     });
@@ -79,7 +92,7 @@ async fn main() -> Result<()> {
         .await?;
 
     let host_metrics_bus = HostMetricsBusInterface {};
-    let _host_metrics_bus_connection = connection::Builder::system()?
+    let host_metrics_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.HostMetrics")?
         .serve_at(
             "/org/mechanix/services/HostMetrics",
@@ -89,7 +102,10 @@ async fn main() -> Result<()> {
         .await?;
 
     let _host_metrics_handle = tokio::spawn(async move {
-        if let Err(e) = host_metrics_bus.clone().send_notification_stream().await {
+        if let Err(e) =
+            host_metrics_event_notification_stream(&host_metrics_bus, &host_metrics_bus_connection)
+                .await
+        {
             println!("Error in host_metrics_handle notification stream: {}", e)
         }
     });

@@ -2,7 +2,7 @@ use zbus::{
     fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
-    Connection, SignalContext,
+    SignalContext,
 };
 
 use tokio::time::{self, Duration};
@@ -183,49 +183,6 @@ impl BluetoothBusInterface {
         event: BluetoothNotificationEvent,
     ) -> Result<(), zbus::Error>;
 
-    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
-        let mut interval = time::interval(Duration::from_secs(15));
-        let mut previous_is_enable: Option<bool> = None;
-        let mut previous_is_connected: Option<bool> = None;
-
-        loop {
-            interval.tick().await;
-            let bluetooth = Bluetooth::new();
-
-            // Check Bluetooth power status
-            let is_enable = match bluetooth.status().await {
-                Ok(status) => status == 1,
-                Err(e) => {
-                    previous_is_enable.unwrap_or(false) // Use previous value or default to false
-                }
-            };
-
-            // Check Bluetooth connection status
-            let is_connected = bluetooth.is_connected().await.unwrap_or_else(|e| {
-                previous_is_connected.unwrap_or(false) // Use previous value or default to false
-            });
-
-            // Send signal if there's a change in status
-            if previous_is_enable != Some(is_enable) || previous_is_connected != Some(is_connected)
-            {
-                let ctxt = SignalContext::new(
-                    &Connection::system().await?,
-                    "/org/mechanix/services/Bluetooth",
-                )?;
-                self.notification(
-                    &ctxt,
-                    BluetoothNotificationEvent {
-                        is_connected: is_connected,
-                        is_enabled: is_enable,
-                    },
-                )
-                .await?;
-                previous_is_enable = Some(is_enable);
-                previous_is_connected = Some(is_connected);
-            }
-        }
-    }
-
     pub async fn get_bluetooth_properties(
         &self,
     ) -> Result<BluetoothAdapterInfoListResponse, ZbusError> {
@@ -259,6 +216,55 @@ impl BluetoothBusInterface {
                     "Failed to get bluetooth properties".to_string(),
                 ));
             }
+        }
+    }
+}
+
+pub async fn bluetooth_event_notification_stream(
+    bluetooth_bus: &BluetoothBusInterface,
+    conn: &zbus::Connection,
+) -> Result<(), ZbusError> {
+    let mut interval = time::interval(Duration::from_secs(15));
+    let mut previous_is_enable: Option<bool> = None;
+    let mut previous_is_connected: Option<bool> = None;
+
+    loop {
+        interval.tick().await;
+        let bluetooth = Bluetooth::new();
+
+        // Check Bluetooth power status
+        let is_enable = match bluetooth.status().await {
+            Ok(status) => status == 1,
+            Err(e) => {
+                previous_is_enable.unwrap_or(false) // Use previous value or default to false
+            }
+        };
+
+        // Check Bluetooth connection status
+        let is_connected = bluetooth.is_connected().await.unwrap_or_else(|e| {
+            previous_is_connected.unwrap_or(false) // Use previous value or default to false
+        });
+
+        // Send signal if there's a change in status
+        if previous_is_enable != Some(is_enable) || previous_is_connected != Some(is_connected) {
+            let ctxt = SignalContext::new(conn, "/org/mechanix/services/Bluetooth")?;
+            bluetooth_bus
+                .notification(
+                    &ctxt,
+                    BluetoothNotificationEvent {
+                        is_connected: is_connected,
+                        is_enabled: is_enable,
+                    },
+                )
+                .await?;
+
+            println!(
+                "Bluetooth status: {}, Connected: {}",
+                is_enable, is_connected,
+            );
+
+            previous_is_enable = Some(is_enable);
+            previous_is_connected = Some(is_connected);
         }
     }
 }
