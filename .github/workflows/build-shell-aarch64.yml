@@ -56,6 +56,11 @@ jobs:
             artifact: mechanix-app-switcher-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
+          - name: Power options
+            package: mechanix-power-options
+            artifact: mechanix-power-options-aarch64-unknown-linux-gnu.tar.gz
+            path: shell
+
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
     steps:
