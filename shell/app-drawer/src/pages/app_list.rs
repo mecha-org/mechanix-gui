@@ -1,4 +1,5 @@
-use crate::{components::app::App as AppComponent, gui, utils::desktop_entries::DesktopEntry};
+use crate::{components::app::App as AppComponent, gui};
+use desktop_entries::DesktopEntry;
 use mctk_core::{
     component::{Component, Message},
     lay,

@@ -1,0 +1,25 @@
+title: App Switcher # Empty
+app:
+  id: app-switcher # launcher
+  text_multithreading: true # false
+  antialiasing: true # false
+  try_opengles_first: true # false
+window:
+  size: [480, 440]
+  position: [0, 0] # [0, 0]
+  min_size: [480, 440] # None
+  max_size: null # None
+  visible: true # true
+  resizable: true # true
+  decorations: true # true
+  transparent: true # false
+  always_on_top: false # false
+  icon_path: null # Todo
+modules:
+  back:
+    icon: /usr/share/mechanix/shell/app-switcher/assets/icons/back.svg
+  close_all:
+    icon: /usr/share/mechanix/shell/app-switcher/assets/icons/close_all.svg
+  not_found:
+    icon:
+      small: /usr/share/mechanix/shell/app-switcher/assets/icons/not_found_small.png

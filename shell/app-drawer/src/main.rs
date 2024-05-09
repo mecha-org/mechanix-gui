@@ -4,7 +4,6 @@ mod gui;
 mod pages;
 mod settings;
 mod theme;
-mod utils;
 
 use std::collections::HashMap;
 use std::time::Duration;
@@ -24,11 +23,11 @@ use mctk_core::{
 use mctk_smithay::WindowMessage;
 use mctk_smithay::{layer_surface::LayerOptions, layer_window::LayerWindowParams, WindowOptions};
 
+use desktop_entries::DesktopEntries;
 use settings::AppDrawerSettings;
 use theme::AppDrawerTheme;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
-use utils::desktop_entries::DesktopEntries;
 
 use crate::gui::Message;
 

@@ -23,6 +23,7 @@ members = [
     "status-bar",
     "wallpaper-daemon",
     "commons/*",
+    "app-switcher"
 ]
 
 [[bin]]
@@ -40,9 +41,9 @@ categories = ["gui"]
 keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
 
 [workspace.dependencies]
-mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "b44534c2a3da17482b28dfaf775bbc6eda2fded8" }
-mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "b44534c2a3da17482b28dfaf775bbc6eda2fded8" }
-mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "b44534c2a3da17482b28dfaf775bbc6eda2fded8" }
+mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "6e5d130088d14530bea3c14c7fbf8d63ed10ad01" }
+mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "6e5d130088d14530bea3c14c7fbf8d63ed10ad01" }
+mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "6e5d130088d14530bea3c14c7fbf8d63ed10ad01" }
 mechanix_zbus_client = { path = "../services/client/zbus" }
 smithay-client-toolkit = "0.18.0"
 image = { version = "0.24.9", features = ["png", "jpeg"] }
@@ -50,6 +51,7 @@ futures = "0.3.30"
 wayland-protocols-async = "1.0.0"
 chrono = "0.4.31"
 command = { path = "./commons/command"}
+desktop_entries = { path = "./commons/desktop_entries"}
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 futures-util = "0.3.30"
