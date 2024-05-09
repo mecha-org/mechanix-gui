@@ -3,14 +3,14 @@ use std::{fmt, process};
 
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Direction};
-use mctk_core::style::Styled;
-use mctk_core::widgets::IconButton;
+use mctk_core::style::{FontWeight, Styled};
+use mctk_core::widgets::{IconButton, Text};
 use mctk_core::{component, msg, Color};
 use mctk_core::{
-    component::Component, lay, node, rect, size, size_pct, state_component_impl, widgets::Div, Node,
+    component::Component, lay, node, rect, size, size_pct, state_component_impl, txt, widgets::Div,
+    Node,
 };
 
-#[cfg(not(target_arch = "wasm32"))]
 use mctk_core::reexports::glutin::prelude::*;
 use smithay_client_toolkit::reexports::calloop;
 use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::ToplevelKey;
@@ -194,15 +194,32 @@ impl Component for AppSwitcher {
             )),
         );
 
-        let mut running_apps_list_node = node!(
-            Carousel::new(),
-            lay![
-                padding: [14, 24, 18, 0],
-                margin: [20, 0, 0, 0],
-                size_pct: [100, Auto],
-                direction: Row,
-            ]
-        );
+        let mut running_apps_list_node = if self.state_ref().running_apps.len() > 0 {
+            node!(
+                Carousel::new(),
+                lay![
+                    padding: [14, 24, 18, 0],
+                    margin: [20, 0, 0, 0],
+                    size_pct: [100, Auto],
+                    direction: Row,
+                ]
+            )
+        } else {
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [100, Auto],
+                    axis_alignment: Alignment::Center,
+                    cross_alignment: Alignment::Center
+                ]
+            )
+            .push(node!(
+                Text::new(txt!("No apps running".to_string()))
+                    .style("color", Color::rgb(197., 200., 207.))
+                    .style("size", 12.0)
+                    .style("font_weight", FontWeight::Normal) // .style("v_alignment", VerticalPosition::Center)
+            ))
+        };
 
         for (i, app) in self
             .state_ref()
@@ -229,6 +246,7 @@ impl Component for AppSwitcher {
                 lay![
                     size_pct: [100]
                     direction: Direction::Column,
+                    axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Stretch,
                 ]
             )

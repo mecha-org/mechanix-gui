@@ -1,0 +1,49 @@
+[package]
+name = "mechanix-power-options"
+description = "Power options for turning machine on, off and logout"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1.33", features = ["full"] }
+mctk_core = { workspace = true }
+mctk_smithay = { workspace = true }
+mctk_macros = { workspace = true }
+mechanix_zbus_client = { workspace = true }
+futures = { workspace = true }
+
+[package.metadata.deb]
+name = "mechanix-power-options"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-power-options",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/power-options/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/power-options/settings.yml",
+        "644",
+    ],
+]

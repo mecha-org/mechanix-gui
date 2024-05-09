@@ -74,4 +74,12 @@ impl Power {
         let stream = proxy.receive_notification().await?;
         Ok(stream)
     }
+
+    pub async fn shutdown() -> Result<()> {
+        Ok(())
+    }
+
+    pub async fn restart() -> Result<()> {
+        Ok(())
+    }
 }

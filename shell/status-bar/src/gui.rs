@@ -9,7 +9,6 @@ use mctk_core::{
     component::Component, lay, node, rect, size, size_pct, state_component_impl, widgets::Div, Node,
 };
 
-#[cfg(not(target_arch = "wasm32"))]
 use mctk_core::reexports::glutin::prelude::*;
 
 use crate::modules::clock::component::ClockComponent;
