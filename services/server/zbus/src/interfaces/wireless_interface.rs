@@ -216,65 +216,57 @@ pub async fn wireless_event_notification_stream(
     wireless_bus: &WirelessBusInterface,
     conn: &zbus::Connection,
 ) -> Result<(), ZbusError> {
-    let mut interval = time::interval(Duration::from_secs(15));
+    let mut interval = time::interval(Duration::from_secs(5));
     let mut previous_is_enabled: Option<bool> = None;
     let mut previous_is_connected: Option<bool> = None;
     let mut previous_signal_strength: Option<String> = None;
     let mut previous_frequency: Option<String> = None;
     let mut previous_ssid: Option<String> = None;
+    let wireless = WirelessNetworkControl::new(wireless_path.as_str());
 
     loop {
         interval.tick().await;
-        let wireless = WirelessNetworkControl::new(wireless_path.as_str());
 
         // Check if WiFi is enabled
         let is_enabled = wireless.status().await;
 
-        let is_connected;
-        let signal_strength;
-        let ssid;
-        let frequency;
-
-        // If WiFi is enabled, check if it's connected and get signal strength, SSID, and frequency
-        if is_enabled {
+        // Initialize variables
+        let (is_connected, signal_strength, ssid, frequency) = if is_enabled {
+            // If WiFi is enabled, check if it's connected and get signal strength, SSID, and frequency
             let wifi_info = wireless.info().await;
-
             if let Ok(info) = wifi_info {
-                is_connected = true;
-                signal_strength = info.signal.clone().to_string();
-                ssid = info.name.clone(); // Assuming `ssid` is a field in the info struct
-                frequency = info.frequency.clone(); // Assuming `frequency` is a field in the info struct
+                (
+                    true,
+                    info.signal.clone().to_string(),
+                    info.name.clone(),
+                    info.frequency.clone(),
+                )
             } else {
-                is_connected = false;
-                signal_strength = "".to_string();
-                ssid = "".to_string();
-                frequency = "".to_string();
+                (false, "".to_string(), "".to_string(), "".to_string())
             }
         } else {
-            is_connected = false;
-            signal_strength = "".to_string();
-            ssid = "".to_string();
-            frequency = "".to_string();
-        }
+            // If WiFi is not enabled, set all values to indicate disconnected status
+            (false, "".to_string(), "".to_string(), "".to_string())
+        };
 
         // Trigger notification if any value has changed
         if previous_is_enabled != Some(is_enabled)
             || previous_is_connected != Some(is_connected)
-            || previous_signal_strength != Some(signal_strength.clone())
-            || previous_ssid != Some(ssid.clone())
+            || previous_signal_strength != Some(signal_strength.clone()) // Clone for comparison
+            || previous_ssid != Some(ssid.clone()) // Clone for comparison
             || previous_frequency != Some(frequency.clone())
+        // Clone for comparison
         {
             let ctxt = SignalContext::new(conn, "/org/mechanix/services/Wireless")?;
             wireless_bus
                 .notification(
                     &ctxt,
                     WirelessNotificationEvent {
-                        signal_strength: signal_strength.clone(),
+                        signal_strength: signal_strength.clone(), // Clone here
                         is_connected,
                         is_enabled,
-                        // Add ssid and frequency to the event
-                        ssid: ssid.clone(),
-                        frequency: frequency.clone(),
+                        ssid: ssid.clone(),           // Clone here
+                        frequency: frequency.clone(), // Clone here
                     },
                 )
                 .await?;
