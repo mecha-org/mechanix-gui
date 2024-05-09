@@ -23,7 +23,8 @@ members = [
     "status-bar",
     "wallpaper-daemon",
     "commons/*",
-    "app-switcher"
+    "app-switcher",
+    "power-options",
 ]
 
 [[bin]]
