@@ -79,41 +79,6 @@ impl PowerBusInterface {
         Ok(percentage)
     }
 
-    // events for all signals to be emitted notification
-    pub async fn send_notification_stream(&self) -> Result<(), ZbusError> {
-        let mut interval = time::interval(Duration::from_secs(1));
-        let mut previous_percentage: Option<f32> = None;
-        let mut previous_status: Option<String> = None;
-
-        loop {
-            interval.tick().await;
-            let power = Power::new();
-            let current_percentage = power.get_battery_percentage();
-            let current_status = power.get_battery_status();
-            let ctxt =
-                SignalContext::new(&Connection::system().await?, "/org/mechanix/services/Power")?;
-
-            // Check if the current percentage has changed from the previous percentage
-            if previous_percentage != Some(current_percentage)
-                || previous_status != Some(current_status.clone())
-            {
-                // If there's a change, emit the notification signal
-                self.notification(
-                    &ctxt,
-                    PowerNotificationEvent {
-                        status: current_status.clone(),
-                        percentage: current_percentage,
-                    },
-                )
-                .await?;
-
-                // Update the previous values to the current ones
-                previous_percentage = Some(current_percentage);
-                previous_status = Some(current_status);
-            }
-        }
-    }
-
     //set cpu governor
     pub async fn set_cpu_governor(&self, governor: &str) -> Result<(), ZbusError> {
         let power = Power::new();
@@ -219,4 +184,42 @@ async fn authorized() -> Result<bool, Box<dyn std::error::Error>> {
         )
         .await?;
     Ok(result.is_authorized)
+}
+
+// events for all signals to be emitted notification
+pub async fn power_event_notification_stream(
+    power_bus: &PowerBusInterface,
+    conn: &zbus::Connection,
+) -> Result<(), ZbusError> {
+    let mut interval = time::interval(Duration::from_secs(1));
+    let mut previous_percentage: Option<f32> = None;
+    let mut previous_status: Option<String> = None;
+
+    loop {
+        interval.tick().await;
+        let power = Power::new();
+        let current_percentage = power.get_battery_percentage();
+        let current_status = power.get_battery_status();
+        let ctxt = SignalContext::new(conn, "/org/mechanix/services/Power")?;
+
+        // Check if the current percentage has changed from the previous percentage
+        if previous_percentage != Some(current_percentage)
+            || previous_status != Some(current_status.clone())
+        {
+            // If there's a change, emit the notification signal
+            power_bus
+                .notification(
+                    &ctxt,
+                    PowerNotificationEvent {
+                        status: current_status.clone(),
+                        percentage: current_percentage,
+                    },
+                )
+                .await?;
+
+            // Update the previous values to the current ones
+            previous_percentage = Some(current_percentage);
+            previous_status = Some(current_status);
+        }
+    }
 }
