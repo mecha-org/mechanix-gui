@@ -8,7 +8,9 @@ use mctk_core::{
 };
 
 use crate::{
-    gui::Message, settings::CommonLowMediumHighPaths, widgets::slidable_setting::SlidableSetting,
+    gui::{Message, SliderSettingsNames},
+    settings::CommonLowMediumHighPaths,
+    widgets::slidable_setting::SlidableSetting,
 };
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -50,7 +52,9 @@ impl Component for SoundComponent {
             "Sound".to_string(),
             self.value,
         )
-        .on_slide(Box::new(|value| msg!(Message::Sound { value })))))
+        .on_slide(Box::new(|value| msg!(Message::SliderChanged(
+            SliderSettingsNames::Sound { value }
+        ))))))
     }
 }
 

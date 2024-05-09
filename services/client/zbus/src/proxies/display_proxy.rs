@@ -3,7 +3,9 @@ use tracing::info;
 use zbus::{proxy, zvariant::Type, Connection, Result};
 
 #[derive(Deserialize, Serialize, Type, PartialEq, Debug)]
-pub struct NotificationEvent {}
+pub struct NotificationEvent {
+    pub brightness_percentage: u8,
+}
 
 #[proxy(
     interface = "org.mechanix.services.Display",

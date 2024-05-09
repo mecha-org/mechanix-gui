@@ -100,8 +100,8 @@ pub enum RotationMessage {}
 
 #[derive(Debug)]
 pub enum SoundMessage {
-    Value { value: i32 },
-    Change { value: i32 },
+    Value { value: u8 },
+    Change { value: u8 },
 }
 
 #[derive(Debug)]
