@@ -1,8 +1,6 @@
+use mechanix_zbus_services::BluetoothNotificationEvent;
 use serde::{Deserialize, Serialize};
 use zbus::{proxy, zvariant::Type, Connection, Result};
-
-#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]
-pub struct NotificationEvent {}
 
 #[proxy(
     interface = "org.mechanix.services.Bluetooth",
@@ -15,7 +13,7 @@ trait Bluetooth {
     async fn enable(&self) -> Result<()>;
     async fn disable(&self) -> Result<()>;
     #[zbus(signal)]
-    async fn notification(&self, event: NotificationEvent) -> Result<()>;
+    async fn notification(&self, event: BluetoothNotificationEvent) -> Result<()>;
 }
 
 pub struct BluetoothService;

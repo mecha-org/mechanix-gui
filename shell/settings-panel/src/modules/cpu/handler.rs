@@ -20,10 +20,24 @@ impl CpuServiceHandle {
 
     pub async fn run(&mut self) {
         let task = "run";
+        match CpuService::get_cpu_usage().await {
+            Ok(usage) => {
+                let _ = self.app_channel.send(AppMessage::Cpu {
+                    message: CpuMessage::Usage { usage },
+                });
+            }
+            Err(e) => {
+                error!(task, "error while getting cpu usage {}", e);
+                let _ = self.app_channel.send(AppMessage::Cpu {
+                    message: CpuMessage::Usage { usage: 0. },
+                });
+            }
+        };
+
         let mut stream_res = CpuService::get_notification_stream().await;
 
         if let Err(e) = stream_res.as_ref() {
-            error!(task, "error while getting cpu usage {}", e);
+            error!("error while getting cpu stream {}", e);
             let _ = self.app_channel.send(AppMessage::Cpu {
                 message: CpuMessage::Usage { usage: 0. },
             });
@@ -32,10 +46,12 @@ impl CpuServiceHandle {
 
         while let Some(signal) = stream_res.as_mut().unwrap().next().await {
             if let Ok(args) = signal.args() {
-                let notification_event = args.event;
-                // let _ = self.app_channel.send(AppMessage::Cpu {
-                //     message: CpuMessage::Usage { usage },
-                // });
+                let event = args.event;
+                let _ = self.app_channel.send(AppMessage::Cpu {
+                    message: CpuMessage::Usage {
+                        usage: event.cpu_usage,
+                    },
+                });
             }
         }
     }

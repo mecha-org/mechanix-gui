@@ -1,0 +1,58 @@
+[package]
+name = "mechanix-app-switcher"
+description = "App switcher component for the Mechanix shell"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1.33", features = ["full"] }
+wayland-protocols-async = "1.0.0"
+command = { workspace = true }
+indexmap = "2.1.0"
+mctk_core = { workspace = true }
+mctk_smithay = { workspace = true }
+mctk_macros = { workspace = true }
+smithay-client-toolkit = "0.18.0"
+futures = "0.3.30"
+xdg = "2.4.1"
+kmeans_colors = "0.6.0"
+palette = "0.7.6"
+image = { workspace = true }
+colors-transform = "0.2.11"
+desktop_entries = { workspace = true }
+
+[package.metadata.deb]
+name = "mechanix-app-switcher"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-app-switcher",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/app-switcher/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/app-switcher/settings.yml",
+        "644",
+    ],
+]

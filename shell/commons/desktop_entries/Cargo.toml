@@ -1,0 +1,13 @@
+[package]
+name = "desktop_entries"
+documentation = "https://docs.mecha.so"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mecha-launcher"
+homepage = "https://mecha.so"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+xdg = "2.4.1"

@@ -1,5 +1,6 @@
 mod interfaces;
 pub use interfaces::{
-    KnownNetworkListResponse, KnownNetworkResponse, MemoryInfoResponse, WirelessInfoResponse,
-    WirelessScanListResponse,
+    BluetoothNotificationEvent, HostMetricsNotificationEvent, KnownNetworkListResponse,
+    KnownNetworkResponse, MemoryInfoResponse, PowerNotificationEvent, WirelessInfoResponse,
+    WirelessNotificationEvent, WirelessScanListResponse,
 };

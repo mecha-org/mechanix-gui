@@ -50,7 +50,7 @@ pub struct NetworkDataInfo {
     pub transmitted: u64,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type)]
+#[derive(Debug, DeserializeDict, SerializeDict, Type)]
 // `Type` treats `HostMetricsNotificationEvents` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct HostMetricsNotificationEvent {

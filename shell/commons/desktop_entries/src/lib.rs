@@ -142,6 +142,8 @@ impl DesktopEntries {
             .entries
             .sort_unstable_by(|first, second| first.name.cmp(&second.name));
 
+        // println!("desktop_entries {:?}", desktop_entries);
+
         Ok(desktop_entries)
     }
 

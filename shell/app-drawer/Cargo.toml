@@ -18,6 +18,7 @@ mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 command = { workspace = true }
+desktop_entries = { workspace = true }
 xdg = "2.4.1"
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }

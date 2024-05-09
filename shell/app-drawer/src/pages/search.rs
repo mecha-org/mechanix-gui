@@ -7,7 +7,7 @@ use mctk_core::{lay, msg, node, rect, size, size_pct, widgets::Div};
 
 use crate::components::filter_app::FilterApp;
 use crate::gui;
-use crate::utils::desktop_entries::DesktopEntry;
+use desktop_entries::DesktopEntry;
 
 #[derive(Debug)]
 pub struct Search {

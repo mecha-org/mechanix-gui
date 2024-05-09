@@ -18,6 +18,22 @@ impl BatteryServiceHandle {
     }
 
     pub async fn run(&mut self) {
+        match BatteryService::get_battery_level().await {
+            Ok((capacity, status)) => {
+                let _ = self.app_channel.send(AppMessage::Battery {
+                    level: capacity,
+                    status: BatteryStatus::from_str(status.as_ref()).unwrap(),
+                });
+            }
+            Err(e) => {
+                error!("error while getting battery level {}", e);
+                let _ = self.app_channel.send(AppMessage::Battery {
+                    level: 0,
+                    status: BatteryStatus::Unknown,
+                });
+            }
+        };
+
         let mut stream_res = BatteryService::get_notification_stream().await;
 
         if let Err(e) = stream_res.as_ref() {
@@ -31,11 +47,11 @@ impl BatteryServiceHandle {
 
         while let Some(signal) = stream_res.as_mut().unwrap().next().await {
             if let Ok(args) = signal.args() {
-                let notification_event = args.event;
-                // let _ = self.app_channel.send(AppMessage::Battery {
-                //     level: capacity,
-                //     status: BatteryStatus::from_str(status.as_ref()).unwrap(),
-                // });
+                let event = args.event;
+                let _ = self.app_channel.send(AppMessage::Battery {
+                    level: event.percentage as u8,
+                    status: BatteryStatus::from_str(&event.status).unwrap(),
+                });
             }
         }
     }

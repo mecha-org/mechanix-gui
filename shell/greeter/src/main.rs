@@ -16,6 +16,7 @@ use std::time::Duration;
 use greetd_ipc::Response;
 use gui::Greeter;
 use handlers::login::handler::{LoginHandler, LoginHandlerMessage};
+use mctk_core::types::{AssetParams, ImgFilter};
 use mctk_core::{msg, reexports::cosmic_text};
 use mctk_smithay::{
     layer_surface::LayerOptions, lock_window::SessionLockWindowParams, WindowOptions,
@@ -111,7 +112,7 @@ fn main() -> anyhow::Result<()> {
     let mut fonts = cosmic_text::fontdb::Database::new();
     fonts.load_system_fonts();
 
-    let mut assets: HashMap<String, String> = HashMap::new();
+    let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
 
     let modules = settings.modules.clone();
@@ -169,7 +170,14 @@ fn main() -> anyhow::Result<()> {
         svgs.insert("hide_icon".to_string(), icon);
     }
     if let Some(icon) = modules.background.icon.default {
-        assets.insert("background".to_string(), icon);
+        assets.insert(
+            "background".to_string(),
+            AssetParams {
+                path: icon,
+                filter: ImgFilter::GRAY,
+                blur: None,
+            },
+        );
     }
 
     for user in users_settings.users {

@@ -20,6 +20,7 @@ use mctk_core::{
             shell::wlr_layer,
         },
     },
+    types::{AssetParams, ImgFilter},
 };
 use mctk_smithay::WindowMessage;
 use mctk_smithay::{layer_surface::LayerOptions, layer_window::LayerWindowParams, WindowOptions};
@@ -64,7 +65,7 @@ fn main() -> anyhow::Result<()> {
     let mut fonts = cosmic_text::fontdb::Database::new();
     fonts.load_system_fonts();
 
-    let mut assets: HashMap<String, String> = HashMap::new();
+    let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
 
     let modules = settings.modules.clone();
@@ -72,7 +73,10 @@ fn main() -> anyhow::Result<()> {
     for app in modules.apps.iter() {
         if let Some(app_icon) = app.icon.clone() {
             if app_icon.ends_with(".png") {
-                assets.insert(app.app_id.to_owned(), app.icon.clone().unwrap().to_owned());
+                assets.insert(
+                    app.app_id.to_owned(),
+                    AssetParams::new(app.icon.clone().unwrap().to_owned()),
+                );
             } else if app_icon.ends_with(".svg") {
                 svgs.insert(app.app_id.to_owned(), app.icon.clone().unwrap().to_owned());
             }

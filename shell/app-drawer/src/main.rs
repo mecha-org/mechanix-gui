@@ -4,7 +4,6 @@ mod gui;
 mod pages;
 mod settings;
 mod theme;
-mod utils;
 
 use std::collections::HashMap;
 use std::time::Duration;
@@ -19,15 +18,16 @@ use mctk_core::{
             shell::wlr_layer,
         },
     },
+    types::AssetParams,
 };
 use mctk_smithay::WindowMessage;
 use mctk_smithay::{layer_surface::LayerOptions, layer_window::LayerWindowParams, WindowOptions};
 
+use desktop_entries::DesktopEntries;
 use settings::AppDrawerSettings;
 use theme::AppDrawerTheme;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
-use utils::desktop_entries::DesktopEntries;
 
 use crate::gui::Message;
 
@@ -64,7 +64,7 @@ fn main() -> anyhow::Result<()> {
     let mut fonts = cosmic_text::fontdb::Database::new();
     fonts.load_system_fonts();
 
-    let mut assets: HashMap<String, String> = HashMap::new();
+    let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
 
     let modules = settings.modules.clone();
@@ -86,11 +86,11 @@ fn main() -> anyhow::Result<()> {
     }
 
     if let Some(icon) = modules.not_found.icon.default {
-        assets.insert("not_found_icon".to_string(), icon);
+        assets.insert("not_found_icon".to_string(), AssetParams::new(icon));
     }
 
     if let Some(icon) = modules.not_found.icon.small {
-        assets.insert("not_found_small_icon".to_string(), icon);
+        assets.insert("not_found_small_icon".to_string(), AssetParams::new(icon));
     }
 
     if let Ok(desktop_entries) = DesktopEntries::new() {
@@ -98,7 +98,10 @@ fn main() -> anyhow::Result<()> {
             if let Some(icon_path) = entry.icon_path {
                 match icon_path.extension().and_then(|ext| ext.to_str()) {
                     Some("png") => {
-                        assets.insert(entry.name, icon_path.to_str().unwrap().to_string());
+                        assets.insert(
+                            entry.name,
+                            AssetParams::new(icon_path.to_str().unwrap().to_string()),
+                        );
                     }
                     Some("svg") => {
                         svgs.insert(entry.name, icon_path.to_str().unwrap().to_string());
