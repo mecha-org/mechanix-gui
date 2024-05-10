@@ -19,7 +19,7 @@ use mctk_core::{
     widgets::Div,
     Node,
 };
-use mctk_smithay::lock_window::{SessionLockMessage, SessionLockWindow};
+use mctk_smithay::session_lock::lock_window::{SessionLockMessage, SessionLockWindow};
 use std::any::Any;
 use std::time::{Duration, Instant};
 use std::{collections::HashMap, fmt};

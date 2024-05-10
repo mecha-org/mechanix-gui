@@ -21,7 +21,6 @@ use mctk_core::{
     widgets::Div,
     Node,
 };
-use mctk_smithay::lock_window::{SessionLockMessage, SessionLockWindow};
 use smithay_client_toolkit::reexports::calloop;
 use smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::any::Any;

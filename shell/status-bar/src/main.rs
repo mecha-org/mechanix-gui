@@ -18,8 +18,10 @@ use mctk_core::{
     },
     types::AssetParams,
 };
-use mctk_smithay::{layer_surface::LayerOptions, WindowOptions};
-use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
+use mctk_smithay::layer_shell::layer_window::LayerWindow;
+use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
+use mctk_smithay::WindowOptions;
+use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use modules::{
     battery::{
         component::{get_battery_icons_charging_map, get_battery_icons_map},
@@ -105,19 +107,19 @@ fn main() -> anyhow::Result<()> {
     };
 
     let (app_channel, app_receiver) = calloop::channel::channel();
-    let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::layer_window::LayerWindow::open_blocking::<StatusBar, AppMessage>(
-            LayerWindowParams {
-                title: settings.title.clone(),
-                namespace,
-                window_opts,
-                fonts,
-                assets,
-                svgs,
-                layer_shell_opts,
-            },
-            None,
-        );
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<StatusBar, AppMessage>(
+        LayerWindowParams {
+            title: settings.title.clone(),
+            namespace,
+            window_opts,
+            fonts,
+            assets,
+            svgs,
+            layer_shell_opts,
+            ..Default::default()
+        },
+        None,
+    );
 
     let handle = event_loop.handle();
     let window_tx_2 = window_tx.clone();

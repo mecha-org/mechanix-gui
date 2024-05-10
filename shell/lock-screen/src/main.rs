@@ -26,10 +26,10 @@ use mctk_core::{
     },
     types::{AssetParams, ImgFilter},
 };
-use mctk_smithay::{
-    layer_surface::LayerOptions, lock_window::SessionLockWindowParams, WindowOptions,
-};
-use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
+use mctk_smithay::session_lock::lock_window::SessionLockWindow;
+use mctk_smithay::session_lock::lock_window::SessionLockWindowParams;
+use mctk_smithay::WindowMessage;
+use mctk_smithay::WindowOptions;
 
 use modules::{
     battery::{
@@ -143,7 +143,7 @@ async fn main() -> anyhow::Result<()> {
     let (session_lock_tx, session_lock_rx) = calloop::channel::channel();
     let (app_channel, app_receiver) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::lock_window::SessionLockWindow::open_blocking::<LockScreen, AppMessage>(
+        SessionLockWindow::open_blocking::<LockScreen, AppMessage>(
             SessionLockWindowParams {
                 // title: "LockScreen".to_string(),
                 // namespace,

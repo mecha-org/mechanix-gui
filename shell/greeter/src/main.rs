@@ -18,10 +18,9 @@ use gui::Greeter;
 use handlers::login::handler::{LoginHandler, LoginHandlerMessage};
 use mctk_core::types::{AssetParams, ImgFilter};
 use mctk_core::{msg, reexports::cosmic_text};
-use mctk_smithay::{
-    layer_surface::LayerOptions, lock_window::SessionLockWindowParams, WindowOptions,
-};
-use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
+use mctk_smithay::layer_shell::layer_window::{LayerWindow, LayerWindowParams};
+use mctk_smithay::WindowOptions;
+use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use modules::battery::component::{get_battery_icons_charging_map, get_battery_icons_map};
 use modules::battery::handler::BatteryServiceHandle;
 use modules::bluetooth::component::get_bluetooth_icons_map;
@@ -209,19 +208,19 @@ fn main() -> anyhow::Result<()> {
     };
     let (app_channel, app_receiver) = calloop::channel::channel();
     let app_channel2 = app_channel.clone();
-    let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::layer_window::LayerWindow::open_blocking::<Greeter, AppMessage>(
-            LayerWindowParams {
-                title: "Greeter".to_string(),
-                namespace,
-                window_opts,
-                fonts,
-                assets,
-                layer_shell_opts,
-                svgs,
-            },
-            Some(app_channel),
-        );
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Greeter, AppMessage>(
+        LayerWindowParams {
+            title: "Greeter".to_string(),
+            namespace,
+            window_opts,
+            fonts,
+            assets,
+            layer_shell_opts,
+            svgs,
+            ..Default::default()
+        },
+        Some(app_channel),
+    );
 
     let handle = event_loop.handle();
 

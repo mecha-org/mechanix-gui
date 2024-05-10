@@ -31,8 +31,10 @@ use mctk_core::{
     },
     types::AssetParams,
 };
-use mctk_smithay::{layer_surface::LayerOptions, WindowOptions};
-use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
+use mctk_smithay::layer_shell::layer_window::LayerWindow;
+use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
+use mctk_smithay::WindowOptions;
+use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 
 use modules::{
     battery::component::get_battery_icons_map,
@@ -195,7 +197,7 @@ fn main() -> anyhow::Result<()> {
     let (app_channel, app_receiver) = calloop::channel::channel();
     let app_channel2 = app_channel.clone();
     let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::layer_window::LayerWindow::open_blocking::<SettingsPanel, AppMessage>(
+        LayerWindow::open_blocking::<SettingsPanel, AppMessage>(
             LayerWindowParams {
                 title: settings.title.clone(),
                 namespace,
@@ -204,6 +206,7 @@ fn main() -> anyhow::Result<()> {
                 assets,
                 svgs,
                 layer_shell_opts,
+                ..Default::default()
             },
             Some(app_channel),
         );
