@@ -11,19 +11,12 @@ use std::time::Duration;
 use gui::{AppMessage, AppSwitcher};
 use mctk_core::AssetParams;
 use mctk_core::{msg, reexports::cosmic_text};
-use mctk_smithay::layer_shell::layer_window::LayerWindow;
-use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
-use mctk_smithay::WindowOptions;
-use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
+use mctk_smithay::xdg_shell::xdg_window::{XdgWindow, XdgWindowParams};
+use mctk_smithay::{WindowMessage, WindowOptions};
 use services::app_manager::{AppManagerMessage, AppManagerService};
-use smithay_client_toolkit::{
-    reexports::calloop::{self, channel::Sender},
-    shell::wlr_layer,
-};
+use smithay_client_toolkit::reexports::calloop::{self, channel::Sender};
 
-use desktop_entries::DesktopEntries;
 use settings::AppSwitcherSettings;
-use theme::AppSwitcherTheme;
 use tokio::runtime::Builder;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{error, info};
@@ -74,25 +67,16 @@ fn main() -> anyhow::Result<()> {
 
     let namespace = settings.app.id.clone().unwrap_or_default();
 
-    let layer_shell_opts = LayerOptions {
-        anchor: wlr_layer::Anchor::BOTTOM,
-        layer: wlr_layer::Layer::Overlay,
-        keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
-        namespace: Some(namespace.clone()),
-        zone: 0. as i32,
-    };
-
     let (app_channel, app_receiver) = calloop::channel::channel();
     let app_channel2 = app_channel.clone();
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<AppSwitcher, AppMessage>(
-        LayerWindowParams {
+    let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<AppSwitcher, AppMessage>(
+        XdgWindowParams {
             title: settings.title.clone(),
             namespace,
             window_opts,
             fonts,
             assets,
             svgs,
-            layer_shell_opts,
             ..Default::default()
         },
         Some(app_channel),

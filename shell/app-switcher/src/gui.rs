@@ -58,6 +58,7 @@ pub struct AppSwitcherState {
     cpu_usage: String,
     memory_usage: String,
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
+    settings: AppSwitcherSettings,
 }
 
 #[component(State = "AppSwitcherState")]
@@ -142,11 +143,17 @@ impl Component for AppSwitcher {
             // }),
         ];
 
+        let settings = match settings::read_settings_yml() {
+            Ok(settings) => settings,
+            Err(_) => AppSwitcherSettings::default(),
+        };
+
         self.state = Some(AppSwitcherState {
             running_apps,
             cpu_usage: "".to_string(),
             memory_usage: "".to_string(),
             app_channel: None,
+            settings,
         })
     }
 
@@ -260,8 +267,10 @@ impl Component for AppSwitcher {
         match message.downcast_ref::<Message>() {
             Some(Message::AppsUpdated { apps }) => {
                 println!("apps updated are {:?}", apps);
+                let app_id = self.state_ref().settings.app.id.clone().unwrap_or_default();
                 self.state_mut().running_apps = apps
                     .iter()
+                    .filter(|app| app.app_id != app_id)
                     .map(|app| {
                         RunningApp::new(AppDetails {
                             icon: Some("chromium".to_string()),
