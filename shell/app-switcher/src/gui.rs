@@ -267,16 +267,19 @@ impl Component for AppSwitcher {
         match message.downcast_ref::<Message>() {
             Some(Message::AppsUpdated { apps }) => {
                 println!("apps updated are {:?}", apps);
-                let app_id = self.state_ref().settings.app.id.clone().unwrap_or_default();
+                let settings = self.state_ref().settings.clone();
+                let app_id = settings.app.id.clone().unwrap_or_default();
                 self.state_mut().running_apps = apps
                     .iter()
-                    .filter(|app| app.app_id != app_id)
-                    .map(|app| {
-                        RunningApp::new(AppDetails {
-                            icon: Some("chromium".to_string()),
-                            ..app.clone()
-                        })
+                    .filter(|app| {
+                        app.app_id != app_id
+                            && settings
+                                .exclude_apps
+                                .clone()
+                                .into_iter()
+                                .any(|ea| ea != app.app_id)
                     })
+                    .map(|app| RunningApp::new(AppDetails { ..app.clone() }))
                     .collect();
             }
             Some(Message::AppInstanceClicked(instance)) => {

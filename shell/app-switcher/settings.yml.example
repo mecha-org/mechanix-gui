@@ -23,3 +23,4 @@ modules:
   not_found:
     icon:
       small: /usr/share/mechanix/shell/app-switcher/assets/icons/not_found_small.png
+exclude_apps: ["mechanix.shell.home-screen"]

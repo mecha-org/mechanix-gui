@@ -16,6 +16,7 @@ pub struct AppSwitcherSettings {
     pub window: WindowSettings, // Window Settings
     pub title: String,          // Sets the window title
     pub modules: Modules,
+    pub exclude_apps: Vec<String>,
 }
 
 impl Default for AppSwitcherSettings {
@@ -25,6 +26,7 @@ impl Default for AppSwitcherSettings {
             window: WindowSettings::default(),
             title: String::from("App Switcher"),
             modules: Modules::default(),
+            exclude_apps: vec![],
         }
     }
 }
