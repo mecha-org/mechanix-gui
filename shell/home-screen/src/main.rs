@@ -22,10 +22,8 @@ use mctk_core::{
     },
     types::{AssetParams, ImgFilter},
 };
-use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
-use mctk_smithay::WindowOptions;
-use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
-use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
+use mctk_smithay::xdg_shell::xdg_window::{XdgWindow, XdgWindowParams};
+use mctk_smithay::{WindowInfo, WindowMessage, WindowOptions};
 
 use settings::HomescreenSettings;
 use theme::HomescreenTheme;
@@ -92,27 +90,18 @@ fn main() -> anyhow::Result<()> {
         .unwrap_or(String::from("mechanix.shell.home-screen"));
     let namespace = app_id.clone();
 
-    let layer_shell_opts = LayerOptions {
-        anchor: wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
-        layer: wlr_layer::Layer::Bottom,
-        keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
-        namespace: Some(namespace.clone()),
-        zone: 0 as i32,
-    };
-
     let window_info = WindowInfo {
         id: app_id,
         title: settings.title.clone(),
         namespace,
     };
 
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Homescreen, AppMessage>(
-        LayerWindowParams {
+    let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<Homescreen, AppMessage>(
+        XdgWindowParams {
             window_info,
             window_opts,
             fonts,
             assets,
-            layer_shell_opts,
             svgs,
             ..Default::default()
         },
