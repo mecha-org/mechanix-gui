@@ -18,10 +18,10 @@ use mctk_core::{
     },
     types::AssetParams,
 };
-use mctk_smithay::layer_shell::layer_window::LayerWindow;
 use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
 use mctk_smithay::WindowOptions;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
+use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
 use modules::{
     battery::{
         component::{get_battery_icons_charging_map, get_battery_icons_map},
@@ -96,7 +96,12 @@ fn main() -> anyhow::Result<()> {
     svgs.extend(wireless_assets);
     svgs.extend(bluetooth_assets);
 
-    let namespace = settings.app.id.clone().unwrap_or_default();
+    let app_id = settings
+        .app
+        .id
+        .clone()
+        .unwrap_or(String::from("mechanix.shell.status-bar"));
+    let namespace = app_id.clone();
 
     let layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::TOP,
@@ -106,11 +111,16 @@ fn main() -> anyhow::Result<()> {
         zone: window_opts.height as i32,
     };
 
+    let window_info = WindowInfo {
+        id: app_id,
+        title: settings.title.clone(),
+        namespace,
+    };
+
     let (app_channel, app_receiver) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<StatusBar, AppMessage>(
         LayerWindowParams {
-            title: settings.title.clone(),
-            namespace,
+            window_info,
             window_opts,
             fonts,
             assets,

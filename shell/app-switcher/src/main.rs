@@ -12,7 +12,7 @@ use gui::{AppMessage, AppSwitcher};
 use mctk_core::AssetParams;
 use mctk_core::{msg, reexports::cosmic_text};
 use mctk_smithay::xdg_shell::xdg_window::{XdgWindow, XdgWindowParams};
-use mctk_smithay::{WindowMessage, WindowOptions};
+use mctk_smithay::{WindowInfo, WindowMessage, WindowOptions};
 use services::app_manager::{AppManagerMessage, AppManagerService};
 use smithay_client_toolkit::reexports::calloop::{self, channel::Sender};
 
@@ -65,14 +65,23 @@ fn main() -> anyhow::Result<()> {
         assets.insert("not_found_small_icon".to_string(), AssetParams::new(icon));
     }
 
-    let namespace = settings.app.id.clone().unwrap_or_default();
+    let app_id = settings
+        .app
+        .id
+        .clone()
+        .unwrap_or(String::from("mechanix.shell.app-switcher"));
+
+    let window_info = WindowInfo {
+        id: app_id.clone(),
+        title: settings.title.clone(),
+        namespace: app_id,
+    };
 
     let (app_channel, app_receiver) = calloop::channel::channel();
     let app_channel2 = app_channel.clone();
     let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<AppSwitcher, AppMessage>(
         XdgWindowParams {
-            title: settings.title.clone(),
-            namespace,
+            window_info,
             window_opts,
             fonts,
             assets,

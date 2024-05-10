@@ -1,6 +1,6 @@
 title: Lock Screen # Empty
 app:
-  id: lock-screen # lock-screen
+  id: mechanix.shell.lock-screen # lock-screen
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

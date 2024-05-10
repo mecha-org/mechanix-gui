@@ -1,6 +1,6 @@
 title: Power Options # Empty
 app:
-  id: mechanix-power-options # mechanix-power-options
+  id: mechanix.shell.power-options # mechanix-power-options
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

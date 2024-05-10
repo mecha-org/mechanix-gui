@@ -1,6 +1,6 @@
 title: Homescreen # Empty
 app:
-  id: homescreen # homescreen
+  id: mechanix.shell.home-screen # homescreen
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

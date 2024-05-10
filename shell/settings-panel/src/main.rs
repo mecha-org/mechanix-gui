@@ -33,8 +33,8 @@ use mctk_core::{
 };
 use mctk_smithay::layer_shell::layer_window::LayerWindow;
 use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
-use mctk_smithay::WindowOptions;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
+use mctk_smithay::{WindowInfo, WindowOptions};
 
 use modules::{
     battery::component::get_battery_icons_map,
@@ -181,7 +181,12 @@ fn main() -> anyhow::Result<()> {
     svgs.extend(sound_assets);
     svgs.extend(brightness_assets);
 
-    let namespace = settings.app.id.clone().unwrap_or_default();
+    let app_id = settings
+        .app
+        .id
+        .clone()
+        .unwrap_or(String::from("mechanix.shell.settings-panel"));
+    let namespace = app_id.clone();
 
     let layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::BOTTOM | wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT,
@@ -194,13 +199,18 @@ fn main() -> anyhow::Result<()> {
     let mut fonts = cosmic_text::fontdb::Database::new();
     fonts.load_system_fonts();
 
+    let window_info = WindowInfo {
+        id: app_id,
+        title: settings.title.clone(),
+        namespace,
+    };
+
     let (app_channel, app_receiver) = calloop::channel::channel();
     let app_channel2 = app_channel.clone();
     let (mut app, mut event_loop, window_tx) =
         LayerWindow::open_blocking::<SettingsPanel, AppMessage>(
             LayerWindowParams {
-                title: settings.title.clone(),
-                namespace,
+                window_info,
                 window_opts: window_opts,
                 fonts,
                 assets,

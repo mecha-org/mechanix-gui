@@ -20,10 +20,10 @@ use mctk_core::{
     },
     types::AssetParams,
 };
-use mctk_smithay::layer_shell::layer_window::LayerWindow;
 use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
 use mctk_smithay::WindowOptions;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
+use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
 
 use desktop_entries::DesktopEntries;
 use settings::AppDrawerSettings;
@@ -114,7 +114,12 @@ fn main() -> anyhow::Result<()> {
         }
     };
 
-    let namespace = "mctk.app.drawer".to_string();
+    let app_id = settings
+        .app
+        .id
+        .clone()
+        .unwrap_or(String::from("mechanix.shell.app-drawer"));
+    let namespace = app_id.clone();
 
     let layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
@@ -124,10 +129,15 @@ fn main() -> anyhow::Result<()> {
         zone: 0 as i32,
     };
 
+    let window_info = WindowInfo {
+        id: app_id,
+        title: settings.title.clone(),
+        namespace,
+    };
+
     let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<AppDrawer, AppMessage>(
         LayerWindowParams {
-            title: "AppDrawer".to_string(),
-            namespace,
+            window_info,
             window_opts,
             fonts,
             assets,

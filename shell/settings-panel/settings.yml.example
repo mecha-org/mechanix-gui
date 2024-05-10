@@ -1,6 +1,6 @@
 title: Settings Panel # Empty
 app:
-  id: settings-panel # launcher
+  id: mechanix.shell.settings-panel # launcher
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

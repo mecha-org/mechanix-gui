@@ -1,6 +1,6 @@
 title: Greeter # Empty
 app:
-  id: greeter # greeter
+  id: mechanix.shell.greeter # greeter
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

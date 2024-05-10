@@ -1,6 +1,6 @@
 title: App Switcher # Empty
 app:
-  id: app-switcher # launcher
+  id: mechanix.shell.app-switcher # launcher
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

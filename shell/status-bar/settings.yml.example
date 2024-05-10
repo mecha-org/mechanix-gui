@@ -1,6 +1,6 @@
 title: Status Bar # Empty
 app:
-  id: status.bar # Status bar
+  id: mechanix.shell.status-bar # Status bar
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

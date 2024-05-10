@@ -135,8 +135,6 @@ async fn main() -> anyhow::Result<()> {
     svgs.extend(wireless_assets);
     svgs.extend(bluetooth_assets);
 
-    let namespace = settings.app.id.clone();
-
     let mut fonts = cosmic_text::fontdb::Database::new();
     fonts.load_system_fonts();
 
@@ -145,14 +143,11 @@ async fn main() -> anyhow::Result<()> {
     let (mut app, mut event_loop, window_tx) =
         SessionLockWindow::open_blocking::<LockScreen, AppMessage>(
             SessionLockWindowParams {
-                // title: "LockScreen".to_string(),
-                // namespace,
                 session_lock_tx,
                 session_lock_rx,
                 window_opts,
                 fonts,
                 assets,
-                // layer_shell_opts,
                 svgs,
             },
             Some(app_channel.clone()),

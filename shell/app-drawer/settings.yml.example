@@ -1,6 +1,6 @@
 title: App Drawer # Empty
 app:
-  id: app.drawer # app-drawer
+  id: mechanix.shell.app-drawer # app-drawer
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false
