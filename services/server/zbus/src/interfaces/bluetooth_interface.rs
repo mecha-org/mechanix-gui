@@ -224,13 +224,13 @@ pub async fn bluetooth_event_notification_stream(
     bluetooth_bus: &BluetoothBusInterface,
     conn: &zbus::Connection,
 ) -> Result<(), ZbusError> {
-    let mut interval = time::interval(Duration::from_secs(15));
+    let mut interval = time::interval(Duration::from_secs(05));
     let mut previous_is_enable: Option<bool> = None;
     let mut previous_is_connected: Option<bool> = None;
+    let bluetooth = Bluetooth::new();
 
     loop {
         interval.tick().await;
-        let bluetooth = Bluetooth::new();
 
         // Check Bluetooth power status
         let is_enable = match bluetooth.status().await {
