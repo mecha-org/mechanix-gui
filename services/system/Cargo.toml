@@ -1,8 +1,9 @@
 [package]
 name = "system"
+description = "Zbus interface for Mechanix System services"
 version.workspace = true
-authors.workspace = true
 edition.workspace = true
+authors.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
@@ -21,3 +22,20 @@ mechanix-power-ctl = { path = "../ctl/power" }
 mechanix-display-ctl = { path = "../ctl/display" }
 mechanix-host-metrics = { path = "../ctl/host-metrics" }
 zbus_polkit = { version = "4.0.0", features = ["tokio"] }
+serde.workspace = true
+tracing.workspace = true
+serde_yaml = "0.9.25"
+
+
+[package.metadata.deb]
+name = "system"
+depends = "$auto"
+assets = [
+    # binary
+    ["../target/release/system", "/usr/bin/", "755"],
+    #dbus-conf
+    ["./system-dbus.conf", "/etc/dbus-1/system.d/", "644"],
+    # settings
+    ["./services-config-example.yml", "/etc/mechanix-gui/server/system/", "644"],
+
+]
