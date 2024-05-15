@@ -11,3 +11,6 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+libpulse-binding = "2.28.1"
+anyhow.workspace = true
+serde.workspace = true

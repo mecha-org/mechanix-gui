@@ -1,0 +1,23 @@
+[package]
+name = "system"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio.workspace = true
+anyhow.workspace = true
+zbus = { version = "4.1.2", features = ["tokio"] }
+mechanix-bluetooth-ctl = { path = "../ctl/bluetooth" }
+mechanix-network-ctl = { path = "../ctl/network" }
+mechanix-power-ctl = { path = "../ctl/power" }
+mechanix-display-ctl = { path = "../ctl/display" }
+mechanix-host-metrics = { path = "../ctl/host-metrics" }
+zbus_polkit = { version = "4.0.0", features = ["tokio"] }

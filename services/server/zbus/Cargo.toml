@@ -23,6 +23,8 @@ mechanix-network-ctl = { path = "../../ctl/network" }
 mechanix-power-ctl = { path = "../../ctl/power" }
 mechanix-display-ctl = { path = "../../ctl/display" }
 mechanix-host-metrics = { path = "../../ctl/host-metrics" }
+system = { path = "../../system"}
+desktop = { path = "../../desktop"}
 serde_yaml = "0.9.25"
 serde.workspace = true
 zbus_polkit = { version = "4.0.0", features = ["tokio"] }

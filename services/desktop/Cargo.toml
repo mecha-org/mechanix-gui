@@ -1,0 +1,18 @@
+[package]
+name = "desktop"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio.workspace = true
+anyhow.workspace = true
+zbus = { version = "4.1.2", features = ["tokio"] }
+mechanix-sound-ctl = { path = "../ctl/sound" }

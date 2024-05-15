@@ -15,7 +15,7 @@ members = [
     "ctl/users",
     "ctl/host-metrics",
     "client/zbus"
-]
+, "system", "desktop"]
 default-members = ["server/zbus"]
 
 

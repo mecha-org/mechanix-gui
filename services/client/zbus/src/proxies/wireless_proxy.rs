@@ -1,8 +1,8 @@
-use mechanix_zbus_services::{
+use serde::{Deserialize, Serialize};
+use system::system_interfaces::{
     KnownNetworkListResponse, WirelessInfoResponse, WirelessNotificationEvent,
     WirelessScanListResponse,
 };
-use serde::{Deserialize, Serialize};
 use tracing::info;
 use zbus::{proxy, zvariant::Type, Connection, Result, SignalContext};
 
