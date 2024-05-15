@@ -24,6 +24,7 @@ pub struct SourceInformationResponse {
 pub struct SinkInformationResponse {
     pub name: String,
     pub description: String,
+    pub prop_list: HashMap<String, String>,
 }
 
 #[interface(name = "org.mechanix.services.Sound")]
@@ -169,6 +170,11 @@ impl SoundBusInterface {
                 .map(|device| SinkInformationResponse {
                     name: device.name.clone(),
                     description: device.description.clone(),
+                    prop_list: device
+                        .prop_list
+                        .iter()
+                        .map(|(key, value)| (key.clone(), value.clone()))
+                        .collect(),
                 })
                 .collect()),
             Err(_) => {

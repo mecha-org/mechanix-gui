@@ -8,7 +8,7 @@ use libpulse_binding::context::{Context, State};
 use libpulse_binding::error::PAErr;
 use libpulse_binding::mainloop::standard::Mainloop;
 use libpulse_binding::proplist::Proplist;
-use libpulse_binding::volume::{ChannelVolumes, Volume};
+use libpulse_binding::volume::ChannelVolumes;
 
 use crate::sound::{
     apply_volume_command, connect, run, volume_to_percentage, VolumeCommand, Volumes,
@@ -20,7 +20,7 @@ pub fn run_input_command(command: VolumeCommand, device: Option<String>) -> Resu
         .ok_or_else(|| eprintln!("Failed to initialize PulseAudio main loop."))
         .unwrap();
 
-    let mut context = connect(&mut main_loop).unwrap();
+    let context = connect(&mut main_loop).unwrap();
 
     let mut volumes = get_input_volumes(&mut main_loop, &context, device.clone())
         .map_err(|e| anyhow!("Failed to get input volume: {e}"))?;
@@ -49,7 +49,7 @@ pub fn get_input_volumes(
 ) -> Result<Volumes> {
     let device = match device {
         Some(device) if !device.trim().is_empty() => device,
-        _ => "@DEFAULT_SINK@".to_string(),
+        _ => "@DEFAULT_SOURCE@".to_string(),
     };
 
     run(main_loop, move |output| {
@@ -80,7 +80,7 @@ pub fn set_input_volumes(
 ) -> Result<()> {
     let device = match device {
         Some(device) if !device.trim().is_empty() => device,
-        _ => "@DEFAULT_SINK@".to_string(),
+        _ => "@DEFAULT_SOURCE@".to_string(),
     };
 
     run(main_loop, move |output| {
@@ -108,7 +108,7 @@ pub fn set_input_muted(
 ) -> Result<()> {
     let device = match device {
         Some(device) if !device.trim().is_empty() => device,
-        _ => "@DEFAULT_SINK@".to_string(),
+        _ => "@DEFAULT_SOURCE@".to_string(),
     };
 
     run(main_loop, move |output| {
