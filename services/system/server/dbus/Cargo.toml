@@ -1,5 +1,5 @@
 [package]
-name = "system-dbus-server"
+name = "mechanix_system_dbus_server"
 description = "Zbus interface for Mechanix System services"
 version.workspace = true
 edition.workspace = true
@@ -29,12 +29,12 @@ serde_yaml = "0.9.25"
 
 # This is for the debian package
 [package.metadata.deb]
-name = "system-dbus-server"
+name = "mechanix_system_dbus_server"
 depends = "$auto"
 assets = [
     # binary
     [
-        "../target/release/system-dbus-server",
+        "../target/release/mechanix_system_dbus_server",
         "/usr/bin/",
         "755",
     ],

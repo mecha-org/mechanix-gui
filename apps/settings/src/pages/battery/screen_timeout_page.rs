@@ -14,7 +14,7 @@ use custom_widgets::icon_button::{
     OutputMessage as IconButtonOutputMessage,
 };
 use gtk::prelude::*;
-use mechanix_zbus_client::power::Power;
+use mechanix_system_dbus_client::power::Power;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},

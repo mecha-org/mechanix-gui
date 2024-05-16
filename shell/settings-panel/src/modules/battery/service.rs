@@ -6,7 +6,7 @@ use crate::{
 
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_zbus_client::power::{NotificationStream, Power};
+use mechanix_system_dbus_client::power::{NotificationStream, Power};
 use tracing::{debug, error, info};
 
 pub struct BatteryService {}

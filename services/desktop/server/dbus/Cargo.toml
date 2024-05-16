@@ -1,5 +1,5 @@
 [package]
-name = "desktop-dbus-server"
+name = "mechanix_desktop_dbus_server"
 description = "Zbus interface for Mechanix desktop services"
 version.workspace = true
 edition.workspace = true

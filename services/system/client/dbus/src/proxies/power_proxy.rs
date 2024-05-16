@@ -1,4 +1,4 @@
-use system_dbus_server::system_interfaces::PowerNotificationEvent;
+use mechanix_system_dbus_server::system_interfaces::PowerNotificationEvent;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use zbus::{proxy, zvariant::Type, Connection, Result};

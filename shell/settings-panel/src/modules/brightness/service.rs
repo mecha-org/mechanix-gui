@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_zbus_client::display::{Display, NotificationStream};
+use mechanix_system_dbus_client::display::{Display, NotificationStream};
 use tracing::{debug, error, info};
 
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
