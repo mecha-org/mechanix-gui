@@ -5,7 +5,6 @@ on:
       - main
       - dev
       - dev-arm64-build
-      - system-desktop-service
 
 env:
   CARGO_INCREMENTAL: 0
