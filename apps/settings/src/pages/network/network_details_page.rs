@@ -4,7 +4,7 @@ use custom_widgets::icon_button::{
     OutputMessage as IconButtonOutputMessage,
 };
 use gtk::prelude::*;
-use mechanix_zbus_client::wireless::WirelessService;
+use mechanix_system_dbus_client::wireless::WirelessService;
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},

@@ -6,7 +6,7 @@ use relm4::{
     AsyncComponentSender, Component, ComponentController, Controller,
 };
 
-use mechanix_zbus_client::power::Power;
+use mechanix_system_dbus_client::power::Power;
 
 use crate::{
     settings::{LayoutSettings, Modules, WidgetConfigs},
