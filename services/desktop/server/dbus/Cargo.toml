@@ -1,5 +1,5 @@
 [package]
-name = "desktop"
+name = "desktop-dbus-server"
 description = "Zbus interface for Mechanix desktop services"
 version.workspace = true
 edition.workspace = true
@@ -16,7 +16,7 @@ keywords.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 zbus = { version = "4.1.2", features = ["tokio"] }
-mechanix-sound-ctl = { path = "../ctl/sound" }
+mechanix-sound-ctl = { path = "../../../ctl/sound" }
 serde.workspace = true
 tracing.workspace = true
 serde_yaml = "0.9.25"

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use system::system_interfaces::{
+use system_dbus_server::system_interfaces::{
     KnownNetworkListResponse, WirelessInfoResponse, WirelessNotificationEvent,
     WirelessScanListResponse,
 };

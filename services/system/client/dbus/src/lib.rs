@@ -2,7 +2,7 @@ mod proxies;
 
 pub mod wireless {
     use crate::proxies;
-    pub use system::system_interfaces::{
+    pub use system_dbus_server::system_interfaces::{
         KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
         WirelessScanListResponse,
     };
@@ -21,7 +21,7 @@ pub mod bluetooth {
 
 pub mod host_metrics {
     use crate::proxies;
-    pub use system::system_interfaces::MemoryInfoResponse;
+    pub use system_dbus_server::system_interfaces::MemoryInfoResponse;
     pub use proxies::host_metrics::{HostMetrics, NotificationStream};
 }
 

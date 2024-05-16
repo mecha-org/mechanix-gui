@@ -15,4 +15,4 @@ anyhow.workspace = true
 zbus.workspace = true
 tracing.workspace = true
 serde.workspace = true
-system = { path = "../../system" }
+system-dbus-server = { path = "../../server/dbus" }

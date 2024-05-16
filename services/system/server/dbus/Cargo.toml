@@ -1,5 +1,5 @@
 [package]
-name = "system"
+name = "system-dbus-server"
 description = "Zbus interface for Mechanix System services"
 version.workspace = true
 edition.workspace = true
@@ -16,26 +16,39 @@ keywords.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 zbus = { version = "4.1.2", features = ["tokio"] }
-mechanix-bluetooth-ctl = { path = "../ctl/bluetooth" }
-mechanix-network-ctl = { path = "../ctl/network" }
-mechanix-power-ctl = { path = "../ctl/power" }
-mechanix-display-ctl = { path = "../ctl/display" }
-mechanix-host-metrics = { path = "../ctl/host-metrics" }
+mechanix-bluetooth-ctl = { path = "../../../ctl/bluetooth" }
+mechanix-network-ctl = { path = "../../../ctl/network" }
+mechanix-power-ctl = { path = "../../../ctl/power" }
+mechanix-display-ctl = { path = "../../../ctl/display" }
+mechanix-host-metrics = { path = "../../../ctl/host-metrics" }
 zbus_polkit = { version = "4.0.0", features = ["tokio"] }
 serde.workspace = true
 tracing.workspace = true
 serde_yaml = "0.9.25"
 
 
+# This is for the debian package
 [package.metadata.deb]
-name = "system"
+name = "system-dbus-server"
 depends = "$auto"
 assets = [
     # binary
-    ["../target/release/system", "/usr/bin/", "755"],
+    [
+        "../target/release/system-dbus-server",
+        "/usr/bin/",
+        "755",
+    ],
     #dbus-conf
-    ["./system-dbus.conf", "/etc/dbus-1/system.d/", "644"],
+    [
+        "./system-dbus.conf",
+        "/etc/dbus-1/system.d/",
+        "644",
+    ],
     # settings
-    ["./services-config-example.yml", "/etc/mechanix-gui/server/system/", "644"],
+    [
+        "./services-config-example.yml",
+        "/etc/mechanix-gui/server/system/",
+        "644",
+    ],
 
 ]
