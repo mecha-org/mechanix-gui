@@ -1,8 +1,6 @@
 [workspace]
 resolver = "2"
 members = [
-    "server/zbus",
-    "server/grpc",
     "ctl/bluetooth",
     "ctl/date-time",
     "ctl/display",
@@ -14,9 +12,11 @@ members = [
     "ctl/sound",
     "ctl/users",
     "ctl/host-metrics",
-    "client/zbus"
+    "system/server/dbus",
+    "desktop/server/dbus",
+    "system/client/dbus",
 ]
-default-members = ["server/zbus"]
+default-members = ["system/server/dbus", "desktop/server/dbus"]
 
 
 [workspace.package]
@@ -47,4 +47,3 @@ tokio = { version = "1", features = ["full"] }
 tracing = "0.1.40"
 zbus = { version = "4.1.2", features = ["tokio"] }
 serde = { version = "1.0.164", features = ["derive"] }
-mechanix-zbus-services = { path = "./server/zbus" }

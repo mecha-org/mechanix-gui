@@ -24,7 +24,7 @@ mctk_macros = { workspace = true }
 smithay-client-toolkit = { workspace = true }
 futures = { workspace = true }
 image = { workspace = true }
-mechanix_zbus_client = { workspace = true }
+mechanix_system_dbus_client = { workspace = true }
 chrono = { workspace = true }
 
 [package.metadata.deb]

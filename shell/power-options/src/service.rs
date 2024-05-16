@@ -1,6 +1,6 @@
 use crate::errors::{PowerOptionsError, PowerOptionsErrorCodes};
 use anyhow::{bail, Result};
-use mechanix_zbus_client::power::Power as PowerZbusClient;
+use mechanix_system_dbus_client::power::Power as PowerZbusClient;
 use tracing::{debug, error, info};
 
 pub struct PowerService {}

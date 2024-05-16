@@ -13,7 +13,7 @@ use crate::{
 };
 use custom_utils::get_image_from_path;
 use gtk::{glib::clone, prelude::*};
-use mechanix_zbus_client::wireless::{WirelessInfoResponse, WirelessService};
+use mechanix_system_dbus_client::wireless::{WirelessInfoResponse, WirelessService};
 use relm4::{
     async_trait::async_trait,
     component::{AsyncComponent, AsyncComponentParts},

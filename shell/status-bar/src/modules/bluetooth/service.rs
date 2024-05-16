@@ -5,7 +5,7 @@ use crate::{
 };
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_zbus_client::bluetooth::{
+use mechanix_system_dbus_client::bluetooth::{
     BluetoothService as BluetoothZbusClient, NotificationStream,
 };
 use tracing::{debug, error, info};

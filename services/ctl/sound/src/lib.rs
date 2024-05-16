@@ -1,14 +1,6 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod sound;
+pub use sound::{Proplist, Sound};
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+mod input_device;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+mod output_device;

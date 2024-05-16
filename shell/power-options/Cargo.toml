@@ -20,7 +20,7 @@ tokio = { version = "1.33", features = ["full"] }
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
-mechanix_zbus_client = { workspace = true }
+mechanix_system_dbus_client = { workspace = true }
 futures = { workspace = true }
 
 [package.metadata.deb]

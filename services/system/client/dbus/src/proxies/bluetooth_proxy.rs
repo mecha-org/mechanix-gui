@@ -1,4 +1,4 @@
-use mechanix_zbus_services::BluetoothNotificationEvent;
+use mechanix_system_dbus_server::system_interfaces::BluetoothNotificationEvent;
 use serde::{Deserialize, Serialize};
 use zbus::{proxy, zvariant::Type, Connection, Result};
 
