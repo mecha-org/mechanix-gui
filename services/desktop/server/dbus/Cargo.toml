@@ -21,10 +21,11 @@ serde.workspace = true
 tracing.workspace = true
 serde_yaml = "0.9.25"
 
+
 [package.metadata.deb]
-name = "system"
+name = "mechanix_desktop_dbus_server"
 depends = "$auto"
 assets = [
     # binary
-    ["../target/release/desktop", "/usr/bin/", "755"],
+    ["../../../target/release/desktop", "/usr/bin/", "755"],
 ]

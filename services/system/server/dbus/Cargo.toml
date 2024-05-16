@@ -34,19 +34,19 @@ depends = "$auto"
 assets = [
     # binary
     [
-        "../target/release/mechanix_system_dbus_server",
+        ".../../../target/release/mechanix_system_dbus_server",
         "/usr/bin/",
         "755",
     ],
     #dbus-conf
     [
-        "./system-dbus.conf",
+        "./../../system-dbus.conf",
         "/etc/dbus-1/system.d/",
         "644",
     ],
     # settings
     [
-        "./services-config-example.yml",
+        "./../../services-config-example.yml",
         "/etc/mechanix-gui/server/system/",
         "644",
     ],
