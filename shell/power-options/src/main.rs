@@ -1,17 +1,16 @@
 mod errors;
 mod gui;
-mod service;
+mod modules;
 mod settings;
 
 use mctk_core::ImgFilter;
-use service::PowerService;
+use modules::power::handler::PowerServiceHandle;
+use modules::power::service::PowerService;
 use settings::PowerOptionsSettings;
 use std::time::Duration;
 use std::{collections::HashMap, env};
-use tokio::{
-    runtime::Builder,
-    sync::{mpsc::Receiver, oneshot},
-};
+use tokio::sync::mpsc;
+use tokio::{runtime::Builder, sync::mpsc::Receiver};
 
 use gui::PowerOptions;
 use mctk_core::{
@@ -35,7 +34,6 @@ use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{WindowInfo, WindowOptions};
 
 use std::thread::{self, JoinHandle};
-use tokio::sync::mpsc;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
@@ -43,8 +41,8 @@ use crate::gui::Message;
 
 #[derive(Debug)]
 pub enum AppMessage {
-    Shutdown,
-    Restart,
+    PowerOff,
+    Reboot,
     Logout,
 }
 
@@ -139,30 +137,21 @@ fn main() -> anyhow::Result<()> {
     let handle = event_loop.handle();
 
     let window_tx_2 = window_tx.clone();
-
+    let (power_msg_tx, power_msg_rx) = mpsc::channel(128);
     let _ = handle.insert_source(app_receiver, move |event, _, _| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
-            calloop::channel::Event::Msg(msg) => match msg {
-                AppMessage::Shutdown => {
-                    futures::executor::block_on(async move {
-                        let _ = PowerService::shutdown().await;
-                    });
-                }
-                AppMessage::Restart => {
-                    futures::executor::block_on(async move {
-                        let _ = PowerService::restart().await;
-                    });
-                }
-                AppMessage::Logout => {}
-
-                _ => (),
-            },
+            calloop::channel::Event::Msg(msg) => {
+                let power_msg_tx_cloned = power_msg_tx.clone();
+                futures::executor::block_on(async move {
+                    let _ = power_msg_tx_cloned.clone().send(msg).await;
+                });
+            }
             calloop::channel::Event::Closed => {}
         };
     });
 
-    init_services(app_channel2);
+    init_services(app_channel2, power_msg_rx);
 
     loop {
         event_loop
@@ -174,7 +163,10 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn init_services(app_channel: Sender<AppMessage>) -> JoinHandle<()> {
+fn init_services(
+    app_channel: Sender<AppMessage>,
+    power_msg_rx: Receiver<AppMessage>,
+) -> JoinHandle<()> {
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
             .worker_threads(1)
@@ -182,8 +174,14 @@ fn init_services(app_channel: Sender<AppMessage>) -> JoinHandle<()> {
             .build()
             .unwrap();
 
+        let power_f = run_power_handler(app_channel.clone(), power_msg_rx);
+
         runtime
-            .block_on(runtime.spawn(async move { tokio::join!() }))
+            .block_on(runtime.spawn(async move { tokio::join!(power_f) }))
             .unwrap();
     })
+}
+async fn run_power_handler(app_channel: Sender<AppMessage>, power_msg_rx: Receiver<AppMessage>) {
+    let mut power_service_handle = PowerServiceHandle::new(app_channel);
+    power_service_handle.run(power_msg_rx).await;
 }

@@ -6,9 +6,9 @@ use tracing::{debug, error, info};
 pub struct PowerService {}
 
 impl PowerService {
-    pub async fn shutdown() -> Result<()> {
-        println!("PowerService::shutdown()");
-        match PowerZbusClient::shutdown().await {
+    pub async fn power_off() -> Result<()> {
+        println!("PowerService::power_off()");
+        match PowerZbusClient::power_off().await {
             Ok(_) => true,
             Err(e) => bail!(PowerOptionsError::new(
                 PowerOptionsErrorCodes::Shutdown,
@@ -18,15 +18,27 @@ impl PowerService {
         Ok(())
     }
 
-    pub async fn restart() -> Result<()> {
-        println!("PowerService::restart()");
-        match PowerZbusClient::shutdown().await {
+    pub async fn reboot() -> Result<()> {
+        println!("PowerService::reboot()");
+        match PowerZbusClient::reboot().await {
             Ok(_) => true,
             Err(e) => bail!(PowerOptionsError::new(
                 PowerOptionsErrorCodes::Restart,
                 e.to_string(),
             )),
         };
+        Ok(())
+    }
+
+    pub async fn logout() -> Result<()> {
+        println!("PowerService::logout()");
+        // match PowerZbusClient::logout().await {
+        //     Ok(_) => true,
+        //     Err(e) => bail!(PowerOptionsError::new(
+        //         PowerOptionsErrorCodes::Logout,
+        //         e.to_string(),
+        //     )),
+        // };
         Ok(())
     }
 }

@@ -41,7 +41,7 @@ pub struct SoundComponent {
 
 impl Component for SoundComponent {
     fn view(&self) -> Option<Node> {
-        let icon = if self.value < 10 {
+        let icon = if self.value == 0 {
             SoundValue::Low.to_string()
         } else {
             SoundValue::Medium.to_string()

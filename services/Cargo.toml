@@ -15,6 +15,7 @@ members = [
     "system/server/dbus",
     "desktop/server/dbus",
     "system/client/dbus",
+    "desktop/client/dbus",
 ]
 default-members = ["system/server/dbus", "desktop/server/dbus"]
 

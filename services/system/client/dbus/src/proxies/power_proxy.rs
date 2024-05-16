@@ -20,6 +20,8 @@ trait PowerBusInterface {
     async fn set_cpu_governor(&self, value: &str) -> Result<String>;
     #[zbus(signal)]
     async fn notification(&self, event: PowerNotificationEvent) -> Result<(), zbus::Error>;
+    async fn power_off(&self) -> Result<()>;
+    async fn reboot(&self) -> Result<()>;
 }
 
 pub struct Power;
@@ -75,11 +77,15 @@ impl Power {
         Ok(stream)
     }
 
-    pub async fn shutdown() -> Result<()> {
-        Ok(())
+    pub async fn power_off() -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = PowerBusInterfaceProxy::new(&connection).await?;
+        proxy.power_off().await
     }
 
-    pub async fn restart() -> Result<()> {
-        Ok(())
+    pub async fn reboot() -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = PowerBusInterfaceProxy::new(&connection).await?;
+        proxy.reboot().await
     }
 }

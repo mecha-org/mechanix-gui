@@ -29,8 +29,3 @@ pub mod display {
     use crate::proxies;
     pub use proxies::display_proxy::{Display, NotificationStream};
 }
-
-pub mod sound {
-    use crate::proxies;
-    pub use proxies::sound_proxy::{NotificationStream, Sound};
-}
