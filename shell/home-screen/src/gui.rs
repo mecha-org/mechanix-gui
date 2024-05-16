@@ -5,9 +5,11 @@ use crate::AppMessage;
 use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
+use mctk_core::reexports::femtovg::CompositeOperation;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
+use mctk_core::renderables::{Image, Renderable};
 use mctk_core::widgets::Carousel;
-use mctk_core::{component, layout, Color};
+use mctk_core::{component, layout, Color, Scale, AABB};
 use mctk_core::{
     component::Component, lay, msg, node, rect, size, size_pct, state_component_impl, widgets::Div,
     Node,
@@ -139,6 +141,20 @@ impl Component for Homescreen {
             _ => (),
         }
         vec![]
+    }
+
+    fn render(&mut self, context: component::RenderContext) -> Option<Vec<Renderable>> {
+        let width = context.aabb.width();
+        let height = context.aabb.height();
+        let AABB { pos, .. } = context.aabb;
+        let mut rs = vec![];
+
+        let image = Image::new(pos, Scale { width, height }, "background")
+            .composite_operation(CompositeOperation::DestinationOver);
+
+        rs.push(Renderable::Image(image));
+
+        Some(rs)
     }
 }
 
