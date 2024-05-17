@@ -28,5 +28,9 @@ name = "mechanix_desktop_dbus_server"
 depends = "$auto"
 assets = [
     # binary
-    ["../../../target/release/desktop", "/usr/bin/", "755"],
+    [
+        "../../../target/release/mechanix_desktop_dbus_server",
+        "/usr/bin/",
+        "755",
+    ],
 ]
