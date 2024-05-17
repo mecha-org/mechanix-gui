@@ -18,7 +18,7 @@ jobs:
   build:
     name: ${{ matrix.name }}
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: system dbus service
@@ -51,7 +51,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install \
-          libdbus-1-dev
+          libdbus-1-dev \
+          libpulse-dev
 
       - name: Set up Git SSH key
         run: |

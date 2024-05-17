@@ -4,10 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use libpulse_binding::context::{Context, State};
-use libpulse_binding::error::PAErr;
+use libpulse_binding::context::Context;
 use libpulse_binding::mainloop::standard::Mainloop;
-use libpulse_binding::proplist::Proplist;
 use libpulse_binding::volume::ChannelVolumes;
 
 use crate::sound::{
