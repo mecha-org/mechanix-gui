@@ -17,14 +17,20 @@ tokio.workspace = true
 anyhow.workspace = true
 zbus = { version = "4.1.2", features = ["tokio"] }
 mechanix-sound-ctl = { path = "../../../ctl/sound" }
+mechanix-power-ctl = { path = "../../../ctl/power" }
 serde.workspace = true
 tracing.workspace = true
 serde_yaml = "0.9.25"
 
+
 [package.metadata.deb]
-name = "system"
+name = "mechanix_desktop_dbus_server"
 depends = "$auto"
 assets = [
     # binary
-    ["../target/release/desktop", "/usr/bin/", "755"],
+    [
+        "../../../target/release/mechanix_desktop_dbus_server",
+        "/usr/bin/",
+        "755",
+    ],
 ]

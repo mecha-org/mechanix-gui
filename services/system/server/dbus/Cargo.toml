@@ -34,7 +34,7 @@ depends = "$auto"
 assets = [
     # binary
     [
-        "../target/release/mechanix_system_dbus_server",
+        "../../../target/release/mechanix_system_dbus_server",
         "/usr/bin/",
         "755",
     ],
