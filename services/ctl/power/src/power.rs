@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use system_shutdown::{hibernate, reboot, shutdown};
+use system_shutdown::{hibernate, logout, reboot, shutdown};
 
 use battery::Manager;
 pub struct Power {
@@ -133,6 +133,17 @@ impl Power {
             Err(_) => Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "Failed to reboot",
+            )),
+        }
+    }
+
+    //logout the current session
+    pub fn session_logout(&self) -> Result<(), std::io::Error> {
+        match logout() {
+            Ok(_) => Ok(()),
+            Err(_) => Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to logout",
             )),
         }
     }
