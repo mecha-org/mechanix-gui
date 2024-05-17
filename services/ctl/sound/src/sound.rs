@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use std::sync::{Arc, Mutex};
 
 use libpulse_binding::context::{Context, State};
-use libpulse_binding::error::PAErr;
 use libpulse_binding::mainloop::standard::Mainloop;
 use libpulse_binding::volume::{ChannelVolumes, Volume};
 
@@ -22,17 +21,22 @@ impl Sound {
         Sound {}
     }
 
-    pub async fn get_output_device_volume(&self, device: Option<String>) -> Result<f64> {
+    pub async fn get_output_device_volume(&self, device: Option<String>) -> Result<(f64, bool)> {
         // Initialize the Mainloop and Context
         let (mut main_loop, mut context) = init_pulseaudio()?;
 
-        // Get the output volumes
-        let volume = match get_output_volumes(&mut main_loop, &mut context, device.clone()) {
-            Ok(volume) => volume_to_percentage(volume.channels.max()),
-            Err(_) => return Err(anyhow!("Failed to get volume").into()),
-        };
+        // Get the output volumes and mute status
+        let (volume, is_muted) =
+            match get_output_volumes(&mut main_loop, &mut context, device.clone()) {
+                Ok(output_info) => {
+                    let volume = volume_to_percentage(output_info.channels.max());
+                    let is_muted = output_info.muted;
+                    (volume, is_muted)
+                }
+                Err(_) => return Err(anyhow!("Failed to get volume").into()),
+            };
 
-        Ok(volume)
+        Ok((volume, is_muted))
     }
 
     pub async fn set_output_device_volume(
