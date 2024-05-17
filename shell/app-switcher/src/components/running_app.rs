@@ -3,7 +3,9 @@ use std::ops::Neg;
 use mctk_core::{
     component::{self, Component, RenderContext},
     event::{Event, MouseDown},
-    lay, msg, node,
+    lay,
+    layout::Size,
+    msg, node,
     reexports::femtovg::Align,
     renderables::{
         image::InstanceBuilder as ImageInstanceBuilder,
@@ -13,7 +15,7 @@ use mctk_core::{
     size, state_component_impl,
     style::FontWeight,
     widgets::{Div, IconType},
-    Color, Node, Pos, Scale, AABB,
+    Color, Node, Point, Pos, Scale, AABB,
 };
 use mctk_macros::component;
 use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::ToplevelKey;
@@ -45,6 +47,7 @@ pub struct AppDetails {
 #[derive(Debug, Default, Clone)]
 struct RunningAppState {
     drag_y: f32,
+    drag_angle: Option<f32>,
 }
 
 #[component(State = "RunningAppState", Internal)]
@@ -61,6 +64,64 @@ impl RunningApp {
             dirty: false,
         }
     }
+
+    fn handle_on_drag(
+        &mut self,
+        logical_delta: Point,
+        physical_delta: Point,
+        start_pos: Point,
+        logical_mouse_position: Point,
+    ) -> Option<mctk_core::component::Message> {
+        let dx = logical_delta.x;
+        let dy = logical_delta.y;
+        let min_drag = 10.;
+        let mut drag_angle_op = self.state_ref().drag_angle;
+
+        if (dx.abs() > min_drag || dy.abs() > min_drag) && drag_angle_op.is_none() {
+            //Drag x or Drag y
+            let start_pos = start_pos;
+            let current_pos = logical_mouse_position;
+            let angle = ((current_pos.y - start_pos.y) / (current_pos.x - start_pos.x))
+                .atan()
+                .to_degrees();
+            drag_angle_op = Some(angle);
+            self.state_mut().drag_angle = Some(angle);
+        }
+
+        if let Some(drag_angle) = drag_angle_op {
+            if drag_angle.abs() > 60. {
+                //Drag in y direction
+                if dy.neg() > 0. {
+                    self.state_mut().drag_y = dy;
+                } else {
+                    return Some(msg!(CarouselMessage::ChildDragX(physical_delta.x.neg())));
+                }
+            }
+        }
+        None
+    }
+
+    fn handle_drag_end(
+        &mut self,
+        logical_delta: Point,
+        current_physical_aabb: AABB,
+    ) -> Option<mctk_core::component::Message> {
+        let dx = logical_delta.x.neg();
+        let dy = logical_delta.y.neg();
+        let w = current_physical_aabb.width();
+        if let Some(drag_angle) = self.state_ref().drag_angle {
+            if drag_angle.abs() > 60. {
+                if dy > 80. {
+                    return Some(msg!(Message::AppInstanceCloseClicked(
+                        self.app_details.instances.get(0).unwrap().instance_key,
+                    )));
+                }
+            } else {
+                return Some(msg!(CarouselMessage::ChildDragXSlow(dx, w)));
+            }
+        };
+        None
+    }
 }
 
 #[state_component_impl(RunningAppState)]
@@ -72,47 +133,62 @@ impl Component for RunningApp {
     }
 
     fn on_drag_start(&mut self, event: &mut Event<mctk_core::event::DragStart>) {
-        // println!("drag start");
-
         event.stop_bubbling();
     }
 
-    fn on_drag_end(&mut self, event: &mut Event<mctk_core::event::DragEnd>) {
-        self.state_mut().drag_y = 0.;
-        // event.emit(msg!(Message::AppInstanceCloseClicked(
-        //     self.app_details.instances.get(0).unwrap().instance_key,
-        // )));
+    fn on_touch_drag_start(&mut self, event: &mut Event<mctk_core::event::TouchDragStart>) {
         event.stop_bubbling();
     }
 
     fn on_drag(&mut self, event: &mut Event<mctk_core::event::Drag>) {
-        // println!("on drag");
-        // println!(
-        //     "{:?} {:?} {:?} {:?}",
-        //     event.logical_delta(),
-        //     event.physical_delta(),
-        //     event.bounded_logical_delta(),
-        //     event.bounded_physical_delta()
-        // );
-        let delta_x = event.bounded_logical_delta().x;
-        let delta_y = event.bounded_logical_delta().y.neg();
-        if delta_y > 0. && delta_x == 0. {
-            self.state_mut().drag_y = delta_y;
-        } else {
-            event.emit(msg!(CarouselMessage::ChildDragX(delta_x)));
+        let messages = self.handle_on_drag(
+            event.logical_delta(),
+            event.physical_delta(),
+            event.input.start_pos,
+            event.logical_mouse_position(),
+        );
+        if let Some(message) = messages {
+            event.emit(message);
         }
+    }
 
-        // event.stop_bubbling();
+    fn on_touch_drag(&mut self, event: &mut Event<mctk_core::event::TouchDrag>) {
+        let messages = self.handle_on_drag(
+            event.logical_delta(),
+            event.physical_delta(),
+            event.input.start_pos,
+            event.logical_touch_position(),
+        );
+        if let Some(message) = messages {
+            event.emit(message);
+        }
+    }
+
+    fn on_drag_end(&mut self, event: &mut Event<mctk_core::event::DragEnd>) {
+        let messages = self.handle_drag_end(event.logical_delta(), event.current_physical_aabb());
+        if let Some(message) = messages {
+            event.emit(message);
+        }
+        self.state_mut().drag_y = 0.;
+        self.state_mut().drag_angle = None;
+    }
+
+    fn on_touch_drag_end(&mut self, event: &mut Event<mctk_core::event::TouchDragEnd>) {
+        let messages = self.handle_drag_end(event.logical_delta(), event.current_physical_aabb());
+        if let Some(message) = messages {
+            event.emit(message);
+        }
+        self.state_mut().drag_y = 0.;
+        self.state_mut().drag_angle = None;
     }
 
     fn render(&mut self, context: RenderContext) -> Option<Vec<Renderable>> {
-        let drag_y = self.state_ref().drag_y;
         if let Some(instance) = self.app_details.instances.get(0) {
             let width = context.aabb.width();
             let height = context.aabb.height();
             let mut pos = context.aabb.pos;
+            pos.y = pos.y + self.state_ref().drag_y;
             let mut rs = vec![];
-            pos.y -= drag_y;
 
             //Background
             let background = RectInstanceBuilder::default()
@@ -206,7 +282,10 @@ impl Component for RunningApp {
                 y: img_bg_pos.y + img_bg_scale.height + title_margin.0,
                 z: img_bg_pos.z,
             };
-            if let Some(title) = instance.title.clone() {
+            if let Some(mut title) = instance.title.clone() {
+                if title.len() > 24 {
+                    title = [title[..24].to_owned().to_string(), "...".to_string()].join("");
+                }
                 let title_instance = TextInstanceBuilder::default()
                     .align(Align::Left)
                     .pos(title_pos)
@@ -237,7 +316,10 @@ impl Component for RunningApp {
                 y: title_pos.y + title_scale.height + name_margin.0,
                 z: title_pos.z,
             };
-            if let Some(name) = self.app_details.name.clone() {
+            if let Some(mut name) = self.app_details.name.clone() {
+                if name.len() > 20 {
+                    name = [name[..20].to_owned().to_string(), "...".to_string()].join("");
+                }
                 let name_instance = TextInstanceBuilder::default()
                     .align(Align::Left)
                     .pos(name_pos)
