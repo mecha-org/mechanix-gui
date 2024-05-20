@@ -34,30 +34,30 @@ impl SoundServiceHandle {
                 error!(task, "error while getting sound value {}", e);
             }
         };
-        // let mut stream_res = SoundService::get_notification_stream().await;
+        let mut stream_res = SoundService::get_notification_stream().await;
         let mut interval = time::interval(Duration::from_secs(5));
-        // if let Err(e) = stream_res.as_ref() {
-        //     error!(task, "error while getting sound stream {}", e);
-        //     let _ = self.app_channel.send(AppMessage::Sound {
-        //         message: SoundMessage::Value { value: 0 },
-        //     });
-        //     return;
-        // }
+        if let Err(e) = stream_res.as_ref() {
+            error!(task, "error while getting sound stream {}", e);
+            let _ = self.app_channel.send(AppMessage::Sound {
+                message: SoundMessage::Value { value: 0 },
+            });
+            return;
+        }
         loop {
             select! {
-                // signal = stream_res.as_mut().unwrap().next() => {
-                //     if signal.is_none() {
-                //         continue;
-                //     }
+                signal = stream_res.as_mut().unwrap().next() => {
+                    if signal.is_none() {
+                        continue;
+                    }
 
-                //     if let Ok(args) = signal.unwrap().args() {
-                //         let notification_event = args.event;
-                //         // let _ = self.app_channel.send(AppMessage::Sound {
-                //         //     message: SoundMessage::Value { value },
-                //         // });
-                //     }
+                    if let Ok(args) = signal.unwrap().args() {
+                        let event = args.event;
+                        let _ = self.app_channel.send(AppMessage::Sound {
+                            message: SoundMessage::Value { value: event.volume_level as u8 },
+                        });
+                    }
 
-                // }
+                }
 
                 msg = sound_msg_rx.recv() => {
                     if msg.is_none() {

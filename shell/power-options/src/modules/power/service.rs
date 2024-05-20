@@ -1,5 +1,6 @@
 use crate::errors::{PowerOptionsError, PowerOptionsErrorCodes};
 use anyhow::{bail, Result};
+use mechanix_desktop_dbus_client::power::Power as PowerDesktopZbusClient;
 use mechanix_system_dbus_client::power::Power as PowerZbusClient;
 use tracing::{debug, error, info};
 
@@ -32,13 +33,13 @@ impl PowerService {
 
     pub async fn logout() -> Result<()> {
         println!("PowerService::logout()");
-        // match PowerZbusClient::logout().await {
-        //     Ok(_) => true,
-        //     Err(e) => bail!(PowerOptionsError::new(
-        //         PowerOptionsErrorCodes::Logout,
-        //         e.to_string(),
-        //     )),
-        // };
+        match PowerDesktopZbusClient::logout().await {
+            Ok(_) => true,
+            Err(e) => bail!(PowerOptionsError::new(
+                PowerOptionsErrorCodes::Logout,
+                e.to_string(),
+            )),
+        };
         Ok(())
     }
 }

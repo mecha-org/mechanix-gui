@@ -4,7 +4,8 @@ use zbus::{proxy, zvariant::Type, Connection, Result};
 
 #[derive(Deserialize, Serialize, Type, PartialEq, Debug)]
 pub struct NotificationEvent {
-    pub brightness_percentage: u8,
+    pub is_mute: bool,
+    pub volume_level: f64,
 }
 
 #[proxy(

@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use chrono::{Local, Timelike};
-use mechanix_desktop_dbus_client::sound::Sound;
+use mechanix_desktop_dbus_client::sound::{NotificationStream, Sound};
 use tracing::{debug, error, info};
 
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
@@ -46,8 +46,8 @@ impl SoundService {
         Ok(())
     }
 
-    // pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
-    //     let stream = Sound::get_notification_stream().await?;
-    //     Ok(stream)
-    // }
+    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
+        let stream = Sound::get_notification_stream().await?;
+        Ok(stream)
+    }
 }
