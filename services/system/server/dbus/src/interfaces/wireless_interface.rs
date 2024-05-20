@@ -67,24 +67,82 @@ impl WirelessBusInterface {
         Ok(result)
     }
 
-    pub async fn connect(&self, ssid: &str, password: &str) -> Result<(), ZbusError> {
+    pub async fn connect(
+        &self,
+        ssid: &str,
+        password: &str,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+    ) -> Result<(), ZbusError> {
         let wireless = WirelessNetworkControl::new(self.path.as_str());
+        let status = wireless.status().await;
+        if !status {
+            return Err(ZbusError::Failed("Wifi is not enabled".to_string()));
+        }
         let wifi_result = match wireless.connect(ssid, password).await {
-            Ok(result) => result,
-            Err(_) => return Err(ZbusError::Failed("Failed to connect Wifi".to_string())),
+            Ok(result) => {
+                let event = WirelessNotificationEvent {
+                    signal_strength: "".to_string(),
+                    is_connected: true,
+                    is_enabled: true,
+                    frequency: "".to_string(),
+                    ssid: ssid.to_string(),
+                };
+
+                self.notification(&ctxt, event).await?;
+                result
+            }
+            Err(_) => {
+                let event = WirelessNotificationEvent {
+                    signal_strength: "".to_string(),
+                    is_connected: false,
+                    is_enabled: true,
+                    frequency: "".to_string(),
+                    ssid: "".to_string(),
+                };
+
+                self.notification(&ctxt, event).await?;
+                return Err(ZbusError::Failed("Failed to connect Wifi".to_string()));
+            }
         };
         Ok(wifi_result)
     }
 
-    pub async fn disconnect(&self, network_id: &str) -> Result<(), ZbusError> {
+    pub async fn disconnect(
+        &self,
+        network_id: &str,
+        #[zbus(signal_context)] ctxt: SignalContext<'_>,
+    ) -> Result<(), ZbusError> {
         let network_id = match network_id.parse::<usize>() {
             Ok(result) => result,
             Err(_) => return Err(ZbusError::Failed("Failed to parse network_id".to_string())),
         };
         let wifi_result =
             match WirelessNetworkControl::remove_wireless_network(&self.path, network_id).await {
-                Ok(result) => result,
-                Err(_) => return Err(ZbusError::Failed("Failed to disconnect Wifi".to_string())),
+                Ok(result) => {
+                    let event = WirelessNotificationEvent {
+                        signal_strength: "".to_string(),
+                        is_connected: false,
+                        is_enabled: true,
+                        frequency: "".to_string(),
+                        ssid: "".to_string(),
+                    };
+
+                    self.notification(&ctxt, event).await?;
+                    result
+                }
+                Err(_) => {
+                    let event = WirelessNotificationEvent {
+                        signal_strength: "".to_string(),
+                        is_connected: true,
+                        is_enabled: true,
+                        frequency: "".to_string(),
+                        ssid: "".to_string(),
+                    };
+
+                    self.notification(&ctxt, event).await?;
+
+                    return Err(ZbusError::Failed("Failed to disconnect Wifi".to_string()));
+                }
             };
 
         Ok(wifi_result)
@@ -106,6 +164,12 @@ impl WirelessBusInterface {
 
     pub async fn info(&self) -> Result<WirelessInfoResponse, ZbusError> {
         let wireless = WirelessNetworkControl::new(self.path.as_str());
+
+        let status = wireless.status().await;
+        if !status {
+            return Err(ZbusError::Failed("Wifi is not enabled".to_string()));
+        }
+
         let wifi_result = match wireless.info().await {
             Ok(result) => {
                 let wifi_info = WirelessInfoResponse {
@@ -132,6 +196,7 @@ impl WirelessBusInterface {
 
     pub async fn scan(&self) -> Result<WirelessScanListResponse, ZbusError> {
         let wireless = WirelessNetworkControl::new(self.path.as_str());
+
         let wifi_result = match wireless.scan().await {
             Ok(result) => {
                 let mut wifi_scan_list = Vec::new();
@@ -223,6 +288,20 @@ pub async fn wireless_event_notification_stream(
     let mut previous_frequency: Option<String> = None;
     let mut previous_ssid: Option<String> = None;
     let wireless = WirelessNetworkControl::new(wireless_path.as_str());
+
+    let status = wireless.status().await;
+    if !status {
+        let event = WirelessNotificationEvent {
+            signal_strength: "".to_string(),
+            is_connected: false,
+            is_enabled: true,
+            frequency: "".to_string(),
+            ssid: "".to_string(),
+        };
+
+        let ctxt = SignalContext::new(conn, "/org/mechanix/services/Wireless")?;
+        wireless_bus.notification(&ctxt, event).await?;
+    }
 
     loop {
         interval.tick().await;
