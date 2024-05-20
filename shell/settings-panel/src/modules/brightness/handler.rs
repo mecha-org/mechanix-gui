@@ -24,6 +24,16 @@ impl BrightnessServiceHandle {
 
     pub async fn run(&mut self, mut brightness_msg_rx: Receiver<BrightnessMessage>) {
         let task = "run";
+        match BrightnessService::get_brightness_value().await {
+            Ok(value) => {
+                let _ = self.app_channel.send(AppMessage::Brightness {
+                    message: BrightnessMessage::Value { value },
+                });
+            }
+            Err(e) => {
+                error!(task, "error while getting brightness value {}", e);
+            }
+        };
         let mut stream_res = BrightnessService::get_notification_stream().await;
         let mut interval = time::interval(Duration::from_secs(5));
         if let Err(e) = stream_res.as_ref() {
@@ -41,10 +51,10 @@ impl BrightnessServiceHandle {
                     }
 
                     if let Ok(args) = signal.unwrap().args() {
-                        let notification_event = args.event;
-                        // let _ = self.app_channel.send(AppMessage::Brightness {
-                        //     message: BrightnessMessage::Value { value },
-                        // });
+                        let event = args.event;
+                        let _ = self.app_channel.send(AppMessage::Brightness {
+                            message: BrightnessMessage::Value { value: event.brightness_percentage },
+                        });
                     }
 
                 }

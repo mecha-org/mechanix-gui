@@ -92,6 +92,11 @@ pub struct App {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct BackgroundModule {
+    pub icon: DefaultIconPaths,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct SearchModule {
     pub icon: DefaultIconPaths,
 }
@@ -111,6 +116,7 @@ pub struct DefaultIconPaths {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Modules {
     pub apps: Vec<App>,
+    pub background: BackgroundModule,
 }
 
 impl Default for WindowSettings {
@@ -142,7 +148,12 @@ impl Default for LayoutSettings {
 
 impl Default for Modules {
     fn default() -> Self {
-        Self { apps: vec![] }
+        Self {
+            apps: vec![],
+            background: BackgroundModule {
+                icon: DefaultIconPaths { default: None },
+            },
+        }
     }
 }
 

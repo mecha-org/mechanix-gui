@@ -8,7 +8,9 @@ use mctk_core::{
 };
 
 use crate::{
-    gui::Message, settings::CommonLowMediumHighPaths, widgets::slidable_setting::SlidableSetting,
+    gui::{Message, SliderSettingsNames},
+    settings::CommonLowMediumHighPaths,
+    widgets::slidable_setting::SlidableSetting,
 };
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -39,7 +41,7 @@ pub struct SoundComponent {
 
 impl Component for SoundComponent {
     fn view(&self) -> Option<Node> {
-        let icon = if self.value < 10 {
+        let icon = if self.value == 0 {
             SoundValue::Low.to_string()
         } else {
             SoundValue::Medium.to_string()
@@ -50,7 +52,9 @@ impl Component for SoundComponent {
             "Sound".to_string(),
             self.value,
         )
-        .on_slide(Box::new(|value| msg!(Message::Sound { value })))))
+        .on_slide(Box::new(|value| msg!(Message::SliderChanged(
+            SliderSettingsNames::Sound { value }
+        ))))))
     }
 }
 

@@ -1,3 +1,4 @@
+use futures::StreamExt;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::time::Duration;
 use tokio::{
@@ -23,23 +24,39 @@ impl SoundServiceHandle {
 
     pub async fn run(&mut self, mut sound_msg_rx: Receiver<SoundMessage>) {
         let task = "run";
-        let mut interval = time::interval(Duration::from_secs(1));
+        match SoundService::get_sound_value("".to_string()).await {
+            Ok(value) => {
+                let _ = self.app_channel.send(AppMessage::Sound {
+                    message: SoundMessage::Value { value },
+                });
+            }
+            Err(e) => {
+                error!(task, "error while getting sound value {}", e);
+            }
+        };
+        let mut stream_res = SoundService::get_notification_stream().await;
+        let mut interval = time::interval(Duration::from_secs(5));
+        if let Err(e) = stream_res.as_ref() {
+            error!(task, "error while getting sound stream {}", e);
+            let _ = self.app_channel.send(AppMessage::Sound {
+                message: SoundMessage::Value { value: 0 },
+            });
+            return;
+        }
         loop {
             select! {
-                tick = interval.tick() => {
-                    match SoundService::get_sound_value().await {
-                        Ok(value) => {
-                            let _ = self.app_channel.send(AppMessage::Sound {
-                                message: SoundMessage::Value { value },
-                            });
-                        }
-                        Err(e) => {
-                            error!(task, "error while getting sound status {}", e);
-                            let _ = self.app_channel.send(AppMessage::Sound {
-                                message: SoundMessage::Value { value: 0 },
-                            });
-                        }
-                    };
+                signal = stream_res.as_mut().unwrap().next() => {
+                    if signal.is_none() {
+                        continue;
+                    }
+
+                    if let Ok(args) = signal.unwrap().args() {
+                        let event = args.event;
+                        let _ = self.app_channel.send(AppMessage::Sound {
+                            message: SoundMessage::Value { value: event.volume_level as u8 },
+                        });
+                    }
+
                 }
 
                 msg = sound_msg_rx.recv() => {
@@ -49,7 +66,9 @@ impl SoundServiceHandle {
 
                     match msg.unwrap() {
                         SoundMessage::Change { value } => {
-                            let _ = SoundService::set_sound_value(value as i32).await;
+                            println!("SoundServiceHandle::run() SoundMessage::Change {:?}", value);
+                            interval.reset();
+                            let _ = SoundService::set_sound_value(value as u8, "".to_string()).await;
                         }
                         _ => ()
                     };

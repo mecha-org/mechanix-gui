@@ -1,11 +1,9 @@
 use crate::components::overlay::Overlay;
 use crate::components::pin_indicators::MAX_PIN_LENGTH;
-use crate::components::status_bar::StatusBar;
 use crate::components::unlock_button::UnlockButton;
 use crate::pages::pin::Pin;
 use crate::settings::{self, LockScreenSettings};
 use crate::theme::{self, LockScreenTheme};
-use crate::types::{BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus};
 use crate::AppMessage;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
@@ -19,7 +17,12 @@ use mctk_core::{
     widgets::Div,
     Node,
 };
-use mctk_smithay::lock_window::{SessionLockMessage, SessionLockWindow};
+use mctk_smithay::session_lock::lock_window::{SessionLockMessage, SessionLockWindow};
+use mechanix_status_bar_components::get_formatted_battery_level;
+use mechanix_status_bar_components::gui::CommonStatusBar;
+use mechanix_status_bar_components::types::{
+    BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus,
+};
 use std::any::Any;
 use std::time::{Duration, Instant};
 use std::{collections::HashMap, fmt};
@@ -133,7 +136,7 @@ impl Component for LockScreen {
         let overlay_node = node!(
             Overlay::new(unlock_pressing_time),
             lay! [
-                size: [Auto],
+                size_pct: [100],
                 axis_alignment: Alignment::Center,
                 cross_alignment: Alignment::Center,
             ]
@@ -166,13 +169,17 @@ impl Component for LockScreen {
                 ]
             )
             .push(node!(
-                StatusBar {
+                CommonStatusBar {
                     battery_level: self.state_ref().battery_level.clone(),
                     wireless_status: self.state_ref().wireless_status.clone(),
                     bluetooth_status: self.state_ref().bluetooth_status.clone(),
                     current_time: self.state_ref().current_time.clone(),
                 },
-                lay![size: [Auto, 34]]
+                lay![
+                    size: [Auto, 34],
+                    position_type: mctk_core::layout::PositionType::Absolute,
+                    position: [0.0, 0.0, Auto, 0.0],
+                ]
             ))
             .push(screen),
         )
@@ -247,38 +254,7 @@ impl Component for LockScreen {
                 self.state_mut().bluetooth_status = status.clone();
             }
             Some(Message::Battery { level, status }) => {
-                let battery_level = if *status == BatteryStatus::Unknown {
-                    BatteryLevel::NotFound
-                } else if *status == BatteryStatus::Charging {
-                    match level {
-                        0..=9 => BatteryLevel::ChargingLevel10,
-                        10..=19 => BatteryLevel::ChargingLevel20,
-                        20..=34 => BatteryLevel::ChargingLevel30,
-                        35..=49 => BatteryLevel::ChargingLevel40,
-                        50..=59 => BatteryLevel::ChargingLevel50,
-                        60..=69 => BatteryLevel::ChargingLevel60,
-                        70..=79 => BatteryLevel::ChargingLevel70,
-                        80..=89 => BatteryLevel::ChargingLevel80,
-                        90..=94 => BatteryLevel::ChargingLevel90,
-                        95..=100 => BatteryLevel::ChargingLevel100,
-                        _ => BatteryLevel::NotFound,
-                    }
-                } else {
-                    match level {
-                        0..=9 => BatteryLevel::Level10,
-                        10..=19 => BatteryLevel::Level20,
-                        20..=34 => BatteryLevel::Level30,
-                        35..=49 => BatteryLevel::Level40,
-                        50..=59 => BatteryLevel::Level50,
-                        60..=69 => BatteryLevel::Level60,
-                        70..=79 => BatteryLevel::Level70,
-                        80..=89 => BatteryLevel::Level80,
-                        90..=94 => BatteryLevel::Level90,
-                        95..=100 => BatteryLevel::Level100,
-                        _ => BatteryLevel::NotFound,
-                    }
-                };
-
+                let battery_level = get_formatted_battery_level(level, status);
                 self.state_mut().battery_level = battery_level;
             }
             _ => (),

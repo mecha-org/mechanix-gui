@@ -58,6 +58,7 @@ pub struct AppSwitcherState {
     cpu_usage: String,
     memory_usage: String,
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
+    settings: AppSwitcherSettings,
 }
 
 #[component(State = "AppSwitcherState")]
@@ -79,6 +80,8 @@ impl Component for AppSwitcher {
             //         instance_key: ToplevelKey::default(),
             //         icon: Some("chromium".to_string()),
             //     }],
+            //     icon_type: None,
+            //     icon_path: None,
             // }),
             // RunningApp::new(AppDetails {
             //     app_id: "2".to_string(),
@@ -91,6 +94,8 @@ impl Component for AppSwitcher {
             //         instance_key: ToplevelKey::default(),
             //         icon: Some("mecha_connect".to_string()),
             //     }],
+            //     icon_type: None,
+            //     icon_path: None,
             // }),
             // RunningApp::new(AppDetails {
             //     app_id: "1".to_string(),
@@ -103,6 +108,8 @@ impl Component for AppSwitcher {
             //         instance_key: ToplevelKey::default(),
             //         icon: Some("chromium".to_string()),
             //     }],
+            //     icon_type: None,
+            //     icon_path: None,
             // }),
             // RunningApp::new(AppDetails {
             //     app_id: "2".to_string(),
@@ -115,6 +122,8 @@ impl Component for AppSwitcher {
             //         instance_key: ToplevelKey::default(),
             //         icon: Some("mecha_connect".to_string()),
             //     }],
+            //     icon_type: None,
+            //     icon_path: None,
             // }),
             // RunningApp::new(AppDetails {
             //     app_id: "1".to_string(),
@@ -127,6 +136,8 @@ impl Component for AppSwitcher {
             //         instance_key: ToplevelKey::default(),
             //         icon: Some("chromium".to_string()),
             //     }],
+            //     icon_type: None,
+            //     icon_path: None,
             // }),
             // RunningApp::new(AppDetails {
             //     app_id: "2".to_string(),
@@ -139,14 +150,22 @@ impl Component for AppSwitcher {
             //         instance_key: ToplevelKey::default(),
             //         icon: Some("mecha_connect".to_string()),
             //     }],
+            //     icon_type: None,
+            //     icon_path: None,
             // }),
         ];
+
+        let settings = match settings::read_settings_yml() {
+            Ok(settings) => settings,
+            Err(_) => AppSwitcherSettings::default(),
+        };
 
         self.state = Some(AppSwitcherState {
             running_apps,
             cpu_usage: "".to_string(),
             memory_usage: "".to_string(),
             app_channel: None,
+            settings,
         })
     }
 
@@ -198,10 +217,9 @@ impl Component for AppSwitcher {
             node!(
                 Carousel::new(),
                 lay![
-                    padding: [14, 24, 18, 0],
-                    margin: [20, 0, 0, 0],
-                    size_pct: [100, Auto],
+                    margin: [20, 20, 20, 20],
                     direction: Row,
+                    cross_alignment: Alignment::End
                 ]
             )
         } else {
@@ -232,8 +250,7 @@ impl Component for AppSwitcher {
                 node!(
                     app,
                     lay![
-                        size: [208, 208],
-                        margin: [10]
+                        size: [208, 262],
                     ]
                 )
                 .key(i as u64),
@@ -259,15 +276,20 @@ impl Component for AppSwitcher {
         println!("App was sent: {:?}", message);
         match message.downcast_ref::<Message>() {
             Some(Message::AppsUpdated { apps }) => {
-                println!("apps updated are {:?}", apps);
+                println!("apps updated are {:?}", apps.len());
+                let settings = self.state_ref().settings.clone();
+                let app_id = settings.app.id.clone().unwrap_or_default();
                 self.state_mut().running_apps = apps
                     .iter()
-                    .map(|app| {
-                        RunningApp::new(AppDetails {
-                            icon: Some("chromium".to_string()),
-                            ..app.clone()
-                        })
+                    .filter(|app| {
+                        app.app_id != app_id
+                            && settings
+                                .exclude_apps
+                                .clone()
+                                .into_iter()
+                                .any(|ea| ea != app.app_id)
                     })
+                    .map(|app| RunningApp::new(AppDetails { ..app.clone() }))
                     .collect();
             }
             Some(Message::AppInstanceClicked(instance)) => {

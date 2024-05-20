@@ -22,8 +22,10 @@ use mctk_core::{
     },
     types::{AssetParams, ImgFilter},
 };
-use mctk_smithay::WindowMessage;
-use mctk_smithay::{layer_surface::LayerOptions, layer_window::LayerWindowParams, WindowOptions};
+use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
+use mctk_smithay::WindowOptions;
+use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
+use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
 
 use settings::HomescreenSettings;
 use theme::HomescreenTheme;
@@ -83,7 +85,16 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let namespace = "mctk.homescreen".to_string();
+    if let Some(icon) = modules.background.icon.default {
+        assets.insert("background".to_string(), AssetParams::new(icon));
+    }
+
+    let app_id = settings
+        .app
+        .id
+        .clone()
+        .unwrap_or(String::from("mechanix.shell.home-screen"));
+    let namespace = app_id.clone();
 
     let layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
@@ -93,19 +104,24 @@ fn main() -> anyhow::Result<()> {
         zone: 0 as i32,
     };
 
-    let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::layer_window::LayerWindow::open_blocking::<Homescreen, AppMessage>(
-            LayerWindowParams {
-                title: "Homescreen".to_string(),
-                namespace,
-                window_opts,
-                fonts,
-                assets,
-                layer_shell_opts,
-                svgs,
-            },
-            None,
-        );
+    let window_info = WindowInfo {
+        id: app_id,
+        title: settings.title.clone(),
+        namespace,
+    };
+
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Homescreen, AppMessage>(
+        LayerWindowParams {
+            window_info,
+            window_opts,
+            fonts,
+            assets,
+            layer_shell_opts,
+            svgs,
+            ..Default::default()
+        },
+        None,
+    );
 
     let handle = event_loop.handle();
 

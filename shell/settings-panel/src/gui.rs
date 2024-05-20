@@ -13,7 +13,7 @@ use crate::theme::{self, SettingsPanelTheme};
 use crate::types::{
     BatteryLevel, BatteryStatus, BluetoothStatus, WirelessConnectedState, WirelessStatus,
 };
-use crate::{AppMessage, BluetoothMessage, BrightnessMessage, WirelessMessage};
+use crate::{AppMessage, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage};
 use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
@@ -332,7 +332,16 @@ impl Component for SettingsPanel {
                         });
                     }
                 }
-                SliderSettingsNames::Sound { .. } => {}
+                SliderSettingsNames::Sound { value } => {
+                    self.state_mut().sound_value = *value;
+                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                        let _ = app_channel.send(AppMessage::Sound {
+                            message: SoundMessage::Change {
+                                value: *value as u8,
+                            },
+                        });
+                    }
+                }
             },
             Some(Message::Cpu { usage }) => {
                 self.state_mut().cpu_usage = *usage;

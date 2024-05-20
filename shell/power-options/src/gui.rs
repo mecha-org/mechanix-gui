@@ -115,12 +115,12 @@ impl Component for PowerOptions {
         match message.downcast_ref::<Message>() {
             Some(Message::ShutdownClicked) => {
                 if let Some(app_channel) = &self.state_ref().app_channel {
-                    app_channel.send(AppMessage::Shutdown).unwrap();
+                    app_channel.send(AppMessage::PowerOff).unwrap();
                 };
             }
             Some(Message::RestartClicked) => {
                 if let Some(app_channel) = &self.state_ref().app_channel {
-                    app_channel.send(AppMessage::Restart).unwrap();
+                    app_channel.send(AppMessage::Reboot).unwrap();
                 };
             }
             Some(Message::LogoutClicked) => {

@@ -3,7 +3,7 @@ use mctk_core::{
     Node,
 };
 
-use crate::{
+use mechanix_status_bar_components::{
     modules::{
         battery::component::BatteryComponent, bluetooth::component::BluetoothComponent,
         clock::component::ClockComponent, wireless::component::WirelessComponent,

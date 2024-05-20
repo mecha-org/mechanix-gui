@@ -2,7 +2,7 @@ use std::any::Any;
 use std::fmt;
 
 use mctk_core::component::RootComponent;
-use mctk_core::layout::Alignment;
+use mctk_core::layout::{self, Alignment};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::{component, Color};
 use mctk_core::{
@@ -10,14 +10,16 @@ use mctk_core::{
 };
 
 use mctk_core::reexports::glutin::prelude::*;
-
-use crate::modules::clock::component::ClockComponent;
-use crate::modules::window::component::WindowTitleComponent;
-use crate::types::{
-    BatteryLevel, BatteryStatus, BluetoothStatus, WirelessConnectedState, WirelessStatus,
+use mechanix_status_bar_components::get_formatted_battery_level;
+use mechanix_status_bar_components::gui::CommonStatusBar;
+use mechanix_status_bar_components::types::{
+    BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus,
 };
+
 use crate::AppMessage;
-use crate::{
+use mechanix_status_bar_components::modules::clock::component::ClockComponent;
+use mechanix_status_bar_components::modules::window::component::WindowTitleComponent;
+use mechanix_status_bar_components::{
     modules::{
         battery::component::BatteryComponent,
         bluetooth::component::BluetoothComponent,
@@ -91,56 +93,23 @@ impl Component for StatusBar {
             node!(
                 Div::new().bg(bg_color),
                 lay![
-                    padding: [6, 14, 5, 10],
-                    size_pct: [100],
+                    cross_alignment: Alignment::Stretch,
                     axis_alignment: Alignment::Stretch,
-                    //  cross_alignment: Alignment::SpaceBetween
+                    size_pct: [100],
+                    direction: layout::Direction::Row
                 ]
             )
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [50],
-                        axis_alignment: Alignment::Start
-                    ],
-                )
-                .push(node!(
-                    ClockComponent {
-                        current_time: self.state_ref().current_time.clone(),
-                    },
-                    lay![
-                        margin: [0,  0],
-                    ]
-                )),
-            )
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [50],
-                        axis_alignment: Alignment::End
-                    ]
-                )
-                .push(node!(
-                    WirelessComponent {
-                        status: self.state_ref().wireless_status,
-                    },
-                    lay![margin: [0, 0]]
-                ))
-                .push(node!(
-                    BluetoothComponent {
-                        status: self.state_ref().bluetooth_status,
-                    },
-                    lay![margin: [0, 14]]
-                ))
-                .push(node!(
-                    BatteryComponent {
-                        level: self.state_ref().battery_level,
-                    },
-                    lay![margin: [0, 0]]
-                )),
-            ),
+            .push(node!(
+                CommonStatusBar {
+                    battery_level: self.state_ref().battery_level.clone(),
+                    wireless_status: self.state_ref().wireless_status.clone(),
+                    bluetooth_status: self.state_ref().bluetooth_status.clone(),
+                    current_time: self.state_ref().current_time.clone(),
+                },
+                lay![
+                    size: [Auto, 34],
+                ]
+            )),
         )
     }
 
@@ -157,38 +126,7 @@ impl Component for StatusBar {
                 self.state_mut().bluetooth_status = status.clone();
             }
             Some(Message::Battery { level, status }) => {
-                let battery_level = if *status == BatteryStatus::Unknown {
-                    BatteryLevel::NotFound
-                } else if *status == BatteryStatus::Charging {
-                    match level {
-                        0..=9 => BatteryLevel::ChargingLevel10,
-                        10..=19 => BatteryLevel::ChargingLevel20,
-                        20..=34 => BatteryLevel::ChargingLevel30,
-                        35..=49 => BatteryLevel::ChargingLevel40,
-                        50..=59 => BatteryLevel::ChargingLevel50,
-                        60..=69 => BatteryLevel::ChargingLevel60,
-                        70..=79 => BatteryLevel::ChargingLevel70,
-                        80..=89 => BatteryLevel::ChargingLevel80,
-                        90..=94 => BatteryLevel::ChargingLevel90,
-                        95..=100 => BatteryLevel::ChargingLevel100,
-                        _ => BatteryLevel::NotFound,
-                    }
-                } else {
-                    match level {
-                        0..=9 => BatteryLevel::Level10,
-                        10..=19 => BatteryLevel::Level20,
-                        20..=34 => BatteryLevel::Level30,
-                        35..=49 => BatteryLevel::Level40,
-                        50..=59 => BatteryLevel::Level50,
-                        60..=69 => BatteryLevel::Level60,
-                        70..=79 => BatteryLevel::Level70,
-                        80..=89 => BatteryLevel::Level80,
-                        90..=94 => BatteryLevel::Level90,
-                        95..=100 => BatteryLevel::Level100,
-                        _ => BatteryLevel::NotFound,
-                    }
-                };
-
+                let battery_level = get_formatted_battery_level(level, status);
                 self.state_mut().battery_level = battery_level;
             }
             Some(Message::Window { title, activated }) => {

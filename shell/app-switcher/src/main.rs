@@ -11,17 +11,12 @@ use std::time::Duration;
 use gui::{AppMessage, AppSwitcher};
 use mctk_core::AssetParams;
 use mctk_core::{msg, reexports::cosmic_text};
-use mctk_smithay::{layer_surface::LayerOptions, WindowOptions};
-use mctk_smithay::{layer_window::LayerWindowParams, WindowMessage};
+use mctk_smithay::xdg_shell::xdg_window::{XdgWindow, XdgWindowParams};
+use mctk_smithay::{WindowInfo, WindowMessage, WindowOptions};
 use services::app_manager::{AppManagerMessage, AppManagerService};
-use smithay_client_toolkit::{
-    reexports::calloop::{self, channel::Sender},
-    shell::wlr_layer,
-};
+use smithay_client_toolkit::reexports::calloop::{self, channel::Sender};
 
-use desktop_entries::DesktopEntries;
 use settings::AppSwitcherSettings;
-use theme::AppSwitcherTheme;
 use tokio::runtime::Builder;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{error, info};
@@ -70,31 +65,31 @@ fn main() -> anyhow::Result<()> {
         assets.insert("not_found_small_icon".to_string(), AssetParams::new(icon));
     }
 
-    let namespace = settings.app.id.clone().unwrap_or_default();
+    let app_id = settings
+        .app
+        .id
+        .clone()
+        .unwrap_or(String::from("mechanix.shell.app-switcher"));
 
-    let layer_shell_opts = LayerOptions {
-        anchor: wlr_layer::Anchor::BOTTOM,
-        layer: wlr_layer::Layer::Overlay,
-        keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
-        namespace: Some(namespace.clone()),
-        zone: 0. as i32,
+    let window_info = WindowInfo {
+        id: app_id.clone(),
+        title: settings.title.clone(),
+        namespace: app_id,
     };
 
     let (app_channel, app_receiver) = calloop::channel::channel();
     let app_channel2 = app_channel.clone();
-    let (mut app, mut event_loop, window_tx) =
-        mctk_smithay::layer_window::LayerWindow::open_blocking::<AppSwitcher, AppMessage>(
-            LayerWindowParams {
-                title: settings.title.clone(),
-                namespace,
-                window_opts,
-                fonts,
-                assets,
-                svgs,
-                layer_shell_opts,
-            },
-            Some(app_channel),
-        );
+    let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<AppSwitcher, AppMessage>(
+        XdgWindowParams {
+            window_info,
+            window_opts,
+            fonts,
+            assets,
+            svgs,
+            ..Default::default()
+        },
+        Some(app_channel),
+    );
 
     let handle = event_loop.handle();
     let window_tx_2 = window_tx.clone();

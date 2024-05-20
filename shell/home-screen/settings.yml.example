@@ -1,6 +1,6 @@
 title: Homescreen # Empty
 app:
-  id: homescreen # homescreen
+  id: mechanix.shell.home-screen # homescreen
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false
@@ -20,6 +20,9 @@ layout:
   center: []
   right: []
 modules:
+  background:
+    icon:
+      default: /usr/share/mechanix/shell/home-screen/assets/icons/mecha-background-color.png
   apps:
     - app_id: mecha-connect
       name: Mecha Connect

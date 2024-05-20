@@ -1,6 +1,6 @@
 title: App Switcher # Empty
 app:
-  id: app-switcher # launcher
+  id: mechanix.shell.app-switcher # launcher
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false
@@ -23,3 +23,4 @@ modules:
   not_found:
     icon:
       small: /usr/share/mechanix/shell/app-switcher/assets/icons/not_found_small.png
+exclude_apps: ["mechanix.shell.home-screen"]
