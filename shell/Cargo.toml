@@ -57,3 +57,10 @@ desktop_entries = { path = "./commons/desktop_entries"}
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 futures-util = "0.3.30"
+echo_client = { path = "./commons/echo-client"}
+mechanix_status_bar_components = { path = "./commons/status-bar"}
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+anyhow = "1.0.71"
+tokio = { version = "1.33", features = ["full"] }
+zbus = "3.14.1"

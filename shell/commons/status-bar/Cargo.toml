@@ -1,0 +1,27 @@
+[package]
+name = "mechanix_status_bar_components"
+description = "Shared status bar component for the Mechanix shell"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+echo_client = { workspace = true }
+zbus = { workspace = true }
+wayland-protocols-async = "1.0.0"
+mctk_core = { workspace = true }
+mctk_smithay = { workspace = true }
+mctk_macros = { workspace = true }
+mechanix_system_dbus_client = { workspace = true }
+futures-util = { workspace = true }

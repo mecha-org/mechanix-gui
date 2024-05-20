@@ -6,7 +6,6 @@ use crate::pages::power_options::PowerOptions;
 use crate::pages::users::Users;
 use crate::settings::{self, GreeterSettings};
 use crate::theme::{self, GreeterTheme};
-use crate::types::{BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus};
 use crate::users::{self, UsersSettings};
 use crate::{AppMessage, AuthSubmit, LoginHandlerEvents, Prompt};
 use mctk_core::component::RootComponent;
@@ -20,6 +19,11 @@ use mctk_core::{
     lay, msg, node, rect, size, size_pct, state_component_impl,
     widgets::Div,
     Node,
+};
+use mechanix_status_bar_components::get_formatted_battery_level;
+use mechanix_status_bar_components::gui::CommonStatusBar;
+use mechanix_status_bar_components::types::{
+    BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus,
 };
 use smithay_client_toolkit::reexports::calloop;
 use smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -249,17 +253,22 @@ impl Component for Greeter {
                 lay![
                     cross_alignment: Alignment::Stretch,
                     axis_alignment: Alignment::Stretch,
-                    size_pct: [100]
+                    size_pct: [100],
+                    direction: layout::Direction::Column
                 ]
             )
             .push(node!(
-                StatusBar {
+                CommonStatusBar {
                     battery_level: self.state_ref().battery_level.clone(),
                     wireless_status: self.state_ref().wireless_status.clone(),
                     bluetooth_status: self.state_ref().bluetooth_status.clone(),
                     current_time: self.state_ref().current_time.clone(),
                 },
-                lay![size: [Auto, 34]]
+                lay![
+                    size: [Auto, 34],
+                    position_type: mctk_core::layout::PositionType::Absolute,
+                    position: [0.0, 0.0, Auto, 0.0],
+                ]
             ))
             .push(screen),
         )
@@ -309,38 +318,7 @@ impl Component for Greeter {
                 self.state_mut().bluetooth_status = status.clone();
             }
             Some(Message::Battery { level, status }) => {
-                let battery_level = if *status == BatteryStatus::Unknown {
-                    BatteryLevel::NotFound
-                } else if *status == BatteryStatus::Charging {
-                    match level {
-                        0..=9 => BatteryLevel::ChargingLevel10,
-                        10..=19 => BatteryLevel::ChargingLevel20,
-                        20..=34 => BatteryLevel::ChargingLevel30,
-                        35..=49 => BatteryLevel::ChargingLevel40,
-                        50..=59 => BatteryLevel::ChargingLevel50,
-                        60..=69 => BatteryLevel::ChargingLevel60,
-                        70..=79 => BatteryLevel::ChargingLevel70,
-                        80..=89 => BatteryLevel::ChargingLevel80,
-                        90..=94 => BatteryLevel::ChargingLevel90,
-                        95..=100 => BatteryLevel::ChargingLevel100,
-                        _ => BatteryLevel::NotFound,
-                    }
-                } else {
-                    match level {
-                        0..=9 => BatteryLevel::Level10,
-                        10..=19 => BatteryLevel::Level20,
-                        20..=34 => BatteryLevel::Level30,
-                        35..=49 => BatteryLevel::Level40,
-                        50..=59 => BatteryLevel::Level50,
-                        60..=69 => BatteryLevel::Level60,
-                        70..=79 => BatteryLevel::Level70,
-                        80..=89 => BatteryLevel::Level80,
-                        90..=94 => BatteryLevel::Level90,
-                        95..=100 => BatteryLevel::Level100,
-                        _ => BatteryLevel::NotFound,
-                    }
-                };
-
+                let battery_level = get_formatted_battery_level(level, status);
                 self.state_mut().battery_level = battery_level;
             }
             _ => (),

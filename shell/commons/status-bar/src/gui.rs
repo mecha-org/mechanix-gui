@@ -3,7 +3,7 @@ use mctk_core::{
     Node,
 };
 
-use mechanix_status_bar_components::{
+use crate::{
     modules::{
         battery::component::BatteryComponent, bluetooth::component::BluetoothComponent,
         clock::component::ClockComponent, wireless::component::WirelessComponent,
@@ -12,24 +12,18 @@ use mechanix_status_bar_components::{
 };
 
 #[derive(Debug)]
-pub struct StatusBar {
+pub struct CommonStatusBar {
     pub battery_level: BatteryLevel,
     pub wireless_status: WirelessStatus,
     pub bluetooth_status: BluetoothStatus,
     pub current_time: String,
 }
 
-impl Component for StatusBar {
+impl Component for CommonStatusBar {
     fn view(&self) -> Option<Node> {
-        let bg_color = if true {
-            Color::rgba(5., 7., 10., 1.)
-        } else {
-            Color::TRANSPARENT
-        };
-
         Some(
             node!(
-                Div::new().bg(bg_color),
+                Div::new().bg(Color::TRANSPARENT),
                 lay![
                     padding: [6, 14, 5, 10],
                     size_pct: [100],

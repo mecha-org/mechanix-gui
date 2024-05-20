@@ -2,11 +2,9 @@ mod components;
 mod errors;
 mod gui;
 mod handlers;
-mod modules;
 mod pages;
 mod settings;
 mod theme;
-mod types;
 mod users;
 
 use std::collections::HashMap;
@@ -21,15 +19,19 @@ use mctk_core::{msg, reexports::cosmic_text};
 use mctk_smithay::layer_shell::layer_window::{LayerWindow, LayerWindowParams};
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{WindowInfo, WindowOptions};
-use modules::battery::component::{get_battery_icons_charging_map, get_battery_icons_map};
-use modules::battery::handler::BatteryServiceHandle;
-use modules::bluetooth::component::get_bluetooth_icons_map;
-use modules::bluetooth::handler::BluetoothServiceHandle;
-use modules::clock::handler::ClockServiceHandle;
-use modules::wireless::component::get_wireless_icons_map;
-use modules::wireless::handler::WirelessServiceHandle;
+use mechanix_status_bar_components::modules::battery::component::{
+    get_battery_icons_charging_map, get_battery_icons_map,
+};
+use mechanix_status_bar_components::modules::battery::handler::BatteryServiceHandle;
+use mechanix_status_bar_components::modules::bluetooth::component::get_bluetooth_icons_map;
+use mechanix_status_bar_components::modules::bluetooth::handler::BluetoothServiceHandle;
+use mechanix_status_bar_components::modules::clock::handler::ClockServiceHandle;
+use mechanix_status_bar_components::modules::wireless::component::get_wireless_icons_map;
+use mechanix_status_bar_components::modules::wireless::handler::WirelessServiceHandle;
+use mechanix_status_bar_components::StatusBarMessage;
 use smithay_client_toolkit::reexports::calloop::{self, channel::Sender};
 
+use mechanix_status_bar_components::types::{BatteryStatus, BluetoothStatus, WirelessStatus};
 use settings::GreeterSettings;
 use smithay_client_toolkit::shell::wlr_layer;
 use theme::GreeterTheme;
@@ -37,7 +39,6 @@ use tokio::runtime::Builder;
 use tokio::sync::{mpsc, oneshot};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
-use types::{BatteryStatus, BluetoothStatus, WirelessStatus};
 use users::UsersSettings;
 
 use crate::gui::Message;
@@ -69,10 +70,6 @@ pub enum LoginHandlerEvents {
 pub enum AppMessage {
     LoginEvents(LoginHandlerEvents),
     AuthSubmit(AuthSubmit),
-    Clock { current_time: String },
-    Wireless { status: WirelessStatus },
-    Bluetooth { status: BluetoothStatus },
-    Battery { level: u8, status: BatteryStatus },
 }
 
 // Layer Surface App
@@ -236,6 +233,7 @@ fn main() -> anyhow::Result<()> {
     let handle = event_loop.handle();
 
     let window_tx_2 = window_tx.clone();
+    let window_tx_3 = window_tx.clone();
     //subscribe to events channel
     let (greeter_msg_tx, greeter_msg_rx) = mpsc::channel(128);
     let _ = handle.insert_source(app_receiver, move |event, _, app| {
@@ -304,27 +302,6 @@ fn main() -> anyhow::Result<()> {
                             message: msg!(LoginHandlerEvents::from(login_event)),
                         });
                     }
-                    AppMessage::Clock { current_time } => {
-                        //println!("AppMessage::Clock {:?}", current_time);
-                        let _ = window_tx_2.clone().send(WindowMessage::Send {
-                            message: msg!(Message::Clock { current_time }),
-                        });
-                    }
-                    AppMessage::Wireless { status } => {
-                        let _ = window_tx_2.clone().send(WindowMessage::Send {
-                            message: msg!(Message::Wireless { status }),
-                        });
-                    }
-                    AppMessage::Bluetooth { status } => {
-                        let _ = window_tx_2.clone().send(WindowMessage::Send {
-                            message: msg!(Message::Bluetooth { status }),
-                        });
-                    }
-                    AppMessage::Battery { level, status } => {
-                        let _ = window_tx_2.clone().send(WindowMessage::Send {
-                            message: msg!(Message::Battery { level, status }),
-                        });
-                    }
                 }
 
                 // AppMessage::Test => {
@@ -337,7 +314,41 @@ fn main() -> anyhow::Result<()> {
         };
     });
 
-    init_services(greeter_msg_rx, settings, app_channel2);
+    let (status_bar_channel, status_bar_receiver) = calloop::channel::channel();
+    let _ = handle.insert_source(status_bar_receiver, move |event, _, app| {
+        let _ = match event {
+            // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
+            calloop::channel::Event::Msg(msg) => {
+                println!("main::event {:?}", msg);
+                match msg {
+                    StatusBarMessage::Clock { current_time } => {
+                        //println!("StatusBarMessage::Clock {:?}", current_time);
+                        let _ = window_tx_3.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Clock { current_time }),
+                        });
+                    }
+                    StatusBarMessage::Wireless { status } => {
+                        let _ = window_tx_3.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Wireless { status }),
+                        });
+                    }
+                    StatusBarMessage::Bluetooth { status } => {
+                        let _ = window_tx_3.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Bluetooth { status }),
+                        });
+                    }
+                    StatusBarMessage::Battery { level, status } => {
+                        let _ = window_tx_3.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Battery { level, status }),
+                        });
+                    }
+                    StatusBarMessage::Window { title, activated } => {}
+                }
+            }
+            calloop::channel::Event::Closed => {}
+        };
+    });
+    init_services(greeter_msg_rx, settings, app_channel2, status_bar_channel);
 
     loop {
         event_loop
@@ -353,6 +364,7 @@ fn init_services(
     greeter_msg_rx: mpsc::Receiver<LoginHandlerMessage>,
     settings: GreeterSettings,
     app_channel: Sender<AppMessage>,
+    status_bar_channel: Sender<StatusBarMessage>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
@@ -363,10 +375,10 @@ fn init_services(
 
         let login_f = run_login_handler(greeter_msg_rx, app_channel.clone());
         let time_format = settings.modules.clock.format.clone();
-        let clock_f = run_clock_handler(time_format, app_channel.clone());
-        let wireless_f = run_wireless_handler(app_channel.clone());
-        let bluetooth_f = run_bluetooth_handler(app_channel.clone());
-        let battery_f = run_battery_handler(app_channel.clone());
+        let clock_f = run_clock_handler(time_format, status_bar_channel.clone());
+        let wireless_f = run_wireless_handler(status_bar_channel.clone());
+        let bluetooth_f = run_bluetooth_handler(status_bar_channel.clone());
+        let battery_f = run_battery_handler(status_bar_channel.clone());
 
         runtime
             .block_on(runtime.spawn(async move {
@@ -387,22 +399,22 @@ async fn run_login_handler(
     let _ = login_handler.unwrap().run(msg_rx, app_channel_tx).await;
 }
 
-async fn run_clock_handler(time_format: String, app_channel: Sender<AppMessage>) {
-    let mut clock_service_handle = ClockServiceHandle::new(app_channel);
+async fn run_clock_handler(time_format: String, status_bar_channel: Sender<StatusBarMessage>) {
+    let mut clock_service_handle = ClockServiceHandle::new(status_bar_channel);
     clock_service_handle.run(time_format).await;
 }
 
-async fn run_wireless_handler(app_channel: Sender<AppMessage>) {
-    let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
+async fn run_wireless_handler(status_bar_channel: Sender<StatusBarMessage>) {
+    let mut wireless_service_handle = WirelessServiceHandle::new(status_bar_channel);
     wireless_service_handle.run().await;
 }
 
-async fn run_bluetooth_handler(app_channel: Sender<AppMessage>) {
-    let mut bluetooth_service_handle = BluetoothServiceHandle::new(app_channel);
+async fn run_bluetooth_handler(status_bar_channel: Sender<StatusBarMessage>) {
+    let mut bluetooth_service_handle = BluetoothServiceHandle::new(status_bar_channel);
     bluetooth_service_handle.run().await;
 }
 
-async fn run_battery_handler(app_channel: Sender<AppMessage>) {
-    let mut battery_service_handle = BatteryServiceHandle::new(app_channel);
+async fn run_battery_handler(status_bar_channel: Sender<StatusBarMessage>) {
+    let mut battery_service_handle = BatteryServiceHandle::new(status_bar_channel);
     battery_service_handle.run().await;
 }

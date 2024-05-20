@@ -1,10 +1,8 @@
 mod errors;
 mod event_handler;
 mod gui;
-mod modules;
 mod settings;
 mod theme;
-mod types;
 
 use gui::StatusBar;
 use mctk_core::{
@@ -22,7 +20,7 @@ use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
 use mctk_smithay::WindowOptions;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
-use modules::{
+use mechanix_status_bar_components::modules::{
     battery::{
         component::{get_battery_icons_charging_map, get_battery_icons_map},
         handler::BatteryServiceHandle,
@@ -31,26 +29,23 @@ use modules::{
     clock::handler::ClockServiceHandle,
     wireless::{component::get_wireless_icons_map, handler::WirelessServiceHandle},
 };
-use modules::{bluetooth::handler::BluetoothServiceHandle, window::handler::WindowServiceHandle};
+use mechanix_status_bar_components::modules::{
+    bluetooth::handler::BluetoothServiceHandle, window::handler::WindowServiceHandle,
+};
+use mechanix_status_bar_components::StatusBarMessage;
 use std::time::Duration;
 use std::{collections::HashMap, fmt};
 use tracing_subscriber::EnvFilter;
 
+use mechanix_status_bar_components::types::{BatteryStatus, BluetoothStatus, WirelessStatus};
 use settings::StatusBarSettings;
 use std::thread::{self, JoinHandle};
 use tokio::runtime::Builder;
-use types::{BatteryStatus, BluetoothStatus, WirelessStatus};
 
 use crate::gui::Message;
 
-#[derive(Debug)]
-pub enum AppMessage {
-    Clock { current_time: String },
-    Window { title: String, activated: bool },
-    Wireless { status: WirelessStatus },
-    Bluetooth { status: BluetoothStatus },
-    Battery { level: u8, status: BatteryStatus },
-}
+#[derive(Debug, Clone)]
+pub struct AppMessage {}
 
 // Layer Surface App
 fn main() -> anyhow::Result<()> {
@@ -117,7 +112,7 @@ fn main() -> anyhow::Result<()> {
         namespace,
     };
 
-    let (app_channel, app_receiver) = calloop::channel::channel();
+    let (status_bar_channel, status_bar_receiver) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<StatusBar, AppMessage>(
         LayerWindowParams {
             window_info,
@@ -134,32 +129,32 @@ fn main() -> anyhow::Result<()> {
     let handle = event_loop.handle();
     let window_tx_2 = window_tx.clone();
 
-    let _ = handle.insert_source(app_receiver, move |event, _, _| {
+    let _ = handle.insert_source(status_bar_receiver, move |event, _, _| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
             calloop::channel::Event::Msg(msg) => match msg {
-                AppMessage::Clock { current_time } => {
-                    //println!("AppMessage::Clock {:?}", current_time);
+                StatusBarMessage::Clock { current_time } => {
+                    //println!("StatusBarMessage::Clock {:?}", current_time);
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::Clock { current_time }),
                     });
                 }
-                AppMessage::Window { title, activated } => {
+                StatusBarMessage::Window { title, activated } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::Window { title, activated }),
                     });
                 }
-                AppMessage::Wireless { status } => {
+                StatusBarMessage::Wireless { status } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::Wireless { status }),
                     });
                 }
-                AppMessage::Bluetooth { status } => {
+                StatusBarMessage::Bluetooth { status } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::Bluetooth { status }),
                     });
                 }
-                AppMessage::Battery { level, status } => {
+                StatusBarMessage::Battery { level, status } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::Battery { level, status }),
                     });
@@ -171,7 +166,7 @@ fn main() -> anyhow::Result<()> {
         };
     });
 
-    init_services(settings.clone(), app_channel);
+    init_services(settings.clone(), status_bar_channel);
 
     loop {
         event_loop
@@ -183,7 +178,10 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn init_services(settings: StatusBarSettings, app_channel: Sender<AppMessage>) -> JoinHandle<()> {
+fn init_services(
+    settings: StatusBarSettings,
+    status_bar_channel: Sender<StatusBarMessage>,
+) -> JoinHandle<()> {
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
             .worker_threads(1)
@@ -192,11 +190,11 @@ fn init_services(settings: StatusBarSettings, app_channel: Sender<AppMessage>) -
             .unwrap();
 
         let time_format = settings.modules.clock.format.clone();
-        let clock_f = run_clock_handler(time_format, app_channel.clone());
-        let window_f = run_window_handler(app_channel.clone());
-        let wireless_f = run_wireless_handler(app_channel.clone());
-        let bluetooth_f = run_bluetooth_handler(app_channel.clone());
-        let battery_f = run_battery_handler(app_channel.clone());
+        let clock_f = run_clock_handler(time_format, status_bar_channel.clone());
+        let window_f = run_window_handler(status_bar_channel.clone());
+        let wireless_f = run_wireless_handler(status_bar_channel.clone());
+        let bluetooth_f = run_bluetooth_handler(status_bar_channel.clone());
+        let battery_f = run_battery_handler(status_bar_channel.clone());
 
         runtime
             .block_on(runtime.spawn(async move {
@@ -206,27 +204,27 @@ fn init_services(settings: StatusBarSettings, app_channel: Sender<AppMessage>) -
     })
 }
 
-async fn run_clock_handler(time_format: String, app_channel: Sender<AppMessage>) {
-    let mut clock_service_handle = ClockServiceHandle::new(app_channel);
+async fn run_clock_handler(time_format: String, status_bar_channel: Sender<StatusBarMessage>) {
+    let mut clock_service_handle = ClockServiceHandle::new(status_bar_channel);
     clock_service_handle.run(time_format).await;
 }
 
-async fn run_window_handler(app_channel: Sender<AppMessage>) {
-    let mut window_service_handle = WindowServiceHandle::new(app_channel);
+async fn run_window_handler(status_bar_channel: Sender<StatusBarMessage>) {
+    let mut window_service_handle = WindowServiceHandle::new(status_bar_channel);
     window_service_handle.run().await;
 }
 
-async fn run_wireless_handler(app_channel: Sender<AppMessage>) {
-    let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
+async fn run_wireless_handler(status_bar_channel: Sender<StatusBarMessage>) {
+    let mut wireless_service_handle = WirelessServiceHandle::new(status_bar_channel);
     wireless_service_handle.run().await;
 }
 
-async fn run_bluetooth_handler(app_channel: Sender<AppMessage>) {
-    let mut bluetooth_service_handle = BluetoothServiceHandle::new(app_channel);
+async fn run_bluetooth_handler(status_bar_channel: Sender<StatusBarMessage>) {
+    let mut bluetooth_service_handle = BluetoothServiceHandle::new(status_bar_channel);
     bluetooth_service_handle.run().await;
 }
 
-async fn run_battery_handler(app_channel: Sender<AppMessage>) {
-    let mut battery_service_handle = BatteryServiceHandle::new(app_channel);
+async fn run_battery_handler(status_bar_channel: Sender<StatusBarMessage>) {
+    let mut battery_service_handle = BatteryServiceHandle::new(status_bar_channel);
     battery_service_handle.run().await;
 }

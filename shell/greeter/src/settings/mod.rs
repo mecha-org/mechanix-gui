@@ -1,6 +1,13 @@
 use crate::errors::{GreeterError, GreeterErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
+use mechanix_status_bar_components::settings::Battery;
+use mechanix_status_bar_components::settings::BatteryIconPaths;
+use mechanix_status_bar_components::settings::Bluetooth;
+use mechanix_status_bar_components::settings::BluetoothIconPaths;
+use mechanix_status_bar_components::settings::Clock;
+use mechanix_status_bar_components::settings::Wireless;
+use mechanix_status_bar_components::settings::WirelessIconPaths;
 use serde::{Deserialize, Serialize};
 use std::{env, fs::File, path::PathBuf};
 use tracing::{debug, info};
@@ -194,68 +201,6 @@ pub struct UnPeekPasswordModule {
     pub icon: DefaultIconPaths,
 }
 
-/// Clock module
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct ClockModule {
-    pub format: String,
-}
-
-/// Bluetooth module
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct BluetoothModule {
-    pub icon: BluetoothIconPaths,
-}
-
-/// Wireless module
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct WirelessModule {
-    pub icon: WirelessIconPaths,
-}
-
-/// Battery module
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct BatteryModule {
-    pub icon: BatteryIconPaths,
-    pub charging_icon: BatteryIconPaths,
-}
-
-/// Icon paths for bluetooth module
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct BluetoothIconPaths {
-    pub on: Option<String>,
-    pub off: Option<String>,
-    pub connected: Option<String>,
-    pub not_found: Option<String>,
-}
-
-/// Icon paths for wireless module
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct WirelessIconPaths {
-    pub off: Option<String>,
-    pub on: Option<String>,
-    pub low: Option<String>,
-    pub weak: Option<String>,
-    pub good: Option<String>,
-    pub strong: Option<String>,
-    pub not_found: Option<String>,
-}
-/// Icon paths for battery module
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct BatteryIconPaths {
-    pub level_100: Option<String>,
-    pub level_90: Option<String>,
-    pub level_80: Option<String>,
-    pub level_70: Option<String>,
-    pub level_60: Option<String>,
-    pub level_50: Option<String>,
-    pub level_40: Option<String>,
-    pub level_30: Option<String>,
-    pub level_20: Option<String>,
-    pub level_10: Option<String>,
-    pub level_0: Option<String>,
-    pub not_found: Option<String>,
-}
-
 /// # Modules
 ///
 /// Options that will be visible in Greeter
@@ -279,10 +224,10 @@ pub struct Modules {
     pub show: ShowModule,
     pub hide: HideModule,
     pub background: BackgroundModule,
-    pub clock: ClockModule,
-    pub bluetooth: BluetoothModule,
-    pub wireless: WirelessModule,
-    pub battery: BatteryModule,
+    pub clock: Clock,
+    pub bluetooth: Bluetooth,
+    pub wireless: Wireless,
+    pub battery: Battery,
 }
 
 impl Default for WindowSettings {
@@ -362,10 +307,10 @@ impl Default for Modules {
             background: BackgroundModule {
                 icon: DefaultIconPaths { default: None },
             },
-            clock: ClockModule {
+            clock: Clock {
                 format: "[hour repr:12]:[minute] [period]".to_string(),
             },
-            bluetooth: BluetoothModule {
+            bluetooth: Bluetooth {
                 icon: BluetoothIconPaths {
                     on: None,
                     off: None,
@@ -373,7 +318,7 @@ impl Default for Modules {
                     not_found: None,
                 },
             },
-            wireless: WirelessModule {
+            wireless: Wireless {
                 icon: WirelessIconPaths {
                     off: None,
                     on: None,
@@ -384,7 +329,7 @@ impl Default for Modules {
                     not_found: None,
                 },
             },
-            battery: BatteryModule {
+            battery: Battery {
                 icon: BatteryIconPaths {
                     level_100: None,
                     level_90: None,
