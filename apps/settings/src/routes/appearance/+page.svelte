@@ -50,7 +50,7 @@
 								<img
 									alt={image.name}
 									src={image.src}
-									class={`rounded-xl ${selectedImage.key === image.key ? 'h-[120px] w-[120px] border-2 border-primary' : 'h-[120px] w-[120px] border-2 border-[#2A2A2C]'}  transition-all duration-100 ease-in-out`}
+									class={`rounded-xl ${selectedImage.key === image.key ? 'border-primary h-[120px] w-[120px] border-2' : 'h-[120px] w-[120px] border-2 border-[#2A2A2C]'}  transition-all duration-100 ease-in-out`}
 								/>
 								<p
 									class={`text-base font-medium ${selectedImage.key === image.key ? 'text-[#DBDDE1]' : 'text-[#858586]'}`}
@@ -66,14 +66,14 @@
 		<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 			<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 				<button
-					class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-md bg-[#15171D] p-2 text-[#FAFBFC]"
+					class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 					on:click={goBack}
 				>
 					<Icons name="right_arrow" width="32" height="32" />
 				</button>
 				<button
-					class="flex h-[48px] w-[48px] items-center justify-center rounded-md bg-[#15171D] p-2 text-primary"
-					on:click={() => applyTheme(modes.apply)}
+					class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+					on:click={goBack}
 				>
 					<Icons name="export" width="32" height="32" />
 				</button>
