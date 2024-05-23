@@ -1,5 +1,5 @@
 <script lang="ts">
-	export let title;
+	export let title:string = "";
 </script>
 
 <header class="z-10 flex h-[80px] items-center bg-[#05070A]">

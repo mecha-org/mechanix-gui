@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListBlock from '$lib/components/list-block.svelte';
@@ -6,11 +6,49 @@
 	import ListItem from '$lib/components/list-item.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import { goBack } from '$lib/services/common-services';
+	import { invoke } from '@tauri-apps/api'; 
+	import { onMount } from 'svelte';
+	import { bluetooth_status } from '$lib/stores';
+
+	let bluetooth_data: any;
+	let available_devices: any[];
+	$: checked = false;
+
+	const check_bluetooth_data = async () => {
+		console.log('check_bluetooth_data called...');
+		try {
+			let response = await invoke('get_bluetooth_status');
+			console.log('response: ', response);
+			bluetooth_data = response;
+
+			if (bluetooth_data.status == 1) {
+				checked = bluetooth_data.status == 1;
+				available_devices = bluetooth_data.available_devices;
+
+				bluetooth_status.set(bluetooth_data.status);
+				bluetooth_status.subscribe((value) =>{
+					checked = value
+				})
+			}
+
+		} catch (error) {
+			console.error('check_bluetooth_data error : ', error);
+		}
+	};
+
+	onMount(() => {
+		check_bluetooth_data();
+	});
+
+	// setInterval(() => {
+	// 	check_bluetooth_data();
+	// }, 20000);
+	
 </script>
 
 <Layout title="Bluetooth">
 	<ListItem isLink title="Enable bluetooth">
-		<Switch />
+		<Switch bind:checked />
 	</ListItem>
 	<div class="mt-10">
 		<ListHeading title="Available devices" />

@@ -6,6 +6,9 @@
 	import { Button } from '$lib/components/ui/button';
 
 	import { goBack } from '$lib/services/common-services';
+	import { bluetooth_status } from '$lib/stores';
+
+	console.log("bluetooth_status: ", $bluetooth_status);
 
 	/** @type {import('./$types').PageData} */
 	export let data;
