@@ -16,7 +16,10 @@ pub async fn get_bluetooth_status() -> Result<BluetoothData, Error> {
     println!("get_bluetooth_status....");
     let bluetooth_on = match client::BluetoothService::status().await {
         Ok(v) => v,
-        Err(e) => return Err(Error::Other(e.to_string())),
+        Err(e) => {
+            println!("bluetooth bluetooth_on error {:?} ", e);
+            return Err(Error::Other(e.to_string()))
+        },
     };
 
     if bluetooth_on == 0 {
@@ -28,7 +31,10 @@ pub async fn get_bluetooth_status() -> Result<BluetoothData, Error> {
 
     let scan_response = match client::BluetoothService::scan().await {
         Ok(v) => v,
-        Err(e) => return Err(Error::Other(e.to_string())),
+        Err(e) => {
+            println!("bluetooth scan_response error {:?} ", e);
+            return Err(Error::Other(e.to_string()))
+        },
     };
 
     println!("scan_response {:?}", scan_response);
@@ -48,7 +54,7 @@ pub async fn get_bluetooth_status() -> Result<BluetoothData, Error> {
 
 
 #[tauri::command]
-async fn update_enable_bluetooth() -> Result<(), Error> {
+pub async fn update_enable_bluetooth() -> Result<(), Error> {
     println!("update_enable_bluetooth called....");
     match client::BluetoothService::enable_bluetooth().await {
         Ok(result) => {
@@ -56,14 +62,14 @@ async fn update_enable_bluetooth() -> Result<(), Error> {
             Ok(())
         },
         Err(e) => {
-            println!("CHECK ERROR: {:?}", e);
+            println!("CHECK enable_bluetooth ERROR: {:?}", e);
             Err(Error::Other(e.to_string()))
         }
     }
 }
 
 #[tauri::command]
-async fn update_disable_bluetooth() -> Result<(), Error> {
+pub async fn update_disable_bluetooth() -> Result<(), Error> {
     println!("update_disable_bluetooth called....");
     match client::BluetoothService::disable_bluetooth().await {
         Ok(result) => {
@@ -71,7 +77,7 @@ async fn update_disable_bluetooth() -> Result<(), Error> {
             Ok(())
         },
         Err(e) => {
-            println!("CHECK ERROR: {:?}", e);
+            println!("CHECK disable_bluetooth ERROR: {:?}", e);
             Err(Error::Other(e.to_string()))
         }
     }

@@ -6,12 +6,11 @@
 	import { Button } from '$lib/components/ui/button';
 
 	import { goBack } from '$lib/services/common-services';
-	import { bluetooth_status } from '$lib/stores';
-
-	console.log("bluetooth_status: ", $bluetooth_status);
+	import { bluetooth_store } from '$lib/stores';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
+	console.log("Device page data: ", data);
 </script>
 
 <Layout title={data.title}>

@@ -1,14 +1,9 @@
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tracing::info;
 use zbus::{proxy, zvariant::{ DeserializeDict, SerializeDict, Type}, Connection, Result};
 
-use tauri::{
-    plugin::{Builder, TauriPlugin},
-    Runtime,
-  };
-
-#[derive(DeserializeDict, SerializeDict, Debug, Type, Clone, Default)]
+#[derive(DeserializeDict, Debug, Type, Clone, Default, Serialize)]
 #[zvariant(signature = "a{sv}")]
 pub struct BluetoothScanResponse {
     pub address: String,
@@ -56,22 +51,18 @@ impl BluetoothService {
     pub async fn enable_bluetooth() -> Result<()> {
         info!("In bluetooth enable status call:: ");
         let connection = Connection::system().await?;
-
         let proxy = BluetoothProxy::new(&connection).await?;
-
         let reply =  proxy.enable().await?;
-        info!("enable_bluetooth reply: {:?}", reply);
+        println!("enable_bluetooth reply: {:?}", reply);
         Ok(reply)
     }
 
     pub async fn disable_bluetooth() -> Result<()> {
         info!("In bluetooth disable status call:: ");
         let connection = Connection::system().await?;
-
         let proxy = BluetoothProxy::new(&connection).await?;
-
         let reply =  proxy.disable().await?;
-        info!("disable_bluetooth reply: {:?}", reply);
+        println!("disable_bluetooth reply: {:?}", reply);
         Ok(reply)
     }
 
