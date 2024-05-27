@@ -14,8 +14,10 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             modules::bluetooth::get_bluetooth_status,
+            modules::bluetooth::scan_bluetooth,
             modules::bluetooth::update_enable_bluetooth,
             modules::bluetooth::update_disable_bluetooth,
+            modules::bluetooth::add_bluetooth_device,
             exit_app
         ])
         .run(tauri::generate_context!())
