@@ -18,7 +18,7 @@ pub struct BluetoothScanResponse {
 }
 
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, Default)]
+#[derive(DeserializeDict, Type, Debug, Clone, Default, Serialize)]
 #[zvariant(signature = "a{sv}")]
 pub struct BluetoothScanListResponse {
     pub bluetooth_devices: Vec<BluetoothScanResponse>,

@@ -15,8 +15,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             modules::bluetooth::get_bluetooth_status,
             modules::bluetooth::scan_bluetooth,
-            modules::bluetooth::update_enable_bluetooth,
-            modules::bluetooth::update_disable_bluetooth,
+            modules::bluetooth::enable_bluetooth,
+            modules::bluetooth::disable_bluetooth,
             modules::bluetooth::connect_bluetooth_device,
             modules::bluetooth::disconnect_bluetooth_device,
             exit_app
