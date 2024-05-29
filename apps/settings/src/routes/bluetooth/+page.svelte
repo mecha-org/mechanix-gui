@@ -8,147 +8,81 @@
 	import { goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api';
 	import { onDestroy, onMount } from 'svelte';
-	import { bluetoothStore, checkUpdate } from '$lib/stores';
+	import { bluetoothStatus, disableBluetoothSwitch, fetchingBluetoothStatus, fetchingAvailableDevices, fetchingOtherDevices, availableDevicesList, otherDevicesList } from '$lib/stores/bluetoothStore';
+	import { fetchAvailableDevices, fetchBluetoothStatus , type BluetoothScanResponse} from '$lib/services/bluetooth-services';
 
-	console.log('STORE: ', $checkUpdate);
-
-	let bluetooth_status: boolean = $bluetoothStore?.bluetooth_status || false;
-	let available_devices: any[] = $bluetoothStore?.available_devices || [];
-	let paired_devices: any[] = $bluetoothStore?.paired_devices || [];
-
-	$: isStatusLoading = false;
-	$: isScanLoading =  false;
-
-	const check_bluetooth_data = async () => {
-		console.log('check_bluetooth_data called...');
-		isStatusLoading = true;
+	const getInitalData = async () => {
+		console.log('page::bluetooth::getInitalData()');
 		try {
-			let response: any = await invoke('get_bluetooth_status');
-			isStatusLoading = false;
-			bluetooth_status = response; // for switch
-
-			bluetoothStore.set({
-				bluetooth_status: response
-			});
-			console.log('status response: ', response );
+			let response = await fetchBluetoothStatus();
+			fetchingBluetoothStatus.set(false);
+			if (response) {
+				fetchAvailableDevices();
+				fetchingAvailableDevices.set(false);
+				fetchingOtherDevices.set(false);
+			}  
 		} catch (error) {
-			isStatusLoading = false;
-			console.error('check_bluetooth_data error : ', error);
+			console.error('page::bluetooth::getInitalData()::error:::: ', error);
 		}
 	};
 
-	// later: separate available vs paired device api
-	const scan_bluetooth = async () => {
-		isScanLoading= true;
-		try {
-			let response: any = await invoke('scan_bluetooth');
-			console.log('scan_bluetooth response: ', response);
-			isScanLoading = false;
+	onMount(() => {
+		getInitalData();
+	});
 
-			if (response.length > 0) {
-				available_devices = response.filter((item: any) => {
-					return item.is_paired || item.is_trusted;
-				});
-				paired_devices = response.filter((item: any) => {
-					return !item.is_paired;
-				});
-
-				bluetoothStore.set({
-					bluetooth_status: bluetooth_status,
-					available_devices: available_devices,
-					paired_devices: paired_devices
-				});
-
-				console.log('devices: ', { available_devices, paired_devices });
-			}
-		} catch (error) {
-			isScanLoading = false;
-			console.error('scan_bluetooth error : ', error);
-		}
-	};
-
-	// let unsubscribe = bluetoothStore.subscribe((value: any) => {
-	// 	console.log('mount un-subscribe here: ', value);
-	// });
-	// onDestroy(unsubscribe);
-
-	const update_data = async () => {
-		if (bluetooth_status || paired_devices.length == 0) {
-			await check_bluetooth_data();
-			await scan_bluetooth();
-		}
-	};
+	onDestroy(() => {
+		console.log("ON DESTROY")
+	});
 
 	// setInterval(async () => {
 	// 	await update_data();
 	// }, 15000);
 
-	onMount(async () => {
-		if (Object.keys($bluetoothStore).length == 0 || $checkUpdate) {
-			await update_data();
-		} else {
-			bluetooth_status = $bluetoothStore.bluetooth_status!;
-			available_devices = $bluetoothStore.available_devices!;
-			paired_devices = $bluetoothStore.paired_devices!;
-		}
-	});
-
-	const disable_bluetooth = async () => {
+	const onBluetoothStatusChangeHandler = async (flag: boolean) => {
 		try {
-			let response = await invoke('update_disable_bluetooth');
-			console.log('disable_bluetooth response: ', response);
-			available_devices = [];
-			paired_devices = [];
-
-			bluetoothStore.set({
-				bluetooth_status: false,
-				available_devices: available_devices,
-				paired_devices: paired_devices
-			});
+			disableBluetoothSwitch.set(true);
+			if (flag) {
+				const response: boolean = await invoke('enable_bluetooth');
+				disableBluetoothSwitch.set(false);
+				bluetoothStatus.set(response);
+				if (response) {
+					fetchAvailableDevices();
+				}
+			} else {
+				const response = await invoke('disable_bluetooth');
+				if (response) {
+					availableDevicesList.set([] as BluetoothScanResponse[]);
+					otherDevicesList.set([] as BluetoothScanResponse[]);
+				}
+				disableBluetoothSwitch.set(false);
+			}
 		} catch (error) {
-			console.error('disable_bluetooth error : ', error);
+			console.error('page::bluetooth::onBluetoothStatusChangeHandler()::error:::', error);
 		}
 	};
 
-	const enable_bluetooth = async () => {
-		try {
-			let response = await invoke('update_enable_bluetooth');
-			console.log('enable_bluetooth response: ', response);
-			bluetooth_status = true;
-			update_data();
-		} catch (error) {
-			console.error('enable_bluetooth error : ', error);
-		}
-	};
-
-	const handleChange = async (e: boolean) => {
-		console.log('handleChange :: ', e);
-		if (e == true) {
-			enable_bluetooth();
-		} else {
-			disable_bluetooth();
-		}
-	};
 </script>
 
 <Layout title="Bluetooth">
 	<ListItem isLink title="Enable bluetooth">
-		{#if isStatusLoading}
+		{#if $fetchingBluetoothStatus}
 			<div class="flex animate-spin flex-row items-center gap-2">
 				<Icons name="spinner" height="30px" width="30px" />
 			</div>
 		{:else}
-			<Switch bind:checked={bluetooth_status} onCheckedChange={handleChange} />
+			<Switch bind:checked={$bluetoothStatus} 
+			onCheckedChange={onBluetoothStatusChangeHandler} 
+			disabled={$disableBluetoothSwitch}/>
 		{/if}
 	</ListItem>
 	<div class="mt-10">
-		{#if available_devices.length > 0 || isScanLoading}
+		{#if $availableDevicesList.length > 0 || $fetchingAvailableDevices}
 			<ListHeading title="Available devices" />
 		{/if}
 
-		{#if available_devices.length > 0}
+		{#if $availableDevicesList.length > 0}
 			<div class="flex flex-col gap-4">
-				{#each available_devices as available_device}
+				{#each $availableDevicesList as available_device}
 					<ListItem
 						isLink
 						href={`/bluetooth/${available_device?.name?.trim().replace(/\s+/g, '-')}?address=${available_device?.address}`}
@@ -164,21 +98,21 @@
 					</ListItem>
 				{/each}
 			</div>
-		{:else if isScanLoading && available_devices.length == 0}
+		{:else if $availableDevicesList.length == 0 && $fetchingAvailableDevices}
 			<ListItem
 				isLink={false}
 				isSelected={false}
-				isLoading={isScanLoading}
+				isLoading={$fetchingAvailableDevices}
 				href={`/bluetooth/other-device/searching-paired-devices`}
-				title={isScanLoading ? 'Searching available devices' : 'No Device Found'}
+				title={$fetchingAvailableDevices ? 'Searching available devices' : 'No Device Found'}
 			></ListItem>
 		{/if}
 	</div>
 	<div class="mt-10">
 		<ListHeading title="Paired devices" />
-		{#if paired_devices.length > 0}
+		{#if $otherDevicesList.length > 0}
 			<div class="flex flex-col gap-4">
-				{#each paired_devices as other_device}
+				{#each $otherDevicesList as other_device}
 					<ListItem
 						isLink
 						href={`/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}?address=${other_device?.address}`}
@@ -190,9 +124,9 @@
 			<ListItem
 				isLink={false}
 				isSelected={false}
-				isLoading={isScanLoading}
+				isLoading={$fetchingOtherDevices}
 				href={`/bluetooth/other-device/searching-paired-devices`}
-				title={isScanLoading ? 'Searching paired devices' : 'No Device Found'}
+				title={$fetchingOtherDevices ? 'Searching paired devices' : 'No Device Found'}
 			></ListItem>
 		{/if}
 	</div>

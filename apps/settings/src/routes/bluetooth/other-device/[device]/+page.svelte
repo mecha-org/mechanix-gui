@@ -5,37 +5,24 @@
 	import ListItem from '$lib/components/list-item.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import Input from '$lib/components/ui/input/input.svelte';
+	import { addBluetoothDevice } from '$lib/services/bluetooth-services';
 
 	import { goBack } from '$lib/services/common-services';
-	import { checkUpdate } from '$lib/stores';
 	import { invoke } from '@tauri-apps/api';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
 
 	let pin = '';
-
-	// 	const connect_promise = new Promise(async (resolve, reject) => {
-	// 		const { address } = data;
-	// 		try {
-	// 			await invoke('connect_bluetooth_device', { address: address })
-	// 			resolve(true);
-	// 		} catch (error) {
-	// 			reject(error);
-	// 		}
-	// });
-
 	const handleAddDevice =  () => {
 		console.log("handleAddDevice ");
 		const { address } = data;
-		 invoke('connect_bluetooth_device', { address: address })
-			.then(() => {
-				checkUpdate.set(true);
-				goBack();
-			})
-			.catch((error: any) => {
-				console.error('forget device error: ', error);
-			});
+		try {
+			 addBluetoothDevice(address);
+			 goBack();
+		} catch (error) {
+			console.error('page::bluetooth::handleAddDevice::error:::: ', error);
+		}
 	};
 </script>
 

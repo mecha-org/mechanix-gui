@@ -4,29 +4,23 @@
 	import ListHeading from '$lib/components/list-heading.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
 	import { Button } from '$lib/components/ui/button';
+	import { forgetBluetoothDevice } from '$lib/services/bluetooth-services';
 
 	import { goBack } from '$lib/services/common-services';
-	import { checkUpdate } from '$lib/stores';
 	import { invoke } from '@tauri-apps/api';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
 
-	const handleForgetDevice = async () => {
+	const handleForgetDevice = () => {
 		console.log("handleForgetDevice ");
 		const { address } = data;
-
-		await invoke('disconnect_bluetooth_device', { address: address })
-			.then((response) => {
-				checkUpdate.set(true);
-				console.log("response: ", response);
-				goBack();
-			})
-			.catch((error: any) => {
-				console.error('disconnect device error: ', error);
-			});
-
-		
+		try {
+			forgetBluetoothDevice(address);
+			goBack();
+		} catch (error) {
+			console.error('page::bluetooth::handleForgetDevice::error:::: ', error);
+		}
 	};
 </script>
 

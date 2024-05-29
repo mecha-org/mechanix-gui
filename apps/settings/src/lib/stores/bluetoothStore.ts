@@ -1,9 +1,14 @@
 import { writable } from 'svelte/store';
 
-export interface BluetoothData {
-    bluetooth_status?: boolean,
-    available_devices?: any[],
-    paired_devices?: any[]
-}
-export const bluetoothStore = writable<BluetoothData>({} as BluetoothData);
-export const checkUpdate = writable(false); 
+import type { BluetoothScanResponse } from '$lib/services/bluetooth-services';
+
+// bluetooth page
+export const bluetoothStatus = writable(false);
+export const disableBluetoothSwitch = writable(false);
+export const fetchingBluetoothStatus = writable(true);
+
+export const fetchingAvailableDevices = writable(true);
+export const fetchingOtherDevices = writable(true);
+
+export const availableDevicesList = writable<BluetoothScanResponse[]>([] as BluetoothScanResponse[]);
+export const otherDevicesList = writable<BluetoothScanResponse[]>([] as BluetoothScanResponse[]);
