@@ -188,9 +188,13 @@ async fn main() -> anyhow::Result<()> {
 
     loop {
         event_loop.dispatch(None, &mut app).unwrap();
+
+        if app.is_exited {
+            break;
+        }
     }
     //End
-
+    println!("lock screen exited");
     Ok(())
 }
 

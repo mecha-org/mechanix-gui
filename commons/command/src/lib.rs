@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::process::{Child, Command};
 
 use anyhow::{bail, Result};
 
@@ -27,7 +27,7 @@ pub fn execute_command(command: String, args: Vec<String>) -> Result<bool> {
     Ok(true)
 }
 
-pub fn spawn_command(command: String, args: Vec<String>) -> Result<bool> {
+pub fn spawn_command(command: String, args: Vec<String>) -> Result<Child> {
     println!("spawning command {:?} args {:?}", command, args);
     let child = match Command::new(command).args(args).spawn() {
         Ok(output) => output,
@@ -39,5 +39,5 @@ pub fn spawn_command(command: String, args: Vec<String>) -> Result<bool> {
         }
     };
 
-    Ok(true)
+    Ok(child)
 }

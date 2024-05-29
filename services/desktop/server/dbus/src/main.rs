@@ -1,23 +1,29 @@
+use std::thread::{self, JoinHandle};
+
 use anyhow::Result;
 use interfaces::{sound_event_notification_stream, PowerBusInterface, SoundBusInterface};
-use tokio::task::JoinHandle;
+use session::SessionHandler;
+use tokio::runtime::Builder;
 use zbus::connection;
-mod config;
 mod interfaces;
-
-use config::read_configs_yml;
+use mechanix_desktop_settings::{
+    idle_notify::IdleNotifySettings, read_settings_yml, DesktopServerSettings,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = match read_configs_yml() {
-        Ok(config) => config,
+    let settings = match read_settings_yml() {
+        Ok(s) => {
+            println!("settings read successfully");
+            s
+        }
         Err(e) => {
-            eprintln!("Error reading configs: {}", e);
-            std::process::exit(1);
+            println!("error while reading settings.yml {:?}", e);
+            DesktopServerSettings::default()
         }
     };
 
-    let mut handles: Vec<JoinHandle<()>> = Vec::new();
+    let mut handles: Vec<tokio::task::JoinHandle<()>> = Vec::new();
 
     let sound_bus = SoundBusInterface {};
     let _sound_bus_connection = connection::Builder::session()?
@@ -42,6 +48,11 @@ async fn main() -> Result<()> {
         .await?;
 
     handles.push(sound_handle);
+    let session_handler = SessionHandler::new(settings);
+    let session_handle = tokio::spawn(async move {
+        session_handler.run().await;
+    });
+    handles.push(session_handle);
 
     for handle in handles {
         handle.await?;

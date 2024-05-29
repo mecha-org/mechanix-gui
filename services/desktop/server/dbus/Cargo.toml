@@ -18,6 +18,8 @@ anyhow.workspace = true
 zbus = { version = "4.1.2", features = ["tokio"] }
 mechanix-sound-ctl = { path = "../../../ctl/sound" }
 mechanix-power-ctl = { path = "../../../ctl/power" }
+mechanix-desktop-settings = { path = "../settings" }
+session = { path = "../handlers/session" }
 serde.workspace = true
 tracing.workspace = true
 serde_yaml = "0.9.25"

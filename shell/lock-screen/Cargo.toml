@@ -27,6 +27,7 @@ mechanix_system_dbus_client = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }
 mechanix_status_bar_components = { workspace = true }
+logind = { workspace = true } 
 
 [package.metadata.deb]
 name = "mechanix-lock-screen"

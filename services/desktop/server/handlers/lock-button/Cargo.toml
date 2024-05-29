@@ -1,0 +1,22 @@
+[package]
+name = "lock_button"
+description = "Idle timeout service for Mechanix desktop sevices"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mechanix_system_dbus_client = { workspace = true }
+futures-util = { workspace = true }
+logind = { workspace = true }
+anyhow = { workspace = true }
+command = { workspace = true }
+tokio = { workspace = true }
+mechanix-desktop-settings = { path = "../../settings" }

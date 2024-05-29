@@ -5,6 +5,7 @@ use crate::pages::pin::Pin;
 use crate::settings::{self, LockScreenSettings};
 use crate::theme::{self, LockScreenTheme};
 use crate::AppMessage;
+use logind::session_unlock;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -186,7 +187,7 @@ impl Component for LockScreen {
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
-        println!("App was sent: {:?}", message.downcast_ref::<Message>());
+        // println!("App was sent: {:?}", message.downcast_ref::<Message>());
         match message.downcast_ref::<Message>() {
             Some(Message::UnlockPressed) => {
                 println!("unlock pressed");
@@ -214,7 +215,7 @@ impl Component for LockScreen {
                 }
             }
             Some(Message::PinKeyClicked(pin_key)) => {
-                println!("pin key clicked {:?}", pin_key);
+                // println!("pin key clicked {:?}", pin_key);
                 match pin_key {
                     PinKey::Text { key } => {
                         let updated_pin = [self.state_ref().pin.clone(), key.to_string()].join("");
@@ -273,10 +274,15 @@ impl RootComponent<AppMessage> for LockScreen {
 }
 
 fn unlock(session_lock_sender_op: Option<Sender<SessionLockMessage>>) -> anyhow::Result<bool> {
+    println!("Gui::unlock()");
     if let Some(session_lock_sender) = session_lock_sender_op {
-        let _ = session_lock_sender.send(SessionLockMessage::Unlock);
+        futures::executor::block_on(async {
+            let _ = session_unlock().await;
+        });
+        if let Ok(_) = session_lock_sender.send(SessionLockMessage::Unlock) {
+            return Ok(true);
+        };
         // std::process::exit(0);
-        return Ok(true);
     }
 
     Ok(false)

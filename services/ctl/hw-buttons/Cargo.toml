@@ -1,0 +1,18 @@
+[package]
+name = "mechanix-hw-buttons"
+description = "Hardware buttons controller for Mechanix services"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+tokio.workspace = true
+evdev.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+zbus.workspace = true
