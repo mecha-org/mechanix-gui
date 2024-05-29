@@ -11,6 +11,12 @@ pub enum WirelessNetworkErrorCodes {
     UnableToGetWirelessNetworkStatus,
     UnableToRemoveWirelessNetwork,
     Unknown,
+    WrongPsk,
+    PendingSelect,
+    NotFound,
+    InvalidNetworkId,
+    Timeout,
+    AlreadyConnected,
 }
 
 impl std::fmt::Display for WirelessNetworkErrorCodes {
@@ -37,6 +43,12 @@ impl std::fmt::Display for WirelessNetworkErrorCodes {
             WirelessNetworkErrorCodes::UnableToRemoveWirelessNetwork => {
                 write!(f, "UnableToRemoveWirelessNetwork")
             }
+            WirelessNetworkErrorCodes::WrongPsk => write!(f, "WrongPsk"),
+            WirelessNetworkErrorCodes::PendingSelect => write!(f, "PendingSelect"),
+            WirelessNetworkErrorCodes::NotFound => write!(f, "NotFound"),
+            WirelessNetworkErrorCodes::InvalidNetworkId => write!(f, "InvalidNetworkId"),
+            WirelessNetworkErrorCodes::Timeout => write!(f, "Timeout"),
+            WirelessNetworkErrorCodes::AlreadyConnected => write!(f, "AlreadyConnected"),
             WirelessNetworkErrorCodes::Unknown => write!(f, "Unknown"),
         }
     }
