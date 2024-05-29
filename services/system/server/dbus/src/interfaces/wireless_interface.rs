@@ -47,7 +47,7 @@ pub struct KnownNetworkListResponse {
     pub known_network: Vec<KnownNetworkResponse>,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, PartialEq)]
 /// A wireless notification event.
 #[zvariant(signature = "a{sv}")]
 pub struct WirelessNotificationEvent {
@@ -305,55 +305,85 @@ pub async fn wireless_event_notification_stream(
     conn: &zbus::Connection,
 ) -> Result<(), ZbusError> {
     let mut interval = time::interval(Duration::from_secs(5));
-    let wireless = WirelessNetworkControl::new(&wireless_path);
+    let mut previous_is_enabled: Option<bool> = None;
+    let mut previous_is_connected: Option<bool> = None;
+    let mut previous_signal_strength: Option<String> = None;
+    let mut previous_frequency: Option<String> = None;
+    let mut previous_ssid: Option<String> = None;
+    let wireless = WirelessNetworkControl::new(wireless_path.as_str());
 
-    let signal_ctxt = SignalContext::new(conn, "/org/mechanix/services/Wireless")?;
+    let status = wireless.status().await;
+    if !status {
+        let event = WirelessNotificationEvent {
+            signal_strength: "".to_string(),
+            is_connected: false,
+            is_enabled: true,
+            frequency: "".to_string(),
+            ssid: "".to_string(),
+        };
+
+        let ctxt = SignalContext::new(conn, "/org/mechanix/services/Wireless")?;
+        wireless_bus.notification(&ctxt, event).await?;
+    }
 
     loop {
         interval.tick().await;
 
+        // Check if WiFi is enabled
         let is_enabled = wireless.status().await;
 
-        println!("WiFi is enabled: {}", is_enabled);
-
-        if is_enabled {
-            let event = match timeout(Duration::from_secs(5), wireless.info()).await {
-                Ok(Ok(wifi_info)) => {
-                    println!("wifi info : {:?}", wifi_info);
-                    WirelessNotificationEvent {
-                        signal_strength: wifi_info.signal.to_string(),
-                        is_connected: true,
-                        is_enabled: true,
-                        frequency: wifi_info.frequency,
-                        ssid: wifi_info.name,
-                    }
+        // Initialize variables
+        let (is_connected, signal_strength, ssid, frequency) = if is_enabled {
+            // If WiFi is enabled, check if it's connected and get signal strength, SSID, and frequency
+            match timeout(Duration::from_secs(5), wireless.info()).await {
+                Ok(Ok(info)) => (
+                    true,
+                    info.signal.clone().to_string(),
+                    info.name.clone(),
+                    info.frequency.clone(),
+                ),
+                Ok(Err(e)) => {
+                    eprintln!("Error fetching wireless info: {:?}", anyhow::anyhow!(e));
+                    continue; // Skip this iteration if there's an error
+                },
+                Err(_) => {
+                    eprintln!("Timeout when fetching wireless info");
+                    continue; // Skip this iteration if there's a timeout
                 }
-                Ok(Err(_)) | Err(_) => {
-                    println!("Failed to get WiFi info or timeout, sending empty details");
-                    WirelessNotificationEvent {
-                        signal_strength: "".to_string(),
-                        is_connected: false,
-                        is_enabled: true,
-                        frequency: "".to_string(),
-                        ssid: "".to_string(),
-                    }
-                }
-            };
-
-            println!("inside if loop");
-            wireless_bus.notification(&signal_ctxt, event).await?;
+            }
         } else {
-            let event = WirelessNotificationEvent {
-                signal_strength: "".to_string(),
-                is_connected: false,
-                is_enabled: false,
-                frequency: "".to_string(),
-                ssid: "".to_string(),
-            };
+            // If WiFi is not enabled, set all values to indicate disconnected status
+            (false, "".to_string(), "".to_string(), "".to_string())
+        };
 
-            println!("inside else loop");
+        // Trigger notification if any value has changed
+        if previous_is_enabled != Some(is_enabled)
+            || previous_is_connected != Some(is_connected)
+            || previous_signal_strength != Some(signal_strength.clone()) // Clone for comparison
+            || previous_ssid != Some(ssid.clone()) // Clone for comparison
+            || previous_frequency != Some(frequency.clone())
+        // Clone for comparison
+        {
+            let ctxt = SignalContext::new(conn, "/org/mechanix/services/Wireless")?;
+            wireless_bus
+                .notification(
+                    &ctxt,
+                    WirelessNotificationEvent {
+                        signal_strength: signal_strength.clone(), // Clone here
+                        is_connected,
+                        is_enabled,
+                        ssid: ssid.clone(),           // Clone here
+                        frequency: frequency.clone(), // Clone here
+                    },
+                )
+                .await?;
 
-            wireless_bus.notification(&signal_ctxt, event).await?;
+            // Update previous values
+            previous_is_enabled = Some(is_enabled);
+            previous_is_connected = Some(is_connected);
+            previous_signal_strength = Some(signal_strength);
+            previous_ssid = Some(ssid);
+            previous_frequency = Some(frequency);
         }
     }
 }
