@@ -1,6 +1,28 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
+import { fetchAvaialbleNetworks, type WirelessInfoResponse } from '$lib/services/network-services';
+import { availableNetworksList } from '$lib/stores/networkStore';
 export const load: PageLoad = ({ params }) => {
+
+
+	const {network} = params;
+
+	fetchAvaialbleNetworks();
+
+	let networkDetailList:WirelessInfoResponse[] = []; 
+
+	availableNetworksList.subscribe((value)=>{
+		networkDetailList=value;
+	});
+	
+	const selectedNetworkDetails = networkDetailList.find((item)=>item.name == network);
+
+	if(!selectedNetworkDetails){
+		return error(404, 'Not found');
+	}
+
+
+
 	const networkDetail = [
 		[
 			{
@@ -9,18 +31,18 @@ export const load: PageLoad = ({ params }) => {
 			},
 			{
 				title: 'Wi-Fi Address',
-				value: 'A#WELKJEFLK'
+				value: selectedNetworkDetails?.frequency
 			}
 		],
 		[
 			{
 				title: 'Network SSID',
-				value: 'Action Linksys'
+				value: selectedNetworkDetails?.name
 			}
 		]
 	];
 	if (params.network) {
-		return { title: params.network, networkDetail: networkDetail };
+		return { title:  selectedNetworkDetails?.name, networkDetail: networkDetail };
 	}
 	error(404, 'Not found');
 };
