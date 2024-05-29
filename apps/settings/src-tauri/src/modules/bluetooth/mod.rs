@@ -111,15 +111,30 @@ pub async fn update_disable_bluetooth() -> Result<(), Error> {
 }
 
 #[tauri::command]
-pub async fn add_bluetooth_device(address: &str) -> Result<(), Error> {
-    println!("add_bluetooth_device called.... {:?}", address.to_owned());
+pub async fn connect_bluetooth_device(address: &str) -> Result<(), Error> {
+    println!("connect_bluetooth_device called.... {:?}", address.to_owned());
     match client::BluetoothService::connect(address).await {
         Ok(result) => {
-            println!("RESULT add_bluetooth_device: {:?}", result);
+            println!("RESULT connect_bluetooth_device: {:?}", result);
             Ok(())
         },
         Err(e) => {
-            println!("CHECK add_bluetooth_device ERROR: {:?}", e);
+            println!("CHECK connect_bluetooth_device ERROR: {:?}", e);
+            Err(Error::Other(e.to_string()))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn disconnect_bluetooth_device(address: &str) -> Result<(), Error> {
+    println!("disconnect_bluetooth_device called.... {:?}", address.to_owned());
+    match client::BluetoothService::disconnect(&address).await {
+        Ok(result) => {
+            println!("RESULT disconnect_bluetooth_device: {:?}", result);
+            Ok(())
+        },
+        Err(e) => {
+            println!("CHECK disconnect_bluetooth_device ERROR: {:?}", e);
             Err(Error::Other(e.to_string()))
         }
     }

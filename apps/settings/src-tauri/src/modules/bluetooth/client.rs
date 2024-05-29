@@ -36,6 +36,7 @@ trait Bluetooth {
     async fn disable(&self) -> Result<()>;
     async fn status(&self) -> Result<i8>;
     async fn connect(&self, address: &str) -> Result<()>;
+    async fn disconnect(&self, address: &str) -> Result<()>;
 }
 
 pub struct BluetoothService; 
@@ -80,6 +81,14 @@ impl BluetoothService {
         let proxy = BluetoothProxy::new(&connection).await?;
         let reply =  proxy.connect(address).await?;
         println!("connect reply: {:?}", reply);
+        Ok(reply)
+    }
+
+    pub async fn disconnect(address: &str) -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = BluetoothProxy::new(&connection).await?;
+        let reply =  proxy.disconnect(address).await?;
+        println!("disconnect reply: {:?}", reply);
         Ok(reply)
     }
 

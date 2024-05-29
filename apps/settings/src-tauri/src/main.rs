@@ -17,7 +17,8 @@ fn main() {
             modules::bluetooth::scan_bluetooth,
             modules::bluetooth::update_enable_bluetooth,
             modules::bluetooth::update_disable_bluetooth,
-            modules::bluetooth::add_bluetooth_device,
+            modules::bluetooth::connect_bluetooth_device,
+            modules::bluetooth::disconnect_bluetooth_device,
             exit_app
         ])
         .run(tauri::generate_context!())

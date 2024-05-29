@@ -8,16 +8,16 @@
 	import { goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api';
 	import { onDestroy, onMount } from 'svelte';
-	import { bluetoothStore } from '$lib/stores';
+	import { bluetoothStore, checkUpdate } from '$lib/stores';
 
+	console.log('STORE: ', $checkUpdate);
 
-	let bluetooth_status: boolean = false;
-	let available_devices: any[] = [] || $bluetoothStore.available_devices;
-	let paired_devices: any[] = [];
+	let bluetooth_status: boolean = $bluetoothStore?.bluetooth_status || false;
+	let available_devices: any[] = $bluetoothStore?.available_devices || [];
+	let paired_devices: any[] = $bluetoothStore?.paired_devices || [];
 
 	$: isStatusLoading = false;
-	$: isScanLoading = false;
-	$: checked = false; 
+	$: isScanLoading =  false;
 
 	const check_bluetooth_data = async () => {
 		console.log('check_bluetooth_data called...');
@@ -25,13 +25,12 @@
 		try {
 			let response: any = await invoke('get_bluetooth_status');
 			isStatusLoading = false;
-			checked = response == 1 ?? false;  // for switch
-			bluetooth_status = response;       // for store
+			bluetooth_status = response; // for switch
 
 			bluetoothStore.set({
-				bluetooth_status: response,
+				bluetooth_status: response
 			});
-			console.log('response: ', { response, checked });
+			console.log('status response: ', response );
 		} catch (error) {
 			isStatusLoading = false;
 			console.error('check_bluetooth_data error : ', error);
@@ -40,11 +39,10 @@
 
 	// later: separate available vs paired device api
 	const scan_bluetooth = async () => {
-		console.log('scan_bluetooth called...');
-		isScanLoading = true;
+		isScanLoading= true;
 		try {
 			let response: any = await invoke('scan_bluetooth');
-			console.log('response: ', response);
+			console.log('scan_bluetooth response: ', response);
 			isScanLoading = false;
 
 			if (response.length > 0) {
@@ -54,7 +52,6 @@
 				paired_devices = response.filter((item: any) => {
 					return !item.is_paired;
 				});
-
 
 				bluetoothStore.set({
 					bluetooth_status: bluetooth_status,
@@ -70,32 +67,26 @@
 		}
 	};
 
-	let unsubscribe = bluetoothStore.subscribe((value: any) => {
-		console.log("mount un-subscribe here: ", value);
-	});
-	onDestroy(unsubscribe);
+	// let unsubscribe = bluetoothStore.subscribe((value: any) => {
+	// 	console.log('mount un-subscribe here: ', value);
+	// });
+	// onDestroy(unsubscribe);
 
-
-	const update_data = async() => {
-		if(bluetooth_status || paired_devices.length == 0) {
+	const update_data = async () => {
+		if (bluetooth_status || paired_devices.length == 0) {
 			await check_bluetooth_data();
 			await scan_bluetooth();
 		}
 	};
 
-	setInterval(async () => {
-		update_data();
-	}, 15000);
+	// setInterval(async () => {
+	// 	await update_data();
+	// }, 15000);
 
 	onMount(async () => {
-
-		console.log("onMount: ", $bluetoothStore);
-		console.log("onMount checkkk: ", Object.keys($bluetoothStore).length);
-
-		if (Object.keys($bluetoothStore).length == 0) {
-            update_data();
-        }
-		else {
+		if (Object.keys($bluetoothStore).length == 0 || $checkUpdate) {
+			await update_data();
+		} else {
 			bluetooth_status = $bluetoothStore.bluetooth_status!;
 			available_devices = $bluetoothStore.available_devices!;
 			paired_devices = $bluetoothStore.paired_devices!;
@@ -110,11 +101,10 @@
 			paired_devices = [];
 
 			bluetoothStore.set({
-					bluetooth_status: false,
-					available_devices: available_devices,
-					paired_devices: paired_devices
-				});
-
+				bluetooth_status: false,
+				available_devices: available_devices,
+				paired_devices: paired_devices
+			});
 		} catch (error) {
 			console.error('disable_bluetooth error : ', error);
 		}
@@ -134,16 +124,11 @@
 	const handleChange = async (e: boolean) => {
 		console.log('handleChange :: ', e);
 		if (e == true) {
-			console.log('ENABLE BLUETOOTH!!!');
 			enable_bluetooth();
 		} else {
-			console.log('DISABLE BLUETOOTH!!!');
 			disable_bluetooth();
 		}
 	};
-
-
-
 </script>
 
 <Layout title="Bluetooth">
@@ -153,7 +138,6 @@
 				<Icons name="spinner" height="30px" width="30px" />
 			</div>
 		{:else}
-			<!-- <Switch bind:checked /> -->
 			<Switch bind:checked={bluetooth_status} onCheckedChange={handleChange} />
 		{/if}
 	</ListItem>
@@ -164,11 +148,18 @@
 
 		{#if available_devices.length > 0}
 			<div class="flex flex-col gap-4">
-				{#each available_devices as { name, is_trusted }}
-					<ListItem isLink href={`/bluetooth/${name?.trim().replace(/\s+/g, '-')}`} title={name}>
+				{#each available_devices as available_device}
+					<ListItem
+						isLink
+						href={`/bluetooth/${available_device?.name?.trim().replace(/\s+/g, '-')}?address=${available_device?.address}`}
+						title={available_device?.name}
+						isSelected={available_device?.is_trusted ?? false}
+					>
 						<div class="flex flex-row items-center gap-4">
-							<Icons name="blue_checked" height="30px" width="30px" />
-							{#if is_trusted}<Icons name="right_arrow" height="30px" width="30px" />{/if}
+							{#if available_device?.is_trusted}
+								<Icons name="blue_checked" height="30px" width="30px" />
+							{/if}
+							<Icons name="right_arrow" height="30px" width="30px" />
 						</div>
 					</ListItem>
 				{/each}
@@ -190,7 +181,7 @@
 				{#each paired_devices as other_device}
 					<ListItem
 						isLink
-						href={`/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}`}
+						href={`/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}?address=${other_device?.address}`}
 						title={other_device?.name}
 					></ListItem>
 				{/each}
@@ -208,13 +199,13 @@
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="addition" width="32" height="32" />

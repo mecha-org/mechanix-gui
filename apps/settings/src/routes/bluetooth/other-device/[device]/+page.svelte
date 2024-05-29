@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListHeading from '$lib/components/list-heading.svelte';
@@ -7,28 +7,56 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 
 	import { goBack } from '$lib/services/common-services';
+	import { checkUpdate } from '$lib/stores';
+	import { invoke } from '@tauri-apps/api';
 
 	/** @type {import('./$types').PageData} */
 	export let data;
+
+	let pin = '';
+
+	// 	const connect_promise = new Promise(async (resolve, reject) => {
+	// 		const { address } = data;
+	// 		try {
+	// 			await invoke('connect_bluetooth_device', { address: address })
+	// 			resolve(true);
+	// 		} catch (error) {
+	// 			reject(error);
+	// 		}
+	// });
+
+	const handleAddDevice =  () => {
+		console.log("handleAddDevice ");
+		const { address } = data;
+		 invoke('connect_bluetooth_device', { address: address })
+			.then(() => {
+				checkUpdate.set(true);
+				goBack();
+			})
+			.catch((error: any) => {
+				console.error('forget device error: ', error);
+			});
+	};
 </script>
 
 <Layout title={`Pair with ${data.title}`}>
 	<div>
 		<ListHeading title={`Enter code shared by the device here`} />
-		<Input placeholder="Type here" />
+		<Input placeholder="Type here" bind:value={pin} maxlength={6} />
+		<!-- <Input placeholder="Type here" bind:value={data?.details?.address} /> -->
 	</div>
 
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
-				on:click={goBack}
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				on:click={handleAddDevice}
 			>
 				<Icons name="addition" width="32" height="32" />
 			</button>

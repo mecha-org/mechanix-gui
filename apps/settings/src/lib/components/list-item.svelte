@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { setContext } from 'svelte';
 	import Icons from './icons.svelte';
 	export let title;
 	export let href = '';

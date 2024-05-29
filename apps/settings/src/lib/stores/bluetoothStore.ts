@@ -6,3 +6,4 @@ export interface BluetoothData {
     paired_devices?: any[]
 }
 export const bluetoothStore = writable<BluetoothData>({} as BluetoothData);
+export const checkUpdate = writable(false); 
