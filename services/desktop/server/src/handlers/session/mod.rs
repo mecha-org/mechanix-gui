@@ -1,19 +1,17 @@
-use std::process;
-
 use anyhow::Result;
 use command::spawn_command;
-use events::SessionEvents;
 use futures::StreamExt;
-use idle_notify::IdleNotifyHandlerClient;
-use lock_button::LockButtonHandler;
 use logind::{
     get_current_session,
     session::{self, SessionProxy},
     session_unlock,
 };
-use mechanix_desktop_settings::DesktopServerSettings;
-use tokio::{process::Command, select, spawn, sync::mpsc};
-use zbus::zvariant::{OwnedFd, SerializeDict};
+use tokio::{select, spawn};
+
+use crate::{
+    handlers::{idle_notify::IdleNotifyHandlerClient, lock_button::LockButtonHandler},
+    settings::DesktopServerSettings,
+};
 
 pub struct SessionHandler {
     is_session_locked: bool,

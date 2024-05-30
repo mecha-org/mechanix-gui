@@ -19,6 +19,7 @@ use mctk_core::{
     Node,
 };
 use mctk_smithay::session_lock::lock_window::{SessionLockMessage, SessionLockWindow};
+use mechanix_desktop_dbus_client::security::Security;
 use mechanix_status_bar_components::get_formatted_battery_level;
 use mechanix_status_bar_components::gui::CommonStatusBar;
 use mechanix_status_bar_components::types::{
@@ -214,33 +215,43 @@ impl Component for LockScreen {
                     }
                 }
             }
-            Some(Message::PinKeyClicked(pin_key)) => {
-                // println!("pin key clicked {:?}", pin_key);
-                match pin_key {
-                    PinKey::Text { key } => {
-                        let updated_pin = [self.state_ref().pin.clone(), key.to_string()].join("");
-                        self.state_mut().pin = updated_pin.clone();
+            Some(Message::PinKeyClicked(pin_key)) => match pin_key {
+                PinKey::Text { key } => {
+                    let updated_pin = [self.state_ref().pin.clone(), key.to_string()].join("");
+                    self.state_mut().pin = updated_pin.clone();
 
-                        if updated_pin.len() == MAX_PIN_LENGTH {
-                            let is_pin_correct = updated_pin == "0000";
+                    if updated_pin.len() == MAX_PIN_LENGTH {
+                        futures::executor::block_on(async {
+                            let auth_r = Security::authenticate(updated_pin).await;
+
+                            if let Err(e) = auth_r {
+                                println!("Auth error: {:?}", e);
+                                return;
+                            }
+
+                            let is_pin_correct = auth_r.unwrap();
+
+                            println!("is_pin_correct {:?}", is_pin_correct);
+
                             if is_pin_correct {
+                                let _ = session_unlock().await;
                                 let _ = unlock(self.state_ref().session_lock_sender.clone());
                             }
-                        };
-                    }
-                    PinKey::Home => {
-                        self.state_mut().current_route = Routes::Unlock;
-                        self.state_mut().pin = String::new();
-                    }
-                    PinKey::Backspace => {
-                        let mut pin = self.state_ref().pin.clone();
-                        if pin.len() > 0 {
-                            pin.pop();
-                            self.state_mut().pin = pin;
-                        }
+                        });
+                    };
+                }
+                PinKey::Home => {
+                    self.state_mut().current_route = Routes::Unlock;
+                    self.state_mut().pin = String::new();
+                }
+                PinKey::Backspace => {
+                    let mut pin = self.state_ref().pin.clone();
+                    if pin.len() > 0 {
+                        pin.pop();
+                        self.state_mut().pin = pin;
                     }
                 }
-            }
+            },
             Some(Message::ChangeRoute(route)) => {
                 println!("change route ");
                 self.state_mut().current_route = *route;
@@ -276,9 +287,6 @@ impl RootComponent<AppMessage> for LockScreen {
 fn unlock(session_lock_sender_op: Option<Sender<SessionLockMessage>>) -> anyhow::Result<bool> {
     println!("Gui::unlock()");
     if let Some(session_lock_sender) = session_lock_sender_op {
-        futures::executor::block_on(async {
-            let _ = session_unlock().await;
-        });
         if let Ok(_) = session_lock_sender.send(SessionLockMessage::Unlock) {
             return Ok(true);
         };

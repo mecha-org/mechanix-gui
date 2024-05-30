@@ -4,11 +4,12 @@ use std::{
 };
 
 use logind::session_lock;
-use mechanix_desktop_settings::idle_notify::{IdleNotifySettings, Periods};
 use mechanix_system_dbus_client::display::Display;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use wayland_protocols_async::ext_idle_notify_v1::handler::{IdleNotifyEvent, IdleNotifyHandler};
+
+use crate::settings::idle_notify::IdleNotifySettings;
 #[derive(Debug, Clone, Copy)]
 pub enum NotifyEvents {
     Display,

@@ -1,16 +1,18 @@
 use anyhow::Result;
 use command::spawn_command;
 use futures_util::stream::StreamExt;
-use mechanix_desktop_settings::home_button::HomeButtonSettings;
+use logind::session_lock;
 use mechanix_system_dbus_client::hardware_buttons::{HwButton, Key, KeyEvent};
 use std::time::Instant;
 
-pub struct HomeButtonHandler {
+use crate::settings::lock_button::LockButtonSettings;
+
+pub struct LockButtonHandler {
     pressed_at: Option<Instant>,
-    configs: HomeButtonSettings,
+    configs: LockButtonSettings,
 }
-impl HomeButtonHandler {
-    pub fn new(configs: HomeButtonSettings) -> Self {
+impl LockButtonHandler {
+    pub fn new(configs: LockButtonSettings) -> Self {
         Self {
             pressed_at: None,
             configs,
@@ -19,23 +21,23 @@ impl HomeButtonHandler {
 
     pub async fn run(mut self) {
         if let Ok(mut stream) =
-            HwButton::get_notification_stream("/org/mechanix/services/HwButton/Home".to_string())
+            HwButton::get_notification_stream("/org/mechanix/services/HwButton/Power".to_string())
                 .await
         {
             while let Some(signal) = stream.next().await {
                 if let Ok(args) = signal.args() {
                     let event = args.event;
-                    // println!("HomeButtonHandler::run() event is {:?}", event);
+                    // println!("LockButtonHandler::run() event is {:?}", event);
                     match event {
-                        KeyEvent::Pressed(Key::Home) => {
+                        KeyEvent::Pressed(Key::Power) => {
                             self.pressed_at = Some(Instant::now());
                         }
-                        KeyEvent::Released(Key::Home) => {
-                            let home_button_pressed_for =
+                        KeyEvent::Released(Key::Power) => {
+                            let power_button_pressed_for =
                                 (Instant::now() - self.pressed_at.unwrap()).as_secs();
-                            println!("home button pressed for {:?}", home_button_pressed_for);
+                            println!("power button pressed for {:?}", power_button_pressed_for);
                             let is_long_press =
-                                home_button_pressed_for >= self.configs.min_time_long_press;
+                                power_button_pressed_for >= self.configs.min_time_long_press;
                             println!("is_long_press {:?}", is_long_press);
                             self.pressed_at = None;
 
@@ -44,10 +46,10 @@ impl HomeButtonHandler {
 
                             if is_long_press {
                                 let _ =
-                                    app_switcher(self.configs.run_commands.app_switcher.clone())
+                                    power_options(self.configs.run_commands.power_options.clone())
                                         .await;
                             } else {
-                                let _ = minimize_all();
+                                let _ = session_lock().await;
                             }
                         }
                         _ => {}
@@ -58,7 +60,7 @@ impl HomeButtonHandler {
     }
 }
 
-async fn app_switcher(run_command: String) -> Result<bool> {
+async fn power_options(run_command: String) -> Result<bool> {
     let _ = tokio::spawn(async move {
         if !run_command.is_empty() {
             let mut args: Vec<String> = vec!["-c".to_string()];
@@ -70,5 +72,3 @@ async fn app_switcher(run_command: String) -> Result<bool> {
     .await;
     Ok(true)
 }
-
-fn minimize_all() {}

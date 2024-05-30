@@ -155,7 +155,7 @@ pub fn read_theme_path_from_args() -> Option<String> {
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_theme_yml() -> Result<AppSwitcherTheme> {
     let mut file_path = PathBuf::from(
-        std::env::var("MECHA_APP_DOCK_THEME_PATH").unwrap_or(String::from("theme.yml")),
+        std::env::var("MECHANIX_APP_DOCK_THEME_PATH").unwrap_or(String::from("theme.yml")),
     ); // Get path of the library
 
     // read from args
