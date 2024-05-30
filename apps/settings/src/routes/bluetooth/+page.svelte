@@ -8,8 +8,19 @@
 	import { goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api';
 	import { onDestroy, onMount } from 'svelte';
-	import { bluetoothStatus, disableBluetoothSwitch, fetchingBluetoothStatus, fetchingAvailableDevices, fetchingOtherDevices, availableDevicesList, otherDevicesList } from '$lib/stores/bluetoothStore';
-	import { fetchAvailableDevices, fetchBluetoothStatus , type BluetoothScanResponse} from '$lib/services/bluetooth-services';
+	import {
+		bluetoothStatus,
+		fetchingBluetoothStatus,
+		isFetchingAvailableDevices,
+		isFetchingOtherDevices,
+		availableDevicesList,
+		otherDevicesList
+	} from '$lib/stores/bluetoothStore';
+	import {
+		fetchAvailableDevices,
+		fetchBluetoothStatus,
+		type BluetoothScanResponse
+	} from '$lib/services/bluetooth-services';
 
 	const getInitalData = async () => {
 		console.log('page::bluetooth::getInitalData()');
@@ -17,10 +28,10 @@
 			let response = await fetchBluetoothStatus();
 			fetchingBluetoothStatus.set(false);
 			if (response) {
-				fetchAvailableDevices();
-				fetchingAvailableDevices.set(false);
-				fetchingOtherDevices.set(false);
-			}  
+				await fetchAvailableDevices();
+				isFetchingAvailableDevices.set(false);
+				isFetchingOtherDevices.set(false);
+			}
 		} catch (error) {
 			console.error('page::bluetooth::getInitalData()::error:::: ', error);
 		}
@@ -31,7 +42,7 @@
 	});
 
 	onDestroy(() => {
-		console.log("ON DESTROY")
+		console.log('ON DESTROY');
 	});
 
 	// setInterval(async () => {
@@ -40,13 +51,11 @@
 
 	const onBluetoothStatusChangeHandler = async (flag: boolean) => {
 		try {
-			disableBluetoothSwitch.set(true);
 			if (flag) {
 				const response: boolean = await invoke('enable_bluetooth');
-				disableBluetoothSwitch.set(false);
 				bluetoothStatus.set(response);
 				if (response) {
-					fetchAvailableDevices();
+					await fetchAvailableDevices();
 				}
 			} else {
 				const response = await invoke('disable_bluetooth');
@@ -54,13 +63,11 @@
 					availableDevicesList.set([] as BluetoothScanResponse[]);
 					otherDevicesList.set([] as BluetoothScanResponse[]);
 				}
-				disableBluetoothSwitch.set(false);
 			}
 		} catch (error) {
 			console.error('page::bluetooth::onBluetoothStatusChangeHandler()::error:::', error);
 		}
 	};
-
 </script>
 
 <Layout title="Bluetooth">
@@ -70,18 +77,33 @@
 				<Icons name="spinner" height="30px" width="30px" />
 			</div>
 		{:else}
-			<Switch bind:checked={$bluetoothStatus} 
-			onCheckedChange={onBluetoothStatusChangeHandler} 
-			disabled={$disableBluetoothSwitch}/>
+			<Switch
+				bind:checked={$bluetoothStatus}
+				onCheckedChange={onBluetoothStatusChangeHandler}
+			/>
 		{/if}
 	</ListItem>
 	<div class="mt-10">
-		{#if $availableDevicesList.length > 0 || $fetchingAvailableDevices}
+		{#if $availableDevicesList.length > 0 || $isFetchingAvailableDevices}
 			<ListHeading title="Available devices" />
 		{/if}
-
-		{#if $availableDevicesList.length > 0}
-			<div class="flex flex-col gap-4">
+		<div class="flex flex-col gap-4">
+			<!-- <ListItem isLink href="/bluetooth/Ritika's-mecha-compute" title="Ritika's mecha compute">
+				<div class="flex flex-row items-center gap-4">
+					<Icons name="blue_checked" height="30px" width="30px" />
+					<Icons name="right_arrow" height="30px" width="30px" />
+				</div>
+			</ListItem>
+			<ListItem isLink href="/network/dns" title="Ritika's mecha compute 2"
+				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
+			> -->
+			{#if $isFetchingAvailableDevices}
+				<ListItem title="Searching available devicess">
+					<div class="flex animate-spin flex-row items-center gap-2">
+						<Icons name="spinner" height="30px" width="30px" />
+					</div>
+				</ListItem>
+			{:else}
 				{#each $availableDevicesList as available_device}
 					<ListItem
 						isLink
@@ -97,21 +119,19 @@
 						</div>
 					</ListItem>
 				{/each}
-			</div>
-		{:else if $availableDevicesList.length == 0 && $fetchingAvailableDevices}
-			<ListItem
-				isLink={false}
-				isSelected={false}
-				isLoading={$fetchingAvailableDevices}
-				href={`/bluetooth/other-device/searching-paired-devices`}
-				title={$fetchingAvailableDevices ? 'Searching available devices' : 'No Device Found'}
-			></ListItem>
-		{/if}
+			{/if}
+		</div>
 	</div>
 	<div class="mt-10">
 		<ListHeading title="Paired devices" />
-		{#if $otherDevicesList.length > 0}
-			<div class="flex flex-col gap-4">
+		<div class="flex flex-col gap-4">
+			{#if $isFetchingOtherDevices}
+				<ListItem title="Searching paired devicess">
+					<div class="flex animate-spin flex-row items-center gap-2">
+						<Icons name="spinner" height="30px" width="30px" />
+					</div>
+				</ListItem>
+			{:else if $otherDevicesList.length > 0}
 				{#each $otherDevicesList as other_device}
 					<ListItem
 						isLink
@@ -119,27 +139,26 @@
 						title={other_device?.name}
 					></ListItem>
 				{/each}
-			</div>
-		{:else}
-			<ListItem
-				isLink={false}
-				isSelected={false}
-				isLoading={$fetchingOtherDevices}
-				href={`/bluetooth/other-device/searching-paired-devices`}
-				title={$fetchingOtherDevices ? 'Searching paired devices' : 'No Device Found'}
-			></ListItem>
-		{/if}
+			{:else}
+				<ListItem
+					isLink={false}
+					isSelected={false}
+					href={`/bluetooth/other-device/searching-paired-devices`}
+					title={$isFetchingAvailableDevices ? 'Searching available devices' : 'No Device Found'}
+				/>
+			{/if}
+		</div>
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="addition" width="32" height="32" />
