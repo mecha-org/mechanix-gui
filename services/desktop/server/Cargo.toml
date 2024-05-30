@@ -15,13 +15,22 @@ keywords.workspace = true
 [dependencies]
 tokio.workspace = true
 anyhow.workspace = true
-zbus = { version = "4.1.2", features = ["tokio"] }
-mechanix-sound-ctl = { path = "../../../ctl/sound" }
-mechanix-power-ctl = { path = "../../../ctl/power" }
+zbus.workspace = true
 serde.workspace = true
+serde_yaml.workspace = true
+serde_json.workspace = true
+dotenv.workspace = true
 tracing.workspace = true
-serde_yaml = "0.9.25"
-
+mechanix-sound-ctl = { path = "../../ctl/sound" }
+mechanix-power-ctl = { path = "../../ctl/power" }
+keyring = "2.3.3"
+sha256 = "1.5.0"
+wayland-protocols-async.workspace = true
+mechanix_system_dbus_client.workspace = true
+command.workspace = true
+logind.workspace = true
+futures-util.workspace = true
+futures.workspace = true
 
 [package.metadata.deb]
 name = "mechanix_desktop_dbus_server"
@@ -29,7 +38,7 @@ depends = "$auto"
 assets = [
     # binary
     [
-        "../../../target/release/mechanix_desktop_dbus_server",
+        "../../target/release/mechanix_desktop_dbus_server",
         "/usr/bin/",
         "755",
     ],

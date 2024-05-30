@@ -17,6 +17,8 @@ trait DisplayBusInterface {
     async fn set_brightness(&self, value: u8) -> Result<()>;
     // async fn get_screen_timeout(&self) -> Result<u32>;
     // async fn set_screen_timeout(&self, value: u32) ->Result<u32>;
+    async fn set_backlight_on(&self) -> Result<()>;
+    async fn set_backlight_off(&self) -> Result<()>;
     #[zbus(signal)]
     async fn notification(&self, event: NotificationEvent) -> Result<()>;
 }
@@ -36,6 +38,20 @@ impl Display {
         let connection = Connection::system().await?;
         let proxy = DisplayBusInterfaceProxy::new(&connection).await?;
         let reply = proxy.set_brightness(value).await?;
+        Ok(())
+    }
+
+    pub async fn set_backlight_on() -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = DisplayBusInterfaceProxy::new(&connection).await?;
+        let reply = proxy.set_backlight_on().await?;
+        Ok(())
+    }
+
+    pub async fn set_backlight_off() -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = DisplayBusInterfaceProxy::new(&connection).await?;
+        let reply = proxy.set_backlight_off().await?;
         Ok(())
     }
 

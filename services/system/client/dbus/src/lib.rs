@@ -29,3 +29,9 @@ pub mod display {
     use crate::proxies;
     pub use proxies::display_proxy::{Display, NotificationStream};
 }
+
+pub mod hardware_buttons {
+    use crate::proxies;
+    pub use mechanix_system_dbus_server::{Key, KeyEvent};
+    pub use proxies::hardware_button::{HwButton, NotificationStream};
+}

@@ -12,6 +12,22 @@ pub struct BaseConfig {
 pub struct Interfaces {
     pub network: Network,
     pub display: Display,
+    pub hw_buttons: HwButtons,
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct HwButtons {
+    pub power: Power,
+    pub home: Home,
+}
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct Power {
+    pub path: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Default)]
+pub struct Home {
+    pub path: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Default)]

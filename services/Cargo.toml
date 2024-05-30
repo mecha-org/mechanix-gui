@@ -12,12 +12,13 @@ members = [
     "ctl/sound",
     "ctl/users",
     "ctl/host-metrics",
+    "ctl/hw-buttons",
     "system/server/dbus",
-    "desktop/server/dbus",
     "system/client/dbus",
     "desktop/client/dbus",
+    "desktop/server"
 ]
-default-members = ["system/server/dbus", "desktop/server/dbus"]
+default-members = ["system/server/dbus", "desktop/server"]
 
 
 [workspace.package]
@@ -48,3 +49,15 @@ tokio = { version = "1", features = ["full"] }
 tracing = "0.1.40"
 zbus = { version = "4.1.2", features = ["tokio"] }
 serde = { version = "1.0.164", features = ["derive"] }
+serde_yaml = "0.9.21"
+dotenv = "0.15.0"
+serde_json = "1.0"
+mechanix_system_dbus_client = { path = "./system/client/dbus" }
+mechanix_desktop_dbus_client = { path = "./desktop/client/dbus" }
+mechanix_desktop_dbus_server = { path = "./desktop/server" }
+command = { path = "../commons/command"}
+logind = { path = "../commons/logind"}
+futures = "0.3.30"
+evdev = { version = "0.12.2", features = ["tokio"] }
+futures-util = "0.3.30"
+wayland-protocols-async = { git = "https://github.com/mecha-org/wayland-protocols-async.git" }

@@ -1,6 +1,11 @@
 name: mecha-comet-m-gen1
 interfaces:
-   display: 
-     device: /sys/class/backlight/backlight/brightness
-   network:
+  display:
+    device: /sys/class/backlight/backlight-dsi/brightness
+  network:
     device: /var/run/wpa_supplicant/wlp2s0
+  hw_buttons:
+    power:
+      path: /dev/input/event3
+    home_button:
+      path: /dev/input/event3
