@@ -29,6 +29,7 @@ mechanix_desktop_dbus_client = { workspace = true }
 futures = { workspace = true }
 wayland-protocols-async = { workspace = true }
 command = { workspace = true }
+upower = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-settings-panel"

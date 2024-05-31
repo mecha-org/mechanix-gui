@@ -2,8 +2,9 @@ use futures::StreamExt;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::{io, str::FromStr, time::Duration};
 use tokio::time;
+use upower::BatteryStatus;
 
-use crate::{types::BatteryStatus, AppMessage, BatteryMessage};
+use crate::{AppMessage, BatteryMessage};
 
 use super::service::BatteryService;
 use tracing::{error, info};
@@ -11,21 +12,6 @@ use tracing::{error, info};
 pub struct BatteryInfo {
     level: u8,
     status: BatteryStatus,
-}
-
-impl FromStr for BatteryStatus {
-    type Err = io::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            _ if s.eq_ignore_ascii_case("Unknown") => Ok(BatteryStatus::Unknown),
-            _ if s.eq_ignore_ascii_case("Empty") => Ok(BatteryStatus::Empty),
-            _ if s.eq_ignore_ascii_case("Full") => Ok(BatteryStatus::Full),
-            _ if s.eq_ignore_ascii_case("Charging") => Ok(BatteryStatus::Charging),
-            _ if s.eq_ignore_ascii_case("Discharging") => Ok(BatteryStatus::Discharging),
-            _ => Err(io::Error::from(io::ErrorKind::InvalidData)),
-        }
-    }
 }
 
 pub struct BatteryServiceHandle {
@@ -39,11 +25,11 @@ impl BatteryServiceHandle {
 
     pub async fn run(&mut self) {
         match BatteryService::get_battery_level().await {
-            Ok((capacity, status)) => {
+            Ok((percentage, status)) => {
                 let _ = self.app_channel.send(AppMessage::Battery {
                     message: BatteryMessage::Status {
-                        level: capacity,
-                        status: BatteryStatus::from_str(status.as_ref()).unwrap(),
+                        level: percentage,
+                        status,
                     },
                 });
             }
@@ -58,29 +44,45 @@ impl BatteryServiceHandle {
             }
         };
 
-        let mut stream_res = BatteryService::get_notification_stream().await;
+        let battery_r = upower::get_battery().await;
 
-        if let Err(e) = stream_res.as_ref() {
-            error!("error while getting battery stream {}", e);
-            let _ = self.app_channel.send(AppMessage::Battery {
-                message: BatteryMessage::Status {
-                    level: 0,
-                    status: BatteryStatus::Unknown,
-                },
-            });
+        if let Err(e) = battery_r {
+            println!("Error while getting battery {:?}", e);
             return;
         }
 
-        while let Some(signal) = stream_res.as_mut().unwrap().next().await {
-            if let Ok(args) = signal.args() {
-                let event = args.event;
-                let _ = self.app_channel.send(AppMessage::Battery {
-                    message: BatteryMessage::Status {
-                        level: event.percentage as u8,
-                        status: BatteryStatus::from_str(&event.status).unwrap(),
-                    },
-                });
+        let battery = battery_r.unwrap();
+
+        let mut state_stream = battery.receive_state_changed().await;
+        let app_channel = self.app_channel.clone();
+        let battery_cloned = battery.clone();
+        let state_stream_t = tokio::spawn(async move {
+            while let Some(msg) = state_stream.next().await {
+                if let Ok(state) = msg.get().await {
+                    let status = BatteryStatus::try_from(state).unwrap();
+                    let level = battery_cloned.percentage().await.unwrap() as u8;
+                    let _ = app_channel.send(AppMessage::Battery {
+                        message: BatteryMessage::Status { level, status },
+                    });
+                };
             }
-        }
+        });
+
+        let mut percentage_stream = battery.receive_percentage_changed().await;
+        let app_channel = self.app_channel.clone();
+        let percentage_stream_t = tokio::spawn(async move {
+            while let Some(msg) = percentage_stream.next().await {
+                if let Ok(percentage) = msg.get().await {
+                    let status = BatteryStatus::try_from(battery.state().await.unwrap()).unwrap();
+                    let level = percentage as u8;
+                    let _ = app_channel.send(AppMessage::Battery {
+                        message: BatteryMessage::Status { level, status },
+                    });
+                };
+            }
+        });
+
+        state_stream_t.await.unwrap();
+        percentage_stream_t.await.unwrap();
     }
 }

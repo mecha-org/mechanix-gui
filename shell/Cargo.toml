@@ -65,3 +65,4 @@ anyhow = "1.0.79"
 tokio = { version = "1.33", features = ["full"] }
 zbus = { version = "4.1.2", features = ["tokio"] }
 logind = { path = "../commons/logind"}
+upower = { path = "../commons/upower"}

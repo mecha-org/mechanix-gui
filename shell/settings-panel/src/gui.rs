@@ -10,9 +10,7 @@ use crate::modules::sound::component::SoundComponent;
 use crate::modules::wireless::component::WirelessComponent;
 use crate::settings::{self, SettingsPanelSettings};
 use crate::theme::{self, SettingsPanelTheme};
-use crate::types::{
-    BatteryLevel, BatteryStatus, BluetoothStatus, WirelessConnectedState, WirelessStatus,
-};
+use crate::types::{BatteryLevel, BluetoothStatus, WirelessConnectedState, WirelessStatus};
 use crate::{AppMessage, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage};
 use command::spawn_command;
 use mctk_core::component::RootComponent;
@@ -27,6 +25,7 @@ use mctk_core::{
 };
 use std::any::Any;
 use std::{collections::HashMap, fmt};
+use upower::BatteryStatus;
 
 #[derive(Debug, Clone)]
 pub enum SettingNames {

@@ -1,21 +1,20 @@
-use crate::{
-    errors::StatusBarError,
-    modules::battery::errors::{BatteryServiceError, BatteryServiceErrorCodes},
-};
-
-use crate::errors::StatusBarErrorCodes::GetBatteryStatusError;
+use crate::errors::StatusBarError;
+use crate::errors::StatusBarErrorCodes::{GetBatteryError, GetBatteryStatusError};
 use anyhow::{bail, Result};
-use chrono::{Local, Timelike};
-use mechanix_system_dbus_client::power::{NotificationStream, Power};
-use tracing::{debug, error, info};
+use upower::BatteryStatus;
 
 pub struct BatteryService {}
 
 impl BatteryService {
-    pub async fn get_battery_level() -> Result<(u8, String)> {
+    pub async fn get_battery_level() -> Result<(u8, BatteryStatus)> {
         let task = "get_battery_level";
 
-        let capacity = match Power::get_battery_percentage().await {
+        let battery = match upower::get_battery().await {
+            Ok(battery) => battery,
+            Err(e) => bail!(StatusBarError::new(GetBatteryError, e.to_string(), false,)),
+        };
+
+        let percentage = match battery.percentage().await {
             Ok(p) => p,
             Err(e) => bail!(StatusBarError::new(
                 GetBatteryStatusError,
@@ -24,7 +23,7 @@ impl BatteryService {
             )),
         };
 
-        let status = match Power::get_battery_status().await {
+        let state = match battery.state().await {
             Ok(s) => s,
             Err(e) => bail!(StatusBarError::new(
                 GetBatteryStatusError,
@@ -33,11 +32,8 @@ impl BatteryService {
             )),
         };
 
-        Ok((capacity as u8, status))
-    }
+        let battery_status = BatteryStatus::try_from(state).unwrap();
 
-    pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
-        let stream = Power::get_notification_stream().await?;
-        Ok(stream)
+        Ok((percentage as u8, battery_status))
     }
 }

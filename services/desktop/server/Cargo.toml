@@ -31,6 +31,7 @@ command.workspace = true
 logind.workspace = true
 futures-util.workspace = true
 futures.workspace = true
+upower.workspace = true
 
 [package.metadata.deb]
 name = "mechanix_desktop_dbus_server"
