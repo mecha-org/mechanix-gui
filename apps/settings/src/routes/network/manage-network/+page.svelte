@@ -40,7 +40,7 @@
 
 	onMount(() => {
 		getInitalData();
-		// timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
+		timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
 	});
 
 	onDestroy(() => {
