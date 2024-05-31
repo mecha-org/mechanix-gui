@@ -11,7 +11,7 @@ use dbus::interfaces::{
 };
 use handlers::{
     session::SessionHandler,
-    shell::{home_button::HomeButtonHandler, security::SecurityHandler},
+    shell::{home_button::HomeButtonHandler, security::SecurityHandler, upower::UpowerHandler},
 };
 use settings::{read_settings_yml, DesktopServerSettings};
 use tokio::runtime::Builder;
@@ -79,6 +79,12 @@ async fn main() -> Result<()> {
         security_handler.run().await;
     });
     handles.push(security_handle);
+
+    let upower_handler = UpowerHandler::new();
+    let upower_handle = tokio::spawn(async move {
+        upower_handler.run().await;
+    });
+    handles.push(upower_handle);
 
     for handle in handles {
         handle.await?;
