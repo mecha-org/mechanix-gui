@@ -107,7 +107,7 @@
 				{#each $availableDevicesList as available_device}
 					<ListItem
 						isLink
-						href={`/bluetooth/${available_device?.name?.trim().replace(/\s+/g, '-')}?address=${available_device?.address}`}
+						href={`/bluetooth/${available_device?.name?.trim().replace(/\s+/g, '-')}?address=${available_device?.address}&type=${available_device?.icon}`}
 						title={available_device?.name}
 						isSelected={available_device?.is_trusted ?? false}
 					>

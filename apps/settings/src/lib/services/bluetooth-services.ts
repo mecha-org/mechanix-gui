@@ -1,4 +1,4 @@
-import { availableDevicesList, bluetoothStatus, otherDevicesList } from "$lib/stores/bluetoothStore";
+import { availableDevicesList, bluetoothStatus, isFetchingAvailableDevices, isFetchingOtherDevices, otherDevicesList } from "$lib/stores/bluetoothStore";
 import { invoke } from "@tauri-apps/api";
 
 
@@ -20,10 +20,14 @@ export interface BluetoothScanListResponse {
 export const fetchBluetoothStatus = async () => {
     console.log("service::bluetooth::fetchBluetoothStatus()");
     try {
-        const response: boolean = await invoke('get_bluetooth_status');
-        console.log("fetchBluetoothStatus response: ", response);
-        bluetoothStatus.set(response);
-        return response;
+        const response: number = await invoke('get_bluetooth_status');
+        const status = response == 1 ? true : false;
+        bluetoothStatus.set(status);
+        if(!status){
+            isFetchingAvailableDevices.set(false);
+            isFetchingOtherDevices.set(false);
+        }
+        return status;
     } catch (error) {
         console.error('service::bluetooth::fetchBluetoothStatus()::error:::: ', error);
         return false;
@@ -35,16 +39,16 @@ export const fetchAvailableDevices = async () => {
     console.log("service::bluetooth::fetchAvailableDevices()");
     try {
         const scan_response: BluetoothScanResponse[]  = (await invoke<BluetoothScanListResponse>('scan_bluetooth')).bluetooth_devices;
-
         let available_devices: BluetoothScanResponse[] = scan_response?.filter((item: any) => {
             return item.is_paired || item.is_trusted;
         });
         let other_devices: BluetoothScanResponse[] = scan_response.filter((item: any) => {
             return !item.is_paired;
         });
-
+    console.log("available_devices: ", {available_devices, other_devices});
         availableDevicesList.set(available_devices);
         otherDevicesList.set(other_devices);
+        return scan_response;
     } catch (error) {
         console.error('service::bluetooth::fetchAvailableDevices()::error:::: ', error);
         return [] as BluetoothScanResponse[];

@@ -5,7 +5,8 @@ export const load: PageLoad = ({ params, url }) => {
 		const modifiedTitle = params.device.split('-').join(' ');
 		return { 
 			title: modifiedTitle,
-			address: url.searchParams.get('address')
+			address: url.searchParams.get('address'),
+			type: url.searchParams.get('type')
 		 };
 	}
 	error(404, 'Not found');

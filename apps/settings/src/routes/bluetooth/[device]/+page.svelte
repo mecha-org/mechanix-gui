@@ -27,7 +27,7 @@
 <Layout title={data.title}>
 	<div>
 		<ListHeading title="Device type" />
-		<ListItem isLink title="Mecha MX" />
+		<ListItem isLink title={data?.type?.replace("-", " ")} />
 	</div>
 
 	<button
