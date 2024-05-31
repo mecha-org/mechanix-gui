@@ -3,42 +3,64 @@
 	import Layout from '$lib/components/layout.svelte';
 	import ListHeading from '$lib/components/list-heading.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
-	import { goBack } from '$lib/services/common-services';
+	import { LOG_LEVEL, consoleLog, goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { onDestroy, onMount } from 'svelte';
 	import { fetchAvaialbleNetworks, fetchKnownNetworks } from '$lib/services/network-services';
 	import {
 		availableNetworksList,
-		connectedNetwork,
 		fetchingAvailableNetworks,
 		fetchingKnownNetworks,
 		knownNetworksList
 	} from '$lib/stores/networkStore';
+	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG, SET_INTERVAL_TIMER } from '../../../constants';
+	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG + 'manage-network::';
 
+	let timeIntervalId: number;
 	const getInitalData = async () => {
-		console.log('page:::network::manage-network::getInitalData()');
+		consoleLog(LOG_PREFIX + 'getInitalData()::');
 		try {
 			fetchKnownNetworks().finally(() => {
-				fetchingKnownNetworks.set(false);
+				if (fetchingKnownNetworks) {
+					fetchingKnownNetworks.set(false);
+				}
 			});
 			fetchAvaialbleNetworks().finally(() => {
-				fetchingAvailableNetworks.set(false);
+				if (fetchingAvailableNetworks) {
+					fetchingAvailableNetworks.set(false);
+				}
 			});
 		} catch (error) {
-			console.error('page::network::manage-network::getInitalData()::error:::: ', error);
+			consoleLog(LOG_PREFIX + 'getInitalData()::' + ERROR_LOG, {
+				type: LOG_LEVEL.ERROR,
+				data: error
+			});
 		}
 	};
 
 	onMount(() => {
 		getInitalData();
-		fetchAvaialbleNetworks
+		// timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
 	});
 
-	onDestroy
-	const connectedToNetwork = (networkId: string) => async () => {
-		const response: boolean = await invoke('connect_to_known_network', { network_id: networkId });
+	onDestroy(() => {
+		clearInterval(timeIntervalId);
+	});
+
+	const connectedToNetwork = async (networkId: string) => {
+		consoleLog(LOG_PREFIX + 'connectedToNetwork()::' + networkId);
+		try {
+			const response: boolean = await invoke('connect_to_known_network', { network_id: networkId });
 		fetchKnownNetworks();
+		} catch (error) {
+			
+		}
+		
 	};
+
+	$: availableNetworksToShow = $availableNetworksList.filter(
+		(network) => !$knownNetworksList.some((i) => i.ssid == network.name)
+	);
 </script>
 
 <Layout title="Manage Network">
@@ -51,7 +73,7 @@
 						<Icons name="spinner" height="30px" width="30px" />
 					</div>
 				</ListItem>
-			{:else}
+			{:else if $knownNetworksList.length > 0}
 				{#each $knownNetworksList as item, i (item.network_id)}
 					{#if item.flags.includes('CURRENT')}
 						<ListItem
@@ -68,11 +90,13 @@
 							</div>
 						</ListItem>
 					{:else}
-						<ListItem isSelected title={item.ssid} isLink={false} handler={connectedToNetwork(item.ssid)}>
-							<div
-								class="flex flex-row items-center gap-2"
-								
-							>
+						<ListItem
+							isSelected
+							title={item.ssid}
+							isLink={false}
+							on:click={() => connectedToNetwork(item.network_id)}
+						>
+							<div class="flex flex-row items-center gap-2">
 								<Icons name="lock" height="30px" width="30px" />
 								<Icons name="network" height="30px" width="30px" />
 								<a href={`/network/manage-network/known/${item.network_id}`}>
@@ -80,9 +104,10 @@
 								</a>
 							</div>
 						</ListItem>
-						
 					{/if}
 				{/each}
+			{:else}
+				<ListItem title="No networks available"></ListItem>
 			{/if}
 		</div>
 		<div>
@@ -96,13 +121,12 @@
 								<Icons name="spinner" height="30px" width="30px" />
 							</div>
 						</ListItem>
-					{:else}
-						{#each $availableNetworksList as item, i (item.name)}
+					{:else if availableNetworksToShow.length > 0}
+						{#each availableNetworksToShow as item, i (item.name)}
 							<ListItem
 								isLink
 								href={`/network/manage-network/connect/${item.name}`}
 								title={item.name}
-								
 							>
 								<div class="flex flex-row items-center gap-2">
 									<Icons name="lock" height="30px" width="30px" />
@@ -113,6 +137,8 @@
 								</div>
 							</ListItem>
 						{/each}
+					{:else}
+						<ListItem title="No networks available"></ListItem>
 					{/if}
 				</div>
 			</div>
@@ -121,13 +147,13 @@
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
 			>
 				<Icons name="addition" width="32" height="32" />
 			</button>

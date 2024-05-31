@@ -53,11 +53,7 @@
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
-			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
-			>
-				<Icons name="addition" width="32" height="32" />
-			</button>
+		
 		</div>
 	</footer>
 </Layout>

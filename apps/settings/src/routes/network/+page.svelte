@@ -6,41 +6,52 @@
 	import ListHeading from '$lib/components/list-heading.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
-	import { goBack } from '$lib/services/common-services';
+	import { LOG_LEVEL, consoleLog, goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import {
 		wifiStatus,
 		connectedNetwork,
 		disableWifiSwitch,
 		fetchingWifiStatus
 	} from '$lib/stores/networkStore';
-	import {
-		fetchConnectedWifiInfo,
-		fetchWifiStatus,
-		type WirelessInfoResponse
-	} from '$lib/services/network-services';
-
+	import { fetchConnectedWifiInfo, fetchWifiStatus } from '$lib/services/network-services';
+	import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
+	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG, SET_INTERVAL_TIMER } from '../../constants';
+	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG;
+	
+	let timeIntervalId: number;
 	const getInitalData = async () => {
-		console.log('page::network::getInitalData()');
+		consoleLog(LOG_PREFIX + 'getInitalData()::');
 		try {
 			let response = await fetchWifiStatus();
-			fetchingWifiStatus.set(false);
+			if ($fetchingWifiStatus) {
+				fetchingWifiStatus.set(false);
+			}
 			if (response) {
 				fetchConnectedWifiInfo();
 			} else {
 				connectedNetwork.set({} as WirelessInfoResponse);
 			}
 		} catch (error) {
-			console.error('page::network::getInitalData()::error:::: ', error);
+			consoleLog(LOG_PREFIX + 'getInitalData()::' + ERROR_LOG, {
+				type: LOG_LEVEL.ERROR,
+				data: error
+			});
 		}
 	};
 
 	onMount(() => {
 		getInitalData();
+		timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
+	});
+
+	onDestroy(() => {
+		clearInterval(timeIntervalId);
 	});
 
 	const onWifiStatuChangeHandler = async (flag: boolean) => {
+		consoleLog(LOG_PREFIX + 'onWifiStatuChangeHandler()::');
 		try {
 			disableWifiSwitch.set(true);
 			if (flag) {
@@ -58,7 +69,10 @@
 				disableWifiSwitch.set(false);
 			}
 		} catch (error) {
-			console.error('page::network::onWifiStatuChangeHandler()::error:::', error);
+			consoleLog(LOG_PREFIX + 'onWifiStatuChangeHandler()::' + ERROR_LOG, {
+				type: LOG_LEVEL.ERROR,
+				data: error
+			});
 		}
 	};
 </script>

@@ -126,18 +126,35 @@ impl WirelessService {
 
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
-        let reply =  proxy.connect(ssid, password).await?;
-        println!("get performance reply: {:?}", reply);
-        Ok(())
+        // let reply =  proxy.connect(ssid, password).await?;
+
+        match proxy.connect(ssid, password).await {
+            Ok(v) => {
+                println!("Connect network");
+                println!("{:?}", v);
+                return Ok(v)},
+            Err(e) => {
+                println!("Error");
+                println!("{:?}", e);
+
+                return Err(e)
+
+            },
+        };
+
+        
     }
 
     pub async fn connect_to_known_network(network_id: &str) -> Result<()> {
 
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
-        let reply =  proxy.select_network(network_id).await?;
-        println!("get performance reply: {:?}", reply);
-        Ok(())
+        // let reply =  proxy.select_network(network_id).await?;
+        match proxy.select_network(network_id).await {
+            Ok(v) => return Ok(v),
+            Err(e) => return Err(e),
+        };
+
     }
 
     pub async fn disconnect(value: &str) -> Result<()> {

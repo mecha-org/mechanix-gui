@@ -1,4 +1,5 @@
-import type { KnownNetworkResponse, WirelessInfoResponse } from '$lib/services/network-services';
+
+import type { WirelessInfoResponse, KnownNetworkResponse } from '$lib/types/NetworkTypes';
 import { writable } from 'svelte/store';
 
 // network page

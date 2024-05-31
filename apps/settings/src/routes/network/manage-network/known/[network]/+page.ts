@@ -1,10 +1,11 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { availableNetworksList, knownNetworksList } from '$lib/stores/networkStore';
-import { fetchAvaialbleNetworks, fetchKnownNetworks, type KnownNetworkResponse, type WirelessInfoResponse } from '$lib/services/network-services';
+import { fetchAvaialbleNetworks, fetchKnownNetworks} from '$lib/services/network-services';
+import type { KnownNetworkResponse, WirelessInfoResponse } from '$lib/types/NetworkTypes';
 
 
-export const load: PageLoad = ({ params }) => {
+export const load: PageLoad = async ({ params }) => {
 
 	const {network} = params;
 
@@ -21,10 +22,10 @@ export const load: PageLoad = ({ params }) => {
 		networkDetailList=value;
 	});
 	const selectedNetwork = networkList.find((item)=>item.network_id == network);
-	console.log("selectedNetwork", knownNetworksList, selectedNetwork, network);
+	
 	const selectedNetworkDetails = networkDetailList.find((item)=>item.name == selectedNetwork?.ssid);
 
-	if(!selectedNetworkDetails){
+	if(!selectedNetwork){
 		return error(404, 'Not found');
 	}
 
@@ -68,10 +69,8 @@ export const load: PageLoad = ({ params }) => {
 	];
 
 
-
-	console.log("params", params)
 	if (params.network) {
-		return { title: selectedNetworkDetails?.name , networkDetail: displayNetworkDetail };
+		return { title: selectedNetwork?.ssid , networkDetail: displayNetworkDetail };
 	}
 	error(404, 'Not found');
 };

@@ -1,7 +1,8 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
-import { fetchAvaialbleNetworks, type WirelessInfoResponse } from '$lib/services/network-services';
+import { fetchAvaialbleNetworks } from '$lib/services/network-services';
 import { availableNetworksList } from '$lib/stores/networkStore';
+import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
 export const load: PageLoad = ({ params }) => {
 
 

@@ -1,29 +1,6 @@
 import { availableNetworksList, connectedNetwork, knownNetworksList, wifiStatus } from "$lib/stores/networkStore";
+import type { KnownNetworkListResponse, WirelessScanListResponse, WirelessInfoResponse } from "$lib/types/NetworkTypes";
 import { invoke } from "@tauri-apps/api/tauri";
-
-export interface KnownNetworkResponse {
-    network_id: string,
-    ssid: string,
-    flags: string,
-}
-export interface KnownNetworkListResponse {
-    known_network: KnownNetworkResponse[],
-}
-
-
-
-
-
-export interface WirelessInfoResponse {
-    mac: string,
-    frequency: string,
-    signal: string,
-    flags: string,
-    name: string,
-}
-export interface WirelessScanListResponse {
-    wireless_network: WirelessInfoResponse[],
-}
 
 
 export const fetchKnownNetworks = () => {
