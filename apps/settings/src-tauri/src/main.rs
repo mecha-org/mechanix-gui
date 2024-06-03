@@ -19,6 +19,8 @@ fn main() {
             modules::bluetooth::disable_bluetooth,
             modules::bluetooth::connect_bluetooth_device,
             modules::bluetooth::disconnect_bluetooth_device,
+            modules::display::get_brightness,
+            modules::display::set_brightness,
             exit_app
         ])
         .run(tauri::generate_context!())
