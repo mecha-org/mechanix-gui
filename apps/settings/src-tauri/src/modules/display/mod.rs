@@ -2,7 +2,7 @@ pub mod client;
 use crate::error::Error;
 
 #[tauri::command]
-pub async fn get_brightness() -> Result<(u8), Error> {
+pub async fn get_brightness() -> Result<u8, Error> {
     println!("get_brightness....");
     match client::Display::get_brightness_percentage().await {
         Ok(v) => {
