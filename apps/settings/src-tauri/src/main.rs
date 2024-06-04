@@ -21,6 +21,14 @@ fn main() {
             modules::bluetooth::disconnect_bluetooth_device,
             modules::display::get_brightness,
             modules::display::set_brightness,
+            modules::sound::get_input_devices,
+            modules::sound::get_output_devices,
+            modules::sound::get_output_sound_value,
+            modules::sound::set_output_sound_value,
+            modules::sound::get_input_sound_value,
+            modules::sound::set_input_sound_value,
+            modules::sound::input_device_toggle_mute,
+            modules::sound::output_device_toggle_mute,
             exit_app
         ])
         .run(tauri::generate_context!())
