@@ -19,9 +19,10 @@ chrono = { workspace = true }
 tokio = { workspace = true }
 echo_client = { workspace = true }
 zbus = { workspace = true }
-wayland-protocols-async = "1.0.0"
+wayland-protocols-async = { workspace = true }
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 mechanix_system_dbus_client = { workspace = true }
 futures-util = { workspace = true }
+upower = { workspace = true }

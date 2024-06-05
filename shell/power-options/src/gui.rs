@@ -1,5 +1,7 @@
+use crate::service::PowerOptionsService;
 use crate::settings::{self, PowerOptionsSettings};
 use crate::AppMessage;
+
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
 use mctk_core::reexports::femtovg::CompositeOperation;
@@ -13,6 +15,7 @@ use mctk_core::{
     widgets::Div, Node,
 };
 use std::any::Any;
+use std::process;
 use std::{collections::HashMap, fmt};
 
 /// ## Message
@@ -114,19 +117,13 @@ impl Component for PowerOptions {
         // println!("App was sent: {:?}", message.downcast_ref::<Message>());
         match message.downcast_ref::<Message>() {
             Some(Message::ShutdownClicked) => {
-                if let Some(app_channel) = &self.state_ref().app_channel {
-                    app_channel.send(AppMessage::PowerOff).unwrap();
-                };
+                let _ = PowerOptionsService::lock();
             }
             Some(Message::RestartClicked) => {
-                if let Some(app_channel) = &self.state_ref().app_channel {
-                    app_channel.send(AppMessage::Reboot).unwrap();
-                };
+                let _ = PowerOptionsService::restart();
             }
             Some(Message::LogoutClicked) => {
-                if let Some(app_channel) = &self.state_ref().app_channel {
-                    app_channel.send(AppMessage::Logout).unwrap();
-                };
+                let _ = PowerOptionsService::suspend();
             }
             _ => (),
         };

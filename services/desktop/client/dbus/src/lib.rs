@@ -9,3 +9,8 @@ pub mod power {
     use crate::proxies;
     pub use proxies::power_proxy::Power;
 }
+
+pub mod security {
+    use crate::proxies;
+    pub use proxies::security_proxy::Security;
+}

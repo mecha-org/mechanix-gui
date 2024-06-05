@@ -26,6 +26,7 @@ pub enum SettingsPanelErrorCodes {
     DisableWireless,
     EnableBluetooth,
     DisableBluetooth,
+    GetBatteryError,
 }
 
 impl fmt::Display for SettingsPanelErrorCodes {
@@ -51,6 +52,7 @@ impl fmt::Display for SettingsPanelErrorCodes {
             SettingsPanelErrorCodes::EnableBluetooth => write!(f, "EnableBluetooth"),
             SettingsPanelErrorCodes::DisableBluetooth => write!(f, "DisableBluetooth"),
             SettingsPanelErrorCodes::GetBatteryStatusError => write!(f, "GetBatteryStatusError"),
+            SettingsPanelErrorCodes::GetBatteryError => write!(f, "GetBatteryError"),
         }
     }
 }

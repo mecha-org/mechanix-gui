@@ -1,4 +1,5 @@
 use std::{fmt, io, str::FromStr};
+pub use upower::BatteryStatus;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum WirelessConnectedState {
@@ -44,30 +45,6 @@ impl fmt::Display for BluetoothStatus {
             BluetoothStatus::Off => write!(f, "BluetoothOff"),
             BluetoothStatus::Connected => write!(f, "BluetoothConnected"),
             BluetoothStatus::NotFound => write!(f, "BluetoothNotFound"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum BatteryStatus {
-    Unknown,
-    Charging,
-    Discharging,
-    Empty,
-    Full,
-}
-
-impl FromStr for BatteryStatus {
-    type Err = io::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            _ if s.eq_ignore_ascii_case("Unknown") => Ok(BatteryStatus::Unknown),
-            _ if s.eq_ignore_ascii_case("Empty") => Ok(BatteryStatus::Empty),
-            _ if s.eq_ignore_ascii_case("Full") => Ok(BatteryStatus::Full),
-            _ if s.eq_ignore_ascii_case("Charging") => Ok(BatteryStatus::Charging),
-            _ if s.eq_ignore_ascii_case("Discharging") => Ok(BatteryStatus::Discharging),
-            _ => Err(io::Error::from(io::ErrorKind::InvalidData)),
         }
     }
 }

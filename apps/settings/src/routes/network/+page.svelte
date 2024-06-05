@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import BlockItem from '$lib/components/block-item.svelte';
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
@@ -6,26 +6,116 @@
 	import ListHeading from '$lib/components/list-heading.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
-	import { goBack } from '$lib/services/common-services';
+	import { LOG_LEVEL, consoleLog, goBack } from '$lib/services/common-services';
+	import { invoke } from '@tauri-apps/api';
+	import { onDestroy, onMount } from 'svelte';
+	import {
+		wifiStatus,
+		connectedNetwork,
+		disableWifiSwitch,
+		fetchingWifiStatus
+	} from '$lib/stores/networkStore';
+	import { fetchConnectedWifiInfo, fetchWifiStatus } from '$lib/services/network-services';
+	import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
+	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG, SET_INTERVAL_TIMER } from '../../constants';
+	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG;
+	
+	let timeIntervalId: number;
+	const getInitalData = async () => {
+		consoleLog(LOG_PREFIX + 'getInitalData()::');
+		try {
+			let response = await fetchWifiStatus();
+			if ($fetchingWifiStatus) {
+				fetchingWifiStatus.set(false);
+			}
+			if (response) {
+				fetchConnectedWifiInfo();
+			} else {
+				connectedNetwork.set({} as WirelessInfoResponse);
+			}
+		} catch (error) {
+			consoleLog(LOG_PREFIX + 'getInitalData()::' + ERROR_LOG, {
+				type: LOG_LEVEL.ERROR,
+				data: error
+			});
+		}
+	};
+
+	onMount(() => {
+		getInitalData();
+		timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
+	});
+
+	onDestroy(() => {
+		clearInterval(timeIntervalId);
+	});
+
+	const onWifiStatuChangeHandler = async (flag: boolean) => {
+		consoleLog(LOG_PREFIX + 'onWifiStatuChangeHandler()::');
+		try {
+			disableWifiSwitch.set(true);
+			if (flag) {
+				const response: boolean = await invoke('enable_wifi');
+				disableWifiSwitch.set(false);
+				wifiStatus.set(response);
+				if (response) {
+					fetchConnectedWifiInfo();
+				}
+			} else {
+				const response = await invoke('disable_wifi');
+				if (response) {
+					connectedNetwork.set({} as WirelessInfoResponse);
+				}
+				disableWifiSwitch.set(false);
+			}
+		} catch (error) {
+			consoleLog(LOG_PREFIX + 'onWifiStatuChangeHandler()::' + ERROR_LOG, {
+				type: LOG_LEVEL.ERROR,
+				data: error
+			});
+		}
+	};
 </script>
 
 <Layout title="Network">
 	<div class="flex flex-col gap-12">
 		<div class="flex flex-col gap-4">
 			<ListBlock>
-				<BlockItem title="Enable Wireless">
-					<Switch />
+				<BlockItem title="Enable Wireless" isBottomBorderVisible={!!$connectedNetwork.name}>
+					{#if $fetchingWifiStatus}
+						<div class="flex animate-spin flex-row items-center gap-2">
+							<Icons name="spinner" height="30px" width="30px" />
+						</div>
+					{:else}
+						<Switch
+							bind:checked={$wifiStatus}
+							onCheckedChange={onWifiStatuChangeHandler}
+							disabled={$disableWifiSwitch}
+						/>
+					{/if}
 				</BlockItem>
-				<BlockItem isBottomBorderVisible={false} title="Actonate Office net1">
-					<div class="flex flex-row items-center gap-4">
-						<Icons height="30px" width="30px" name="blue_checked" />
-						<Icons height="30px" width="30px" name="right_arrow" />
-					</div>
-				</BlockItem>
+				{#if !!$connectedNetwork.name}
+					<BlockItem
+						isBottomBorderVisible={false}
+						title={$connectedNetwork.name}
+						href={`/network/manage-network/available/${$connectedNetwork.name}`}
+					>
+						<div class="flex flex-row items-center gap-4">
+							<Icons height="30px" width="30px" name="blue_checked" />
+							<Icons height="30px" width="30px" name="right_arrow" />
+						</div>
+					</BlockItem>
+				{/if}
 			</ListBlock>
-			<ListItem isLink href="/network/manage-network" title="Manage Networks"
-				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-			>
+			{#if $wifiStatus}
+				<ListItem isLink href="/network/manage-network" title="Manage Networks"
+					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
+				>
+			{:else}
+				<ListItem title="Manage Networks" isSelected={false}
+					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
+				>
+			{/if}
 			<ListItem isLink href="/network/ip-settings" title="IP Settings"
 				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
 			>
@@ -45,7 +135,7 @@
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />

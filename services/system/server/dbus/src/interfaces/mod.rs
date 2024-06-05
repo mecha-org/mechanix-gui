@@ -23,3 +23,6 @@ pub use host_metrics::{
     host_metrics_event_notification_stream, HostMetricsBusInterface, HostMetricsNotificationEvent,
     MemoryInfoResponse,
 };
+
+mod hardware_buttons;
+pub use hardware_buttons::{hw_buttons_notification_stream, HwButtonInterface};

@@ -278,7 +278,7 @@ impl Component for Greeter {
         println!("App was sent: {:?}", message.downcast_ref::<Message>());
         match message.downcast_ref::<Message>() {
             Some(Message::PinKeyClicked(pin_key)) => {
-                println!("pin key clicked {:?}", pin_key);
+                // println!("pin key clicked {:?}", pin_key);
                 match pin_key {
                     PinKey::Text { key } => {
                         let updated_pin = [self.state_ref().pin.clone(), key.to_string()].join("");

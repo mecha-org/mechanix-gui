@@ -1,0 +1,46 @@
+[package]
+name = "mechanix_desktop_dbus_server"
+description = "Zbus interface for Mechanix desktop services"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio.workspace = true
+anyhow.workspace = true
+zbus.workspace = true
+serde.workspace = true
+serde_yaml.workspace = true
+serde_json.workspace = true
+dotenv.workspace = true
+tracing.workspace = true
+mechanix-sound-ctl = { path = "../../ctl/sound" }
+mechanix-power-ctl = { path = "../../ctl/power" }
+keyring = "2.3.3"
+sha256 = "1.5.0"
+wayland-protocols-async.workspace = true
+mechanix_system_dbus_client.workspace = true
+command.workspace = true
+logind.workspace = true
+futures-util.workspace = true
+futures.workspace = true
+upower.workspace = true
+
+[package.metadata.deb]
+name = "mechanix_desktop_dbus_server"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../../target/release/mechanix_desktop_dbus_server",
+        "/usr/bin/",
+        "755",
+    ],
+]

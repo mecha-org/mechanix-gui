@@ -54,15 +54,6 @@ impl fmt::Display for BluetoothStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum BatteryStatus {
-    Unknown,
-    Charging,
-    Discharging,
-    Empty,
-    Full,
-}
-
 #[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum BatteryLevel {
     #[default]

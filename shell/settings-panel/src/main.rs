@@ -14,6 +14,7 @@ use tokio::{
     runtime::Builder,
     sync::{mpsc::Receiver, oneshot},
 };
+use upower::BatteryStatus;
 
 use gui::SettingsPanel;
 use mctk_core::{
@@ -61,7 +62,7 @@ use theme::SettingsPanelTheme;
 use tokio::sync::mpsc;
 use tracing::info;
 use tracing_subscriber::EnvFilter;
-use types::{BatteryStatus, BluetoothStatus, WirelessStatus};
+use types::{BluetoothStatus, WirelessStatus};
 
 use crate::gui::Message;
 

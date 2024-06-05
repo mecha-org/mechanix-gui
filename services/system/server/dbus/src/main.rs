@@ -6,8 +6,8 @@ mod interfaces;
 use config::read_configs_yml;
 
 use interfaces::{
-    BluetoothBusInterface, DisplayBusInterface, HostMetricsBusInterface, PowerBusInterface,
-    WirelessBusInterface,
+    hw_buttons_notification_stream, BluetoothBusInterface, DisplayBusInterface,
+    HostMetricsBusInterface, HwButtonInterface, PowerBusInterface, WirelessBusInterface,
 };
 
 use interfaces::{
@@ -109,6 +109,30 @@ async fn main() -> Result<()> {
             println!("Error in host_metrics_handle notification stream: {}", e)
         }
     });
+
+    let hw_button_bus = HwButtonInterface {};
+    let _hw_button_bus_connection = connection::Builder::system()?
+        .name("org.mechanix.services.HwButton")?
+        .serve_at("/org/mechanix/services/HwButton", hw_button_bus)?
+        .build()
+        .await?;
+    let power_button_path = config.interfaces.hw_buttons.power.path.clone();
+    let home_button_path = config.interfaces.hw_buttons.home.path.clone();
+
+    let _hw_button_handle = tokio::spawn(async move {
+        if let Err(e) = hw_buttons_notification_stream(
+            &hw_button_bus,
+            &_hw_button_bus_connection,
+            power_button_path,
+            home_button_path,
+        )
+        .await
+        {
+            println!("Error in power btn notification stream: {}", e);
+        }
+    });
+
+    handles.push(_hw_button_handle);
 
     for handle in handles {
         handle.await?;

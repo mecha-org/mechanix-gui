@@ -19,6 +19,7 @@ pub enum StatusBarErrorCodes {
     GetWirelessStatusError,
     GetBluetoothStatusError,
     GetBatteryStatusError,
+    GetBatteryError,
 }
 
 impl fmt::Display for StatusBarErrorCodes {
@@ -37,6 +38,7 @@ impl fmt::Display for StatusBarErrorCodes {
             StatusBarErrorCodes::GetWirelessStatusError => write!(f, "GetWirelessStatusError"),
             StatusBarErrorCodes::GetBluetoothStatusError => write!(f, "GetBluetoothStatusError"),
             StatusBarErrorCodes::GetBatteryStatusError => write!(f, "GetBatteryStatusError"),
+            StatusBarErrorCodes::GetBatteryError => write!(f, "GetBatteryError"),
         }
     }
 }

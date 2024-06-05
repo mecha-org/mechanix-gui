@@ -209,7 +209,7 @@ pub fn read_settings_path_from_args() -> Option<String> {
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<AppDrawerSettings> {
     let mut file_path = PathBuf::from(
-        std::env::var("MECHA_APP_DRAWER_SETTINGS_PATH").unwrap_or(String::from("settings.yml")),
+        std::env::var("MECHANIX_APP_DRAWER_SETTINGS_PATH").unwrap_or(String::from("settings.yml")),
     ); // Get path of the library
 
     // read from args

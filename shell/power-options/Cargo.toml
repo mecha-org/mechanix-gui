@@ -23,6 +23,8 @@ mctk_macros = { workspace = true }
 mechanix_system_dbus_client = { workspace = true }
 mechanix_desktop_dbus_client = { workspace = true }
 futures = { workspace = true }
+logind = { workspace = true }
+zbus = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-power-options"
