@@ -4,6 +4,7 @@
 use std::{thread::JoinHandle, time::Duration};
 
 use tauri::{Manager, Window};
+use upower::BatteryStatus;
 
 mod error;
 mod modules;
@@ -24,8 +25,6 @@ fn main() {
     tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
             modules::bluetooth::get_bluetooth_status,
-
-
             modules::wireless::get_wireless_status,
             modules::wireless::enable_wifi,
             modules::wireless::disable_wifi,
@@ -35,9 +34,6 @@ fn main() {
             modules::wireless::get_known_networks,
             modules::wireless::connect_to_network,
             modules::wireless::connect_to_known_network,
-
-
-
             modules::bluetooth::scan_bluetooth,
             modules::bluetooth::enable_bluetooth,
             modules::bluetooth::disable_bluetooth,
@@ -53,6 +49,10 @@ fn main() {
             modules::sound::set_input_sound_value,
             modules::sound::input_device_toggle_mute,
             modules::sound::output_device_toggle_mute,
+            modules::battery::get_battery_percentage,
+            modules::battery::get_avilable_performance_modes,
+            modules::battery::get_current_performance_mode,
+            modules::battery::set_performance_mode,
             exit_app
         ])
         .run(tauri::generate_context!())
