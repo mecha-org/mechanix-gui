@@ -1,20 +1,40 @@
-<script>
+<script lang="ts">
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
+	import { get_all_performance_mode, get_selected_performance_mode, set_performance_mode } from '$lib/services/battery-service';
 	import { goBack } from '$lib/services/common-services';
-	let batteryModeArr = ['Low', 'Balanced', 'High'];
-	let selectedMode = 'Low';
+	import { batteryPerformanceMode, batteryPerformanceOptions } from '$lib/stores/batteryStore';
+	import { onMount } from 'svelte';
+
+	let selectedMode = $batteryPerformanceMode ;  
+
+	const getInitalData = async () => {
+		await get_all_performance_mode();
+		await get_selected_performance_mode();
+		selectedMode = $batteryPerformanceMode;
+
+	};
+
+	const modeHandler = (mode: string) => async() => {
+		selectedMode = mode;
+	};
+
+	const submitHandler = async() => {
+		await set_performance_mode(selectedMode);
+	};
+
+	onMount(() => {
+		getInitalData();
+	});
 </script>
 
 <Layout title="Performance mode">
 	<div class="flex flex-col gap-4">
 		<div class="flex flex-col gap-4">
-			{#each batteryModeArr as mode, index}
+			{#each $batteryPerformanceOptions as mode, index}
 				<button
-					on:click={() => {
-						selectedMode = mode;
-					}}
+					on:click={modeHandler(mode)}
 					><ListItem isSelected={selectedMode == mode} title={mode}>
 						{#if mode == selectedMode}
 							<Icons name="blue_checked" height="30px" width="30px" />
@@ -42,7 +62,7 @@
 			</button>
 			<button
 				class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
-				on:click={goBack}
+				on:click={submitHandler}
 			>
 				<Icons name="tick" width="32" height="32" />
 			</button>

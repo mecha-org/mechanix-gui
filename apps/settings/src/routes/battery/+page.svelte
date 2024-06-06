@@ -1,10 +1,21 @@
-<script>
+<script lang="ts">
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListHeading from '$lib/components/list-heading.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
 	import { Progress } from '$lib/components/ui/progress';
+	import { get_battery_percentage } from '$lib/services/battery-service';
 	import { goBack } from '$lib/services/common-services';
+	import { batteryPercentage } from '$lib/stores/batteryStore';
+	import { onMount } from 'svelte';
+
+	const getInitalData = async () => {
+		await get_battery_percentage();
+	};
+
+	onMount(()=>{
+		getInitalData();
+	})
 </script>
 
 <Layout title="Battery">
@@ -12,7 +23,7 @@
 		<div>
 			<ListHeading title="Battery Percentage" />
 			<div class="bg-midnight-abyss border-twilight-navy rounded-lg border p-6">
-				<Progress value={33} />
+				<Progress value={$batteryPercentage} />
 			</div>
 		</div>
 		<ListItem title="Battery performace" isLink href="/battery/battery-performance">
