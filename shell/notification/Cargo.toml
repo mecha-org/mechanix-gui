@@ -1,0 +1,54 @@
+[package]
+name = "mechanix-notification"
+description = "Notification component for the Mechanix shell"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true 
+serde_yaml.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+zbus.workspace = true
+clap.workspace = true
+mctk_core = { workspace = true }
+mctk_smithay = { workspace = true }
+mctk_macros = { workspace = true }
+command = { workspace = true }
+desktop_entries = { workspace = true }
+
+[build-dependencies]
+tonic-build = "0.9.2"
+
+[package.metadata.deb]
+name = "mechanix-notification"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-notification",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/notification/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/notification/settings.yml",
+        "644",
+    ],
+]

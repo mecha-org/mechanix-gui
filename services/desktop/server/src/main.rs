@@ -7,14 +7,15 @@ mod settings;
 
 use anyhow::Result;
 use dbus::interfaces::{
-    sound_event_notification_stream, PowerBusInterface, SecurityBusInterface, SoundBusInterface,
+    sound_event_notification_stream, NotificationBusInterface, Notifier, PowerBusInterface,
+    SecurityBusInterface, SoundBusInterface,
 };
 use handlers::{
     session::SessionHandler,
     shell::{home_button::HomeButtonHandler, security::SecurityHandler, upower::UpowerHandler},
 };
 use settings::{read_settings_yml, DesktopServerSettings};
-use tokio::runtime::Builder;
+use tokio::{runtime::Builder, sync::mpsc};
 use zbus::connection;
 
 #[tokio::main]
@@ -55,13 +56,28 @@ async fn main() -> Result<()> {
         .await?;
 
     handles.push(sound_handle);
+
+    let (event_tx, event_rx) = mpsc::channel(128);
+    let notification_bus = NotificationBusInterface {
+        event_tx: event_tx.clone(),
+    };
+    let _notification_bus_connection = connection::Builder::session()?
+        .name("org.freedesktop.Notifications")?
+        .serve_at("/org/freedesktop/Notifications", notification_bus.clone())?
+        .build()
+        .await?;
+
+    let notifier = Notifier::new(settings.notifier.clone());
+    let notifier_handle = tokio::spawn(async move { notifier.run(event_tx, event_rx).await });
+    handles.push(notifier_handle);
+
     let session_handler = SessionHandler::new(settings.clone());
     let session_handle = tokio::spawn(async move {
         session_handler.run().await;
     });
     handles.push(session_handle);
 
-    let home_button_handler = HomeButtonHandler::new(settings.home_button);
+    let home_button_handler = HomeButtonHandler::new(settings.home_button.clone());
     let home_button_handle = tokio::spawn(async move {
         home_button_handler.run().await;
     });
