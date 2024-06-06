@@ -6,7 +6,7 @@
 	import { Slider } from '$lib/components/ui/slider';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import { goBack } from '$lib/services/common-services';
-	import { getBrightness, setBrightness } from '$lib/services/display-service';
+	import { getBrightness, setBrightness } from '$lib/services/display-services';
 	import { brightnessPercentage } from '$lib/stores/displayStore';
 	import { onMount } from 'svelte';
 
