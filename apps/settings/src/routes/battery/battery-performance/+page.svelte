@@ -22,6 +22,7 @@
 
 	const submitHandler = async() => {
 		await set_performance_mode(selectedMode);
+		goBack();
 	};
 
 	onMount(() => {
@@ -61,7 +62,7 @@
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="bg-ash-gray hover:bg-[#474749]/80 flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={submitHandler}
 			>
 				<Icons name="tick" width="32" height="32" />
