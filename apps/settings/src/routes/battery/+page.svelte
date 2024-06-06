@@ -4,13 +4,14 @@
 	import ListHeading from '$lib/components/list-heading.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
 	import { Progress } from '$lib/components/ui/progress';
-	import { get_battery_percentage } from '$lib/services/battery-service';
+	import { get_battery_percentage, get_selected_performance_mode } from '$lib/services/battery-services';
 	import { goBack } from '$lib/services/common-services';
-	import { batteryPercentage } from '$lib/stores/batteryStore';
+	import { batteryPercentage, batteryPerformanceMode } from '$lib/stores/batteryStore';
 	import { onMount } from 'svelte';
 
 	const getInitalData = async () => {
 		await get_battery_percentage();
+		await get_selected_performance_mode();
 	};
 
 	onMount(()=>{
@@ -27,7 +28,10 @@
 			</div>
 		</div>
 		<ListItem title="Battery performace" isLink href="/battery/battery-performance">
-			<Icons name="right_arrow" height="30px" width="30px" />
+			<div class="flex flex-row items-center gap-2">
+				<p class="text-xl text-misty-slate">{$batteryPerformanceMode}</p>
+				<Icons name="right_arrow" height="30px" width="30px" />
+			</div>
 		</ListItem>
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">

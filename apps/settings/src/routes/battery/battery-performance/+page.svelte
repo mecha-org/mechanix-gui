@@ -2,7 +2,7 @@
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
-	import { get_all_performance_mode, get_selected_performance_mode, set_performance_mode } from '$lib/services/battery-service';
+	import { get_all_performance_mode, set_performance_mode } from '$lib/services/battery-services';
 	import { goBack } from '$lib/services/common-services';
 	import { batteryPerformanceMode, batteryPerformanceOptions } from '$lib/stores/batteryStore';
 	import { onMount } from 'svelte';
@@ -11,7 +11,6 @@
 
 	const getInitalData = async () => {
 		await get_all_performance_mode();
-		await get_selected_performance_mode();
 		selectedMode = $batteryPerformanceMode;
 
 	};
