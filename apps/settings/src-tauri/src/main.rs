@@ -54,6 +54,7 @@ fn main() {
             modules::battery::get_avilable_performance_modes,
             modules::battery::get_current_performance_mode,
             modules::battery::set_performance_mode,
+            modules::security::get_security_lock_status,
             exit_app
         ])
         .run(tauri::generate_context!())
