@@ -1,3 +1,4 @@
+pub mod appearance;
 pub mod battery;
 pub mod bluetooth;
 pub mod display;

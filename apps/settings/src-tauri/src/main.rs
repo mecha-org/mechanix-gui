@@ -60,6 +60,9 @@ fn main() {
             modules::security::change_pin,
             modules::security::authenticate_pin,
             modules::security::remove_pin_lock,
+            modules::appearance::get_available_wallpapers,
+            modules::appearance::get_applied_wallpaper,
+            modules::appearance::set_wallpaper,
             exit_app
         ])
         .run(tauri::generate_context!())
