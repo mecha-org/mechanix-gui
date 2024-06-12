@@ -6,7 +6,12 @@
 	import { LOG_LEVEL, consoleLog, goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { onDestroy, onMount } from 'svelte';
-	import { fetchAvaialbleNetworks, fetchKnownNetworks } from '$lib/services/network-services';
+	import {
+		fetchAvaialbleNetworks,
+		fetchConnectedWifiInfo,
+		fetchKnownNetworks,
+		removeWifi
+	} from '$lib/services/network-services';
 	import {
 		availableNetworksList,
 		fetchingAvailableNetworks,
@@ -47,19 +52,20 @@
 		clearInterval(timeIntervalId);
 	});
 
-	const connectedToNetwork = async (networkId: string) => {
-		consoleLog(LOG_PREFIX + 'connectedToNetwork()::' + networkId);
+	const connectedToNetwork = async (networkSSID: string) => {
+		consoleLog(LOG_PREFIX + 'connectedToNetwork()::' + networkSSID);
 		try {
-			const response: boolean = await invoke('connect_to_known_network', { network_id: networkId });
-		fetchKnownNetworks();
+			const response: boolean = await invoke('connect_to_known_network', {
+				networkSsid: networkSSID
+			});
+			fetchConnectedWifiInfo();
 		} catch (error) {
-			
+			console.log(LOG_PREFIX + 'connectedToNetwork()::error::', error);
 		}
-		
 	};
 
 	$: availableNetworksToShow = $availableNetworksList.filter(
-		(network) => !$knownNetworksList.some((i) => i.ssid == network.name)
+		(network) => !$knownNetworksList.some((i) => i.ssid == network.name  || network.name.includes("\\"))
 	);
 </script>
 
@@ -147,16 +153,16 @@
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
-			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+			<!-- <button
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 			>
 				<Icons name="addition" width="32" height="32" />
-			</button>
+			</button> -->
 		</div>
 	</footer>
 </Layout>

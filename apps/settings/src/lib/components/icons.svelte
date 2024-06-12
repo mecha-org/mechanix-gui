@@ -144,6 +144,44 @@
 		tick:{
 			box:39,
 			svg:`<path d="M6.83602 19.5524L13.9585 27.3359C14.6211 28.0599 15.7458 28.1079 16.4675 27.4429L31.8223 13.2956" stroke="#2D8AFF" stroke-width="3.76705" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		trash: {
+			box: 40,
+			svg: `<g clip-path="url(#clip0_5204_451)">
+<path d="M10 13L11.423 30.9304C11.5606 32.6636 13.0073 34 14.7459 34H25.2541C26.9927 34 28.4394 32.6636 28.577 30.9304L30 13" stroke="#F33742" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 13H33" stroke="#F33742" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 12L15.2 7H24.8L28 12" stroke="#F33742" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_5204_451">
+<rect width="40" height="40" fill="white" transform="translate(0 0.00796509)"/>
+</clipPath>
+</defs>`
+		},
+		volume_unmute:{
+			box:32,
+			svg:`<g clip-path="url(#clip0_5147_422)">
+<path d="M27.7363 10.6665C27.9105 12.4207 27.9997 14.1998 27.9997 15.9998C27.9997 17.7998 27.9105 19.579 27.7363 21.3332" stroke="white" stroke-width="2" stroke-linecap="round"/>
+<path d="M17.3333 15.9998C17.3333 13.4876 17.1162 11.0261 16.6997 8.63298C16.5363 7.69433 15.451 7.27504 14.6737 7.82603L11.3595 10.1753C10.9088 10.4949 10.3699 10.6665 9.81737 10.6665H6.66667C5.19391 10.6665 4 11.8604 4 13.3332V18.6665C4 20.1393 5.19391 21.3332 6.66666 21.3332H9.81737C10.3699 21.3332 10.9088 21.5048 11.3595 21.8243L14.6737 24.1736C15.451 24.7246 16.5363 24.3053 16.6997 23.3667C17.1162 20.9736 17.3333 18.5121 17.3333 15.9998Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+<path d="M22.502 12C22.6108 13.3189 22.6662 14.653 22.6662 16C22.6662 17.347 22.6108 18.6811 22.502 20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</g>
+<defs>
+<clipPath id="clip0_5147_422">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>`
+		},
+		volume_mute:{
+			box:32,
+			svg:`<g clip-path="url(#clip0_1403_365)">
+<path d="M22.3333 16C22.3333 13.4878 22.1162 11.0262 21.6997 8.63316C21.5363 7.69451 20.451 7.27522 19.6737 7.82622L16.3595 10.1755C15.9088 10.4951 15.3699 10.6667 14.8174 10.6667H11.6667C10.1939 10.6667 9 11.8606 9 13.3334V18.6667C9 20.1394 10.1939 21.3334 11.6667 21.3334H14.8174C15.3699 21.3334 15.9088 21.505 16.3595 21.8245L19.6737 24.1738C20.451 24.7248 21.5363 24.3055 21.6997 23.3669C22.1162 20.9738 22.3333 18.5123 22.3333 16Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+<path d="M7 6L27 26" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</g>
+<defs>
+<clipPath id="clip0_1403_365">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>`
 		}
 	} as const;
 	let displayIcon = icons[name];

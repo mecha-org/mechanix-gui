@@ -16,7 +16,7 @@
 		{href}
 		class="flex flex-row items-center justify-between rounded-lg border border-twilight-navy bg-midnight-abyss p-4"
 	>
-		<h1 class="flex flex-row items-center gap-3 text-lg font-medium text-white">
+		<h1 class="flex flex-row items-center gap-3 text-lg font-medium text-white text-ellipsis">
 			{#if leftIcon}
 				<Icons name={leftIcon} height="30px" width="30px" />
 			{/if}

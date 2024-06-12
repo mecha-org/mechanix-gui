@@ -15,11 +15,15 @@
 		disableWifiSwitch,
 		fetchingWifiStatus
 	} from '$lib/stores/networkStore';
-	import { fetchConnectedWifiInfo, fetchWifiStatus } from '$lib/services/network-services';
+	import {
+	fetchAvaialbleNetworks,
+		fetchConnectedWifiInfo,
+		fetchWifiStatus
+	} from '$lib/services/network-services';
 	import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
 	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG, SET_INTERVAL_TIMER } from '../../constants';
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG;
-	
+
 	let timeIntervalId: number;
 	const getInitalData = async () => {
 		consoleLog(LOG_PREFIX + 'getInitalData()::');
@@ -43,6 +47,7 @@
 
 	onMount(() => {
 		getInitalData();
+		fetchAvaialbleNetworks();
 		timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
 	});
 
@@ -94,15 +99,15 @@
 						/>
 					{/if}
 				</BlockItem>
-				{#if !!$connectedNetwork.name}
+				{#if typeof $connectedNetwork.name !== 'undefined'}
 					<BlockItem
 						isBottomBorderVisible={false}
 						title={$connectedNetwork.name}
-						href={`/network/manage-network/available/${$connectedNetwork.name}`}
+						href={`/network/manage-network/available/${$connectedNetwork.name}?isConnected=${true}`}
 					>
 						<div class="flex flex-row items-center gap-4">
-							<Icons height="30px" width="30px" name="blue_checked" />
-							<Icons height="30px" width="30px" name="right_arrow" />
+								<Icons height="30px" width="30px" name="blue_checked" />
+								<Icons height="30px" width="30px" name="right_arrow" />
 						</div>
 					</BlockItem>
 				{/if}

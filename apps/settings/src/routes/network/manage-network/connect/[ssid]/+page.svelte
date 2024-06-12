@@ -7,12 +7,14 @@
 	import { invoke } from '@tauri-apps/api/tauri';
 
 	import type { PageData } from '../../available/[network]/$types';
-	import { fetchKnownNetworks } from '$lib/services/network-services';
+	import { fetchKnownNetworks, removeWifi } from '$lib/services/network-services';
 	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG } from '../../../../../constants';
 
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG + 'manage-network::connet::';
 
 	export let data: PageData;
+	let showError : boolean = false;
+	let error_message : string = "";
 
 	$: password = '';
 	const connectToNetwork = async () => {
@@ -23,14 +25,22 @@
 				password: password
 			});
 
-			console.log('response', response);
-			fetchKnownNetworks();
+			await fetchKnownNetworks();
 			goBack();
-		} catch (error) {
+		} catch (error: any) {
+			console.log('=======> error: ', error);
+			const startIndex = error.indexOf('message:') + 'message:'.length;
+			const endIndex = error.length;
+			error_message = error.substring(startIndex, endIndex).replace(")","").trim();
+			console.log("=======> error_message:", error_message);
+			showError = true;
+			
 			consoleLog(LOG_PREFIX + 'connectToNetwork()::' + ERROR_LOG, {
 				type: LOG_LEVEL.ERROR,
 				data: error
 			});
+
+			setTimeout(() => {showError=false}, 3000);
 		}
 	};
 </script>
@@ -41,17 +51,23 @@
 			<ListHeading title="Password" />
 			<Input placeholder="Password" bind:value={password} />
 		</div>
+
+		{#if showError}
+			<div class="animate-pulse capitalize text-gray-300 text-lg inline-flex justify-center">
+				{error_message}
+			</div>
+		{/if}
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
 			<button
-				class="flex h-[48px] w-[48px] items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={connectToNetwork}
 			>
 				<Icons name="tick" width="32" height="32" />
