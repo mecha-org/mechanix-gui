@@ -34,6 +34,7 @@ fn main() {
             modules::wireless::get_known_networks,
             modules::wireless::connect_to_network,
             modules::wireless::connect_to_known_network,
+            modules::wireless::disconnect_network,
             modules::bluetooth::scan_bluetooth,
             modules::bluetooth::enable_bluetooth,
             modules::bluetooth::disable_bluetooth,
