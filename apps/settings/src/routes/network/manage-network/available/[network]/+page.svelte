@@ -32,21 +32,22 @@
 		try {
 			await removeWifi(networkSSID);
 			await fetchKnownNetworks();
-			goBack();
 		} catch (error) {
 			// TODO: error handling in UI - show toast/popup
 			console.log('removeClickHandler error: ', error);
 		}
 	};
 
+	const backClickHandler = () => {
+		goBack();
+	}
+
 	const addNetwork = () => {
 		goto(`/network/manage-network/connect/${data.title}`);
 	};
-
-	
 </script>
 
-<Layout title={formattitle(data.title)}>
+<Layout title={formattitle(data.title) + ` network details`}>
 	<div class="flex flex-col gap-4">
 		{#each data?.networkDetail as networkDetail}
 			<ListBlock>
@@ -78,7 +79,7 @@
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
 				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
-				on:click={goBack}
+				on:click={backClickHandler}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
@@ -89,13 +90,13 @@
 				>
 					<Icons name="trash" width="32" height="32" />
 				</button>
-			{:else}
+			<!-- {:else}
 				<button
 					class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 					on:click={addNetwork}
 				>
 					<Icons name="addition" width="32" height="32" />
-				</button>
+				</button> -->
 			{/if}
 		</div>
 	</footer>

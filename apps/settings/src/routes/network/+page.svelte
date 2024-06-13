@@ -16,7 +16,7 @@
 		fetchingWifiStatus
 	} from '$lib/stores/networkStore';
 	import {
-	fetchAvaialbleNetworks,
+		fetchAvaialbleNetworks,
 		fetchConnectedWifiInfo,
 		fetchWifiStatus
 	} from '$lib/services/network-services';
@@ -106,24 +106,30 @@
 						href={`/network/manage-network/available/${$connectedNetwork.name}?isConnected=${true}`}
 					>
 						<div class="flex flex-row items-center gap-4">
-								<Icons height="30px" width="30px" name="blue_checked" />
-								<Icons height="30px" width="30px" name="right_arrow" />
+							<Icons height="30px" width="30px" name="blue_checked" />
+							<Icons height="30px" width="30px" name="right_arrow" />
 						</div>
 					</BlockItem>
 				{/if}
 			</ListBlock>
 			{#if $wifiStatus}
-				<ListItem isLink href="/network/manage-network" title="Manage Networks"
-					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-				>
+				<ListBlock>
+					<BlockItem title="Manage Networks" isBottomBorderVisible={true} href="/network/manage-network">
+						<Icons name="right_arrow" height="30px" width="30px" />
+					</BlockItem>
+					<BlockItem title="Available Networks" isBottomBorderVisible={false} href="/network/available-network">
+						<Icons name="right_arrow" height="30px" width="30px" />
+					</BlockItem>
+				</ListBlock>
 			{:else}
-				<ListItem title="Manage Networks" isSelected={false}
-					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-				>
+				<ListItem title="Manage Networks" isSelected={false}>
+					<Icons name="right_arrow" height="30px" width="30px" />
+				</ListItem>
 			{/if}
-			<ListItem isLink href="/network/ip-settings" title="IP Settings"
-				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-			>
+			
+			<ListItem isLink href="/network/ip-settings" title="IP Settings">
+				<Icons name="right_arrow" height="30px" width="30px" />
+			</ListItem>
 		</div>
 		<div>
 			<ListHeading title="Others" />

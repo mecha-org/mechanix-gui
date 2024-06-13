@@ -1,6 +1,7 @@
 import { availableNetworksList, connectedNetwork, knownNetworksList, wifiStatus } from "$lib/stores/networkStore";
 import type { KnownNetworkListResponse, WirelessScanListResponse, WirelessInfoResponse } from "$lib/types/NetworkTypes";
 import { invoke } from "@tauri-apps/api/tauri";
+import { SECURITY_PROTOCOLS } from "../../constants";
 
 
 export const fetchKnownNetworks = () => {
@@ -30,6 +31,13 @@ export const fetchAvaialbleNetworks = () => {
                 // const filteredResponse = (response as WirelessScanListResponse).wireless_network
                 //     .filter((x: any) => !x.flags.includes("TEMP"));
                 // const finalResponse = {wireless_network: filteredResponse};
+
+                response?.wireless_network?.forEach((item: any) => {
+                    const security_protocol = item?.flags.match(/\[(WPA[2-]?-PSK)\-/)?.[1];
+                    item.security = security_protocol;
+                    item.encryption = item?.flags.match(/\-(CCMP|TKIP)\]/)?.[1];
+                    item.isSecured =  SECURITY_PROTOCOLS.includes(security_protocol);
+                });
 
                 availableNetworksList.set((response as WirelessScanListResponse).wireless_network);
             }

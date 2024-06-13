@@ -38,7 +38,7 @@
 	});
 </script>
 
-<Layout title={formattitle(data.title)}>
+<Layout title={formattitle(data.title)+` network details`}>
 	<div class="flex flex-col gap-4">
 		{#each data.networkDetail as networkDetail}
 			<ListBlock>

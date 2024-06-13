@@ -9,6 +9,7 @@
 	import type { PageData } from '../../available/[network]/$types';
 	import { fetchKnownNetworks, removeWifi } from '$lib/services/network-services';
 	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG } from '../../../../../constants';
+	import { goto } from '$app/navigation';
 
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG + 'manage-network::connet::';
 
@@ -26,7 +27,7 @@
 			});
 
 			await fetchKnownNetworks();
-			goBack();
+			goto(`/network`);
 		} catch (error: any) {
 			console.log('=======> error: ', error);
 			const startIndex = error.indexOf('message:') + 'message:'.length;
@@ -42,6 +43,10 @@
 
 			setTimeout(() => {showError=false}, 3000);
 		}
+	};
+
+	const backClickHandler = () => {
+		goBack();
 	};
 </script>
 
@@ -62,7 +67,7 @@
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
 				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
-				on:click={goBack}
+				on:click={backClickHandler}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
