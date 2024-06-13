@@ -61,32 +61,30 @@
 			updateInputDeviceMute(device_name).finally(async () => {
 				const updates = $inputDevices.map((device: any) => {
 					if (device.name == device_name) device.is_mute = !is_mute;
-					if(!is_mute) device.sound_level = [0];
+					if (!is_mute) device.sound_level = [0];
 					return device;
 				});
 				inputDevices.set(updates);
 
-				if(is_mute) await getAllInputDevicesVolume(updates);
+				if (is_mute) await getAllInputDevicesVolume(updates);
 			});
 		} else {
 			updateOutputDeviceMute(device_name).finally(async () => {
 				const updates = $outputDevices.map((device: any) => {
 					if (device.name == device_name) device.is_mute = !is_mute;
-					if(!is_mute) device.sound_level = [0];
+					if (!is_mute) device.sound_level = [0];
 					return device;
 				});
 				outputDevices.set(updates);
 
-				if(is_mute) await getAllOutputDevicesVolume(updates);
+				if (is_mute) await getAllOutputDevicesVolume(updates);
 			});
-
 		}
 	};
 </script>
 
 <Layout title="Sound">
 	<div class="flex flex-col gap-3">
-
 		<ListHeading title="Output Devices" />
 		{#each $outputDevices as outputDevice}
 			<SoundItem isBottomBorderVisible={false} title={outputDevice?.description}>
@@ -109,9 +107,9 @@
 							audioClickHandler(DeviceType.OUTPUT, outputDevice?.name, outputDevice?.is_mute)}
 					>
 						{#if outputDevice?.is_mute}
-							<img alt="no-audio" src={NoAudio} class="" width="25" height="25" />
+							<Icons name="volume_mute" height="30px" width="30px" />
 						{:else}
-							<img alt="audio" src={Audio} class="" width="25" height="25" />
+							<Icons name="volume_unmute" height="30px" width="30px" />
 						{/if}
 					</button>
 				</div>
@@ -142,16 +140,16 @@
 							audioClickHandler(DeviceType.INPUT, inputDevice?.name, inputDevice?.is_mute)}
 					>
 						{#if inputDevice?.is_mute}
-							<img alt="no-audio" src={NoAudio} class="" width="25" height="25" />
+							<!-- <img alt="no-audio" src={NoAudio} class="" width="25" height="25" /> -->
+							<Icons name="volume_mute" height="30px" width="30px" />
 						{:else}
-							<img alt="audio" src={Audio} class="" width="25" height="25" />
+							<!-- <img alt="audio" src={Audio} class="" width="25" height="25" /> -->
+							<Icons name="volume_unmute" height="30px" width="30px" />
 						{/if}
 					</button>
 				</div>
 			</SoundItem>
 		{/each}
-
-		
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
