@@ -23,7 +23,6 @@ export const load: PageLoad = ({ params, url }) => {
 		return error(404, 'Not found');
 	}
 
-
 	const networkDetail = [
 		[
 			// // NOTE: ARCHIVED 
@@ -31,16 +30,48 @@ export const load: PageLoad = ({ params, url }) => {
 			// 	title: 'Private Wi-Fi Address',
 			// 	value: false
 			// },
+			// {
+			// 	title: 'Network ID',
+			// 	value: selectedNetworkDetails?.network_id
+			// },
+			// {
+			// 	title: 'Passphrase',
+			// 	value: selectedNetworkDetails?.flags
+			// },
 			{
-				title: 'Wi-Fi Address',
+				title: 'Network SSID',
+				value: selectedNetworkDetails?.name
+			},
+			{
+				title: 'Frequency',
 				value: selectedNetworkDetails?.frequency
+			},
+			{
+				title: 'Security',
+				value: selectedNetworkDetails?.security
+			},
+			{
+				title: 'Encryption',
+				value: selectedNetworkDetails?.encryption
 			}
 		],
 		[
 			{
-				title: 'Network SSID',
-				value: selectedNetworkDetails?.name
-			}
+				title: 'IP Address',
+				value: '192.160.12.1'
+			},
+			{
+				title: 'Subnet Mask',
+				value: '255.255.255.0'
+			},
+			{
+				title: 'Gateway',
+				value: '192.160.0.1'
+			},
+			{
+				title: 'MAC Address',
+				value: selectedNetworkDetails?.mac
+			},
 		]
 	];
 
