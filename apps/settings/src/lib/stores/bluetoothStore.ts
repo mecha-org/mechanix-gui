@@ -4,6 +4,7 @@ import type { BluetoothScanResponse } from '$lib/services/bluetooth-services';
 
 // bluetooth page
 export const bluetoothStatus = writable(false);
+export const disableBluetoothSwitch = writable(false);
 export const fetchingBluetoothStatus = writable(true);
 
 export const isFetchingAvailableDevices = writable(true);

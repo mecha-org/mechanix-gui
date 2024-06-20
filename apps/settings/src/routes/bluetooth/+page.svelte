@@ -11,12 +11,15 @@
 	import {
 		bluetoothStatus,
 		fetchingBluetoothStatus,
+		disableBluetoothSwitch,
 		isFetchingAvailableDevices,
 		isFetchingOtherDevices,
 		availableDevicesList,
-		otherDevicesList
+		otherDevicesList,
 	} from '$lib/stores/bluetoothStore';
 	import {
+	disableBluetooth,
+	enableBluetooth,
 		fetchAvailableDevices,
 		fetchBluetoothStatus,
 		type BluetoothScanResponse
@@ -51,18 +54,14 @@
 
 	const onBluetoothStatusChangeHandler = async (flag: boolean) => {
 		try {
+			disableBluetoothSwitch.set(true);
 			if (flag) {
-				const response: boolean = await invoke('enable_bluetooth');
-				bluetoothStatus.set(response);
+				const response: boolean = await enableBluetooth();
 				if (response) {
 					await fetchAvailableDevices();
 				}
 			} else {
-				const response = await invoke('disable_bluetooth');
-				if (response) {
-					availableDevicesList.set([] as BluetoothScanResponse[]);
-					otherDevicesList.set([] as BluetoothScanResponse[]);
-				}
+				const response: any = await disableBluetooth();
 			}
 		} catch (error) {
 			console.error('page::bluetooth::onBluetoothStatusChangeHandler()::error:::', error);
@@ -80,6 +79,7 @@
 			<Switch
 				bind:checked={$bluetoothStatus}
 				onCheckedChange={onBluetoothStatusChangeHandler}
+				disabled={$disableBluetoothSwitch}
 			/>
 		{/if}
 	</ListItem>

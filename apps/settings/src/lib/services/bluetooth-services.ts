@@ -1,4 +1,4 @@
-import { availableDevicesList, bluetoothStatus, isFetchingAvailableDevices, isFetchingOtherDevices, otherDevicesList } from "$lib/stores/bluetoothStore";
+import { availableDevicesList, bluetoothStatus, disableBluetoothSwitch, isFetchingAvailableDevices, isFetchingOtherDevices, otherDevicesList } from "$lib/stores/bluetoothStore";
 import { invoke } from "@tauri-apps/api";
 
 
@@ -23,7 +23,7 @@ export const fetchBluetoothStatus = async () => {
         const response: number = await invoke('get_bluetooth_status');
         const status = response == 1 ? true : false;
         bluetoothStatus.set(status);
-        if(!status){
+        if (!status) {
             isFetchingAvailableDevices.set(false);
             isFetchingOtherDevices.set(false);
         }
@@ -38,14 +38,13 @@ export const fetchBluetoothStatus = async () => {
 export const fetchAvailableDevices = async () => {
     console.log("service::bluetooth::fetchAvailableDevices()");
     try {
-        const scan_response: BluetoothScanResponse[]  = (await invoke<BluetoothScanListResponse>('scan_bluetooth')).bluetooth_devices;
+        const scan_response: BluetoothScanResponse[] = (await invoke<BluetoothScanListResponse>('scan_bluetooth')).bluetooth_devices;
         let available_devices: BluetoothScanResponse[] = scan_response?.filter((item: any) => {
             return item.is_paired || item.is_trusted;
         });
         let other_devices: BluetoothScanResponse[] = scan_response.filter((item: any) => {
             return !item.is_paired;
         });
-    console.log("available_devices: ", {available_devices, other_devices});
         availableDevicesList.set(available_devices);
         otherDevicesList.set(other_devices);
         return scan_response;
@@ -68,11 +67,44 @@ export const addBluetoothDevice = async (address: string) => {
 
 export const forgetBluetoothDevice = async (address: string) => {
     console.log("service::bluetooth::forgetBluetoothDevice()");
-    
+
     try {
         await invoke('disconnect_bluetooth_device', { address });
     } catch (error) {
         console.error('service::bluetooth::forgetBluetoothDevice()::error::::', error);
         return error;
+    }
+};
+
+export const enableBluetooth = async () => {
+    console.log("service::bluetooth::enableBluetooth()");
+
+    try {
+        const response: boolean = await invoke('enable_bluetooth');
+        console.log("enable_bluetooth response: ", response);
+        disableBluetoothSwitch.set(false);
+        bluetoothStatus.set(response);
+        return response;
+    } catch (error) {
+        console.error('service::bluetooth::enableBluetooth()::error::::', error);
+        return false;
+    }
+};
+
+export const disableBluetooth = async () => {
+    console.log("service::bluetooth::disableBluetooth()");
+
+    try {
+        const response = await invoke('disable_bluetooth');
+        disableBluetoothSwitch.set(true);
+        if (response) {
+            availableDevicesList.set([] as BluetoothScanResponse[]);
+            otherDevicesList.set([] as BluetoothScanResponse[]);
+        }
+        disableBluetoothSwitch.set(false);
+        return true;
+    } catch (error) {
+        console.error('service::bluetooth::disableBluetooth()::error::::', error);
+        return false;
     }
 };

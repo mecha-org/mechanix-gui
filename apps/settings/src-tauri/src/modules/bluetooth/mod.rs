@@ -36,6 +36,22 @@ pub async fn enable_bluetooth() -> Result<(), Error> {
     }
 }
 
+// #[tauri::command]
+// pub async fn enable_bluetooth() -> Result<bool, Error> {
+//     println!("enable_bluetooth called....");
+//     match client::BluetoothService::enable_bluetooth().await {
+//         Ok(v) => {
+//             // return Ok(v)
+//             println!("enable_bluetooth result: {:?}", v);
+//             return Ok(true);
+//         },
+//         Err(e) => {
+//             println!("enable_bluetooth error: {:?}", e.to_string());
+//             return Err(Error::Other(e.to_string()))
+//         }
+//     }
+// }
+
 #[tauri::command]
 pub async fn disable_bluetooth() -> Result<(), Error> {
     println!("disable_bluetooth called....");
