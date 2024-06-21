@@ -67,4 +67,8 @@ tokio = { version = "1.33", features = ["full"] }
 zbus = { version = "4.1.2", features = ["tokio"] }
 logind = { path = "../commons/logind"}
 upower = { path = "../commons/upower"}
+policykit = { path = "../commons/policykit"}
 clap = { version = "4.5.4", features = ["derive", "env"] }
+users = "0.11.0"
+keyring = "2.3.3"
+pam-client = "0.5.0"

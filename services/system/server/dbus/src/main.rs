@@ -7,12 +7,12 @@ use config::read_configs_yml;
 
 use interfaces::{
     hw_buttons_notification_stream, BluetoothBusInterface, DisplayBusInterface,
-    HostMetricsBusInterface, HwButtonInterface, PowerBusInterface, WirelessBusInterface,
+    HostMetricsBusInterface, HwButtonInterface, SecurityBusInterface, WirelessBusInterface,
 };
 
 use interfaces::{
     bluetooth_event_notification_stream, host_metrics_event_notification_stream,
-    power_event_notification_stream, wireless_event_notification_stream,
+    wireless_event_notification_stream,
 };
 
 #[tokio::main]
@@ -24,7 +24,6 @@ async fn main() -> Result<()> {
             std::process::exit(1);
         }
     };
-
     let mut handles: Vec<JoinHandle<()>> = Vec::new();
 
     let bluetooth_bus = BluetoothBusInterface {};
@@ -67,21 +66,6 @@ async fn main() -> Result<()> {
 
     handles.push(wireless_handle);
 
-    let power_bus = PowerBusInterface {};
-    let power_bus_connection = connection::Builder::system()?
-        .name("org.mechanix.services.Power")?
-        .serve_at("/org/mechanix/services/Power", power_bus)?
-        .build()
-        .await?;
-
-    let power_handle = tokio::spawn(async move {
-        if let Err(e) = power_event_notification_stream(&power_bus, &power_bus_connection).await {
-            println!("Error in power notification stream: {}", e)
-        }
-    });
-
-    handles.push(power_handle);
-
     let display_bus = DisplayBusInterface {
         path: config.interfaces.display.device.clone(),
     };
@@ -116,6 +100,14 @@ async fn main() -> Result<()> {
         .serve_at("/org/mechanix/services/HwButton", hw_button_bus)?
         .build()
         .await?;
+
+    let security_bus = SecurityBusInterface {};
+    let _security_bus_connection = connection::Builder::system()?
+        .name("org.mechanix.services.Security")?
+        .serve_at("/org/mechanix/services/Security", security_bus)?
+        .build()
+        .await?;
+
     let power_button_path = config.interfaces.hw_buttons.power.path.clone();
     let home_button_path = config.interfaces.hw_buttons.home.path.clone();
 

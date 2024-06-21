@@ -8,7 +8,7 @@ mod settings;
 use anyhow::Result;
 use dbus::interfaces::{
     sound_event_notification_stream, NotificationBusInterface, Notifier, PowerBusInterface,
-    SecurityBusInterface, SoundBusInterface,
+    SoundBusInterface,
 };
 use handlers::{
     session::SessionHandler,
@@ -82,13 +82,6 @@ async fn main() -> Result<()> {
         home_button_handler.run().await;
     });
     handles.push(home_button_handle);
-
-    let security_bus = SecurityBusInterface {};
-    let _security_bus_connection = connection::Builder::session()?
-        .name("org.mechanix.services.Security")?
-        .serve_at("/org/mechanix/services/Security", security_bus)?
-        .build()
-        .await?;
 
     let security_handler = SecurityHandler::new();
     let security_handle = tokio::spawn(async move {

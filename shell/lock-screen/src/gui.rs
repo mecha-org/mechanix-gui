@@ -5,6 +5,8 @@ use crate::pages::pin::Pin;
 use crate::settings::{self, LockScreenSettings};
 use crate::theme::{self, LockScreenTheme};
 use crate::AppMessage;
+use anyhow::Result;
+use keyring::Entry;
 use logind::session_unlock;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
@@ -19,12 +21,14 @@ use mctk_core::{
     Node,
 };
 use mctk_smithay::session_lock::lock_window::{SessionLockMessage, SessionLockWindow};
-use mechanix_desktop_dbus_client::security::Security;
 use mechanix_status_bar_components::get_formatted_battery_level;
 use mechanix_status_bar_components::gui::CommonStatusBar;
 use mechanix_status_bar_components::types::{
     BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus,
 };
+use mechanix_system_dbus_client::security::Security;
+use pam_client::conv_mock::Conversation;
+use pam_client::{Context, Flag};
 use std::any::Any;
 use std::time::{Duration, Instant};
 use std::{collections::HashMap, fmt};
@@ -85,6 +89,7 @@ pub struct LockScreenState {
     wireless_status: WirelessStatus,
     bluetooth_status: BluetoothStatus,
     current_time: String,
+    pin_enabled: bool,
 }
 
 #[component(State = "LockScreenState")]
@@ -110,6 +115,8 @@ impl Component for LockScreen {
             Err(_) => LockScreenSettings::default(),
         };
 
+        let pin_enabled = is_pin_enabled();
+
         // let custom_theme = match theme::read_theme_yml() {
         //     Ok(theme) => theme,
         //     Err(_) => LockScreenTheme::default(),
@@ -127,6 +134,7 @@ impl Component for LockScreen {
             wireless_status: WirelessStatus::default(),
             bluetooth_status: BluetoothStatus::default(),
             current_time: String::from(""),
+            pin_enabled,
         });
     }
 
@@ -206,7 +214,7 @@ impl Component for LockScreen {
                     self.state_mut().unlock_pressing_time = 0;
                     self.state_mut().unlock_pressed_at = None;
                     if unlock_pressing_time > 750 {
-                        let is_pin_enabled = true;
+                        let is_pin_enabled = self.state_ref().pin_enabled;
                         if !is_pin_enabled {
                             let _ = unlock(self.state_ref().session_lock_sender.clone());
                         } else {
@@ -221,23 +229,21 @@ impl Component for LockScreen {
                     self.state_mut().pin = updated_pin.clone();
 
                     if updated_pin.len() == MAX_PIN_LENGTH {
-                        futures::executor::block_on(async {
-                            let auth_r = Security::authenticate(updated_pin).await;
+                        let auth_r = authenticate(updated_pin);
 
-                            if let Err(e) = auth_r {
-                                println!("Auth error: {:?}", e);
-                                return;
-                            }
-
+                        if let Err(e) = &auth_r {
+                            println!("Auth error: {:?}", e);
+                            self.state_mut().pin = String::new();
+                        } else {
                             let is_pin_correct = auth_r.unwrap();
-
                             println!("is_pin_correct {:?}", is_pin_correct);
-
                             if is_pin_correct {
-                                let _ = session_unlock().await;
+                                let _ = session_unlock();
                                 let _ = unlock(self.state_ref().session_lock_sender.clone());
+                            } else {
+                                self.state_mut().pin = String::new();
                             }
-                        });
+                        }
                     };
                 }
                 PinKey::Home => {
@@ -294,4 +300,75 @@ fn unlock(session_lock_sender_op: Option<Sender<SessionLockMessage>>) -> anyhow:
     }
 
     Ok(false)
+}
+
+fn authenticate(mut password: String) -> Result<bool> {
+    let Some(username) = users::get_current_username() else {
+        println!("username not found");
+        return Ok(false);
+    };
+
+    let Ok(username) = username.into_string() else {
+        println!("error converting username to string");
+        return Ok(false);
+    };
+
+    let Ok(entry) = Entry::new("mechanix-shell", &username) else {
+        println!("error creating entry");
+        return Ok(false);
+    };
+
+    let Ok(secret) = entry.get_password() else {
+        println!("error while getting entry password");
+        return Ok(false);
+    };
+
+    if secret.is_empty() {
+        println!("secret cannot be empty");
+        return Ok(false);
+    }
+
+    if password.len() > 0 {
+        password = format!("{}{}", password, secret);
+    }
+
+    let context_r = Context::new(
+        "mechanix-shell", // Service name
+        None,
+        Conversation::with_credentials(username, password),
+    );
+
+    if let Err(e) = &context_r {
+        println!("Error creating context: {:?}", e);
+        return Ok(false);
+    }
+
+    let mut context = context_r.unwrap();
+
+    // Authenticate the user
+    let auth_r = context.authenticate(Flag::NONE);
+
+    if let Err(e) = &auth_r {
+        println!("Error authenticating: {:?}", e);
+        return Ok(false);
+    }
+
+    Ok(true)
+}
+
+fn is_pin_enabled() -> bool {
+    let mut password_set = false;
+
+    let password_set_r = Security::is_password_set();
+
+    if let Err(e) = &password_set_r {
+        println!("Error while checking password set {:?}", e);
+        panic!("Error while checking password set")
+    }
+
+    println!("password_set_r {:?}", password_set_r);
+
+    password_set = password_set_r.unwrap_or_default();
+
+    password_set
 }
