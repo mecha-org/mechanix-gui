@@ -21,10 +21,25 @@ impl Security {
         let reply = proxy.is_pin_lock_enabled().await?;
         Ok(reply)
     }
+
     pub async fn authenticate(pin: String) -> Result<bool> {
         let connection = Connection::session().await?;
         let proxy = SecurityBusInterfaceProxy::new(&connection).await?;
         let reply = proxy.authenticate_pin(pin).await?;
+        Ok(reply)
+    }
+
+    pub async fn set_pin_lock() -> Result<bool> {
+        let connection = Connection::session().await?;
+        let proxy = SecurityBusInterfaceProxy::new(&connection).await?;
+        let reply = proxy.set_pin_lock().await?;
+        Ok(reply)
+    }
+
+    pub async fn remove_pin_lock() -> Result<bool> {
+        let connection = Connection::session().await?;
+        let proxy = SecurityBusInterfaceProxy::new(&connection).await?;
+        let reply = proxy.remove_pin_lock().await?;
         Ok(reply)
     }
 }

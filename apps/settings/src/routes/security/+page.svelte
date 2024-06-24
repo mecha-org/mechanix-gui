@@ -9,7 +9,8 @@
 	import {
 		disableLockSwitch,
 		fetchingLockStatus,
-		currentLockStatus
+		currentLockStatus,
+		ChangePinTypes
 	} from '$lib/stores/securityStore';
 	import { onMount } from 'svelte';
 
@@ -17,18 +18,37 @@
 		await get_lock_status();
 	};
 
-	const lockStatusHandler = (flag: boolean) => {
-		console.log('lockStatusHandler: ', flag);
-		// disableLockSwitch - when some data is loading - true  ELSE FALSE
-		// true -  change screen - set pin
-		// false - stay on same screen
+	// // disableLockSwitch - when some data is loading - true  ELSE FALSE
+	const enableLockHandler = (flag: boolean) => {
+		console.log('enableLockHandler: ', flag);
 		if (flag) {
-			goto('/security/change-pin', { invalidateAll: true });
+			goto('/security/change-pin', {
+				invalidateAll: true,
+				state: { screenType: ChangePinTypes.SET_PIN }
+			});
+		}
+		else {
+			goto('/security/change-pin', {
+				invalidateAll: true,
+				state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
+			});
 		}
 	};
 
 	const changePinClickHandler = () => {
-		goto('/security/change-pin');
+		console.log('changePinClickHandler...', $currentLockStatus);
+
+		if ($currentLockStatus) {
+			goto('/security/change-pin', {
+				invalidateAll: true,
+				state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
+			});
+		} else {
+			goto('/security/change-pin', {
+				invalidateAll: true,
+				state: { screenType: ChangePinTypes.SET_PIN }
+			});
+		}
 	};
 
 	onMount(() => {
@@ -46,7 +66,7 @@
 			{:else}
 				<Switch
 					bind:checked={$currentLockStatus}
-					onCheckedChange={lockStatusHandler}
+					onCheckedChange={enableLockHandler}
 					disabled={$disableLockSwitch}
 				/>
 			{/if}
@@ -58,17 +78,19 @@
 			</div>
 		</ListItem>
 
-		<button
-			class="mt-4 flex h-[62px] w-full items-center justify-center rounded-lg bg-[#2F2F39] text-xl font-medium hover:bg-[#2F2F39]/80"
-			on:click={changePinClickHandler}
-		>
-			Change pin
-		</button>
+		{#if $currentLockStatus}
+			<button
+				class="mt-4 flex h-[62px] w-full items-center justify-center rounded-lg bg-[#2F2F39] text-xl font-medium hover:bg-[#2F2F39]/80"
+				on:click={changePinClickHandler}
+			>
+				Change pin
+			</button>
+		{/if}
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
