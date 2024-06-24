@@ -1,0 +1,2 @@
+auth    requisite                       pam_mechanix.so entries_path=/etc/shadow-pins
+password required pam_mechanix.so entries_path=/etc/shadow-pins
