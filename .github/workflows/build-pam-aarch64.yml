@@ -24,7 +24,7 @@ jobs:
           - name: PAM module
             package: pam-mechanix
             lib: libpam_mechanix.so
-            bin: { mechanix-chkpwd, mechanix-setpwd }
+            bin: "{mechanix-chkpwd,mechanix-setpwd}"
             artifact: pam-mechanix-aarch64-unknown-linux-gnu.tar.gz
             path: pam
 
@@ -49,7 +49,8 @@ jobs:
         run: |
           sudo apt install \
           libdbus-1-dev \
-          libpam0g-dev
+          libpam0g-dev \
+          libclang-dev
 
       - name: Set up Git SSH key
         run: |
