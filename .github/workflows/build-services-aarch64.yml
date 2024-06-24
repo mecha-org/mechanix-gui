@@ -53,6 +53,7 @@ jobs:
           sudo apt install \
           libdbus-1-dev \
           libpulse-dev \
+          libpam0g-dev \
           libclang-dev
 
       - name: Set up Git SSH key

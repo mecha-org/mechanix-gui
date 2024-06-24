@@ -51,4 +51,11 @@ assets = [
         "/usr/sbin/",
         "2755",
     ],
+
+    # pam.d
+    [
+        "etc/pam.d/*",
+        "/etc/pam.d/",
+        "644",
+    ],
 ]

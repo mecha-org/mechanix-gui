@@ -25,6 +25,7 @@ jobs:
             package: pam-mechanix
             lib: libpam_mechanix.so
             bin: "{mechanix-chkpwd,mechanix-setpwd}"
+            conf: mechanix-shell
             artifact: pam-mechanix-aarch64-unknown-linux-gnu.tar.gz
             path: pam
 
@@ -77,6 +78,7 @@ jobs:
           mkdir build
           cp ${{ matrix.path }}/target/release/${{ matrix.lib }} ./build
           cp ${{ matrix.path }}/target/release/${{ matrix.bin }} ./build
+          cp ${{ matrix.path }}/etc/pam.d/${{ matrix.conf }} ./build
           cp ${{ matrix.path }}/target/debian/*.deb ./build
 
       - name: Upload artifacts
