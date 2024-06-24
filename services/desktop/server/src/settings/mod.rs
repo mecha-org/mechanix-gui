@@ -5,9 +5,11 @@ use lock_button::LockButtonSettings;
 pub mod home_button;
 pub mod idle_notify;
 pub mod lock_button;
+pub mod notifier;
 pub mod session;
 use anyhow::bail;
 use anyhow::Result;
+use notifier::NotifierSettings;
 use serde::{Deserialize, Serialize};
 use session::SessionSettings;
 use std::{env, fs::File, path::PathBuf};
@@ -19,6 +21,7 @@ pub struct DesktopServerSettings {
     pub session: SessionSettings,
     pub lock_button: LockButtonSettings,
     pub home_button: HomeButtonSettings,
+    pub notifier: NotifierSettings,
 }
 /// # Reads Settings path from arg
 ///

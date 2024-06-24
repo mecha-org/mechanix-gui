@@ -11,3 +11,51 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+anyhow.workspace = true
+serde.workspace = true 
+serde_yaml.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+zbus.workspace = true
+clap.workspace = true
+mctk_core = { workspace = true }
+mctk_smithay = { workspace = true }
+mctk_macros = { workspace = true }
+command = { workspace = true }
+desktop_entries = { workspace = true }
+uzers = "0.11.3"
+logind.workspace = true
+policykit.workspace = true
+mechanix_system_dbus_client = { workspace = true }
+futures.workspace = true
+users.workspace = true
+keyring.workspace = true 
+
+[build-dependencies]
+tonic-build = "0.9.2"
+
+[package.metadata.deb]
+name = "mechanix-polkit-agent"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-polkit-agent",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/polkit-agent/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/polkit-agent/settings.yml",
+        "644",
+    ],
+]

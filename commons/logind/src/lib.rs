@@ -34,9 +34,7 @@ pub async fn get_current_session() -> Result<SessionProxy<'static>> {
         }
     }
 
-    println!("tty is {:?}", tty);
     let sessions = user.sessions().await?;
-    println!("sessions found {:?}", sessions.len());
     for (_, path) in sessions {
         let session = SessionProxy::builder(&connection)
             .path(&path)?
@@ -49,7 +47,6 @@ pub async fn get_current_session() -> Result<SessionProxy<'static>> {
             break;
         }
     }
-    println!("current user session path is {:?}", session_path);
     let session = SessionProxy::builder(&connection)
         .path(session_path)?
         .build()

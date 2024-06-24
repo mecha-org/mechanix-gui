@@ -1,0 +1,54 @@
+[package]
+name = "pam-mechanix"
+description = "PAM modules and binaries for authentication"
+documentation = "https://docs.mecha.so"
+authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+
+[lib]
+name = "pam_mechanix"
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "mechanix-chkpwd"
+path = "src/bin/chkpwd.rs"
+
+[[bin]]
+name = "mechanix-setpwd"
+path = "src/bin/setpwd.rs"
+
+[dependencies]
+libc = "0.2.155"
+sha256 = "1.5.0"
+clap = { version = "4.5.7", features = ["derive"] }
+
+[package.metadata.deb]
+name = "pam-mechanix"
+depends = "$auto"
+assets = [
+    # modules
+    [
+        "target/release/libpam_mechanix.so",
+        "/lib/aarch64-linux-gnu/security/pam_mechanix.so",
+        "644",
+    ],
+    
+    # chkpwd bin
+    [
+        "target/release/mechanix-chkpwd",
+        "/usr/sbin/",
+        "2755",
+    ],
+
+    # setpwd bin
+    [
+        "target/release/mechanix-setpwd",
+        "/usr/sbin/",
+        "2755",
+    ],
+]

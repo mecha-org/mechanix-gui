@@ -61,6 +61,21 @@ jobs:
             artifact: mechanix-power-options-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
+          - name: Notification
+            package: mechanix-notification
+            artifact: mechanix-notification-aarch64-unknown-linux-gnu.tar.gz
+            path: shell
+
+          - name: Power options
+            package: mechanix-polkit-agent
+            artifact: mechanix-polkit-agent-aarch64-unknown-linux-gnu.tar.gz
+            path: shell
+
+          - name: Pam
+            package: pam-mechanix
+            artifact: pam-mechanix-aarch64-unknown-linux-gnu.tar.gz
+            path: pam
+
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
     steps:

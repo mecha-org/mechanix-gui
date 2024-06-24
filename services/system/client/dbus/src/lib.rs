@@ -9,11 +9,6 @@ pub mod wireless {
     pub use proxies::wireless_proxy::{NotificationStream, WirelessService};
 }
 
-pub mod power {
-    use crate::proxies;
-    pub use proxies::power_proxy::{NotificationStream, Power};
-}
-
 pub mod bluetooth {
     use crate::proxies;
     pub use proxies::bluetooth_proxy::{BluetoothService, NotificationStream};
@@ -34,4 +29,9 @@ pub mod hardware_buttons {
     use crate::proxies;
     pub use mechanix_system_dbus_server::{Key, KeyEvent};
     pub use proxies::hardware_button::{HwButton, NotificationStream};
+}
+
+pub mod security {
+    use crate::proxies;
+    pub use proxies::security_proxy::Security;
 }

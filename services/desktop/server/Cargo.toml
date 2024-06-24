@@ -23,8 +23,6 @@ dotenv.workspace = true
 tracing.workspace = true
 mechanix-sound-ctl = { path = "../../ctl/sound" }
 mechanix-power-ctl = { path = "../../ctl/power" }
-keyring = "2.3.3"
-sha256 = "1.5.0"
 wayland-protocols-async.workspace = true
 mechanix_system_dbus_client.workspace = true
 command.workspace = true
@@ -32,6 +30,7 @@ logind.workspace = true
 futures-util.workspace = true
 futures.workspace = true
 upower.workspace = true
+url = "2.4.0"
 
 [package.metadata.deb]
 name = "mechanix_desktop_dbus_server"

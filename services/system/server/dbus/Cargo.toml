@@ -15,18 +15,21 @@ keywords.workspace = true
 [dependencies]
 tokio.workspace = true
 anyhow.workspace = true
-zbus = { version = "4.1.2", features = ["tokio"] }
+zbus = { version = "4.1.2" }
 mechanix-bluetooth-ctl = { path = "../../../ctl/bluetooth" }
 mechanix-network-ctl = { path = "../../../ctl/network" }
 mechanix-power-ctl = { path = "../../../ctl/power" }
 mechanix-display-ctl = { path = "../../../ctl/display" }
 mechanix-host-metrics = { path = "../../../ctl/host-metrics" }
 mechanix-hw-buttons = { path = "../../../ctl/hw-buttons" }
-zbus_polkit = { version = "4.0.0", features = ["tokio"] }
 serde.workspace = true
 tracing.workspace = true
 serde_yaml = "0.9.25"
-
+sha256 = "1.5.0"
+policykit.workspace = true
+pam-mechanix.workspace = true
+users = "0.11.0"
+pam-client = "0.5.0"
 
 # This is for the debian package
 [package.metadata.deb]
