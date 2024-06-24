@@ -64,7 +64,7 @@ impl PamHooks for PasswordModule {
         //     return PamResultCode::PAM_AUTH_ERR;
         // }
 
-        let command = "mechanix_chkpwd";
+        let command = "mechanix-chkpwd";
         let cargs = vec!["--username", &user, "--password", password];
         let output = match Command::new(command).args(cargs).output() {
             Ok(output) => output,
@@ -132,7 +132,7 @@ impl PamHooks for PasswordModule {
         let new = new.unwrap();
         println!("Got new ");
 
-        let command = "mechanix_setpwd";
+        let command = "mechanix-setpwd";
         let cargs = vec!["--username", &user, "--old", &old, "--new", &new];
         let output = match Command::new(command).args(cargs).output() {
             Ok(output) => output,
