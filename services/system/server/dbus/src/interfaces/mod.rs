@@ -10,11 +10,6 @@ pub use wireless_interface::{
     WirelessScanListResponse,
 };
 
-mod power_interface;
-pub use power_interface::{
-    power_event_notification_stream, PowerBusInterface, PowerNotificationEvent,
-};
-
 mod display_interface;
 pub use display_interface::DisplayBusInterface;
 
@@ -26,3 +21,6 @@ pub use host_metrics::{
 
 mod hardware_buttons;
 pub use hardware_buttons::{hw_buttons_notification_stream, HwButtonInterface};
+
+mod security_interface;
+pub use security_interface::SecurityBusInterface;

@@ -55,8 +55,8 @@ use crate::gui::Message;
 pub enum AppMessage {}
 
 // Layer Surface App
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+// #[tokio::main]
+fn main() -> anyhow::Result<()> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
     tracing_subscriber::fmt()
         .compact()

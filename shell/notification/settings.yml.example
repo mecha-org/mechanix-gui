@@ -1,0 +1,19 @@
+title: Notification # Empty
+app:
+  id: mechanix.shell.notification # Notification
+  text_multithreading: true # false
+  antialiasing: true # false
+  try_opengles_first: true # false
+window:
+  size: [448, 84] # [1024, 768]
+  position: [0, 0] # [0, 0]
+  min_size: [448, 84] # None
+  max_size: null # None
+  visible: true # true
+  resizable: true # true
+  decorations: true # true
+  transparent: true # false
+  always_on_top: false # false
+  icon_path: null # Todo
+icons:
+  bell: /usr/share/mechanix/shell/notification/assets/icons/bell.svg
