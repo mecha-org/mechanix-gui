@@ -71,11 +71,6 @@ jobs:
             artifact: mechanix-polkit-agent-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - name: Pam
-            package: pam-mechanix
-            artifact: pam-mechanix-aarch64-unknown-linux-gnu.tar.gz
-            path: pam
-
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
     steps:
@@ -98,8 +93,7 @@ jobs:
           sudo apt install \
           libwayland-dev \
           libxkbcommon-dev \
-          libdbus-1-dev \
-          libpam0g-dev
+          libdbus-1-dev
 
       - name: Set up Git SSH key
         run: |
