@@ -93,7 +93,8 @@ jobs:
           sudo apt install \
           libwayland-dev \
           libxkbcommon-dev \
-          libdbus-1-dev
+          libdbus-1-dev \
+          libclang-dev
 
       - name: Set up Git SSH key
         run: |

@@ -29,7 +29,7 @@ jobs:
           - name: desktop dbus service
             package: mechanix_desktop_dbus_server
             artifact: mechanix_desktop_dbus_server-aarch64-unknown-linux-gnu.tar.gz
-            path: services  
+            path: services
 
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
@@ -52,7 +52,8 @@ jobs:
         run: |
           sudo apt install \
           libdbus-1-dev \
-          libpulse-dev
+          libpulse-dev \
+          libclang-dev
 
       - name: Set up Git SSH key
         run: |
@@ -73,7 +74,7 @@ jobs:
           cd ${{ matrix.path }}
           cargo deb --no-build --package ${{ matrix.package }}
           ls -la
-          
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir build
