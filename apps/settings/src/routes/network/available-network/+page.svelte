@@ -83,7 +83,6 @@
 							{#if item?.isSecured}
 								<Icons name="lock" height="30px" width="30px" />
 								{:else}
-								<!-- todo : icon  -->
 								<Icons name="warning" height="30px" width="30px" />
 							{/if}
 							<Icons name="network" height="30px" width="30px" />

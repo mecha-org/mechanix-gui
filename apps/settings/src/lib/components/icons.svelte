@@ -3,7 +3,7 @@
 	export let width = '1rem';
 	export let height = '1rem';
 	export let focusable: string | number | null | undefined = undefined;
-	let icons = {
+	let icons : any= {
 		delete: {
 			box: 32,
 			svg: `<path d="M 15 4 C 14.476563 4 13.941406 4.183594 13.5625 4.5625 C 13.183594 4.941406 13 5.476563 13 6 L 13 7 L 7 7 L 7 9 L 8 9 L 8 25 C 8 26.644531 9.355469 28 11 28 L 23 28 C 24.644531 28 26 26.644531 26 25 L 26 9 L 27 9 L 27 7 L 21 7 L 21 6 C 21 5.476563 20.816406 4.941406 20.4375 4.5625 C 20.058594 4.183594 19.523438 4 19 4 Z M 15 6 L 19 6 L 19 7 L 15 7 Z M 10 9 L 24 9 L 24 25 C 24 25.554688 23.554688 26 23 26 L 11 26 C 10.445313 26 10 25.554688 10 25 Z M 12 12 L 12 23 L 14 23 L 14 12 Z M 16 12 L 16 23 L 18 23 L 18 12 Z M 20 12 L 20 23 L 22 23 L 22 12 Z"></path>`
@@ -184,12 +184,19 @@
 </defs>`
 		},
 		warning: {
-			box: 20,
-			svg: `
-<g id="SVGRepo_bgCarrier" stroke-width="0"/>
-<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/>
-<g id="SVGRepo_iconCarrier"> <g> <g> <g> <circle cx="239.904" cy="314.721" r="35.878"/> <path d="M256.657,127.525h-31.9c-10.557,0-19.125,8.645-19.125,19.125v101.975c0,10.48,8.645,19.125,19.125,19.125h31.9 c10.48,0,19.125-8.645,19.125-19.125V146.65C275.782,136.17,267.138,127.525,256.657,127.525z"/> <path d="M239.062,0C106.947,0,0,106.947,0,239.062s106.947,239.062,239.062,239.062c132.115,0,239.062-106.947,239.062-239.062 S371.178,0,239.062,0z M239.292,409.734c-94.171,0-170.595-76.348-170.595-170.596c0-94.248,76.347-170.595,170.595-170.595 s170.595,76.347,170.595,170.595C409.887,333.387,333.464,409.734,239.292,409.734z"/> </g> </g> </g> </g>
-`
+			box: 30,
+			svg: `<circle cx="15" cy="15" r="10.5" stroke="#FEDD00" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="15" y="19.5" width="0.0125" height="0.0125" stroke="#FEDD00" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M15 15.5L15 10.5" stroke="#FEDD00" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		backspace : {
+			box: 40,
+			svg: `<path d="M14.291 8.07054C14.86 7.43764 15.671 7.07617 16.5221 7.07617H31.6539C34.1392 7.07617 36.1539 9.09089 36.1539 11.5762V28.4223C36.1539 30.9076 34.1392 32.9223 31.6539 32.9223H16.5651C15.6891 32.9223 14.8569 32.5395 14.287 31.8743L4.70281 20.6888C4.21272 20.1169 4.2228 19.2702 4.72635 18.71L14.291 8.07054Z" stroke="#FAFBFC" stroke-width="3.23077"/>
+<path d="M18.9231 15.6919L27.5385 24.3073M18.9231 24.3073L27.5385 15.6919" stroke="#FAFBFC" stroke-width="3.23077" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		cancel: {
+			box: 40,
+			svg: `<path d="M11.923 11.9233L28.0768 28.0772M11.923 28.0772L28.0768 11.9233" stroke="white" stroke-width="3.23077" stroke-linecap="round" stroke-linejoin="round"/>`
 		}
 	} as const;
 	let displayIcon = icons[name];
