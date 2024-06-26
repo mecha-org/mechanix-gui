@@ -35,4 +35,11 @@ impl Security {
         Ok(reply)
     }
 
+    pub fn remove_pin_lock(pin: String, secret: String) -> Result<bool> {
+        // let connection = zbus::blocking::Connection::system()?;
+        // let proxy: std::result::Result<SecurityBusInterfaceProxyBlocking, zbus::Error> = SecurityBusInterfaceProxyBlocking::new(&connection);
+        // let reply = proxy?.remove_pin(pin, secret)?;
+        // Ok(reply)
+        Ok(true)
+    }
 }

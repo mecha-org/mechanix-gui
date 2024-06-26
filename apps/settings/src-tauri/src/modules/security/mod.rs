@@ -86,12 +86,11 @@ pub async fn authenticate_pin(pin: String) -> Result<bool, Error> {
 }
 
 #[tauri::command]
-pub fn change_pin(old_pin: String, new_pin: String, set_pin_enabled: bool) -> Result<bool, Error> {
-    println!("Calling::Security::change_pin()");
+pub fn change_pin(old_pin: String, new_pin: String, set_new_secret: bool) -> Result<bool, Error> {
     println!("Calling::Security::change_pin()  old pin {:?} and new_pin {:?} ", &old_pin,&new_pin);
    let mut secret = String::from("");
 
-   if set_pin_enabled {
+   if set_new_secret {
     secret = match set_pin_secret() {
         Ok(secret) => secret,
         Err(e) => return Err(e),
@@ -117,4 +116,23 @@ pub fn change_pin(old_pin: String, new_pin: String, set_pin_enabled: bool) -> Re
         },
     };
  
+}
+
+#[tauri::command]
+pub fn remove_pin_lock(pin: String) -> Result<bool, Error> {
+    println!("Calling::Security::remove_pin_lock");
+    let mut secret = match get_pin_secret() {
+        Ok(secret) => secret,
+        Err(e) => return Err(e),
+    };
+    match client::Security::remove_pin_lock(pin, secret) {
+        Ok(v) => return Ok(v),
+        Err(e) => {
+            println!("ERROR:: {:?} ", e.to_string());
+            if e.to_string().contains("Entry not found") {
+                return Ok(false);
+            }
+            return Err(Error::Other(e.to_string()));
+        }
+    };
 }

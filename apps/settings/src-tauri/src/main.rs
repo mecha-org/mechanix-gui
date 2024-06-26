@@ -60,6 +60,7 @@ fn main() {
             modules::security::get_security_lock_status,
             modules::security::change_pin,
             modules::security::authenticate_pin,
+            modules::security::remove_pin_lock,
             exit_app
         ])
         .run(tauri::generate_context!())
