@@ -1,0 +1,26 @@
+---
+outlines:
+    default:   { width: 37.46,  height: 52 }
+    altline:   { width: 48.39,  height: 52 }
+    wide:      { width: 88.98,  height: 52 }
+    spaceline: { width: 120.58, height: 52 }
+
+views:
+    base:
+        - "1 2 3 ( )"
+        - "4 5 6 # *"
+        - "7 8 9 + -"
+        - "BackSpace 0 space Return"
+
+buttons:
+    BackSpace:
+        outline: "altline"
+        icon: "edit-clear-symbolic"
+        action: "erase"
+    space:
+        outline: "spaceline"
+        text: " "
+    Return:
+        outline: "wide"
+        icon: "key-enter"
+        keysym: "Return"

@@ -11,3 +11,39 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+anyhow.workspace = true
+serde.workspace = true 
+serde_yaml.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tokio.workspace = true
+zbus.workspace = true
+mctk_core = { workspace = true }
+mctk_smithay = { workspace = true }
+mctk_macros = { workspace = true }
+
+[package.metadata.deb]
+name = "mechanix-keyboard"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-keyboard",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/keyboard/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/keyboard/settings.yml",
+        "644",
+    ],
+]
+
