@@ -1,0 +1,19 @@
+---
+margins: { top: 4, side: 0, bottom: 4 }
+outlines:
+  default: { width: 120, height: 42 }
+
+views:
+  base:
+    - "1 2 3"
+    - "4 5 6"
+    - "7 8 9"
+    - "BackSpace 0 Return"
+
+buttons:
+  BackSpace:
+    icon: "edit-clear-symbolic"
+    action: "erase"
+  Return:
+    icon: "key-enter"
+    keysym: "Return"

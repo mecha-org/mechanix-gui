@@ -71,6 +71,11 @@ jobs:
             artifact: mechanix-polkit-agent-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
+          - name: Keyboard
+            package: mechanix-keyboard
+            artifact: mechanix-keyboard-aarch64-unknown-linux-gnu.tar.gz
+            path: shell
+
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
     steps:
