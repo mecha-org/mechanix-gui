@@ -83,10 +83,6 @@
 			changePinClick = true;
 			modalType = ChangePinTypes.AUTHENTICATE_PIN;
 			showModal(true);
-			// goto('/security/authenticate-pin', {
-			// 	invalidateAll: true,
-			// 	state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
-			// });
 		}
 	};
 
