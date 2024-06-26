@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import Icons from './icons.svelte';
 	import { createEventDispatcher } from 'svelte';

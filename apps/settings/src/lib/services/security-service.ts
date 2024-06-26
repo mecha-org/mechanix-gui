@@ -16,33 +16,6 @@ export const get_lock_status = async () => {
     }
 };
 
-// export const set_pin_secret = async () => {
-//     console.log("service::security::set_pin_secret() ");
-
-//     try {
-//         const response: any = await invoke('set_pin_secret');
-//         console.log("service::security::set_pin_secret() response===>  ", response);
-//         pinSecret.set(response);
-//         return response;
-//     } catch (error) {
-//         console.error('service::security::set_pin_secret()::error:::: ', error);
-//         return error;
-
-//     }
-// };
-
-// export const get_pin_secret = async () => {
-//     console.log("service::security::get_pin_secret() ");
-
-//     try {
-//         const response: any = await invoke('get_pin_secret');
-//         return response;
-//     } catch (error) {
-//         console.error('service::security::get_pin_secret()::error:::: ', error);
-//         return error;
-//     }
-// };
-
 export const authenticate_pin = async (pin: string) => {
     console.log("service::security::authenticate_pin() ", pin);
 
@@ -50,8 +23,9 @@ export const authenticate_pin = async (pin: string) => {
         const response: any = await invoke('authenticate_pin', { pin: pin });
         console.log("service::security::authenticate_pin()::response: ", pin);
         oldPin.set(pin);
+        // TODO: 
+        // to handle enable or disable lock switch 
         return response;
-
     } catch (error) {
         console.error('service::security::authenticate_pin()::error:::: ', error);
         return error;
@@ -59,12 +33,13 @@ export const authenticate_pin = async (pin: string) => {
     }
 };
 
-export const set_pin_lock = async (oldPin: string, newPin: string, setPinEnabled: boolean) => {
+export const set_pin_lock = async (oldPin: string, newPin: string, setNewSecret: boolean) => {
     console.log("service::security::set_pin_lock() ", { oldPin, newPin });
 
     try {
-        const response: any = await invoke('change_pin', { oldPin: oldPin, newPin: newPin, setPinEnabled: setPinEnabled });
+        const response: any = await invoke('change_pin', { oldPin: oldPin, newPin: newPin, setNewSecret: setNewSecret });
         console.log("service::security::set_pin_lock():response:: ", response);
+        get_lock_status();  // to handle enable or disable lock switch
         return response;
 
     } catch (error) {
@@ -75,14 +50,12 @@ export const set_pin_lock = async (oldPin: string, newPin: string, setPinEnabled
 };
 
 // TODO RUST API
-export const remove_pin_lock = async () => {
+export const remove_pin_lock = async (pin: string) => {
     console.log("service::security::remove_pin_lock() ");
 
     try {
-        // const response: any = await invoke('remove_pin_lock');
-        const response = true;
+        const response: any = await invoke('remove_pin_lock', {pin: pin});
         return response;
-
     } catch (error) {
         console.error('service::security::remove_pin_lock()::error:::: ', error);
         return error;

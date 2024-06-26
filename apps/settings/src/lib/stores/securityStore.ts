@@ -12,17 +12,21 @@ export const ChangePinTypesInfo = {
     AUTHENTICATE_PIN: {
         title: "Confirm pin",
     }
+
 };
 
 export const pin_lentgh_options = {
     FOUR: 4,
     SIX: 6,
+    EIGHT: 8,
 };
 
 export const currentLockStatus = writable<boolean>(false);
 export const fetchingLockStatus = writable<boolean>(true);
 
 export const disableLockSwitch = writable<boolean>(false);
-export const selectedPinLength = pin_lentgh_options.FOUR;
+export const selectedPinLength = pin_lentgh_options.FOUR;  // temp
+export const maxPinLength = pin_lentgh_options.EIGHT;
+export const minPinLength = pin_lentgh_options.FOUR;
 
 export const oldPin = writable<string>('');

@@ -5,34 +5,73 @@
 	import ListItem from '$lib/components/list-item.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import { goBack } from '$lib/services/common-services';
-	import { get_lock_status } from '$lib/services/security-service';
+	import {
+		authenticate_pin,
+		get_lock_status,
+		remove_pin_lock,
+		set_pin_lock
+	} from '$lib/services/security-service';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import * as Dialog from '$lib/components/ui/dialog';
+
 	import {
 		disableLockSwitch,
 		fetchingLockStatus,
 		currentLockStatus,
-		ChangePinTypes
+		ChangePinTypes,
+		ChangePinTypesInfo,
+		maxPinLength,
+		minPinLength,
+		oldPin
 	} from '$lib/stores/securityStore';
 	import { onMount } from 'svelte';
+	export let pinValue: string = '';
+	export let showError: boolean = false;
+	export let errorMessage: string = '';
+
+	let openPinModal: boolean = false;
+	let setNewSecret: boolean = false;
+	let modalType: ChangePinTypes;
+
+	let currentSwitchStatus : boolean = false;
+	$: changePinClick = false;
+
+
+	type KeysType = {
+		value: string;
+		icon?: string;
+	};
+	let keysArray: KeysType[] = [
+		{ value: '1' },
+		{ value: '2' },
+		{ value: '3' },
+		{ value: '4' },
+		{ value: '5' },
+		{ value: '6' },
+		{ value: '7' },
+		{ value: '8' },
+		{ value: 'backPress', icon: 'back' as string }, // back
+		{ value: '9' },
+		{ value: '0' },
+		{ value: 'enterPress', icon: 'blue_tick' as string } // enter
+	];
 
 	const getInitalData = async () => {
 		await get_lock_status();
+	 	currentSwitchStatus = $currentLockStatus;
 	};
 
-	// // disableLockSwitch - when some data is loading - true  ELSE FALSE
 	const enableLockHandler = (flag: boolean) => {
 		console.log('enableLockHandler: ', flag, $currentLockStatus);
-		
+
 		if (flag) {
-			goto('/security/change-pin', {
-				invalidateAll: true,
-				state: { screenType: ChangePinTypes.SET_PIN, setPinEnabled: true }
-			});
-		}
-		else {
-			goto('/security/authenticate-pin', {
-				invalidateAll: true,
-				state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
-			});
+			setNewSecret = true;
+			modalType = ChangePinTypes.SET_PIN;
+			showModal(true);
+		} else {
+			modalType = ChangePinTypes.AUTHENTICATE_PIN;
+			setNewSecret = false;
+			showModal(true);
 		}
 	};
 
@@ -41,11 +80,96 @@
 
 		// TODO: fix 1st time enabling pin does not change page
 		if ($currentLockStatus) {
-			goto('/security/authenticate-pin', {
-				invalidateAll: true,
-				state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
-			});
-		}  
+			changePinClick = true;
+			modalType = ChangePinTypes.AUTHENTICATE_PIN;
+			showModal(true);
+			// goto('/security/authenticate-pin', {
+			// 	invalidateAll: true,
+			// 	state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
+			// });
+		}
+	};
+
+	const keyClickHandler = (key: string) => async () => {
+		console.log('keyClickHandler : ', { modalType }, $currentLockStatus);
+		let updatePin: string = '';
+		if (updatePin.length != maxPinLength) updatePin = pinValue + key;
+
+		switch (key) {
+			case 'backPress':
+				currentSwitchStatus = $currentLockStatus == true;
+				pinValue = '';
+				showModal(false);
+				break;
+
+			case 'enterPress':
+				console.log('ENTER API CALL', { pinValue, modalType });
+				if (pinValue.length > maxPinLength || pinValue.length < minPinLength) {
+					// TODO : toast
+					console.log('TOAST: PIN must be 4-8 digits');
+					return;
+				}
+
+				console.log("DIALOG: ", {modalType, setNewSecret, changePinClick});
+
+				if (modalType == ChangePinTypes.SET_PIN) {
+					try {
+						const response = set_pin_lock(
+							$oldPin != '' ? $oldPin : pinValue,
+							pinValue,
+							setNewSecret
+						);
+						setNewSecret = false; // IMP
+						console.log('set_pin_lock response: ', response);
+						pinValue = '';
+						showModal(false);
+					} catch (error) {
+						console.error('AUTHENITCATE_PIN ERROR: ', error);
+					}
+				} else if (modalType == ChangePinTypes.AUTHENTICATE_PIN) {
+					try {
+						const response = await authenticate_pin(pinValue);
+						console.log('authenticate_pin response: ', response);
+
+						if (!response) {
+							showError = true;
+							errorMessage = 'Pin is incorrect, retry!';
+							pinValue = '';
+						} else {
+							if (setNewSecret || changePinClick) {
+								pinValue = '';
+								modalType = ChangePinTypes.SET_PIN;
+								showModal(true);
+							} else {
+								remove_pin_lock(pinValue);
+								showModal(false);
+							}
+						}
+
+						setTimeout(() => {
+							showError = false;
+						}, 2000);
+					} catch (error) {
+						console.error('AUTHENTICATE_PIN ERROR: ', error);
+					}
+				}
+				break;
+
+			default:
+				if (updatePin.length <= maxPinLength) {
+					pinValue = updatePin;
+				}
+				break;
+		}
+	};
+
+	const erasePinCharacter = () => {
+		if (pinValue !== '') pinValue = pinValue.slice(0, -1);
+		console.log('updated pinValue: ', pinValue);
+	};
+
+	const showModal = (state: boolean) => {
+		openPinModal = state;
 	};
 
 	onMount(() => {
@@ -62,7 +186,7 @@
 				</div>
 			{:else}
 				<Switch
-					bind:checked={$currentLockStatus}
+					bind:checked={currentSwitchStatus}
 					onCheckedChange={enableLockHandler}
 					disabled={$disableLockSwitch}
 				/>
@@ -84,8 +208,62 @@
 			</button>
 		{/if}
 
+		<Dialog.Root
+			open={openPinModal}
+			onOutsideClick={(e) => {
+				e.preventDefault();
+			}}
+		>
+			<Dialog.Content class="h-[70%] w-[70%] rounded-lg border-0 bg-[#15171D;]">
+				<Dialog.Header class="">
+					<Dialog.Title class="flex justify-center">
+						{ChangePinTypesInfo[modalType].title}
+					</Dialog.Title>
+				</Dialog.Header>
 
-		
+				<Dialog.Description class="h-full text-white">
+					{#if showError}
+						<div
+							class="flex animate-pulse items-center justify-center text-lg normal-case text-gray-400"
+						>
+							{errorMessage}
+						</div>
+					{/if}
+					<div class="flex items-center justify-center">
+						<Input
+							class="text-center text-xl"
+							placeholder="Enter pin"
+							type="password"
+							minlength={minPinLength}
+							maxlength={maxPinLength}
+							bind:value={pinValue}
+						/>
+						<button
+							class=" flex h-[48px] w-[48px] items-center justify-center p-2 text-[#FAFBFC]"
+							on:click={erasePinCharacter}
+						>
+							<Icons name="backspace" width="32" height="32" />
+						</button>
+					</div>
+					<div class="flex flex-1 items-center justify-center">
+						<div class="grid grid-cols-4 gap-4 p-4">
+							{#each keysArray as key (key?.value)}
+								<button
+									class="rounded-md bg-[#2C2F36] px-2.5 py-1.5 text-2xl font-bold text-white"
+									on:click={keyClickHandler(key?.value)}
+								>
+									{#if key.icon && (key.value == 'backPress' || key.value == 'enterPress')}
+										<Icons name={key.icon} height="30px" width="30px" />
+									{:else}
+										{key.value}
+									{/if}
+								</button>
+							{/each}
+						</div>
+					</div>
+				</Dialog.Description>
+			</Dialog.Content>
+		</Dialog.Root>
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">

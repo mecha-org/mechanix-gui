@@ -47,8 +47,6 @@
 					console.log('ELSE API CALL');
 
 					try {
-						console.log('CHECKKKK pinValue : ',  pinValue);
-						console.log('CHECKKKK $oldPin : ', $oldPin,);
 						
 						const response = set_pin_lock($oldPin != '' ? $oldPin : pinValue, pinValue, setPinEnabled);
 						console.log('set_pin_lock response: ', response);
