@@ -6,24 +6,21 @@
 		ChangePinTypesInfo,
 		ChangePinTypes,
 		selectedPinLength,
-		oldPin,
-
+		oldPin
 	} from '$lib/stores/securityStore';
-	import { authenticate_pin, set_pin_lock } from '$lib/services/security-service';
+	import { authenticate_pin  } from '$lib/services/security-service';
 	import PinDialog from '$lib/components/pin-dialog.svelte';
 	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
 
 	// let pinValue: string = '';
 	$: pinValue = '';
 	const state: any = $page.state;
 	const screenType: ChangePinTypes = state?.screenType;
-	const {setPinEnabled} = state;
 
 	let showError: boolean = false;
 	let errorMessage: string = '';
 
-	const clickHandler = (event: CustomEvent<any>) => {
+	const clickHandler = async (event: CustomEvent<any>) => {
 		const key = event.detail;
 		let updatePin: string = '';
 		if (updatePin.length != selectedPinLength) updatePin = pinValue + key;
@@ -47,20 +44,31 @@
 					console.log('ELSE API CALL');
 
 					try {
-						console.log('CHECKKKK pinValue : ',  pinValue);
-						console.log('CHECKKKK $oldPin : ', $oldPin,);
-						
-						const response = set_pin_lock($oldPin != '' ? $oldPin : pinValue, pinValue, setPinEnabled);
-						console.log('set_pin_lock response: ', response);
-						goto('/security');
+						// const response = await authenticate_pin(pinValue, secret);
+						const response = await authenticate_pin(pinValue);
+						console.log('authenticate_pin response: ', response);
+
+						if (!response) {
+							showError = true;
+							errorMessage = 'Pin is incorrect, retry!';
+							pinValue = '';
+						} else {
+							goto('/security/change-pin', {
+								invalidateAll: true,
+								state: { screenType: ChangePinTypes.SET_PIN }
+							});
+						}
+
+						setTimeout(() => {
+							showError = false;
+						}, 2000);
 					} catch (error) {
-						console.error('AUTHENITCATE_PIN ERROR: ', error);
+						console.error('AUTHENTICATE_PIN ERROR: ', error);
 					}
 				}
 				break;
 		}
 	};
-
 </script>
 
 <Layout title="">

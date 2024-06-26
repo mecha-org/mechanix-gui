@@ -20,15 +20,16 @@
 
 	// // disableLockSwitch - when some data is loading - true  ELSE FALSE
 	const enableLockHandler = (flag: boolean) => {
-		console.log('enableLockHandler: ', flag);
+		console.log('enableLockHandler: ', flag, $currentLockStatus);
+		
 		if (flag) {
 			goto('/security/change-pin', {
 				invalidateAll: true,
-				state: { screenType: ChangePinTypes.SET_PIN }
+				state: { screenType: ChangePinTypes.SET_PIN, setPinEnabled: true }
 			});
 		}
 		else {
-			goto('/security/change-pin', {
+			goto('/security/authenticate-pin', {
 				invalidateAll: true,
 				state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
 			});
@@ -38,17 +39,13 @@
 	const changePinClickHandler = () => {
 		console.log('changePinClickHandler...', $currentLockStatus);
 
+		// TODO: fix 1st time enabling pin does not change page
 		if ($currentLockStatus) {
-			goto('/security/change-pin', {
+			goto('/security/authenticate-pin', {
 				invalidateAll: true,
 				state: { screenType: ChangePinTypes.AUTHENTICATE_PIN }
 			});
-		} else {
-			goto('/security/change-pin', {
-				invalidateAll: true,
-				state: { screenType: ChangePinTypes.SET_PIN }
-			});
-		}
+		}  
 	};
 
 	onMount(() => {
@@ -86,6 +83,9 @@
 				Change pin
 			</button>
 		{/if}
+
+
+		
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
