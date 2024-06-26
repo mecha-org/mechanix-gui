@@ -8,6 +8,7 @@ use upower::BatteryStatus;
 
 mod error;
 mod modules;
+mod constants;
 
 #[tauri::command]
 fn exit_app() {
@@ -54,7 +55,11 @@ fn main() {
             modules::battery::get_avilable_performance_modes,
             modules::battery::get_current_performance_mode,
             modules::battery::set_performance_mode,
+            modules::security::set_pin_secret,
+            modules::security::get_pin_secret,
             modules::security::get_security_lock_status,
+            modules::security::change_pin,
+            modules::security::authenticate_pin,
             exit_app
         ])
         .run(tauri::generate_context!())
