@@ -3,20 +3,18 @@
 	import Layout from '$lib/components/layout.svelte';
 	import ListHeading from '$lib/components/list-heading.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { LOG_LEVEL, consoleLog, goBack } from '$lib/services/common-services';
+	import { LOG_LEVEL, consoleLog, customToast, goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api/tauri';
-
 	import type { PageData } from '../../available/[network]/$types';
 	import { fetchKnownNetworks, removeWifi } from '$lib/services/network-services';
 	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG } from '../../../../../constants';
 	import { goto } from '$app/navigation';
+	import { Toaster } from 'svelte-french-toast';
 
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG + 'manage-network::connet::';
 
 	export let data: PageData;
-	let showError : boolean = false;
-	let error_message : string = "";
-
+	
 	$: password = '';
 	const connectToNetwork = async () => {
 		consoleLog(LOG_PREFIX + 'connectToNetwork()::');
@@ -32,16 +30,15 @@
 			console.log('=======> error: ', error);
 			const startIndex = error.indexOf('message:') + 'message:'.length;
 			const endIndex = error.length;
-			error_message = error.substring(startIndex, endIndex).replace(")","").trim();
+			let error_message = error.substring(startIndex, endIndex).replace(")","").trim();
 			console.log("=======> error_message:", error_message);
-			showError = true;
+			customToast(error_message);
 			
 			consoleLog(LOG_PREFIX + 'connectToNetwork()::' + ERROR_LOG, {
 				type: LOG_LEVEL.ERROR,
 				data: error
 			});
-
-			setTimeout(() => {showError=false}, 3000);
+ 
 		}
 	};
 
@@ -57,11 +54,7 @@
 			<Input placeholder="Password" bind:value={password} />
 		</div>
 
-		{#if showError}
-			<div class="animate-pulse capitalize text-gray-300 text-lg inline-flex justify-center">
-				{error_message}
-			</div>
-		{/if}
+		<Toaster/>
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
