@@ -4,7 +4,7 @@
 	import Layout from '$lib/components/layout.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
-	import { goBack } from '$lib/services/common-services';
+	import { customToast, goBack } from '$lib/services/common-services';
 	import {
 		authenticate_pin,
 		get_lock_status,
@@ -13,6 +13,7 @@
 	} from '$lib/services/security-service';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import * as Dialog from '$lib/components/ui/dialog';
+	import { Toaster } from 'svelte-french-toast';
 
 	import {
 		disableLockSwitch,
@@ -26,16 +27,13 @@
 	} from '$lib/stores/securityStore';
 	import { onMount } from 'svelte';
 	export let pinValue: string = '';
-	export let showError: boolean = false;
-	export let errorMessage: string = '';
 
 	let openPinModal: boolean = false;
 	let setNewSecret: boolean = false;
 	let modalType: ChangePinTypes;
 
-	let currentSwitchStatus : boolean = false;
-	$: changePinClick = false;
-
+	let currentSwitchStatus: boolean = false;
+	$: changePinClicked = false;
 
 	type KeysType = {
 		value: string;
@@ -58,12 +56,10 @@
 
 	const getInitalData = async () => {
 		await get_lock_status();
-	 	currentSwitchStatus = $currentLockStatus;
+		currentSwitchStatus = $currentLockStatus;
 	};
 
 	const enableLockHandler = (flag: boolean) => {
-		console.log('enableLockHandler: ', flag, $currentLockStatus);
-
 		if (flag) {
 			setNewSecret = true;
 			modalType = ChangePinTypes.SET_PIN;
@@ -76,18 +72,14 @@
 	};
 
 	const changePinClickHandler = () => {
-		console.log('changePinClickHandler...', $currentLockStatus);
-
-		// TODO: fix 1st time enabling pin does not change page
 		if ($currentLockStatus) {
-			changePinClick = true;
+			changePinClicked = true;
 			modalType = ChangePinTypes.AUTHENTICATE_PIN;
 			showModal(true);
 		}
 	};
 
 	const keyClickHandler = (key: string) => async () => {
-		console.log('keyClickHandler : ', { modalType }, $currentLockStatus);
 		let updatePin: string = '';
 		if (updatePin.length != maxPinLength) updatePin = pinValue + key;
 
@@ -99,14 +91,10 @@
 				break;
 
 			case 'enterPress':
-				console.log('ENTER API CALL', { pinValue, modalType });
 				if (pinValue.length > maxPinLength || pinValue.length < minPinLength) {
-					// TODO : toast
-					console.log('TOAST: PIN must be 4-8 digits');
+					customToast('Pin must be 4-8 digits');
 					return;
 				}
-
-				console.log("DIALOG: ", {modalType, setNewSecret, changePinClick});
 
 				if (modalType == ChangePinTypes.SET_PIN) {
 					try {
@@ -116,11 +104,11 @@
 							setNewSecret
 						);
 						setNewSecret = false; // IMP
-						console.log('set_pin_lock response: ', response);
 						pinValue = '';
 						showModal(false);
 					} catch (error) {
-						console.error('AUTHENITCATE_PIN ERROR: ', error);
+						customToast('Something went wrong! Try after some time.');
+						console.error('SET_PIN ERROR: ', error);
 					}
 				} else if (modalType == ChangePinTypes.AUTHENTICATE_PIN) {
 					try {
@@ -128,24 +116,21 @@
 						console.log('authenticate_pin response: ', response);
 
 						if (!response) {
-							showError = true;
-							errorMessage = 'Pin is incorrect, retry!';
+							customToast('Pin is incorrect!');
 							pinValue = '';
 						} else {
-							if (setNewSecret || changePinClick) {
+							if (setNewSecret || changePinClicked) {
 								pinValue = '';
 								modalType = ChangePinTypes.SET_PIN;
 								showModal(true);
+								changePinClicked = false;
 							} else {
 								remove_pin_lock(pinValue);
 								showModal(false);
 							}
 						}
-
-						setTimeout(() => {
-							showError = false;
-						}, 2000);
 					} catch (error) {
+						customToast('Pin is incorrect!');
 						console.error('AUTHENTICATE_PIN ERROR: ', error);
 					}
 				}
@@ -161,7 +146,6 @@
 
 	const erasePinCharacter = () => {
 		if (pinValue !== '') pinValue = pinValue.slice(0, -1);
-		console.log('updated pinValue: ', pinValue);
 	};
 
 	const showModal = (state: boolean) => {
@@ -190,7 +174,7 @@
 		</ListItem>
 		<ListItem title="Lock timeout" isLink href="/security/lock-timeout">
 			<div class="flex flex-row items-center gap-2">
-				<p class="text-lg text-misty-slate">10s</p>
+				<p class="text-misty-slate text-lg">10s</p>
 				<Icons name="right_arrow" height="30px" width="30px" />
 			</div>
 		</ListItem>
@@ -218,13 +202,6 @@
 				</Dialog.Header>
 
 				<Dialog.Description class="h-full text-white">
-					{#if showError}
-						<div
-							class="flex animate-pulse items-center justify-center text-lg normal-case text-gray-400"
-						>
-							{errorMessage}
-						</div>
-					{/if}
 					<div class="flex items-center justify-center">
 						<Input
 							class="text-center text-xl"
@@ -260,11 +237,13 @@
 				</Dialog.Description>
 			</Dialog.Content>
 		</Dialog.Root>
+
+		<Toaster />
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="right_arrow" width="32" height="32" />
