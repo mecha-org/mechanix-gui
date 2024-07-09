@@ -85,6 +85,8 @@ modules:
     title: "Settings"
     icon:
       default: /usr/share/mechanix/shell/settings-panel/assets/icons/settings/settings.svg
+    run_command:
+      ["sh", "-c", "mecha-settings -s /usr/share/mecha/settings/settings.yml"]
   running_apps:
     title: "Running Apps"
     icon:

@@ -1,12 +1,15 @@
 use anyhow::Result;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
-use std::fs;
 use std::io::BufReader;
-use std::path::PathBuf;
+use std::io::Write;
+use std::mem;
+use std::ptr;
+use std::string::FromUtf8Error;
 use std::vec::Vec;
-
-use crate::errors::KeyboardError;
+use std::{fmt, fs, io};
+use xkbcommon::xkb;
+mod util;
 
 /// The root element describing an entire keyboard
 #[derive(Debug, Deserialize, PartialEq, Clone)]
@@ -141,33 +144,45 @@ impl Layout {
             })
             .collect();
 
-        let button_states = HashMap::<String, crate::action::Action>::from_iter(
-            button_actions.into_iter().map(|(name, action)| {
-                // let keycodes = match &action {
-                //     // crate::action::Action::Submit { text: _, keys } => keys
-                //     //     .iter()
-                //     //     .map(|named_keysym| {
-                //     //         symbolmap
-                //     //             .get(named_keysym.0.as_str())
-                //     //             .expect(
-                //     //                 format!(
-                //     //                     "keysym {} in key {} missing from symbol map",
-                //     //                     named_keysym.0, name
-                //     //                 )
-                //     //                 .as_str(),
-                //     //             )
-                //     //             .clone()
-                //     //     })
-                //     //     .collect(),
-                //     crate::action::Action::Erase => vec![symbolmap
-                //         .get("BackSpace")
-                //         .expect(&format!("BackSpace missing from symbol map"))
-                //         .clone()],
-                //     _ => Vec::new(),
-                // };
-                (name.into(), action)
-            }),
-        );
+        let symbolmap: HashMap<String, KeyCode> =
+            generate_keycodes(extract_symbol_names(&button_actions));
+
+        // println!("symbolmap {:?}", symbolmap);
+
+        let button_states =
+            HashMap::<String, Key>::from_iter(button_actions.into_iter().map(|(name, action)| {
+                let keycodes = match &action {
+                    crate::action::Action::Submit { text: _, keys } => keys
+                        .iter()
+                        .map(|named_keysym| {
+                            symbolmap
+                                .get(named_keysym.0.as_str())
+                                .expect(
+                                    format!(
+                                        "keysym {} in key {} missing from symbol map",
+                                        named_keysym.0, name
+                                    )
+                                    .as_str(),
+                                )
+                                .clone()
+                        })
+                        .collect(),
+                    crate::action::Action::Erase => vec![symbolmap
+                        .get("BackSpace")
+                        .expect(&format!("BackSpace missing from symbol map"))
+                        .clone()],
+                    _ => Vec::new(),
+                };
+                (name.into(), Key { keycodes, action })
+            }));
+
+        let keymaps = match generate_keymaps(symbolmap) {
+            Err(e) => return (Err(anyhow::Error::msg(e.to_string()))),
+            Ok(v) => v,
+        };
+
+        // println!("keymaps {:?}", keymaps);
+        // println!("keymaps len {:?}", keymaps.len());
 
         let views: Vec<_> = self
             .views
@@ -195,7 +210,7 @@ impl Layout {
         let views: HashMap<String, View> =
             { HashMap::from_iter(views.into_iter().map(|(name, view)| (name, view))) };
 
-        Ok(ParsedLayout { views })
+        Ok(ParsedLayout { views, keymaps })
     }
 }
 
@@ -215,13 +230,14 @@ pub struct KeyButton {
     pub outline_name: String,
     /// Static description of what the key does when pressed or released
     pub action: crate::action::Action,
+    pub keycodes: Vec<crate::layout::KeyCode>,
 }
 
 fn create_keyboard_button(
     name: &str,
     button_info: &HashMap<String, ButtonMeta>,
     outlines: &HashMap<String, Outline>,
-    data: crate::action::Action,
+    data: Key,
 ) -> KeyButton {
     let name = name.to_string();
     // don't remove, because multiple buttons with the same name are allowed
@@ -271,7 +287,8 @@ fn create_keyboard_button(
         outline_name,
         size: (outline.width, outline.height),
         label,
-        action: data,
+        action: data.action,
+        keycodes: data.keycodes,
     }
 }
 
@@ -284,8 +301,7 @@ fn create_action(
     let symbol_meta = button_info.get(name).unwrap_or(&default_meta);
 
     fn keysym_valid(name: &str) -> bool {
-        true
-        // xkb::keysym_from_name(name, xkb::KEYSYM_NO_FLAGS) != xkb::KEY_NoSymbol
+        xkb::keysym_from_name(name, xkb::KEYSYM_NO_FLAGS) != xkb::KEY_NoSymbol
     }
 
     enum SubmitData {
@@ -432,4 +448,195 @@ impl View {
 #[derive(Debug, Clone)]
 pub struct ParsedLayout {
     pub views: HashMap<String, View>,
+    pub keymaps: Vec<String>,
+}
+
+/// The extended, unambiguous layout-keycode
+#[derive(Debug, Clone, PartialEq)]
+pub struct KeyCode {
+    pub code: u32,
+    pub keymap_idx: usize,
+}
+
+/// Generates a mapping where each key gets a keycode, starting from ~~8~~
+/// HACK: starting from 9, because 8 results in keycode 0,
+/// which the compositor likes to discard
+pub fn generate_keycodes<'a, C: IntoIterator<Item = String>>(
+    key_names: C,
+) -> HashMap<String, KeyCode> {
+    HashMap::from_iter(
+        // Sort to remove a source of indeterminism in keycode assignment.
+        sorted(key_names.into_iter())
+            .zip(util::cycle_count(9..255))
+            .map(|(name, (code, keymap_idx))| (String::from(name), KeyCode { code, keymap_idx })),
+    )
+}
+
+/// Sorts an iterator by converting it to a Vector and back
+fn sorted<'a, I: Iterator<Item = String>>(iter: I) -> impl Iterator<Item = String> {
+    let mut v: Vec<String> = iter.collect();
+    v.sort();
+    v.into_iter()
+}
+
+#[derive(Debug)]
+pub enum FormattingError {
+    Utf(FromUtf8Error),
+    Format(io::Error),
+}
+
+impl fmt::Display for FormattingError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FormattingError::Utf(e) => write!(f, "UTF: {}", e),
+            FormattingError::Format(e) => write!(f, "Format: {}", e),
+        }
+    }
+}
+
+impl From<io::Error> for FormattingError {
+    fn from(e: io::Error) -> Self {
+        FormattingError::Format(e)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Key {
+    /// A cache of raw keycodes derived from Action::Submit given a keymap
+    pub keycodes: Vec<KeyCode>,
+    /// Static description of what the key does when pressed or released
+    pub action: crate::action::Action,
+}
+
+/// Index is the key code, String is the occupant.
+/// Starts all empty.
+/// https://gitlab.freedesktop.org/xorg/xserver/-/issues/260
+type SingleKeyMap = [Option<String>; 256];
+
+fn single_key_map_new() -> SingleKeyMap {
+    // Why can't we just initialize arrays without tricks -_- ?
+    // Inspired by
+    // https://www.reddit.com/r/rust/comments/5n7bh1/how_to_create_an_array_of_a_type_with_clone_but/
+    let mut array = mem::MaybeUninit::<SingleKeyMap>::uninit();
+
+    unsafe {
+        let arref = &mut *array.as_mut_ptr();
+        for element in arref.iter_mut() {
+            ptr::write(element, None);
+        }
+
+        array.assume_init()
+    }
+}
+
+pub fn generate_keymaps(
+    symbolmap: HashMap<String, KeyCode>,
+) -> Result<Vec<String>, FormattingError> {
+    let mut bins: Vec<SingleKeyMap> = Vec::new();
+
+    for (name, KeyCode { code, keymap_idx }) in symbolmap.into_iter() {
+        if keymap_idx >= bins.len() {
+            bins.resize_with(keymap_idx + 1, || single_key_map_new());
+        }
+        bins[keymap_idx][code as usize] = Some(name);
+    }
+
+    let mut out = Vec::new();
+    for bin in bins {
+        out.push(generate_keymap(&bin)?);
+    }
+    Ok(out)
+}
+
+/// Generates a de-facto single level keymap.
+/// Key codes must not repeat and must remain between 9 and 255.
+fn generate_keymap(symbolmap: &SingleKeyMap) -> Result<String, FormattingError> {
+    let mut buf: Vec<u8> = Vec::new();
+    writeln!(
+        buf,
+        "xkb_keymap {{
+
+    xkb_keycodes \"(unnamed)\" {{
+        minimum = 8;
+        maximum = 255;"
+    )?;
+
+    let pairs: Vec<(&String, usize)> = symbolmap
+        .iter()
+        // Attach a key code to each cell.
+        .enumerate()
+        // Get rid of empty keycodes.
+        .filter_map(|(code, name)| name.as_ref().map(|n| (n, code)))
+        .collect();
+
+    // Xorg can only consume up to 255 keys, so this may not work in Xwayland.
+    // Two possible solutions:
+    // - use levels to cram multiple characters into one key
+    // - swap layouts on key presses
+    for (_name, keycode) in &pairs {
+        write!(
+            buf,
+            "
+        <I{}> = {0};",
+            keycode,
+        )?;
+    }
+
+    writeln!(
+        buf,
+        "
+        indicator 1 = \"Caps Lock\"; // Xwayland won't accept without it.
+    }};
+    
+    xkb_symbols \"(unnamed)\" {{
+"
+    )?;
+
+    for (name, keycode) in pairs {
+        write!(
+            buf,
+            "
+key <I{}> {{ [ {} ] }};",
+            keycode, name,
+        )?;
+    }
+
+    writeln!(
+        buf,
+        "
+    }};
+
+    xkb_types \"(unnamed)\" {{
+        virtual_modifiers MechanixKeyboard; // No modifiers! Needed for Xorg for some reason.
+    
+        // Those names are needed for Xwayland.
+        type \"ONE_LEVEL\" {{
+            modifiers= none;
+            level_name[Level1]= \"Any\";
+        }};
+        type \"TWO_LEVEL\" {{
+            level_name[Level1]= \"Base\";
+        }};
+        type \"ALPHABETIC\" {{
+            level_name[Level1]= \"Base\";
+        }};
+        type \"KEYPAD\" {{
+            level_name[Level1]= \"Base\";
+        }};
+        type \"SHIFT+ALT\" {{
+            level_name[Level1]= \"Base\";
+        }};
+
+    }};
+
+    xkb_compatibility \"(unnamed)\" {{
+        // Needed for Xwayland again.
+        interpret Any+AnyOf(all) {{
+            action= SetMods(modifiers=modMapMods,clearLocks);
+        }};
+    }};
+}};"
+    )?;
+
+    String::from_utf8(buf).map_err(FormattingError::Utf)
 }
