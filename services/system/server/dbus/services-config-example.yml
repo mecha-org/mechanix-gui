@@ -6,6 +6,6 @@ interfaces:
     device: /var/run/wpa_supplicant/wlp2s0
   hw_buttons:
     power:
-      path: /dev/input/event3
-    home_button:
-      path: /dev/input/event3
+      path: /dev/input/event0
+    home:
+      path: /dev/input/event2

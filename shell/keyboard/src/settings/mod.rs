@@ -17,6 +17,7 @@ pub struct KeyboardSettings {
     pub title: String,          // Sets the window title
     pub icons: Icons,
     pub layouts: Layouts,
+    pub trie: TrieConfigs,
 }
 
 impl Default for KeyboardSettings {
@@ -27,6 +28,7 @@ impl Default for KeyboardSettings {
             title: String::from("keyboard"),
             icons: Icons::default(),
             layouts: Layouts::default(),
+            trie: TrieConfigs::default(),
         }
     }
 }
@@ -111,6 +113,12 @@ pub struct Icons {
 #[derive(Debug, Deserialize, Clone, Serialize, Default)]
 pub struct Layouts {
     pub default: String,
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+pub struct TrieConfigs {
+    pub raw_file: Option<String>,
+    pub cached_file: Option<String>,
 }
 
 /// # Reads Settings path from arg

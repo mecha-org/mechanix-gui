@@ -1,8 +1,8 @@
 ---
 outlines:
   default: { width: 41.9, height: 42 }
-  altline: { width: 52.67, height: 42 }
-  change-view: { width: 52.67, height: 42 }
+  altline: { width: 42, height: 42 }
+  change-view: { width: 42, height: 42 }
   change-view-2: { width: 62, height: 42 }
   wide: { width: 100, height: 42 }
   spaceline: { width: 201.3, height: 42 }
@@ -71,6 +71,7 @@ buttons:
     outline: "large"
   space:
     outline: "spaceline"
+    label: "space"
     text: " "
   Return:
     outline: "wide"
