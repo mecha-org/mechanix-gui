@@ -120,6 +120,12 @@ jobs:
           cargo --config net.git-fetch-with-cli=true fetch
           cargo build --release --package ${{ matrix.package }}
           ls -la
+      
+      - name: Package deb [${{ matrix.package }}]
+        run: |
+          cd ${{ matrix.path }}
+          cargo deb --no-build --package ${{ matrix.package }}
+          ls -la    
 
       - name: Extract package details
         id: package_details
