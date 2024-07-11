@@ -5,33 +5,7 @@ app:
   antialiasing: true # false
   try_opengles_first: true # false
 window:
-  size: [480, 220] # [1024, 768]
-  position: [0, 0] # [0, 0]
-  min_size: [448, 84] # None
-  max_size: null # None
-  visible: true # true
-  resizable: true # true
-  decorations: true # true
-  transparent: true # false
-  always_on_top: false # false
-  icon_path: null # Todo
-icons:
-  backspace: /usr/share/mechanix/shell/keyboard/assets/icons/edit-clear-symbolic.svg
-  shift: /usr/share/mechanix/shell/keyboard/assets/icons/key-shift.svg
-  enter: /usr/share/mechanix/shell/keyboard/assets/icons/key-enter.svg
-  symbolic: /usr/share/mechanix/shell/keyboard/assets/icons/keyboard-mode-symbolic.svg
-layouts:
-  default: /usr/share/mechanix/shell/keyboard/example-layouts/us.yaml
-
-
-title: Keyboard # Empty
-app:
-  id: mechanix.shell.keyboard # Keyboard
-  text_multithreading: true # false
-  antialiasing: true # false
-  try_opengles_first: true # false
-window:
-  size: [480, 260] # [480, 200]
+  size: [480, 244] # [480, 200]
   position: [0, 0] # [0, 0]
   min_size: [448, 84] # None
   max_size: null # None
