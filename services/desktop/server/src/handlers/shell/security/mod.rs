@@ -25,7 +25,7 @@ impl SecurityHandler {
 }
 
 async fn is_pin_enabled() -> Result<bool> {
-    let connection = Connection::session().await?;
+    let connection = Connection::system().await?;
     let p = Proxy::new(
         &connection,
         "org.mechanix.services.Security",
@@ -33,6 +33,6 @@ async fn is_pin_enabled() -> Result<bool> {
         "org.mechanix.services.Security",
     )
     .await?;
-    let pin_enabled: bool = p.call("IsPinLockEnabled", &()).await?;
+    let pin_enabled: bool = p.call("IsPasswordSet", &()).await?;
     Ok(pin_enabled)
 }
