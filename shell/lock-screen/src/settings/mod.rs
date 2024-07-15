@@ -1,10 +1,11 @@
 use crate::errors::{LockScreenError, LockScreenErrorCodes};
 use anyhow::bail;
-use anyhow::Result;
+use anyhow::Result; 
 use mechanix_status_bar_components::settings::Battery;
 use mechanix_status_bar_components::settings::BatteryIconPaths;
 use mechanix_status_bar_components::settings::Bluetooth;
 use mechanix_status_bar_components::settings::BluetoothIconPaths;
+use mechanix_status_bar_components::settings::ChargingBatteryIconPaths;
 use mechanix_status_bar_components::settings::Clock;
 use mechanix_status_bar_components::settings::Wireless;
 use mechanix_status_bar_components::settings::WirelessIconPaths;
@@ -109,34 +110,8 @@ impl Default for Modules {
                 },
             },
             battery: Battery {
-                icon: BatteryIconPaths {
-                    level_100: None,
-                    level_90: None,
-                    level_80: None,
-                    level_70: None,
-                    level_60: None,
-                    level_50: None,
-                    level_40: None,
-                    level_30: None,
-                    level_20: None,
-                    level_10: None,
-                    level_0: None,
-                    not_found: None,
-                },
-                charging_icon: BatteryIconPaths {
-                    level_100: None,
-                    level_90: None,
-                    level_80: None,
-                    level_70: None,
-                    level_60: None,
-                    level_50: None,
-                    level_40: None,
-                    level_30: None,
-                    level_20: None,
-                    level_10: None,
-                    level_0: None,
-                    not_found: None,
-                },
+                icon: BatteryIconPaths::default(),
+                charging_icon: ChargingBatteryIconPaths::default(),
             },
         }
     }
