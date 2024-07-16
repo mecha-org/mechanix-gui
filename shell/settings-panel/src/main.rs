@@ -5,6 +5,7 @@ mod settings;
 mod theme;
 mod types;
 mod widgets;
+mod constants;
 
 use echo_client::EchoClient;
 use modules::battery::component::get_battery_icons_charging_map;

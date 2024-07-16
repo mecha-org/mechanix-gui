@@ -1,3 +1,4 @@
+use crate::constants::{BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, SYSTEM_MECHANIX_SETTINGS_PANEL_PATH, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK};
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -97,39 +98,124 @@ impl Default for CssConfigs {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)] 
 pub struct BluetoothIconPaths {
-    pub on: Option<String>,
-    pub off: Option<String>,
-    pub connected: Option<String>,
-    pub not_found: Option<String>,
+    pub on: String,
+    pub off: String,
+    pub connected: String,
+    pub not_found: String,
+}
+impl Default for BluetoothIconPaths {
+    fn default() -> Self {
+        BluetoothIconPaths {
+            off: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_OFF,
+            on: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_ON,
+            connected: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_CONNECTED,
+            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_NOT_FOUND,
+        }
+    }
 }
 
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)] 
+
 pub struct WirelessIconPaths {
-    pub off: Option<String>,
-    pub on: Option<String>,
-    pub low: Option<String>,
-    pub weak: Option<String>,
-    pub good: Option<String>,
-    pub strong: Option<String>,
-    pub not_found: Option<String>,
+    pub off: String,
+    pub on: String,
+    pub low: String,
+    pub weak: String,
+    pub good: String,
+    pub strong: String,
+    pub not_found: String,
+}
+impl Default for WirelessIconPaths {
+    fn default() -> Self {
+        WirelessIconPaths {
+            off: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_OFF,
+            on: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_ON,
+            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_LOW,
+            weak: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_WEAK,
+            good: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_GOOD,
+            strong: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_STRONG,
+            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_NOT_FOUND,
+        }
+    }
 }
 
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)] 
 pub struct BatteryIconPaths {
-    pub level_100: Option<String>,
-    pub level_90: Option<String>,
-    pub level_80: Option<String>,
-    pub level_70: Option<String>,
-    pub level_60: Option<String>,
-    pub level_50: Option<String>,
-    pub level_40: Option<String>,
-    pub level_30: Option<String>,
-    pub level_20: Option<String>,
-    pub level_10: Option<String>,
-    pub level_0: Option<String>,
-    pub not_found: Option<String>,
+    pub level_100: String,
+    pub level_90: String,
+    pub level_80: String,
+    pub level_70: String,
+    pub level_60: String,
+    pub level_50: String,
+    pub level_40: String,
+    pub level_30: String,
+    pub level_20: String,
+    pub level_10: String,
+    pub level_0: String,
+    pub not_found: String,
 }
+impl Default for BatteryIconPaths {
+    fn default() ->  Self {
+        BatteryIconPaths {
+            level_100: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_100,
+            level_90: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_90,
+            level_80: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_80,
+            level_70: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_70,
+            level_60: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_60,
+            level_50: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_50,
+            level_40: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_40,
+            level_30: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_30,
+            level_20: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_20,
+            level_10: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_10,
+            level_0: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_0,
+            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_NOT_FOUND,
+        }
+    }
+}
+
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)] 
+pub struct BatteryChrgingIconPaths {
+    pub level_100: String,
+    pub level_90: String,
+    pub level_80: String,
+    pub level_70: String,
+    pub level_60: String,
+    pub level_50: String,
+    pub level_40: String,
+    pub level_30: String,
+    pub level_20: String,
+    pub level_10: String,
+    pub level_0: String,
+    pub not_found: String,
+}
+impl Default for BatteryChrgingIconPaths {
+    fn default() ->  Self {
+        BatteryChrgingIconPaths {
+            level_100: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_100,
+            level_90: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_90,
+            level_80: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_80,
+            level_70: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_70,
+            level_60: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_60,
+            level_50: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_50,
+            level_40: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_40,
+            level_30: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_30,
+            level_20: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_20,
+            level_10: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_10,
+            level_0: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_0,
+            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_NOT_FOUND,
+        }
+    }
+}
+
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct RotationIconPaths {
@@ -149,25 +235,50 @@ pub struct CommonLowMediumHighPaths {
 }
 
 /// # Modules Definitions
-///
 /// Options that will be visible in settings panel
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BluetoothModule {
     pub icon: BluetoothIconPaths,
     pub title: String,
 }
+impl Default for BluetoothModule {
+    fn default() ->  Self {
+        BluetoothModule {
+        icon: BluetoothIconPaths::default(),
+        title: "Bluetooth".to_string(),
+    }}
+}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct WirelessModule {
     pub icon: WirelessIconPaths,
     pub title: String,
 }
+impl Default for WirelessModule {
+    fn default() ->  Self {
+        WirelessModule {
+        icon: WirelessIconPaths::default(),
+        title: "Wireless".to_string(),
+    }}
+}
+
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BatteryModule {
     pub icon: BatteryIconPaths,
     pub title: String,
-    pub charging_icon: BatteryIconPaths,
+    pub charging_icon: BatteryChrgingIconPaths,
+}
+impl Default for BatteryModule {
+    fn default() ->  Self {
+        BatteryModule {
+        title: "Battery".to_string(),
+        icon: BatteryIconPaths::default(),
+        charging_icon:  BatteryChrgingIconPaths::default()
+    }}
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -217,6 +328,8 @@ pub struct BrightnessModule {
 ///
 /// Options that will be visible in settings panel
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(deny_unknown_fields)]
+#[serde(default)] 
 pub struct Modules {
     pub wireless: WirelessModule,
     pub bluetooth: BluetoothModule,
@@ -256,58 +369,9 @@ impl Default for LayoutSettings {
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            bluetooth: BluetoothModule {
-                icon: BluetoothIconPaths {
-                    on: None,
-                    off: None,
-                    connected: None,
-                    not_found: None,
-                },
-                title: "Bluetooth".to_string(),
-            },
-            wireless: WirelessModule {
-                icon: WirelessIconPaths {
-                    off: None,
-                    on: None,
-                    low: None,
-                    weak: None,
-                    good: None,
-                    strong: None,
-                    not_found: None,
-                },
-                title: "Wifi".to_string(),
-            },
-            battery: BatteryModule {
-                icon: BatteryIconPaths {
-                    level_100: None,
-                    level_90: None,
-                    level_80: None,
-                    level_70: None,
-                    level_60: None,
-                    level_50: None,
-                    level_40: None,
-                    level_30: None,
-                    level_20: None,
-                    level_10: None,
-                    level_0: None,
-                    not_found: None,
-                },
-                title: "Battery".to_string(),
-                charging_icon: BatteryIconPaths {
-                    level_100: None,
-                    level_90: None,
-                    level_80: None,
-                    level_70: None,
-                    level_60: None,
-                    level_50: None,
-                    level_40: None,
-                    level_30: None,
-                    level_20: None,
-                    level_10: None,
-                    level_0: None,
-                    not_found: None,
-                },
-            },
+            bluetooth: BluetoothModule::default(),
+            wireless: WirelessModule::default(),
+            battery: BatteryModule::default(),
             rotation: RotationModule {
                 icon: RotationIconPaths {
                     portrait: None,

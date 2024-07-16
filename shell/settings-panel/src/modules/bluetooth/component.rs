@@ -47,19 +47,19 @@ impl Component for BluetoothComponent {
 pub fn get_bluetooth_icons_map(icon_paths: BluetoothIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
-    if let Some(value) = &icon_paths.not_found {
+    if let value = &icon_paths.not_found {
         assets.insert(BluetoothStatus::NotFound.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.on {
+    if let value = &icon_paths.on {
         assets.insert(BluetoothStatus::On.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.off {
+    if let value = &icon_paths.off {
         assets.insert(BluetoothStatus::Off.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.connected {
+    if let value = &icon_paths.connected {
         assets.insert(BluetoothStatus::Connected.to_string(), value.clone());
     }
 
