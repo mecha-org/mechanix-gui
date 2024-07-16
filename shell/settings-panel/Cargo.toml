@@ -30,6 +30,8 @@ futures = { workspace = true }
 wayland-protocols-async = { workspace = true }
 command = { workspace = true }
 upower = { workspace = true }
+mechanix_store_client = { workspace = true }
+
 
 [package.metadata.deb]
 name = "mechanix-settings-panel"

@@ -11,7 +11,9 @@ use crate::modules::wireless::component::WirelessComponent;
 use crate::settings::{self, SettingsPanelSettings};
 use crate::theme::{self, SettingsPanelTheme};
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessConnectedState, WirelessStatus};
-use crate::{AppMessage, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage};
+use crate::{
+    AppMessage, AppParams, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage,
+};
 use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
@@ -24,6 +26,7 @@ use mctk_core::{
     widgets::Div, Node,
 };
 use std::any::Any;
+use std::sync::{Arc, RwLock};
 use std::{collections::HashMap, fmt};
 use upower::BatteryStatus;
 
@@ -80,7 +83,7 @@ pub struct Loading {
 
 #[derive(Debug)]
 pub struct SettingsPanelState {
-    settings: SettingsPanelSettings,
+    settings: Arc<RwLock<SettingsPanelSettings>>,
     custom_theme: SettingsPanelTheme,
     battery_level: BatteryLevel,
     battery_percentage: u8,
@@ -109,7 +112,7 @@ impl Component for SettingsPanel {
             Err(_) => SettingsPanelSettings::default(),
         };
         self.state = Some(SettingsPanelState {
-            settings,
+            settings: Arc::new(RwLock::new(SettingsPanelSettings::default())),
             custom_theme: SettingsPanelTheme::default(),
             battery_percentage: 0,
             battery_level: BatteryLevel::Level0,
@@ -303,13 +306,9 @@ impl Component for SettingsPanel {
                     }
                     SettingNames::Rotation => {}
                     SettingNames::Settings => {
-                        let run_command = self
-                            .state_ref()
-                            .settings
-                            .modules
-                            .settings
-                            .run_command
-                            .clone();
+                        let settings = self.state_ref().settings.read().unwrap();
+
+                        let run_command = settings.modules.settings.run_command.clone();
                         println!("run_command {:?}", run_command);
                         if !run_command.is_empty() {
                             let command = run_command[0].clone();
@@ -365,9 +364,11 @@ impl Component for SettingsPanel {
         vec![]
     }
 }
-impl RootComponent<AppMessage> for SettingsPanel {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
-        self.state_mut().app_channel = app_channel;
+impl RootComponent<AppParams> for SettingsPanel {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_params = app_params.downcast_ref::<AppParams>().unwrap();
+        self.state_mut().app_channel = app_params.app_channel.clone();
+        self.state_mut().settings = app_params.settings.clone();
     }
 }
 

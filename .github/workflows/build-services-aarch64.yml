@@ -36,6 +36,11 @@ jobs:
             artifact: mechanix_desktop_dbus_server-aarch64-unknown-linux-gnu.tar.gz
             path: services
 
+          - name: store server
+            package: mechanix_store_server
+            artifact: mechanix_store_server-aarch64-unknown-linux-gnu.tar.gz
+            path: services
+
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
     steps:

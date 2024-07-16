@@ -1,0 +1,33 @@
+[package]
+name = "mechanix_store_server"
+description = "Zbus interface for Mechanix System services"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sled = "0.34.7"
+anyhow.workspace = true
+serde.workspace = true
+tokio.workspace = true
+zbus.workspace = true
+dirs = "5.0.1"
+
+[package.metadata.deb]
+name = "mechanix_store_server"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../../target/release/mechanix_store_server",
+        "/usr/bin/",
+        "755",
+    ],
+]
