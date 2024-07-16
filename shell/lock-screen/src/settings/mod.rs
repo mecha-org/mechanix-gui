@@ -88,7 +88,7 @@ impl Default for Modules {
                 password_length: 0,
             },
             clock: Clock {
-                format: "[hour repr:12]:[minute] [period]".to_string(),
+                format: "%I:%M %p".to_string(),
             },
             bluetooth: Bluetooth {
                 icon: BluetoothIconPaths::default(),
