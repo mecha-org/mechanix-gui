@@ -312,12 +312,7 @@ impl Default for Modules {
                 format: "[hour repr:12]:[minute] [period]".to_string(),
             },
             bluetooth: Bluetooth {
-                icon: BluetoothIconPaths {
-                    on: None,
-                    off: None,
-                    connected: None,
-                    not_found: None,
-                },
+                icon: BluetoothIconPaths::default(),
             },
             wireless: Wireless {
                 icon: WirelessIconPaths::default(),

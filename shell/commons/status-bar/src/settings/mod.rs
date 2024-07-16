@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
-use crate::constants::{SYSTEM_MECHANIX_STATUSBAR_PATH,
-    BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
+use crate::constants::{BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, SYSTEM_MECHANIX_STATUSBAR_PATH, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
 };
 
 /// # StatusBar Settings
@@ -41,6 +40,7 @@ pub struct Layout {
 #[serde(deny_unknown_fields)]
 pub struct Modules {
     pub clock: Clock,
+    #[serde(default)]
     pub bluetooth: Bluetooth,
     #[serde(default)]
     pub wireless: Wireless,
@@ -57,7 +57,14 @@ pub struct Clock {
 /// Bluetooth module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Bluetooth {
+    #[serde(default)]
     pub icon: BluetoothIconPaths,
+}
+impl Default for Bluetooth {
+    fn default() ->  Self {
+        Bluetooth {
+        icon: BluetoothIconPaths::default(),
+    }}
 }
 
 /// Wireless module
@@ -67,13 +74,13 @@ pub struct Wireless {
     #[serde(default)]
     pub icon: WirelessIconPaths,
 }
-
 impl Default for Wireless {
     fn default() ->  Self {
         Wireless {
         icon: WirelessIconPaths::default(),
     }}
 }
+
 
 /// Battery module 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -84,7 +91,6 @@ pub struct Battery {
     #[serde(default)] 
     pub charging_icon: ChargingBatteryIconPaths,
 }
-
 impl Default for Battery {
     fn default() ->  Self {
         Battery {
@@ -93,13 +99,26 @@ impl Default for Battery {
     }}
 }
 
+
 /// Icon paths for bluetooth module
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)] 
 pub struct BluetoothIconPaths {
-    pub on: Option<String>,
-    pub off: Option<String>,
-    pub connected: Option<String>,
-    pub not_found: Option<String>,
+    pub on: String,
+    pub off: String,
+    pub connected: String,
+    pub not_found: String,
+}
+impl Default for BluetoothIconPaths {
+    fn default() -> Self {
+        BluetoothIconPaths {
+            off: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_OFF,
+            on: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_ON,
+            connected: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_CONNECTED,
+            not_found: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_NOT_FOUND,
+        }
+    
+    }
 }
 
 /// Icon paths for wireless module
@@ -114,7 +133,6 @@ pub struct WirelessIconPaths {
     pub strong: String,
     pub not_found: String,
 }
-
 impl Default for WirelessIconPaths {
     fn default() -> Self {
         WirelessIconPaths {
@@ -213,12 +231,7 @@ impl Default for Modules {
                 format: "[hour repr:12]:[minute] [period]".to_string(),
             },
             bluetooth: Bluetooth {
-                icon: BluetoothIconPaths {
-                    on: None,
-                    off: None,
-                    connected: None,
-                    not_found: None,
-                },
+                icon: BluetoothIconPaths::default(),
             },
             wireless: Wireless {
                 icon: WirelessIconPaths::default(),

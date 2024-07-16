@@ -36,3 +36,9 @@ pub const WIRELESS_WEAK : &str = "wireless/wireless_weak.svg";
 pub const WIRELESS_GOOD : &str = "wireless/wireless_good.svg";
 pub const WIRELESS_STRONG : &str = "wireless/wireless_strong.svg";
 pub const WIRELESS_NOT_FOUND : &str = "wireless/wireless_not_found.svg";
+
+// bluetooth
+pub const BLUETOOTH_ON : &str = "bluetooth/bluetooth_on.svg";
+pub const BLUETOOTH_OFF : &str = "bluetooth/bluetooth_off.svg";
+pub const BLUETOOTH_CONNECTED : &str = "bluetooth/bluetooth_connected.svg";
+pub const BLUETOOTH_NOT_FOUND : &str = "bluetooth/bluetooth_not_found.svg";
