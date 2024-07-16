@@ -7,7 +7,7 @@ use crate::pages::users::Users;
 use crate::settings::{self, GreeterSettings};
 use crate::theme::{self, GreeterTheme};
 use crate::users::{self, UsersSettings};
-use crate::{AppMessage, AuthSubmit, LoginHandlerEvents, Prompt};
+use crate::{AppMessage, AppParams, AuthSubmit, LoginHandlerEvents, Prompt};
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension, PositionType};
 use mctk_core::reexports::femtovg::CompositeOperation;
@@ -427,12 +427,9 @@ impl Component for Greeter {
     }
 }
 
-impl RootComponent<AppMessage> for Greeter {
-    fn root(
-        &mut self,
-        window: &dyn Any,
-        app_channel: Option<calloop::channel::Sender<AppMessage>>,
-    ) {
-        self.state_mut().app_channel = app_channel;
+impl RootComponent<AppParams> for Greeter {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_params = app_params.downcast_ref::<AppParams>().unwrap();
+        self.state_mut().app_channel = app_params.app_channel.clone();
     }
 }

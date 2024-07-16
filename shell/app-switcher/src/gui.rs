@@ -21,6 +21,7 @@ use crate::services::app_manager::AppManagerMessage;
 use crate::settings::{self, AppSwitcherSettings};
 
 use crate::theme::{self, AppSwitcherTheme};
+use crate::AppParams;
 
 #[derive(Debug, Clone)]
 pub enum AppMessage {
@@ -317,12 +318,9 @@ impl Component for AppSwitcher {
     }
 }
 
-impl RootComponent<AppMessage> for AppSwitcher {
-    fn root(
-        &mut self,
-        window: &dyn Any,
-        app_channel: Option<calloop::channel::Sender<AppMessage>>,
-    ) {
-        self.state_mut().app_channel = app_channel;
+impl RootComponent<AppParams> for AppSwitcher {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_params = app_params.downcast_ref::<AppParams>().unwrap();
+        self.state_mut().app_channel = app_params.app_channel.clone();
     }
 }

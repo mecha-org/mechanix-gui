@@ -1,6 +1,6 @@
 use crate::service::PowerOptionsService;
 use crate::settings::{self, PowerOptionsSettings};
-use crate::AppMessage;
+use crate::{AppMessage, AppParams};
 
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
@@ -130,8 +130,6 @@ impl Component for PowerOptions {
         vec![]
     }
 }
-impl RootComponent<AppMessage> for PowerOptions {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
-        self.state_mut().app_channel = app_channel;
-    }
+impl RootComponent<AppParams> for PowerOptions {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {}
 }

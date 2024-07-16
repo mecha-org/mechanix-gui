@@ -2,7 +2,7 @@ use crate::components::pin_indicators::MAX_PIN_LENGTH;
 use crate::pages::permission::Permission;
 use crate::pages::pin::Pin;
 use crate::settings::{self, PolkitAgentSettings};
-use crate::AppMessage;
+use crate::{AppMessage, AppParams};
 use clap::Parser;
 use command::spawn_command;
 use mctk_core::component::RootComponent;
@@ -226,9 +226,10 @@ impl Component for PolkitAgent {
     }
 }
 
-impl RootComponent<AppMessage> for PolkitAgent {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
-        self.state_mut().app_channel = app_channel;
+impl RootComponent<AppParams> for PolkitAgent {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_channel = app_params.downcast_ref::<Sender<AppMessage>>().unwrap();
+        self.state_mut().app_channel = Some(app_channel.clone());
     }
 }
 

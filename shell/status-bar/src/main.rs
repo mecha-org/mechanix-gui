@@ -47,6 +47,9 @@ use crate::gui::Message;
 #[derive(Debug, Clone)]
 pub struct AppMessage {}
 
+#[derive(Debug, Clone)]
+pub struct AppParams {}
+
 // Layer Surface App
 fn main() -> anyhow::Result<()> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
@@ -113,7 +116,7 @@ fn main() -> anyhow::Result<()> {
     };
 
     let (status_bar_channel, status_bar_receiver) = calloop::channel::channel();
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<StatusBar, AppMessage>(
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<StatusBar, AppParams>(
         LayerWindowParams {
             window_info,
             window_opts,
@@ -123,7 +126,7 @@ fn main() -> anyhow::Result<()> {
             layer_shell_opts,
             ..Default::default()
         },
-        None,
+        AppParams {},
     );
 
     let handle = event_loop.handle();

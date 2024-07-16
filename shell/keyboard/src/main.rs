@@ -49,6 +49,11 @@ use settings::{KeyboardSettings, TrieConfigs};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
+#[derive(Debug, Clone)]
+pub struct AppParams {
+    app_channel: Option<calloop::channel::Sender<AppMessage>>,
+}
+
 #[derive(Debug)]
 enum AppMessage {
     Show,
@@ -131,7 +136,7 @@ fn main() -> anyhow::Result<()> {
 
     //subscribe to events channel
     let (app_channel, app_channel_rx) = calloop::channel::channel();
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Keyboard, AppMessage>(
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Keyboard, AppParams>(
         LayerWindowParams {
             window_info,
             window_opts,
@@ -141,7 +146,9 @@ fn main() -> anyhow::Result<()> {
             svgs,
             ..Default::default()
         },
-        Some(app_channel.clone()),
+        AppParams {
+            app_channel: Some(app_channel.clone()),
+        },
     );
 
     let handle = event_loop.handle();

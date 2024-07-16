@@ -72,6 +72,11 @@ pub enum AppMessage {
     AuthSubmit(AuthSubmit),
 }
 
+#[derive(Debug, Clone)]
+pub struct AppParams {
+    app_channel: Option<calloop::channel::Sender<AppMessage>>,
+}
+
 // Layer Surface App
 fn main() -> anyhow::Result<()> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new("debug"));
@@ -217,7 +222,7 @@ fn main() -> anyhow::Result<()> {
         namespace,
     };
 
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Greeter, AppMessage>(
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Greeter, AppParams>(
         LayerWindowParams {
             window_info,
             window_opts,
@@ -227,7 +232,9 @@ fn main() -> anyhow::Result<()> {
             svgs,
             ..Default::default()
         },
-        Some(app_channel),
+        AppParams {
+            app_channel: Some(app_channel),
+        },
     );
 
     let handle = event_loop.handle();
