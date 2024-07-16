@@ -9,7 +9,7 @@ use crate::errors::{AppDrawerError, AppDrawerErrorCodes};
 use crate::pages::app_list::AppList;
 use crate::pages::search::Search;
 use crate::settings::{self, AppDrawerSettings};
-use crate::AppMessage;
+use crate::{AppMessage, AppParams};
 use anyhow::{bail, Result};
 use command::spawn_command;
 use desktop_entries::{self, DesktopEntries, DesktopEntry};
@@ -157,6 +157,6 @@ impl Component for AppDrawer {
     }
 }
 
-impl RootComponent<AppMessage> for AppDrawer {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {}
+impl RootComponent<AppParams> for AppDrawer {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {}
 }

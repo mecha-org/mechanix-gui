@@ -51,6 +51,9 @@ use tracing_subscriber::EnvFilter;
 
 use crate::gui::Message;
 
+#[derive(Debug, Clone)]
+pub struct AppParams {}
+
 #[derive(Debug)]
 pub enum AppMessage {}
 
@@ -137,7 +140,7 @@ fn main() -> anyhow::Result<()> {
     let (session_lock_tx, session_lock_rx) = calloop::channel::channel();
     let (status_bar_channel, status_bar_receiver) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) =
-        SessionLockWindow::open_blocking::<LockScreen, AppMessage>(
+        SessionLockWindow::open_blocking::<LockScreen, AppParams>(
             SessionLockWindowParams {
                 session_lock_tx,
                 session_lock_rx,
@@ -146,7 +149,7 @@ fn main() -> anyhow::Result<()> {
                 assets,
                 svgs,
             },
-            None,
+            AppParams {},
         );
 
     let handle = event_loop.handle();

@@ -1,5 +1,5 @@
 use crate::settings::{self, KeyboardSettings};
-use crate::{action, AppMessage};
+use crate::{action, AppMessage, AppParams};
 use mctk_core::component::RootComponent;
 use mctk_core::event::Event;
 use mctk_core::layout::{Alignment, Dimension, Size};
@@ -323,8 +323,9 @@ impl Component for Keyboard {
     }
 }
 
-impl RootComponent<AppMessage> for Keyboard {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
-        self.state_mut().app_channel = app_channel;
+impl RootComponent<AppParams> for Keyboard {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_params = app_params.downcast_ref::<AppParams>().unwrap();
+        self.state_mut().app_channel = app_params.app_channel.clone();
     }
 }

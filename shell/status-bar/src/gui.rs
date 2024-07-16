@@ -16,7 +16,7 @@ use mechanix_status_bar_components::types::{
     BatteryLevel, BatteryStatus, BluetoothStatus, WirelessStatus,
 };
 
-use crate::AppMessage;
+use crate::{AppMessage, AppParams};
 use mechanix_status_bar_components::modules::clock::component::ClockComponent;
 use mechanix_status_bar_components::modules::window::component::WindowTitleComponent;
 use mechanix_status_bar_components::{
@@ -139,6 +139,6 @@ impl Component for StatusBar {
     }
 }
 
-impl RootComponent<AppMessage> for StatusBar {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {}
+impl RootComponent<AppParams> for StatusBar {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {}
 }

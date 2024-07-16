@@ -20,6 +20,9 @@ use mctk_smithay::{WindowInfo, WindowOptions};
 
 use tracing_subscriber::EnvFilter;
 
+#[derive(Debug, Clone)]
+pub struct AppParams {}
+
 #[derive(Debug)]
 pub enum AppMessage {}
 
@@ -96,7 +99,7 @@ fn main() -> anyhow::Result<()> {
         namespace,
     };
 
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<PowerOptions, AppMessage>(
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<PowerOptions, AppParams>(
         LayerWindowParams {
             window_info,
             window_opts: window_opts,
@@ -106,7 +109,7 @@ fn main() -> anyhow::Result<()> {
             layer_shell_opts,
             ..Default::default()
         },
-        None,
+        AppParams {},
     );
 
     loop {
