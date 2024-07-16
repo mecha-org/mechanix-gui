@@ -43,8 +43,6 @@ impl Component for BatteryComponent {
 pub fn get_battery_icons_map(icon_paths: BatteryIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
-    println!("get_battery_icons_map BatteryLevel::Level0.to_string() =======>{:?}", BatteryLevel::Level0.to_string());
-
     if let value = &icon_paths.not_found {
         assets.insert(BatteryLevel::NotFound.to_string(), value.clone());
     }

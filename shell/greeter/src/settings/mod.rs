@@ -320,15 +320,7 @@ impl Default for Modules {
                 },
             },
             wireless: Wireless {
-                icon: WirelessIconPaths {
-                    off: None,
-                    on: None,
-                    low: None,
-                    weak: None,
-                    good: None,
-                    strong: None,
-                    not_found: None,
-                },
+                icon: WirelessIconPaths::default(),
             },
             battery: Battery {
                 icon: BatteryIconPaths::default(),
