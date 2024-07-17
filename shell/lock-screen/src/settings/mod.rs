@@ -1,3 +1,4 @@
+use crate::constants::{BACKGROUND_ICON, BACKSPACE_ICON, BACK_ICON, HOME_ICON, LOCK_ICON, PASSWORD_LENGTH, SYSTEM_MECHANIX_LOCK_SCREEN_PATH, UNLOCK_ICON};
 use crate::errors::{LockScreenError, LockScreenErrorCodes};
 use anyhow::bail;
 use anyhow::Result; 
@@ -20,6 +21,7 @@ use tracing::{debug, info};
 /// this file lets you control the behavior of the lock screen,
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct LockScreenSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
@@ -46,6 +48,7 @@ impl Default for LockScreenSettings {
 ///
 /// Options that will be visible in lock screen
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Modules {
     pub clock: Clock,
     pub bluetooth: Bluetooth,
@@ -63,29 +66,15 @@ pub struct Modules {
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            home: HomeModule {
-                icon: DefaultIconPaths { default: None },
-                title: "".to_string(),
-            },
-            back_space: BackSpaceModule {
-                icon: DefaultIconPaths { default: None },
-                title: "".to_string(),
-            },
-            back: BackModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            lock: LockModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            unlock: UnlockModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            background: BackgroundModule {
-                icon: DefaultIconPaths { default: None },
-            },
+            home: HomeModule::default(),
+            back_space: BackSpaceModule::default(),
+            back: BackModule::default(),
+            lock: LockModule::default(),
+            unlock: UnlockModule::default(),
+            background: BackgroundModule::default(),
             password_configs: PasswordConfigsModule {
-                keys_allowed: vec![],
-                password_length: 0,
+                keys_allowed: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"].map(String::from).to_vec(),
+                password_length: PASSWORD_LENGTH,
             },
             clock: Clock {
                 format: "%I:%M %p".to_string(),
@@ -150,6 +139,7 @@ pub struct WindowSettings {
 /// Part of the settings.yml to control the behavior of
 /// the layout of options in the lock screen.
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct LayoutSettings {
     pub grid: Vec<String>, //Items that will in grid
 }
@@ -164,39 +154,172 @@ pub struct DefaultIconPaths {
     pub default: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct HomeIconPath {
+    pub default: String,
+}
+impl Default for HomeIconPath {
+    fn default() -> Self {
+        HomeIconPath {
+            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + HOME_ICON,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct BackSpaceIconPath {
+    pub default: String,
+}
+impl Default for BackSpaceIconPath {
+    fn default() -> Self {
+        BackSpaceIconPath {
+            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + BACKSPACE_ICON,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct LockIconPath {
+    pub default: String,
+}
+impl Default for LockIconPath {
+    fn default() -> Self {
+        LockIconPath {
+            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + LOCK_ICON,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct UnlockIconPath {
+    pub default: String,
+}
+impl Default for UnlockIconPath {
+    fn default() -> Self {
+        UnlockIconPath {
+            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + UNLOCK_ICON,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct BackIconPath {
+    pub default: String,
+}
+impl Default for BackIconPath {
+    fn default() -> Self {
+        BackIconPath {
+            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + BACK_ICON,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct BackgroundImagePath {
+    pub default: String,
+}
+impl Default for BackgroundImagePath {
+    fn default() -> Self {
+        BackgroundImagePath {
+            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + BACKGROUND_ICON,
+        }
+    }
+}
+
+
 /// # Modules
 ///
 /// Options that will be visible in lock screen
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct HomeModule {
-    pub icon: DefaultIconPaths,
+    pub icon: HomeIconPath,
     pub title: String,
+}
+impl Default for HomeModule {
+    fn default() -> Self {
+        HomeModule {
+            icon: HomeIconPath::default(),
+            title: "".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BackSpaceModule {
-    pub icon: DefaultIconPaths,
+    pub icon: BackSpaceIconPath,
     pub title: String,
 }
+impl Default for BackSpaceModule {
+    fn default() -> Self {
+        BackSpaceModule {
+            icon: BackSpaceIconPath::default(),
+            title: "".to_string(),
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct LockModule {
-    pub icon: DefaultIconPaths,
+    pub icon: LockIconPath,
+}
+impl Default for LockModule {
+    fn default() -> Self {
+        LockModule {
+            icon: LockIconPath::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct UnlockModule {
-    pub icon: DefaultIconPaths,
+    pub icon: UnlockIconPath,
+}
+impl Default for UnlockModule {
+    fn default() -> Self {
+        UnlockModule {
+            icon: UnlockIconPath::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BackModule {
-    pub icon: DefaultIconPaths,
+    pub icon: BackIconPath,
+}
+impl Default for BackModule {
+    fn default() -> Self {
+        BackModule {
+            icon: BackIconPath::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BackgroundModule {
-    pub icon: DefaultIconPaths,
+    pub icon: BackgroundImagePath,
+}
+impl Default for BackgroundModule {
+    fn default() -> Self {
+        BackgroundModule {
+            icon: BackgroundImagePath::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -208,7 +331,7 @@ pub struct PasswordConfigsModule {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 443),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -224,7 +347,9 @@ impl Default for WindowSettings {
 
 impl Default for LayoutSettings {
     fn default() -> Self {
-        Self { grid: vec![] }
+        Self { 
+            grid: ["1", "2", "3", "4", "5", "6", "7", "8", "Home", "9", "0", "Back Space"].map(String::from).to_vec()
+        }
     }
 }
 

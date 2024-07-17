@@ -4,6 +4,7 @@ mod gui;
 mod pages;
 mod settings;
 mod theme;
+mod constants;
 
 use std::collections::HashMap;
 use std::time::Duration;
@@ -67,7 +68,6 @@ fn main() -> anyhow::Result<()> {
         Ok(settings) => settings,
         Err(e) => {
             println!("error while reading settings {:?}", e);
-
             LockScreenSettings::default()
         }
     };
@@ -88,27 +88,27 @@ fn main() -> anyhow::Result<()> {
 
     let modules = settings.modules.clone();
 
-    if let Some(icon) = modules.lock.icon.default {
+    if let icon = modules.lock.icon.default {
         svgs.insert("lock_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.unlock.icon.default {
+    if let icon = modules.unlock.icon.default {
         svgs.insert("unlock_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.back.icon.default {
+    if let icon = modules.back.icon.default {
         svgs.insert("back_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.home.icon.default {
+    if let icon = modules.home.icon.default {
         svgs.insert("home_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.back_space.icon.default {
+    if let icon = modules.back_space.icon.default {
         svgs.insert("backspace_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.background.icon.default {
+    if let icon = modules.background.icon.default {
         assets.insert(
             "background".to_string(),
             AssetParams {
