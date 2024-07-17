@@ -41,3 +41,36 @@ pub const BLUETOOTH_ON : &str = "bluetooth/bluetooth_on.svg";
 pub const BLUETOOTH_OFF : &str = "bluetooth/bluetooth_off.svg";
 pub const BLUETOOTH_CONNECTED : &str = "bluetooth/bluetooth_connected.svg";
 pub const BLUETOOTH_NOT_FOUND : &str = "bluetooth/bluetooth_not_found.svg";
+
+
+// rotation 
+pub const ROTATION_PORTRAIT : &str = "rotation/portrait.svg"; 
+pub const ROTATION_LANDSCAPE : &str = "rotation/landscape.svg"; 
+
+// settings
+pub const SETTINGS_ICON : &str = "settings/settings.svg";
+
+// running-apps
+pub const RUNNING_APPS_LOW : &str = "running_apps/low.svg";
+pub const RUNNING_APPS_MEDIUM : &str = "running_apps/medium.svg";
+pub const RUNNING_APPS_HIGH : &str = "running_apps/high.svg";
+
+// cpu
+pub const CPU_LOW : &str = "cpu/low.svg";
+pub const CPU_MEDIUM : &str = "cpu/medium.svg";
+pub const CPU_HIGH : &str = "cpu/high.svg";
+
+// memory
+pub const MEMORY_LOW : &str = "memory/low.svg";
+pub const MEMORY_MEDIUM : &str = "memory/medium.svg";
+pub const MEMORY_HIGH : &str = "memory/high.svg";
+
+// sound
+pub const SOUND_LOW : &str = "sound/low.svg";
+pub const SOUND_MEDIUM : &str = "sound/medium.svg";
+pub const SOUND_HIGH : &str = "sound/high.svg";
+
+// brightness
+pub const BRIGHTNESS_LOW : &str = "brightness/low.svg";
+pub const BRIGHTNESS_MEDIUM : &str = "brightness/medium.svg";
+pub const BRIGHTNESS_HIGH : &str = "brightness/high.svg";

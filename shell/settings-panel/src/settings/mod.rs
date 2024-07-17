@@ -1,4 +1,6 @@
-use crate::constants::{BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, SYSTEM_MECHANIX_SETTINGS_PANEL_PATH, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK};
+use crate::constants::{
+    BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, BRIGHTNESS_HIGH, BRIGHTNESS_LOW, BRIGHTNESS_MEDIUM, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, CPU_HIGH, CPU_LOW, CPU_MEDIUM, MEMORY_HIGH, MEMORY_LOW, MEMORY_MEDIUM, ROTATION_LANDSCAPE, ROTATION_PORTRAIT, RUNNING_APPS_HIGH, RUNNING_APPS_LOW, RUNNING_APPS_MEDIUM, SETTINGS_ICON, SOUND_HIGH, SOUND_LOW, SOUND_MEDIUM, SYSTEM_MECHANIX_SETTINGS_PANEL_PATH, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
+};
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -98,7 +100,7 @@ impl Default for CssConfigs {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
+#[serde(default)]
 pub struct BluetoothIconPaths {
     pub on: String,
     pub off: String,
@@ -116,9 +118,8 @@ impl Default for BluetoothIconPaths {
     }
 }
 
-
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
+#[serde(default)]
 
 pub struct WirelessIconPaths {
     pub off: String,
@@ -143,9 +144,8 @@ impl Default for WirelessIconPaths {
     }
 }
 
-
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
+#[serde(default)]
 pub struct BatteryIconPaths {
     pub level_100: String,
     pub level_90: String,
@@ -161,7 +161,7 @@ pub struct BatteryIconPaths {
     pub not_found: String,
 }
 impl Default for BatteryIconPaths {
-    fn default() ->  Self {
+    fn default() -> Self {
         BatteryIconPaths {
             level_100: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_100,
             level_90: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_90,
@@ -179,10 +179,8 @@ impl Default for BatteryIconPaths {
     }
 }
 
-
-
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
+#[serde(default)]
 pub struct BatteryChrgingIconPaths {
     pub level_100: String,
     pub level_90: String,
@@ -198,7 +196,7 @@ pub struct BatteryChrgingIconPaths {
     pub not_found: String,
 }
 impl Default for BatteryChrgingIconPaths {
-    fn default() ->  Self {
+    fn default() -> Self {
         BatteryChrgingIconPaths {
             level_100: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_100,
             level_90: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_90,
@@ -216,17 +214,125 @@ impl Default for BatteryChrgingIconPaths {
     }
 }
 
-
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct RotationIconPaths {
-    pub portrait: Option<String>,
-    pub landscape: Option<String>,
+#[serde(default)]
+pub struct RotationIcons {
+    pub portrait: String,
+    pub landscape: String,
+}
+impl Default for RotationIcons {
+    fn default() -> Self {
+        RotationIcons {
+            portrait: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + ROTATION_PORTRAIT,
+            landscape: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + ROTATION_LANDSCAPE,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct SettingsIconPaths {
-    pub default: Option<String>,
+#[serde(default)]
+pub struct SettingsIcons {
+    pub default: String,
 }
+impl Default for SettingsIcons {
+    fn default() -> Self {
+        SettingsIcons {
+            default: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SETTINGS_ICON,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct RunningAppsIcons {
+    pub low: String,
+    pub medium: String,
+    pub high: String,
+}
+impl Default for RunningAppsIcons {
+    fn default() -> Self {
+        RunningAppsIcons {
+            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_LOW,
+            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_MEDIUM,
+            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_HIGH,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct CpuIcons {
+    pub low: String,
+    pub medium: String,
+    pub high: String,
+}
+impl Default for CpuIcons {
+    fn default() -> Self {
+        CpuIcons {
+            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_LOW,
+            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_MEDIUM,
+            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_HIGH,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct MemoryIcons {
+    pub low: String,
+    pub medium: String,
+    pub high: String,
+}
+impl Default for MemoryIcons {
+    fn default() -> Self {
+        MemoryIcons {
+            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_LOW,
+            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_MEDIUM,
+            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_HIGH,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct BrightnessIcons {
+    pub low: String,
+    pub medium: String,
+    pub high: String,
+}
+impl Default for BrightnessIcons {
+    fn default() -> Self {
+        BrightnessIcons {
+            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_LOW,
+            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_MEDIUM,
+            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_HIGH,
+        }
+    }
+}
+
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SoundIcons {
+    pub low: String,
+    pub medium: String,
+    pub high: String,
+}
+impl Default for SoundIcons {
+    fn default() -> Self {
+        SoundIcons {
+            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_LOW,
+            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_MEDIUM,
+            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_HIGH,
+        }
+    }
+}
+
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct CommonLowMediumHighPaths {
     pub low: Option<String>,
@@ -243,11 +349,12 @@ pub struct BluetoothModule {
     pub title: String,
 }
 impl Default for BluetoothModule {
-    fn default() ->  Self {
+    fn default() -> Self {
         BluetoothModule {
-        icon: BluetoothIconPaths::default(),
-        title: "Bluetooth".to_string(),
-    }}
+            icon: BluetoothIconPaths::default(),
+            title: "Bluetooth".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -257,13 +364,13 @@ pub struct WirelessModule {
     pub title: String,
 }
 impl Default for WirelessModule {
-    fn default() ->  Self {
+    fn default() -> Self {
         WirelessModule {
-        icon: WirelessIconPaths::default(),
-        title: "Wireless".to_string(),
-    }}
+            icon: WirelessIconPaths::default(),
+            title: "Wireless".to_string(),
+        }
+    }
 }
-
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
@@ -273,55 +380,125 @@ pub struct BatteryModule {
     pub charging_icon: BatteryChrgingIconPaths,
 }
 impl Default for BatteryModule {
-    fn default() ->  Self {
+    fn default() -> Self {
         BatteryModule {
-        title: "Battery".to_string(),
-        icon: BatteryIconPaths::default(),
-        charging_icon:  BatteryChrgingIconPaths::default()
-    }}
+            title: "Battery".to_string(),
+            icon: BatteryIconPaths::default(),
+            charging_icon: BatteryChrgingIconPaths::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct RotationModule {
-    pub icon: RotationIconPaths,
+    pub icon: RotationIcons,
     pub title: String,
 }
+impl Default for RotationModule {
+    fn default() -> Self {
+        RotationModule {
+            icon: RotationIcons::default(),
+            title: "Auto Rotate".to_string(),
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct SettingsModule {
-    pub icon: SettingsIconPaths,
+    pub icon: SettingsIcons,
     pub title: String,
     pub run_command: Vec<String>,
 }
+impl Default for SettingsModule {
+    fn default() -> Self {
+        SettingsModule {
+            icon: SettingsIcons::default(),
+            title: "Settings".to_string(),
+            run_command: vec![
+                "sh".to_string(), 
+                "-c".to_string(),
+                "mecha-settings -s /usr/share/mecha/settings/settings.yml".to_string()
+            ],
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct RunningAppsModule {
-    pub icon: CommonLowMediumHighPaths,
+    pub icon: RunningAppsIcons,
     pub title: String,
+}
+impl Default for RunningAppsModule {
+    fn default() -> Self {
+        RunningAppsModule {
+            icon: RunningAppsIcons::default(),  
+            title: "Running Apps".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct CpuModule {
-    pub icon: CommonLowMediumHighPaths,
+    pub icon: CpuIcons,
     pub title: String,
+}
+impl Default for CpuModule {
+    fn default() -> Self {
+        CpuModule {
+            icon: CpuIcons::default(),
+            title: "CPU".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct MemoryModule {
-    pub icon: CommonLowMediumHighPaths,
+    pub icon: MemoryIcons,
     pub title: String,
+}
+impl Default for MemoryModule {
+    fn default() -> Self {
+        MemoryModule {
+            icon: MemoryIcons::default(),
+            title: "Memory".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct SoundModule {
-    pub icon: CommonLowMediumHighPaths,
+    pub icon: SoundIcons,
     pub title: String,
 }
+impl Default for SoundModule {
+    fn default() -> Self {
+        SoundModule { 
+            icon: SoundIcons::default(), 
+            title: "Sound".to_string(),
+        }
+    }
+}
+
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BrightnessModule {
-    pub icon: CommonLowMediumHighPaths,
+    pub icon: BrightnessIcons,
     pub title: String,
+}
+impl Default for BrightnessModule {
+    fn default() -> Self {
+        BrightnessModule {
+            icon: BrightnessIcons::default(), 
+            title: "Brightness".to_string(),
+        }
+    }
 }
 
 /// # Modules
@@ -329,7 +506,7 @@ pub struct BrightnessModule {
 /// Options that will be visible in settings panel
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(deny_unknown_fields)]
-#[serde(default)] 
+#[serde(default)]
 pub struct Modules {
     pub wireless: WirelessModule,
     pub bluetooth: BluetoothModule,
@@ -346,7 +523,7 @@ pub struct Modules {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 443), 
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -372,58 +549,13 @@ impl Default for Modules {
             bluetooth: BluetoothModule::default(),
             wireless: WirelessModule::default(),
             battery: BatteryModule::default(),
-            rotation: RotationModule {
-                icon: RotationIconPaths {
-                    portrait: None,
-                    landscape: None,
-                },
-                title: "Auto Rotate".to_string(),
-            },
-            settings: SettingsModule {
-                icon: SettingsIconPaths { default: None },
-                title: "Settings".to_string(),
-                run_command: vec![],
-            },
-            running_apps: RunningAppsModule {
-                icon: CommonLowMediumHighPaths {
-                    low: None,
-                    medium: None,
-                    high: None,
-                },
-                title: "Running Apps".to_string(),
-            },
-            cpu: CpuModule {
-                icon: CommonLowMediumHighPaths {
-                    low: None,
-                    medium: None,
-                    high: None,
-                },
-                title: "CPU".to_string(),
-            },
-            memory: MemoryModule {
-                icon: CommonLowMediumHighPaths {
-                    low: None,
-                    medium: None,
-                    high: None,
-                },
-                title: "Memory".to_string(),
-            },
-            sound: SoundModule {
-                icon: CommonLowMediumHighPaths {
-                    low: None,
-                    medium: None,
-                    high: None,
-                },
-                title: "Sound".to_string(),
-            },
-            brightness: BrightnessModule {
-                icon: CommonLowMediumHighPaths {
-                    low: None,
-                    medium: None,
-                    high: None,
-                },
-                title: "Brightness".to_string(),
-            },
+            rotation: RotationModule::default(),
+            settings: SettingsModule::default(),
+            running_apps: RunningAppsModule::default(),
+            cpu: CpuModule::default(),
+            memory: MemoryModule::default(),
+            sound: SoundModule::default(),
+            brightness: BrightnessModule::default(),
         }
     }
 }

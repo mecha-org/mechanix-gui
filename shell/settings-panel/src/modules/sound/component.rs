@@ -9,7 +9,7 @@ use mctk_core::{
 
 use crate::{
     gui::{Message, SliderSettingsNames},
-    settings::CommonLowMediumHighPaths,
+    settings::SoundIcons,
     widgets::slidable_setting::SlidableSetting,
 };
 
@@ -58,18 +58,18 @@ impl Component for SoundComponent {
     }
 }
 
-pub fn get_sound_icons_map(icon_paths: CommonLowMediumHighPaths) -> HashMap<String, String> {
+pub fn get_sound_icons_map(icon_paths: SoundIcons) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
-    if let Some(value) = &icon_paths.low {
+    if let value = &icon_paths.low {
         assets.insert(SoundValue::Low.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.medium {
+    if let value = &icon_paths.medium {
         assets.insert(SoundValue::Medium.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.high {
+    if let value = &icon_paths.high {
         assets.insert(SoundValue::High.to_string(), value.clone());
     }
 
