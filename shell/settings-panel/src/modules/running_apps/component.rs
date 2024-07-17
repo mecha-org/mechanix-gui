@@ -8,7 +8,7 @@ use mctk_core::{
 };
 
 use crate::{
-    settings::RunningAppsIcons,
+    settings::RunningAppsIconPaths,
     widgets::clickable_setting::{ClickableSetting, SettingText},
 };
 
@@ -55,7 +55,7 @@ impl Component for RunningAppsComponent {
     }
 }
 
-pub fn get_running_apps_icons_map(icon_paths: RunningAppsIcons) -> HashMap<String, String> {
+pub fn get_running_apps_icons_map(icon_paths: RunningAppsIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
     if let value = &icon_paths.low {

@@ -8,7 +8,7 @@ use mctk_core::{
 };
 
 use crate::{
-    settings::MemoryIcons,
+    settings::MemoryIconPaths,
     widgets::clickable_setting::{ClickableSetting, SettingText},
 };
 
@@ -70,7 +70,7 @@ impl Component for MemoryComponent {
     }
 }
 
-pub fn get_memory_icons_map(icon_paths: MemoryIcons) -> HashMap<String, String> {
+pub fn get_memory_icons_map(icon_paths: MemoryIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
     if let value = &icon_paths.low {

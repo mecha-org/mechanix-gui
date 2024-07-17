@@ -8,7 +8,7 @@ use mctk_core::{
 };
 
 use crate::{
-    settings::RotationIcons,
+    settings::RotationIconPaths,
     widgets::clickable_setting::{ClickableSetting, SettingText},
 };
 
@@ -50,7 +50,7 @@ impl Component for RotationComponent {
     }
 }
 
-pub fn get_rotation_icons_map(icon_paths: RotationIcons) -> HashMap<String, String> {
+pub fn get_rotation_icons_map(icon_paths: RotationIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
     if let value = &icon_paths.portrait {

@@ -216,13 +216,13 @@ impl Default for BatteryChrgingIconPaths {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
-pub struct RotationIcons {
+pub struct RotationIconPaths {
     pub portrait: String,
     pub landscape: String,
 }
-impl Default for RotationIcons {
+impl Default for RotationIconPaths {
     fn default() -> Self {
-        RotationIcons {
+        RotationIconPaths {
             portrait: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + ROTATION_PORTRAIT,
             landscape: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + ROTATION_LANDSCAPE,
         }
@@ -231,12 +231,12 @@ impl Default for RotationIcons {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
-pub struct SettingsIcons {
+pub struct SettingsIconPaths {
     pub default: String,
 }
-impl Default for SettingsIcons {
+impl Default for SettingsIconPaths {
     fn default() -> Self {
-        SettingsIcons {
+        SettingsIconPaths {
             default: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SETTINGS_ICON,
         }
     }
@@ -245,14 +245,14 @@ impl Default for SettingsIcons {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
-pub struct RunningAppsIcons {
+pub struct RunningAppsIconPaths {
     pub low: String,
     pub medium: String,
     pub high: String,
 }
-impl Default for RunningAppsIcons {
+impl Default for RunningAppsIconPaths {
     fn default() -> Self {
-        RunningAppsIcons {
+        RunningAppsIconPaths {
             low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_LOW,
             medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_MEDIUM,
             high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_HIGH,
@@ -263,14 +263,14 @@ impl Default for RunningAppsIcons {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
-pub struct CpuIcons {
+pub struct CpuIconPaths {
     pub low: String,
     pub medium: String,
     pub high: String,
 }
-impl Default for CpuIcons {
+impl Default for CpuIconPaths {
     fn default() -> Self {
-        CpuIcons {
+        CpuIconPaths {
             low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_LOW,
             medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_MEDIUM,
             high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_HIGH,
@@ -281,14 +281,14 @@ impl Default for CpuIcons {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
-pub struct MemoryIcons {
+pub struct MemoryIconPaths {
     pub low: String,
     pub medium: String,
     pub high: String,
 }
-impl Default for MemoryIcons {
+impl Default for MemoryIconPaths {
     fn default() -> Self {
-        MemoryIcons {
+        MemoryIconPaths {
             low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_LOW,
             medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_MEDIUM,
             high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_HIGH,
@@ -299,14 +299,14 @@ impl Default for MemoryIcons {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
-pub struct BrightnessIcons {
+pub struct BrightnessIconPaths {
     pub low: String,
     pub medium: String,
     pub high: String,
 }
-impl Default for BrightnessIcons {
+impl Default for BrightnessIconPaths {
     fn default() -> Self {
-        BrightnessIcons {
+        BrightnessIconPaths {
             low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_LOW,
             medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_MEDIUM,
             high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_HIGH,
@@ -317,14 +317,14 @@ impl Default for BrightnessIcons {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
-pub struct SoundIcons {
+pub struct SoundIconPaths {
     pub low: String,
     pub medium: String,
     pub high: String,
 }
-impl Default for SoundIcons {
+impl Default for SoundIconPaths {
     fn default() -> Self {
-        SoundIcons {
+        SoundIconPaths {
             low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_LOW,
             medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_MEDIUM,
             high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_HIGH,
@@ -392,13 +392,13 @@ impl Default for BatteryModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct RotationModule {
-    pub icon: RotationIcons,
+    pub icon: RotationIconPaths,
     pub title: String,
 }
 impl Default for RotationModule {
     fn default() -> Self {
         RotationModule {
-            icon: RotationIcons::default(),
+            icon: RotationIconPaths::default(),
             title: "Auto Rotate".to_string(),
         }
     }
@@ -407,14 +407,14 @@ impl Default for RotationModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct SettingsModule {
-    pub icon: SettingsIcons,
+    pub icon: SettingsIconPaths,
     pub title: String,
     pub run_command: Vec<String>,
 }
 impl Default for SettingsModule {
     fn default() -> Self {
         SettingsModule {
-            icon: SettingsIcons::default(),
+            icon: SettingsIconPaths::default(),
             title: "Settings".to_string(),
             run_command: vec![
                 "sh".to_string(), 
@@ -428,13 +428,13 @@ impl Default for SettingsModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct RunningAppsModule {
-    pub icon: RunningAppsIcons,
+    pub icon: RunningAppsIconPaths,
     pub title: String,
 }
 impl Default for RunningAppsModule {
     fn default() -> Self {
         RunningAppsModule {
-            icon: RunningAppsIcons::default(),  
+            icon: RunningAppsIconPaths::default(),  
             title: "Running Apps".to_string(),
         }
     }
@@ -443,13 +443,13 @@ impl Default for RunningAppsModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct CpuModule {
-    pub icon: CpuIcons,
+    pub icon: CpuIconPaths,
     pub title: String,
 }
 impl Default for CpuModule {
     fn default() -> Self {
         CpuModule {
-            icon: CpuIcons::default(),
+            icon: CpuIconPaths::default(),
             title: "CPU".to_string(),
         }
     }
@@ -458,13 +458,13 @@ impl Default for CpuModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct MemoryModule {
-    pub icon: MemoryIcons,
+    pub icon: MemoryIconPaths,
     pub title: String,
 }
 impl Default for MemoryModule {
     fn default() -> Self {
         MemoryModule {
-            icon: MemoryIcons::default(),
+            icon: MemoryIconPaths::default(),
             title: "Memory".to_string(),
         }
     }
@@ -473,13 +473,13 @@ impl Default for MemoryModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct SoundModule {
-    pub icon: SoundIcons,
+    pub icon: SoundIconPaths,
     pub title: String,
 }
 impl Default for SoundModule {
     fn default() -> Self {
         SoundModule { 
-            icon: SoundIcons::default(), 
+            icon: SoundIconPaths::default(), 
             title: "Sound".to_string(),
         }
     }
@@ -489,13 +489,13 @@ impl Default for SoundModule {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct BrightnessModule {
-    pub icon: BrightnessIcons,
+    pub icon: BrightnessIconPaths,
     pub title: String,
 }
 impl Default for BrightnessModule {
     fn default() -> Self {
         BrightnessModule {
-            icon: BrightnessIcons::default(), 
+            icon: BrightnessIconPaths::default(), 
             title: "Brightness".to_string(),
         }
     }

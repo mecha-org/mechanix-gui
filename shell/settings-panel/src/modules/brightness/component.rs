@@ -9,7 +9,7 @@ use mctk_core::{
 
 use crate::{
     gui::{Message, SliderSettingsNames},
-    settings::BrightnessIcons,
+    settings::BrightnessIconPaths,
     widgets::slidable_setting::SlidableSetting,
 };
 
@@ -58,7 +58,7 @@ impl Component for BrightnessComponent {
     }
 }
 
-pub fn get_brightness_icons_map(icon_paths: BrightnessIcons) -> HashMap<String, String> {
+pub fn get_brightness_icons_map(icon_paths: BrightnessIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
     if let value = &icon_paths.low {
