@@ -1,3 +1,4 @@
+use crate::constants::{BELL_ICON, SYSTEM_MECHANIX_NOTIFICATION_PATH};
 use crate::errors::{NotificationError, NotificationErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -15,6 +16,7 @@ pub struct NotificationSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
     pub title: String,          // Sets the window title
+    #[serde(default)]
     pub icons: Icons,
 }
 
@@ -84,7 +86,7 @@ pub struct Modules {}
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (448, 84),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -98,9 +100,17 @@ impl Default for WindowSettings {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Icons {
     pub bell: Option<String>,
+}
+impl Default for Icons {
+    fn default() -> Self {
+        Self { 
+            bell: (Some(SYSTEM_MECHANIX_NOTIFICATION_PATH.to_owned() + BELL_ICON))
+        }
+    }
 }
 
 /// # Reads Settings path from arg
