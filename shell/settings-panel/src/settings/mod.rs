@@ -523,7 +523,7 @@ pub struct Modules {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (480, 443), 
+            size: (480, 440), 
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -539,7 +539,19 @@ impl Default for WindowSettings {
 
 impl Default for LayoutSettings {
     fn default() -> Self {
-        Self { grid: vec![] }
+        Self { grid: [
+            "Wireless",
+            "Bluetooth",
+            "Battery",
+            "Auto Rotate",
+            "Settings",
+            "Running Apps",
+            "CPU",
+            "Memory",
+            "Sound",
+            "Brightness",
+          ].map(String::from).to_vec()
+        }
     }
 }
 

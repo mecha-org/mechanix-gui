@@ -26,11 +26,21 @@ impl Default for StatusBarSettings {
 ///
 /// Part of the settings.yml to control the behavior of
 /// the layout of options in the status bar.
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Layout {
     pub left: Vec<String>,   //Items that will in left side of status bar
     pub center: Vec<String>, //Items that will in center of status bar
     pub right: Vec<String>,  //Items that will in right side of status bar
+}
+impl Default for Layout {
+    fn default() -> Self {
+        Self {
+            left: ["clock"].map(String::from).to_vec(),
+            center: ["window_title"].map(String::from).to_vec(),
+            right: ["wireless", "bluetooth", "battery"].map(String::from).to_vec(),
+        }
+    }
 }
 
 /// # Modules

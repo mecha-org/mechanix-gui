@@ -149,10 +149,6 @@ pub struct AutoRotateIconPaths {
     pub portrait: String,
     pub landscape: String,
 }
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct DefaultIconPaths {
-    pub default: Option<String>,
-}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
