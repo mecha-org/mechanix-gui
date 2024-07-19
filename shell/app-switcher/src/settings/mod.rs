@@ -1,3 +1,4 @@
+use crate::constants::{BECK_ICON, CLOSE_ALL_ICON, NOT_FOUND_ICON, SYSTEM_MECHANIX_APP_SWITCHER_PATH};
 use crate::errors::{AppSwitcherError, AppSwitcherErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -11,6 +12,7 @@ use tracing::{debug, info};
 /// this file lets you control the behavior of the App Switcher,
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct AppSwitcherSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
@@ -26,7 +28,7 @@ impl Default for AppSwitcherSettings {
             window: WindowSettings::default(),
             title: String::from("App Switcher"),
             modules: Modules::default(),
-            exclude_apps: vec![],
+            exclude_apps: vec!["mechanix.shell.home-screen".to_string()],
         }
     }
 }
@@ -92,30 +94,63 @@ pub struct LayoutSettings {
 
 /// # Modules
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Back {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for Back {
+    fn default() -> Self {
+        Self { 
+            icon: SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + BECK_ICON
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct CloseAll {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for CloseAll {
+    fn default() -> Self {
+        Self { 
+           icon:  SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + CLOSE_ALL_ICON,
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct NotFound {
     pub icon: NotFoundIconPaths,
 }
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+impl  Default for  NotFound {
+    fn default() -> Self {
+        Self { icon: NotFoundIconPaths::default() }
+    }
+    
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct NotFoundIconPaths {
-    pub default: Option<String>,
-    pub small: Option<String>,
+    pub default: String,
+    pub small: String,
+}
+impl Default for NotFoundIconPaths {
+    fn default() -> Self {
+        Self { 
+            default: SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + NOT_FOUND_ICON,
+            small: SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + NOT_FOUND_ICON,
+     }
+    }
 }
 
 /// # Modules
 ///
 /// Options that will be visible in app switcher
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Modules {
     pub back: Back,
     pub close_all: CloseAll,
@@ -125,7 +160,7 @@ pub struct Modules {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (480, 100),
+            size: (480, 440),
             position: (0, 0),
             min_size: None,
             max_size: None,
