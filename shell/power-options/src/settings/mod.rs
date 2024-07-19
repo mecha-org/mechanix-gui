@@ -1,3 +1,4 @@
+use crate::constants::{BACKGROUND_ICON, LOGOUT_ICON, RESTART_ICON, SHUTDOWN_ICON, SYSTEM_MECHANIX_POWER_OPTIONS_PATH};
 use crate::errors::{PowerOptionsError, PowerOptionsErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -73,30 +74,63 @@ pub struct WindowSettings {
 /// # Modules Definitions
 ///
 /// Options that will be visible in power options
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct ShutdownModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for ShutdownModule {
+    fn default() -> Self {
+        Self { 
+            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + SHUTDOWN_ICON, 
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct RestartModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for RestartModule {
+    fn default() -> Self {
+        Self { 
+            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + RESTART_ICON, 
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct LogoutModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for LogoutModule {
+    fn default() -> Self {
+        Self { 
+            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + LOGOUT_ICON, 
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BackgroundModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for BackgroundModule {
+    fn default() -> Self {
+        Self { 
+            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + BACKGROUND_ICON 
+        }
+    }
 }
 
 /// # Modules
 ///
 /// Options that will be visible in Power options
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Modules {
     pub shutdown: ShutdownModule,
     pub restart: RestartModule,
@@ -107,7 +141,7 @@ pub struct Modules {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 440),
             position: (0, 0),
             min_size: None,
             max_size: None,
