@@ -643,10 +643,7 @@ impl Default for Modules {
             back_space: BackSpaceModule::default(),
             lock: LockModule::default(),
             unlock: UnlockModule::default(),
-            password_configs: PasswordConfigsModule {
-                keys_allowed: vec![],
-                password_length: 0,
-            },
+            password_configs: PasswordConfigsModule::default(),
             back: BackModule::default(),
             next: NextModule::default(),
             submit: SubmitModule::default(),
