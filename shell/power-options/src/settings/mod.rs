@@ -1,4 +1,4 @@
-use crate::constants::{BACKGROUND_ICON, LOGOUT_ICON, RESTART_ICON, SHUTDOWN_ICON, SYSTEM_MECHANIX_POWER_OPTIONS_PATH};
+use crate::constants::{BACKGROUND_IMAGE, HOME_DIR_PATH, LOGOUT_ICON, RESTART_ICON, SHUTDOWN_ICON};
 use crate::errors::{PowerOptionsError, PowerOptionsErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -82,7 +82,7 @@ pub struct ShutdownModule {
 impl Default for ShutdownModule {
     fn default() -> Self {
         Self { 
-            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + SHUTDOWN_ICON, 
+            icon: SHUTDOWN_ICON.to_owned(), 
         }
     }
 }
@@ -95,7 +95,7 @@ pub struct RestartModule {
 impl Default for RestartModule {
     fn default() -> Self {
         Self { 
-            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + RESTART_ICON, 
+            icon: RESTART_ICON.to_owned(), 
         }
     }
 }
@@ -108,7 +108,7 @@ pub struct LogoutModule {
 impl Default for LogoutModule {
     fn default() -> Self {
         Self { 
-            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + LOGOUT_ICON, 
+            icon: LOGOUT_ICON.to_owned(), 
         }
     }
 }
@@ -121,7 +121,7 @@ pub struct BackgroundModule {
 impl Default for BackgroundModule {
     fn default() -> Self {
         Self { 
-            icon: SYSTEM_MECHANIX_POWER_OPTIONS_PATH.to_owned() + BACKGROUND_ICON 
+            icon: BACKGROUND_IMAGE.to_owned(),
         }
     }
 }
@@ -179,6 +179,10 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to PowerOptionsSettings
@@ -196,6 +200,10 @@ pub fn read_settings_yml() -> Result<PowerOptionsSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     println!("settings file location - {:?}", file_path);
 
     // open file
