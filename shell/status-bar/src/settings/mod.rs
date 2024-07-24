@@ -177,12 +177,23 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to StatusBarSettings
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<StatusBarSettings> {
+    // 1. args
+    // 1. env
+    // 3. .config/mechanix
+    // 4. /usr/share
+
+    // dir - settings.yml ? 4 ?
+
     let mut file_path = PathBuf::from(
         std::env::var("MECHA_STATUS_BAR_SETTINGS_PATH").unwrap_or(String::from("settings.yml")),
     ); // Get path of the library
@@ -190,8 +201,15 @@ pub fn read_settings_yml() -> Result<StatusBarSettings> {
     // read from args
     let file_path_in_args = read_settings_path_from_args();
     if file_path_in_args.is_some() {
-        file_path = PathBuf::from(file_path_in_args.unwrap());
+        file_path = PathBuf::from(file_path_in_args.unwrap()); // this - 3
     }
+
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(".config/mechanix/status-bar/settings.yml");
+    }
+
+    println!("2 =======> CHECKING file_path : {:?} ", &file_path);
 
     info!(
         task = "read_settings",

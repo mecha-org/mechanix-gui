@@ -1,44 +1,45 @@
-pub const SYSTEM_MECHANIX_STATUSBAR_PATH  :  &str  = "/usr/share/mechanix/status-bar/icons/";
+use const_format::concatcp;
 // status-bar 
+const ASSET_PATH  :  &str  = "/usr/share/mechanix/status-bar/assets/";
 
 // battery
-pub const BATTERY_LEVEL_100 : &str = "battery/battery_100.svg";
-pub const BATTERY_LEVEL_90 : &str = "battery/battery_90.svg";
-pub const BATTERY_LEVEL_80 : &str = "battery/battery_80.svg";
-pub const BATTERY_LEVEL_70 : &str = "battery/battery_70.svg";
-pub const BATTERY_LEVEL_60 : &str = "battery/battery_60.svg";
-pub const BATTERY_LEVEL_50 : &str = "battery/battery_50.svg";
-pub const BATTERY_LEVEL_40 : &str = "battery/battery_40.svg";
-pub const BATTERY_LEVEL_30 : &str = "battery/battery_30.svg";
-pub const BATTERY_LEVEL_20 : &str = "battery/battery_20.svg";
-pub const BATTERY_LEVEL_10 : &str = "battery/battery_10.svg";
-pub const BATTERY_LEVEL_0 : &str = "battery/battery_0.svg";
-pub const BATTERY_NOT_FOUND : &str = "battery/battery_not_found.svg";
+pub const BATTERY_LEVEL_100 : &str = concatcp!(ASSET_PATH, "battery/battery_100_icon.svg");
+pub const BATTERY_LEVEL_90 : &str = concatcp!(ASSET_PATH, "battery/battery_90_icon.svg");
+pub const BATTERY_LEVEL_80 : &str = concatcp!(ASSET_PATH, "battery/battery_80_icon.svg");
+pub const BATTERY_LEVEL_70 : &str = concatcp!(ASSET_PATH, "battery/battery_70_icon.svg");
+pub const BATTERY_LEVEL_60 : &str = concatcp!(ASSET_PATH, "battery/battery_60_icon.svg");
+pub const BATTERY_LEVEL_50 : &str = concatcp!(ASSET_PATH, "battery/battery_50_icon.svg");
+pub const BATTERY_LEVEL_40 : &str = concatcp!(ASSET_PATH, "battery/battery_40_icon.svg");
+pub const BATTERY_LEVEL_30 : &str = concatcp!(ASSET_PATH, "battery/battery_30_icon.svg");
+pub const BATTERY_LEVEL_20 : &str = concatcp!(ASSET_PATH, "battery/battery_20_icon.svg");
+pub const BATTERY_LEVEL_10 : &str = concatcp!(ASSET_PATH, "battery/battery_10_icon.svg");
+pub const BATTERY_LEVEL_0 : &str = concatcp!(ASSET_PATH, "battery/battery_0_icon.svg");
+pub const BATTERY_NOT_FOUND : &str = concatcp!(ASSET_PATH, "battery/battery_not_found_icon.svg");
 
 // charging-battery
-pub const CHARGING_BATTERY_LEVEL_100 : &str = "battery/charging/battery_100.svg";
-pub const CHARGING_BATTERY_LEVEL_90 : &str = "battery/charging/battery_90.svg";
-pub const CHARGING_BATTERY_LEVEL_80 : &str = "battery/charging/battery_80.svg";
-pub const CHARGING_BATTERY_LEVEL_70 : &str = "battery/charging/battery_70.svg";
-pub const CHARGING_BATTERY_LEVEL_60 : &str = "battery/charging/battery_60.svg";
-pub const CHARGING_BATTERY_LEVEL_50 : &str = "battery/charging/battery_50.svg";
-pub const CHARGING_BATTERY_LEVEL_40 : &str = "battery/charging/battery_40.svg";
-pub const CHARGING_BATTERY_LEVEL_30 : &str = "battery/charging/battery_30.svg";
-pub const CHARGING_BATTERY_LEVEL_20 : &str = "battery/charging/battery_20.svg";
-pub const CHARGING_BATTERY_LEVEL_10 : &str = "battery/charging/battery_10.svg";
-pub const CHARGING_BATTERY_LEVEL_0 : &str = "battery/charging/battery_0.svg";
+pub const CHARGING_BATTERY_LEVEL_100 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_100_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_90 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_90_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_80 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_80_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_70 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_70_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_60 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_60_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_50 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_50_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_40 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_40_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_30 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_30_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_20 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_20_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_10 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_10_icon.svg");
+pub const CHARGING_BATTERY_LEVEL_0 : &str = concatcp!(ASSET_PATH, "battery/charging/battery_0_icon.svg");
 
 // wireless
-pub const WIRELESS_OFF : &str =  "wireless/wireless_off.svg";
-pub const WIRELESS_ON : &str = "wireless/wireless_on.svg";
-pub const WIRELESS_LOW : &str = "wireless/wireless_low.svg";
-pub const WIRELESS_WEAK : &str = "wireless/wireless_weak.svg";
-pub const WIRELESS_GOOD : &str = "wireless/wireless_good.svg";
-pub const WIRELESS_STRONG : &str = "wireless/wireless_strong.svg";
-pub const WIRELESS_NOT_FOUND : &str = "wireless/wireless_not_found.svg";
+pub const WIRELESS_OFF : &str = concatcp!(ASSET_PATH, "wireless/wireless_off_icon.svg");
+pub const WIRELESS_ON : &str = concatcp!(ASSET_PATH, "wireless/wireless_on_icon.svg");
+pub const WIRELESS_LOW : &str = concatcp!(ASSET_PATH, "wireless/wireless_low_icon.svg");
+pub const WIRELESS_WEAK : &str = concatcp!(ASSET_PATH, "wireless/wireless_weak_icon.svg");
+pub const WIRELESS_GOOD : &str = concatcp!(ASSET_PATH, "wireless/wireless_good_icon.svg");
+pub const WIRELESS_STRONG : &str = concatcp!(ASSET_PATH, "wireless/wireless_strong_icon.svg");
+pub const WIRELESS_NOT_FOUND : &str = concatcp!(ASSET_PATH, "wireless/wireless_not_found_icon.svg");
 
 // bluetooth
-pub const BLUETOOTH_ON : &str = "bluetooth/bluetooth_on.svg";
-pub const BLUETOOTH_OFF : &str = "bluetooth/bluetooth_off.svg";
-pub const BLUETOOTH_CONNECTED : &str = "bluetooth/bluetooth_connected.svg";
-pub const BLUETOOTH_NOT_FOUND : &str = "bluetooth/bluetooth_not_found.svg";
+pub const BLUETOOTH_ON : &str = concatcp!(ASSET_PATH, "bluetooth/bluetooth_on_icon.svg");
+pub const BLUETOOTH_OFF : &str = concatcp!(ASSET_PATH, "bluetooth/bluetooth_off_icon.svg");
+pub const BLUETOOTH_CONNECTED : &str = concatcp!(ASSET_PATH, "bluetooth/bluetooth_connected_icon.svg");
+pub const BLUETOOTH_NOT_FOUND : &str = concatcp!(ASSET_PATH, "bluetooth/bluetooth_not_found_icon.svg");

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
-use crate::constants::{BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, SYSTEM_MECHANIX_STATUSBAR_PATH, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
+use crate::constants::{BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
 };
 
 /// # StatusBar Settings
@@ -122,10 +122,10 @@ pub struct BluetoothIconPaths {
 impl Default for BluetoothIconPaths {
     fn default() -> Self {
         BluetoothIconPaths {
-            off: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_OFF,
-            on: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_ON,
-            connected: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_CONNECTED,
-            not_found: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BLUETOOTH_NOT_FOUND,
+            off: BLUETOOTH_OFF.to_owned(),
+            on: BLUETOOTH_ON.to_owned(),
+            connected: BLUETOOTH_CONNECTED.to_owned(),
+            not_found: BLUETOOTH_NOT_FOUND.to_owned(),
         }
     
     }
@@ -146,13 +146,13 @@ pub struct WirelessIconPaths {
 impl Default for WirelessIconPaths {
     fn default() -> Self {
         WirelessIconPaths {
-            off: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + WIRELESS_OFF,
-            on: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + WIRELESS_ON,
-            low: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + WIRELESS_LOW,
-            weak: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + WIRELESS_WEAK,
-            good: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + WIRELESS_GOOD,
-            strong: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + WIRELESS_STRONG,
-            not_found: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + WIRELESS_NOT_FOUND,
+            off: WIRELESS_OFF.to_owned(),
+            on: WIRELESS_ON.to_owned(),
+            low: WIRELESS_LOW.to_owned(),
+            weak: WIRELESS_WEAK.to_owned(),
+            good: WIRELESS_GOOD.to_owned(),
+            strong: WIRELESS_STRONG.to_owned(),
+            not_found: WIRELESS_NOT_FOUND.to_owned(),
         }
     
     }
@@ -179,18 +179,18 @@ pub struct BatteryIconPaths {
 impl Default for BatteryIconPaths {
     fn default() ->  Self {
         BatteryIconPaths {
-            level_100: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_100,
-            level_90: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_90,
-            level_80: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_80,
-            level_70: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_70,
-            level_60: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_60,
-            level_50: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_50,
-            level_40: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_40,
-            level_30: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_30,
-            level_20: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_20,
-            level_10: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_10,
-            level_0: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_LEVEL_0,
-            not_found: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_NOT_FOUND,
+            level_100: BATTERY_LEVEL_100.to_owned(),
+            level_90: BATTERY_LEVEL_90.to_owned(),
+            level_80: BATTERY_LEVEL_80.to_owned(),
+            level_70: BATTERY_LEVEL_70.to_owned(),
+            level_60: BATTERY_LEVEL_60.to_owned(),
+            level_50: BATTERY_LEVEL_50.to_owned(),
+            level_40: BATTERY_LEVEL_40.to_owned(),
+            level_30: BATTERY_LEVEL_30.to_owned(),
+            level_20: BATTERY_LEVEL_20.to_owned(),
+            level_10: BATTERY_LEVEL_10.to_owned(),
+            level_0: BATTERY_LEVEL_0.to_owned(),
+            not_found: BATTERY_NOT_FOUND.to_owned(),
         }
     }
 }
@@ -217,18 +217,18 @@ pub struct ChargingBatteryIconPaths {
 impl Default for ChargingBatteryIconPaths {
     fn default() ->  Self {
         ChargingBatteryIconPaths {
-            level_100: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_100,
-            level_90: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_90,
-            level_80: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_80,
-            level_70: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_70,
-            level_60: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_60,
-            level_50: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_50,
-            level_40: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_40,
-            level_30: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_30,
-            level_20: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_20,
-            level_10: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_10,
-            level_0: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + CHARGING_BATTERY_LEVEL_0,
-            not_found: SYSTEM_MECHANIX_STATUSBAR_PATH.to_owned() + BATTERY_NOT_FOUND,
+            level_100: CHARGING_BATTERY_LEVEL_100.to_owned(),
+            level_90: CHARGING_BATTERY_LEVEL_90.to_owned(),
+            level_80: CHARGING_BATTERY_LEVEL_80.to_owned(),
+            level_70: CHARGING_BATTERY_LEVEL_70.to_owned(),
+            level_60: CHARGING_BATTERY_LEVEL_60.to_owned(),
+            level_50: CHARGING_BATTERY_LEVEL_50.to_owned(),
+            level_40: CHARGING_BATTERY_LEVEL_40.to_owned(),
+            level_30: CHARGING_BATTERY_LEVEL_30.to_owned(),
+            level_20: CHARGING_BATTERY_LEVEL_20.to_owned(),
+            level_10: CHARGING_BATTERY_LEVEL_10.to_owned(),
+            level_0: CHARGING_BATTERY_LEVEL_0.to_owned(),
+            not_found: BATTERY_NOT_FOUND.to_owned(),
         }
     }
 }
