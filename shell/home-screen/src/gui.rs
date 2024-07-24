@@ -1,7 +1,7 @@
 use crate::components::pinned_app::PinnedApp;
 use crate::settings::{self, HomescreenSettings};
 use crate::theme::{self, HomescreenTheme};
-use crate::AppMessage;
+use crate::{AppMessage, AppParams};
 use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Dimension};
@@ -158,6 +158,6 @@ impl Component for Homescreen {
     }
 }
 
-impl RootComponent<AppMessage> for Homescreen {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {}
+impl RootComponent<AppParams> for Homescreen {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {}
 }

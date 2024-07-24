@@ -4,7 +4,7 @@ use crate::components::unlock_button::UnlockButton;
 use crate::pages::pin::Pin;
 use crate::settings::{self, LockScreenSettings};
 use crate::theme::{self, LockScreenTheme};
-use crate::AppMessage;
+use crate::{AppMessage, AppParams};
 use anyhow::Result;
 use keyring::Entry;
 use logind::session_unlock;
@@ -281,8 +281,8 @@ impl Component for LockScreen {
     }
 }
 
-impl RootComponent<AppMessage> for LockScreen {
-    fn root(&mut self, w: &dyn Any, app_channel: Option<Sender<AppMessage>>) {
+impl RootComponent<AppParams> for LockScreen {
+    fn root(&mut self, w: &dyn Any, app_params: &dyn Any) {
         let session_lock_window = w.downcast_ref::<SessionLockWindow>();
         if session_lock_window.is_some() {
             self.state_mut().session_lock_sender = Some(session_lock_window.unwrap().sender());

@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use crate::entries;
 
-const PASSWORDS_PATH: &str = "/etc/shadow-pins";
+const PASSWORDS_PATH: &str = "/etc/shadow-pwds";
 
 #[derive(Debug, PartialEq, PartialOrd, Clone)]
 pub struct PassswordEntry {

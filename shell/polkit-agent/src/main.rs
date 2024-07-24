@@ -35,6 +35,11 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 use types::{Params, PolkitError, PolkitEvent};
 
+#[derive(Debug, Clone)]
+pub struct AppParams {
+    app_channel: Option<calloop::channel::Sender<AppMessage>>,
+}
+
 #[derive(Debug)]
 enum AppMessage {
     Authenticate { password: String },
@@ -136,7 +141,7 @@ fn launch_auth_ui(params: Params) -> anyhow::Result<()> {
     };
 
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<PolkitAgent, AppMessage>(
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<PolkitAgent, AppParams>(
         LayerWindowParams {
             window_info,
             window_opts,
@@ -146,7 +151,9 @@ fn launch_auth_ui(params: Params) -> anyhow::Result<()> {
             svgs,
             ..Default::default()
         },
-        Some(app_channel_tx),
+        AppParams {
+            app_channel: Some(app_channel_tx),
+        },
     );
 
     let handle = event_loop.handle();

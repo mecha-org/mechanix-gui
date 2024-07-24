@@ -5,7 +5,7 @@ app:
   antialiasing: true # false
   try_opengles_first: true # false
 window:
-  size: [480, 220] # [1024, 768]
+  size: [480, 244] # [480, 200]
   position: [0, 0] # [0, 0]
   min_size: [448, 84] # None
   max_size: null # None
@@ -21,4 +21,7 @@ icons:
   enter: /usr/share/mechanix/shell/keyboard/assets/icons/key-enter.svg
   symbolic: /usr/share/mechanix/shell/keyboard/assets/icons/keyboard-mode-symbolic.svg
 layouts:
-  default: /usr/share/mechanix/shell/keyboard/example-layouts/us.yaml
+  default: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
+trie:
+  raw_file: /usr/share/mechanix/shell/keyboard/assets/trie/words_raw.tsv
+  cached_file: /usr/share/mechanix/shell/keyboard/assets/trie/words_cached.json

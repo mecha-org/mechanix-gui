@@ -1,5 +1,5 @@
 use crate::settings::{self, KeyboardSettings};
-use crate::{action, AppMessage};
+use crate::{action, AppMessage, AppParams};
 use mctk_core::component::RootComponent;
 use mctk_core::event::Event;
 use mctk_core::layout::{Alignment, Dimension, Size};
@@ -42,9 +42,12 @@ pub enum SettingNames {
 /// Each of them are handled in the ``impl Application()::update()``
 #[derive(Debug, Clone)]
 pub enum Message {
-    KeyboardKeyClicked(crate::action::Action),
-    Show,
-    Hide,
+    KeyClicked(crate::action::Action, Vec<crate::layout::KeyCode>),
+    SuggestionClicked(String),
+    UpdateSuggestions {
+        suggestions: Vec<String>,
+        suggested_for: String,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -60,6 +63,9 @@ pub struct KeyboardState {
     settings: KeyboardSettings,
     layout: crate::layout::ParsedLayout,
     current_view: String,
+    app_channel: Option<Sender<AppMessage>>,
+    suggestions: Vec<String>,
+    suggested_for: String,
 }
 
 #[component(State = "KeyboardState")]
@@ -95,13 +101,16 @@ impl Component for Keyboard {
             settings,
             layout: parsed_layout,
             current_view: String::from("base"),
+            app_channel: None,
+            suggestions: vec![],
+            suggested_for: String::new(),
         });
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
         println!("App was sent: {:?}", message.downcast_ref::<Message>());
         match message.downcast_ref::<Message>() {
-            Some(Message::KeyboardKeyClicked(action)) => match action {
+            Some(Message::KeyClicked(action, keycodes)) => match action {
                 action::Action::SetView(view) => {
                     self.state_mut().current_view = view.clone();
                 }
@@ -117,13 +126,41 @@ impl Component for Keyboard {
                         self.state_mut().current_view = lock.clone();
                     }
                 }
-                action::Action::ApplyModifier(_) => {}
-                action::Action::Submit { text, keys } => {}
-                action::Action::Erase => {}
+                action::Action::ApplyModifier(m) => {}
+                action::Action::Submit { text, keys } => {
+                    // println!("text {:?} keys {:?}", text, keys);
+                    if let Some(app_channel) = &self.state_ref().app_channel {
+                        let _ = app_channel.send(AppMessage::TextkeyPressed {
+                            keycode: keycodes[0].clone(),
+                        });
+                    };
+                    if self.state_ref().current_view == "upper".to_string() {
+                        self.state_mut().current_view = "base".to_string()
+                    }
+                }
+                action::Action::Erase => {
+                    if let Some(app_channel) = &self.state_ref().app_channel {
+                        let _ = app_channel.send(AppMessage::Erase);
+                    };
+                }
                 action::Action::ShowPreferences => {}
             },
-            Some(Message::Show) => {}
-            Some(Message::Hide) => {}
+            Some(Message::UpdateSuggestions {
+                suggestions,
+                suggested_for,
+            }) => {
+                self.state_mut().suggestions = suggestions.clone();
+                self.state_mut().suggested_for = suggested_for.clone();
+            }
+            Some(Message::SuggestionClicked(suggestion)) => {
+                // println!("Suggestion clicked: {}", suggestion);
+                if let Some(app_channel) = &self.state_ref().app_channel {
+                    let _ = app_channel.send(AppMessage::SuggestionPressed {
+                        suggestion: suggestion.clone(),
+                        suggested_for: self.state_ref().suggested_for.clone(),
+                    });
+                }
+            }
             _ => (),
         }
         vec![]
@@ -148,26 +185,67 @@ impl Component for Keyboard {
     // }
 
     fn view(&self) -> Option<Node> {
+        //Render view from layout
+        let layout = self.state_ref().layout.clone();
+        let current_view = self.state_ref().current_view.clone();
+        let view = layout.views.get(&current_view).unwrap();
+        let suggestions = self.state_ref().suggestions.clone();
+
         let mut main_div = node!(
             Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100, 100],
                 direction: layout::Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        );
+
+        let mut suggestion_row = node!(
+            Div::new(),
+            lay![
+                size: [Auto, 26],
+                direction: layout::Direction::Row,
+                margin: [8., 0., 0., 0.],
+                axis_alignment: Alignment::Stretch,
+            ]
+        );
+
+        for (i, suggestion) in suggestions.into_iter().enumerate() {
+            suggestion_row = suggestion_row.push(
+                node!(
+                    Button::new(txt!(suggestion.clone()))
+                        .on_click(Box::new(move || msg!(Message::SuggestionClicked(
+                            suggestion.to_string()
+                        ))))
+                        .style("h_alignment", HorizontalPosition::Center)
+                        .style("radius", 4.6)
+                        .style("text_color", Color::WHITE)
+                        .style("font_size", 16.)
+                        .style("active_color", Color::rgba(255., 255., 255., 0.50))
+                        .style("background_color", Color::TRANSPARENT),
+                    lay![
+                        margin: [0., 2.5, 0., 2.5],
+                    ],
+                )
+                .key(i as u64),
+            );
+        }
+        main_div = main_div.push(suggestion_row);
+
+        let mut keys_rows = node!(
+            Div::new().bg(Color::BLACK),
+            lay![
+                direction: layout::Direction::Column,
                 cross_alignment: Alignment::Center,
             ]
         );
 
-        //Render view from layout
-
-        let layout = self.state_ref().layout.clone();
-        let current_view = self.state_ref().current_view.clone();
-        let view = layout.views.get(&current_view).unwrap();
-        println!("rows {:?}", view.rows);
+        // println!("rows {:?}", view.rows);
         for (i, row) in view.rows.clone().into_iter().enumerate() {
             let mut row_div = node!(
                 Div::new(),
                 lay![
-                    margin: [10, 0,0,0],
+                    margin: [8, 0,0,0],
                     cross_alignment: Alignment::Stretch,
                 ]
             );
@@ -175,16 +253,42 @@ impl Component for Keyboard {
 
             for (j, col) in row.buttons.into_iter().enumerate() {
                 let action = col.action.clone();
+                let mut margin_left = 2.5;
+                let mut margin_right = 2.5;
+                let mut text_color = Color::WHITE;
+                let mut font_size = 20.;
+                match col.outline_name.as_str() {
+                    "altline" => {
+                        margin_left = 25.;
+                    }
+                    "change-view" => {
+                        margin_right = 25.;
+                        font_size = 15.;
+                    }
+                    "wide" => {
+                        text_color = Color::rgb(45., 138., 255.);
+                        font_size = 15.;
+                    }
+                    "change-view-2" => {
+                        font_size = 15.;
+                    }
+                    "spaceline" => {
+                        font_size = 15.;
+                    }
+                    _ => (),
+                }
+
                 let col_div = match col.label.clone() {
                     crate::layout::Label::Text(text) => node!(
                         Button::new(txt!(text))
-                            .on_click(Box::new(move || msg!(Message::KeyboardKeyClicked(
-                                action.clone()
+                            .on_click(Box::new(move || msg!(Message::KeyClicked(
+                                action.clone(),
+                                col.keycodes.clone()
                             ))))
                             .style("h_alignment", HorizontalPosition::Center)
                             .style("radius", 4.6)
-                            .style("text_color", Color::WHITE)
-                            .style("font_size", 20.)
+                            .style("text_color", text_color)
+                            .style("font_size", font_size)
                             .style("active_color", Color::rgba(255., 255., 255., 0.50))
                             .style("background_color", Color::rgb(42., 42., 44.)),
                         lay![
@@ -194,29 +298,35 @@ impl Component for Keyboard {
                     ),
                     crate::layout::Label::Icon(icon) => node!(
                         IconButton::new(icon)
-                            .on_click(Box::new(move || msg!(Message::KeyboardKeyClicked(
-                                action.clone()
+                            .on_click(Box::new(move || msg!(Message::KeyClicked(
+                                action.clone(),
+                                col.keycodes.clone()
                             ))))
                             .style("background_color", Color::rgb(42., 42., 44.))
                             .style("active_color", Color::rgba(255., 255., 255., 0.50))
-                            .style("padding", 8.)
-                            .style("radius", 12.),
+                            .style("padding", 6.)
+                            .style("radius", 4.6),
                         lay![
                             size: [col.size.0, col.size.1],
-                            margin: [0., 2.5, 0., 2.5],
+                            margin: [0., margin_left, 0., margin_right],
                         ]
                     ),
                 };
 
                 row_div = row_div.push(col_div.key(j as u64));
             }
-            main_div = main_div.push(row_div.key(i as u64));
+            keys_rows = keys_rows.push(row_div.key(i as u64));
         }
+
+        main_div = main_div.push(keys_rows);
 
         Some(main_div)
     }
 }
 
-impl RootComponent<AppMessage> for Keyboard {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {}
+impl RootComponent<AppParams> for Keyboard {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_params = app_params.downcast_ref::<AppParams>().unwrap();
+        self.state_mut().app_channel = app_params.app_channel.clone();
+    }
 }

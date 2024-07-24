@@ -1,6 +1,6 @@
 use crate::settings::{self, NotificationSettings};
 use crate::theme::{self, NotificationTheme};
-use crate::{AppMessage, NotificationArgs};
+use crate::{AppMessage, AppParams, NotificationArgs};
 use clap::Parser;
 use command::spawn_command;
 use mctk_core::component::RootComponent;
@@ -377,6 +377,6 @@ impl Component for Notification {
     }
 }
 
-impl RootComponent<AppMessage> for Notification {
-    fn root(&mut self, window: &dyn Any, app_channel: Option<Sender<AppMessage>>) {}
+impl RootComponent<AppParams> for Notification {
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {}
 }

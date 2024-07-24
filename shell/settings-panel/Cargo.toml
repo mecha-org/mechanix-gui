@@ -32,6 +32,8 @@ command = { workspace = true }
 upower = { workspace = true }
 const_format = "0.2.32"
 dirs = "5.0.1"
+mechanix_store_client = { workspace = true }
+
 
 [package.metadata.deb]
 name = "mechanix-settings-panel"

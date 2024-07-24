@@ -16,13 +16,15 @@ members = [
     "system/server/dbus",
     "system/client/dbus",
     "desktop/client/dbus",
-    "desktop/server"
+    "desktop/server",
+    "store/server",
+    "store/client/dbus",
 ]
 default-members = ["system/server/dbus", "desktop/server"]
 
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     "Dhruvesh Baria <dhruveshb@mechasystems.com>",
     "Shoaib Merchant <shoaibm@mechasystems.com>",
@@ -55,6 +57,8 @@ serde_json = "1.0"
 mechanix_system_dbus_client = { path = "./system/client/dbus" }
 mechanix_desktop_dbus_client = { path = "./desktop/client/dbus" }
 mechanix_desktop_dbus_server = { path = "./desktop/server" }
+mechanix_store_server = { path = "./store/server" }
+mechanix_store_client = { path = "./store/client" }
 command = { path = "../commons/command"}
 logind = { path = "../commons/logind"}
 upower = { path = "../commons/upower"}

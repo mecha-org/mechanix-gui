@@ -7,16 +7,7 @@ mod types;
 mod widgets;
 mod constants;
 
-use echo_client::EchoClient;
-use modules::battery::component::get_battery_icons_charging_map;
-use std::time::Duration;
-use std::{collections::HashMap, env};
-use tokio::{
-    runtime::Builder,
-    sync::{mpsc::Receiver, oneshot},
-};
-use upower::BatteryStatus;
-
+use futures::StreamExt;
 use gui::SettingsPanel;
 use mctk_core::{
     msg,
@@ -37,7 +28,15 @@ use mctk_smithay::layer_shell::layer_window::LayerWindow;
 use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{WindowInfo, WindowOptions};
+use mechanix_store_client::{store_proxy::StoreClient, StoreEvent};
+use modules::battery::component::get_battery_icons_charging_map;
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
+use std::{collections::HashMap, env};
+use tokio::{runtime::Builder, sync::mpsc::Receiver};
+use upower::BatteryStatus;
 
+use crate::gui::Message;
 use modules::{
     battery::component::get_battery_icons_map,
     bluetooth::component::get_bluetooth_icons_map,
@@ -65,7 +64,11 @@ use tracing::info;
 use tracing_subscriber::EnvFilter;
 use types::{BluetoothStatus, WirelessStatus};
 
-use crate::gui::Message;
+#[derive(Debug, Clone)]
+pub struct AppParams {
+    app_channel: Option<calloop::channel::Sender<AppMessage>>,
+    settings: Arc<RwLock<SettingsPanelSettings>>,
+}
 
 #[derive(Debug)]
 pub enum WirelessMessage {
@@ -207,21 +210,26 @@ fn main() -> anyhow::Result<()> {
         namespace,
     };
 
+    let settings = Arc::new(RwLock::new(settings));
+
     let (app_channel, app_receiver) = calloop::channel::channel();
     let app_channel2 = app_channel.clone();
-    let (mut app, mut event_loop, window_tx) =
-        LayerWindow::open_blocking::<SettingsPanel, AppMessage>(
-            LayerWindowParams {
-                window_info,
-                window_opts: window_opts,
-                fonts,
-                assets,
-                svgs,
-                layer_shell_opts,
-                ..Default::default()
-            },
-            Some(app_channel),
-        );
+    let app_params = AppParams {
+        app_channel: Some(app_channel),
+        settings: settings.clone(),
+    };
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<SettingsPanel, AppParams>(
+        LayerWindowParams {
+            window_info,
+            window_opts: window_opts,
+            fonts,
+            assets,
+            svgs,
+            layer_shell_opts,
+            ..Default::default()
+        },
+        app_params,
+    );
 
     let handle = event_loop.handle();
 
@@ -359,6 +367,7 @@ fn main() -> anyhow::Result<()> {
         rotation_msg_rx,
         brightness_msg_rx,
         sound_msg_rx,
+        settings,
     );
 
     loop {
@@ -378,6 +387,7 @@ fn init_services(
     rotation_msg_rx: Receiver<RotationMessage>,
     brightness_msg_rx: Receiver<BrightnessMessage>,
     sound_msg_rx: Receiver<SoundMessage>,
+    settings: Arc<RwLock<SettingsPanelSettings>>,
 ) -> JoinHandle<()> {
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
@@ -394,6 +404,7 @@ fn init_services(
         let memory_f = run_memory_handler(app_channel.clone());
         let brightness_f = run_brightness_handler(app_channel.clone(), brightness_msg_rx);
         let sound_f = run_sound_handler(app_channel.clone(), sound_msg_rx);
+        let settings_sync_f = run_settings_sync_handler(settings);
 
         runtime
             .block_on(runtime.spawn(async move {
@@ -406,6 +417,7 @@ fn init_services(
                     memory_f,
                     brightness_f,
                     sound_f,
+                    settings_sync_f
                 )
             }))
             .unwrap();
@@ -457,4 +469,51 @@ async fn run_brightness_handler(
 async fn run_sound_handler(app_channel: Sender<AppMessage>, sound_msg_rx: Receiver<SoundMessage>) {
     let mut sound_service_handle = SoundServiceHandle::new(app_channel);
     sound_service_handle.run(sound_msg_rx).await;
+}
+
+async fn run_settings_sync_handler(settings: Arc<RwLock<SettingsPanelSettings>>) {
+    let mut stream_res = StoreClient::get_notify().await;
+
+    if let Err(e) = stream_res.as_ref() {
+        println!("error while getting notify stream {}", e);
+        return;
+    }
+
+    loop {
+        if let Some(signal) = stream_res.as_mut().unwrap().next().await {
+            if let Ok(args) = signal.args() {
+                let event = args.event;
+                match event {
+                    StoreEvent::Insert { keys_vals } => {
+                        for (key, _) in keys_vals {
+                            match key.as_str() {
+                                // "k1" => {
+                                //     if let Ok(settings) = settings.write().as_mut() {
+                                //         settings.bg_color = (0., 0., 255., 1.);
+                                //     }
+                                // }
+                                _ => (),
+                            }
+                        }
+                    }
+                    StoreEvent::Update { keys_vals } => {
+                        for (key, _) in keys_vals {
+                            match key.as_str() {
+                                _ => (),
+                            }
+                        }
+                    }
+                    StoreEvent::Delete { keys_vals } => {
+                        for (key, _) in keys_vals {
+                            match key.as_str() {
+                                _ => (),
+                            }
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    println!("settings sync ended");
 }

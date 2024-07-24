@@ -15,5 +15,7 @@ buttons:
     icon: "edit-clear-symbolic"
     action: "erase"
   Return:
-    icon: "key-enter"
+    outline: "wide"
+    # icon: "key-enter"
+    label: "Done"
     keysym: "Return"

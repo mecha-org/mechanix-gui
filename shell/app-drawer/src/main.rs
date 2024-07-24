@@ -34,6 +34,9 @@ use tracing_subscriber::EnvFilter;
 
 use crate::gui::Message;
 
+#[derive(Debug, Clone)]
+pub struct AppParams {}
+
 #[derive(Debug)]
 enum AppMessage {}
 
@@ -135,7 +138,7 @@ fn main() -> anyhow::Result<()> {
         namespace,
     };
 
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<AppDrawer, AppMessage>(
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<AppDrawer, AppParams>(
         LayerWindowParams {
             window_info,
             window_opts,
@@ -145,7 +148,7 @@ fn main() -> anyhow::Result<()> {
             svgs,
             ..Default::default()
         },
-        None,
+        AppParams {},
     );
 
     let handle = event_loop.handle();
