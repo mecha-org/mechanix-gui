@@ -1,4 +1,4 @@
-use crate::constants::{BELL_ICON, SYSTEM_MECHANIX_NOTIFICATION_PATH};
+use crate::constants::{BELL_ICON, HOME_DIR_PATH};
 use crate::errors::{NotificationError, NotificationErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -108,7 +108,7 @@ pub struct Icons {
 impl Default for Icons {
     fn default() -> Self {
         Self { 
-            bell: (Some(SYSTEM_MECHANIX_NOTIFICATION_PATH.to_owned() + BELL_ICON))
+            bell: (Some(BELL_ICON.to_owned()))
         }
     }
 }
@@ -123,6 +123,10 @@ pub fn read_settings_path_from_args() -> Option<String> {
         return Some(String::from(args[2].clone()));
     }
     None
+}
+
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
 }
 
 /// # Reads Settings YML
@@ -142,6 +146,10 @@ pub fn read_settings_yml() -> Result<NotificationSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path

@@ -1,3 +1,6 @@
-pub const SYSTEM_MECHANIX_NOTIFICATION_PATH  :  &str  = "/usr/share/mechanix/notification/icons/";
+use const_format::concatcp;
 
-pub const BELL_ICON : &str = "bell.svg";
+pub const ASSET_PATH  :  &str  = "/usr/share/mechanix/notification/assets/";
+pub const HOME_DIR_PATH : &str = ".config/mechanix/notification/settings.yml";
+
+pub const BELL_ICON : &str = concatcp!(ASSET_PATH, "bell_icon.svg");
