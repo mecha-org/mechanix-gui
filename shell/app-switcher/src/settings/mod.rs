@@ -1,4 +1,4 @@
-use crate::constants::{BECK_ICON, CLOSE_ALL_ICON, NOT_FOUND_ICON, SYSTEM_MECHANIX_APP_SWITCHER_PATH};
+use crate::constants::{APP_NAMESPACE, BECK_ICON, CLOSE_ALL_ICON, HOME_DIR_PATH, NOT_FOUND_ICON};
 use crate::errors::{AppSwitcherError, AppSwitcherErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -28,7 +28,7 @@ impl Default for AppSwitcherSettings {
             window: WindowSettings::default(),
             title: String::from("App Switcher"),
             modules: Modules::default(),
-            exclude_apps: vec!["mechanix.shell.home-screen".to_string()],
+            exclude_apps: vec![APP_NAMESPACE.to_string()],
         }
     }
 }
@@ -102,7 +102,7 @@ pub struct Back {
 impl Default for Back {
     fn default() -> Self {
         Self { 
-            icon: SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + BECK_ICON
+            icon: BECK_ICON.to_owned(),
         }
     }
 }
@@ -115,7 +115,7 @@ pub struct CloseAll {
 impl Default for CloseAll {
     fn default() -> Self {
         Self { 
-           icon:  SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + CLOSE_ALL_ICON,
+           icon:  CLOSE_ALL_ICON.to_owned(),
         }
     }
 }
@@ -140,8 +140,8 @@ pub struct NotFoundIconPaths {
 impl Default for NotFoundIconPaths {
     fn default() -> Self {
         Self { 
-            default: SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + NOT_FOUND_ICON,
-            small: SYSTEM_MECHANIX_APP_SWITCHER_PATH.to_owned() + NOT_FOUND_ICON,
+            default: NOT_FOUND_ICON.to_owned(),
+            small: NOT_FOUND_ICON.to_owned(),
      }
     }
 }
@@ -196,6 +196,11 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to AppSwitcherSettings
@@ -213,6 +218,10 @@ pub fn read_settings_yml() -> Result<AppSwitcherSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path

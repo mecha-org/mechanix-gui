@@ -31,6 +31,8 @@ palette = "0.7.6"
 image = { workspace = true }
 colors-transform = "0.2.11"
 desktop_entries = { workspace = true }
+const_format = "0.2.32"
+dirs = "5.0.1"
 
 [package.metadata.deb]
 name = "mechanix-app-switcher"
