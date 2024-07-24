@@ -1,4 +1,4 @@
-use crate::constants::{BACKGROUND_ICON, BACKSPACE_ICON, BACK_ICON, HOME_ICON, LOCK_ICON, PASSWORD_LENGTH, SYSTEM_MECHANIX_LOCK_SCREEN_PATH, UNLOCK_ICON};
+use crate::constants::{BACKGROUND_IMAGE, BACKSPACE_ICON, BACK_ICON, HOME_DIR_PATH, HOME_ICON, LOCK_ICON, PASSWORD_LENGTH, UNLOCK_ICON};
 use crate::errors::{LockScreenError, LockScreenErrorCodes};
 use anyhow::bail;
 use anyhow::Result; 
@@ -158,7 +158,7 @@ pub struct HomeIconPath {
 impl Default for HomeIconPath {
     fn default() -> Self {
         HomeIconPath {
-            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + HOME_ICON,
+            default: HOME_ICON.to_owned(),
         }
     }
 }
@@ -171,7 +171,7 @@ pub struct BackSpaceIconPath {
 impl Default for BackSpaceIconPath {
     fn default() -> Self {
         BackSpaceIconPath {
-            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + BACKSPACE_ICON,
+            default: BACKSPACE_ICON.to_owned(),
         }
     }
 }
@@ -185,7 +185,7 @@ pub struct LockIconPath {
 impl Default for LockIconPath {
     fn default() -> Self {
         LockIconPath {
-            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + LOCK_ICON,
+            default: LOCK_ICON.to_owned(),
         }
     }
 }
@@ -199,7 +199,7 @@ pub struct UnlockIconPath {
 impl Default for UnlockIconPath {
     fn default() -> Self {
         UnlockIconPath {
-            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + UNLOCK_ICON,
+            default: UNLOCK_ICON.to_owned(),
         }
     }
 }
@@ -213,7 +213,7 @@ pub struct BackIconPath {
 impl Default for BackIconPath {
     fn default() -> Self {
         BackIconPath {
-            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + BACK_ICON,
+            default: BACK_ICON.to_owned(),
         }
     }
 }
@@ -227,7 +227,7 @@ pub struct BackgroundImagePath {
 impl Default for BackgroundImagePath {
     fn default() -> Self {
         BackgroundImagePath {
-            default: SYSTEM_MECHANIX_LOCK_SCREEN_PATH.to_owned() + BACKGROUND_ICON,
+            default: BACKGROUND_IMAGE.to_owned(),
         }
     }
 }
@@ -361,6 +361,11 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to LockScreenSettings
@@ -377,6 +382,10 @@ pub fn read_settings_yml() -> Result<LockScreenSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path
