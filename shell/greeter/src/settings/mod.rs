@@ -1,5 +1,5 @@
 use crate::constants::{
-    BACKGROUND_ICON, BACKSPACE_ICON, BACK_ICON, CLOSE_ICON, HIDE_ICON, HOME_ICON, LOCK_ICON, NEXT_ICON, PASSWORD_LENGTH, PEEK_PASSWORD_ICON, POWER_ICON, RESTART_ICON, SHOW_ICON, SHUTDOWN_ICON, SLEEP_ICON, SUBMIT_ICON, SYSTEM_MECHANIX_GREETER_PATH, UNLOCK_ICON, UNPEEK_PASSWORD_ICON
+    BACKGROUND_IMAGE, BACKSPACE_ICON, BACK_ICON, CLOSE_ICON, HIDE_ICON, HOME_DIR_PATH, HOME_ICON, LOCK_ICON, NEXT_ICON, PASSWORD_LENGTH, PEEK_PASSWORD_ICON, POWER_ICON, RESTART_ICON, SHOW_ICON, SHUTDOWN_ICON, SLEEP_ICON, SUBMIT_ICON, UNLOCK_ICON, UNPEEK_PASSWORD_ICON
 };
 use crate::errors::{GreeterError, GreeterErrorCodes};
 use anyhow::bail;
@@ -376,7 +376,7 @@ pub struct HomeIconPath {
 impl Default for HomeIconPath {
     fn default() -> Self {
         HomeIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + HOME_ICON,
+            default: HOME_ICON.to_owned(),
         }
     }
 }
@@ -389,7 +389,7 @@ pub struct BackSpaceIconPath {
 impl Default for BackSpaceIconPath {
     fn default() -> Self {
         BackSpaceIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + BACKSPACE_ICON,
+            default: BACKSPACE_ICON.to_owned(),
         }
     }
 }
@@ -402,7 +402,7 @@ pub struct LockIconPath {
 impl Default for LockIconPath {
     fn default() -> Self {
         LockIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + LOCK_ICON,
+            default: LOCK_ICON.to_owned(),
         }
     }
 }
@@ -415,7 +415,7 @@ pub struct UnlockIconPath {
 impl Default for UnlockIconPath {
     fn default() -> Self {
         UnlockIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + UNLOCK_ICON,
+            default: UNLOCK_ICON.to_owned(),
         }
     }
 }
@@ -428,7 +428,7 @@ pub struct BackIconPath {
 impl Default for BackIconPath {
     fn default() -> Self {
         BackIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + BACK_ICON,
+            default: BACK_ICON.to_owned(),
         }
     }
 }
@@ -441,7 +441,7 @@ pub struct NextIconPath {
 impl Default for NextIconPath {
     fn default() -> Self {
         NextIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + NEXT_ICON,
+            default: NEXT_ICON.to_owned(),
         }
     }
 }
@@ -454,7 +454,7 @@ pub struct SubmitIconPath {
 impl Default for SubmitIconPath {
     fn default() -> Self {
         SubmitIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + SUBMIT_ICON,
+            default: SUBMIT_ICON.to_owned(),
         }
     }
 }
@@ -467,7 +467,7 @@ pub struct ShowIconPath {
 impl Default for ShowIconPath {
     fn default() -> Self {
         ShowIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + SHOW_ICON,
+            default: SHOW_ICON.to_owned(),
         }
     }
 }
@@ -480,7 +480,7 @@ pub struct HideIconPath {
 impl Default for HideIconPath {
     fn default() -> Self {
         HideIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + HIDE_ICON,
+            default: HIDE_ICON.to_owned(),
         }
     }
 }
@@ -493,7 +493,7 @@ pub struct BackgroundIconPath {
 impl Default for BackgroundIconPath {
     fn default() -> Self {
         BackgroundIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + BACKGROUND_ICON,
+            default: BACKGROUND_IMAGE.to_owned(),
         }
     }
 }
@@ -506,7 +506,7 @@ pub struct PowerIconPath {
 impl Default for PowerIconPath {
     fn default() -> Self {
         PowerIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + POWER_ICON,
+            default: POWER_ICON.to_owned(),
         }
     }
 }
@@ -519,7 +519,7 @@ pub struct ShutdownIconPath {
 impl Default for ShutdownIconPath {
     fn default() -> Self {
         ShutdownIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + SHUTDOWN_ICON,
+            default: SHUTDOWN_ICON.to_owned(),
         }
     }
 }
@@ -532,7 +532,7 @@ pub struct RestartIconPath {
 impl Default for RestartIconPath {
     fn default() -> Self {
         RestartIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + RESTART_ICON,
+            default: RESTART_ICON.to_owned(),
         }
     }
 }
@@ -545,7 +545,7 @@ pub struct SleepIconPath {
 impl Default for SleepIconPath {
     fn default() -> Self {
         SleepIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + SLEEP_ICON,
+            default: SLEEP_ICON.to_owned(),
         }
     }
 }
@@ -558,7 +558,7 @@ pub struct PeekPasswordIconPath {
 impl Default for PeekPasswordIconPath {
     fn default() -> Self {
         PeekPasswordIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + PEEK_PASSWORD_ICON,
+            default: PEEK_PASSWORD_ICON.to_owned(),
         }
     }
 }
@@ -571,7 +571,7 @@ pub struct UnPeekPasswordIconPath {
 impl Default for UnPeekPasswordIconPath {
     fn default() -> Self {
         UnPeekPasswordIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + UNPEEK_PASSWORD_ICON,
+            default: UNPEEK_PASSWORD_ICON.to_owned(),
         }
     }
 }
@@ -584,7 +584,7 @@ pub struct CloseIconPath {
 impl Default for CloseIconPath {
     fn default() -> Self {
         CloseIconPath {
-            default: SYSTEM_MECHANIX_GREETER_PATH.to_owned() + CLOSE_ICON,
+            default: CLOSE_ICON.to_owned(),
         }
     }
 }
@@ -686,6 +686,10 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to GreeterSettings
@@ -702,6 +706,11 @@ pub fn read_settings_yml() -> Result<GreeterSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
+    println!("settings file location - {:?}", file_path);
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path

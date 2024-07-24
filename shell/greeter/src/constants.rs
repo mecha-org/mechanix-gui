@@ -1,23 +1,26 @@
-pub const SYSTEM_MECHANIX_GREETER_PATH : &str  = "/usr/share/mechanix/greeter/icons/";
+use const_format::concatcp;
 
-pub const HOME_ICON : &str = "home.svg";
-pub const BACKSPACE_ICON : &str = "backspace.svg";
-pub const LOCK_ICON : &str = "lock.svg";
-pub const POWER_ICON : &str = "power.svg";
-pub const SHUTDOWN_ICON : &str = "shutdown.svg";
-pub const RESTART_ICON : &str = "restart.svg";
-pub const SLEEP_ICON : &str = "sleep.svg";
-pub const CLOSE_ICON : &str = "close.svg";
-pub const UNLOCK_ICON : &str = "unlock.svg";
-pub const BACK_ICON : &str = "back.svg";
-pub const NEXT_ICON : &str = "next.svg";
-pub const SUBMIT_ICON : &str = "submit.svg";
+pub const ASSET_PATH : &str  = "/usr/share/mechanix/greeter/assets/";
+pub const HOME_DIR_PATH : &str = ".config/mechanix/greeter/settings.yml";
 
-pub const PEEK_PASSWORD_ICON : &str = "peek_password.png";
-pub const UNPEEK_PASSWORD_ICON : &str = "un_peek_password.png";
+pub const HOME_ICON : &str = concatcp!(ASSET_PATH, "home_icon.svg");
+pub const BACKSPACE_ICON : &str = concatcp!(ASSET_PATH, "backspace_icon.svg");
+pub const LOCK_ICON : &str = concatcp!(ASSET_PATH, "lock_icon.svg");
+pub const POWER_ICON : &str = concatcp!(ASSET_PATH, "power_icon.svg");
+pub const SHUTDOWN_ICON : &str = concatcp!(ASSET_PATH, "shutdown_icon.svg");
+pub const RESTART_ICON : &str = concatcp!(ASSET_PATH, "restart_icon.svg");
+pub const SLEEP_ICON : &str = concatcp!(ASSET_PATH, "sleep_icon.svg");
+pub const CLOSE_ICON : &str = concatcp!(ASSET_PATH, "close_icon.svg");
+pub const UNLOCK_ICON : &str = concatcp!(ASSET_PATH, "unlock_icon.svg");
+pub const BACK_ICON : &str = concatcp!(ASSET_PATH, "back_icon.svg");
+pub const NEXT_ICON : &str = concatcp!(ASSET_PATH, "next_icon.svg");
+pub const SUBMIT_ICON : &str = concatcp!(ASSET_PATH, "submit_icon.svg");
 
-pub const SHOW_ICON : &str = "show.svg";
-pub const HIDE_ICON : &str = "hide.svg";
-pub const BACKGROUND_ICON : &str = "mecha-background-color.png";
+pub const PEEK_PASSWORD_ICON : &str = concatcp!(ASSET_PATH, "peek_password_icon.png");
+pub const UNPEEK_PASSWORD_ICON : &str = concatcp!(ASSET_PATH, "un_peek_password_icon.png");
+
+pub const SHOW_ICON : &str = concatcp!(ASSET_PATH, "show_icon.svg");
+pub const HIDE_ICON : &str = concatcp!(ASSET_PATH, "hide_icon.svg");
+pub const BACKGROUND_IMAGE : &str = concatcp!(ASSET_PATH, "mecha_background_color.png");
 
 pub const PASSWORD_LENGTH : usize = 4;
