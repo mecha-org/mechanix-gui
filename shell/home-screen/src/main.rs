@@ -3,7 +3,7 @@ mod errors;
 mod gui;
 mod settings;
 mod theme;
-
+mod constants;
 use std::collections::HashMap;
 use std::time::Duration;
 
@@ -85,7 +85,7 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    if let Some(icon) = modules.background.icon.default {
+    if let icon = modules.background.icon.default {
         assets.insert("background".to_string(), AssetParams::new(icon));
     }
 

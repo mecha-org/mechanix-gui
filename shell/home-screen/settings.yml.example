@@ -22,7 +22,7 @@ layout:
 modules:
   background:
     icon:
-      default: /usr/share/mechanix/shell/home-screen/assets/icons/mecha-background-color.png
+      default: /usr/share/mechanix/shell/home-screen/assets/icons/mecha_background_color.png
   apps:
     - app_id: mecha-connect
       name: Mecha Connect

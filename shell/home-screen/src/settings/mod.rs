@@ -1,3 +1,6 @@
+use crate::constants::{
+    BACKGROUND_IMAGE, HOME_DIR_PATH, MECHA_CONNECT_ICON, MECHA_GAMING_ICON, MECHA_LLAMA_ICON, MECHA_TERMINAL_ICON, MECHA_VISION_ICON
+};
 use crate::errors::{HomescreenError, HomescreenErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -92,8 +95,16 @@ pub struct App {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BackgroundModule {
-    pub icon: DefaultIconPaths,
+    pub icon: BackgroundIconPath,
+}
+impl Default for BackgroundModule {
+    fn default() -> Self {
+        Self {
+            icon: BackgroundIconPath::default(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -110,10 +121,24 @@ pub struct DefaultIconPaths {
     pub default: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct BackgroundIconPath {
+    pub default: String,
+}
+impl Default for BackgroundIconPath {
+    fn default() -> Self {
+        Self {
+            default: BACKGROUND_IMAGE.to_owned(),
+        }
+    }
+}
+
 /// # Modules
 ///
 /// Options that will be visible in home screen
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Modules {
     pub apps: Vec<App>,
     pub background: BackgroundModule,
@@ -122,7 +147,7 @@ pub struct Modules {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 440),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -149,10 +174,59 @@ impl Default for LayoutSettings {
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            apps: vec![],
-            background: BackgroundModule {
-                icon: DefaultIconPaths { default: None },
-            },
+            apps: vec![
+                App{
+                    app_id: "mecha-connect".to_string(),
+                    name: "Mecha Connect".to_string(),
+                    icon: Some(MECHA_CONNECT_ICON.to_owned()),
+                    run_command:  [
+                        "sh",
+                        "-c",
+                        "MECHA_CONNECT_APP_SETTINGS_PATH=/etc/mecha/connect/settings-demo.yml mecha-connect",
+                      ].map(String::from).to_vec(),
+                },
+                App{
+                    app_id: "mecha-llama".to_string(),
+                    name: "Mecha LLama".to_string(),
+                    icon: Some(MECHA_LLAMA_ICON.to_owned()),
+                    run_command: [
+                        "sh", 
+                        "-c",
+                        "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland https://mecha-voice-ai-demo.vercel.app/"
+                      ].map(String::from).to_vec(),
+                },
+                App{
+                    app_id: "mecha-vision".to_string(),
+                    name: "Mecha Vision".to_string(),
+                    icon: Some(MECHA_VISION_ICON.to_owned()),
+                    run_command: [
+                        "sh", 
+                        "-c",
+                        "LD_LIBRARY_PATH=/home/mecha/.pipeless /home/mecha/.pipeless/pipeless add stream --input-uri 'v4l2' --output-uri 'screen' --frame-path 'cats'"
+                      ].map(String::from).to_vec(),
+                },
+                App{
+                    app_id: "mecha-terminal".to_string(),
+                    name: "Mecha Terminal".to_string(),
+                    icon: Some(MECHA_TERMINAL_ICON.to_owned()),
+                    run_command: [
+                        "sh", 
+                        "-c",
+                        "alacritty"
+                      ].map(String::from).to_vec(),
+                },
+                App{
+                    app_id: "mecha-gaming".to_string(),
+                    name: "Mecha Gaming".to_string(),
+                    icon: Some(MECHA_GAMING_ICON.to_owned()),
+                    run_command: [
+                        "sh", 
+                        "-c",
+                        "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland https://guccigrip.gucci.com/"
+                      ].map(String::from).to_vec(),
+                },
+            ],
+            background: BackgroundModule::default(),
         }
     }
 }
@@ -167,6 +241,10 @@ pub fn read_settings_path_from_args() -> Option<String> {
         return Some(String::from(args[2].clone()));
     }
     None
+}
+
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
 }
 
 /// # Reads Settings YML
@@ -185,6 +263,10 @@ pub fn read_settings_yml() -> Result<HomescreenSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path
