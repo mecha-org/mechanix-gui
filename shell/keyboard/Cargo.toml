@@ -21,6 +21,8 @@ zbus.workspace = true
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
+const_format = "0.2.32"
+dirs = "5.0.1"
 
 [package.metadata.deb]
 name = "mechanix-keyboard"

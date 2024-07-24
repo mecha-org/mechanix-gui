@@ -1,3 +1,4 @@
+use crate::constants::{EDIT_CLEAR_ICON, HOME_DIR_PATH, KEYBOARD_MODE_ICON, KEY_ENTER_ICON, KEY_SHIFT_ICON, LAYOUT_EXAMPLE_PATH};
 use crate::errors::{KeyboardError, KeyboardErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -11,6 +12,7 @@ use tracing::{debug, info};
 /// this file lets you control the behavior of the keyboard,
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct KeyboardSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
@@ -36,6 +38,7 @@ impl Default for KeyboardSettings {
 /// Struct part of settings.yml to control the application
 /// behavior, includes optimizations and defaults
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct AppSettings {
     pub id: Option<String>,        // Process ID
     pub text_multithreading: bool, // Enable text multithreading
@@ -59,6 +62,7 @@ impl Default for AppSettings {
 /// Part of the settings.yml to control the behavior of
 /// the application window
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct WindowSettings {
     pub size: (i32, i32),             // Size of the window
     pub position: (i32, i32),         // Default position to start window
@@ -86,7 +90,7 @@ pub struct Modules {}
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 440),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -100,17 +104,34 @@ impl Default for WindowSettings {
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Icons {
-    pub backspace: Option<String>,
-    pub enter: Option<String>,
-    pub shift: Option<String>,
-    pub symbolic: Option<String>,
+    pub backspace: String,
+    pub enter: String,
+    pub shift: String,
+    pub symbolic: String,
+}
+impl Default for Icons {
+    fn default() -> Self {
+        Self { 
+                backspace: EDIT_CLEAR_ICON.to_owned(),
+                enter: KEY_SHIFT_ICON.to_owned(),
+                shift: KEY_ENTER_ICON.to_owned(),
+                symbolic: KEYBOARD_MODE_ICON.to_owned(), 
+            }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Layouts {
     pub default: String,
+}
+impl Default for Layouts {
+    fn default() -> Self {
+        Self { default: LAYOUT_EXAMPLE_PATH.to_owned() }
+    }
 }
 
 /// # Reads Settings path from arg
@@ -123,6 +144,10 @@ pub fn read_settings_path_from_args() -> Option<String> {
         return Some(String::from(args[2].clone()));
     }
     None
+}
+
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
 }
 
 /// # Reads Settings YML
@@ -141,6 +166,10 @@ pub fn read_settings_yml() -> Result<KeyboardSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path

@@ -77,6 +77,7 @@ impl Component for Keyboard {
         };
 
         let layout_path = settings.layouts.default.clone();
+        println!("layout_path ============> : {:?} ", layout_path);
 
         let layout = match crate::layout::Layout::from_file(layout_path) {
             Ok(layout) => layout,
