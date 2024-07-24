@@ -1,4 +1,7 @@
-use crate::constants::{EDIT_CLEAR_ICON, HOME_DIR_PATH, KEYBOARD_MODE_ICON, KEY_ENTER_ICON, KEY_SHIFT_ICON, LAYOUT_EXAMPLE_PATH};
+use crate::constants::{
+    EDIT_CLEAR_ICON, HOME_DIR_PATH, KEYBOARD_MODE_ICON, KEY_ENTER_ICON, KEY_SHIFT_ICON,
+    LAYOUT_EXAMPLE_PATH, TRIE_CACHED_FILE, TRIE_RAW_FILE,
+};
 use crate::errors::{KeyboardError, KeyboardErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -116,12 +119,12 @@ pub struct Icons {
 }
 impl Default for Icons {
     fn default() -> Self {
-        Self { 
-                backspace: EDIT_CLEAR_ICON.to_owned(),
-                enter: KEY_SHIFT_ICON.to_owned(),
-                shift: KEY_ENTER_ICON.to_owned(),
-                symbolic: KEYBOARD_MODE_ICON.to_owned(), 
-            }
+        Self {
+            backspace: EDIT_CLEAR_ICON.to_owned(),
+            enter: KEY_SHIFT_ICON.to_owned(),
+            shift: KEY_ENTER_ICON.to_owned(),
+            symbolic: KEYBOARD_MODE_ICON.to_owned(),
+        }
     }
 }
 
@@ -132,14 +135,25 @@ pub struct Layouts {
 }
 impl Default for Layouts {
     fn default() -> Self {
-        Self { default: LAYOUT_EXAMPLE_PATH.to_owned() }
+        Self {
+            default: LAYOUT_EXAMPLE_PATH.to_owned(),
+        }
     }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct TrieConfigs {
     pub raw_file: Option<String>,
     pub cached_file: Option<String>,
+}
+impl Default for TrieConfigs {
+    fn default() -> Self {
+        Self {
+            raw_file: Some(TRIE_RAW_FILE.to_owned()),
+            cached_file: Some(TRIE_CACHED_FILE.to_owned()),
+        }
+    }
 }
 
 /// # Reads Settings path from arg

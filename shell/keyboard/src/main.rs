@@ -114,19 +114,6 @@ fn main() -> anyhow::Result<()> {
         svgs.insert("keyboard_mode_icon".to_string(), icon);
     }
 
-    // if let icon = icons.backspace {
-    //     svgs.insert("edit-clear-symbolic".to_string(), icon);
-    // }
-    // if let icon = icons.enter {
-    //     svgs.insert("key-enter".to_string(), icon);
-    // }
-    // if let icon = icons.shift {
-    //     svgs.insert("key-shift".to_string(), icon);
-    // }
-    // if let icon = icons.symbolic {
-    //     svgs.insert("keyboard-mode-symbolic".to_string(), icon);
-    // }
-
     let app_id = settings
         .app
         .id
