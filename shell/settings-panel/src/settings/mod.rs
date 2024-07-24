@@ -1,12 +1,12 @@
 use crate::constants::{
-    BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, BRIGHTNESS_HIGH, BRIGHTNESS_LOW, BRIGHTNESS_MEDIUM, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, CPU_HIGH, CPU_LOW, CPU_MEDIUM, MEMORY_HIGH, MEMORY_LOW, MEMORY_MEDIUM, ROTATION_LANDSCAPE, ROTATION_PORTRAIT, RUNNING_APPS_HIGH, RUNNING_APPS_LOW, RUNNING_APPS_MEDIUM, SETTINGS_ICON, SOUND_HIGH, SOUND_LOW, SOUND_MEDIUM, SYSTEM_MECHANIX_SETTINGS_PANEL_PATH, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
+    BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, BRIGHTNESS_HIGH, BRIGHTNESS_LOW, BRIGHTNESS_MEDIUM, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, CPU_HIGH, CPU_LOW, CPU_MEDIUM, HOME_DIR_PATH, MEMORY_HIGH, MEMORY_LOW, MEMORY_MEDIUM, ROTATION_LANDSCAPE, ROTATION_PORTRAIT, RUNNING_APPS_HIGH, RUNNING_APPS_LOW, RUNNING_APPS_MEDIUM, SETTINGS_ICON, SOUND_HIGH, SOUND_LOW, SOUND_MEDIUM, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
 };
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, env, fs::File, path::PathBuf};
-use tracing::{debug, info};
+use tracing::debug;
 
 /// # Settings panel Settings
 ///
@@ -110,10 +110,10 @@ pub struct BluetoothIconPaths {
 impl Default for BluetoothIconPaths {
     fn default() -> Self {
         BluetoothIconPaths {
-            off: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_OFF,
-            on: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_ON,
-            connected: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_CONNECTED,
-            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BLUETOOTH_NOT_FOUND,
+            off: BLUETOOTH_OFF.to_owned(),
+            on: BLUETOOTH_ON.to_owned(),
+            connected: BLUETOOTH_CONNECTED.to_owned(),
+            not_found: BLUETOOTH_NOT_FOUND.to_owned(),
         }
     }
 }
@@ -133,13 +133,13 @@ pub struct WirelessIconPaths {
 impl Default for WirelessIconPaths {
     fn default() -> Self {
         WirelessIconPaths {
-            off: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_OFF,
-            on: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_ON,
-            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_LOW,
-            weak: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_WEAK,
-            good: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_GOOD,
-            strong: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_STRONG,
-            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + WIRELESS_NOT_FOUND,
+            off: WIRELESS_OFF.to_owned(),
+            on: WIRELESS_ON.to_owned(),
+            low: WIRELESS_LOW.to_owned(),
+            weak: WIRELESS_WEAK.to_owned(),
+            good: WIRELESS_GOOD.to_owned(),
+            strong: WIRELESS_STRONG.to_owned(),
+            not_found: WIRELESS_NOT_FOUND.to_owned(),
         }
     }
 }
@@ -163,18 +163,18 @@ pub struct BatteryIconPaths {
 impl Default for BatteryIconPaths {
     fn default() -> Self {
         BatteryIconPaths {
-            level_100: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_100,
-            level_90: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_90,
-            level_80: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_80,
-            level_70: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_70,
-            level_60: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_60,
-            level_50: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_50,
-            level_40: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_40,
-            level_30: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_30,
-            level_20: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_20,
-            level_10: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_10,
-            level_0: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_LEVEL_0,
-            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_NOT_FOUND,
+            level_100: BATTERY_LEVEL_100.to_owned(),
+            level_90: BATTERY_LEVEL_90.to_owned(),
+            level_80: BATTERY_LEVEL_80.to_owned(),
+            level_70: BATTERY_LEVEL_70.to_owned(),
+            level_60: BATTERY_LEVEL_60.to_owned(),
+            level_50: BATTERY_LEVEL_50.to_owned(),
+            level_40: BATTERY_LEVEL_40.to_owned(),
+            level_30: BATTERY_LEVEL_30.to_owned(),
+            level_20: BATTERY_LEVEL_20.to_owned(),
+            level_10: BATTERY_LEVEL_10.to_owned(),
+            level_0: BATTERY_LEVEL_0.to_owned(),
+            not_found: BATTERY_NOT_FOUND.to_owned(),
         }
     }
 }
@@ -198,18 +198,18 @@ pub struct BatteryChrgingIconPaths {
 impl Default for BatteryChrgingIconPaths {
     fn default() -> Self {
         BatteryChrgingIconPaths {
-            level_100: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_100,
-            level_90: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_90,
-            level_80: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_80,
-            level_70: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_70,
-            level_60: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_60,
-            level_50: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_50,
-            level_40: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_40,
-            level_30: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_30,
-            level_20: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_20,
-            level_10: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_10,
-            level_0: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CHARGING_BATTERY_LEVEL_0,
-            not_found: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BATTERY_NOT_FOUND,
+            level_100: CHARGING_BATTERY_LEVEL_100.to_owned(),
+            level_90: CHARGING_BATTERY_LEVEL_90.to_owned(),
+            level_80: CHARGING_BATTERY_LEVEL_80.to_owned(),
+            level_70: CHARGING_BATTERY_LEVEL_70.to_owned(),
+            level_60: CHARGING_BATTERY_LEVEL_60.to_owned(),
+            level_50: CHARGING_BATTERY_LEVEL_50.to_owned(),
+            level_40: CHARGING_BATTERY_LEVEL_40.to_owned(),
+            level_30: CHARGING_BATTERY_LEVEL_30.to_owned(),
+            level_20: CHARGING_BATTERY_LEVEL_20.to_owned(),
+            level_10: CHARGING_BATTERY_LEVEL_10.to_owned(),
+            level_0: CHARGING_BATTERY_LEVEL_0.to_owned(),
+            not_found: BATTERY_NOT_FOUND.to_owned(),
         }
     }
 }
@@ -223,8 +223,8 @@ pub struct RotationIconPaths {
 impl Default for RotationIconPaths {
     fn default() -> Self {
         RotationIconPaths {
-            portrait: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + ROTATION_PORTRAIT,
-            landscape: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + ROTATION_LANDSCAPE,
+            portrait: ROTATION_PORTRAIT.to_owned(),
+            landscape: ROTATION_LANDSCAPE.to_owned(),
         }
     }
 }
@@ -237,7 +237,7 @@ pub struct SettingsIconPaths {
 impl Default for SettingsIconPaths {
     fn default() -> Self {
         SettingsIconPaths {
-            default: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SETTINGS_ICON,
+            default: SETTINGS_ICON.to_owned(),
         }
     }
 }
@@ -253,9 +253,9 @@ pub struct RunningAppsIconPaths {
 impl Default for RunningAppsIconPaths {
     fn default() -> Self {
         RunningAppsIconPaths {
-            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_LOW,
-            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_MEDIUM,
-            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + RUNNING_APPS_HIGH,
+            low: RUNNING_APPS_LOW.to_owned(),
+            medium: RUNNING_APPS_MEDIUM.to_owned(),
+            high: RUNNING_APPS_HIGH.to_owned(),
         }
     }
 }
@@ -271,9 +271,9 @@ pub struct CpuIconPaths {
 impl Default for CpuIconPaths {
     fn default() -> Self {
         CpuIconPaths {
-            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_LOW,
-            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_MEDIUM,
-            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + CPU_HIGH,
+            low: CPU_LOW.to_owned(),
+            medium: CPU_MEDIUM.to_owned(),
+            high: CPU_HIGH.to_owned(),
         }
     }
 }
@@ -289,9 +289,9 @@ pub struct MemoryIconPaths {
 impl Default for MemoryIconPaths {
     fn default() -> Self {
         MemoryIconPaths {
-            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_LOW,
-            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_MEDIUM,
-            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + MEMORY_HIGH,
+            low: MEMORY_LOW.to_owned(),
+            medium: MEMORY_MEDIUM.to_owned(),
+            high: MEMORY_HIGH.to_owned(),
         }
     }
 }
@@ -307,9 +307,9 @@ pub struct BrightnessIconPaths {
 impl Default for BrightnessIconPaths {
     fn default() -> Self {
         BrightnessIconPaths {
-            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_LOW,
-            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_MEDIUM,
-            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + BRIGHTNESS_HIGH,
+            low: BRIGHTNESS_LOW.to_owned(),
+            medium: BRIGHTNESS_MEDIUM.to_owned(),
+            high: BRIGHTNESS_HIGH.to_owned(),
         }
     }
 }
@@ -325,9 +325,9 @@ pub struct SoundIconPaths {
 impl Default for SoundIconPaths {
     fn default() -> Self {
         SoundIconPaths {
-            low: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_LOW,
-            medium: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_MEDIUM,
-            high: SYSTEM_MECHANIX_SETTINGS_PANEL_PATH.to_owned() + SOUND_HIGH,
+            low: SOUND_LOW.to_owned(),
+            medium: SOUND_MEDIUM.to_owned(),
+            high: SOUND_HIGH.to_owned(),
         }
     }
 }
@@ -585,6 +585,10 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to SettingsPanelSettings
@@ -601,6 +605,10 @@ pub fn read_settings_yml() -> Result<SettingsPanelSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     println!("settings file location - {:?}", file_path);
 
     // open file
