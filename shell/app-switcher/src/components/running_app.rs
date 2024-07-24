@@ -89,13 +89,11 @@ impl RunningApp {
         }
 
         if let Some(drag_angle) = drag_angle_op {
-            if drag_angle.abs() > 60. {
+            if drag_angle.abs() > 60. && dy.neg() > 0. {
                 //Drag in y direction
-                if dy.neg() > 0. {
-                    self.state_mut().drag_y = dy;
-                } else {
-                    return Some(msg!(CarouselMessage::ChildDragX(physical_delta.x.neg())));
-                }
+                self.state_mut().drag_y = dy;
+            } else {
+                return Some(msg!(CarouselMessage::ChildDragX(physical_delta.x.neg())));
             }
         }
         None
