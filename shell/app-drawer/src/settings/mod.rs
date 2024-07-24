@@ -1,6 +1,5 @@
 use crate::constants::{
-    BACK_ICON, CLEAR_ICON, HOME_ICON, NOT_FOUND_ICON, NOT_FOUND_SMALL_ICON, SEARCH_ICON,
-    SYSTEM_MECHANIX_APP_DRAWER_PATH,
+    BACK_ICON, CLEAR_ICON, HOME_DIR_PATH, HOME_ICON, NOT_FOUND_ICON, NOT_FOUND_SMALL_ICON, SEARCH_ICON
 };
 use crate::errors::{AppDrawerError, AppDrawerErrorCodes};
 use anyhow::bail;
@@ -63,6 +62,7 @@ impl Default for AppSettings {
 /// Part of the settings.yml to control the behavior of
 /// the application window
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct WindowSettings {
     pub size: (i32, i32),             // Size of the window
     pub position: (i32, i32),         // Default position to start window
@@ -174,8 +174,8 @@ pub struct NotFoundIconPaths {
 impl Default for NotFoundIconPaths {
     fn default() -> Self {
         Self {
-            default: SYSTEM_MECHANIX_APP_DRAWER_PATH.to_owned() + NOT_FOUND_ICON,
-            small: SYSTEM_MECHANIX_APP_DRAWER_PATH.to_owned() + NOT_FOUND_SMALL_ICON,
+            default: NOT_FOUND_ICON.to_owned(),
+            small: NOT_FOUND_SMALL_ICON.to_owned(),
         }
     }
 }
@@ -188,7 +188,7 @@ pub struct HomeIconPath {
 impl Default for HomeIconPath {
     fn default() -> Self {
         HomeIconPath {
-            default: SYSTEM_MECHANIX_APP_DRAWER_PATH.to_owned() + HOME_ICON,
+            default: HOME_ICON.to_owned(),
         }
     }
 }
@@ -201,7 +201,7 @@ pub struct BackIconPath {
 impl Default for BackIconPath {
     fn default() -> Self {
         BackIconPath {
-            default: SYSTEM_MECHANIX_APP_DRAWER_PATH.to_owned() + BACK_ICON,
+            default: BACK_ICON.to_owned(),
         }
     }
 }
@@ -214,7 +214,7 @@ pub struct ClearIconPath {
 impl Default for ClearIconPath {
     fn default() -> Self {
         ClearIconPath {
-            default: SYSTEM_MECHANIX_APP_DRAWER_PATH.to_owned() + CLEAR_ICON,
+            default: CLEAR_ICON.to_owned(),
         }
     }
 }
@@ -227,7 +227,7 @@ pub struct SearchIconPath {
 impl Default for SearchIconPath {
     fn default() -> Self {
         SearchIconPath {
-            default: SYSTEM_MECHANIX_APP_DRAWER_PATH.to_owned() + SEARCH_ICON,
+            default: SEARCH_ICON.to_owned(),
         }
     }
 }
@@ -296,6 +296,10 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+fn is_empty_path(path: &PathBuf) -> bool {
+    path.as_os_str().is_empty()
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to AppDrawerSettings
@@ -312,6 +316,10 @@ pub fn read_settings_yml() -> Result<AppDrawerSettings> {
         file_path = PathBuf::from(file_path_in_args.unwrap());
     }
 
+    if is_empty_path(&file_path) {
+        let home_dir = dirs::home_dir().unwrap();
+        file_path = home_dir.join(HOME_DIR_PATH);
+    }
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path
