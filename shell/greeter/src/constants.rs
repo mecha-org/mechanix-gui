@@ -1,7 +1,10 @@
 use const_format::concatcp;
 
-pub const ASSET_PATH : &str  = "/usr/share/mechanix/greeter/assets/";
-pub const HOME_DIR_PATH : &str = ".config/mechanix/greeter/settings.yml";
+pub const HOME_DIR_CONFIG_PATH : &str = "/.config";
+pub const USR_SHARE_PATH : &str = "/usr/share";
+pub const BASE_SETTINGS_PATH : &str = "/mechanix/greeter/settings.yml";
+
+pub const ASSET_PATH  :  &str  = concatcp!(USR_SHARE_PATH ,"/mechanix/greeter/assets/");
 
 pub const HOME_ICON : &str = concatcp!(ASSET_PATH, "home_icon.svg");
 pub const BACKSPACE_ICON : &str = concatcp!(ASSET_PATH, "backspace_icon.svg");
