@@ -27,7 +27,7 @@ mctk_macros = { workspace = true }
 mechanix_system_dbus_client = { workspace = true }
 futures-util = { workspace = true }
 mechanix_status_bar_components = { workspace = true }
-dirs = "5.0.1"
+dirs = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-status-bar"

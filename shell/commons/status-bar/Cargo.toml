@@ -26,4 +26,4 @@ mctk_macros = { workspace = true }
 mechanix_system_dbus_client = { workspace = true }
 futures-util = { workspace = true }
 upower = { workspace = true }
-const_format = "0.2.32"
+const_format = { workspace = true }

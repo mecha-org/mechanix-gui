@@ -22,13 +22,13 @@ zbus.workspace = true
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
-const_format = "0.2.32"
-dirs = "5.0.1"
 wayland-protocols-async = { workspace = true }
 futures = { workspace = true }
 memmap2 = "0.9.3"
 tempfile = "3.10.1"
 xkbcommon = { version = "0.5.*", features = ["wayland"] }
+const_format = { workspace = true }
+dirs = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-keyboard"
