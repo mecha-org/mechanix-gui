@@ -43,9 +43,9 @@ categories = ["gui"]
 keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
 
 [workspace.dependencies]
-mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63c17f2744a5087debc7683476dd637dde8043dd" }
-mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63c17f2744a5087debc7683476dd637dde8043dd" }
-mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63c17f2744a5087debc7683476dd637dde8043dd" }
+mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "5deb790a996703f7576dc18b592075c44373c2d0" }
+mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "5deb790a996703f7576dc18b592075c44373c2d0" }
+mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "5deb790a996703f7576dc18b592075c44373c2d0" }
 mechanix_system_dbus_client = { path = "../services/system/client/dbus" }
 mechanix_desktop_dbus_client = { path = "../services/desktop/client/dbus" }
 mechanix_store_server = { path = "../services/store/server" }
