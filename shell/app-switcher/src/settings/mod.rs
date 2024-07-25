@@ -1,4 +1,7 @@
-use crate::constants::{APP_NAMESPACE, BECK_ICON, CLOSE_ALL_ICON, HOME_DIR_PATH, NOT_FOUND_ICON};
+use crate::constants::{
+    APP_NAMESPACE, BASE_SETTINGS_PATH, BECK_ICON, CLOSE_ALL_ICON, HOME_DIR_CONFIG_PATH,
+    NOT_FOUND_ICON, USR_SHARE_PATH,
+};
 use crate::errors::{AppSwitcherError, AppSwitcherErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -101,7 +104,7 @@ pub struct Back {
 }
 impl Default for Back {
     fn default() -> Self {
-        Self { 
+        Self {
             icon: BECK_ICON.to_owned(),
         }
     }
@@ -114,8 +117,8 @@ pub struct CloseAll {
 }
 impl Default for CloseAll {
     fn default() -> Self {
-        Self { 
-           icon:  CLOSE_ALL_ICON.to_owned(),
+        Self {
+            icon: CLOSE_ALL_ICON.to_owned(),
         }
     }
 }
@@ -125,11 +128,12 @@ impl Default for CloseAll {
 pub struct NotFound {
     pub icon: NotFoundIconPaths,
 }
-impl  Default for  NotFound {
+impl Default for NotFound {
     fn default() -> Self {
-        Self { icon: NotFoundIconPaths::default() }
+        Self {
+            icon: NotFoundIconPaths::default(),
+        }
     }
-    
 }
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
@@ -139,10 +143,10 @@ pub struct NotFoundIconPaths {
 }
 impl Default for NotFoundIconPaths {
     fn default() -> Self {
-        Self { 
+        Self {
             default: NOT_FOUND_ICON.to_owned(),
             small: NOT_FOUND_ICON.to_owned(),
-     }
+        }
     }
 }
 
@@ -196,9 +200,50 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+fn is_valid_file(path: &str) -> Option<PathBuf> {
+    let path_buf = PathBuf::from(path);
+    println!("CHECKING PATH {} EXIST ===>  {:?}", path, path_buf.is_file());
+    if path_buf.is_file() {
+        Some(path_buf)
+    } else {
+        None
+    }
+}
 
-fn is_empty_path(path: &PathBuf) -> bool {
-    path.as_os_str().is_empty()
+fn find_config_path() -> Option<PathBuf> {
+    // from env
+    if let Ok(env_path) = std::env::var("MECHANIX_APP_SWITCHER_SETTINGS_PATH") {
+        if let Some(path) = is_valid_file(&env_path) {
+            return Some(path);
+        }
+    }
+
+    // read from args
+    if let Some(arg) = read_settings_path_from_args() {
+        if let Some(file_path_in_args) = is_valid_file(&arg) {
+            return Some(PathBuf::from(file_path_in_args));
+        }
+    }
+
+    // read from local settings
+    if let settings_path = String::from("settings.yml") {
+        if let Some(path) = is_valid_file(&settings_path) {
+            return Some(path);
+        }
+    }
+
+    // home config dir
+    if let Some(home_dir) = dirs::home_dir() {
+        let mut path = home_dir;
+        path.push(&format!("{}{}", HOME_DIR_CONFIG_PATH, BASE_SETTINGS_PATH)); // Replace with your actual path
+        if let Some(path) = is_valid_file(path.to_str().unwrap()) {
+            return Some(path);
+        }
+    }
+
+    // default usr dir
+    let default_path = format!("{}{}", USR_SHARE_PATH, BASE_SETTINGS_PATH);
+    is_valid_file(&default_path)
 }
 
 /// # Reads Settings YML
@@ -207,21 +252,8 @@ fn is_empty_path(path: &PathBuf) -> bool {
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<AppSwitcherSettings> {
-    let mut file_path = PathBuf::from(
-        std::env::var("MECHANIX_APP_SWITCHER_SETTINGS_PATH")
-            .unwrap_or(String::from("settings.yml")),
-    ); // Get path of the library
+    let file_path = find_config_path().unwrap();
 
-    // read from args
-    let file_path_in_args = read_settings_path_from_args();
-    if file_path_in_args.is_some() {
-        file_path = PathBuf::from(file_path_in_args.unwrap());
-    }
-
-    if is_empty_path(&file_path) {
-        let home_dir = dirs::home_dir().unwrap();
-        file_path = home_dir.join(HOME_DIR_PATH);
-    }
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path
