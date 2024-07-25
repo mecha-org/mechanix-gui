@@ -1,6 +1,8 @@
 use const_format::concatcp;
 // status-bar 
-const ASSET_PATH  :  &str  = "/usr/share/mechanix/status-bar/assets/";
+const USR_SHARE_PATH : &str = "/usr/share";
+const ASSET_PATH  :  &str  = concatcp!(USR_SHARE_PATH ,"/mechanix/status-bar/assets/");
+
 
 // battery
 pub const BATTERY_LEVEL_100 : &str = concatcp!(ASSET_PATH, "battery/battery_100_icon.svg");
