@@ -1,5 +1,5 @@
 use crate::constants::{
-    BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, BRIGHTNESS_HIGH, BRIGHTNESS_LOW, BRIGHTNESS_MEDIUM, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, CPU_HIGH, CPU_LOW, CPU_MEDIUM, HOME_DIR_PATH, MEMORY_HIGH, MEMORY_LOW, MEMORY_MEDIUM, ROTATION_LANDSCAPE, ROTATION_PORTRAIT, RUNNING_APPS_HIGH, RUNNING_APPS_LOW, RUNNING_APPS_MEDIUM, SETTINGS_ICON, SOUND_HIGH, SOUND_LOW, SOUND_MEDIUM, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
+    BASE_SETTINGS_PATH, BATTERY_LEVEL_0, BATTERY_LEVEL_10, BATTERY_LEVEL_100, BATTERY_LEVEL_20, BATTERY_LEVEL_30, BATTERY_LEVEL_40, BATTERY_LEVEL_50, BATTERY_LEVEL_60, BATTERY_LEVEL_70, BATTERY_LEVEL_80, BATTERY_LEVEL_90, BATTERY_NOT_FOUND, BLUETOOTH_CONNECTED, BLUETOOTH_NOT_FOUND, BLUETOOTH_OFF, BLUETOOTH_ON, BRIGHTNESS_HIGH, BRIGHTNESS_LOW, BRIGHTNESS_MEDIUM, CHARGING_BATTERY_LEVEL_0, CHARGING_BATTERY_LEVEL_10, CHARGING_BATTERY_LEVEL_100, CHARGING_BATTERY_LEVEL_20, CHARGING_BATTERY_LEVEL_30, CHARGING_BATTERY_LEVEL_40, CHARGING_BATTERY_LEVEL_50, CHARGING_BATTERY_LEVEL_60, CHARGING_BATTERY_LEVEL_70, CHARGING_BATTERY_LEVEL_80, CHARGING_BATTERY_LEVEL_90, CPU_HIGH, CPU_LOW, CPU_MEDIUM, HOME_DIR_CONFIG_PATH, MEMORY_HIGH, MEMORY_LOW, MEMORY_MEDIUM, ROTATION_LANDSCAPE, ROTATION_PORTRAIT, RUNNING_APPS_HIGH, RUNNING_APPS_LOW, RUNNING_APPS_MEDIUM, SETTINGS_ICON, SOUND_HIGH, SOUND_LOW, SOUND_MEDIUM, USR_SHARE_PATH, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF, WIRELESS_ON, WIRELESS_STRONG, WIRELESS_WEAK
 };
 use crate::errors::{SettingsPanelError, SettingsPanelErrorCodes};
 use anyhow::bail;
@@ -585,8 +585,52 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
-fn is_empty_path(path: &PathBuf) -> bool {
-    path.as_os_str().is_empty()
+fn is_valid_file(path: &str) -> Option<PathBuf> {
+    let path_buf = PathBuf::from(path);
+    println!("CHECKING PATH {} EXIST ===>  {:?}", path, path_buf.is_file());
+    if path_buf.is_file() {
+        Some(path_buf)
+    } else {
+        None
+    }
+}
+
+fn find_config_path() -> Option<PathBuf> {
+
+    // from env 
+    if let Ok(env_path) = std::env::var("MECHA_SETTINGS_PANEL_SETTINGS_PATH") {
+        if let Some(path) = is_valid_file(&env_path) {
+            return Some(path);
+        }
+    }   
+
+    // read from args
+    if let Some(arg) = read_settings_path_from_args() {
+        if let Some(file_path_in_args) = is_valid_file(&arg) {
+            return Some(PathBuf::from(file_path_in_args));
+        }
+    } 
+
+    // read from local settings 
+    if let settings_path = String::from("settings.yml") {
+        if let Some(path) = is_valid_file(&settings_path) {
+            return Some(path);
+        } 
+    }  
+
+    // home config dir
+    if let Some(home_dir) = dirs::home_dir(){
+        let mut path = home_dir;
+        path.push(&format!("{}{}", HOME_DIR_CONFIG_PATH, BASE_SETTINGS_PATH)); // Replace with your actual path
+        if let Some(path) = is_valid_file(path.to_str().unwrap()) {
+            return Some(path);
+        }
+    } 
+    
+    // default usr dir
+    let default_path = format!("{}{}", USR_SHARE_PATH, BASE_SETTINGS_PATH);
+    is_valid_file(&default_path) 
+
 }
 
 /// # Reads Settings YML
@@ -595,20 +639,8 @@ fn is_empty_path(path: &PathBuf) -> bool {
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<SettingsPanelSettings> {
-    let mut file_path = PathBuf::from(
-        std::env::var("MECHA_SETTINGS_PANEL_SETTINGS_PATH").unwrap_or(String::from("settings.yml")),
-    ); // Get path of the library
+    let file_path = find_config_path().unwrap();
 
-    // read from args
-    let file_path_in_args = read_settings_path_from_args();
-    if file_path_in_args.is_some() {
-        file_path = PathBuf::from(file_path_in_args.unwrap());
-    }
-
-    if is_empty_path(&file_path) {
-        let home_dir = dirs::home_dir().unwrap();
-        file_path = home_dir.join(HOME_DIR_PATH);
-    }
     println!("settings file location - {:?}", file_path);
 
     // open file

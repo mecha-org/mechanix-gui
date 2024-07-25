@@ -1,8 +1,10 @@
 use const_format::concatcp;
 
-pub const ASSET_PATH : &str  = "/usr/share/mechanix/settings-panel/assets/";
-pub const HOME_DIR_PATH : &str = ".config/mechanix/settings-panel/settings.yml";
+pub const HOME_DIR_CONFIG_PATH : &str = "/.config";
+pub const USR_SHARE_PATH : &str = "/usr/share";
+pub const BASE_SETTINGS_PATH : &str = "/mechanix/settings-panel/settings.yml";
 
+pub const ASSET_PATH  :  &str  = concatcp!(USR_SHARE_PATH ,"/mechanix/settings-panel/assets/");
 // battery
 pub const BATTERY_LEVEL_100 : &str = concatcp!(ASSET_PATH, "battery/battery_100_icon.svg");
 pub const BATTERY_LEVEL_90 : &str = concatcp!(ASSET_PATH, "battery/battery_90_icon.svg");
