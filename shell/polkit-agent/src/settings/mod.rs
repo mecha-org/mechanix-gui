@@ -78,7 +78,7 @@ pub struct DefaultIconPaths {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 440),
             position: (0, 0),
             min_size: None,
             max_size: None,

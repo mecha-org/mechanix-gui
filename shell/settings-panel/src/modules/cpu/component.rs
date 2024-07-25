@@ -8,7 +8,7 @@ use mctk_core::{
 };
 
 use crate::{
-    settings::CommonLowMediumHighPaths,
+    settings::CpuIconPaths,
     widgets::clickable_setting::{ClickableSetting, SettingText},
 };
 
@@ -51,18 +51,18 @@ impl Component for CpuComponent {
     }
 }
 
-pub fn get_cpu_icons_map(icon_paths: CommonLowMediumHighPaths) -> HashMap<String, String> {
+pub fn get_cpu_icons_map(icon_paths: CpuIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
-    if let Some(value) = &icon_paths.low {
+    if let value = &icon_paths.low {
         assets.insert(CpuUsage::Low.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.medium {
+    if let value = &icon_paths.medium {
         assets.insert(CpuUsage::Medium.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.high {
+    if let value = &icon_paths.high {
         assets.insert(CpuUsage::High.to_string(), value.clone());
     }
 

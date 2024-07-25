@@ -25,6 +25,8 @@ mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
 command = { workspace = true }
+const_format = { workspace = true }
+dirs = { workspace = true }
 
 [build-dependencies]
 tonic-build = "0.9.2"

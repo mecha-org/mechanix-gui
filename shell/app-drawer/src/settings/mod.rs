@@ -1,3 +1,6 @@
+use crate::constants::{
+    BACK_ICON, BASE_SETTINGS_PATH, CLEAR_ICON, HOME_DIR_CONFIG_PATH, HOME_ICON, NOT_FOUND_ICON, NOT_FOUND_SMALL_ICON, SEARCH_ICON, USR_SHARE_PATH
+};
 use crate::errors::{AppDrawerError, AppDrawerErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -59,6 +62,7 @@ impl Default for AppSettings {
 /// Part of the settings.yml to control the behavior of
 /// the application window
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct WindowSettings {
     pub size: (i32, i32),             // Size of the window
     pub position: (i32, i32),         // Default position to start window
@@ -97,39 +101,142 @@ impl Default for CssConfigs {
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct SearchModule {
-    pub icon: DefaultIconPaths,
+    pub icon: SearchIconPath,
 }
+impl Default for SearchModule {
+    fn default() -> Self {
+        Self {
+            icon: SearchIconPath::default(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct HomeModule {
-    pub icon: DefaultIconPaths,
+    pub icon: HomeIconPath,
 }
+impl Default for HomeModule {
+    fn default() -> Self {
+        Self {
+            icon: HomeIconPath::default(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BackModule {
-    pub icon: DefaultIconPaths,
+    pub icon: BackIconPath,
 }
+impl Default for BackModule {
+    fn default() -> Self {
+        Self {
+            icon: BackIconPath::default(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct ClearModule {
-    pub icon: DefaultIconPaths,
+    pub icon: ClearIconPath,
 }
+impl Default for ClearModule {
+    fn default() -> Self {
+        Self {
+            icon: ClearIconPath::default(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct NotFoundModule {
     pub icon: NotFoundIconPaths,
 }
-#[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct NotFoundIconPaths {
-    pub default: Option<String>,
-    pub small: Option<String>,
+impl Default for NotFoundModule {
+    fn default() -> Self {
+        Self {
+            icon: NotFoundIconPaths::default(),
+        }
+    }
 }
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct DefaultIconPaths {
-    pub default: Option<String>,
+#[serde(default)]
+pub struct NotFoundIconPaths {
+    pub default: String,
+    pub small: String,
+}
+impl Default for NotFoundIconPaths {
+    fn default() -> Self {
+        Self {
+            default: NOT_FOUND_ICON.to_owned(),
+            small: NOT_FOUND_SMALL_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct HomeIconPath {
+    pub default: String,
+}
+impl Default for HomeIconPath {
+    fn default() -> Self {
+        HomeIconPath {
+            default: HOME_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct BackIconPath {
+    pub default: String,
+}
+impl Default for BackIconPath {
+    fn default() -> Self {
+        BackIconPath {
+            default: BACK_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct ClearIconPath {
+    pub default: String,
+}
+impl Default for ClearIconPath {
+    fn default() -> Self {
+        ClearIconPath {
+            default: CLEAR_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SearchIconPath {
+    pub default: String,
+}
+impl Default for SearchIconPath {
+    fn default() -> Self {
+        SearchIconPath {
+            default: SEARCH_ICON.to_owned(),
+        }
+    }
 }
 
 /// # Modules
 ///
 /// Options that will be visible in app drawer
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Modules {
     pub home: HomeModule,
     pub back: BackModule,
@@ -141,7 +248,7 @@ pub struct Modules {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 440),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -168,24 +275,11 @@ impl Default for LayoutSettings {
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            search: SearchModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            home: HomeModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            back: BackModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            clear: ClearModule {
-                icon: DefaultIconPaths { default: None },
-            },
-            not_found: NotFoundModule {
-                icon: NotFoundIconPaths {
-                    default: None,
-                    small: None,
-                },
-            },
+            search: SearchModule::default(),
+            home: HomeModule::default(),
+            back: BackModule::default(),
+            clear: ClearModule::default(),
+            not_found: NotFoundModule::default(),
         }
     }
 }
@@ -202,21 +296,59 @@ pub fn read_settings_path_from_args() -> Option<String> {
     None
 }
 
+fn is_valid_file(path: &str) -> Option<PathBuf> {
+    let path_buf = PathBuf::from(path);
+    println!("CHECKING PATH {} EXIST ===>  {:?}", path, path_buf.is_file());
+    if path_buf.is_file() {
+        Some(path_buf)
+    } else {
+        None
+    }
+}
+
+fn find_config_path() -> Option<PathBuf> {
+    // from env
+    if let Ok(env_path) = std::env::var("MECHANIX_APP_DRAWER_SETTINGS_PATH") {
+        if let Some(path) = is_valid_file(&env_path) {
+            return Some(path);
+        }
+    }
+
+    // read from args
+    if let Some(arg) = read_settings_path_from_args() {
+        if let Some(file_path_in_args) = is_valid_file(&arg) {
+            return Some(PathBuf::from(file_path_in_args));
+        }
+    }
+
+    // read from local settings
+    if let settings_path = String::from("settings.yml") {
+        if let Some(path) = is_valid_file(&settings_path) {
+            return Some(path);
+        }
+    }
+
+    // home config dir
+    if let Some(home_dir) = dirs::home_dir() {
+        let mut path = home_dir;
+        path.push(&format!("{}{}", HOME_DIR_CONFIG_PATH, BASE_SETTINGS_PATH)); // Replace with your actual path
+        if let Some(path) = is_valid_file(path.to_str().unwrap()) {
+            return Some(path);
+        }
+    }
+
+    // default usr dir
+    let default_path = format!("{}{}", USR_SHARE_PATH, BASE_SETTINGS_PATH);
+    is_valid_file(&default_path)
+}
+
 /// # Reads Settings YML
 ///
 /// Reads the `settings.yml` and parsers to AppDrawerSettings
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<AppDrawerSettings> {
-    let mut file_path = PathBuf::from(
-        std::env::var("MECHANIX_APP_DRAWER_SETTINGS_PATH").unwrap_or(String::from("settings.yml")),
-    ); // Get path of the library
-
-    // read from args
-    let file_path_in_args = read_settings_path_from_args();
-    if file_path_in_args.is_some() {
-        file_path = PathBuf::from(file_path_in_args.unwrap());
-    }
+    let file_path = find_config_path().unwrap();
 
     info!(
         task = "read_settings",

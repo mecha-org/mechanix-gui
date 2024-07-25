@@ -1,3 +1,4 @@
+use crate::constants::{BACKGROUND_IMAGE, BASE_SETTINGS_PATH, HOME_DIR_CONFIG_PATH, LOGOUT_ICON, RESTART_ICON, SHUTDOWN_ICON, USR_SHARE_PATH};
 use crate::errors::{PowerOptionsError, PowerOptionsErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -73,30 +74,63 @@ pub struct WindowSettings {
 /// # Modules Definitions
 ///
 /// Options that will be visible in power options
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct ShutdownModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for ShutdownModule {
+    fn default() -> Self {
+        Self { 
+            icon: SHUTDOWN_ICON.to_owned(), 
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct RestartModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for RestartModule {
+    fn default() -> Self {
+        Self { 
+            icon: RESTART_ICON.to_owned(), 
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct LogoutModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for LogoutModule {
+    fn default() -> Self {
+        Self { 
+            icon: LOGOUT_ICON.to_owned(), 
+        }
+    }
 }
 
-#[derive(Debug, Deserialize, Clone, Serialize, Default)]
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct BackgroundModule {
-    pub icon: Option<String>,
+    pub icon: String,
+}
+impl Default for BackgroundModule {
+    fn default() -> Self {
+        Self { 
+            icon: BACKGROUND_IMAGE.to_owned(),
+        }
+    }
 }
 
 /// # Modules
 ///
 /// Options that will be visible in Power options
 #[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
 pub struct Modules {
     pub shutdown: ShutdownModule,
     pub restart: RestartModule,
@@ -107,7 +141,7 @@ pub struct Modules {
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (1024, 768),
+            size: (480, 440),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -132,6 +166,54 @@ impl Default for Modules {
     }
 }
 
+fn is_valid_file(path: &str) -> Option<PathBuf> {
+    let path_buf = PathBuf::from(path);
+    println!("CHECKING PATH {} EXIST ===>  {:?}", path, path_buf.is_file());
+    if path_buf.is_file() {
+        Some(path_buf)
+    } else {
+        None
+    }
+}
+
+fn find_config_path() -> Option<PathBuf> {
+
+    // from env 
+    if let Ok(env_path) = std::env::var("MECHANIX_POWER_OPTIONS_SETTINGS_PATH") {
+        if let Some(path) = is_valid_file(&env_path) {
+            return Some(path);
+        }
+    }   
+
+    // read from args
+    if let Some(arg) = read_settings_path_from_args() {
+        if let Some(file_path_in_args) = is_valid_file(&arg) {
+            return Some(PathBuf::from(file_path_in_args));
+        }
+    } 
+
+    // read from local settings 
+    if let settings_path = String::from("settings.yml") {
+        if let Some(path) = is_valid_file(&settings_path) {
+            return Some(path);
+        } 
+    }  
+
+    // home config dir
+    if let Some(home_dir) = dirs::home_dir(){
+        let mut path = home_dir;
+        path.push(&format!("{}{}", HOME_DIR_CONFIG_PATH, BASE_SETTINGS_PATH)); // Replace with your actual path
+        if let Some(path) = is_valid_file(path.to_str().unwrap()) {
+            return Some(path);
+        }
+    } 
+    
+    // default usr dir
+    let default_path = format!("{}{}", USR_SHARE_PATH, BASE_SETTINGS_PATH);
+    is_valid_file(&default_path) 
+
+}
+
 /// # Reads Settings path from arg
 ///
 /// Reads the `-s` or `--settings` argument for the path
@@ -151,17 +233,8 @@ pub fn read_settings_path_from_args() -> Option<String> {
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<PowerOptionsSettings> {
-    let mut file_path = PathBuf::from(
-        std::env::var("MECHANIX_POWER_OPTIONS_SETTINGS_PATH")
-            .unwrap_or(String::from("settings.yml")),
-    ); // Get path of the library
-
-    // read from args
-    let file_path_in_args = read_settings_path_from_args();
-    if file_path_in_args.is_some() {
-        file_path = PathBuf::from(file_path_in_args.unwrap());
-    }
-
+    let file_path = find_config_path().unwrap();
+     
     println!("settings file location - {:?}", file_path);
 
     // open file

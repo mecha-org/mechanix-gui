@@ -3,6 +3,9 @@ mod errors;
 mod gui;
 mod layout;
 mod settings;
+mod constants;
+use std::collections::HashMap;
+use std::time::Duration;
 mod trie;
 
 use gui::Keyboard;
@@ -26,8 +29,7 @@ use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
 use std::io::{Seek, Write};
 use std::thread::{self, JoinHandle};
-use std::time::Duration;
-use std::{collections::HashMap, io::SeekFrom};
+use std::io::SeekFrom;
 use std::{io::Read, os::fd::IntoRawFd};
 use tempfile::tempfile;
 use tokio::{
@@ -42,7 +44,6 @@ use wayland_protocols_async::{
         keymap::KEYMAP,
     },
 };
-use zbus::zvariant::NoneValue;
 
 use crate::gui::Message;
 use settings::{KeyboardSettings, TrieConfigs};
@@ -83,7 +84,6 @@ fn main() -> anyhow::Result<()> {
         Ok(settings) => settings,
         Err(e) => {
             println!("error while reading settings {:?}", e);
-
             KeyboardSettings::default()
         }
     };
@@ -100,17 +100,18 @@ fn main() -> anyhow::Result<()> {
     let assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
     let icons = settings.icons.clone();
-    if let Some(icon) = icons.backspace {
-        svgs.insert("edit-clear-symbolic".to_string(), icon);
+
+    if let icon = icons.backspace {
+        svgs.insert("edit_clear_icon".to_string(), icon);
     }
-    if let Some(icon) = icons.enter {
-        svgs.insert("key-enter".to_string(), icon);
+    if let icon = icons.enter {
+        svgs.insert("key_enter_icon".to_string(), icon);
     }
-    if let Some(icon) = icons.shift {
-        svgs.insert("key-shift".to_string(), icon);
+    if let icon = icons.shift {
+        svgs.insert("key_shift_icon".to_string(), icon);
     }
-    if let Some(icon) = icons.symbolic {
-        svgs.insert("keyboard-mode-symbolic".to_string(), icon);
+    if let icon = icons.symbolic {
+        svgs.insert("keyboard_mode_icon".to_string(), icon);
     }
 
     let app_id = settings

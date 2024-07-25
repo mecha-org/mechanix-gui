@@ -50,7 +50,7 @@ impl Component for SettingsComponent {
 pub fn get_settings_icons_map(icon_paths: SettingsIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
-    if let Some(value) = &icon_paths.default {
+    if let  value = &icon_paths.default {
         assets.insert(SettingsStatus::Default.to_string(), value.clone());
     }
 

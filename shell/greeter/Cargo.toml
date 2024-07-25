@@ -27,6 +27,8 @@ image = { workspace = true }
 mechanix_system_dbus_client = { workspace = true }
 chrono = { workspace = true }
 mechanix_status_bar_components = { workspace = true }
+const_format = { workspace = true }
+dirs = { workspace = true }
 
 [package.metadata.deb]
 assets = [

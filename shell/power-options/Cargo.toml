@@ -25,6 +25,8 @@ mechanix_desktop_dbus_client = { workspace = true }
 futures = { workspace = true }
 logind = { workspace = true }
 zbus = { workspace = true }
+dirs = { workspace = true }
+const_format = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-power-options"

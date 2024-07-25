@@ -4,6 +4,7 @@ mod gui;
 mod pages;
 mod settings;
 mod theme;
+mod constants;
 
 use std::collections::HashMap;
 use std::time::Duration;
@@ -50,7 +51,6 @@ fn main() -> anyhow::Result<()> {
         Ok(settings) => settings,
         Err(e) => {
             println!("error while reading settings {:?}", e);
-
             AppDrawerSettings::default()
         }
     };
@@ -74,27 +74,27 @@ fn main() -> anyhow::Result<()> {
 
     let modules = settings.modules.clone();
 
-    if let Some(icon) = modules.home.icon.default {
+    if let icon = modules.home.icon.default {
         svgs.insert("home_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.search.icon.default {
+    if let icon = modules.search.icon.default {
         svgs.insert("search_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.back.icon.default {
+    if let icon = modules.back.icon.default {
         svgs.insert("back_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.clear.icon.default {
+    if let icon = modules.clear.icon.default {
         svgs.insert("clear_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.not_found.icon.default {
+    if let icon = modules.not_found.icon.default {
         assets.insert("not_found_icon".to_string(), AssetParams::new(icon));
     }
 
-    if let Some(icon) = modules.not_found.icon.small {
+    if let icon = modules.not_found.icon.small {
         assets.insert("not_found_small_icon".to_string(), AssetParams::new(icon));
     }
 

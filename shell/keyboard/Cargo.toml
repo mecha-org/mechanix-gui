@@ -27,6 +27,8 @@ futures = { workspace = true }
 memmap2 = "0.9.3"
 tempfile = "3.10.1"
 xkbcommon = { version = "0.5.*", features = ["wayland"] }
+const_format = { workspace = true }
+dirs = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-keyboard"

@@ -5,6 +5,7 @@ pub mod gui;
 pub mod modules;
 pub mod settings;
 pub mod types;
+pub mod constants;
 
 #[derive(Debug)]
 pub enum StatusBarMessage {

@@ -5,6 +5,7 @@ mod settings;
 mod theme;
 mod types;
 mod widgets;
+mod constants;
 
 use futures::StreamExt;
 use gui::SettingsPanel;

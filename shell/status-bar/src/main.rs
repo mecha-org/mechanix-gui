@@ -3,7 +3,7 @@ mod event_handler;
 mod gui;
 mod settings;
 mod theme;
-
+mod constants;
 use gui::StatusBar;
 use mctk_core::{
     msg,

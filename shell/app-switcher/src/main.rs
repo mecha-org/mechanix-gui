@@ -4,6 +4,7 @@ mod gui;
 mod services;
 mod settings;
 mod theme;
+mod constants;
 use std::collections::HashMap;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
@@ -37,9 +38,13 @@ fn main() -> anyhow::Result<()> {
         .with_env_filter(env_filter)
         .init();
 
+
     let settings = match settings::read_settings_yml() {
         Ok(settings) => settings,
-        Err(_) => AppSwitcherSettings::default(),
+        Err(e) => {
+            println!("error while reading settings {:?}", e);
+            AppSwitcherSettings::default()
+        },
     };
 
     let window = settings.window.clone();
@@ -58,15 +63,15 @@ fn main() -> anyhow::Result<()> {
 
     let modules = settings.modules.clone();
 
-    if let Some(icon) = modules.back.icon {
+    if let icon = modules.back.icon {
         svgs.insert("back_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.close_all.icon {
+    if let icon = modules.close_all.icon {
         svgs.insert("close_all_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.not_found.icon.small {
+    if let icon = modules.not_found.icon.small {
         assets.insert("not_found_small_icon".to_string(), AssetParams::new(icon));
     }
 

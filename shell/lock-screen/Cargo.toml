@@ -32,6 +32,8 @@ logind = { workspace = true }
 pam-client = { workspace = true }
 users = { workspace = true }
 keyring = { workspace = true }
+const_format = { workspace = true }
+dirs = { workspace = true }
 
 [package.metadata.deb]
 name = "mechanix-lock-screen"

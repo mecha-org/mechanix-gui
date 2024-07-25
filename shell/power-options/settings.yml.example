@@ -23,4 +23,4 @@ modules:
   logout:
     icon: /usr/share/mechanix/shell/power-options/assets/icons/logout.svg
   background:
-    icon: /usr/share/mechanix/shell/power-options/assets/icons/mecha-background-color.png
+    icon: /usr/share/mechanix/shell/power-options/assets/icons/mecha_background_color.png

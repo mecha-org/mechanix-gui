@@ -30,6 +30,8 @@ futures = { workspace = true }
 wayland-protocols-async = { workspace = true }
 command = { workspace = true }
 upower = { workspace = true }
+const_format = { workspace = true }
+dirs = "5.0.1"
 mechanix_store_client = { workspace = true }
 
 

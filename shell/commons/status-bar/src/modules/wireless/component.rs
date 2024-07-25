@@ -51,39 +51,39 @@ impl Component for WirelessComponent {
 pub fn get_wireless_icons_map(icon_paths: WirelessIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
-    if let Some(value) = &icon_paths.not_found {
+    if let value = &icon_paths.not_found {
         assets.insert(WirelessStatus::NotFound.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.on {
+    if let value = &icon_paths.on {
         assets.insert(WirelessStatus::On.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.off {
+    if let value = &icon_paths.off {
         assets.insert(WirelessStatus::Off.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.weak {
+    if let value = &icon_paths.weak {
         assets.insert(
             WirelessStatus::Connected(WirelessConnectedState::Weak).to_string(),
             value.clone(),
         );
     }
 
-    if let Some(value) = &icon_paths.low {
+    if let value = &icon_paths.low {
         assets.insert(
             WirelessStatus::Connected(WirelessConnectedState::Low).to_string(),
             value.clone(),
         );
     }
 
-    if let Some(value) = &icon_paths.good {
+    if let value = &icon_paths.good {
         assets.insert(
             WirelessStatus::Connected(WirelessConnectedState::Good).to_string(),
             value.clone(),
         );
     }
-    if let Some(value) = &icon_paths.strong {
+    if let value = &icon_paths.strong {
         assets.insert(
             WirelessStatus::Connected(WirelessConnectedState::Strong).to_string(),
             value.clone(),

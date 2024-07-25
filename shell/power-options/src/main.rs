@@ -2,6 +2,7 @@ mod errors;
 mod gui;
 mod service;
 mod settings;
+mod constants;
 
 use mctk_core::ImgFilter;
 use settings::PowerOptionsSettings;
@@ -36,7 +37,10 @@ fn main() -> anyhow::Result<()> {
 
     let settings = match settings::read_settings_yml() {
         Ok(settings) => settings,
-        Err(_) => PowerOptionsSettings::default(),
+        Err(e) => {
+            println!("error while reading settings {:?}", e);
+            PowerOptionsSettings::default()
+        }
     };
 
     let width = settings.window.size.0 as u32;
@@ -52,19 +56,19 @@ fn main() -> anyhow::Result<()> {
 
     let modules = settings.modules.clone();
 
-    if let Some(icon) = modules.shutdown.icon {
+    if let icon = modules.shutdown.icon {
         svgs.insert("shutdown_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.restart.icon {
+    if let icon = modules.restart.icon {
         svgs.insert("restart_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.logout.icon {
+    if let icon = modules.logout.icon {
         svgs.insert("logout_icon".to_string(), icon);
     }
 
-    if let Some(icon) = modules.background.icon {
+    if let icon = modules.background.icon {
         assets.insert(
             "background".to_string(),
             AssetParams {

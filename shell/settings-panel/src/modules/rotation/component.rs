@@ -53,11 +53,11 @@ impl Component for RotationComponent {
 pub fn get_rotation_icons_map(icon_paths: RotationIconPaths) -> HashMap<String, String> {
     let mut assets = HashMap::new();
 
-    if let Some(value) = &icon_paths.portrait {
+    if let value = &icon_paths.portrait {
         assets.insert(RotationStatus::Portrait.to_string(), value.clone());
     }
 
-    if let Some(value) = &icon_paths.landscape {
+    if let value = &icon_paths.landscape {
         assets.insert(RotationStatus::Landscape.to_string(), value.clone());
     }
 

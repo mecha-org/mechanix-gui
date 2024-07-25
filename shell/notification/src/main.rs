@@ -2,6 +2,7 @@ mod errors;
 mod gui;
 mod settings;
 mod theme;
+mod constants;
 
 use std::collections::HashMap;
 use std::time::Duration;
