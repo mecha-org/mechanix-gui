@@ -233,12 +233,21 @@ pub fn read_settings_path_from_args() -> Option<String> {
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<PowerOptionsSettings> {
-    let file_path = find_config_path().unwrap();
+    let file_path = find_config_path();
+
+    if file_path.is_none() {
+        bail!(PowerOptionsError::new(
+            PowerOptionsErrorCodes::SettingsReadError,
+            format!(
+                "settings.yml path not found",
+            ),
+        ));
+    }
      
     println!("settings file location - {:?}", file_path);
 
     // open file
-    let settings_file_handle = match File::open(file_path) {
+    let settings_file_handle = match File::open(file_path.unwrap()) {
         Ok(file) => file,
         Err(e) => {
             println!("settings read error {:?}", e.to_string());

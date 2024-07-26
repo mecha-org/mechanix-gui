@@ -6,7 +6,7 @@ use anyhow::bail;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, env, fs::File, path::PathBuf};
-use tracing::debug;
+use tracing::{debug, info};
 
 /// # Settings panel Settings
 ///
@@ -639,12 +639,17 @@ fn find_config_path() -> Option<PathBuf> {
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<SettingsPanelSettings> {
-    let file_path = find_config_path().unwrap();
+    let file_path = find_config_path();
+
+    if file_path.is_none() {
+        info!("No settings.yml found, using default settings");
+        return Ok(SettingsPanelSettings::default());
+    }
 
     println!("settings file location - {:?}", file_path);
 
     // open file
-    let settings_file_handle = match File::open(file_path) {
+    let settings_file_handle = match File::open(file_path.unwrap()) {
         Ok(file) => file,
         Err(e) => {
             println!("settings read error {:?}", e.to_string());
