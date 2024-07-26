@@ -179,7 +179,16 @@ fn find_config_path() -> Option<PathBuf> {
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
 pub fn read_settings_yml() -> Result<NotificationSettings> {
-    let file_path = find_config_path().unwrap();
+    let file_path = find_config_path();
+
+    if file_path.is_none() {
+        bail!(NotificationError::new(
+            NotificationErrorCodes::SettingsReadError,
+            format!(
+                "settings.yml path not found",
+            ),
+        ));
+    }
    
     info!(
         task = "read_settings",
@@ -187,7 +196,7 @@ pub fn read_settings_yml() -> Result<NotificationSettings> {
     );
 
     // open file
-    let settings_file_handle = match File::open(file_path) {
+    let settings_file_handle = match File::open(file_path.unwrap()) {
         Ok(file) => file,
         Err(e) => {
             bail!(NotificationError::new(

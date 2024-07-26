@@ -1,7 +1,7 @@
 use const_format::concatcp;
 // status-bar 
 const USR_SHARE_PATH : &str = "/usr/share";
-const ASSET_PATH  :  &str  = concatcp!(USR_SHARE_PATH ,"/mechanix/status-bar/assets/");
+const ASSET_PATH  :  &str  = concatcp!(USR_SHARE_PATH ,"/mechanix/shell/status-bar/assets/");
 
 
 // battery
