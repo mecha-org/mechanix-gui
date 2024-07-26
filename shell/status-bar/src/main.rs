@@ -172,9 +172,7 @@ fn main() -> anyhow::Result<()> {
     init_services(settings.clone(), status_bar_channel);
 
     loop {
-        event_loop
-            .dispatch(Duration::from_millis(16), &mut app)
-            .unwrap();
+        event_loop.dispatch(None, &mut app).unwrap();
     }
     //End
 

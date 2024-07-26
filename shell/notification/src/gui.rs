@@ -23,6 +23,7 @@ use mctk_core::{
     Node,
 };
 use std::any::Any;
+use std::hash::Hash;
 use std::ops::Neg;
 
 pub enum IconType {
@@ -122,6 +123,12 @@ impl Notification {
 
 #[state_component_impl(NotificationState)]
 impl Component for Notification {
+    fn render_hash(&self, hasher: &mut component::ComponentHasher) {
+        if self.state.is_some() {
+            (self.state_ref().drag_y.neg() as u64).hash(hasher);
+        }
+    }
+
     fn init(&mut self) {
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,

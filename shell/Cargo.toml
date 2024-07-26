@@ -33,7 +33,7 @@ name = "mechanix-wallpaper-daemon"
 path = "wallpaper-daemon/src/main.rs"
 
 [workspace.package]
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
 edition = "2021"
 license = "MIT"
@@ -43,9 +43,9 @@ categories = ["gui"]
 keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
 
 [workspace.dependencies]
-mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63c17f2744a5087debc7683476dd637dde8043dd" }
-mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63c17f2744a5087debc7683476dd637dde8043dd" }
-mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "63c17f2744a5087debc7683476dd637dde8043dd" }
+mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "b8b973a06b7a9b86324cb3d1bcc81cc326d435bf" }
+mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "b8b973a06b7a9b86324cb3d1bcc81cc326d435bf" }
+mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "b8b973a06b7a9b86324cb3d1bcc81cc326d435bf" }
 mechanix_system_dbus_client = { path = "../services/system/client/dbus" }
 mechanix_desktop_dbus_client = { path = "../services/desktop/client/dbus" }
 mechanix_store_server = { path = "../services/store/server" }

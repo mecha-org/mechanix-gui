@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use crate::{components::app::App as AppComponent, gui};
 use desktop_entries::DesktopEntry;
 use mctk_core::{
@@ -21,6 +23,10 @@ pub struct AppList {
 }
 
 impl Component for AppList {
+    fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.apps.len().hash(hasher);
+    }
+
     fn update(&mut self, msg: Message) -> Vec<Message> {
         println!(
             "AppList was sent: {:?}",

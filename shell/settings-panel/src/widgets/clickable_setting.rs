@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use mctk_core::event::{MouseUp, TouchDown, TouchUp};
 use mctk_core::layout::{Alignment, Direction, PositionType};
 use mctk_core::style::{FontWeight, Styled, VerticalPosition};
@@ -18,7 +20,7 @@ struct ClickableSettingState {
     disabled: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash)]
 pub enum SettingText {
     Normal(String),
     Subscript(String, String),
@@ -76,6 +78,21 @@ impl ClickableSetting {
 
 #[state_component_impl(ClickableSettingState)]
 impl Component for ClickableSetting {
+    fn render_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        if self.state.is_some() {
+            self.state_ref().pressing.hash(hasher);
+            self.state_ref().click_disabled.hash(hasher);
+            self.state_ref().loading.hash(hasher);
+            self.state_ref().disabled.hash(hasher);
+        }
+    }
+
+    fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.icon.hash(hasher);
+        self.text_1.hash(hasher);
+        self.text_2.hash(hasher);
+    }
+
     fn on_click(&mut self, event: &mut Event<Click>) {
         if let Some(f) = &self.on_click {
             if !self.state_ref().click_disabled && !self.state_ref().loading {
@@ -120,13 +137,10 @@ impl Component for ClickableSetting {
 
         match self.text_2.clone() {
             SettingText::Normal(text) => {
-                text_2_node = text_2_node.push(node!(
-                    Text::new(txt!(text.clone()))
-                        .style("color", Color::rgb(197., 200., 207.))
-                        .style("size", 12.0)
-                        .style("font_weight", FontWeight::Normal),
-                    lay![]
-                ));
+                text_2_node = text_2_node.push(node!(Text::new(txt!(text.clone()))
+                    .style("color", Color::rgb(197., 200., 207.))
+                    .style("size", 12.0)
+                    .style("font_weight", FontWeight::Normal)));
             }
             SettingText::Subscript(text, subscript) => {
                 text_2_node = text_2_node.push(node!(Text::new(txt!(text))
@@ -186,12 +200,13 @@ impl Component for ClickableSetting {
                 ],
             ))
             .push(text_2_node)
-            .push(node!(Text::new(txt!(self.text_1.clone()))
-                .style("color", text_1_color)
-                .style("size", 12.0)
-                //.style("font_weight", FontWeight::Medium)
-                .style("font_weight", FontWeight::Normal)
-                .style("v_alignment", VerticalPosition::Bottom),)),
+            .push(node!(
+                Text::new(txt!(self.text_1.clone()))
+                    .style("color", text_1_color)
+                    .style("size", 12.0)
+                    //.style("font_weight", FontWeight::Medium)
+                    .style("font_weight", FontWeight::Normal), // .style("v_alignment", VerticalPosition::Bottom)
+            )),
         )
     }
 }

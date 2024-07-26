@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use mctk_core::{
     component::Component, lay, node, rect, size, style::Styled, widgets::Div, Color, Node,
 };
@@ -10,6 +12,10 @@ pub struct PinIndicators {
 }
 
 impl Component for PinIndicators {
+    fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.pin_length.hash(hasher);
+    }
+
     fn view(&self) -> Option<Node> {
         let mut indicators = node!(Div::new(), lay![],);
 

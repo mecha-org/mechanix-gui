@@ -182,7 +182,7 @@ pub async fn host_metrics_event_notification_stream(
     host_metrics_bus: &HostMetricsBusInterface,
     conn: &zbus::Connection,
 ) -> Result<(), ZbusError> {
-    let mut interval = time::interval(Duration::from_secs(5));
+    let mut interval = time::interval(Duration::from_secs(10));
     let host_metrics = HostMetrics::new(); // Create once and reuse
     let ctxt = SignalContext::new(conn, "/org/mechanix/services/HostMetrics")?; // Create once outside the loop
 
