@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use mctk_core::{
     component::Component,
     lay,
@@ -27,6 +29,10 @@ impl std::fmt::Debug for Pin {
 }
 
 impl Component for Pin {
+    fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.pin_length.hash(hasher);
+    }
+
     fn view(&self) -> Option<Node> {
         let pin_keys = [
             "1",

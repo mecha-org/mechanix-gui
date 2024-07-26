@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use mctk_core::{
     component::{Component, Message},
     event::{Click, Event},
@@ -43,6 +45,10 @@ impl App {
 }
 
 impl Component for App {
+    fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.name.hash(hasher);
+    }
+
     fn on_click(&mut self, event: &mut Event<Click>) {
         if let Some(f) = &self.on_click {
             event.emit(f());
@@ -114,7 +120,10 @@ impl Component for App {
                     Text::new(txt!(app_name))
                         .style("color", Color::rgb(197., 200., 207.))
                         .style("size", 12.0)
-                        .style("font_weight", FontWeight::Normal) // .style("v_alignment", VerticalPosition::Center)
+                        .style("font_weight", FontWeight::Normal), // .style("v_alignment", VerticalPosition::Center)
+                    lay![
+                        size: [80, 16]
+                    ]
                 )),
             ),
         )

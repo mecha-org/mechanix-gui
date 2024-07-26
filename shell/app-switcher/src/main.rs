@@ -195,9 +195,7 @@ fn main() -> anyhow::Result<()> {
     init_services(app_manager_msg_rx, app_channel2);
 
     loop {
-        event_loop
-            .dispatch(Duration::from_millis(16), &mut app)
-            .unwrap();
+        event_loop.dispatch(None, &mut app).unwrap();
     }
     //End
 

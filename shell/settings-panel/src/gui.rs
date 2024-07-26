@@ -282,6 +282,11 @@ impl Component for SettingsPanel {
                         };
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             self.state_mut().loading.wireless = true;
+                            if value == true {
+                                self.state_mut().wireless_status = WirelessStatus::On;
+                            } else {
+                                self.state_mut().wireless_status = WirelessStatus::Off;
+                            }
                             let _ = app_channel.send(AppMessage::Wireless {
                                 message: WirelessMessage::Toggle { value: Some(value) },
                             });
@@ -298,6 +303,11 @@ impl Component for SettingsPanel {
                         };
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             self.state_mut().loading.bluetooth = true;
+                            if value == true {
+                                self.state_mut().bluetooth_status = BluetoothStatus::On;
+                            } else {
+                                self.state_mut().bluetooth_status = BluetoothStatus::Off;
+                            }
                             let _ = app_channel.send(AppMessage::Bluetooth {
                                 message: BluetoothMessage::Toggle { value: Some(value) },
                             });

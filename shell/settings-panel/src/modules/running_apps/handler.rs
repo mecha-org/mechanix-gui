@@ -41,7 +41,7 @@ impl RunningAppsServiceHandle {
             let _ = runtime.block_on(toplevel_handler.run(toplevel_msg_rx));
         });
 
-        let mut interval = time::interval(Duration::from_secs(1));
+        let mut interval = time::interval(Duration::from_secs(10));
         loop {
             interval.tick().await;
             let (tx, rx) = oneshot::channel();

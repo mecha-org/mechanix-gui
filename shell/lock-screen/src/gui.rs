@@ -30,6 +30,7 @@ use mechanix_system_dbus_client::security::Security;
 use pam_client::conv_mock::Conversation;
 use pam_client::{Context, Flag};
 use std::any::Any;
+use std::hash::Hash;
 use std::time::{Duration, Instant};
 use std::{collections::HashMap, fmt};
 
@@ -98,6 +99,13 @@ pub struct LockScreen {}
 
 #[state_component_impl(LockScreenState)]
 impl Component for LockScreen {
+    fn render_hash(&self, hasher: &mut component::ComponentHasher) {
+        if self.state.is_some() {
+            self.state_ref().unlock_pressing.hash(hasher);
+            self.state_ref().unlock_pressing_time.hash(hasher);
+        }
+    }
+
     fn on_tick(&mut self, _event: &mut Event<Tick>) {
         if self.state_ref().unlock_pressing {
             let unlock_pressed_duration = match self.state_ref().unlock_pressed_at {

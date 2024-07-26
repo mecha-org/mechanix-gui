@@ -1,5 +1,6 @@
 use std::any::Any;
-use std::{fmt, process};
+use std::hash::Hasher;
+use std::{fmt, hash::Hash, process};
 
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Direction};
@@ -68,6 +69,12 @@ pub struct AppSwitcher {}
 
 #[state_component_impl(AppSwitcherState)]
 impl Component for AppSwitcher {
+    fn render_hash(&self, hasher: &mut component::ComponentHasher) {
+        if self.state.is_some() {
+            self.state_ref().running_apps.len().hash(hasher);
+        }
+    }
+
     fn init(&mut self) {
         let running_apps = vec![
             // RunningApp::new(AppDetails {

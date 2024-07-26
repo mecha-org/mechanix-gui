@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use mctk_core::{
     component::{Component, RenderContext},
     lay,
@@ -34,6 +36,10 @@ impl Overlay {
 }
 
 impl Component for Overlay {
+    fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.unlock_pressing_time.hash(hasher);
+    }
+
     fn render(&mut self, context: RenderContext) -> Option<Vec<Renderable>> {
         let width = context.aabb.width();
         //height of status bar 34.

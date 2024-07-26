@@ -154,7 +154,7 @@ fn main() -> anyhow::Result<()> {
     let handle = event_loop.handle();
 
     //subscribe to events channel
-    let (channel_tx, channel_rx) = calloop::channel::channel();
+    let (_, channel_rx) = calloop::channel::channel::<Message>();
     let window_tx_2 = window_tx.clone();
     let _ = handle.insert_source(channel_rx, move |event, _, app| {
         let _ = match event {
@@ -168,16 +168,10 @@ fn main() -> anyhow::Result<()> {
         };
     });
 
-    init_services(channel_tx);
-
     loop {
-        event_loop
-            .dispatch(Duration::from_millis(16), &mut app)
-            .unwrap();
+        event_loop.dispatch(None, &mut app).unwrap();
     }
     //End
 
     Ok(())
 }
-
-fn init_services(sender: Sender<Message>) {}
