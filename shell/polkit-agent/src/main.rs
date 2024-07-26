@@ -229,7 +229,7 @@ fn launch_auth_ui(params: Params) -> anyhow::Result<()> {
 
     loop {
         // println!("event_loop_dispatch");
-        let _ = event_loop.dispatch(Duration::from_millis(16), &mut app);
+        let _ = event_loop.dispatch(None, &mut app);
 
         // println!("app is_exited {:?}", app.is_exited);
         if app.is_exited {

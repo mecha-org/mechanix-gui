@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use mctk_core::component::Component;
 use mctk_core::layout::{Alignment, Direction};
 use mctk_core::style::Styled;
@@ -15,6 +17,10 @@ pub struct Search {
 }
 
 impl Component for Search {
+    fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.apps.len().hash(hasher);
+    }
+
     fn view(&self) -> Option<node::Node> {
         let mut filtered_apps = node!(
             Div::new()

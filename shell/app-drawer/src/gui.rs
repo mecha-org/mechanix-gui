@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::fs;
+use std::hash::Hash;
 use std::path::PathBuf;
 use std::{fs::read_dir, path::Path};
 
@@ -60,7 +61,7 @@ pub enum Message {
     ChangeRoute { route: Routes },
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Hash)]
 pub enum Routes {
     #[default]
     Apps,
@@ -69,6 +70,15 @@ pub enum Routes {
 
 #[state_component_impl(AppDrawerState)]
 impl Component for AppDrawer {
+    fn render_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        if self.state.is_some() {
+            self.state_ref().apps.len().hash(hasher);
+            self.state_ref().filtered_apps.len().hash(hasher);
+            self.state_ref().search_text.hash(hasher);
+            self.state_ref().current_route.hash(hasher);
+        }
+    }
+
     fn init(&mut self) {
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
