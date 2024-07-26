@@ -34,65 +34,65 @@ modules:
   wireless:
     title: "Wireless"
     icon:
-      off: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_off.svg
-      on: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_on.svg
-      low: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_low.svg
-      weak: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_weak.svg
-      good: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_good.svg
-      strong: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_strong.svg
-      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_not_found.svg
+      off: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_off_icon.svg
+      on: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_on_icon.svg
+      low: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_low_icon.svg
+      weak: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_weak_icon.svg
+      good: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_good_icon.svg
+      strong: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_strong_icon.svg
+      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/wireless/wireless_not_found_icon.svg
   bluetooth:
     title: "Bluetooth"
     icon:
-      on: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_on.svg
-      off: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_off.svg
-      connected: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_connected.svg
-      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_not_found.svg
+      on: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_on_icon.svg
+      off: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_off_icon.svg
+      connected: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_connected_icon.svg
+      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/bluetooth/bluetooth_not_found_icon.svg
   battery:
     title: "Battery"
     icon:
-      level_100: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_100.svg
-      level_90: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_90.svg
-      level_80: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_80.svg
-      level_70: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_70.svg
-      level_60: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_60.svg
-      level_50: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_50.svg
-      level_40: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_40.svg
-      level_30: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_30.svg
-      level_20: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_20.svg
-      level_10: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_10.svg
-      level_0: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_0.svg
-      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_not_found.svg
+      level_100: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_100_icon.svg
+      level_90: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_90_icon.svg
+      level_80: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_80_icon.svg
+      level_70: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_70_icon.svg
+      level_60: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_60_icon.svg
+      level_50: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_50_icon.svg
+      level_40: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_40_icon.svg
+      level_30: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_30_icon.svg
+      level_20: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_20_icon.svg
+      level_10: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_10_icon.svg
+      level_0: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_0_icon.svg
+      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/battery_not_found_icon.svg
     charging_icon:
-      level_100: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_100.svg
-      level_90: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_90.svg
-      level_80: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_80.svg
-      level_70: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_70.svg
-      level_60: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_60.svg
-      level_50: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_50.svg
-      level_40: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_40.svg
-      level_30: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_30.svg
-      level_20: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_20.svg
-      level_10: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_10.svg
-      level_0: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_0.svg
-      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_not_found.svg
+      level_100: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_100_icon.svg
+      level_90: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_90_icon.svg
+      level_80: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_80_icon.svg
+      level_70: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_70_icon.svg
+      level_60: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_60_icon.svg
+      level_50: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_50_icon.svg
+      level_40: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_40_icon.svg
+      level_30: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_30_icon.svg
+      level_20: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_20_icon.svg
+      level_10: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_10_icon.svg
+      level_0: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_0_icon.svg
+      not_found: /usr/share/mechanix/shell/settings-panel/assets/icons/battery/charging/battery_not_found_icon.svg
   rotation:
     title: "Auto Rotate"
     icon:
-      portrait: /usr/share/mechanix/shell/settings-panel/assets/icons/rotation/portrait.svg
-      landscape: /usr/share/mechanix/shell/settings-panel/assets/icons/rotation/landscape.svg
+      portrait: /usr/share/mechanix/shell/settings-panel/assets/icons/rotation/portrait_icon.svg
+      landscape: /usr/share/mechanix/shell/settings-panel/assets/icons/rotation/landscape_icon.svg
   settings:
     title: "Settings"
     icon:
-      default: /usr/share/mechanix/shell/settings-panel/assets/icons/settings/settings.svg
+      default: /usr/share/mechanix/shell/settings-panel/assets/icons/settings/settings_icon.svg
     run_command:
       ["sh", "-c", "mecha-settings -s /usr/share/mecha/settings/settings.yml"]
   running_apps:
     title: "Running Apps"
     icon:
-      low: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/low.svg
-      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/medium.svg
-      high: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/high.svg
+      low: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/low_icon.svg
+      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/medium_icon.svg
+      high: /usr/share/mechanix/shell/settings-panel/assets/icons/running_apps/high_icon.svg
     run_command: [
         "sh", 
         "-c",
@@ -101,24 +101,24 @@ modules:
   cpu:
     title: "CPU"
     icon:
-      low: /usr/share/mechanix/shell/settings-panel/assets/icons/cpu/low.svg
-      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/cpu/medium.svg
-      high: /usr/share/mechanix/shell/settings-panel/assets/icons/cpu/high.svg
+      low: /usr/share/mechanix/shell/settings-panel/assets/icons/cpu/low_icon.svg
+      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/cpu/medium_icon.svg
+      high: /usr/share/mechanix/shell/settings-panel/assets/icons/cpu/high_icon.svg
   memory:
     title: "Memory"
     icon:
-      low: /usr/share/mechanix/shell/settings-panel/assets/icons/memory/low.svg
-      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/memory/medium.svg
-      high: /usr/share/mechanix/shell/settings-panel/assets/icons/memory/high.svg
+      low: /usr/share/mechanix/shell/settings-panel/assets/icons/memory/low_icon.svg
+      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/memory/medium_icon.svg
+      high: /usr/share/mechanix/shell/settings-panel/assets/icons/memory/high_icon.svg
   sound:
     title: "Sound"
     icon:
-      low: /usr/share/mechanix/shell/settings-panel/assets/icons/sound/low.svg
-      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/sound/medium.svg
-      high: /usr/share/mechanix/shell/settings-panel/assets/icons/sound/high.svg
+      low: /usr/share/mechanix/shell/settings-panel/assets/icons/sound/low_icon.svg
+      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/sound/medium_icon.svg
+      high: /usr/share/mechanix/shell/settings-panel/assets/icons/sound/high_icon.svg
   brightness:
     title: "Brightness"
     icon:
-      low: /usr/share/mechanix/shell/settings-panel/assets/icons/brightness/low.svg
-      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/brightness/medium.svg
-      high: /usr/share/mechanix/shell/settings-panel/assets/icons/brightness/high.svg
+      low: /usr/share/mechanix/shell/settings-panel/assets/icons/brightness/low_icon.svg
+      medium: /usr/share/mechanix/shell/settings-panel/assets/icons/brightness/medium_icon.svg
+      high: /usr/share/mechanix/shell/settings-panel/assets/icons/brightness/high_icon.svg

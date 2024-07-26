@@ -16,4 +16,4 @@ window:
   always_on_top: false # false
   icon_path: null # Todo
 icons:
-  bell: /usr/share/mechanix/shell/notification/assets/icons/bell.svg
+  bell: /usr/share/mechanix/shell/notification/assets/icons/bell_icon.svg

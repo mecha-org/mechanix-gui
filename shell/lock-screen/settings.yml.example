@@ -22,23 +22,23 @@ modules:
   home:
     title: "Home"
     icon:
-      default: /usr/share/mechanix/shell/lock-screen/assets/icons/home.svg
+      default: /usr/share/mechanix/shell/lock-screen/assets/icons/home_icon.svg
   back_space:
     title: "Back Space"
     icon:
-      default: /usr/share/mechanix/shell/lock-screen/assets/icons/backspace.svg
+      default: /usr/share/mechanix/shell/lock-screen/assets/icons/backspace_icon.svg
   password_configs:
     keys_allowed: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
     password_length: 4
   back:
     icon:
-      default: /usr/share/mechanix/shell/lock-screen/assets/icons/back.svg
+      default: /usr/share/mechanix/shell/lock-screen/assets/icons/back_icon.svg
   lock:
     icon:
-      default: /usr/share/mechanix/shell/lock-screen/assets/icons/lock.svg
+      default: /usr/share/mechanix/shell/lock-screen/assets/icons/lock_icon.svg
   unlock:
     icon:
-      default: /usr/share/mechanix/shell/lock-screen/assets/icons/unlock.svg
+      default: /usr/share/mechanix/shell/lock-screen/assets/icons/unlock_icon.svg
   background:
     icon:
       default: /usr/share/mechanix/shell/lock-screen/assets/icons/mecha_background_color.png
@@ -46,44 +46,44 @@ modules:
     format: "%I:%M %p" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
     icon:
-      on: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_on.svg
-      off: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_off.svg
-      connected: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_connected.svg
-      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_not_found.svg
+      on: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_on_icon.svg
+      off: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_off_icon.svg
+      connected: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_connected_icon.svg
+      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/bluetooth/bluetooth_not_found_icon.svg
   wireless:
     icon:
-      off: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_off.svg
-      on: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_on.svg
-      low: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_low.svg
-      weak: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_weak.svg
-      good: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_good.svg
-      strong: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_strong.svg
-      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_not_found.svg
+      off: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_off_icon.svg
+      on: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_on_icon.svg
+      low: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_low_icon.svg
+      weak: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_weak_icon.svg
+      good: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_good_icon.svg
+      strong: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_strong_icon.svg
+      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/wireless/wireless_not_found_icon.svg
   battery:
     icon:
-      level_100: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_100.svg
-      level_90: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_90.svg
-      level_80: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_80.svg
-      level_70: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_70.svg
-      level_60: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_60.svg
-      level_50: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_50.svg
-      level_40: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_40.svg
-      level_30: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_30.svg
-      level_20: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_20.svg
-      level_10: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_10.svg
-      level_0: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_0.svg
-      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_not_found.svg
+      level_100: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_100_icon.svg
+      level_90: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_90_icon.svg
+      level_80: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_80_icon.svg
+      level_70: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_70_icon.svg
+      level_60: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_60_icon.svg
+      level_50: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_50_icon.svg
+      level_40: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_40_icon.svg
+      level_30: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_30_icon.svg
+      level_20: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_20_icon.svg
+      level_10: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_10_icon.svg
+      level_0: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_0_icon.svg
+      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/battery_not_found_icon.svg
       battery:
     charging_icon:
-      level_100: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_100.svg
-      level_90: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_90.svg
-      level_80: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_80.svg
-      level_70: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_70.svg
-      level_60: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_60.svg
-      level_50: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_50.svg
-      level_40: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_40.svg
-      level_30: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_30.svg
-      level_20: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_20.svg
-      level_10: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_10.svg
-      level_0: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_0.svg
-      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_not_found.svg
+      level_100: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_100_icon.svg
+      level_90: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_90_icon.svg
+      level_80: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_80_icon.svg
+      level_70: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_70_icon.svg
+      level_60: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_60_icon.svg
+      level_50: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_50_icon.svg
+      level_40: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_40_icon.svg
+      level_30: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_30_icon.svg
+      level_20: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_20_icon.svg
+      level_10: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_10_icon.svg
+      level_0: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_0_icon.svg
+      not_found: /usr/share/mechanix/shell/lock-screen/assets/icons/status-bar/battery/charging/battery_not_found_icon.svg

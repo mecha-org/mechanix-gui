@@ -26,7 +26,7 @@ modules:
   apps:
     - app_id: mecha-connect
       name: Mecha Connect
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-connect.png
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha_connect_icon.png
       run_command:
         [
           "sh",
@@ -35,7 +35,7 @@ modules:
         ]
     - app_id: mecha-llama
       name: Mecha LLama
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-llama.png
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha_llama_icon.png
       run_command: [
         "sh", 
         "-c",
@@ -43,7 +43,7 @@ modules:
       ]
     - app_id: mecha-vision
       name: Mecha Vision
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-vision.png
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha_vision_icon.png
       run_command: [
         "sh", 
         "-c",
@@ -51,7 +51,7 @@ modules:
       ]
     - app_id: mecha-terminal
       name: Terminal
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-terminal.png
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha_terminal_icon.png
       run_command: [
         "sh", 
         "-c",
@@ -59,7 +59,7 @@ modules:
       ]
     - app_id: mecha-gaming
       name: Mecha Vision
-      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha-gaming.png
+      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/mecha_gaming_icon.png
       run_command: [
         "sh", 
         "-c",
@@ -67,7 +67,7 @@ modules:
       ]
 #    - app_id: chromium
 #      name: Chromium
-#      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/chromium.png
+#      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/chromium_icon.png
 #      run_command:
 #        [
 #          "sh",
@@ -76,5 +76,5 @@ modules:
 #        ]
 #    - app_id: firefox
 #      name: firefox
-#      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/firefox.png
+#      icon: /usr/share/mechanix/shell/home-screen/assets/icons/apps/firefox_icon.png
 #      run_command: ["sh", "-c", firefox-esr]

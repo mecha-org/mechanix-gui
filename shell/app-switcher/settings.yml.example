@@ -17,10 +17,10 @@ window:
   icon_path: null # Todo
 modules:
   back:
-    icon: /usr/share/mechanix/shell/app-switcher/assets/icons/back.svg
+    icon: /usr/share/mechanix/shell/app-switcher/assets/icons/back_icon.svg
   close_all:
-    icon: /usr/share/mechanix/shell/app-switcher/assets/icons/close_all.svg
+    icon: /usr/share/mechanix/shell/app-switcher/assets/icons/close_all_icon.svg
   not_found:
     icon:
-      small: /usr/share/mechanix/shell/app-switcher/assets/icons/not_found_small.png
+      small: /usr/share/mechanix/shell/app-switcher/assets/icons/not_found_small_icon.png
 exclude_apps: ["mechanix.shell.home-screen"]

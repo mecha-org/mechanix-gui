@@ -16,10 +16,10 @@ window:
   always_on_top: false # false
   icon_path: null # Todo
 icons:
-  backspace: /usr/share/mechanix/shell/keyboard/assets/icons/edit-clear-symbolic.svg
-  shift: /usr/share/mechanix/shell/keyboard/assets/icons/key-shift.svg
-  enter: /usr/share/mechanix/shell/keyboard/assets/icons/key-enter.svg
-  symbolic: /usr/share/mechanix/shell/keyboard/assets/icons/keyboard-mode-symbolic.svg
+  backspace: /usr/share/mechanix/shell/keyboard/assets/icons/edit_clear_icon.svg
+  shift: /usr/share/mechanix/shell/keyboard/assets/icons/key_shift_icon.svg
+  enter: /usr/share/mechanix/shell/keyboard/assets/icons/key_enter_icon.svg
+  symbolic: /usr/share/mechanix/shell/keyboard/assets/icons/keyboard_mode_icon.svg
 layouts:
   default: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
 trie:

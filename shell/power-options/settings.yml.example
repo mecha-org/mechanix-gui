@@ -17,10 +17,10 @@ window:
   icon_path: null # Todo
 modules:
   shutdown:
-    icon: /usr/share/mechanix/shell/power-options/assets/icons/shutdown.svg
+    icon: /usr/share/mechanix/shell/power-options/assets/icons/shutdown_icon.svg
   restart:
-    icon: /usr/share/mechanix/shell/power-options/assets/icons/restart.svg
+    icon: /usr/share/mechanix/shell/power-options/assets/icons/restart_icon.svg
   logout:
-    icon: /usr/share/mechanix/shell/power-options/assets/icons/logout.svg
+    icon: /usr/share/mechanix/shell/power-options/assets/icons/logout_icon.svg
   background:
     icon: /usr/share/mechanix/shell/power-options/assets/icons/mecha_background_color.png

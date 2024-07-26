@@ -22,17 +22,17 @@ layout:
 modules:
   search:
     icon:
-      default: /usr/share/mechanix/shell/app-drawer/assets/icons/search.svg
+      default: /usr/share/mechanix/shell/app-drawer/assets/icons/search_icon.svg
   home:
     icon:
-      default: /usr/share/mechanix/shell/app-drawer/assets/icons/home.svg
+      default: /usr/share/mechanix/shell/app-drawer/assets/icons/home_icon.svg
   back:
     icon:
-      default: /usr/share/mechanix/shell/app-drawer/assets/icons/back.svg
+      default: /usr/share/mechanix/shell/app-drawer/assets/icons/back_icon.svg
   clear:
     icon:
-      default: /usr/share/mechanix/shell/app-drawer/assets/icons/clear.svg
+      default: /usr/share/mechanix/shell/app-drawer/assets/icons/clear_icon.svg
   not_found:
     icon:
-      default: /usr/share/mechanix/shell/app-drawer/assets/icons/not_found.png
-      small: /usr/share/mechanix/shell/app-drawer/assets/icons/not_found_small.png
+      default: /usr/share/mechanix/shell/app-drawer/assets/icons/not_found_icon.png
+      small: /usr/share/mechanix/shell/app-drawer/assets/icons/not_found_small_icon.png
