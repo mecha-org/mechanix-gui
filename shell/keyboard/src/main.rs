@@ -159,82 +159,85 @@ fn main() -> anyhow::Result<()> {
     let _ = handle.insert_source(app_channel_rx, move |event: Event<AppMessage>, _, app| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
-            calloop::channel::Event::Msg(msg) => match msg {
-                AppMessage::Show => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Resize {
-                        width: settings.window.size.0 as u32,
-                        height: settings.window.size.1 as u32,
-                    });
-                }
-                AppMessage::Hide => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Resize {
-                        width: 1,
-                        height: 1,
-                    });
-                }
-                AppMessage::TextkeyPressed { keycode } => {
-                    println!("AppMessage::TextkeyPressed {:?}", keycode);
+            calloop::channel::Event::Msg(msg) => {
+                println!("app event {:?}", msg);
+                match msg {
+                    AppMessage::Show => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
+                            width: settings.window.size.0 as u32,
+                            height: settings.window.size.1 as u32,
+                        });
+                    }
+                    AppMessage::Hide => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
+                            width: 1,
+                            height: 1,
+                        });
+                    }
+                    AppMessage::TextkeyPressed { keycode } => {
+                        println!("AppMessage::TextkeyPressed {:?}", keycode);
 
-                    let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let _ = virtual_keyboard_msg_tx
-                            .send(VirtualKeyboardMessage::Key {
-                                keycode: keycode.code - 8,
-                                keymotion: KeyMotion::Press,
-                            })
-                            .await;
-                        let _ = virtual_keyboard_msg_tx
-                            .send(VirtualKeyboardMessage::Key {
-                                keycode: keycode.code - 8,
-                                keymotion: KeyMotion::Release,
-                            })
-                            .await;
-                    });
+                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            let _ = virtual_keyboard_msg_tx
+                                .send(VirtualKeyboardMessage::Key {
+                                    keycode: keycode.code - 8,
+                                    keymotion: KeyMotion::Press,
+                                })
+                                .await;
+                            let _ = virtual_keyboard_msg_tx
+                                .send(VirtualKeyboardMessage::Key {
+                                    keycode: keycode.code - 8,
+                                    keymotion: KeyMotion::Release,
+                                })
+                                .await;
+                        });
+                    }
+                    AppMessage::SuggestionPressed {
+                        suggestion,
+                        suggested_for,
+                    } => {
+                        let input_method_msg_tx = input_method_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            let _ = input_method_msg_tx
+                                .send(InputMethodMessage::DeleteSurroundingText {
+                                    before_length: suggested_for.len() as u32,
+                                    after_length: 0,
+                                })
+                                .await;
+                            let _ = input_method_msg_tx
+                                .send(InputMethodMessage::CommitString { text: suggestion })
+                                .await;
+                            let _ = input_method_msg_tx.send(InputMethodMessage::Commit).await;
+                        });
+                    }
+                    AppMessage::SuggestionsChanged {
+                        suggestions,
+                        suggested_for,
+                        next_char_prob,
+                    } => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Send {
+                            message: msg!(Message::UpdateSuggestions {
+                                suggestions,
+                                suggested_for,
+                                next_char_prob
+                            }),
+                        });
+                    }
+                    AppMessage::Erase => {
+                        let input_method_msg_tx = input_method_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            let _ = input_method_msg_tx
+                                .send(InputMethodMessage::DeleteSurroundingText {
+                                    before_length: 1 as u32,
+                                    after_length: 0,
+                                })
+                                .await;
+                            let _ = input_method_msg_tx.send(InputMethodMessage::Commit).await;
+                        });
+                    }
                 }
-                AppMessage::SuggestionPressed {
-                    suggestion,
-                    suggested_for,
-                } => {
-                    let input_method_msg_tx = input_method_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let _ = input_method_msg_tx
-                            .send(InputMethodMessage::DeleteSurroundingText {
-                                before_length: suggested_for.len() as u32,
-                                after_length: 0,
-                            })
-                            .await;
-                        let _ = input_method_msg_tx
-                            .send(InputMethodMessage::CommitString { text: suggestion })
-                            .await;
-                        let _ = input_method_msg_tx.send(InputMethodMessage::Commit).await;
-                    });
-                }
-                AppMessage::SuggestionsChanged {
-                    suggestions,
-                    suggested_for,
-                    next_char_prob,
-                } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::UpdateSuggestions {
-                            suggestions,
-                            suggested_for,
-                            next_char_prob
-                        }),
-                    });
-                }
-                AppMessage::Erase => {
-                    let input_method_msg_tx = input_method_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let _ = input_method_msg_tx
-                            .send(InputMethodMessage::DeleteSurroundingText {
-                                before_length: 1 as u32,
-                                after_length: 0,
-                            })
-                            .await;
-                        let _ = input_method_msg_tx.send(InputMethodMessage::Commit).await;
-                    });
-                }
-            },
+            }
             calloop::channel::Event::Closed => {}
         };
     });
@@ -316,6 +319,7 @@ impl InputHandler {
 
                 loop {
                     if let Some(msg) = input_method_event_rx.recv().await {
+                        println!("InputHandler::run_input_handler() {:?}", msg);
                         match msg {
                             InputMethodEvent::Activate => {
                                 //Send message to window to show UI
