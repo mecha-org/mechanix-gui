@@ -1,3 +1,4 @@
+use crate::components::touch_panel::TouchPanel;
 use crate::settings::{self, KeyboardSettings};
 use crate::{action, AppMessage, AppParams};
 use mctk_core::component::RootComponent;
@@ -9,32 +10,11 @@ use mctk_core::style::{FontWeight, HorizontalPosition, Styled};
 use mctk_core::widgets::{Button, IconButton};
 use mctk_core::{component, layout, txt, Color, Point, Pos, Scale, AABB};
 use mctk_core::{
-    component::Component,
-    lay, msg, node, rect,
-    renderables::{
-        image::InstanceBuilder as ImageInstanceBuilder,
-        rect::InstanceBuilder as RectInstanceBuilder, svg::InstanceBuilder as SvgInstanceBuilder,
-        text::InstanceBuilder as TextInstanceBuilder, Image, Rect, Renderable, Svg, Text,
-    },
-    size, size_pct, state_component_impl,
-    widgets::Div,
+    component::Component, lay, msg, node, rect, size, size_pct, state_component_impl, widgets::Div,
     Node,
 };
 use std::any::Any;
 use std::collections::HashMap;
-use std::ffi::CString;
-use std::ops::Neg;
-
-pub enum IconType {
-    Png,
-    Svg,
-}
-
-#[derive(Debug, Clone)]
-pub enum SettingNames {
-    Wireless,
-    Bluetooth,
-}
 
 /// ## Message
 ///
@@ -47,6 +27,7 @@ pub enum Message {
     UpdateSuggestions {
         suggestions: Vec<String>,
         suggested_for: String,
+        next_char_prob: HashMap<String, f64>,
     },
 }
 
@@ -66,6 +47,7 @@ pub struct KeyboardState {
     app_channel: Option<Sender<AppMessage>>,
     suggestions: Vec<String>,
     suggested_for: String,
+    next_char_prob: HashMap<String, f64>,
 }
 
 #[component(State = "KeyboardState")]
@@ -83,19 +65,18 @@ impl Component for Keyboard {
         };
 
         let layout_path = settings.layouts.default.clone();
-        println!("layout_path ============> : {:?} ", layout_path);
 
-        let layout = match crate::layout::Layout::from_file(layout_path) {
+        let layout = match crate::layout::Layout::from_file(layout_path.clone()) {
             Ok(layout) => layout,
             Err(e) => {
-                println!("Error parsing layout {:?}", e);
+                println!("Error parsing layout {:?} from path {:?}", e, layout_path);
                 panic!("");
             }
         };
 
         let parsed_layout = layout.clone().build().unwrap();
 
-        println!("layout is {:?}", parsed_layout);
+        // println!("layout is {:?}", parsed_layout);
 
         self.state = Some(KeyboardState {
             settings,
@@ -104,11 +85,12 @@ impl Component for Keyboard {
             app_channel: None,
             suggestions: vec![],
             suggested_for: String::new(),
+            next_char_prob: HashMap::new(),
         });
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
-        println!("App was sent: {:?}", message.downcast_ref::<Message>());
+        // println!("App was sent: {:?}", message.downcast_ref::<Message>());
         match message.downcast_ref::<Message>() {
             Some(Message::KeyClicked(action, keycodes)) => match action {
                 action::Action::SetView(view) => {
@@ -148,9 +130,11 @@ impl Component for Keyboard {
             Some(Message::UpdateSuggestions {
                 suggestions,
                 suggested_for,
+                next_char_prob,
             }) => {
                 self.state_mut().suggestions = suggestions.clone();
                 self.state_mut().suggested_for = suggested_for.clone();
+                self.state_mut().next_char_prob = next_char_prob.clone();
             }
             Some(Message::SuggestionClicked(suggestion)) => {
                 // println!("Suggestion clicked: {}", suggestion);
@@ -166,47 +150,31 @@ impl Component for Keyboard {
         vec![]
     }
 
-    // fn render(&mut self, context: component::RenderContext) -> Option<Vec<Renderable>> {
-    //     let width = context.aabb.width();
-    //     let height = context.aabb.height();
-    //     let mut pos = context.aabb.pos;
-    //     let mut rs = vec![];
-
-    //     //Background
-    //     let background = RectInstanceBuilder::default()
-    //         .pos(pos)
-    //         .scale(Scale { width, height })
-    //         .color(Color::rgba(5., 7., 10., 0.76))
-    //         .build()
-    //         .unwrap();
-
-    //     rs.push(Renderable::Rect(Rect::from_instance_data(background)));\
-    //     rs
-    // }
-
     fn view(&self) -> Option<Node> {
         //Render view from layout
         let layout = self.state_ref().layout.clone();
         let current_view = self.state_ref().current_view.clone();
         let view = layout.views.get(&current_view).unwrap();
         let suggestions = self.state_ref().suggestions.clone();
-
+        let next_char_prob = self.state_ref().next_char_prob.clone();
+        let click_area_increase_by = self.state_ref().settings.click_area_increase_by.clone();
         let mut main_div = node!(
             Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100, 100],
                 direction: layout::Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                axis_alignment: Alignment::Stretch,
             ]
         );
 
         let mut suggestion_row = node!(
             Div::new(),
             lay![
-                size: [Auto, 26],
+                size: [Auto, 48],
                 direction: layout::Direction::Row,
-                margin: [8., 0., 0., 0.],
                 axis_alignment: Alignment::Stretch,
+                cross_alignment: Alignment::Center
             ]
         );
 
@@ -232,93 +200,12 @@ impl Component for Keyboard {
         }
         main_div = main_div.push(suggestion_row);
 
-        let mut keys_rows = node!(
-            Div::new().bg(Color::BLACK),
-            lay![
-                direction: layout::Direction::Column,
-                cross_alignment: Alignment::Center,
-            ]
-        );
-
-        // println!("rows {:?}", view.rows);
-        for (i, row) in view.rows.clone().into_iter().enumerate() {
-            let mut row_div = node!(
-                Div::new(),
-                lay![
-                    margin: [8, 0,0,0],
-                    cross_alignment: Alignment::Stretch,
-                ]
-            );
-            // let cols: Vec<&str> = row.split(" ").filter(|c| c.len() > 0).collect();
-
-            for (j, col) in row.buttons.into_iter().enumerate() {
-                let action = col.action.clone();
-                let mut margin_left = 2.5;
-                let mut margin_right = 2.5;
-                let mut text_color = Color::WHITE;
-                let mut font_size = 20.;
-                match col.outline_name.as_str() {
-                    "altline" => {
-                        margin_left = 25.;
-                    }
-                    "change-view" => {
-                        margin_right = 25.;
-                        font_size = 15.;
-                    }
-                    "wide" => {
-                        text_color = Color::rgb(45., 138., 255.);
-                        font_size = 15.;
-                    }
-                    "change-view-2" => {
-                        font_size = 15.;
-                    }
-                    "spaceline" => {
-                        font_size = 15.;
-                    }
-                    _ => (),
-                }
-
-                let col_div = match col.label.clone() {
-                    crate::layout::Label::Text(text) => node!(
-                        Button::new(txt!(text))
-                            .on_click(Box::new(move || msg!(Message::KeyClicked(
-                                action.clone(),
-                                col.keycodes.clone()
-                            ))))
-                            .style("h_alignment", HorizontalPosition::Center)
-                            .style("radius", 4.6)
-                            .style("text_color", text_color)
-                            .style("font_size", font_size)
-                            .style("active_color", Color::rgba(255., 255., 255., 0.50))
-                            .style("background_color", Color::rgb(42., 42., 44.)),
-                        lay![
-                            size: [col.size.0, col.size.1],
-                            margin: [0., 2.5, 0., 2.5],
-                        ],
-                    ),
-                    crate::layout::Label::Icon(icon) => node!(
-                        IconButton::new(icon)
-                            .on_click(Box::new(move || msg!(Message::KeyClicked(
-                                action.clone(),
-                                col.keycodes.clone()
-                            ))))
-                            .style("background_color", Color::rgb(42., 42., 44.))
-                            .style("active_color", Color::rgba(255., 255., 255., 0.50))
-                            .style("padding", 6.)
-                            .style("radius", 4.6),
-                        lay![
-                            size: [col.size.0, col.size.1],
-                            margin: [0., margin_left, 0., margin_right],
-                        ]
-                    ),
-                };
-
-                row_div = row_div.push(col_div.key(j as u64));
-            }
-            keys_rows = keys_rows.push(row_div.key(i as u64));
-        }
-
-        main_div = main_div.push(keys_rows);
+        main_div = main_div.push(node!(TouchPanel::new(
+            view.clone(),
+            next_char_prob,
+            self.state_ref().current_view.clone(),
+            click_area_increase_by
+        )));
 
         Some(main_div)
     }

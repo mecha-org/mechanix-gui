@@ -1,11 +1,10 @@
 mod action;
+mod components;
+mod constants;
 mod errors;
 mod gui;
 mod layout;
 mod settings;
-mod constants;
-use std::collections::HashMap;
-use std::time::Duration;
 mod trie;
 
 use gui::Keyboard;
@@ -29,7 +28,8 @@ use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
 use std::io::{Seek, Write};
 use std::thread::{self, JoinHandle};
-use std::io::SeekFrom;
+use std::time::Duration;
+use std::{collections::HashMap, io::SeekFrom};
 use std::{io::Read, os::fd::IntoRawFd};
 use tempfile::tempfile;
 use tokio::{
@@ -39,14 +39,11 @@ use tokio::{
 use trie::util::get_trie;
 use wayland_protocols_async::{
     zwp_input_method_v2::handler::{InputMethodEvent, InputMethodHandler, InputMethodMessage},
-    zwp_virtual_keyboard_v1::{
-        handler::{KeyMotion, VirtualKeyboardHandler, VirtualKeyboardMessage},
-        keymap::KEYMAP,
-    },
+    zwp_virtual_keyboard_v1::handler::{KeyMotion, VirtualKeyboardHandler, VirtualKeyboardMessage},
 };
 
 use crate::gui::Message;
-use settings::{KeyboardSettings, TrieConfigs};
+use settings::{Icons, KeyboardSettings, TrieConfigs};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
@@ -65,6 +62,7 @@ enum AppMessage {
     SuggestionsChanged {
         suggestions: Vec<String>,
         suggested_for: String,
+        next_char_prob: HashMap<String, f64>,
     },
     SuggestionPressed {
         suggestion: String,
@@ -99,20 +97,20 @@ fn main() -> anyhow::Result<()> {
 
     let assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
-    let icons = settings.icons.clone();
+    let Icons {
+        backspace,
+        enter,
+        shift,
+        symbolic,
+    } = settings.icons.clone();
 
-    if let icon = icons.backspace {
-        svgs.insert("edit_clear_icon".to_string(), icon);
-    }
-    if let icon = icons.enter {
-        svgs.insert("key_enter_icon".to_string(), icon);
-    }
-    if let icon = icons.shift {
-        svgs.insert("key_shift_icon".to_string(), icon);
-    }
-    if let icon = icons.symbolic {
-        svgs.insert("keyboard_mode_icon".to_string(), icon);
-    }
+    svgs.insert("edit-clear-symbolic".to_string(), backspace);
+
+    svgs.insert("key-enter".to_string(), enter);
+
+    svgs.insert("key-shift".to_string(), shift);
+
+    svgs.insert("keyboard-mode-symbolic".to_string(), symbolic);
 
     let app_id = settings
         .app
@@ -214,11 +212,13 @@ fn main() -> anyhow::Result<()> {
                 AppMessage::SuggestionsChanged {
                     suggestions,
                     suggested_for,
+                    next_char_prob,
                 } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::UpdateSuggestions {
                             suggestions,
-                            suggested_for
+                            suggested_for,
+                            next_char_prob
                         }),
                     });
                 }
@@ -247,9 +247,7 @@ fn main() -> anyhow::Result<()> {
     );
 
     loop {
-        event_loop
-            .dispatch(Duration::from_millis(16), &mut app)
-            .unwrap();
+        event_loop.dispatch(None, &mut app).unwrap();
     }
     //End
 
@@ -318,7 +316,6 @@ impl InputHandler {
 
                 loop {
                     if let Some(msg) = input_method_event_rx.recv().await {
-                        println!("received input_method_event event={:?}", msg);
                         match msg {
                             InputMethodEvent::Activate => {
                                 //Send message to window to show UI
@@ -334,16 +331,14 @@ impl InputHandler {
                                 anchor,
                             } => {
                                 //Send message to window to update UI with text, cursor, and anchor positions
-                                println!(
-                                    "surrounding text is {:?}  cursor is {:?} anchor is {:?}",
-                                    text, cursor, anchor
-                                );
                                 let words = &text.as_str()[0..cursor as usize].split(" ");
                                 if let Some(last) = words.clone().last() {
                                     let suggestions = trie.search(last);
+                                    let next_char_prob = trie.next_char_probabilities(last);
                                     let _ = app_channel.send(AppMessage::SuggestionsChanged {
                                         suggestions,
                                         suggested_for: last.to_string(),
+                                        next_char_prob,
                                     });
                                 }
                             }
@@ -398,8 +393,6 @@ fn load_keymap(layout_path: String) -> (i32, u32) {
     let parsed_layout = layout.clone().build().unwrap();
     let src = parsed_layout.keymaps.get(0).unwrap().as_str();
 
-    println!("loading keymaps {:?}", src);
-
     // let keymap_size = KEYMAP.len();
     let keymap_size = src.len();
     let keymap_size_u32: u32 = keymap_size.try_into().unwrap(); // Convert it from usize to u32, panics if it is not possible
@@ -421,8 +414,6 @@ fn load_keymap(layout_path: String) -> (i32, u32) {
 
     let mut contents = String::new();
     keymap_file.read_to_string(&mut contents).unwrap();
-
-    println!("Loaded keymap: {}", contents);
 
     // Initialize the virtual keyboard with the keymap
     let keymap_raw_fd = keymap_file.into_raw_fd();

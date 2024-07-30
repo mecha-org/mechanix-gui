@@ -68,4 +68,27 @@ impl Trie {
             .map(|(_, word)| word.clone())
             .collect()
     }
+
+    pub fn next_char_probabilities(&self, prefix: &str) -> HashMap<String, f64> {
+        let mut node = &self.root;
+        for c in prefix.chars() {
+            if let Some(child) = node.children.get(&c) {
+                node = child;
+            } else {
+                return HashMap::new(); // Prefix not found, return an empty map
+            }
+        }
+
+        let total_weight: i32 = node.suggestions.iter().map(|(w, _)| w).sum();
+        let mut probabilities = HashMap::new();
+
+        for (weight, word) in &node.suggestions {
+            let probability = (total_weight as f64 - *weight as f64) / total_weight as f64;
+            if let Some(next_char) = word.chars().nth(prefix.len()) {
+                *probabilities.entry(next_char.to_string()).or_insert(0.0) += probability;
+            }
+        }
+
+        probabilities
+    }
 }

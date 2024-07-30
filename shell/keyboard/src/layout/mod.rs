@@ -1,6 +1,7 @@
 use anyhow::Result;
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::io::BufReader;
 use std::io::Write;
 use std::mem;
@@ -8,7 +9,9 @@ use std::ptr;
 use std::string::FromUtf8Error;
 use std::vec::Vec;
 use std::{fmt, fs, io};
+use util::find_max_double;
 use xkbcommon::xkb;
+mod float_ord;
 mod util;
 
 /// The root element describing an entire keyboard
@@ -200,9 +203,10 @@ impl Layout {
                                 .clone(),
                         )
                     });
-                    Row::new(buttons.collect())
+                    Row::new(add_offsets(buttons, |button| button.size.0).collect())
                 });
-                (name.clone(), View::new(rows.collect()))
+                let rows = add_offsets(rows, |row| row.get_size().height).collect();
+                (name.clone(), crate::layout::View::new(rows))
             })
             .collect();
 
@@ -214,7 +218,19 @@ impl Layout {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct Size {
+    pub width: f64,
+    pub height: f64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Clone, Hash)]
 pub enum Label {
     Text(String),
     Icon(String),
@@ -231,6 +247,12 @@ pub struct KeyButton {
     /// Static description of what the key does when pressed or released
     pub action: crate::action::Action,
     pub keycodes: Vec<crate::layout::KeyCode>,
+}
+
+impl Hash for KeyButton {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
 }
 
 fn create_keyboard_button(
@@ -425,23 +447,93 @@ fn extract_symbol_names<'a>(
 
 #[derive(Debug, Clone)]
 pub struct Row {
-    pub buttons: Vec<KeyButton>,
+    pub buttons: Vec<(f64, KeyButton)>,
+    size: Size,
 }
 
 impl Row {
-    pub fn new(buttons: Vec<KeyButton>) -> Row {
-        Row { buttons }
+    pub fn new(buttons: Vec<(f64, KeyButton)>) -> Row {
+        let width = buttons
+            .iter()
+            .next_back()
+            .map(|(x_offset, button)| button.size.0 + x_offset)
+            .unwrap_or(0.0);
+
+        let height = find_max_double(buttons.iter(), |(_offset, button)| button.size.1);
+
+        Row {
+            buttons,
+            size: Size { width, height },
+        }
+    }
+
+    pub fn get_size(&self) -> Size {
+        self.size.clone()
+    }
+
+    pub fn get_buttons(&self) -> &Vec<(f64, KeyButton)> {
+        &self.buttons
+    }
+
+    /// Finds the first button that covers the specified point
+    /// relative to row's position's origin.
+    /// Returns its index too.
+    fn find_button_by_position(&self, x: f64) -> (&KeyButton, usize) {
+        // Buttons are sorted so we can use a binary search to find the clicked
+        // button. Note this doesn't check whether the point is actually within
+        // a button. This is on purpose as we want a click past the left edge of
+        // the left-most button to register as a click.
+        let result = self
+            .buttons
+            .binary_search_by(|&(f, _)| f.partial_cmp(&x).unwrap());
+
+        let index = result.unwrap_or_else(|r| r);
+        let index = if index > 0 { index - 1 } else { 0 };
+
+        (&self.buttons[index].1, index)
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct View {
-    pub rows: Vec<Row>,
+    /// Rows together with their offsets from the top left
+    pub rows: Vec<(Point, Row)>,
+
+    /// Total size of the view
+    pub size: Size,
 }
 
 impl View {
-    pub fn new(rows: Vec<Row>) -> View {
-        View { rows }
+    pub fn new(rows: Vec<(f64, Row)>) -> View {
+        // No need to call `get_rows()`,
+        // as the biggest row is the most far reaching in both directions
+        // because they are all centered.
+        let width = find_max_double(rows.iter(), |(_offset, row)| row.size.width);
+
+        let height = rows
+            .iter()
+            .next_back()
+            .map(|(y_offset, row)| row.size.height + y_offset)
+            .unwrap_or(0.0);
+
+        // Center the rows
+        let rows = rows
+            .into_iter()
+            .map(|(y_offset, row)| {
+                (
+                    Point {
+                        x: (width - row.size.width) / 2.0,
+                        y: y_offset,
+                    },
+                    row,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        View {
+            rows,
+            size: Size { width, height },
+        }
     }
 }
 
@@ -452,7 +544,7 @@ pub struct ParsedLayout {
 }
 
 /// The extended, unambiguous layout-keycode
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub struct KeyCode {
     pub code: u32,
     pub keymap_idx: usize,
