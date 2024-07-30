@@ -1,5 +1,6 @@
 use crate::constants::{
-    BASE_SETTINGS_PATH, EDIT_CLEAR_ICON, HOME_DIR_CONFIG_PATH, KEYBOARD_MODE_ICON, KEY_ENTER_ICON, KEY_SHIFT_ICON, LAYOUT_EXAMPLE_PATH, TRIE_CACHED_FILE, TRIE_RAW_FILE, USR_SHARE_PATH
+    BASE_SETTINGS_PATH, EDIT_CLEAR_ICON, HOME_DIR_CONFIG_PATH, KEYBOARD_MODE_ICON, KEY_ENTER_ICON,
+    KEY_SHIFT_ICON, LAYOUT_EXAMPLE_PATH, TRIE_CACHED_FILE, TRIE_RAW_FILE, USR_SHARE_PATH,
 };
 use crate::errors::{KeyboardError, KeyboardErrorCodes};
 use anyhow::bail;
@@ -22,6 +23,7 @@ pub struct KeyboardSettings {
     pub icons: Icons,
     pub layouts: Layouts,
     pub trie: TrieConfigs,
+    pub click_area: ClickAreaConfigs,
 }
 
 impl Default for KeyboardSettings {
@@ -33,6 +35,7 @@ impl Default for KeyboardSettings {
             icons: Icons::default(),
             layouts: Layouts::default(),
             trie: TrieConfigs::default(),
+            click_area: ClickAreaConfigs::default(),
         }
     }
 }
@@ -94,7 +97,7 @@ pub struct Modules {}
 impl Default for WindowSettings {
     fn default() -> Self {
         Self {
-            size: (480, 440),
+            size: (480, 244),
             position: (0, 0),
             min_size: None,
             max_size: None,
@@ -120,8 +123,8 @@ impl Default for Icons {
     fn default() -> Self {
         Self {
             backspace: EDIT_CLEAR_ICON.to_owned(),
-            enter: KEY_SHIFT_ICON.to_owned(),
-            shift: KEY_ENTER_ICON.to_owned(),
+            enter: KEY_ENTER_ICON.to_owned(),
+            shift: KEY_SHIFT_ICON.to_owned(),
             symbolic: KEYBOARD_MODE_ICON.to_owned(),
         }
     }
@@ -155,6 +158,21 @@ impl Default for TrieConfigs {
     }
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct ClickAreaConfigs {
+    pub increase_by: f32,
+    pub visible: bool,
+}
+impl Default for ClickAreaConfigs {
+    fn default() -> Self {
+        Self {
+            increase_by: 4.,
+            visible: false,
+        }
+    }
+}
+
 /// # Reads Settings path from arg
 ///
 /// Reads the `-s` or `--settings` argument for the path
@@ -169,7 +187,6 @@ pub fn read_settings_path_from_args() -> Option<String> {
 
 fn is_valid_file(path: &str) -> Option<PathBuf> {
     let path_buf = PathBuf::from(path);
-    println!("CHECKING PATH {} EXIST ===>  {:?}", path, path_buf.is_file());
     if path_buf.is_file() {
         Some(path_buf)
     } else {
@@ -178,41 +195,39 @@ fn is_valid_file(path: &str) -> Option<PathBuf> {
 }
 
 fn find_config_path() -> Option<PathBuf> {
-
-    // from env 
+    // from env
     if let Ok(env_path) = std::env::var("MECHANIX_KEYBOARD_SETTINGS_PATH") {
         if let Some(path) = is_valid_file(&env_path) {
             return Some(path);
         }
-    }   
+    }
 
     // read from args
     if let Some(arg) = read_settings_path_from_args() {
         if let Some(file_path_in_args) = is_valid_file(&arg) {
             return Some(PathBuf::from(file_path_in_args));
         }
-    } 
+    }
 
-    // read from local settings 
+    // read from local settings
     if let settings_path = String::from("settings.yml") {
         if let Some(path) = is_valid_file(&settings_path) {
             return Some(path);
-        } 
-    }  
+        }
+    }
 
     // home config dir
-    if let Some(home_dir) = dirs::home_dir(){
+    if let Some(home_dir) = dirs::home_dir() {
         let mut path = home_dir;
         path.push(&format!("{}{}", HOME_DIR_CONFIG_PATH, BASE_SETTINGS_PATH)); // Replace with your actual path
         if let Some(path) = is_valid_file(path.to_str().unwrap()) {
             return Some(path);
         }
-    } 
-    
+    }
+
     // default usr dir
     let default_path = format!("{}{}", USR_SHARE_PATH, BASE_SETTINGS_PATH);
-    is_valid_file(&default_path) 
-
+    is_valid_file(&default_path)
 }
 
 /// # Reads Settings YML
@@ -226,12 +241,10 @@ pub fn read_settings_yml() -> Result<KeyboardSettings> {
     if file_path.is_none() {
         bail!(KeyboardError::new(
             KeyboardErrorCodes::SettingsReadError,
-            format!(
-                "settings.yml path not found",
-            ),
+            format!("settings.yml path not found",),
         ));
     }
-    
+
     info!(
         task = "read_settings",
         "settings file location - {:?}", file_path

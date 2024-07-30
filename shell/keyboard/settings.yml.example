@@ -24,4 +24,7 @@ layouts:
   default: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
 trie:
   raw_file: /usr/share/mechanix/shell/keyboard/assets/trie/words_raw.tsv
-  cached_file: /usr/share/mechanix/shell/keyboard/assets/trie/words_cached.json
+  cached_file: .config/mechanix/shell/keyboard/caches/words_cached.json
+click_area:
+  increase_by: 4.
+  visible: false
