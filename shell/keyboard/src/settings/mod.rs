@@ -23,7 +23,7 @@ pub struct KeyboardSettings {
     pub icons: Icons,
     pub layouts: Layouts,
     pub trie: TrieConfigs,
-    pub click_area_increase_by: f32,
+    pub click_area: ClickAreaConfigs,
 }
 
 impl Default for KeyboardSettings {
@@ -35,7 +35,7 @@ impl Default for KeyboardSettings {
             icons: Icons::default(),
             layouts: Layouts::default(),
             trie: TrieConfigs::default(),
-            click_area_increase_by: 4.,
+            click_area: ClickAreaConfigs::default(),
         }
     }
 }
@@ -154,6 +154,21 @@ impl Default for TrieConfigs {
         Self {
             raw_file: Some(TRIE_RAW_FILE.to_owned()),
             cached_file: Some(TRIE_CACHED_FILE.to_owned()),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct ClickAreaConfigs {
+    pub increase_by: f32,
+    pub visible: bool,
+}
+impl Default for ClickAreaConfigs {
+    fn default() -> Self {
+        Self {
+            increase_by: 4.,
+            visible: false,
         }
     }
 }

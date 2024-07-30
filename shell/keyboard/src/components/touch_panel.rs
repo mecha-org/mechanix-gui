@@ -3,6 +3,7 @@ use std::hash::Hash;
 
 use crate::gui::{self, Message};
 use crate::layout::{KeyButton, Point};
+use crate::settings::ClickAreaConfigs;
 use mctk_core::component::{self, Component};
 use mctk_core::event::{Event, MouseDown, MouseUp};
 use mctk_core::reexports::femtovg::Align;
@@ -47,7 +48,7 @@ pub struct TouchPanel {
     pub aabb: Option<AABB>,
     pub next_char_prob: HashMap<String, f64>,
     pub current_view: String,
-    pub click_area_increase_by: f32,
+    pub click_area_configs: ClickAreaConfigs,
 }
 
 impl TouchPanel {
@@ -55,7 +56,7 @@ impl TouchPanel {
         view: crate::layout::View,
         next_char_prob: HashMap<String, f64>,
         current_view: String,
-        click_area_increase_by: f32,
+        click_area_configs: ClickAreaConfigs,
     ) -> Self {
         // println!("TouchPanel::new()");
 
@@ -67,7 +68,7 @@ impl TouchPanel {
                 next_char_prob: HashMap::new(),
                 key_pressing: None,
             }),
-            click_area_increase_by,
+            click_area_configs,
             current_view,
             dirty: false,
             next_char_prob: next_char_prob.clone(),
@@ -233,7 +234,7 @@ impl Component for TouchPanel {
                     .enumerate()
                     .map(|(j, (button, (mut tl, mut bl, mut br, mut tr)))| {
                         // check proximity and update new_button
-                        let click_area_increase_by = self.click_area_increase_by as f64;
+                        let click_area_increase_by = self.click_area_configs.increase_by as f64;
                         //Get adjacent buttons
                         let adjacent_buttons =
                             get_adjacent_buttons(positional_matrix.clone(), i, j);
@@ -372,8 +373,9 @@ impl Component for TouchPanel {
         &mut self,
         context: mctk_core::component::RenderContext,
     ) -> Option<Vec<mctk_core::renderables::Renderable>> {
-        let proximity_matrix = self.state_ref().proximity_matrix.clone();
         println!("TouchPanel::render()");
+        let proximity_matrix = self.state_ref().proximity_matrix.clone();
+        let show_click_area = self.click_area_configs.visible;
 
         let width = context.aabb.width();
         let height = context.aabb.height();
@@ -458,7 +460,9 @@ impl Component for TouchPanel {
                     .build()
                     .unwrap();
 
-                rs.push(Renderable::Rect(Rect::from_instance_data(p_button)));
+                if show_click_area {
+                    rs.push(Renderable::Rect(Rect::from_instance_data(p_button)));
+                }
 
                 rs.push(Renderable::Rect(Rect::from_instance_data(button)));
 

@@ -157,7 +157,7 @@ impl Component for Keyboard {
         let view = layout.views.get(&current_view).unwrap();
         let suggestions = self.state_ref().suggestions.clone();
         let next_char_prob = self.state_ref().next_char_prob.clone();
-        let click_area_increase_by = self.state_ref().settings.click_area_increase_by.clone();
+        let click_area = self.state_ref().settings.click_area.clone();
         let mut main_div = node!(
             Div::new().bg(Color::BLACK),
             lay![
@@ -204,7 +204,7 @@ impl Component for Keyboard {
             view.clone(),
             next_char_prob,
             self.state_ref().current_view.clone(),
-            click_area_increase_by
+            click_area
         )));
 
         Some(main_div)
