@@ -109,9 +109,18 @@ pub async fn connect_to_network(ssid: &str, password: &str) -> Result<(), Error>
 }
 
 #[tauri::command]
-pub async fn connect_to_known_network(network_id: &str) -> Result<(), Error> {
+pub async fn connect_to_known_network(network_ssid: &str) -> Result<(), Error> {
     println!("Calling::wireless::connect_to_known_network()");
-    match WirelessService::connect_to_known_network(network_id).await {
+    match WirelessService::connect_to_known_network(network_ssid).await {
+        Ok(v) => return Ok(v),
+        Err(e) => return Err(Error::Other(e.to_string())),
+    };
+}
+
+#[tauri::command]
+pub async fn disconnect_network(network_ssid: &str) -> Result<(), Error> {
+    println!("Calling::wireless::disconnect() ===> {:?} ", network_ssid);
+    match WirelessService::disconnect(network_ssid).await {
         Ok(v) => return Ok(v),
         Err(e) => return Err(Error::Other(e.to_string())),
     };

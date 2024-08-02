@@ -4,9 +4,14 @@
 	import Layout from '$lib/components/layout.svelte';
 	import ListBlock from '$lib/components/list-block.svelte';
 	import { goBack } from '$lib/services/common-services';
+	import { fetchKnownNetworks, removeWifi } from '$lib/services/network-services';
+	import { onMount } from 'svelte';
 
 	import type { PageData } from '../../available/[network]/$types';
+	import { knownNetworksList } from '$lib/stores/networkStore';
 	export let data: PageData;
+	let networkSSID : string = '';
+
 	function formattitle(title: string) {
 		let words = title.split(/[-\s]/);
 		for (let i = 0; i < words.length; i++) {
@@ -14,9 +19,26 @@
 		}
 		return words.join(' ');
 	}
+
+	const removeClickHandler = async () => {
+		console.log('removeClickHandler - networkSSID : ', networkSSID);
+		try {
+			await removeWifi(networkSSID);
+			await fetchKnownNetworks();
+			goBack();
+		} catch (error) {
+			// TODO: error handling in UI - show toast/popup
+			console.log("removeClickHandler error: ", error);
+		}
+	};
+
+	onMount(() => {
+		networkSSID = $knownNetworksList?.find((x: any) => x.ssid == data.title)?.network_id!;
+		console.log('manage network- known - ssid:  ', networkSSID);
+	});
 </script>
 
-<Layout title={formattitle(data.title)}>
+<Layout title={formattitle(data.title)+` network details`}>
 	<div class="flex flex-col gap-4">
 		{#each data.networkDetail as networkDetail}
 			<ListBlock>
@@ -41,7 +63,12 @@
 			>
 				<Icons name="right_arrow" width="32" height="32" />
 			</button>
-			
+			<button
+				class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				on:click={removeClickHandler}
+			>
+				<Icons name="trash" width="32" height="32" />
+			</button>
 		</div>
 	</footer>
 </Layout>

@@ -6,54 +6,89 @@
 	import ListItem from '$lib/components/list-item.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import { goBack } from '$lib/services/common-services';
-	import { invoke } from '@tauri-apps/api'; 
-	import { onMount } from 'svelte';
-	import { bluetooth_status } from '$lib/stores';
+	import { invoke } from '@tauri-apps/api';
+	import { onDestroy, onMount } from 'svelte';
+	import {
+		bluetoothStatus,
+		fetchingBluetoothStatus,
+		disableBluetoothSwitch,
+		isFetchingAvailableDevices,
+		isFetchingOtherDevices,
+		availableDevicesList,
+		otherDevicesList,
+	} from '$lib/stores/bluetoothStore';
+	import {
+	disableBluetooth,
+	enableBluetooth,
+		fetchAvailableDevices,
+		fetchBluetoothStatus,
+		type BluetoothScanResponse
+	} from '$lib/services/bluetooth-services';
 
-	let bluetooth_data: any;
-	let available_devices: any[];
-	$: checked = false;
-
-	const check_bluetooth_data = async () => {
-		console.log('check_bluetooth_data called...');
+	const getInitalData = async () => {
+		console.log('page::bluetooth::getInitalData()');
 		try {
-			let response = await invoke('get_bluetooth_status');
-			console.log('response: ', response);
-			bluetooth_data = response;
-
-			if (bluetooth_data.status == 1) {
-				checked = bluetooth_data.status == 1;
-				available_devices = bluetooth_data.available_devices;
-
-				bluetooth_status.set(bluetooth_data.status);
-				bluetooth_status.subscribe((value) =>{
-					checked = value
-				})
+			let response = await fetchBluetoothStatus();
+			fetchingBluetoothStatus.set(false);
+			if (response) {
+				await fetchAvailableDevices();
+				isFetchingAvailableDevices.set(false);
+				isFetchingOtherDevices.set(false);
 			}
-
 		} catch (error) {
-			console.error('check_bluetooth_data error : ', error);
+			console.error('page::bluetooth::getInitalData()::error:::: ', error);
 		}
 	};
 
 	onMount(() => {
-		check_bluetooth_data();
+		getInitalData();
 	});
 
-	// setInterval(() => {
-	// 	check_bluetooth_data();
-	// }, 20000);
-	
+	onDestroy(() => {
+		console.log('ON DESTROY');
+	});
+
+	// setInterval(async () => {
+	// 	await update_data();
+	// }, 15000);
+
+	const onBluetoothStatusChangeHandler = async (flag: boolean) => {
+		try {
+			disableBluetoothSwitch.set(true);
+			if (flag) {
+				const response: boolean = await enableBluetooth();
+				if (response) {
+					await fetchAvailableDevices();
+				}
+			} else {
+				const response: any = await disableBluetooth();
+			}
+		} catch (error) {
+			console.error('page::bluetooth::onBluetoothStatusChangeHandler()::error:::', error);
+		}
+	};
 </script>
 
 <Layout title="Bluetooth">
 	<ListItem isLink title="Enable bluetooth">
-		<Switch bind:checked />
+		{#if $fetchingBluetoothStatus}
+			<div class="flex animate-spin flex-row items-center gap-2">
+				<Icons name="spinner" height="30px" width="30px" />
+			</div>
+		{:else}
+			<Switch
+				bind:checked={$bluetoothStatus}
+				onCheckedChange={onBluetoothStatusChangeHandler}
+				disabled={$disableBluetoothSwitch}
+			/>
+		{/if}
 	</ListItem>
 	<div class="mt-10">
-		<ListHeading title="Available devices" />
+		{#if $availableDevicesList.length > 0 || $isFetchingAvailableDevices}
+			<ListHeading title="Available devices" />
+		{/if}
 		<div class="flex flex-col gap-4">
-			<ListItem isLink href="/bluetooth/Ritika's-mecha-compute" title="Ritika's mecha compute">
+			<!-- <ListItem isLink href="/bluetooth/Ritika's-mecha-compute" title="Ritika's mecha compute">
 				<div class="flex flex-row items-center gap-4">
 					<Icons name="blue_checked" height="30px" width="30px" />
 					<Icons name="right_arrow" height="30px" width="30px" />
@@ -61,17 +96,57 @@
 			</ListItem>
 			<ListItem isLink href="/network/dns" title="Ritika's mecha compute 2"
 				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-			>
+			> -->
+			{#if $isFetchingAvailableDevices}
+				<ListItem title="Searching available devicess">
+					<div class="flex animate-spin flex-row items-center gap-2">
+						<Icons name="spinner" height="30px" width="30px" />
+					</div>
+				</ListItem>
+			{:else}
+				{#each $availableDevicesList as available_device}
+					<ListItem
+						isLink
+						href={`/bluetooth/${available_device?.name?.trim().replace(/\s+/g, '-')}?address=${available_device?.address}&type=${available_device?.icon}`}
+						title={available_device?.name}
+						isSelected={available_device?.is_trusted ?? false}
+					>
+						<div class="flex flex-row items-center gap-4">
+							{#if available_device?.is_trusted}
+								<Icons name="blue_checked" height="30px" width="30px" />
+							{/if}
+							<Icons name="right_arrow" height="30px" width="30px" />
+						</div>
+					</ListItem>
+				{/each}
+			{/if}
 		</div>
 	</div>
 	<div class="mt-10">
-		<ListHeading title="Other devices" />
+		<ListHeading title="Paired devices" />
 		<div class="flex flex-col gap-4">
-			<ListItem
-				isLink
-				href="/bluetooth/other-device/ritika's-mecha-compute"
-				title="Ritika's mecha compute"
-			></ListItem>
+			{#if $isFetchingOtherDevices}
+				<ListItem title="Searching paired devicess">
+					<div class="flex animate-spin flex-row items-center gap-2">
+						<Icons name="spinner" height="30px" width="30px" />
+					</div>
+				</ListItem>
+			{:else if $otherDevicesList.length > 0}
+				{#each $otherDevicesList as other_device}
+					<ListItem
+						isLink
+						href={`/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}?address=${other_device?.address}`}
+						title={other_device?.name}
+					></ListItem>
+				{/each}
+			{:else}
+				<ListItem
+					isLink={false}
+					isSelected={false}
+					href={`/bluetooth/other-device/searching-paired-devices`}
+					title={$isFetchingAvailableDevices ? 'Searching available devices' : 'No Device Found'}
+				/>
+			{/if}
 		</div>
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">

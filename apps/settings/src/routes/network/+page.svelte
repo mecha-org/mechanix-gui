@@ -15,11 +15,15 @@
 		disableWifiSwitch,
 		fetchingWifiStatus
 	} from '$lib/stores/networkStore';
-	import { fetchConnectedWifiInfo, fetchWifiStatus } from '$lib/services/network-services';
+	import {
+		fetchAvaialbleNetworks,
+		fetchConnectedWifiInfo,
+		fetchWifiStatus
+	} from '$lib/services/network-services';
 	import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
 	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG, SET_INTERVAL_TIMER } from '../../constants';
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG;
-	
+
 	let timeIntervalId: number;
 	const getInitalData = async () => {
 		consoleLog(LOG_PREFIX + 'getInitalData()::');
@@ -43,6 +47,7 @@
 
 	onMount(() => {
 		getInitalData();
+		fetchAvaialbleNetworks();
 		timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
 	});
 
@@ -94,11 +99,11 @@
 						/>
 					{/if}
 				</BlockItem>
-				{#if !!$connectedNetwork.name}
+				{#if typeof $connectedNetwork.name !== 'undefined'}
 					<BlockItem
 						isBottomBorderVisible={false}
 						title={$connectedNetwork.name}
-						href={`/network/manage-network/available/${$connectedNetwork.name}`}
+						href={`/network/manage-network/available/${$connectedNetwork.name}?isConnected=${true}`}
 					>
 						<div class="flex flex-row items-center gap-4">
 							<Icons height="30px" width="30px" name="blue_checked" />
@@ -108,17 +113,23 @@
 				{/if}
 			</ListBlock>
 			{#if $wifiStatus}
-				<ListItem isLink href="/network/manage-network" title="Manage Networks"
-					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-				>
+				<ListBlock>
+					<BlockItem title="Manage Networks" isBottomBorderVisible={true} href="/network/manage-network">
+						<Icons name="right_arrow" height="30px" width="30px" />
+					</BlockItem>
+					<BlockItem title="Available Networks" isBottomBorderVisible={false} href="/network/available-network">
+						<Icons name="right_arrow" height="30px" width="30px" />
+					</BlockItem>
+				</ListBlock>
 			{:else}
-				<ListItem title="Manage Networks" isSelected={false}
-					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-				>
+				<ListItem title="Manage Networks" isSelected={false}>
+					<Icons name="right_arrow" height="30px" width="30px" />
+				</ListItem>
 			{/if}
-			<ListItem isLink href="/network/ip-settings" title="IP Settings"
-				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-			>
+			
+			<ListItem isLink href="/network/ip-settings" title="IP Settings">
+				<Icons name="right_arrow" height="30px" width="30px" />
+			</ListItem>
 		</div>
 		<div>
 			<ListHeading title="Others" />

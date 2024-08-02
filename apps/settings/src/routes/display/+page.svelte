@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListHeading from '$lib/components/list-heading.svelte';
@@ -6,12 +6,28 @@
 	import { Slider } from '$lib/components/ui/slider';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
 	import { goBack } from '$lib/services/common-services';
+	import { getBrightness, setBrightness } from '$lib/services/display-services';
+	import { brightnessPercentage } from '$lib/stores/displayStore';
+	import { onMount } from 'svelte';
+
+	const getInitalData = async () => {
+		await getBrightness();
+	};
+
+	const sliderHandler = async (value: number[]) => {
+		await setBrightness(value);
+	};
+
+	onMount(() => {
+		getInitalData();
+	});
+
 </script>
 
 <Layout title="Display">
 	<ListHeading title="Brightness" />
 	<div class="rounded-lg border border-twilight-navy bg-midnight-abyss p-7">
-		<Slider value={[33]} max={100} step={1} />
+		<Slider value={$brightnessPercentage} max={100} step={1} onValueChange={sliderHandler} />
 	</div>
 	<div class="mt-10">
 		<ListItem href="/display/screen-timeoff" isLink title="Screen off timeout">

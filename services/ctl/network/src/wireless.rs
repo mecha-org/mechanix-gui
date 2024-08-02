@@ -234,11 +234,13 @@ impl WirelessNetworkControl {
 
     // we need to write function that return the currnet wireless network name if it is connected to wireless network or else none, how we're going to do that is we use get_known_wireless_networks function to get the list of all the known wireless network networks and from that reult we can filter the list that has  "flags": "[CURRENT]" and return the ssid of that network or else return none
     pub async fn info(&self) -> Result<ScanResult> {
+
         let known_wifi_list = self.known_network().await?;
         let current_wifi = known_wifi_list.iter().find(|&x| x.flags == "[CURRENT]");
 
         //take ssid for current wireless network and find that in scan_networks list and return that network or else return an error with matching error code
         let scan_wifi_list = WirelessNetworkControl::scan(&self).await?;
+
         let current_wifi = current_wifi
             .map(|x| {
                 scan_wifi_list
@@ -372,6 +374,9 @@ impl WirelessNetworkControl {
             .set_network_psk(network_id, psk.to_string())
             .await?;
 
+        //save network configuration
+        requester.save_config().await?;
+
         //select newly created network id or else return an error with matching error code
         let _ = match self.select_network(requester.clone(), network_id).await {
             Ok(_) => {
@@ -387,6 +392,9 @@ impl WirelessNetworkControl {
                     "unable to get wireless network status: {}",
                     e
                 );
+                println!("Error ---------: {}", e);
+                //if unable to connect to network, remove the network
+                self.remove_network(requester.clone(), network_id).await?;
                 bail!(e)
             }
         };

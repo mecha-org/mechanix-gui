@@ -4,9 +4,11 @@
 use std::{thread::JoinHandle, time::Duration};
 
 use tauri::{Manager, Window};
+use upower::BatteryStatus;
 
 mod error;
 mod modules;
+mod constants;
 
 #[tauri::command]
 fn exit_app() {
@@ -24,8 +26,6 @@ fn main() {
     tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
             modules::bluetooth::get_bluetooth_status,
-
-
             modules::wireless::get_wireless_status,
             modules::wireless::enable_wifi,
             modules::wireless::disable_wifi,
@@ -35,9 +35,32 @@ fn main() {
             modules::wireless::get_known_networks,
             modules::wireless::connect_to_network,
             modules::wireless::connect_to_known_network,
-
-
-
+            modules::wireless::disconnect_network,
+            modules::bluetooth::scan_bluetooth,
+            modules::bluetooth::enable_bluetooth,
+            modules::bluetooth::disable_bluetooth,
+            modules::bluetooth::connect_bluetooth_device,
+            modules::bluetooth::disconnect_bluetooth_device,
+            modules::display::get_brightness,
+            modules::display::set_brightness,
+            modules::sound::get_input_devices,
+            modules::sound::get_output_devices,
+            modules::sound::get_output_sound_value,
+            modules::sound::set_output_sound_value,
+            modules::sound::get_input_sound_value,
+            modules::sound::set_input_sound_value,
+            modules::sound::input_device_toggle_mute,
+            modules::sound::output_device_toggle_mute,
+            modules::battery::get_battery_percentage,
+            modules::battery::get_avilable_performance_modes,
+            modules::battery::get_current_performance_mode,
+            modules::battery::set_performance_mode,
+            modules::security::set_pin_secret,
+            modules::security::get_pin_secret,
+            modules::security::get_security_lock_status,
+            modules::security::change_pin,
+            modules::security::authenticate_pin,
+            modules::security::remove_pin_lock,
             exit_app
         ])
         .run(tauri::generate_context!())
