@@ -60,7 +60,8 @@
         "resizable": true,
         "title": "settings-app",
         "width": 800,
-        "decorations": false
+        "decorations": false,
+        "transparent": true 
       }
     ]
   }
