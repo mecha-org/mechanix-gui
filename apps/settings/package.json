@@ -18,7 +18,7 @@
         "@sveltejs/kit": "^2.0.0",
         "@sveltejs/vite-plugin-svelte": "^3.0.0",
         "@tailwindcss/typography": "^0.5.10",
-        "@tauri-apps/cli": "^1.5.14",
+        "@tauri-apps/cli": "^1.6.0",
         "@types/eslint": "^8.56.0",
         "@typescript-eslint/eslint-plugin": "^7.0.0",
         "@typescript-eslint/parser": "^7.0.0",
@@ -39,7 +39,7 @@
     },
     "type": "module",
     "dependencies": {
-        "@tauri-apps/api": "^1.5.6",
+        "@tauri-apps/api": "^1.6.0",
         "bits-ui": "^0.21.8",
         "clsx": "^2.1.1",
         "tailwind-merge": "^2.3.0",
