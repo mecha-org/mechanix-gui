@@ -47,18 +47,12 @@ trait Wireless {
     async fn scan(&self) -> Result<WirelessScanListResponse>;
     async fn known_networks(&self) -> Result<KnownNetworkListResponse>;
     async fn select_network(&self, network_id: &str) ->Result<()>;
-
     async fn info(&self) -> Result<WirelessInfoResponse>;
     async fn status(&self) -> Result<bool>;
     async fn enable(&self) -> Result<bool>;
     async fn disable(&self) -> Result<bool>;
     async fn connect(&self, ssid: &str, password: &str) ->Result<()>;
-
-    async fn disconnect(&self, ssid: &str) ->Result<()>;
-
-    
-
-
+    async fn disconnect(&self, network_id: &str) ->Result<()>;
 }
 
 pub struct WirelessService; 
@@ -158,10 +152,9 @@ impl WirelessService {
     }
 
     pub async fn disconnect(value: &str) -> Result<()> {
-
         let connection = Connection::system().await?;
         let proxy = WirelessProxy::new(&connection).await?;
-        let reply =  proxy.disconnect(value).await?;
+        let reply = proxy.disconnect(value).await?;
         println!("get disconnect reply: {:?}", reply);
         Ok(reply)
     }

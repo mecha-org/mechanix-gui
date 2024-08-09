@@ -1,5 +1,8 @@
 <script lang="ts">
 	export let title:string = "";
+
+	import AstronautXMecha from '$lib/assets/images/wallpapers/astronaut_mecha.png';
+
 </script>
 
 <header class="z-10 flex h-[80px] items-center bg-[#05070A]">
@@ -8,7 +11,10 @@
 	</div>
 </header>
 
-<main class={`px-5 ${$$slots.footer ? 'pb-20' : 'pb-5'} `}><slot /></main>
+<!-- style={ `background-image: url(${AstronautXMecha});`} -->
+
+<main class={`px-5 ${$$slots.footer ? 'pb-20' : 'pb-5'} `}
+><slot /></main>
 
 {#if $$slots.footer}
 	<footer

@@ -3,7 +3,7 @@
 	export let width = '1rem';
 	export let height = '1rem';
 	export let focusable: string | number | null | undefined = undefined;
-	let icons = {
+	let icons: any = {
 		delete: {
 			box: 32,
 			svg: `<path d="M 15 4 C 14.476563 4 13.941406 4.183594 13.5625 4.5625 C 13.183594 4.941406 13 5.476563 13 6 L 13 7 L 7 7 L 7 9 L 8 9 L 8 25 C 8 26.644531 9.355469 28 11 28 L 23 28 C 24.644531 28 26 26.644531 26 25 L 26 9 L 27 9 L 27 7 L 21 7 L 21 6 C 21 5.476563 20.816406 4.941406 20.4375 4.5625 C 20.058594 4.183594 19.523438 4 19 4 Z M 15 6 L 19 6 L 19 7 L 15 7 Z M 10 9 L 24 9 L 24 25 C 24 25.554688 23.554688 26 23 26 L 11 26 C 10.445313 26 10 25.554688 10 25 Z M 12 12 L 12 23 L 14 23 L 14 12 Z M 16 12 L 16 23 L 18 23 L 18 12 Z M 20 12 L 20 23 L 22 23 L 22 12 Z"></path>`
@@ -141,9 +141,74 @@
 			box: 30,
 			svg: `<rect width="30" height="30" rx="6" fill="#202431"/><path d="M25 11.1429C25 10.5906 24.5523 10.1429 24 10.1429H19.4534L21.0705 8.52575C21.461 8.13522 21.461 7.50206 21.0705 7.11154L19.2518 5.29289C19.0643 5.10535 18.8099 4.99999 18.5447 5C18.2795 5.00001 18.0251 5.10538 17.8376 5.29294L14.7143 8.41663V6C14.7143 5.44772 14.2666 5 13.7143 5H11.1429C10.5906 5 10.1429 5.44772 10.1429 6V10.5466L8.52575 8.92954C8.13522 8.53901 7.50206 8.53901 7.11154 8.92954L5.29289 10.7482C5.10535 10.9357 4.99999 11.1901 5 11.4553C5.00001 11.7205 5.10538 11.9749 5.29294 12.1624L8.41663 15.2857H6C5.44772 15.2857 5 15.7334 5 16.2857V18.8571C5 19.4094 5.44772 19.8571 6 19.8571H10.5466L8.92954 21.4742C8.53906 21.8647 8.53901 22.4978 8.92941 22.8883L10.7474 24.707C10.9349 24.8946 11.1893 25 11.4546 25C11.7198 25 11.9742 24.8947 12.1618 24.7071L15.2857 21.5831V24C15.2857 24.5523 15.7334 25 16.2857 25H18.8571C19.4094 25 19.8571 24.5523 19.8571 24V19.4534L21.4742 21.0705C21.8647 21.4609 22.4978 21.461 22.8883 21.0706L24.707 19.2526C24.8946 19.0651 25 18.8107 25 18.5454C25 18.2802 24.8947 18.0258 24.7071 17.8382L21.5831 14.7143H24C24.5523 14.7143 25 14.2666 25 13.7143V11.1429Z" stroke="#007FFF" stroke-width="2" stroke-linejoin="round"/><rect x="14" y="14" width="2" height="2" rx="1" stroke="#007FFF" stroke-width="2"/>`
 		},
-		tick:{
-			box:39,
-			svg:`<path d="M6.83602 19.5524L13.9585 27.3359C14.6211 28.0599 15.7458 28.1079 16.4675 27.4429L31.8223 13.2956" stroke="#2D8AFF" stroke-width="3.76705" stroke-linecap="round" stroke-linejoin="round"/>`
+		tick: {
+			box: 39,
+			svg: `<path d="M6.83602 19.5524L13.9585 27.3359C14.6211 28.0599 15.7458 28.1079 16.4675 27.4429L31.8223 13.2956" stroke="#2D8AFF" stroke-width="3.76705" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		trash: {
+			box: 40,
+			svg: `<g clip-path="url(#clip0_5204_451)">
+<path d="M10 13L11.423 30.9304C11.5606 32.6636 13.0073 34 14.7459 34H25.2541C26.9927 34 28.4394 32.6636 28.577 30.9304L30 13" stroke="#F33742" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7 13H33" stroke="#F33742" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M12 12L15.2 7H24.8L28 12" stroke="#F33742" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_5204_451">
+<rect width="40" height="40" fill="white" transform="translate(0 0.00796509)"/>
+</clipPath>
+</defs>`
+		},
+		volume_unmute: {
+			box: 32,
+			svg: `<g clip-path="url(#clip0_5147_422)">
+<path d="M27.7363 10.6665C27.9105 12.4207 27.9997 14.1998 27.9997 15.9998C27.9997 17.7998 27.9105 19.579 27.7363 21.3332" stroke="white" stroke-width="2" stroke-linecap="round"/>
+<path d="M17.3333 15.9998C17.3333 13.4876 17.1162 11.0261 16.6997 8.63298C16.5363 7.69433 15.451 7.27504 14.6737 7.82603L11.3595 10.1753C10.9088 10.4949 10.3699 10.6665 9.81737 10.6665H6.66667C5.19391 10.6665 4 11.8604 4 13.3332V18.6665C4 20.1393 5.19391 21.3332 6.66666 21.3332H9.81737C10.3699 21.3332 10.9088 21.5048 11.3595 21.8243L14.6737 24.1736C15.451 24.7246 16.5363 24.3053 16.6997 23.3667C17.1162 20.9736 17.3333 18.5121 17.3333 15.9998Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+<path d="M22.502 12C22.6108 13.3189 22.6662 14.653 22.6662 16C22.6662 17.347 22.6108 18.6811 22.502 20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</g>
+<defs>
+<clipPath id="clip0_5147_422">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>`
+		},
+		volume_mute: {
+			box: 32,
+			svg: `<g clip-path="url(#clip0_1403_365)">
+<path d="M22.3333 16C22.3333 13.4878 22.1162 11.0262 21.6997 8.63316C21.5363 7.69451 20.451 7.27522 19.6737 7.82622L16.3595 10.1755C15.9088 10.4951 15.3699 10.6667 14.8174 10.6667H11.6667C10.1939 10.6667 9 11.8606 9 13.3334V18.6667C9 20.1394 10.1939 21.3334 11.6667 21.3334H14.8174C15.3699 21.3334 15.9088 21.505 16.3595 21.8245L19.6737 24.1738C20.451 24.7248 21.5363 24.3055 21.6997 23.3669C22.1162 20.9738 22.3333 18.5123 22.3333 16Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+<path d="M7 6L27 26" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</g>
+<defs>
+<clipPath id="clip0_1403_365">
+<rect width="32" height="32" fill="white"/>
+</clipPath>
+</defs>`
+		},
+		warning: {
+			box: 30,
+			svg: `<circle cx="15" cy="15" r="10.5" stroke="#FEDD00" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="15" y="19.5" width="0.0125" height="0.0125" stroke="#FEDD00" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M15 15.5L15 10.5" stroke="#FEDD00" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		backspace: {
+			box: 40,
+			svg: `<path d="M14.291 8.07054C14.86 7.43764 15.671 7.07617 16.5221 7.07617H31.6539C34.1392 7.07617 36.1539 9.09089 36.1539 11.5762V28.4223C36.1539 30.9076 34.1392 32.9223 31.6539 32.9223H16.5651C15.6891 32.9223 14.8569 32.5395 14.287 31.8743L4.70281 20.6888C4.21272 20.1169 4.2228 19.2702 4.72635 18.71L14.291 8.07054Z" stroke="#FAFBFC" stroke-width="3.23077"/>
+<path d="M18.9231 15.6919L27.5385 24.3073M18.9231 24.3073L27.5385 15.6919" stroke="#FAFBFC" stroke-width="3.23077" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		cancel: {
+			box: 40,
+			svg: `<path d="M11.923 11.9233L28.0768 28.0772M11.923 28.0772L28.0768 11.9233" stroke="white" stroke-width="3.23077" stroke-linecap="round" stroke-linejoin="round"/>`
+		},
+		back: {
+			box: 40,
+			svg: `<g clip-path="url(#clip0_4825_1317)">
+<path d="M24.6875 31.0156L13.6719 20" stroke="white" stroke-width="3.75" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M13.6719 20L24.6875 8.98437" stroke="white" stroke-width="3.75" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_4825_1317">
+<rect width="39.375" height="39.375" fill="white" transform="matrix(1 1.74846e-07 1.74846e-07 -1 0.3125 39.6875)"/>
+</clipPath>
+</defs>`
 		}
 	} as const;
 	let displayIcon = icons[name];
