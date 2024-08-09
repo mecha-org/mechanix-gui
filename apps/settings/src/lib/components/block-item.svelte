@@ -8,7 +8,7 @@
 <div class="w-full">
 	<a {href}>
 		<div class="flex w-full justify-between">
-			<h1 class={`text-lg font-medium  ${disabled ? 'text-mid-gray':'text-white'  }`}>{title}</h1>
+			<h1 class={`text-lg font-medium  ${disabled ? 'text-mid-gray' : 'text-white'}`}>{title}</h1>
 
 			<slot></slot>
 		</div>

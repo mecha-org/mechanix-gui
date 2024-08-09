@@ -2,7 +2,9 @@
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
-	let settingsListArr = [
+	import TopPanel from '$lib/components/top-panel.svelte';
+
+	let settingsListArr1 = [
 		{
 			title: 'Network',
 			icon: 'network_box',
@@ -34,13 +36,17 @@
 			link: '/sound'
 		},
 		{
-			title: 'Security',
+			// title: 'Security',
+			title: 'Lock',
 			icon: 'security_box',
 			link: '/security'
-		},
+		}
+	];
+
+	let settingsListArr2 = [
 		{
 			title: 'Date & Time',
-			icon: 'date_box',
+			icon: 'time_box',
 			link: '/date-time'
 		},
 		{
@@ -62,8 +68,24 @@
 </script>
 
 <Layout title="Settings">
-	<div class="flex flex-col gap-3">
-		{#each settingsListArr as settings}
+	<div class="flex flex-col gap-x-3">
+		{#each settingsListArr1 as settings, index}
+			<ListItem
+				title={settings.title}
+				isLink
+				href={settings.link}
+				leftIcon={settings.icon}
+				borderTop={index != 0}
+			>
+				<Icons name="right_arrow" height="30px" width="30px" />
+			</ListItem>
+		{/each}
+	</div>
+	<div class="my-5">
+		<hr />
+	</div>
+	<div class="flex flex-col gap-x-3">
+		{#each settingsListArr2 as settings}
 			<ListItem title={settings.title} isLink href={settings.link} leftIcon={settings.icon}>
 				<Icons name="right_arrow" height="30px" width="30px" />
 			</ListItem>

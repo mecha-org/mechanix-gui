@@ -7,14 +7,17 @@
 	export let isLink = false;
 	export let isSelected = false;
 	export let leftIcon: null | string = null;
+	export let borderTop: boolean = false;
+
 	type $$Events = Events;
 
 </script>
 
 {#if isLink}
+	<!-- <a {href} class="border-neutral-gray flex flex-row items-center justify-between border-b p-4"> -->
 	<a
 		{href}
-		class="flex flex-row items-center justify-between rounded-lg border border-twilight-navy bg-midnight-abyss p-4"
+		class={`border-neutral-gray flex flex-row items-center justify-between ${borderTop ? 'border-t' : 'border-b'} p-4`}
 	>
 		<h1 class="flex flex-row items-center gap-3 text-lg font-medium text-white text-ellipsis">
 			{#if leftIcon}
@@ -27,7 +30,7 @@
 	</a>
 {:else}
 	<button
-		class="flex flex-row items-center justify-between rounded-lg border border-twilight-navy bg-midnight-abyss p-4 w-full"
+		class="border-neutral-gray flex flex-row items-center justify-between border-b p-4 w-full"
 		{...$$restProps}
 		on:click
 		on:keydown
