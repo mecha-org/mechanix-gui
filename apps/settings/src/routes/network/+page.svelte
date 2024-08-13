@@ -114,10 +114,18 @@
 			</ListBlock>
 			{#if $wifiStatus}
 				<ListBlock>
-					<BlockItem title="Manage Networks" isBottomBorderVisible={true} href="/network/manage-network">
+					<BlockItem
+						title="Manage Networks"
+						isBottomBorderVisible={true}
+						href="/network/manage-network"
+					>
 						<Icons name="right_arrow" height="30px" width="30px" />
 					</BlockItem>
-					<BlockItem title="Available Networks" isBottomBorderVisible={false} href="/network/available-network">
+					<BlockItem
+						title="Available Networks"
+						isBottomBorderVisible={false}
+						href="/network/available-network"
+					>
 						<Icons name="right_arrow" height="30px" width="30px" />
 					</BlockItem>
 				</ListBlock>
@@ -126,7 +134,7 @@
 					<Icons name="right_arrow" height="30px" width="30px" />
 				</ListItem>
 			{/if}
-			
+
 			<ListItem isLink href="/network/ip-settings" title="IP Settings">
 				<Icons name="right_arrow" height="30px" width="30px" />
 			</ListItem>
@@ -143,10 +151,11 @@
 			</div>
 		</div>
 	</div>
-	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
-		<div
-			class="border-silver-gray flex h-full w-full flex-row items-center justify-between border-t-2 px-4 py-3"
-		>
+	<footer
+		slot="footer"
+		class="border-silver-gray h-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+	>
+		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
 				class="  flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}

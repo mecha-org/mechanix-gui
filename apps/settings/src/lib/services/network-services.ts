@@ -7,7 +7,7 @@ import { SECURITY_PROTOCOLS } from "../../constants";
 export const fetchKnownNetworks = () => {
     console.log("service::network::fetchKnownNetworks()");
     return invoke<KnownNetworkListResponse>('get_known_networks')
-        .then((response) => {
+        .then((response: KnownNetworkListResponse) => {
             if (response) {
                 knownNetworksList.set((response as KnownNetworkListResponse).known_network);
             }
@@ -24,7 +24,7 @@ export const fetchKnownNetworks = () => {
 export const fetchAvaialbleNetworks = () => {
     console.log("service::network::fetchAvaialbleNetworks()");
     return invoke<WirelessScanListResponse>('wifi_scanning')
-        .then((response) => {
+        .then((response: WirelessScanListResponse) => {
             if (response) {
                 // // NOTE: Keep only if issue occurs of duplicate networks
                 // // required filter out - flags like TEMP
