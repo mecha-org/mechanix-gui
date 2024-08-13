@@ -2,13 +2,11 @@
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
-	import TopPanel from '$lib/components/top-panel.svelte';
 	import { onMount } from 'svelte';
 	import { ERROR_LOG, PAGE_LOG, SETTINGS_MODULE_LOG } from '../constants';
 	import { consoleLog, LOG_LEVEL } from '$lib/services/common-services';
 	import { fetchConnectedWifiInfo, fetchWifiStatus } from '$lib/services/network-services';
 	import { connectedNetwork } from '$lib/stores/networkStore';
-	import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
 	import { get_battery_percentage } from '$lib/services/battery-services';
 	import { batteryPercentage } from '$lib/stores/batteryStore';
 
@@ -75,16 +73,11 @@
 	];
 
 	const LOG_PREFIX = PAGE_LOG + SETTINGS_MODULE_LOG;
-	const getInitalData = async () => {
+	const getInitalData = () => {
 		consoleLog(LOG_PREFIX + 'getInitalData()::');
 		try {
-			let response = await fetchWifiStatus();
-			if (response) {
-				fetchConnectedWifiInfo();
-			} else {
-				connectedNetwork.set({} as WirelessInfoResponse);
-			}
-			await get_battery_percentage();
+			fetchConnectedWifiInfo();
+			get_battery_percentage();
 		} catch (error) {
 			consoleLog(LOG_PREFIX + 'getInitalData()::' + ERROR_LOG, {
 				type: LOG_LEVEL.ERROR,
@@ -109,7 +102,7 @@
 				borderTop={index != 0}
 			>
 				<div class="flex flex-row items-center gap-2">
-					{#if settings.title == 'Network'}
+					{#if settings.title == 'Network' && $connectedNetwork.name != undefined}
 						<p class="text-misty-slate truncate text-lg">{$connectedNetwork.name}</p>
 					{:else if settings.title == 'Battery'}
 						<p class="text-misty-slate text-lg">{$batteryPercentage}&percnt;</p>

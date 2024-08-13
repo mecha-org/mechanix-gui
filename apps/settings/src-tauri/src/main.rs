@@ -6,9 +6,9 @@ use std::{thread::JoinHandle, time::Duration};
 use tauri::{Manager, Window};
 use upower::BatteryStatus;
 
+mod constants;
 mod error;
 mod modules;
-mod constants;
 
 #[tauri::command]
 fn exit_app() {
@@ -21,10 +21,9 @@ struct Payload {
     message: String,
 }
 
-
 fn main() {
     tauri::Builder::default()
-    .invoke_handler(tauri::generate_handler![
+        .invoke_handler(tauri::generate_handler![
             modules::bluetooth::get_bluetooth_status,
             modules::wireless::get_wireless_status,
             modules::wireless::enable_wifi,

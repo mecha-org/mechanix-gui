@@ -30,6 +30,8 @@ export const fetchBluetoothStatus = async () => {
         return status;
     } catch (error) {
         console.error('service::bluetooth::fetchBluetoothStatus()::error:::: ', error);
+        isFetchingAvailableDevices.set(false);
+        isFetchingOtherDevices.set(false);
         return false;
     }
 }
@@ -83,7 +85,7 @@ export const enableBluetooth = async () => {
         const response: boolean = await invoke('enable_bluetooth');
         console.log("enable_bluetooth response: ", response);
         disableBluetoothSwitch.set(false);
-        bluetoothStatus.set(response);
+        bluetoothStatus.set(response ? response : false);
         return response;
     } catch (error) {
         console.error('service::bluetooth::enableBluetooth()::error::::', error);

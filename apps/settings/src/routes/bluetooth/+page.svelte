@@ -15,15 +15,19 @@
 		isFetchingAvailableDevices,
 		isFetchingOtherDevices,
 		availableDevicesList,
-		otherDevicesList,
+		otherDevicesList
 	} from '$lib/stores/bluetoothStore';
 	import {
-	disableBluetooth,
-	enableBluetooth,
+		disableBluetooth,
+		enableBluetooth,
 		fetchAvailableDevices,
 		fetchBluetoothStatus,
 		type BluetoothScanResponse
 	} from '$lib/services/bluetooth-services';
+	import { Label } from 'bits-ui';
+
+	// $: code = '243562';
+	$: code = undefined;
 
 	const getInitalData = async () => {
 		console.log('page::bluetooth::getInitalData()');
@@ -48,11 +52,8 @@
 		console.log('ON DESTROY');
 	});
 
-	// setInterval(async () => {
-	// 	await update_data();
-	// }, 15000);
-
 	const onBluetoothStatusChangeHandler = async (flag: boolean) => {
+		console.log('onBluetoothStatusChangeHandler flag: ', flag);
 		try {
 			disableBluetoothSwitch.set(true);
 			if (flag) {
@@ -70,7 +71,7 @@
 </script>
 
 <Layout title="Bluetooth">
-	<ListItem isLink title="Enable bluetooth">
+	<div slot="switch">
 		{#if $fetchingBluetoothStatus}
 			<div class="flex animate-spin flex-row items-center gap-2">
 				<Icons name="spinner" height="30px" width="30px" />
@@ -80,23 +81,15 @@
 				bind:checked={$bluetoothStatus}
 				onCheckedChange={onBluetoothStatusChangeHandler}
 				disabled={$disableBluetoothSwitch}
-			/>
+				id={$bluetoothStatus ? 'ON' : 'OFF'}
+			></Switch>
 		{/if}
-	</ListItem>
-	<div class="mt-10">
+	</div>
+	<div class="mt-7">
 		{#if $availableDevicesList.length > 0 || $isFetchingAvailableDevices}
 			<ListHeading title="Available devices" />
 		{/if}
 		<div class="flex flex-col gap-4">
-			<!-- <ListItem isLink href="/bluetooth/Ritika's-mecha-compute" title="Ritika's mecha compute">
-				<div class="flex flex-row items-center gap-4">
-					<Icons name="blue_checked" height="30px" width="30px" />
-					<Icons name="right_arrow" height="30px" width="30px" />
-				</div>
-			</ListItem>
-			<ListItem isLink href="/network/dns" title="Ritika's mecha compute 2"
-				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-			> -->
 			{#if $isFetchingAvailableDevices}
 				<ListItem title="Searching available devicess">
 					<div class="flex animate-spin flex-row items-center gap-2">
@@ -111,18 +104,18 @@
 						title={available_device?.name}
 						isSelected={available_device?.is_trusted ?? false}
 					>
-						<div class="flex flex-row items-center gap-4">
+						<div class="flex flex-row items-center gap-3">
 							{#if available_device?.is_trusted}
-								<Icons name="blue_checked" height="30px" width="30px" />
+								<Icons name="blue_checked" height="24px" width="24px" />
 							{/if}
-							<Icons name="right_arrow" height="30px" width="30px" />
+							<Icons name="right_arrow" height="24px" width="24px" />
 						</div>
 					</ListItem>
 				{/each}
 			{/if}
 		</div>
 	</div>
-	<div class="mt-10">
+	<div class="mt-7">
 		<ListHeading title="Paired devices" />
 		<div class="flex flex-col gap-4">
 			{#if $isFetchingOtherDevices}
@@ -135,9 +128,13 @@
 				{#each $otherDevicesList as other_device}
 					<ListItem
 						isLink
-						href={`/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}?address=${other_device?.address}`}
+						href={code
+							? `/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}?address=${other_device?.address}&code=${code}`
+							: `/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}?address=${other_device?.address}`}
 						title={other_device?.name}
-					></ListItem>
+					>
+						<Icons name="right_arrow" height="24px" width="24px" />
+					</ListItem>
 				{/each}
 			{:else}
 				<ListItem
@@ -150,18 +147,20 @@
 		</div>
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
-		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
+		<div
+			class="border-silver-gray flex h-full w-full flex-row items-center justify-between border-t-2 px-4 py-3"
+		>
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="addition" width="32" height="32" />
+				<Icons name="addition" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

@@ -1,24 +1,36 @@
 <script lang="ts">
-	import TopPanel from './top-panel.svelte';
 	export let title: string = '';
+	export let bluetooth_title: string = '';
 
 	import AstronautXMecha from '$lib/assets/images/wallpapers/astronaut_mecha.png';
-
 </script>
 
-<!-- <header class="z-10 flex h-[80px] flex-col bg-[#05070A]"> -->
 <header>
-	<div class="px-5 py-2">
-		<TopPanel />
-	</div>
-	<div class="p-5 pt-2">
-		<h1 class="text-misty-slate text-2xl">{title}</h1>
-	</div>
+	{#if title}
+		<div class="flex flex-row justify-between p-5 pt-6">
+			<h1 class="text-misty-slate text-2xl">{title}</h1>
+			<slot name="switch" />
+		</div>
+	{:else if bluetooth_title.length > 0}
+		<div class="flex flex-row p-5 pt-6">
+			<h1 class="text-misty-slate text-2xl">
+				Confirm this code on<br />
+				{' '}
+				<strong>
+					{bluetooth_title.length > 15
+						? `'${bluetooth_title.slice(0, 10)}...${bluetooth_title.substring(bluetooth_title.length - 1)}'`
+						: `'${bluetooth_title}'`}
+				</strong>
+				&nbsp;to connect
+			</h1>
+		</div>
+	{/if}
 </header>
 <!-- style={ `background-image: url(${AstronautXMecha});`} -->
 
-<main class={`px-5 ${$$slots.footer ? 'pb-20' : 'pb-5'} `}
-><slot /></main>
+<main class={`px-5 ${$$slots.footer ? 'pb-20' : 'pb-5'} `}>
+	<slot />
+</main>
 
 {#if $$slots.footer}
 	<footer
