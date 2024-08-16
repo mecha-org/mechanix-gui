@@ -68,6 +68,12 @@
 			console.error('page::bluetooth::onBluetoothStatusChangeHandler()::error:::', error);
 		}
 	};
+
+	// NOTE: when api works, remove this code & check
+	$: if (!$bluetoothStatus) {
+		availableDevicesList.set([]);
+		otherDevicesList.set([]);
+	}
 </script>
 
 <Layout title="Bluetooth">
@@ -81,7 +87,6 @@
 				bind:checked={$bluetoothStatus}
 				onCheckedChange={onBluetoothStatusChangeHandler}
 				disabled={$disableBluetoothSwitch}
-				id={$bluetoothStatus ? 'ON' : 'OFF'}
 			></Switch>
 		{/if}
 	</div>
