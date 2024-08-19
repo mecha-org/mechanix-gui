@@ -1,0 +1,65 @@
+[package]
+name = "mechanix-on-screen-display"
+description = "Mechanix on screen display component for the Mechanix shell"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tonic = "0.9.2"
+serde_ini = "0.2.0"
+tokio = { version = "1.33", features = ["full"] }
+wayland-protocols-async = { workspace = true }
+desktop_ini_utils = { path = "../commons/desktop_ini_utils"}
+mctk_core = { workspace = true }
+mctk_smithay = { workspace = true }
+mctk_macros = { workspace = true }
+command = { workspace = true }
+const_format = { workspace = true }
+dirs = { workspace = true }
+sysinfo = "0.31.2"
+online = { version = "4.0.0" }
+rand = "0.8.5"
+logind = { workspace = true }
+futures = { workspace = true }
+upower ={ workspace = true }
+chrono = { workspace = true }
+mechanix_system_dbus_client = { workspace = true }
+
+[build-dependencies]
+tonic-build = "0.9.2"
+
+[package.metadata.deb]
+name = "mechanix-on-screen-display"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-on-screen-display",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/on-screen-display/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/shell/on-screen-display/settings.yml",
+        "644",
+    ],
+]

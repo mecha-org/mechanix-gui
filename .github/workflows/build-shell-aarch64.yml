@@ -15,7 +15,7 @@ env:
   CARGO_NET_GIT_FETCH_WITH_CLI: true
   MECHANIX_APTLY_SERVER_ENDPOINT: ${{ vars.MECHANIX_APTLY_SERVER_ENDPOINT }}
   MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
-  MECHANIX_APTLY_DEB_REPOSITORY_NAME: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_NAME }} 
+  MECHANIX_APTLY_DEB_REPOSITORY_NAME: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}
   MECHANIX_APTLY_S3_PUBLISH_ENDPOINT: ${{ vars.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT }}
 
 jobs:
@@ -26,55 +26,60 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          - name: Status Bar
-            package: mechanix-status-bar
-            artifact: mechanix-status-bar-aarch64-unknown-linux-gnu.tar.gz
+          # - name: Status Bar
+          #   package: mechanix-status-bar
+          #   artifact: mechanix-status-bar-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
+
+          # - name: Greeter
+          #   package: mechanix-greeter
+          #   artifact: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
+
+          # - name: Settings Panel
+          #   package: mechanix-settings-panel
+          #   artifact: mechanix-settings-panel-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
+
+          # - name: Lock Screen
+          #   package: mechanix-lock-screen
+          #   artifact: mechanix-lock-screen-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
+
+          # - name: Home Screen
+          #   package: mechanix-home-screen
+          #   artifact: mechanix-home-screen-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
+
+          - name: On Screen Display
+            package: mechanix-on-screen-display
+            artifact: mechanix-on-screen-display-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
-          - name: Greeter
-            package: mechanix-greeter
-            artifact: mechanix-greeter-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
+          # - name: App Drawer
+          #   package: mechanix-app-drawer
+          #   artifact: mechanix-app-drawer-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
 
-          - name: Settings Panel
-            package: mechanix-settings-panel
-            artifact: mechanix-settings-panel-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
+          # - name: App Switcher
+          #   package: mechanix-app-switcher
+          #   artifact: mechanix-app-switcher-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
 
-          - name: Lock Screen
-            package: mechanix-lock-screen
-            artifact: mechanix-lock-screen-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
+          # - name: Power options
+          #   package: mechanix-power-options
+          #   artifact: mechanix-power-options-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
 
-          - name: Home Screen
-            package: mechanix-home-screen
-            artifact: mechanix-home-screen-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
+          # - name: Notification
+          #   package: mechanix-notification
+          #   artifact: mechanix-notification-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
 
-          - name: App Drawer
-            package: mechanix-app-drawer
-            artifact: mechanix-app-drawer-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
-
-          - name: App Switcher
-            package: mechanix-app-switcher
-            artifact: mechanix-app-switcher-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
-
-          - name: Power options
-            package: mechanix-power-options
-            artifact: mechanix-power-options-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
-
-          - name: Notification
-            package: mechanix-notification
-            artifact: mechanix-notification-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
-
-          - name: Power options
-            package: mechanix-polkit-agent
-            artifact: mechanix-polkit-agent-aarch64-unknown-linux-gnu.tar.gz
-            path: shell
+          # - name: Power options
+          #   package: mechanix-polkit-agent
+          #   artifact: mechanix-polkit-agent-aarch64-unknown-linux-gnu.tar.gz
+          #   path: shell
 
           - name: Keyboard
             package: mechanix-keyboard
@@ -120,12 +125,12 @@ jobs:
           cargo --config net.git-fetch-with-cli=true fetch
           cargo build --release --package ${{ matrix.package }}
           ls -la
-      
+
       - name: Package deb [${{ matrix.package }}]
         run: |
           cd ${{ matrix.path }}
           cargo deb --no-build --package ${{ matrix.package }}
-          ls -la    
+          ls -la
 
       - name: Extract package details
         id: package_details
@@ -144,12 +149,12 @@ jobs:
           echo "Uploading package: ${{ steps.package_details.outputs.package_name }}"
           echo "To folder: ${{ steps.package_details.outputs.folder_name }}"
           curl -X POST -F file=@target/debian/${{ steps.package_details.outputs.package_name }} ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/files/${{ steps.package_details.outputs.folder_name }}
-      
+
       - name: Add package to local repo
         run: |
           echo "Adding package from folder: ${{ steps.package_details.outputs.folder_name }}"
           curl -X POST ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/repos/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}/file/${{ steps.package_details.outputs.folder_name }}
-      
+
       - name: Update local published repo
         run: |
           echo "Updating local published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
@@ -157,7 +162,7 @@ jobs:
             "Architectures": ["arm64", "amd64"],
             "Signing": {"Skip": true}
           }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/:./${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
-      
+
       - name: Update S3 published repo
         run: |
           echo "Updating S3 published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
@@ -165,8 +170,8 @@ jobs:
             "Sources": [{"Name": "${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}"}],
             "Architectures": ["arm64", "amd64"],
             "Signing": {"Skip": true}
-          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT}}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}    
-             
+          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT}}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir build

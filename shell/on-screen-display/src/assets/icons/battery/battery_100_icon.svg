@@ -1,0 +1,15 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="body_1" width="28" height="28">
+
+<g transform="matrix(1 0 0 1 0 0)">
+    <path transform="matrix(-0.70710665 0.7071069 -0.7071069 -0.70710665 37.51433 32.838444)"  d="M11.9561 24.1887L14.45512 24.1887L14.45512 30.1887L11.9561 30.1887z" stroke="none" fill="#34C759" fill-rule="nonzero" />
+    <path transform="matrix(-0.70710665 0.7071069 -0.7071069 -0.70710665 43.06409 30.139263)"  d="M15.29 23.9885L17.78902 23.9885L17.78902 34.7905L15.29 34.7905z" stroke="none" fill="#34C759" fill-rule="nonzero" />
+    <path transform="matrix(-0.70710665 0.7071069 -0.7071069 -0.70710665 49.229618 27.695417)"  d="M18.8789 24.0435L21.37792 24.0435L21.37792 39.793503L18.8789 39.793503z" stroke="none" fill="#34C759" fill-rule="nonzero" />
+    <path transform="matrix(-0.70710665 0.7071069 -0.7071069 -0.70710665 53.09802 24.308273)"  d="M21.5146 23.1511L24.01362 23.1511L24.01362 41.9545L21.5146 41.9545z" stroke="none" fill="#34C759" fill-rule="nonzero" />
+    <path transform="matrix(-0.70710665 0.7071069 -0.7071069 -0.70710665 54.058567 19.728401)"  d="M22.9434 21.0601L25.44242 21.0601L25.44242 41.4827L22.9434 41.4827z" stroke="none" fill="#34C759" fill-rule="nonzero" />
+    <path transform="matrix(-0.70710665 0.7071069 -0.7071069 -0.70710665 51.46328 13.663202)"  d="M22.9019 17.49L25.400919 17.49L25.400919 35.4414L22.9019 35.4414z" stroke="none" fill="#34C759" fill-rule="nonzero" />
+    <path transform="matrix(-0.70710665 0.7071069 -0.7071069 -0.70710665 48.524784 7.460368)"  d="M22.7173 13.78L25.21632 13.78L25.21632 26.192501L22.7173 26.192501z" stroke="none" fill="#34C759" fill-rule="nonzero" />
+    <path d="M10.5593 5.84707L7 5.84707L7 25L16.887 25L22 25L22 5.84707L18.1864 5.84707zM10.5593 5.84707L14.6271 5.84707L18.1864 5.84707zM10.5593 5.84707L10.5593 3L18.1864 3L18.1864 5.84707" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="square" fill="none" />
+</g>
+</svg>

@@ -1,6 +1,6 @@
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::time::Duration;
-use tokio::{sync::oneshot, time};
+use tokio::time;
 
 use crate::StatusBarMessage as AppMessage;
 

@@ -15,6 +15,7 @@ members = [
     "app-drawer",
     "greeter",
     "home-screen",
+    "on-screen-display",
     "keyboard",
     "lock-screen",
     "polkit-agent",
@@ -43,9 +44,9 @@ categories = ["gui"]
 keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
 
 [workspace.dependencies]
-mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "4e3897e226830beca23c13fbcfd7ce141d91c61e" }
-mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "4e3897e226830beca23c13fbcfd7ce141d91c61e" }
-mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "4e3897e226830beca23c13fbcfd7ce141d91c61e" }
+mctk_core = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "61746a59b7a95c918e0a66bb9c46e3e367a64347" }
+mctk_smithay = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "61746a59b7a95c918e0a66bb9c46e3e367a64347" }
+mctk_macros = { git = "ssh://git@github.com/mecha-org/mctk.git", rev = "61746a59b7a95c918e0a66bb9c46e3e367a64347" }
 mechanix_system_dbus_client = { path = "../services/system/client/dbus" }
 mechanix_desktop_dbus_client = { path = "../services/desktop/client/dbus" }
 mechanix_store_server = { path = "../services/store/server" }
