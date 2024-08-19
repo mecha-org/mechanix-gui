@@ -1,18 +1,18 @@
 use crate::constants::*;
-use crate::errors::{OnScreenDisplayError, OnScreenDisplayErrorCodes};
+use crate::errors::{LauncherError, LauncherErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::{env, fs::File, path::PathBuf};
 use tracing::{debug, info};
 
-/// # OnscreenDisplay Settings
+/// # Launcher Settings
 ///
 /// Struct representing the settings.yml configuration file,
-/// this file lets you control the behavior of the on screen display,
+/// this file lets you control the behavior of the launcher,
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct  OnScreenDisplaySettings {
+pub struct  LauncherSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
     pub title: String,          // Sets the window title
@@ -21,12 +21,12 @@ pub struct  OnScreenDisplaySettings {
     pub fonts: CustomFonts
 }
 
-impl Default for OnScreenDisplaySettings {
+impl Default for LauncherSettings {
     fn default() -> Self {
         Self {
             app: AppSettings::default(),
             window: WindowSettings::default(),
-            title: String::from("OnScreenDisplay"),
+            title: String::from("Launcher"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
             fonts: CustomFonts::default(),
@@ -49,7 +49,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            id: Some(String::from("onscreendisplay")),
+            id: Some(String::from("Launcher")),
             text_multithreading: false,
             antialiasing: false,
             try_opengles_first: true,
@@ -78,12 +78,12 @@ pub struct WindowSettings {
 /// # Layout Settings
 ///
 /// Part of the settings.yml to control the behavior of
-/// the layout of options in the on screen display.
+/// the layout of options in the launcher.
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct LayoutSettings {
-    pub left: Vec<String>,   //Items that will in left side of on screen display
-    pub center: Vec<String>, //Items that will in center of on screen display
-    pub right: Vec<String>,  //Items that will in right side of on screen display
+    pub left: Vec<String>,   //Items that will in left side of launcher
+    pub center: Vec<String>, //Items that will in center of launcher
+    pub right: Vec<String>,  //Items that will in right side of launcher
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -193,7 +193,7 @@ impl Default for BackgroundIconPath {
 
 /// # Modules
 ///
-/// Options that will be visible in on screen display
+/// Options that will be visible in launcher
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct Modules {
@@ -528,7 +528,7 @@ fn is_valid_file(path: &str) -> Option<PathBuf> {
 
 fn find_config_path() -> Option<PathBuf> {
     // from env
-    if let Ok(env_path) = std::env::var("MECHA_ON_SCREEN_DISPLAY_SETTINGS_PATH") {
+    if let Ok(env_path) = std::env::var("MECHA_LAUNCHER_SETTINGS_PATH") {
         if let Some(path) = is_valid_file(&env_path) {
             return Some(path);
         }
@@ -564,15 +564,15 @@ fn find_config_path() -> Option<PathBuf> {
 
 /// # Reads Settings YML
 ///
-/// Reads the `settings.yml` and parsers to OnScreenDisplaySettings
+/// Reads the `settings.yml` and parsers to LauncherSettings
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
-pub fn read_settings_yml() -> Result<OnScreenDisplaySettings> {
+pub fn read_settings_yml() -> Result<LauncherSettings> {
     let file_path = find_config_path();
 
     if file_path.is_none() {
-        bail!(OnScreenDisplayError::new(
-            OnScreenDisplayErrorCodes::SettingsReadError,
+        bail!(LauncherError::new(
+            LauncherErrorCodes::SettingsReadError,
             format!("settings.yml path not found",),
         ));
     }
@@ -586,8 +586,8 @@ pub fn read_settings_yml() -> Result<OnScreenDisplaySettings> {
     let settings_file_handle = match File::open(file_path.unwrap()) {
         Ok(file) => file,
         Err(e) => {
-            bail!(OnScreenDisplayError::new(
-                OnScreenDisplayErrorCodes::SettingsReadError,
+            bail!(LauncherError::new(
+                LauncherErrorCodes::SettingsReadError,
                 format!(
                     "cannot read the settings.yml in the path - {}",
                     e.to_string()
@@ -597,11 +597,11 @@ pub fn read_settings_yml() -> Result<OnScreenDisplaySettings> {
     };
 
     // read and parse
-    let config: OnScreenDisplaySettings = match serde_yaml::from_reader(settings_file_handle) {
+    let config: LauncherSettings = match serde_yaml::from_reader(settings_file_handle) {
         Ok(config) => config,
         Err(e) => {
-            bail!(OnScreenDisplayError::new(
-                OnScreenDisplayErrorCodes::SettingsParseError,
+            bail!(LauncherError::new(
+                LauncherErrorCodes::SettingsParseError,
                 format!("error parsing the settings.yml - {}", e.to_string()),
             ));
         }

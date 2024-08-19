@@ -2,8 +2,8 @@ use crate::modules::cpu::component::GRID_SIZE;
 use crate::pages::home_ui::HomeUi;
 use crate::pages::settings_panel::SettingsPanel;
 use crate::pages::status_bar::StatusBar;
-use crate::settings::{self, OnScreenDisplaySettings};
-use crate::theme::{self, OnScreenDisplayTheme};
+use crate::settings::{self, LauncherSettings};
+use crate::theme::{self, LauncherTheme};
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
 use crate::utils::get_formatted_battery_level;
 use crate::{AppMessage, AppParams};
@@ -102,9 +102,9 @@ pub struct Swipe {
 }
 
 #[derive(Debug, Default)]
-pub struct OnScreenDisplayState {
-    settings: OnScreenDisplaySettings,
-    custom_theme: OnScreenDisplayTheme,
+pub struct LauncherState {
+    settings: LauncherSettings,
+    custom_theme: LauncherTheme,
     battery_level: BatteryLevel,
     wireless_status: WirelessStatus,
     bluetooth_status: BluetoothStatus,
@@ -125,10 +125,10 @@ pub struct OnScreenDisplayState {
     app_channel: Option<Sender<AppMessage>>,
 }
 
-#[component(State = "OnScreenDisplayState")]
+#[component(State = "LauncherState")]
 #[derive(Debug, Default)]
-pub struct OnScreenDisplay {}
-impl OnScreenDisplay {
+pub struct Launcher {}
+impl Launcher {
     fn handle_on_drag(&mut self, logical_delta: Point) -> Option<mctk_core::component::Message> {
         let dx = logical_delta.x;
         let dy = logical_delta.y;
@@ -287,8 +287,8 @@ impl OnScreenDisplay {
     }
 }
 
-#[state_component_impl(OnScreenDisplayState)]
-impl Component for OnScreenDisplay {
+#[state_component_impl(LauncherState)]
+impl Component for Launcher {
     fn on_tick(&mut self, _event: &mut mctk_core::event::Event<mctk_core::event::Tick>) {
         if self.state.is_none() {
             return;
@@ -306,7 +306,7 @@ impl Component for OnScreenDisplay {
                 state,
             } = swipe.clone();
 
-            println!("OnScreenDisplay::on_tick() dy {:?} {:?}", dy, state);
+            println!("Launcher::on_tick() dy {:?} {:?}", dy, state);
             if state == SwipeState::Completed {
                 self.state_mut().swipe = None;
                 return;
@@ -359,14 +359,14 @@ impl Component for OnScreenDisplay {
     fn init(&mut self) {
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
-            Err(_) => OnScreenDisplaySettings::default(),
+            Err(_) => LauncherSettings::default(),
         };
 
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
-            Err(_) => OnScreenDisplayTheme::default(),
+            Err(_) => LauncherTheme::default(),
         };
-        self.state = Some(OnScreenDisplayState {
+        self.state = Some(LauncherState {
             settings,
             custom_theme,
             battery_level: BatteryLevel::default(),
@@ -618,7 +618,7 @@ impl Component for OnScreenDisplay {
 
     fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
         println!(
-            "OnScreenDisplay::on_drag_start() {:?}",
+            "Launcher::on_drag_start() {:?}",
             event.relative_logical_position()
         );
 
@@ -647,7 +647,7 @@ impl Component for OnScreenDisplay {
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
     ) {
         println!(
-            "OnScreenDisplay::on_drag_start() {:?}",
+            "Launcher::on_drag_start() {:?}",
             event.relative_logical_position()
         );
 
@@ -675,7 +675,7 @@ impl Component for OnScreenDisplay {
     }
 }
 
-impl RootComponent<AppParams> for OnScreenDisplay {
+impl RootComponent<AppParams> for Launcher {
     fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
         let app_params = app_params.downcast_ref::<AppParams>().unwrap();
         let app_channel = app_params.app_channel.clone();

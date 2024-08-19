@@ -51,9 +51,9 @@ jobs:
           #   artifact: mechanix-home-screen-aarch64-unknown-linux-gnu.tar.gz
           #   path: shell
 
-          - name: On Screen Display
-            package: mechanix-on-screen-display
-            artifact: mechanix-on-screen-display-aarch64-unknown-linux-gnu.tar.gz
+          - name: Laucher
+            package: mechanix-launcher
+            artifact: mechanix-launcher-aarch64-unknown-linux-gnu.tar.gz
             path: shell
 
           # - name: App Drawer

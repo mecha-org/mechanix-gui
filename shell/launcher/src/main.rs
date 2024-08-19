@@ -50,8 +50,8 @@ use mctk_core::{
     types::AssetParams,
 };
 use mctk_smithay::WindowMessage;
-use settings::OnScreenDisplaySettings;
-use theme::OnScreenDisplayTheme;
+use settings::LauncherSettings;
+use theme::LauncherTheme;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Debug, Clone)]
@@ -80,8 +80,8 @@ pub struct UiParams {
     fonts: cosmic_text::fontdb::Database,
     assets: HashMap<String, AssetParams>,
     svgs: HashMap<String, String>,
-    settings: OnScreenDisplaySettings,
-    theme: OnScreenDisplayTheme,
+    settings: LauncherSettings,
+    theme: LauncherTheme,
 }
 
 #[tokio::main]
@@ -97,13 +97,13 @@ async fn main() {
         Err(e) => {
             println!("error while reading settings {:?}", e);
 
-            OnScreenDisplaySettings::default()
+            LauncherSettings::default()
         }
     };
 
     let theme = match crate::theme::read_theme_yml() {
         Ok(theme) => theme,
-        Err(_) => OnScreenDisplayTheme::default(),
+        Err(_) => LauncherTheme::default(),
     };
 
     let mut fonts: cosmic_text::fontdb::Database = cosmic_text::fontdb::Database::new();
@@ -201,10 +201,7 @@ async fn main() {
     homesceen_ui_t.join().unwrap();
 }
 
-fn init_services(
-    settings: OnScreenDisplaySettings,
-    app_channel: Sender<AppMessage>,
-) -> JoinHandle<()> {
+fn init_services(settings: LauncherSettings, app_channel: Sender<AppMessage>) -> JoinHandle<()> {
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
             .worker_threads(1)

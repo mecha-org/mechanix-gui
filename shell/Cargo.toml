@@ -15,7 +15,7 @@ members = [
     "app-drawer",
     "greeter",
     "home-screen",
-    "on-screen-display",
+    "launcher",
     "keyboard",
     "lock-screen",
     "polkit-agent",

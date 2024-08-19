@@ -1,7 +1,7 @@
 use core::fmt;
 
-use crate::errors::OnScreenDisplayError;
-use crate::errors::OnScreenDisplayErrorCodes::{GetBatteryError, GetBatteryStatusError};
+use crate::errors::LauncherError;
+use crate::errors::LauncherErrorCodes::{GetBatteryError, GetBatteryStatusError};
 use crate::AppMessage;
 use anyhow::{bail, Result};
 use futures::StreamExt;
@@ -17,23 +17,17 @@ impl BatteryService {
 
         let battery = match upower::get_battery().await {
             Ok(battery) => battery,
-            Err(e) => bail!(OnScreenDisplayError::new(GetBatteryError, e.to_string(),)),
+            Err(e) => bail!(LauncherError::new(GetBatteryError, e.to_string(),)),
         };
 
         let percentage = match battery.percentage().await {
             Ok(p) => p,
-            Err(e) => bail!(OnScreenDisplayError::new(
-                GetBatteryStatusError,
-                e.to_string(),
-            )),
+            Err(e) => bail!(LauncherError::new(GetBatteryStatusError, e.to_string(),)),
         };
 
         let state = match battery.state().await {
             Ok(s) => s,
-            Err(e) => bail!(OnScreenDisplayError::new(
-                GetBatteryStatusError,
-                e.to_string(),
-            )),
+            Err(e) => bail!(LauncherError::new(GetBatteryStatusError, e.to_string(),)),
         };
 
         let battery_status = BatteryStatus::try_from(state).unwrap();

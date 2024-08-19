@@ -10,7 +10,7 @@ use crate::modules::name::component::MachineName;
 use crate::modules::networking::component::Networking;
 use crate::modules::pinned_app::PinnedApp;
 use crate::modules::uptime::component::Uptime;
-use crate::settings::OnScreenDisplaySettings;
+use crate::settings::LauncherSettings;
 use crate::shared::h_divider::HDivider;
 use crate::shared::slider::{Slider, SliderType};
 use crate::shared::v_divider::VDivider;
@@ -21,7 +21,7 @@ use mctk_core::{msg, Color};
 
 #[derive(Debug, Default)]
 pub struct HomeUi {
-    pub settings: OnScreenDisplaySettings,
+    pub settings: LauncherSettings,
     pub battery_level: BatteryLevel,
     pub wireless_status: WirelessStatus,
     pub bluetooth_status: BluetoothStatus,

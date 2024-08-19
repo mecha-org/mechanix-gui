@@ -1,4 +1,4 @@
-use crate::errors::{OnScreenDisplayError, OnScreenDisplayErrorCodes};
+use crate::errors::{LauncherError, LauncherErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -9,9 +9,9 @@ use tracing::{debug, info};
 ///
 /// Struct representing the theme.yml configuration file,
 /// this file lets you control the appearance and theme
-/// of the on screen display
+/// of the launcher
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct OnScreenDisplayTheme {
+pub struct LauncherTheme {
     pub font: FontSettings,             // Font Settings
     pub colors: ColorSettings,          // Color Settings
     pub font_size: FontSizeSettings,    // Font Size Settings
@@ -19,10 +19,10 @@ pub struct OnScreenDisplayTheme {
 }
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ThemeConfigs {
-    pub theme: OnScreenDisplayTheme, // Theme configs
+    pub theme: LauncherTheme, // Theme configs
 }
 
-impl Default for OnScreenDisplayTheme {
+impl Default for LauncherTheme {
     fn default() -> Self {
         Self {
             font: FontSettings::default(),
@@ -35,7 +35,7 @@ impl Default for OnScreenDisplayTheme {
 
 /// # Font Settings
 ///
-/// Declares all the fonts needed for the on screen display with their
+/// Declares all the fonts needed for the launcher with their
 /// paths (relative to the binary)
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct FontSettings {
@@ -170,12 +170,12 @@ pub fn read_theme_path_from_args() -> Option<String> {
 
 /// # Reads Theme YML
 ///
-/// Reads the `settings.yml` and parsers to OnScreenDisplayTheme
+/// Reads the `settings.yml` and parsers to LauncherTheme
 ///
 /// **Important**: Ensure all fields are present in the yml due to strict parsing
-pub fn read_theme_yml() -> Result<OnScreenDisplayTheme> {
+pub fn read_theme_yml() -> Result<LauncherTheme> {
     let mut file_path = PathBuf::from(
-        std::env::var("MECHA_ON_SCREEN_DISPLAY_THEME_PATH").unwrap_or(String::from("theme.yml")),
+        std::env::var("MECHA_LAUNCHER_THEME_PATH").unwrap_or(String::from("theme.yml")),
     ); // Get path of the library
 
     // read from args
@@ -190,8 +190,8 @@ pub fn read_theme_yml() -> Result<OnScreenDisplayTheme> {
     let theme_file_handle = match File::open(file_path) {
         Ok(file) => file,
         Err(e) => {
-            bail!(OnScreenDisplayError::new(
-                OnScreenDisplayErrorCodes::ThemeReadError,
+            bail!(LauncherError::new(
+                LauncherErrorCodes::ThemeReadError,
                 format!("cannot read the theme.yml in the path - {}", e.to_string()),
             ));
         }
@@ -201,8 +201,8 @@ pub fn read_theme_yml() -> Result<OnScreenDisplayTheme> {
     let config: ThemeConfigs = match serde_yaml::from_reader(theme_file_handle) {
         Ok(config) => config,
         Err(e) => {
-            bail!(OnScreenDisplayError::new(
-                OnScreenDisplayErrorCodes::ThemeParseError,
+            bail!(LauncherError::new(
+                LauncherErrorCodes::ThemeParseError,
                 format!("error parsing the theme.yml - {}", e.to_string()),
             ));
         }

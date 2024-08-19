@@ -1,7 +1,7 @@
 use crate::gui::Message;
 use crate::pages::home_ui::HomeUi;
-use crate::settings::{self, OnScreenDisplaySettings};
-use crate::theme::{self, OnScreenDisplayTheme};
+use crate::settings::{self, LauncherSettings};
+use crate::theme::{self, LauncherTheme};
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
 use crate::utils::get_formatted_battery_level;
 use crate::{AppMessage, AppParams};
@@ -20,8 +20,8 @@ use std::any::Any;
 
 #[derive(Debug, Default)]
 pub struct LockscreenState {
-    settings: OnScreenDisplaySettings,
-    custom_theme: OnScreenDisplayTheme,
+    settings: LauncherSettings,
+    custom_theme: LauncherTheme,
     battery_level: BatteryLevel,
     wireless_status: WirelessStatus,
     bluetooth_status: BluetoothStatus,
@@ -40,12 +40,12 @@ impl Component for Lockscreen {
     fn init(&mut self) {
         let settings = match settings::read_settings_yml() {
             Ok(settings) => settings,
-            Err(_) => OnScreenDisplaySettings::default(),
+            Err(_) => LauncherSettings::default(),
         };
 
         let custom_theme = match theme::read_theme_yml() {
             Ok(theme) => theme,
-            Err(_) => OnScreenDisplayTheme::default(),
+            Err(_) => LauncherTheme::default(),
         };
         self.state = Some(LockscreenState {
             settings,

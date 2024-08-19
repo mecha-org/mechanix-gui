@@ -6,7 +6,7 @@ use crate::{
     AppMessage,
 };
 
-use crate::errors::{OnScreenDisplayError, OnScreenDisplayErrorCodes};
+use crate::errors::{LauncherError, LauncherErrorCodes};
 use anyhow::{bail, Result};
 use mechanix_system_dbus_client::wireless::{
     NotificationStream, WirelessService as WirelessZbusClient,
@@ -94,8 +94,8 @@ impl WirelessService {
         let task = "get_wireless_status";
         let wireless_on = match WirelessZbusClient::wireless_status().await {
             Ok(v) => v,
-            Err(e) => bail!(OnScreenDisplayError::new(
-                OnScreenDisplayErrorCodes::GetWirelessStatusError,
+            Err(e) => bail!(LauncherError::new(
+                LauncherErrorCodes::GetWirelessStatusError,
                 e.to_string(),
             )),
         };
@@ -106,8 +106,8 @@ impl WirelessService {
 
         let wireless_info = match WirelessZbusClient::info().await {
             Ok(v) => v,
-            Err(e) => bail!(OnScreenDisplayError::new(
-                OnScreenDisplayErrorCodes::GetWirelessStatusError,
+            Err(e) => bail!(LauncherError::new(
+                LauncherErrorCodes::GetWirelessStatusError,
                 e.to_string(),
             )),
         };

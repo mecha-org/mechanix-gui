@@ -2,7 +2,7 @@ use crate::{init_services, AppMessage, AppParams, UiParams};
 use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
 use std::sync::{Arc, RwLock};
 
-use crate::gui::OnScreenDisplay;
+use crate::gui::Launcher;
 use mctk_core::{
     msg,
     reexports::smithay_client_toolkit::{
@@ -61,22 +61,21 @@ pub fn launch_homescreen(
     let (layer_tx, layer_rx) = calloop::channel::channel();
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
-    let (mut app, mut event_loop, window_tx) =
-        LayerWindow::open_blocking::<OnScreenDisplay, AppParams>(
-            LayerWindowParams {
-                window_info,
-                window_opts,
-                fonts,
-                assets,
-                layer_shell_opts: layer_shell_opts.clone(),
-                svgs,
-                layer_tx: Some(layer_tx.clone()),
-                layer_rx: Some(layer_rx),
-            },
-            AppParams {
-                app_channel: Some(app_channel_tx.clone()),
-            },
-        );
+    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Launcher, AppParams>(
+        LayerWindowParams {
+            window_info,
+            window_opts,
+            fonts,
+            assets,
+            layer_shell_opts: layer_shell_opts.clone(),
+            svgs,
+            layer_tx: Some(layer_tx.clone()),
+            layer_rx: Some(layer_rx),
+        },
+        AppParams {
+            app_channel: Some(app_channel_tx.clone()),
+        },
+    );
 
     let handle = event_loop.handle();
 
