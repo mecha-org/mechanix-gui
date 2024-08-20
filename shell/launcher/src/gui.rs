@@ -99,6 +99,7 @@ pub struct Swipe {
     pub min_dy: i32,
     pub direction: SwipeDirection,
     pub state: SwipeState,
+    pub is_closer: bool,
 }
 
 #[derive(Debug, Default)]
@@ -257,28 +258,29 @@ impl Launcher {
                 direction: SwipeDirection::Down,
                 ..Default::default()
             });
-        } else if bottom_area.is_under(pos) {
-            swipe = Some(Swipe {
-                max_dy: aabb.height() as i32,
-                min_dy: 0,
-                direction: SwipeDirection::Up,
-                ..Default::default()
-            })
-        } else if left_area.is_under(pos) {
-            swipe = Some(Swipe {
-                max_dx: aabb.width() as i32,
-                min_dx: 0,
-                direction: SwipeDirection::Right,
-                ..Default::default()
-            })
-        } else if right_area.is_under(pos) {
-            swipe = Some(Swipe {
-                max_dx: aabb.width() as i32,
-                min_dx: 0,
-                direction: SwipeDirection::Left,
-                ..Default::default()
-            })
         }
+        // else if bottom_area.is_under(pos) {
+        //     swipe = Some(Swipe {
+        //         max_dy: aabb.height() as i32,
+        //         min_dy: 0,
+        //         direction: SwipeDirection::Up,
+        //         ..Default::default()
+        //     })
+        // } else if left_area.is_under(pos) {
+        //     swipe = Some(Swipe {
+        //         max_dx: aabb.width() as i32,
+        //         min_dx: 0,
+        //         direction: SwipeDirection::Right,
+        //         ..Default::default()
+        //     })
+        // } else if right_area.is_under(pos) {
+        //     swipe = Some(Swipe {
+        //         max_dx: aabb.width() as i32,
+        //         min_dx: 0,
+        //         direction: SwipeDirection::Left,
+        //         ..Default::default()
+        //     })
+        // }
 
         self.state_mut().swipe = swipe;
         if let Some(app_channel) = self.state_ref().app_channel.clone() {
@@ -304,11 +306,14 @@ impl Component for Launcher {
                 min_dy,
                 direction,
                 state,
+                is_closer,
             } = swipe.clone();
 
             println!("Launcher::on_tick() dy {:?} {:?}", dy, state);
             if state == SwipeState::Completed {
-                self.state_mut().swipe = None;
+                if is_closer {
+                    self.state_mut().swipe = None;
+                }
                 return;
             }
 
@@ -316,10 +321,10 @@ impl Component for Launcher {
                 if direction == SwipeDirection::Down {
                     if dy >= max_dy {
                         swipe.state = SwipeState::Completed;
-                        return;
+                        // return;
                     }
 
-                    swipe.dy = (dy + 10).max(min_dy).min(max_dy);
+                    swipe.dy = (dy + 30).max(min_dy).min(max_dy);
                 }
                 if direction == SwipeDirection::Up {
                     if dy <= min_dy {
@@ -327,10 +332,10 @@ impl Component for Launcher {
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             let _ = app_channel.send(AppMessage::RunOnBottom);
                         }
-                        return;
+                        // return;
                     }
 
-                    swipe.dy = (dy - 14).max(min_dy).min(max_dy);
+                    swipe.dy = (dy - 30).max(min_dy).min(max_dy);
                 }
             }
             self.state_mut().swipe = Some(swipe);
@@ -406,6 +411,7 @@ impl Component for Launcher {
         let current_screen = self.state_ref().current_screen.clone();
         let swipe_gesture = self.state_ref().swipe_gesture.clone();
         let swipe = self.state_ref().swipe.clone();
+        println!("swipe is {:?}", swipe);
         let sound = self.state_ref().sound;
         let brightness = self.state_ref().brightness;
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
@@ -435,7 +441,9 @@ impl Component for Launcher {
 
         let mut down_swipe = 0;
         if let Some(swipe) = swipe {
-            if swipe.direction == SwipeDirection::Down || swipe.direction == SwipeDirection::Up {
+            if (swipe.direction == SwipeDirection::Down && !swipe.is_closer)
+                || (swipe.direction == SwipeDirection::Up && swipe.is_closer)
+            {
                 down_swipe = swipe.dy;
             }
         }
@@ -617,6 +625,11 @@ impl Component for Launcher {
     }
 
     fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
+        if self.state_ref().swipe.is_some() {
+            println!("Swipe already exists");
+            return;
+        }
+
         println!(
             "Launcher::on_drag_start() {:?}",
             event.relative_logical_position()
@@ -633,6 +646,7 @@ impl Component for Launcher {
 
     fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
         let logical_delta = event.bounded_logical_delta();
+        println!("Launcher::on_drag() {:?}", logical_delta);
         if let Some(msg) = self.handle_on_drag(logical_delta) {
             self.update(msg);
         }
@@ -646,6 +660,11 @@ impl Component for Launcher {
         &mut self,
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
     ) {
+        if self.state_ref().swipe.is_some() {
+            println!("Swipe already exists");
+            return;
+        }
+
         println!(
             "Launcher::on_drag_start() {:?}",
             event.relative_logical_position()
@@ -662,6 +681,7 @@ impl Component for Launcher {
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
         let logical_delta = event.bounded_logical_delta();
+        println!("Launcher::on_touch_drag() {:?}", logical_delta);
         if let Some(msg) = self.handle_on_drag(logical_delta) {
             self.update(msg);
         }

@@ -9,15 +9,8 @@ pub mod session;
 pub mod user;
 
 pub async fn get_current_session() -> Result<SessionProxy<'static>> {
-    let connection = zbus::Connection::system().await?;
-    let manager = ManagerProxy::new(&connection).await?;
     // let user_path = manager.get_user_by_pid(std::process::id()).await?;
-    let user = UserProxy::builder(&connection)
-        // .path(user_path)?
-        .build()
-        .await?;
 
-    let mut session_path: String = "".to_string();
     let mut tty = "".to_string();
     let args: Vec<String> = env::args().collect();
     for (i, arg) in args.iter().enumerate() {
@@ -25,6 +18,9 @@ pub async fn get_current_session() -> Result<SessionProxy<'static>> {
             tty = args.get(i + 1).unwrap_or(&String::new()).clone();
         }
     }
+
+    println!("tty args is {:?}", tty);
+
     if tty.is_empty() {
         let env_vars = env::vars();
         for (key, value) in env_vars {
@@ -34,7 +30,30 @@ pub async fn get_current_session() -> Result<SessionProxy<'static>> {
         }
     }
 
+    println!("tty param is {:?}", tty);
+
+    let connection = zbus::Connection::system().await?;
+    if tty.is_empty() && env::var("XDG_SESSION_ID").is_ok() {
+        let manager = ManagerProxy::new(&connection).await?;
+        let path = manager
+            .get_session(env::var("XDG_SESSION_ID").unwrap())
+            .await?;
+        println!("current session path {:?}", path);
+        let session = SessionProxy::builder(&connection)
+            .path(path.clone())?
+            .build()
+            .await?;
+        println!("session tty of current process {:?}", session.tty().await);
+        return Ok(session);
+    }
+
+    let user = UserProxy::builder(&connection)
+        // .path(user_path)?
+        .build()
+        .await?;
+
     let sessions = user.sessions().await?;
+    let mut session_path: String = "".to_string();
     for (_, path) in sessions {
         let session = SessionProxy::builder(&connection)
             .path(&path)?
@@ -51,6 +70,7 @@ pub async fn get_current_session() -> Result<SessionProxy<'static>> {
         .path(session_path)?
         .build()
         .await?;
+    println!("session tty {:?}", session.tty().await);
     Ok(session)
 }
 

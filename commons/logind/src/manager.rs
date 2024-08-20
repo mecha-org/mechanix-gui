@@ -14,4 +14,6 @@ trait Manager {
     fn power_off(&self, interactive: bool) -> zbus::Result<()>;
 
     // fn kill_session(&self, session_id: &str, who: &str, signal_number: i32) -> zbus::Result<()>;
+
+    fn get_session(&self, session_id: String) -> zbus::Result<zbus::zvariant::OwnedObjectPath>;
 }
