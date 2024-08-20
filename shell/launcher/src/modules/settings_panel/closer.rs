@@ -16,6 +16,7 @@ impl Closer {
                 max_dy: 480 - 124,
                 direction: SwipeDirection::Up,
                 state: SwipeState::UserSwiping,
+                is_closer: true,
                 ..Default::default()
             };
 
