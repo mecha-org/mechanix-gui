@@ -5,6 +5,8 @@ use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
 
 use super::battery::component::Battery;
 use super::bluetooth::component::Bluetooth;
+use super::lock::component::Lock;
+use super::settings::component::Settings;
 use super::wireless::component::Wireless;
 
 #[derive(Debug)]
@@ -12,6 +14,7 @@ pub struct Controls {
     pub battery_level: BatteryLevel,
     pub wireless_status: WirelessStatus,
     pub bluetooth_status: BluetoothStatus,
+    pub is_lock_screen: bool,
 }
 
 impl Component for Controls {
@@ -44,6 +47,12 @@ impl Component for Controls {
             },
             lay![size: [60, 60]]
         ));
+
+        if self.is_lock_screen {
+            controls_node = controls_node.push(node!(Lock {}, lay![size: [60, 60]]));
+        } else {
+            controls_node = controls_node.push(node!(Settings {}, lay![size: [60, 60]]));
+        }
 
         Some(controls_node)
     }

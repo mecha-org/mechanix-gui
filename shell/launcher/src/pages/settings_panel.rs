@@ -3,20 +3,27 @@ use std::hash::Hash;
 use mctk_core::layout::{Alignment, Direction};
 use mctk_core::style::Styled;
 use mctk_core::widgets::{IconButton, RoundedRect};
-use mctk_core::Color;
 use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
+use mctk_core::{msg, Color};
 
+use crate::gui;
 use crate::modules::settings_panel::brightness::component::Brightness;
 use crate::modules::settings_panel::closer::Closer;
+use crate::modules::settings_panel::rotation::component::RotationStatus;
 use crate::modules::settings_panel::sound::component::Sound;
 use crate::shared::h_divider::HDivider;
 use crate::shared::v_divider::VDivider;
+use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
 
 #[derive(Debug)]
 pub struct SettingsPanel {
     pub swipe: i32,
     pub sound: u8,
     pub brightness: u8,
+    pub battery_level: BatteryLevel,
+    pub wireless_status: WirelessStatus,
+    pub bluetooth_status: BluetoothStatus,
+    pub rotation_status: RotationStatus,
 }
 
 impl Component for SettingsPanel {
@@ -24,12 +31,21 @@ impl Component for SettingsPanel {
         self.swipe.hash(hasher);
         self.sound.hash(hasher);
         self.brightness.hash(hasher);
+        self.battery_level.hash(hasher);
+        self.wireless_status.hash(hasher);
+        self.bluetooth_status.hash(hasher);
+        self.rotation_status.hash(hasher);
     }
 
     fn view(&self) -> Option<Node> {
         let swipe = self.swipe;
         let sound = self.sound;
         let brightness = self.brightness;
+        let battery_level = self.battery_level;
+        let wireless_status = self.wireless_status;
+        let bluetooth_status = self.bluetooth_status;
+        let rotation_status = self.rotation_status;
+
         // println!("view() swipe {:?}", swipe);
         let width = 480;
         let height = 480;
@@ -65,10 +81,12 @@ impl Component for SettingsPanel {
             ]
         );
         row_1 = row_1.push(node!(
-            IconButton::new("WirelessConnected(Strong)")
-                // .on_click(Box::new(move || msg!(message.clone())))
+            IconButton::new(wireless_status.to_string())
+                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                    gui::SettingNames::Wireless
+                ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgba(255., 255., 255., 0.50)),
+                .style("active_color", Color::TRANSPARENT),
             lay![
                 size: [80, 88],
                 padding: [24, 13., 24, 26.],
@@ -76,10 +94,12 @@ impl Component for SettingsPanel {
         ));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(
-            IconButton::new("BluetoothOn")
-                // .on_click(Box::new(move || msg!(message.clone())))
+            IconButton::new(bluetooth_status.to_string())
+                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                    gui::SettingNames::Bluetooth
+                ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgba(255., 255., 255., 0.50)),
+                .style("active_color", Color::TRANSPARENT),
             lay![
                 size: [92, 88],
                 padding: [24., 26., 24., 26.]
@@ -87,10 +107,12 @@ impl Component for SettingsPanel {
         ));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(
-            IconButton::new("RotationPortrait")
-                // .on_click(Box::new(move || msg!(message.clone())))
+            IconButton::new(rotation_status.to_string())
+                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                    gui::SettingNames::Rotation
+                ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgba(255., 255., 255., 0.50)),
+                .style("active_color", Color::TRANSPARENT),
             lay![
                 size: [92, 88],
                 padding: [24., 26., 24., 26.]
@@ -106,9 +128,11 @@ impl Component for SettingsPanel {
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(
             IconButton::new("power_icon")
-                // .on_click(Box::new(move || msg!(message.clone())))
+                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                    gui::SettingNames::Power
+                ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgba(255., 255., 255., 0.50)),
+                .style("active_color", Color::TRANSPARENT),
             lay![
                 size: [80, 88],
                 padding: [24., 26., 24., 13.]

@@ -1,4 +1,5 @@
 use crate::modules::cpu::component::GRID_SIZE;
+use crate::modules::settings_panel::rotation::component::RotationStatus;
 use crate::pages::home_ui::HomeUi;
 use crate::pages::settings_panel::SettingsPanel;
 use crate::pages::status_bar::StatusBar;
@@ -6,7 +7,9 @@ use crate::settings::{self, LauncherSettings};
 use crate::theme::{self, LauncherTheme};
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
 use crate::utils::get_formatted_battery_level;
-use crate::{AppMessage, AppParams};
+use crate::{
+    AppMessage, AppParams, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage,
+};
 use command::spawn_command;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Direction};
@@ -39,6 +42,20 @@ pub enum Screens {
     Notification,
 }
 
+#[derive(Debug, Clone)]
+pub enum SettingNames {
+    Wireless,
+    Bluetooth,
+    Rotation,
+    Settings,
+    Power,
+}
+#[derive(Debug, Clone)]
+pub enum SliderSettingsNames {
+    Brightness { value: u8 },
+    Sound { value: u8 },
+}
+
 /// ## Message
 ///
 /// These are the events (or messages) that update state.
@@ -50,6 +67,8 @@ pub enum Message {
     Wireless { status: WirelessStatus },
     Bluetooth { status: BluetoothStatus },
     Battery { level: u8, status: BatteryStatus },
+    SettingClicked(SettingNames),
+    SliderChanged(SliderSettingsNames),
     CPUUsage { usage: f32 },
     Uptime { uptime: String },
     MachineName { name: String },
@@ -109,6 +128,7 @@ pub struct LauncherState {
     battery_level: BatteryLevel,
     wireless_status: WirelessStatus,
     bluetooth_status: BluetoothStatus,
+    rotation_status: RotationStatus,
     time: String,
     date: String,
     cpu_usage: VecDeque<u8>,
@@ -377,6 +397,7 @@ impl Component for Launcher {
             battery_level: BatteryLevel::default(),
             wireless_status: WirelessStatus::default(),
             bluetooth_status: BluetoothStatus::default(),
+            rotation_status: RotationStatus::default(),
             time: String::from(""),
             date: String::from(""),
             cpu_usage: VecDeque::new(),
@@ -407,6 +428,7 @@ impl Component for Launcher {
         let battery_level = self.state_ref().battery_level.clone();
         let wireless_status = self.state_ref().wireless_status.clone();
         let bluetooth_status = self.state_ref().bluetooth_status.clone();
+        let rotation_status = self.state_ref().rotation_status.clone();
         let settings = self.state_ref().settings.clone();
         let current_screen = self.state_ref().current_screen.clone();
         let swipe_gesture = self.state_ref().swipe_gesture.clone();
@@ -485,8 +507,12 @@ impl Component for Launcher {
             start_node = start_node.push(node!(
                 SettingsPanel {
                     swipe: down_swipe,
-                    sound: 40,
-                    brightness: 70
+                    sound,
+                    brightness,
+                    battery_level,
+                    wireless_status,
+                    bluetooth_status,
+                    rotation_status
                 },
                 lay![
                     size_pct: [100],
@@ -550,6 +576,96 @@ impl Component for Launcher {
                     let battery_level = get_formatted_battery_level(level, status);
                     self.state_mut().battery_level = battery_level;
                 }
+                Message::SettingClicked(settings_name) => {
+                    println!("setting clicked: {:?}", settings_name);
+                    match settings_name {
+                        SettingNames::Wireless => {
+                            let wireless_status = self.state_ref().wireless_status.clone();
+                            let value = match wireless_status {
+                                WirelessStatus::Off => true,
+                                WirelessStatus::On => false,
+                                WirelessStatus::Connected(_) => false,
+                                WirelessStatus::NotFound => false,
+                            };
+                            if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                                if value == true {
+                                    self.state_mut().wireless_status = WirelessStatus::On;
+                                } else {
+                                    self.state_mut().wireless_status = WirelessStatus::Off;
+                                }
+                                let _ = app_channel.send(AppMessage::Wireless {
+                                    message: WirelessMessage::Toggle { value: Some(value) },
+                                });
+                            }
+                        }
+                        SettingNames::Bluetooth => {
+                            let bluetooth_status = self.state_ref().bluetooth_status.clone();
+                            let value = match bluetooth_status {
+                                BluetoothStatus::Off => true,
+                                BluetoothStatus::On => false,
+                                BluetoothStatus::Connected => false,
+                                BluetoothStatus::NotFound => false,
+                            };
+                            if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                                if value == true {
+                                    self.state_mut().bluetooth_status = BluetoothStatus::On;
+                                } else {
+                                    self.state_mut().bluetooth_status = BluetoothStatus::Off;
+                                }
+                                let _ = app_channel.send(AppMessage::Bluetooth {
+                                    message: BluetoothMessage::Toggle { value: Some(value) },
+                                });
+                            }
+                        }
+                        SettingNames::Rotation => {
+                            let rotation_status = self.state_ref().rotation_status.clone();
+                            if rotation_status == RotationStatus::Portrait {
+                                self.state_mut().rotation_status = RotationStatus::Landscape;
+                            } else if rotation_status == RotationStatus::Landscape {
+                                self.state_mut().rotation_status = RotationStatus::Portrait;
+                            }
+                        }
+                        SettingNames::Settings => {
+                            let run_command = self
+                                .state_ref()
+                                .settings
+                                .modules
+                                .settings
+                                .run_command
+                                .clone();
+                            println!("run_command {:?}", run_command);
+                            if !run_command.is_empty() {
+                                let command = run_command[0].clone();
+                                let args: Vec<String> = run_command.clone()[1..].to_vec();
+                                println!("command {:?} args {:?}", command, args);
+                                let _ = spawn_command(command, args);
+                            }
+                        }
+                        SettingNames::Power => {}
+                    }
+                }
+                Message::SliderChanged(settings_name) => match settings_name {
+                    SliderSettingsNames::Brightness { value } => {
+                        self.state_mut().brightness = *value;
+                        if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                            let _ = app_channel.send(AppMessage::Brightness {
+                                message: BrightnessMessage::Change {
+                                    value: *value as u8,
+                                },
+                            });
+                        }
+                    }
+                    SliderSettingsNames::Sound { value } => {
+                        self.state_mut().sound = *value;
+                        if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                            let _ = app_channel.send(AppMessage::Sound {
+                                message: SoundMessage::Change {
+                                    value: *value as u8,
+                                },
+                            });
+                        }
+                    }
+                },
                 Message::CPUUsage { usage } => {
                     let mut usages = self.state_ref().cpu_usage.clone();
                     usages.push_front(*usage as u8);
@@ -667,11 +783,11 @@ impl Component for Launcher {
 
         println!(
             "Launcher::on_drag_start() {:?}",
-            event.relative_logical_position()
+            event.relative_logical_position_touch()
         );
 
         let aabb = event.current_logical_aabb();
-        let pos = event.relative_logical_position();
+        let pos = event.relative_logical_position_touch();
 
         if let Some(edges) = self.is_drag_from_edges(aabb, pos) {
             event.stop_bubbling();
