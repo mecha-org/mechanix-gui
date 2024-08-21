@@ -80,25 +80,25 @@
 	<div slot="switch">
 		{#if $fetchingBluetoothStatus}
 			<div class="flex animate-spin flex-row items-center gap-2">
-				<Icons name="spinner" height="30px" width="30px" />
+				<Icons name="spinner" height="28px" width="28px" />
 			</div>
 		{:else}
 			<Switch
 				bind:checked={$bluetoothStatus}
 				onCheckedChange={onBluetoothStatusChangeHandler}
 				disabled={$disableBluetoothSwitch}
-			></Switch>
+			/>
 		{/if}
 	</div>
 	<div class="mt-7">
 		{#if $availableDevicesList.length > 0 || $isFetchingAvailableDevices}
 			<ListHeading title="Available devices" />
 		{/if}
-		<div class="flex flex-col gap-4">
+		<div class="flex flex-col">
 			{#if $isFetchingAvailableDevices}
 				<ListItem title="Searching available devicess">
 					<div class="flex animate-spin flex-row items-center gap-2">
-						<Icons name="spinner" height="30px" width="30px" />
+						<Icons name="spinner" height="28px" width="28px" />
 					</div>
 				</ListItem>
 			{:else}
@@ -111,7 +111,7 @@
 					>
 						<div class="flex flex-row items-center gap-3">
 							{#if available_device?.is_trusted}
-								<Icons name="blue_checked" height="24px" width="24px" />
+								<Icons name="blue_check_no_fill" height="24px" width="24px" />
 							{/if}
 							<Icons name="right_arrow" height="24px" width="24px" />
 						</div>
@@ -122,11 +122,11 @@
 	</div>
 	<div class="mt-7">
 		<ListHeading title="Paired devices" />
-		<div class="flex flex-col gap-4">
+		<div class="flex flex-col">
 			{#if $isFetchingOtherDevices}
 				<ListItem title="Searching paired devicess">
 					<div class="flex animate-spin flex-row items-center gap-2">
-						<Icons name="spinner" height="30px" width="30px" />
+						<Icons name="spinner" height="28px" width="28px" />
 					</div>
 				</ListItem>
 			{:else if $otherDevicesList.length > 0}
@@ -138,7 +138,9 @@
 							: `/bluetooth/other-device/${other_device?.name?.trim().replace(/\s+/g, '-')}?address=${other_device?.address}`}
 						title={other_device?.name}
 					>
-						<Icons name="right_arrow" height="24px" width="24px" />
+						<div class="flex flex-row items-center gap-3">
+							<Icons name="right_arrow" height="24px" width="24px" />
+						</div>
 					</ListItem>
 				{/each}
 			{:else}
@@ -162,7 +164,7 @@
 				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 			<button
-				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
 				<Icons name="addition" width="60" height="60" />

@@ -7,6 +7,7 @@ export const wifiStatus = writable(false);
 export const connectedNetwork = writable<WirelessInfoResponse>({} as WirelessInfoResponse);
 export const disableWifiSwitch = writable(false);
 export const fetchingWifiStatus = writable(true);
+export const fetchingConnectedNetwork = writable(true);
 
 // manage-network page
 

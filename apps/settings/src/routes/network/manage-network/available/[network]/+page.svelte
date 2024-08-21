@@ -40,57 +40,69 @@
 
 	const backClickHandler = () => {
 		goBack();
-	}
+	};
 
 	const addNetwork = () => {
 		goto(`/network/manage-network/connect/${data.title}`);
 	};
 </script>
 
-<Layout title={formattitle(data.title) + ` network details`}>
-	<div class="flex flex-col gap-4">
+<Layout title={formattitle(data.title)}>
+	<div class="mt-4 flex flex-col">
 		{#each data?.networkDetail as networkDetail}
 			<ListBlock>
 				{#each networkDetail as eachNetwork, index}
-					{#if index == networkDetail.length - 1}<BlockItem
-							isBottomBorderVisible={false}
-							title={eachNetwork.title}
-						>
-							{#if typeof eachNetwork.value == 'boolean'}
+					<!-- isTopBorderVisible={index == 0}
+			isBottomBorderVisible={index !== networkDetail.length - 1}	 -->
+					<BlockItem borderY={true} title={eachNetwork.title}>
+						<h2 class="text-misty-slate text-lg font-medium">
+							{eachNetwork.value}
+						</h2></BlockItem
+					>
+				{/each}
+			</ListBlock>
+
+			<!-- <ListBlock>
+				{#each networkDetail as network, index}
+					{#if index == networkDetail.length - 1}
+						<BlockItem isBottomBorderVisible={false} title={network.title}>
+							{#if typeof network.value == 'boolean'}
 								<Switch />
 							{:else}
-								<p class="text-misty-slate text-lg font-medium">{eachNetwork.value}</p>
+								<p class="text-misty-slate text-lg font-medium">{network.value}</p>
 							{/if}
 						</BlockItem>
 					{:else}
-						<BlockItem title={eachNetwork.title}>
-							{#if typeof eachNetwork.value == 'boolean'}
+						<BlockItem title={network.title}>
+							{#if typeof network.value == 'boolean'}
 								<Switch />
 							{:else}
-								<p class="text-misty-slate text-lg font-medium">{eachNetwork.value}</p>
+								<p class="text-misty-slate text-lg font-medium">{network.value}</p>
 							{/if}
 						</BlockItem>
 					{/if}
 				{/each}
-			</ListBlock>
+			</ListBlock> -->
 		{/each}
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
-		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
+		<div
+			class="border-silver-gray flex h-full w-full flex-row items-center justify-between border-t-2 px-4 py-3"
+		>
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
 				on:click={backClickHandler}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 			{#if data?.isConnected}
 				<button
-					class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+					class=" flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
 					on:click={removeClickHandler}
 				>
-					<Icons name="trash" width="32" height="32" />
+					<Icons name="trash" width="60" height="60" />
 				</button>
-			<!-- {:else}
+				<!-- {:else}
 				<button
 					class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 					on:click={addNetwork}

@@ -14,7 +14,7 @@
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG + 'manage-network::connet::';
 
 	export let data: PageData;
-	
+
 	$: password = '';
 	const connectToNetwork = async () => {
 		consoleLog(LOG_PREFIX + 'connectToNetwork()::');
@@ -30,15 +30,14 @@
 			console.log('=======> error: ', error);
 			const startIndex = error.indexOf('message:') + 'message:'.length;
 			const endIndex = error.length;
-			let error_message = error.substring(startIndex, endIndex).replace(")","").trim();
-			console.log("=======> error_message:", error_message);
+			let error_message = error.substring(startIndex, endIndex).replace(')', '').trim();
+			console.log('=======> error_message:', error_message);
 			customToast(error_message);
-			
+
 			consoleLog(LOG_PREFIX + 'connectToNetwork()::' + ERROR_LOG, {
 				type: LOG_LEVEL.ERROR,
 				data: error
 			});
- 
 		}
 	};
 
@@ -47,28 +46,34 @@
 	};
 </script>
 
-<Layout title={data.title}>
-	<div class="flex flex-col gap-4">
-		<div>
+<Layout title={`Enter password for ${data.title}`} bold_text={data.title}>
+	<div class="mt-6 flex flex-col gap-4">
+		<!-- <div>
 			<ListHeading title="Password" />
+			<Input placeholder="Password" bind:value={password} />
+		</div> -->
+		<div class="border-neutral-gray border-y-2 py-1">
 			<Input placeholder="Password" bind:value={password} />
 		</div>
 
-		<Toaster/>
+		<Toaster />
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
-		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
+		<div
+			class="border-silver-gray flex h-full w-full flex-row items-center justify-between border-t-2 px-4 py-3"
+		>
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
 				on:click={backClickHandler}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
+
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
 				on:click={connectToNetwork}
 			>
-				<Icons name="tick" width="32" height="32" />
+				<Icons name="submit" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

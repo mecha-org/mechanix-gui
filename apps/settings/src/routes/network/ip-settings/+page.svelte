@@ -9,7 +9,7 @@
 </script>
 
 <Layout title="IP Settings">
-	<div class="flex flex-col gap-4">
+	<div class="flex flex-col">
 		<button
 			on:click={() => {
 				selectedSetting = 'dhcp';
@@ -17,9 +17,9 @@
 		>
 			<ListItem isSelected={selectedSetting == 'dhcp'} title="Automatic (DHCP)">
 				{#if selectedSetting == 'dhcp'}
-					<Icons name="blue_checked" height="30px" width="30px" />
+					<Icons name="blue_radio_fill" height="24px" width="24px" />
 				{:else}
-					<Icons name="empty_ring" height="30px" width="30px" />
+					<Icons name="empty_ring" height="24px" width="24px" />
 				{/if}
 			</ListItem>
 		</button>
@@ -30,14 +30,14 @@
 		>
 			<ListItem isSelected={selectedSetting == 'static'} title="Static">
 				{#if selectedSetting == 'static'}
-					<Icons name="blue_checked" height="30px" width="30px" />
+					<Icons name="blue_radio_fill" height="24px" width="24px" />
 				{:else}
-					<Icons name="empty_ring" height="30px" width="30px" />
+					<Icons name="empty_ring" height="24px" width="24px" />
 				{/if}
 			</ListItem>
 		</button>
 		{#if selectedSetting == 'static'}
-			<div class="flex flex-col gap-4">
+			<div class="flex flex-col">
 				<div>
 					<ListHeading title="IP Address" />
 					<Input placeholder="Type here" />
@@ -49,13 +49,16 @@
 			</div>
 		{/if}
 	</div>
-	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
+	<footer
+		slot="footer"
+		class="border-silver-gray h-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+	>
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="  flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

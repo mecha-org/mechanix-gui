@@ -1,6 +1,7 @@
 <script lang="ts">
 	export let title: string = '';
-	export let bluetooth_title: string = '';
+	export let bold_text: string = '';
+	export let loader: boolean = false;
 
 	import AstronautXMecha from '$lib/assets/images/wallpapers/astronaut_mecha.png';
 </script>
@@ -9,17 +10,21 @@
 	{#if title}
 		<div class="flex flex-row justify-between p-5 pt-6">
 			<h1 class="text-misty-slate text-2xl">{title}</h1>
-			<slot name="switch" />
+			{#if loader}
+				<slot name="loader" />
+			{:else}
+				<slot name="switch" />
+			{/if}
 		</div>
-	{:else if bluetooth_title.length > 0}
+	{:else if bold_text.length > 0}
 		<div class="flex flex-row p-5 pt-6">
 			<h1 class="text-misty-slate text-2xl">
 				Confirm this code on<br />
 				{' '}
 				<strong>
-					{bluetooth_title.length > 15
-						? `'${bluetooth_title.slice(0, 10)}...${bluetooth_title.substring(bluetooth_title.length - 1)}'`
-						: `'${bluetooth_title}'`}
+					{bold_text.length > 15
+						? `'${bold_text.slice(0, 10)}...${bold_text.substring(bold_text.length - 1)}'`
+						: `'${bold_text}'`}
 				</strong>
 				&nbsp;to connect
 			</h1>

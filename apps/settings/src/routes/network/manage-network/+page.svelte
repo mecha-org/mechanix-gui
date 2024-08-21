@@ -20,7 +20,7 @@
 	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG, SET_INTERVAL_TIMER } from '../../../constants';
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG + 'manage-network::';
 
-	let timeIntervalId: number; 
+	let timeIntervalId: number;
 
 	const getInitalData = async () => {
 		consoleLog(LOG_PREFIX + 'getInitalData()::');
@@ -56,24 +56,22 @@
 			});
 			await fetchConnectedWifiInfo();
 			changeKnownNetwork.set(false);
-
 		} catch (error) {
 			changeKnownNetwork.set(false);
 
 			console.log(LOG_PREFIX + 'connectedToNetwork()::error::', error);
 		}
 	};
-
 </script>
 
 <Layout title="Manage Network">
 	<!-- <ListHeading title="Known Networks" /> -->
 	<div class="flex flex-col gap-12">
-		<div class="flex flex-col gap-4">
+		<div class="flex flex-col">
 			{#if $fetchingKnownNetworks}
 				<ListItem title="Loading known networks">
 					<div class="flex animate-spin flex-row items-center gap-2">
-						<Icons name="spinner" height="30px" width="30px" />
+						<Icons name="spinner" height="28px" width="28px" />
 					</div>
 				</ListItem>
 			{:else if $knownNetworksList.length > 0}
@@ -85,11 +83,11 @@
 							title={item.ssid}
 						>
 							<div class="flex flex-row items-center gap-2">
-								<Icons name="blue_checked" height="30px" width="30px" />
+								<Icons name="blue_check_no_fill" height="24px" width="24px" />
 
-								<Icons name="lock" height="30px" width="30px" />
-								<Icons name="network" height="30px" width="30px" />
-								<Icons name="square_info" height="30px" width="30px" />
+								<Icons name="lock" height="24px" width="24px" />
+								<Icons name="network" height="24px" width="24px" />
+								<Icons name="square_info" height="24px" width="24px" />
 							</div>
 						</ListItem>
 					{:else}
@@ -101,15 +99,15 @@
 						>
 							{#if $changeKnownNetwork}
 								<div class="flex animate-spin flex-row items-center gap-2">
-									<Icons name="spinner" height="30px" width="30px" />
+									<Icons name="spinner" height="28px" width="28px" />
 								</div>
 							{:else}
 								<div class="flex flex-row items-center gap-2">
-									<Icons name="lock" height="30px" width="30px" />
-									<Icons name="network" height="30px" width="30px" />
+									<Icons name="lock" height="24px" width="24px" />
+									<Icons name="network" height="24px" width="24px" />
 
 									<a href={`/network/manage-network/known/${item.network_id}`}>
-										<Icons name="square_info" height="30px" width="30px" />
+										<Icons name="square_info" height="24px" width="24px" />
 									</a>
 								</div>
 							{/if}
@@ -121,19 +119,17 @@
 			{/if}
 		</div>
 	</div>
-	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
+	<footer
+		slot="footer"
+		class="border-silver-gray h-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+	>
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="  flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
-			<!-- <button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
-			>
-				<Icons name="addition" width="32" height="32" />
-			</button> -->
 		</div>
 	</footer>
 </Layout>

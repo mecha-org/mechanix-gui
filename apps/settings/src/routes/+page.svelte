@@ -112,7 +112,7 @@
 			</ListItem>
 		{/each}
 	</div>
-	<div class="my-5">
+	<div class="my-6">
 		<hr />
 	</div>
 	<div class="flex flex-col gap-x-3">

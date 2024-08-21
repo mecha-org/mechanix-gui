@@ -10,7 +10,6 @@
 	export let borderTop: boolean = false;
 
 	type $$Events = Events;
-
 </script>
 
 {#if isLink}
@@ -19,7 +18,7 @@
 		{href}
 		class={`border-neutral-gray flex flex-row items-center justify-between ${borderTop ? 'border-t' : 'border-b'} p-4`}
 	>
-		<h1 class="flex flex-row items-center gap-3 text-lg font-medium text-white text-ellipsis">
+		<h1 class="flex flex-row items-center gap-3 text-ellipsis text-lg font-medium text-white">
 			{#if leftIcon}
 				<Icons name={leftIcon} height="30px" width="30px" />
 			{/if}
@@ -30,7 +29,7 @@
 	</a>
 {:else}
 	<button
-		class="border-neutral-gray flex flex-row items-center justify-between border-b p-4 w-full"
+		class="border-neutral-gray flex w-full flex-row items-center justify-between border-b p-4"
 		{...$$restProps}
 		on:click
 		on:keydown
@@ -38,5 +37,4 @@
 		<h1 class={`text-lg font-medium ${isSelected ? 'text-white' : 'text-mid-gray'}`}>{title}</h1>
 		<slot></slot>
 	</button>
-
 {/if}

@@ -28,7 +28,7 @@
 	};
 </script>
 
-<Layout title={!code ? `Pair with ${data.title}` : ``} bluetooth_title={data.title}>
+<Layout title={!code ? `Pair with ${data.title}` : ``} bold_text={data.title}>
 	<div class="border-neutral-gray mt-3 border-y-2 py-3">
 		{#if !code}
 			<Input placeholder="Enter code on the device" bind:value={pin} maxlength={6} />
@@ -52,7 +52,7 @@
 
 			{#if !code}
 				<button
-					class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
+					class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 					on:click={handleAddDevice}
 				>
 					<Icons name="addition" width="60" height="60" />

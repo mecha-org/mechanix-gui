@@ -12,10 +12,22 @@
 			box: 28,
 			svg: `<g clip-path="url(#clip0_2472_3117)"><path d="M11.6667 19.833L17.5 13.9997" stroke="#B7BBC8" stroke-width="2.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.5 14L11.6667 8.16667" stroke="#B7BBC8" stroke-width="2.33333" stroke-linecap="round" stroke-linejoin="round"/></g><defs><clipPath id="clip0_2472_3117"><rect width="28" height="28" fill="white"/></clipPath></defs>`
 		},
-		blue_checked: {
+		blue_check_no_fill: {
 			box: 24,
-			svg: `<rect width="24" height="24" fill="#2D8AFF"/>
-<path d="M18 8L10.0134 16L6 11.9798" stroke="white" stroke-width="2" stroke-linecap="square" stroke-linejoin="bevel"/>`
+			svg: `<path d="M16.725 9.3L11.1 14.7L7.725 11.9864M3 3H21V21H3V3Z" stroke="#2D8AFF" stroke-width="2.5" stroke-linejoin="bevel"/>`
+		},
+		old_blue_checked: {
+			box: 28,
+			svg: `<g clip-path="url(#clip0_2472_3034)"><circle cx="14" cy="14" r="10.5" fill="#3283E8" stroke="#3283E8" stroke-width="2.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.5 11.667L12.8333 16.3337L10.5 14.0003" stroke="#05070A" stroke-width="2.33333" stroke-linecap="round" stroke-linejoin="round"/></g><defs><clipPath id="clip0_2472_3034"><rect width="28" height="28" fill="white"/></clipPath></defs>`
+		},
+		blue_checked: {
+			box: 28,
+			svg: `<g clip-path="url(#clip0_2472_3034)"><circle cx="14" cy="14" r="10.5" fill="#3283E8" stroke="#3283E8" stroke-width="2.33333" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.5 11.667L12.8333 16.3337L10.5 14.0003" stroke="#05070A" stroke-width="2.33333" stroke-linecap="round" stroke-linejoin="round"/></g><defs><clipPath id="clip0_2472_3034"><rect width="28" height="28" fill="white"/></clipPath></defs>`
+		},
+		blue_radio_fill: {
+			box: 24,
+			svg: `<circle cx="12" cy="12" r="9" stroke="#2D8AFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="12" cy="12" r="6" fill="#2D8AFF"/>`
 		},
 		blue_tick: {
 			box: 40,
@@ -84,12 +96,14 @@
 			  <path class="opacity-75" fill="#2D8AFF" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>`
 		},
 		lock: {
-			box: 20,
-			svg: `<path d="M6.48535 8.37388V5.86173C6.48535 4.01184 7.93706 2.51221 9.72784 2.51221C11.5186 2.51221 12.9703 4.01184 12.9703 5.86173V8.37388" stroke="#848DA6" stroke-width="1.48301" stroke-linecap="round"/><path d="M4.05176 8.37352H15.4005V15.9369C15.4005 16.847 14.6627 17.5847 13.7527 17.5847H5.69954C4.7895 17.5847 4.05176 16.847 4.05176 15.9369V8.37352Z" stroke="#848DA6" stroke-width="1.48301" stroke-linejoin="round"/><rect x="11.752" y="12.9797" width="0.0105" height="0.0105" stroke="#848DA6" stroke-width="2.25" stroke-linejoin="round"/>`
+			box: 24,
+			svg: `
+<path d="M7.5 6.84075V3H16.5V6.84075M4 7H20V21H4V7Z" stroke="white" stroke-width="2.25" stroke-linejoin="bevel"/>
+<path d="M12 11.5C12.4487 12.6415 13.3585 13.5513 14.5 14C13.3585 14.4487 12.4487 15.3585 12 16.5C11.5513 15.3585 10.6415 14.4487 9.5 14C10.6415 13.5513 11.5513 12.6415 12 11.5Z" stroke="white" stroke-width="1.75" stroke-linejoin="bevel"/>`
 		},
 		square_info: {
 			box: 28,
-			svg: `<path d="M4.66602 7.89864C4.66602 6.11434 6.11248 4.66788 7.89678 4.66788H20.1019C21.8862 4.66788 23.3327 6.11434 23.3327 7.89865V20.1038C23.3327 21.8881 21.8862 23.3345 20.1019 23.3345H7.89678C6.11248 23.3345 4.66602 21.8881 4.66602 20.1038V7.89864Z" stroke="#2D8AFF" stroke-width="2.15385" stroke-linecap="round" stroke-linejoin="round"/><rect x="14" y="9.3334" width="0.01" height="0.01" stroke="#2D8AFF" stroke-width="3.5" stroke-linejoin="round"/><path d="M14 13.9999V18.6665" stroke="#2D8AFF" stroke-width="2.15385" stroke-linecap="round" stroke-linejoin="round"/>`
+			svg: `<path d="M12 16.5011L12 12.0011M12 7.5011L12 7.47034M21 21L3 21L3 3L21 3L21 21Z" stroke="#2D8AFF" stroke-width="2.35" stroke-linecap="square" stroke-linejoin="bevel"/>`
 		},
 		empty_ring: {
 			box: 28,
@@ -258,8 +272,7 @@
 		},
 		addition: {
 			box: 50,
-			svg: `<rect x="5" y="5" width="40" height="40" stroke="white" stroke-width="3" stroke-linejoin="bevel"/>
-<path d="M25 17V33M17 25H33" stroke="white" stroke-width="3.25" stroke-linecap="square" stroke-linejoin="bevel"/>`
+			svg: `<path d="M25 15V35M15 25H35" stroke="white" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="bevel"/>`
 		},
 		submit: {
 			box: 60,

@@ -1,4 +1,4 @@
-import { availableNetworksList, connectedNetwork, knownNetworksList, wifiStatus } from "$lib/stores/networkStore";
+import { availableNetworksList, connectedNetwork, fetchingConnectedNetwork, knownNetworksList, wifiStatus } from "$lib/stores/networkStore";
 import type { KnownNetworkListResponse, WirelessScanListResponse, WirelessInfoResponse } from "$lib/types/NetworkTypes";
 import { invoke } from "@tauri-apps/api/tauri";
 import { SECURITY_PROTOCOLS } from "../../constants";
@@ -70,9 +70,11 @@ export const fetchConnectedWifiInfo = async () => {
     try {
         const wifi_info_response: WirelessInfoResponse = await invoke('get_connected_wifi_info');
         connectedNetwork.set(wifi_info_response); 
+        fetchingConnectedNetwork.set(false);
         return wifi_info_response;
     } catch (error) {
         console.error('service::network::fetchConnectedWifiInfo()::error:::: ', error);
+        fetchingConnectedNetwork.set(false);
         return {} as WirelessInfoResponse;
     }
 
