@@ -209,7 +209,7 @@ impl Component for Slider {
 
     fn on_touch_drag(&mut self, event: &mut Event<event::TouchDrag>) {
         if let Some(value) = self.handle_on_drag(
-            event.relative_logical_position(),
+            event.relative_logical_position_touch(),
             event.current_logical_aabb(),
         ) {
             if let Some(f) = &self.on_slide {

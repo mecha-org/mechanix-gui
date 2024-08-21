@@ -1,6 +1,10 @@
-use crate::{init_services, AppMessage, AppParams, UiParams};
+use crate::{
+    init_services, AppMessage, AppParams, BatteryMessage, BluetoothMessage, BrightnessMessage,
+    SoundMessage, UiParams, WirelessMessage,
+};
 use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
 use std::sync::{Arc, RwLock};
+use tokio::sync::mpsc;
 
 use crate::gui::Launcher;
 use mctk_core::{
@@ -80,6 +84,11 @@ pub fn launch_homescreen(
     let handle = event_loop.handle();
 
     let window_tx_2 = window_tx.clone();
+    let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
+    let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
+    let (rotation_msg_tx, rotation_msg_rx) = mpsc::channel(128);
+    let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
+    let (sound_msg_tx, sound_msg_rx) = mpsc::channel(128);
     let _ = handle.insert_source(app_channel_rx, move |event: Event<AppMessage>, _, app| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
@@ -159,27 +168,79 @@ pub fn launch_homescreen(
                         }
                     }
                 }
-                AppMessage::Wireless { status } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::Wireless { status }),
-                    });
-                }
-                AppMessage::Bluetooth { status } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::Bluetooth { status }),
-                    });
-                }
-                AppMessage::Battery { level, status } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::Battery { level, status }),
-                    });
-                }
+                AppMessage::Wireless { message } => match message {
+                    WirelessMessage::Status { status } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Wireless { status }),
+                        });
+                    }
+                    WirelessMessage::Toggle { .. } => {
+                        let wireless_msg_tx_cloned = wireless_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            let res = wireless_msg_tx_cloned.clone().send(message).await;
+                        });
+                    }
+                },
+                AppMessage::Bluetooth { message } => match message {
+                    BluetoothMessage::Status { status } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Bluetooth { status }),
+                        });
+                    }
+                    BluetoothMessage::Toggle { .. } => {
+                        let bluetooth_msg_tx_cloned = bluetooth_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            let res = bluetooth_msg_tx_cloned.clone().send(message).await;
+                        });
+                    }
+                },
+                AppMessage::Battery { message } => match message {
+                    BatteryMessage::Status { level, status } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Battery { level, status }),
+                        });
+                    }
+                },
+                AppMessage::Brightness { message } => match message {
+                    BrightnessMessage::Value { value } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Brightness { value: value }),
+                        });
+                    }
+                    BrightnessMessage::Change { .. } => {
+                        let brightness_msg_tx_cloned = brightness_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            let res = brightness_msg_tx_cloned.clone().send(message).await;
+                        });
+                    }
+                },
+                AppMessage::Sound { message } => match message {
+                    SoundMessage::Value { value } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(Message::Sound { value }),
+                        });
+                    }
+                    SoundMessage::Change { .. } => {
+                        let sound_msg_tx_cloned = sound_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            let res = sound_msg_tx_cloned.clone().send(message).await;
+                        });
+                    }
+                },
             },
             calloop::channel::Event::Closed => {}
         };
     });
 
-    init_services(settings.clone(), app_channel_tx);
+    init_services(
+        settings.clone(),
+        app_channel_tx,
+        wireless_msg_rx,
+        bluetooth_msg_rx,
+        rotation_msg_rx,
+        brightness_msg_rx,
+        sound_msg_rx,
+    );
 
     loop {
         event_loop.dispatch(None, &mut app).unwrap();

@@ -18,6 +18,14 @@ pub enum LauncherErrorCodes {
     GetBluetoothStatusError,
     GetBatteryStatusError,
     GetBatteryError,
+    EnableWireless,
+    DisableWireless,
+    EnableBluetooth,
+    DisableBluetooth,
+    GetBrightnessError,
+    SetBrightnessError,
+    GetSoundError,
+    SetSoundError,
 }
 
 impl fmt::Display for LauncherErrorCodes {
@@ -37,6 +45,14 @@ impl fmt::Display for LauncherErrorCodes {
             }
             LauncherErrorCodes::GetBatteryStatusError => write!(f, "GetBatteryStatusError"),
             LauncherErrorCodes::GetBatteryError => write!(f, "GetBatteryError"),
+            LauncherErrorCodes::EnableWireless => write!(f, "EnableWireless"),
+            LauncherErrorCodes::DisableWireless => write!(f, "DisableWireless"),
+            LauncherErrorCodes::EnableBluetooth => write!(f, "EnableBluetooth"),
+            LauncherErrorCodes::DisableBluetooth => write!(f, "DisableBluetooth"),
+            LauncherErrorCodes::GetBrightnessError => write!(f, "GetBrightnessError"),
+            LauncherErrorCodes::SetBrightnessError => write!(f, "SetBrightnessError"),
+            LauncherErrorCodes::GetSoundError => write!(f, "GetSoundError"),
+            LauncherErrorCodes::SetSoundError => write!(f, "SetSoundError"),
         }
     }
 }

@@ -19,6 +19,8 @@ pub const MECHA_GAMING_ICON: &str = concatcp!(ASSET_PATH, "mecha_gaming_icon.png
 pub const ROTATION_PORTRAIT: &str = concatcp!(ASSET_PATH, "rotation/portrait_icon.svg");
 pub const ROTATION_LANDSCAPE: &str = concatcp!(ASSET_PATH, "rotation/landscape_icon.svg");
 pub const POWER_ICON: &str = concatcp!(ASSET_PATH, "power_icon.svg");
+pub const LOCK_ICON: &str = concatcp!(ASSET_PATH, "lock_icon.svg");
+pub const SETTINGS_ICON: &str = concatcp!(ASSET_PATH, "settings_icon.svg");
 
 // battery
 pub const BATTERY_LEVEL_100: &str = concatcp!(ASSET_PATH, "battery/battery_100_icon.svg");

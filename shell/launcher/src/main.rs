@@ -25,7 +25,9 @@ use modules::memory::handler::MemoryHandle;
 use modules::name::handler::MachineNameHandle;
 use modules::networking::handler::NetworkingHandle;
 use modules::running_apps::handler::RunningAppsHandle;
+use modules::settings_panel::brightness::handler::BrightnessServiceHandle;
 use modules::settings_panel::rotation::component::get_rotation_icons_map;
+use modules::settings_panel::sound::handler::SoundServiceHandle;
 use modules::uptime::handler::UptimeHandle;
 use modules::wireless::handler::WirelessServiceHandle;
 use std::collections::HashMap;
@@ -35,6 +37,7 @@ use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 use tokio::runtime::Builder;
 use tokio::select;
+use tokio::sync::mpsc::Receiver;
 use types::{BluetoothStatus, WirelessStatus};
 use upower::BatteryStatus;
 use utils::{
@@ -58,6 +61,39 @@ use tracing_subscriber::EnvFilter;
 pub struct AppParams {
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
 }
+
+#[derive(Debug)]
+pub enum WirelessMessage {
+    Status { status: WirelessStatus },
+    Toggle { value: Option<bool> },
+}
+
+#[derive(Debug)]
+pub enum BluetoothMessage {
+    Status { status: BluetoothStatus },
+    Toggle { value: Option<bool> },
+}
+
+#[derive(Debug)]
+pub enum BatteryMessage {
+    Status { level: u8, status: BatteryStatus },
+}
+
+#[derive(Debug)]
+pub enum SoundMessage {
+    Value { value: u8 },
+    Change { value: u8 },
+}
+
+#[derive(Debug)]
+pub enum BrightnessMessage {
+    Value { value: u8 },
+    Change { value: u8 },
+}
+
+#[derive(Debug)]
+pub enum RotationMessage {}
+
 #[derive(Debug)]
 enum AppMessage {
     CPUUsage { usage: f32 },
@@ -70,9 +106,11 @@ enum AppMessage {
     RunOnTop,
     RunOnBottom,
     Clock { time: String, date: String },
-    Wireless { status: WirelessStatus },
-    Bluetooth { status: BluetoothStatus },
-    Battery { level: u8, status: BatteryStatus },
+    Wireless { message: WirelessMessage },
+    Bluetooth { message: BluetoothMessage },
+    Battery { message: BatteryMessage },
+    Sound { message: SoundMessage },
+    Brightness { message: BrightnessMessage },
 }
 
 #[derive(Debug, Clone)]
@@ -148,6 +186,8 @@ async fn main() {
     let wireless_assets = get_wireless_icons_map(modules.wireless.icon);
     let rotation_assets = get_rotation_icons_map(modules.rotation.icon);
     let power_icon = modules.power.icon.default;
+    let lock_icon = modules.lock.icon.default;
+    let settings_icon = modules.settings.icon.default;
 
     svgs.extend(battery_assets);
     svgs.extend(battery_charging_assets);
@@ -155,6 +195,8 @@ async fn main() {
     svgs.extend(bluetooth_assets);
     svgs.extend(rotation_assets);
     svgs.insert("power_icon".to_string(), power_icon);
+    svgs.insert("lock_icon".to_string(), lock_icon);
+    svgs.insert("settings_icon".to_string(), settings_icon);
 
     let background = modules.background.icon.default;
     assets.insert("background".to_string(), AssetParams::new(background));
@@ -201,7 +243,15 @@ async fn main() {
     homesceen_ui_t.join().unwrap();
 }
 
-fn init_services(settings: LauncherSettings, app_channel: Sender<AppMessage>) -> JoinHandle<()> {
+fn init_services(
+    settings: LauncherSettings,
+    app_channel: Sender<AppMessage>,
+    wireless_msg_rx: Receiver<WirelessMessage>,
+    bluetooth_msg_rx: Receiver<BluetoothMessage>,
+    rotation_msg_rx: Receiver<RotationMessage>,
+    brightness_msg_rx: Receiver<BrightnessMessage>,
+    sound_msg_rx: Receiver<SoundMessage>,
+) -> JoinHandle<()> {
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
             .worker_threads(1)
@@ -211,9 +261,12 @@ fn init_services(settings: LauncherSettings, app_channel: Sender<AppMessage>) ->
 
         let time_format = settings.modules.clock.format.clone();
         let clock_f = run_clock_handler(time_format, app_channel.clone());
-        let wireless_f = run_wireless_handler(app_channel.clone());
-        let bluetooth_f = run_bluetooth_handler(app_channel.clone());
+        let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
+        let bluetooth_f = run_bluetooth_handler(app_channel.clone(), bluetooth_msg_rx);
         let battery_f = run_battery_handler(app_channel.clone());
+        // let rotation_f = run_rotation_handler(app_channel.clone(), rotation_msg_rx);
+        let brightness_f = run_brightness_handler(app_channel.clone(), brightness_msg_rx);
+        let sound_f = run_sound_handler(app_channel.clone(), sound_msg_rx);
         let cpu_f = run_cpu_handler(app_channel.clone());
         let memory_f = run_memory_handler(app_channel.clone());
         let uptime_f = run_uptime_handler(app_channel.clone());
@@ -229,6 +282,9 @@ fn init_services(settings: LauncherSettings, app_channel: Sender<AppMessage>) ->
                     wireless_f,
                     bluetooth_f,
                     battery_f,
+                    // rotation_f,
+                    brightness_f,
+                    sound_f,
                     cpu_f,
                     memory_f,
                     uptime_f,
@@ -247,19 +303,37 @@ async fn run_clock_handler(time_format: String, app_channel: Sender<AppMessage>)
     clock_service_handle.run(time_format).await;
 }
 
-async fn run_wireless_handler(app_channel: Sender<AppMessage>) {
+async fn run_wireless_handler(
+    app_channel: Sender<AppMessage>,
+    wireless_msg_rx: Receiver<WirelessMessage>,
+) {
     let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
-    wireless_service_handle.run().await;
+    wireless_service_handle.run(wireless_msg_rx).await;
 }
 
-async fn run_bluetooth_handler(app_channel: Sender<AppMessage>) {
+async fn run_bluetooth_handler(
+    app_channel: Sender<AppMessage>,
+    bluetooth_msg_rx: Receiver<BluetoothMessage>,
+) {
     let mut bluetooth_service_handle = BluetoothServiceHandle::new(app_channel);
-    bluetooth_service_handle.run().await;
+    bluetooth_service_handle.run(bluetooth_msg_rx).await;
 }
 
 async fn run_battery_handler(app_channel: Sender<AppMessage>) {
     let mut battery_service_handle = BatteryServiceHandle::new(app_channel);
     battery_service_handle.run().await;
+}
+
+async fn run_brightness_handler(
+    app_channel: Sender<AppMessage>,
+    brightness_msg_rx: Receiver<BrightnessMessage>,
+) {
+    let mut brightness_service_handle = BrightnessServiceHandle::new(app_channel);
+    brightness_service_handle.run(brightness_msg_rx).await;
+}
+async fn run_sound_handler(app_channel: Sender<AppMessage>, sound_msg_rx: Receiver<SoundMessage>) {
+    let mut sound_service_handle = SoundServiceHandle::new(app_channel);
+    sound_service_handle.run(sound_msg_rx).await;
 }
 
 async fn run_cpu_handler(app_channel: Sender<AppMessage>) {

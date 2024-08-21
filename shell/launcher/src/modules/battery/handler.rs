@@ -2,7 +2,7 @@ use core::fmt;
 
 use crate::errors::LauncherError;
 use crate::errors::LauncherErrorCodes::{GetBatteryError, GetBatteryStatusError};
-use crate::AppMessage;
+use crate::{AppMessage, BatteryMessage};
 use anyhow::{bail, Result};
 use futures::StreamExt;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -47,17 +47,21 @@ impl BatteryServiceHandle {
 
     pub async fn run(&mut self) {
         match BatteryService::get_battery_level().await {
-            Ok((capacity, status)) => {
+            Ok((percentage, status)) => {
                 let _ = self.app_channel.send(AppMessage::Battery {
-                    level: capacity,
-                    status,
+                    message: BatteryMessage::Status {
+                        level: percentage,
+                        status,
+                    },
                 });
             }
             Err(e) => {
                 error!("error while getting battery level {}", e);
                 let _ = self.app_channel.send(AppMessage::Battery {
-                    level: 0,
-                    status: BatteryStatus::Unknown,
+                    message: BatteryMessage::Status {
+                        level: 0,
+                        status: BatteryStatus::Unknown,
+                    },
                 });
             }
         };
@@ -74,13 +78,14 @@ impl BatteryServiceHandle {
         let mut state_stream = battery.receive_state_changed().await;
         let app_channel = self.app_channel.clone();
         let battery_cloned = battery.clone();
-
         let state_stream_t = tokio::spawn(async move {
             while let Some(msg) = state_stream.next().await {
                 if let Ok(state) = msg.get().await {
                     let status = BatteryStatus::try_from(state).unwrap();
                     let level = battery_cloned.percentage().await.unwrap() as u8;
-                    let _ = app_channel.send(AppMessage::Battery { level, status });
+                    let _ = app_channel.send(AppMessage::Battery {
+                        message: BatteryMessage::Status { level, status },
+                    });
                 };
             }
         });
@@ -92,7 +97,9 @@ impl BatteryServiceHandle {
                 if let Ok(percentage) = msg.get().await {
                     let status = BatteryStatus::try_from(battery.state().await.unwrap()).unwrap();
                     let level = percentage as u8;
-                    let _ = app_channel.send(AppMessage::Battery { level, status });
+                    let _ = app_channel.send(AppMessage::Battery {
+                        message: BatteryMessage::Status { level, status },
+                    });
                 };
             }
         });

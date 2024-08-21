@@ -150,6 +150,38 @@ impl Default for PowerModule {
     }
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct LockModule {
+    pub icon: LockIconPath,
+}
+impl Default for LockModule {
+    fn default() -> Self {
+        Self {
+            icon: LockIconPath::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SettingsModule {
+    pub icon: SettingsIconPath,
+    pub run_command: Vec<String>
+}
+impl Default for SettingsModule {
+    fn default() -> Self {
+        Self {
+            icon: SettingsIconPath::default(),
+            run_command: vec![
+                "sh".to_string(), 
+                "-c".to_string(),
+                "mecha-settings -s /usr/share/mecha/settings/settings.yml".to_string()
+            ],
+        }
+    }
+}
+
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
@@ -160,6 +192,32 @@ impl Default for PowerIconPath {
     fn default() -> Self {
         PowerIconPath {
             default: POWER_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct LockIconPath {
+    pub default: String,
+}
+impl Default for LockIconPath {
+    fn default() -> Self {
+        LockIconPath {
+            default: LOCK_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SettingsIconPath {
+    pub default: String,
+}
+impl Default for SettingsIconPath {
+    fn default() -> Self {
+        SettingsIconPath {
+            default: SETTINGS_ICON.to_owned(),
         }
     }
 }
@@ -205,6 +263,8 @@ pub struct Modules {
     pub background: BackgroundModule,
     pub rotation: RotationModule,
     pub power: PowerModule,
+    pub lock: LockModule,
+    pub settings: SettingsModule
 }
 
 
@@ -494,7 +554,9 @@ impl Default for Modules {
                 charging_icon: ChargingBatteryIconPaths::default(),
             },
             rotation: RotationModule { icon: RotationIconPaths::default(), title: "".to_string() },
-            power: PowerModule { icon: PowerIconPath::default() }
+            power: PowerModule { icon: PowerIconPath::default() },
+            lock: LockModule { icon: LockIconPath::default() },
+            settings: SettingsModule::default()
         
         }
     }

@@ -33,7 +33,7 @@ impl Component for Sound {
                 .value(self.value)
                 .slider_type(SliderType::Line)
                 .active_color(Color::rgb(226., 102., 0.))
-                .on_slide(Box::new(|value| msg!(gui::Message::Sound { value })))
+                .on_slide(Box::new(|value| msg!(gui::Message::SliderChanged(gui::SliderSettingsNames::Sound { value }))))
                 .col_spacing(8.)
                 .col_width(3.75)
                 , 

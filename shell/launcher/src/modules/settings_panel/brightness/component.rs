@@ -33,7 +33,7 @@ impl Component for Brightness {
                 .value(self.value)
                 .slider_type(SliderType::Box)
                 .active_color(Color::rgb(15.,168.,255.))
-                .on_slide(Box::new(|value| msg!(gui::Message::Brightness { value })))
+                .on_slide(Box::new(|value| msg!(gui::Message::SliderChanged(gui::SliderSettingsNames::Brightness { value }))))
                 .col_spacing(7.75)
                 .row_spacing(7.75)
                 .col_width(4.), 

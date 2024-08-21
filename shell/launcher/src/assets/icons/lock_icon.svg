@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none">
+  <path d="M9.5 11V4H18.5V11" stroke="white" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="bevel"/>
+  <path d="M6 10H22V24H6V10Z" fill="white" stroke="white" stroke-width="2.5" stroke-linejoin="bevel"/>
+  <path d="M14 14C14.5384 15.3699 15.6301 16.4616 17 17C15.6301 17.5384 14.5384 18.6301 14 20C13.4616 18.6301 12.3699 17.5384 11 17C12.3699 16.4616 13.4616 15.3699 14 14Z" fill="black" stroke="black" stroke-width="2" stroke-linejoin="bevel"/>
+</svg>

@@ -86,6 +86,7 @@ impl Component for HomeUi {
         let battery_level = self.battery_level.clone();
         let wireless_status = self.wireless_status.clone();
         let bluetooth_status = self.bluetooth_status.clone();
+        let is_lock_screen = self.is_lock_screen;
 
         let mut start_node = node!(
             Div::new().bg(Color::rgba(0., 0., 0., 0.64)),
@@ -119,6 +120,7 @@ impl Component for HomeUi {
                 battery_level: BatteryLevel::Level100,
                 wireless_status,
                 bluetooth_status: BluetoothStatus::Connected,
+                is_lock_screen
             },
             lay![
                 size_pct: [50, Auto],
@@ -284,7 +286,7 @@ impl Component for HomeUi {
             lay! [ margin: [10., 0., 0., 0.] ]
         ));
 
-        if !self.is_lock_screen {
+        if !is_lock_screen {
             start_node = start_node.push(row_2);
             start_node = start_node.push(node!(HDivider { size: 1. }));
             start_node = start_node.push(row_3);
@@ -293,7 +295,7 @@ impl Component for HomeUi {
         }
 
         start_node = start_node.push(node!(HDivider { size: 1. }));
-        if !self.is_lock_screen {
+        if !is_lock_screen {
             start_node = start_node.push(row_4);
         } else {
             start_node = start_node.push(node!(

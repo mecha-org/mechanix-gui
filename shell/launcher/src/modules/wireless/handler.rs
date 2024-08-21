@@ -1,9 +1,10 @@
 use futures::StreamExt;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
+use tokio::{select, sync::mpsc::Receiver};
 
 use crate::{
     types::{WirelessConnectedState, WirelessStatus},
-    AppMessage,
+    AppMessage, WirelessMessage,
 };
 
 use crate::errors::{LauncherError, LauncherErrorCodes};
@@ -23,18 +24,22 @@ impl WirelessServiceHandle {
         Self { app_channel }
     }
 
-    pub async fn run(&mut self) {
-        let task = "WirelessServiceHandle::run()";
+    pub async fn run(&mut self, mut wireless_msg_rx: Receiver<WirelessMessage>) {
+        println!("WirelessServiceHandle::run()");
         match WirelessService::get_wireless_status().await {
             Ok(wireless_status) => {
                 let _ = self.app_channel.send(AppMessage::Wireless {
-                    status: wireless_status,
+                    message: WirelessMessage::Status {
+                        status: wireless_status,
+                    },
                 });
             }
             Err(e) => {
                 println!("error while getting wireless status {}", e);
                 let _ = self.app_channel.send(AppMessage::Wireless {
-                    status: WirelessStatus::NotFound,
+                    message: WirelessMessage::Status {
+                        status: WirelessStatus::NotFound,
+                    },
                 });
             }
         };
@@ -44,45 +49,71 @@ impl WirelessServiceHandle {
         if let Err(e) = stream_res.as_ref() {
             println!("error while getting wireless stream {}", e);
             let _ = self.app_channel.send(AppMessage::Wireless {
-                status: WirelessStatus::NotFound,
+                message: WirelessMessage::Status {
+                    status: WirelessStatus::NotFound,
+                },
             });
             return;
         }
 
-        while let Some(signal) = stream_res.as_mut().unwrap().next().await {
-            let args_r = signal.args();
+        loop {
+            select! {
+                    signal = stream_res.as_mut().unwrap().next() => {
+                        if signal.is_none() {
+                            continue;
+                        }
 
-            if let Err(e) = &args_r {
-                println!("error while parsing args {}", e);
-            };
 
-            let args = args_r.unwrap();
+                        if let Ok(args) = signal.unwrap().args() {
+                            let event = args.event;
+                            println!("event {:?}", event);
+                            let mut wireless_status = WirelessStatus::Off;
 
-            println!("args are {:?}", args);
+                            if event.is_enabled {
+                                wireless_status = WirelessStatus::On;
+                            }
 
-            let event = args.event;
-            let mut wireless_status = WirelessStatus::Off;
+                            if event.is_connected {
+                                let signal = event.signal_strength.parse::<i32>().unwrap();
+                                wireless_status = if signal <= -80 {
+                                    WirelessStatus::Connected(WirelessConnectedState::Low)
+                                } else if signal <= -60 {
+                                    WirelessStatus::Connected(WirelessConnectedState::Weak)
+                                } else if signal <= -40 {
+                                    WirelessStatus::Connected(WirelessConnectedState::Good)
+                                } else {
+                                    WirelessStatus::Connected(WirelessConnectedState::Strong)
+                                };
+                            }
 
-            if event.is_enabled {
-                wireless_status = WirelessStatus::On;
+                            let _ = self.app_channel.send(AppMessage::Wireless {
+                                message: WirelessMessage::Status {
+                                    status: wireless_status,
+                                },
+                            });
+                        }
+                    }
+                    msg = wireless_msg_rx.recv() => {
+                        if msg.is_none() {
+                            continue;
+                        }
+
+                        match msg.unwrap() {
+                            WirelessMessage::Toggle { value } => {
+                            println!("WirelessServiceHandle::run() toggle {:?}", value);
+                            if let Some(turn_on) = value {
+                                    if turn_on {
+                                         let _ = WirelessService::enable_wireless().await;
+                                    }
+                                    else {
+                                        let _ = WirelessService::disable_wireless().await;
+                                    }
+                                }
+                            }
+                        _ => ()
+                        };
+                    }
             }
-
-            if event.is_connected {
-                let signal = event.signal_strength.parse::<i32>().unwrap();
-                wireless_status = if signal <= -80 {
-                    WirelessStatus::Connected(WirelessConnectedState::Low)
-                } else if signal <= -60 {
-                    WirelessStatus::Connected(WirelessConnectedState::Weak)
-                } else if signal <= -40 {
-                    WirelessStatus::Connected(WirelessConnectedState::Good)
-                } else {
-                    WirelessStatus::Connected(WirelessConnectedState::Strong)
-                };
-            }
-
-            let _ = self.app_channel.send(AppMessage::Wireless {
-                status: wireless_status,
-            });
         }
     }
 }
@@ -130,6 +161,28 @@ impl WirelessService {
     pub async fn get_notification_stream() -> Result<NotificationStream<'static>> {
         let stream = WirelessZbusClient::get_notification_stream().await?;
         Ok(stream)
+    }
+
+    pub async fn enable_wireless() -> Result<bool> {
+        let success = match WirelessZbusClient::enable_wireless().await {
+            Ok(_) => true,
+            Err(e) => bail!(LauncherError::new(
+                LauncherErrorCodes::EnableWireless,
+                e.to_string(),
+            )),
+        };
+        Ok(success)
+    }
+
+    pub async fn disable_wireless() -> Result<bool> {
+        let success = match WirelessZbusClient::disable_wireless().await {
+            Ok(_) => true,
+            Err(e) => bail!(LauncherError::new(
+                LauncherErrorCodes::DisableWireless,
+                e.to_string(),
+            )),
+        };
+        Ok(success)
     }
 }
 
