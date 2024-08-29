@@ -51,7 +51,7 @@ pub fn launch_homescreen(
     let mut layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::TOP | wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT,
         layer: wlr_layer::Layer::Bottom,
-        keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
+        keyboard_interactivity: wlr_layer::KeyboardInteractivity::OnDemand,
         namespace: Some(namespace.clone()),
         zone: 36 as i32,
     };
