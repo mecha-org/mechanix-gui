@@ -352,7 +352,7 @@ impl Component for TouchPanel {
 
     fn on_touch_down(&mut self, event: &mut Event<mctk_core::event::TouchDown>) {
         event.stop_bubbling();
-        let msgs = self.handle_press(event.relative_logical_position());
+        let msgs = self.handle_press(event.relative_logical_position_touch());
         for mesg in msgs {
             event.emit(Box::new(mesg).clone());
         }
