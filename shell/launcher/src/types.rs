@@ -82,3 +82,17 @@ impl fmt::Display for BatteryLevel {
         fmt::Debug::fmt(self, f)
     }
 }
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub enum ShutdownState {
+    Pressed,
+    Released,
+    Clicked,
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub enum RestartState {
+    Pressed,
+    Released,
+    Clicked,
+}

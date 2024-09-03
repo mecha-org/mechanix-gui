@@ -35,6 +35,9 @@ upower ={ workspace = true }
 chrono = { workspace = true }
 mechanix_system_dbus_client = { workspace = true }
 mechanix_desktop_dbus_client = { workspace = true }
+indexmap = "2.1.0"
+desktop_entries = { workspace = true }
+zbus = { version = "4.1.2", features = ["tokio"] }
 
 [build-dependencies]
 tonic-build = "0.9.2"

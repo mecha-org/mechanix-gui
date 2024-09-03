@@ -1,6 +1,6 @@
 use mctk_core::component;
 use mctk_core::layout::Alignment;
-use mctk_core::widgets::Svg;
+use mctk_core::widgets::Image;
 use mctk_core::{component::Component, lay, node, size, size_pct, widgets::Div, Node};
 use std::hash::Hash;
 
@@ -28,7 +28,7 @@ impl Component for Bluetooth {
                 ],
             )
             .push(node!(
-                Svg::new(self.bluetooth_status.to_string()),
+                Image::new(format!("sm{:?}", self.bluetooth_status.to_string())),
                 lay![
                     size: [28, 28],
                 ],

@@ -11,6 +11,9 @@ trait Session {
     /// Unlock method
     fn unlock(&self) -> zbus::Result<()>;
 
+    /// Set locked hint
+    fn set_locked_hint(&self, locked: bool) -> zbus::Result<()>;
+
     /// Lock signal
     #[zbus(signal)]
     fn lock(&self) -> zbus::Result<()>;
@@ -26,4 +29,8 @@ trait Session {
     /// TTY property
     #[zbus(property, name = "TTY")]
     fn tty(&self) -> zbus::Result<String>;
+
+    /// LockedHint property
+    #[zbus(property, name = "LockedHint")]
+    fn locked_hint(&self) -> zbus::Result<bool>;
 }

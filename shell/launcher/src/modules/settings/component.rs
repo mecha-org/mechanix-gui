@@ -1,6 +1,5 @@
-use mctk_core::component;
 use mctk_core::layout::Alignment;
-use mctk_core::widgets::Svg;
+use mctk_core::widgets::Image;
 use mctk_core::{component::Component, lay, node, size, size_pct, widgets::Div, Node};
 
 #[derive(Debug)]
@@ -19,7 +18,7 @@ impl Component for Settings {
                 ],
             )
             .push(node!(
-                Svg::new("settings_icon"),
+                Image::new("settings_icon"),
                 lay![
                     size: [28, 28],
                 ],

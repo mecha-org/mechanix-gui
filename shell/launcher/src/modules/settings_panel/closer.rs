@@ -3,17 +3,18 @@ use mctk_core::widgets::Div;
 use mctk_core::{component::Component, node, Node};
 use mctk_core::{lay, msg, size, size_pct, Color, Point};
 
-use crate::gui::{Message, Swipe, SwipeDirection, SwipeGestures, SwipeState};
+use crate::gui::{Message, Swipe, SwipeDirection, SwipeState};
 #[derive(Debug)]
 pub struct Closer {}
 
 impl Closer {
     fn handle_on_drag(&self, delta: Point) -> Option<mctk_core::component::Message> {
-        if delta.y.abs() > 10. {
+        if delta.y < -10. {
             let swipe = Swipe {
                 dy: (480. - 124. + delta.y) as i32,
                 min_dy: 0,
                 max_dy: 480 - 124,
+                threshold_dy: 80,
                 direction: SwipeDirection::Up,
                 state: SwipeState::UserSwiping,
                 is_closer: true,

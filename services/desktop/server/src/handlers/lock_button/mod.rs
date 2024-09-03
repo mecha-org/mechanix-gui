@@ -45,9 +45,9 @@ impl LockButtonHandler {
                             //else lock screen
 
                             if is_long_press {
-                                let _ =
-                                    power_options(self.configs.run_commands.power_options.clone())
-                                        .await;
+                                // let _ =
+                                //     power_options(self.configs.run_commands.power_options.clone())
+                                //         .await;
                             } else {
                                 let _ = session_lock().await;
                             }

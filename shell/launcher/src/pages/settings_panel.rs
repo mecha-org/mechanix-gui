@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use mctk_core::layout::{Alignment, Direction};
 use mctk_core::style::Styled;
-use mctk_core::widgets::{IconButton, RoundedRect};
+use mctk_core::widgets::{IconButton, IconType, RoundedRect};
 use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
 use mctk_core::{msg, Color};
 
@@ -65,7 +65,7 @@ impl Component for SettingsPanel {
             lay![
                 size_pct: [100, Auto],
                 // size: [480, 434]
-                padding: [20., 22., 20., 22.],
+                padding: [36., 22., 20., 22.],
                 cross_alignment: Alignment::Stretch,
                 direction: Direction::Column
             ]
@@ -77,65 +77,76 @@ impl Component for SettingsPanel {
                 size: [Auto, 88],
                 direction: Direction::Row,
                 cross_alignment: Alignment::Stretch,
-                axis_alignment: Alignment::Center,
+                axis_alignment: Alignment::Start,
             ]
         );
         row_1 = row_1.push(node!(
-            IconButton::new(wireless_status.to_string())
+            IconButton::new(format!("lg{:?}", wireless_status.to_string()))
+                .icon_type(IconType::Png)
                 .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
                     gui::SettingNames::Wireless
                 ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::TRANSPARENT),
+                .style("active_color", Color::rgb(43., 43., 43.))
+                .style("padding", 23.),
             lay![
-                size: [80, 88],
-                padding: [24, 13., 24, 26.],
+                size: [88],
             ]
         ));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(
-            IconButton::new(bluetooth_status.to_string())
+            IconButton::new(format!("lg{:?}", bluetooth_status.to_string()))
+                .icon_type(IconType::Png)
                 .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
                     gui::SettingNames::Bluetooth
                 ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::TRANSPARENT),
+                .style("active_color", Color::rgb(43., 43., 43.))
+                .style("padding", 23.),
             lay![
-                size: [92, 88],
-                padding: [24., 26., 24., 26.]
+                size: [88],
             ]
         ));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(
             IconButton::new(rotation_status.to_string())
+                .icon_type(IconType::Png)
                 .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
                     gui::SettingNames::Rotation
                 ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::TRANSPARENT),
+                .style("active_color", Color::rgb(43., 43., 43.))
+                .style("padding", 23.),
             lay![
-                size: [92, 88],
-                padding: [24., 26., 24., 26.]
+                size: [88],
             ]
         ));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(
-            Div::new(),
+            IconButton::new("terminal_icon")
+                .icon_type(IconType::Png)
+                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                    gui::SettingNames::Terminal
+                ))))
+                .style("background_color", Color::TRANSPARENT)
+                .style("active_color", Color::rgb(43., 43., 43.))
+                .style("padding", 23.),
             lay![
-                size: [92, 88],
+                size: [88],
             ]
         ));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(
             IconButton::new("power_icon")
+                .icon_type(IconType::Png)
                 .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
                     gui::SettingNames::Power
                 ))))
                 .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::TRANSPARENT),
+                .style("active_color", Color::rgb(43., 43., 43.))
+                .style("padding", 23.),
             lay![
-                size: [80, 88],
-                padding: [24., 26., 24., 13.]
+                size: [88],
             ]
         ));
 
@@ -211,6 +222,15 @@ impl Component for SettingsPanel {
     }
 
     fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
+        if self.swipe > 10 {
+            event.stop_bubbling()
+        }
+    }
+
+    fn on_touch_drag_start(
+        &mut self,
+        event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
+    ) {
         if self.swipe > 10 {
             event.stop_bubbling()
         }

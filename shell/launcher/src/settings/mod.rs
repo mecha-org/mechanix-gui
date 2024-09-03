@@ -12,13 +12,14 @@ use tracing::{debug, info};
 /// this file lets you control the behavior of the launcher,
 /// apply custom theme and fonts
 #[derive(Debug, Deserialize, Clone, Serialize)]
-pub struct  LauncherSettings {
+pub struct LauncherSettings {
     pub app: AppSettings,
     pub window: WindowSettings, // Window Settings
     pub title: String,          // Sets the window title
     pub layout: LayoutSettings,
     pub modules: Modules,
-    pub fonts: CustomFonts
+    pub fonts: CustomFonts,
+    pub app_list: AppListSettings,
 }
 
 impl Default for LauncherSettings {
@@ -30,6 +31,7 @@ impl Default for LauncherSettings {
             layout: LayoutSettings::default(),
             modules: Modules::default(),
             fonts: CustomFonts::default(),
+            app_list: AppListSettings::default(),
         }
     }
 }
@@ -84,6 +86,23 @@ pub struct LayoutSettings {
     pub left: Vec<String>,   //Items that will in left side of launcher
     pub center: Vec<String>, //Items that will in center of launcher
     pub right: Vec<String>,  //Items that will in right side of launcher
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct AppListSettings {
+    pub include_only: Vec<String>,
+    pub exclude: Vec<String>,
+    pub include: Vec<String>,
+}
+
+impl Default for AppListSettings {
+    fn default() -> Self {
+        Self {
+            include_only: vec![],
+            exclude: vec![],
+            include: vec![],
+        }
+    }
 }
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
@@ -154,11 +173,13 @@ impl Default for PowerModule {
 #[serde(default)]
 pub struct LockModule {
     pub icon: LockIconPath,
+    pub min_time_long_press: u8,
 }
 impl Default for LockModule {
     fn default() -> Self {
         Self {
             icon: LockIconPath::default(),
+            min_time_long_press: 1,
         }
     }
 }
@@ -167,21 +188,27 @@ impl Default for LockModule {
 #[serde(default)]
 pub struct SettingsModule {
     pub icon: SettingsIconPath,
-    pub run_command: Vec<String>
 }
 impl Default for SettingsModule {
     fn default() -> Self {
         Self {
             icon: SettingsIconPath::default(),
-            run_command: vec![
-                "sh".to_string(), 
-                "-c".to_string(),
-                "mecha-settings -s /usr/share/mecha/settings/settings.yml".to_string()
-            ],
         }
     }
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct RunningAppsModule {
+    pub exclude: Vec<String>,
+}
+impl Default for RunningAppsModule {
+    fn default() -> Self {
+        Self {
+            exclude: vec![APP_ID.to_string()],
+        }
+    }
+}
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
@@ -224,8 +251,140 @@ impl Default for SettingsIconPath {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct SearchModule {
-    pub icon: DefaultIconPaths,
+    pub icon: SearchIconPath,
 }
+
+impl Default for SearchModule {
+    fn default() -> Self {
+        SearchModule {
+            icon: SearchIconPath::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SearchIconPath {
+    pub default: String,
+}
+impl Default for SearchIconPath {
+    fn default() -> Self {
+        SearchIconPath {
+            default: SEARCH_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct LaunchModule {
+    pub icon: LaunchIconPath,
+}
+
+impl Default for LaunchModule {
+    fn default() -> Self {
+        LaunchModule {
+            icon: LaunchIconPath::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct LaunchIconPath {
+    pub default: String,
+}
+impl Default for LaunchIconPath {
+    fn default() -> Self {
+        LaunchIconPath {
+            default: LAUNCH_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct DeleteModule {
+    pub icon: DeleteIconPath,
+}
+
+impl Default for DeleteModule {
+    fn default() -> Self {
+        DeleteModule {
+            icon: DeleteIconPath::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct DeleteIconPath {
+    pub default: String,
+}
+impl Default for DeleteIconPath {
+    fn default() -> Self {
+        DeleteIconPath {
+            default: DELETE_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct CloseModule {
+    pub icon: CloseIconPath,
+}
+
+impl Default for CloseModule {
+    fn default() -> Self {
+        CloseModule {
+            icon: CloseIconPath::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct CloseIconPath {
+    pub default: String,
+}
+impl Default for CloseIconPath {
+    fn default() -> Self {
+        CloseIconPath {
+            default: CLOSE_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct TerminalModule {
+    pub icon: CloseIconPath,
+    pub run_command: Vec<String>,
+}
+
+impl Default for TerminalModule {
+    fn default() -> Self {
+        TerminalModule {
+            icon: CloseIconPath::default(),
+            run_command: vec![
+                "sh".to_string(),
+                "-c".to_string(),
+                "alacritty --working-directory=/home/mecha".to_string(),
+            ],
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct TerminalIconPath {
+    pub default: String,
+}
+impl Default for TerminalIconPath {
+    fn default() -> Self {
+        TerminalIconPath {
+            default: TERMINAL_ICON.to_owned(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct ClearModule {
     pub icon: DefaultIconPaths,
@@ -249,6 +408,46 @@ impl Default for BackgroundIconPath {
     }
 }
 
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct PowerOptionsModule {
+    pub shutdown: Shutdown,
+    pub restart: Restart,
+}
+
+impl Default for PowerOptionsModule {
+    fn default() -> Self {
+        PowerOptionsModule {
+            shutdown: Shutdown::default(),
+            restart: Restart::default(),
+        }
+    }
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Shutdown {
+    pub icon: String,
+}
+
+impl Default for Shutdown {
+    fn default() -> Self {
+        Shutdown {
+            icon: SHUTDOWN_ICON.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+pub struct Restart {
+    pub icon: String,
+}
+
+impl Default for Restart {
+    fn default() -> Self {
+        Restart {
+            icon: RESTART_ICON.to_owned(),
+        }
+    }
+}
+
 /// # Modules
 ///
 /// Options that will be visible in launcher
@@ -264,10 +463,15 @@ pub struct Modules {
     pub rotation: RotationModule,
     pub power: PowerModule,
     pub lock: LockModule,
-    pub settings: SettingsModule
+    pub settings: SettingsModule,
+    pub running_apps: RunningAppsModule,
+    pub search: SearchModule,
+    pub launch: LaunchModule,
+    pub delete: DeleteModule,
+    pub close: CloseModule,
+    pub power_options: PowerOptionsModule,
+    pub terminal: TerminalModule,
 }
-
-
 
 impl Default for WindowSettings {
     fn default() -> Self {
@@ -306,13 +510,14 @@ pub struct Clock {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Bluetooth {
     #[serde(default)]
-    pub icon: BluetoothIconPaths,
+    pub icon: BluetoothIcons,
 }
 impl Default for Bluetooth {
-    fn default() ->  Self {
+    fn default() -> Self {
         Bluetooth {
-        icon: BluetoothIconPaths::default(),
-    }}
+            icon: BluetoothIcons::default(),
+        }
+    }
 }
 
 /// Wireless module
@@ -320,59 +525,110 @@ impl Default for Bluetooth {
 #[serde(deny_unknown_fields)]
 pub struct Wireless {
     #[serde(default)]
-    pub icon: WirelessIconPaths,
+    pub icon: WirelessIcons,
 }
 impl Default for Wireless {
-    fn default() ->  Self {
+    fn default() -> Self {
         Wireless {
-        icon: WirelessIconPaths::default(),
-    }}
+            icon: WirelessIcons::default(),
+        }
+    }
 }
 
-
-/// Battery module 
+/// Battery module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Battery {
     #[serde(default)]
     pub icon: BatteryIconPaths,
-    #[serde(default)] 
+    #[serde(default)]
     pub charging_icon: ChargingBatteryIconPaths,
 }
 impl Default for Battery {
-    fn default() ->  Self {
+    fn default() -> Self {
         Battery {
-        icon: BatteryIconPaths::default(),
-        charging_icon: ChargingBatteryIconPaths::default(),
-    }}
+            icon: BatteryIconPaths::default(),
+            charging_icon: ChargingBatteryIconPaths::default(),
+        }
+    }
 }
-
 
 /// Icon paths for bluetooth module
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
-pub struct BluetoothIconPaths {
+#[serde(default)]
+pub struct BluetoothIcons {
+    pub sm: SmBluetoothIconPaths,
+    pub lg: LgBluetoothIconPaths,
+}
+
+impl Default for BluetoothIcons {
+    fn default() -> Self {
+        Self {
+            sm: SmBluetoothIconPaths::default(),
+            lg: LgBluetoothIconPaths::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SmBluetoothIconPaths {
     pub on: String,
     pub off: String,
     pub connected: String,
     pub not_found: String,
 }
-impl Default for BluetoothIconPaths {
+impl Default for SmBluetoothIconPaths {
     fn default() -> Self {
-        BluetoothIconPaths {
-            off: BLUETOOTH_OFF.to_owned(),
-            on: BLUETOOTH_ON.to_owned(),
-            connected: BLUETOOTH_CONNECTED.to_owned(),
-            not_found: BLUETOOTH_NOT_FOUND.to_owned(),
+        SmBluetoothIconPaths {
+            off: SM_BLUETOOTH_OFF.to_owned(),
+            on: SM_BLUETOOTH_ON.to_owned(),
+            connected: SM_BLUETOOTH_CONNECTED.to_owned(),
+            not_found: SM_BLUETOOTH_NOT_FOUND.to_owned(),
         }
-    
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct LgBluetoothIconPaths {
+    pub on: String,
+    pub off: String,
+    pub connected: String,
+    pub not_found: String,
+}
+impl Default for LgBluetoothIconPaths {
+    fn default() -> Self {
+        LgBluetoothIconPaths {
+            off: LG_BLUETOOTH_OFF.to_owned(),
+            on: LG_BLUETOOTH_ON.to_owned(),
+            connected: LG_BLUETOOTH_CONNECTED.to_owned(),
+            not_found: LG_BLUETOOTH_NOT_FOUND.to_owned(),
+        }
     }
 }
 
 /// Icon paths for wireless module
+
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
-pub struct WirelessIconPaths {
+#[serde(default)]
+pub struct WirelessIcons {
+    pub sm: SmWirelessIconPaths,
+    pub lg: LgWirelessIconPaths,
+}
+
+impl Default for WirelessIcons {
+    fn default() -> Self {
+        Self {
+            sm: SmWirelessIconPaths::default(),
+            lg: LgWirelessIconPaths::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SmWirelessIconPaths {
     pub off: String,
     pub on: String,
     pub low: String,
@@ -381,24 +637,47 @@ pub struct WirelessIconPaths {
     pub strong: String,
     pub not_found: String,
 }
-impl Default for WirelessIconPaths {
+impl Default for SmWirelessIconPaths {
     fn default() -> Self {
-        WirelessIconPaths {
-            off: WIRELESS_OFF.to_owned(),
-            on: WIRELESS_ON.to_owned(),
-            low: WIRELESS_LOW.to_owned(),
-            weak: WIRELESS_WEAK.to_owned(),
-            good: WIRELESS_GOOD.to_owned(),
-            strong: WIRELESS_STRONG.to_owned(),
-            not_found: WIRELESS_NOT_FOUND.to_owned(),
+        SmWirelessIconPaths {
+            off: SM_WIRELESS_OFF.to_owned(),
+            on: SM_WIRELESS_ON.to_owned(),
+            low: SM_WIRELESS_LOW.to_owned(),
+            weak: SM_WIRELESS_WEAK.to_owned(),
+            good: SM_WIRELESS_GOOD.to_owned(),
+            strong: SM_WIRELESS_STRONG.to_owned(),
+            not_found: SM_WIRELESS_NOT_FOUND.to_owned(),
         }
-    
+    }
+}
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct LgWirelessIconPaths {
+    pub off: String,
+    pub on: String,
+    pub low: String,
+    pub weak: String,
+    pub good: String,
+    pub strong: String,
+    pub not_found: String,
+}
+impl Default for LgWirelessIconPaths {
+    fn default() -> Self {
+        LgWirelessIconPaths {
+            off: LG_WIRELESS_OFF.to_owned(),
+            on: LG_WIRELESS_ON.to_owned(),
+            low: LG_WIRELESS_LOW.to_owned(),
+            weak: LG_WIRELESS_WEAK.to_owned(),
+            good: LG_WIRELESS_GOOD.to_owned(),
+            strong: LG_WIRELESS_STRONG.to_owned(),
+            not_found: LG_WIRELESS_NOT_FOUND.to_owned(),
+        }
     }
 }
 
 // /// Icon paths for battery module
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
+#[serde(default)]
 pub struct BatteryIconPaths {
     pub level_100: String,
     pub level_90: String,
@@ -415,7 +694,7 @@ pub struct BatteryIconPaths {
 }
 
 impl Default for BatteryIconPaths {
-    fn default() ->  Self {
+    fn default() -> Self {
         BatteryIconPaths {
             level_100: BATTERY_LEVEL_100.to_owned(),
             level_90: BATTERY_LEVEL_90.to_owned(),
@@ -433,10 +712,8 @@ impl Default for BatteryIconPaths {
     }
 }
 
-
-
 #[derive(Debug, Deserialize, Clone, Serialize)]
-#[serde(default)] 
+#[serde(default)]
 pub struct ChargingBatteryIconPaths {
     pub level_100: String,
     pub level_90: String,
@@ -453,7 +730,7 @@ pub struct ChargingBatteryIconPaths {
 }
 
 impl Default for ChargingBatteryIconPaths {
-    fn default() ->  Self {
+    fn default() -> Self {
         ChargingBatteryIconPaths {
             level_100: CHARGING_BATTERY_LEVEL_100.to_owned(),
             level_90: CHARGING_BATTERY_LEVEL_90.to_owned(),
@@ -473,7 +750,7 @@ impl Default for ChargingBatteryIconPaths {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct CustomFonts {
-    pub paths: Vec<String>
+    pub paths: Vec<String>,
 }
 impl Default for CustomFonts {
     fn default() -> Self {
@@ -481,11 +758,8 @@ impl Default for CustomFonts {
     }
 }
 
-
-
 impl Default for Modules {
     fn default() -> Self {
-
         Self {
             apps: vec![
                 App{
@@ -544,20 +818,26 @@ impl Default for Modules {
                 format: "%I:%M %p".to_string(),
             },
             bluetooth: Bluetooth {
-                icon: BluetoothIconPaths::default(),
+                icon: BluetoothIcons::default(),
             },
             wireless: Wireless {
-                icon: WirelessIconPaths::default(),
+                icon: WirelessIcons::default(),
             },
             battery: Battery {
                 icon: BatteryIconPaths::default(),
                 charging_icon: ChargingBatteryIconPaths::default(),
             },
             rotation: RotationModule { icon: RotationIconPaths::default(), title: "".to_string() },
-            power: PowerModule { icon: PowerIconPath::default() },
-            lock: LockModule { icon: LockIconPath::default() },
-            settings: SettingsModule::default()
-        
+            power: PowerModule::default(),
+            lock: LockModule::default(),
+            settings: SettingsModule::default(),
+            running_apps: RunningAppsModule::default(),
+            search: SearchModule::default(),
+            launch: LaunchModule::default(),
+            delete: DeleteModule::default(),
+            close: CloseModule::default(),
+            terminal: TerminalModule::default(),
+            power_options: PowerOptionsModule::default(),
         }
     }
 }

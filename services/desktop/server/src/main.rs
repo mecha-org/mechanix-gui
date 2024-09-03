@@ -12,10 +12,10 @@ use dbus::interfaces::{
 };
 use handlers::{
     session::SessionHandler,
-    shell::{home_button::HomeButtonHandler, security::SecurityHandler, upower::UpowerHandler},
+    shell::{security::SecurityHandler, upower::UpowerHandler},
 };
 use settings::{read_settings_yml, DesktopServerSettings};
-use tokio::{runtime::Builder, sync::mpsc};
+use tokio::sync::mpsc;
 use zbus::connection;
 
 #[tokio::main]
@@ -77,11 +77,11 @@ async fn main() -> Result<()> {
     });
     handles.push(session_handle);
 
-    let home_button_handler = HomeButtonHandler::new(settings.home_button.clone());
-    let home_button_handle = tokio::spawn(async move {
-        home_button_handler.run().await;
-    });
-    handles.push(home_button_handle);
+    // let home_button_handler = HomeButtonHandler::new(settings.home_button.clone());
+    // let home_button_handle = tokio::spawn(async move {
+    //     home_button_handler.run().await;
+    // });
+    // handles.push(home_button_handle);
 
     let security_handler = SecurityHandler::new();
     let security_handle = tokio::spawn(async move {
