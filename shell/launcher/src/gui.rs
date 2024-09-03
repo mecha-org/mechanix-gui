@@ -953,18 +953,6 @@ impl Component for Launcher {
         };
     }
 
-    fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
-        let logical_delta = event.bounded_logical_delta();
-        println!("Launcher::on_drag() {:?}", logical_delta);
-        if let Some(msg) = self.handle_on_drag(logical_delta) {
-            self.update(msg);
-        }
-    }
-
-    fn on_drag_end(&mut self, _event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
-        self.handle_on_drag_end();
-    }
-
     fn on_touch_drag_start(
         &mut self,
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
@@ -988,6 +976,14 @@ impl Component for Launcher {
         };
     }
 
+    fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
+        let logical_delta = event.bounded_logical_delta();
+        println!("Launcher::on_drag() {:?}", logical_delta);
+        if let Some(msg) = self.handle_on_drag(logical_delta) {
+            self.update(msg);
+        }
+    }
+
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
         let logical_delta = event.bounded_logical_delta();
         println!("Launcher::on_touch_drag() {:?}", logical_delta);
@@ -996,15 +992,15 @@ impl Component for Launcher {
         }
     }
 
+    fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
+        self.handle_on_drag_end();
+    }
+
     fn on_touch_drag_end(
         &mut self,
         _event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
     ) {
         self.handle_on_drag_end();
-    }
-
-    fn on_blur(&mut self, _event: &mut mctk_core::event::Event<mctk_core::event::Blur>) {
-        println!("blurrr");
     }
 }
 

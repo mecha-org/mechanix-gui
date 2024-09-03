@@ -279,7 +279,7 @@ async fn main() {
     };
 
     let ui_params_1 = ui_params.clone();
-    let homesceen_ui_t = std::thread::spawn(move || {
+    let _ = std::thread::spawn(move || {
         let _ = launch_homescreen(ui_params_1);
     });
 
@@ -289,41 +289,30 @@ async fn main() {
     let is_session_locked = session.locked_hint().await.unwrap();
     if is_session_locked {
         let ui_params_1 = ui_params.clone();
-        let lock_screen_ui_t = std::thread::spawn(move || {
+        let _ = std::thread::spawn(move || {
             let _ = launch_lockscreen(ui_params_1);
         });
-        // lock_screen_ui_t.join().unwrap();
     }
-    let lock_event_t = tokio::spawn(async move {
-        //Listen for events
-        loop {
-            select! {
-                _ =  lock.next() =>  {
-                    let session = get_current_session().await.unwrap();
-                    let is_session_locked = session.locked_hint().await.unwrap();
-                    println!("is_session_locked {:?}", is_session_locked);
-                    if is_session_locked {
-                        return;
-                    }
-                    let _ = session.set_locked_hint(true).await;
-                    let ui_params_1 = ui_params.clone();
-                    let lock_screen_ui_t = std::thread::spawn(move || {
-                        let _ = launch_lockscreen( ui_params_1);
-                    });
-                    // lock_screen_ui_t.join().unwrap();
-                }, _ = unlock.next() => {
-                    println!("logind unlock");
-                    let _ = session.set_locked_hint(false).await;
+    loop {
+        select! {
+            _ =  lock.next() =>  {
+                let session = get_current_session().await.unwrap();
+                let is_session_locked = session.locked_hint().await.unwrap();
+                println!("is_session_locked {:?}", is_session_locked);
+                if is_session_locked {
+                    return;
                 }
+                let _ = session.set_locked_hint(true).await;
+                let ui_params_1 = ui_params.clone();
+                let _ = std::thread::spawn(move || {
+                    let _ = launch_lockscreen( ui_params_1);
+                });
+            }, _ = unlock.next() => {
+                println!("logind unlock");
+                let _ = session.set_locked_hint(false).await;
             }
         }
-    });
-
-    lock_event_t.await.unwrap();
-    homesceen_ui_t.join().unwrap();
-    // let lock_window_tx_1 = lock_window_tx.clone();
-    // let ui_params_1 = ui_params.clone();
-    // let _ = launch_lockscreen(lock_window_tx_1, ui_params_1);
+    }
 }
 
 pub struct InitServicesParams {
