@@ -248,7 +248,9 @@ async fn main() {
     assets.insert("terminal_icon".to_string(), AssetParams::new(terminal_icon));
 
     let background = modules.background.icon.default;
-    assets.insert("background".to_string(), AssetParams::new(background));
+    if background.len() > 0 {
+        assets.insert("background".to_string(), AssetParams::new(background));
+    }
 
     for app in installed_apps.clone() {
         if let Some(icon_path) = app.icon_path {
