@@ -1,6 +1,6 @@
 use mctk_core::component;
 use mctk_core::layout::Alignment;
-use mctk_core::widgets::Svg;
+use mctk_core::widgets::Image;
 use mctk_core::{component::Component, lay, node, size, size_pct, widgets::Div, Node};
 
 #[derive(Debug)]
@@ -19,7 +19,7 @@ impl Component for Lock {
                 ],
             )
             .push(node!(
-                Svg::new("lock_icon"),
+                Image::new("lock_icon"),
                 lay![
                     size: [28, 28],
                 ],

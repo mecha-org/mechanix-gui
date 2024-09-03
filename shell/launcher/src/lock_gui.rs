@@ -10,8 +10,9 @@ use mctk_core::layout::{Alignment, Direction};
 
 use mctk_core::reexports::femtovg::CompositeOperation;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
-use mctk_core::renderables::{Image, Renderable};
-use mctk_core::{component, Color, Scale, AABB};
+use mctk_core::renderables::rect::InstanceBuilder;
+use mctk_core::renderables::{Image, Rect, Renderable};
+use mctk_core::{component, Color, Pos, Scale, AABB};
 use mctk_core::{
     component::Component, lay, node, size_pct, state_component_impl, widgets::Div, Node,
 };
@@ -97,7 +98,7 @@ impl Component for Lockscreen {
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
-        println!("App was sent: {:?}", message);
+        // println!("App was sent: {:?}", message);
         if let Some(msg) = message.downcast_ref::<Message>() {
             match msg {
                 Message::Clock { time, date } => {
@@ -115,10 +116,11 @@ impl Component for Lockscreen {
                     self.state_mut().battery_level = battery_level;
                 }
                 Message::Unlock => {
-                    if let Some(session_tx) = &self.state_ref().session_lock_sender {
-                        let _ = session_tx.send(SessionLockMessage::Unlock);
+                    if let Some(app_channel) = &self.state_ref().app_channel {
+                        let _ = app_channel.send(AppMessage::Unlock);
                     }
                 }
+
                 _ => (),
             }
         }
@@ -130,20 +132,42 @@ impl Component for Lockscreen {
         //     return None;
         // }
 
-        let width = context.aabb.width();
-        let height = context.aabb.height();
-        let AABB { pos, .. } = context.aabb;
         let mut rs = vec![];
+        if self
+            .state_ref()
+            .settings
+            .modules
+            .background
+            .icon
+            .default
+            .len()
+            > 0
+        {
+            let width = context.aabb.width();
+            let height = context.aabb.height();
+            let AABB { pos, .. } = context.aabb;
 
-        let image = Image::new(pos, Scale { width, height }, "background")
-            .composite_operation(CompositeOperation::DestinationOver);
+            let image = Image::new(pos, Scale { width, height }, "background")
+                .composite_operation(CompositeOperation::DestinationOver);
 
-        rs.push(Renderable::Image(image));
+            rs.push(Renderable::Image(image));
+        } else {
+            let mut rect_instance = InstanceBuilder::default()
+                .pos(Pos {
+                    x: context.aabb.pos.x,
+                    y: context.aabb.pos.y,
+                    z: 0.1,
+                })
+                .scale(context.aabb.size())
+                .color(Color::BLACK)
+                .build()
+                .unwrap();
+
+            rs.push(Renderable::Rect(Rect::from_instance_data(rect_instance)))
+        }
 
         Some(rs)
     }
-
-    fn render_hash(&self, hasher: &mut component::ComponentHasher) {}
 }
 
 impl RootComponent<AppParams> for Lockscreen {

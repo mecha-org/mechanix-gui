@@ -53,12 +53,16 @@ impl RunningAppsHandle {
                     //     top_levels.len()
                     // );
                     let _ = self.app_channel.send(AppMessage::RunningApps {
-                        count: top_levels.len() as i32,
+                        message: crate::RunningAppsMessage::Status {
+                            count: top_levels.len() as i32,
+                        },
                     });
                 }
                 Err(e) => {
                     error!(task, "error while getting running apps {}", e);
-                    let _ = self.app_channel.send(AppMessage::RunningApps { count: 0 });
+                    let _ = self.app_channel.send(AppMessage::RunningApps {
+                        message: crate::RunningAppsMessage::Status { count: 0 },
+                    });
                 }
             };
         }

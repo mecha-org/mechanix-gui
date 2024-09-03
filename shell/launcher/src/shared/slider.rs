@@ -4,7 +4,7 @@ use mctk_core::layout::{Alignment, Direction};
 use mctk_core::{component, msg, state_component_impl, Color, Point, Scale, AABB};
 use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
 use std::fmt::Debug;
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 
 use crate::utils::fill_grid_with_true;
 
@@ -143,7 +143,8 @@ impl Slider {
             }
         }
         self.state_mut().value = value;
-        self.state_mut().grid = grid;
+        self.state_mut().grid = grid.clone();
+        println!("Slider::handle_on_drag() {:?}", grid);
         return Some(value);
     }
 
@@ -169,6 +170,7 @@ impl Component for Slider {
     fn render_hash(&self, hasher: &mut ComponentHasher) {
         self.state_ref().value.hash(hasher);
         self.state_ref().grid.hash(hasher);
+        println!("Slider::render_hash() {:?}", hasher.finish());
     }
     fn props_hash(&self, hasher: &mut ComponentHasher) {
         self.value.hash(hasher);
@@ -182,7 +184,13 @@ impl Component for Slider {
         event.stop_bubbling();
     }
 
+    fn on_touch_drag_start(&mut self, event: &mut Event<event::TouchDragStart>) {
+        println!("Slider::on_touch_drag_start()");
+        event.stop_bubbling();
+    }
+
     fn on_drag(&mut self, event: &mut Event<event::Drag>) {
+        println!("Slider::on_drag() {:?}", event.relative_logical_position());
         if let Some(value) = self.handle_on_drag(
             event.relative_logical_position(),
             event.current_logical_aabb(),
@@ -193,6 +201,25 @@ impl Component for Slider {
         }
     }
 
+    fn on_touch_drag(&mut self, event: &mut Event<event::TouchDrag>) {
+        event.stop_bubbling();
+
+        // self.dirty = true;
+
+        println!(
+            "Slider::on_touch_drag() {:?}",
+            event.relative_logical_position_touch(),
+        );
+        if let Some(value) = self.handle_on_drag(
+            event.relative_logical_position_touch(),
+            event.current_logical_aabb(),
+        ) {
+            println!("Slider::on_touch_drag() value {:?}", value,);
+            if let Some(f) = &self.on_slide {
+                event.emit(f(value));
+            }
+        }
+    }
     fn on_drag_end(&mut self, event: &mut Event<event::DragEnd>) {
         if let Some(f) = &self.on_slide_end {
             let value = self.state_ref().value;
@@ -202,23 +229,8 @@ impl Component for Slider {
         self.handle_on_drag_end();
     }
 
-    fn on_touch_drag_start(&mut self, event: &mut Event<event::TouchDragStart>) {
-        println!("Slider::on_touch_drag_start()");
-        event.stop_bubbling();
-    }
-
-    fn on_touch_drag(&mut self, event: &mut Event<event::TouchDrag>) {
-        if let Some(value) = self.handle_on_drag(
-            event.relative_logical_position_touch(),
-            event.current_logical_aabb(),
-        ) {
-            if let Some(f) = &self.on_slide {
-                event.emit(f(value));
-            }
-        }
-    }
-
     fn on_touch_drag_end(&mut self, event: &mut Event<event::TouchDragEnd>) {
+        event.stop_bubbling();
         if let Some(f) = &self.on_slide_end {
             let value = self.state_ref().value;
             event.emit(f(value));
@@ -277,6 +289,7 @@ impl Component for Slider {
             ]
         );
         let grid = self.state_ref().grid.clone();
+        println!("Slider::view()");
         let slider_type = self.slider_type.clone();
         let col_width = self.col_width;
         let col_spacing = self.col_spacing;

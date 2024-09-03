@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt};
 
+use mctk_core::AssetParams;
+
 use crate::settings::RotationIconPaths;
 
 #[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -20,16 +22,17 @@ impl fmt::Display for RotationStatus {
     }
 }
 
-pub fn get_rotation_icons_map(icon_paths: RotationIconPaths) -> HashMap<String, String> {
+pub fn get_rotation_icons_map(icon_paths: RotationIconPaths) -> HashMap<String, AssetParams> {
     let mut assets = HashMap::new();
 
-    if let value = &icon_paths.portrait {
-        assets.insert(RotationStatus::Portrait.to_string(), value.clone());
-    }
-
-    if let value = &icon_paths.landscape {
-        assets.insert(RotationStatus::Landscape.to_string(), value.clone());
-    }
+    assets.insert(
+        RotationStatus::Portrait.to_string(),
+        AssetParams::new(icon_paths.portrait.clone()),
+    );
+    assets.insert(
+        RotationStatus::Landscape.to_string(),
+        AssetParams::new(icon_paths.landscape.clone()),
+    );
 
     assets
 }

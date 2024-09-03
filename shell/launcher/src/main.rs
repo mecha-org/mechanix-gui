@@ -12,6 +12,7 @@ mod theme;
 mod types;
 mod utils;
 
+use desktop_entries::{DesktopEntries, DesktopEntry};
 use futures::StreamExt;
 use home_screen_ui::launch_homescreen;
 use lock_screen_ui::launch_lockscreen;
@@ -20,11 +21,14 @@ use modules::battery::handler::BatteryServiceHandle;
 use modules::bluetooth::handler::BluetoothServiceHandle;
 use modules::clock::handler::ClockServiceHandle;
 use modules::cpu::handler::CPUServiceHandle;
+use modules::home::handler::HomeButtonHandler;
 use modules::ip_address::handler::IpAddressHandle;
 use modules::memory::handler::MemoryHandle;
 use modules::name::handler::MachineNameHandle;
 use modules::networking::handler::NetworkingHandle;
+use modules::running_apps::app_manager::{AppManagerMessage, AppManagerService};
 use modules::running_apps::handler::RunningAppsHandle;
+use modules::running_apps::running_app::AppDetails;
 use modules::settings_panel::brightness::handler::BrightnessServiceHandle;
 use modules::settings_panel::rotation::component::get_rotation_icons_map;
 use modules::settings_panel::sound::handler::SoundServiceHandle;
@@ -37,13 +41,14 @@ use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 use tokio::runtime::Builder;
 use tokio::select;
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::mpsc::{self, Receiver};
 use types::{BluetoothStatus, WirelessStatus};
 use upower::BatteryStatus;
 use utils::{
     get_battery_icons_charging_map, get_battery_icons_map, get_bluetooth_icons_map,
     get_wireless_icons_map,
 };
+use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::ToplevelKey;
 
 use mctk_core::{
     reexports::{
@@ -57,9 +62,10 @@ use settings::LauncherSettings;
 use theme::LauncherTheme;
 use tracing_subscriber::EnvFilter;
 
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct AppParams {
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
+    installed_apps: Option<Vec<DesktopEntry>>,
 }
 
 #[derive(Debug)]
@@ -77,6 +83,12 @@ pub enum BluetoothMessage {
 #[derive(Debug)]
 pub enum BatteryMessage {
     Status { level: u8, status: BatteryStatus },
+}
+
+#[derive(Debug)]
+pub enum RunningAppsMessage {
+    Status { count: i32 },
+    Toggle { value: bool },
 }
 
 #[derive(Debug)]
@@ -102,7 +114,7 @@ enum AppMessage {
     IpAddress { address: String },
     Net { online: bool },
     Memory { total: u64, used: u64 },
-    RunningApps { count: i32 },
+    RunningApps { message: RunningAppsMessage },
     RunOnTop,
     RunOnBottom,
     Clock { time: String, date: String },
@@ -111,6 +123,14 @@ enum AppMessage {
     Battery { message: BatteryMessage },
     Sound { message: SoundMessage },
     Brightness { message: BrightnessMessage },
+    AppsUpdated { apps: Vec<AppDetails> },
+    AppInstanceClicked(ToplevelKey),
+    AppInstanceCloseClicked(ToplevelKey),
+    CloseAllApps,
+    PowerOptions { show: bool },
+    ShutDown,
+    Restart,
+    Unlock,
 }
 
 #[derive(Debug, Clone)]
@@ -120,6 +140,7 @@ pub struct UiParams {
     svgs: HashMap<String, String>,
     settings: LauncherSettings,
     theme: LauncherTheme,
+    installed_apps: Vec<DesktopEntry>,
 }
 
 #[tokio::main]
@@ -144,21 +165,35 @@ async fn main() {
         Err(_) => LauncherTheme::default(),
     };
 
+    let mut installed_apps: Vec<DesktopEntry> = vec![];
+    let include_only_apps = settings.app_list.include_only.clone();
+    let exclude_apps = settings.app_list.exclude.clone();
+    let include_apps = settings.app_list.include.clone();
+
+    if let Ok(v) = DesktopEntries::new() {
+        let entries = v.entries.to_vec();
+        if include_only_apps.len() > 0 {
+            installed_apps = entries
+                .into_iter()
+                .filter(|e| include_only_apps.contains(&e.name.to_lowercase()))
+                .collect();
+        } else if exclude_apps.len() > 0 {
+            installed_apps = entries
+                .into_iter()
+                .filter(|e| !exclude_apps.contains(&e.name.to_lowercase()))
+                .collect();
+        } else {
+            installed_apps = entries;
+        }
+    };
+
     let mut fonts: cosmic_text::fontdb::Database = cosmic_text::fontdb::Database::new();
-    // fonts.load_system_fonts();
     for path in settings.fonts.paths.clone() {
         println!("font path is {:?}", path);
         if let Ok(content) = fs::read(Path::new(&path)) {
             fonts.load_font_data(content);
         }
     }
-
-    // fonts.load_font_data(include_bytes!("assets/fonts/SpaceMono-Bold.ttf").into());
-    // fonts.load_font_data(include_bytes!("assets/fonts/SpaceMono-BoldItalic.ttf").into());
-    // fonts.load_font_data(include_bytes!("assets/fonts/SpaceMono-Italic.ttf").into());
-    // fonts.load_font_data(include_bytes!("assets/fonts/SpaceMono-Regular.ttf").into());
-    // fonts.load_font_data(include_bytes!("assets/fonts/SpaceGrotesk-Bold.ttf").into());
-    // fonts.load_font_data(include_bytes!("assets/fonts/SpaceGrotesk-Regular.ttf").into());
 
     let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
@@ -188,18 +223,49 @@ async fn main() {
     let power_icon = modules.power.icon.default;
     let lock_icon = modules.lock.icon.default;
     let settings_icon = modules.settings.icon.default;
+    let search_icon = modules.search.icon.default;
+    let launch_icon = modules.launch.icon.default;
+    let delete_icon = modules.delete.icon.default;
+    let close_icon = modules.close.icon.default;
+    let terminal_icon = modules.terminal.icon.default;
+    let shutdown_icon = modules.power_options.shutdown.icon;
+    let restart_icon = modules.power_options.restart.icon;
 
-    svgs.extend(battery_assets);
-    svgs.extend(battery_charging_assets);
-    svgs.extend(wireless_assets);
-    svgs.extend(bluetooth_assets);
-    svgs.extend(rotation_assets);
-    svgs.insert("power_icon".to_string(), power_icon);
-    svgs.insert("lock_icon".to_string(), lock_icon);
-    svgs.insert("settings_icon".to_string(), settings_icon);
+    assets.extend(battery_assets);
+    assets.extend(battery_charging_assets);
+    assets.extend(wireless_assets);
+    assets.extend(bluetooth_assets);
+    assets.extend(rotation_assets);
+    assets.insert("power_icon".to_string(), AssetParams::new(power_icon));
+    assets.insert("lock_icon".to_string(), AssetParams::new(lock_icon));
+    assets.insert("settings_icon".to_string(), AssetParams::new(settings_icon));
+    assets.insert("search_icon".to_string(), AssetParams::new(search_icon));
+    assets.insert("launch_icon".to_string(), AssetParams::new(launch_icon));
+    assets.insert("delete_icon".to_string(), AssetParams::new(delete_icon));
+    assets.insert("shutdown_icon".to_string(), AssetParams::new(shutdown_icon));
+    assets.insert("restart_icon".to_string(), AssetParams::new(restart_icon));
+    assets.insert("close_icon".to_string(), AssetParams::new(close_icon));
+    assets.insert("terminal_icon".to_string(), AssetParams::new(terminal_icon));
 
     let background = modules.background.icon.default;
     assets.insert("background".to_string(), AssetParams::new(background));
+
+    for app in installed_apps.clone() {
+        if let Some(icon_path) = app.icon_path {
+            match icon_path.extension().and_then(|ext| ext.to_str()) {
+                Some("png") => {
+                    assets.insert(
+                        app.name,
+                        AssetParams::new(icon_path.to_str().unwrap().to_string()),
+                    );
+                }
+                Some("svg") => {
+                    svgs.insert(app.name, icon_path.to_str().unwrap().to_string());
+                }
+                _ => (),
+            }
+        }
+    }
 
     let ui_params = UiParams {
         fonts,
@@ -207,33 +273,45 @@ async fn main() {
         svgs,
         settings,
         theme,
+        installed_apps: installed_apps.clone(),
     };
 
-    let lock_window_tx: Arc<RwLock<Option<Sender<WindowMessage>>>> = Arc::new(RwLock::new(None));
-
-    let lock_window_tx_1 = lock_window_tx.clone();
     let ui_params_1 = ui_params.clone();
     let homesceen_ui_t = std::thread::spawn(move || {
-        let _ = launch_homescreen(lock_window_tx_1, ui_params_1);
+        let _ = launch_homescreen(ui_params_1);
     });
 
     let session = get_current_session().await.unwrap();
     let mut lock = session.receive_lock().await.unwrap();
     let mut unlock = session.receive_unlock().await.unwrap();
-
+    let is_session_locked = session.locked_hint().await.unwrap();
+    if is_session_locked {
+        let ui_params_1 = ui_params.clone();
+        let lock_screen_ui_t = std::thread::spawn(move || {
+            let _ = launch_lockscreen(ui_params_1);
+        });
+        // lock_screen_ui_t.join().unwrap();
+    }
     let lock_event_t = tokio::spawn(async move {
         //Listen for events
         loop {
             select! {
                 _ =  lock.next() =>  {
-                    let lock_window_tx_1 = lock_window_tx.clone();
+                    let session = get_current_session().await.unwrap();
+                    let is_session_locked = session.locked_hint().await.unwrap();
+                    println!("is_session_locked {:?}", is_session_locked);
+                    if is_session_locked {
+                        return;
+                    }
+                    let _ = session.set_locked_hint(true).await;
                     let ui_params_1 = ui_params.clone();
                     let lock_screen_ui_t = std::thread::spawn(move || {
-                        let _ = launch_lockscreen(lock_window_tx_1, ui_params_1);
+                        let _ = launch_lockscreen( ui_params_1);
                     });
-                    lock_screen_ui_t.join().unwrap();
+                    // lock_screen_ui_t.join().unwrap();
                 }, _ = unlock.next() => {
                     println!("logind unlock");
+                    let _ = session.set_locked_hint(false).await;
                 }
             }
         }
@@ -241,17 +319,51 @@ async fn main() {
 
     lock_event_t.await.unwrap();
     homesceen_ui_t.join().unwrap();
+    // let lock_window_tx_1 = lock_window_tx.clone();
+    // let ui_params_1 = ui_params.clone();
+    // let _ = launch_lockscreen(lock_window_tx_1, ui_params_1);
 }
 
-fn init_services(
-    settings: LauncherSettings,
-    app_channel: Sender<AppMessage>,
-    wireless_msg_rx: Receiver<WirelessMessage>,
-    bluetooth_msg_rx: Receiver<BluetoothMessage>,
-    rotation_msg_rx: Receiver<RotationMessage>,
-    brightness_msg_rx: Receiver<BrightnessMessage>,
-    sound_msg_rx: Receiver<SoundMessage>,
-) -> JoinHandle<()> {
+pub struct InitServicesParams {
+    pub settings: LauncherSettings,
+    pub app_channel: Sender<AppMessage>,
+    pub wireless_msg_rx: Receiver<WirelessMessage>,
+    pub bluetooth_msg_rx: Receiver<BluetoothMessage>,
+    pub rotation_msg_rx: Receiver<RotationMessage>,
+    pub brightness_msg_rx: Receiver<BrightnessMessage>,
+    pub sound_msg_rx: Receiver<SoundMessage>,
+    pub app_manager_msg_rx: Receiver<AppManagerMessage>,
+    pub installed_apps: Vec<DesktopEntry>,
+}
+
+impl Default for InitServicesParams {
+    fn default() -> Self {
+        Self {
+            settings: Default::default(),
+            app_channel: calloop::channel::channel().0,
+            wireless_msg_rx: tokio::sync::mpsc::channel(128).1,
+            bluetooth_msg_rx: tokio::sync::mpsc::channel(128).1,
+            rotation_msg_rx: tokio::sync::mpsc::channel(128).1,
+            brightness_msg_rx: tokio::sync::mpsc::channel(128).1,
+            sound_msg_rx: tokio::sync::mpsc::channel(128).1,
+            app_manager_msg_rx: tokio::sync::mpsc::channel(128).1,
+            installed_apps: vec![],
+        }
+    }
+}
+
+fn init_services(init_params: InitServicesParams) -> JoinHandle<()> {
+    let InitServicesParams {
+        settings,
+        app_channel,
+        wireless_msg_rx,
+        bluetooth_msg_rx,
+        rotation_msg_rx,
+        brightness_msg_rx,
+        sound_msg_rx,
+        app_manager_msg_rx,
+        installed_apps,
+    } = init_params;
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
             .worker_threads(1)
@@ -274,6 +386,9 @@ fn init_services(
         let ip_address_f = run_ip_address_handler(app_channel.clone());
         let net_f = run_net_handler(app_channel.clone());
         let running_apps_f = run_running_apps_handler(app_channel.clone());
+        let app_manager_f =
+            run_app_manager_handler(app_manager_msg_rx, app_channel.clone(), installed_apps);
+        let home_button_f = run_home_button_handler(app_channel.clone());
 
         runtime
             .block_on(runtime.spawn(async move {
@@ -291,7 +406,9 @@ fn init_services(
                     machine_name_f,
                     ip_address_f,
                     net_f,
-                    running_apps_f
+                    running_apps_f,
+                    app_manager_f,
+                    home_button_f
                 )
             }))
             .unwrap();
@@ -368,4 +485,21 @@ async fn run_net_handler(app_channel: Sender<AppMessage>) {
 async fn run_running_apps_handler(app_channel: Sender<AppMessage>) {
     let mut running_apps = RunningAppsHandle::new(app_channel);
     running_apps.run().await;
+}
+
+async fn run_home_button_handler(app_channel: Sender<AppMessage>) {
+    let home_button_handle = HomeButtonHandler::new(app_channel);
+    home_button_handle.run().await;
+}
+
+async fn run_app_manager_handler(
+    msg_rx: mpsc::Receiver<AppManagerMessage>,
+    app_channel_tx: calloop::channel::Sender<AppMessage>,
+    installed_apps: Vec<DesktopEntry>,
+) {
+    // create the app manager instance
+    let mut app_manager_handler = AppManagerService::new(installed_apps);
+
+    // start the app manager handler
+    let _ = app_manager_handler.run(msg_rx, app_channel_tx).await;
 }

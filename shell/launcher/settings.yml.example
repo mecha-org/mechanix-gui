@@ -26,11 +26,13 @@ fonts:
     - /usr/share/mechanix/shell/launcher/assets/fonts/SpaceMono-Italic.ttf
     - /usr/share/mechanix/shell/launcher/assets/fonts/SpaceMono-Regular.ttf
     - /usr/share/mechanix/shell/launcher/assets/fonts/SpaceGrotesk-Bold.ttf
-    - /usr/share/mechanix/shell/launcher/assets/assets/fonts/SpaceGrotesk-Regular.ttf
+    - /usr/share/mechanix/shell/launcher/assets/fonts/SpaceGrotesk-Regular.ttf
+    - /usr/share/mechanix/shell/launcher/assets/fonts/SpaceGrotesk-SemiBold.ttf
+    - /usr/share/mechanix/shell/launcher/assets/fonts/SpaceGrotesk-Medium.ttf
 modules:
   background:
     icon:
-      default: /usr/share/mechanix/shell/launcher/assets/icons/mecha_background_color.png
+      default:
   apps:
     - app_id: mecha-connect
       name: Mecha Connect
@@ -55,55 +57,104 @@ modules:
       icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/firefox_icon.png
       run_command: ["sh", "-c", firefox-esr]
   clock:
-    format: "%k:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+    format: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
     icon:
-      on: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/bluetooth_on_icon.svg
-      off: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/bluetooth_off_icon.svg
-      connected: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/bluetooth_connected_icon.svg
-      not_found: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/bluetooth_not_found_icon.svg
+      sm:
+        on: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/sm/bluetooth_on_icon.png
+        off: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/sm/bluetooth_off_icon.png
+        connected: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/sm/bluetooth_connected_icon.png
+        not_found: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/sm/bluetooth_not_found_icon.png
+      lg:
+        on: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/lg/bluetooth_on_icon.png
+        off: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/lg/bluetooth_off_icon.png
+        connected: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/lg/bluetooth_connected_icon.png
+        not_found: /usr/share/mechanix/shell/launcher/assets/icons/bluetooth/lg/bluetooth_not_found_icon.png
   wireless:
     icon:
-      off: /usr/share/mechanix/shell/launcher/assets/icons/wireless/wireless_off_icon.svg
-      on: /usr/share/mechanix/shell/launcher/assets/icons/wireless/wireless_on_icon.svg
-      low: /usr/share/mechanix/shell/launcher/assets/icons/wireless/wireless_low_icon.svg
-      weak: /usr/share/mechanix/shell/launcher/assets/icons/wireless/wireless_weak_icon.svg
-      good: /usr/share/mechanix/shell/launcher/assets/icons/wireless/wireless_good_icon.svg
-      strong: /usr/share/mechanix/shell/launcher/assets/icons/wireless/wireless_strong_icon.svg
-      not_found: /usr/share/mechanix/shell/launcher/assets/icons/wireless/wireless_not_found_icon.svg
+      sm:
+        off: /usr/share/mechanix/shell/launcher/assets/icons/wireless/sm/wireless_off_icon.png
+        on: /usr/share/mechanix/shell/launcher/assets/icons/wireless/sm/wireless_on_icon.png
+        low: /usr/share/mechanix/shell/launcher/assets/icons/wireless/sm/wireless_low_icon.png
+        weak: /usr/share/mechanix/shell/launcher/assets/icons/wireless/sm/wireless_weak_icon.png
+        good: /usr/share/mechanix/shell/launcher/assets/icons/wireless/sm/wireless_good_icon.png
+        strong: /usr/share/mechanix/shell/launcher/assets/icons/wireless/sm/wireless_strong_icon.png
+        not_found: /usr/share/mechanix/shell/launcher/assets/icons/wireless/sm/wireless_not_found_icon.png
+      lg:
+        off: /usr/share/mechanix/shell/launcher/assets/icons/wireless/lg/wireless_off_icon.png
+        on: /usr/share/mechanix/shell/launcher/assets/icons/wireless/lg/wireless_on_icon.png
+        low: /usr/share/mechanix/shell/launcher/assets/icons/wireless/lg/wireless_low_icon.png
+        weak: /usr/share/mechanix/shell/launcher/assets/icons/wireless/lg/wireless_weak_icon.png
+        good: /usr/share/mechanix/shell/launcher/assets/icons/wireless/lg/wireless_good_icon.png
+        strong: /usr/share/mechanix/shell/launcher/assets/icons/wireless/lg/wireless_strong_icon.png
+        not_found: /usr/share/mechanix/shell/launcher/assets/icons/wireless/lg/wireless_not_found_icon.png
   battery:
     icon:
-      level_100: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_100_icon.svg
-      level_90: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_90_icon.svg
-      level_80: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_80_icon.svg
-      level_70: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_70_icon.svg
-      level_60: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_60_icon.svg
-      level_50: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_50_icon.svg
-      level_40: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_40_icon.svg
-      level_30: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_30_icon.svg
-      level_20: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_20_icon.svg
-      level_10: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_10_icon.svg
-      level_0: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_0_icon.svg
-      not_found: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_not_found_icon.svg
+      level_100: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_100_icon.png
+      level_90: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_90_icon.png
+      level_80: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_80_icon.png
+      level_70: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_70_icon.png
+      level_60: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_60_icon.png
+      level_50: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_50_icon.png
+      level_40: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_40_icon.png
+      level_30: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_30_icon.png
+      level_20: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_20_icon.png
+      level_10: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_10_icon.png
+      level_0: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_0_icon.png
+      not_found: /usr/share/mechanix/shell/launcher/assets/icons/battery/battery_not_found_icon.png
       battery:
     charging_icon:
-      level_100: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_100_icon.svg
-      level_90: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_90_icon.svg
-      level_80: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_80_icon.svg
-      level_70: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_70_icon.svg
-      level_60: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_60_icon.svg
-      level_50: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_50_icon.svg
-      level_40: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_40_icon.svg
-      level_30: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_30_icon.svg
-      level_20: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_20_icon.svg
-      level_10: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_10_icon.svg
-      level_0: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_0_icon.svg
-      not_found: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_not_found_icon.svg
+      level_100: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_100_icon.png
+      level_90: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_90_icon.png
+      level_80: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_80_icon.png
+      level_70: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_70_icon.png
+      level_60: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_60_icon.png
+      level_50: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_50_icon.png
+      level_40: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_40_icon.png
+      level_30: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_30_icon.png
+      level_20: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_20_icon.png
+      level_10: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_10_icon.png
+      level_0: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_0_icon.png
+      not_found: /usr/share/mechanix/shell/launcher/assets/icons/battery/charging/battery_not_found_icon.png
   rotation:
     title: "Auto Rotate"
     icon:
-      portrait: /usr/share/mechanix/shell/launcher/assets/icons/rotation/portrait_icon.svg
-      landscape: /usr/share/mechanix/shell/launcher/assets/icons/rotation/landscape_icon.svg
+      portrait: /usr/share/mechanix/shell/launcher/assets/icons/rotation/portrait_icon.png
+      landscape: /usr/share/mechanix/shell/launcher/assets/icons/rotation/landscape_icon.png
   power:
     icon:
-      default: /usr/share/mechanix/shell/launcher/assets/icons/power_icon.svg
+      default: /usr/share/mechanix/shell/launcher/assets/icons/power_icon.png
+  lock:
+    icon:
+      default: /usr/share/mechanix/shell/launcher/assets/icons/lock_icon.png
+    min_time_long_press: 1
+  settings:
+    icon:
+      default: /usr/share/mechanix/shell/launcher/assets/icons/settings_icon.png
+  search:
+    icon:
+      default: /usr/share/mechanix/shell/launcher/assets/icons/search_icon.png
+  launch:
+    icon:
+      default: /usr/share/mechanix/shell/launcher/assets/icons/launch_icon.png
+  delete:
+    icon:
+      default: /usr/share/mechanix/shell/launcher/assets/icons/delete_icon.png
+  close:
+    icon:
+      default: /usr/share/mechanix/shell/launcher/assets/icons/close_icon.png
+  power_options:
+    shutdown:
+      icon: /usr/share/mechanix/shell/launcher/assets/icons/shutdown_icon.png
+    restart:
+      icon: /usr/share/mechanix/shell/launcher/assets/icons/restart_icon.png
+  terminal:
+    icon:
+      default: /usr/share/mechanix/shell/launcher/assets/icons/terminal_icon.png
+    run_command: ["sh", "-c", "alacritty --working-directory=/home/ironman"]
+app_list:
+  include_only:
+    - chromium web browser
+    - firefox web browser
+  exclude:
+  include:

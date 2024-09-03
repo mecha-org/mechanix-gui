@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use crate::gui::{self, Message, SwipeGestures};
+use crate::gui::{self, Message};
 use crate::modules::clock::component::Clock;
 use crate::modules::controls::Controls;
 use crate::modules::cpu::component::CPU;
@@ -33,48 +33,11 @@ pub struct HomeUi {
     pub ip_address: String,
     pub online: bool,
     pub used_memory: u64,
-    pub swipe_gesture: Option<SwipeGestures>,
     pub is_lock_screen: bool,
-}
-
-impl HomeUi {
-    // fn handle_on_drag(&mut self, logical_delta: Point) -> Option<mctk_core::component::Message> {
-    //     let dx = logical_delta.x;
-    //     let dy = logical_delta.y;
-    //     let min_drag = 10.;
-
-    //     if dx.abs() > min_drag || dy.abs() > min_drag {
-    //         if dx > dy {
-    //             if logical_delta.x > 0. {
-    //                 return Some(msg!(Message::Swipe {
-    //                     direction: SwipeGestures::Right(dx.abs() as i32)
-    //                 }));
-    //             } else {
-    //                 return Some(msg!(Message::Swipe {
-    //                     direction: SwipeGestures::Left(dx.abs() as i32)
-    //                 }));
-    //             }
-    //         } else {
-    //             if logical_delta.y > 0. {
-    //                 return Some(msg!(Message::Swipe {
-    //                     direction: SwipeGestures::Down(dy.abs() as i32)
-    //                 }));
-    //             } else {
-    //                 return Some(msg!(Message::Swipe {
-    //                     direction: SwipeGestures::Up(dy.abs() as i32)
-    //                 }));
-    //             }
-    //         };
-    //     }
-
-    //     None
-    // }
 }
 
 impl Component for HomeUi {
     fn view(&self) -> Option<Node> {
-        // println!("HomeUi::view()");
-
         let cpu_usage = self.cpu_usage.clone();
         let uptime = self.uptime.clone();
         let machine_name = self.machine_name.clone();
@@ -117,9 +80,9 @@ impl Component for HomeUi {
 
         row_1 = row_1.push(node!(
             Controls {
-                battery_level: BatteryLevel::Level100,
+                battery_level,
                 wireless_status,
-                bluetooth_status: BluetoothStatus::Connected,
+                bluetooth_status,
                 is_lock_screen
             },
             lay![
@@ -176,7 +139,9 @@ impl Component for HomeUi {
                 Uptime {
                     time: uptime.clone()
                 },
-                lay![],
+                lay![
+                    size: [Auto, 58]
+                ],
             ))
             .push(node!(
                 Networking {
@@ -187,7 +152,8 @@ impl Component for HomeUi {
                     }
                 },
                 lay![
-                    margin: [10., 0., 0., 0.]
+                    margin: [8., 0., 0., 0.],
+                    size: [Auto, 58]
                 ],
             )),
         );

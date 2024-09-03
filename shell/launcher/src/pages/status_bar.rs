@@ -1,6 +1,6 @@
 use mctk_core::layout::Alignment;
 use mctk_core::style::{FontWeight, Styled};
-use mctk_core::widgets::{Svg, Text};
+use mctk_core::widgets::{Image, Text};
 use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
 use mctk_core::{txt, Color};
 
@@ -23,14 +23,14 @@ impl Component for StatusBar {
                     padding: [13, 20, 1, 20],
                     size_pct: [100],
                     axis_alignment: Alignment::Stretch,
-                    //  cross_alignment: Alignment::SpaceBetween
+                    cross_alignment: Alignment::Center
                 ]
             )
             .push(
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [50],
+                        size_pct: [50, Auto],
                         axis_alignment: Alignment::Start
                     ],
                 )
@@ -48,7 +48,7 @@ impl Component for StatusBar {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [50],
+                        size_pct: [50, Auto],
                         axis_alignment: Alignment::End
                     ]
                 )
@@ -62,7 +62,7 @@ impl Component for StatusBar {
                     Bluetooth {
                         status: self.bluetooth_status,
                     },
-                    lay![margin: [0, 14]]
+                    lay![margin: [0, 20]]
                 ))
                 .push(node!(
                     Battery {
@@ -102,23 +102,12 @@ pub struct Wireless {
 
 impl Component for Wireless {
     fn view(&self) -> Option<Node> {
-        Some(
-            node!(
-                Div::new()
-                // .bg(Color::RED)
-                ,
-                [
-                    size: [24, 24],
-                    padding: [1, 2, 1, 2]
-                ],
-            )
-            .push(node!(
-                Svg::new(self.status.to_string()),
-                lay![
-                    size: [20, 20],
-                ],
-            )),
-        )
+        Some(node!(
+            Image::new(format!("sm{:?}", self.status.to_string())),
+            lay![
+                size: [22, 22],
+            ]
+        ))
     }
 }
 
@@ -129,23 +118,12 @@ pub struct Bluetooth {
 
 impl Component for Bluetooth {
     fn view(&self) -> Option<Node> {
-        Some(
-            node!(
-                Div::new()
-                // .bg(Color::LIGHT_GREY)
-                ,
-                [
-                    size: [24, 24],
-                    padding: [1, 2, 1, 2]
-                ],
-            )
-            .push(node!(
-                Svg::new(self.status.to_string()),
-                lay![
-                    size: [20, 20],
-                ],
-            )),
-        )
+        Some(node!(
+            Image::new(format!("sm{:?}", self.status.to_string())),
+            lay![
+                size: [22, 22],
+            ],
+        ))
     }
 }
 #[derive(Debug)]
@@ -155,24 +133,11 @@ pub struct Battery {
 
 impl Component for Battery {
     fn view(&self) -> Option<Node> {
-        Some(
-            node!(
-                Div::new()
-                // .bg(Color::LIGHT_GREY)
-                ,
-                [
-                    size: [24, 24],
-                    // cross_alignment: Alignment::Center,
-                    // axis_alignment: Alignment::Center,
-                    padding: [1, 2, 1, 2]
-                ],
-            )
-            .push(node!(
-                Svg::new(self.level.to_string()),
-                lay![
-                    size: [20, 20],
-                ],
-            )),
-        )
+        Some(node!(
+            Image::new(self.level.to_string()),
+            lay![
+                size: [22, 22],
+            ],
+        ))
     }
 }

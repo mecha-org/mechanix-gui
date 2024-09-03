@@ -1,11 +1,15 @@
 use std::collections::HashMap;
 
+use mctk_core::AssetParams;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use upower::BatteryStatus;
 
 use crate::{
-    settings::{BatteryIconPaths, BluetoothIconPaths, ChargingBatteryIconPaths, WirelessIconPaths},
+    settings::{
+        BatteryIconPaths, BluetoothIcons, ChargingBatteryIconPaths, LgWirelessIconPaths,
+        SmWirelessIconPaths, WirelessIcons,
+    },
     types::{BatteryLevel, BluetoothStatus, WirelessConnectedState, WirelessStatus},
 };
 
@@ -43,52 +47,88 @@ pub fn get_formatted_battery_level(level: &u8, status: &BatteryStatus) -> Batter
     }
 }
 
-pub fn get_battery_icons_map(icon_paths: BatteryIconPaths) -> HashMap<String, String> {
+pub fn get_battery_icons_map(icon_paths: BatteryIconPaths) -> HashMap<String, AssetParams> {
     let mut assets = HashMap::new();
 
     if let value = &icon_paths.not_found {
-        assets.insert(BatteryLevel::NotFound.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::NotFound.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_0 {
-        assets.insert(BatteryLevel::Level0.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level0.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_10 {
-        assets.insert(BatteryLevel::Level10.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level10.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_20 {
-        assets.insert(BatteryLevel::Level20.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level20.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_30 {
-        assets.insert(BatteryLevel::Level30.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level30.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_40 {
-        assets.insert(BatteryLevel::Level40.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level40.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_50 {
-        assets.insert(BatteryLevel::Level50.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level50.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_60 {
-        assets.insert(BatteryLevel::Level60.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level60.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
     if let value = &icon_paths.level_70 {
-        assets.insert(BatteryLevel::Level70.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level70.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_80 {
-        assets.insert(BatteryLevel::Level80.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level80.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
     if let value = &icon_paths.level_90 {
-        assets.insert(BatteryLevel::Level90.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level90.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
     if let value = &icon_paths.level_100 {
-        assets.insert(BatteryLevel::Level100.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::Level100.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     assets
@@ -96,116 +136,231 @@ pub fn get_battery_icons_map(icon_paths: BatteryIconPaths) -> HashMap<String, St
 
 pub fn get_battery_icons_charging_map(
     icon_paths: ChargingBatteryIconPaths,
-) -> HashMap<String, String> {
+) -> HashMap<String, AssetParams> {
     let mut assets = HashMap::new();
 
     if let value = &icon_paths.level_0 {
-        assets.insert(BatteryLevel::ChargingLevel0.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel0.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_10 {
-        assets.insert(BatteryLevel::ChargingLevel10.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel10.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_20 {
-        assets.insert(BatteryLevel::ChargingLevel20.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel20.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_30 {
-        assets.insert(BatteryLevel::ChargingLevel30.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel30.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_40 {
-        assets.insert(BatteryLevel::ChargingLevel40.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel40.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_50 {
-        assets.insert(BatteryLevel::ChargingLevel50.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel50.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_60 {
-        assets.insert(BatteryLevel::ChargingLevel60.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel60.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
     if let value = &icon_paths.level_70 {
-        assets.insert(BatteryLevel::ChargingLevel70.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel70.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     if let value = &icon_paths.level_80 {
-        assets.insert(BatteryLevel::ChargingLevel80.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel80.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
     if let value = &icon_paths.level_90 {
-        assets.insert(BatteryLevel::ChargingLevel90.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel90.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
     if let value = &icon_paths.level_100 {
-        assets.insert(BatteryLevel::ChargingLevel100.to_string(), value.clone());
+        assets.insert(
+            BatteryLevel::ChargingLevel100.to_string(),
+            AssetParams::new(value.clone()),
+        );
     }
 
     assets
 }
 
-pub fn get_bluetooth_icons_map(icon_paths: BluetoothIconPaths) -> HashMap<String, String> {
+pub fn get_bluetooth_icons_map(icons: BluetoothIcons) -> HashMap<String, AssetParams> {
     let mut assets = HashMap::new();
 
-    if let value = &icon_paths.not_found {
-        assets.insert(BluetoothStatus::NotFound.to_string(), value.clone());
-    }
+    let sm = icons.sm;
+    let lg = icons.lg;
+    //sm
+    assets.insert(
+        format!("sm{:?}", BluetoothStatus::NotFound.to_string()),
+        AssetParams::new(sm.not_found),
+    );
+    assets.insert(
+        format!("sm{:?}", BluetoothStatus::On.to_string()),
+        AssetParams::new(sm.on),
+    );
 
-    if let value = &icon_paths.on {
-        assets.insert(BluetoothStatus::On.to_string(), value.clone());
-    }
+    assets.insert(
+        format!("sm{:?}", BluetoothStatus::Off.to_string()),
+        AssetParams::new(sm.off),
+    );
 
-    if let value = &icon_paths.off {
-        assets.insert(BluetoothStatus::Off.to_string(), value.clone());
-    }
+    assets.insert(
+        format!("sm{:?}", BluetoothStatus::Connected.to_string()),
+        AssetParams::new(sm.connected),
+    );
 
-    if let value = &icon_paths.connected {
-        assets.insert(BluetoothStatus::Connected.to_string(), value.clone());
-    }
+    //lg
+    assets.insert(
+        format!("lg{:?}", BluetoothStatus::NotFound.to_string()),
+        AssetParams::new(lg.not_found),
+    );
+    assets.insert(
+        format!("lg{:?}", BluetoothStatus::On.to_string()),
+        AssetParams::new(lg.on),
+    );
+
+    assets.insert(
+        format!("lg{:?}", BluetoothStatus::Off.to_string()),
+        AssetParams::new(lg.off),
+    );
+
+    assets.insert(
+        format!("lg{:?}", BluetoothStatus::Connected.to_string()),
+        AssetParams::new(lg.connected),
+    );
 
     assets
 }
 
-pub fn get_wireless_icons_map(icon_paths: WirelessIconPaths) -> HashMap<String, String> {
+pub fn get_wireless_icons_map(icons: WirelessIcons) -> HashMap<String, AssetParams> {
     let mut assets = HashMap::new();
 
-    if let value = &icon_paths.not_found {
-        assets.insert(WirelessStatus::NotFound.to_string(), value.clone());
-    }
+    let sm = icons.sm;
+    let lg = icons.lg;
 
-    if let value = &icon_paths.on {
-        assets.insert(WirelessStatus::On.to_string(), value.clone());
-    }
+    //sm
+    assets.insert(
+        format!("sm{:?}", WirelessStatus::NotFound.to_string()),
+        AssetParams::new(sm.not_found.clone()),
+    );
 
-    if let value = &icon_paths.off {
-        assets.insert(WirelessStatus::Off.to_string(), value.clone());
-    }
+    assets.insert(
+        format!("sm{:?}", WirelessStatus::On.to_string()),
+        AssetParams::new(sm.on.clone()),
+    );
+    assets.insert(
+        format!("sm{:?}", WirelessStatus::Off.to_string()),
+        AssetParams::new(sm.off.clone()),
+    );
+    assets.insert(
+        format!(
+            "sm{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Weak).to_string()
+        ),
+        AssetParams::new(sm.weak.clone()),
+    );
+    assets.insert(
+        format!(
+            "sm{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Low).to_string()
+        ),
+        AssetParams::new(sm.low.clone()),
+    );
 
-    if let value = &icon_paths.weak {
-        assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Weak).to_string(),
-            value.clone(),
-        );
-    }
+    assets.insert(
+        format!(
+            "sm{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Good).to_string()
+        ),
+        AssetParams::new(sm.good.clone()),
+    );
+    assets.insert(
+        format!(
+            "sm{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Strong).to_string()
+        ),
+        AssetParams::new(sm.strong.clone()),
+    );
 
-    if let value = &icon_paths.low {
-        assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Low).to_string(),
-            value.clone(),
-        );
-    }
+    assets.insert(
+        format!("sm{:?}", WirelessStatus::NotFound.to_string()),
+        AssetParams::new(sm.not_found.clone()),
+    );
 
-    if let value = &icon_paths.good {
-        assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Good).to_string(),
-            value.clone(),
-        );
-    }
-    if let value = &icon_paths.strong {
-        assets.insert(
-            WirelessStatus::Connected(WirelessConnectedState::Strong).to_string(),
-            value.clone(),
-        );
-    }
+    //lg
+    assets.insert(
+        format!("lg{:?}", WirelessStatus::On.to_string()),
+        AssetParams::new(lg.on.clone()),
+    );
+    assets.insert(
+        format!("lg{:?}", WirelessStatus::Off.to_string()),
+        AssetParams::new(lg.off.clone()),
+    );
+    assets.insert(
+        format!(
+            "lg{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Weak).to_string()
+        ),
+        AssetParams::new(lg.weak.clone()),
+    );
+    assets.insert(
+        format!(
+            "lg{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Low).to_string()
+        ),
+        AssetParams::new(lg.low.clone()),
+    );
+
+    assets.insert(
+        format!(
+            "lg{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Good).to_string()
+        ),
+        AssetParams::new(lg.good.clone()),
+    );
+    assets.insert(
+        format!(
+            "lg{:?}",
+            WirelessStatus::Connected(WirelessConnectedState::Strong).to_string()
+        ),
+        AssetParams::new(lg.strong.clone()),
+    );
+    assets.insert(
+        format!("lg{:?}", WirelessStatus::NotFound.to_string()),
+        AssetParams::new(lg.not_found.clone()),
+    );
 
     assets
 }
