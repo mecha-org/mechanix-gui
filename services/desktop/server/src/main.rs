@@ -57,19 +57,19 @@ async fn main() -> Result<()> {
 
     handles.push(sound_handle);
 
-    let (event_tx, event_rx) = mpsc::channel(128);
-    let notification_bus = NotificationBusInterface {
-        event_tx: event_tx.clone(),
-    };
-    let _notification_bus_connection = connection::Builder::session()?
-        .name("org.freedesktop.Notifications")?
-        .serve_at("/org/freedesktop/Notifications", notification_bus.clone())?
-        .build()
-        .await?;
+    // let (event_tx, event_rx) = mpsc::channel(128);
+    // let notification_bus = NotificationBusInterface {
+    //     event_tx: event_tx.clone(),
+    // };
+    // let _notification_bus_connection = connection::Builder::session()?
+    //     .name("org.freedesktop.Notifications")?
+    //     .serve_at("/org/freedesktop/Notifications", notification_bus.clone())?
+    //     .build()
+    //     .await?;
 
-    let notifier = Notifier::new(settings.notifier.clone());
-    let notifier_handle = tokio::spawn(async move { notifier.run(event_tx, event_rx).await });
-    handles.push(notifier_handle);
+    // let notifier = Notifier::new(settings.notifier.clone());
+    // let notifier_handle = tokio::spawn(async move { notifier.run(event_tx, event_rx).await });
+    // handles.push(notifier_handle);
 
     let session_handler = SessionHandler::new(settings.clone());
     let session_handle = tokio::spawn(async move {
@@ -83,11 +83,11 @@ async fn main() -> Result<()> {
     // });
     // handles.push(home_button_handle);
 
-    let security_handler = SecurityHandler::new();
-    let security_handle = tokio::spawn(async move {
-        security_handler.run().await;
-    });
-    handles.push(security_handle);
+    // let security_handler = SecurityHandler::new();
+    // let security_handle = tokio::spawn(async move {
+    //     security_handler.run().await;
+    // });
+    // handles.push(security_handle);
 
     let upower_handler = UpowerHandler::new();
     let upower_handle = tokio::spawn(async move {
