@@ -5,7 +5,6 @@
 	import Layout from '$lib/components/layout.svelte';
 	import Icons from '$lib/components/icons.svelte';
 	import { goBack } from '$lib/services/common-services';
-	import ListHeading from '$lib/components/list-heading.svelte';
 
 	const modes = {
 		choose: 'CHOOSE',
@@ -20,19 +19,26 @@
 
 	type modeStates = 'CHOOSE' | 'APPLY';
 
-	let currScreen: modeStates = modes.choose as modeStates;
+	let currentScreen: modeStates = modes.choose as modeStates;
 	let selectedImage = systemWallpapers[0];
 
 	const selectImage = (image: { key: string; name: string; src: string }) => {
 		selectedImage = image;
+		currentScreen = modes.apply as modeStates;
 	};
 
-	const applyTheme = (value: string) => {
-		currScreen = value as modeStates;
+	// const selectTheme = (value: string) => {
+	// 	currentScreen = value as modeStates;
+	// };
+
+	const submitHandler = () => {};
+
+	const goBackToChooseWallpaper = () => {
+		currentScreen = modes.choose as modeStates;
 	};
 </script>
 
-{#if currScreen === modes.choose}
+{#if currentScreen === modes.choose}
 	<Layout title="Appearance">
 		<div class="flex flex-col gap-3">
 			<ul class="flex flex-col gap-3">
@@ -72,26 +78,11 @@
 				>
 					<Icons name="left_arrow" width="60" height="60" />
 				</button>
-				<button
-					class="bg-ash-gray flex h-[48px] w-[48px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
-					on:click={goBack}
-				>
-					<Icons name="export" width="32" height="32" />
-				</button>
 			</div>
 		</footer>
 	</Layout>
 {:else}
-	<div class="m-0 max-h-screen overflow-hidden p-0">
-		<header
-			class="absolute top-0 z-10 flex h-[80px] w-full items-center bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
-		>
-			<div class="px-5 py-7">
-				<h1 class="text-[26px] text-xl font-normal text-[#B7BBC8]">
-					Apply theme "{selectedImage.name}"
-				</h1>
-			</div>
-		</header>
+	<Layout title="Apply wallpaper ">
 		<div class="flex flex-col gap-3">
 			<img
 				alt={selectedImage.name}
@@ -99,5 +90,24 @@
 				class={`h-full w-full rounded-xl object-cover`}
 			/>
 		</div>
-	</div>
+		<footer
+			slot="footer"
+			class="h-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+		>
+			<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
+				<button
+					class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
+					on:click={goBackToChooseWallpaper}
+				>
+					<Icons name="left_arrow" width="60" height="60" />
+				</button>
+				<button
+					class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+					on:click={submitHandler}
+				>
+					<Icons name="submit" width="60" height="60" />
+				</button>
+			</div>
+		</footer>
+	</Layout>
 {/if}

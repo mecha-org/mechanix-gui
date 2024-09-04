@@ -88,7 +88,7 @@
 	};
 </script>
 
-<Layout title="Network" loader={$fetchingWifiStatus}>
+<Layout title="Wireless" loader={$fetchingWifiStatus}>
 	<div slot="switch">
 		{#if $fetchingWifiStatus || $fetchingConnectedNetwork}
 			<div class="flex animate-spin flex-row items-center gap-2">

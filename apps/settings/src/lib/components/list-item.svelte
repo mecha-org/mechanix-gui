@@ -13,7 +13,6 @@
 </script>
 
 {#if isLink}
-	<!-- <a {href} class="border-neutral-gray flex flex-row items-center justify-between border-b p-4"> -->
 	<a
 		{href}
 		class={`border-neutral-gray flex flex-row items-center justify-between ${borderTop ? 'border-t' : 'border-b'} p-4`}
@@ -28,13 +27,16 @@
 		<slot></slot>
 	</a>
 {:else}
-	<button
-		class="border-neutral-gray flex w-full flex-row items-center justify-between border-b p-4"
-		{...$$restProps}
-		on:click
-		on:keydown
-	>
-		<h1 class={`text-lg font-medium ${isSelected ? 'text-white' : 'text-mid-gray'}`}>{title}</h1>
-		<slot></slot>
-	</button>
+	<div class={`border-neutral-gray flex flex-col ${borderTop ? 'border-t' : 'border-b'}`}>
+		<button
+			class={`flex w-full flex-row items-center justify-between  p-4 `}
+			{...$$restProps}
+			on:click
+			on:keydown
+		>
+			<h1 class={`text-lg font-medium ${isSelected ? 'text-white' : 'text-mid-gray'}`}>{title}</h1>
+			<slot></slot>
+		</button>
+		<slot name="content" class="p-4" />
+	</div>
 {/if}

@@ -62,6 +62,7 @@ const config: Config = {
 				'silver-gray': '#A6A6A6',
 				'light-gray': '#989898',
 				'brand-blue': '#2D8AFF',
+				'powder-gray': '#C5C5C5',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

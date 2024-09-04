@@ -1,4 +1,5 @@
 <script>
+	import BlockItem from '$lib/components/block-item.svelte';
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListHeading from '$lib/components/list-heading.svelte';
@@ -28,26 +29,47 @@
 				selectedSetting = 'static';
 			}}
 		>
-			<ListItem isSelected={selectedSetting == 'static'} title="Static">
+			<ListItem
+				isSelected={selectedSetting == 'static'}
+				title="Static"
+				isColumnStyle={selectedSetting == 'static' ? true : false}
+			>
 				{#if selectedSetting == 'static'}
 					<Icons name="blue_radio_fill" height="24px" width="24px" />
 				{:else}
 					<Icons name="empty_ring" height="24px" width="24px" />
 				{/if}
+
+				<div slot="content" class="flex flex-col">
+					{#if selectedSetting == 'static'}
+						<div class="flex flex-col justify-between p-2 text-lg">
+							<BlockItem
+								isBottomBorderVisible={false}
+								title={'Address'}
+								href={`/network/ip-settings/static-address`}
+								borderY={false}
+							>
+								<div class="flex flex-row items-center gap-4">
+									<div>AE:16:AF:80:CF:2F</div>
+									<Icons height="24px" width="24px" name="right_arrow" />
+								</div>
+							</BlockItem>
+							<BlockItem
+								isBottomBorderVisible={false}
+								title={'Gateway'}
+								href={`/network/ip-settings/static-gateway`}
+								borderY={false}
+							>
+								<div class="flex flex-row items-center gap-2">
+									<div>None</div>
+									<Icons height="24px" width="24px" name="right_arrow" />
+								</div>
+							</BlockItem>
+						</div>
+					{/if}
+				</div>
 			</ListItem>
 		</button>
-		{#if selectedSetting == 'static'}
-			<div class="flex flex-col">
-				<div>
-					<ListHeading title="IP Address" />
-					<Input placeholder="Type here" />
-				</div>
-				<div>
-					<ListHeading title="Gateway" />
-					<Input placeholder="Type here" />
-				</div>
-			</div>
-		{/if}
 	</div>
 	<footer
 		slot="footer"

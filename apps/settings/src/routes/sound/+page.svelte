@@ -7,8 +7,6 @@
 	import { Slider } from '$lib/components/ui/slider';
 	import { goBack } from '$lib/services/common-services';
 	import { onMount } from 'svelte';
-	import Audio from '$lib/assets/images/icons/audio.png';
-	import NoAudio from '$lib/assets/images/icons/no_audio.png';
 
 	import {
 		getAllInputDevicesVolume,
@@ -140,10 +138,8 @@
 							audioClickHandler(DeviceType.INPUT, inputDevice?.name, inputDevice?.is_mute)}
 					>
 						{#if inputDevice?.is_mute}
-							<!-- <img alt="no-audio" src={NoAudio} class="" width="25" height="25" /> -->
 							<Icons name="volume_mute" height="30px" width="30px" />
 						{:else}
-							<!-- <img alt="audio" src={Audio} class="" width="25" height="25" /> -->
 							<Icons name="volume_unmute" height="30px" width="30px" />
 						{/if}
 					</button>
@@ -152,12 +148,14 @@
 		{/each}
 	</div>
 	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
-		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
+		<div
+			class="border-silver-gray flex h-full w-full flex-row items-center justify-between border-t-2 px-4 py-3"
+		>
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-1 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

@@ -9,32 +9,36 @@
 <Layout title="About">
 	<div class="flex flex-col gap-4">
 		<ListBlock>
-			<BlockItem title="OS">
+			<BlockItem title="OS" isBottomBorderVisible={true}>
 				<p class="text-lg font-medium">Mechanix OS</p>
 			</BlockItem>
-			<BlockItem isBottomBorderVisible={false} title="Version">
+			<BlockItem isBottomBorderVisible={true} title="Version">
 				<p class="text-lg font-medium">24.01</p>
 			</BlockItem>
 		</ListBlock>
+		<div class="p-6"></div>
 		<ListBlock>
-			<BlockItem title="Version">
+			<BlockItem title="Version" isBottomBorderVisible={true}>
 				<p class="text-lg font-medium">24.01</p>
 			</BlockItem>
-			<BlockItem title="Serial Number">
+			<BlockItem title="Serial Number" isBottomBorderVisible={true}>
 				<p class="text-lg font-medium">123 123 123</p>
 			</BlockItem>
-			<BlockItem isBottomBorderVisible={false} title="Ethernet MAC Address">
+			<BlockItem isBottomBorderVisible={true} title="Ethernet MAC Address">
 				<p class="text-lg font-medium">B0:35:B5:DA:A6:75</p>
 			</BlockItem>
 		</ListBlock>
 	</div>
-	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
+	<footer
+		slot="footer"
+		class="border-silver-grayh-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+	>
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="  flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

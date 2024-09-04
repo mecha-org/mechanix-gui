@@ -3,7 +3,7 @@
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
 	import ListBlock from '$lib/components/list-block.svelte';
-	import { goBack } from '$lib/services/common-services';
+	import { customToast, goBack } from '$lib/services/common-services';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { Toaster } from 'svelte-french-toast';
 	import { goto } from '$app/navigation';
@@ -18,6 +18,11 @@
 	$: network_name = '';
 
 	const goNext = () => {
+		if (network_name == '' || !network_name) {
+			customToast('Enter network name');
+			return;
+		}
+		// console.log('goNext network_name: ', network_name);
 		goto(`/network/manage-network/connect/${network_name}`);
 	};
 </script>

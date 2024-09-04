@@ -3,12 +3,12 @@ import type { PageLoad } from './$types';
 import { fetchAvaialbleNetworks } from '$lib/services/network-services';
 import { availableNetworksList } from '$lib/stores/networkStore';
 import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
-export const load: PageLoad = ({ params, url }) => {
+export const load: PageLoad = async ({ params, url }) => {
 
 	const {network} = params;
 	const isConnected = url.searchParams.get('isConnected');
 
-	fetchAvaialbleNetworks();
+	await fetchAvaialbleNetworks();
 
 	let networkDetailList:WirelessInfoResponse[] = []; 
 

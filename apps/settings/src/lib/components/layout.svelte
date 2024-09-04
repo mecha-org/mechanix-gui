@@ -2,14 +2,13 @@
 	export let title: string = '';
 	export let bold_text: string = '';
 	export let loader: boolean = false;
-
-	import AstronautXMecha from '$lib/assets/images/wallpapers/astronaut_mecha.png';
+	// import AstronautXMecha from '$lib/assets/images/wallpapers/astronaut_mecha.png';
 </script>
 
 <header>
 	{#if title}
-		<div class="flex flex-row justify-between p-5 pt-6">
-			<h1 class="text-misty-slate text-2xl">{title}</h1>
+		<div class="flex flex-row justify-between p-8">
+			<h1 class="text-misty-slate text-3xl">{title}</h1>
 			{#if loader}
 				<slot name="loader" />
 			{:else}
@@ -17,8 +16,8 @@
 			{/if}
 		</div>
 	{:else if bold_text.length > 0}
-		<div class="flex flex-row p-5 pt-6">
-			<h1 class="text-misty-slate text-2xl">
+		<div class="flex flex-row p-8">
+			<h1 class="text-misty-slate text-3xl">
 				Confirm this code on<br />
 				{' '}
 				<strong>
@@ -31,7 +30,6 @@
 		</div>
 	{/if}
 </header>
-<!-- style={ `background-image: url(${AstronautXMecha});`} -->
 
 <main class={`px-5 ${$$slots.footer ? 'pb-20' : 'pb-5'} `}>
 	<slot />
@@ -44,6 +42,11 @@
 		<slot name="footer" />
 	</footer>
 {/if}
+
+<!-- style={`background-image: url(${AstronautXMecha});`} -->
+<!-- main {
+	background-image: url('$lib/assets/images/wallpapers/astronaut_mecha.png'); -->
+}
 
 <style>
 	header {

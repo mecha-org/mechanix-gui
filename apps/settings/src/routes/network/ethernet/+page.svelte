@@ -10,7 +10,7 @@
 	<div slot="switch" class="flex flex-col">
 		<Switch />
 	</div>
-	<ListItem isLink title="IP Settings">
+	<ListItem isLink title="IP Settings" href={'/network/ip-settings'}>
 		<Icons name="right_arrow" height="30px" width="30px" />
 	</ListItem>
 	<footer

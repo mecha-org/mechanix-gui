@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
-	import ListHeading from '$lib/components/list-heading.svelte';
 	import ListItem from '$lib/components/list-item.svelte';
 	import { LOG_LEVEL, consoleLog, goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api/tauri';
@@ -77,7 +76,7 @@
 					</div>
 				</ListItem>
 			{:else if availableNetworksToShow.length > 0}
-				{#each availableNetworksToShow as item, i (item.name)}
+				{#each availableNetworksToShow as item, i (`${item.name}${i}`)}
 					<ListItem isLink href={`/network/manage-network/connect/${item.name}`} title={item.name}>
 						<div class="flex flex-row items-center gap-2">
 							{#if item?.isSecured}

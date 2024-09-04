@@ -1,29 +1,26 @@
-<script>
+<script lang="ts">
 	import Icons from '$lib/components/icons.svelte';
 	import Layout from '$lib/components/layout.svelte';
-	import ListItem from '$lib/components/list-item.svelte';
 	import { goBack } from '$lib/services/common-services';
-	let timeOutArr = ['10s', '20s', '30s', '40s'];
-	let selectedTime = '10s';
+	import Input from '$lib/components/ui/input/input.svelte';
+	import { Toaster } from 'svelte-french-toast';
+
+	$: gateway = '';
+
+	const submitHandler = () => {
+		console.log('submit gateway: ', gateway);
+		goBack();
+		// goto(`/network/manage-network/connect/${gateway}`);
+	};
 </script>
 
-<Layout title="Securtiy timemout">
-	<div class="flex flex-col gap-4">
-		{#each timeOutArr as time, index}
-			<button
-				on:click={() => {
-					selectedTime = time;
-				}}
-			>
-				<ListItem isSelected={selectedTime == time} title={time}>
-					{#if time == selectedTime}
-						<Icons name="blue_checked" height="30px" width="30px" />
-					{:else}
-						<Icons name="empty_ring" height="30px" width="30px" />
-					{/if}
-				</ListItem>
-			</button>
-		{/each}
+<Layout title="Static">
+	<div class="mt-6 flex flex-col gap-4">
+		<div class="border-neutral-gray border-y-2 py-1">
+			<Input placeholder="Gateway" bind:value={gateway} />
+		</div>
+
+		<Toaster />
 	</div>
 	<footer
 		slot="footer"
@@ -38,7 +35,7 @@
 			</button>
 			<button
 				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
-				on:click={goBack}
+				on:click={submitHandler}
 			>
 				<Icons name="submit" width="60" height="60" />
 			</button>

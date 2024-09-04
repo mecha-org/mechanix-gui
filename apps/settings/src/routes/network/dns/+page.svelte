@@ -8,7 +8,10 @@
 <Layout title="DNS">
 	<div class="flex flex-col">
 		<ListItem isLink title="DNS Server 1">
-			<Icons name="right_arrow" height="30px" width="30px" />
+			<div class="flex flex-row items-center gap-2">
+				<div>AE:16:AF:80:CF:2F</div>
+				<Icons name="right_arrow" height="30px" width="30px" />
+			</div>
 		</ListItem>
 		<ListItem isLink title="DNS Server 2">
 			<Icons name="right_arrow" height="30px" width="30px" />
