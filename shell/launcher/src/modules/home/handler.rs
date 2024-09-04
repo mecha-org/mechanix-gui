@@ -1,15 +1,15 @@
+use crate::AppMessage;
 use anyhow::Result;
 use futures::StreamExt;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mechanix_system_dbus_client::hardware_buttons::{HwButton, Key, KeyEvent};
 use serde::{Deserialize, Serialize};
-use std::time::Instant;
-use tokio::sync::{mpsc, oneshot};
+use std::{sync::Arc, time::Instant};
+use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::time::{sleep, Duration};
 use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::{
     ToplevelHandler, ToplevelMessage,
 };
-
-use crate::AppMessage;
 
 #[derive(Debug, Deserialize, Clone, Serialize, Default)]
 pub struct HomeButtonSettings {
@@ -18,19 +18,19 @@ pub struct HomeButtonSettings {
 
 pub struct HomeButtonHandler {
     app_channel: Sender<AppMessage>,
-    pressed_at: Option<Instant>,
+    pressed_at: Arc<Mutex<Option<Instant>>>, // Use Arc<Mutex<>> for shared mutable state
     configs: HomeButtonSettings,
-    long_press_sent: bool,
+    long_press_sent: Arc<Mutex<bool>>, // Track if long press action was sent
 }
 impl HomeButtonHandler {
     pub fn new(app_channel: Sender<AppMessage>) -> Self {
         Self {
-            pressed_at: None,
+            pressed_at: Arc::new(Mutex::new(None)),
             configs: HomeButtonSettings {
                 min_time_long_press: 1,
             },
             app_channel,
-            long_press_sent: false,
+            long_press_sent: Arc::new(Mutex::new(false)),
         }
     }
 
@@ -55,33 +55,77 @@ impl HomeButtonHandler {
                 while let Some(signal) = stream.next().await {
                     if let Ok(args) = signal.args() {
                         let event = args.event;
-                        // println!("HomeButtonHandler::run() event is {:?}", event);
+                        println!("HomeButtonHandler::run() event is {:?}", event);
+                        let pressed_at_mutex = Arc::clone(&self.pressed_at);
+                        let long_press_sent_mutex = Arc::clone(&self.long_press_sent);
                         match event {
                             KeyEvent::Pressed(Key::Home) => {
-                                self.pressed_at = Some(Instant::now());
+                                {
+                                    let mut pressed_at = pressed_at_mutex.lock().await;
+                                    *pressed_at = Some(Instant::now());
+                                }
+
+                                let app_channel = self.app_channel.clone();
+                                let min_time_long_press = self.configs.min_time_long_press;
+
+                                // Spawn a task that checks the duration while the button is pressed
+                                tokio::spawn(async move {
+                                    loop {
+                                        let mut pressed_at = None;
+                                        {
+                                            let p = pressed_at_mutex.lock().await;
+                                            pressed_at = *p;
+                                        }
+
+                                        if pressed_at.is_none() {
+                                            break;
+                                        }
+
+                                        let elapsed =
+                                            (Instant::now() - pressed_at.unwrap()).as_secs();
+
+                                        let mut long_press_sent = false;
+                                        {
+                                            let p = long_press_sent_mutex.lock().await;
+                                            long_press_sent = *p;
+                                        }
+
+                                        if elapsed >= min_time_long_press && !long_press_sent {
+                                            // Long press detected
+                                            let _ = app_channel.send(AppMessage::RunningApps {
+                                                message: crate::RunningAppsMessage::Toggle {
+                                                    value: true,
+                                                },
+                                            });
+                                            {
+                                                let mut long_press_sent =
+                                                    long_press_sent_mutex.lock().await;
+                                                *long_press_sent = true;
+                                            }
+                                            break;
+                                        }
+
+                                        // // Sleep for a short duration before checking again
+                                        sleep(Duration::from_millis(100)).await;
+                                    }
+                                });
                             }
                             KeyEvent::Released(Key::Home) => {
-                                self.pressed_at = None;
-                                if !self.long_press_sent {
+                                let mut long_press_sent = false;
+                                {
+                                    let p = long_press_sent_mutex.lock().await;
+                                    long_press_sent = *p;
+                                }
+                                if !long_press_sent {
+                                    // Short press detected, minimize all
                                     let _ = minimize_all(toplevel_msg_tx.clone()).await;
                                 }
-                            }
-                            KeyEvent::Pressing(Key::Home) => {
-                                let home_button_pressed_for =
-                                    (Instant::now() - self.pressed_at.unwrap()).as_secs();
-                                println!("home button pressed for {:?}", home_button_pressed_for);
-                                let is_long_press =
-                                    home_button_pressed_for >= self.configs.min_time_long_press;
-                                println!("is_long_press {:?}", is_long_press);
+                                {
+                                    let mut pressed_at = pressed_at_mutex.lock().await;
+                                    let mut long_press_sent = long_press_sent_mutex.lock().await;
 
-                                //if long press spawn power options
-                                //else lock screen
-
-                                if is_long_press {
-                                    let _ = &self.app_channel.send(AppMessage::RunningApps {
-                                        message: crate::RunningAppsMessage::Toggle { value: true },
-                                    });
-                                    self.long_press_sent = true;
+                                    *pressed_at = None;
+                                    *long_press_sent = false;
                                 }
                             }
                             _ => {}

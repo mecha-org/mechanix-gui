@@ -299,14 +299,13 @@ async fn main() {
                 let session = get_current_session().await.unwrap();
                 let is_session_locked = session.locked_hint().await.unwrap();
                 println!("is_session_locked {:?}", is_session_locked);
-                if is_session_locked {
-                    return;
+                if !is_session_locked {
+                    let _ = session.set_locked_hint(true).await;
+                    let ui_params_1 = ui_params.clone();
+                    let _ = std::thread::spawn(move || {
+                        let _ = launch_lockscreen( ui_params_1);
+                    });
                 }
-                let _ = session.set_locked_hint(true).await;
-                let ui_params_1 = ui_params.clone();
-                let _ = std::thread::spawn(move || {
-                    let _ = launch_lockscreen( ui_params_1);
-                });
             }, _ = unlock.next() => {
                 println!("logind unlock");
                 let _ = session.set_locked_hint(false).await;
