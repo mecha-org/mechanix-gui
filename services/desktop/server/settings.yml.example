@@ -1,0 +1,21 @@
+idle_notify:
+  periods:
+    display_off: 10
+    screen_lock: 3000
+session:
+  run_commands:
+    lock_screen: MECHANIX_LOCK_SCREEN_SETTINGS_PATH=/etc/mechanix/shell/lock-screen/settings.yml mechanix-lock-screen
+lock_button:
+  run_commands:
+    power_options: MECHANIX_LOCK_SCREEN_SETTINGS_PATH=/etc/mechanix/shell/power-options/settings.yml mechanix-power-options
+  min_time_long_press: 1
+home_button:
+  run_commands:
+    app_switcher: MECHANIX_LOCK_SCREEN_SETTINGS_PATH=/etc/mechanix/shell/app-switcher/settings.yml mechanix-app-switcher
+  min_time_long_press: 1
+security:
+  run_commands:
+    lock_screen: MECHANIX_LOCK_SCREEN_SETTINGS_PATH=/etc/mechanix/shell/lock-screen/settings.yml mechanix-lock-screen
+notifier:
+  run_commands:
+    notification: MECHANIX_LOCK_SCREEN_SETTINGS_PATH=/etc/mechanix/shell/notification/settings.yml mechanix-notification
