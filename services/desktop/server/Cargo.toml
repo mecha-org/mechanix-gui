@@ -42,4 +42,10 @@ assets = [
         "/usr/bin/",
         "755",
     ],
+    # settings
+    [
+        "./settings.yml.example",
+        "/etc/mechanix-gui/server/desktop/settings.yml",
+        "644",
+    ],
 ]

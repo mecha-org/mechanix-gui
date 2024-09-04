@@ -51,7 +51,7 @@ assets = [
     # settings
     [
         "./services-config-example.yml",
-        "/etc/mechanix-gui/server/system/",
+        "/etc/mechanix-gui/server/system/services-config.yml",
         "644",
     ],
 
