@@ -3,6 +3,7 @@
 #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 use core::arch::aarch64::*;
 use core::cmp::{self, Ordering};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
@@ -164,7 +165,7 @@ impl DesktopEntries {
 }
 
 /// Desktop entry information.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DesktopEntry {
     pub icon_name: Option<String>,
     pub icon_path: Option<PathBuf>,

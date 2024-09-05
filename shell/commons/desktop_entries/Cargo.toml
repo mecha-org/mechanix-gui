@@ -11,3 +11,4 @@ homepage = "https://mecha.so"
 
 [dependencies]
 xdg = "2.4.1"
+serde = { version = "1.0.163", features = ["derive"] }
