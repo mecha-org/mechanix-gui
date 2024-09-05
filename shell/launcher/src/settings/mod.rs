@@ -2,6 +2,7 @@ use crate::constants::*;
 use crate::errors::{LauncherError, LauncherErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
+use desktop_entries::DesktopEntry;
 use serde::{Deserialize, Serialize};
 use std::{env, fs::File, path::PathBuf};
 use tracing::{debug, info};
@@ -93,6 +94,7 @@ pub struct AppListSettings {
     pub include_only: Vec<String>,
     pub exclude: Vec<String>,
     pub include: Vec<String>,
+    pub custom: Vec<DesktopEntry>,
 }
 
 impl Default for AppListSettings {
@@ -101,6 +103,7 @@ impl Default for AppListSettings {
             include_only: vec![],
             exclude: vec![],
             include: vec![],
+            custom: vec![],
         }
     }
 }

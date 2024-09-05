@@ -166,26 +166,28 @@ async fn main() {
     };
 
     let mut installed_apps: Vec<DesktopEntry> = vec![];
-    let include_only_apps = settings.app_list.include_only.clone();
-    let exclude_apps = settings.app_list.exclude.clone();
-    let include_apps = settings.app_list.include.clone();
+    // let include_only_apps = settings.app_list.include_only.clone();
+    // let exclude_apps = settings.app_list.exclude.clone();
+    // let include_apps = settings.app_list.include.clone();
 
-    if let Ok(v) = DesktopEntries::new() {
-        let entries = v.entries.to_vec();
-        if include_only_apps.len() > 0 {
-            installed_apps = entries
-                .into_iter()
-                .filter(|e| include_only_apps.contains(&e.name.to_lowercase()))
-                .collect();
-        } else if exclude_apps.len() > 0 {
-            installed_apps = entries
-                .into_iter()
-                .filter(|e| !exclude_apps.contains(&e.name.to_lowercase()))
-                .collect();
-        } else {
-            installed_apps = entries;
-        }
-    };
+    installed_apps = settings.app_list.custom.clone();
+
+    // if let Ok(v) = DesktopEntries::new() {
+    //     let entries = v.entries.to_vec();
+    //     if include_only_apps.len() > 0 {
+    //         installed_apps = entries
+    //             .into_iter()
+    //             .filter(|e| include_only_apps.contains(&e.name.to_lowercase()))
+    //             .collect();
+    //     } else if exclude_apps.len() > 0 {
+    //         installed_apps = entries
+    //             .into_iter()
+    //             .filter(|e| !exclude_apps.contains(&e.name.to_lowercase()))
+    //             .collect();
+    //     } else {
+    //         installed_apps = entries;
+    //     }
+    // };
 
     let mut fonts: cosmic_text::fontdb::Database = cosmic_text::fontdb::Database::new();
     for path in settings.fonts.paths.clone() {

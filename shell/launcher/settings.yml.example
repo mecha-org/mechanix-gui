@@ -154,7 +154,22 @@ modules:
     run_command: ["sh", "-c", "alacritty --working-directory=/home/ironman"]
 app_list:
   include_only:
-    - chromium web browser
-    - firefox web browser
   exclude:
   include:
+  custom:
+    - name: Mecha Connect
+      exec: mecha-connect
+      icon_name: mecha_connect_icon
+      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/mecha_connect_icon.png
+    - name: Terminal
+      exec: alacritty
+      icon_name: terminal_icon
+      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/terminal_icon.png
+    - name: Firefox
+      exec: firefox
+      icon_name: firefox_icon
+      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/firefox_icon.png
+    - name: Doom
+      exec: /usr/games/chocolate-doom -iwad DOOM1.WAD -window 480x480
+      icon_name: doom_icon
+      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/doom_icon.png
