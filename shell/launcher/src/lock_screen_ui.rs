@@ -1,10 +1,10 @@
 use crate::gui::Message;
-use crate::init_services;
+use crate::init_services_lock;
 use crate::AppMessage;
 use crate::AppParams;
 use crate::BatteryMessage;
 use crate::BluetoothMessage;
-use crate::InitServicesParams;
+use crate::InitServicesParamsLock;
 use crate::WirelessMessage;
 use crate::{lock_gui, UiParams};
 use logind::get_current_session;
@@ -17,6 +17,7 @@ use mctk_smithay::session_lock::lock_window::SessionLockWindow;
 use mctk_smithay::session_lock::lock_window::SessionLockWindowParams;
 use mctk_smithay::WindowMessage;
 use mctk_smithay::WindowOptions;
+use tokio::sync::mpsc;
 
 pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
     let UiParams {
@@ -56,6 +57,8 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
     let handle = event_loop.handle();
     let window_tx_2 = window_tx.clone();
 
+    let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
+    let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
     let _ = handle.insert_source(app_channel_rx, move |event: Event<AppMessage>, _, app| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
@@ -106,44 +109,11 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
         };
     });
 
-    // let _ = handle.insert_source(status_bar_receiver, move |event, _, _| {
-    //     let _ = match event {
-    //         // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
-    //         calloop::channel::Event::Msg(msg) => match msg {
-    //             StatusBarMessage::Clock { current_time } => {
-    //                 //println!("StatusBarMessage::Clock {:?}", current_time);
-    //                 let _ = window_tx_2.clone().send(WindowMessage::Send {
-    //                     message: msg!(Message::Clock { current_time }),
-    //                 });
-    //             }
-    //             StatusBarMessage::Wireless { status } => {
-    //                 let _ = window_tx_2.clone().send(WindowMessage::Send {
-    //                     message: msg!(Message::Wireless { status }),
-    //                 });
-    //             }
-    //             StatusBarMessage::Bluetooth { status } => {
-    //                 let _ = window_tx_2.clone().send(WindowMessage::Send {
-    //                     message: msg!(Message::Bluetooth { status }),
-    //                 });
-    //             }
-    //             StatusBarMessage::Battery { level, status } => {
-    //                 let _ = window_tx_2.clone().send(WindowMessage::Send {
-    //                     message: msg!(Message::Battery { level, status }),
-    //                 });
-    //             }
-
-    //             _ => (),
-    //         },
-    //         calloop::channel::Event::Closed => {}
-    //     };
-    // });
-
-    // init_services(settings.clone(), status_bar_channel);
-
-    init_services(InitServicesParams {
+    init_services_lock(InitServicesParamsLock {
         settings,
         app_channel: app_channel_tx,
-        ..Default::default()
+        wireless_msg_rx,
+        bluetooth_msg_rx,
     });
 
     loop {

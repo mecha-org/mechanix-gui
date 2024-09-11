@@ -397,7 +397,7 @@ impl Component for Launcher {
                         // return;
                     }
 
-                    swipe.dy = (dy + 30).max(min_dy).min(max_dy);
+                    swipe.dy = (dy + 90).max(min_dy).min(max_dy);
                 }
                 if direction == SwipeDirection::Up {
                     if dy <= min_dy {
@@ -408,7 +408,7 @@ impl Component for Launcher {
                         // return;
                     }
 
-                    swipe.dy = (dy - 30).max(min_dy).min(max_dy);
+                    swipe.dy = (dy - 90).max(min_dy).min(max_dy);
                     println!("swipe.dy {:?}", swipe.dy);
                 }
             }

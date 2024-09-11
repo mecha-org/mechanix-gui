@@ -55,7 +55,7 @@ modules:
     - app_id: firefox
       name: firefox
       icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/firefox_icon.png
-      run_command: ["sh", "-c", firefox-esr]
+      run_command: ["sh", "-c", "firefox-esr"]
   clock:
     format: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
@@ -151,7 +151,7 @@ modules:
   terminal:
     icon:
       default: /usr/share/mechanix/shell/launcher/assets/icons/terminal_icon.png
-    run_command: ["sh", "-c", "alacritty --working-directory=/home/ironman"]
+    run_command: ["sh", "-c", "alacritty --working-directory=/home/mecha"]
 app_list:
   include_only:
   exclude:
@@ -160,16 +160,20 @@ app_list:
     - name: Mecha Connect
       exec: mecha-connect
       icon_name: mecha_connect_icon
-      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/mecha_connect_icon.png
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mecha_connect_icon.png
     - name: Terminal
       exec: alacritty
       icon_name: terminal_icon
-      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/terminal_icon.png
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/terminal_icon.png
     - name: Firefox
       exec: firefox
       icon_name: firefox_icon
-      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/firefox_icon.png
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/firefox_icon.png
     - name: Doom
       exec: /usr/games/chocolate-doom -iwad DOOM1.WAD -window 480x480
       icon_name: doom_icon
-      icon_path: /home/ironman/Mecha/gui-final/shell/launcher/src/assets/icons/app_drawer/doom_icon.png
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/doom_icon.png
+    - name: Alloy
+      exec: chromium "http://localhost:3000" --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized --window-size=480,480
+      icon_name: alloy_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/doom_icon.png

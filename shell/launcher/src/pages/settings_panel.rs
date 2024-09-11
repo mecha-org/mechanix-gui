@@ -212,7 +212,7 @@ impl Component for SettingsPanel {
         ));
         rows = rows.push(node!(
             Closer {},
-            lay![ size: [Auto, 20], margin: [0., 0., 4., 0.] ]
+            lay![ size: [Auto, 138], margin: [0., 0., 4., 0.] ]
         ));
         p1 = p1.push(sc2);
         p1 = p1.push(rows);
