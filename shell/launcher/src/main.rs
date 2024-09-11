@@ -12,7 +12,7 @@ mod theme;
 mod types;
 mod utils;
 
-use desktop_entries::{DesktopEntries, DesktopEntry};
+use desktop_entries::DesktopEntry;
 use futures::StreamExt;
 use home_screen_ui::launch_homescreen;
 use lock_screen_ui::launch_lockscreen;
