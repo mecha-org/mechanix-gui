@@ -1,7 +1,7 @@
 use mctk_core::layout::Alignment;
 use mctk_core::widgets::Div;
 use mctk_core::{component::Component, node, Node};
-use mctk_core::{lay, msg, size, size_pct, Color, Point};
+use mctk_core::{lay, msg, rect, size, size_pct, Color, Point};
 
 use crate::gui::{Message, Swipe, SwipeDirection, SwipeState};
 #[derive(Debug)]
@@ -67,11 +67,16 @@ impl Component for Closer {
         Some(
             node!(
                 Div::new(),
-                lay![size_pct: [100], axis_alignment: Alignment::Center, cross_alignment: Alignment::Center]
+                lay![
+                    size_pct: [100],
+                    axis_alignment: Alignment::Center,
+                    padding: [20., 0., 0., 0.]
+                ]
             )
-            .push(
-                node!(Div::new().bg(Color::rgb(132.,132.,132.)), lay![size: [160, 2.5]]),
-            ),
+            .push(node!(
+                Div::new().bg(Color::rgb(132., 132., 132.)),
+                lay![size: [160, 2.5]]
+            )),
         )
     }
 }

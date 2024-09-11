@@ -44,6 +44,10 @@ impl SoundServiceHandle {
             return;
         }
         loop {
+            if sound_msg_rx.is_closed() {
+                break;
+            }
+
             select! {
                 signal = stream_res.as_mut().unwrap().next() => {
                     if signal.is_none() {

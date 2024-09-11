@@ -12,7 +12,7 @@ mod theme;
 mod types;
 mod utils;
 
-use desktop_entries::{DesktopEntries, DesktopEntry};
+use desktop_entries::DesktopEntry;
 use futures::StreamExt;
 use home_screen_ui::launch_homescreen;
 use lock_screen_ui::launch_lockscreen;
@@ -281,11 +281,11 @@ async fn main() {
     };
 
     let ui_params_1 = ui_params.clone();
-    let homescreen_t = std::thread::spawn(move || {
+    let _ = std::thread::spawn(move || {
         let _ = launch_homescreen(ui_params_1);
     });
 
-    /* let session = get_current_session().await.unwrap();
+    let session = get_current_session().await.unwrap();
     let mut lock = session.receive_lock().await.unwrap();
     let mut unlock = session.receive_unlock().await.unwrap();
     let is_session_locked = session.locked_hint().await.unwrap();
@@ -294,64 +294,52 @@ async fn main() {
         let _ = std::thread::spawn(move || {
             let _ = launch_lockscreen(ui_params_1);
         });
-    }*/
-    // loop {
-    //     select! {
-    //         _ =  lock.next() =>  {
-    //             let session = get_current_session().await.unwrap();
-    //             let is_session_locked = session.locked_hint().await.unwrap();
-    //             println!("is_session_locked {:?}", is_session_locked);
-    //             if !is_session_locked {
-    //                 let _ = session.set_locked_hint(true).await;
-    //                 let ui_params_1 = ui_params.clone();
-    //                 let _ = std::thread::spawn(move || {
-    //                     let _ = launch_lockscreen( ui_params_1);
-    //                 });
-    //             }
-    //         }, _ = unlock.next() => {
-    //             println!("logind unlock");
-    //             let _ = session.set_locked_hint(false).await;
-    //         }
-    //     }
-    // }
-    homescreen_t.join().unwrap();
+    }
+    loop {
+        select! {
+            _ =  lock.next() =>  {
+                let session = get_current_session().await.unwrap();
+                let is_session_locked = session.locked_hint().await.unwrap();
+                println!("is_session_locked {:?}", is_session_locked);
+                if !is_session_locked {
+                    let _ = session.set_locked_hint(true).await;
+                    let ui_params_1 = ui_params.clone();
+                    let _ = std::thread::spawn(move || {
+                        let _ = launch_lockscreen( ui_params_1);
+                    });
+                }
+            }, _ = unlock.next() => {
+                println!("logind unlock");
+                let session = get_current_session().await.unwrap();
+                let _ = session.set_locked_hint(false).await;
+            }
+        }
+    }
 }
 
-pub struct InitServicesParams {
+pub struct InitServicesParamsHome {
     pub settings: LauncherSettings,
     pub app_channel: Sender<AppMessage>,
     pub wireless_msg_rx: Receiver<WirelessMessage>,
     pub bluetooth_msg_rx: Receiver<BluetoothMessage>,
-    pub rotation_msg_rx: Receiver<RotationMessage>,
     pub brightness_msg_rx: Receiver<BrightnessMessage>,
     pub sound_msg_rx: Receiver<SoundMessage>,
     pub app_manager_msg_rx: Receiver<AppManagerMessage>,
     pub installed_apps: Vec<DesktopEntry>,
 }
-
-impl Default for InitServicesParams {
-    fn default() -> Self {
-        Self {
-            settings: Default::default(),
-            app_channel: calloop::channel::channel().0,
-            wireless_msg_rx: tokio::sync::mpsc::channel(128).1,
-            bluetooth_msg_rx: tokio::sync::mpsc::channel(128).1,
-            rotation_msg_rx: tokio::sync::mpsc::channel(128).1,
-            brightness_msg_rx: tokio::sync::mpsc::channel(128).1,
-            sound_msg_rx: tokio::sync::mpsc::channel(128).1,
-            app_manager_msg_rx: tokio::sync::mpsc::channel(128).1,
-            installed_apps: vec![],
-        }
-    }
+pub struct InitServicesParamsLock {
+    pub settings: LauncherSettings,
+    pub app_channel: Sender<AppMessage>,
+    pub wireless_msg_rx: Receiver<WirelessMessage>,
+    pub bluetooth_msg_rx: Receiver<BluetoothMessage>,
 }
 
-fn init_services(init_params: InitServicesParams) -> JoinHandle<()> {
-    let InitServicesParams {
+fn init_services_home(init_params: InitServicesParamsHome) -> JoinHandle<()> {
+    let InitServicesParamsHome {
         settings,
         app_channel,
         wireless_msg_rx,
         bluetooth_msg_rx,
-        rotation_msg_rx,
         brightness_msg_rx,
         sound_msg_rx,
         app_manager_msg_rx,
@@ -404,6 +392,36 @@ fn init_services(init_params: InitServicesParams) -> JoinHandle<()> {
                     home_button_f
                 )
             }))
+            .unwrap();
+    })
+}
+
+fn init_services_lock(init_params: InitServicesParamsLock) -> JoinHandle<()> {
+    let InitServicesParamsLock {
+        settings,
+        app_channel,
+        wireless_msg_rx,
+        bluetooth_msg_rx,
+    } = init_params;
+    thread::spawn(move || {
+        let runtime = Builder::new_multi_thread()
+            .worker_threads(1)
+            .enable_all()
+            .build()
+            .unwrap();
+
+        let time_format = settings.modules.clock.format.clone();
+        let clock_f = run_clock_handler(time_format, app_channel.clone());
+        let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
+        let bluetooth_f = run_bluetooth_handler(app_channel.clone(), bluetooth_msg_rx);
+        let battery_f = run_battery_handler(app_channel.clone());
+
+        runtime
+            .block_on(
+                runtime.spawn(
+                    async move { tokio::join!(clock_f, wireless_f, bluetooth_f, battery_f,) },
+                ),
+            )
             .unwrap();
     })
 }

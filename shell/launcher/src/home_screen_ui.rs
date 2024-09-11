@@ -1,9 +1,6 @@
 use crate::{
-    init_services,
-    modules::{
-        power_options::service::PowerOptionsService, running_apps::app_manager::AppManagerMessage,
-    },
-    AppMessage, AppParams, BatteryMessage, BluetoothMessage, BrightnessMessage, InitServicesParams,
+    init_services_home, modules::running_apps::app_manager::AppManagerMessage, AppMessage,
+    AppParams, BatteryMessage, BluetoothMessage, BrightnessMessage, InitServicesParamsHome,
     RunningAppsMessage, SoundMessage, UiParams, WirelessMessage,
 };
 use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
@@ -90,7 +87,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     let window_tx_2 = window_tx.clone();
     let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
-    let (rotation_msg_tx, rotation_msg_rx) = mpsc::channel(128);
     let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
     let (sound_msg_tx, sound_msg_rx) = mpsc::channel(128);
     let (app_manager_msg_tx, app_manager_msg_rx) = mpsc::channel(128);
@@ -326,12 +322,11 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
         };
     });
 
-    init_services(InitServicesParams {
+    init_services_home(InitServicesParamsHome {
         settings,
         app_channel: app_channel_tx,
         wireless_msg_rx,
         bluetooth_msg_rx,
-        rotation_msg_rx,
         brightness_msg_rx,
         sound_msg_rx,
         app_manager_msg_rx,
