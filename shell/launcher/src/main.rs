@@ -17,6 +17,7 @@ use futures::StreamExt;
 use home_screen_ui::launch_homescreen;
 use lock_screen_ui::launch_lockscreen;
 use logind::get_current_session;
+use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
 use modules::battery::handler::BatteryServiceHandle;
 use modules::bluetooth::handler::BluetoothServiceHandle;
 use modules::clock::handler::ClockServiceHandle;
@@ -115,8 +116,7 @@ enum AppMessage {
     Net { online: bool },
     Memory { total: u64, used: u64 },
     RunningApps { message: RunningAppsMessage },
-    RunOnTop,
-    RunOnBottom,
+    ChangeLayer(Layer),
     Clock { time: String, date: String },
     Wireless { message: WirelessMessage },
     Bluetooth { message: BluetoothMessage },

@@ -28,7 +28,6 @@ pub struct SettingsPanel {
 
 impl Component for SettingsPanel {
     fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
-        self.swipe.hash(hasher);
         self.sound.hash(hasher);
         self.brightness.hash(hasher);
         self.battery_level.hash(hasher);
@@ -150,6 +149,8 @@ impl Component for SettingsPanel {
             ]
         ));
 
+        println!("swipe - height {:?}", swipe - height);
+
         let sc1 = node!(
             RoundedRect {
                 scissor: Some(true),
@@ -157,29 +158,15 @@ impl Component for SettingsPanel {
                 border_color: Color::TRANSPARENT,
                 border_width: 0.,
                 radius: (0., 0., 0., 0.),
+                swipe
             },
             lay![
                 size_pct: [100],
                 position_type: Absolute,
-                //Settings panel
-                // position: [Auto, Auto , 80., 0.],
                 position: [swipe - height, 0., Auto, Auto]
-
-                //Notifications
-                // position: [0., Auto, Auto, 80.],
-                // position: [0., swipe - width, Auto, Auto],
-
-                //App drawer
-                // position: [100., 0., Auto, Auto],
-                // position: [Auto, Auto, swipe - height, 0.],
-
-                //Running Apps
-                // position: [0, 70., Auto, Auto],
-                // position: [Auto, Auto , 0., swipe - width],
                 z_index_increment: 1000.
             ]
-        )
-        .key(swipe as u64);
+        );
 
         let sc2 = node!(
             RoundedRect {
@@ -187,7 +174,8 @@ impl Component for SettingsPanel {
                 background_color: Color::TRANSPARENT,
                 border_color: Color::TRANSPARENT,
                 border_width: 0.,
-                radius: (0., 0., 0., 0.)
+                radius: (0., 0., 0., 0.),
+                swipe: swipe
             },
             lay![position_type: Absolute,]
         );

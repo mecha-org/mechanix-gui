@@ -228,7 +228,7 @@ impl Component for AppDrawer {
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
         event.stop_bubbling();
-        println!("AppDrawer::drag()");
+        println!("AppDrawer::touch_drag()");
         if let Some(msg) = self.handle_on_drag(event.logical_delta()) {
             event.emit(msg);
         };

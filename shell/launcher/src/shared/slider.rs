@@ -170,7 +170,7 @@ impl Component for Slider {
     fn render_hash(&self, hasher: &mut ComponentHasher) {
         self.state_ref().value.hash(hasher);
         self.state_ref().grid.hash(hasher);
-        println!("Slider::render_hash() {:?}", hasher.finish());
+        // println!("Slider::render_hash() {:?}", hasher.finish());
     }
     fn props_hash(&self, hasher: &mut ComponentHasher) {
         self.value.hash(hasher);
@@ -289,7 +289,7 @@ impl Component for Slider {
             ]
         );
         let grid = self.state_ref().grid.clone();
-        println!("Slider::view()");
+        // println!("Slider::view()");
         let slider_type = self.slider_type.clone();
         let col_width = self.col_width;
         let col_spacing = self.col_spacing;

@@ -6,7 +6,7 @@ use tokio::{
 };
 use tracing::error;
 use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::{
-    ToplevelHandler, ToplevelMessage,
+    ToplevelHandler, ToplevelMessage, ToplevelWState,
 };
 
 use crate::AppMessage;
@@ -43,7 +43,7 @@ impl RunningAppsHandle {
             interval.tick().await;
             let (tx, rx) = oneshot::channel();
             let _ = toplevel_msg_tx
-                .send(ToplevelMessage::GetToplevels { reply_to: tx })
+                .send(ToplevelMessage::GetToplevelsWithMeta { reply_to: tx })
                 .await;
 
             match rx.await {
@@ -52,9 +52,20 @@ impl RunningAppsHandle {
                     //     "RunningAppsHandle::run() top level count{}",
                     //     top_levels.len()
                     // );
+
+                    let mut non_minimized_apps = 0;
+
+                    for (_, tl_meta) in top_levels {
+                        if let Some(state) = tl_meta.state {
+                            if !state.contains(&ToplevelWState::Minimized) {
+                                non_minimized_apps += 1;
+                            }
+                        };
+                    }
+
                     let _ = self.app_channel.send(AppMessage::RunningApps {
                         message: crate::RunningAppsMessage::Status {
-                            count: top_levels.len() as i32,
+                            count: non_minimized_apps,
                         },
                     });
                 }

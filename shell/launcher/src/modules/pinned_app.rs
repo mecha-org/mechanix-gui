@@ -11,6 +11,7 @@ pub struct PinnedApp {
     app_id: String,
     icon: String,
     on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
+    disabled: bool,
 }
 
 impl std::fmt::Debug for PinnedApp {
@@ -27,6 +28,7 @@ impl PinnedApp {
             app_id: app_id.into(),
             icon: icon.into(),
             on_click: None,
+            disabled: false,
         }
     }
 
@@ -34,10 +36,19 @@ impl PinnedApp {
         self.on_click = Some(on_click);
         self
     }
+
+    pub fn disabled(mut self, d: bool) -> Self {
+        self.disabled = d;
+        self
+    }
 }
 
 impl Component for PinnedApp {
     fn on_click(&mut self, event: &mut Event<Click>) {
+        if self.disabled {
+            return;
+        }
+
         if let Some(f) = &self.on_click {
             event.emit(f());
         }
@@ -51,6 +62,7 @@ impl Component for PinnedApp {
                 } else {
                     IconType::Png
                 })
+                .disabled(self.disabled)
                 .style("background_color", Color::TRANSPARENT)
                 .style("active_color", Color::rgba(42., 42., 44., 0.80))
                 .style("padding", 16.)

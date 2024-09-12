@@ -1,7 +1,10 @@
 use crate::{
-    init_services_home, modules::running_apps::app_manager::AppManagerMessage, AppMessage,
-    AppParams, BatteryMessage, BluetoothMessage, BrightnessMessage, InitServicesParamsHome,
-    RunningAppsMessage, SoundMessage, UiParams, WirelessMessage,
+    init_services_home,
+    modules::{
+        power_options::service::PowerOptionsService, running_apps::app_manager::AppManagerMessage,
+    },
+    AppMessage, AppParams, BatteryMessage, BluetoothMessage, BrightnessMessage,
+    InitServicesParamsHome, RunningAppsMessage, SoundMessage, UiParams, WirelessMessage,
 };
 use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
 use std::sync::{Arc, RwLock};
@@ -148,21 +151,16 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                             });
                     }
                 },
-                AppMessage::RunOnTop => {
-                    layer_shell_opts.layer = Layer::Top;
+                AppMessage::ChangeLayer(layer) => {
+                    layer_shell_opts.layer = layer;
                     let _ = layer_tx
                         .clone()
                         .send(LayerWindowMessage::ReconfigureLayerOpts {
                             opts: layer_shell_opts.clone(),
                         });
-                }
-                AppMessage::RunOnBottom => {
-                    layer_shell_opts.layer = Layer::Bottom;
-                    let _ = layer_tx
-                        .clone()
-                        .send(LayerWindowMessage::ReconfigureLayerOpts {
-                            opts: layer_shell_opts.clone(),
-                        });
+                    let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        message: msg!(Message::ChangeLayer(layer)),
+                    });
                 }
                 AppMessage::Clock { date, time } => {
                     //println!("AppMessage::Clock {:?}", current_time);
@@ -310,11 +308,11 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                 }
                 AppMessage::ShutDown => {
                     println!("AppMessage::ShutDown");
-                    // let _ = PowerOptionsService::shutdown();
+                    let _ = PowerOptionsService::shutdown();
                 }
                 AppMessage::Restart => {
                     println!("AppMessage::Restart");
-                    // let _ = PowerOptionsService::restart();
+                    let _ = PowerOptionsService::restart();
                 }
                 AppMessage::Unlock => {}
             },
