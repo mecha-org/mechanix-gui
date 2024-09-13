@@ -45,11 +45,11 @@ modules:
         ]
     - app_id: alacritty
       name: Terminal
-      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/terminal.png
+      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/terminal_icon.png
       run_command: ["sh", "-c", "alacritty --working-directory=/home/mecha"]
     - app_id: epiphany-browser
       name: Browser
-      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/browser.png
+      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/browser_icon.png
       run_command: ["sh", "-c", "epiphany-browser"]
   clock:
     format: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
