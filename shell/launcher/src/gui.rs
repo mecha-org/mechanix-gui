@@ -78,6 +78,7 @@ pub enum Message {
     Net { online: bool },
     Memory { total: u64, used: u64 },
     Swipe { swipe: Swipe },
+    AppListAppClicked { app: DesktopEntry },
     SwipeEnd,
     Sound { value: u8 },
     Brightness { value: u8 },
@@ -94,6 +95,7 @@ pub enum Message {
     Shutdown(ShutdownState),
     Restart(RestartState),
     ChangeLayer(Layer),
+    AppOpening { value: bool },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -215,6 +217,7 @@ pub struct LauncherState {
     shutdown_pressed: bool,
     restart_pressed: bool,
     current_layer: Layer,
+    app_opening: bool,
 }
 
 #[component(State = "LauncherState")]
@@ -472,6 +475,7 @@ impl Component for Launcher {
             shutdown_pressed: false,
             restart_pressed: false,
             current_layer: Layer::Bottom,
+            app_opening: false,
         });
     }
 
@@ -502,6 +506,7 @@ impl Component for Launcher {
         let show_running_apps = self.state_ref().show_running_apps;
         let shutdown_pressed = self.state_ref().shutdown_pressed;
         let restart_pressed = self.state_ref().restart_pressed;
+        let app_opening = self.state_ref().app_opening;
 
         let mut start_node = node!(
             Div::new().bg(Color::rgba(0., 0., 0., 0.64)),
@@ -588,7 +593,7 @@ impl Component for Launcher {
         if (up_swipe.abs()) < 460 {
             // println!("up_swipe {:?} ", up_swipe);
             start_node = start_node.push(node!(
-                AppDrawer::new(installed_apps, up_swipe),
+                AppDrawer::new(installed_apps, up_swipe, app_opening),
                 lay![
                     size_pct: [100],
                     position_type: Absolute,
@@ -627,7 +632,7 @@ impl Component for Launcher {
                     online,
                     used_memory,
                     is_lock_screen: false,
-                    disable_activity: (swipe.is_some() || active_swipe.is_some())
+                    disable_activity: (swipe.is_some() || active_swipe.is_some() || app_opening)
                 },
                 lay![size_pct: [100, Auto],]
             ));
@@ -648,8 +653,15 @@ impl Component for Launcher {
                     if !run_command.is_empty() {
                         let command = run_command[0].clone();
                         let args: Vec<String> = run_command.clone()[1..].to_vec();
+                        self.state_mut().app_opening = true;
                         let _ = spawn_command(command, args);
                     }
+                }
+                Message::AppListAppClicked { app } => {
+                    let mut args: Vec<String> = vec!["-c".to_string()];
+                    args.push(app.exec.clone());
+                    self.state_mut().app_opening = true;
+                    let _ = spawn_command("sh".to_string(), args);
                 }
                 Message::Clock { time, date } => {
                     self.state_mut().time = time.clone();
@@ -899,6 +911,9 @@ impl Component for Launcher {
                 Message::ChangeLayer(layer) => {
                     self.state_mut().current_layer = *layer;
                 }
+                Message::AppOpening { value } => {
+                    self.state_mut().app_opening = *value;
+                }
                 _ => (),
             }
         }
@@ -958,6 +973,13 @@ impl Component for Launcher {
 
     fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
         if on_top_of_other_apps {
             println!("not dragging as other apps are running");
             return;
@@ -987,6 +1009,13 @@ impl Component for Launcher {
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
     ) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
         if on_top_of_other_apps {
             println!("not dragging as other apps are running");
             return;
@@ -1012,6 +1041,13 @@ impl Component for Launcher {
 
     fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
         if on_top_of_other_apps {
             println!("not dragging as other apps are running");
             return;
@@ -1025,6 +1061,13 @@ impl Component for Launcher {
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
         if on_top_of_other_apps {
             println!("not dragging as other apps are running");
             return;
@@ -1039,6 +1082,13 @@ impl Component for Launcher {
 
     fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
         if on_top_of_other_apps {
             println!("not dragging as other apps are running");
             return;
@@ -1051,6 +1101,13 @@ impl Component for Launcher {
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
     ) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
         if on_top_of_other_apps {
             println!("not dragging as other apps are running");
             return;

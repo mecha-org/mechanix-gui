@@ -235,6 +235,9 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::AppsUpdated { apps }),
                     });
+                    let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        message: msg!(Message::AppOpening { value: false }),
+                    });
                 }
                 AppMessage::AppInstanceClicked(instance) => {
                     let app_manager_msg_tx2 = app_manager_msg_tx.clone();

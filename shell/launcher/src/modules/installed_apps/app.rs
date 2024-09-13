@@ -30,6 +30,7 @@ struct AppState {
 #[component(State = "AppState", Internal)]
 pub struct App {
     pub app: DesktopEntry,
+    pub disabled: bool,
 }
 
 impl std::fmt::Debug for App {
@@ -39,9 +40,10 @@ impl std::fmt::Debug for App {
 }
 
 impl App {
-    pub fn new(app: DesktopEntry) -> Self {
+    pub fn new(app: DesktopEntry, disabled: bool) -> Self {
         Self {
             app,
+            disabled,
             state: Some(AppState::default()),
             dirty: false,
         }
@@ -83,11 +85,19 @@ impl Component for App {
     }
 
     fn on_mouse_down(&mut self, _event: &mut Event<mctk_core::event::MouseDown>) {
+        if self.disabled {
+            return;
+        }
+
         self.state_mut().pressed = true;
         self.state_mut().pressed_at = Some(Instant::now());
     }
 
     fn on_mouse_up(&mut self, _event: &mut Event<mctk_core::event::MouseUp>) {
+        if self.disabled {
+            return;
+        }
+
         self.state_mut().pressed = false;
     }
 
@@ -97,11 +107,18 @@ impl Component for App {
     }
 
     fn on_touch_down(&mut self, _event: &mut Event<mctk_core::event::TouchDown>) {
+        if self.disabled {
+            return;
+        }
+
         self.state_mut().pressed = true;
         self.state_mut().pressed_at = Some(Instant::now());
     }
 
     fn on_touch_up(&mut self, _event: &mut Event<mctk_core::event::TouchUp>) {
+        if self.disabled {
+            return;
+        }
         self.state_mut().pressed = false;
     }
 

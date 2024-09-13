@@ -23,11 +23,12 @@ pub enum AppListMessage {
 #[derive(Debug)]
 pub struct AppList {
     pub apps: Vec<DesktopEntry>,
+    pub disabled: bool,
 }
 
 impl AppList {
-    pub fn new(apps: Vec<DesktopEntry>) -> Self {
-        Self { apps }
+    pub fn new(apps: Vec<DesktopEntry>, disabled: bool) -> Self {
+        Self { apps, disabled }
     }
 }
 
@@ -67,7 +68,7 @@ impl Component for AppList {
         for (i, app) in self.apps.clone().into_iter().enumerate() {
             apps_list_node = apps_list_node.push(
                 node!(
-                    AppComponent::new(app.clone()),
+                    AppComponent::new(app.clone(), self.disabled),
                     lay![margin: [0., 0., 0., if (i+1) % 4 == 0 { 0. } else {29.} ]]
                 )
                 .key(i as u64),
