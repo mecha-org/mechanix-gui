@@ -24,7 +24,7 @@ default-members = ["system/server/dbus", "desktop/server"]
 
 
 [workspace.package]
-version = "0.1.3"
+version = "0.1.4"
 authors = [
     "Dhruvesh Baria <dhruveshb@mechasystems.com>",
     "Shoaib Merchant <shoaibm@mechasystems.com>",
