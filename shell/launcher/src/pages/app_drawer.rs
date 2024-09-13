@@ -35,13 +35,15 @@ pub struct AppDrawerState {
 pub struct AppDrawer {
     pub apps: Vec<DesktopEntry>,
     pub swipe: i32,
+    pub disabled_apps_click: bool,
 }
 
 impl AppDrawer {
-    pub fn new(apps: Vec<DesktopEntry>, swipe: i32) -> Self {
+    pub fn new(apps: Vec<DesktopEntry>, swipe: i32, disabled_apps_click: bool) -> Self {
         Self {
             apps,
             swipe,
+            disabled_apps_click,
             state: Some(AppDrawerState::default()),
             dirty: false,
         }
@@ -84,9 +86,6 @@ impl Component for AppDrawer {
             match message {
                 AppListMessage::AppClicked { app } => {
                     if !app.exec.is_empty() {
-                        let mut args: Vec<String> = vec!["-c".to_string()];
-                        args.push(app.exec.clone());
-                        let _ = spawn_command("sh".to_string(), args);
                         let swipe = Swipe {
                             dy: 0 as i32,
                             min_dy: 0,
@@ -97,6 +96,8 @@ impl Component for AppDrawer {
                             is_closer: true,
                             ..Default::default()
                         };
+                        bubble_msgs
+                            .push(msg!(gui::Message::AppListAppClicked { app: app.clone() }));
                         bubble_msgs.push(msg!(gui::Message::Swipe { swipe }));
                     }
                 }
@@ -197,7 +198,7 @@ impl Component for AppDrawer {
         ));
 
         start_node = start_node.push(node!(
-            AppList::new(self.apps.clone()),
+            AppList::new(self.apps.clone(), self.disabled_apps_click),
             lay![
                 size: [Auto],
                 margin: [0., 20., 0., 20.]
@@ -228,7 +229,7 @@ impl Component for AppDrawer {
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
         event.stop_bubbling();
-        println!("AppDrawer::drag()");
+        println!("AppDrawer::touch_drag()");
         if let Some(msg) = self.handle_on_drag(event.logical_delta()) {
             event.emit(msg);
         };

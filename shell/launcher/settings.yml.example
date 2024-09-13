@@ -43,19 +43,14 @@ modules:
           "-c",
           "MECHA_CONNECT_APP_SETTINGS_PATH=/etc/mecha/connect/settings-demo.yml mecha-connect",
         ]
-    - app_id: chromium
-      name: Chromium
-      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/chromium_icon.png
-      run_command:
-        [
-          "sh",
-          "-c",
-          "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland chrome://gpu",
-        ]
-    - app_id: firefox
-      name: firefox
-      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/firefox_icon.png
-      run_command: ["sh", "-c", "firefox-esr"]
+    - app_id: alacritty
+      name: Terminal
+      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/terminal.png
+      run_command: ["sh", "-c", "alacritty --working-directory=/home/mecha"]
+    - app_id: epiphany-browser
+      name: Browser
+      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/browser.png
+      run_command: ["sh", "-c", "epiphany-browser"]
   clock:
     format: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
@@ -165,15 +160,19 @@ app_list:
       exec: alacritty
       icon_name: terminal_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/terminal_icon.png
-    - name: Firefox
-      exec: firefox
-      icon_name: firefox_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/firefox_icon.png
+    - name: Browser
+      exec: epiphany-browser
+      icon_name: browser_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/browser_icon.png
+    - name: File Manager
+      exec: nautilus
+      icon_name: file_manager_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/file_manager_icon.png
     - name: Doom
       exec: /usr/games/chocolate-doom -iwad DOOM1.WAD -window 480x480
       icon_name: doom_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/doom_icon.png
-    - name: Alloy
-      exec: chromium "http://localhost:3000" --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized --window-size=480,480
-      icon_name: alloy_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/doom_icon.png
+    - name: Game Emulator
+      exec: mednafen
+      icon_name: game_emulator_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/game_emulator_icon.png

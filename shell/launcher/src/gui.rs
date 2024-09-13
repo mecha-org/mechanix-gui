@@ -21,6 +21,7 @@ use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Direction};
 use mctk_core::reexports::femtovg::CompositeOperation;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
+use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
 use mctk_core::renderables::rect::InstanceBuilder;
 use mctk_core::renderables::{Image, Rect, Renderable};
 use mctk_core::{component, msg, Color, Point, Pos, Scale, AABB};
@@ -77,6 +78,7 @@ pub enum Message {
     Net { online: bool },
     Memory { total: u64, used: u64 },
     Swipe { swipe: Swipe },
+    AppListAppClicked { app: DesktopEntry },
     SwipeEnd,
     Sound { value: u8 },
     Brightness { value: u8 },
@@ -92,6 +94,8 @@ pub enum Message {
     RunningAppsToggle { show: bool },
     Shutdown(ShutdownState),
     Restart(RestartState),
+    ChangeLayer(Layer),
+    AppOpening { value: bool },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -182,7 +186,7 @@ impl Swipe {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct LauncherState {
     settings: LauncherSettings,
     custom_theme: LauncherTheme,
@@ -212,6 +216,8 @@ pub struct LauncherState {
     show_running_apps: bool,
     shutdown_pressed: bool,
     restart_pressed: bool,
+    current_layer: Layer,
+    app_opening: bool,
 }
 
 #[component(State = "LauncherState")]
@@ -243,6 +249,14 @@ impl Launcher {
 
                     swipe.dx = dx as i32;
                     swipe.dy = dy as i32;
+                    // if dy as i32 > swipe.threshold_dy
+                    //     && self.state_ref().running_apps_count > 0
+                    //     && self.state_ref().current_layer != Layer::Top
+                    // {
+                    //     if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                    //         let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Top));
+                    //     };
+                    // }
                 }
                 SwipeDirection::Left => {}
                 SwipeDirection::Right => {}
@@ -255,6 +269,10 @@ impl Launcher {
     }
 
     pub fn handle_on_drag_end(&mut self) {
+        println!(
+            "Launcher::handle_on_drag_end() {:?}",
+            self.state_ref().swipe.clone()
+        );
         if let Some(mut swipe) = self.state_ref().swipe.clone() {
             if swipe.state == SwipeState::UserSwiping {
                 swipe.state = SwipeState::CompletingSwipe;
@@ -341,19 +359,18 @@ impl Launcher {
         // }
 
         self.state_mut().swipe = swipe;
-        if let Some(app_channel) = self.state_ref().app_channel.clone() {
-            let _ = app_channel.send(AppMessage::RunOnTop);
-        };
     }
 }
 
 #[state_component_impl(LauncherState)]
 impl Component for Launcher {
     fn on_tick(&mut self, _event: &mut mctk_core::event::Event<mctk_core::event::Tick>) {
+        println!("on_tick {:?}", self.state.is_some());
         if self.state.is_none() {
             return;
         }
 
+        println!("on_tick swipe {:?}", self.state_ref().swipe.clone());
         if let Some(mut swipe) = self.state_ref().swipe.clone() {
             let Swipe {
                 dx,
@@ -397,22 +414,24 @@ impl Component for Launcher {
                         // return;
                     }
 
-                    swipe.dy = (dy + 90).max(min_dy).min(max_dy);
+                    swipe.dy = (dy + 25).max(min_dy).min(max_dy);
+                    println!("swipe.dy {:?}", swipe.dy);
                 }
                 if direction == SwipeDirection::Up {
                     if dy <= min_dy {
                         swipe.state = SwipeState::Completed;
-                        if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                            let _ = app_channel.send(AppMessage::RunOnBottom);
-                        }
+                        // if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                        //     let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
+                        // }
                         // return;
                     }
 
-                    swipe.dy = (dy - 90).max(min_dy).min(max_dy);
+                    swipe.dy = (dy - 25).max(min_dy).min(max_dy);
                     println!("swipe.dy {:?}", swipe.dy);
                 }
             }
             self.state_mut().swipe = Some(swipe);
+            println!("updated swipe");
         }
     }
 
@@ -455,6 +474,8 @@ impl Component for Launcher {
             show_running_apps: false,
             shutdown_pressed: false,
             restart_pressed: false,
+            current_layer: Layer::Bottom,
+            app_opening: false,
         });
     }
 
@@ -485,6 +506,7 @@ impl Component for Launcher {
         let show_running_apps = self.state_ref().show_running_apps;
         let shutdown_pressed = self.state_ref().shutdown_pressed;
         let restart_pressed = self.state_ref().restart_pressed;
+        let app_opening = self.state_ref().app_opening;
 
         let mut start_node = node!(
             Div::new().bg(Color::rgba(0., 0., 0., 0.64)),
@@ -520,14 +542,14 @@ impl Component for Launcher {
                 lay![
                     size_pct: [100],
                     position_type: Absolute,
-                    position: [37., 0., 0., 0.],
+                    position: [36., 0., 0., 0.],
                 ]
             ));
         }
 
         let mut down_swipe = 0;
         let mut up_swipe = 480;
-        if let Some(swipe) = swipe {
+        if let Some(swipe) = swipe.clone() {
             if (swipe.direction == SwipeDirection::Down && !swipe.is_closer)
                 || (swipe.direction == SwipeDirection::Up && swipe.is_closer)
             {
@@ -537,7 +559,7 @@ impl Component for Launcher {
             {
                 up_swipe = swipe.dy;
             }
-        } else if let Some(swipe) = active_swipe {
+        } else if let Some(swipe) = active_swipe.clone() {
             if (swipe.direction == SwipeDirection::Down && !swipe.is_closer)
                 || (swipe.direction == SwipeDirection::Up && swipe.is_closer)
             {
@@ -571,7 +593,7 @@ impl Component for Launcher {
         if (up_swipe.abs()) < 460 {
             // println!("up_swipe {:?} ", up_swipe);
             start_node = start_node.push(node!(
-                AppDrawer::new(installed_apps, up_swipe),
+                AppDrawer::new(installed_apps, up_swipe, app_opening),
                 lay![
                     size_pct: [100],
                     position_type: Absolute,
@@ -610,6 +632,7 @@ impl Component for Launcher {
                     online,
                     used_memory,
                     is_lock_screen: false,
+                    disable_activity: (swipe.is_some() || active_swipe.is_some() || app_opening)
                 },
                 lay![size_pct: [100, Auto],]
             ));
@@ -619,7 +642,7 @@ impl Component for Launcher {
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
-        println!("App was sent: {:?}", message);
+        // println!("App was sent: {:?}", message);
         if let Some(msg) = message.downcast_ref::<Message>() {
             match msg {
                 Message::AppClicked { app_id } => {
@@ -630,8 +653,15 @@ impl Component for Launcher {
                     if !run_command.is_empty() {
                         let command = run_command[0].clone();
                         let args: Vec<String> = run_command.clone()[1..].to_vec();
+                        self.state_mut().app_opening = true;
                         let _ = spawn_command(command, args);
                     }
+                }
+                Message::AppListAppClicked { app } => {
+                    let mut args: Vec<String> = vec!["-c".to_string()];
+                    args.push(app.exec.clone());
+                    self.state_mut().app_opening = true;
+                    let _ = spawn_command("sh".to_string(), args);
                 }
                 Message::Clock { time, date } => {
                     self.state_mut().time = time.clone();
@@ -821,6 +851,8 @@ impl Component for Launcher {
                 Message::AppInstanceClicked(instance) => {
                     if let Some(app_channel) = self.state_ref().app_channel.clone() {
                         let _ = app_channel.send(AppMessage::AppInstanceClicked(*instance));
+                        let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
+                        self.state_mut().show_running_apps = false;
                         // process::exit(0)
                     };
                 }
@@ -838,7 +870,7 @@ impl Component for Launcher {
                     self.state_mut().show_power_options = *show;
                     if !show {
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                            let _ = app_channel.send(AppMessage::RunOnBottom);
+                            let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
                         };
                     }
                 }
@@ -846,7 +878,7 @@ impl Component for Launcher {
                     self.state_mut().show_running_apps = *show;
                     if !show {
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                            let _ = app_channel.send(AppMessage::RunOnBottom);
+                            let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
                         };
                     }
                 }
@@ -876,6 +908,12 @@ impl Component for Launcher {
                         }
                     }
                 },
+                Message::ChangeLayer(layer) => {
+                    self.state_mut().current_layer = *layer;
+                }
+                Message::AppOpening { value } => {
+                    self.state_mut().app_opening = *value;
+                }
                 _ => (),
             }
         }
@@ -934,6 +972,19 @@ impl Component for Launcher {
     }
 
     fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
+        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
+        if on_top_of_other_apps {
+            println!("not dragging as other apps are running");
+            return;
+        }
+
         if self.state_ref().swipe.is_some() {
             println!("Swipe already exists");
             return;
@@ -957,15 +1008,27 @@ impl Component for Launcher {
         &mut self,
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
     ) {
-        if self.state_ref().swipe.is_some() {
-            println!("Swipe already exists");
+        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
+        if on_top_of_other_apps {
+            println!("not dragging as other apps are running");
             return;
         }
 
         println!(
-            "Launcher::on_drag_start() {:?}",
+            "Launcher::on_touch_drag_start() {:?}",
             event.physical_touch_position()
         );
+        if self.state_ref().swipe.is_some() {
+            println!("Swipe already exists");
+            return;
+        }
 
         let aabb = event.current_logical_aabb();
         let pos = event.physical_touch_position();
@@ -977,6 +1040,18 @@ impl Component for Launcher {
     }
 
     fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
+        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
+        if on_top_of_other_apps {
+            println!("not dragging as other apps are running");
+            return;
+        }
         let logical_delta = event.bounded_logical_delta();
         println!("Launcher::on_drag() {:?}", logical_delta);
         if let Some(msg) = self.handle_on_drag(logical_delta) {
@@ -985,6 +1060,19 @@ impl Component for Launcher {
     }
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
+        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
+        if on_top_of_other_apps {
+            println!("not dragging as other apps are running");
+            return;
+        }
+
         let logical_delta = event.bounded_logical_delta();
         println!("Launcher::on_touch_drag() {:?}", logical_delta);
         if let Some(msg) = self.handle_on_drag(logical_delta) {
@@ -993,13 +1081,41 @@ impl Component for Launcher {
     }
 
     fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
+        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
+        if on_top_of_other_apps {
+            println!("not dragging as other apps are running");
+            return;
+        }
         self.handle_on_drag_end();
     }
 
     fn on_touch_drag_end(
         &mut self,
-        _event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
+        event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
     ) {
+        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
+        let app_opening = self.state_ref().app_opening;
+
+        if app_opening {
+            println!("not dragging as some app is launching");
+            return;
+        }
+
+        if on_top_of_other_apps {
+            println!("not dragging as other apps are running");
+            return;
+        }
+        println!(
+            "Launcher::on_touch_drag_end() {:?}",
+            event.physical_touch_position()
+        );
         self.handle_on_drag_end();
     }
 }

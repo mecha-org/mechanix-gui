@@ -34,6 +34,7 @@ pub struct HomeUi {
     pub online: bool,
     pub used_memory: u64,
     pub is_lock_screen: bool,
+    pub disable_activity: bool,
 }
 
 impl Component for HomeUi {
@@ -50,6 +51,7 @@ impl Component for HomeUi {
         let wireless_status = self.wireless_status.clone();
         let bluetooth_status = self.bluetooth_status.clone();
         let is_lock_screen = self.is_lock_screen;
+        let disable_activity = self.disable_activity;
 
         let mut start_node = node!(
             Div::new().bg(Color::rgba(0., 0., 0., 0.64)),
@@ -193,13 +195,11 @@ impl Component for HomeUi {
 
         for (i, app) in self.settings.modules.apps.clone().into_iter().enumerate() {
             row_4 = row_4.push(
-                node!(
-                    PinnedApp::new(app.app_id.clone(), app.icon.unwrap()).on_click(Box::new(
-                        move || msg!(Message::AppClicked {
-                            app_id: app.app_id.clone()
-                        })
-                    ))
-                )
+                node!(PinnedApp::new(app.app_id.clone(), app.icon.unwrap())
+                    .on_click(Box::new(move || msg!(Message::AppClicked {
+                        app_id: app.app_id.clone()
+                    })))
+                    .disabled(disable_activity))
                 .key(i as u64),
             );
         }
