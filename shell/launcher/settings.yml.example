@@ -173,6 +173,6 @@ app_list:
       icon_name: doom_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/doom_icon.png
     - name: Game Emulator
-      exec: mednafen
+      exec: /usr/games/mednafen -video.fs 1 /usr/games/SuperMario4Advance.gba
       icon_name: game_emulator_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/game_emulator_icon.png
