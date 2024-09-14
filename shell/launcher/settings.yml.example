@@ -157,7 +157,7 @@ app_list:
       icon_name: mecha_connect_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mecha_connect_icon.png
     - name: Terminal
-      exec: alacritty
+      exec: "alacritty --working-directory=/home/mecha"
       icon_name: terminal_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/terminal_icon.png
     - name: Browser
