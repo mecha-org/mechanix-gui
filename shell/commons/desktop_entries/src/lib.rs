@@ -127,6 +127,7 @@ impl DesktopEntries {
                     entries.insert(
                         file.file_name(),
                         DesktopEntry {
+                            app_id: "".to_string(),
                             icon_name,
                             icon_path,
                             name,
@@ -167,6 +168,7 @@ impl DesktopEntries {
 /// Desktop entry information.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DesktopEntry {
+    pub app_id: String,
     pub icon_name: Option<String>,
     pub icon_path: Option<PathBuf>,
     pub name: String,
