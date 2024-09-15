@@ -414,7 +414,7 @@ impl Component for Launcher {
                         // return;
                     }
 
-                    swipe.dy = (dy + 25).max(min_dy).min(max_dy);
+                    swipe.dy = (dy + 30).max(min_dy).min(max_dy);
                     println!("swipe.dy {:?}", swipe.dy);
                 }
                 if direction == SwipeDirection::Up {
@@ -426,7 +426,7 @@ impl Component for Launcher {
                         // return;
                     }
 
-                    swipe.dy = (dy - 25).max(min_dy).min(max_dy);
+                    swipe.dy = (dy - 30).max(min_dy).min(max_dy);
                     println!("swipe.dy {:?}", swipe.dy);
                 }
             }
@@ -857,6 +857,14 @@ impl Component for Launcher {
                     };
                 }
                 Message::AppInstanceCloseClicked(instance) => {
+                    let running_apps = self.state_ref().running_apps.clone();
+                    let filtered_running_apps = running_apps
+                        .into_iter()
+                        .filter(|app| {
+                            app.app_details.instances.get(0).unwrap().instance_key != *instance
+                        })
+                        .collect();
+                    self.state_mut().running_apps = filtered_running_apps;
                     if let Some(app_channel) = self.state_ref().app_channel.clone() {
                         let _ = app_channel.send(AppMessage::AppInstanceCloseClicked(*instance));
                     };

@@ -407,7 +407,8 @@ fn format_apps_from_map_to_vec(
         let mut icon_type: Option<IconType> = None;
         let mut path: Option<String> = None;
         if let Some(entry) = desktop_entries.clone().into_iter().find(|entry| {
-            Some(app_id.clone()) == entry.icon_name
+            app_id.to_lowercase() == entry.app_id.to_lowercase()
+                || Some(app_id.clone()) == entry.icon_name
                 || entry
                     .exec
                     .clone()
