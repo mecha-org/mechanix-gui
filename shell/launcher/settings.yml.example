@@ -162,17 +162,17 @@ app_list:
       exec: "alacritty --working-directory=/home/mecha"
       icon_name: terminal_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/terminal_icon.png
-    - app_id: firefox
+    - app_id: firefox-esr
       name: Firefox
-      exec: firefox --MOZ_ENABLE_WAYLAND=1
+      exec: firefox-esr --MOZ_ENABLE_WAYLAND=1
       icon_name: firefox_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/firefox_icon.png
-    - app_id: nautilus
+    - app_id: org.gnome.Nautilus
       name: File Manager
       exec: nautilus
       icon_name: file_manager_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/file_manager_icon.png
-    - app_id: doom
+    - app_id: chocolate-doom
       name: Doom
       exec: /usr/games/chocolate-doom -iwad DOOM1.WAD -window 480x480
       icon_name: doom_icon
