@@ -1,0 +1,1 @@
+pub const SECRET_KEY : &str = "mechanix-shell";

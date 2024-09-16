@@ -1,31 +1,32 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { availableNetworksList, knownNetworksList } from '$lib/stores/networkStore';
-import { fetchAvaialbleNetworks, fetchKnownNetworks} from '$lib/services/network-services';
+import { fetchAvaialbleNetworks, fetchKnownNetworks } from '$lib/services/network-services';
 import type { KnownNetworkResponse, WirelessInfoResponse } from '$lib/types/NetworkTypes';
 
 
 export const load: PageLoad = async ({ params }) => {
 
-	const {network} = params;
+	const { network } = params;
 
 	fetchKnownNetworks();
 	fetchAvaialbleNetworks();
 
-	let networkList:KnownNetworkResponse[] = []; 
-	let networkDetailList:WirelessInfoResponse[] = []; 
-	knownNetworksList.subscribe((value)=>{
-		networkList=value;
+	let networkList: KnownNetworkResponse[] = [];
+	let networkDetailList: WirelessInfoResponse[] = [];
+	knownNetworksList.subscribe((value) => {
+		networkList = value;
 	});
 
-	availableNetworksList.subscribe((value)=>{
-		networkDetailList=value;
+	availableNetworksList.subscribe((value) => {
+		networkDetailList = value;
 	});
-	const selectedNetwork = networkList.find((item)=>item.network_id == network);
+	const selectedNetwork = networkList.find((item) => item.network_id == network);
+
+	const selectedNetworkDetails = networkDetailList.find((item) => item.name == selectedNetwork?.ssid);
+
 	
-	const selectedNetworkDetails = networkDetailList.find((item)=>item.name == selectedNetwork?.ssid);
-
-	if(!selectedNetwork){
+	if (!selectedNetwork) {
 		return error(404, 'Not found');
 	}
 
@@ -46,6 +47,14 @@ export const load: PageLoad = async ({ params }) => {
 			{
 				title: 'Frequency',
 				value: selectedNetworkDetails?.frequency
+			},
+			{
+				title: 'Security',
+				value: selectedNetworkDetails?.security
+			},
+			{
+				title: 'Encryption',
+				value: selectedNetworkDetails?.encryption
 			}
 		],
 		[
@@ -70,7 +79,7 @@ export const load: PageLoad = async ({ params }) => {
 
 
 	if (params.network) {
-		return { title: selectedNetwork?.ssid , networkDetail: displayNetworkDetail };
+		return { title: selectedNetwork?.ssid, networkDetail: displayNetworkDetail };
 	}
 	error(404, 'Not found');
 };

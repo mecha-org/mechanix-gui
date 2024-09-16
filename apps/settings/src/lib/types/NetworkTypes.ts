@@ -13,6 +13,9 @@ export interface WirelessInfoResponse {
     signal: string,
     flags: string,
     name: string,
+    security?: string,
+    encryption?: string,
+    isSecured?: boolean
 }
 export interface WirelessScanListResponse {
     wireless_network: WirelessInfoResponse[],

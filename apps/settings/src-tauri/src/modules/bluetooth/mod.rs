@@ -1,78 +1,80 @@
 pub mod client;
 pub mod listener;
 use crate::error::Error;
-use serde::Serialize;
 
-use self::client::BluetoothScanResponse;
-
-#[derive(Debug, Serialize)]
-pub struct BluetoothData {
-    pub status: i8, 
-    pub available_devices: Vec<BluetoothScanResponse>
-}
+use self::client::BluetoothScanListResponse;
 
 #[tauri::command]
-pub async fn get_bluetooth_status() -> Result<BluetoothData, Error> {
+pub async fn get_bluetooth_status() -> Result<i8, Error> {
     println!("get_bluetooth_status....");
-    let bluetooth_on = match client::BluetoothService::status().await {
-        Ok(v) => v,
-        Err(e) => return Err(Error::Other(e.to_string())),
-    };
-
-    if bluetooth_on == 0 {
-        return Ok(BluetoothData{
-            status: 0,
-            available_devices: vec![]
-        });
-    };
-
-    let scan_response = match client::BluetoothService::scan().await {
-        Ok(v) => v,
-        Err(e) => return Err(Error::Other(e.to_string())),
-    };
-
-    println!("scan_response {:?}", scan_response);
-
-    if scan_response.bluetooth_devices.len() > 0 {
-        return Ok(BluetoothData{
-            status: 1,
-            available_devices: scan_response.bluetooth_devices
-        });
-    } else {
-        return Ok(BluetoothData{
-            status: 0,
-            available_devices: vec![]
-        });
+    match client::BluetoothService::status().await {
+        Ok(v) => return Ok(v),
+        Err(e) => return Err(Error::Other(e.to_string()))
     };
 }
 
 
 #[tauri::command]
-async fn update_enable_bluetooth() -> Result<(), Error> {
-    println!("update_enable_bluetooth called....");
-    match client::BluetoothService::enable_bluetooth().await {
-        Ok(result) => {
-            println!("RESULT enable_bluetooth: {:?}", result);
-            Ok(())
-        },
+pub async fn scan_bluetooth() -> Result<BluetoothScanListResponse, Error> {
+    println!("scan_bluetooth....");
+    match client::BluetoothService::scan().await {
+        Ok(v) => return Ok(v),
         Err(e) => {
-            println!("CHECK ERROR: {:?}", e);
-            Err(Error::Other(e.to_string()))
-        }
+            println!("bluetooth::scan_response error {:?} ", e);
+            return Err(Error::Other(e.to_string()))
+        },
+    };
+}
+
+
+#[tauri::command]
+pub async fn enable_bluetooth() -> Result<(), Error> {
+    println!("enable_bluetooth called....");
+    match client::BluetoothService::enable_bluetooth().await {
+        Ok(v) => return Ok(v),
+        Err(e) => return Err(Error::Other(e.to_string()))
+    }
+}
+
+// #[tauri::command]
+// pub async fn enable_bluetooth() -> Result<bool, Error> {
+//     println!("enable_bluetooth called....");
+//     match client::BluetoothService::enable_bluetooth().await {
+//         Ok(v) => {
+//             // return Ok(v)
+//             println!("enable_bluetooth result: {:?}", v);
+//             return Ok(true);
+//         },
+//         Err(e) => {
+//             println!("enable_bluetooth error: {:?}", e.to_string());
+//             return Err(Error::Other(e.to_string()))
+//         }
+//     }
+// }
+
+#[tauri::command]
+pub async fn disable_bluetooth() -> Result<(), Error> {
+    println!("disable_bluetooth called....");
+    match client::BluetoothService::disable_bluetooth().await {
+        Ok(v) => return Ok(v),
+        Err(e) => return Err(Error::Other(e.to_string()))
     }
 }
 
 #[tauri::command]
-async fn update_disable_bluetooth() -> Result<(), Error> {
-    println!("update_disable_bluetooth called....");
-    match client::BluetoothService::disable_bluetooth().await {
-        Ok(result) => {
-            println!("RESULT disable_bluetooth: {:?}", result);
-            Ok(())
-        },
-        Err(e) => {
-            println!("CHECK ERROR: {:?}", e);
-            Err(Error::Other(e.to_string()))
-        }
+pub async fn connect_bluetooth_device(address: &str) -> Result<(), Error> {
+    println!("connect_bluetooth_device called.... {:?}", address.to_owned());
+    match client::BluetoothService::connect(address).await {
+        Ok(v) => return Ok(v),
+        Err(e) => return Err(Error::Other(e.to_string()))
+    }
+}
+
+#[tauri::command]
+pub async fn disconnect_bluetooth_device(address: &str) -> Result<(), Error> {
+    println!("disconnect_bluetooth_device called.... {:?}", address.to_owned());
+    match client::BluetoothService::disconnect(&address).await {
+        Ok(v) => return Ok(v),
+        Err(e) => return Err(Error::Other(e.to_string()))
     }
 }

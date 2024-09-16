@@ -57,7 +57,12 @@ const config: Config = {
 				'midnight-sky': '#101820',
 				'pale-silver': '#D8DCE7',
 				'ash-gray': '#2A2A2C',
-				'mid-gray': '#545966'
+				'mid-gray': '#545966',
+				'neutral-gray': '#535353',
+				'silver-gray': '#A6A6A6',
+				'light-gray': '#989898',
+				'brand-blue': '#2D8AFF',
+				'powder-gray': '#C5C5C5',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -26,6 +26,10 @@ thiserror = "1.0.59"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 zbus = { version = "4.1.2", features = ["tokio"] }
+upower = { path = "../../../commons/upower" }
+keyring = "2.3.3"
+users = "0.11.0"
+uuid = "1.9.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

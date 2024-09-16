@@ -13,13 +13,19 @@
 		wifiStatus,
 		connectedNetwork,
 		disableWifiSwitch,
-		fetchingWifiStatus
+		fetchingWifiStatus,
+		fetchingConnectedNetwork
 	} from '$lib/stores/networkStore';
-	import { fetchConnectedWifiInfo, fetchWifiStatus } from '$lib/services/network-services';
+	import {
+		fetchAvaialbleNetworks,
+		fetchConnectedWifiInfo,
+		fetchWifiStatus
+	} from '$lib/services/network-services';
 	import type { WirelessInfoResponse } from '$lib/types/NetworkTypes';
 	import { ERROR_LOG, NETWORK_MODULE_LOG, PAGE_LOG, SET_INTERVAL_TIMER } from '../../constants';
+	import { goto } from '$app/navigation';
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG;
-	
+
 	let timeIntervalId: number;
 	const getInitalData = async () => {
 		consoleLog(LOG_PREFIX + 'getInitalData()::');
@@ -43,6 +49,7 @@
 
 	onMount(() => {
 		getInitalData();
+		fetchAvaialbleNetworks();
 		timeIntervalId = setInterval(getInitalData, SET_INTERVAL_TIMER);
 	});
 
@@ -75,54 +82,81 @@
 			});
 		}
 	};
+
+	const addNewNetwork = () => {
+		goto('/network/manage-network/new-network');
+	};
 </script>
 
-<Layout title="Network">
+<Layout title="Wireless" loader={$fetchingWifiStatus}>
+	<div slot="switch">
+		{#if $fetchingWifiStatus || $fetchingConnectedNetwork}
+			<div class="flex animate-spin flex-row items-center gap-2">
+				<Icons name="spinner" height="28px" width="28px" />
+			</div>
+		{:else}
+			<Switch
+				bind:checked={$wifiStatus}
+				onCheckedChange={onWifiStatuChangeHandler}
+				disabled={$disableWifiSwitch}
+			/>
+		{/if}
+	</div>
 	<div class="flex flex-col gap-12">
-		<div class="flex flex-col gap-4">
-			<ListBlock>
-				<BlockItem title="Enable Wireless" isBottomBorderVisible={!!$connectedNetwork.name}>
-					{#if $fetchingWifiStatus}
-						<div class="flex animate-spin flex-row items-center gap-2">
-							<Icons name="spinner" height="30px" width="30px" />
-						</div>
-					{:else}
-						<Switch
-							bind:checked={$wifiStatus}
-							onCheckedChange={onWifiStatuChangeHandler}
-							disabled={$disableWifiSwitch}
-						/>
-					{/if}
+		<ListBlock>
+			{#if !$fetchingConnectedNetwork || typeof $connectedNetwork.name !== 'undefined'}
+				<BlockItem
+					isBottomBorderVisible={false}
+					title={$connectedNetwork.name}
+					href={`/network/manage-network/available/${$connectedNetwork.name}?isConnected=${true}`}
+					borderY={true}
+				>
+					<div class="flex flex-row items-center gap-4">
+						<Icons height="24px" width="24px" name="blue_check_no_fill" />
+						<Icons height="24px" width="24px" name="right_arrow" />
+					</div>
 				</BlockItem>
-				{#if !!$connectedNetwork.name}
-					<BlockItem
-						isBottomBorderVisible={false}
-						title={$connectedNetwork.name}
-						href={`/network/manage-network/available/${$connectedNetwork.name}`}
-					>
-						<div class="flex flex-row items-center gap-4">
-							<Icons height="30px" width="30px" name="blue_checked" />
-							<Icons height="30px" width="30px" name="right_arrow" />
-						</div>
-					</BlockItem>
-				{/if}
-			</ListBlock>
-			{#if $wifiStatus}
-				<ListItem isLink href="/network/manage-network" title="Manage Networks"
-					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-				>
-			{:else}
-				<ListItem title="Manage Networks" isSelected={false}
-					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-				>
 			{/if}
-			<ListItem isLink href="/network/ip-settings" title="IP Settings"
-				><Icons name="right_arrow" height="30px" width="30px" /></ListItem
-			>
-		</div>
+		</ListBlock>
+
+		{#if $wifiStatus}
+			<!-- <ListBlock>
+				<BlockItem
+					title="Manage Networks"
+					isBottomBorderVisible={true}
+					href="/network/manage-network"
+				>
+					<Icons name="right_arrow" height="30px" width="30px" />
+				</BlockItem>
+				<BlockItem
+					title="Available Networks"
+					isBottomBorderVisible={false}
+					href="/network/available-network"
+				>
+					<Icons name="right_arrow" height="30px" width="30px" />
+				</BlockItem>
+			</ListBlock> -->
+			<div class="flex flex-col">
+				<ListItem isLink href="/network/manage-network" title="Manage Networks">
+					<Icons name="right_arrow" height="30px" width="30px" />
+				</ListItem>
+				<ListItem isLink href="/network/available-network" title="Available Networks"
+					><Icons name="right_arrow" height="30px" width="30px" />
+				</ListItem>
+			</div>
+		{:else}
+			<ListItem title="Manage Networks" isSelected={false}>
+				<Icons name="right_arrow" height="30px" width="30px" />
+			</ListItem>
+		{/if}
+
+		<!-- </div> -->
 		<div>
-			<ListHeading title="Others" />
-			<div class="flex flex-col gap-4">
+			<ListHeading title="Other" />
+			<div class="flex flex-col">
+				<ListItem isLink href="/network/ip-settings" title="IP Settings">
+					<Icons name="right_arrow" height="30px" width="30px" />
+				</ListItem>
 				<ListItem isLink href="/network/ethernet" title="Ethernet"
 					><Icons name="right_arrow" height="30px" width="30px" /></ListItem
 				>
@@ -132,13 +166,22 @@
 			</div>
 		</div>
 	</div>
-	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
+	<footer
+		slot="footer"
+		class="border-silver-gray h-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+	>
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="bg-ash-gray flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				class="  flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
+			</button>
+			<button
+				class="flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
+				on:click={addNewNetwork}
+			>
+				<Icons name="addition" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

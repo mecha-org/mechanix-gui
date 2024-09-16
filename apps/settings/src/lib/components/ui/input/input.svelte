@@ -17,7 +17,7 @@
 
 <input
 	class={cn(
-		'flex w-full  rounded-lg bg-midnight-abyss  p-4 text-lg outline-none  placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
+		'placeholder:text-muted-foreground  flex w-full bg-[#05070a] p-5 text-lg outline-none disabled:cursor-not-allowed disabled:opacity-50',
 		className
 	)}
 	bind:value
