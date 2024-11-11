@@ -1,0 +1,64 @@
+title: Settings App # Empty
+app:
+  id: mechanix.apps.settings-app # settings-app
+  text_multithreading: true # false
+  antialiasing: true # false
+  try_opengles_first: true # false
+window:
+  size: [480, 440] # [1024, 768]
+  position: [0, 0] # [0, 0]
+  min_size: [480, 40] # None
+  max_size: null # None
+  visible: true # true
+  resizable: true # true
+  decorations: true # true
+  transparent: true # false
+  always_on_top: false # false
+  icon_path: null # Todo
+layout:
+  left: []
+  center: []
+  right: []
+fonts:
+  paths:
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Bold.ttf
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-BoldItalic.ttf
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Italic.ttf
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Regular.ttf
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Bold.ttf
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Regular.ttf
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-SemiBold.ttf
+    - /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Medium.ttf
+modules:
+  wireless:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/wifi_icon.png
+  bluetooth:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/bluetooth_icon.png
+  display:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/display_icon.png
+  appearance:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/appearance_icon.png
+  battery:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/battery_icon.png
+  sound:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/sound_icon.png
+  lock:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/lock_icon.png
+  date_time:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/date_time_icon.png
+  language:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/language_icon.png
+  update:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/update_icon.png
+  about:
+    icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/about_icon.png
+  see_options:
+    right_arrow_icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/right_arrow_icon.png
+    info_icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/info_icon.png
+    connected_icon: /home/sweta/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/connected_icon.png
+  footer:
+    back_icon: 
+  not_found:
+    icon:
+      default: /home/white/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/not_found_icon.png
+      small: /home/white/sweta-repos/mechanix-gui-1/apps/settings-app/src/assets/icons/not_found_small_icon.png
