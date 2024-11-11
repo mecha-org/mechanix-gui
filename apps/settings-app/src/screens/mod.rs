@@ -1,4 +1,5 @@
 pub mod settings_menu;
+pub mod sound;
 pub mod wireless;
 
 // src/screens/settings_menu
@@ -7,10 +8,10 @@ pub mod wireless;
 // src/screens/display
 // src/screens/mod.rs
 
-
-// in settings_menu, 
+// in settings_menu,
 // settings_menu/component.rs
 // settings_menu/settings_row.rs
 // settings_menu/mod.rs
 
 // in src/screens/mod.rs, how to write settings_menu, network, bluetooth
+
