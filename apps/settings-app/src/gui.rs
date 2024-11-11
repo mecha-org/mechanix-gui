@@ -4,7 +4,7 @@ use std::any::Any;
 
 use crate::{
     screens::{
-        settings_menu::settings_screen::SettingsScreen,
+        settings_menu::settings_screen::SettingsScreen, sound::sound_screen::SoundScreen,
         wireless::network_details_screen::NetworkDetailsScreen,
         wireless::network_screen::NetworkScreen,
     },
@@ -113,7 +113,7 @@ impl Component for SettingsApp {
             Routes::DisplayScreen => todo!(),
             Routes::AppearanceScreen => todo!(),
             Routes::BatteryScreen => todo!(),
-            Routes::SoundScreen => todo!(),
+            Routes::SoundScreen => base = base.push(node!(SoundScreen {})),
             Routes::LockScreen => todo!(),
         }
 
