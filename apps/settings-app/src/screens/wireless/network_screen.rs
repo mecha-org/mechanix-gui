@@ -102,7 +102,7 @@ impl Component for NetworkScreen {
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
                 on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::SettingsList // TODO : show connected network details
+                    route: Routes::NetworkDetails // TODO : show connected network details
                 }))),
             },
             lay![
