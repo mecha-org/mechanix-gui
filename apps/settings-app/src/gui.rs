@@ -4,7 +4,9 @@ use std::any::Any;
 
 use crate::{
     screens::{
-        settings_menu::settings_screen::SettingsScreen, wireless::network_screen::NetworkScreen,
+        settings_menu::settings_screen::SettingsScreen,
+        wireless::network_details_screen::NetworkDetailsScreen,
+        wireless::network_screen::NetworkScreen,
     },
     settings::{self, MainSettings},
     AppMessage, AppParams,
@@ -34,6 +36,7 @@ pub enum Routes {
     #[default]
     SettingsList,
     NetworkScreen,
+    NetworkDetails,
     BluetoothScreen,
     DisplayScreen,
     AppearanceScreen,
@@ -105,6 +108,7 @@ impl Component for SettingsApp {
         match self.state_ref().current_route {
             Routes::SettingsList => base = base.push(node!(SettingsScreen {})),
             Routes::NetworkScreen => base = base.push(node!(NetworkScreen {})),
+            Routes::NetworkDetails => base = base.push(node!(NetworkDetailsScreen {})),
             Routes::BluetoothScreen => todo!(),
             Routes::DisplayScreen => todo!(),
             Routes::AppearanceScreen => todo!(),
