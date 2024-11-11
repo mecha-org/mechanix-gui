@@ -29,39 +29,42 @@ impl Component for NetworkScreen {
         );
         let mut main_node = node!(
             Div::new(),
-            // .scroll_y()
-            // .style("bar_width", 0.)
-            // .style("bar_color", Color::TRANSPARENT)
-            // .style("bar_background_color", Color::TRANSPARENT),
             lay![
-                size_pct: [100],
+                size_pct: [100, 70],
                 cross_alignment: Alignment::Stretch,
                 direction: Direction::Column,
-                // padding: [15.0, 10.0, 15.0, 10.0],
             ]
         );
+
         let mut c_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 80],
-                axis_alignment: Alignment::Stretch,
+                size_pct: [100, 70],
                 cross_alignment: Alignment::Stretch,
                 direction: Direction::Column,
-                padding: [0.0, 10.0, 0.0, 10.0]
+                padding: [0.0, 10.0, 0.0, 10.0],
+                position_type: Relative,
             ],
         );
 
         //Title
+        let mut header_node = node!(
+            Div::new(),
+            lay![
+                size_pct: [100, 15],
+                axis_alignment: Alignment::Start,
+                direction: Direction::Column
+            ]
+        );
+
         let mut header = node!(
             Div::new(),
-            // Div::new().bg(Color::MID_GREY),
             lay![
                 size_pct: [100, 15],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
-                // cross_alignment: Alignment::Center,
-                padding: [5.0, 10.0, 10.0, 10.0],
-                margin: [0., 0., 15., 0.]
+                padding: [5.0, 5.0, 10.0, 10.0],
+                margin: [0., 0., 20., 0.],
             ]
         );
         let header_text = node!(
@@ -85,13 +88,14 @@ impl Component for NetworkScreen {
         );
         header = header.push(header_text);
         header = header.push(toggle);
+        header_node = header_node.push(header);
 
         let mut network_div = node!(
             Div::new(),
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [15, 0, 0, 0]
+                margin: [15, 0, 20, 0]
             ]
         );
         let network_row = node!(
@@ -117,7 +121,6 @@ impl Component for NetworkScreen {
         let mut manage_networks_div = node!(
             Div::new(),
             lay![
-                margin: [15, 0, 0, 0]
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -145,7 +148,6 @@ impl Component for NetworkScreen {
         let mut available_networks_div = node!(
             Div::new(),
             lay![
-                margin: [0, 0, 10, 0],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -162,40 +164,62 @@ impl Component for NetworkScreen {
                 }))),
             },
             lay![
-                padding: [5., 3., 5., 5.],
+                padding: [0., 3., 5., 5.],
             ]
         );
         available_networks_div = available_networks_div
             .push(available_networks_row)
             .push(node!(HDivider { size: 1. }));
 
-        let mut footer = node!(
-            Div::new().bg(Color::MID_GREY),
+        let mut footer_div = node!(
+            Div::new(),
             lay![
-                size_pct: [100, 20],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::End,
                 position_type: Absolute,
                 position: [Auto, 0.0, 0.0, 0.0],
-                direction: Direction::Column
             ]
         );
-        footer = footer.push(node!(HDivider { size: 1. }));
-        footer = footer.push(node!(
-            Image::new("back_icon"),
+        let mut footer_row = node!(
+            Div::new(),
             lay![
-                size: [24, 24],
+                padding: [10, 0, 10, 0],
+                size_pct: [100],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
             ]
-        ));
-        c_node = c_node.push(header);
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [50],
+                    axis_alignment: Alignment::Start,
+                    margin: [0, 10, 0, 10]
+                ],
+            )
+            .push(node!(
+                Image::new("back_icon"),
+                lay![
+                    size: [30, 30],
+                    padding: [0., 15., 0., 15.]
+                ]
+            )),
+        );
+
+        footer_div = footer_div
+            .push(node!(HDivider { size: 1. }))
+            .push(footer_row);
+
         c_node = c_node.push(network_div);
         c_node = c_node.push(manage_networks_div);
         c_node = c_node.push(available_networks_div);
 
         main_node = main_node.push(c_node);
+        base = base.push(header_node);
         base = base.push(main_node);
-        base = base.push(footer);
+        base = base.push(footer_div);
 
         Some(base)
     }
