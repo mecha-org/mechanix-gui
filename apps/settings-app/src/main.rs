@@ -4,6 +4,7 @@ mod gui;
 mod screens;
 mod settings;
 mod shared;
+mod utils;
 
 use crate::gui::SettingsApp;
 use futures::StreamExt;

@@ -3,6 +3,7 @@ use std::any::Any;
 use crate::{
     screens::{
         settings_menu::settings_screen::SettingsScreen,
+        sound::sound_screen::SoundScreen,
         wireless::{
             handler::WirelessInfoItem, network_details_screen::NetworkDetailsScreen,
             network_screen::NetworkScreen,
@@ -105,8 +106,6 @@ impl Component for SettingsApp {
                 }))
             }
             Routes::NetworkScreen => {
-                //  Some(WirelessInfoResponse { mac: "12:10:81:ef:3f:2c", frequency: "2412", signal: "-29", flags: "[WPA2-PSK-CCMP][WPS][ESS]", name: "Tejas" })
-
                 base = base.push(node!(NetworkScreen {
                     connected_network: self.state_ref().connected_network_info.clone(),
                     status: self.state_ref().wireless_Status.clone(),
@@ -117,10 +116,10 @@ impl Component for SettingsApp {
                     connected_network: self.state_ref().connected_network_details.clone(),
                 }))
             }
+            Routes::SoundScreen => base = base.push(node!(SoundScreen {})),
             _ => (),
             // Routes::BluetoothScreen => {
             // Routes::DisplayScreen => todo!(),
-            // Routes::SoundScreen => todo!(),
             // Routes::LockScreen => todo!(),
         }
 
