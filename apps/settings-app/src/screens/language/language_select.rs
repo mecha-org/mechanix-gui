@@ -1,3 +1,4 @@
+use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
@@ -41,6 +42,9 @@ impl Component for LanguageSelect {
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
         }
+        main_node = main_node.push(footer_node(ScreenRoute {
+            route: Routes::LanguageScreen,
+        }));
         base = base.push(main_node);
         Some(base)
     }

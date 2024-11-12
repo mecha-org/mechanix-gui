@@ -27,6 +27,7 @@ use mctk_core::{
 };
 use mctk_macros::{component, state_component_impl};
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
+use std::any::Any;
 
 #[derive(Default, Debug, Clone, Hash, Copy)]
 pub enum Routes {
@@ -119,7 +120,7 @@ impl Component for SettingsApp {
                     connected_network: self.state_ref().connected_network_details.clone(),
                 }))
             }
-            Routes::LanguageScreen => base = base.push(node!(LanguageSelect {})),
+            Routes::LanguageScreen => base = base.push(node!(LanguageScreen {})),
             Routes::DisplayScreen => base = base.push(node!(DisplayScreen {})),
             Routes::SoundScreen => base = base.push(node!(SoundScreen {})),
             _ => (),
@@ -135,11 +136,9 @@ impl Component for SettingsApp {
         if let Some(msg) = message.downcast_ref::<Message>() {
             match msg {
                 Message::ChangeRoute { route } => {
-                    match route {
-                        _ => (),
-                        // Routes::SettingsList => {}
-                        // Routes::NetworkScreen => {}
-                    }
+                    // match route {
+                    //     _ => (),
+                    // }
                     self.state_mut().current_route = route.clone();
                 }
                 Message::WirelessStatus { status } => {

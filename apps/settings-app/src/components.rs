@@ -19,7 +19,7 @@ pub fn footer_node(screen_route: ScreenRoute) -> Node {
             .style("background_color", Color::BLACK)
             .bg(Color::BLACK),
         lay![
-            size_pct: [100, 15],
+            size_pct: [100, 18],
             direction: Direction::Column,
             cross_alignment: Alignment::Stretch,
             axis_alignment: Alignment::End,
@@ -55,7 +55,7 @@ pub fn footer_node(screen_route: ScreenRoute) -> Node {
             .push(node!(
                 IconButton::new("back_icon")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::SettingsList // TODO
+                        route: Routes::SettingsList // todo: dynamic
                     })))
                     .icon_type(IconType::Png)
                     .style(

@@ -204,7 +204,7 @@ impl component::Component for NetworkDetailsScreen {
         let mut footer_div = node!(
             Div::new(),
             lay![
-                size_pct: [100, 15],
+                size_pct: [100, 18],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::End,
@@ -233,7 +233,7 @@ impl component::Component for NetworkDetailsScreen {
                 node!(
                     Div::new(),
                     lay![
-                        padding: [5., 15., 0., 0.]
+                        padding: [10., 15., 0., 0.]
                     ]
                 )
                 .push(node!(

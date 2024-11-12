@@ -193,7 +193,9 @@ impl Component for SettingsScreen {
                 icon_1: "sound_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: None
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: Routes::SoundScreen
+                }))),
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -266,7 +268,9 @@ impl Component for SettingsScreen {
                 icon_1: "language_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: None,
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: Routes::LanguageScreen
+                }))),
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -277,8 +281,6 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [0, 20]
-                // size: [Auto, 34]
             ]
         )
         .push(language_row)
@@ -339,11 +341,11 @@ impl Component for SettingsScreen {
         base = base.push(bluetooth_div);
         base = base.push(display_div);
         base = base.push(appearance_div);
-        base = base.push(battery_div);
+        // base = base.push(battery_div);
         base = base.push(sound_div);
         // base = base.push(lock_div);
         // base = base.push(date_time_div);
-        // base = base.push(language_div);
+        base = base.push(language_div);
         // base = base.push(update_div);
         // base = base.push(about_div);
 

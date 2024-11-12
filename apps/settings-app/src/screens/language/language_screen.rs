@@ -31,7 +31,7 @@ impl Component for LanguageScreen {
             [text_node("English-UK"), icon_node("right_arrow_icon")]
         ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        main_node = main_node.push(footer_node(ScreenRoute {
+        base = base.push(footer_node(ScreenRoute {
             route: Routes::SettingsList,
         }));
         base = base.push(main_node);
