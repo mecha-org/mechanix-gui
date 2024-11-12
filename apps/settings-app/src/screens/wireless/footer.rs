@@ -3,34 +3,31 @@ use std::fmt::Debug;
 use mctk_core::{
     component::{Component, Message},
     event, lay,
-    layout::{Alignment, Direction},
-    node, rect, size, size_pct,
+    layout::{self, Alignment, Direction},
+    msg, node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{Div, Image, Text},
+    widgets::{Div, IconButton, Image, Text},
     Color,
 };
 
-pub struct NetworkRowComponent {
-    pub title: String,
-    pub value: String,
+use crate::shared::h_divider::HDivider;
+
+pub struct FooterComponent {
     pub icon_1: String,
     pub icon_2: String,
-    pub color: Color,
-    pub on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
 }
 
-impl Debug for NetworkRowComponent {
+impl Debug for FooterComponent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("NetworkRowComponent")
-            .field("title", &self.title)
+        f.debug_struct("FooterComponent")
             .field("icon", &self.icon_1)
             .field("icon", &self.icon_2)
             .finish()
     }
 }
 
-impl Component for NetworkRowComponent {
+impl Component for FooterComponent {
     fn on_click(&mut self, event: &mut event::Event<event::Click>) {
         if let Some(f) = &self.on_click {
             event.emit(f());

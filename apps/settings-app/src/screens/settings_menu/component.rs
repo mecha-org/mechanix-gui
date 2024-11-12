@@ -3,11 +3,11 @@ use std::fmt::Debug;
 use mctk_core::{
     component::{Component, Message},
     event, lay,
-    layout::{self, Alignment, Direction},
-    msg, node, rect, size, size_pct,
+    layout::{Alignment, Direction},
+    node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{Div, IconButton, Image, Text},
+    widgets::{Div, Image, Text},
     Color,
 };
 
