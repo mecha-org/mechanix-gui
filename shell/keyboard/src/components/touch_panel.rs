@@ -18,6 +18,7 @@ use mctk_core::{
     lay, msg, node, size_pct, state_component_impl, widgets::Div, Color, Pos, Scale, AABB,
 };
 use mctk_macros::component;
+use wayland_protocols_async::zwp_input_method_v2::handler::ContentPurpose;
 
 #[derive(Debug, Default)]
 pub struct TouchPanelState {
@@ -49,6 +50,7 @@ pub struct TouchPanel {
     pub next_char_prob: HashMap<String, f64>,
     pub current_view: String,
     pub click_area_configs: ClickAreaConfigs,
+    pub purpose: ContentPurpose,
 }
 
 impl TouchPanel {
@@ -57,6 +59,7 @@ impl TouchPanel {
         next_char_prob: HashMap<String, f64>,
         current_view: String,
         click_area_configs: ClickAreaConfigs,
+        purpose: ContentPurpose,
     ) -> Self {
         // println!("TouchPanel::new()");
 
@@ -70,6 +73,7 @@ impl TouchPanel {
             }),
             click_area_configs,
             current_view,
+            purpose,
             dirty: false,
             next_char_prob: next_char_prob.clone(),
         }
@@ -105,12 +109,12 @@ impl TouchPanel {
                                 && position.y <= bl.y
                                 && position.y <= br.y
                             {
-                                println!(
-                                    "Clicked button at index: {:?} {:?} {:?}",
-                                    (i, j),
-                                    button,
-                                    tr
-                                );
+                                // println!(
+                                //     "Clicked button at index: {:?} {:?} {:?}",
+                                //     (i, j),
+                                //     button,
+                                //     tr
+                                // );
 
                                 possible_buttons.push(button.clone());
 
@@ -119,7 +123,7 @@ impl TouchPanel {
                         }
                     }
 
-                    println!("possible buttons {:?}", possible_buttons,);
+                    // println!("possible buttons {:?}", possible_buttons,);
 
                     if possible_buttons.len() > 0 {
                         let next_char_prob = self.state_ref().next_char_prob.clone();
@@ -148,7 +152,7 @@ impl TouchPanel {
             }
         }
 
-        println!("return_messages {:?}", return_messages.len());
+        // println!("return_messages {:?}", return_messages.len());
         return_messages
     }
 
@@ -214,6 +218,7 @@ impl Component for TouchPanel {
     fn props_hash(&self, hasher: &mut component::ComponentHasher) {
         self.next_char_prob.len().hash(hasher);
         self.current_view.hash(hasher);
+        self.purpose.hash(hasher);
         // self.view.hash(hasher);
     }
 
@@ -339,6 +344,7 @@ impl Component for TouchPanel {
     }
 
     fn on_mouse_down(&mut self, event: &mut Event<MouseDown>) {
+        println!("TouchPanel::on_mouse_down()");
         event.stop_bubbling();
         let msgs = self.handle_press(event.relative_logical_position());
         for mesg in msgs {
@@ -347,6 +353,7 @@ impl Component for TouchPanel {
     }
 
     fn on_mouse_up(&mut self, _event: &mut Event<MouseUp>) {
+        println!("TouchPanel::on_mouse_up()");
         self.handle_release();
     }
 
@@ -365,7 +372,7 @@ impl Component for TouchPanel {
     fn view(&self) -> Option<mctk_core::Node> {
         Some(node!(
             Div::new().bg(Color::TRANSPARENT),
-            lay![ size_pct: [100] ]
+            lay![ size_pct: [100],]
         ))
     }
 
@@ -412,7 +419,7 @@ impl Component for TouchPanel {
                     })
                     .color(button_color)
                     .border_size(1.)
-                    .border_color(Color::TRANSPARENT)
+                    .border_color(Color::DARK_GREY)
                     .build()
                     .unwrap();
 

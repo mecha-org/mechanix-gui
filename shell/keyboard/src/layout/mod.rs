@@ -83,6 +83,10 @@ enum Action {
     /// Remove last character
     #[serde(rename = "erase")]
     Erase,
+    #[serde(rename = "minimize")]
+    Minimize,
+    #[serde(rename = "maximize")]
+    Maximize,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -387,6 +391,8 @@ fn create_action(
             looks_locked_from,
         },
         SubmitData::Action(Action::ShowPrefs) => crate::action::Action::ShowPreferences,
+        SubmitData::Action(Action::Minimize) => crate::action::Action::Minimize,
+        SubmitData::Action(Action::Maximize) => crate::action::Action::Maximize,
         SubmitData::Action(Action::Erase) => crate::action::Action::Erase,
         SubmitData::Keysym(keysym) => crate::action::Action::Submit {
             text: None,

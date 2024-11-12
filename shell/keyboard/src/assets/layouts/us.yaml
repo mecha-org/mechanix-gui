@@ -71,10 +71,10 @@ buttons:
     outline: "large"
   space:
     outline: "spaceline"
-    label: "space"
+    label: " "
     text: " "
   Return:
     outline: "wide"
-    # icon: "key-enter"
-    label: "Done"
+    icon: "key-enter"
+    # label: "Done"
     keysym: "Return"
