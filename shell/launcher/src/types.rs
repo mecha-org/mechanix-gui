@@ -11,8 +11,8 @@ pub enum WirelessConnectedState {
 
 #[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum WirelessStatus {
-    On,
     #[default]
+    On,
     Off,
     Connected(WirelessConnectedState),
     NotFound,

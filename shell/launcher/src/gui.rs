@@ -11,7 +11,7 @@ use crate::pages::status_bar::StatusBar;
 use crate::settings::{self, LauncherSettings};
 use crate::theme::{self, LauncherTheme};
 use crate::types::{BatteryLevel, BluetoothStatus, RestartState, ShutdownState, WirelessStatus};
-use crate::utils::get_formatted_battery_level;
+use crate::utils::{cubic_bezier, get_formatted_battery_level};
 use crate::{
     AppMessage, AppParams, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage,
 };
@@ -29,10 +29,13 @@ use mctk_core::{
     component::Component, lay, node, rect, size, size_pct, state_component_impl, widgets::Div, Node,
 };
 use std::any::Any;
+use std::cmp::{max, min};
 use std::collections::VecDeque;
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 use upower::BatteryStatus;
 use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::ToplevelKey;
+
+pub const BEZIER_POINTS: [f64; 4] = [0.0, 0.0, 480.0, 480.0];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Screens {
@@ -125,7 +128,7 @@ pub enum SwipeState {
     Cancelled,
 }
 
-#[derive(Debug, Clone, Default, Hash)]
+#[derive(Debug, Clone, Default)]
 pub struct Swipe {
     pub dx: i32,
     pub dy: i32,
@@ -137,6 +140,25 @@ pub struct Swipe {
     pub state: SwipeState,
     pub is_closer: bool,
     pub threshold_dy: i32,
+    pub translations: Vec<f64>,
+    pub current_translation: usize,
+}
+
+impl Hash for Swipe {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.dx.hash(state);
+        self.dy.hash(state);
+        self.max_dx.hash(state);
+        self.max_dy.hash(state);
+        self.min_dx.hash(state);
+        self.min_dy.hash(state);
+        self.direction.hash(state);
+        self.state.hash(state);
+        self.is_closer.hash(state);
+        self.threshold_dy.hash(state);
+        self.translations.len().hash(state);
+        self.current_translation.hash(state);
+    }
 }
 
 impl Swipe {
@@ -152,6 +174,8 @@ impl Swipe {
             state,
             mut is_closer,
             threshold_dy,
+            translations,
+            current_translation,
         } = self.clone();
 
         match direction {
@@ -275,6 +299,53 @@ impl Launcher {
         );
         if let Some(mut swipe) = self.state_ref().swipe.clone() {
             if swipe.state == SwipeState::UserSwiping {
+                let dy = swipe.dy;
+                let translations = match swipe.direction {
+                    SwipeDirection::Up => {
+                        let inc = 1.0 / 12.0;
+                        let t = (480 - dy) as f64 / 480.0 + inc;
+                        let trans = get_translations(BEZIER_POINTS, t, inc);
+                        if trans.len() > 0 {
+                            trans
+                        } else {
+                            vec![480.]
+                        }
+
+                        // let mut counter = translate_y.len() - 1;
+                        // for (i, &value) in translate_y.iter().rev().enumerate() {
+                        //     if value >= dy as f64 {
+                        //         counter = i;
+                        //     }
+                        // }
+                        // counter
+                    }
+                    SwipeDirection::Down => {
+                        let inc = 1.0 / 12.0;
+                        let t = dy as f64 / 480.0 + inc;
+                        let trans = get_translations(BEZIER_POINTS, t, inc);
+                        if trans.len() > 0 {
+                            trans
+                        } else {
+                            vec![480.]
+                        }
+
+                        // let mut counter = 0;
+                        // for (i, &value) in translate_y.iter().enumerate() {
+                        //     if dy as f64 >= value {
+                        //         counter = i;
+                        //     } else {
+                        //         break;
+                        //     }
+                        // }
+                        // counter
+                    }
+
+                    SwipeDirection::Left => todo!(),
+                    SwipeDirection::Right => todo!(),
+                };
+
+                println!("translations is {:?}", translations);
+                swipe.translations = translations;
                 swipe.state = SwipeState::CompletingSwipe;
                 self.state_mut().swipe = Some(swipe);
             }
@@ -365,12 +436,11 @@ impl Launcher {
 #[state_component_impl(LauncherState)]
 impl Component for Launcher {
     fn on_tick(&mut self, _event: &mut mctk_core::event::Event<mctk_core::event::Tick>) {
-        println!("on_tick {:?}", self.state.is_some());
         if self.state.is_none() {
             return;
         }
 
-        println!("on_tick swipe {:?}", self.state_ref().swipe.clone());
+        // println!("on_tick swipe {:?}", self.state_ref().swipe.clone());
         if let Some(mut swipe) = self.state_ref().swipe.clone() {
             let Swipe {
                 dx,
@@ -383,6 +453,8 @@ impl Component for Launcher {
                 state,
                 is_closer,
                 threshold_dy,
+                translations,
+                current_translation,
             } = swipe.clone();
 
             // println!("Launcher::on_tick() dy {:?} {:?}", dy, state);
@@ -414,10 +486,13 @@ impl Component for Launcher {
                         // return;
                     }
 
-                    swipe.dy = (dy + 30).max(min_dy).min(max_dy);
+                    swipe.dy = (translations[current_translation] as i32)
+                        .max(min_dy)
+                        .min(max_dy);
                     println!("swipe.dy {:?}", swipe.dy);
                 }
                 if direction == SwipeDirection::Up {
+                    println!("dy {:?} min_dy {:?}", dy, min_dy);
                     if dy <= min_dy {
                         swipe.state = SwipeState::Completed;
                         // if let Some(app_channel) = self.state_ref().app_channel.clone() {
@@ -425,10 +500,19 @@ impl Component for Launcher {
                         // }
                         // return;
                     }
-
-                    swipe.dy = (dy - 30).max(min_dy).min(max_dy);
+                    swipe.dy = (480 - translations[current_translation] as i32)
+                        .max(min_dy)
+                        .min(max_dy);
+                    // swipe.dy = (dy - 8).max(min_dy).min(max_dy);
                     println!("swipe.dy {:?}", swipe.dy);
                 }
+                swipe.current_translation = max(
+                    0,
+                    min(
+                        translations.len().saturating_sub(1),
+                        current_translation + 1,
+                    ),
+                );
             }
             self.state_mut().swipe = Some(swipe);
             println!("updated swipe");
@@ -668,6 +752,7 @@ impl Component for Launcher {
                     self.state_mut().date = date.clone().to_uppercase();
                 }
                 Message::Wireless { status } => {
+                    println!("Message::Wireless {:?}", status);
                     self.state_mut().wireless_status = status.clone();
                 }
                 Message::Bluetooth { status } => {
@@ -740,14 +825,18 @@ impl Component for Launcher {
                                 let args: Vec<String> = run_command.clone()[1..].to_vec();
                                 println!("command {:?} args {:?}", command, args);
                                 let _ = spawn_command(command, args);
+
+                                let inc = 1.0 / 12.0;
+                                let translations = get_translations(BEZIER_POINTS, 0., inc);
                                 let swipe = Swipe {
-                                    dy: (480. - 124.) as i32,
+                                    dy: 480 as i32,
                                     min_dy: 0,
-                                    max_dy: 480 - 124,
-                                    threshold_dy: 200,
+                                    max_dy: 480,
+                                    threshold_dy: 0,
                                     direction: SwipeDirection::Up,
                                     state: SwipeState::CompletingSwipe,
                                     is_closer: true,
+                                    translations,
                                     ..Default::default()
                                 };
 
@@ -762,7 +851,7 @@ impl Component for Launcher {
                 }
                 Message::SliderChanged(settings_name) => match settings_name {
                     SliderSettingsNames::Brightness { value } => {
-                        self.state_mut().brightness = *value;
+                        // self.state_mut().brightness = *value;
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             let _ = app_channel.send(AppMessage::Brightness {
                                 message: BrightnessMessage::Change {
@@ -772,7 +861,7 @@ impl Component for Launcher {
                         }
                     }
                     SliderSettingsNames::Sound { value } => {
-                        self.state_mut().sound = *value;
+                        // self.state_mut().sound = *value;
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             let _ = app_channel.send(AppMessage::Sound {
                                 message: SoundMessage::Change {
@@ -822,6 +911,49 @@ impl Component for Launcher {
                 }
                 Message::SwipeEnd => {
                     if let Some(mut swipe) = self.state_ref().swipe.clone() {
+                        let dy = swipe.dy;
+                        let translations = match swipe.direction {
+                            SwipeDirection::Up => {
+                                let inc = 1.0 / 12.0;
+                                let t = (480 - dy) as f64 / 480.0 + inc;
+                                let trans = get_translations(BEZIER_POINTS, t, inc);
+                                if trans.len() > 0 {
+                                    trans
+                                } else {
+                                    vec![480.]
+                                }
+                                // let mut counter = translate_y.len() - 1;
+                                // for (i, &value) in translate_y.iter().rev().enumerate() {
+                                //     if value >= dy as f64 {
+                                //         counter = i;
+                                //     }
+                                // }
+                                // counter
+                            }
+                            SwipeDirection::Down => {
+                                let inc = 1.0 / 12.0;
+                                let t = dy as f64 / 480.0 + inc;
+                                let trans = get_translations(BEZIER_POINTS, t, inc);
+                                if trans.len() > 0 {
+                                    trans
+                                } else {
+                                    vec![480.]
+                                }
+                                // let mut counter = 0;
+                                // for (i, &value) in translate_y.iter().enumerate() {
+                                //     if dy as f64 >= value {
+                                //         counter = i;
+                                //     } else {
+                                //         break;
+                                //     }
+                                // }
+                                // counter
+                            }
+                            SwipeDirection::Left => todo!(),
+                            SwipeDirection::Right => todo!(),
+                        };
+                        println!("translations is {:?}", translations);
+                        swipe.translations = translations;
                         swipe.state = SwipeState::CompletingSwipe;
                         self.state_mut().swipe = Some(swipe);
                     }
@@ -847,6 +979,10 @@ impl Component for Launcher {
                         })
                         .map(|app| RunningApp::new(AppDetails { ..app.clone() }))
                         .collect();
+                    println!(
+                        "running apps state updated {:?}",
+                        self.state_ref().running_apps.len()
+                    );
                 }
                 Message::AppInstanceClicked(instance) => {
                     if let Some(app_channel) = self.state_ref().app_channel.clone() {
@@ -858,15 +994,30 @@ impl Component for Launcher {
                 }
                 Message::AppInstanceCloseClicked(instance) => {
                     let running_apps = self.state_ref().running_apps.clone();
-                    let filtered_running_apps = running_apps
+                    let filtered_running_apps: Vec<RunningApp> = running_apps
+                        .clone()
                         .into_iter()
                         .filter(|app| {
                             app.app_details.instances.get(0).unwrap().instance_key != *instance
                         })
                         .collect();
+                    if filtered_running_apps.len() == 0 {
+                        self.state_mut().show_running_apps = false;
+                        if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                            let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
+                        };
+                    }
                     self.state_mut().running_apps = filtered_running_apps;
                     if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                        let _ = app_channel.send(AppMessage::AppInstanceCloseClicked(*instance));
+                        if let Some(app) = running_apps.into_iter().find(|app| {
+                            app.app_details.instances.get(0).unwrap().instance_key == *instance
+                        }) {
+                            for instance in app.app_details.instances {
+                                let _ = app_channel.send(AppMessage::AppInstanceCloseClicked(
+                                    instance.instance_key,
+                                ));
+                            }
+                        };
                     };
                 }
                 Message::CloseAllApps => {
@@ -1138,4 +1289,17 @@ impl RootComponent<AppParams> for Launcher {
             self.state_mut().installed_apps = apps
         }
     }
+}
+
+pub fn get_translations(bezier_points: [f64; 4], start_time: f64, increment: f64) -> Vec<f64> {
+    let mut time = start_time;
+    let mut translations = Vec::new();
+    while time <= 1.0 {
+        if (time + increment) > 1.0 {
+            time = 1.0;
+        }
+        translations.push(cubic_bezier(&bezier_points, time));
+        time += increment;
+    }
+    translations
 }

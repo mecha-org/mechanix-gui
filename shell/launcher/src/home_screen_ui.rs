@@ -88,7 +88,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     let handle = event_loop.handle();
 
     let window_tx_2 = window_tx.clone();
-    let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
+    // let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
     let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
     let (sound_msg_tx, sound_msg_rx) = mpsc::channel(128);
@@ -143,12 +143,16 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         let _ = window_tx_2.clone().send(WindowMessage::Send {
                             message: msg!(Message::RunningAppsToggle { show: value }),
                         });
-                        layer_shell_opts.layer = Layer::Top;
-                        let _ = layer_tx
-                            .clone()
-                            .send(LayerWindowMessage::ReconfigureLayerOpts {
-                                opts: layer_shell_opts.clone(),
-                            });
+
+                        if value == true {
+                            layer_shell_opts.layer = Layer::Top;
+                            let _ =
+                                layer_tx
+                                    .clone()
+                                    .send(LayerWindowMessage::ReconfigureLayerOpts {
+                                        opts: layer_shell_opts.clone(),
+                                    });
+                        }
                     }
                 },
                 AppMessage::ChangeLayer(layer) => {
@@ -179,10 +183,10 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         });
                     }
                     WirelessMessage::Toggle { .. } => {
-                        let wireless_msg_tx_cloned = wireless_msg_tx.clone();
-                        futures::executor::block_on(async move {
-                            let res = wireless_msg_tx_cloned.clone().send(message).await;
-                        });
+                        // let wireless_msg_tx_cloned = wireless_msg_tx.clone();
+                        // futures::executor::block_on(async move {
+                        //     let res = wireless_msg_tx_cloned.clone().send(message).await;
+                        // });
                     }
                 },
                 AppMessage::Bluetooth { message } => match message {
@@ -326,7 +330,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     init_services_home(InitServicesParamsHome {
         settings,
         app_channel: app_channel_tx,
-        wireless_msg_rx,
+        // wireless_msg_rx,
         bluetooth_msg_rx,
         brightness_msg_rx,
         sound_msg_rx,

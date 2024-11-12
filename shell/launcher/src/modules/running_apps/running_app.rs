@@ -1,4 +1,8 @@
-use std::ops::Neg;
+use std::{
+    cmp::{max, min},
+    hash::Hash,
+    ops::Neg,
+};
 
 use mctk_core::{
     component::{self, Component, RenderContext},
@@ -20,9 +24,11 @@ use mctk_core::{
 use mctk_macros::component;
 use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::ToplevelKey;
 
-use crate::gui::Message;
+use crate::gui::{get_translations, Message, Swipe, SwipeDirection, SwipeState};
 
 use super::running_apps_carousel::CarouselMessage;
+
+const BEZIER_POINTS: [f64; 4] = [0.0, 0.0, 347.0, 347.0];
 
 #[derive(PartialEq, Hash, Default, Debug, Clone)]
 pub struct AppInstance {
@@ -47,6 +53,7 @@ pub struct AppDetails {
 struct RunningAppState {
     drag_y: f32,
     drag_angle: Option<f32>,
+    swipe: Option<Swipe>,
 }
 
 #[component(State = "RunningAppState", Internal)]
@@ -62,6 +69,18 @@ impl RunningApp {
             state: Some(RunningAppState::default()),
             dirty: false,
         }
+    }
+
+    pub fn handle_on_drag_start(&mut self) {
+        let mut swipe = None;
+        swipe = Some(Swipe {
+            dy: 347,
+            max_dy: 347,
+            min_dy: 0,
+            direction: SwipeDirection::Up,
+            ..Default::default()
+        });
+        self.state_mut().swipe = swipe;
     }
 
     fn handle_on_drag(
@@ -90,8 +109,15 @@ impl RunningApp {
         if let Some(drag_angle) = drag_angle_op {
             if drag_angle.abs() > 60. && dy.neg() > 0. {
                 //Drag in y direction
-                self.state_mut().drag_y = dy;
-            } else {
+                if let Some(mut swipe) = self.state_ref().swipe.clone() {
+                    if dy > 0. {
+                        self.state_mut().swipe = None;
+                        return None;
+                    }
+                    swipe.dy = (347. + dy) as i32;
+                    self.state_mut().swipe = Some(swipe);
+                };
+            } else if drag_angle.abs() <= 60. {
                 return Some(msg!(CarouselMessage::ChildDragX(physical_delta.x.neg())));
             }
         }
@@ -106,12 +132,28 @@ impl RunningApp {
         let dx = logical_delta.x.neg();
         let dy = logical_delta.y.neg();
         let w = current_physical_aabb.width();
+        let pos = current_physical_aabb.pos;
         if let Some(drag_angle) = self.state_ref().drag_angle {
             if drag_angle.abs() > 60. {
-                if dy > 80. {
-                    return Some(msg!(Message::AppInstanceCloseClicked(
-                        self.app_details.instances.get(0).unwrap().instance_key,
-                    )));
+                // println!("user dragged {:?}", dy);
+                if dy > 30. {
+                    if let Some(mut swipe) = self.state_ref().swipe.clone() {
+                        let inc = 1.0 / 18.0;
+                        let t = (347 - swipe.dy + 30) as f64 / 347.0 + inc;
+                        let mut translations = get_translations(BEZIER_POINTS, t, inc);
+                        if translations.len() == 0 {
+                            translations = vec![0.]
+                        }
+                        println!(
+                            "translations {:?} swipe dy {:?} t {:?}",
+                            translations, swipe.dy, t
+                        );
+                        swipe.translations = translations;
+                        swipe.state = SwipeState::CompletingSwipe;
+                        self.state_mut().swipe = Some(swipe);
+                    }
+                } else {
+                    self.state_mut().swipe = None;
                 }
             } else {
                 return Some(msg!(CarouselMessage::ChildDragXSlow(dx, w)));
@@ -123,6 +165,58 @@ impl RunningApp {
 
 #[state_component_impl(RunningAppState)]
 impl Component for RunningApp {
+    fn render_hash(&self, hasher: &mut component::ComponentHasher) {
+        self.state_ref().swipe.hash(hasher);
+    }
+
+    fn on_tick(&mut self, event: &mut Event<mctk_core::event::Tick>) {
+        println!("swipe exists {:?}", self.state_ref().swipe.is_some());
+        if let Some(mut swipe) = self.state_ref().swipe.clone() {
+            let Swipe {
+                dx,
+                mut dy,
+                max_dx,
+                max_dy,
+                min_dx,
+                min_dy,
+                direction,
+                state,
+                is_closer,
+                threshold_dy,
+                translations,
+                current_translation,
+            } = swipe.clone();
+
+            // println!("on_tick() {:?}", state);
+            if state == SwipeState::CompletingSwipe {
+                // println!("dy {:?} min_dy {:?}", dy, min_dy);
+                if dy <= min_dy {
+                    event.emit(msg!(Message::AppInstanceCloseClicked(
+                        self.app_details.instances.get(0).unwrap().instance_key,
+                    )));
+                    self.state_mut().swipe = None;
+                    return;
+                }
+
+                // println!("translations are {:?}", translations);
+                swipe.dy = (347 - translations[current_translation] as i32)
+                    .max(min_dy)
+                    .min(max_dy);
+                // println!("swipe.dy {:?}", swipe.dy);
+
+                swipe.current_translation = max(
+                    0,
+                    min(
+                        translations.len().saturating_sub(1),
+                        current_translation + 1,
+                    ),
+                );
+
+                self.state_mut().swipe = Some(swipe);
+            }
+        };
+    }
+
     fn on_click(&mut self, event: &mut Event<mctk_core::event::Click>) {
         event.emit(msg!(Message::AppInstanceClicked(
             self.app_details.instances.get(0).unwrap().instance_key,
@@ -131,10 +225,12 @@ impl Component for RunningApp {
 
     fn on_drag_start(&mut self, event: &mut Event<mctk_core::event::DragStart>) {
         event.stop_bubbling();
+        self.handle_on_drag_start();
     }
 
     fn on_touch_drag_start(&mut self, event: &mut Event<mctk_core::event::TouchDragStart>) {
         event.stop_bubbling();
+        self.handle_on_drag_start();
     }
 
     fn on_drag(&mut self, event: &mut Event<mctk_core::event::Drag>) {
@@ -184,7 +280,23 @@ impl Component for RunningApp {
             let width = context.aabb.width();
             let height = context.aabb.height();
             let mut pos = context.aabb.pos;
-            pos.y = pos.y + self.state_ref().drag_y;
+
+            // if let Some(swipe) = self.state_ref().swipe.clone() {
+            //     pos.y =  swipe.dy as f32;
+            // }
+            // else {
+            //     pos.y = pos.y + self.state_ref().drag_y;
+            // }
+
+            // println!("pos {:?} height {:?}", pos, height);
+
+            if let Some(swipe) = self.state_ref().swipe.clone() {
+                // println!("swipe.dy {:?}", swipe.dy);
+                pos.y = swipe.dy as f32 - height;
+            }
+
+            // println!("pos.y {:?}", pos.y);
+
             let mut rs = vec![];
 
             //Background
@@ -279,6 +391,7 @@ impl Component for RunningApp {
                 y: img_bg_pos.y + img_bg_scale.height + title_margin.0,
                 z: img_bg_pos.z,
             };
+
             if let Some(mut title) = self.app_details.name.clone() {
                 if title.len() > 13 {
                     title = [title[..13].to_owned().to_string(), "...".to_string()].join("");
