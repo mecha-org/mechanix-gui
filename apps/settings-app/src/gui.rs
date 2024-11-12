@@ -1,7 +1,9 @@
-use std::any::Any;
-
 use crate::{
     screens::{
+        display::display_screen::DisplayScreen,
+        display::screen_off_time::ScreenOffTime,
+        language::language_screen::LanguageScreen,
+        language::language_select::LanguageSelect,
         settings_menu::settings_screen::SettingsScreen,
         sound::sound_screen::SoundScreen,
         wireless::{
@@ -26,7 +28,7 @@ use mctk_core::{
 use mctk_macros::{component, state_component_impl};
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 
-#[derive(Default, Debug, Clone, Hash)]
+#[derive(Default, Debug, Clone, Hash, Copy)]
 pub enum Routes {
     #[default]
     SettingsList,
@@ -38,6 +40,7 @@ pub enum Routes {
     BatteryScreen,
     SoundScreen,
     LockScreen,
+    LanguageScreen,
 }
 
 #[derive(Debug)]
@@ -116,6 +119,8 @@ impl Component for SettingsApp {
                     connected_network: self.state_ref().connected_network_details.clone(),
                 }))
             }
+            Routes::LanguageScreen => base = base.push(node!(LanguageSelect {})),
+            Routes::DisplayScreen => base = base.push(node!(DisplayScreen {})),
             Routes::SoundScreen => base = base.push(node!(SoundScreen {})),
             _ => (),
             // Routes::BluetoothScreen => {
