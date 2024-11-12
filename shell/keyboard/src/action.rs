@@ -48,6 +48,8 @@ pub enum Action {
     /// Erase a position behind the cursor
     Erase,
     ShowPreferences,
+    Minimize,
+    Maximize,
 }
 
 impl Action {

@@ -335,19 +335,22 @@ pub async fn wireless_event_notification_stream(
         // Initialize variables
         let (is_connected, signal_strength, ssid, frequency) = if is_enabled {
             // If WiFi is enabled, check if it's connected and get signal strength, SSID, and frequency
-            match timeout(Duration::from_secs(5), wireless.info()).await {
-                Ok(Ok(info)) => (
-                    true,
-                    info.signal.clone().to_string(),
-                    info.name.clone(),
-                    info.frequency.clone(),
-                ),
+            match timeout(Duration::from_secs(10), wireless.info()).await {
+                Ok(Ok(info)) => {
+                    println!("Connected to: {:?}", info.name);
+                    (
+                        true,
+                        info.signal.clone().to_string(),
+                        info.name.clone(),
+                        info.frequency.clone(),
+                    )
+                }
                 Ok(Err(e)) => {
                     eprintln!("Error fetching wireless info: {:?}", anyhow::anyhow!(e));
                     continue; // Skip this iteration if there's an error
-                },
-                Err(_) => {
-                    eprintln!("Timeout when fetching wireless info");
+                }
+                Err(e) => {
+                    eprintln!("Timeout when fetching wireless info {:?}", e);
                     continue; // Skip this iteration if there's a timeout
                 }
             }

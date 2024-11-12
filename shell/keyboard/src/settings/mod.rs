@@ -1,7 +1,4 @@
-use crate::constants::{
-    BASE_SETTINGS_PATH, EDIT_CLEAR_ICON, HOME_DIR_CONFIG_PATH, KEYBOARD_MODE_ICON, KEY_ENTER_ICON,
-    KEY_SHIFT_ICON, LAYOUT_EXAMPLE_PATH, TRIE_CACHED_FILE, TRIE_RAW_FILE, USR_SHARE_PATH,
-};
+use crate::constants::*;
 use crate::errors::{KeyboardError, KeyboardErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
@@ -118,6 +115,8 @@ pub struct Icons {
     pub enter: String,
     pub shift: String,
     pub symbolic: String,
+    pub window_max: String,
+    pub window_min: String,
 }
 impl Default for Icons {
     fn default() -> Self {
@@ -126,6 +125,8 @@ impl Default for Icons {
             enter: KEY_ENTER_ICON.to_owned(),
             shift: KEY_SHIFT_ICON.to_owned(),
             symbolic: KEYBOARD_MODE_ICON.to_owned(),
+            window_max: WINDOW_MAX_ICON.to_owned(),
+            window_min: WINDOW_MIN_ICON.to_owned(),
         }
     }
 }
@@ -134,11 +135,13 @@ impl Default for Icons {
 #[serde(default)]
 pub struct Layouts {
     pub default: String,
+    pub terminal: String,
 }
 impl Default for Layouts {
     fn default() -> Self {
         Self {
             default: LAYOUT_EXAMPLE_PATH.to_owned(),
+            terminal: TERMINAL_EXAMPLE_PATH.to_owned(),
         }
     }
 }
