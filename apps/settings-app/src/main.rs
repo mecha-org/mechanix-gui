@@ -6,6 +6,8 @@ mod settings;
 mod shared;
 
 use crate::gui::SettingsApp;
+use futures::StreamExt;
+use gui::Message;
 use mctk_core::{
     msg,
     reexports::{
@@ -25,14 +27,22 @@ use mctk_smithay::{
         layer_surface::LayerOptions,
         layer_window::{LayerWindow, LayerWindowParams},
     },
-    WindowInfo, WindowOptions,
+    WindowInfo, WindowMessage, WindowOptions,
 };
+use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
+use screens::wireless::handler::{WirelessInfoItem, WirelessServiceHandle};
 use settings::{AppSettings, MainSettings};
-use std::{collections::HashMap, fs, path::Path};
+use std::{
+    collections::HashMap,
+    fs,
+    path::Path,
+    thread::{self, JoinHandle},
+};
 use tokio::runtime::Builder;
 use tokio::select;
 use tokio::sync::mpsc::{self, Receiver};
 use tracing_subscriber::EnvFilter;
+use zbus::message;
 
 #[derive(Debug, Clone)]
 pub struct UiParams {
@@ -44,14 +54,24 @@ pub struct UiParams {
 }
 
 #[derive(Debug)]
-enum AppMessage {
-    ShowNetworkScreen,
-    // Network { isConnected: bool, value: String }, // {isConnected: true, value: Mecha}
+pub enum AppMessage {
+    NetworkStatus { status: bool },
+    ConnectedNetwork { info: WirelessInfoResponse },
+    // UpdateNetworkStatus { status: bool },
+    Wireless { message: WirelessMessage },
+    NotFound,
+    AvailableNetworksList { list: Vec<WirelessInfoItem> },
+    ConnectedNetworkDetails { details: Option<WirelessInfoItem> },
 }
 
 #[derive(Default, Clone)]
 pub struct AppParams {
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
+}
+
+#[derive(Debug)]
+pub enum WirelessMessage {
+    Toggle { value: Option<bool> },
 }
 
 #[tokio::main]
@@ -63,10 +83,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let settings = match crate::settings::read_settings_yml() {
-        Ok(settings) => {
-            println!("SUCCESS read_settings_yml {:?}", settings.clone());
-            settings
-        }
+        Ok(settings) => settings,
         Err(e) => {
             println!("error while reading settings {:?}", e);
             MainSettings::default()
@@ -80,7 +97,6 @@ async fn main() -> anyhow::Result<()> {
 
     let mut fonts: cosmic_text::fontdb::Database = cosmic_text::fontdb::Database::new();
     for path in settings.fonts.paths.clone() {
-        println!("font path is {:?}", path);
         if let Ok(content) = fs::read(Path::new(&path)) {
             fonts.load_font_data(content);
         }
@@ -90,12 +106,6 @@ async fn main() -> anyhow::Result<()> {
     let mut svgs: HashMap<String, String> = HashMap::new();
 
     let modules = settings.modules.clone();
-
-    println!(
-        "----> CHECK right_arrow_icon {:?} ",
-        modules.see_options.right_arrow_icon.clone()
-    );
-
     assets.insert(
         "wifi_icon".to_string(),
         AssetParams::new(modules.wireless.icon),
@@ -200,34 +210,86 @@ async fn main() -> anyhow::Result<()> {
             app_channel: Some(app_channel_tx.clone()),
         },
     );
+    let app_channel = app_channel_tx.clone();
 
     let handle = event_loop.handle();
     let window_tx_2 = window_tx.clone();
 
-    // let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
+    let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     // let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
-    // let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
-    // let (sound_msg_tx, sound_msg_rx) = mpsc::channel(128);
-    // let (app_manager_msg_tx, app_manager_msg_rx) = mpsc::channel(128);
 
-    // TODO: handle api
     let _ = handle.insert_source(app_channel_rx, move |event, _, _| {
-        println!("11------------------> CHANGE TO NETWORK SCREEN !!");
-
         let _ = match event {
             calloop::channel::Event::Msg(msg) => match msg {
-                AppMessage::ShowNetworkScreen => {
-                    println!("12------------------> CHANGE TO NETWORK SCREEN !!");
+                AppMessage::NetworkStatus { status } => {
+                    let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        message: msg!(Message::WirelessStatus { status: status }),
+                    });
                 }
+                AppMessage::ConnectedNetwork { info } => {
+                    let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        message: msg!(Message::ConnectedNetwork { info: info }),
+                    });
+                }
+                AppMessage::ConnectedNetworkDetails { details } => {
+                    let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        message: msg!(Message::ConnectedNetworkDetails { details: details }),
+                    });
+                }
+                AppMessage::Wireless { message } => match message {
+                    WirelessMessage::Toggle { value } => {
+                        let wireless_msg_tx_cloned = wireless_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            //let (tx, rx) = oneshot::channel();
+                            let res = wireless_msg_tx_cloned.clone().send(message).await;
+                            //let res = rx.await.expect("no reply from service");
+                        });
+                    }
+                },
+                AppMessage::AvailableNetworksList { list } => {
+                    let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        message: msg!(Message::AvailableNetworksList { list: list }),
+                    });
+                }
+                AppMessage::NotFound => todo!(),
+                _ => (),
             },
             calloop::channel::Event::Closed => {}
         };
     });
+    init_services(settings.clone(), app_channel, wireless_msg_rx);
 
     loop {
         event_loop.dispatch(None, &mut app).unwrap();
     }
-    // //End
 
     Ok(())
+}
+
+fn init_services(
+    settings: MainSettings,
+    app_channel: Sender<AppMessage>,
+    wireless_msg_rx: Receiver<WirelessMessage>,
+) -> JoinHandle<()> {
+    thread::spawn(move || {
+        let runtime = Builder::new_multi_thread()
+            .worker_threads(1)
+            .enable_all()
+            .build()
+            .unwrap();
+
+        let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
+
+        runtime
+            .block_on(runtime.spawn(async move { tokio::join!(wireless_f) }))
+            .unwrap();
+    })
+}
+
+async fn run_wireless_handler(
+    app_channel: Sender<AppMessage>,
+    wireless_msg_rx: Receiver<WirelessMessage>,
+) {
+    let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
+    wireless_service_handle.run(wireless_msg_rx).await;
 }

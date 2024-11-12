@@ -4,21 +4,39 @@ use crate::{
     shared::h_divider::HDivider,
 };
 use mctk_core::{
-    component::{self, Component, RootComponent},
+    component::Component,
     lay,
-    layout::{Alignment, Direction},
-    msg, node, rect,
-    reexports::smithay_client_toolkit::reexports::calloop,
-    size, size_pct,
+    layout::{Alignment, Dimension, Direction, Size},
+    msg, node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{Div, Image, Text, Toggle},
+    widgets::{Div, IconButton, IconType, Text, Toggle},
     Color, Node,
 };
+use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
+
+// #[derive(Debug, Clone)]
+// pub enum NetworkScreenMessage {
+//     ChangeStatus(bool),
+// }
+
 #[derive(Debug)]
-pub struct NetworkScreen {}
+pub struct NetworkScreen {
+    pub connected_network: Option<WirelessInfoResponse>,
+    pub status: bool,
+}
 impl Component for NetworkScreen {
     fn view(&self) -> Option<Node> {
+        let mut text_color = Color::WHITE;
+
+        let connected_network_name: String = match self.connected_network.clone() {
+            Some(resp) => resp.name,
+            None => {
+                text_color = Color::rgb(197., 200., 207.);
+                "Network".to_string()
+            }
+        };
+
         let mut base: Node = node!(
             Div::new().bg(Color::BLACK),
             lay![
@@ -31,7 +49,7 @@ impl Component for NetworkScreen {
             Div::new(),
             lay![
                 size_pct: [100, 70],
-                cross_alignment: Alignment::Stretch,
+                // cross_alignment: Alignment::Stretch,
                 direction: Direction::Column,
             ]
         );
@@ -43,7 +61,7 @@ impl Component for NetworkScreen {
                 cross_alignment: Alignment::Stretch,
                 direction: Direction::Column,
                 padding: [0.0, 10.0, 0.0, 10.0],
-                position_type: Relative,
+                // position_type: Relative,
             ],
         );
 
@@ -80,7 +98,8 @@ impl Component for NetworkScreen {
             ]
         );
         let toggle = node!(
-            Toggle::new(true), // dynamic handle
+            Toggle::new(self.status.clone())
+                .on_change(Box::new(|value| msg!(Message::UpdateWirelessStatus(value)))),
             lay![
                 margin:[0., 0., 0., 28.],
                 axis_alignment: Alignment::End
@@ -95,18 +114,18 @@ impl Component for NetworkScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [15, 0, 20, 0]
+                margin: [15, 0, 25, 0]
             ]
         );
         let network_row = node!(
             NetworkRowComponent {
-                title: "Actonate office net".to_string(),
-                value: "Mecha-1".to_string(),
+                title: connected_network_name.clone(),
+                value: "".to_string(),
                 icon_1: "connected_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
-                color: Color::WHITE,
+                color: text_color,
                 on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::NetworkDetails // TODO : show connected network details
+                    route: Routes::NetworkDetails
                 }))),
             },
             lay![
@@ -133,9 +152,7 @@ impl Component for NetworkScreen {
                 icon_1: "".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::SettingsList // TODO : show connected network details
-                }))),
+                on_click: None,
             },
             lay![
                 padding: [5., 3., 0., 5.],
@@ -159,12 +176,10 @@ impl Component for NetworkScreen {
                 icon_1: "".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::SettingsList // TODO : show connected network details
-                }))),
+                on_click: None,
             },
             lay![
-                padding: [0., 3., 5., 5.],
+                padding: [5., 3., 5., 5.],
             ]
         );
         available_networks_div = available_networks_div
@@ -174,6 +189,7 @@ impl Component for NetworkScreen {
         let mut footer_div = node!(
             Div::new(),
             lay![
+                size_pct: [100, 15],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::End,
@@ -181,10 +197,9 @@ impl Component for NetworkScreen {
                 position: [Auto, 0.0, 0.0, 0.0],
             ]
         );
-        let mut footer_row = node!(
+        let footer_row: Node = node!(
             Div::new(),
             lay![
-                padding: [10, 0, 10, 0],
                 size_pct: [100],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
@@ -196,16 +211,39 @@ impl Component for NetworkScreen {
                 lay![
                     size_pct: [50],
                     axis_alignment: Alignment::Start,
-                    margin: [0, 10, 0, 10]
+                    cross_alignment: Alignment::Center,
                 ],
             )
-            .push(node!(
-                Image::new("back_icon"),
-                lay![
-                    size: [30, 30],
-                    padding: [0., 15., 0., 15.]
-                ]
-            )),
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        padding: [5., 15., 0., 0.]
+                    ]
+                )
+                .push(node!(
+                    IconButton::new("back_icon")
+                        .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                            route: Routes::SettingsList
+                        })))
+                        .icon_type(IconType::Png)
+                        .style(
+                            "size",
+                            Size {
+                                width: Dimension::Px(52.0),
+                                height: Dimension::Px(52.0),
+                            }
+                        )
+                        .style("background_color", Color::TRANSPARENT)
+                        .style("border_color", Color::TRANSPARENT)
+                        .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                        .style("padding", 8.)
+                        .style("radius", 12.),
+                    lay![
+                        size: [30, 30],
+                    ]
+                )),
+            ),
         );
 
         footer_div = footer_div

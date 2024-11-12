@@ -1,10 +1,8 @@
 use mctk_core::{
-    component::{self, Component, RootComponent},
+    component::Component,
     lay,
     layout::{Alignment, Direction},
-    msg, node, rect,
-    reexports::smithay_client_toolkit::reexports::calloop,
-    size, size_pct,
+    msg, node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
     widgets::{Div, Text},
@@ -19,7 +17,9 @@ use crate::{
 use super::component::SettingsRowComponent;
 
 #[derive(Debug)]
-pub struct SettingsScreen {}
+pub struct SettingsScreen {
+    pub connected_network_name: String,
+}
 
 impl Component for SettingsScreen {
     fn view(&self) -> Option<Node> {
@@ -66,7 +66,7 @@ impl Component for SettingsScreen {
         let network_row = node!(
             SettingsRowComponent {
                 title: "Network".to_string(),
-                value: "Mecha-1".to_string(),
+                value: self.connected_network_name.to_string(),
                 icon_1: "wifi_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
@@ -91,13 +91,11 @@ impl Component for SettingsScreen {
         let bluetooth_row = node!(
             SettingsRowComponent {
                 title: "Bluetooth".to_string(),
-                value: "Mecha-bt-1".to_string(),
+                value: "".to_string(), // TODO: api integration
                 icon_1: "bluetooth_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::BluetoothScreen
-                }))),
+                on_click: None,
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -145,9 +143,7 @@ impl Component for SettingsScreen {
                 icon_1: "appearance_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::AppearanceScreen
-                }))),
+                on_click: None,
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -197,9 +193,7 @@ impl Component for SettingsScreen {
                 icon_1: "sound_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::SoundScreen
-                }))),
+                on_click: None
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -222,9 +216,7 @@ impl Component for SettingsScreen {
                 icon_1: "lock_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::LockScreen
-                }))),
+                on_click: None,
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -235,10 +227,111 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                // margin: [0, 0, 10, 0]
                 // size: [Auto, 34]
             ]
         )
         .push(lock_row)
+        .push(node!(HDivider { size: 1. }));
+
+        let date_time_row = node!(
+            SettingsRowComponent {
+                title: "Date & Time".to_string(),
+                value: "".to_string(),
+                icon_1: "date_time_icon".to_string(),
+                icon_2: "right_arrow_icon".to_string(),
+                color: Color::WHITE,
+                on_click: None,
+            },
+            lay![
+                padding: [5., 3., 5., 5.],
+            ]
+        );
+        let date_time_div = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                margin: [0, 20]
+                // size: [Auto, 34]
+            ]
+        )
+        .push(date_time_row)
+        .push(node!(HDivider { size: 1. }));
+
+        let language_row = node!(
+            SettingsRowComponent {
+                title: "Language".to_string(),
+                value: "".to_string(),
+                icon_1: "language_icon".to_string(),
+                icon_2: "right_arrow_icon".to_string(),
+                color: Color::WHITE,
+                on_click: None,
+            },
+            lay![
+                padding: [5., 3., 5., 5.],
+            ]
+        );
+        let language_div = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                margin: [0, 20]
+                // size: [Auto, 34]
+            ]
+        )
+        .push(language_row)
+        .push(node!(HDivider { size: 1. }));
+
+        let update_row = node!(
+            SettingsRowComponent {
+                title: "Update".to_string(),
+                value: "".to_string(),
+                icon_1: "update_icon".to_string(),
+                icon_2: "right_arrow_icon".to_string(),
+                color: Color::WHITE,
+                on_click: None,
+            },
+            lay![
+                padding: [5., 3., 5., 5.],
+            ]
+        );
+        let update_div = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                margin: [0, 20]
+                // size: [Auto, 34]
+            ]
+        )
+        .push(update_row)
+        .push(node!(HDivider { size: 1. }));
+
+        let about_row = node!(
+            SettingsRowComponent {
+                title: "Update".to_string(),
+                value: "".to_string(),
+                icon_1: "about_icon".to_string(),
+                icon_2: "right_arrow_icon".to_string(),
+                color: Color::WHITE,
+                on_click: None,
+            },
+            lay![
+                padding: [5., 3., 5., 5.],
+            ]
+        );
+        let about_div = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                margin: [0, 20]
+                // size: [Auto, 34]
+            ]
+        )
+        .push(about_row)
         .push(node!(HDivider { size: 1. }));
 
         base = base.push(header);
@@ -248,7 +341,11 @@ impl Component for SettingsScreen {
         base = base.push(appearance_div);
         base = base.push(battery_div);
         base = base.push(sound_div);
-        base = base.push(lock_div);
+        // base = base.push(lock_div);
+        // base = base.push(date_time_div);
+        // base = base.push(language_div);
+        // base = base.push(update_div);
+        // base = base.push(about_div);
 
         Some(base)
     }

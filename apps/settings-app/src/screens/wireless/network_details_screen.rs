@@ -1,28 +1,24 @@
-use super::component::NetworkRowComponent;
+use super::handler::WirelessInfoItem;
+use crate::gui::{Message, Routes};
 use crate::shared::h_divider::HDivider;
-use mctk_core::style::Styled;
 use mctk_core::*;
-
-// use mctk_core::{
-//     component::Component,
-//     lay,
-//     layout::{Alignment, Direction},
-//     node, rect, size, size_pct,
-//     style::{FontWeight, Styled},
-//     txt,
-//     widgets::{Div, Image, Text},
-//     Color, Node,
-// };
+use mctk_core::{
+    lay,
+    layout::{Alignment, Dimension, Direction, Size},
+    msg, node, rect, size, size_pct,
+    style::{FontWeight, Styled},
+    txt,
+    widgets::{Div, IconButton, IconType, Text},
+    Color, Node,
+};
 
 macro_rules! row {
     ($key:expr, $value:expr) => {{
         let base = node!(
             widgets::Div::new(),
             lay![
-                padding: [20, 0, 0, 0],
-                size: [430, 60],
+                size_pct: [100, Auto],
                 direction: layout::Direction::Column,
-                axis_alignment: layout::Alignment::Stretch,
                 cross_alignment: layout::Alignment::Stretch,
             ]
         );
@@ -32,6 +28,7 @@ macro_rules! row {
                 size_pct: [100],
                 direction: layout::Direction::Row,
                 axis_alignment: layout::Alignment::Stretch,
+                padding: [20., 0, 20., 0],
             ]
         );
         let left_div = node!(
@@ -67,9 +64,29 @@ macro_rules! row {
 }
 
 #[derive(Debug)]
-pub struct NetworkDetailsScreen {}
+pub struct NetworkDetailsScreen {
+    pub connected_network: Option<WirelessInfoItem>,
+}
 impl component::Component for NetworkDetailsScreen {
     fn view(&self) -> Option<Node> {
+        let mut network_name: String = "Mecha-test".to_string();
+        let mut network_ssid: String = "Mecha-test".to_string();
+        let mut network_security: String = "-".to_string();
+        let mut network_encyption: String = "-".to_string();
+        let mut network_frequency: String = "-".to_string();
+        let mut mac_address = "-".to_string();
+        match self.connected_network.clone() {
+            Some(resp) => {
+                network_name = resp.scan_info.name.clone();
+                network_ssid = resp.scan_info.name.clone();
+                network_security = resp.security.clone();
+                network_encyption = resp.encryption.clone();
+                network_frequency = resp.scan_info.frequency.clone();
+                mac_address = resp.scan_info.mac.clone();
+            }
+            None => (),
+        };
+
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
             lay![
@@ -82,7 +99,7 @@ impl component::Component for NetworkDetailsScreen {
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size_pct: [100],
+                size_pct: [100, 70],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
                 // padding: [15.0, 10.0, 15.0, 10.0],
@@ -90,48 +107,62 @@ impl component::Component for NetworkDetailsScreen {
         );
 
         let mut c_node = node!(
-            widgets::Div::new()
-                .scroll_y()
-                .style("bar_width", 0.)
-                .style("bar_color", Color::TRANSPARENT)
-                .style("bar_background_color", Color::TRANSPARENT),
+            widgets::Div::new(),
+            // .scroll_y()
+            // .style("bar_width", 0.)
+            // .style("bar_color", Color::TRANSPARENT)
+            // .style("bar_background_color", Color::TRANSPARENT),
             lay![
-                size_pct: [100, 80],
-                axis_alignment: layout::Alignment::Stretch,
+                size_pct: [100, 70],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [0.0, 20.0, 0.0, 20.0]
+                padding: [0.0, 10.0, 0.0, 10.0],
+                position_type: Relative,
             ],
         );
 
         //Title
-        let mut header = node!(
-            widgets::Div::new(),
-            // Div::new().bg(Color::MID_GREY),
+        let mut header_node = node!(
+            Div::new(),
             lay![
                 size_pct: [100, 15],
-                axis_alignment: layout::Alignment::Stretch,
-                // cross_alignment: Alignment::Center,
-                cross_alignment: layout::Alignment::Stretch,
-                direction: layout::Direction::Column,
-                padding: [5.0, 0.0, 0.0, 0.0],
-                margin: [25., 0., 0., 10.]
+                axis_alignment: Alignment::Stretch,
+                cross_alignment: Alignment::Stretch,
+                direction: Direction::Column,
+            ]
+        );
+
+        let mut header = node!(
+            Div::new(),
+            lay![
+                size_pct: [100, 15],
+                direction: Direction::Row,
+                axis_alignment: Alignment::Stretch,
+                padding: [5.0, 5.0, 10.0, 10.0],
+                margin: [0., 0., 20., 0.],
             ]
         );
         let header_text = node!(
-            widgets::Text::new(txt!("Actonate 5G"))
+            Text::new(txt!(network_name))
                 .style("font", "Space Grotesk")
                 .style("size", 28.)
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
-                .style("font_weight", style::FontWeight::Normal),
+                .style("font_weight", FontWeight::Normal),
             lay![
                 margin:[2.0, 5.0, 2.0, 5.0],
                 size: size!(20.0, 50.0),
-                axis_alignment: layout::Alignment::Stretch,
+                axis_alignment: Alignment::Start
             ]
         );
         header = header.push(header_text);
-        header = header.push(node!(HDivider { size: 1. }));
+        header_node = header_node.push(header);
+        header_node = header_node.push(node!(
+            HDivider { size: 1. },
+            lay![
+                margin: [0., 10., 0., 10.],
+                padding: [0., 0., 20., 0.]
+            ]
+        ));
 
         let mut footer = node!(
             widgets::Div::new().bg(Color::MID_GREY),
@@ -152,19 +183,93 @@ impl component::Component for NetworkDetailsScreen {
                 axis_alignment: layout::Alignment::Stretch,
             ]
         ));
-        c_node = c_node.push(header);
-        c_node = c_node.push(row!("Network SSID", "Actonate 5G"));
-        c_node = c_node.push(row!("Network ID", "2"));
-        c_node = c_node.push(row!("Passphrase", "WPA2"));
-        c_node = c_node.push(row!("Frequency", "5GHz"));
-        c_node = c_node.push(row!("", ""));
-        c_node = c_node.push(row!("IP Address", "192.168.100.100"));
-        c_node = c_node.push(row!("Subnet Mask", "255.255.255.0"));
-        c_node = c_node.push(row!("Gateway", "192.168.100.1"));
+        c_node = c_node.push(node!(
+            Div::new(),
+            lay![
+                margin: [10., 0., 0., 0.]
+            ]
+        ));
+        c_node = c_node.push(row!("Network SSID", network_ssid));
+        c_node = c_node.push(row!("Security", network_security));
+        c_node = c_node.push(row!("Encryption", network_encyption));
+        c_node = c_node.push(row!("MAC Address", mac_address));
+        // // c_node = c_node.push(row!("Frequency", network_frequency));
+        // c_node = c_node.push(row!("", ""));
+        // c_node = c_node.push(row!("IP Address", "192.168.100.100"));
+        // c_node = c_node.push(row!("Subnet Mask", "255.255.255.0"));
+        // c_node = c_node.push(row!("Gateway", "192.168.100.1"));
+        // // c_node = c_node.push(row!("Network ID", "2"));
+        // // c_node = c_node.push(row!("Passphrase", "WPA2"));
+
+        let mut footer_div = node!(
+            Div::new(),
+            lay![
+                size_pct: [100, 15],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                axis_alignment: Alignment::End,
+                position_type: Absolute,
+                position: [Auto, 0.0, 0.0, 0.0],
+            ]
+        );
+        let footer_row: Node = node!(
+            Div::new(),
+            lay![
+                size_pct: [100],
+                direction: Direction::Row,
+                axis_alignment: Alignment::Stretch,
+            ]
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [50],
+                    axis_alignment: Alignment::Start,
+                    cross_alignment: Alignment::Center,
+                ],
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        padding: [5., 15., 0., 0.]
+                    ]
+                )
+                .push(node!(
+                    IconButton::new("back_icon")
+                        .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                            route: Routes::NetworkScreen
+                        })))
+                        .icon_type(IconType::Png)
+                        .style(
+                            "size",
+                            Size {
+                                width: Dimension::Px(52.0),
+                                height: Dimension::Px(52.0),
+                            }
+                        )
+                        .style("background_color", Color::TRANSPARENT)
+                        .style("border_color", Color::TRANSPARENT)
+                        .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                        .style("padding", 8.)
+                        .style("radius", 12.),
+                    lay![
+                        size: [30, 30],
+                    ]
+                )),
+            ),
+        );
+
+        footer_div = footer_div
+            .push(node!(HDivider { size: 1. }))
+            .push(footer_row);
 
         main_node = main_node.push(c_node);
+
+        base = base.push(header_node);
         base = base.push(main_node);
-        // base = base.push(footer);
+        base = base.push(footer_div);
 
         Some(base)
     }
