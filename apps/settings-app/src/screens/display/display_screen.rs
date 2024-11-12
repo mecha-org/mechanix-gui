@@ -55,7 +55,10 @@ impl Component for DisplayScreen {
         main_node = main_node.push(screen_off_time);
         main_node = main_node.push(node!(HDivider { size: 1. }));
         base = base.push(main_node);
-        base = base.push(footer_node());
+        base = base.push(footer_node(ScreenRoute {
+            route: Routes::SettingsList,
+        }));
+
         Some(base)
     }
 }

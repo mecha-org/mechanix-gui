@@ -1,5 +1,5 @@
-use crate::components::{footer_node, header_node, text_node};
-use crate::gui;
+use crate::components::{footer_node, header_node, text_node, ScreenRoute};
+use crate::gui::{self, Routes};
 use crate::shared::h_divider::HDivider;
 use crate::shared::slider::{Slider, SliderType};
 use mctk_core::style::Styled;
@@ -40,7 +40,11 @@ impl component::Component for SoundScreen {
         main_node = main_node.push(header_node("Sound"));
         main_node = main_node.push(text_node("OUTPUT"));
         main_node = main_node.push(slider);
-        main_node = main_node.push(footer_node());
+
+        main_node = main_node.push(footer_node(ScreenRoute {
+            route: Routes::SettingsList,
+        }));
+
         base = base.push(main_node);
 
         Some(base)

@@ -1,5 +1,3 @@
-use std::any::Any;
-
 use crate::{
     screens::{
         display::display_screen::DisplayScreen,
@@ -42,6 +40,7 @@ pub enum Routes {
     BatteryScreen,
     SoundScreen,
     LockScreen,
+    LanguageScreen,
 }
 
 #[derive(Debug)]

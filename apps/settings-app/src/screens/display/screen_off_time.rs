@@ -1,3 +1,4 @@
+use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
@@ -34,7 +35,9 @@ impl Component for ScreenOffTime {
         }
 
         base = base.push(main_node);
-        base = base.push(footer_node());
+        base = base.push(footer_node(ScreenRoute {
+            route: Routes::DisplayScreen,
+        }));
         Some(base)
     }
 }

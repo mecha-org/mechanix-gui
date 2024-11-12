@@ -8,13 +8,18 @@ pub use mctk_core::style::*;
 pub use mctk_core::widgets::*;
 pub use mctk_core::*;
 
-pub fn footer_node() -> Node {
-    let mut footer_div = node!(
+#[derive(Default, Debug, Clone)]
+pub struct ScreenRoute {
+    pub(crate) route: Routes,
+}
+
+pub fn footer_node(screen_route: ScreenRoute) -> Node {
+    let mut footer_div: Node = node!(
         Div::new()
             .style("background_color", Color::BLACK)
             .bg(Color::BLACK),
         lay![
-            size_pct: [110, 20],
+            size_pct: [100, 15],
             direction: Direction::Column,
             cross_alignment: Alignment::Stretch,
             axis_alignment: Alignment::End,
@@ -48,9 +53,9 @@ pub fn footer_node() -> Node {
                 ]
             )
             .push(node!(
-                IconButton::new("right_arrow_icon")
+                IconButton::new("back_icon")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::SettingsList
+                        route: Routes::SettingsList // TODO
                     })))
                     .icon_type(IconType::Png)
                     .style(
