@@ -1,3 +1,5 @@
+pub mod display;
+pub mod language;
 pub mod settings_menu;
 pub mod sound;
 pub mod wireless;
@@ -14,4 +16,3 @@ pub mod wireless;
 // settings_menu/mod.rs
 
 // in src/screens/mod.rs, how to write settings_menu, network, bluetooth
-

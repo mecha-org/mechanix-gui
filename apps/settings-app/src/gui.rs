@@ -4,6 +4,8 @@ use std::any::Any;
 
 use crate::{
     screens::{
+        display::display_screen::DisplayScreen, display::screen_off_time::ScreenOffTime,
+        language::language_screen::LanguageScreen, language::language_select::LanguageSelect,
         settings_menu::settings_screen::SettingsScreen, sound::sound_screen::SoundScreen,
         wireless::network_details_screen::NetworkDetailsScreen,
         wireless::network_screen::NetworkScreen,
@@ -31,7 +33,7 @@ pub struct NetworkState {
     connectedValue: String,
 }
 
-#[derive(Default, Debug, Clone, Hash)]
+#[derive(Default, Debug, Clone, Hash, Copy)]
 pub enum Routes {
     #[default]
     SettingsList,
@@ -109,11 +111,12 @@ impl Component for SettingsApp {
             Routes::SettingsList => base = base.push(node!(SettingsScreen {})),
             Routes::NetworkScreen => base = base.push(node!(NetworkScreen {})),
             Routes::NetworkDetails => base = base.push(node!(NetworkDetailsScreen {})),
-            Routes::BluetoothScreen => todo!(),
-            Routes::DisplayScreen => todo!(),
-            Routes::AppearanceScreen => todo!(),
-            Routes::BatteryScreen => todo!(),
+            Routes::BluetoothScreen => base = base.push(node!(LanguageScreen {})),
+            // Routes::DisplayScreen => base = base.push(node!(ScreenOffTime {})),
+            Routes::AppearanceScreen => base = base.push(node!(LanguageSelect {})),
+            Routes::DisplayScreen => base = base.push(node!(DisplayScreen {})),
             Routes::SoundScreen => base = base.push(node!(SoundScreen {})),
+            Routes::BatteryScreen => todo!(),
             Routes::LockScreen => todo!(),
         }
 

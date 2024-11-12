@@ -1,3 +1,4 @@
+mod components;
 mod constants;
 mod errors;
 mod gui;
