@@ -163,6 +163,7 @@ macro_rules! tab_item_node {
                 padding: [15, 0, 15, 0],
                 size_pct: [100],
                 direction: Direction::Row,
+                cross_alignment: Alignment::Center,
                 axis_alignment: Alignment::Stretch,
             ]
         );
@@ -201,6 +202,7 @@ macro_rules! tab_item_node {
                 padding: [20, 0, 20, 0],
                 size_pct: [100, Auto],
                 direction: Direction::Row,
+                cross_alignment: Alignment::Center,
                 axis_alignment: Alignment::Stretch,
             ]
         );
@@ -209,6 +211,7 @@ macro_rules! tab_item_node {
             Div::new(),
             lay![
                 size_pct: [50],
+                cross_alignment: Alignment::Center,
                 axis_alignment: Alignment::Start
             ],
         );
@@ -220,6 +223,7 @@ macro_rules! tab_item_node {
             Div::new(),
             lay![
                 size_pct: [50],
+                cross_alignment: Alignment::Center,
                 axis_alignment: Alignment::End
             ],
         );
@@ -230,6 +234,21 @@ macro_rules! tab_item_node {
         base = base.push(right);
         base
     }};
+}
+
+pub fn radio_node(options: Vec<&str>) -> Node {
+    let options = options.into_iter().map(|x| txt!(x.to_string())).collect();
+    let radio = node!(
+        RadioButtons::new(options, 0,)
+            .direction(mctk_core::layout::Direction::Column)
+            .style("font_size", 18.0)
+            .style("padding", 0.)
+            //.multi_select(true)
+            .max_columns(1),
+        // .on_change(Box::new(|s| msg!(HelloEvent::RadioSelect { selection: s }))),
+        lay![margin: [0], size: [450, Auto]]
+    );
+    radio
 }
 
 // #[derive(Default)]
