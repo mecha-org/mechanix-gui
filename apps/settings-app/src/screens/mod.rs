@@ -1,4 +1,5 @@
 pub mod battery;
+pub mod bluetooth;
 pub mod display;
 pub mod language;
 pub mod security;
