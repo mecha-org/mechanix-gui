@@ -35,6 +35,7 @@ impl Component for DisplayScreen {
 
         let slider = node!(
             Slider::new()
+                .value(70)
                 .slider_type(SliderType::Box)
                 .active_color(Color::rgb(15., 168., 255.))
                 .on_slide(Box::new(|_| { Box::new(()) }))

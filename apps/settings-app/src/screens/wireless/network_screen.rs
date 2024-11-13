@@ -15,12 +15,16 @@ use mctk_core::{
 };
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 
+// #[derive(Debug, Clone)]
+// pub enum NetworkScreenMessage {
+//     ChangeStatus(bool),
+// }
+
 #[derive(Debug)]
 pub struct NetworkScreen {
     pub connected_network: Option<WirelessInfoResponse>,
     pub status: bool,
 }
-
 impl Component for NetworkScreen {
     fn view(&self) -> Option<Node> {
         let mut text_color = Color::WHITE;
@@ -29,7 +33,7 @@ impl Component for NetworkScreen {
             Some(resp) => resp.name,
             None => {
                 text_color = Color::rgb(197., 200., 207.);
-                "".to_string()
+                "Network".to_string()
             }
         };
 
@@ -108,36 +112,33 @@ impl Component for NetworkScreen {
         let mut network_div_check: Option<Node> = None;
 
         if connected_network_name.clone().len() > 0 {
-            let mut network_div = node!(
-                Div::new(),
-                lay![
-                    direction: Direction::Column,
-                    cross_alignment: Alignment::Stretch,
-                    margin: [15, 0, 25, 0]
-                ]
-            );
-            let network_row = node!(
-                NetworkRowComponent {
-                    title: connected_network_name.clone(),
-                    value: "".to_string(),
-                    icon_1: "connected_icon".to_string(),
-                    icon_2: "right_arrow_icon".to_string(),
-                    color: text_color,
-                    on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                        route: Routes::NetworkDetails
-                    }))),
-                },
-                lay![
-                    padding: [5., 3., 5., 5.],
-                ]
-            );
-            network_div = network_div
-                .push(node!(HDivider { size: 1. }))
-                .push(network_row)
-                .push(node!(HDivider { size: 1. }));
-
-            network_div_check = Some(network_div);
-        }
+        let mut network_div = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                margin: [15, 0, 25, 0]
+            ]
+        );
+        let network_row = node!(
+            NetworkRowComponent {
+                title: connected_network_name.clone(),
+                value: "".to_string(),
+                icon_1: "connected_icon".to_string(),
+                icon_2: "right_arrow_icon".to_string(),
+                color: text_color,
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: Routes::NetworkDetails
+                }))),
+            },
+            lay![
+                padding: [5., 3., 5., 5.],
+            ]
+        );
+        network_div = network_div
+            .push(node!(HDivider { size: 1. }))
+            .push(network_row)
+            .push(node!(HDivider { size: 1. }));
 
         let mut manage_networks_div = node!(
             Div::new(),
@@ -188,6 +189,17 @@ impl Component for NetworkScreen {
             .push(available_networks_row)
             .push(node!(HDivider { size: 1. }));
 
+        let mut footer_div = node!(
+            Div::new(),
+            lay![
+                size_pct: [100, 20],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                axis_alignment: Alignment::End,
+                position_type: Absolute,
+                position: [Auto, 0.0, 0.0, 0.0],
+            ]
+        );
         let mut footer_div = node!(
             Div::new(),
             lay![
@@ -247,8 +259,8 @@ impl Component for NetworkScreen {
         // c_node = c_node.push(available_networks_div);
 
         if connected_network_name.clone().len() < 1 {
-            c_node = c_node.push(manage_networks_div);
-            c_node = c_node.push(available_networks_div);
+        c_node = c_node.push(manage_networks_div);
+        c_node = c_node.push(available_networks_div);
             main_node = main_node.push(c_node);
         } else {
             let mut c_node = node!(
@@ -263,7 +275,7 @@ impl Component for NetworkScreen {
             c_node = c_node.push(network_div_check?);
             c_node = c_node.push(manage_networks_div);
             c_node = c_node.push(available_networks_div);
-            main_node = main_node.push(c_node);
+        main_node = main_node.push(c_node);
         }
 
         base = base.push(header_node);

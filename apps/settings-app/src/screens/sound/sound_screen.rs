@@ -30,6 +30,7 @@ impl component::Component for SoundScreen {
 
         let slider = node!(
             Slider::new()
+                .value(30)
                 .slider_type(SliderType::Line)
                 .active_color(Color::rgb(226., 102., 0.))
                 .on_slide(Box::new(|value| Box::new(())))

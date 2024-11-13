@@ -16,25 +16,24 @@ impl Component for ScreenOffTime {
         );
 
         let mut main_node = node!(
-            widgets::Div::new(),
+            widgets::Div::new().scroll_y(),
             lay![
                 size_pct: [100, 80],
-                cross_alignment: layout::Alignment::Center,
+                cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
                 padding: [0.0, 10.0, 0.0, 10.0],
             ]
         );
 
         main_node = main_node.push(header_node("Screen off time"));
-        // for (i, time) in ["10s", "30s", "60s", "5m", "Never"].into_iter().enumerate() {
-        //     main_node = main_node.push(
-        //         tab_item_node!([text_bold_node(time)], [icon_node("right_arrow_icon")])
-        //             .key((i + 1) as u64),
-        //     );
-        //     main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
-        // }
+        for (i, time) in ["10s", "30s", "60s", "5m", "Never"].into_iter().enumerate() {
+            main_node = main_node.push(
+                tab_item_node!([text_bold_node(time)], [icon_node("right_arrow_icon")])
+                    .key((i + 1) as u64),
+            );
+            main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
+        }
 
-        main_node = main_node.push(radio_node(vec!["10s", "20s", "30s", "60s", "5m", "Never"]));
         base = base.push(main_node);
         base = base.push(footer_node(ScreenRoute {
             route: Routes::DisplayScreen,

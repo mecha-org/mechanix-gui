@@ -25,9 +25,8 @@ use mctk_core::{
     AssetParams,
 };
 use mctk_smithay::{
-    layer_shell::{
-        layer_surface::LayerOptions,
-        layer_window::{LayerWindow, LayerWindowParams},
+    xdg_shell::{
+        xdg_window::{XdgWindow, XdgWindowParams},
     },
     WindowInfo, WindowMessage, WindowOptions,
 };
@@ -177,16 +176,9 @@ async fn main() -> anyhow::Result<()> {
         .app
         .id
         .clone()
-        .unwrap_or(String::from("mechanix.shell.home-screen"));
+        .unwrap_or(String::from("mechanix-settings"));
     let namespace = app_id.clone();
 
-    let mut layer_shell_opts = LayerOptions {
-        anchor: wlr_layer::Anchor::TOP | wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT,
-        layer: wlr_layer::Layer::Bottom,
-        keyboard_interactivity: wlr_layer::KeyboardInteractivity::OnDemand,
-        namespace: Some(namespace.clone()),
-        zone: 36 as i32,
-    };
 
     let window_info = WindowInfo {
         id: app_id,
@@ -194,20 +186,10 @@ async fn main() -> anyhow::Result<()> {
         namespace,
     };
 
-    let (layer_tx, layer_rx) = calloop::channel::channel();
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<SettingsApp, AppParams>(
-        LayerWindowParams {
-            window_info,
-            window_opts,
-            fonts,
-            assets,
-            layer_shell_opts: layer_shell_opts.clone(),
-            svgs,
-            layer_tx: Some(layer_tx.clone()),
-            layer_rx: Some(layer_rx),
-        },
+    let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<SettingsApp, AppParams>(
+        XdgWindowParams {window_info,window_opts,fonts,assets,svgs, ..Default::default() },
         AppParams {
             app_channel: Some(app_channel_tx.clone()),
         },

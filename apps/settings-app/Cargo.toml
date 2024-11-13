@@ -1,8 +1,14 @@
 [package]
-name = "settings"
-version = "0.1.0"
+name = "mechanix-settings"
+description = "Mechanix launcher component for the Mechanix shell"
+version = "0.1.2"
 edition = "2021"
-authors = ["Sweta ROhit <swetar@mechasystems.com>", "Naman Agarwal <namanr@mechasystems.com>"]
+authors = ["Sweta <swetar@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+categories = ["gui"]
+keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,3 +32,29 @@ mechanix_system_dbus_client = { path = "../../services/system/client/dbus" }
 futures-util = "0.3.30"
 futures = "0.3.30"
 regex="1.11.1"
+
+[package.metadata.deb]
+name = "mechanix-settings"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "target/aarch64-unknown-linux-gnu/release/mechanix-settings",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/apps/settings/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/apps/settings/settings.yml",
+        "644",
+    ],
+]
+
