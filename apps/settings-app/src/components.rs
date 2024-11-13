@@ -13,61 +13,64 @@ pub struct ScreenRoute {
     pub(crate) route: Routes,
 }
 
-pub fn footer_node(screen_route: ScreenRoute) -> Node {
-    let mut footer_div = node!(
-        Div::new(),
-        lay![
-            size_pct: [100, 20],
-            direction: Direction::Column,
-            cross_alignment: Alignment::Stretch,
-            position_type: Absolute,
-            position: [Auto, 0.0, 0.0, 0.0],
-        ]
-    );
-    let footer_row: Node = node!(
-        Div::new(),
-        lay![
-            direction: Direction::Row,
-            axis_alignment: Alignment::Start,
-            cross_alignment: Alignment::Center,
-        ]
-    )
-    .push(
-        node!(
+#[macro_export]
+macro_rules! footer_node {
+    ($route:expr) => {{
+        let mut footer_div = node!(
             Div::new(),
             lay![
-                size_pct: [50],
-            ],
-        )
-        .push(node!(
-            IconButton::new("back_icon")
-                .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                    route: Routes::SettingsList
-                })))
-                .icon_type(IconType::Png)
-                .style(
-                    "size",
-                    Size {
-                        width: Dimension::Px(52.0),
-                        height: Dimension::Px(52.0),
-                    }
-                )
-                .style("background_color", Color::TRANSPARENT)
-                .style("border_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                .style("radius", 12.),
-            lay![
-                size: [52, 52],
-            cross_alignment: Alignment::Center,
-            margin: [0., 20., 0., 0.]
+                size_pct: [100, 20],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                position_type: Absolute,
+                position: [Auto, 0.0, 0.0, 0.0],
             ]
-        )),
-    );
+        );
+        let footer_row: Node = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Row,
+                axis_alignment: Alignment::Start,
+                cross_alignment: Alignment::Center,
+            ]
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [50],
+                ],
+            )
+            .push(node!(
+                IconButton::new("back_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: $route
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(52.0),
+                            height: Dimension::Px(52.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 12.),
+                lay![
+                    size: [52, 52],
+                cross_alignment: Alignment::Center,
+                margin: [0., 20., 0., 0.]
+                ]
+            )),
+        );
 
-    footer_div = footer_div
-        .push(node!(HDivider { size: 1. }))
-        .push(footer_row);
-    footer_div
+        footer_div = footer_div
+            .push(node!(HDivider { size: 1. }))
+            .push(footer_row);
+        footer_div
+    }};
 }
 
 pub fn header_node(text: &str) -> Node {
@@ -140,25 +143,22 @@ pub fn icon_node(name: &str) -> Node {
 
 #[macro_export]
 macro_rules! tab_item_node {
-    ([$($left_nodes:expr),* $(,)?], [$($right_nodes:expr),* $(,)?], on_click = $on_click:expr) => {{
-        todo!("ON CLICK");
+    ([$($left_nodes:expr),* $(,)?], [$($right_nodes:expr),* $(,)?], route: $route:expr) => {{
         let left_nodes = vec![$($left_nodes),*];
         let right_nodes = vec![$($right_nodes),*];
         let mut base = node!(
-            Div::new(),
-            lay![
-                padding: [15, 0, 15, 0],
-                size_pct: [100],
-                direction: Direction::Row,
-                cross_alignment: Alignment::Center,
-                axis_alignment: Alignment::Stretch,
-            ]
+            TabItemComponent {
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: $route
+                }))),
+            },
         );
 
         let mut left = node!(
             Div::new(),
             lay![
                 size_pct: [50],
+                cross_alignment: Alignment::Center,
                 axis_alignment: Alignment::Start
             ],
         );
@@ -170,6 +170,7 @@ macro_rules! tab_item_node {
             Div::new(),
             lay![
                 size_pct: [50],
+                cross_alignment: Alignment::Center,
                 axis_alignment: Alignment::End
             ],
         );
@@ -184,14 +185,9 @@ macro_rules! tab_item_node {
         let left_nodes = vec![$($left_nodes),*];
         let right_nodes = vec![$($right_nodes),*];
         let mut base = node!(
-            Div::new(),
-            lay![
-                padding: [20, 0, 20, 0],
-                size_pct: [100, Auto],
-                direction: Direction::Row,
-                cross_alignment: Alignment::Center,
-                axis_alignment: Alignment::Stretch,
-            ]
+            TabItemComponent {
+                on_click: None
+            },
         );
 
         let mut left = node!(
@@ -244,47 +240,53 @@ pub fn radio_node(options: Vec<&str>) -> Node {
 //     right: Option<Node>,
 //     on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
 // }
-//
+
 // impl std::fmt::Debug for TabItemState {
 //     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 //         f.debug_struct("TabItemState").finish()
 //     }
 // }
-//
+
 // #[component(State = "TabItemState")]
-// pub struct TabItemComponent {}
-//
-// impl std::fmt::Debug for TabItemComponent {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         f.debug_struct("TabItemComponent").finish()
-//     }
-// }
-//
+pub struct TabItemComponent {
+    pub on_click: Option<Box<dyn Fn() -> Box<Message> + Send + Sync>>,
+}
+
+impl std::fmt::Debug for TabItemComponent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TabItemComponent").finish()
+    }
+}
+
 // #[state_component_impl(TabItemState)]
-// impl Component for TabItemComponent {
-//     fn on_click(&mut self, event: &mut event::Event<event::Click>) {
-//         let on_click = &self.state_ref().on_click;
-//         if let Some(f) = on_click {
-//             event.emit(f());
-//         }
-//     }
-//
-//     fn view(&self) -> Option<Node> {
-//         let mut base = node!(
-//             Div::new(),
-//             lay![
-//                 padding: [15, 5, 15, 5],
-//                 size_pct: [100],
-//                 direction: Direction::Row,
-//                 axis_alignment: Alignment::Stretch,
-//             ]
-//         );
-//         // base = base.push(self.state_ref().left?);
-//         // base = base.push(self.state_ref().right?);
-//         Some(base)
-//     }
-// }
-//
+impl Component for TabItemComponent {
+    fn on_click(&mut self, event: &mut event::Event<event::Click>) {
+        if let Some(f) = &self.on_click {
+            event.emit(f());
+        }
+    }
+
+    fn container(&self) -> Option<Vec<usize>> {
+        Some(vec![0])
+    }
+
+    fn view(&self) -> Option<Node> {
+        let base = node!(
+            Div::new(),
+            lay![
+                padding: [20, 0, 20, 0],
+                size_pct: [100, Auto],
+                direction: Direction::Row,
+                cross_alignment: Alignment::Center,
+                axis_alignment: Alignment::Stretch,
+            ]
+        );
+        // base = base.push(self.state_ref().left?);
+        // base = base.push(self.state_ref().right?);
+        Some(base)
+    }
+}
+
 // impl TabItemComponent {
 //     pub fn new(
 //         left_nodes: Vec<Node>,

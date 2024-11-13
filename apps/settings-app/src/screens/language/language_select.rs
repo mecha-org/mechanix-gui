@@ -1,6 +1,6 @@
-use crate::gui::Routes;
+use crate::gui::{Message, Routes};
 use crate::shared::h_divider::HDivider;
-use crate::{components::*, tab_item_node};
+use crate::{components::*, footer_node, tab_item_node};
 
 #[derive(Debug)]
 pub struct LanguageSelect {}
@@ -42,9 +42,7 @@ impl Component for LanguageSelect {
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
         }
-        main_node = main_node.push(footer_node(ScreenRoute {
-            route: Routes::LanguageScreen,
-        }));
+        main_node = main_node.push(footer_node!(Routes::LanguageScreen));
         base = base.push(main_node);
         Some(base)
     }

@@ -1,3 +1,5 @@
+use crate::footer_node;
+use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
@@ -33,9 +35,7 @@ impl Component for PerformanceMode {
         main_node = main_node.push(text_node("proceeding. increase the temperature of the"));
         main_node = main_node.push(text_node("device significantly."));
         base = base.push(main_node);
-        base = base.push(footer_node(ScreenRoute {
-            route: Routes::DisplayScreen,
-        }));
+        base = base.push(footer_node!(Routes::BatteryScreen));
         Some(base)
     }
 }

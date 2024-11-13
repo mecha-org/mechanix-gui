@@ -1,5 +1,9 @@
 use crate::{
     screens::{
+        battery::battery_screen::BatteryScreen,
+        battery::performance_mode::PerformanceMode,
+        bluetooth::bluetooth_screen::BluetoothScreen,
+        bluetooth::device_info::BluetoothDeviceInfo,
         display::display_screen::DisplayScreen,
         display::screen_off_time::ScreenOffTime,
         language::language_screen::LanguageScreen,
@@ -35,11 +39,15 @@ pub enum Routes {
     #[default]
     SettingsList,
     NetworkScreen,
+    LanguageSelect,
     NetworkDetails,
     BluetoothScreen,
+    BluetoothDeviceInfo,
+    ScreenOffTime,
     DisplayScreen,
     AppearanceScreen,
     BatteryScreen,
+    PerformanceModes,
     SoundScreen,
     LockScreen,
     LanguageScreen,
@@ -137,15 +145,19 @@ impl Component for SettingsApp {
             }
             Routes::LanguageScreen => base = base.push(node!(LanguageScreen {})),
             Routes::DisplayScreen => base = base.push(node!(DisplayScreen {})),
+            Routes::ScreenOffTime => base = base.push(node!(ScreenOffTime {})),
             Routes::SoundScreen => base = base.push(node!(SoundScreen {})),
-            _ => (),
-            // Routes::BluetoothScreen => {
-            // Routes::DisplayScreen => todo!(),
-            // Routes::LockScreen => todo!(),
+            Routes::PerformanceModes => base = base.push(node!(PerformanceMode {})),
+            Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
+            Routes::BluetoothDeviceInfo => base = base.push(node!(BluetoothDeviceInfo {})),
+            Routes::LockScreen => todo!(),
+            Routes::LanguageSelect => base = base.push(node!(LanguageSelect {})),
+            Routes::AppearanceScreen => todo!(),
+            Routes::BatteryScreen => base = base.push(node!(BatteryScreen {})),
         }
 
         app_node = app_node.push(base);
-        return Some(app_node);
+        Some(app_node)
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {

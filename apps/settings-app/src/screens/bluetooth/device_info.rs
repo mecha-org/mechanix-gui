@@ -1,10 +1,12 @@
+use crate::footer_node;
+use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
 #[derive(Debug)]
-pub struct DeviceInfo {}
-impl Component for DeviceInfo {
+pub struct BluetoothDeviceInfo {}
+impl Component for BluetoothDeviceInfo {
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -30,9 +32,7 @@ impl Component for DeviceInfo {
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
         main_node = main_node.push(tab_item_node!([text_bold_node("Mecha")], []));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        base = base.push(footer_node(ScreenRoute {
-            route: Routes::SettingsList,
-        }));
+        base = base.push(footer_node!(Routes::BluetoothScreen));
         base = base.push(main_node);
         Some(base)
     }

@@ -95,7 +95,9 @@ impl Component for SettingsScreen {
                 icon_1: "bluetooth_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: None,
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: Routes::BluetoothScreen
+                }))),
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -136,30 +138,6 @@ impl Component for SettingsScreen {
         .push(display_row)
         .push(node!(HDivider { size: 1. }));
 
-        let appearance_row = node!(
-            SettingsRowComponent {
-                title: "Appearance".to_string(),
-                value: "".to_string(),
-                icon_1: "appearance_icon".to_string(),
-                icon_2: "right_arrow_icon".to_string(),
-                color: Color::WHITE,
-                on_click: None,
-            },
-            lay![
-                padding: [5., 3., 5., 5.],
-            ]
-        );
-        let appearance_div = node!(
-            Div::new(),
-            lay![
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
-                // size: [Auto, 34]
-            ]
-        )
-        .push(appearance_row)
-        .push(node!(HDivider { size: 1. }));
-
         let battery_row = node!(
             SettingsRowComponent {
                 title: "Battery".to_string(),
@@ -184,6 +162,30 @@ impl Component for SettingsScreen {
             ]
         )
         .push(battery_row)
+        .push(node!(HDivider { size: 1. }));
+
+        let appearance_row = node!(
+            SettingsRowComponent {
+                title: "Appearance".to_string(),
+                value: "".to_string(),
+                icon_1: "appearance_icon".to_string(),
+                icon_2: "right_arrow_icon".to_string(),
+                color: Color::WHITE,
+                on_click: None,
+            },
+            lay![
+                padding: [5., 3., 5., 5.],
+            ]
+        );
+        let appearance_div = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                // size: [Auto, 34]
+            ]
+        )
+        .push(appearance_row)
         .push(node!(HDivider { size: 1. }));
 
         let sound_row = node!(
@@ -340,12 +342,12 @@ impl Component for SettingsScreen {
         base = base.push(network_div);
         base = base.push(bluetooth_div);
         base = base.push(display_div);
-        // base = base.push(battery_div);
+        base = base.push(battery_div);
         base = base.push(sound_div);
         // base = base.push(lock_div);
         // base = base.push(date_time_div);
         base = base.push(language_div);
-        base = base.push(appearance_div);
+        // base = base.push(appearance_div);
 
         // base = base.push(update_div);
         // base = base.push(about_div);

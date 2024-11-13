@@ -1,6 +1,7 @@
+use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
-use crate::{components::*, tab_item_node};
+use crate::{components::*, footer_node, tab_item_node};
 
 #[derive(Debug)]
 pub struct LanguageScreen {}
@@ -28,12 +29,11 @@ impl Component for LanguageScreen {
         main_node = main_node.push(header_node("Language"));
         main_node = main_node.push(tab_item_node!(
             [text_bold_node("English")],
-            [text_node("English-UK"), icon_node("right_arrow_icon")]
+            [text_node("English-UK"), icon_node("right_arrow_icon")],
+            route: Routes::LanguageSelect
         ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        base = base.push(footer_node(ScreenRoute {
-            route: Routes::SettingsList,
-        }));
+        base = base.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
         Some(base)
     }
