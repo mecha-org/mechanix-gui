@@ -19,7 +19,7 @@ pub fn footer_node(screen_route: ScreenRoute) -> Node {
             .style("background_color", Color::BLACK)
             .bg(Color::BLACK),
         lay![
-            size_pct: [100, 18],
+            size_pct: [100, 20],
             direction: Direction::Column,
             cross_alignment: Alignment::Stretch,
             axis_alignment: Alignment::End,

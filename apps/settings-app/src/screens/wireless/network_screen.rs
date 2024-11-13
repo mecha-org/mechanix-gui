@@ -189,7 +189,7 @@ impl Component for NetworkScreen {
         let mut footer_div = node!(
             Div::new(),
             lay![
-                size_pct: [100, 18],
+                size_pct: [100, 20],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::End,

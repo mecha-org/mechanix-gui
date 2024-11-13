@@ -12,6 +12,7 @@ use crate::{
         },
     },
     settings::{self, MainSettings},
+    shared::h_divider::HDivider,
     AppMessage, AppParams,
 };
 use mctk_core::{
@@ -92,6 +93,20 @@ impl Component for SettingsApp {
     }
 
     fn view(&self) -> Option<Node> {
+        let mut app_node = node!(
+            Div::new().bg(Color::BLACK),
+            lay![
+                size_pct: [100]
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        );
+        app_node = app_node.push(node!(
+            HDivider { size: 1. },
+            lay![
+                padding: [5.0, 10.0, 5.0, 10.0],
+            ],
+        ));
         let mut base: Node = node!(
             Div::new().bg(Color::BLACK),
             lay![
@@ -129,7 +144,8 @@ impl Component for SettingsApp {
             // Routes::LockScreen => todo!(),
         }
 
-        return Some(base);
+        app_node = app_node.push(base);
+        return Some(app_node);
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {

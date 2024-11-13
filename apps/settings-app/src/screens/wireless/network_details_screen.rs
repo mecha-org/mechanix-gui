@@ -164,25 +164,6 @@ impl component::Component for NetworkDetailsScreen {
             ]
         ));
 
-        let mut footer = node!(
-            widgets::Div::new().bg(Color::MID_GREY),
-            lay![
-                size_pct: [100, 20],
-                axis_alignment: layout::Alignment::End,
-                position_type: Absolute,
-                position: [Auto, 0.0, 0.0, 0.0],
-                direction: layout::Direction::Column
-            ]
-        );
-        footer = footer.push(node!(HDivider { size: 1. }));
-        footer = footer.push(node!(
-            widgets::Image::new("back_icon"),
-            lay![
-                size: [24, 24],
-                direction: layout::Direction::Row,
-                axis_alignment: layout::Alignment::Stretch,
-            ]
-        ));
         c_node = c_node.push(node!(
             Div::new(),
             lay![
@@ -204,7 +185,7 @@ impl component::Component for NetworkDetailsScreen {
         let mut footer_div = node!(
             Div::new(),
             lay![
-                size_pct: [100, 18],
+                size_pct: [100, 20],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::End,

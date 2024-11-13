@@ -340,12 +340,13 @@ impl Component for SettingsScreen {
         base = base.push(network_div);
         base = base.push(bluetooth_div);
         base = base.push(display_div);
-        base = base.push(appearance_div);
         // base = base.push(battery_div);
         base = base.push(sound_div);
         // base = base.push(lock_div);
         // base = base.push(date_time_div);
         base = base.push(language_div);
+        base = base.push(appearance_div);
+
         // base = base.push(update_div);
         // base = base.push(about_div);
 
