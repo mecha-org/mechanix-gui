@@ -94,7 +94,7 @@ pub fn header_node(text: &str) -> Node {
             cross_alignment: layout::Alignment::Stretch,
             direction: layout::Direction::Column,
             padding: [5.0, 0.0, 0.0, 0.0],
-            margin: [25., 0., 0., 10.]
+            margin: [0., 0., 0., 10.]
         ]
     );
     let header_text = node!(
