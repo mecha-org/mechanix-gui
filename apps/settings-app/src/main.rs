@@ -25,9 +25,7 @@ use mctk_core::{
     AssetParams,
 };
 use mctk_smithay::{
-    xdg_shell::{
-        xdg_window::{XdgWindow, XdgWindowParams},
-    },
+    xdg_shell::xdg_window::{XdgWindow, XdgWindowParams},
     WindowInfo, WindowMessage, WindowOptions,
 };
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
@@ -179,7 +177,6 @@ async fn main() -> anyhow::Result<()> {
         .unwrap_or(String::from("mechanix-settings"));
     let namespace = app_id.clone();
 
-
     let window_info = WindowInfo {
         id: app_id,
         title: settings.title.clone(),
@@ -189,7 +186,14 @@ async fn main() -> anyhow::Result<()> {
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<SettingsApp, AppParams>(
-        XdgWindowParams {window_info,window_opts,fonts,assets,svgs, ..Default::default() },
+        XdgWindowParams {
+            window_info,
+            window_opts,
+            fonts,
+            assets,
+            svgs,
+            ..Default::default()
+        },
         AppParams {
             app_channel: Some(app_channel_tx.clone()),
         },
@@ -245,6 +249,10 @@ async fn main() -> anyhow::Result<()> {
 
     loop {
         event_loop.dispatch(None, &mut app).unwrap();
+
+        if app.is_exited {
+            break;
+        }
     }
 
     Ok(())
