@@ -187,3 +187,8 @@ app_list:
       exec: /usr/bin/rover-control -s /etc/mechanix/rover/settings.yml
       icon_name: rover_control_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/rover_control_icon.png
+    - app_id: mechanix-settings
+      name: Settings
+      exec: mechanix-settings -s /etc/mechanix/apps/settings/settings.yml
+      icon_name: mechanix_settings_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mechanix_settings_icon.png
