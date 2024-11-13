@@ -307,6 +307,7 @@ async fn main() {
                     let _ = std::thread::spawn(move || {
                         let _ = launch_lockscreen( ui_params_1);
                     });
+                    let _ = session.set_locked_hint(false).await;
                 }
             }, _ = unlock.next() => {
                 println!("logind unlock");
@@ -320,7 +321,7 @@ async fn main() {
 pub struct InitServicesParamsHome {
     pub settings: LauncherSettings,
     pub app_channel: Sender<AppMessage>,
-    pub wireless_msg_rx: Receiver<WirelessMessage>,
+    // pub wireless_msg_rx: Receiver<WirelessMessage>,
     pub bluetooth_msg_rx: Receiver<BluetoothMessage>,
     pub brightness_msg_rx: Receiver<BrightnessMessage>,
     pub sound_msg_rx: Receiver<SoundMessage>,
@@ -330,7 +331,7 @@ pub struct InitServicesParamsHome {
 pub struct InitServicesParamsLock {
     pub settings: LauncherSettings,
     pub app_channel: Sender<AppMessage>,
-    pub wireless_msg_rx: Receiver<WirelessMessage>,
+    // pub wireless_msg_rx: Receiver<WirelessMessage>,
     pub bluetooth_msg_rx: Receiver<BluetoothMessage>,
 }
 
@@ -338,7 +339,7 @@ fn init_services_home(init_params: InitServicesParamsHome) -> JoinHandle<()> {
     let InitServicesParamsHome {
         settings,
         app_channel,
-        wireless_msg_rx,
+        // wireless_msg_rx,
         bluetooth_msg_rx,
         brightness_msg_rx,
         sound_msg_rx,
@@ -354,7 +355,7 @@ fn init_services_home(init_params: InitServicesParamsHome) -> JoinHandle<()> {
 
         let time_format = settings.modules.clock.format.clone();
         let clock_f = run_clock_handler(time_format, app_channel.clone());
-        let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
+        // let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
         let bluetooth_f = run_bluetooth_handler(app_channel.clone(), bluetooth_msg_rx);
         let battery_f = run_battery_handler(app_channel.clone());
         // let rotation_f = run_rotation_handler(app_channel.clone(), rotation_msg_rx);
@@ -375,7 +376,7 @@ fn init_services_home(init_params: InitServicesParamsHome) -> JoinHandle<()> {
             .block_on(runtime.spawn(async move {
                 tokio::join!(
                     clock_f,
-                    wireless_f,
+                    // wireless_f,
                     bluetooth_f,
                     battery_f,
                     // rotation_f,
@@ -400,7 +401,7 @@ fn init_services_lock(init_params: InitServicesParamsLock) -> JoinHandle<()> {
     let InitServicesParamsLock {
         settings,
         app_channel,
-        wireless_msg_rx,
+        // wireless_msg_rx,
         bluetooth_msg_rx,
     } = init_params;
     thread::spawn(move || {
@@ -412,16 +413,19 @@ fn init_services_lock(init_params: InitServicesParamsLock) -> JoinHandle<()> {
 
         let time_format = settings.modules.clock.format.clone();
         let clock_f = run_clock_handler(time_format, app_channel.clone());
-        let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
+        // let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
         let bluetooth_f = run_bluetooth_handler(app_channel.clone(), bluetooth_msg_rx);
         let battery_f = run_battery_handler(app_channel.clone());
 
         runtime
-            .block_on(
-                runtime.spawn(
-                    async move { tokio::join!(clock_f, wireless_f, bluetooth_f, battery_f,) },
-                ),
-            )
+            .block_on(runtime.spawn(async move {
+                tokio::join!(
+                    clock_f,
+                    // wireless_f,
+                    bluetooth_f,
+                    battery_f,
+                )
+            }))
             .unwrap();
     })
 }
