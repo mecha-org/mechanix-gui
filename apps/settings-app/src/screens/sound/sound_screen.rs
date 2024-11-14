@@ -1,4 +1,6 @@
-use crate::components::{footer_node, header_node, text_node, ScreenRoute};
+use crate::components::*;
+use crate::footer_node;
+use crate::gui::Message;
 use crate::gui::{self, Routes};
 use crate::shared::h_divider::HDivider;
 use crate::shared::slider::{Slider, SliderType};
@@ -42,9 +44,7 @@ impl component::Component for SoundScreen {
         main_node = main_node.push(text_node("OUTPUT"));
         main_node = main_node.push(slider);
 
-        main_node = main_node.push(footer_node(ScreenRoute {
-            route: Routes::SettingsList,
-        }));
+        main_node = main_node.push(footer_node!(Routes::SettingsList));
 
         base = base.push(main_node);
 

@@ -1,3 +1,5 @@
+use crate::footer_node;
+use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
@@ -29,12 +31,11 @@ impl Component for BatteryScreen {
         main_node = main_node.push(node!(HDivider { size: 1. }));
         main_node = main_node.push(tab_item_node!(
             [text_node("Mode")],
-            [text_bold_node("Balenced"), icon_node("right_arrow_icon")]
+            [text_bold_node("Balenced"), icon_node("right_arrow_icon")],
+            route: Routes::PerformanceModes
         ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        base = base.push(footer_node(ScreenRoute {
-            route: Routes::SettingsList,
-        }));
+        base = base.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
         Some(base)
     }

@@ -1,5 +1,6 @@
 use crate::shared::slider::{Slider, SliderType};
-use crate::{components::*, tab_item_node};
+use crate::{components::*, footer_node, tab_item_node};
+
 use crate::{
     gui::{Message, Routes},
     shared::h_divider::HDivider,
@@ -47,7 +48,8 @@ impl Component for DisplayScreen {
 
         let screen_off_time = tab_item_node!(
             [text_node("Screen Time")],
-            [text_bold_node("30s"), icon_node("right_arrow_icon")]
+            [text_bold_node("30s"), icon_node("right_arrow_icon")],
+            route: Routes::ScreenOffTime
         );
         main_node = main_node.push(header_node("Display"));
         main_node = main_node.push(text_node("BRIGHTNESS"));
@@ -56,9 +58,7 @@ impl Component for DisplayScreen {
         main_node = main_node.push(screen_off_time);
         main_node = main_node.push(node!(HDivider { size: 1. }));
         base = base.push(main_node);
-        base = base.push(footer_node(ScreenRoute {
-            route: Routes::SettingsList,
-        }));
+        base = base.push(footer_node!(Routes::SettingsList));
 
         Some(base)
     }

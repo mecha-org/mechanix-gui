@@ -1,3 +1,5 @@
+use crate::footer_node;
+use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
@@ -73,10 +75,11 @@ impl Component for BluetoothScreen {
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
         main_node = main_node.push(tab_item_node!(
             [text_bold_node("mecha compute")],
-            [icon_node("connected_icon"), icon_node("right_arrow_icon")]
+            [icon_node("connected_icon"), icon_node("right_arrow_icon")],
+            route: Routes::BluetoothDeviceInfo
         ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        for (i, (device)) in devices.into_iter().enumerate() {
+        for (i, device) in devices.into_iter().enumerate() {
             main_node = main_node.push(
                 tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")])
                     .key((i + 1) as u64),
@@ -99,9 +102,7 @@ impl Component for BluetoothScreen {
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
         }
-        main_node = main_node.push(footer_node(ScreenRoute {
-            route: Routes::LanguageScreen,
-        }));
+        main_node = main_node.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
         Some(base)
     }
