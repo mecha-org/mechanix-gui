@@ -81,7 +81,7 @@ impl Component for BluetoothScreen {
         main_node = main_node.push(node!(HDivider { size: 1. }));
         for (i, device) in devices.into_iter().enumerate() {
             main_node = main_node.push(
-                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")])
+                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")], route: Routes::BluetoothPairingEnterCode)
                     .key((i + 1) as u64),
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
