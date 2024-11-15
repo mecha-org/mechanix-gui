@@ -34,8 +34,15 @@ impl Component for PerformanceMode {
         main_node = main_node.push(text_node("and Check ambient temperature before"));
         main_node = main_node.push(text_node("proceeding. increase the temperature of the"));
         main_node = main_node.push(text_node("device significantly."));
+        base = base.push(footer_node!(
+            Routes::BatteryScreen,
+            "tick_icon",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::BatteryScreen,
+            }))
+        ));
         base = base.push(main_node);
-        base = base.push(footer_node!(Routes::BatteryScreen));
+        // base = base.push(footer_node!(Routes::BatteryScreen));
         Some(base)
     }
 }
