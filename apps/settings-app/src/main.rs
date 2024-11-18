@@ -29,7 +29,7 @@ use mctk_smithay::{
     WindowInfo, WindowMessage, WindowOptions,
 };
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use screens::wireless::handler::{WirelessInfoItem, WirelessServiceHandle};
+use screens::wireless::handler::{WirelessDetailsItem, WirelessServiceHandle};
 use settings::{AppSettings, MainSettings};
 use std::{
     collections::HashMap,
@@ -53,24 +53,36 @@ pub struct UiParams {
 }
 
 #[derive(Debug)]
+pub enum WirelessMessage {
+    Toggle { value: Option<bool> },
+    // available networks
+    // manage networks
+}
+
+#[derive(Debug)]
 pub enum AppMessage {
-    NetworkStatus { status: bool },
-    ConnectedNetwork { info: WirelessInfoResponse },
+    NetworkStatus {
+        status: bool,
+    },
+    ConnectedNetwork {
+        info: WirelessInfoResponse,
+    },
     // UpdateNetworkStatus { status: bool },
-    Wireless { message: WirelessMessage },
+    Wireless {
+        message: WirelessMessage,
+    },
     NotFound,
-    AvailableNetworksList { list: Vec<WirelessInfoItem> },
-    ConnectedNetworkDetails { details: Option<WirelessInfoItem> },
+    AvailableNetworksList {
+        list: Vec<WirelessDetailsItem>,
+    },
+    ConnectedNetworkDetails {
+        details: Option<WirelessDetailsItem>,
+    },
 }
 
 #[derive(Default, Clone)]
 pub struct AppParams {
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
-}
-
-#[derive(Debug)]
-pub enum WirelessMessage {
-    Toggle { value: Option<bool> },
 }
 
 #[tokio::main]
@@ -107,7 +119,15 @@ async fn main() -> anyhow::Result<()> {
     let modules = settings.modules.clone();
     assets.insert(
         "wifi_icon".to_string(),
-        AssetParams::new(modules.wireless.icon),
+        AssetParams::new(modules.wireless.wifi_icon),
+    );
+    assets.insert(
+        "secured_wifi_icon".to_string(),
+        AssetParams::new(modules.wireless.secured_wifi_icon),
+    );
+    assets.insert(
+        "wifi_strength_icon".to_string(),
+        AssetParams::new(modules.wireless.wifi_strength_icon),
     );
     assets.insert(
         "bluetooth_icon".to_string(),
@@ -155,10 +175,13 @@ async fn main() -> anyhow::Result<()> {
         AssetParams::new(modules.see_options.connected_icon),
     );
     assets.insert(
+        "info_icon".to_string(),
+        AssetParams::new(modules.see_options.info_icon),
+    );
+    assets.insert(
         "back_icon".to_string(),
         AssetParams::new(modules.footer.back_icon),
     );
-
     // let background = modules.background.icon.default;
     // if background.len() > 0 {
     //     assets.insert("background".to_string(), AssetParams::new(background));

@@ -1,18 +1,14 @@
 use crate::{
     screens::{
-        battery::battery_screen::BatteryScreen,
-        battery::performance_mode::PerformanceMode,
-        bluetooth::bluetooth_screen::BluetoothScreen,
-        bluetooth::device_info::BluetoothDeviceInfo,
-        display::display_screen::DisplayScreen,
-        display::screen_off_time::ScreenOffTime,
-        language::language_screen::LanguageScreen,
-        language::language_select::LanguageSelect,
+        battery::{battery_screen::BatteryScreen, performance_mode::PerformanceMode},
+        bluetooth::{bluetooth_screen::BluetoothScreen, device_info::BluetoothDeviceInfo},
+        display::{display_screen::DisplayScreen, screen_off_time::ScreenOffTime},
+        language::{language_screen::LanguageScreen, language_select::LanguageSelect},
         settings_menu::settings_screen::SettingsScreen,
         sound::sound_screen::SoundScreen,
         wireless::{
-            handler::WirelessInfoItem, network_details_screen::NetworkDetailsScreen,
-            network_screen::NetworkScreen,
+            available_networks::AvailableNetworksScreen, handler::WirelessDetailsItem,
+            network_details_screen::NetworkDetailsScreen, network_screen::NetworkScreen,
         },
     },
     settings::{self, MainSettings},
@@ -39,6 +35,7 @@ pub enum Routes {
     #[default]
     SettingsList,
     NetworkScreen,
+    AvailableNetworksScreen,
     LanguageSelect,
     NetworkDetails,
     BluetoothScreen,
@@ -60,18 +57,29 @@ pub struct SettingsAppState {
     current_route: Routes,
     connected_network_name: String,
     connected_network_info: Option<WirelessInfoResponse>,
-    connected_network_details: Option<WirelessInfoItem>,
+    connected_network_details: Option<WirelessDetailsItem>,
+    available_networks_list: Vec<WirelessDetailsItem>,
     wireless_Status: bool,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    ChangeRoute { route: Routes },
-    WirelessStatus { status: bool },
-    ConnectedNetwork { info: WirelessInfoResponse },
+    ChangeRoute {
+        route: Routes,
+    },
+    WirelessStatus {
+        status: bool,
+    },
+    ConnectedNetwork {
+        info: WirelessInfoResponse,
+    },
     UpdateWirelessStatus(bool),
-    AvailableNetworksList { list: Vec<WirelessInfoItem> },
-    ConnectedNetworkDetails { details: Option<WirelessInfoItem> },
+    AvailableNetworksList {
+        list: Vec<WirelessDetailsItem>,
+    },
+    ConnectedNetworkDetails {
+        details: Option<WirelessDetailsItem>,
+    },
 }
 
 /// # SettingsApp State
@@ -97,6 +105,7 @@ impl Component for SettingsApp {
             connected_network_name: String::from(""),
             connected_network_info: None,
             connected_network_details: None,
+            available_networks_list: vec![],
         });
     }
 
@@ -136,11 +145,17 @@ impl Component for SettingsApp {
                 base = base.push(node!(NetworkScreen {
                     connected_network: self.state_ref().connected_network_info.clone(),
                     status: self.state_ref().wireless_Status.clone(),
+                    available_networks_list: self.state_ref().available_networks_list.clone(),
                 }))
             }
             Routes::NetworkDetails => {
                 base = base.push(node!(NetworkDetailsScreen {
-                    connected_network: self.state_ref().connected_network_details.clone(),
+                    wireless_details: self.state_ref().connected_network_details.clone(),
+                }))
+            }
+            Routes::AvailableNetworksScreen => {
+                base = base.push(node!(AvailableNetworksScreen {
+                    available_networks_list: self.state_ref().available_networks_list.clone(),
                 }))
             }
             Routes::LanguageScreen => base = base.push(node!(LanguageScreen {})),
@@ -154,6 +169,7 @@ impl Component for SettingsApp {
             Routes::LanguageSelect => base = base.push(node!(LanguageSelect {})),
             Routes::AppearanceScreen => todo!(),
             Routes::BatteryScreen => base = base.push(node!(BatteryScreen {})),
+            _ => (),
         }
 
         app_node = app_node.push(base);
@@ -164,9 +180,6 @@ impl Component for SettingsApp {
         if let Some(msg) = message.downcast_ref::<Message>() {
             match msg {
                 Message::ChangeRoute { route } => {
-                    // match route {
-                    //     _ => (),
-                    // }
                     self.state_mut().current_route = route.clone();
                 }
                 Message::WirelessStatus { status } => {
@@ -184,7 +197,7 @@ impl Component for SettingsApp {
                     self.state_mut().connected_network_details = details.clone();
                 }
                 Message::AvailableNetworksList { list } => {
-                    // println!("Message::AvailableNetworksList  list{:?}", &list);
+                    self.state_mut().available_networks_list = list.clone();
                 }
                 _ => (),
             }

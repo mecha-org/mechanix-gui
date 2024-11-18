@@ -158,7 +158,6 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                // size: [Auto, 34]
             ]
         )
         .push(battery_row)
@@ -182,7 +181,6 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                // size: [Auto, 34]
             ]
         )
         .push(appearance_row)
@@ -231,8 +229,6 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                // margin: [0, 0, 10, 0]
-                // size: [Auto, 34]
             ]
         )
         .push(lock_row)
@@ -256,8 +252,6 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [0, 20]
-                // size: [Auto, 34]
             ]
         )
         .push(date_time_row)
@@ -306,8 +300,6 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [0, 20]
-                // size: [Auto, 34]
             ]
         )
         .push(update_row)
@@ -315,7 +307,7 @@ impl Component for SettingsScreen {
 
         let about_row = node!(
             SettingsRowComponent {
-                title: "Update".to_string(),
+                title: "About".to_string(),
                 value: "".to_string(),
                 icon_1: "about_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
@@ -331,8 +323,6 @@ impl Component for SettingsScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [0, 20]
-                // size: [Auto, 34]
             ]
         )
         .push(about_row)
@@ -342,15 +332,14 @@ impl Component for SettingsScreen {
         base = base.push(network_div);
         base = base.push(bluetooth_div);
         base = base.push(display_div);
+        base = base.push(appearance_div);
         base = base.push(battery_div);
         base = base.push(sound_div);
-        // base = base.push(lock_div);
-        // base = base.push(date_time_div);
+        base = base.push(lock_div);
+        base = base.push(date_time_div);
         base = base.push(language_div);
-        // base = base.push(appearance_div);
-
-        // base = base.push(update_div);
-        // base = base.push(about_div);
+        base = base.push(update_div);
+        base = base.push(about_div);
 
         Some(base)
     }
