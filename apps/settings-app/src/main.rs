@@ -185,6 +185,18 @@ async fn main() -> anyhow::Result<()> {
         "back_icon".to_string(),
         AssetParams::new(modules.footer.back_icon),
     );
+    assets.insert(
+        "add_icon".to_string(),
+        AssetParams::new(modules.footer.add_icon),
+    );
+    assets.insert(
+        "tick_icon".to_string(),
+        AssetParams::new(modules.footer.tick_icon),
+    );
+    assets.insert(
+        "delete_icon".to_string(),
+        AssetParams::new(modules.footer.delete_icon),
+    );
     // let background = modules.background.icon.default;
     // if background.len() > 0 {
     //     assets.insert("background".to_string(), AssetParams::new(background));

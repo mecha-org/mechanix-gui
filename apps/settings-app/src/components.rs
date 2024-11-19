@@ -17,9 +17,9 @@ pub struct ScreenRoute {
 macro_rules! footer_node {
     ($route:expr) => {{
         let mut footer_div = node!(
-            Div::new(),
+            Div::new().bg(Color::BLACK),
             lay![
-                size_pct: [100, 20],
+                size_pct: [110, 20],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 position_type: Absolute,
@@ -71,6 +71,95 @@ macro_rules! footer_node {
             .push(footer_row);
         footer_div
     }};
+    ($route:expr, $icon:expr, $on_click:expr) => {{
+
+        let mut footer_div = node!(
+            Div::new().bg(Color::BLACK),
+            lay![
+                size_pct: [100, 20],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                position_type: Absolute,
+                position: [Auto, 0.0, 0.0, 0.0],
+            ]
+        );
+        let footer_row: Node = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Row,
+                axis_alignment: Alignment::Start,
+                cross_alignment: Alignment::Center,
+            ]
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [50],
+                ],
+            )
+            .push(node!(
+                IconButton::new("back_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: $route,
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(52.0),
+                            height: Dimension::Px(52.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 12.),
+                lay![
+                    size: [52, 52],
+                cross_alignment: Alignment::Center,
+                margin: [0., 20., 0., 0.]
+                ]
+            )),
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [50],
+                    cross_alignment: Alignment::Start,
+                    axis_alignment: Alignment::End,
+                ],
+            )
+            .push(node!(
+                IconButton::new($icon)
+                    .on_click($on_click)
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(52.0),
+                            height: Dimension::Px(52.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 12.),
+                lay![
+                    size: [52, 52],
+                cross_alignment: Alignment::Center,
+                axis_alignment: Alignment::End,
+                margin: [0., 0., 0., 20.]
+                ]
+            )),
+        );
+
+        footer_div = footer_div
+            .push(node!(HDivider { size: 1. }))
+            .push(footer_row);
+        footer_div
+    }}
 }
 
 pub fn header_node(text: &str) -> Node {

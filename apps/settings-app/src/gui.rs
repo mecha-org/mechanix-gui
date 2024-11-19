@@ -1,7 +1,14 @@
 use crate::{
     screens::{
         battery::{battery_screen::BatteryScreen, performance_mode::PerformanceMode},
-        bluetooth::{bluetooth_screen::BluetoothScreen, device_info::BluetoothDeviceInfo},
+        bluetooth::{
+            bluetooth_pairing_enter_code::BluetoothPairingEnterCode,
+            device_info::BluetoothDeviceInfo,
+        },
+        bluetooth::{
+            bluetooth_pairing_verify_code::BluetoothPairingVerifyCode,
+            bluetooth_screen::BluetoothScreen,
+        },
         display::{display_screen::DisplayScreen, screen_off_time::ScreenOffTime},
         language::{language_screen::LanguageScreen, language_select::LanguageSelect},
         settings_menu::settings_screen::SettingsScreen,
@@ -42,6 +49,8 @@ pub enum Routes {
     LanguageSelect,
     NetworkDetails,
     BluetoothScreen,
+    BluetoothPairingVerifyCode,
+    BluetoothPairingEnterCode,
     BluetoothDeviceInfo,
     ScreenOffTime,
     DisplayScreen,
@@ -167,6 +176,12 @@ impl Component for SettingsApp {
             Routes::SoundScreen => base = base.push(node!(SoundScreen {})),
             Routes::PerformanceModes => base = base.push(node!(PerformanceMode {})),
             Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
+            Routes::BluetoothPairingEnterCode => {
+                base = base.push(node!(BluetoothPairingEnterCode {}))
+            }
+            Routes::BluetoothPairingVerifyCode => {
+                base = base.push(node!(BluetoothPairingVerifyCode {}))
+            }
             Routes::BluetoothDeviceInfo => base = base.push(node!(BluetoothDeviceInfo {})),
             Routes::LockScreen => todo!(),
             Routes::LanguageSelect => base = base.push(node!(LanguageSelect {})),

@@ -29,3 +29,6 @@ pub const RIGHT_ARROW_ICON: &str = concatcp!(ASSET_PATH, "right_arrow.png");
 pub const INFO_ICON: &str = concatcp!(ASSET_PATH, "info_icon.png");
 pub const CONNECTED_ICON: &str = concatcp!(ASSET_PATH, "connected_icon.png");
 pub const BACK_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
+pub const ADD_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
+pub const DELETE_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
+pub const TICK_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");

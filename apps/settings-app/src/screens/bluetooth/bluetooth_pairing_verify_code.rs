@@ -5,8 +5,8 @@ use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
 #[derive(Debug)]
-pub struct BluetoothDeviceInfo {}
-impl Component for BluetoothDeviceInfo {
+pub struct BluetoothPairingVerifyCode {}
+impl Component for BluetoothPairingVerifyCode {
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -27,14 +27,27 @@ impl Component for BluetoothDeviceInfo {
             ]
         );
 
-        main_node = main_node.push(header_node("Mecha's Bluetooth Device"));
-        main_node = main_node.push(text_node("Device Type"));
-        main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        main_node = main_node.push(tab_item_node!([text_bold_node("Mecha")], []));
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(header_node("Verify the Code for Mecha"));
+        let text_node = node!(
+            widgets::Text::new(txt!("1234 5678"))
+                .style("color", Color::WHITE)
+                .style("size", 40.0)
+                .style("line_height", 20.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Bold),
+            lay![
+                margin: [22.5, 125.0, 0.0, 10.0],
+                size_pct: [100, 15],
+                cross_alignment: layout::Alignment::Center,
+                axis_alignment: layout::Alignment::Center
+            ]
+        );
+        main_node = main_node.push(node!(HDivider { size: 1. }).key(9));
+        main_node = main_node.push(text_node);
+        main_node = main_node.push(node!(HDivider { size: 1. }).key(10));
         base = base.push(footer_node!(
             Routes::BluetoothScreen,
-            "delete_icon",
+            "tick_icon",
             Box::new(|| msg!(Message::ChangeRoute {
                 route: Routes::BluetoothScreen,
             }))

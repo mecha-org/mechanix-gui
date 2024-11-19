@@ -70,6 +70,13 @@ impl Component for BluetoothScreen {
         header_node = header_node.push(header);
 
         let devices = [("English"), ("English"), ("Chinese")];
+        base = base.push(footer_node!(
+            Routes::SettingsList,
+            "add_icon",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::SettingsList,
+            }))
+        ));
         main_node = main_node.push(header_node);
         main_node = main_node.push(text_node("Available Devices"));
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
@@ -81,7 +88,7 @@ impl Component for BluetoothScreen {
         main_node = main_node.push(node!(HDivider { size: 1. }));
         for (i, device) in devices.into_iter().enumerate() {
             main_node = main_node.push(
-                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")])
+                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")], route: Routes::BluetoothPairingEnterCode)
                     .key((i + 1) as u64),
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
@@ -102,7 +109,6 @@ impl Component for BluetoothScreen {
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
         }
-        main_node = main_node.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
         Some(base)
     }
