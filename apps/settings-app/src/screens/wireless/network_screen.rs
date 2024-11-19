@@ -1,5 +1,6 @@
-use super::component::NetworkRowComponent;
+use super::{component::NetworkRowComponent, handler::WirelessDetailsItem};
 use crate::{
+    components::text_node,
     gui::{Message, Routes},
     shared::h_divider::HDivider,
 };
@@ -15,16 +16,13 @@ use mctk_core::{
 };
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 
-// #[derive(Debug, Clone)]
-// pub enum NetworkScreenMessage {
-//     ChangeStatus(bool),
-// }
-
 #[derive(Debug)]
 pub struct NetworkScreen {
     pub connected_network: Option<WirelessInfoResponse>,
+    pub available_networks_list: Vec<WirelessDetailsItem>,
     pub status: bool,
 }
+
 impl Component for NetworkScreen {
     fn view(&self) -> Option<Node> {
         let mut text_color = Color::WHITE;
@@ -33,7 +31,7 @@ impl Component for NetworkScreen {
             Some(resp) => resp.name,
             None => {
                 text_color = Color::rgb(197., 200., 207.);
-                "Network".to_string()
+                "".to_string()
             }
         };
 
@@ -48,20 +46,19 @@ impl Component for NetworkScreen {
         let mut main_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 70],
-                // cross_alignment: Alignment::Stretch,
+                size_pct: [100, 80],
                 direction: Direction::Column,
             ]
         );
 
         let mut c_node = node!(
+            // let mut main_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 70],
+                size_pct: [100, 80],
                 cross_alignment: Alignment::Stretch,
                 direction: Direction::Column,
                 padding: [0.0, 10.0, 0.0, 10.0],
-                // position_type: Relative,
             ],
         );
 
@@ -117,7 +114,7 @@ impl Component for NetworkScreen {
                 lay![
                     direction: Direction::Column,
                     cross_alignment: Alignment::Stretch,
-                    margin: [15, 0, 25, 0]
+                    margin: [15., 0, 25., 0],
                 ]
             );
             let network_row = node!(
@@ -139,7 +136,10 @@ impl Component for NetworkScreen {
                 .push(node!(HDivider { size: 1. }))
                 .push(network_row)
                 .push(node!(HDivider { size: 1. }));
+
+            network_div_check = Some(network_div);
         }
+
         let mut manage_networks_div = node!(
             Div::new(),
             lay![
@@ -170,6 +170,7 @@ impl Component for NetworkScreen {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                margin: [0., 0, 25., 0],
             ]
         );
         let available_networks_row = node!(
@@ -179,7 +180,10 @@ impl Component for NetworkScreen {
                 icon_1: "".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: None,
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: Routes::AvailableNetworksScreen
+                }))),
+                // on_click: None,
             },
             lay![
                 padding: [5., 3., 5., 5.],
@@ -195,21 +199,11 @@ impl Component for NetworkScreen {
                 size_pct: [100, 20],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                axis_alignment: Alignment::End,
                 position_type: Absolute,
                 position: [Auto, 0.0, 0.0, 0.0],
             ]
         );
-        let mut footer_div = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 20],
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
-                position_type: Absolute,
-                position: [Auto, 0.0, 0.0, 0.0],
-            ]
-        );
+
         let footer_row: Node = node!(
             Div::new(),
             lay![
@@ -254,9 +248,9 @@ impl Component for NetworkScreen {
             .push(node!(HDivider { size: 1. }))
             .push(footer_row);
 
-        // c_node = c_node.push(network_div);
-        // c_node = c_node.push(manage_networks_div);
-        // c_node = c_node.push(available_networks_div);
+        // // c_node = c_node.push(network_div);
+        // // c_node = c_node.push(manage_networks_div);
+        // // c_node = c_node.push(available_networks_div);
 
         if connected_network_name.clone().len() < 1 {
             c_node = c_node.push(manage_networks_div);
@@ -275,6 +269,7 @@ impl Component for NetworkScreen {
             c_node = c_node.push(network_div_check?);
             c_node = c_node.push(manage_networks_div);
             c_node = c_node.push(available_networks_div);
+            c_node = c_node.push(text_node("Other"));
             main_node = main_node.push(c_node);
         }
 
