@@ -35,6 +35,7 @@ use std::{
     collections::HashMap,
     fs,
     path::Path,
+    sync::{Arc, RwLock},
     thread::{self, JoinHandle},
 };
 use tokio::runtime::Builder;
@@ -54,6 +55,7 @@ pub struct UiParams {
 
 #[derive(Debug)]
 pub enum WirelessMessage {
+    // Status { status: }
     Toggle { value: Option<bool> },
     // available networks
     // manage networks
@@ -83,6 +85,7 @@ pub enum AppMessage {
 #[derive(Default, Clone)]
 pub struct AppParams {
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
+    settings: Arc<RwLock<MainSettings>>,
 }
 
 #[tokio::main]
@@ -208,6 +211,8 @@ async fn main() -> anyhow::Result<()> {
 
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
+    let settings = Arc::new(RwLock::new(settings));
+
     let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<SettingsApp, AppParams>(
         XdgWindowParams {
             window_info,
@@ -219,6 +224,7 @@ async fn main() -> anyhow::Result<()> {
         },
         AppParams {
             app_channel: Some(app_channel_tx.clone()),
+            settings: settings.clone(),
         },
     );
     let app_channel = app_channel_tx.clone();
@@ -248,11 +254,12 @@ async fn main() -> anyhow::Result<()> {
                     });
                 }
                 AppMessage::Wireless { message } => match message {
-                    WirelessMessage::Toggle { value } => {
+                    WirelessMessage::Toggle { .. } => {
+                        println!("INSIDE TOGGLE");
                         let wireless_msg_tx_cloned = wireless_msg_tx.clone();
                         futures::executor::block_on(async move {
                             //let (tx, rx) = oneshot::channel();
-                            let res = wireless_msg_tx_cloned.clone().send(message).await;
+                            let res = wireless_msg_tx_cloned.send(message).await;
                             //let res = rx.await.expect("no reply from service");
                         });
                     }
@@ -282,7 +289,7 @@ async fn main() -> anyhow::Result<()> {
 }
 
 fn init_services(
-    settings: MainSettings,
+    settings: Arc<RwLock<MainSettings>>,
     app_channel: Sender<AppMessage>,
     wireless_msg_rx: Receiver<WirelessMessage>,
 ) -> JoinHandle<()> {

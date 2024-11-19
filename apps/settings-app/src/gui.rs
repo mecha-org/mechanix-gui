@@ -13,7 +13,7 @@ use crate::{
     },
     settings::{self, MainSettings},
     shared::h_divider::HDivider,
-    AppMessage, AppParams,
+    AppMessage, AppParams, WirelessMessage,
 };
 use mctk_core::{
     component::{self, Component, RootComponent},
@@ -28,7 +28,10 @@ use mctk_core::{
 };
 use mctk_macros::{component, state_component_impl};
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use std::any::Any;
+use std::{
+    any::Any,
+    sync::{Arc, RwLock},
+};
 
 #[derive(Default, Debug, Clone, Hash, Copy)]
 pub enum Routes {
@@ -52,7 +55,7 @@ pub enum Routes {
 
 #[derive(Debug)]
 pub struct SettingsAppState {
-    settings: MainSettings,
+    settings: Arc<RwLock<MainSettings>>,
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
     current_route: Routes,
     connected_network_name: String,
@@ -98,7 +101,7 @@ impl Component for SettingsApp {
         };
 
         self.state = Some(SettingsAppState {
-            settings,
+            settings: Arc::new(RwLock::new(MainSettings::default())),
             wireless_Status: false,
             app_channel: None,
             current_route: Routes::default(),
@@ -190,8 +193,14 @@ impl Component for SettingsApp {
                     self.state_mut().connected_network_info = Some(info.clone());
                 }
                 Message::UpdateWirelessStatus(value) => {
-                    // println!("CHECK TOGGLE VALUE {:?} ", value.clone());
                     self.state_mut().wireless_Status = value.clone();
+                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                        let _ = app_channel.send(AppMessage::Wireless {
+                            message: WirelessMessage::Toggle {
+                                value: Some(value.clone()),
+                            },
+                        });
+                    }
                 }
                 Message::ConnectedNetworkDetails { details } => {
                     self.state_mut().connected_network_details = details.clone();
@@ -207,5 +216,9 @@ impl Component for SettingsApp {
     }
 }
 impl RootComponent<AppParams> for SettingsApp {
-    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {}
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_params = app_params.downcast_ref::<AppParams>().unwrap();
+        self.state_mut().app_channel = app_params.app_channel.clone();
+        self.state_mut().settings = app_params.settings.clone();
+    }
 }
