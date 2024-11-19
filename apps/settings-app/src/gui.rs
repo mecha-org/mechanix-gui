@@ -1,27 +1,26 @@
 use crate::{
     screens::{
-        battery::battery_screen::BatteryScreen,
-        battery::performance_mode::PerformanceMode,
-        bluetooth::bluetooth_pairing_enter_code::BluetoothPairingEnterCode,
-        bluetooth::device_info::BluetoothDeviceInfo,
+        battery::{battery_screen::BatteryScreen, performance_mode::PerformanceMode},
+        bluetooth::{
+            bluetooth_pairing_enter_code::BluetoothPairingEnterCode,
+            device_info::BluetoothDeviceInfo,
+        },
         bluetooth::{
             bluetooth_pairing_verify_code::BluetoothPairingVerifyCode,
             bluetooth_screen::BluetoothScreen,
         },
-        display::display_screen::DisplayScreen,
-        display::screen_off_time::ScreenOffTime,
-        language::language_screen::LanguageScreen,
-        language::language_select::LanguageSelect,
+        display::{display_screen::DisplayScreen, screen_off_time::ScreenOffTime},
+        language::{language_screen::LanguageScreen, language_select::LanguageSelect},
         settings_menu::settings_screen::SettingsScreen,
         sound::sound_screen::SoundScreen,
         wireless::{
-            handler::WirelessInfoItem, network_details_screen::NetworkDetailsScreen,
-            network_screen::NetworkScreen,
+            available_networks::AvailableNetworksScreen, handler::WirelessDetailsItem,
+            network_details_screen::NetworkDetailsScreen, network_screen::NetworkScreen,
         },
     },
     settings::{self, MainSettings},
     shared::h_divider::HDivider,
-    AppMessage, AppParams,
+    AppMessage, AppParams, WirelessMessage,
 };
 use mctk_core::{
     component::{self, Component, RootComponent},
@@ -36,13 +35,17 @@ use mctk_core::{
 };
 use mctk_macros::{component, state_component_impl};
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use std::any::Any;
+use std::{
+    any::Any,
+    sync::{Arc, RwLock},
+};
 
 #[derive(Default, Debug, Clone, Hash, Copy)]
 pub enum Routes {
     #[default]
     SettingsList,
     NetworkScreen,
+    AvailableNetworksScreen,
     LanguageSelect,
     NetworkDetails,
     BluetoothScreen,
@@ -61,23 +64,34 @@ pub enum Routes {
 
 #[derive(Debug)]
 pub struct SettingsAppState {
-    settings: MainSettings,
+    settings: Arc<RwLock<MainSettings>>,
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
     current_route: Routes,
     connected_network_name: String,
     connected_network_info: Option<WirelessInfoResponse>,
-    connected_network_details: Option<WirelessInfoItem>,
+    connected_network_details: Option<WirelessDetailsItem>,
+    available_networks_list: Vec<WirelessDetailsItem>,
     wireless_Status: bool,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    ChangeRoute { route: Routes },
-    WirelessStatus { status: bool },
-    ConnectedNetwork { info: WirelessInfoResponse },
+    ChangeRoute {
+        route: Routes,
+    },
+    WirelessStatus {
+        status: bool,
+    },
+    ConnectedNetwork {
+        info: WirelessInfoResponse,
+    },
     UpdateWirelessStatus(bool),
-    AvailableNetworksList { list: Vec<WirelessInfoItem> },
-    ConnectedNetworkDetails { details: Option<WirelessInfoItem> },
+    AvailableNetworksList {
+        list: Vec<WirelessDetailsItem>,
+    },
+    ConnectedNetworkDetails {
+        details: Option<WirelessDetailsItem>,
+    },
 }
 
 /// # SettingsApp State
@@ -96,13 +110,14 @@ impl Component for SettingsApp {
         };
 
         self.state = Some(SettingsAppState {
-            settings,
+            settings: Arc::new(RwLock::new(MainSettings::default())),
             wireless_Status: false,
             app_channel: None,
             current_route: Routes::default(),
             connected_network_name: String::from(""),
             connected_network_info: None,
             connected_network_details: None,
+            available_networks_list: vec![],
         });
     }
 
@@ -142,11 +157,17 @@ impl Component for SettingsApp {
                 base = base.push(node!(NetworkScreen {
                     connected_network: self.state_ref().connected_network_info.clone(),
                     status: self.state_ref().wireless_Status.clone(),
+                    available_networks_list: self.state_ref().available_networks_list.clone(),
                 }))
             }
             Routes::NetworkDetails => {
                 base = base.push(node!(NetworkDetailsScreen {
-                    connected_network: self.state_ref().connected_network_details.clone(),
+                    wireless_details: self.state_ref().connected_network_details.clone(),
+                }))
+            }
+            Routes::AvailableNetworksScreen => {
+                base = base.push(node!(AvailableNetworksScreen {
+                    available_networks_list: self.state_ref().available_networks_list.clone(),
                 }))
             }
             Routes::LanguageScreen => base = base.push(node!(LanguageScreen {})),
@@ -166,6 +187,7 @@ impl Component for SettingsApp {
             Routes::LanguageSelect => base = base.push(node!(LanguageSelect {})),
             Routes::AppearanceScreen => todo!(),
             Routes::BatteryScreen => base = base.push(node!(BatteryScreen {})),
+            _ => (),
         }
 
         app_node = app_node.push(base);
@@ -176,9 +198,6 @@ impl Component for SettingsApp {
         if let Some(msg) = message.downcast_ref::<Message>() {
             match msg {
                 Message::ChangeRoute { route } => {
-                    // match route {
-                    //     _ => (),
-                    // }
                     self.state_mut().current_route = route.clone();
                 }
                 Message::WirelessStatus { status } => {
@@ -189,14 +208,20 @@ impl Component for SettingsApp {
                     self.state_mut().connected_network_info = Some(info.clone());
                 }
                 Message::UpdateWirelessStatus(value) => {
-                    // println!("CHECK TOGGLE VALUE {:?} ", value.clone());
                     self.state_mut().wireless_Status = value.clone();
+                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                        let _ = app_channel.send(AppMessage::Wireless {
+                            message: WirelessMessage::Toggle {
+                                value: Some(value.clone()),
+                            },
+                        });
+                    }
                 }
                 Message::ConnectedNetworkDetails { details } => {
                     self.state_mut().connected_network_details = details.clone();
                 }
                 Message::AvailableNetworksList { list } => {
-                    // println!("Message::AvailableNetworksList  list{:?}", &list);
+                    self.state_mut().available_networks_list = list.clone();
                 }
                 _ => (),
             }
@@ -206,5 +231,9 @@ impl Component for SettingsApp {
     }
 }
 impl RootComponent<AppParams> for SettingsApp {
-    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {}
+    fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
+        let app_params = app_params.downcast_ref::<AppParams>().unwrap();
+        self.state_mut().app_channel = app_params.app_channel.clone();
+        self.state_mut().settings = app_params.settings.clone();
+    }
 }

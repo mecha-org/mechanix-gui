@@ -1,4 +1,4 @@
-use super::handler::WirelessInfoItem;
+use super::handler::WirelessDetailsItem;
 use crate::gui::{Message, Routes};
 use crate::shared::h_divider::HDivider;
 use mctk_core::*;
@@ -65,7 +65,7 @@ macro_rules! row {
 
 #[derive(Debug)]
 pub struct NetworkDetailsScreen {
-    pub connected_network: Option<WirelessInfoItem>,
+    pub wireless_details: Option<WirelessDetailsItem>,
 }
 impl component::Component for NetworkDetailsScreen {
     fn view(&self) -> Option<Node> {
@@ -75,7 +75,7 @@ impl component::Component for NetworkDetailsScreen {
         let mut network_encyption: String = "-".to_string();
         let mut network_frequency: String = "-".to_string();
         let mut mac_address = "-".to_string();
-        match self.connected_network.clone() {
+        match self.wireless_details.clone() {
             Some(resp) => {
                 network_name = resp.scan_info.name.clone();
                 network_ssid = resp.scan_info.name.clone();

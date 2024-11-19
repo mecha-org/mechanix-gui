@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct WirelessInfoItem {
+pub struct WirelessDetailsItem {
     pub scan_info: WirelessInfoResponse,
     pub security: String,
     pub encryption: String,
@@ -68,11 +68,11 @@ impl WirelessServiceHandle {
                 let security_protocol_regex = Regex::new(r"\[(WPA[2-]?-PSK)\-").unwrap();
                 let encryption_regex = Regex::new(r"\-(CCMP|TKIP)\]").unwrap();
 
-                let modified_wireless_network: Vec<WirelessInfoItem> = response
+                let modified_wireless_network: Vec<WirelessDetailsItem> = response
                     .wireless_network
                     .into_iter()
                     .map(|item| {
-                        let mut new_item: WirelessInfoItem = WirelessInfoItem {
+                        let mut new_item: WirelessDetailsItem = WirelessDetailsItem {
                             scan_info: item.clone(),
                             security: "".to_string(),
                             encryption: "".to_string(),
@@ -103,7 +103,7 @@ impl WirelessServiceHandle {
 
                 match connected_network_info {
                     Some(response) => {
-                        let connected_wireless: Option<WirelessInfoItem> =
+                        let connected_wireless: Option<WirelessDetailsItem> =
                             modified_wireless_network
                                 .iter()
                                 .find(|p| {

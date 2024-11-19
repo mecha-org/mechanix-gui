@@ -4,9 +4,13 @@ use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
+use super::handler::WirelessDetailsItem;
+
 #[derive(Debug)]
-pub struct BluetoothScreen {}
-impl Component for BluetoothScreen {
+pub struct AvailableNetworksScreen {
+    pub available_networks_list: Vec<WirelessDetailsItem>,
+}
+impl Component for AvailableNetworksScreen {
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -47,7 +51,7 @@ impl Component for BluetoothScreen {
             ]
         );
         let header_text = node!(
-            Text::new(txt!("Bluetooth"))
+            Text::new(txt!("Available Networks"))
                 .style("font", "Space Grotesk")
                 .style("size", 28.)
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
@@ -69,46 +73,48 @@ impl Component for BluetoothScreen {
         header = header.push(toggle);
         header_node = header_node.push(header);
 
-        let devices = [("English"), ("English"), ("Chinese")];
-        base = base.push(footer_node!(
-            Routes::SettingsList,
-            "add_icon",
-            Box::new(|| msg!(Message::ChangeRoute {
-                route: Routes::SettingsList,
-            }))
-        ));
+        // let devices = [("English"), ("English"), ("Chinese")];
+        let devices = self.available_networks_list.clone();
         main_node = main_node.push(header_node);
-        main_node = main_node.push(text_node("Available Devices"));
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        main_node = main_node.push(tab_item_node!(
-            [text_bold_node("mecha compute")],
-            [icon_node("connected_icon"), icon_node("right_arrow_icon")],
-            route: Routes::BluetoothDeviceInfo
-        ));
+        // main_node = main_node.push(tab_item_node!(
+        //     [text_bold_node("mecha compute")],
+        //     [icon_node("connected_icon"), icon_node("right_arrow_icon")],
+        //     route: Routes::BluetoothDeviceInfo
+        // ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
         for (i, device) in devices.into_iter().enumerate() {
             main_node = main_node.push(
-                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")], route: Routes::BluetoothPairingEnterCode)
-                    .key((i + 1) as u64),
+                tab_item_node!(
+                    [text_bold_node(&device.scan_info.name)],
+                    [
+                        icon_node("secured_wifi_icon"),
+                        icon_node("wifi_strength_icon"),
+                        icon_node("info_icon")
+                    ],
+                    route: Routes::NetworkDetails
+                )
+                .key((i + 1) as u64),
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
         }
 
-        main_node = main_node.push(node!(Div::new(), lay![size: [50]]));
-        main_node = main_node.push(text_node("Other Devices"));
-        main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        main_node = main_node.push(tab_item_node!(
-            [text_bold_node("mecha compute")],
-            [icon_node("connected_icon"), icon_node("right_arrow_icon")]
-        ));
+        // main_node = main_node.push(node!(Div::new(), lay![size: [50]]));
+        // main_node = main_node.push(text_node("Other Devices"));
+        // main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
+        // main_node = main_node.push(tab_item_node!(
+        //     [text_bold_node("mecha compute")],
+        //     [icon_node("connected_icon"), icon_node("right_arrow_icon")]
+        // ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        for (i, device) in devices.into_iter().enumerate() {
-            main_node = main_node.push(
-                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")])
-                    .key((i + 1) as u64),
-            );
-            main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
-        }
+        // for (i, device) in devices.into_iter().enumerate() {
+        //     main_node = main_node.push(
+        //         tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")])
+        //             .key((i + 1) as u64),
+        //     );
+        //     main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
+        // }
+        main_node = main_node.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
         Some(base)
     }
