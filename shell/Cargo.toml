@@ -47,7 +47,7 @@ keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "w
 mctk_core = { git = "https://github.com/mecha-org/mctk.git", rev = "81c09eed5388f983ac8e43a1835e9119759864b0" }
 mctk_smithay = { git = "https://github.com/mecha-org/mctk.git", rev = "81c09eed5388f983ac8e43a1835e9119759864b0" }
 mctk_macros = { git = "https://github.com/mecha-org/mctk.git", rev = "81c09eed5388f983ac8e43a1835e9119759864b0" }
-wayland-protocols-async = { git = "https://github.com/mecha-org/wayland-protocols-async.git", rev = "1a152eb5f40d3de89a47a9d54cbc4b826376e94e" }
+wayland-protocols-async = { git = "https://github.com/mecha-org/wayland-protocols-async.git", rev = "0c2c8f6ab9d944e24fdff89f08fd8fe6a67eb6d3" }
 mechanix_system_dbus_client = { path = "../services/system/client/dbus" }
 mechanix_desktop_dbus_client = { path = "../services/desktop/client/dbus" }
 mechanix_store_server = { path = "../services/store/server" }

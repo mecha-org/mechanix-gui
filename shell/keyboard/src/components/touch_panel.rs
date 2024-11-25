@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
+use crate::action::Modifier;
 use crate::gui::{self, Message};
 use crate::layout::{KeyButton, Point};
 use crate::settings::ClickAreaConfigs;
@@ -51,6 +52,7 @@ pub struct TouchPanel {
     pub current_view: String,
     pub click_area_configs: ClickAreaConfigs,
     pub purpose: ContentPurpose,
+    pub active_mods: HashSet<Modifier>,
 }
 
 impl TouchPanel {
@@ -60,6 +62,7 @@ impl TouchPanel {
         current_view: String,
         click_area_configs: ClickAreaConfigs,
         purpose: ContentPurpose,
+        active_mods: HashSet<Modifier>,
     ) -> Self {
         // println!("TouchPanel::new()");
 
@@ -76,6 +79,7 @@ impl TouchPanel {
             purpose,
             dirty: false,
             next_char_prob: next_char_prob.clone(),
+            active_mods,
         }
     }
 
@@ -147,7 +151,7 @@ impl TouchPanel {
                         ));
                     }
 
-                    println!("after click {:?}", self.state_ref().next_char_prob.clone());
+                    // println!("after click {:?}", self.state_ref().next_char_prob.clone());
                 }
             }
         }
@@ -219,11 +223,12 @@ impl Component for TouchPanel {
         self.next_char_prob.len().hash(hasher);
         self.current_view.hash(hasher);
         self.purpose.hash(hasher);
+        self.active_mods.len().hash(hasher);
         // self.view.hash(hasher);
     }
 
     fn new_props(&mut self) {
-        println!("TouchPanel:: new_props()");
+        // println!("TouchPanel:: new_props()");
         self.state_mut().next_char_prob = self.next_char_prob.clone();
         //Find posibilities of next keys
         //Update proximity martrix based on that
@@ -344,7 +349,7 @@ impl Component for TouchPanel {
     }
 
     fn on_mouse_down(&mut self, event: &mut Event<MouseDown>) {
-        println!("TouchPanel::on_mouse_down()");
+        // println!("TouchPanel::on_mouse_down()");
         event.stop_bubbling();
         let msgs = self.handle_press(event.relative_logical_position());
         for mesg in msgs {
@@ -353,7 +358,7 @@ impl Component for TouchPanel {
     }
 
     fn on_mouse_up(&mut self, _event: &mut Event<MouseUp>) {
-        println!("TouchPanel::on_mouse_up()");
+        // println!("TouchPanel::on_mouse_up()");
         self.handle_release();
     }
 
@@ -383,6 +388,7 @@ impl Component for TouchPanel {
         println!("TouchPanel::render()");
         let proximity_matrix = self.state_ref().proximity_matrix.clone();
         let show_click_area = self.click_area_configs.visible;
+        let active_mods = self.active_mods.clone();
 
         let width = context.aabb.width();
         let height = context.aabb.height();
@@ -410,6 +416,15 @@ impl Component for TouchPanel {
                         button_color = Color::rgba(255., 255., 255., 0.25);
                     }
                 };
+
+                match col.action {
+                    crate::action::Action::ApplyModifier(modifier) => {
+                        if active_mods.contains(&modifier) {
+                            button_color = Color::rgba(255., 255., 255., 0.25);
+                        }
+                    }
+                    _ => (),
+                }
 
                 let button = RectInstanceBuilder::default()
                     .pos(col_pos)
