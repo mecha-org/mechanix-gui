@@ -1,3 +1,4 @@
+use crate::action::Modifier;
 use crate::components::touch_panel::TouchPanel;
 use crate::settings::{self, KeyboardSettings};
 use crate::{action, AppMessage, AppParams};
@@ -12,7 +13,7 @@ use mctk_core::{
     Node,
 };
 use std::any::Any;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use wayland_protocols_async::zwp_input_method_v2::handler::ContentPurpose;
 
@@ -63,6 +64,7 @@ pub struct KeyboardState {
     suggested_for: String,
     next_char_prob: HashMap<String, f64>,
     keyboard_window: KeyboardWindow,
+    active_mods: HashSet<Modifier>,
 }
 
 #[component(State = "KeyboardState")]
@@ -120,6 +122,7 @@ impl Component for Keyboard {
             next_char_prob: HashMap::new(),
             purpose: ContentPurpose::Normal,
             keyboard_window: KeyboardWindow::Maximized,
+            active_mods: HashSet::new(),
         });
     }
 
@@ -142,7 +145,20 @@ impl Component for Keyboard {
                         self.state_mut().current_view = lock.clone();
                     }
                 }
-                action::Action::ApplyModifier(m) => {}
+                action::Action::ApplyModifier(m) => {
+                    println!("modifier is {:?}", m);
+                    let mut mods = self.state_ref().active_mods.clone();
+                    if mods.contains(m) {
+                        mods.remove(m);
+                    } else {
+                        mods.insert(m.clone());
+                    }
+
+                    self.state_mut().active_mods = mods.clone();
+                    if let Some(app_channel) = &self.state_ref().app_channel {
+                        let _ = app_channel.send(AppMessage::ApplyModifiers { mods });
+                    };
+                }
                 action::Action::Submit { text, keys } => {
                     // println!("text {:?} keys {:?}", text, keys);
                     if let Some(app_channel) = &self.state_ref().app_channel {
@@ -218,6 +234,7 @@ impl Component for Keyboard {
         let suggestions = self.state_ref().suggestions.clone();
         let next_char_prob = self.state_ref().next_char_prob.clone();
         let click_area = self.state_ref().settings.click_area.clone();
+        let active_mods = self.state_ref().active_mods.clone();
         let mut main_div = node!(
             Div::new().bg(if keyboard_window == KeyboardWindow::Maximized {
                 Color::BLACK
@@ -274,6 +291,7 @@ impl Component for Keyboard {
                 self.state_ref().current_view.clone(),
                 click_area,
                 purpose,
+                active_mods
             ),
             lay![ margin: [8., if purpose == ContentPurpose::Terminal { 12. } else { 0. }, 0., 0.]]
         ));

@@ -7,6 +7,7 @@ mod layout;
 mod settings;
 mod trie;
 
+use action::{Modifier, Modifiers};
 use gui::Keyboard;
 use mctk_core::{
     msg,
@@ -26,10 +27,13 @@ use mctk_smithay::layer_shell::layer_window::{LayerWindowMessage, LayerWindowPar
 use mctk_smithay::WindowOptions;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
-use std::io::{Seek, Write};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 use std::{collections::HashMap, io::SeekFrom};
+use std::{
+    collections::HashSet,
+    io::{Seek, Write},
+};
 use std::{io::Read, os::fd::IntoRawFd};
 use tempfile::tempfile;
 use tokio::{
@@ -75,6 +79,9 @@ enum AppMessage {
     Erase,
     ContentInfo {
         purpose: ContentPurpose,
+    },
+    ApplyModifiers {
+        mods: HashSet<Modifier>,
     },
 }
 
@@ -140,7 +147,7 @@ fn main() -> anyhow::Result<()> {
         .unwrap_or(String::from("mechanix.shell.keyboard"));
     let namespace = app_id.clone();
 
-    let layer_shell_opts = LayerOptions {
+    let mut layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
         layer: wlr_layer::Layer::Top,
         keyboard_interactivity: wlr_layer::KeyboardInteractivity::None,
@@ -156,7 +163,7 @@ fn main() -> anyhow::Result<()> {
 
     //subscribe to events channel
     let (app_channel, app_channel_rx) = calloop::channel::channel();
-    // let (layer_tx, layer_rx) = calloop::channel::channel();
+    let (layer_tx, layer_rx) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Keyboard, AppParams>(
         LayerWindowParams {
             window_info,
@@ -165,8 +172,8 @@ fn main() -> anyhow::Result<()> {
             assets,
             layer_shell_opts: layer_shell_opts.clone(),
             svgs,
-            // layer_tx: Some(layer_tx.clone()),
-            // layer_rx: Some(layer_rx),
+            layer_tx: Some(layer_tx.clone()),
+            layer_rx: Some(layer_rx),
             ..Default::default()
         },
         AppParams {
@@ -191,6 +198,15 @@ fn main() -> anyhow::Result<()> {
                             width: settings.window.size.0 as u32,
                             height: settings.window.size.1 as u32,
                         });
+                        layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
+                            | wlr_layer::Anchor::RIGHT
+                            | wlr_layer::Anchor::BOTTOM;
+                        layer_shell_opts.zone = settings.window.size.1 as i32;
+                        let _ = layer_tx
+                            .clone()
+                            .send(LayerWindowMessage::ReconfigureLayerOpts {
+                                opts: layer_shell_opts.clone(),
+                            });
                         let _ = window_tx_2.clone().send(WindowMessage::Send {
                             message: msg!(Message::Reset),
                         });
@@ -206,6 +222,15 @@ fn main() -> anyhow::Result<()> {
                             width: settings.window.size.0 as u32,
                             height: settings.window.size.1 as u32,
                         });
+                        layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
+                            | wlr_layer::Anchor::RIGHT
+                            | wlr_layer::Anchor::BOTTOM;
+                        layer_shell_opts.zone = settings.window.size.1 as i32;
+                        let _ = layer_tx
+                            .clone()
+                            .send(LayerWindowMessage::ReconfigureLayerOpts {
+                                opts: layer_shell_opts.clone(),
+                            });
                         // let _ = window_tx_2.clone().send(WindowMessage::Send {
                         //     message: msg!(Message::UpdateKeyboardWindow {
                         //         keyboard_window: gui::KeyboardWindow::Maximized
@@ -226,6 +251,14 @@ fn main() -> anyhow::Result<()> {
                             width: 80,
                             height: 60,
                         });
+                        layer_shell_opts.anchor =
+                            wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM;
+                        layer_shell_opts.zone = 0 as i32;
+                        let _ = layer_tx
+                            .clone()
+                            .send(LayerWindowMessage::ReconfigureLayerOpts {
+                                opts: layer_shell_opts.clone(),
+                            });
                         // let _ = window_tx_2.clone().send(WindowMessage::Send {
                         //     message: msg!(Message::UpdateKeyboardWindow {
                         //         keyboard_window: gui::KeyboardWindow::Minimized
@@ -254,6 +287,29 @@ fn main() -> anyhow::Result<()> {
                                 .send(VirtualKeyboardMessage::Key {
                                     keycode: keycode.code - 8,
                                     keymotion: KeyMotion::Release,
+                                })
+                                .await;
+                        });
+                    }
+                    AppMessage::ApplyModifiers { mods } => {
+                        println!("AppMessage::ApplyModifiers {:?}", mods);
+                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
+
+                        let raw_modifiers = mods
+                            .iter()
+                            .map(|m| match m {
+                                Modifier::Control => Modifiers::CONTROL,
+                                Modifier::Alt => Modifiers::MOD1,
+                                Modifier::Mod4 => Modifiers::MOD4,
+                            })
+                            .fold(Modifiers::empty(), |m, n| m | n);
+
+                        futures::executor::block_on(async move {
+                            let _ = virtual_keyboard_msg_tx
+                                .send(VirtualKeyboardMessage::SetModifiers {
+                                    depressed: raw_modifiers.bits() as u32,
+                                    latched: 0,
+                                    locked: 0,
                                 })
                                 .await;
                         });
