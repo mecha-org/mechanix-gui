@@ -24,10 +24,9 @@ impl Component for Brightness {
                 lay![direction: Direction::Column, cross_alignment:Alignment::Stretch, size_pct:[100, Auto]]
             )
             .push(node!(Text::new(txt!("BRIGHTNESS"))
-                .style("color", Color::WHITE)
+                .with_class("text-white font-space-mono font-normal")
                 .style("size", 15.0)
-                .style("font", "SpaceMono-Bold")
-                .style("font_weight", FontWeight::Normal)))
+                ))
             .push(node!(
                 Slider::new()
                 .value(self.value)

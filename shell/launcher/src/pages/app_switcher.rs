@@ -60,10 +60,8 @@ impl Component for AppSwitcher {
             )
             .push(node!(
                 Text::new(txt!("No apps running".to_string()))
-                    .style("color", Color::rgb(113., 113., 113.))
-                    .style("size", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal) // .style("v_alignment", VerticalPosition::Center)
+                    .with_class("text-l font-space-grotesk font-normal")
+                    .style("color", Color::rgb(113., 113., 113.)) // .style("v_alignment", VerticalPosition::Center)
             ))
         };
 
@@ -92,11 +90,8 @@ impl Component for AppSwitcher {
 
         start_node = start_node.push(node!(
             Text::new(txt!("Running apps"))
-                .style("color", Color::rgb(197., 197., 197.))
-                .style("size", 28.0)
-                .style("line_height", 28.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
+                .with_class("text-3xl leading-7 font-space-grotesk font-normal")
+                .style("color", Color::rgb(197., 197., 197.)),
             lay! [ margin: [0., 20., 0, 20.] ]
         ));
 

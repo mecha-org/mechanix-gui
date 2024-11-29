@@ -10,7 +10,7 @@ use mctk_core::{
     layout::{Alignment, Direction},
     msg, node, rect, size, size_pct, state_component_impl,
     style::Styled,
-    widgets::{Div, IconButton, IconType},
+    widgets::{Div, IconButton, IconType, Scrollable},
     Color,
 };
 
@@ -58,7 +58,7 @@ impl Component for AppList {
             // .style("bar_background_color", Color::TRANSPARENT),
             lay![
                 // padding: [8, 16, 0, 0],
-                size_pct: [100],
+                size: [440, Auto],
                 axis_alignment: Alignment::Start,
                 direction: Row,
                 wrap: true,
@@ -75,6 +75,8 @@ impl Component for AppList {
             );
         }
 
-        Some(apps_list_node)
+        let scrollable = node!(Scrollable::new(), lay![ size: [440] ]).push(apps_list_node);
+
+        Some(scrollable)
     }
 }
