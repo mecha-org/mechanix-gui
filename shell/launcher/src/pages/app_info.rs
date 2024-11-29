@@ -40,7 +40,7 @@ impl Component for AppInfo {
         let icon_path = self.app.icon_path.clone();
 
         let mut start_node = node!(
-            Div::new().bg(Color::rgba(13., 13., 14., 0.95)),
+            Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
                 cross_alignment: Alignment::Stretch,
@@ -96,11 +96,8 @@ impl Component for AppInfo {
 
         row_1 = row_1.push(node!(
             Text::new(txt!(name))
-                .style("color", Color::rgb(197., 197., 197.))
-                .style("size", 28.0)
-                .style("line_height", 28.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
+                .with_class("font-space-grotesk font-normal text-3xl leading-7")
+                .style("color", Color::rgb(197., 197., 197.)),
             lay! [ margin: [0., 20., 0, 20.] ]
         ));
 
@@ -199,11 +196,8 @@ impl Component for AppOptions {
                     ]
                 )
                 .push(node!(Text::new(txt!(title))
-                    .style("color", color)
-                    .style("size", 20.0)
-                    .style("line_height", 20.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold))),
+                    .with_class("text-l font-space-grotesk leading-5 font-bold")
+                    .style("color", color))),
             )
             .push(
                 node!(

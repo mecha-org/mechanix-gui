@@ -1,9 +1,9 @@
 use mctk_core::{
     component::{Component, Message},
     event::{Click, Event},
-    lay, node, rect, size, size_pct,
+    lay, node, rect, size,
     style::Styled,
-    widgets::{Div, IconButton, IconType, Image, Svg},
+    widgets::{Div, IconButton, IconType},
     Color, Node,
 };
 
@@ -62,13 +62,11 @@ impl Component for PinnedApp {
                 } else {
                     IconType::Png
                 })
+                .with_class("btn-xxl border-0 p-4 rounded-xl")
                 .disabled(self.disabled)
-                .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgba(42., 42., 44., 0.80))
-                .style("padding", 16.)
-                .style("radius", 12.),
+                .style("active_color", Color::rgba(42., 42., 44., 0.80)),
             lay![
-                size_pct: [100],
+                size: [Auto],
             ],
         );
 

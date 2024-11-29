@@ -325,7 +325,7 @@ impl Component for RunningApp {
                 .pos(img_bg_pos)
                 .scale(img_bg_scale)
                 .color(Color::BLACK)
-                .border_size(2.5)
+                .border_size((2.5, 2.5, 2.5, 2.5))
                 .border_color(Color::WHITE)
                 .radius((radius, radius, radius, radius))
                 .build()

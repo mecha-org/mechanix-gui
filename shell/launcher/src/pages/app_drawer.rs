@@ -209,13 +209,15 @@ impl Component for AppDrawer {
         //     lay! [ margin: [8., 20., 20., 20.] ]
         // ));
 
-        start_node = start_node.push(node!(
-            AppList::new(self.apps.clone(), self.disabled_apps_click),
-            lay![
-                size: [Auto],
-                margin: [0., 20., 0., 20.]
-            ]
-        ));
+        if !app_info_app_exists {
+            start_node = start_node.push(node!(
+                AppList::new(self.apps.clone(), self.disabled_apps_click),
+                lay![
+                    size: [Auto],
+                    margin: [0., 20., 0., 20.]
+                ]
+            ));
+        }
 
         Some(start_node)
     }

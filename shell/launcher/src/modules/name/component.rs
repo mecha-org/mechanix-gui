@@ -16,9 +16,7 @@ impl Component for MachineName {
 
     fn view(&self) -> Option<Node> {
         Some(node!(Text::new(txt!(self.name.to_uppercase().clone()))
-            .style("color", Color::WHITE)
-            .style("size", 15.0)
-            .style("font", "SpaceMono-Bold")
-            .style("font_weight", FontWeight::Bold)))
+            .with_class("text-white font-space-mono font-bold")
+            .style("size", 15.0)))
     }
 }

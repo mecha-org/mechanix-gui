@@ -92,11 +92,9 @@ impl Component for CloseButton {
                 ],
             ))
             .push(node!(Text::new(txt!("Close"))
+                .with_class("text-white text-xl font-space-grotesk font-medium")
                 .style("color", Color::WHITE)
-                .style("size", 22.0)
-                .style("line_height", 22.0)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Medium),)),
+                .style("line_height", 22.0),)),
         )
     }
 }

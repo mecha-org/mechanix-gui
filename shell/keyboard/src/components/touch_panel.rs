@@ -433,7 +433,7 @@ impl Component for TouchPanel {
                         height: button_height,
                     })
                     .color(button_color)
-                    .border_size(1.)
+                    .border_size((1., 1., 1., 1.))
                     .border_color(Color::DARK_GREY)
                     .build()
                     .unwrap();
@@ -477,7 +477,7 @@ impl Component for TouchPanel {
                         height: (p_bl.y - p_tl.y) as f32,
                     })
                     .color(Color::TRANSPARENT)
-                    .border_size(1.)
+                    .border_size((1., 1., 1., 1.))
                     .border_color(Color::WHITE)
                     .build()
                     .unwrap();
