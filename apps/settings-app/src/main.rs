@@ -8,9 +8,11 @@ mod shared;
 mod utils;
 
 use crate::gui::SettingsApp;
+use crate::screens::sound::sound_model::SoundModel;
 use futures::StreamExt;
 use gui::{Message, NetworkMessage};
 use mctk_core::{
+    context::{self, Model},
     msg,
     reexports::{
         cosmic_text,
@@ -247,6 +249,14 @@ async fn main() -> anyhow::Result<()> {
 
     let handle = event_loop.handle();
     let window_tx_2 = window_tx.clone();
+    let window_tx_channel = window_tx.clone();
+    let context_handler = context::get_static_context_handler();
+    context_handler.register_on_change(Box::new(move || {
+        window_tx_channel
+            .send(WindowMessage::Send { message: msg!(0) })
+            .unwrap();
+    }));
+    SoundModel::get().register_context_handler(context_handler);
 
     let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     // let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);

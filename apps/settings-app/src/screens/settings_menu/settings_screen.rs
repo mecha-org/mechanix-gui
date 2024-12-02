@@ -205,10 +205,10 @@ impl Component for SettingsScreen {
                 icon_1: "sound_icon".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: None,
-                // on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                //     route: Routes::SoundScreen
-                // }))),
+                // on_click: None,
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: Routes::SoundScreen
+                }))),
             },
             lay![
                 padding: [5., 3., 5., 5.],
