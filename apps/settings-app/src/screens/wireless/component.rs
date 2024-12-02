@@ -60,7 +60,6 @@ impl Component for NetworkRowComponent {
 
         Some(
             node!(
-                // Div::new().bg(Color::TRANSPARENT),
                 Div::new(),
                 lay![
                     padding: [10, 0, 10, 0],

@@ -31,7 +31,10 @@ fonts:
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Medium.ttf
 modules:
   wireless:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/wifi_icon.png
+    wifi_icon: /usr/share/mechanix/apps/settings/assets/icons/wifi_icon.png
+    network_settings_icon: /usr/share/mechanix/apps/settings/assets/icons/network_settings_icon.png
+    secured_wifi_icon: /usr/share/mechanix/apps/settings/assets/icons/secured_wifi_icon.png
+    wifi_strength_icon: /usr/share/mechanix/apps/settings/assets/icons/wifi_strength_icon.png
   bluetooth:
     icon: /usr/share/mechanix/apps/settings/assets/icons/bluetooth_icon.png
   display:
@@ -58,6 +61,9 @@ modules:
     connected_icon: /usr/share/mechanix/apps/settings/assets/icons/connected_icon.png
   footer:
     back_icon: /usr/share/mechanix/apps/settings/assets/icons/back_icon.png
+    tick_icon: /usr/share/mechanix/apps/settings/assets/icons/tick_icon.png
+    delete_icon: /usr/share/mechanix/apps/settings/assets/icons/delete_icon.png
+    add_icon: /usr/share/mechanix/apps/settings/assets/icons/add_icon.png
   not_found:
     icon:
       default: /usr/share/mechanix/apps/settings/assets/icons/not_found_icon.png

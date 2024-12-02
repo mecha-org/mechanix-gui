@@ -1,11 +1,11 @@
-use super::{component::NetworkRowComponent, handler::WirelessDetailsItem};
+use super::component::NetworkRowComponent;
 use crate::{
     components::text_node,
-    gui::{Message, Routes},
+    gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
     shared::h_divider::HDivider,
 };
 use mctk_core::{
-    component::Component,
+    component::{self, Component},
     lay,
     layout::{Alignment, Dimension, Direction, Size},
     msg, node, rect, size, size_pct,
@@ -14,26 +14,49 @@ use mctk_core::{
     widgets::{Div, IconButton, IconType, Text, Toggle},
     Color, Node,
 };
+use mctk_macros::{component, state_component_impl};
+
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
+use zbus::message;
 
 #[derive(Debug)]
-pub struct NetworkScreen {
-    pub connected_network: Option<WirelessInfoResponse>,
-    pub available_networks_list: Vec<WirelessDetailsItem>,
+pub struct NetworkScreenState {
+    // pub loading: bool,
     pub status: bool,
+    pub name: String,
+    // pub connected_network: Option<WirelessDetailsItem>,
+}
+
+#[derive(Debug)]
+#[component(State = "NetworkScreenState")]
+pub struct NetworkScreen {}
+
+impl NetworkScreen {
+    pub fn new(status: bool, name: String) -> Self {
+        Self {
+            state: Some(NetworkScreenState {
+                status: status,
+                name: name,
+                // connected_network: connected_network,
+            }),
+            dirty: false,
+        }
+    }
 }
 
 impl Component for NetworkScreen {
     fn view(&self) -> Option<Node> {
         let mut text_color = Color::WHITE;
 
-        let connected_network_name: String = match self.connected_network.clone() {
-            Some(resp) => resp.name,
-            None => {
-                text_color = Color::rgb(197., 200., 207.);
-                "".to_string()
-            }
-        };
+        // let connected_network_name: String = match self.connected_network.clone() {
+        //     Some(resp) => resp.name,
+        //     None => {
+        //         text_color = Color::rgb(197., 200., 207.);
+        //         "".to_string()
+        //     }
+        // };
+        // let connected_network_name: String = "".to_string();
+        let connected_network_name: String = self.state_ref().name.clone();
 
         let mut base: Node = node!(
             Div::new().bg(Color::BLACK),
@@ -94,21 +117,21 @@ impl Component for NetworkScreen {
                 axis_alignment: Alignment::Start
             ]
         );
-        let toggle = node!(
-            Toggle::new(self.status.clone())
-                .on_change(Box::new(|value| msg!(Message::UpdateWirelessStatus(value)))),
+        let toggle_node = node!(
+            Toggle::new(self.state_ref().status.clone())
+                .on_change(Box::new(|value| msg!(NetworkMessage::Toggle(value)))),
             lay![
                 margin:[0., 0., 0., 28.],
                 axis_alignment: Alignment::End
             ]
         );
         header = header.push(header_text);
-        header = header.push(toggle);
+        header = header.push(toggle_node);
         header_node = header_node.push(header);
 
         let mut network_div_check: Option<Node> = None;
 
-        if connected_network_name.clone().len() > 0 {
+        if connected_network_name.clone().len() > 0 || self.state_ref().status.clone() == true {
             let mut network_div = node!(
                 Div::new(),
                 lay![
@@ -124,9 +147,12 @@ impl Component for NetworkScreen {
                     icon_1: "connected_icon".to_string(),
                     icon_2: "right_arrow_icon".to_string(),
                     color: text_color,
-                    on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                        route: Routes::NetworkDetails
-                    }))),
+                    on_click: None,
+                    // on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    //     route: Routes::Network {
+                    //         screen: NetworkScreenRoutes::NetworkDetailsScreen
+                    //     }
+                    // }))),
                 },
                 lay![
                     padding: [5., 3., 5., 5.],
@@ -180,10 +206,7 @@ impl Component for NetworkScreen {
                 icon_1: "".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: Routes::AvailableNetworksScreen
-                }))),
-                // on_click: None,
+                on_click: None,
             },
             lay![
                 padding: [5., 3., 5., 5.],

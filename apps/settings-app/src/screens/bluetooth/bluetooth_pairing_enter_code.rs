@@ -56,13 +56,13 @@ impl Component for BluetoothPairingEnterCode {
         main_node = main_node.push(node!(HDivider { size: 1. }).key(9));
         main_node = main_node.push(text_box);
         main_node = main_node.push(node!(HDivider { size: 1. }).key(10));
-        base = base.push(footer_node!(
-            Routes::BluetoothScreen,
-            "tick_icon",
-            Box::new(|| msg!(Message::ChangeRoute {
-                route: Routes::BluetoothScreen,
-            }))
-        ));
+        // base = base.push(footer_node!(
+        //     Routes::BluetoothScreen,
+        //     "tick_icon",
+        //     Box::new(|| msg!(Message::ChangeRoute {
+        //         route: Routes::BluetoothScreen,
+        //     }))
+        // ));
         base = base.push(main_node);
         Some(base)
     }

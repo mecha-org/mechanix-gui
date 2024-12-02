@@ -1,8 +1,5 @@
 use crate::constants::{
-    ABOUT_ICON, ADD_ICON, APPEARANCE_ICON, BACKGROUND_IMAGE, BACK_ICON, BASE_SETTINGS_PATH,
-    BATTERY_ICON, BLUETOOTH_ICON, CONNECTED_ICON, DATE_TIME_ICON, DELETE_ICON, DISPLAY_ICON,
-    HOME_DIR_CONFIG_PATH, INFO_ICON, LANGUAGE_ICON, LOCK_ICON, RIGHT_ARROW_ICON, SECURED_WIFI_ICON,
-    SOUND_ICON, TICK_ICON, UPDATE_ICON, USR_SHARE_PATH, WIFI_ICON, WIFI_STRENTH_ICON,
+    ABOUT_ICON, ADD_ICON, APPEARANCE_ICON, BACKGROUND_IMAGE, BACK_ICON, BASE_SETTINGS_PATH, BATTERY_ICON, BLUETOOTH_ICON, CONNECTED_ICON, DATE_TIME_ICON, DELETE_ICON, DISPLAY_ICON, HOME_DIR_CONFIG_PATH, INFO_ICON, LANGUAGE_ICON, LOCK_ICON, NETWORK_SETTIGNS_ICON, RIGHT_ARROW_ICON, SECURED_WIFI_ICON, SOUND_ICON, TICK_ICON, UPDATE_ICON, USR_SHARE_PATH, WIFI_ICON, WIFI_STRENTH_ICON
 };
 use crate::errors::{SettingsAppError, SettingsAppErrorCodes};
 use anyhow::bail;
@@ -207,6 +204,7 @@ impl Default for LayoutSettings {
 #[serde(deny_unknown_fields)]
 #[serde(default)]
 pub struct Wireless {
+    pub network_settings_icon: String,
     pub wifi_icon: String,
     pub secured_wifi_icon: String,
     pub wifi_strength_icon: String,
@@ -214,6 +212,7 @@ pub struct Wireless {
 impl Default for Wireless {
     fn default() -> Self {
         Wireless {
+            network_settings_icon: NETWORK_SETTIGNS_ICON.to_owned(),
             wifi_icon: WIFI_ICON.to_owned(),
             secured_wifi_icon: SECURED_WIFI_ICON.to_owned(),
             wifi_strength_icon: WIFI_STRENTH_ICON.to_owned(),

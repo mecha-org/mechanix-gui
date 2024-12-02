@@ -1,5 +1,5 @@
 use super::handler::WirelessDetailsItem;
-use crate::gui::{Message, Routes};
+use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::shared::h_divider::HDivider;
 use mctk_core::*;
 use mctk_core::{
@@ -210,7 +210,9 @@ impl component::Component for NetworkDetailsScreen {
             .push(node!(
                 IconButton::new("back_icon")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::SettingsList
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkScreen
+                        }
                     })))
                     .icon_type(IconType::Png)
                     .style(

@@ -9,7 +9,7 @@ mod utils;
 
 use crate::gui::SettingsApp;
 use futures::StreamExt;
-use gui::Message;
+use gui::{Message, NetworkMessage};
 use mctk_core::{
     msg,
     reexports::{
@@ -28,8 +28,11 @@ use mctk_smithay::{
     xdg_shell::xdg_window::{XdgWindow, XdgWindowParams},
     WindowInfo, WindowMessage, WindowOptions,
 };
-use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use screens::wireless::handler::{WirelessDetailsItem, WirelessServiceHandle};
+use mechanix_status_bar_components::types::WirelessStatus;
+use mechanix_system_dbus_client::wireless::{
+    KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
+};
+// use screens::wireless::handler::{WirelessDetailsItem, WirelessServiceHandle};
 use settings::{AppSettings, MainSettings};
 use std::{
     collections::HashMap,
@@ -55,31 +58,26 @@ pub struct UiParams {
 
 #[derive(Debug)]
 pub enum WirelessMessage {
-    // Status { status: }
+    Status { status: Option<bool> },
     Toggle { value: Option<bool> },
-    // available networks
-    // manage networks
+    ConnectedNetworkName { name: String },
+    // ConnectedNetworkDetails {
+    //     details: Option<WirelessDetailsItem>,
+    // },
+    // AvailableNetworksList {
+    //     list: Vec<WirelessDetailsItem>,
+    // },
+    // KnownNetworksList {
+    //     // manage networks
+    //     list: Vec<KnownNetworkResponse>,
+    // },
+    getStatus,
 }
 
 #[derive(Debug)]
 pub enum AppMessage {
-    NetworkStatus {
-        status: bool,
-    },
-    ConnectedNetwork {
-        info: WirelessInfoResponse,
-    },
-    // UpdateNetworkStatus { status: bool },
-    Wireless {
-        message: WirelessMessage,
-    },
+    Wireless { message: WirelessMessage },
     NotFound,
-    AvailableNetworksList {
-        list: Vec<WirelessDetailsItem>,
-    },
-    ConnectedNetworkDetails {
-        details: Option<WirelessDetailsItem>,
-    },
 }
 
 #[derive(Default, Clone)]
@@ -124,6 +122,12 @@ async fn main() -> anyhow::Result<()> {
         "wifi_icon".to_string(),
         AssetParams::new(modules.wireless.wifi_icon),
     );
+
+    assets.insert(
+        "network_settings_icon".to_string(),
+        AssetParams::new(modules.wireless.network_settings_icon),
+    );
+
     assets.insert(
         "secured_wifi_icon".to_string(),
         AssetParams::new(modules.wireless.secured_wifi_icon),
@@ -250,44 +254,62 @@ async fn main() -> anyhow::Result<()> {
     let _ = handle.insert_source(app_channel_rx, move |event, _, _| {
         let _ = match event {
             calloop::channel::Event::Msg(msg) => match msg {
-                AppMessage::NetworkStatus { status } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::WirelessStatus { status: status }),
-                    });
-                }
-                AppMessage::ConnectedNetwork { info } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::ConnectedNetwork { info: info }),
-                    });
-                }
-                AppMessage::ConnectedNetworkDetails { details } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::ConnectedNetworkDetails { details: details }),
-                    });
-                }
                 AppMessage::Wireless { message } => match message {
-                    WirelessMessage::Toggle { .. } => {
-                        println!("INSIDE TOGGLE");
+                    WirelessMessage::Status { status } => {
+                        if let Some(value) = status {
+                            let _ = window_tx_2.send(WindowMessage::Send {
+                                message: msg!(NetworkMessage::WirelessStatus { status: value }),
+                            });
+                        } else {
+                            println!("No Wireless Value found");
+                        }
+                    }
+                    WirelessMessage::getStatus => {
                         let wireless_msg_tx_cloned = wireless_msg_tx.clone();
                         futures::executor::block_on(async move {
                             //let (tx, rx) = oneshot::channel();
-                            let res = wireless_msg_tx_cloned.send(message).await;
+                            let res = wireless_msg_tx_cloned.clone().send(message).await;
                             //let res = rx.await.expect("no reply from service");
                         });
                     }
+                    WirelessMessage::Toggle { .. } => {
+                        let wireless_msg_tx_cloned = wireless_msg_tx.clone();
+                        futures::executor::block_on(async move {
+                            //let (tx, rx) = oneshot::channel();
+                            let res = wireless_msg_tx_cloned.clone().send(message).await;
+                            //let res = rx.await.expect("no reply from service");
+                        });
+                    }
+                    WirelessMessage::ConnectedNetworkName { name } => {
+                        let _ = window_tx_2.send(WindowMessage::Send {
+                            message: msg!(NetworkMessage::ConnectedNetworkName { name: name }),
+                        });
+                    } // WirelessMessage::ConnectedNetworkDetails { details } => {
+                      //     let _ = window_tx_2.send(WindowMessage::Send {
+                      //         message: msg!(NetworkMessage::ConnectedNetworkDetails {
+                      //             details: details
+                      //         }),
+                      //     });
+                      // }
+                      // WirelessMessage::AvailableNetworksList { list } => {
+                      //     let _ = window_tx_2.send(WindowMessage::Send {
+                      //         message: msg!(NetworkMessage::AvailableNetworksList { list: list }),
+                      //     });
+                      // }
+                      // WirelessMessage::KnownNetworksList { list } => {
+                      //     let _ = window_tx_2.send(WindowMessage::Send {
+                      //         message: msg!(NetworkMessage::KnownNetworksList { list: list }),
+                      //     });
+                      // }
                 },
-                AppMessage::AvailableNetworksList { list } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::AvailableNetworksList { list: list }),
-                    });
-                }
                 AppMessage::NotFound => todo!(),
                 _ => (),
             },
             calloop::channel::Event::Closed => {}
         };
     });
-    init_services(settings.clone(), app_channel, wireless_msg_rx);
+    // // NOTE: not working with API for now
+    // init_services(settings.clone(), app_channel, wireless_msg_rx);
 
     loop {
         event_loop.dispatch(None, &mut app).unwrap();
@@ -300,30 +322,30 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn init_services(
-    settings: Arc<RwLock<MainSettings>>,
-    app_channel: Sender<AppMessage>,
-    wireless_msg_rx: Receiver<WirelessMessage>,
-) -> JoinHandle<()> {
-    thread::spawn(move || {
-        let runtime = Builder::new_multi_thread()
-            .worker_threads(1)
-            .enable_all()
-            .build()
-            .unwrap();
+// fn init_services(
+//     settings: Arc<RwLock<MainSettings>>,
+//     app_channel: Sender<AppMessage>,
+//     wireless_msg_rx: Receiver<WirelessMessage>,
+// ) -> JoinHandle<()> {
+//     thread::spawn(move || {
+//         let runtime = Builder::new_multi_thread()
+//             .worker_threads(1)
+//             .enable_all()
+//             .build()
+//             .unwrap();
 
-        let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
+//         let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
 
-        runtime
-            .block_on(runtime.spawn(async move { tokio::join!(wireless_f) }))
-            .unwrap();
-    })
-}
+//         runtime
+//             .block_on(runtime.spawn(async move { tokio::join!(wireless_f) }))
+//             .unwrap();
+//     })
+// }
 
-async fn run_wireless_handler(
-    app_channel: Sender<AppMessage>,
-    wireless_msg_rx: Receiver<WirelessMessage>,
-) {
-    let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
-    wireless_service_handle.run(wireless_msg_rx).await;
-}
+// async fn run_wireless_handler(
+//     app_channel: Sender<AppMessage>,
+//     wireless_msg_rx: Receiver<WirelessMessage>,
+// ) {
+//     let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
+//     wireless_service_handle.run(wireless_msg_rx).await;
+// }

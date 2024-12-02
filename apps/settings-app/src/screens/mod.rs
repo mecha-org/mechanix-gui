@@ -1,8 +1,11 @@
-pub mod battery;
+pub mod settings_menu;
+// pub mod wireless;
+pub mod network;
 pub mod bluetooth;
 pub mod display;
-pub mod language;
-pub mod security;
-pub mod settings_menu;
+// pub mod appearance;
+pub mod battery;
 pub mod sound;
-pub mod wireless;
+// pub mod lock;
+// pub mod date_time;
+pub mod language;   

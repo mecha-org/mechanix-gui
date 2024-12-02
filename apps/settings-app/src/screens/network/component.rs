@@ -3,31 +3,34 @@ use std::fmt::Debug;
 use mctk_core::{
     component::{Component, Message},
     event, lay,
-    layout::{self, Alignment, Direction},
-    msg, node, rect, size, size_pct,
+    layout::{Alignment, Direction},
+    node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{Div, IconButton, Image, Text},
+    widgets::{Div, Image, Text},
     Color,
 };
 
-use crate::shared::h_divider::HDivider;
-
-pub struct FooterComponent {
+pub struct NetworkRowComponent {
+    pub title: String,
+    pub value: String,
     pub icon_1: String,
     pub icon_2: String,
+    pub color: Color,
+    pub on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
 }
 
-impl Debug for FooterComponent {
+impl Debug for NetworkRowComponent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FooterComponent")
+        f.debug_struct("NetworkRowComponent")
+            .field("title", &self.title)
             .field("icon", &self.icon_1)
             .field("icon", &self.icon_2)
             .finish()
     }
 }
 
-impl Component for FooterComponent {
+impl Component for NetworkRowComponent {
     fn on_click(&mut self, event: &mut event::Event<event::Click>) {
         if let Some(f) = &self.on_click {
             event.emit(f());
@@ -57,7 +60,6 @@ impl Component for FooterComponent {
 
         Some(
             node!(
-                // Div::new().bg(Color::TRANSPARENT),
                 Div::new(),
                 lay![
                     padding: [10, 0, 10, 0],

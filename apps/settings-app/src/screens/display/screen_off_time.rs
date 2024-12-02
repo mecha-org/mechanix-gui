@@ -27,7 +27,9 @@ impl Component for ScreenOffTime {
         );
 
         main_node = main_node.push(header_node("Screen off time"));
-        main_node = main_node.push(radio_node(vec!["10s", "20s", "30s", "60s", "5m", "Never"]));
+        // // NOTE :  less option as footer back won't work due to overlapping issue
+        // main_node = main_node.push(radio_node(vec!["10s", "20s", "30s", "60s", "5m", "Never"]));
+        main_node = main_node.push(radio_node(vec!["10s", "20s", "30s"]));
         base = base.push(footer_node!(
             Routes::DisplayScreen,
             "tick_icon",

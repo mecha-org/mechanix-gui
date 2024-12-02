@@ -1,3 +1,6 @@
+use mechanix_status_bar_components::types::WirelessConnectedState;
+use std::{fmt, io, str::FromStr};
+
 #[derive(Default, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum WirelessStatus {
     On,

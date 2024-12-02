@@ -1,3 +1,7 @@
+use mechanix_system_dbus_client::wireless::KnownNetworkListResponse;
+use mechanix_system_dbus_client::wireless::KnownNetworkResponse;
+use reexports::glutin::api::egl::device;
+
 use crate::footer_node;
 use crate::gui::Message;
 use crate::gui::NetworkScreenRoutes;
@@ -5,13 +9,11 @@ use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
-use super::handler::WirelessDetailsItem;
-
 #[derive(Debug)]
-pub struct AvailableNetworksScreen {
-    pub available_networks_list: Vec<WirelessDetailsItem>,
+pub struct ManageNetworksScreen {
+    pub known_networks_list: Vec<KnownNetworkResponse>,
 }
-impl Component for AvailableNetworksScreen {
+impl Component for ManageNetworksScreen {
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -52,7 +54,7 @@ impl Component for AvailableNetworksScreen {
             ]
         );
         let header_text = node!(
-            Text::new(txt!("Available Networks"))
+            Text::new(txt!("Manage Networks"))
                 .style("font", "Space Grotesk")
                 .style("size", 28.)
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
@@ -67,58 +69,36 @@ impl Component for AvailableNetworksScreen {
         header = header.push(header_text);
         header_node = header_node.push(header);
 
-        // let devices = [("English"), ("English"), ("Chinese")];
-        let devices = self.available_networks_list.clone();
+        let devices = self.known_networks_list.clone();
         main_node = main_node.push(header_node);
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        // main_node = main_node.push(tab_item_node!(
-        //     [text_bold_node("mecha compute")],
-        //     [icon_node("connected_icon"), icon_node("right_arrow_icon")],
-        //     route: Routes::BluetoothDeviceInfo
-        // ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
+
         for (i, device) in devices.into_iter().enumerate() {
+            let check_current_network = device.clone().flags.contains("CURRENT");
+
             main_node = main_node.push(
-                // TODO - change this common component
                 tab_item_node!(
-                    [text_bold_node(&device.scan_info.name)],
+                    [text_bold_node(&device.ssid)],
                     [
+                        if check_current_network { icon_node("connected_icon") } else {node!(Div::new(), lay![size: [0, 0]])},
                         icon_node("secured_wifi_icon"),
                         icon_node("wifi_strength_icon"),
                         icon_node("info_icon")
                     ],
                     route: Routes::Network {
-                        screen: NetworkScreenRoutes::NetworkDetailsScreen
-                        // screen: NetworkScreenRoutes::NetworkScreen
+                        screen: NetworkScreenRoutes::NetworkScreen
                     }
-                    // icon_route: Routes::Network { screen: NetworkScreenRoutes::ConnectNetworkEnterCode }
-
                 )
                 .key((i + 1) as u64),
             );
             main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
         }
 
-        // main_node = main_node.push(node!(Div::new(), lay![size: [50]]));
-        // main_node = main_node.push(text_node("Other Devices"));
-        // main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        // main_node = main_node.push(tab_item_node!(
-        //     [text_bold_node("mecha compute")],
-        //     [icon_node("connected_icon"), icon_node("right_arrow_icon")]
-        // ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        // for (i, device) in devices.into_iter().enumerate() {
-        //     main_node = main_node.push(
-        //         tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")])
-        //             .key((i + 1) as u64),
-        //     );
-        //     main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
-        // }
-
         main_node = main_node.push(footer_node!(Routes::Network {
             screen: NetworkScreenRoutes::NetworkScreen
         }));
-
         base = base.push(main_node);
         Some(base)
     }

@@ -270,6 +270,58 @@ macro_rules! tab_item_node {
         base = base.push(right);
         base
     }};
+
+    ([$($left_nodes:expr),* $(,)?], [$($right_nodes:expr),* $(,)?], route: $route:expr, icon_route: $icon_route:expr) => {{
+
+        println!("CASE 2 : route {:?}", $route.clone());
+        println!("CASE 2 : icon_route {:?}", $icon_route.clone());
+        let left_nodes = vec![$($left_nodes),*];
+        let right_nodes = vec![$($right_nodes),*];
+        let mut base = node!(
+            TabItemComponent {
+                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                    route: $route
+                }))),
+            },
+        );
+
+        let mut left = node!(
+            Div::new(),
+            lay![
+                size_pct: [50],
+                cross_alignment: Alignment::Center,
+                axis_alignment: Alignment::Start
+            ],
+        );
+        for node in left_nodes {
+            left = left.push(node);
+        }
+
+        let mut right = node!(
+            Div::new(),
+            lay![
+                size_pct: [50],
+                cross_alignment: Alignment::Center,
+                axis_alignment: Alignment::End
+            ],
+        );
+
+        // // TODO
+        // let mut right = node!(
+        //     ClicableIconComponent {
+        //         on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+        //             route: $icon_route
+        //         }))),
+        //     },
+        // );
+        for node in right_nodes {
+            right = right.push(node);
+        }
+        base = base.push(left);
+        base = base.push(right);
+        base
+    }};
+
     ([$($left_nodes:expr),* $(,)?], [$($right_nodes:expr),* $(,)?]) => {{
         let left_nodes = vec![$($left_nodes),*];
         let right_nodes = vec![$($right_nodes),*];
@@ -375,6 +427,38 @@ impl Component for TabItemComponent {
         Some(base)
     }
 }
+
+// -----------------
+
+pub struct ClicableIconComponent {
+    pub on_click: Option<Box<dyn Fn() -> Box<Message> + Send + Sync>>,
+}
+
+impl std::fmt::Debug for ClicableIconComponent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ClicableIconComponent").finish()
+    }
+}
+
+impl Component for ClicableIconComponent {
+    fn container(&self) -> Option<Vec<usize>> {
+        Some(vec![0])
+    }
+
+    fn view(&self) -> Option<Node> {
+        let base = node!(
+            Div::new(),
+            lay![
+                size_pct: [50],
+                cross_alignment: Alignment::Center,
+                axis_alignment: Alignment::End
+            ],
+        );
+        Some(base)
+    }
+}
+
+// -----------------
 
 // impl TabItemComponent {
 //     pub fn new(

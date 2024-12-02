@@ -69,7 +69,7 @@ impl Component for BluetoothScreen {
         header = header.push(toggle);
         header_node = header_node.push(header);
 
-        let devices = [("English"), ("English"), ("Chinese")];
+        let devices = [("Bluetooth device 1"), ("Bluetooth device 2")];
         base = base.push(footer_node!(
             Routes::SettingsList,
             "add_icon",

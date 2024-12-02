@@ -13,6 +13,7 @@ pub const BACKGROUND_IMAGE: &str = concatcp!(ASSET_PATH, "mecha_background_color
 
 // settings
 pub const WIFI_ICON: &str = concatcp!(ASSET_PATH, "wifi_icon.png");
+pub const NETWORK_SETTIGNS_ICON: &str = concatcp!(ASSET_PATH, "network_settings_icon.png");
 pub const SECURED_WIFI_ICON: &str = concatcp!(ASSET_PATH, "secured_wifi_icon.png");
 pub const WIFI_STRENTH_ICON: &str = concatcp!(ASSET_PATH, "wifi_strength_icon.png");
 pub const BLUETOOTH_ICON: &str = concatcp!(ASSET_PATH, "bluetooth_icon.png");
