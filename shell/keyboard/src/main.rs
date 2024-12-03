@@ -7,6 +7,7 @@ mod layout;
 mod settings;
 mod trie;
 
+use action::{Modifier, Modifiers};
 use gui::Keyboard;
 use mctk_core::{
     msg,
@@ -22,14 +23,17 @@ use mctk_core::{
     },
     types::AssetParams,
 };
-use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
+use mctk_smithay::layer_shell::layer_window::{LayerWindowMessage, LayerWindowParams};
 use mctk_smithay::WindowOptions;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
-use std::io::{Seek, Write};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 use std::{collections::HashMap, io::SeekFrom};
+use std::{
+    collections::HashSet,
+    io::{Seek, Write},
+};
 use std::{io::Read, os::fd::IntoRawFd};
 use tempfile::tempfile;
 use tokio::{
@@ -38,7 +42,9 @@ use tokio::{
 };
 use trie::util::get_trie;
 use wayland_protocols_async::{
-    zwp_input_method_v2::handler::{InputMethodEvent, InputMethodHandler, InputMethodMessage},
+    zwp_input_method_v2::handler::{
+        ContentPurpose, InputMethodEvent, InputMethodHandler, InputMethodMessage,
+    },
     zwp_virtual_keyboard_v1::handler::{KeyMotion, VirtualKeyboardHandler, VirtualKeyboardMessage},
 };
 
@@ -56,6 +62,8 @@ pub struct AppParams {
 enum AppMessage {
     Show,
     Hide,
+    Maximize,
+    Minimize,
     TextkeyPressed {
         keycode: crate::layout::KeyCode,
     },
@@ -69,6 +77,12 @@ enum AppMessage {
         suggested_for: String,
     },
     Erase,
+    ContentInfo {
+        purpose: ContentPurpose,
+    },
+    ApplyModifiers {
+        mods: HashSet<Modifier>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -102,6 +116,8 @@ fn main() -> anyhow::Result<()> {
         enter,
         shift,
         symbolic,
+        window_max,
+        window_min,
     } = settings.icons.clone();
 
     svgs.insert("edit-clear-symbolic".to_string(), backspace);
@@ -111,6 +127,18 @@ fn main() -> anyhow::Result<()> {
     svgs.insert("key-shift".to_string(), shift);
 
     svgs.insert("keyboard-mode-symbolic".to_string(), symbolic);
+    svgs.insert("window-max".to_string(), window_max);
+    svgs.insert("window-min".to_string(), window_min);
+
+    // create the handler instance
+    let layouts = settings.layouts.clone();
+    let mut layouts_map: HashMap<ContentPurpose, (i32, u32)> = HashMap::new();
+    let default_keymap = load_keymap(layouts.default.clone());
+    layouts_map.insert(ContentPurpose::Normal, default_keymap);
+    layouts_map.insert(
+        ContentPurpose::Terminal,
+        load_keymap(layouts.terminal.clone()),
+    );
 
     let app_id = settings
         .app
@@ -119,8 +147,8 @@ fn main() -> anyhow::Result<()> {
         .unwrap_or(String::from("mechanix.shell.keyboard"));
     let namespace = app_id.clone();
 
-    let layer_shell_opts = LayerOptions {
-        anchor: wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
+    let mut layer_shell_opts = LayerOptions {
+        anchor: wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM,
         layer: wlr_layer::Layer::Top,
         keyboard_interactivity: wlr_layer::KeyboardInteractivity::None,
         namespace: Some(namespace.clone()),
@@ -135,14 +163,17 @@ fn main() -> anyhow::Result<()> {
 
     //subscribe to events channel
     let (app_channel, app_channel_rx) = calloop::channel::channel();
+    let (layer_tx, layer_rx) = calloop::channel::channel();
     let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<Keyboard, AppParams>(
         LayerWindowParams {
             window_info,
             window_opts,
             fonts,
             assets,
-            layer_shell_opts,
+            layer_shell_opts: layer_shell_opts.clone(),
             svgs,
+            layer_tx: Some(layer_tx.clone()),
+            layer_rx: Some(layer_rx),
             ..Default::default()
         },
         AppParams {
@@ -160,12 +191,24 @@ fn main() -> anyhow::Result<()> {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
             calloop::channel::Event::Msg(msg) => {
-                println!("app event {:?}", msg);
+                // println!("app event {:?}", msg);
                 match msg {
                     AppMessage::Show => {
                         let _ = window_tx_2.clone().send(WindowMessage::Resize {
                             width: settings.window.size.0 as u32,
                             height: settings.window.size.1 as u32,
+                        });
+                        layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
+                            | wlr_layer::Anchor::RIGHT
+                            | wlr_layer::Anchor::BOTTOM;
+                        layer_shell_opts.zone = settings.window.size.1 as i32;
+                        let _ = layer_tx
+                            .clone()
+                            .send(LayerWindowMessage::ReconfigureLayerOpts {
+                                opts: layer_shell_opts.clone(),
+                            });
+                        let _ = window_tx_2.clone().send(WindowMessage::Send {
+                            message: msg!(Message::Reset),
                         });
                     }
                     AppMessage::Hide => {
@@ -173,6 +216,61 @@ fn main() -> anyhow::Result<()> {
                             width: 1,
                             height: 1,
                         });
+                    }
+                    AppMessage::Maximize => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
+                            width: settings.window.size.0 as u32,
+                            height: settings.window.size.1 as u32,
+                        });
+                        layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
+                            | wlr_layer::Anchor::RIGHT
+                            | wlr_layer::Anchor::BOTTOM;
+                        layer_shell_opts.zone = settings.window.size.1 as i32;
+                        let _ = layer_tx
+                            .clone()
+                            .send(LayerWindowMessage::ReconfigureLayerOpts {
+                                opts: layer_shell_opts.clone(),
+                            });
+                        // let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        //     message: msg!(Message::UpdateKeyboardWindow {
+                        //         keyboard_window: gui::KeyboardWindow::Maximized
+                        //     }),
+                        // });
+
+                        // layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
+                        //     | wlr_layer::Anchor::RIGHT
+                        //     | wlr_layer::Anchor::BOTTOM;
+                        // let _ = layer_tx
+                        //     .clone()
+                        //     .send(LayerWindowMessage::ReconfigureLayerOpts {
+                        //         opts: layer_shell_opts.clone(),
+                        //     });
+                    }
+                    AppMessage::Minimize => {
+                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
+                            width: 80,
+                            height: 60,
+                        });
+                        layer_shell_opts.anchor =
+                            wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM;
+                        layer_shell_opts.zone = 0 as i32;
+                        let _ = layer_tx
+                            .clone()
+                            .send(LayerWindowMessage::ReconfigureLayerOpts {
+                                opts: layer_shell_opts.clone(),
+                            });
+                        // let _ = window_tx_2.clone().send(WindowMessage::Send {
+                        //     message: msg!(Message::UpdateKeyboardWindow {
+                        //         keyboard_window: gui::KeyboardWindow::Minimized
+                        //     }),
+                        // });
+                        // layer_shell_opts.anchor =
+                        //     wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM;
+                        // let _ = layer_tx
+                        //     .clone()
+                        //     .send(LayerWindowMessage::ReconfigureLayerOpts {
+                        //         opts: layer_shell_opts.clone(),
+                        //     });
                     }
                     AppMessage::TextkeyPressed { keycode } => {
                         println!("AppMessage::TextkeyPressed {:?}", keycode);
@@ -189,6 +287,29 @@ fn main() -> anyhow::Result<()> {
                                 .send(VirtualKeyboardMessage::Key {
                                     keycode: keycode.code - 8,
                                     keymotion: KeyMotion::Release,
+                                })
+                                .await;
+                        });
+                    }
+                    AppMessage::ApplyModifiers { mods } => {
+                        println!("AppMessage::ApplyModifiers {:?}", mods);
+                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
+
+                        let raw_modifiers = mods
+                            .iter()
+                            .map(|m| match m {
+                                Modifier::Control => Modifiers::CONTROL,
+                                Modifier::Alt => Modifiers::MOD1,
+                                Modifier::Mod4 => Modifiers::MOD4,
+                            })
+                            .fold(Modifiers::empty(), |m, n| m | n);
+
+                        futures::executor::block_on(async move {
+                            let _ = virtual_keyboard_msg_tx
+                                .send(VirtualKeyboardMessage::SetModifiers {
+                                    depressed: raw_modifiers.bits() as u32,
+                                    latched: 0,
+                                    locked: 0,
                                 })
                                 .await;
                         });
@@ -225,15 +346,37 @@ fn main() -> anyhow::Result<()> {
                         });
                     }
                     AppMessage::Erase => {
-                        let input_method_msg_tx = input_method_msg_tx.clone();
+                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
                         futures::executor::block_on(async move {
-                            let _ = input_method_msg_tx
-                                .send(InputMethodMessage::DeleteSurroundingText {
-                                    before_length: 1 as u32,
-                                    after_length: 0,
+                            let _ = virtual_keyboard_msg_tx
+                                .send(VirtualKeyboardMessage::Key {
+                                    keycode: 21 - 8,
+                                    keymotion: KeyMotion::Press,
                                 })
                                 .await;
-                            let _ = input_method_msg_tx.send(InputMethodMessage::Commit).await;
+                            let _ = virtual_keyboard_msg_tx
+                                .send(VirtualKeyboardMessage::Key {
+                                    keycode: 21 - 8,
+                                    keymotion: KeyMotion::Release,
+                                })
+                                .await;
+                        });
+                    }
+                    AppMessage::ContentInfo { purpose } => {
+                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
+                        let layouts_map = layouts_map.clone();
+                        futures::executor::block_on(async move {
+                            if let Some((keymap_raw_fd, keymap_size)) = layouts_map.get(&purpose) {
+                                let _ = virtual_keyboard_msg_tx
+                                    .send(VirtualKeyboardMessage::SetKeymap {
+                                        keymap_raw_fd: *keymap_raw_fd,
+                                        keymap_size: *keymap_size,
+                                    })
+                                    .await;
+                            };
+                        });
+                        let _ = window_tx_2.clone().send(WindowMessage::Send {
+                            message: msg!(Message::ContentInfo { purpose }),
                         });
                     }
                 }
@@ -247,6 +390,7 @@ fn main() -> anyhow::Result<()> {
         virtual_keyboard_msg_rx,
         input_method_msg_rx,
         settings.clone(),
+        default_keymap,
     );
 
     loop {
@@ -262,6 +406,7 @@ fn init_services(
     virtual_keyboard_msg_rx: mpsc::Receiver<VirtualKeyboardMessage>,
     input_method_msg_rx: mpsc::Receiver<InputMethodMessage>,
     settings: KeyboardSettings,
+    default_keymap: (i32, u32),
 ) -> JoinHandle<()> {
     thread::spawn(move || {
         let runtime = Builder::new_multi_thread()
@@ -270,9 +415,7 @@ fn init_services(
             .build()
             .unwrap();
 
-        let layout_configs = settings.layouts.clone();
-        let keyboard_f =
-            run_keyboard_hanlder(layout_configs.default.clone(), virtual_keyboard_msg_rx);
+        let keyboard_f = run_keyboard_hanlder(default_keymap, virtual_keyboard_msg_rx);
         let trie_configs = settings.trie.clone();
         let input_f = InputHandler::new().run_input_handler(
             app_channel.clone(),
@@ -319,7 +462,7 @@ impl InputHandler {
 
                 loop {
                     if let Some(msg) = input_method_event_rx.recv().await {
-                        println!("InputHandler::run_input_handler() {:?}", msg);
+                        // println!("InputHandler::run_input_handler() {:?}", msg);
                         match msg {
                             InputMethodEvent::Activate => {
                                 //Send message to window to show UI
@@ -348,6 +491,9 @@ impl InputHandler {
                             }
                             InputMethodEvent::ContentType { hint, purpose } => {
                                 //Use purpose to change layout
+                                if let Ok(purpose) = purpose {
+                                    let _ = app_channel.send(AppMessage::ContentInfo { purpose });
+                                }
                             }
 
                             _ => (),
@@ -364,16 +510,16 @@ impl InputHandler {
 //let (virtual_keyboard_msg_tx, mut virtual_keyboard_msg_rx) = mpsc::channel(128);
 
 async fn run_keyboard_hanlder(
-    layout_path: String,
+    default_keymap: (i32, u32),
     virtual_keyboard_msg_rx: mpsc::Receiver<VirtualKeyboardMessage>,
 ) {
-    // create the handler instance
-    let (keymap_raw_fd, keymap_size) = load_keymap(layout_path);
-
     // create mpsc channel for receiving events from the virtual_keyboard handler
     let (virtual_keyboard_event_tx, mut virtual_keyboard_event_rx) = mpsc::channel(128);
-    let mut virtual_keyboard_handler: VirtualKeyboardHandler =
-        VirtualKeyboardHandler::new(keymap_raw_fd, keymap_size, virtual_keyboard_event_tx);
+    let mut virtual_keyboard_handler: VirtualKeyboardHandler = VirtualKeyboardHandler::new(
+        default_keymap.0,
+        default_keymap.1,
+        virtual_keyboard_event_tx,
+    );
 
     // start the virtual_keyboard handler
     let virtual_keyboard_t = tokio::spawn(async move {

@@ -84,10 +84,8 @@ impl Component for Clock {
     fn view(&self) -> Option<Node> {
         Some(node!(
             Text::new(txt!(self.time.clone()))
-                .style("color", Color::WHITE)
-                .style("size", 15.0)
-                .style("font", "SpaceGrotesk-Bold")
-                .style("font_weight", FontWeight::Bold),
+                .with_class("text-white font-space-grotesk font-bold")
+                .style("size", 15.0),
             lay![
                 size: [Auto, 20],
             ]

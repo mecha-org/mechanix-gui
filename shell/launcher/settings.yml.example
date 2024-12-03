@@ -50,7 +50,7 @@ modules:
     - app_id: firefox esr
       name: Firefox
       icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/firefox_icon.png
-      run_command: ["sh", "-c", "firefox-esr --MOZ_ENABLE_WAYLAND=1"]
+      run_command: ["sh", "-c", "MOZ_ENABLE_WAYLAND=1 GDK_BACKEND=wayland firefox-esr --user-agent=\"Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.127 Mobile Safari/537.36\""]
   clock:
     format: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
@@ -164,7 +164,7 @@ app_list:
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/terminal_icon.png
     - app_id: firefox-esr
       name: Firefox
-      exec: firefox-esr --MOZ_ENABLE_WAYLAND=1
+      exec: "MOZ_ENABLE_WAYLAND=1 GDK_BACKEND=wayland firefox-esr --user-agent=\"Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.127 Mobile Safari/537.36\""
       icon_name: firefox_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/firefox_icon.png
     - app_id: org.gnome.Nautilus
@@ -182,3 +182,13 @@ app_list:
       exec: /usr/games/mednafen -video.fs 1 /usr/games/SuperMario4Advance.gba
       icon_name: game_emulator_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/game_emulator_icon.png
+    - app_id: mctk.examples.RoverControl
+      name: Rover Control
+      exec: /usr/bin/rover-control -s /etc/mechanix/rover/settings.yml
+      icon_name: rover_control_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/rover_control_icon.png
+    - app_id: mechanix-settings
+      name: Settings
+      exec: mechanix-settings -s /etc/mechanix/apps/settings/settings.yml
+      icon_name: mechanix_settings_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mechanix_settings_icon.png

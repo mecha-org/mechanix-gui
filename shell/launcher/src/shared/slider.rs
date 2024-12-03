@@ -144,7 +144,7 @@ impl Slider {
         }
         self.state_mut().value = value;
         self.state_mut().grid = grid.clone();
-        println!("Slider::handle_on_drag() {:?}", grid);
+        println!("Slider::handle_on_drag()");
         return Some(value);
     }
 

@@ -137,7 +137,7 @@ impl Component for App {
                  axis_alignment: Alignment::Center,
                  cross_alignment: Alignment::Center,
                  margin: [0, 0, 14, 0],
-                 padding: [15.53]
+                 padding: [7]
             ]
         );
 

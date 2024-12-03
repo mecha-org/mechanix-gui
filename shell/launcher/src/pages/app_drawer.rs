@@ -13,7 +13,7 @@ use mctk_core::{
 };
 
 use crate::{
-    gui::{self, Message, Swipe, SwipeDirection, SwipeState},
+    gui::{self, get_translations, Message, Swipe, SwipeDirection, SwipeState, BEZIER_POINTS},
     modules::installed_apps::{
         app,
         component::{AppList, AppListMessage},
@@ -68,6 +68,15 @@ impl AppDrawer {
 
         None
     }
+
+    fn handle_on_drag_end(&self, delta: Point) -> Option<mctk_core::component::Message> {
+        println!("AppDrawer handle_on_drag_end delta.y {:?}", delta.y);
+        if delta.y > 20. {
+            return Some(msg!(Message::SwipeEnd));
+        }
+
+        None
+    }
 }
 
 #[state_component_impl(AppDrawerState)]
@@ -86,6 +95,8 @@ impl Component for AppDrawer {
             match message {
                 AppListMessage::AppClicked { app } => {
                     if !app.exec.is_empty() {
+                        let inc = 1.0 / 12.0;
+                        let translations = get_translations(BEZIER_POINTS, 0.0, inc);
                         let swipe = Swipe {
                             dy: 0 as i32,
                             min_dy: 0,
@@ -94,6 +105,7 @@ impl Component for AppDrawer {
                             direction: SwipeDirection::Down,
                             state: SwipeState::CompletingSwipe,
                             is_closer: true,
+                            translations,
                             ..Default::default()
                         };
                         bubble_msgs
@@ -158,52 +170,54 @@ impl Component for AppDrawer {
 
         start_node = start_node.push(node!(
             HDivider { size: 1. },
-            lay! [ margin: [10., 20., 8., 20.] ]
+            lay! [ margin: [20., 20., 18., 20.] ]
         ));
 
-        start_node = start_node.push(
-            node!(
-                Div::new(),
+        // start_node = start_node.push(
+        //     node!(
+        //         Div::new(),
+        //         lay![
+        //             margin: [0., 20., 0., 20.]
+        //         ]
+        //     )
+        //     .push(node!(
+        //         Image::new("search_icon"),
+        //         lay![
+        //             size: [24, 24],
+        //             margin: [0., 0., 0., 10.]
+        //         ],
+        //     ))
+        //     .push(node!(
+        //         TextBox::new(Some("".to_string()))
+        //         .style("background_color", Color::TRANSPARENT)
+        //         .style("font_size", 18.)
+        //         .style("text_color", Color::WHITE)
+        //         .style("border_width", 0.)
+        //         .style("cursor_color", Color::WHITE)
+        //         .style("placeholder_color",  Color::rgb(168., 168., 168.))
+        //             .placeholder(if !app_info_app_exists {"Search" } else { "" } )
+        //             .on_change(Box::new(|s| msg!(gui::Message::SearchTextChanged(s.to_string()))))
+        //             ,
+        //         [
+        //             size: [420, Auto],
+        //         ]
+        //     )),
+        // );
+
+        // start_node = start_node.push(node!(
+        //     HDivider { size: 1. },
+        //     lay! [ margin: [8., 20., 20., 20.] ]
+        // ));
+
+        if !app_info_app_exists {
+            start_node = start_node.push(node!(
+                AppList::new(self.apps.clone(), self.disabled_apps_click),
                 lay![
+                    size: [Auto],
                     margin: [0., 20., 0., 20.]
                 ]
-            )
-            .push(node!(
-                Image::new("search_icon"),
-                lay![
-                    size: [24, 24],
-                    margin: [0., 0., 0., 10.]
-                ],
-            ))
-            .push(node!(
-                TextBox::new(Some("".to_string()))
-                .style("background_color", Color::TRANSPARENT)
-                .style("font_size", 18.)
-                .style("text_color", Color::WHITE)
-                .style("border_width", 0.)
-                .style("cursor_color", Color::WHITE)
-                .style("placeholder_color",  Color::rgb(168., 168., 168.))
-                    .placeholder(if !app_info_app_exists {"Search" } else { "" } )
-                    .on_change(Box::new(|s| msg!(gui::Message::SearchTextChanged(s.to_string()))))
-                    ,
-                [
-                    size: [420, Auto],
-                ]
-            )),
-        );
-
-        start_node = start_node.push(node!(
-            HDivider { size: 1. },
-            lay! [ margin: [8., 20., 20., 20.] ]
-        ));
-
-        start_node = start_node.push(node!(
-            AppList::new(self.apps.clone(), self.disabled_apps_click),
-            lay![
-                size: [Auto],
-                margin: [0., 20., 0., 20.]
-            ]
-        ));
+            ));
+        }
 
         Some(start_node)
     }
@@ -236,13 +250,17 @@ impl Component for AppDrawer {
     }
 
     fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
-        event.emit(msg!(Message::SwipeEnd));
+        if let Some(msg) = self.handle_on_drag_end(event.logical_delta()) {
+            event.emit(msg);
+        };
     }
 
     fn on_touch_drag_end(
         &mut self,
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
     ) {
-        event.emit(msg!(Message::SwipeEnd));
+        if let Some(msg) = self.handle_on_drag_end(event.logical_delta()) {
+            event.emit(msg);
+        };
     }
 }

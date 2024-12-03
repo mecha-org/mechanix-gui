@@ -118,6 +118,10 @@ impl HomeButtonHandler {
                                 }
                                 if !long_press_sent {
                                     // Short press detected, minimize all
+                                    let app_channel = self.app_channel.clone();
+                                    let _ = app_channel.send(AppMessage::RunningApps {
+                                        message: crate::RunningAppsMessage::Toggle { value: false },
+                                    });
                                     let _ = minimize_all(toplevel_msg_tx.clone()).await;
                                 }
                                 {
@@ -144,6 +148,7 @@ async fn minimize_all(toplevel_msg_tx: mpsc::Sender<ToplevelMessage>) -> Result<
     let _ = toplevel_msg_tx
         .send(ToplevelMessage::MinimizeAll { reply_to: tx })
         .await;
+
     if let Err(e) = rx.await {
         println!("errors while minimizing applications {:?}", e);
         return Ok(false);

@@ -11,9 +11,9 @@ impl Closer {
     fn handle_on_drag(&self, delta: Point) -> Option<mctk_core::component::Message> {
         if delta.y < -10. {
             let swipe = Swipe {
-                dy: (480. - 124. + delta.y) as i32,
+                dy: (480. + delta.y) as i32,
                 min_dy: 0,
-                max_dy: 480 - 124,
+                max_dy: 480,
                 threshold_dy: 80,
                 direction: SwipeDirection::Up,
                 state: SwipeState::UserSwiping,
@@ -24,7 +24,17 @@ impl Closer {
             return Some(msg!(Message::Swipe { swipe }));
         }
 
+        println!("Closer::handle_on_drag() invalid drag");
         None
+    }
+
+    fn handle_on_drag_end(&self, delta: Point) -> Option<mctk_core::component::Message> {
+        if delta.y > 0. {
+            println!("Closer::handle_on_drag() invalid drag");
+            return None;
+        }
+
+        Some(msg!(Message::SwipeEnd))
     }
 }
 
@@ -35,12 +45,16 @@ impl Component for Closer {
 
     fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
         println!("Closer::on_drag() {:?}", event.logical_delta());
+
         if let Some(msg) = self.handle_on_drag(event.logical_delta()) {
             event.emit(msg);
         };
     }
     fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
-        event.emit(msg!(Message::SwipeEnd));
+        println!("Closer::on_drag_end() {:?}", event.logical_delta());
+        if let Some(msg) = self.handle_on_drag_end(event.logical_delta()) {
+            event.emit(msg);
+        };
     }
 
     fn on_touch_drag_start(
@@ -60,7 +74,10 @@ impl Component for Closer {
         &mut self,
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
     ) {
-        event.emit(msg!(Message::SwipeEnd));
+        println!("Closer::on_touch_drag_end() {:?}", event.logical_delta());
+        if let Some(msg) = self.handle_on_drag_end(event.logical_delta()) {
+            event.emit(msg);
+        };
     }
 
     fn view(&self) -> Option<Node> {

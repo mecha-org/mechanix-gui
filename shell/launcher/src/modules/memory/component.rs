@@ -97,10 +97,8 @@ impl Component for Memory {
         Some(
             node!(Div::new(), lay![direction: Direction::Column])
                 .push(node!(Text::new(txt!("MEMORY"))
-                    .style("color", Color::WHITE)
-                    .style("size", 15.0)
-                    .style("font", "SpaceMono-Bold")
-                    .style("font_weight", FontWeight::Bold)))
+                    .with_class("text-white font-space-mono font-bold")
+                    .style("size", 15.0)))
                 .push(memory_blocks),
         )
     }

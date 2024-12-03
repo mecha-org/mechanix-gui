@@ -24,10 +24,8 @@ impl Component for Sound {
                 lay![direction: Direction::Column, cross_alignment:Alignment::Stretch, size_pct:[100, Auto]]
             )
             .push(node!(Text::new(txt!("SOUND"))
-                .style("color", Color::WHITE)
-                .style("size", 15.0)
-                .style("font", "SpaceMono-Bold")
-                .style("font_weight", FontWeight::Normal)))
+                .with_class("text-white font-space-mono font-normal")
+                .style("size", 15.0)))
             .push(node!(
                 Slider::new()
                 .value(self.value)
