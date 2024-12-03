@@ -797,7 +797,7 @@ impl Component for NetworkingScreen {
         let mut scrollable_section = node!(
             Scrollable::new(),
             lay![
-                size: [440, 220],
+                size: [440, 320],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -883,11 +883,11 @@ impl Component for NetworkingScreen {
         content_node = content_node.push(node!(HDivider { size: 1. }));
 
         // content_node = content_node.push(view_all_text);
-        content_node = content_node.push(advanced_nextwork_text);
+        // content_node = content_node.push(advanced_nextwork_text);
 
-        content_node = content_node.push(node!(HDivider { size: 1. }));
-        content_node = content_node.push(advanced_network_row);
-        content_node = content_node.push(node!(HDivider { size: 1. }));
+        // content_node = content_node.push(node!(HDivider { size: 1. }));
+        // content_node = content_node.push(advanced_network_row);
+        // content_node = content_node.push(node!(HDivider { size: 1. }));
 
         base = base.push(header_node);
         base = base.push(content_node);
