@@ -8,6 +8,7 @@ mod shared;
 mod utils;
 
 use crate::gui::SettingsApp;
+use crate::screens::network::wireless_model::WirelessModel;
 use crate::screens::sound::sound_model::SoundModel;
 use futures::StreamExt;
 use gui::{Message, NetworkMessage};
@@ -257,6 +258,7 @@ async fn main() -> anyhow::Result<()> {
             .unwrap();
     }));
     SoundModel::get().register_context_handler(context_handler);
+    WirelessModel::get().register_context_handler(context_handler);
 
     let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     // let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
