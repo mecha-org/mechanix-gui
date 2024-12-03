@@ -1,4 +1,5 @@
 use super::component::NetworkRowComponent;
+use super::wireless_model::WirelessModel;
 use crate::AppMessage;
 use crate::{
     components::{header_node, text_node},
@@ -59,6 +60,9 @@ impl NetworkingScreen {
 }
 
 impl Component for NetworkingScreen {
+    fn init(&mut self) {
+        WirelessModel::update();
+    }
     fn view(&self) -> Option<Node> {
         let mut text_color = Color::WHITE;
 
@@ -197,7 +201,14 @@ impl Component for NetworkingScreen {
                     cross_alignment: Alignment::Center,
                 ]
             )
-            .push(node!(Toggle::new(true), lay![])),
+            .push(node!(
+                Toggle::new(*WirelessModel::get().is_enabled.get()).on_change(Box::new(|value| {
+                    WirelessModel::toggle_wireless();
+                    // WirelessModel::update();
+                    Box::new(())
+                })),
+                lay![]
+            )),
         );
 
         let toggle_node = node!(
@@ -209,6 +220,11 @@ impl Component for NetworkingScreen {
             ]
         )
         .push(toggle_row);
+
+        let mut connected_network_name = "".to_string();
+        if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
+            connected_network_name = connected_network.name.clone();
+        }
 
         let connected_network_row = node!(
             Div::new(),
@@ -245,7 +261,7 @@ impl Component for NetworkingScreen {
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!("Mecha Workstation"))
+                    Text::new(txt!(connected_network_name))
                         .style("color", Color::WHITE)
                         .style("size", 18.0)
                         .style("line_height", 20.0)
