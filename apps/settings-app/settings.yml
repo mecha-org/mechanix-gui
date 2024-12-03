@@ -21,50 +21,50 @@ layout:
   right: []
 fonts:
   paths:
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Bold.ttf
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-BoldItalic.ttf
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Italic.ttf
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Regular.ttf
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Bold.ttf
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Regular.ttf
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-SemiBold.ttf
-    - /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Medium.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Bold.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-BoldItalic.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Italic.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceMono-Regular.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Bold.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Regular.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-SemiBold.ttf
+    - /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/fonts/SpaceGrotesk-Medium.ttf
 modules:
   wireless:
-    wifi_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/wifi_icon.png
-    network_settings_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/network_settings_icon.png
-    secured_wifi_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/secured_wifi_icon.png
-    wifi_strength_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/wifi_strength_icon.png
+    wifi_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/wifi_icon.png
+    network_settings_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/network_settings_icon.png
+    secured_wifi_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/secured_wifi_icon.png
+    wifi_strength_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/wifi_strength_icon.png
   bluetooth:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/bluetooth_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/bluetooth_icon.png
   display:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/display_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/display_icon.png
   appearance:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/appearance_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/appearance_icon.png
   battery:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/battery_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/battery_icon.png
   sound:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/sound_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/sound_icon.png
   lock:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/lock_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/lock_icon.png
   date_time:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/date_time_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/date_time_icon.png
   language:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/language_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/language_icon.png
   update:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/update_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/update_icon.png
   about:
-    icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/about_icon.png
+    icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/about_icon.png
   see_options:
-    right_arrow_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/right_arrow_icon.png
-    info_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/info_icon.png
-    connected_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/connected_icon.png
+    right_arrow_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/right_arrow_icon.png
+    info_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/info_icon.png
+    connected_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/connected_icon.png
   footer:
-    back_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/back_icon.png
-    tick_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/tick_icon.png
-    delete_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/delete_icon.png
-    add_icon: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/add_icon.png
+    back_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/back_icon.png
+    tick_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/tick_icon.png
+    delete_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/delete_icon.png
+    add_icon: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/add_icon.png
   not_found:
     icon:
-      default: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/not_found_icon.png
-      small: /home/sweta/sweta-repos/nov24/mechanix-gui-1/apps/settings-app/src/assets/icons/not_found_small_icon.png
+      default: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/not_found_icon.png
+      small: /home/naman/code/mechanix-gui-1/apps/settings-app/src/assets/icons/not_found_small_icon.png

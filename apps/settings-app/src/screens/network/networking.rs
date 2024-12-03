@@ -8,6 +8,7 @@ use crate::{
     shared::h_divider::HDivider,
 };
 
+use mctk_core::reexports::femtovg::img::save_buffer;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::renderables::Image;
 use mctk_core::{
@@ -62,11 +63,9 @@ impl NetworkingScreen {
 impl Component for NetworkingScreen {
     fn init(&mut self) {
         WirelessModel::update();
+        WirelessModel::scan();
     }
     fn view(&self) -> Option<Node> {
-        let mut text_color = Color::WHITE;
-
-        let connected_network_name: String = self.state_ref().name.clone();
         let status: bool = *WirelessModel::get().is_enabled.get();
 
         let mut base: Node = node!(
@@ -314,7 +313,40 @@ impl Component for NetworkingScreen {
             )),
         );
 
-        // avialble networks
+        let mut saved_available_networks = vec![];
+        let mut unsaved_available_networks = vec![];
+        let available_networks = WirelessModel::get()
+            .scan_result
+            .get()
+            .wireless_network
+            .clone();
+
+        for network in available_networks {
+            let known_networks = WirelessModel::get()
+                .known_networks
+                .get()
+                .known_network
+                .clone();
+            let mut is_known = false;
+            for known_network in known_networks.iter() {
+                if known_network.ssid == network.mac {
+                    is_known = true;
+                    break;
+                }
+            }
+            if is_known {
+                saved_available_networks.push(network);
+            } else {
+                unsaved_available_networks.push(network);
+            }
+        }
+
+        println!("Saved Available Networks: {:?}", saved_available_networks);
+        println!(
+            "Un Saved Available Networks: {:?}",
+            unsaved_available_networks
+        );
+
         let available_network_text = node!(
             Text::new(txt!("Available Networks"))
                 .style("color", Color::rgba(197., 197., 197., 1.))
@@ -327,152 +359,156 @@ impl Component for NetworkingScreen {
             ]
         );
 
-        let available_network_row_1 = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 12],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-                // padding: [5., 0., 12., 0.],
-            ]
-        )
-        .push(
+        let saved_network_row_component = |name: &str| {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
+                    size_pct: [100, 12],
+                    direction: Direction::Row,
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Center,
+                    // padding: [5., 0., 12., 0.],
                 ]
             )
-            .push(node!(
-                widgets::Image::new("wifi_icon"),
-                lay![
-                    size: [24, 24],
-                    margin:[0., 0., 0., 20.],
-                ]
-            ))
             .push(
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Stretch,
+                        size_pct: [80, Auto],
+                        axis_alignment: Alignment::Start,
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!("Mecha Admin"))
-                        .style("color", Color::WHITE)
-                        .style("size", 18.0)
-                        .style("line_height", 20.0)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                    widgets::Image::new("wifi_icon"),
                     lay![
-                        direction: Direction::Row,
-                        axis_alignment: Alignment::Start,
-                        cross_alignment: Alignment::Center,
+                        size: [24, 24],
+                        margin:[0., 0., 0., 20.],
                     ]
                 ))
-                .push(node!(
-                    // mini status
-                    Text::new(txt!("Saved"))
-                        .style("color", Color::WHITE)
-                        .style("size", 14.0)
-                        .style("line_height", 18.)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
-                    lay![
-                        direction: Direction::Row,
-                        axis_alignment: Alignment::Start,
-                        cross_alignment: Alignment::Center,
-                    ]
-                )),
-            ),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End,
-                    cross_alignment:Alignment::Center,
-                    padding: [0. , 0., 0., 10.]
-                ]
+                .push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [100, Auto],
+                            direction: Direction::Column,
+                            axis_alignment: Alignment::Stretch,
+                        ]
+                    )
+                    .push(node!(
+                        Text::new(txt!(name))
+                            .style("color", Color::WHITE)
+                            .style("size", 18.0)
+                            .style("line_height", 20.0)
+                            .style("font", "Space Grotesk")
+                            .style("font_weight", FontWeight::Normal),
+                        lay![
+                            direction: Direction::Row,
+                            axis_alignment: Alignment::Start,
+                            cross_alignment: Alignment::Center,
+                        ]
+                    ))
+                    .push(node!(
+                        // mini status
+                        Text::new(txt!("Saved"))
+                            .style("color", Color::WHITE)
+                            .style("size", 14.0)
+                            .style("line_height", 18.)
+                            .style("font", "Space Grotesk")
+                            .style("font_weight", FontWeight::Normal),
+                        lay![
+                            direction: Direction::Row,
+                            axis_alignment: Alignment::Start,
+                            cross_alignment: Alignment::Center,
+                        ]
+                    )),
+                ),
             )
-            .push(node!(
-                widgets::Image::new("info_icon"),
-                lay![
-                    size: [22, 22],
-                ]
-            )),
-        );
-
-        let available_network_row_2 = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 12],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-                // padding: [5., 0., 12., 0.],
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
-                ]
-            )
-            .push(node!(
-                widgets::Image::new("wifi_icon"),
-                lay![
-                    size: [24, 24],
-                    margin:[0., 0., 0., 20.],
-                ]
-            ))
             .push(
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Stretch,
+                        size_pct: [20, Auto],
+                        axis_alignment: Alignment::End,
+                        cross_alignment:Alignment::Center,
+                        padding: [0. , 0., 0., 10.]
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!("Mecha Guest"))
-                        .style("color", Color::WHITE)
-                        .style("size", 18.0)
-                        .style("line_height", 20.0)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                    widgets::Image::new("info_icon"),
                     lay![
-                        direction: Direction::Row,
-                        axis_alignment: Alignment::Start,
+                        size: [22, 22],
                     ]
                 )),
-            ),
-        )
-        .push(
+            )
+        };
+
+        let unsaved_available_network_row_component = |name: &str| {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End,
-                    cross_alignment:Alignment::Center,
-                    padding: [0. , 0., 0., 10.]
+                    size_pct: [100, 12],
+                    direction: Direction::Row,
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Center,
+                    // padding: [5., 0., 12., 0.],
                 ]
             )
-            .push(node!(
-                widgets::Image::new("info_icon"),
-                lay![
-                    size: [22, 22],
-                ]
-            )),
-        );
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [80, Auto],
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(node!(
+                    widgets::Image::new("wifi_icon"),
+                    lay![
+                        size: [24, 24],
+                        margin:[0., 0., 0., 20.],
+                    ]
+                ))
+                .push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [100, Auto],
+                            direction: Direction::Column,
+                            axis_alignment: Alignment::Stretch,
+                        ]
+                    )
+                    .push(node!(
+                        Text::new(txt!("Mecha Guest"))
+                            .style("color", Color::WHITE)
+                            .style("size", 18.0)
+                            .style("line_height", 20.0)
+                            .style("font", "Space Grotesk")
+                            .style("font_weight", FontWeight::Normal),
+                        lay![
+                            direction: Direction::Row,
+                            axis_alignment: Alignment::Start,
+                        ]
+                    )),
+                ),
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [20, Auto],
+                        axis_alignment: Alignment::End,
+                        cross_alignment:Alignment::Center,
+                        padding: [0. , 0., 0., 10.]
+                    ]
+                )
+                .push(node!(
+                    widgets::Image::new("info_icon"),
+                    lay![
+                        size: [22, 22],
+                    ]
+                )),
+            )
+        };
 
         let available_network_row_3 = node!(
             Div::new(),
@@ -626,9 +662,16 @@ impl Component for NetworkingScreen {
         // TODO : HANDLE MORE
 
         content_node = content_node.push(node!(HDivider { size: 1. }));
-        content_node = content_node.push(available_network_row_1);
-        content_node = content_node.push(node!(HDivider { size: 0.5 }));
-        content_node = content_node.push(available_network_row_2);
+        for network in saved_available_networks {
+            content_node = content_node.push(saved_network_row_component(&network.name));
+            content_node = content_node.push(node!(HDivider { size: 0.5 }));
+        }
+
+        for network in unsaved_available_networks {
+            content_node =
+                content_node.push(unsaved_available_network_row_component(&network.name));
+            content_node = content_node.push(node!(HDivider { size: 0.5 }));
+        }
         content_node = content_node.push(node!(HDivider { size: 1. }));
 
         content_node = content_node.push(view_all_text);

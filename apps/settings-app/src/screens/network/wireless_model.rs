@@ -1,10 +1,9 @@
 use futures::StreamExt;
 use lazy_static::lazy_static;
 use mctk_core::context::Context;
-use mctk_core::reexports::smithay_client_toolkit::reexports::client::Connection;
 use mctk_macros::Model;
 use mechanix_system_dbus_client::wireless::{
-    KnownNetworkListResponse, NotificationStream, WirelessInfoResponse, WirelessService,
+    KnownNetworkListResponse, WirelessInfoResponse, WirelessScanListResponse, WirelessService,
 };
 use tokio::runtime::Runtime;
 use tokio::select;
@@ -15,7 +14,9 @@ lazy_static! {
         known_networks: Context::new(KnownNetworkListResponse {
             known_network: vec![]
         }),
-        available_networks: Context::new(vec![]),
+        scan_result: Context::new(WirelessScanListResponse {
+            wireless_network: vec![]
+        }),
         connected_network: Context::new(None),
         is_enabled: Context::new(false),
     };
@@ -24,7 +25,7 @@ lazy_static! {
 #[derive(Model)]
 pub struct WirelessModel {
     pub known_networks: Context<KnownNetworkListResponse>,
-    pub available_networks: Context<Vec<String>>,
+    pub scan_result: Context<WirelessScanListResponse>,
     pub connected_network: Context<Option<WirelessInfoResponse>>,
     pub is_enabled: Context<bool>,
 }
@@ -43,6 +44,13 @@ impl WirelessModel {
                 WirelessService::enable_wireless().await.unwrap();
             }
             WirelessModel::update();
+        });
+    }
+
+    pub fn scan() {
+        RUNTIME.spawn(async {
+            let scan_result = WirelessService::scan().await.unwrap();
+            WirelessModel::get().scan_result.set(scan_result);
         });
     }
 
