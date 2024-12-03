@@ -1,4 +1,4 @@
-use crate::footer_node;
+// use crate::footer_node;
 use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
@@ -70,13 +70,13 @@ impl Component for BluetoothScreen {
         header_node = header_node.push(header);
 
         let devices = [("Bluetooth device 1"), ("Bluetooth device 2")];
-        base = base.push(footer_node!(
-            Routes::SettingsList,
-            "add_icon",
-            Box::new(|| msg!(Message::ChangeRoute {
-                route: Routes::SettingsList,
-            }))
-        ));
+        // base = base.push(footer_node!(
+        //     Routes::SettingsList,
+        //     "add_icon",
+        //     Box::new(|| msg!(Message::ChangeRoute {
+        //         route: Routes::SettingsList,
+        //     }))
+        // ));
         main_node = main_node.push(header_node);
         main_node = main_node.push(text_node("Available Devices"));
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));

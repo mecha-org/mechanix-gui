@@ -1,4 +1,3 @@
-use crate::footer_node;
 use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
@@ -35,7 +34,7 @@ impl Component for BatteryScreen {
             route: Routes::PerformanceModes
         ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
-        base = base.push(footer_node!(Routes::SettingsList));
+        // base = base.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
         Some(base)
     }

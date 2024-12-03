@@ -2,7 +2,7 @@ use crate::gui::Message;
 use crate::gui::{self, Routes};
 use crate::screens::sound::sound_model::SoundModel;
 use crate::shared::slider::{Slider, SliderType};
-use crate::{components::*, footer_node, tab_item_node};
+use crate::{components::*, header_node, tab_item_node};
 
 use super::input_device_selector::InputDeviceSelector;
 use super::output_device_selector::OutputDeviceSelector;
@@ -62,7 +62,7 @@ impl component::Component for SoundScreen {
 
         let output_slider = node!(
             Slider::new()
-                .value((*SoundModel::get().output_volume.get()) as u8)
+                .value((*SoundModel::get().output_volume.get()).ceil() as u8)
                 .slider_type(SliderType::Line)
                 .active_color(Color::rgb(226., 102., 0.))
                 .on_slide(Box::new(|value| {
@@ -95,7 +95,7 @@ impl component::Component for SoundScreen {
             [icon_node("right_arrow_icon")],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectInputDevice }))),
         );
-        main_node = main_node.push(header_node("Sound"));
+        main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
         main_node = main_node.push(text_bold_node("OUTPUT"));
         main_node = main_node.push(output_slider);
         main_node = main_node.push(output_device);
@@ -107,6 +107,22 @@ impl component::Component for SoundScreen {
 
         // main_node = main_node.push(footer_node!(Routes::SettingsList));
 
+        base = base.push(header_node!(
+            "Sound",
+            if let SoundScreenRoute::SoundScreen = self.state_ref().route {
+                Box::new(|| {
+                    msg!(Message::ChangeRoute {
+                        route: Routes::SettingsList,
+                    })
+                })
+            } else {
+                Box::new(|| {
+                    msg!(Message::ChangeSoundScreenRoute {
+                        route: SoundScreenRoute::SoundScreen,
+                    })
+                })
+            }
+        ));
         match self.state_ref().route {
             SoundScreenRoute::SelectOutputDevice => {
                 base = base.push(node!(OutputDeviceSelector {}))

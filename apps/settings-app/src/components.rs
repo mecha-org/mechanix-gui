@@ -14,152 +14,155 @@ pub struct ScreenRoute {
 }
 
 #[macro_export]
-macro_rules! footer_node {
-    ($route:expr) => {{
-        let mut footer_div = node!(
-            Div::new().bg(Color::BLACK),
+macro_rules! header_node {
+    ($title:expr, $back_on_click:expr) => {{
+        let text_node = node!(
+            Text::new(txt!($title))
+                .style("color", Color::WHITE)
+                .style("size", 28.0)
+                .style("line_height", 20.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Medium),
             lay![
-                size_pct: [110, 20],
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
-                position_type: Absolute,
-                position: [Auto, 0.0, 0.0, 0.0],
+                size_pct: [100, Auto],
             ]
         );
-        let footer_row: Node = node!(
+        let header_node = node!(
             Div::new(),
             lay![
+                size_pct: [100, 15],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Start,
+                axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
+                margin: [0., 0., 5., 0.],
+                // position_type: Absolute,
+                position: [0., 0., Auto, 0.],
             ]
         )
         .push(
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [50],
+                    size_pct: [80, Auto],
+                    axis_alignment: Alignment::Start,
+                    cross_alignment: Alignment::Center,
                 ],
             )
             .push(node!(
                 IconButton::new("back_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: $route
-                    })))
+                    .on_click($back_on_click)
                     .icon_type(IconType::Png)
                     .style(
                         "size",
                         Size {
-                            width: Dimension::Px(52.0),
-                            height: Dimension::Px(52.0),
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
                         }
                     )
                     .style("background_color", Color::TRANSPARENT)
                     .style("border_color", Color::TRANSPARENT)
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 12.),
+                    .style("radius", 10.),
                 lay![
                     size: [52, 52],
-                cross_alignment: Alignment::Center,
-                margin: [0., 20., 0., 0.]
+                    padding: [0, 0, 0, 20.],
+                    axis_alignment: Alignment::Start,
+                    cross_alignment: Alignment::Center,
                 ]
-            )),
+            ))
+            .push(text_node),
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [20, Auto],
+                    axis_alignment: Alignment::End
+                ]
+            )
+            // .push(node!(
+            //     widgets::Image::new("network_settings_icon"),
+            //     lay![
+            //         size: [24, 24],
+            //     ]
+            // )),
         );
-
-        footer_div = footer_div
-            .push(node!(HDivider { size: 1. }))
-            .push(footer_row);
-        footer_div
+        header_node
     }};
-    ($route:expr, $icon:expr, $on_click:expr) => {{
-
-        let mut footer_div = node!(
-            Div::new().bg(Color::BLACK),
+    ($title:expr, $back_on_click:expr, $right_icon:expr) => {{
+        let text_node = node!(
+            Text::new(txt!($title))
+                .style("color", Color::WHITE)
+                .style("size", 28.0)
+                .style("line_height", 20.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Medium),
             lay![
-                size_pct: [100, 20],
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
-                position_type: Absolute,
-                position: [Auto, 0.0, 0.0, 0.0],
+                size_pct: [100, Auto],
             ]
         );
-        let footer_row: Node = node!(
+        let header_node = node!(
             Div::new(),
             lay![
+                size_pct: [100, 10],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Start,
+                axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
+                margin: [0., 0., 5., 0.],
+                // position_type: Absolute,
+                position: [0., 0., Auto, 0.],
             ]
         )
         .push(
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [50],
+                    size_pct: [80, Auto],
+                    axis_alignment: Alignment::Start,
+                    cross_alignment: Alignment::Center,
                 ],
             )
             .push(node!(
                 IconButton::new("back_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: $route,
-                    })))
+                    .on_click($back_on_click)
                     .icon_type(IconType::Png)
                     .style(
                         "size",
                         Size {
-                            width: Dimension::Px(52.0),
-                            height: Dimension::Px(52.0),
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
                         }
                     )
                     .style("background_color", Color::TRANSPARENT)
                     .style("border_color", Color::TRANSPARENT)
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 12.),
+                    .style("radius", 10.),
                 lay![
                     size: [52, 52],
-                cross_alignment: Alignment::Center,
-                margin: [0., 20., 0., 0.]
+                    padding: [0, 0, 0, 20.],
+                    axis_alignment: Alignment::Start,
+                    cross_alignment: Alignment::Center,
                 ]
-            )),
+            ))
+            .push(text_node),
         )
         .push(
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [50],
-                    cross_alignment: Alignment::Start,
-                    axis_alignment: Alignment::End,
-                ],
+                    size_pct: [20, Auto],
+                    axis_alignment: Alignment::End
+                ]
             )
             .push(node!(
-                IconButton::new($icon)
-                    .on_click($on_click)
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(52.0),
-                            height: Dimension::Px(52.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 12.),
+                widgets::Image::new($right_icon),
                 lay![
-                    size: [52, 52],
-                cross_alignment: Alignment::Center,
-                axis_alignment: Alignment::End,
-                margin: [0., 0., 0., 20.]
+                    size: [24, 24],
                 ]
             )),
         );
-
-        footer_div = footer_div
-            .push(node!(HDivider { size: 1. }))
-            .push(footer_row);
-        footer_div
-    }}
+        header_node
+    }};
 }
 
 pub fn header_node(text: &str) -> Node {
