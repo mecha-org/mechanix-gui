@@ -361,14 +361,18 @@ impl Component for NetworkingScreen {
 
         for network in available_networks {
             let mut is_known = false;
+            let mut is_current = false;
             for known_network in known_networks.iter() {
-                if known_network.flags == "CURRENT" {
-                    continue;
-                }
                 if known_network.ssid == network.name {
+                    if known_network.flags.contains("[CURRENT]") {
+                        is_current = true;
+                    }
                     is_known = true;
                     break;
                 }
+            }
+            if is_current {
+                continue;
             }
             if is_known {
                 saved_available_networks.push(network);
@@ -689,22 +693,21 @@ impl Component for NetworkingScreen {
 
         content_node = content_node.push(available_network_text);
 
-        // TODO : HANDLE MORE
-
         content_node = content_node.push(node!(HDivider { size: 1. }));
-        for network in saved_available_networks {
-            content_node = content_node.push(saved_network_row_component(&network.name));
-            content_node = content_node.push(node!(HDivider { size: 0.5 }));
-        }
-        // content_node = content_node.push(saved_network_row_component("HELLO"));
-        content_node = content_node.push(node!(HDivider { size: 0.5 }));
 
+        for (i, network) in saved_available_networks.iter().rev().enumerate() {
+            content_node =
+                content_node.push(saved_network_row_component(&network.name).key(i as u64));
+            content_node = content_node
+                .push(node!(HDivider { size: 0.5 }))
+                .key(2 * i as u64);
+        }
         for (i, network) in unsaved_available_networks.iter().rev().enumerate() {
             content_node = content_node
                 .push(unsaved_available_network_row_component(&network.name).key(i as u64));
             content_node = content_node
                 .push(node!(HDivider { size: 0.5 }))
-                .key(i as u64);
+                .key(2 * i as u64);
         }
         content_node = content_node.push(node!(HDivider { size: 1. }));
 
