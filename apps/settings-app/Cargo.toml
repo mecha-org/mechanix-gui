@@ -16,11 +16,12 @@ keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "w
 anyhow = "1.0.71"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
-# mctk_core = { git = "https://github.com/mecha-org/mctk.git", rev = "cbd85c0f9cdb4279a89389ed1ec5bba9a8d5a30a" }
-# mctk_macros = { git = "https://github.com/mecha-org/mctk.git", rev = "cbd85c0f9cdb4279a89389ed1ec5bba9a8d5a30a" }
-mctk_core = { git = "https://github.com/akshayr-mecha/mctk.git", rev = "7823866c0d432e4e72f48976a1f9e26279e6a171" }
-mctk_smithay = { git = "https://github.com/akshayr-mecha/mctk.git", rev = "7823866c0d432e4e72f48976a1f9e26279e6a171" }
-mctk_macros = { git = "https://github.com/akshayr-mecha/mctk.git", rev = "7823866c0d432e4e72f48976a1f9e26279e6a171" }
+mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }
+# mctk_core = { git = "https://github.com/akshayr-mecha/mctk.git", rev = "7823866c0d432e4e72f48976a1f9e26279e6a171" }
+# mctk_smithay = { git = "https://github.com/akshayr-mecha/mctk.git", rev = "7823866c0d432e4e72f48976a1f9e26279e6a171" }
+# mctk_macros = { git = "https://github.com/akshayr-mecha/mctk.git", rev = "7823866c0d432e4e72f48976a1f9e26279e6a171" }
 xdg = "2.4.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -29,10 +30,12 @@ dirs = "5.0.1"
 tokio = { version = "1.33", features = ["full"] }
 zbus = { version = "4.1.2", features = ["tokio"] }
 mechanix_system_dbus_client = { path = "../../services/system/client/dbus" }
+mechanix_desktop_dbus_client = { path = "../../services/desktop/client/dbus" }
 mechanix_status_bar_components = { path = "../../shell/commons/status-bar" }
 futures-util = "0.3.30"
 futures = "0.3.30"
 regex="1.11.1"
+lazy_static = "1.5.0"
 
 [package.metadata.deb]
 name = "mechanix-settings"

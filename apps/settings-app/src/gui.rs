@@ -9,6 +9,7 @@ use crate::{
             network_settings::NetworkSettings, networking::NetworkingScreen,
         },
         settings_menu::settings_screen::SettingsScreen,
+        sound::sound_screen::{SoundScreen, SoundScreenRoute},
     },
     settings::{self, MainSettings},
     shared::h_divider::HDivider,
@@ -90,6 +91,7 @@ pub struct SettingsAppState {
 #[derive(Debug, Clone)]
 pub enum Message {
     ChangeRoute { route: Routes },
+    ChangeSoundScreenRoute { route: SoundScreenRoute },
 }
 
 pub enum NetworkMessage {
@@ -165,6 +167,7 @@ impl Component for SettingsApp {
                     connected_network_name: self.state_ref().connected_network_name.clone()
                 }))
             }
+            Routes::SoundScreen => base = base.push(node!(SoundScreen::new())),
             Routes::Network { screen } => match screen {
                 NetworkScreenRoutes::Networking => {
                     base = base.push(node!(NetworkingScreen::new(
@@ -209,7 +212,8 @@ impl Component for SettingsApp {
                             self.state_mut().current_route = route.clone();
                         }
                     }
-                } // _ => (),
+                }
+                _ => (),
             }
         }
 

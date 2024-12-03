@@ -68,6 +68,7 @@ impl Component for PowerOptions {
                             .on_release(Box::new(|| msg!(Message::Shutdown(
                                 ShutdownState::Released
                             ))))
+                            .with_class("p-4 border-2")
                             .style(
                                 "background_color",
                                 if self.shutdown_pressed {
@@ -84,8 +85,6 @@ impl Component for PowerOptions {
                                     Color::TRANSPARENT
                                 }
                             )
-                            .style("padding", 16.)
-                            .style("radius", 0.)
                             .style(
                                 "border_color",
                                 if self.shutdown_pressed {
@@ -94,10 +93,9 @@ impl Component for PowerOptions {
                                     Color::rgb(243., 24., 65.)
                                 }
                             )
-                            .style("border_width", 2.),
+                            .style("size", size!(80, 80)),
                         lay![
-                            size: [80, 80],
-                            margin: [0., 0., 0., 20.],
+                            margin: [0., 0., 0., 14.],
                         ]
                     ))
                     .push(node!(
@@ -107,14 +105,12 @@ impl Component for PowerOptions {
                             .on_release(Box::new(|| msg!(Message::Shutdown(
                                 ShutdownState::Released
                             ))))
+                            .with_class(
+                                "text-3xl leading-7 bg-transparent font-medium font-space-grotesk p-0"
+                            )
                             .style("text_color", Color::rgb(243., 24., 65.))
-                            .style("background_color", Color::TRANSPARENT)
                             .style("active_color", Color::TRANSPARENT)
-                            .style("font_size", 28.0)
-                            .style("line_height", 28.0)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Medium)
-                            .style("padding", 0.),
+                            ,
                         lay![
                             size: [131, 36]
                         ]
@@ -135,6 +131,7 @@ impl Component for PowerOptions {
                             .on_click(Box::new(|| msg!(Message::Restart(RestartState::Clicked))))
                             .on_press(Box::new(|| msg!(Message::Restart(RestartState::Pressed))))
                             .on_release(Box::new(|| msg!(Message::Restart(RestartState::Released))))
+                            .with_class("p-4 border-2")
                             .style(
                                 "background_color",
                                 if self.restart_pressed {
@@ -151,8 +148,6 @@ impl Component for PowerOptions {
                                     Color::TRANSPARENT
                                 }
                             )
-                            .style("padding", 16.)
-                            .style("radius", 0.)
                             .style(
                                 "border_color",
                                 if self.restart_pressed {
@@ -161,25 +156,20 @@ impl Component for PowerOptions {
                                     Color::WHITE
                                 }
                             )
-                            .style("border_width", 2.),
+                            .style("size", size!(80, 80)),
                         lay![
-                            size: [80, 80],
-                            margin: [0., 0., 0., 20.],
+                            margin: [0., 0., 0., 0.],
                         ]
                     ))
                     .push(node!(
                         Button::new(txt!("Restart"))
+                            .with_class(
+                                "text-3xl leading-7 text-white bg-transparent font-medium font-space-grotesk p-0"
+                            )
                             .on_click(Box::new(|| msg!(Message::Restart(RestartState::Clicked))))
                             .on_press(Box::new(|| msg!(Message::Restart(RestartState::Pressed))))
                             .on_release(Box::new(|| msg!(Message::Restart(RestartState::Released))))
-                            .style("text_color", Color::WHITE)
-                            .style("background_color", Color::TRANSPARENT)
-                            .style("active_color", Color::TRANSPARENT)
-                            .style("font_size", 28.0)
-                            .style("line_height", 28.0)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Medium)
-                            .style("padding", 0.),
+                            .style("active_color", Color::TRANSPARENT),
                         lay![
                             size: [131, 36]
                         ]

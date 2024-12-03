@@ -18,6 +18,7 @@ pub enum SliderType {
 pub struct SliderState {
     value: u8,
     grid: Vec<Vec<bool>>,
+    aabb: AABB,
 }
 #[component(State = "SliderState")]
 #[derive(Default)]
@@ -158,12 +159,41 @@ impl Slider {
             self.state_mut().grid = random_vec;
         }
     }
+
+    fn update_grid(&mut self) {
+        let width = self.state_ref().aabb.width();
+        let height = self.state_ref().aabb.height();
+        let line_spacing = self.col_spacing;
+        let row_spacing = self.row_spacing;
+        let line_width = self.col_width;
+
+        let no_of_cols = ((width - line_width) / (line_width + line_spacing)) as u32 + 1;
+        let no_of_rows = ((height - line_width) / (line_width + row_spacing)) as u32 + 1;
+
+        let grid = if self.fill_random_on_start {
+            fill_grid_with_true(no_of_rows as usize, no_of_cols as usize, 20)
+        } else {
+            let mut grid: Vec<Vec<bool>> =
+                vec![vec![false; no_of_cols as usize]; no_of_rows as usize];
+            //Set specific cells as true based on the current value
+            let true_values = (self.state_ref().value as f32 * no_of_cols as f32 / 100.) as usize;
+            for i in 0..true_values {
+                for j in 0..no_of_rows as usize {
+                    grid[j][i] = true;
+                }
+            }
+            grid
+        };
+
+        self.state_mut().grid = grid;
+    }
 }
 #[state_component_impl(SliderState)]
 impl Component for Slider {
     fn init(&mut self) {
         self.state = Some(SliderState {
             value: self.value,
+            aabb: AABB::default(),
             grid: Vec::new(),
         })
     }
@@ -177,6 +207,7 @@ impl Component for Slider {
     }
     fn new_props(&mut self) {
         self.state_mut().value = self.value;
+        self.update_grid();
     }
 
     fn on_drag_start(&mut self, event: &mut Event<event::DragStart>) {
@@ -250,35 +281,11 @@ impl Component for Slider {
         _frame: AABB,
         _scale_factor: f32,
     ) {
+        self.state_mut().aabb = aabb.clone();
         if self.state_ref().grid.len() > 0 {
             return;
         }
-
-        let width = aabb.width();
-        let height = aabb.height();
-        let line_spacing = self.col_spacing;
-        let row_spacing = self.row_spacing;
-        let line_width = self.col_width;
-
-        let no_of_cols = ((width - line_width) / (line_width + line_spacing)) as u32 + 1;
-        let no_of_rows = ((height - line_width) / (line_width + row_spacing)) as u32 + 1;
-
-        let grid = if self.fill_random_on_start {
-            fill_grid_with_true(no_of_rows as usize, no_of_cols as usize, 20)
-        } else {
-            let mut grid: Vec<Vec<bool>> =
-                vec![vec![false; no_of_cols as usize]; no_of_rows as usize];
-            //Set specific cells as true based on the current value
-            let true_values = (self.state_ref().value as f32 * no_of_cols as f32 / 100.) as usize;
-            for i in 0..true_values {
-                for j in 0..no_of_rows as usize {
-                    grid[j][i] = true;
-                }
-            }
-            grid
-        };
-
-        self.state_mut().grid = grid;
+        self.update_grid();
     }
     fn view(&self) -> Option<Node> {
         let mut slider = node!(

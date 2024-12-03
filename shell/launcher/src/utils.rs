@@ -385,3 +385,9 @@ pub fn fill_grid_with_true(rows: usize, cols: usize, mut num_true: usize) -> Vec
 
     grid
 }
+
+pub fn cubic_bezier(arr: &[f64; 4], t: f64) -> f64 {
+    let ut = 1.0 - t;
+    let a1 = arr[1] * ut + arr[2] * t;
+    ((arr[0] * ut + arr[1] * t) * ut + a1 * t) * ut + (a1 * ut + (arr[2] * ut + arr[3] * t) * t) * t
+}

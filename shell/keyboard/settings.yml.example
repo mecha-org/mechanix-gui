@@ -20,11 +20,14 @@ icons:
   shift: /usr/share/mechanix/shell/keyboard/assets/icons/key_shift_icon.svg
   enter: /usr/share/mechanix/shell/keyboard/assets/icons/key_enter_icon.svg
   symbolic: /usr/share/mechanix/shell/keyboard/assets/icons/keyboard_mode_icon.svg
+  window_max: /usr/share/mechanix/shell/keyboard/assets/icons/window_max_icon.svg
+  window_min: /usr/share/mechanix/shell/keyboard/assets/icons/window_min_icon.svg
 layouts:
   default: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
+  terminal: /usr/share/mechanix/shell/keyboard/assets/layouts/terminal/us.yaml
 trie:
   raw_file: /usr/share/mechanix/shell/keyboard/assets/trie/words_raw.tsv
   cached_file: .config/mechanix/shell/keyboard/caches/words_cached.json
 click_area:
-  increase_by: 4.
+  increase_by: 5.
   visible: false

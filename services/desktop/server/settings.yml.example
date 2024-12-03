@@ -1,7 +1,7 @@
 idle_notify:
   periods:
-    display_off: 10
-    screen_lock: 3000
+    display_off: 100000
+    screen_lock: 90000
 session:
   run_commands:
     lock_screen: MECHANIX_LOCK_SCREEN_SETTINGS_PATH=/etc/mechanix/shell/lock-screen/settings.yml mechanix-lock-screen

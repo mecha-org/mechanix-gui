@@ -1,12 +1,7 @@
+use mechanix_desktop_dbus_server::SoundNotificationEvent;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use zbus::{proxy, zvariant::Type, Connection, Result};
-
-#[derive(Deserialize, Serialize, Type, PartialEq, Debug)]
-pub struct NotificationEvent {
-    pub is_mute: bool,
-    pub volume_level: f64,
-}
 
 #[proxy(
     interface = "org.mechanix.services.Sound",
@@ -17,7 +12,7 @@ trait SoundBusInterface {
     async fn set_output_device_volume(&self, volume: f64, device: String) -> Result<()>;
     async fn get_output_device_volume(&self, device: String) -> Result<f64>;
     #[zbus(signal)]
-    async fn notification(&self, event: NotificationEvent) -> Result<()>;
+    async fn notification(&self, event: SoundNotificationEvent) -> Result<()>;
 }
 
 pub struct Sound;

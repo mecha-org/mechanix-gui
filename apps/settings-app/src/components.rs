@@ -232,17 +232,19 @@ pub fn icon_node(name: &str) -> Node {
 
 #[macro_export]
 macro_rules! tab_item_node {
-    ([$($left_nodes:expr),* $(,)?], [$($right_nodes:expr),* $(,)?], route: $route:expr) => {{
+    (
+        [$($left_nodes:expr),* $(,)?],
+        [$($right_nodes:expr),* $(,)?],
+        on_click: $on_click:expr
+        $(,)?
+    ) => {{
         let left_nodes = vec![$($left_nodes),*];
         let right_nodes = vec![$($right_nodes),*];
         let mut base = node!(
             TabItemComponent {
-                on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                    route: $route
-                }))),
+                on_click: $on_click
             },
         );
-
         let mut left = node!(
             Div::new(),
             lay![
@@ -254,7 +256,6 @@ macro_rules! tab_item_node {
         for node in left_nodes {
             left = left.push(node);
         }
-
         let mut right = node!(
             Div::new(),
             lay![
@@ -270,11 +271,12 @@ macro_rules! tab_item_node {
         base = base.push(right);
         base
     }};
-
-    ([$($left_nodes:expr),* $(,)?], [$($right_nodes:expr),* $(,)?], route: $route:expr, icon_route: $icon_route:expr) => {{
-
-        println!("CASE 2 : route {:?}", $route.clone());
-        println!("CASE 2 : icon_route {:?}", $icon_route.clone());
+    (
+        [$($left_nodes:expr),* $(,)?],
+        [$($right_nodes:expr),* $(,)?],
+        route: $route:expr
+        $(,)?
+    ) => {{
         let left_nodes = vec![$($left_nodes),*];
         let right_nodes = vec![$($right_nodes),*];
         let mut base = node!(
@@ -284,7 +286,6 @@ macro_rules! tab_item_node {
                 }))),
             },
         );
-
         let mut left = node!(
             Div::new(),
             lay![
@@ -296,7 +297,6 @@ macro_rules! tab_item_node {
         for node in left_nodes {
             left = left.push(node);
         }
-
         let mut right = node!(
             Div::new(),
             lay![
@@ -305,15 +305,6 @@ macro_rules! tab_item_node {
                 axis_alignment: Alignment::End
             ],
         );
-
-        // // TODO
-        // let mut right = node!(
-        //     ClicableIconComponent {
-        //         on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-        //             route: $icon_route
-        //         }))),
-        //     },
-        // );
         for node in right_nodes {
             right = right.push(node);
         }
@@ -321,8 +312,11 @@ macro_rules! tab_item_node {
         base = base.push(right);
         base
     }};
-
-    ([$($left_nodes:expr),* $(,)?], [$($right_nodes:expr),* $(,)?]) => {{
+    (
+        [$($left_nodes:expr),* $(,)?],
+        [$($right_nodes:expr),* $(,)?]
+        $(,)?
+    ) => {{
         let left_nodes = vec![$($left_nodes),*];
         let right_nodes = vec![$($right_nodes),*];
         let mut base = node!(
@@ -330,7 +324,6 @@ macro_rules! tab_item_node {
                 on_click: None
             },
         );
-
         let mut left = node!(
             Div::new(),
             lay![
@@ -342,7 +335,6 @@ macro_rules! tab_item_node {
         for node in left_nodes {
             left = left.push(node);
         }
-
         let mut right = node!(
             Div::new(),
             lay![
