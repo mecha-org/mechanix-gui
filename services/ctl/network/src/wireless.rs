@@ -372,6 +372,8 @@ impl WirelessNetworkControl {
             .set_network_psk(network_id, psk.to_string())
             .await?;
 
+        //save network configuration
+        requester.save_config().await?;
         //select newly created network id or else return an error with matching error code
         let _ = match self.select_network(requester.clone(), network_id).await {
             Ok(_) => {
@@ -387,6 +389,9 @@ impl WirelessNetworkControl {
                     "unable to get wireless network status: {}",
                     e
                 );
+                println!("Error ---------: {}", e);
+                //if unable to connect to network, remove the network
+                self.remove_network(requester.clone(), network_id).await?;
                 bail!(e)
             }
         };
