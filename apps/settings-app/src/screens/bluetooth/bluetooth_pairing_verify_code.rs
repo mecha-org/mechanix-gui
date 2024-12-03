@@ -1,4 +1,3 @@
-use crate::footer_node;
 use crate::gui::Message;
 use crate::gui::Routes;
 use crate::shared::h_divider::HDivider;
