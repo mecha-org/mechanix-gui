@@ -51,6 +51,9 @@ impl WirelessModel {
         RUNTIME.spawn(async {
             let scan_result = WirelessService::scan().await.unwrap();
             WirelessModel::get().scan_result.set(scan_result);
+
+            let known_networks = WirelessService::known_networks().await.unwrap();
+            WirelessModel::get().known_networks.set(known_networks);
         });
     }
 

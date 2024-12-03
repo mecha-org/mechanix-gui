@@ -321,15 +321,16 @@ impl Component for NetworkingScreen {
             .wireless_network
             .clone();
 
+        let known_networks = WirelessModel::get()
+            .known_networks
+            .get()
+            .known_network
+            .clone();
+
         for network in available_networks {
-            let known_networks = WirelessModel::get()
-                .known_networks
-                .get()
-                .known_network
-                .clone();
             let mut is_known = false;
             for known_network in known_networks.iter() {
-                if known_network.ssid == network.mac {
+                if known_network.ssid == network.name {
                     is_known = true;
                     break;
                 }
@@ -340,12 +341,6 @@ impl Component for NetworkingScreen {
                 unsaved_available_networks.push(network);
             }
         }
-
-        println!("Saved Available Networks: {:?}", saved_available_networks);
-        println!(
-            "Un Saved Available Networks: {:?}",
-            unsaved_available_networks
-        );
 
         let available_network_text = node!(
             Text::new(txt!("Available Networks"))
@@ -478,7 +473,7 @@ impl Component for NetworkingScreen {
                         ]
                     )
                     .push(node!(
-                        Text::new(txt!("Mecha Guest"))
+                        Text::new(txt!(name))
                             .style("color", Color::WHITE)
                             .style("size", 18.0)
                             .style("line_height", 20.0)
@@ -667,7 +662,7 @@ impl Component for NetworkingScreen {
             content_node = content_node.push(node!(HDivider { size: 0.5 }));
         }
 
-        for network in unsaved_available_networks {
+        for network in unsaved_available_networks.iter().rev() {
             content_node =
                 content_node.push(unsaved_available_network_row_component(&network.name));
             content_node = content_node.push(node!(HDivider { size: 0.5 }));
