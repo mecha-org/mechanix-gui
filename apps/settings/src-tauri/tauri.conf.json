@@ -29,7 +29,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "so.mecha.dev",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -56,12 +56,12 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
+        "height": 480,
         "resizable": true,
         "title": "settings-app",
-        "width": 800,
-        "decorations": false,
-        "transparent": true 
+        "width": 480,
+        "transparent": true,
+        "decorations": true
       }
     ]
   }

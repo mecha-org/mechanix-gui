@@ -1,5 +1,14 @@
+import toast from 'svelte-french-toast';
+
 export const goBack = () => {
 	window.history.back();
+};
+
+export const customToast = (message: string) => {
+	return toast.error(message, {
+		position: 'bottom-center',
+		style: 'background-color: #202431; color: #FFFFFF'
+	});
 };
 
 

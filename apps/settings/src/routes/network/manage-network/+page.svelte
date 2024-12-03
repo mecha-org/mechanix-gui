@@ -6,10 +6,14 @@
 	import { LOG_LEVEL, consoleLog, goBack } from '$lib/services/common-services';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { onDestroy, onMount } from 'svelte';
-	import { fetchAvaialbleNetworks, fetchKnownNetworks } from '$lib/services/network-services';
 	import {
-		availableNetworksList,
-		fetchingAvailableNetworks,
+		fetchAvaialbleNetworks,
+		fetchConnectedWifiInfo,
+		fetchKnownNetworks,
+		removeWifi
+	} from '$lib/services/network-services';
+	import {
+		changeKnownNetwork,
 		fetchingKnownNetworks,
 		knownNetworksList
 	} from '$lib/stores/networkStore';
@@ -17,17 +21,13 @@
 	const LOG_PREFIX = PAGE_LOG + NETWORK_MODULE_LOG + 'manage-network::';
 
 	let timeIntervalId: number;
+
 	const getInitalData = async () => {
 		consoleLog(LOG_PREFIX + 'getInitalData()::');
 		try {
 			fetchKnownNetworks().finally(() => {
 				if (fetchingKnownNetworks) {
 					fetchingKnownNetworks.set(false);
-				}
-			});
-			fetchAvaialbleNetworks().finally(() => {
-				if (fetchingAvailableNetworks) {
-					fetchingAvailableNetworks.set(false);
 				}
 			});
 		} catch (error) {
@@ -47,30 +47,31 @@
 		clearInterval(timeIntervalId);
 	});
 
-	const connectedToNetwork = async (networkId: string) => {
-		consoleLog(LOG_PREFIX + 'connectedToNetwork()::' + networkId);
+	const connectedToNetwork = async (networkSSID: string) => {
+		changeKnownNetwork.set(true);
+		consoleLog(LOG_PREFIX + 'connectedToNetwork()::' + networkSSID);
 		try {
-			const response: boolean = await invoke('connect_to_known_network', { network_id: networkId });
-		fetchKnownNetworks();
+			const response: boolean = await invoke('connect_to_known_network', {
+				networkSsid: networkSSID
+			});
+			await fetchConnectedWifiInfo();
+			changeKnownNetwork.set(false);
 		} catch (error) {
-			
-		}
-		
-	};
+			changeKnownNetwork.set(false);
 
-	$: availableNetworksToShow = $availableNetworksList.filter(
-		(network) => !$knownNetworksList.some((i) => i.ssid == network.name)
-	);
+			console.log(LOG_PREFIX + 'connectedToNetwork()::error::', error);
+		}
+	};
 </script>
 
 <Layout title="Manage Network">
-	<ListHeading title="Known Networks" />
+	<!-- <ListHeading title="Known Networks" /> -->
 	<div class="flex flex-col gap-12">
-		<div class="flex flex-col gap-4">
-			{#if $fetchingAvailableNetworks}
+		<div class="flex flex-col">
+			{#if $fetchingKnownNetworks}
 				<ListItem title="Loading known networks">
 					<div class="flex animate-spin flex-row items-center gap-2">
-						<Icons name="spinner" height="30px" width="30px" />
+						<Icons name="spinner" height="28px" width="28px" />
 					</div>
 				</ListItem>
 			{:else if $knownNetworksList.length > 0}
@@ -82,11 +83,11 @@
 							title={item.ssid}
 						>
 							<div class="flex flex-row items-center gap-2">
-								<Icons name="blue_checked" height="30px" width="30px" />
+								<Icons name="blue_check_no_fill" height="24px" width="24px" />
 
-								<Icons name="lock" height="30px" width="30px" />
-								<Icons name="network" height="30px" width="30px" />
-								<Icons name="square_info" height="30px" width="30px" />
+								<Icons name="lock" height="24px" width="24px" />
+								<Icons name="network" height="24px" width="24px" />
+								<Icons name="square_info" height="24px" width="24px" />
 							</div>
 						</ListItem>
 					{:else}
@@ -96,13 +97,20 @@
 							isLink={false}
 							on:click={() => connectedToNetwork(item.network_id)}
 						>
-							<div class="flex flex-row items-center gap-2">
-								<Icons name="lock" height="30px" width="30px" />
-								<Icons name="network" height="30px" width="30px" />
-								<a href={`/network/manage-network/known/${item.network_id}`}>
-									<Icons name="square_info" height="30px" width="30px" />
-								</a>
-							</div>
+							{#if $changeKnownNetwork}
+								<div class="flex animate-spin flex-row items-center gap-2">
+									<Icons name="spinner" height="28px" width="28px" />
+								</div>
+							{:else}
+								<div class="flex flex-row items-center gap-2">
+									<Icons name="lock" height="24px" width="24px" />
+									<Icons name="network" height="24px" width="24px" />
+
+									<a href={`/network/manage-network/known/${item.network_id}`}>
+										<Icons name="square_info" height="24px" width="24px" />
+									</a>
+								</div>
+							{/if}
 						</ListItem>
 					{/if}
 				{/each}
@@ -110,52 +118,17 @@
 				<ListItem title="No networks available"></ListItem>
 			{/if}
 		</div>
-		<div>
-			<ListHeading title="Available Networks" />
-
-			<div class="flex flex-col gap-12">
-				<div class="flex flex-col gap-4">
-					{#if $fetchingAvailableNetworks}
-						<ListItem title="Searching available networks">
-							<div class="flex animate-spin flex-row items-center gap-2">
-								<Icons name="spinner" height="30px" width="30px" />
-							</div>
-						</ListItem>
-					{:else if availableNetworksToShow.length > 0}
-						{#each availableNetworksToShow as item, i (item.name)}
-							<ListItem
-								isLink
-								href={`/network/manage-network/connect/${item.name}`}
-								title={item.name}
-							>
-								<div class="flex flex-row items-center gap-2">
-									<Icons name="lock" height="30px" width="30px" />
-									<Icons name="network" height="30px" width="30px" />
-									<a href={`/network/manage-network/available/${item.name}`}>
-										<Icons name="square_info" height="30px" width="30px" />
-									</a>
-								</div>
-							</ListItem>
-						{/each}
-					{:else}
-						<ListItem title="No networks available"></ListItem>
-					{/if}
-				</div>
-			</div>
-		</div>
 	</div>
-	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
+	<footer
+		slot="footer"
+		class="border-silver-gray h-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+	>
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="  flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
-			</button>
-			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
-			>
-				<Icons name="addition" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

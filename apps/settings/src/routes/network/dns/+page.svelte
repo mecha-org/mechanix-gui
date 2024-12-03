@@ -6,21 +6,27 @@
 </script>
 
 <Layout title="DNS">
-	<div class="flex flex-col gap-4">
+	<div class="flex flex-col">
 		<ListItem isLink title="DNS Server 1">
-			<Icons name="right_arrow" height="30px" width="30px" />
+			<div class="flex flex-row items-center gap-2">
+				<div>AE:16:AF:80:CF:2F</div>
+				<Icons name="right_arrow" height="30px" width="30px" />
+			</div>
 		</ListItem>
 		<ListItem isLink title="DNS Server 2">
 			<Icons name="right_arrow" height="30px" width="30px" />
 		</ListItem>
 	</div>
-	<footer slot="footer" class="h-full w-full bg-[#05070A73] backdrop-blur-3xl backdrop-filter">
+	<footer
+		slot="footer"
+		class="border-silver-gray h-full w-full border-t-2 bg-[#05070A73] backdrop-blur-3xl backdrop-filter"
+	>
 		<div class="flex h-full w-full flex-row items-center justify-between px-4 py-3">
 			<button
-				class="flex h-[48px] w-[48px] rotate-180 items-center justify-center rounded-lg bg-ash-gray p-2 text-[#FAFBFC]"
+				class="  flex h-[60px] w-[60px] items-center justify-center rounded-lg p-2 text-[#FAFBFC]"
 				on:click={goBack}
 			>
-				<Icons name="right_arrow" width="32" height="32" />
+				<Icons name="left_arrow" width="60" height="60" />
 			</button>
 		</div>
 	</footer>

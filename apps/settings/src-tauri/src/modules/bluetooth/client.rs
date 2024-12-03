@@ -1,14 +1,9 @@
 
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tracing::info;
 use zbus::{proxy, zvariant::{ DeserializeDict, SerializeDict, Type}, Connection, Result};
 
-use tauri::{
-    plugin::{Builder, TauriPlugin},
-    Runtime,
-  };
-
-#[derive(DeserializeDict, SerializeDict, Debug, Type, Clone, Default)]
+#[derive(DeserializeDict, Debug, Type, Clone, Default, Serialize)]
 #[zvariant(signature = "a{sv}")]
 pub struct BluetoothScanResponse {
     pub address: String,
@@ -22,13 +17,11 @@ pub struct BluetoothScanResponse {
     pub is_trusted: bool,
 }
 
-
-#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone, Default)]
+#[derive(DeserializeDict, Type, Debug, Clone, Default, Serialize)]
 #[zvariant(signature = "a{sv}")]
 pub struct BluetoothScanListResponse {
     pub bluetooth_devices: Vec<BluetoothScanResponse>,
 }
-
 
 #[proxy(
     interface = "org.mechanix.services.Bluetooth",
@@ -40,6 +33,8 @@ trait Bluetooth {
     async fn enable(&self) -> Result<()>;
     async fn disable(&self) -> Result<()>;
     async fn status(&self) -> Result<i8>;
+    async fn connect(&self, address: &str) -> Result<()>;
+    async fn disconnect(&self, address: &str) -> Result<()>;
 }
 
 pub struct BluetoothService; 
@@ -56,22 +51,18 @@ impl BluetoothService {
     pub async fn enable_bluetooth() -> Result<()> {
         info!("In bluetooth enable status call:: ");
         let connection = Connection::system().await?;
-
         let proxy = BluetoothProxy::new(&connection).await?;
-
         let reply =  proxy.enable().await?;
-        info!("enable_bluetooth reply: {:?}", reply);
+        println!("enable_bluetooth reply: {:?}", reply);
         Ok(reply)
     }
 
     pub async fn disable_bluetooth() -> Result<()> {
         info!("In bluetooth disable status call:: ");
         let connection = Connection::system().await?;
-
         let proxy = BluetoothProxy::new(&connection).await?;
-
         let reply =  proxy.disable().await?;
-        info!("disable_bluetooth reply: {:?}", reply);
+        println!("disable_bluetooth reply: {:?}", reply);
         Ok(reply)
     }
 
@@ -79,6 +70,23 @@ impl BluetoothService {
         let connection = Connection::system().await?;
         let proxy = BluetoothProxy::new(&connection).await?;
         let reply = proxy.status().await?;
+        Ok(reply)
+    }
+
+
+    pub async fn connect(address: &str) -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = BluetoothProxy::new(&connection).await?;
+        let reply =  proxy.connect(address).await?;
+        println!("connect reply: {:?}", reply);
+        Ok(reply)
+    }
+
+    pub async fn disconnect(address: &str) -> Result<()> {
+        let connection = Connection::system().await?;
+        let proxy = BluetoothProxy::new(&connection).await?;
+        let reply =  proxy.disconnect(address).await?;
+        println!("disconnect reply: {:?}", reply);
         Ok(reply)
     }
 

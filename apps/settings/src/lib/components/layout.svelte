@@ -1,14 +1,39 @@
 <script lang="ts">
-	export let title:string = "";
+	export let title: string = '';
+	export let bold_text: string = '';
+	export let loader: boolean = false;
+	// import AstronautXMecha from '$lib/assets/images/wallpapers/astronaut_mecha.png';
 </script>
 
-<header class="z-10 flex h-[80px] items-center bg-[#05070A]">
-	<div class="p-5">
-		<h1 class="text-xl font-bold text-misty-slate">{title}</h1>
-	</div>
+<header>
+	{#if title}
+		<div class="flex flex-row justify-between p-8">
+			<h1 class="text-misty-slate text-3xl">{title}</h1>
+			{#if loader}
+				<slot name="loader" />
+			{:else}
+				<slot name="switch" />
+			{/if}
+		</div>
+	{:else if bold_text.length > 0}
+		<div class="flex flex-row p-8">
+			<h1 class="text-misty-slate text-3xl">
+				Confirm this code on<br />
+				{' '}
+				<strong>
+					{bold_text.length > 15
+						? `'${bold_text.slice(0, 10)}...${bold_text.substring(bold_text.length - 1)}'`
+						: `'${bold_text}'`}
+				</strong>
+				&nbsp;to connect
+			</h1>
+		</div>
+	{/if}
 </header>
 
-<main class={`px-5 ${$$slots.footer ? 'pb-20' : 'pb-5'} `}><slot /></main>
+<main class={`px-5 ${$$slots.footer ? 'pb-20' : 'pb-5'} `}>
+	<slot />
+</main>
 
 {#if $$slots.footer}
 	<footer
@@ -17,6 +42,11 @@
 		<slot name="footer" />
 	</footer>
 {/if}
+
+<!-- style={`background-image: url(${AstronautXMecha});`} -->
+<!-- main {
+	background-image: url('$lib/assets/images/wallpapers/astronaut_mecha.png'); -->
+}
 
 <style>
 	header {
