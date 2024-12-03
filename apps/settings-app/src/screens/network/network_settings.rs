@@ -32,35 +32,16 @@ enum NetworkingMessage {
 #[derive(Debug)]
 pub struct NetworkSettingsState {
     // pub loading: bool,
-    pub status: bool,
-    pub name: String,
-    pub more_clicked: bool,
+    // list
 }
 
 #[derive(Debug)]
-#[component(State = "NetworkSettingsState")]
-pub struct NetworkSettingsScreen {}
+// #[component(State = "NetworkSettingsState")]
+pub struct NetworkSettings {}
 
-impl NetworkSettingsScreen {
-    // pub fn new(status: bool, connected_network: Option<WirelessDetailsItem>) -> Self {
-    pub fn new(status: bool, name: String) -> Self {
-        Self {
-            state: Some(NetworkSettingsState {
-                status,
-                name,
-                more_clicked: false,
-                // connected_network: connected_network,
-            }),
-            dirty: false,
-        }
-    }
-}
-
-impl Component for NetworkSettingsScreen {
+impl Component for NetworkSettings {
     fn view(&self) -> Option<Node> {
         let mut text_color = Color::WHITE;
-
-        let connected_network_name: String = self.state_ref().name.clone();
 
         let mut base: Node = node!(
             Div::new(),
@@ -73,12 +54,12 @@ impl Component for NetworkSettingsScreen {
         );
 
         let text_node = node!(
-            Text::new(txt!("Network Settings"))
-                .style("color", Color::WHITE)
+            Text::new(txt!("Saved Networks"))
+                .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("size", 28.0)
                 .style("line_height", 20.)
                 .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Medium),
+                .style("font_weight", FontWeight::Normal),
             lay![
                 size_pct: [100, Auto],
             ]
@@ -108,9 +89,10 @@ impl Component for NetworkSettingsScreen {
             .push(node!(
                 IconButton::new("back_icon")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::SettingsList
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::Networking
+                        }
                     })))
-                    // .on_click(Box::new(|| msg!(NetworkingMessage::handleClickOnBack)))
                     .icon_type(IconType::Png)
                     .style(
                         "size",
@@ -132,6 +114,18 @@ impl Component for NetworkSettingsScreen {
             ))
             .push(text_node),
         );
+
+        let mut content_node = node!(
+            Div::new(),
+            lay![
+                size_pct: [100, 90],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        );
+
+        base = base.push(header_node);
+        base = base.push(content_node);
 
         Some(base)
     }

@@ -70,6 +70,8 @@ impl Component for BluetoothScreen {
         header_node = header_node.push(header);
 
         let devices = [("Bluetooth device 1"), ("Bluetooth device 2")];
+
+
         // base = base.push(footer_node!(
         //     Routes::SettingsList,
         //     "add_icon",
@@ -77,6 +79,7 @@ impl Component for BluetoothScreen {
         //         route: Routes::SettingsList,
         //     }))
         // ));
+
         main_node = main_node.push(header_node);
         main_node = main_node.push(text_node("Available Devices"));
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));

@@ -12,6 +12,7 @@ use std::hash::Hash;
 use mctk_core::reexports::femtovg::img::save_buffer;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::renderables::Image;
+use mctk_core::widgets::Scrollable;
 use mctk_core::{
     component::{self, Component},
     lay,
@@ -93,7 +94,6 @@ impl Component for NetworkingScreen {
             0_i32.hash(hasher);
         }
 
-        println!("{:?}", hasher);
         self.props_hash(hasher);
     }
 
@@ -112,13 +112,14 @@ impl Component for NetworkingScreen {
 
         let text_node = node!(
             Text::new(txt!("Networking"))
-                .style("color", Color::WHITE)
+                .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("size", 28.0)
                 .style("line_height", 20.)
                 .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Medium),
+                .style("font_weight", FontWeight::Normal),
             lay![
                 size_pct: [100, Auto],
+                margin:[2.0, 5.0, 2.0, 5.0],
             ]
         );
 
@@ -138,7 +139,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [80, Auto],
+                    size_pct: [60, Auto],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ],
@@ -148,7 +149,6 @@ impl Component for NetworkingScreen {
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
                         route: Routes::SettingsList
                     })))
-                    // .on_click(Box::new(|| msg!(NetworkingMessage::handleClickOnBack)))
                     .icon_type(IconType::Png)
                     .style(
                         "size",
@@ -174,14 +174,59 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End
+                    size_pct: [40, Auto],
+                    axis_alignment: Alignment::End,
+                    padding: [0, 0, 0, 0.],
                 ]
             )
             .push(node!(
-                widgets::Image::new("network_settings_icon"),
+                IconButton::new("add_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::AddNetwork
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(40.0),
+                            height: Dimension::Px(40.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [24, 24],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
+                ]
+            ))
+            .push(node!(
+                IconButton::new("network_settings_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkSettings
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
+                lay![
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
@@ -189,7 +234,7 @@ impl Component for NetworkingScreen {
         let mut content_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 90],
+                size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -199,7 +244,7 @@ impl Component for NetworkingScreen {
         let toggle_row = node!(
             Div::new(),
             lay![
-                size_pct: [100, Auto],
+                size: [480, 50],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
@@ -210,7 +255,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [80, Auto],
+                    size: [350, 50],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ]
@@ -228,7 +273,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new().bg(Color::TRANSPARENT),
                 lay![
-                    size_pct: [20, Auto],
+                    size_pct: [20, 40],
                     axis_alignment: Alignment::End,
                     cross_alignment: Alignment::Center,
                 ]
@@ -246,7 +291,7 @@ impl Component for NetworkingScreen {
         let toggle_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 15],
+                size: [350, 50],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -267,7 +312,7 @@ impl Component for NetworkingScreen {
         let connected_network_row = node!(
             Div::new(),
             lay![
-                size_pct: [100, 12],
+                size: [440, 50],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
@@ -338,9 +383,28 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("info_icon"),
+                IconButton::new("info_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkDetails
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
@@ -397,7 +461,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [100, 12],
+                    size: [440, 50],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
@@ -480,7 +544,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [100, 12],
+                    size: [440, 50],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
@@ -604,15 +668,34 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("info_icon"),
+                IconButton::new("info_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkDetails
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
 
         let view_all_text: Node = node!(
-            Text::new(txt!("View all"))
+            Text::new(txt!("view all"))
                 .style("color", Color::rgba(197., 197., 197., 1.))
                 .style("size", 10.0)
                 .style("font", "Space Grotesk")
@@ -639,7 +722,7 @@ impl Component for NetworkingScreen {
         let advanced_network_row = node!(
             Div::new(),
             lay![
-                size_pct: [100, 12],
+                size: [440, 50],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
@@ -674,44 +757,132 @@ impl Component for NetworkingScreen {
                 lay![
                     size_pct: [20, Auto],
                     axis_alignment: Alignment::End,
-                    padding: [0. , 0., 0., 10.]
+                    padding: [0. , 0., 0., 5.]
                 ]
             )
             .push(node!(
-                widgets::Image::new("right_arrow_icon"),
+                IconButton::new("right_arrow_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::AddNetwork
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
 
         content_node = content_node.push(toggle_node);
         content_node = content_node.push(node!(HDivider { size: 1. }));
+        // content_node = content_node.push(node!(HDivider { size: 1. }));
 
-        content_node = content_node.push(connected_network_row);
-        content_node = content_node.push(node!(HDivider { size: 1. }));
+        // content_node = content_node.push(available_network_text);
+        //
+        // content_node = content_node.push(node!(HDivider { size: 1. }));
+        let mut scrollable_section = node!(
+            Scrollable::new(),
+            lay![
+                size: [440, 220],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        )
+        .push(node!(
+            Div::new(),
+            lay![
+                size: [440, Auto],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        ));
 
-        content_node = content_node.push(available_network_text);
-
-        content_node = content_node.push(node!(HDivider { size: 1. }));
-
-        for (i, network) in saved_available_networks.iter().rev().enumerate() {
-            content_node =
-                content_node.push(saved_network_row_component(&network.name).key(i as u64));
-            content_node = content_node
-                .push(node!(HDivider { size: 0.5 }))
-                .key(2 * i as u64);
+        if WirelessModel::get().connected_network.get().is_some() {
+            scrollable_section = scrollable_section.push(connected_network_row);
         }
-        for (i, network) in unsaved_available_networks.iter().rev().enumerate() {
-            content_node = content_node
-                .push(unsaved_available_network_row_component(&network.name).key(i as u64));
-            content_node = content_node
-                .push(node!(HDivider { size: 0.5 }))
-                .key(2 * i as u64);
+        let mut key = 0;
+
+        scrollable_section = scrollable_section.push(
+            node!(
+                Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
+                lay![
+                    direction: Direction::Row,
+                    size: [480, Auto],
+                    cross_alignment: Alignment::Stretch
+                ]
+            )
+            .push(node!(
+                Div::new(),
+                lay![
+                    size: [ 480, 1 ]
+                ]
+            )),
+        );
+        for network in saved_available_networks.iter().rev() {
+            scrollable_section =
+                scrollable_section.push(saved_network_row_component(&network.name).key(key));
+            key += 1;
+            scrollable_section = scrollable_section
+                .push(
+                    node!(
+                        Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
+                        lay![
+                            direction: Direction::Row,
+                            size: [480, Auto],
+                            cross_alignment: Alignment::Stretch
+                        ]
+                    )
+                    .push(node!(
+                        Div::new(),
+                        lay![
+                            size: [ 480, 1 ]
+                        ]
+                    )),
+                )
+                .key(key);
+            key += 1;
         }
+        for network in unsaved_available_networks.iter().rev() {
+            key += 1;
+            scrollable_section = scrollable_section
+                .push(unsaved_available_network_row_component(&network.name).key(key));
+            scrollable_section = scrollable_section
+                .push(
+                    node!(
+                        Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
+                        lay![
+                            direction: Direction::Row,
+                            size: [480, Auto],
+                            cross_alignment: Alignment::Stretch
+                        ]
+                    )
+                    .push(node!(
+                        Div::new(),
+                        lay![
+                            size: [ 480, 1 ]
+                        ]
+                    )),
+                )
+                .key(key);
+        }
+        content_node = content_node.push(scrollable_section);
         content_node = content_node.push(node!(HDivider { size: 1. }));
 
-        content_node = content_node.push(view_all_text);
+        // content_node = content_node.push(view_all_text);
         content_node = content_node.push(advanced_nextwork_text);
 
         content_node = content_node.push(node!(HDivider { size: 1. }));
@@ -720,6 +891,7 @@ impl Component for NetworkingScreen {
 
         base = base.push(header_node);
         base = base.push(content_node);
+        // base = base.push(node!(Scrollable::new(), lay![size: [440, 380]]).push(content_node));
         Some(base)
     }
 }
