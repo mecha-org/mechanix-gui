@@ -2,11 +2,12 @@ use super::component::NetworkRowComponent;
 use super::wireless_model::WirelessModel;
 use crate::AppMessage;
 use crate::{
-    components::{header_node, text_node},
+    components::{header_node, text_node, ComponentHasher},
     gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
     main,
     shared::h_divider::HDivider,
 };
+use std::hash::Hash;
 
 use mctk_core::reexports::femtovg::img::save_buffer;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
@@ -65,6 +66,37 @@ impl Component for NetworkingScreen {
         WirelessModel::update();
         WirelessModel::scan();
     }
+
+    fn render_hash(&self, hasher: &mut ComponentHasher) {
+        WirelessModel::get()
+            .scan_result
+            .get()
+            .wireless_network
+            .len()
+            .hash(hasher);
+
+        WirelessModel::get()
+            .known_networks
+            .get()
+            .known_network
+            .len()
+            .hash(hasher);
+
+        if WirelessModel::get()
+            .connected_network
+            .get()
+            .clone()
+            .is_some()
+        {
+            1_i32.hash(hasher);
+        } else {
+            0_i32.hash(hasher);
+        }
+
+        println!("{:?}", hasher);
+        self.props_hash(hasher);
+    }
+
     fn view(&self) -> Option<Node> {
         let status: bool = *WirelessModel::get().is_enabled.get();
 
@@ -330,6 +362,9 @@ impl Component for NetworkingScreen {
         for network in available_networks {
             let mut is_known = false;
             for known_network in known_networks.iter() {
+                if known_network.flags == "CURRENT" {
+                    continue;
+                }
                 if known_network.ssid == network.name {
                     is_known = true;
                     break;
@@ -661,11 +696,15 @@ impl Component for NetworkingScreen {
             content_node = content_node.push(saved_network_row_component(&network.name));
             content_node = content_node.push(node!(HDivider { size: 0.5 }));
         }
+        // content_node = content_node.push(saved_network_row_component("HELLO"));
+        content_node = content_node.push(node!(HDivider { size: 0.5 }));
 
-        for network in unsaved_available_networks.iter().rev() {
-            content_node =
-                content_node.push(unsaved_available_network_row_component(&network.name));
-            content_node = content_node.push(node!(HDivider { size: 0.5 }));
+        for (i, network) in unsaved_available_networks.iter().rev().enumerate() {
+            content_node = content_node
+                .push(unsaved_available_network_row_component(&network.name).key(i as u64));
+            content_node = content_node
+                .push(node!(HDivider { size: 0.5 }))
+                .key(i as u64);
         }
         content_node = content_node.push(node!(HDivider { size: 1. }));
 
