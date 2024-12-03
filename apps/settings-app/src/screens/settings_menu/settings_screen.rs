@@ -46,7 +46,8 @@ impl Component for SettingsScreen {
                 size_pct: [100, 10],
                 direction: Direction::Row,
                 cross_alignment: Alignment::Center,
-                margin: [0., 0., 5., 0.]
+                margin: [0., 0., 5., 0.],
+                position: [0., 0., Auto, 0.],
             ]
         );
 
@@ -54,11 +55,12 @@ impl Component for SettingsScreen {
             Text::new(txt!("Settings"))
                 .style("font", "Space Grotesk")
                 .style("size", 28.)
+                .style("line_height", 20.)
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("font_weight", FontWeight::Normal),
             lay![
+                size_pct: [100, Auto],
                 margin:[2.0, 5.0, 2.0, 5.0],
-                size: size!(20.0, 50.0),
             ]
         );
 

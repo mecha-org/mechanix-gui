@@ -74,7 +74,7 @@ impl Component for BluetoothScreen {
             Routes::SettingsList,
             "add_icon",
             Box::new(|| msg!(Message::ChangeRoute {
-                route: Routes::SettingsList,
+                route: Routes::BluetoothPairingEnterCode,
             }))
         ));
         main_node = main_node.push(header_node);

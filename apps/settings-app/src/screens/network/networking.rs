@@ -1,4 +1,3 @@
-use super::component::NetworkRowComponent;
 use crate::AppMessage;
 use crate::{
     components::{header_node, text_node},
@@ -76,13 +75,14 @@ impl Component for NetworkingScreen {
 
         let text_node = node!(
             Text::new(txt!("Networking"))
-                .style("color", Color::WHITE)
+                .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("size", 28.0)
                 .style("line_height", 20.)
                 .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Medium),
+                .style("font_weight", FontWeight::Normal),
             lay![
                 size_pct: [100, Auto],
+                margin:[2.0, 5.0, 2.0, 5.0],
             ]
         );
 
@@ -102,7 +102,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [80, Auto],
+                    size_pct: [60, Auto],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ],
@@ -112,7 +112,6 @@ impl Component for NetworkingScreen {
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
                         route: Routes::SettingsList
                     })))
-                    // .on_click(Box::new(|| msg!(NetworkingMessage::handleClickOnBack)))
                     .icon_type(IconType::Png)
                     .style(
                         "size",
@@ -138,14 +137,59 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End
+                    size_pct: [40, Auto],
+                    axis_alignment: Alignment::End,
+                    padding: [0, 0, 0, 0.],
                 ]
             )
             .push(node!(
-                widgets::Image::new("network_settings_icon"),
+                IconButton::new("add_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::AddNetwork
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(40.0),
+                            height: Dimension::Px(40.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [24, 24],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
+                ]
+            ))
+            .push(node!(
+                IconButton::new("network_settings_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkSettings
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
+                lay![
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
@@ -284,9 +328,28 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("info_icon"),
+                IconButton::new("info_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkDetails
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
@@ -378,9 +441,29 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("info_icon"),
+                // TODO: pass selected network details
+                IconButton::new("info_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkDetails
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
@@ -444,9 +527,28 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("info_icon"),
+                IconButton::new("info_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkDetails
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
@@ -511,15 +613,34 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("info_icon"),
+                IconButton::new("info_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::NetworkDetails
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );
 
         let view_all_text: Node = node!(
-            Text::new(txt!("View all"))
+            Text::new(txt!("view all"))
                 .style("color", Color::rgba(197., 197., 197., 1.))
                 .style("size", 10.0)
                 .style("font", "Space Grotesk")
@@ -581,13 +702,32 @@ impl Component for NetworkingScreen {
                 lay![
                     size_pct: [20, Auto],
                     axis_alignment: Alignment::End,
-                    padding: [0. , 0., 0., 10.]
+                    padding: [0. , 0., 0., 5.]
                 ]
             )
             .push(node!(
-                widgets::Image::new("right_arrow_icon"),
+                IconButton::new("right_arrow_icon")
+                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::AddNetwork
+                        }
+                    })))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
                 lay![
-                    size: [22, 22],
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
                 ]
             )),
         );

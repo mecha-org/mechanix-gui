@@ -1,6 +1,13 @@
 use crate::{
     screens::{
-        network::{network_settings::NetworkSettingsScreen, networking::NetworkingScreen},
+        bluetooth::{
+            bluetooth_pairing_enter_code::BluetoothPairingEnterCode,
+            bluetooth_screen::BluetoothScreen,
+        },
+        network::{
+            add_network::AddNetwork, network_details::NetworkDetails,
+            network_settings::NetworkSettings, networking::NetworkingScreen,
+        },
         settings_menu::settings_screen::SettingsScreen,
     },
     settings::{self, MainSettings},
@@ -38,7 +45,9 @@ use std::{
 pub enum NetworkScreenRoutes {
     #[default]
     Networking,
+    AddNetwork,
     NetworkSettings,
+    NetworkDetails,
 }
 
 #[derive(Default, Debug, Clone)]
@@ -75,6 +84,7 @@ pub struct SettingsAppState {
     // available_networks_list: Vec<WirelessDetailsItem>,
     known_networks_list: Vec<KnownNetworkResponse>,
     wireless_Status: bool,
+    add_network_name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -119,6 +129,7 @@ impl Component for SettingsApp {
             // connected_network_details: None,
             // available_networks_list: vec![],
             known_networks_list: vec![],
+            add_network_name: String::from(""),
         });
     }
 
@@ -161,13 +172,18 @@ impl Component for SettingsApp {
                         self.state_ref().connected_network_name.clone() // self.state_ref().connected_network_details.clone()
                     )))
                 }
-                NetworkScreenRoutes::NetworkSettings => {
-                    base = base.push(node!(NetworkSettingsScreen::new(
-                        self.state_ref().wireless_Status.clone(),
-                        self.state_ref().connected_network_name.clone() // self.state_ref().connected_network_details.clone()
+                NetworkScreenRoutes::AddNetwork => {
+                    base = base.push(node!(AddNetwork::new(
+                        self.state_ref().add_network_name.clone() // self.state_ref().connected_network_details.clone()
                     )))
                 }
+                NetworkScreenRoutes::NetworkSettings => base = base.push(node!(NetworkSettings {})),
+                NetworkScreenRoutes::NetworkDetails => base = base.push(node!(NetworkDetails {})),
             },
+            Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
+            Routes::BluetoothPairingEnterCode => {
+                base = base.push(node!(BluetoothPairingEnterCode {}))
+            }
 
             _ => (),
         }
@@ -186,11 +202,10 @@ impl Component for SettingsApp {
                         Routes::SettingsList => {
                             self.state_mut().current_route = route.clone();
                         }
-                        Routes::Network { screen } => {
+                        Routes::Network { .. } => {
                             self.state_mut().current_route = route.clone();
                         }
                         _ => {
-                            println!("DIFFERENT ROUTE------------------->");
                             self.state_mut().current_route = route.clone();
                         }
                     }
