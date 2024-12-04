@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use super::component::NetworkRowComponent;
 use crate::AppMessage;
 use crate::{
@@ -7,8 +9,10 @@ use crate::{
     shared::h_divider::HDivider,
 };
 
+use mctk_core::prelude::cosmic_text::rustybuzz::ttf_parser::Fixed;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::renderables::Image;
+use mctk_core::widgets::Button;
 use mctk_core::{
     component::{self, Component},
     lay,
@@ -24,24 +28,40 @@ use mctk_macros::{component, state_component_impl};
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 use zbus::message;
 
-enum NetworkingMessage {
-    handleClickOnMore,
-    handleClickOnBack,
+enum NetworkDetailsMessage {
+    openModel(bool),
+    ForgetNetwork,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NetworkDetailsState {
-    // pub loading: bool,
-    // list
+    pub is_model_open: bool,
 }
 
 #[derive(Debug)]
-// #[component(State = "NetworkDetailsState")]
+#[component(State = "NetworkDetailsState")]
 pub struct NetworkDetails {}
 
+impl NetworkDetails {
+    pub fn new() -> Self {
+        NetworkDetails {
+            dirty: false,
+            state: Some(NetworkDetailsState {
+                is_model_open: false,
+            }),
+        }
+    }
+}
+
+#[state_component_impl(NetworkDetailsState)]
 impl Component for NetworkDetails {
+    fn render_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.state_ref().is_model_open.hash(hasher);
+    }
+
     fn view(&self) -> Option<Node> {
         let mut text_color = Color::WHITE;
+        let is_model_open = self.state_ref().is_model_open;
 
         let mut base: Node = node!(
             Div::new(),
@@ -125,11 +145,9 @@ impl Component for NetworkDetails {
             )
             .push(node!(
                 IconButton::new("delete_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::Networking
-                        }
-                    })))
+                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
+                        !is_model_open
+                    ))))
                     .icon_type(IconType::Png)
                     .style(
                         "size",
@@ -233,20 +251,6 @@ impl Component for NetworkDetails {
             ]
         )
         .push(selected_network_row);
-
-        // details text
-        let details_text = node!(
-            Text::new(txt!("Details"))
-                .style("color", Color::rgba(197., 197., 197., 1.))
-                .style("size", 16.)
-                .style("line_height", 18.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
-            lay![
-                direction: Direction::Row,
-                margin: [20.0, 0.0, 10.0, 0.0],
-            ]
-        );
 
         // status, passphrase - security
         let details_row_1 = node!(
@@ -459,7 +463,14 @@ impl Component for NetworkDetails {
             )),
         );
 
-        content_node = content_node.push(details_text);
+        let start_node = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Row,
+                margin: [20.0, 0.0, 10.0, 0.0],
+            ]
+        );
+        content_node = content_node.push(start_node);
 
         // content_node = content_node.push(selected_network_node);
         // content_node = content_node.push(node!(HDivider { size: 1. }, lay![
@@ -494,9 +505,110 @@ impl Component for NetworkDetails {
             ]
         ));
 
+        // let mut modal = node!(
+        //     Div::new()
+        //         .bg(Color::TRANSPARENT)
+        //         .style("border_radius", 50.0),
+        //     lay![
+        //         size_pct: [100, 80],
+        //         direction: Direction::Column,
+        //         axis_alignment: Alignment::Center,
+        //         cross_alignment: Alignment::Start,
+        //         position_type: Absolute,
+        //         position: [20., 0., 10., 0.],
+        //     ]
+        // );
+
+        let modal = node!(
+            Div::new().bg(Color::rgba(166., 166., 166., 1.0)).border(
+                Color::DARK_GREY,
+                0.5,
+                (10., 10., 10., 10.)
+            ),
+            lay![
+                size: [280, 200],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                position_type: Absolute,
+                position: [120., 80., 0., 0.],
+            ]
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                size_pct: [100, 70],
+                direction: Direction::Row,
+                axis_alignment: Alignment::Center,
+                cross_alignment: Alignment::Center,
+                padding:[0., 20., 0., 0.]
+                ]
+            )
+            .push(node!(
+                Text::new(txt!("Forget this network ? "))
+                    .style("color", Color::WHITE)
+                    .style("size", 20.)
+                    .style("line_height", 22.)
+                    .style("font", "Space Grotesk")
+                    .style("font_weight", FontWeight::Normal),
+                lay![
+                    size_pct: [100, 50],
+                ],
+            )),
+        )
+        .push(
+            node!(
+                Div::new().bg(Color::BLUE),
+                lay![
+                    size_pct: [100, 30],
+                    direction: Direction::Row,
+                    cross_alignment: Alignment::Stretch,
+                ]
+            )
+            .push(node!(
+                Button::new(txt!("Cancel"))
+                    .style("text_color", Color::MID_GREY)
+                    .style("background_color", Color::DARK_GREY)
+                    .style("font_size", 20.)
+                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
+                        // !is_model_open.clone()
+                        !is_model_open
+                    )))),
+                lay![
+                    size_pct: [50, Auto],
+                ]
+            ))
+            .push(node!(
+                Button::new(txt!("Forget"))
+                    .style("text_color", Color::RED)
+                    .style("background_color", Color::DARK_GREY)
+                    .style("font_size", 20.)
+                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::ForgetNetwork))),
+                lay![
+                    size_pct: [50, Auto],
+                ]
+            )),
+        );
+
+        if is_model_open.clone() == true {
+            base = base.push(modal);
+        }
         base = base.push(header_node);
         base = base.push(content_node);
-
         Some(base)
+    }
+
+    fn update(&mut self, msg: mctk_core::component::Message) -> Vec<mctk_core::component::Message> {
+        if let Some(message) = msg.downcast_ref::<NetworkDetailsMessage>() {
+            match message {
+                NetworkDetailsMessage::openModel(value) => {
+                    self.state_mut().is_model_open = *value;
+                }
+                NetworkDetailsMessage::ForgetNetwork => {
+                    self.state_mut().is_model_open = false;
+                }
+            }
+        }
+        vec![]
     }
 }

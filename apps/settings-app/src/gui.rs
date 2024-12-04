@@ -181,7 +181,9 @@ impl Component for SettingsApp {
                     )))
                 }
                 NetworkScreenRoutes::NetworkSettings => base = base.push(node!(NetworkSettings {})),
-                NetworkScreenRoutes::NetworkDetails => base = base.push(node!(NetworkDetails {})),
+                NetworkScreenRoutes::NetworkDetails => {
+                    base = base.push(node!(NetworkDetails::new()))
+                }
             },
             Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
             Routes::BluetoothPairingEnterCode => {
