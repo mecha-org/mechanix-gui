@@ -50,7 +50,9 @@ pub enum NetworkScreenRoutes {
     UnknownNetworkDetails {
         mac: String,
     },
-    AddNetwork,
+    AddNetwork {
+        ssid: String,
+    },
     NetworkSettings,
     NetworkDetails,
 }
@@ -179,10 +181,8 @@ impl Component for SettingsApp {
                         self.state_ref().connected_network_name.clone() // self.state_ref().connected_network_details.clone()
                     )))
                 }
-                NetworkScreenRoutes::AddNetwork => {
-                    base = base.push(node!(AddNetwork::new(
-                        self.state_ref().add_network_name.clone() // self.state_ref().connected_network_details.clone()
-                    )))
+                NetworkScreenRoutes::AddNetwork { ssid } => {
+                    base = base.push(node!(AddNetwork::new(ssid.to_string())))
                 }
                 NetworkScreenRoutes::NetworkSettings => base = base.push(node!(NetworkSettings {})),
                 NetworkScreenRoutes::NetworkDetails => base = base.push(node!(NetworkDetails {})),

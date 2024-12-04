@@ -9,6 +9,7 @@ use crate::{
 };
 use std::hash::Hash;
 
+use mctk_core::event;
 use mctk_core::reexports::femtovg::img::save_buffer;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::renderables::Image;
@@ -31,6 +32,39 @@ use zbus::message;
 enum NetworkingMessage {
     handleClickOnMore,
     handleClickOnBack,
+}
+
+pub struct ClicableIconComponent {
+    pub on_click: Option<Box<dyn Fn() -> Box<Message> + Send + Sync>>,
+}
+
+impl std::fmt::Debug for ClicableIconComponent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ClicableIconComponent").finish()
+    }
+}
+
+impl Component for ClicableIconComponent {
+    fn on_click(&mut self, event: &mut event::Event<event::Click>) {
+        if let Some(f) = &self.on_click {
+            event.emit(f());
+        }
+    }
+
+    fn container(&self) -> Option<Vec<usize>> {
+        Some(vec![0])
+    }
+
+    fn view(&self) -> Option<Node> {
+        let base = node!(
+            Div::new(),
+            lay![
+                size_pct: [80, Auto],
+                axis_alignment: Alignment::Start,
+            ]
+        );
+        Some(base)
+    }
 }
 
 #[derive(Debug)]
@@ -183,7 +217,9 @@ impl Component for NetworkingScreen {
                 IconButton::new("add_icon")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
                         route: Routes::Network {
-                            screen: NetworkScreenRoutes::AddNetwork
+                            screen: NetworkScreenRoutes::AddNetwork {
+                                ssid: "".to_string()
+                            }
                         }
                     })))
                     .icon_type(IconType::Png)
@@ -457,7 +493,8 @@ impl Component for NetworkingScreen {
             ]
         );
 
-        let saved_network_row_component = |name: &str, mac: String| {
+        let saved_network_row_component = |name: String, mac: String| {
+            let ssid = name.clone();
             node!(
                 Div::new(),
                 lay![
@@ -466,16 +503,16 @@ impl Component for NetworkingScreen {
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
                     // padding: [5., 0., 12., 0.],
-                ]
+                ],
             )
             .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [80, Auto],
-                        axis_alignment: Alignment::Start,
-                    ]
-                )
+                node!(ClicableIconComponent {
+                    on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::AddNetwork { ssid: ssid.clone() }
+                        }
+                    })))
+                },)
                 .push(node!(
                     widgets::Image::new("wifi_icon"),
                     lay![
@@ -561,7 +598,8 @@ impl Component for NetworkingScreen {
             )
         };
 
-        let unsaved_available_network_row_component = |name: &str, mac: String| {
+        let unsaved_available_network_row_component = |name: String, mac: String| {
+            let ssid = name.clone();
             node!(
                 Div::new(),
                 lay![
@@ -573,13 +611,13 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [80, Auto],
-                        axis_alignment: Alignment::Start,
-                    ]
-                )
+                node!(ClicableIconComponent {
+                    on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                        route: Routes::Network {
+                            screen: NetworkScreenRoutes::AddNetwork { ssid: ssid.clone() }
+                        }
+                    })))
+                },)
                 .push(node!(
                     widgets::Image::new("wifi_icon"),
                     lay![
@@ -804,11 +842,11 @@ impl Component for NetworkingScreen {
             )
             .push(node!(
                 IconButton::new("right_arrow_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::AddNetwork
-                        }
-                    })))
+                    // .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                    //     route: Routes::Network {
+                    //         screen: NetworkScreenRoutes::AddNetwork
+                    //     }
+                    // })))
                     .icon_type(IconType::Png)
                     .style(
                         "size",
@@ -854,7 +892,6 @@ impl Component for NetworkingScreen {
         ));
 
         if WirelessModel::get().connected_network.get().is_some() {
-            println!("{:?}", WirelessModel::get().connected_network.get());
             scrollable_section = scrollable_section.push(connected_network_row);
         }
         let mut key = 0;
@@ -876,8 +913,10 @@ impl Component for NetworkingScreen {
             )),
         );
         for network in saved_available_networks.iter().rev() {
-            scrollable_section = scrollable_section
-                .push(saved_network_row_component(&network.name, network.mac.to_string()).key(key));
+            scrollable_section = scrollable_section.push(
+                saved_network_row_component(network.name.to_string(), network.mac.to_string())
+                    .key(key),
+            );
             key += 1;
             scrollable_section = scrollable_section
                 .push(
@@ -902,8 +941,11 @@ impl Component for NetworkingScreen {
         for network in unsaved_available_networks.iter().rev() {
             key += 1;
             scrollable_section = scrollable_section.push(
-                unsaved_available_network_row_component(&network.name, network.mac.to_string())
-                    .key(key),
+                unsaved_available_network_row_component(
+                    network.name.to_string(),
+                    network.mac.to_string(),
+                )
+                .key(key),
             );
             scrollable_section = scrollable_section
                 .push(

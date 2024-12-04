@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::AppMessage;
 use crate::{
     components::{header_node, text_node},
@@ -6,6 +8,7 @@ use crate::{
     shared::h_divider::HDivider,
 };
 
+use mctk_core::context::Context;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::renderables::Image;
 use mctk_core::widgets::TextBox;
@@ -26,6 +29,20 @@ use zbus::message;
 
 enum NetworkingMessage {}
 
+struct Form {
+    ssid: Context<String>,
+    password: Context<String>,
+}
+
+impl Debug for Form {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Form")
+            .field("ssid", &self.ssid.get())
+            .field("password", &self.password.get())
+            .finish()
+    }
+}
+
 #[derive(Debug)]
 pub struct NetworkScreenState {
     pub name: String,
@@ -33,13 +50,19 @@ pub struct NetworkScreenState {
 
 #[derive(Debug)]
 #[component(State = "NetworkScreenState")]
-pub struct AddNetwork {}
+pub struct AddNetwork {
+    form: Form,
+}
 
 impl AddNetwork {
     pub fn new(name: String) -> Self {
         Self {
-            state: Some(NetworkScreenState { name }),
+            state: Some(NetworkScreenState { name: name.clone() }),
             dirty: false,
+            form: Form {
+                ssid: Context::new(name.clone()),
+                password: Context::new("".to_string()),
+            },
         }
     }
 }
@@ -178,7 +201,7 @@ impl Component for AddNetwork {
         );
 
         let name_input_value = node!(
-            TextBox::new(Some("".to_string()))
+            TextBox::new(Some(self.form.ssid.get().clone()))
                 .style("background_color", Color::TRANSPARENT)
                 .style("font_size", 20.)
                 .style("text_color", Color::WHITE)
@@ -207,7 +230,7 @@ impl Component for AddNetwork {
         );
 
         let password_input_value = node!(
-            TextBox::new(Some("".to_string()))
+            TextBox::new(Some(self.form.password.get().clone()))
                 .style("background_color", Color::TRANSPARENT)
                 .style("font_size", 20.)
                 .style("text_color", Color::WHITE)

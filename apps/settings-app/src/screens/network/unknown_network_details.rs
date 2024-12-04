@@ -127,7 +127,7 @@ impl Component for UnknownNetworkDetails {
             Text::new(txt!("Network Details"))
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("size", 28.0)
-                .style("line_height", 20.)
+                .style("line_height", 17.5)
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
@@ -267,8 +267,8 @@ impl Component for UnknownNetworkDetails {
                 .push(node!(
                     Text::new(txt!("Signal"))
                         .style("color", Color::WHITE)
-                        .style("size", 18.0)
-                        .style("line_height", 20.0)
+                        .style("size", 15.0)
+                        .style("line_height", 17.50)
                         .style("font", "Space Grotesk")
                         .style("font_weight", FontWeight::Normal),
                     lay![
@@ -282,9 +282,9 @@ impl Component for UnknownNetworkDetails {
                     Text::new(txt!(signal_strength))
                         .style("color", Color::WHITE)
                         .style("size", 14.0)
-                        .style("line_height", 18.)
+                        .style("line_height", 20.0)
                         .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                        .style("font_weight", FontWeight::Bold),
                     lay![
                         direction: Direction::Row,
                         axis_alignment: Alignment::Start,
@@ -308,10 +308,10 @@ impl Component for UnknownNetworkDetails {
         let details_text = node!(
             Text::new(txt!("Details"))
                 .style("color", Color::rgba(197., 197., 197., 1.))
-                .style("size", 16.)
-                .style("line_height", 18.)
+                .style("size", 18.0)
+                .style("line_height", 20.0)
                 .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
+                .style("font_weight", FontWeight::Bold),
             lay![
                 direction: Direction::Row,
                 margin: [20.0, 0.0, 10.0, 0.0],
@@ -341,8 +341,8 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!("Name"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 18.0)
-                    .style("line_height", 20.)
+                    .style("size", 15.0)
+                    .style("line_height", 17.5)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -352,10 +352,10 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!(connected_network.name.clone()))
                     .style("color", Color::WHITE)
-                    .style("size", 16.)
-                    .style("line_height", 18.)
+                    .style("size", 18.0)
+                    .style("line_height", 20.0)
                     .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                    .style("font_weight", FontWeight::Bold),
                 lay![]
             )),
         )
@@ -371,8 +371,8 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!("Status"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 18.0)
-                    .style("line_height", 20.)
+                    .style("size", 15.0)
+                    .style("line_height", 17.5)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -382,10 +382,10 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!("Not Connected"))
                     .style("color", Color::WHITE)
-                    .style("size", 16.)
-                    .style("line_height", 18.)
+                    .style("size", 18.0)
+                    .style("line_height", 20.0)
                     .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                    .style("font_weight", FontWeight::Bold),
                 lay![]
             )),
         );
@@ -411,8 +411,8 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!("Frequency"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 18.0)
-                    .style("line_height", 20.)
+                    .style("size", 15.0)
+                    .style("line_height", 17.5)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -426,10 +426,10 @@ impl Component for UnknownNetworkDetails {
                     "5 GHz"
                 }))
                 .style("color", Color::WHITE)
-                .style("size", 16.)
-                .style("line_height", 18.)
+                .style("size", 18.0)
+                .style("line_height", 20.0)
                 .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
+                .style("font_weight", FontWeight::Bold),
                 lay![]
             )),
         )
@@ -445,8 +445,8 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!("Signal"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 18.0)
-                    .style("line_height", 20.)
+                    .style("size", 15.0)
+                    .style("line_height", 17.5)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -456,10 +456,10 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!(signal_strength))
                     .style("color", Color::WHITE)
-                    .style("size", 16.)
-                    .style("line_height", 18.)
+                    .style("size", 18.0)
+                    .style("line_height", 20.0)
                     .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                    .style("font_weight", FontWeight::Bold),
                 lay![]
             )),
         );
@@ -485,8 +485,8 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!("MAC Address"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 18.0)
-                    .style("line_height", 20.)
+                    .style("size", 15.0)
+                    .style("line_height", 17.5)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -496,10 +496,10 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!(connected_network.mac.clone()))
                     .style("color", Color::WHITE)
-                    .style("size", 16.)
-                    .style("line_height", 18.)
+                    .style("size", 18.0)
+                    .style("line_height", 20.0)
                     .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                    .style("font_weight", FontWeight::Bold),
                 lay![]
             )),
         )
@@ -515,8 +515,8 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!("Security"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 18.0)
-                    .style("line_height", 20.)
+                    .style("size", 15.0)
+                    .style("line_height", 17.5)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -526,10 +526,10 @@ impl Component for UnknownNetworkDetails {
             .push(node!(
                 Text::new(txt!(security))
                     .style("color", Color::WHITE)
-                    .style("size", 16.)
-                    .style("line_height", 18.)
+                    .style("size", 18.0)
+                    .style("line_height", 20.0)
                     .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                    .style("font_weight", FontWeight::Bold),
                 lay![]
             )),
         );
