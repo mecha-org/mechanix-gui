@@ -1,4 +1,5 @@
 use super::component::NetworkRowComponent;
+use super::wireless_model::WirelessModel;
 use crate::AppMessage;
 use crate::{
     components::{header_node, text_node},
@@ -21,6 +22,7 @@ use mctk_core::{
 };
 use mctk_macros::{component, state_component_impl};
 
+use mechanix_status_bar_components::types::WirelessStatus;
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 use zbus::message;
 
@@ -39,9 +41,48 @@ pub struct NetworkDetailsState {
 // #[component(State = "NetworkDetailsState")]
 pub struct NetworkDetails {}
 
+impl NetworkDetails {
+    fn get_ip_address(&self) -> Option<String> {
+        let networks = sysinfo::Networks::new_with_refreshed_list();
+        for (interface, info) in &networks {
+            if interface.starts_with("wl") {
+                for network in info.ip_networks().iter() {
+                    if network.addr.is_ipv4() {
+                        return Some(network.addr.to_string());
+                    }
+                }
+            }
+        }
+        None
+    }
+}
+
 impl Component for NetworkDetails {
+    fn init(&mut self) {
+        WirelessModel::update();
+    }
+
     fn view(&self) -> Option<Node> {
+        let ip_address = if let Some(ip_address) = self.get_ip_address() {
+            ip_address
+        } else {
+            "-".to_string()
+        };
         let mut text_color = Color::WHITE;
+        let connected_network_option = WirelessModel::get().connected_network.get().clone();
+        let mut network_status = "Connected";
+        let connected_network = if let Some(connected_network_option) = connected_network_option {
+            connected_network_option
+        } else {
+            network_status = "Not Connected";
+            WirelessInfoResponse {
+                name: "-".to_string(),
+                mac: "-".to_string(),
+                flags: "-".to_string(),
+                frequency: "-".to_string(),
+                signal: "-".to_string(),
+            }
+        };
 
         let mut base: Node = node!(
             Div::new(),
@@ -195,7 +236,7 @@ impl Component for NetworkDetails {
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!("Mecha Workstation"))
+                    Text::new(txt!(connected_network.name))
                         .style("color", Color::WHITE)
                         .style("size", 18.0)
                         .style("line_height", 20.0)
@@ -209,7 +250,7 @@ impl Component for NetworkDetails {
                 ))
                 .push(node!(
                     // mini status
-                    Text::new(txt!("Connected"))
+                    Text::new(txt!(network_status))
                         .style("color", Color::WHITE)
                         .style("size", 14.0)
                         .style("line_height", 18.)
@@ -309,7 +350,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("WPA2-PSK"))
+                Text::new(txt!(connected_network.flags))
                     .style("color", Color::WHITE)
                     .style("size", 16.)
                     .style("line_height", 18.)
@@ -349,7 +390,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("5 GHz"))
+                Text::new(txt!(connected_network.frequency))
                     .style("color", Color::WHITE)
                     .style("size", 16.)
                     .style("line_height", 18.)
@@ -379,7 +420,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("192.160.57.81"))
+                Text::new(txt!(ip_address))
                     .style("color", Color::WHITE)
                     .style("size", 16.)
                     .style("line_height", 18.)

@@ -532,9 +532,28 @@ impl Component for NetworkingScreen {
                     ]
                 )
                 .push(node!(
-                    widgets::Image::new("info_icon"),
+                    IconButton::new("info_icon")
+                        // .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        //     route: Routes::Network {
+                        //         screen: NetworkScreenRoutes::NetworkDetails
+                        //     }
+                        // })))
+                        .icon_type(IconType::Png)
+                        .style(
+                            "size",
+                            Size {
+                                width: Dimension::Px(34.0),
+                                height: Dimension::Px(34.0),
+                            }
+                        )
+                        .style("background_color", Color::TRANSPARENT)
+                        .style("border_color", Color::TRANSPARENT)
+                        .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                        .style("radius", 10.),
                     lay![
-                        size: [22, 22],
+                        size: [52, 52],
+                        axis_alignment: Alignment::End,
+                        cross_alignment: Alignment::Center,
                     ]
                 )),
             )
@@ -600,9 +619,28 @@ impl Component for NetworkingScreen {
                     ]
                 )
                 .push(node!(
-                    widgets::Image::new("info_icon"),
+                    IconButton::new("info_icon")
+                        // .on_click(Box::new(|| msg!(Message::ChangeRoute {
+                        //     route: Routes::Network {
+                        //         screen: NetworkScreenRoutes::NetworkDetails
+                        //     }
+                        // })))
+                        .icon_type(IconType::Png)
+                        .style(
+                            "size",
+                            Size {
+                                width: Dimension::Px(34.0),
+                                height: Dimension::Px(34.0),
+                            }
+                        )
+                        .style("background_color", Color::TRANSPARENT)
+                        .style("border_color", Color::TRANSPARENT)
+                        .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                        .style("radius", 10.),
                     lay![
-                        size: [22, 22],
+                        size: [52, 52],
+                        axis_alignment: Alignment::End,
+                        cross_alignment: Alignment::Center,
                     ]
                 )),
             )
@@ -812,6 +850,7 @@ impl Component for NetworkingScreen {
         ));
 
         if WirelessModel::get().connected_network.get().is_some() {
+            println!("{:?}", WirelessModel::get().connected_network.get());
             scrollable_section = scrollable_section.push(connected_network_row);
         }
         let mut key = 0;
