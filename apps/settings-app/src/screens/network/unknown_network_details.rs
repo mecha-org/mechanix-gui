@@ -185,41 +185,13 @@ impl Component for UnknownNetworkDetails {
             ))
             .push(text_node),
         )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End
-                ]
-            )
-            .push(node!(
-                IconButton::new("delete_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::Networking
-                        }
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [52, 52],
-                    axis_alignment: Alignment::End,
-                    cross_alignment: Alignment::Center,
-                    padding: [0., 0., 0., 2.]
-                ]
-            )),
-        );
+        .push(node!(
+            Div::new(),
+            lay![
+                size_pct: [20, Auto],
+                axis_alignment: Alignment::End
+            ]
+        ));
 
         let mut content_node = node!(
             Div::new(),

@@ -8,6 +8,7 @@ use crate::{
     shared::h_divider::HDivider,
 };
 
+use lazy_static::lazy_static;
 use mctk_core::context::Context;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::renderables::Image;
@@ -27,11 +28,20 @@ use mctk_macros::{component, state_component_impl};
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 use zbus::message;
 
+use super::wireless_model::WirelessModel;
+
+lazy_static! {
+    static ref FORM: Form = Form {
+        ssid: Context::new("".to_string()),
+        password: Context::new("".to_string()),
+    };
+}
+
 enum NetworkingMessage {}
 
 struct Form {
-    ssid: Context<String>,
-    password: Context<String>,
+    pub ssid: Context<String>,
+    pub password: Context<String>,
 }
 
 impl Debug for Form {
@@ -51,7 +61,8 @@ pub struct NetworkScreenState {
 #[derive(Debug)]
 #[component(State = "NetworkScreenState")]
 pub struct AddNetwork {
-    form: Form,
+    form: &'static Form,
+    name: String,
 }
 
 impl AddNetwork {
@@ -59,15 +70,17 @@ impl AddNetwork {
         Self {
             state: Some(NetworkScreenState { name: name.clone() }),
             dirty: false,
-            form: Form {
-                ssid: Context::new(name.clone()),
-                password: Context::new("".to_string()),
-            },
+            form: &FORM,
+            name,
         }
     }
 }
 
 impl Component for AddNetwork {
+    fn init(&mut self) {
+        FORM.ssid.set(self.name.clone());
+    }
+
     fn view(&self) -> Option<Node> {
         let network_name: String = self.state_ref().name.clone();
 
@@ -152,11 +165,17 @@ impl Component for AddNetwork {
             )
             .push(node!(
                 IconButton::new("tick_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::Networking
-                        }
-                    })))
+                    .on_click(Box::new(|| {
+                        WirelessModel::connect_to_network(
+                            FORM.ssid.get().clone(),
+                            FORM.password.get().clone(),
+                        );
+                        msg!(Message::ChangeRoute {
+                            route: Routes::Network {
+                                screen: NetworkScreenRoutes::Networking
+                            }
+                        })
+                    }))
                     .icon_type(IconType::Png)
                     .style(
                         "size",
@@ -201,7 +220,7 @@ impl Component for AddNetwork {
         );
 
         let name_input_value = node!(
-            TextBox::new(Some(self.form.ssid.get().clone()))
+            TextBox::new(Some(network_name))
                 .style("background_color", Color::TRANSPARENT)
                 .style("font_size", 20.)
                 .style("text_color", Color::WHITE)
@@ -209,6 +228,10 @@ impl Component for AddNetwork {
                 // .style("border_width", 0.)
                 .style("cursor_color", Color::WHITE)
                 .style("placeholder_color", Color::rgb(107., 107., 107.))
+                .on_change(Box::new(|s| {
+                    FORM.ssid.set(s.to_string());
+                    msg!(())
+                }))
                 .placeholder("Enter Name"),
             lay![
                 size_pct: [100, 12],
@@ -230,13 +253,17 @@ impl Component for AddNetwork {
         );
 
         let password_input_value = node!(
-            TextBox::new(Some(self.form.password.get().clone()))
+            TextBox::new(Some("".to_string()))
                 .style("background_color", Color::TRANSPARENT)
                 .style("font_size", 20.)
                 .style("text_color", Color::WHITE)
                 .style("border_color", Color::TRANSPARENT)
                 .style("cursor_color", Color::WHITE)
                 .style("placeholder_color", Color::rgb(107., 107., 107.))
+                .on_change(Box::new(|s| {
+                    FORM.password.set(s.to_string());
+                    msg!(())
+                }))
                 .placeholder("Enter Password"),
             lay![
                 size_pct: [100, 12],
