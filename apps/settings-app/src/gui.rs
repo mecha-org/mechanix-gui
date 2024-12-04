@@ -7,6 +7,7 @@ use crate::{
         network::{
             add_network::AddNetwork, network_details::NetworkDetails,
             network_settings::NetworkSettings, networking::NetworkingScreen,
+            unknown_network_details::UnknownNetworkDetails,
         },
         settings_menu::settings_screen::SettingsScreen,
         sound::sound_screen::{SoundScreen, SoundScreenRoute},
@@ -46,6 +47,9 @@ use std::{
 pub enum NetworkScreenRoutes {
     #[default]
     Networking,
+    UnknownNetworkDetails {
+        mac: String,
+    },
     AddNetwork,
     NetworkSettings,
     NetworkDetails,
@@ -182,6 +186,9 @@ impl Component for SettingsApp {
                 }
                 NetworkScreenRoutes::NetworkSettings => base = base.push(node!(NetworkSettings {})),
                 NetworkScreenRoutes::NetworkDetails => base = base.push(node!(NetworkDetails {})),
+                NetworkScreenRoutes::UnknownNetworkDetails { mac } => {
+                    base = base.push(node!(UnknownNetworkDetails::new(mac.to_string())))
+                }
             },
             Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
             Routes::BluetoothPairingEnterCode => {

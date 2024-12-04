@@ -457,7 +457,7 @@ impl Component for NetworkingScreen {
             ]
         );
 
-        let saved_network_row_component = |name: &str| {
+        let saved_network_row_component = |name: &str, mac: String| {
             node!(
                 Div::new(),
                 lay![
@@ -533,11 +533,13 @@ impl Component for NetworkingScreen {
                 )
                 .push(node!(
                     IconButton::new("info_icon")
-                        // .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        //     route: Routes::Network {
-                        //         screen: NetworkScreenRoutes::NetworkDetails
-                        //     }
-                        // })))
+                        .on_click(Box::new(move || msg!(Message::ChangeRoute {
+                            route: Routes::Network {
+                                screen: NetworkScreenRoutes::UnknownNetworkDetails {
+                                    mac: mac.clone()
+                                }
+                            }
+                        })))
                         .icon_type(IconType::Png)
                         .style(
                             "size",
@@ -559,7 +561,7 @@ impl Component for NetworkingScreen {
             )
         };
 
-        let unsaved_available_network_row_component = |name: &str| {
+        let unsaved_available_network_row_component = |name: &str, mac: String| {
             node!(
                 Div::new(),
                 lay![
@@ -620,11 +622,13 @@ impl Component for NetworkingScreen {
                 )
                 .push(node!(
                     IconButton::new("info_icon")
-                        // .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        //     route: Routes::Network {
-                        //         screen: NetworkScreenRoutes::NetworkDetails
-                        //     }
-                        // })))
+                        .on_click(Box::new(move || msg!(Message::ChangeRoute {
+                            route: Routes::Network {
+                                screen: NetworkScreenRoutes::UnknownNetworkDetails {
+                                    mac: mac.clone()
+                                }
+                            }
+                        })))
                         .icon_type(IconType::Png)
                         .style(
                             "size",
@@ -872,8 +876,8 @@ impl Component for NetworkingScreen {
             )),
         );
         for network in saved_available_networks.iter().rev() {
-            scrollable_section =
-                scrollable_section.push(saved_network_row_component(&network.name).key(key));
+            scrollable_section = scrollable_section
+                .push(saved_network_row_component(&network.name, network.mac.to_string()).key(key));
             key += 1;
             scrollable_section = scrollable_section
                 .push(
@@ -897,8 +901,10 @@ impl Component for NetworkingScreen {
         }
         for network in unsaved_available_networks.iter().rev() {
             key += 1;
-            scrollable_section = scrollable_section
-                .push(unsaved_available_network_row_component(&network.name).key(key));
+            scrollable_section = scrollable_section.push(
+                unsaved_available_network_row_component(&network.name, network.mac.to_string())
+                    .key(key),
+            );
             scrollable_section = scrollable_section
                 .push(
                     node!(

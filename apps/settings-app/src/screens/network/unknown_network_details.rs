@@ -39,9 +39,15 @@ pub struct NetworkDetailsState {
 
 #[derive(Debug)]
 // #[component(State = "NetworkDetailsState")]
-pub struct NetworkDetails {}
+pub struct UnknownNetworkDetails {
+    mac: String,
+}
 
-impl NetworkDetails {
+impl UnknownNetworkDetails {
+    pub fn new(mac: String) -> Self {
+        Self { mac }
+    }
+
     fn get_ip_address(&self) -> Option<String> {
         let networks = sysinfo::Networks::new_with_refreshed_list();
         for (interface, info) in &networks {
@@ -57,7 +63,7 @@ impl NetworkDetails {
     }
 }
 
-impl Component for NetworkDetails {
+impl Component for UnknownNetworkDetails {
     fn init(&mut self) {
         WirelessModel::update();
     }
@@ -69,26 +75,42 @@ impl Component for NetworkDetails {
             "-".to_string()
         };
         let mut text_color = Color::WHITE;
-        let connected_network_option = WirelessModel::get().connected_network.get().clone();
-        let mut network_status = "Connected";
+        let connected_network_option = WirelessModel::get()
+            .scan_result
+            .get()
+            .wireless_network
+            .clone()
+            .into_iter()
+            .find(|network| network.mac == self.mac)
+            .clone();
         let mut security = "-";
-        let connected_network = if let Some(connected_network_option) = connected_network_option {
-            for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
-                if connected_network_option.flags.contains(security_match) {
-                    security = security_match;
-                    break;
+        let mut signal_strength = "-";
+        let connected_network = match connected_network_option {
+            Some(connected_network_option) => {
+                for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
+                    if connected_network_option.flags.contains(security_match) {
+                        security = security_match;
+                        break;
+                    }
                 }
+                if let Ok(signal_int) = connected_network_option.signal.parse::<i32>() {
+                    if signal_int < 0_i32 && signal_int > -30_i32 {
+                        signal_strength = "Excellent";
+                    } else if signal_int <= -30 && signal_int > -70 {
+                        signal_strength = "Good";
+                    } else if signal_int <= -70 {
+                        signal_strength = "Weak";
+                    }
+                };
+                connected_network_option
             }
-            connected_network_option
-        } else {
-            network_status = "Not Connected";
-            WirelessInfoResponse {
+            None => WirelessInfoResponse {
                 name: "-".to_string(),
                 mac: "-".to_string(),
                 flags: "-".to_string(),
                 frequency: "-".to_string(),
                 signal: "-".to_string(),
-            }
+            },
         };
 
         let mut base: Node = node!(
@@ -243,7 +265,7 @@ impl Component for NetworkDetails {
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!("Status"))
+                    Text::new(txt!("Signal"))
                         .style("color", Color::WHITE)
                         .style("size", 18.0)
                         .style("line_height", 20.0)
@@ -257,7 +279,7 @@ impl Component for NetworkDetails {
                 ))
                 .push(node!(
                     // mini status
-                    Text::new(txt!(network_status))
+                    Text::new(txt!(signal_strength))
                         .style("color", Color::WHITE)
                         .style("size", 14.0)
                         .style("line_height", 18.)
@@ -358,7 +380,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(network_status))
+                Text::new(txt!("Not Connected"))
                     .style("color", Color::WHITE)
                     .style("size", 16.)
                     .style("line_height", 18.)
@@ -421,7 +443,7 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("IP Address"))
+                Text::new(txt!("Signal"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
                     .style("size", 18.0)
                     .style("line_height", 20.)
@@ -432,7 +454,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(ip_address))
+                Text::new(txt!(signal_strength))
                     .style("color", Color::WHITE)
                     .style("size", 16.)
                     .style("line_height", 18.)
@@ -472,7 +494,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(connected_network.mac))
+                Text::new(txt!(connected_network.mac.clone()))
                     .style("color", Color::WHITE)
                     .style("size", 16.)
                     .style("line_height", 18.)
