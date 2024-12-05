@@ -98,6 +98,7 @@ impl NetworkingScreen {
 
 impl Component for NetworkingScreen {
     fn init(&mut self) {
+        WirelessModel::start_streaming();
         WirelessModel::update();
         WirelessModel::scan();
     }
@@ -462,11 +463,13 @@ impl Component for NetworkingScreen {
         for network in available_networks {
             let mut is_known = false;
             let mut is_current = false;
+            let mut network_id = "".to_string();
             for known_network in known_networks.iter() {
                 if known_network.ssid == network.name {
                     if known_network.flags.contains("[CURRENT]") {
                         is_current = true;
                     }
+                    network_id = known_network.network_id.clone();
                     is_known = true;
                     break;
                 }
@@ -475,7 +478,7 @@ impl Component for NetworkingScreen {
                 continue;
             }
             if is_known {
-                saved_available_networks.push(network);
+                saved_available_networks.push((network, network_id));
             } else {
                 unsaved_available_networks.push(network);
             }
@@ -493,7 +496,7 @@ impl Component for NetworkingScreen {
             ]
         );
 
-        let saved_network_row_component = |name: String, mac: String| {
+        let saved_network_row_component = |name: String, mac: String, id: String| {
             let ssid = name.clone();
             node!(
                 Div::new(),
@@ -507,12 +510,16 @@ impl Component for NetworkingScreen {
             )
             .push(
                 node!(ClicableIconComponent {
-                    on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::AddNetwork { ssid: ssid.clone() }
-                        }
-                    })))
-                },)
+                    on_click: Some(Box::new(move || {
+                        WirelessModel::select_network(id.clone());
+                        println!("{}", id.clone());
+                        msg!(Message::ChangeRoute {
+                            route: Routes::Network {
+                                screen: NetworkScreenRoutes::Networking
+                            }
+                        })
+                    }))
+                })
                 .push(node!(
                     widgets::Image::new("wifi_icon"),
                     lay![
@@ -912,10 +919,14 @@ impl Component for NetworkingScreen {
                 ]
             )),
         );
-        for network in saved_available_networks.iter().rev() {
+        for (network, network_id) in saved_available_networks.iter().rev() {
             scrollable_section = scrollable_section.push(
-                saved_network_row_component(network.name.to_string(), network.mac.to_string())
-                    .key(key),
+                saved_network_row_component(
+                    network.name.to_string(),
+                    network.mac.to_string(),
+                    network_id.to_string(),
+                )
+                .key(key),
             );
             key += 1;
             scrollable_section = scrollable_section
