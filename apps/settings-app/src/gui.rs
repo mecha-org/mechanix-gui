@@ -7,6 +7,7 @@ use crate::{
         network::{
             add_network::AddNetwork, network_details::NetworkDetails,
             network_settings::NetworkSettings, networking::NetworkingScreen,
+            unknown_network_details::UnknownNetworkDetails,
         },
         settings_menu::settings_screen::SettingsScreen,
         sound::sound_screen::{SoundScreen, SoundScreenRoute},
@@ -46,7 +47,12 @@ use std::{
 pub enum NetworkScreenRoutes {
     #[default]
     Networking,
-    AddNetwork,
+    UnknownNetworkDetails {
+        mac: String,
+    },
+    AddNetwork {
+        ssid: String,
+    },
     NetworkSettings,
     NetworkDetails,
 }
@@ -175,13 +181,16 @@ impl Component for SettingsApp {
                         self.state_ref().connected_network_name.clone() // self.state_ref().connected_network_details.clone()
                     )))
                 }
-                NetworkScreenRoutes::AddNetwork => {
-                    base = base.push(node!(AddNetwork::new(
-                        self.state_ref().add_network_name.clone() // self.state_ref().connected_network_details.clone()
-                    )))
+                NetworkScreenRoutes::AddNetwork { ssid } => {
+                    base = base.push(node!(AddNetwork::new(ssid.to_string())))
                 }
                 NetworkScreenRoutes::NetworkSettings => base = base.push(node!(NetworkSettings {})),
-                NetworkScreenRoutes::NetworkDetails => base = base.push(node!(NetworkDetails {})),
+                NetworkScreenRoutes::NetworkDetails => {
+                    base = base.push(node!(NetworkDetails::new()))
+                }
+                NetworkScreenRoutes::UnknownNetworkDetails { mac } => {
+                    base = base.push(node!(UnknownNetworkDetails::new(mac.to_string())))
+                }
             },
             Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
             Routes::BluetoothPairingEnterCode => {

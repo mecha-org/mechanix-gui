@@ -3,7 +3,8 @@ use lazy_static::lazy_static;
 use mctk_core::context::Context;
 use mctk_macros::Model;
 use mechanix_system_dbus_client::wireless::{
-    KnownNetworkListResponse, WirelessInfoResponse, WirelessScanListResponse, WirelessService,
+    KnownNetworkListResponse, NotificationStream, WirelessInfoResponse, WirelessScanListResponse,
+    WirelessService,
 };
 use tokio::runtime::Runtime;
 use tokio::select;
@@ -19,6 +20,7 @@ lazy_static! {
         }),
         connected_network: Context::new(None),
         is_enabled: Context::new(false),
+        is_streaming: Context::new(false),
     };
 }
 
@@ -28,6 +30,7 @@ pub struct WirelessModel {
     pub scan_result: Context<WirelessScanListResponse>,
     pub connected_network: Context<Option<WirelessInfoResponse>>,
     pub is_enabled: Context<bool>,
+    pub is_streaming: Context<bool>,
 }
 
 impl WirelessModel {
@@ -67,6 +70,56 @@ impl WirelessModel {
             WirelessModel::get()
                 .connected_network
                 .set(Some(connected_network));
+        });
+    }
+
+    pub fn connect_to_network(ssid: String, password: String) {
+        RUNTIME.spawn(async move {
+            println!("Trying to connect to {ssid} with password {password}");
+            WirelessService::connect_to_network(ssid.as_str(), password.as_str()).await;
+            WirelessModel::update();
+        });
+    }
+
+    pub fn start_streaming() {
+        if *WirelessModel::get().is_streaming.get() {
+            return;
+        }
+        WirelessModel::get().is_streaming.set(true);
+        RUNTIME.spawn(async {
+            let mut stream: NotificationStream =
+                WirelessService::get_notification_stream().await.unwrap();
+            loop {
+                println!("Wireless stream started");
+                select! {
+                signal = stream.next() => {
+                    if signal.is_none() {
+                        continue;
+                    }
+                    if let Ok(args) = signal.unwrap().args() {
+                        let event = args.event;
+                        WirelessModel::get().is_enabled.set(event.is_enabled);
+                        if event.is_connected {
+                            WirelessModel::update();
+                            WirelessModel::scan();
+                        }
+                        // else {
+                        //     WirelessModel::get().connected_network.set(None);
+                        // }
+                    }
+                }
+                }
+            }
+        });
+    }
+
+    pub fn select_network(network_id: String) {
+        println!("Trying to connect to {network_id}");
+        RUNTIME.spawn(async move {
+            WirelessService::connect_to_known_network(network_id.as_str())
+                .await
+                .unwrap();
+            WirelessModel::update();
         });
     }
 }
