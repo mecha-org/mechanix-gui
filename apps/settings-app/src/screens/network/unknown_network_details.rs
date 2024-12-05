@@ -506,7 +506,14 @@ impl Component for UnknownNetworkDetails {
             )),
         );
 
-        content_node = content_node.push(details_text);
+        let start_node = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Row,
+                margin: [20.0, 0.0, 10.0, 0.0],
+            ]
+        );
+        content_node = content_node.push(start_node);
 
         // content_node = content_node.push(selected_network_node);
         // content_node = content_node.push(node!(HDivider { size: 1. }, lay![

@@ -69,33 +69,6 @@ impl NetworkDetails {
     }
 }
 
-impl NetworkDetails {
-    fn get_ip_address(&self) -> Option<String> {
-        let networks = sysinfo::Networks::new_with_refreshed_list();
-        for (interface, info) in &networks {
-            if interface.starts_with("wl") {
-                for network in info.ip_networks().iter() {
-                    if network.addr.is_ipv4() {
-                        return Some(network.addr.to_string());
-                    }
-                }
-            }
-        }
-        None
-    }
-}
-
-impl NetworkDetails {
-    pub fn new() -> Self {
-        NetworkDetails {
-            dirty: false,
-            state: Some(NetworkDetailsState {
-                is_model_open: false,
-            }),
-        }
-    }
-}
-
 #[state_component_impl(NetworkDetailsState)]
 impl Component for NetworkDetails {
     fn init(&mut self) {

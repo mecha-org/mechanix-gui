@@ -185,7 +185,9 @@ impl Component for SettingsApp {
                     base = base.push(node!(AddNetwork::new(ssid.to_string())))
                 }
                 NetworkScreenRoutes::NetworkSettings => base = base.push(node!(NetworkSettings {})),
-                NetworkScreenRoutes::NetworkDetails => base = base.push(node!(NetworkDetails {})),
+                NetworkScreenRoutes::NetworkDetails => {
+                    base = base.push(node!(NetworkDetails::new()))
+                }
                 NetworkScreenRoutes::UnknownNetworkDetails { mac } => {
                     base = base.push(node!(UnknownNetworkDetails::new(mac.to_string())))
                 }
