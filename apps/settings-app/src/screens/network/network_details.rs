@@ -505,28 +505,12 @@ impl Component for NetworkDetails {
             ]
         ));
 
-        // let mut modal = node!(
-        //     Div::new()
-        //         .bg(Color::TRANSPARENT)
-        //         .style("border_radius", 50.0),
-        //     lay![
-        //         size_pct: [100, 80],
-        //         direction: Direction::Column,
-        //         axis_alignment: Alignment::Center,
-        //         cross_alignment: Alignment::Start,
-        //         position_type: Absolute,
-        //         position: [20., 0., 10., 0.],
-        //     ]
-        // );
-
         let modal = node!(
-            Div::new().bg(Color::rgba(166., 166., 166., 1.0)).border(
-                Color::DARK_GREY,
-                0.5,
-                (10., 10., 10., 10.)
-            ),
+            Div::new()
+                .bg(Color::DARK_GREY)
+                .border(Color::DARK_GREY, 1., (10., 10., 10., 10.)),
             lay![
-                size: [280, 200],
+                size: [280, 180],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 position_type: Absolute,
@@ -535,7 +519,8 @@ impl Component for NetworkDetails {
         )
         .push(
             node!(
-                Div::new(),
+                Div::new().border(Color::TRANSPARENT, 1., (10., 10., 10., 10.)),
+                // Div::new(),
                 lay![
                 size_pct: [100, 70],
                 direction: Direction::Row,
@@ -545,7 +530,7 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Forget this network ? "))
+                Text::new(txt!("Forget this network? "))
                     .style("color", Color::WHITE)
                     .style("size", 20.)
                     .style("line_height", 22.)
@@ -558,34 +543,60 @@ impl Component for NetworkDetails {
         )
         .push(
             node!(
-                Div::new().bg(Color::BLUE),
+                Div::new().border(Color::TRANSPARENT, 1.5, (0., 10., 10., 10.)),
                 lay![
                     size_pct: [100, 30],
                     direction: Direction::Row,
                     cross_alignment: Alignment::Stretch,
+                    axis_alignment: Alignment::Stretch,
+                    padding: [0., 0., 5., 0.]
                 ]
             )
             .push(node!(
                 Button::new(txt!("Cancel"))
-                    .style("text_color", Color::MID_GREY)
+                    .style("text_color", Color::WHITE)
                     .style("background_color", Color::DARK_GREY)
+                    .style("active_color", Color::MID_GREY)
                     .style("font_size", 20.)
+                    .style("line_height", 22.)
                     .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
-                        // !is_model_open.clone()
                         !is_model_open
                     )))),
                 lay![
-                    size_pct: [50, Auto],
+                    size_pct: [48, Auto],
                 ]
             ))
+            .push(
+                node!(
+                    Div::new().bg(Color::TRANSPARENT),
+                    lay![
+                     size_pct: [4, Auto],
+                     axis_alignment: Alignment::Center,
+                     cross_alignment: Alignment::Center
+                    ]
+                )
+                .push(node!(
+                    Text::new(txt!("|"))
+                        .style("color", Color::LIGHT_GREY)
+                        .style("size", 20.)
+                        .style("line_height", 22.)
+                        .style("font", "Space Grotesk")
+                        .style("font_weight", FontWeight::Normal),
+                    lay![
+                        cross_alignment: Alignment::Center
+                    ]
+                )),
+            )
             .push(node!(
                 Button::new(txt!("Forget"))
                     .style("text_color", Color::RED)
                     .style("background_color", Color::DARK_GREY)
+                    .style("active_color", Color::MID_GREY)
                     .style("font_size", 20.)
+                    .style("line_height", 22.)
                     .on_click(Box::new(move || msg!(NetworkDetailsMessage::ForgetNetwork))),
                 lay![
-                    size_pct: [50, Auto],
+                    size_pct: [48, Auto],
                 ]
             )),
         );
@@ -609,6 +620,6 @@ impl Component for NetworkDetails {
                 }
             }
         }
-        vec![]
+        vec![msg]
     }
 }
