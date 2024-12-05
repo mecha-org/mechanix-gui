@@ -659,7 +659,10 @@ impl Component for NetworkDetails {
                     .style("active_color", Color::MID_GREY)
                     .style("font_size", 20.)
                     .style("line_height", 22.)
-                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::ForgetNetwork))),
+                    .on_click(Box::new(move || {
+                        WirelessModel::disconnect(connected_network.name.clone());
+                        msg!(())
+                    })),
                 lay![
                     size_pct: [48, Auto],
                 ]

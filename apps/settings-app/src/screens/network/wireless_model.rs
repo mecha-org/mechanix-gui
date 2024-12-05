@@ -122,4 +122,13 @@ impl WirelessModel {
             WirelessModel::update();
         });
     }
+
+    pub fn disconnect(network_id: String) {
+        RUNTIME.spawn(async move {
+            WirelessService::disconnect(network_id.as_str())
+                .await
+                .unwrap();
+            WirelessModel::update();
+        });
+    }
 }
