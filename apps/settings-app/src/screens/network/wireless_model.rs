@@ -101,9 +101,11 @@ impl WirelessModel {
                         WirelessModel::get().is_enabled.set(event.is_enabled);
                         if event.is_connected {
                             WirelessModel::update();
-                        } else {
-                            WirelessModel::get().connected_network.set(None);
+                            WirelessModel::scan();
                         }
+                        // else {
+                        //     WirelessModel::get().connected_network.set(None);
+                        // }
                     }
                 }
                 }
