@@ -381,7 +381,7 @@ impl Component for NetworkingScreen {
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!(connected_network_name))
+                    Text::new(txt!(connected_network_name.clone()))
                         .style("color", Color::WHITE)
                         .style("size", 18.0)
                         .style("line_height", 20.0)
@@ -473,6 +473,9 @@ impl Component for NetworkingScreen {
                     is_known = true;
                     break;
                 }
+            }
+            if connected_network_name.clone() == network.name {
+                is_current = true;
             }
             if is_current {
                 continue;
@@ -919,7 +922,7 @@ impl Component for NetworkingScreen {
                 ]
             )),
         );
-        for (network, network_id) in saved_available_networks.iter().rev() {
+        for (network, network_id) in saved_available_networks.iter() {
             scrollable_section = scrollable_section.push(
                 saved_network_row_component(
                     network.name.to_string(),
@@ -949,7 +952,7 @@ impl Component for NetworkingScreen {
                 .key(key);
             key += 1;
         }
-        for network in unsaved_available_networks.iter().rev() {
+        for network in unsaved_available_networks.iter() {
             key += 1;
             scrollable_section = scrollable_section.push(
                 unsaved_available_network_row_component(

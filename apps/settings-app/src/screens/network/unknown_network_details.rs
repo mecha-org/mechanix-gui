@@ -94,12 +94,12 @@ impl Component for UnknownNetworkDetails {
                     }
                 }
                 if let Ok(signal_int) = connected_network_option.signal.parse::<i32>() {
-                    if signal_int < 0_i32 && signal_int > -30_i32 {
-                        signal_strength = "Excellent";
-                    } else if signal_int <= -30 && signal_int > -70 {
-                        signal_strength = "Good";
-                    } else if signal_int <= -70 {
+                    if signal_int < 30_i32 {
                         signal_strength = "Weak";
+                    } else if signal_int >= 30 && signal_int < 70 {
+                        signal_strength = "Good";
+                    } else if signal_int >= 70 {
+                        signal_strength = "Excellent";
                     }
                 };
                 connected_network_option
