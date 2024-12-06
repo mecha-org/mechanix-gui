@@ -1,9 +1,11 @@
 use crate::{
     screens::{
+        battery::battery_screen::BatteryScreen,
         bluetooth::{
             bluetooth_pairing_enter_code::BluetoothPairingEnterCode,
             bluetooth_screen::BluetoothScreen,
         },
+        display::display_screen::DisplayScreen,
         network::{
             add_network::AddNetwork, network_details::NetworkDetails,
             network_settings::NetworkSettings, networking::NetworkingScreen,
@@ -192,6 +194,8 @@ impl Component for SettingsApp {
                     base = base.push(node!(UnknownNetworkDetails::new(mac.to_string())))
                 }
             },
+            Routes::DisplayScreen => base = base.push(node!(DisplayScreen {})),
+            Routes::BatteryScreen => base = base.push(node!(BatteryScreen {})),
             Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
             Routes::BluetoothPairingEnterCode => {
                 base = base.push(node!(BluetoothPairingEnterCode {}))
