@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 use super::component::NetworkRowComponent;
 use super::wireless_model::WirelessModel;
 use crate::AppMessage;
@@ -8,8 +10,10 @@ use crate::{
     shared::h_divider::HDivider,
 };
 
+use mctk_core::prelude::cosmic_text::rustybuzz::ttf_parser::Fixed;
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::renderables::Image;
+use mctk_core::widgets::Button;
 use mctk_core::{
     component::{self, Component},
     lay,
@@ -26,92 +30,82 @@ use mechanix_status_bar_components::types::WirelessStatus;
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 use zbus::message;
 
-enum NetworkingMessage {
-    handleClickOnMore,
-    handleClickOnBack,
+enum NetworkDetailsMessage {
+    openModel(bool),
+    ForgetNetwork,
+}
+
+#[derive(Debug, Clone)]
+pub struct SavedNetworkDetailsState {
+    pub is_model_open: bool,
+    pub mac: String,
 }
 
 #[derive(Debug)]
-pub struct NetworkDetailsState {
-    // pub loading: bool,
-    // list
-}
+#[component(State = "SavedNetworkDetailsState")]
+pub struct SavedNetworkDetails {}
 
-#[derive(Debug)]
-// #[component(State = "NetworkDetailsState")]
-pub struct UnknownNetworkDetails {
-    mac: String,
-}
-
-impl UnknownNetworkDetails {
+impl SavedNetworkDetails {
     pub fn new(mac: String) -> Self {
-        Self { mac }
-    }
-
-    fn get_ip_address(&self) -> Option<String> {
-        let networks = sysinfo::Networks::new_with_refreshed_list();
-        for (interface, info) in &networks {
-            if interface.starts_with("wl") {
-                for network in info.ip_networks().iter() {
-                    if network.addr.is_ipv4() {
-                        return Some(network.addr.to_string());
-                    }
-                }
-            }
+        SavedNetworkDetails {
+            dirty: false,
+            state: Some(SavedNetworkDetailsState {
+                is_model_open: false,
+                mac,
+            }),
         }
-        None
     }
 }
 
-impl Component for UnknownNetworkDetails {
+#[state_component_impl(SavedNetworkDetailsState)]
+impl Component for SavedNetworkDetails {
     fn init(&mut self) {
         WirelessModel::update();
     }
 
+    fn render_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
+        self.state_ref().is_model_open.hash(hasher);
+    }
+
     fn view(&self) -> Option<Node> {
-        let ip_address = if let Some(ip_address) = self.get_ip_address() {
-            ip_address
-        } else {
-            "-".to_string()
-        };
-        let mut text_color = Color::WHITE;
-        let connected_network_option = WirelessModel::get()
+        let networks = WirelessModel::get()
             .scan_result
             .get()
             .wireless_network
-            .clone()
-            .into_iter()
-            .find(|network| network.mac == self.mac)
             .clone();
+        let mut network = WirelessInfoResponse {
+            mac: "".to_string(),
+            name: "".to_string(),
+            signal: "".to_string(),
+            frequency: "".to_string(),
+            flags: "".to_string(),
+        };
+        for n in networks {
+            if self.state_ref().mac == n.mac {
+                network = n;
+                break;
+            }
+        }
+        let mut network_status = "Saved";
         let mut security = "-";
         let mut signal_strength = "-";
-        let connected_network = match connected_network_option {
-            Some(connected_network_option) => {
-                for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
-                    if connected_network_option.flags.contains(security_match) {
-                        security = security_match;
-                        break;
-                    }
-                }
-                if let Ok(signal_int) = connected_network_option.signal.parse::<i32>() {
-                    if signal_int < 30_i32 {
-                        signal_strength = "Weak";
-                    } else if signal_int >= 30 && signal_int < 70 {
-                        signal_strength = "Good";
-                    } else if signal_int >= 70 {
-                        signal_strength = "Excellent";
-                    }
-                };
-                connected_network_option
+        for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
+            if network.flags.contains(security_match) {
+                security = security_match;
+                break;
             }
-            None => WirelessInfoResponse {
-                name: "-".to_string(),
-                mac: "-".to_string(),
-                flags: "-".to_string(),
-                frequency: "-".to_string(),
-                signal: "-".to_string(),
-            },
+        }
+        if let Ok(signal_int) = network.signal.parse::<i32>() {
+            if signal_int < 30_i32 {
+                signal_strength = "Weak";
+            } else if signal_int >= 30 && signal_int < 70 {
+                signal_strength = "Good";
+            } else if signal_int >= 70 {
+                signal_strength = "Excellent";
+            }
         };
+
+        let is_model_open = self.state_ref().is_model_open;
 
         let mut base: Node = node!(
             Div::new(),
@@ -185,13 +179,39 @@ impl Component for UnknownNetworkDetails {
             ))
             .push(text_node),
         )
-        .push(node!(
-            Div::new(),
-            lay![
-                size_pct: [20, Auto],
-                axis_alignment: Alignment::End
-            ]
-        ));
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [20, Auto],
+                    axis_alignment: Alignment::End
+                ]
+            )
+            .push(node!(
+                IconButton::new("delete_icon")
+                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
+                        !is_model_open
+                    ))))
+                    .icon_type(IconType::Png)
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
+                lay![
+                    size: [52, 52],
+                    axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Center,
+                    padding: [0., 0., 0., 2.]
+                ]
+            )),
+        );
 
         let mut content_node = node!(
             Div::new(),
@@ -237,7 +257,7 @@ impl Component for UnknownNetworkDetails {
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!("Signal"))
+                    Text::new(txt!("Status"))
                         .style("color", Color::WHITE)
                         .style("size", 15.0)
                         .style("line_height", 17.50)
@@ -251,7 +271,7 @@ impl Component for UnknownNetworkDetails {
                 ))
                 .push(node!(
                     // mini status
-                    Text::new(txt!(signal_strength))
+                    Text::new(txt!(network_status))
                         .style("color", Color::WHITE)
                         .style("size", 14.0)
                         .style("line_height", 20.0)
@@ -322,7 +342,7 @@ impl Component for UnknownNetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(connected_network.name.clone()))
+                Text::new(txt!(network.name.clone()))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -352,7 +372,7 @@ impl Component for UnknownNetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("Not Connected"))
+                Text::new(txt!(network_status))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -392,7 +412,7 @@ impl Component for UnknownNetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(if connected_network.frequency.starts_with("2") {
+                Text::new(txt!(if network.frequency.starts_with("2") {
                     "2.4 GHz"
                 } else {
                     "5 GHz"
@@ -466,7 +486,7 @@ impl Component for UnknownNetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(connected_network.mac.clone()))
+                Text::new(txt!(network.mac))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -548,9 +568,128 @@ impl Component for UnknownNetworkDetails {
             ]
         ));
 
+        let modal = node!(
+            Div::new()
+                .bg(Color::DARK_GREY)
+                .border(Color::DARK_GREY, 1., (10., 10., 10., 10.)),
+            lay![
+                size: [280, 180],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                position_type: Absolute,
+                position: [120., 80., 0., 0.],
+            ]
+        )
+        .push(
+            node!(
+                Div::new().border(Color::TRANSPARENT, 1., (10., 10., 10., 10.)),
+                // Div::new(),
+                lay![
+                size_pct: [100, 70],
+                direction: Direction::Row,
+                axis_alignment: Alignment::Center,
+                cross_alignment: Alignment::Center,
+                padding:[0., 20., 0., 0.]
+                ]
+            )
+            .push(node!(
+                Text::new(txt!("Forget this network? "))
+                    .style("color", Color::WHITE)
+                    .style("size", 20.)
+                    .style("line_height", 22.)
+                    .style("font", "Space Grotesk")
+                    .style("font_weight", FontWeight::Normal),
+                lay![
+                    size_pct: [100, 50],
+                ],
+            )),
+        )
+        .push(
+            node!(
+                Div::new().border(Color::TRANSPARENT, 1.5, (0., 10., 10., 10.)),
+                lay![
+                    size_pct: [100, 30],
+                    direction: Direction::Row,
+                    cross_alignment: Alignment::Stretch,
+                    axis_alignment: Alignment::Stretch,
+                    padding: [0., 0., 5., 0.]
+                ]
+            )
+            .push(node!(
+                Button::new(txt!("Cancel"))
+                    .style("text_color", Color::WHITE)
+                    .style("background_color", Color::DARK_GREY)
+                    .style("active_color", Color::MID_GREY)
+                    .style("font_size", 20.)
+                    .style("line_height", 22.)
+                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
+                        !is_model_open
+                    )))),
+                lay![
+                    size_pct: [48, Auto],
+                ]
+            ))
+            .push(
+                node!(
+                    Div::new().bg(Color::TRANSPARENT),
+                    lay![
+                     size_pct: [4, Auto],
+                     axis_alignment: Alignment::Center,
+                     cross_alignment: Alignment::Center
+                    ]
+                )
+                .push(node!(
+                    Text::new(txt!("|"))
+                        .style("color", Color::LIGHT_GREY)
+                        .style("size", 20.)
+                        .style("line_height", 22.)
+                        .style("font", "Space Grotesk")
+                        .style("font_weight", FontWeight::Normal),
+                    lay![
+                        cross_alignment: Alignment::Center
+                    ]
+                )),
+            )
+            .push(node!(
+                Button::new(txt!("Forget"))
+                    .style("text_color", Color::RED)
+                    .style("background_color", Color::DARK_GREY)
+                    .style("active_color", Color::MID_GREY)
+                    .style("font_size", 20.)
+                    .style("line_height", 22.)
+                    .on_click(Box::new(move || {
+                        WirelessModel::forget_saved_network(network.name.clone());
+                        msg!(Message::ChangeRoute {
+                            route: Routes::Network {
+                                screen: NetworkScreenRoutes::Networking
+                            }
+                        })
+                    })),
+                lay![
+                    size_pct: [48, Auto],
+                ]
+            )),
+        );
+
+        if is_model_open.clone() == true {
+            base = base.push(modal);
+        }
         base = base.push(header_node);
         base = base.push(content_node);
-
         Some(base)
+    }
+
+    fn update(&mut self, msg: mctk_core::component::Message) -> Vec<mctk_core::component::Message> {
+        if let Some(message) = msg.downcast_ref::<NetworkDetailsMessage>() {
+            match message {
+                NetworkDetailsMessage::openModel(value) => {
+                    self.state_mut().is_model_open = *value;
+                }
+                NetworkDetailsMessage::ForgetNetwork => {
+                    self.state_mut().is_model_open = false;
+                }
+            }
+        }
+        vec![msg]
     }
 }

@@ -12,10 +12,6 @@ pub const ASSET_PATH: &str = concatcp!(USR_SHARE_PATH, APP_PATH, "/assets/"); //
 pub const BACKGROUND_IMAGE: &str = concatcp!(ASSET_PATH, "mecha_background_color.png");
 
 // settings
-pub const WIFI_ICON: &str = concatcp!(ASSET_PATH, "wifi_icon.png");
-pub const NETWORK_SETTIGNS_ICON: &str = concatcp!(ASSET_PATH, "network_settings_icon.png");
-pub const SECURED_WIFI_ICON: &str = concatcp!(ASSET_PATH, "secured_wifi_icon.png");
-pub const WIFI_STRENTH_ICON: &str = concatcp!(ASSET_PATH, "wifi_strength_icon.png");
 pub const BLUETOOTH_ICON: &str = concatcp!(ASSET_PATH, "bluetooth_icon.png");
 pub const DISPLAY_ICON: &str = concatcp!(ASSET_PATH, "display_icon.png");
 pub const APPEARANCE_ICON: &str = concatcp!(ASSET_PATH, "appearance_icon.png");
@@ -33,3 +29,34 @@ pub const BACK_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
 pub const ADD_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
 pub const DELETE_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
 pub const TICK_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
+
+// wireless
+pub const WIRELESS_OFF: &str = concatcp!(ASSET_PATH, "wireless/wireless_off_icon.png");
+pub const WIRELESS_ON: &str = concatcp!(ASSET_PATH, "wireless/wireless_on_icon.png");
+pub const WIRELESS_LOW: &str = concatcp!(ASSET_PATH, "wireless/wireless_low_icon.png");
+pub const WIRELESS_WEAK: &str = concatcp!(ASSET_PATH, "wireless/wireless_weak_icon.png");
+pub const WIRELESS_GOOD: &str = concatcp!(ASSET_PATH, "wireless/wireless_good_icon.png");
+pub const WIRELESS_STRONG: &str = concatcp!(ASSET_PATH, "wireless/wireless_strong_icon.png");
+pub const WIRELESS_ERROR: &str = concatcp!(ASSET_PATH, "wireless/wireless_error_icon.png");
+pub const WIRELESS_SETTIGNS: &str = concatcp!(ASSET_PATH, "wireless/wireless_settings_icon.png");
+pub const WIRELESS_NOT_FOUND: &str = concatcp!(ASSET_PATH, "wireless/wireless_not_found_icon.svg");
+
+// wireless-secured
+pub const SECURED_WIRELESS_OFF: &str =
+    concatcp!(ASSET_PATH, "wireless/secured/secured_wireless_off_icon.png");
+pub const SECURED_WIRELESS_ON: &str =
+    concatcp!(ASSET_PATH, "wireless/secured/secured_wireless_on_icon.png");
+pub const SECURED_WIRELESS_LOW: &str =
+    concatcp!(ASSET_PATH, "wireless/secured/secured_wireless_low_icon.png");
+pub const SECURED_WIRELESS_WEAK: &str = concatcp!(
+    ASSET_PATH,
+    "wireless/secured/secured_wireless_weak_icon.png"
+);
+pub const SECURED_WIRELESS_STRONG: &str = concatcp!(
+    ASSET_PATH,
+    "wireless/secured/secured_wireless_strong_icon.png"
+);
+pub const SECURED_WIRELESS_ERROR: &str = concatcp!(
+    ASSET_PATH,
+    "wireless/secured/secured_wireless_error_icon.png"
+);

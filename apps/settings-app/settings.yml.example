@@ -31,10 +31,23 @@ fonts:
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Medium.ttf
 modules:
   wireless:
-    wifi_icon: /usr/share/mechanix/apps/settings/assets/icons/wifi_icon.png
-    network_settings_icon: /usr/share/mechanix/apps/settings/assets/icons/network_settings_icon.png
-    secured_wifi_icon: /usr/share/mechanix/apps/settings/assets/icons/secured_wifi_icon.png
-    wifi_strength_icon: /usr/share/mechanix/apps/settings/assets/icons/wifi_strength_icon.png
+    icon:
+      off: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_off_icon.png
+      on: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_on_icon.png
+      low: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_low_icon.png
+      weak: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_weak_icon.png
+      good: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_good_icon.png
+      strong: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_strong_icon.png
+      error: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_error_icon.png
+      not_found: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_not_found_icon.svg
+      wireless_settings: /usr/share/mechanix/apps/settings/assets/icons/wireless_settings_icon.png
+    secured_icon:
+      off: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_off_icon.png
+      on: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_on_icon.png
+      low: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_low_icon.png
+      weak: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_weak_icon.png
+      strong: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_strong_icon.png
+      error: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_error_icon.png
   bluetooth:
     icon: /usr/share/mechanix/apps/settings/assets/icons/bluetooth_icon.png
   display:

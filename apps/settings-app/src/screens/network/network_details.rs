@@ -595,7 +595,7 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Forget this network? "))
+                Text::new(txt!("Are you sure?"))
                     .style("color", Color::WHITE)
                     .style("size", 20.)
                     .style("line_height", 22.)
@@ -653,13 +653,20 @@ impl Component for NetworkDetails {
                 )),
             )
             .push(node!(
-                Button::new(txt!("Forget"))
+                Button::new(txt!("Disconnect"))
                     .style("text_color", Color::RED)
                     .style("background_color", Color::DARK_GREY)
                     .style("active_color", Color::MID_GREY)
                     .style("font_size", 20.)
                     .style("line_height", 22.)
-                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::ForgetNetwork))),
+                    .on_click(Box::new(move || {
+                        WirelessModel::disconnect();
+                        msg!(Message::ChangeRoute {
+                            route: Routes::Network {
+                                screen: NetworkScreenRoutes::Networking
+                            }
+                        })
+                    })),
                 lay![
                     size_pct: [48, Auto],
                 ]
