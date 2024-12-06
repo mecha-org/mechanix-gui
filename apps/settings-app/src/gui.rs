@@ -9,6 +9,7 @@ use crate::{
         network::{
             add_network::AddNetwork, network_details::NetworkDetails,
             network_settings::NetworkSettings, networking::NetworkingScreen,
+            saved_network_details::SavedNetworkDetails,
             unknown_network_details::UnknownNetworkDetails,
         },
         settings_menu::settings_screen::SettingsScreen,
@@ -56,6 +57,9 @@ pub enum NetworkScreenRoutes {
         ssid: String,
     },
     NetworkSettings,
+    SavedNetworkDetails {
+        mac: String,
+    },
     NetworkDetails,
 }
 
@@ -192,6 +196,9 @@ impl Component for SettingsApp {
                 }
                 NetworkScreenRoutes::UnknownNetworkDetails { mac } => {
                     base = base.push(node!(UnknownNetworkDetails::new(mac.to_string())))
+                }
+                NetworkScreenRoutes::SavedNetworkDetails { mac } => {
+                    base = base.push(node!(SavedNetworkDetails::new(mac.to_string())))
                 }
             },
             Routes::DisplayScreen => base = base.push(node!(DisplayScreen {})),

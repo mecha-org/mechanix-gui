@@ -70,7 +70,7 @@ impl Component for SettingsScreen {
             SettingsRowComponent {
                 title: "Network".to_string(),
                 value: self.connected_network_name.to_string(),
-                icon_1: "wifi_icon".to_string(),
+                icon_1: "wireless_good".to_string(),
                 icon_2: "right_arrow_icon".to_string(),
                 color: Color::WHITE,
                 on_click: Some(Box::new(move || msg!(Message::ChangeRoute {

@@ -242,7 +242,7 @@ impl Component for NetworkingScreen {
                 ]
             ))
             .push(node!(
-                IconButton::new("network_settings_icon")
+                IconButton::new("wireless_settings")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
                         route: Routes::Network {
                             screen: NetworkScreenRoutes::NetworkSettings
@@ -340,10 +340,10 @@ impl Component for NetworkingScreen {
             connected_network_name = connected_network.name.clone();
         }
 
-        let connected_status = if status == true {
-            "Connected"
-        } else {
-            "Not connected"
+        let connected_status = match *WirelessModel::get().state.get() {
+            super::wireless_model::WifiState::Connecting => "Connecting...",
+            super::wireless_model::WifiState::Connected => "Connected",
+            _ => "Disconnected",
         };
 
         let connected_network_row = node!(
@@ -365,7 +365,7 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("wifi_icon"),
+                widgets::Image::new("wireless_good"),
                 lay![
                     size: [24, 24],
                     margin:[0., 0., 0., 20.],
@@ -381,7 +381,7 @@ impl Component for NetworkingScreen {
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!(connected_network_name))
+                    Text::new(txt!(connected_network_name.clone()))
                         .style("color", Color::WHITE)
                         .style("size", 18.0)
                         .style("line_height", 20.0)
@@ -474,6 +474,9 @@ impl Component for NetworkingScreen {
                     break;
                 }
             }
+            if connected_network_name.clone() == network.name {
+                is_current = true;
+            }
             if is_current {
                 continue;
             }
@@ -511,7 +514,7 @@ impl Component for NetworkingScreen {
             .push(
                 node!(ClicableIconComponent {
                     on_click: Some(Box::new(move || {
-                        WirelessModel::select_network(id.clone());
+                        WirelessModel::connect_to_saved_network(ssid.clone());
                         println!("{}", id.clone());
                         msg!(Message::ChangeRoute {
                             route: Routes::Network {
@@ -521,7 +524,7 @@ impl Component for NetworkingScreen {
                     }))
                 })
                 .push(node!(
-                    widgets::Image::new("wifi_icon"),
+                    widgets::Image::new("wireless_good"),
                     lay![
                         size: [24, 24],
                         margin:[0., 0., 0., 20.],
@@ -579,7 +582,7 @@ impl Component for NetworkingScreen {
                     IconButton::new("info_icon")
                         .on_click(Box::new(move || msg!(Message::ChangeRoute {
                             route: Routes::Network {
-                                screen: NetworkScreenRoutes::UnknownNetworkDetails {
+                                screen: NetworkScreenRoutes::SavedNetworkDetails {
                                     mac: mac.clone()
                                 }
                             }
@@ -626,7 +629,7 @@ impl Component for NetworkingScreen {
                     })))
                 },)
                 .push(node!(
-                    widgets::Image::new("wifi_icon"),
+                    widgets::Image::new("wireless_good"),
                     lay![
                         size: [24, 24],
                         margin:[0., 0., 0., 20.],
@@ -714,7 +717,7 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("wifi_icon"),
+                widgets::Image::new("wireless_good"),
                 lay![
                     size: [24, 24],
                     margin:[0., 0., 0., 20.],
@@ -919,7 +922,7 @@ impl Component for NetworkingScreen {
                 ]
             )),
         );
-        for (network, network_id) in saved_available_networks.iter().rev() {
+        for (network, network_id) in saved_available_networks.iter() {
             scrollable_section = scrollable_section.push(
                 saved_network_row_component(
                     network.name.to_string(),
@@ -949,7 +952,7 @@ impl Component for NetworkingScreen {
                 .key(key);
             key += 1;
         }
-        for network in unsaved_available_networks.iter().rev() {
+        for network in unsaved_available_networks.iter() {
             key += 1;
             scrollable_section = scrollable_section.push(
                 unsaved_available_network_row_component(
