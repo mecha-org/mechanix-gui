@@ -37,6 +37,7 @@ futures = "0.3.30"
 regex="1.11.1"
 lazy_static = "1.5.0"
 sysinfo = "0.32.1"
+upower = { path = "../../commons/upower" }
 
 [package.metadata.deb]
 name = "mechanix-settings"

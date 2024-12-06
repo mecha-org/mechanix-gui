@@ -1,13 +1,19 @@
 use crate::gui::Message;
 use crate::gui::Routes;
+use crate::header_node;
 use crate::shared::h_divider::HDivider;
 use crate::shared::slider::Slider;
 use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
 
+use super::battery_model::BatteryModel;
+
 #[derive(Debug)]
 pub struct BatteryScreen {}
 impl Component for BatteryScreen {
+    fn init(&mut self) {
+        BatteryModel::update();
+    }
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -28,11 +34,18 @@ impl Component for BatteryScreen {
             ]
         );
 
-        main_node = main_node.push(header_node("Battery"));
+        main_node = main_node.push(header_node!(
+            "Battery",
+            Box::new(|| {
+                msg!(Message::ChangeRoute {
+                    route: Routes::SettingsList
+                })
+            })
+        ));
 
         let battery_percentage = node!(
             Slider::new()
-                .value(50)
+                .value(*BatteryModel::get().battery_percentage.get() as u8)
                 .slider_type(SliderType::Line)
                 .active_color(Color::rgb(102., 226., 0.))
                 // .on_slide(Box::new(|value| Box::new(())))
@@ -41,7 +54,13 @@ impl Component for BatteryScreen {
             lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
         );
 
-        main_node = main_node.push(text_node(format!("BATTERY {}%", 50).as_str()));
+        main_node = main_node.push(text_node(
+            format!(
+                "BATTERY {}%",
+                *BatteryModel::get().battery_percentage.get() as u8
+            )
+            .as_str(),
+        ));
         main_node = main_node.push(battery_percentage);
         main_node = main_node.push(node!(HDivider { size: 1. }));
         main_node = main_node.push(tab_item_node!(
