@@ -72,12 +72,30 @@ impl WirelessModel {
         });
     }
 
+    async fn get_wifi_device_path() -> String {
+        let connection = zbus::Connection::system().await.unwrap();
+        let proxy = network_manager::NetworkManagerProxy::new(&connection)
+            .await
+            .unwrap();
+        let devices = proxy.get_all_devices().await.unwrap();
+        for device in devices {
+            let device_proxy = device::DeviceProxy::new(&connection, device.clone())
+                .await
+                .unwrap();
+            if device_proxy.device_type().await.unwrap() == 2 {
+                println!("{}", device);
+                return device.to_string();
+            }
+        }
+        "/org/freedesktop/NetworkManager/Devices/2".to_string()
+    }
+
     pub fn scan() {
         RUNTIME.spawn(async {
             let conneciton = zbus::Connection::system().await.unwrap();
             let wireless_proxy = wireless_device::WirelessDeviceProxy::new(
                 &conneciton,
-                "/org/freedesktop/NetworkManager/Devices/2",
+                Self::get_wifi_device_path().await,
             )
             .await
             .unwrap();
@@ -117,7 +135,7 @@ impl WirelessModel {
             let connection = zbus::Connection::system().await.unwrap();
             let wireless_proxy = wireless_device::WirelessDeviceProxy::new(
                 &connection,
-                "/org/freedesktop/NetworkManager/Devices/2",
+                Self::get_wifi_device_path().await,
             )
             .await
             .unwrap();
