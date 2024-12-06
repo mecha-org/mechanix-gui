@@ -121,24 +121,72 @@ async fn main() -> anyhow::Result<()> {
     let mut svgs: HashMap<String, String> = HashMap::new();
 
     let modules = settings.modules.clone();
+
+    // wireless icons //
     assets.insert(
-        "wifi_icon".to_string(),
-        AssetParams::new(modules.wireless.wifi_icon),
+        "wireless_on".to_string(),
+        AssetParams::new(modules.wireless.icon.on),
+    );
+    assets.insert(
+        "wireless_off".to_string(),
+        AssetParams::new(modules.wireless.icon.off),
+    );
+    assets.insert(
+        "wireless_low".to_string(),
+        AssetParams::new(modules.wireless.icon.low),
+    );
+    assets.insert(
+        "wireless_weak".to_string(),
+        AssetParams::new(modules.wireless.icon.weak),
+    );
+    assets.insert(
+        "wireless_good".to_string(),
+        AssetParams::new(modules.wireless.icon.good),
+    );
+    assets.insert(
+        "wireless_strong".to_string(),
+        AssetParams::new(modules.wireless.icon.strong),
+    );
+    assets.insert(
+        "wireless_error".to_string(),
+        AssetParams::new(modules.wireless.icon.error),
+    );
+    assets.insert(
+        "wireless_not_found".to_string(),
+        AssetParams::new(modules.wireless.icon.not_found),
     );
 
     assets.insert(
-        "network_settings_icon".to_string(),
-        AssetParams::new(modules.wireless.network_settings_icon),
+        "wireless_settings".to_string(),
+        AssetParams::new(modules.wireless.icon.wireless_settings),
+    );
+    // secured wireless icons //
+    assets.insert(
+        "secured_wireless_on".to_string(),
+        AssetParams::new(modules.wireless.secured_icon.on),
+    );
+    assets.insert(
+        "secured_wireless_off".to_string(),
+        AssetParams::new(modules.wireless.secured_icon.off),
+    );
+    assets.insert(
+        "secured_wireless_low".to_string(),
+        AssetParams::new(modules.wireless.secured_icon.low),
+    );
+    assets.insert(
+        "secured_wireless_weak".to_string(),
+        AssetParams::new(modules.wireless.secured_icon.weak),
+    );
+    assets.insert(
+        "secured_wireless_strong".to_string(),
+        AssetParams::new(modules.wireless.secured_icon.strong),
+    );
+    assets.insert(
+        "secured_wireless_error".to_string(),
+        AssetParams::new(modules.wireless.secured_icon.error),
     );
 
-    assets.insert(
-        "secured_wifi_icon".to_string(),
-        AssetParams::new(modules.wireless.secured_wifi_icon),
-    );
-    assets.insert(
-        "wifi_strength_icon".to_string(),
-        AssetParams::new(modules.wireless.wifi_strength_icon),
-    );
+    // ------------------------------//
     assets.insert(
         "bluetooth_icon".to_string(),
         AssetParams::new(modules.bluetooth.icon),

@@ -242,7 +242,7 @@ impl Component for NetworkingScreen {
                 ]
             ))
             .push(node!(
-                IconButton::new("network_settings_icon")
+                IconButton::new("wireless_settings")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
                         route: Routes::Network {
                             screen: NetworkScreenRoutes::NetworkSettings
@@ -365,7 +365,7 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("wifi_icon"),
+                widgets::Image::new("wireless_good"),
                 lay![
                     size: [24, 24],
                     margin:[0., 0., 0., 20.],
@@ -524,7 +524,7 @@ impl Component for NetworkingScreen {
                     }))
                 })
                 .push(node!(
-                    widgets::Image::new("wifi_icon"),
+                    widgets::Image::new("wireless_good"),
                     lay![
                         size: [24, 24],
                         margin:[0., 0., 0., 20.],
@@ -629,7 +629,7 @@ impl Component for NetworkingScreen {
                     })))
                 },)
                 .push(node!(
-                    widgets::Image::new("wifi_icon"),
+                    widgets::Image::new("wireless_good"),
                     lay![
                         size: [24, 24],
                         margin:[0., 0., 0., 20.],
@@ -717,7 +717,7 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("wifi_icon"),
+                widgets::Image::new("wireless_good"),
                 lay![
                     size: [24, 24],
                     margin:[0., 0., 0., 20.],

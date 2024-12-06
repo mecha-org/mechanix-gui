@@ -1,5 +1,11 @@
 use crate::constants::{
-    ABOUT_ICON, ADD_ICON, APPEARANCE_ICON, BACKGROUND_IMAGE, BACK_ICON, BASE_SETTINGS_PATH, BATTERY_ICON, BLUETOOTH_ICON, CONNECTED_ICON, DATE_TIME_ICON, DELETE_ICON, DISPLAY_ICON, HOME_DIR_CONFIG_PATH, INFO_ICON, LANGUAGE_ICON, LOCK_ICON, NETWORK_SETTIGNS_ICON, RIGHT_ARROW_ICON, SECURED_WIFI_ICON, SOUND_ICON, TICK_ICON, UPDATE_ICON, USR_SHARE_PATH, WIFI_ICON, WIFI_STRENTH_ICON
+    ABOUT_ICON, ADD_ICON, APPEARANCE_ICON, BACKGROUND_IMAGE, BACK_ICON, BASE_SETTINGS_PATH,
+    BATTERY_ICON, BLUETOOTH_ICON, CONNECTED_ICON, DATE_TIME_ICON, DELETE_ICON, DISPLAY_ICON,
+    HOME_DIR_CONFIG_PATH, INFO_ICON, LANGUAGE_ICON, LOCK_ICON, RIGHT_ARROW_ICON,
+    SECURED_WIRELESS_ERROR, SECURED_WIRELESS_LOW, SECURED_WIRELESS_OFF, SECURED_WIRELESS_ON,
+    SECURED_WIRELESS_STRONG, SECURED_WIRELESS_WEAK, SOUND_ICON, TICK_ICON, UPDATE_ICON,
+    USR_SHARE_PATH, WIRELESS_ERROR, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF,
+    WIRELESS_ON, WIRELESS_SETTIGNS, WIRELESS_STRONG, WIRELESS_WEAK,
 };
 use crate::errors::{SettingsAppError, SettingsAppErrorCodes};
 use anyhow::bail;
@@ -157,7 +163,7 @@ impl Default for BackgroundIconPath {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct Modules {
-    pub wireless: Wireless,
+    pub wireless: WirelessModule,
     pub bluetooth: Bluetooth,
     pub display: Display,
     pub appearance: Appearance,
@@ -199,23 +205,73 @@ impl Default for LayoutSettings {
     }
 }
 
-/// Wireless module
+// // Wireless module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(deny_unknown_fields)]
 #[serde(default)]
-pub struct Wireless {
-    pub network_settings_icon: String,
-    pub wifi_icon: String,
-    pub secured_wifi_icon: String,
-    pub wifi_strength_icon: String,
+pub struct WirelessModule {
+    pub icon: WirelessIconPaths,
+    pub secured_icon: SecuredWirelessIconPaths,
+    pub title: String,
 }
-impl Default for Wireless {
+impl Default for WirelessModule {
     fn default() -> Self {
-        Wireless {
-            network_settings_icon: NETWORK_SETTIGNS_ICON.to_owned(),
-            wifi_icon: WIFI_ICON.to_owned(),
-            secured_wifi_icon: SECURED_WIFI_ICON.to_owned(),
-            wifi_strength_icon: WIFI_STRENTH_ICON.to_owned(),
+        WirelessModule {
+            icon: WirelessIconPaths::default(),
+            secured_icon: SecuredWirelessIconPaths::default(),
+            title: "Wireless".to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct WirelessIconPaths {
+    pub off: String,
+    pub on: String,
+    pub low: String,
+    pub weak: String,
+    pub good: String,
+    pub strong: String,
+    pub error: String,
+    pub not_found: String,
+    pub wireless_settings: String,
+}
+impl Default for WirelessIconPaths {
+    fn default() -> Self {
+        WirelessIconPaths {
+            off: WIRELESS_OFF.to_owned(),
+            on: WIRELESS_ON.to_owned(),
+            low: WIRELESS_LOW.to_owned(),
+            weak: WIRELESS_WEAK.to_owned(),
+            good: WIRELESS_GOOD.to_owned(),
+            strong: WIRELESS_STRONG.to_owned(),
+            error: WIRELESS_ERROR.to_owned(),
+            not_found: WIRELESS_NOT_FOUND.to_owned(),
+            wireless_settings: WIRELESS_SETTIGNS.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct SecuredWirelessIconPaths {
+    pub off: String,
+    pub on: String,
+    pub low: String,
+    pub weak: String,
+    pub strong: String,
+    pub error: String,
+}
+impl Default for SecuredWirelessIconPaths {
+    fn default() -> Self {
+        SecuredWirelessIconPaths {
+            off: SECURED_WIRELESS_OFF.to_owned(),
+            on: SECURED_WIRELESS_ON.to_owned(),
+            low: SECURED_WIRELESS_LOW.to_owned(),
+            weak: SECURED_WIRELESS_WEAK.to_owned(),
+            strong: SECURED_WIRELESS_STRONG.to_owned(),
+            error: SECURED_WIRELESS_ERROR.to_owned(),
         }
     }
 }
@@ -411,7 +467,7 @@ impl Default for CustomFonts {
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            wireless: Wireless::default(),
+            wireless: WirelessModule::default(),
             bluetooth: Bluetooth::default(),
             battery: Battery::default(),
             display: Display::default(),
