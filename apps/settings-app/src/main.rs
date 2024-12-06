@@ -35,6 +35,7 @@ use mechanix_status_bar_components::types::WirelessStatus;
 use mechanix_system_dbus_client::wireless::{
     KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
 };
+use screens::battery::battery_model::BatteryModel;
 // use screens::wireless::handler::{WirelessDetailsItem, WirelessServiceHandle};
 use settings::{AppSettings, MainSettings};
 use std::{
@@ -307,6 +308,7 @@ async fn main() -> anyhow::Result<()> {
     }));
     SoundModel::get().register_context_handler(context_handler);
     WirelessModel::get().register_context_handler(context_handler);
+    BatteryModel::get().register_context_handler(context_handler);
 
     let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     // let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
