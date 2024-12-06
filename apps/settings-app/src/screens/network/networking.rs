@@ -340,10 +340,10 @@ impl Component for NetworkingScreen {
             connected_network_name = connected_network.name.clone();
         }
 
-        let connected_status = if status == true {
-            "Connected"
-        } else {
-            "Not connected"
+        let connected_status = match *WirelessModel::get().state.get() {
+            super::wireless_model::WifiState::Connecting => "Connecting...",
+            super::wireless_model::WifiState::Connected => "Connected",
+            _ => "Disconnected",
         };
 
         let connected_network_row = node!(
@@ -514,7 +514,7 @@ impl Component for NetworkingScreen {
             .push(
                 node!(ClicableIconComponent {
                     on_click: Some(Box::new(move || {
-                        WirelessModel::select_network(id.clone());
+                        WirelessModel::connect_to_saved_network(ssid.clone());
                         println!("{}", id.clone());
                         msg!(Message::ChangeRoute {
                             route: Routes::Network {
@@ -582,7 +582,7 @@ impl Component for NetworkingScreen {
                     IconButton::new("info_icon")
                         .on_click(Box::new(move || msg!(Message::ChangeRoute {
                             route: Routes::Network {
-                                screen: NetworkScreenRoutes::UnknownNetworkDetails {
+                                screen: NetworkScreenRoutes::SavedNetworkDetails {
                                     mac: mac.clone()
                                 }
                             }

@@ -36,41 +36,29 @@ enum NetworkDetailsMessage {
 }
 
 #[derive(Debug, Clone)]
-pub struct NetworkDetailsState {
+pub struct SavedNetworkDetailsState {
     pub is_model_open: bool,
+    pub mac: String,
 }
 
 #[derive(Debug)]
-#[component(State = "NetworkDetailsState")]
-pub struct NetworkDetails {}
+#[component(State = "SavedNetworkDetailsState")]
+pub struct SavedNetworkDetails {}
 
-impl NetworkDetails {
-    pub fn new() -> Self {
-        NetworkDetails {
+impl SavedNetworkDetails {
+    pub fn new(mac: String) -> Self {
+        SavedNetworkDetails {
             dirty: false,
-            state: Some(NetworkDetailsState {
+            state: Some(SavedNetworkDetailsState {
                 is_model_open: false,
+                mac,
             }),
         }
     }
-
-    fn get_ip_address(&self) -> Option<String> {
-        let networks = sysinfo::Networks::new_with_refreshed_list();
-        for (interface, info) in &networks {
-            if interface.starts_with("wl") {
-                for network in info.ip_networks().iter() {
-                    if network.addr.is_ipv4() {
-                        return Some(network.addr.to_string());
-                    }
-                }
-            }
-        }
-        None
-    }
 }
 
-#[state_component_impl(NetworkDetailsState)]
-impl Component for NetworkDetails {
+#[state_component_impl(SavedNetworkDetailsState)]
+impl Component for SavedNetworkDetails {
     fn init(&mut self) {
         WirelessModel::update();
     }
@@ -80,33 +68,43 @@ impl Component for NetworkDetails {
     }
 
     fn view(&self) -> Option<Node> {
-        let ip_address = if let Some(ip_address) = self.get_ip_address() {
-            ip_address
-        } else {
-            "-".to_string()
+        let networks = WirelessModel::get()
+            .scan_result
+            .get()
+            .wireless_network
+            .clone();
+        let mut network = WirelessInfoResponse {
+            mac: "".to_string(),
+            name: "".to_string(),
+            signal: "".to_string(),
+            frequency: "".to_string(),
+            flags: "".to_string(),
         };
-        let mut text_color = Color::WHITE;
-        let connected_network_option = WirelessModel::get().connected_network.get().clone();
-        let mut network_status = "Connected";
+        for n in networks {
+            if self.state_ref().mac == n.mac {
+                network = n;
+                break;
+            }
+        }
+        let mut network_status = "Saved";
         let mut security = "-";
-        let connected_network = if let Some(connected_network_option) = connected_network_option {
-            for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
-                if connected_network_option.flags.contains(security_match) {
-                    security = security_match;
-                    break;
-                }
+        let mut signal_strength = "-";
+        for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
+            if network.flags.contains(security_match) {
+                security = security_match;
+                break;
             }
-            connected_network_option
-        } else {
-            network_status = "Not Connected";
-            WirelessInfoResponse {
-                name: "-".to_string(),
-                mac: "-".to_string(),
-                flags: "-".to_string(),
-                frequency: "-".to_string(),
-                signal: "-".to_string(),
+        }
+        if let Ok(signal_int) = network.signal.parse::<i32>() {
+            if signal_int < 30_i32 {
+                signal_strength = "Weak";
+            } else if signal_int >= 30 && signal_int < 70 {
+                signal_strength = "Good";
+            } else if signal_int >= 70 {
+                signal_strength = "Excellent";
             }
         };
+
         let is_model_open = self.state_ref().is_model_open;
 
         let mut base: Node = node!(
@@ -344,7 +342,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(connected_network.name.clone()))
+                Text::new(txt!(network.name.clone()))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -414,7 +412,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(if connected_network.frequency.starts_with("2") {
+                Text::new(txt!(if network.frequency.starts_with("2") {
                     "2.4 GHz"
                 } else {
                     "5 GHz"
@@ -437,7 +435,7 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("IP Address"))
+                Text::new(txt!("Signal"))
                     .style("color", Color::rgba(197., 197., 197., 1.))
                     .style("size", 15.0)
                     .style("line_height", 17.5)
@@ -448,7 +446,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(ip_address))
+                Text::new(txt!(signal_strength))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -488,7 +486,7 @@ impl Component for NetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(connected_network.mac))
+                Text::new(txt!(network.mac))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -595,7 +593,7 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Are you sure?"))
+                Text::new(txt!("Forget this network? "))
                     .style("color", Color::WHITE)
                     .style("size", 20.)
                     .style("line_height", 22.)
@@ -653,14 +651,14 @@ impl Component for NetworkDetails {
                 )),
             )
             .push(node!(
-                Button::new(txt!("Disconnect"))
+                Button::new(txt!("Forget"))
                     .style("text_color", Color::RED)
                     .style("background_color", Color::DARK_GREY)
                     .style("active_color", Color::MID_GREY)
                     .style("font_size", 20.)
                     .style("line_height", 22.)
                     .on_click(Box::new(move || {
-                        WirelessModel::disconnect();
+                        WirelessModel::forget_saved_network(network.name.clone());
                         msg!(Message::ChangeRoute {
                             route: Routes::Network {
                                 screen: NetworkScreenRoutes::Networking
