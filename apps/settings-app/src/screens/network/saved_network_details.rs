@@ -57,6 +57,14 @@ impl SavedNetworkDetails {
     }
 }
 
+fn truncate(s: String, max_length: usize) -> String {
+    if s.len() <= max_length {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max_length - 3])
+    }
+}
+
 #[state_component_impl(SavedNetworkDetailsState)]
 impl Component for SavedNetworkDetails {
     fn init(&mut self) {
@@ -336,7 +344,7 @@ impl Component for SavedNetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(network.name.clone()))
+                Text::new(txt!(truncate(network.name.clone(), 17)))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)

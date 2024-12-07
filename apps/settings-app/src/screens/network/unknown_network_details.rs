@@ -63,6 +63,14 @@ impl UnknownNetworkDetails {
     }
 }
 
+fn truncate(s: String, max_length: usize) -> String {
+    if s.len() <= max_length {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max_length - 3])
+    }
+}
+
 impl Component for UnknownNetworkDetails {
     fn init(&mut self) {
         WirelessModel::update();
@@ -317,7 +325,7 @@ impl Component for UnknownNetworkDetails {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(connected_network.name.clone()))
+                Text::new(txt!(truncate(connected_network.name.clone(), 17)))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)

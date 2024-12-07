@@ -44,6 +44,14 @@ impl std::fmt::Debug for ClicableIconComponent {
     }
 }
 
+fn truncate(s: String, max_length: usize) -> String {
+    if s.len() <= max_length {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max_length - 3])
+    }
+}
+
 impl Component for ClicableIconComponent {
     fn on_click(&mut self, event: &mut event::Event<event::Click>) {
         if let Some(f) = &self.on_click {
@@ -339,6 +347,7 @@ impl Component for NetworkingScreen {
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
             connected_network_name = connected_network.name.clone();
         }
+        connected_network_name = truncate(connected_network_name, 30);
 
         let connected_status = match *WirelessModel::get().state.get() {
             super::wireless_model::WifiState::Connecting => "Connecting...",
@@ -551,7 +560,7 @@ impl Component for NetworkingScreen {
                         ]
                     )
                     .push(node!(
-                        Text::new(txt!(network.name.clone()))
+                        Text::new(txt!(truncate(network.name.clone(), 30)))
                             .style("color", Color::WHITE)
                             .style("size", 18.0)
                             .style("line_height", 20.0)
@@ -661,7 +670,7 @@ impl Component for NetworkingScreen {
                         ]
                     )
                     .push(node!(
-                        Text::new(txt!(network.name.clone()))
+                        Text::new(txt!(truncate(network.name.clone(), 28)))
                             .style("color", Color::WHITE)
                             .style("size", 18.0)
                             .style("line_height", 20.0)
