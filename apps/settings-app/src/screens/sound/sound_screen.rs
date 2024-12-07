@@ -78,7 +78,10 @@ impl component::Component for SoundScreen {
                 .value((*SoundModel::get().input_volume.get()) as u8)
                 .slider_type(SliderType::Line)
                 .active_color(Color::rgb(102., 226., 0.))
-                // .on_slide(Box::new(|value| Box::new(())))
+                .on_slide(Box::new(|value| {
+                    SoundModel::set_input_volume(value.into());
+                    Box::new(())
+                }))
                 .col_spacing(8.)
                 .col_width(3.75),
             lay![size: [Auto, 45], margin:[10., 10., 0., 10.]]

@@ -88,14 +88,9 @@ impl Component for NetworkDetails {
         let mut text_color = Color::WHITE;
         let connected_network_option = WirelessModel::get().connected_network.get().clone();
         let mut network_status = "Connected";
-        let mut security = "-";
+        let mut security = "-".to_string();
         let connected_network = if let Some(connected_network_option) = connected_network_option {
-            for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
-                if connected_network_option.flags.contains(security_match) {
-                    security = security_match;
-                    break;
-                }
-            }
+            security = connected_network_option.flags.clone();
             connected_network_option
         } else {
             network_status = "Not Connected";

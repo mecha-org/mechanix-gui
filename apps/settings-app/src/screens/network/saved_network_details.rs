@@ -86,15 +86,9 @@ impl Component for SavedNetworkDetails {
                 break;
             }
         }
-        let mut network_status = "Saved";
-        let mut security = "-";
+        let network_status = "Saved";
+        let security = network.flags.clone();
         let mut signal_strength = "-";
-        for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
-            if network.flags.contains(security_match) {
-                security = security_match;
-                break;
-            }
-        }
         if let Ok(signal_int) = network.signal.parse::<i32>() {
             if signal_int < 30_i32 {
                 signal_strength = "Weak";

@@ -83,16 +83,11 @@ impl Component for UnknownNetworkDetails {
             .into_iter()
             .find(|network| network.mac == self.mac)
             .clone();
-        let mut security = "-";
+        let mut security = "-".to_string();
         let mut signal_strength = "-";
         let connected_network = match connected_network_option {
             Some(connected_network_option) => {
-                for security_match in &["WPA-PSK", "WPA2-PSK", "WPA3-PSK"] {
-                    if connected_network_option.flags.contains(security_match) {
-                        security = security_match;
-                        break;
-                    }
-                }
+                security = connected_network_option.flags.clone();
                 if let Ok(signal_int) = connected_network_option.signal.parse::<i32>() {
                     if signal_int < 30_i32 {
                         signal_strength = "Weak";

@@ -4,6 +4,7 @@ use futures::StreamExt;
 use lazy_static::lazy_static;
 use mctk_core::context::Context;
 use mctk_macros::Model;
+use mechanix_system_dbus_client::security;
 use mechanix_system_dbus_client::wireless::{
     self, KnownNetworkListResponse, KnownNetworkResponse, NotificationStream, WirelessInfoResponse,
     WirelessScanListResponse, WirelessService,
@@ -259,10 +260,19 @@ impl WirelessModel {
                         .await
                         .unwrap();
                     let settings = connection_proxy.get_settings().await.unwrap();
+                    if !settings.contains_key("802-11-wireless") {
+                        continue;
+                    }
                     let access_point = (*settings["connection"]["id"])
                         .downcast_ref::<Str>()
                         .unwrap()
                         .to_string();
+                    println!("Access point: {} {:?}", access_point, settings.keys());
+                    let security_flags = if !settings.contains_key("802-11-wireless-security") {
+                        "Open".to_string()
+                    } else {
+                        "WPA-PSK".to_string()
+                    };
                     let mut flag = false;
                     for network in known_networks.iter() {
                         if network.ssid == access_point {
@@ -276,7 +286,7 @@ impl WirelessModel {
                     known_networks.push(KnownNetworkResponse {
                         ssid: access_point,
                         network_id: "".to_string(),
-                        flags: "[WPA-PSK]".to_string(),
+                        flags: security_flags,
                     })
                 }
                 Self::get().known_networks.set(KnownNetworkListResponse {
@@ -311,6 +321,12 @@ impl WirelessModel {
                     let signal = access_point_proxy.strength().await.unwrap();
                     let frequency = access_point_proxy.frequency().await.unwrap();
                     let mac = access_point_proxy.hw_address().await.unwrap();
+
+                    let flags = if access_point_proxy.rsn_flags().await.unwrap() == 0 {
+                        "Open"
+                    } else {
+                        "WPA-PSK"
+                    };
                     let mut flag = false;
                     for network in scan_result.iter() {
                         if network.name == access_point {
@@ -326,7 +342,7 @@ impl WirelessModel {
                         frequency: frequency.to_string(),
                         mac: mac.clone(),
                         signal: signal.to_string(),
-                        flags: "[WPA-PSK]".to_string(),
+                        flags: flags.to_string(),
                     });
                 }
                 WirelessModel::get()
@@ -365,12 +381,17 @@ impl WirelessModel {
                     let signal = access_point_proxy.strength().await.unwrap();
                     let frequency = access_point_proxy.frequency().await.unwrap();
                     let mac = access_point_proxy.hw_address().await.unwrap();
+                    let flags = if access_point_proxy.rsn_flags().await.unwrap() == 0 {
+                        "Open"
+                    } else {
+                        "WPA-PSK"
+                    };
                     connected_network = Some(WirelessInfoResponse {
                         name: access_point.to_string(),
                         frequency: frequency.to_string(),
                         mac: mac.to_string(),
                         signal: signal.to_string(),
-                        flags: "[WPA-PSK]".to_string(),
+                        flags: flags.to_string(),
                     })
                 }
                 WirelessModel::get()

@@ -130,9 +130,10 @@ impl Component for NetworkSettings {
         let mut scrollable_section = node!(
             Scrollable::new(),
             lay![
-                size: [440, 320],
+                size: [440, 400],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                axis_alignment: Alignment::Stretch,
             ]
         )
         .push(node!(
@@ -144,11 +145,13 @@ impl Component for NetworkSettings {
             ]
         ));
 
-        for network in WirelessModel::get()
+        for (i, network) in WirelessModel::get()
             .known_networks
             .get()
             .known_network
             .clone()
+            .into_iter()
+            .enumerate()
         {
             let row = node!(
                 Div::new(),
@@ -171,13 +174,6 @@ impl Component for NetworkSettings {
                         })
                     }))
                 })
-                .push(node!(
-                    widgets::Image::new("wifi_icon"),
-                    lay![
-                        size: [24, 24],
-                        margin:[0., 0., 0., 20.],
-                    ]
-                ))
                 .push(
                     node!(
                         Div::new(),
@@ -199,21 +195,20 @@ impl Component for NetworkSettings {
                             axis_alignment: Alignment::Start,
                             cross_alignment: Alignment::Center,
                         ]
-                    ))
-                    .push(node!(
-                        // mini status
-                        Text::new(txt!("Saved"))
-                            .style("color", Color::WHITE)
-                            .style("size", 14.0)
-                            .style("line_height", 18.)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
-                        lay![
-                            direction: Direction::Row,
-                            axis_alignment: Alignment::Start,
-                            cross_alignment: Alignment::Center,
-                        ]
-                    )),
+                    )), // .push(node!(
+                        //     // mini status
+                        //     Text::new(txt!("Saved"))
+                        //         .style("color", Color::WHITE)
+                        //         .style("size", 14.0)
+                        //         .style("line_height", 18.)
+                        //         .style("font", "Space Grotesk")
+                        //         .style("font_weight", FontWeight::Normal),
+                        //     lay![
+                        //         direction: Direction::Row,
+                        //         axis_alignment: Alignment::Start,
+                        //         cross_alignment: Alignment::Center,
+                        //     ]
+                        // )),
                 ),
             )
             .push(
@@ -225,38 +220,52 @@ impl Component for NetworkSettings {
                         cross_alignment:Alignment::Center,
                         padding: [0. , 0., 0., 10.]
                     ]
-                )
-                .push(node!(
-                    IconButton::new("info_icon")
-                        // .on_click(Box::new(move || msg!(Message::ChangeRoute {
-                        //     route: Routes::Network {
-                        //         // screen: NetworkScreenRoutes::UnknownNetworkDetails {
-                        //         //     mac: network.
-                        //         // }
-                        //     }
-                        // })))
-                        .icon_type(IconType::Png)
-                        .style(
-                            "size",
-                            Size {
-                                width: Dimension::Px(34.0),
-                                height: Dimension::Px(34.0),
-                            }
-                        )
-                        .style("background_color", Color::TRANSPARENT)
-                        .style("border_color", Color::TRANSPARENT)
-                        .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                        .style("radius", 10.),
-                    lay![
-                        size: [52, 52],
-                        axis_alignment: Alignment::End,
-                        cross_alignment: Alignment::Center,
-                    ]
-                )),
-            );
+                ), // .push(node!(
+                   //     IconButton::new("")
+                   //         // .on_click(Box::new(move || msg!(Message::ChangeRoute {
+                   //         //     route: Routes::Network {
+                   //         //         screen: NetworkScreenRoutes::SavedNetworkDetail {
+                   //         //             mac: network.mac.clone()
+                   //         //         }
+                   //         //     }
+                   //         // })))
+                   //         .icon_type(IconType::Png)
+                   //         .style(
+                   //             "size",
+                   //             Size {
+                   //                 width: Dimension::Px(34.0),
+                   //                 height: Dimension::Px(34.0),
+                   //             }
+                   //         )
+                   //         .style("background_color", Color::TRANSPARENT)
+                   //         .style("border_color", Color::TRANSPARENT)
+                   //         .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                   //         .style("radius", 10.),
+                   //     lay![
+                   //         size: [52, 52],
+                   //         axis_alignment: Alignment::End,
+                   //         cross_alignment: Alignment::Center,
+                   //     ]
+                   // )),
+            )
+            .key(i as u64);
+
+            let row = node!(
+                Div::new(),
+                lay![
+                    size: [440, 50],
+                    direction: Direction::Column,
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Stretch,
+                    // padding: [5., 0., 12., 0.],
+                ],
+            )
+            .push(row)
+            .push(node!(HDivider { size: 1.0 }))
+            .key(2 * i as u64);
+
             scrollable_section = scrollable_section.push(row);
         }
-
         base = base.push(header_node);
         base = base.push(scrollable_section);
 

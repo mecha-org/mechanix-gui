@@ -39,6 +39,7 @@ lazy_static = "1.5.0"
 sysinfo = "0.32.1"
 upower = { path = "../../commons/upower" }
 uuid = "1.11.0"
+pulsectl-rs = "0.3.2"
 
 [package.metadata.deb]
 name = "mechanix-settings"

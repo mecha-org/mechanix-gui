@@ -499,8 +499,20 @@ impl Component for NetworkingScreen {
             ]
         );
 
-        let saved_network_row_component = |name: String, mac: String, id: String| {
-            let ssid = name.clone();
+        let saved_network_row_component = |network: WirelessInfoResponse| {
+            let ssid = network.name.clone();
+            let mut icon = if network.flags.contains("WPA") {
+                "secured_wireless_strong".to_string()
+            } else {
+                "wireless_strong".to_string()
+            };
+            if let Ok(signal) = network.signal.parse::<u32>() {
+                if signal < 70 {
+                    icon = icon.replace("strong", "weak");
+                } else if signal < 30 {
+                    icon = icon.replace("strong", "low");
+                }
+            }
             node!(
                 Div::new(),
                 lay![
@@ -515,7 +527,6 @@ impl Component for NetworkingScreen {
                 node!(ClicableIconComponent {
                     on_click: Some(Box::new(move || {
                         WirelessModel::connect_to_saved_network(ssid.clone());
-                        println!("{}", id.clone());
                         msg!(Message::ChangeRoute {
                             route: Routes::Network {
                                 screen: NetworkScreenRoutes::Networking
@@ -524,7 +535,7 @@ impl Component for NetworkingScreen {
                     }))
                 })
                 .push(node!(
-                    widgets::Image::new("wireless_good"),
+                    widgets::Image::new(icon),
                     lay![
                         size: [24, 24],
                         margin:[0., 0., 0., 20.],
@@ -540,7 +551,7 @@ impl Component for NetworkingScreen {
                         ]
                     )
                     .push(node!(
-                        Text::new(txt!(name))
+                        Text::new(txt!(network.name.clone()))
                             .style("color", Color::WHITE)
                             .style("size", 18.0)
                             .style("line_height", 20.0)
@@ -583,7 +594,7 @@ impl Component for NetworkingScreen {
                         .on_click(Box::new(move || msg!(Message::ChangeRoute {
                             route: Routes::Network {
                                 screen: NetworkScreenRoutes::SavedNetworkDetails {
-                                    mac: mac.clone()
+                                    mac: network.mac.clone()
                                 }
                             }
                         })))
@@ -608,8 +619,13 @@ impl Component for NetworkingScreen {
             )
         };
 
-        let unsaved_available_network_row_component = |name: String, mac: String| {
-            let ssid = name.clone();
+        let unsaved_available_network_row_component = |network: WirelessInfoResponse| {
+            let ssid = network.name.clone();
+            let icon = if network.flags.contains("WPA") {
+                "secured_wireless_strong".to_string()
+            } else {
+                "wireless_strong".to_string()
+            };
             node!(
                 Div::new(),
                 lay![
@@ -629,7 +645,7 @@ impl Component for NetworkingScreen {
                     })))
                 },)
                 .push(node!(
-                    widgets::Image::new("wireless_good"),
+                    widgets::Image::new(icon),
                     lay![
                         size: [24, 24],
                         margin:[0., 0., 0., 20.],
@@ -645,7 +661,7 @@ impl Component for NetworkingScreen {
                         ]
                     )
                     .push(node!(
-                        Text::new(txt!(name))
+                        Text::new(txt!(network.name.clone()))
                             .style("color", Color::WHITE)
                             .style("size", 18.0)
                             .style("line_height", 20.0)
@@ -673,7 +689,7 @@ impl Component for NetworkingScreen {
                         .on_click(Box::new(move || msg!(Message::ChangeRoute {
                             route: Routes::Network {
                                 screen: NetworkScreenRoutes::UnknownNetworkDetails {
-                                    mac: mac.clone()
+                                    mac: network.mac.clone()
                                 }
                             }
                         })))
@@ -923,14 +939,8 @@ impl Component for NetworkingScreen {
             )),
         );
         for (network, network_id) in saved_available_networks.iter() {
-            scrollable_section = scrollable_section.push(
-                saved_network_row_component(
-                    network.name.to_string(),
-                    network.mac.to_string(),
-                    network_id.to_string(),
-                )
-                .key(key),
-            );
+            scrollable_section =
+                scrollable_section.push(saved_network_row_component(network.clone()).key(key));
             key += 1;
             scrollable_section = scrollable_section
                 .push(
@@ -954,13 +964,8 @@ impl Component for NetworkingScreen {
         }
         for network in unsaved_available_networks.iter() {
             key += 1;
-            scrollable_section = scrollable_section.push(
-                unsaved_available_network_row_component(
-                    network.name.to_string(),
-                    network.mac.to_string(),
-                )
-                .key(key),
-            );
+            scrollable_section = scrollable_section
+                .push(unsaved_available_network_row_component(network.clone()).key(key));
             scrollable_section = scrollable_section
                 .push(
                     node!(
