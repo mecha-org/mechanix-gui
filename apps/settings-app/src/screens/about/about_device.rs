@@ -25,43 +25,24 @@ use mechanix_status_bar_components::types::WirelessStatus;
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 use zbus::message;
 
+use super::device_model::DeviceModel;
+
 #[derive(Debug, Clone)]
 pub struct AboutDeviceState {}
 
 #[derive(Debug)]
-// #[component(State = "AboutDeviceState")]
 pub struct AboutDevice {}
 
-// impl AboutDevice {
-//     pub fn new() -> Self {
-//         AboutDevice {
-//             // dirty: false,
-//             // state: Some(AboutDeviceState {
-//             //     is_model_open: false,
-//             // }),
-//         }
-//     }
-
-//     fn get_ip_address(&self) -> Option<String> {
-//         let networks = sysinfo::Networks::new_with_refreshed_list();
-//         for (interface, info) in &networks {
-//             if interface.starts_with("wl") {
-//                 for network in info.ip_networks().iter() {
-//                     if network.addr.is_ipv4() {
-//                         return Some(network.addr.to_string());
-//                     }
-//                 }
-//             }
-//         }
-//         None
-//     }
-// }
-
-// #[state_component_impl(AboutDeviceState)]
 impl Component for AboutDevice {
+    fn init(&mut self) {
+        DeviceModel::update();
+    }
+
     fn view(&self) -> Option<Node> {
         // TODO: dynamic
-        let device_icon = "device_icon".to_string();
+
+        let provisioned_status = *DeviceModel::get().is_provisioned.get();
+        let device_icon = "device_icon".to_string(); // image
         let wifi_mac_address: String = "28:cd:c4:c2:e8:33".to_string();
         let ethernet_mac_address: String = "c0:3e:ba:3e:94:47".to_string();
 
@@ -148,6 +129,8 @@ impl Component for AboutDevice {
                 cross_alignment: Alignment::Stretch,
             ]
         );
+
+        // TODO: if provisioned_status true then show provision_device_details
 
         let provision_device_details = node!(
             Div::new().bg(Color::TRANSPARENT),
