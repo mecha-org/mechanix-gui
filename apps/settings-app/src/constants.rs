@@ -21,7 +21,6 @@ pub const LOCK_ICON: &str = concatcp!(ASSET_PATH, "lock_icon.png");
 pub const DATE_TIME_ICON: &str = concatcp!(ASSET_PATH, "date_time_icon.png");
 pub const LANGUAGE_ICON: &str = concatcp!(ASSET_PATH, "language_icon.png");
 pub const UPDATE_ICON: &str = concatcp!(ASSET_PATH, "update_icon.png");
-pub const ABOUT_ICON: &str = concatcp!(ASSET_PATH, "about_icon.png");
 pub const RIGHT_ARROW_ICON: &str = concatcp!(ASSET_PATH, "right_arrow.png");
 pub const INFO_ICON: &str = concatcp!(ASSET_PATH, "info_icon.png");
 pub const CONNECTED_ICON: &str = concatcp!(ASSET_PATH, "connected_icon.png");
@@ -29,6 +28,10 @@ pub const BACK_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
 pub const ADD_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
 pub const DELETE_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
 pub const TICK_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
+
+// about
+pub const ABOUT_ICON: &str = concatcp!(ASSET_PATH, "about_icon.png");
+pub const DEVICE_ICON: &str = concatcp!(ASSET_PATH, "device_icon.png");
 
 // wireless
 pub const WIRELESS_OFF: &str = concatcp!(ASSET_PATH, "wireless/wireless_off_icon.png");

@@ -223,7 +223,11 @@ async fn main() -> anyhow::Result<()> {
     );
     assets.insert(
         "about_icon".to_string(),
-        AssetParams::new(modules.about.icon),
+        AssetParams::new(modules.about.icon.default),
+    );
+    assets.insert(
+        "device_icon".to_string(),
+        AssetParams::new(modules.about.icon.device),
     );
     assets.insert(
         "right_arrow_icon".to_string(),
