@@ -153,6 +153,11 @@ impl Component for NetworkSettings {
             .into_iter()
             .enumerate()
         {
+            let mut icon = if network.flags.contains("WPA") {
+                "secured_wireless_strong".to_string()
+            } else {
+                "wireless_strong".to_string()
+            };
             let row = node!(
                 Div::new(),
                 lay![
@@ -174,6 +179,13 @@ impl Component for NetworkSettings {
                         })
                     }))
                 })
+                .push(node!(
+                    widgets::Image::new(icon),
+                    lay![
+                        size: [24, 24],
+                        margin:[0., 0., 0., 20.],
+                    ]
+                ))
                 .push(
                     node!(
                         Div::new(),
@@ -220,33 +232,31 @@ impl Component for NetworkSettings {
                         cross_alignment:Alignment::Center,
                         padding: [0. , 0., 0., 10.]
                     ]
-                ), // .push(node!(
-                   //     IconButton::new("")
-                   //         // .on_click(Box::new(move || msg!(Message::ChangeRoute {
-                   //         //     route: Routes::Network {
-                   //         //         screen: NetworkScreenRoutes::SavedNetworkDetail {
-                   //         //             mac: network.mac.clone()
-                   //         //         }
-                   //         //     }
-                   //         // })))
-                   //         .icon_type(IconType::Png)
-                   //         .style(
-                   //             "size",
-                   //             Size {
-                   //                 width: Dimension::Px(34.0),
-                   //                 height: Dimension::Px(34.0),
-                   //             }
-                   //         )
-                   //         .style("background_color", Color::TRANSPARENT)
-                   //         .style("border_color", Color::TRANSPARENT)
-                   //         .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                   //         .style("radius", 10.),
-                   //     lay![
-                   //         size: [52, 52],
-                   //         axis_alignment: Alignment::End,
-                   //         cross_alignment: Alignment::Center,
-                   //     ]
-                   // )),
+                )
+                .push(node!(
+                    IconButton::new("delete_icon")
+                        .on_click(Box::new(move || {
+                            WirelessModel::forget_saved_network(network.ssid.clone());
+                            msg!(())
+                        }))
+                        .icon_type(IconType::Png)
+                        .style(
+                            "size",
+                            Size {
+                                width: Dimension::Px(34.0),
+                                height: Dimension::Px(34.0),
+                            }
+                        )
+                        .style("background_color", Color::TRANSPARENT)
+                        .style("border_color", Color::TRANSPARENT)
+                        .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                        .style("radius", 10.),
+                    lay![
+                        size: [52, 52],
+                        axis_alignment: Alignment::End,
+                        cross_alignment: Alignment::Center,
+                    ]
+                )),
             )
             .key(i as u64);
 
