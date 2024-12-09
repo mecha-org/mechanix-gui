@@ -13,8 +13,6 @@ use tokio::{runtime::Runtime, sync::oneshot::error};
 use tonic::Response;
 use uname::uname;
 
-use crate::screens::network::wireless_model::network_manager;
-
 lazy_static! {
     static ref RUNTIME: Runtime = Runtime::new().unwrap();
     static ref DEVICE_MODEL: DeviceModel = DeviceModel {
