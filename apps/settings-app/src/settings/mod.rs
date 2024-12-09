@@ -1,7 +1,7 @@
 use crate::constants::{
     ABOUT_ICON, ADD_ICON, APPEARANCE_ICON, BACKGROUND_IMAGE, BACK_ICON, BASE_SETTINGS_PATH,
-    BATTERY_ICON, BLUETOOTH_ICON, CONNECTED_ICON, DATE_TIME_ICON, DELETE_ICON, DISPLAY_ICON,
-    HOME_DIR_CONFIG_PATH, INFO_ICON, LANGUAGE_ICON, LOCK_ICON, RIGHT_ARROW_ICON,
+    BATTERY_ICON, BLUETOOTH_ICON, CONNECTED_ICON, DATE_TIME_ICON, DELETE_ICON, DEVICE_ICON,
+    DISPLAY_ICON, HOME_DIR_CONFIG_PATH, INFO_ICON, LANGUAGE_ICON, LOCK_ICON, RIGHT_ARROW_ICON,
     SECURED_WIRELESS_ERROR, SECURED_WIRELESS_LOW, SECURED_WIRELESS_OFF, SECURED_WIRELESS_ON,
     SECURED_WIRELESS_STRONG, SECURED_WIRELESS_WEAK, SOUND_ICON, TICK_ICON, UPDATE_ICON,
     USR_SHARE_PATH, WIRELESS_ERROR, WIRELESS_GOOD, WIRELESS_LOW, WIRELESS_NOT_FOUND, WIRELESS_OFF,
@@ -406,12 +406,27 @@ impl Default for Update {
 #[derive(Debug, Deserialize, Clone, Serialize)]
 #[serde(default)]
 pub struct About {
-    pub icon: String,
+    pub icon: AboutIcons,
 }
 impl Default for About {
     fn default() -> Self {
         About {
-            icon: ABOUT_ICON.to_owned(),
+            icon: AboutIcons::default(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone, Serialize)]
+#[serde(default)]
+pub struct AboutIcons {
+    pub default: String,
+    pub device: String,
+}
+impl Default for AboutIcons {
+    fn default() -> Self {
+        AboutIcons {
+            default: ABOUT_ICON.to_owned(),
+            device: DEVICE_ICON.to_owned(),
         }
     }
 }

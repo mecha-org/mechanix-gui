@@ -67,7 +67,9 @@ modules:
   update:
     icon: /usr/share/mechanix/apps/settings/assets/icons/update_icon.png
   about:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/about_icon.png
+    icon: 
+      default: /usr/share/mechanix/apps/settings/assets/icons/about_icon.png
+      device: /usr/share/mechanix/apps/settings/assets/icons/device_icon.png
   see_options:
     right_arrow_icon: /usr/share/mechanix/apps/settings/assets/icons/right_arrow_icon.png
     info_icon: /usr/share/mechanix/apps/settings/assets/icons/info_icon.png
