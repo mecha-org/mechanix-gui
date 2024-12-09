@@ -1,11 +1,11 @@
 use mctk_core::layout::{Alignment, Direction};
 use mctk_core::style::{FontWeight, Styled};
-use mctk_core::widgets::{Div, Text};
+use mctk_core::widgets::{Div, SlideBar, Text, SlideBarType};
 use mctk_core::{component, lay, msg, rect, size, size_pct, txt, Color};
 use mctk_core::{component::Component, node, Node};
 use std::hash::Hash;
 
-use crate::shared::slider::{Slider, SliderType};
+
 use crate::gui;
 
 #[derive(Debug)]
@@ -27,9 +27,9 @@ impl Component for Sound {
                 .with_class("text-white font-space-mono font-normal")
                 .style("size", 15.0)))
             .push(node!(
-                Slider::new()
+                SlideBar::new()
                 .value(self.value)
-                .slider_type(SliderType::Line)
+                .slider_type(SlideBarType::Line)
                 .active_color(Color::rgb(226., 102., 0.))
                 .on_slide(Box::new(|value| msg!(gui::Message::SliderChanged(gui::SliderSettingsNames::Sound { value }))))
                 .col_spacing(8.)

@@ -1,3 +1,4 @@
+use desktop_entries::DesktopEntry;
 use mctk_core::{
     component::{Component, Message},
     event::{Click, Event},
@@ -8,8 +9,7 @@ use mctk_core::{
 };
 
 pub struct PinnedApp {
-    app_id: String,
-    icon: String,
+    app: DesktopEntry,
     on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
     disabled: bool,
 }
@@ -17,16 +17,15 @@ pub struct PinnedApp {
 impl std::fmt::Debug for PinnedApp {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("PinnedApp")
-            .field("app_id", &self.app_id)
+            .field("app_id", &self.app.app_id)
             .finish()
     }
 }
 
 impl PinnedApp {
-    pub fn new<S: Into<String>>(app_id: S, icon: S) -> Self {
+    pub fn new(app: DesktopEntry) -> Self {
         Self {
-            app_id: app_id.into(),
-            icon: icon.into(),
+            app,
             on_click: None,
             disabled: false,
         }
@@ -55,30 +54,44 @@ impl Component for PinnedApp {
     }
 
     fn view(&self) -> Option<Node> {
-        let app_icon = node!(
-            IconButton::new(self.app_id.clone())
-                .icon_type(if self.icon.clone().ends_with(".svg") {
-                    IconType::Svg
-                } else {
-                    IconType::Png
-                })
-                .with_class("btn-xxl border-0 p-4 rounded-xl")
-                .disabled(self.disabled)
-                .style("active_color", Color::rgba(42., 42., 44., 0.80)),
+        let mut start = node!(
+            Div::new(),
             lay![
-                size: [Auto],
-            ],
+                 size: [88, 88],
+                 margin: [0., 0., 0., 24]
+            ]
         );
 
-        Some(
-            node!(
-                Div::new(),
-                lay![
-                     size: [88, 88],
-                     margin: [0., 0., 0., 24]
-                ]
-            )
-            .push(app_icon),
-        )
+        if let Some(path) = self.app.icon_path.clone() {
+            match path.extension().and_then(|ext| ext.to_str()) {
+                Some("png") => {
+                    start = start.push(node!(
+                        IconButton::new(self.app.name.clone())
+                            .icon_type(IconType::Png)
+                            .with_class("btn-xxl border-0 p-4 rounded-xl")
+                            .disabled(self.disabled)
+                            .style("active_color", Color::rgba(42., 42., 44., 0.80)),
+                        lay![
+                            size: [Auto],
+                        ]
+                    ));
+                }
+                Some("svg") => {
+                    start = start.push(node!(
+                        IconButton::new(self.app.name.clone())
+                            .icon_type(IconType::Svg)
+                            .with_class("btn-xxl border-0 p-4 rounded-xl")
+                            .disabled(self.disabled)
+                            .style("active_color", Color::rgba(42., 42., 44., 0.80)),
+                        lay![
+                            size: [Auto],
+                        ]
+                    ));
+                }
+                _ => (),
+            };
+        }
+
+        Some(start)
     }
 }

@@ -75,7 +75,8 @@ impl Component for AppList {
             );
         }
 
-        let scrollable = node!(Scrollable::new(), lay![ size: [440] ]).push(apps_list_node);
+        let scrollable =
+            node!(Scrollable::new(size!(440., 440.)), lay![ size: [440] ]).push(apps_list_node);
 
         Some(scrollable)
     }

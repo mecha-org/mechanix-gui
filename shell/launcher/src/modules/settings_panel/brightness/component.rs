@@ -1,11 +1,10 @@
 use mctk_core::layout::{Alignment, Direction};
 use mctk_core::style::{FontWeight, Styled};
-use mctk_core::widgets::{Div, Text};
+use mctk_core::widgets::{Div, Text, SlideBar, SlideBarType};
 use mctk_core::{component, lay, msg, rect, size, size_pct, txt, Color};
 use mctk_core::{component::Component, node, Node};
 use std::hash::Hash;
 
-use crate::shared::slider::{Slider, SliderType};
 use crate::gui;
 
 #[derive(Debug)]
@@ -28,9 +27,9 @@ impl Component for Brightness {
                 .style("size", 15.0)
                 ))
             .push(node!(
-                Slider::new()
+                SlideBar::new()
                 .value(self.value)
-                .slider_type(SliderType::Box)
+                .slider_type(SlideBarType::Box)
                 .active_color(Color::rgb(15.,168.,255.))
                 .on_slide(Box::new(|value| msg!(gui::Message::SliderChanged(gui::SliderSettingsNames::Brightness { value }))))
                 .col_spacing(7.75)

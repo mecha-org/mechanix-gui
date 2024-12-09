@@ -36,6 +36,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
         settings,
         theme,
         installed_apps,
+        pinned_apps,
     } = ui_params;
 
     let window_opts = WindowOptions {
@@ -82,6 +83,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
         AppParams {
             app_channel: Some(app_channel_tx.clone()),
             installed_apps: Some(installed_apps.clone()),
+            pinned_apps: Some(pinned_apps.clone()),
         },
     );
 
@@ -93,7 +95,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
     let (sound_msg_tx, sound_msg_rx) = mpsc::channel(128);
     let (app_manager_msg_tx, app_manager_msg_rx) = mpsc::channel(128);
-
+    let app_channel_tx_2 = app_channel_tx.clone();
     let _ = handle.insert_source(app_channel_rx, move |event: Event<AppMessage>, _, app| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
@@ -118,11 +120,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         message: msg!(Message::IpAddress { address }),
                     });
                 }
-                AppMessage::PowerOptions { show } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::PowerOptions { show }),
-                    });
-                }
                 AppMessage::Net { online } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::Net { online }),
@@ -144,14 +141,10 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                             message: msg!(Message::RunningAppsToggle { show: value }),
                         });
 
-                        if value == true {
-                            layer_shell_opts.layer = Layer::Top;
-                            let _ =
-                                layer_tx
-                                    .clone()
-                                    .send(LayerWindowMessage::ReconfigureLayerOpts {
-                                        opts: layer_shell_opts.clone(),
-                                    });
+                        if value {
+                            let _ = app_channel_tx_2
+                                .clone()
+                                .send(AppMessage::ChangeLayer(Layer::Top));
                         }
                     }
                 },
@@ -235,84 +228,20 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         });
                     }
                 },
-                AppMessage::AppsUpdated { apps } => {
+                AppMessage::AppsUpdated {
+                    apps,
+                    app_id,
+                    active_apps_count,
+                } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::AppsUpdated { apps }),
-                    });
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::AppOpening { value: false }),
-                    });
-                }
-                AppMessage::AppInstanceClicked(instance) => {
-                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let (tx, rx) = oneshot::channel();
-                        println!("sending message to wayland to activate app instance");
-                        let _ = app_manager_msg_tx2
-                            .clone()
-                            .send(AppManagerMessage::ActivateAppInstance {
-                                instance,
-                                reply_to: tx,
-                            })
-                            .await;
-                        println!("message sent to wayland to activate app instance");
-                        let res = rx.await.expect("no reply from service");
-
-                        match res {
-                            Ok(r) => {
-                                println!("activate app instance res from wayland {:?}", r);
-                            }
-                            Err(e) => {
-                                error!("activate app instance error from wayland {}", e);
-                            }
-                        }
+                        message: msg!(Message::AppsUpdated {
+                            apps,
+                            app_id,
+                            active_apps_count
+                        }),
                     });
                 }
-                AppMessage::AppInstanceCloseClicked(instance) => {
-                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let (tx, rx) = oneshot::channel();
-                        println!("sending message to wayland to close app instance");
-                        let _ = app_manager_msg_tx2
-                            .send(AppManagerMessage::CloseAppInstance {
-                                instance,
-                                reply_to: tx,
-                            })
-                            .await;
-                        println!("message sent to wayland to close app instance");
-                        let res = rx.await.expect("no reply from service");
 
-                        match res {
-                            Ok(r) => {
-                                println!("close app instance res from wayland {:?}", r);
-                            }
-                            Err(e) => {
-                                error!("close app instance error from wayland {}", e);
-                            }
-                        }
-                    })
-                }
-                AppMessage::CloseAllApps => {
-                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let (tx, rx) = oneshot::channel();
-                        println!("sending message to wayland to close all apps instance");
-                        let _ = app_manager_msg_tx2
-                            .send(AppManagerMessage::CloseAllApps { reply_to: tx })
-                            .await;
-                        println!("message sent to wayland to close all apps instance");
-                        let res = rx.await.expect("no reply from service");
-
-                        match res {
-                            Ok(r) => {
-                                println!("close all apps instance res from wayland {:?}", r);
-                            }
-                            Err(e) => {
-                                println!("close all apps instance error from wayland {}", e);
-                            }
-                        }
-                    })
-                }
                 AppMessage::ShutDown => {
                     println!("AppMessage::ShutDown");
                     let _ = PowerOptionsService::shutdown();
@@ -322,6 +251,50 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                     let _ = PowerOptionsService::restart();
                 }
                 AppMessage::Unlock => {}
+                AppMessage::AppOpen { app_id } => {
+                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
+                    futures::executor::block_on(async move {
+                        let (tx, rx) = oneshot::channel();
+                        let _ = app_manager_msg_tx2
+                            .send(AppManagerMessage::LaunchApp {
+                                app_id,
+                                reply_to: tx,
+                            })
+                            .await;
+                        let res = rx.await.expect("no reply from service");
+
+                        match res {
+                            Ok(r) => {
+                                println!("AppMessage::AppOpen response {:?}", r);
+                            }
+                            Err(e) => {
+                                println!("AppMessage::AppOpen error {}", e);
+                            }
+                        }
+                    })
+                }
+                AppMessage::AppClose { app_id } => {
+                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
+                    futures::executor::block_on(async move {
+                        let (tx, rx) = oneshot::channel();
+                        let _ = app_manager_msg_tx2
+                            .send(AppManagerMessage::CloseApp {
+                                app_id,
+                                reply_to: tx,
+                            })
+                            .await;
+                        let res = rx.await.expect("no reply from service");
+
+                        match res {
+                            Ok(r) => {
+                                println!("AppMessage::AppClose response {:?}", r);
+                            }
+                            Err(e) => {
+                                println!("AppMessage::AppClose error {}", e);
+                            }
+                        }
+                    })
+                }
             },
             calloop::channel::Event::Closed => {}
         };

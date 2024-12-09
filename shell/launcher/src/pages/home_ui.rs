@@ -12,11 +12,16 @@ use crate::modules::pinned_app::PinnedApp;
 use crate::modules::uptime::component::Uptime;
 use crate::settings::LauncherSettings;
 use crate::shared::h_divider::HDivider;
-use crate::shared::slider::{Slider, SliderType};
 use crate::shared::v_divider::VDivider;
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
+use desktop_entries::DesktopEntry;
 use mctk_core::layout::{Alignment, Direction};
-use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
+use mctk_core::{
+    component::Component,
+    lay, node, rect, size, size_pct,
+    widgets::{Div, SlideBar, SlideBarType},
+    Node,
+};
 use mctk_core::{msg, Color};
 
 #[derive(Debug, Default)]
@@ -35,6 +40,7 @@ pub struct HomeUi {
     pub used_memory: u64,
     pub is_lock_screen: bool,
     pub disable_activity: bool,
+    pub pinned_apps: Vec<DesktopEntry>,
 }
 
 impl Component for HomeUi {
@@ -193,11 +199,12 @@ impl Component for HomeUi {
             ]
         );
 
-        for (i, app) in self.settings.modules.apps.clone().into_iter().enumerate() {
+        for (i, app) in self.pinned_apps.clone().into_iter().enumerate() {
             row_4 = row_4.push(
-                node!(PinnedApp::new(app.app_id.clone(), app.icon.unwrap())
-                    .on_click(Box::new(move || msg!(Message::AppClicked {
-                        app_id: app.app_id.clone()
+                node!(PinnedApp::new(app.clone())
+                    .on_click(Box::new(move || msg!(Message::AppOpen {
+                        app_id: app.app_id.clone(),
+                        layer: None
                     })))
                     .disabled(disable_activity))
                 .key(i as u64),
@@ -265,8 +272,8 @@ impl Component for HomeUi {
             start_node = start_node.push(row_4);
         } else {
             start_node = start_node.push(node!(
-                Slider::new()
-                    .slider_type(SliderType::Box)
+                SlideBar::new()
+                    .slider_type(SlideBarType::Box)
                     .on_slide_end(Box::new(|value| {
                         if value > 90 {
                             msg!(gui::Message::Unlock)
@@ -274,6 +281,7 @@ impl Component for HomeUi {
                             msg!("none")
                         }
                     }))
+                    .has_idle_animation(true)
                     .fill_random_on_start(true)
                     .fill_random_on_slide(true)
                     .reset_on_slide_end(true)

@@ -87,7 +87,7 @@ impl Component for SettingsPanel {
         .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
             gui::SettingNames::Wireless
         ))))
-        .with_class("btn-xxl border-0 p-7")
+        .with_class("btn-xxl border-0 p-8")
         .style("active_color", Color::rgb(43., 43., 43.))));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new(format!(
@@ -98,7 +98,7 @@ impl Component for SettingsPanel {
         .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
             gui::SettingNames::Bluetooth
         ))))
-        .with_class("btn-xxl border-0 p-7")
+        .with_class("btn-xxl border-0 p-8")
         .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new(rotation_status.to_string())
@@ -106,7 +106,7 @@ impl Component for SettingsPanel {
             .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
                 gui::SettingNames::Rotation
             ))))
-            .with_class("btn-xxl border-0 p-7")
+            .with_class("btn-xxl border-0 p-8")
             .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new("terminal_icon")
@@ -114,7 +114,7 @@ impl Component for SettingsPanel {
             .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
                 gui::SettingNames::Terminal
             ))))
-            .with_class("btn-xxl border-0 p-7")
+            .with_class("btn-xxl border-0 p-8")
             .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new("power_icon")
@@ -122,7 +122,7 @@ impl Component for SettingsPanel {
             .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
                 gui::SettingNames::Power
             ))))
-            .with_class("btn-xxl border-0 p-7")
+            .with_class("btn-xxl border-0 p-8")
             .style("active_color", Color::rgb(43., 43., 43.)),));
 
         println!("swipe - height {:?}", swipe - height);

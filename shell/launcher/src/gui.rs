@@ -1,5 +1,4 @@
 use crate::modules::cpu::component::GRID_SIZE;
-use crate::modules::installed_apps;
 use crate::modules::running_apps::running_app::{AppDetails, RunningApp};
 use crate::modules::settings_panel::rotation::component::RotationStatus;
 use crate::pages::app_drawer::AppDrawer;
@@ -7,15 +6,14 @@ use crate::pages::app_switcher::AppSwitcher;
 use crate::pages::home_ui::HomeUi;
 use crate::pages::power_options::PowerOptions;
 use crate::pages::settings_panel::SettingsPanel;
+use crate::pages::splash_screen::SplashScreen;
 use crate::pages::status_bar::StatusBar;
 use crate::settings::{self, LauncherSettings};
-use crate::theme::{self, LauncherTheme};
 use crate::types::{BatteryLevel, BluetoothStatus, RestartState, ShutdownState, WirelessStatus};
 use crate::utils::{cubic_bezier, get_formatted_battery_level};
 use crate::{
     AppMessage, AppParams, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage,
 };
-use command::spawn_command;
 use desktop_entries::DesktopEntry;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Direction};
@@ -30,10 +28,9 @@ use mctk_core::{
 };
 use std::any::Any;
 use std::cmp::{max, min};
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 use std::hash::{Hash, Hasher};
 use upower::BatteryStatus;
-use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::ToplevelKey;
 
 pub const BEZIER_POINTS: [f64; 4] = [0.0, 0.0, 480.0, 480.0];
 
@@ -67,38 +64,76 @@ pub enum SliderSettingsNames {
 /// Each of them are handled in the ``impl Application()::update()``
 #[derive(Debug, Clone)]
 pub enum Message {
-    AppClicked { app_id: String },
-    Clock { date: String, time: String },
-    Wireless { status: WirelessStatus },
-    Bluetooth { status: BluetoothStatus },
-    Battery { level: u8, status: BatteryStatus },
+    AppOpen {
+        app_id: String,
+        layer: Option<Layer>,
+    },
+    AppClose {
+        app_id: String,
+    },
+    Clock {
+        date: String,
+        time: String,
+    },
+    Wireless {
+        status: WirelessStatus,
+    },
+    Bluetooth {
+        status: BluetoothStatus,
+    },
+    Battery {
+        level: u8,
+        status: BatteryStatus,
+    },
     SettingClicked(SettingNames),
     SliderChanged(SliderSettingsNames),
-    CPUUsage { usage: f32 },
-    Uptime { uptime: String },
-    MachineName { name: String },
-    IpAddress { address: String },
-    Net { online: bool },
-    Memory { total: u64, used: u64 },
-    Swipe { swipe: Swipe },
-    AppListAppClicked { app: DesktopEntry },
+    CPUUsage {
+        usage: f32,
+    },
+    Uptime {
+        uptime: String,
+    },
+    MachineName {
+        name: String,
+    },
+    IpAddress {
+        address: String,
+    },
+    Net {
+        online: bool,
+    },
+    Memory {
+        total: u64,
+        used: u64,
+    },
+    Swipe {
+        swipe: Swipe,
+    },
     SwipeEnd,
-    Sound { value: u8 },
-    Brightness { value: u8 },
-    RunningApps { count: i32 },
+    Sound {
+        value: u8,
+    },
+    Brightness {
+        value: u8,
+    },
+    RunningApps {
+        count: i32,
+    },
     Unlock,
-    AppsUpdated { apps: Vec<AppDetails> },
-    AppInstanceClicked(ToplevelKey),
-    AppInstanceCloseClicked(ToplevelKey),
-    CloseAllApps,
-    SearchTextChanged(String),
-    RunApp { name: String, exec: String },
-    PowerOptions { show: bool },
-    RunningAppsToggle { show: bool },
+    AppsUpdated {
+        apps: Vec<AppDetails>,
+        app_id: String,
+        active_apps_count: i32,
+    },
+    PowerOptions {
+        show: bool,
+    },
+    RunningAppsToggle {
+        show: bool,
+    },
     Shutdown(ShutdownState),
     Restart(RestartState),
     ChangeLayer(Layer),
-    AppOpening { value: bool },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -213,7 +248,6 @@ impl Swipe {
 #[derive(Debug)]
 pub struct LauncherState {
     settings: LauncherSettings,
-    custom_theme: LauncherTheme,
     battery_level: BatteryLevel,
     wireless_status: WirelessStatus,
     bluetooth_status: BluetoothStatus,
@@ -236,12 +270,13 @@ pub struct LauncherState {
     app_channel: Option<Sender<AppMessage>>,
     running_apps: Vec<RunningApp>,
     installed_apps: Vec<DesktopEntry>,
+    pinned_apps: Vec<DesktopEntry>,
     show_power_options: bool,
     show_running_apps: bool,
     shutdown_pressed: bool,
     restart_pressed: bool,
     current_layer: Layer,
-    app_opening: bool,
+    app_opening: Option<DesktopEntry>,
 }
 
 #[component(State = "LauncherState")]
@@ -251,7 +286,7 @@ impl Launcher {
     fn handle_on_drag(&mut self, logical_delta: Point) -> Option<mctk_core::component::Message> {
         let dx = logical_delta.x;
         let dy = logical_delta.y;
-        println!("dx {:?} dy {:?}", dx, dy);
+        // println!("dx {:?} dy {:?}", dx, dy);
         if let Some(mut swipe) = self.state_ref().swipe.clone() {
             match swipe.direction {
                 SwipeDirection::Up => {
@@ -515,7 +550,7 @@ impl Component for Launcher {
                 );
             }
             self.state_mut().swipe = Some(swipe);
-            println!("updated swipe");
+            // println!("updated swipe");
         }
     }
 
@@ -525,13 +560,8 @@ impl Component for Launcher {
             Err(_) => LauncherSettings::default(),
         };
 
-        let custom_theme = match theme::read_theme_yml() {
-            Ok(theme) => theme,
-            Err(_) => LauncherTheme::default(),
-        };
         self.state = Some(LauncherState {
             settings,
-            custom_theme,
             battery_level: BatteryLevel::default(),
             wireless_status: WirelessStatus::default(),
             bluetooth_status: BluetoothStatus::default(),
@@ -554,12 +584,13 @@ impl Component for Launcher {
             lock_slide: 0,
             running_apps: vec![],
             installed_apps: vec![],
+            pinned_apps: vec![],
             show_power_options: false,
             show_running_apps: false,
             shutdown_pressed: false,
             restart_pressed: false,
             current_layer: Layer::Bottom,
-            app_opening: false,
+            app_opening: None,
         });
     }
 
@@ -590,7 +621,8 @@ impl Component for Launcher {
         let show_running_apps = self.state_ref().show_running_apps;
         let shutdown_pressed = self.state_ref().shutdown_pressed;
         let restart_pressed = self.state_ref().restart_pressed;
-        let app_opening = self.state_ref().app_opening;
+        let app_opening = self.state_ref().app_opening.is_some();
+        let pinned_apps = self.state_ref().pinned_apps.clone();
 
         let mut start_node = node!(
             Div::new().bg(Color::rgba(0., 0., 0., 0.64)),
@@ -603,7 +635,11 @@ impl Component for Launcher {
             ]
         );
 
-        if on_top_of_other_apps || !(current_screen == Screens::Home) || show_running_apps {
+        if on_top_of_other_apps
+            || !(current_screen == Screens::Home)
+            || show_running_apps
+            || app_opening
+        {
             start_node = start_node.push(node!(
                 StatusBar {
                     battery_level,
@@ -700,7 +736,20 @@ impl Component for Launcher {
             ));
         }
 
-        if !on_top_of_other_apps && !show_running_apps {
+        if app_opening {
+            start_node = start_node.push(node!(
+                SplashScreen {
+                    app: self.state_ref().app_opening.clone()
+                },
+                lay![
+                    size_pct: [100],
+                    position_type: Absolute,
+                    position: [36., 0., 0., 0.],
+                ]
+            ));
+        }
+
+        if !on_top_of_other_apps && !show_running_apps && !app_opening {
             start_node = start_node.push(node!(
                 HomeUi {
                     settings,
@@ -716,7 +765,8 @@ impl Component for Launcher {
                     online,
                     used_memory,
                     is_lock_screen: false,
-                    disable_activity: (swipe.is_some() || active_swipe.is_some() || app_opening)
+                    disable_activity: (swipe.is_some() || active_swipe.is_some() || app_opening),
+                    pinned_apps,
                 },
                 lay![size_pct: [100, Auto],]
             ));
@@ -729,23 +779,29 @@ impl Component for Launcher {
         // println!("App was sent: {:?}", message);
         if let Some(msg) = message.downcast_ref::<Message>() {
             match msg {
-                Message::AppClicked { app_id } => {
+                Message::AppOpen { app_id, layer } => {
                     println!("app clicked {:?}", app_id);
-                    let apps = self.state_ref().settings.modules.apps.clone();
-                    let app = apps.into_iter().find(|app| app.app_id == *app_id).unwrap();
-                    let run_command = app.run_command;
-                    if !run_command.is_empty() {
-                        let command = run_command[0].clone();
-                        let args: Vec<String> = run_command.clone()[1..].to_vec();
-                        self.state_mut().app_opening = true;
-                        let _ = spawn_command(command, args);
+
+                    if let Some(app) = self
+                        .state_ref()
+                        .installed_apps
+                        .iter()
+                        .find(|&app| app.app_id == *app_id)
+                    {
+                        self.state_mut().app_opening = Some(app.clone());
+                        println!("statring splash screen {:?}", app_id);
                     }
-                }
-                Message::AppListAppClicked { app } => {
-                    let mut args: Vec<String> = vec!["-c".to_string()];
-                    args.push(app.exec.clone());
-                    self.state_mut().app_opening = true;
-                    let _ = spawn_command("sh".to_string(), args);
+
+                    self.state_mut().running_apps_count = 1;
+                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                        let _ = app_channel.send(AppMessage::AppOpen {
+                            app_id: app_id.clone(),
+                        });
+                        if self.state_ref().current_layer != Layer::Bottom {
+                            let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
+                        }
+                        self.state_mut().show_running_apps = false;
+                    }
                 }
                 Message::Clock { time, date } => {
                     self.state_mut().time = time.clone();
@@ -812,36 +868,28 @@ impl Component for Launcher {
                             }
                         }
                         SettingNames::Terminal => {
-                            let run_command = self
-                                .state_ref()
-                                .settings
-                                .modules
-                                .terminal
-                                .run_command
-                                .clone();
-                            println!("run_command {:?}", run_command);
-                            if !run_command.is_empty() {
-                                let command = run_command[0].clone();
-                                let args: Vec<String> = run_command.clone()[1..].to_vec();
-                                println!("command {:?} args {:?}", command, args);
-                                let _ = spawn_command(command, args);
+                            let terminal_app_id =
+                                self.state_ref().settings.modules.terminal.app_id.clone();
+                            self.update(msg!(Message::AppOpen {
+                                app_id: terminal_app_id,
+                                layer: None
+                            }));
 
-                                let inc = 1.0 / 12.0;
-                                let translations = get_translations(BEZIER_POINTS, 0., inc);
-                                let swipe = Swipe {
-                                    dy: 480 as i32,
-                                    min_dy: 0,
-                                    max_dy: 480,
-                                    threshold_dy: 0,
-                                    direction: SwipeDirection::Up,
-                                    state: SwipeState::CompletingSwipe,
-                                    is_closer: true,
-                                    translations,
-                                    ..Default::default()
-                                };
+                            let inc = 1.0 / 12.0;
+                            let translations = get_translations(BEZIER_POINTS, 0., inc);
+                            let swipe = Swipe {
+                                dy: 480 as i32,
+                                min_dy: 0,
+                                max_dy: 480,
+                                threshold_dy: 0,
+                                direction: SwipeDirection::Up,
+                                state: SwipeState::CompletingSwipe,
+                                is_closer: true,
+                                translations,
+                                ..Default::default()
+                            };
 
-                                self.state_mut().swipe = Some(swipe);
-                            }
+                            self.state_mut().swipe = Some(swipe);
                         }
                         SettingNames::Power => {
                             self.state_mut().show_power_options = true;
@@ -959,10 +1007,21 @@ impl Component for Launcher {
                     }
                 }
                 Message::RunningApps { count } => {
+                    println!("Message::RunningApps");
                     self.state_mut().running_apps_count = *count;
                 }
-                Message::AppsUpdated { apps } => {
+                Message::AppsUpdated {
+                    apps,
+                    app_id,
+                    active_apps_count,
+                } => {
                     println!("apps updated are {:?}", apps.len());
+                    if let Some(app) = self.state_ref().app_opening.clone() {
+                        if app.app_id.to_lowercase() == *app_id.clone().to_lowercase() {
+                            self.state_mut().app_opening = None
+                        }
+                    }
+
                     let settings = self.state_ref().settings.clone();
                     let app_id = settings.app.id.clone().unwrap_or_default();
                     self.state_mut().running_apps = apps
@@ -983,59 +1042,46 @@ impl Component for Launcher {
                         "running apps state updated {:?}",
                         self.state_ref().running_apps.len()
                     );
+                    self.state_mut().running_apps_count = *active_apps_count;
                 }
-                Message::AppInstanceClicked(instance) => {
-                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                        let _ = app_channel.send(AppMessage::AppInstanceClicked(*instance));
-                        let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
-                        self.state_mut().show_running_apps = false;
-                        // process::exit(0)
-                    };
-                }
-                Message::AppInstanceCloseClicked(instance) => {
+
+                Message::AppClose { app_id } => {
                     let running_apps = self.state_ref().running_apps.clone();
                     let filtered_running_apps: Vec<RunningApp> = running_apps
                         .clone()
                         .into_iter()
-                        .filter(|app| {
-                            app.app_details.instances.get(0).unwrap().instance_key != *instance
-                        })
+                        .filter(|app| app.app_details.app_id != app_id.clone())
                         .collect();
+                    self.state_mut().running_apps = filtered_running_apps.clone();
                     if filtered_running_apps.len() == 0 {
                         self.state_mut().show_running_apps = false;
-                        if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                            let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
-                        };
+                        if self.state_ref().current_layer != Layer::Bottom {
+                            if let Some(app_channel) = self.state_ref().app_channel.clone() {
+                                let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
+                            };
+                        }
                     }
-                    self.state_mut().running_apps = filtered_running_apps;
+
                     if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                        if let Some(app) = running_apps.into_iter().find(|app| {
-                            app.app_details.instances.get(0).unwrap().instance_key == *instance
-                        }) {
-                            for instance in app.app_details.instances {
-                                let _ = app_channel.send(AppMessage::AppInstanceCloseClicked(
-                                    instance.instance_key,
-                                ));
-                            }
-                        };
-                    };
-                }
-                Message::CloseAllApps => {
-                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                        let _ = app_channel.send(AppMessage::CloseAllApps);
+                        let _ = app_channel.send(AppMessage::AppClose {
+                            app_id: app_id.to_string(),
+                        });
                     };
                 }
                 Message::PowerOptions { show } => {
                     self.state_mut().show_power_options = *show;
-                    if !show {
+                    if !show && self.state_ref().current_layer != Layer::Bottom {
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
                         };
                     }
                 }
                 Message::RunningAppsToggle { show } => {
+                    println!("Message::RunningAppsToggle");
                     self.state_mut().show_running_apps = *show;
-                    if !show {
+                    self.state_mut().app_opening = None;
+                    self.state_mut().running_apps_count = 0;
+                    if !show && self.state_ref().current_layer != Layer::Bottom {
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
                         };
@@ -1070,9 +1116,7 @@ impl Component for Launcher {
                 Message::ChangeLayer(layer) => {
                     self.state_mut().current_layer = *layer;
                 }
-                Message::AppOpening { value } => {
-                    self.state_mut().app_opening = *value;
-                }
+
                 _ => (),
             }
         }
@@ -1127,12 +1171,13 @@ impl Component for Launcher {
         self.state_ref().running_apps_count.hash(hasher);
         self.state_ref().show_power_options.hash(hasher);
         self.state_ref().show_running_apps.hash(hasher);
+        self.state_ref().app_opening.is_some().hash(hasher);
         // println!("render hash is {:?}", hasher.finish());
     }
 
     fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening;
+        let app_opening = self.state_ref().app_opening.is_some();
 
         if app_opening {
             println!("not dragging as some app is launching");
@@ -1168,7 +1213,7 @@ impl Component for Launcher {
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
     ) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening;
+        let app_opening = self.state_ref().app_opening.is_some();
 
         if app_opening {
             println!("not dragging as some app is launching");
@@ -1200,7 +1245,7 @@ impl Component for Launcher {
 
     fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening;
+        let app_opening = self.state_ref().app_opening.is_some();
 
         if app_opening {
             println!("not dragging as some app is launching");
@@ -1212,7 +1257,7 @@ impl Component for Launcher {
             return;
         }
         let logical_delta = event.bounded_logical_delta();
-        println!("Launcher::on_drag() {:?}", logical_delta);
+        // println!("Launcher::on_drag() {:?}", logical_delta);
         if let Some(msg) = self.handle_on_drag(logical_delta) {
             self.update(msg);
         }
@@ -1220,7 +1265,7 @@ impl Component for Launcher {
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening;
+        let app_opening = self.state_ref().app_opening.is_some();
 
         if app_opening {
             println!("not dragging as some app is launching");
@@ -1241,7 +1286,7 @@ impl Component for Launcher {
 
     fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening;
+        let app_opening = self.state_ref().app_opening.is_some();
 
         if app_opening {
             println!("not dragging as some app is launching");
@@ -1260,7 +1305,7 @@ impl Component for Launcher {
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
     ) {
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening;
+        let app_opening = self.state_ref().app_opening.is_some();
 
         if app_opening {
             println!("not dragging as some app is launching");
@@ -1284,9 +1329,13 @@ impl RootComponent<AppParams> for Launcher {
         let app_params = app_params.downcast_ref::<AppParams>().unwrap();
         let app_channel = app_params.app_channel.clone();
         let installed_apps = app_params.installed_apps.clone();
+        let pinned_apps = app_params.pinned_apps.clone();
         self.state_mut().app_channel = app_channel;
         if let Some(apps) = installed_apps {
             self.state_mut().installed_apps = apps
+        }
+        if let Some(apps) = pinned_apps {
+            self.state_mut().pinned_apps = apps
         }
     }
 }

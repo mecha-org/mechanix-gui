@@ -28,7 +28,6 @@ use modules::memory::handler::MemoryHandle;
 use modules::name::handler::MachineNameHandle;
 use modules::networking::handler::NetworkingHandle;
 use modules::running_apps::app_manager::{AppManagerMessage, AppManagerService};
-use modules::running_apps::handler::RunningAppsHandle;
 use modules::running_apps::running_app::AppDetails;
 use modules::settings_panel::brightness::handler::BrightnessServiceHandle;
 use modules::settings_panel::rotation::component::get_rotation_icons_map;
@@ -37,8 +36,7 @@ use modules::uptime::handler::UptimeHandle;
 use modules::wireless::handler::WirelessServiceHandle;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::{Arc, RwLock};
+use std::path::Path;
 use std::thread::{self, JoinHandle};
 use tokio::runtime::Builder;
 use tokio::select;
@@ -49,7 +47,6 @@ use utils::{
     get_battery_icons_charging_map, get_battery_icons_map, get_bluetooth_icons_map,
     get_wireless_icons_map,
 };
-use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::handler::ToplevelKey;
 
 use mctk_core::{
     reexports::{
@@ -58,7 +55,6 @@ use mctk_core::{
     },
     types::AssetParams,
 };
-use mctk_smithay::WindowMessage;
 use settings::LauncherSettings;
 use theme::LauncherTheme;
 use tracing_subscriber::EnvFilter;
@@ -67,6 +63,7 @@ use tracing_subscriber::EnvFilter;
 pub struct AppParams {
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
     installed_apps: Option<Vec<DesktopEntry>>,
+    pinned_apps: Option<Vec<DesktopEntry>>,
 }
 
 #[derive(Debug)]
@@ -109,28 +106,62 @@ pub enum RotationMessage {}
 
 #[derive(Debug)]
 enum AppMessage {
-    CPUUsage { usage: f32 },
-    Uptime { uptime: String },
-    MachineName { name: String },
-    IpAddress { address: String },
-    Net { online: bool },
-    Memory { total: u64, used: u64 },
-    RunningApps { message: RunningAppsMessage },
+    CPUUsage {
+        usage: f32,
+    },
+    Uptime {
+        uptime: String,
+    },
+    MachineName {
+        name: String,
+    },
+    IpAddress {
+        address: String,
+    },
+    Net {
+        online: bool,
+    },
+    Memory {
+        total: u64,
+        used: u64,
+    },
+    RunningApps {
+        message: RunningAppsMessage,
+    },
     ChangeLayer(Layer),
-    Clock { time: String, date: String },
-    Wireless { message: WirelessMessage },
-    Bluetooth { message: BluetoothMessage },
-    Battery { message: BatteryMessage },
-    Sound { message: SoundMessage },
-    Brightness { message: BrightnessMessage },
-    AppsUpdated { apps: Vec<AppDetails> },
-    AppInstanceClicked(ToplevelKey),
-    AppInstanceCloseClicked(ToplevelKey),
-    CloseAllApps,
-    PowerOptions { show: bool },
+    Clock {
+        time: String,
+        date: String,
+    },
+    Wireless {
+        message: WirelessMessage,
+    },
+    Bluetooth {
+        message: BluetoothMessage,
+    },
+    Battery {
+        message: BatteryMessage,
+    },
+    Sound {
+        message: SoundMessage,
+    },
+    Brightness {
+        message: BrightnessMessage,
+    },
+    AppsUpdated {
+        apps: Vec<AppDetails>,
+        app_id: String,
+        active_apps_count: i32,
+    },
     ShutDown,
     Restart,
     Unlock,
+    AppOpen {
+        app_id: String,
+    },
+    AppClose {
+        app_id: String,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -141,6 +172,7 @@ pub struct UiParams {
     settings: LauncherSettings,
     theme: LauncherTheme,
     installed_apps: Vec<DesktopEntry>,
+    pinned_apps: Vec<DesktopEntry>,
 }
 
 #[tokio::main]
@@ -166,6 +198,7 @@ async fn main() {
     };
 
     let mut installed_apps: Vec<DesktopEntry> = vec![];
+    let mut pinned_apps: Vec<DesktopEntry> = vec![];
     // let include_only_apps = settings.app_list.include_only.clone();
     // let exclude_apps = settings.app_list.exclude.clone();
     // let include_apps = settings.app_list.include.clone();
@@ -189,6 +222,12 @@ async fn main() {
     //     }
     // };
 
+    for app_id in settings.modules.pinned_apps.clone() {
+        if let Some(app) = installed_apps.iter().find(|app| app.app_id == app_id) {
+            pinned_apps.push(app.clone());
+        }
+    }
+
     let mut fonts: cosmic_text::fontdb::Database = cosmic_text::fontdb::Database::new();
     for path in settings.fonts.paths.clone() {
         println!("font path is {:?}", path);
@@ -199,21 +238,6 @@ async fn main() {
 
     let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
-
-    let modules = settings.modules.clone();
-
-    for app in modules.apps.iter() {
-        if let Some(app_icon) = app.icon.clone() {
-            if app_icon.ends_with(".png") {
-                assets.insert(
-                    app.app_id.to_owned(),
-                    AssetParams::new(app.icon.clone().unwrap().to_owned()),
-                );
-            } else if app_icon.ends_with(".svg") {
-                svgs.insert(app.app_id.to_owned(), app.icon.clone().unwrap().to_owned());
-            }
-        }
-    }
 
     let modules = settings.modules.clone();
 
@@ -229,7 +253,7 @@ async fn main() {
     let launch_icon = modules.launch.icon.default;
     let delete_icon = modules.delete.icon.default;
     let close_icon = modules.close.icon.default;
-    let terminal_icon = modules.terminal.icon.default;
+    let terminal_icon = modules.terminal.icon;
     let shutdown_icon = modules.power_options.shutdown.icon;
     let restart_icon = modules.power_options.restart.icon;
 
@@ -278,6 +302,7 @@ async fn main() {
         settings,
         theme,
         installed_apps: installed_apps.clone(),
+        pinned_apps: pinned_apps.clone(),
     };
 
     let ui_params_1 = ui_params.clone();
@@ -367,7 +392,7 @@ fn init_services_home(init_params: InitServicesParamsHome) -> JoinHandle<()> {
         let machine_name_f = run_machine_name_handler(app_channel.clone());
         let ip_address_f = run_ip_address_handler(app_channel.clone());
         let net_f = run_net_handler(app_channel.clone());
-        let running_apps_f = run_running_apps_handler(app_channel.clone());
+        // let running_apps_f = run_running_apps_handler(app_channel.clone());
         let app_manager_f =
             run_app_manager_handler(app_manager_msg_rx, app_channel.clone(), installed_apps);
         let home_button_f = run_home_button_handler(app_channel.clone());
@@ -388,7 +413,7 @@ fn init_services_home(init_params: InitServicesParamsHome) -> JoinHandle<()> {
                     machine_name_f,
                     ip_address_f,
                     net_f,
-                    running_apps_f,
+                    // running_apps_f,
                     app_manager_f,
                     home_button_f
                 )
@@ -497,10 +522,10 @@ async fn run_net_handler(app_channel: Sender<AppMessage>) {
     net_handle.run().await;
 }
 
-async fn run_running_apps_handler(app_channel: Sender<AppMessage>) {
-    let mut running_apps = RunningAppsHandle::new(app_channel);
-    running_apps.run().await;
-}
+// async fn run_running_apps_handler(app_channel: Sender<AppMessage>) {
+//     let mut running_apps = RunningAppsHandle::new(app_channel);
+//     running_apps.run().await;
+// }
 
 async fn run_home_button_handler(app_channel: Sender<AppMessage>) {
     let home_button_handle = HomeButtonHandler::new(app_channel);
