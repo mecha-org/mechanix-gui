@@ -50,7 +50,8 @@ impl Component for BatteryScreen {
                 .active_color(Color::rgb(102., 226., 0.))
                 // .on_slide(Box::new(|value| Box::new(())))
                 .col_spacing(8.)
-                .col_width(3.75),
+                .col_width(3.75)
+                .disabled(true),
             lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
         );
 

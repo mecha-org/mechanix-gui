@@ -11,9 +11,15 @@ use mctk_core::style::Styled;
 use mctk_core::widgets::*;
 use mctk_core::*;
 
+use super::brightness_model::BrightnessModel;
+
 #[derive(Debug)]
 pub struct DisplayScreen {}
 impl Component for DisplayScreen {
+    fn init(&mut self) {
+        BrightnessModel::update();
+    }
+
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -36,8 +42,12 @@ impl Component for DisplayScreen {
 
         let slider = node!(
             Slider::new()
-                .value(70)
+                .value(*BrightnessModel::get().brightness_percentage.get() as u8)
                 .slider_type(SliderType::Box)
+                .on_slide_end(Box::new(|value| {
+                    BrightnessModel::set_brightness(value as f64);
+                    Box::new(())
+                }))
                 .active_color(Color::rgb(15., 168., 255.))
                 .on_slide(Box::new(|_| { Box::new(()) }))
                 .col_spacing(7.75)
