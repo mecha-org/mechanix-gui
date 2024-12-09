@@ -1,6 +1,7 @@
 use std::hash::Hash;
 
 use crate::AppMessage;
+use crate::{components::*, header_node, tab_item_node};
 use crate::{
     components::{header_node, text_node},
     gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
@@ -37,8 +38,8 @@ impl Component for AboutDevice {
     fn render_hash(&self, hasher: &mut ComponentHasher) {
         DeviceModel::get().is_provisioned.get().hash(hasher);
         DeviceModel::get().provision_id.get().hash(hasher);
-        // DeviceModel::get().provision_name.get().hash(hasher);
-        // DeviceModel::get().provision_icon_url.get().hash(hasher);
+        DeviceModel::get().provision_name.get().hash(hasher);
+        DeviceModel::get().provision_icon_url.get().hash(hasher);
     }
 
     fn view(&self) -> Option<Node> {
@@ -57,7 +58,6 @@ impl Component for AboutDevice {
         let provision_machine_name = DeviceModel::get().provision_name.get().clone();
         let provision_machine_icon_url = DeviceModel::get().provision_icon_url.get().clone();
 
-        let device_icon = "device_icon".to_string(); // image
         let wifi_mac_address: String = "28:cd:c4:c2:e8:33".to_string();
         let ethernet_mac_address: String = "c0:3e:ba:3e:94:47".to_string();
 
@@ -65,7 +65,7 @@ impl Component for AboutDevice {
             Div::new(),
             lay![
                 size_pct: [100],
-                padding: [5.0, 0.0, 5.0, 0.0],
+                // padding: [5.0, 0.0, 5.0, 0.0],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -82,59 +82,6 @@ impl Component for AboutDevice {
                 size_pct: [100, Auto],
             ]
         );
-
-        let header_node = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 10],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-                margin: [0., 0., 5., 0.],
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ],
-            )
-            .push(node!(
-                IconButton::new("back_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::SettingsList
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [52, 52],
-                    padding: [0, 0, 0, 20.],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ]
-            ))
-            .push(text_node),
-        )
-        .push(node!(
-            Div::new(),
-            lay![
-                size_pct: [20, Auto],
-                axis_alignment: Alignment::End
-            ]
-        ));
 
         let mut content_node = node!(
             Div::new(),
@@ -160,14 +107,15 @@ impl Component for AboutDevice {
                 lay![
                     size_pct: [30, Auto]
                 ]
-            ), // .push(node!(    // TODO : Img
-               //     widgets::Image::new(device_icon),
-               //     lay![
-               //         size: [24, 24],
-               //         margin: [0, 5],
-               //         padding: [0., 0., 0., 15.]
-               //     ]
-               // )),
+            )
+            .push(node!(
+                widgets::Image::new("device_icon"),
+                lay![
+                    size: [100, 100],
+                    margin: [0, 5],
+                    padding: [0., 0., 0., 15.]
+                ]
+            )),
         )
         .push(
             node!(
@@ -192,7 +140,7 @@ impl Component for AboutDevice {
             ))
             .push(node!(
                 Text::new(txt!(provision_machine_id))
-                    .style("color", Color::WHITE)
+                    .style("color", Color::rgba(197., 197., 197., 1.))
                     .style("size", 18.0)
                     .style("line_height", 20.0)
                     .style("font", "Space Grotesk")
@@ -462,7 +410,15 @@ impl Component for AboutDevice {
             ]
         ));
 
-        base = base.push(header_node);
+        // base = base.push(header_node);
+
+        base = base.push(header_node!(
+            "About device",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::SettingsList
+            }))
+        ));
+
         base = base.push(content_node);
         Some(base)
     }
