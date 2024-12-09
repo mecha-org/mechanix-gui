@@ -8,24 +8,20 @@ use crate::{
     shared::h_divider::HDivider,
 };
 
+use mctk_core::prelude::ComponentHasher;
 use mctk_core::renderables::Image;
 use mctk_core::{
-    component::{self, Component},
+    component::Component,
     lay,
     layout::{Alignment, Dimension, Direction, Size},
     msg, node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{self, Div, IconButton, IconType, Text, Toggle},
+    widgets::{self, Div, IconButton, IconType, Text},
     Color, Node,
 };
-use mctk_macros::{component, state_component_impl};
 
-use mechanix_status_bar_components::types::WirelessStatus;
-use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use zbus::message;
-
-use super::device_model::DeviceModel;
+use super::device_model::{DeviceModel, OSInfo};
 
 #[derive(Debug, Clone)]
 pub struct AboutDeviceState {}
@@ -38,10 +34,29 @@ impl Component for AboutDevice {
         DeviceModel::update();
     }
 
-    fn view(&self) -> Option<Node> {
-        // TODO: dynamic
+    fn render_hash(&self, hasher: &mut ComponentHasher) {
+        DeviceModel::get().is_provisioned.get().hash(hasher);
+        DeviceModel::get().provision_id.get().hash(hasher);
+        // DeviceModel::get().provision_name.get().hash(hasher);
+        // DeviceModel::get().provision_icon_url.get().hash(hasher);
+    }
 
-        let provisioned_status = *DeviceModel::get().is_provisioned.get();
+    fn view(&self) -> Option<Node> {
+        let os_info_option = DeviceModel::get().os_info.get().clone();
+        let os_info = if let Some(os_info_option) = os_info_option {
+            os_info_option
+        } else {
+            OSInfo {
+                name: "-".to_string(),
+                version: "-".to_string(),
+            }
+        };
+
+        let provisioned_status = DeviceModel::get().is_provisioned.get().clone();
+        let provision_machine_id = DeviceModel::get().provision_id.get().clone();
+        let provision_machine_name = DeviceModel::get().provision_name.get().clone();
+        let provision_machine_icon_url = DeviceModel::get().provision_icon_url.get().clone();
+
         let device_icon = "device_icon".to_string(); // image
         let wifi_mac_address: String = "28:cd:c4:c2:e8:33".to_string();
         let ethernet_mac_address: String = "c0:3e:ba:3e:94:47".to_string();
@@ -130,8 +145,6 @@ impl Component for AboutDevice {
             ]
         );
 
-        // TODO: if provisioned_status true then show provision_device_details
-
         let provision_device_details = node!(
             Div::new().bg(Color::TRANSPARENT),
             lay![
@@ -147,15 +160,14 @@ impl Component for AboutDevice {
                 lay![
                     size_pct: [30, Auto]
                 ]
-            )
-            .push(node!(
-                widgets::Image::new(device_icon),
-                lay![
-                    size: [24, 24],
-                    margin: [0, 5],
-                    padding: [0., 0., 0., 15.]
-                ]
-            )),
+            ), // .push(node!(    // TODO : Img
+               //     widgets::Image::new(device_icon),
+               //     lay![
+               //         size: [24, 24],
+               //         margin: [0, 5],
+               //         padding: [0., 0., 0., 15.]
+               //     ]
+               // )),
         )
         .push(
             node!(
@@ -167,7 +179,7 @@ impl Component for AboutDevice {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Mecha Comet"))
+                Text::new(txt!(provision_machine_name)) // name
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -179,7 +191,7 @@ impl Component for AboutDevice {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("213213dasda-2332324-a"))
+                Text::new(txt!(provision_machine_id))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -363,7 +375,7 @@ impl Component for AboutDevice {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("Linux"))
+                Text::new(txt!(os_info.name))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -393,7 +405,7 @@ impl Component for AboutDevice {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("Linux 6.1"))
+                Text::new(txt!(os_info.version))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -412,12 +424,9 @@ impl Component for AboutDevice {
         );
         content_node = content_node.push(start_node);
 
-        // content_node = content_node.push(selected_network_node);
-        // content_node = content_node.push(node!(HDivider { size: 1. }, lay![
-        //     margin: [0.0, 0.0, 30.0, 0.0],
-        // ]));
-
-        content_node = content_node.push(provision_device_details);
+        if provisioned_status.clone() == true {
+            content_node = content_node.push(provision_device_details);
+        }
 
         content_node = content_node.push(node!(
             HDivider { size: 1. },
