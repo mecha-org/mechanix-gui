@@ -35,6 +35,7 @@ pub struct Slider {
     pub reset_on_slide_end: bool,
     pub fill_random_on_start: bool,
     pub fill_random_on_slide: bool,
+    pub disabled: bool,
 }
 impl Debug for Slider {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -58,6 +59,12 @@ impl Slider {
             ..Default::default()
         }
     }
+
+    pub fn disabled(mut self, value: bool) -> Self {
+        self.disabled = value;
+        self
+    }
+
     pub fn value(mut self, value: u8) -> Self {
         self.value = value;
         self
@@ -87,10 +94,16 @@ impl Slider {
         self
     }
     pub fn on_slide(mut self, f: Box<dyn Fn(u8) -> Message + Send + Sync>) -> Self {
+        if self.disabled {
+            return self;
+        }
         self.on_slide = Some(f);
         self
     }
     pub fn on_slide_end(mut self, f: Box<dyn Fn(u8) -> Message + Send + Sync>) -> Self {
+        if self.disabled {
+            return self;
+        }
         self.on_slide_end = Some(f);
         self
     }
@@ -112,6 +125,9 @@ impl Slider {
         relative_logical_position: Point,
         current_logical_aabb: AABB,
     ) -> Option<u8> {
+        if self.disabled {
+            return None;
+        }
         let dx = relative_logical_position;
         let width = current_logical_aabb.width();
         let value = (dx.x as f32 / width as f32 * 100.) as i8;
