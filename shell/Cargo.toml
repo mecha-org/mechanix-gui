@@ -34,7 +34,7 @@ name = "mechanix-wallpaper-daemon"
 path = "wallpaper-daemon/src/main.rs"
 
 [workspace.package]
-version = "0.1.10"
+version = "0.1.11"
 authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
 edition = "2021"
 license = "MIT"
