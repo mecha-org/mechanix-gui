@@ -101,12 +101,14 @@ impl component::Component for SoundScreen {
         main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
         main_node = main_node.push(text_bold_node("OUTPUT"));
         main_node = main_node.push(output_slider);
-        main_node = main_node.push(output_device);
-        // main_node = main_node.push(node!(HDivider { size: 1. }));
+        // // NOTE: Hide
+        // main_node = main_node.push(output_device);
+
         main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
         main_node = main_node.push(text_bold_node("INPUT"));
         main_node = main_node.push(input_slider);
-        main_node = main_node.push(input_device);
+        // // NOTE: Hide
+        // main_node = main_node.push(input_device);
 
         // main_node = main_node.push(footer_node!(Routes::SettingsList));
 

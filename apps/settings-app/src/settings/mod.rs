@@ -10,13 +10,10 @@ use crate::constants::{
 use crate::errors::{SettingsAppError, SettingsAppErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
-use mctk_core::renderables::types::AbsoluteLength;
 use serde::{Deserialize, Serialize};
 use std::{env, fs::File, path::PathBuf};
 use tracing::{debug, info};
 
-/// # Launcher Settings
-///
 /// Struct representing the settings.yml configuration file,
 /// this file lets you control the behavior of the launcher,
 /// apply custom theme and fonts

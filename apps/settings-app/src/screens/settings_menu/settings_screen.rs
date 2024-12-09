@@ -363,15 +363,15 @@ impl Component for SettingsScreen {
         );
 
         list_items = list_items.push(network_div);
-        list_items = list_items.push(bluetooth_div);
+        // list_items = list_items.push(bluetooth_div);
         list_items = list_items.push(display_div);
-        list_items = list_items.push(appearance_div);
+        // list_items = list_items.push(appearance_div);
         list_items = list_items.push(battery_div);
         list_items = list_items.push(sound_div);
-        list_items = list_items.push(lock_div);
-        list_items = list_items.push(date_time_div);
-        list_items = list_items.push(language_div);
-        list_items = list_items.push(update_div);
+        // list_items = list_items.push(lock_div);
+        // list_items = list_items.push(date_time_div);
+        // list_items = list_items.push(language_div);
+        // list_items = list_items.push(update_div);
         list_items = list_items.push(about_div);
 
         scrollable = scrollable.push(list_items);

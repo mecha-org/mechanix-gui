@@ -56,20 +56,17 @@ impl Component for BatteryScreen {
         );
 
         main_node = main_node.push(text_node(
-            format!(
-                "BATTERY {}%",
-                *BatteryModel::get().battery_percentage.get() as u8
-            )
-            .as_str(),
+            format!(" {}%", *BatteryModel::get().battery_percentage.get() as u8).as_str(),
         ));
         main_node = main_node.push(battery_percentage);
-        main_node = main_node.push(node!(HDivider { size: 1. }));
-        main_node = main_node.push(tab_item_node!(
-            [text_node("Mode")],
-            [text_bold_node("Balenced"), icon_node("right_arrow_icon")],
-            route: Routes::PerformanceModes
-        ));
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        // // Note: Hide
+        // main_node = main_node.push(node!(HDivider { size: 1. }));
+        // main_node = main_node.push(tab_item_node!(
+        //     [text_node("Mode")],
+        //     [text_bold_node("Balenced"), icon_node("right_arrow_icon")],
+        //     route: Routes::PerformanceModes
+        // ));
+        // main_node = main_node.push(node!(HDivider { size: 1. }));
 
         // base = base.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
