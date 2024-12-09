@@ -33,24 +33,10 @@ modules:
   background:
     icon:
       default:
-  apps:
-    - app_id: mecha-connect
-      name: Mecha Connect
-      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/mecha_connect_icon.png
-      run_command:
-        [
-          "sh",
-          "-c",
-          "MECHA_CONNECT_APP_SETTINGS_PATH=/etc/mecha/connect/settings-demo.yml mecha-connect",
-        ]
-    - app_id: alacritty
-      name: Terminal
-      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/terminal_icon.png
-      run_command: ["sh", "-c", "alacritty --working-directory=/home/mecha"]
-    - app_id: firefox esr
-      name: Firefox
-      icon: /usr/share/mechanix/shell/launcher/assets/icons/apps/firefox_icon.png
-      run_command: ["sh", "-c", "MOZ_ENABLE_WAYLAND=1 GDK_BACKEND=wayland firefox-esr --user-agent=\"Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.127 Mobile Safari/537.36\""]
+  pinned_apps:
+    - mecha-connect
+    - alacritty
+    - chromium
   clock:
     format: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
@@ -144,9 +130,8 @@ modules:
     restart:
       icon: /usr/share/mechanix/shell/launcher/assets/icons/restart_icon.png
   terminal:
-    icon:
-      default: /usr/share/mechanix/shell/launcher/assets/icons/terminal_icon.png
-    run_command: ["sh", "-c", "alacritty --working-directory=/home/mecha"]
+    icon: /usr/share/mechanix/shell/launcher/assets/icons/terminal_icon.png
+    app_id: alacritty
 app_list:
   include_only:
   exclude:
@@ -162,11 +147,11 @@ app_list:
       exec: "alacritty --working-directory=/home/mecha"
       icon_name: terminal_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/terminal_icon.png
-    - app_id: firefox-esr
-      name: Firefox
-      exec: "MOZ_ENABLE_WAYLAND=1 GDK_BACKEND=wayland firefox-esr --user-agent=\"Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.127 Mobile Safari/537.36\""
-      icon_name: firefox_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/firefox_icon.png
+#    - app_id: firefox-esr
+#      name: Firefox
+#      exec: "MOZ_ENABLE_WAYLAND=1 GDK_BACKEND=wayland firefox-esr --user-agent=\"Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.127 Mobile Safari/537.36\""
+#      icon_name: firefox_icon
+#      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/firefox_icon.png
     - app_id: org.gnome.Nautilus
       name: File Manager
       exec: nautilus
@@ -192,3 +177,8 @@ app_list:
       exec: mechanix-settings -s /etc/mechanix/apps/settings/settings.yml
       icon_name: mechanix_settings_icon
       icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mechanix_settings_icon.png
+    - app_id: chromium
+      name: Chromium
+      exec: chromium --user-agent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36" --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime
+      icon_name: chromium_icon
+      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/chromium_icon.png
