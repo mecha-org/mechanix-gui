@@ -131,9 +131,6 @@ impl Component for SavedNetworkDetails {
             ]
         );
 
-        // // TODO:
-        // 1. show selected network name in header; for long name , add suffix ".."
-        // 2. show forget-(delete_icon) only when it is saved network
         let header_node = node!(
             Div::new(),
             lay![

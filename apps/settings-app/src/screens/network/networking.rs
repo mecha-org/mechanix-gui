@@ -948,51 +948,56 @@ impl Component for NetworkingScreen {
             )),
         );
         for (network, network_id) in saved_available_networks.iter() {
-            scrollable_section =
-                scrollable_section.push(saved_network_row_component(network.clone()).key(key));
-            key += 1;
-            scrollable_section = scrollable_section
-                .push(
-                    node!(
-                        Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
-                        lay![
-                            direction: Direction::Row,
-                            size: [480, Auto],
-                            cross_alignment: Alignment::Stretch
-                        ]
+            if network.name.clone().len() > 0 {
+                scrollable_section =
+                    scrollable_section.push(saved_network_row_component(network.clone()).key(key));
+                key += 1;
+                scrollable_section = scrollable_section
+                    .push(
+                        node!(
+                            Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
+                            lay![
+                                direction: Direction::Row,
+                                size: [480, Auto],
+                                cross_alignment: Alignment::Stretch
+                            ]
+                        )
+                        .push(node!(
+                            Div::new(),
+                            lay![
+                                size: [ 480, 1 ]
+                            ]
+                        )),
                     )
-                    .push(node!(
-                        Div::new(),
-                        lay![
-                            size: [ 480, 1 ]
-                        ]
-                    )),
-                )
-                .key(key);
-            key += 1;
+                    .key(key);
+                key += 1;
+            }
         }
         for network in unsaved_available_networks.iter() {
-            key += 1;
-            scrollable_section = scrollable_section
-                .push(unsaved_available_network_row_component(network.clone()).key(key));
-            scrollable_section = scrollable_section
-                .push(
-                    node!(
-                        Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
-                        lay![
-                            direction: Direction::Row,
-                            size: [480, Auto],
-                            cross_alignment: Alignment::Stretch
-                        ]
+            if network.name.clone().len() > 0 {
+                key += 1;
+
+                scrollable_section = scrollable_section
+                    .push(unsaved_available_network_row_component(network.clone()).key(key));
+                scrollable_section = scrollable_section
+                    .push(
+                        node!(
+                            Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
+                            lay![
+                                direction: Direction::Row,
+                                size: [480, Auto],
+                                cross_alignment: Alignment::Stretch
+                            ]
+                        )
+                        .push(node!(
+                            Div::new(),
+                            lay![
+                                size: [ 480, 1 ]
+                            ]
+                        )),
                     )
-                    .push(node!(
-                        Div::new(),
-                        lay![
-                            size: [ 480, 1 ]
-                        ]
-                    )),
-                )
-                .key(key);
+                    .key(key);
+            }
         }
         content_node = content_node.push(scrollable_section);
         content_node = content_node.push(node!(HDivider { size: 1. }));

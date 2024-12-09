@@ -219,26 +219,41 @@ impl Component for AddNetwork {
             ]
         );
 
-        let name_input_value = node!(
-            TextBox::new(Some(network_name))
-                .style("background_color", Color::TRANSPARENT)
-                .style("font_size", 20.)
-                .style("text_color", Color::WHITE)
-                .style("border_color", Color::TRANSPARENT)
-                // .style("border_width", 0.)
-                .style("cursor_color", Color::WHITE)
-                .style("placeholder_color", Color::rgb(107., 107., 107.))
-                .on_change(Box::new(|s| {
-                    FORM.ssid.set(s.to_string());
-                    msg!(())
-                }))
-                .placeholder("Enter Name"),
-            lay![
-                size_pct: [100, 12],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch
-            ]
-        );
+        let name_input_value: Node = if FORM.ssid.get().clone().len() > 0 {
+            node!(
+                Text::new(txt!(network_name))
+                    .style("color", Color::rgba(197., 197., 197., 1.))
+                    .style("size", 20.0)
+                    .style("line_height", 22.)
+                    .style("font", "Space Grotesk")
+                    .style("font_weight", FontWeight::Normal),
+                lay![
+                    size_pct: [100, 12],
+                    direction: Direction::Row,
+                    axis_alignment: Alignment::Stretch
+                ]
+            )
+        } else {
+            node!(
+                TextBox::new(Some(network_name))
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("font_size", 20.)
+                    .style("text_color", Color::WHITE)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("cursor_color", Color::WHITE)
+                    .style("placeholder_color", Color::rgb(107., 107., 107.))
+                    .on_change(Box::new(|s| {
+                        FORM.ssid.set(s.to_string());
+                        msg!(())
+                    }))
+                    .placeholder("Enter Name"),
+                lay![
+                    size_pct: [100, 12],
+                    direction: Direction::Row,
+                    axis_alignment: Alignment::Stretch
+                ]
+            )
+        };
 
         let password_input_text = node!(
             Text::new(txt!("Password"))
