@@ -162,8 +162,8 @@ impl Component for AboutDevice {
             .push(node!(
                 Text::new(txt!("Host name".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -195,8 +195,8 @@ impl Component for AboutDevice {
             .push(node!(
                 Text::new(txt!("IP Address".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -235,8 +235,8 @@ impl Component for AboutDevice {
             .push(node!(
                 Text::new(txt!("Make".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -265,8 +265,8 @@ impl Component for AboutDevice {
             .push(node!(
                 Text::new(txt!("Model".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -305,8 +305,8 @@ impl Component for AboutDevice {
             .push(node!(
                 Text::new(txt!("Wi-Fi MAC Address".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -333,10 +333,10 @@ impl Component for AboutDevice {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Ethernet MAC Address"))
+                Text::new(txt!("Ethernet MAC Address".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -375,8 +375,8 @@ impl Component for AboutDevice {
             .push(node!(
                 Text::new(txt!("OS".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -405,8 +405,8 @@ impl Component for AboutDevice {
             .push(node!(
                 Text::new(txt!("Kernel".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![

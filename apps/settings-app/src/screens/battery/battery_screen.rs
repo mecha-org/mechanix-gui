@@ -19,6 +19,7 @@ impl Component for BatteryScreen {
             widgets::Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
+                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
             ]
@@ -27,21 +28,12 @@ impl Component for BatteryScreen {
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size_pct: [100],
+                size_pct: [100, 80],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [0.0, 10.0, 0.0, 10.0],
+                padding: [5.0, 10.0, 0.0, 10.0],
             ]
         );
-
-        main_node = main_node.push(header_node!(
-            "Battery",
-            Box::new(|| {
-                msg!(Message::ChangeRoute {
-                    route: Routes::SettingsList
-                })
-            })
-        ));
 
         let battery_percentage = node!(
             Slider::new()
@@ -69,6 +61,14 @@ impl Component for BatteryScreen {
         // main_node = main_node.push(node!(HDivider { size: 1. }));
 
         // base = base.push(footer_node!(Routes::SettingsList));
+        base = base.push(header_node!(
+            "Battery",
+            Box::new(|| {
+                msg!(Message::ChangeRoute {
+                    route: Routes::SettingsList
+                })
+            })
+        ));
         base = base.push(main_node);
         Some(base)
     }

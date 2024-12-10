@@ -66,6 +66,7 @@ impl Component for SettingsRowComponent {
                     size_pct: [100],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Center,
                 ]
             )
             .push(
@@ -73,25 +74,37 @@ impl Component for SettingsRowComponent {
                     Div::new(),
                     lay![
                         size_pct: [70],
-                        axis_alignment: Alignment::Start
+                        axis_alignment: Alignment::Start,
+                        cross_alignment: Alignment::Center,
                     ],
                 )
                 .push(node!(
                     Image::new(icon_1),
                     lay![
                         size: [24, 24],
-                        margin: [0, 5],
-                        padding: [0., 0., 0., 15.]
+                        margin:[0., 0., 0., 20.],
+
                     ]
                 ))
-                .push(text_node),
+                .push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [100, Auto],
+                            direction: Direction::Column,
+                            axis_alignment: Alignment::Stretch,
+                        ]
+                    )
+                    .push(text_node),
+                ),
             )
             .push(
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [30],
-                        axis_alignment: Alignment::End
+                        size_pct: [30, Auto],
+                        axis_alignment: Alignment::End,
+                        cross_alignment:Alignment::Center,
                     ]
                 )
                 .push(value_node)
@@ -99,7 +112,8 @@ impl Component for SettingsRowComponent {
                     Image::new(icon_2),
                     lay![
                         size: [24, 24],
-                        margin: [0, 5],
+                        margin: [0., 0., 0., 5.],
+                        cross_alignment:Alignment::Center,
                     ]
                 )),
             ),

@@ -153,18 +153,12 @@ impl Component for NetworkingScreen {
             ]
         );
 
-        let text_node = node!(
-            Text::new(txt!("Networking"))
-                .style("color", Color::rgb(197.0, 197.0, 197.0))
-                .style("size", 28.0)
-                .style("line_height", 20.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
-            lay![
-                size_pct: [100, Auto],
-                margin:[2.0, 5.0, 2.0, 5.0],
-            ]
-        );
+        let text_node = node!(Text::new(txt!("Networking"))
+            .style("color", Color::rgb(197.0, 197.0, 197.0))
+            .style("size", 28.0)
+            .style("line_height", 20.)
+            .style("font", "Space Grotesk")
+            .style("font_weight", FontWeight::Normal),);
 
         let header_node = node!(
             Div::new(),
@@ -182,7 +176,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [60, Auto],
+                    size_pct: [70, Auto],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ],
@@ -205,19 +199,29 @@ impl Component for NetworkingScreen {
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
                     .style("radius", 10.),
                 lay![
-                    size: [52, 52],
-                    padding: [0, 0, 0, 20.],
+                    size: [42, 42],
+                    padding: [0, 0, 0, 2.],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ]
             ))
-            .push(text_node),
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [100, Auto],
+                        direction: Direction::Column,
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(text_node),
+            ),
         )
         .push(
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [40, Auto],
+                    size_pct: [30, Auto],
                     axis_alignment: Alignment::End,
                     padding: [0, 0, 0, 0.],
                 ]

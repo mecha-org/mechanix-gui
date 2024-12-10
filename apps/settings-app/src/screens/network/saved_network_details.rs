@@ -309,7 +309,6 @@ impl Component for SavedNetworkDetails {
             ]
         );
 
-        // NOTE: removed subnet and gatway to mac address and Name
         // status, passphrase - security
         let details_row_1 = node!(
             Div::new(),

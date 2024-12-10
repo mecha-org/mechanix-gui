@@ -49,6 +49,7 @@ impl Component for DisplayScreen {
             widgets::Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
+                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
             ]
@@ -60,7 +61,7 @@ impl Component for DisplayScreen {
                 size_pct: [100, 80],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [0.0, 10.0, 0.0, 10.0],
+                padding: [5.0, 10.0, 0.0, 10.0],
             ]
         );
 

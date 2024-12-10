@@ -183,7 +183,9 @@ impl Component for SettingsApp {
                 NetworkScreenRoutes::AddNetwork { ssid } => {
                     base = base.push(node!(AddNetwork::new(ssid.to_string())))
                 }
-                NetworkScreenRoutes::NetworkSettings => base = base.push(node!(NetworkSettings {})),
+                NetworkScreenRoutes::NetworkSettings => {
+                    base = base.push(node!(NetworkSettings::new()))
+                }
                 NetworkScreenRoutes::NetworkDetails => {
                     base = base.push(node!(NetworkDetails::new()))
                 }

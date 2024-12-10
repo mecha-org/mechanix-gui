@@ -90,7 +90,7 @@ impl Component for NetworkRowComponent {
                     Image::new(icon_1),
                     lay![
                         size: [24, 24],
-                        margin: [0, 5],
+                        margin: [0., 0., 0., 5.],
                         padding: [0., 0., 0., 15.]
                     ]
                 ))
@@ -98,7 +98,7 @@ impl Component for NetworkRowComponent {
                     Image::new(icon_2),
                     lay![
                         size: [24, 24],
-                        margin: [0, 5],
+                        margin: [0., 0., 0., 5.],
                     ]
                 )),
             ),

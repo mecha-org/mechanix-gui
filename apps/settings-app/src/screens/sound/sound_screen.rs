@@ -45,6 +45,7 @@ impl component::Component for SoundScreen {
             widgets::Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
+                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
             ]
@@ -56,7 +57,7 @@ impl component::Component for SoundScreen {
                 size_pct: [100],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                // padding: [15.0, 10.0, 15.0, 10.0],
+                padding: [5.0, 10.0, 0.0, 10.0],
             ]
         );
 

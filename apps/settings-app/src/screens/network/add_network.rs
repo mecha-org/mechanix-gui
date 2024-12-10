@@ -209,7 +209,7 @@ impl Component for AddNetwork {
         // Add 'Network name'
         let name_input_text = node!(
             Text::new(txt!("Name (SSID)"))
-                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("color", Color::WHITE)
                 .style("size", 16.0)
                 .style("line_height", 18.)
                 .style("font", "Space Grotesk")
@@ -219,23 +219,25 @@ impl Component for AddNetwork {
             ]
         );
 
-        let name_input_value: Node = if FORM.ssid.get().clone().len() > 0 {
+        let name_input_value = if FORM.ssid.get().clone().len() > 0 {
             node!(
-                Text::new(txt!(network_name))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 20.0)
-                    .style("line_height", 22.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                Div::new().bg(Color::TRANSPARENT),
                 lay![
                     size_pct: [100, 12],
                     direction: Direction::Row,
-                    axis_alignment: Alignment::Stretch
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::End
                 ]
             )
+            .push(node!(Text::new(txt!(network_name))
+                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("size", 20.0)
+                .style("line_height", 22.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Normal),))
         } else {
             node!(
-                TextBox::new(Some(network_name))
+                TextBox::new(Some("".to_string()))
                     .style("background_color", Color::TRANSPARENT)
                     .style("font_size", 20.)
                     .style("text_color", Color::WHITE)
@@ -257,7 +259,7 @@ impl Component for AddNetwork {
 
         let password_input_text = node!(
             Text::new(txt!("Password"))
-                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("color", Color::WHITE)
                 .style("size", 16.0)
                 .style("line_height", 18.)
                 .style("font", "Space Grotesk")
@@ -297,7 +299,6 @@ impl Component for AddNetwork {
         ));
 
         content_node = content_node.push(password_input_text);
-        // content_node = content_node.push(node!(HDivider { size: 1. }));
         content_node = content_node.push(password_input_value);
         content_node = content_node.push(node!(HDivider { size: 1. }));
 
