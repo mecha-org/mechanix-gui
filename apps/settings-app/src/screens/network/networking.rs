@@ -326,22 +326,21 @@ impl Component for NetworkingScreen {
             .push(node!(
                 Toggle::new(status).on_change(Box::new(|value| {
                     WirelessModel::toggle_wireless();
-                    // WirelessModel::update();
                     Box::new(())
                 })),
                 lay![]
             )),
         );
 
-        let toggle_node = node!(
-            Div::new(),
-            lay![
-                size: [350, 50],
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
-            ]
-        )
-        .push(toggle_row);
+        // let toggle_node = node!(
+        //     Div::new(),
+        //     lay![
+        //         size: [350, 50],
+        //         direction: Direction::Column,
+        //         cross_alignment: Alignment::Stretch,
+        //     ]
+        // )
+        // .push(toggle_row);
 
         let mut connected_network_name = "    ".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
@@ -902,7 +901,7 @@ impl Component for NetworkingScreen {
             )),
         );
 
-        content_node = content_node.push(toggle_node);
+        content_node = content_node.push(toggle_row);
         content_node = content_node.push(node!(HDivider { size: 1. }));
         // content_node = content_node.push(node!(HDivider { size: 1. }));
 
@@ -926,7 +925,7 @@ impl Component for NetworkingScreen {
             ]
         ));
 
-        if WirelessModel::get().connected_network.get().is_some() {
+        if WirelessModel::get().connected_network.get().is_some() && status.clone() == true {
             scrollable_section = scrollable_section.push(connected_network_row);
         }
         let mut key = 0;
