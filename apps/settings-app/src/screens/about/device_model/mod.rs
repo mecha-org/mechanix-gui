@@ -18,9 +18,9 @@ lazy_static! {
     static ref DEVICE_MODEL: DeviceModel = DeviceModel {
         is_provisioned: Context::new(false),
         os_info: Context::new(None),
-        provision_name: Context::new("-".to_string()),
-        provision_id: Context::new("-".to_string()),
-        provision_icon_url: Context::new("-".to_string())
+        provision_name: Context::new("My Comet".to_string()),
+        provision_id: Context::new(" ".to_string()),
+        provision_icon_url: Context::new("".to_string())
     };
 }
 
@@ -28,6 +28,7 @@ lazy_static! {
 pub struct OSInfo {
     pub name: String,
     pub version: String,
+    pub hostname: String,
 }
 
 #[derive(Model)]
@@ -92,6 +93,7 @@ impl DeviceModel {
             let os_info = OSInfo {
                 name: info.sysname.to_string(),
                 version: info.release.to_string(),
+                hostname: info.nodename.to_string(),
             };
             DeviceModel::get().os_info.set(Some(os_info));
         });
