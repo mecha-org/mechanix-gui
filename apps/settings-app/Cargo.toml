@@ -16,12 +16,9 @@ keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "w
 anyhow = "1.0.71"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
-# mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
-# mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
-# mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }
-mctk_core = { git = "https://github.com/swetar-mecha/mctk.git", rev = "f1ada641a162a1faa7800a53579dfa35a6635019" }
-mctk_smithay = { git = "https://github.com/swetar-mecha/mctk.git", rev = "f1ada641a162a1faa7800a53579dfa35a6635019" }
-mctk_macros = { git = "https://github.com/swetar-mecha/mctk.git", rev = "f1ada641a162a1faa7800a53579dfa35a6635019" }
+mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }
 xdg = "2.4.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
