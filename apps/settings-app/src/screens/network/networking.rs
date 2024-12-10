@@ -343,8 +343,10 @@ impl Component for NetworkingScreen {
         // .push(toggle_row);
 
         let mut connected_network_name = "    ".to_string();
+        let mut icon = "wireless_good".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
             connected_network_name = connected_network.name.clone();
+            icon = get_network_icon(connected_network.flags, connected_network.signal);
         }
         connected_network_name = truncate(connected_network_name, 30);
 
@@ -373,7 +375,7 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                widgets::Image::new("wireless_good"),
+                widgets::Image::new(icon),
                 lay![
                     size: [24, 24],
                     margin:[0., 0., 0., 20.],
@@ -509,18 +511,9 @@ impl Component for NetworkingScreen {
 
         let saved_network_row_component = |network: WirelessInfoResponse| {
             let ssid = network.name.clone();
-            let mut icon = if network.flags.contains("WPA") {
-                "secured_wireless_strong".to_string()
-            } else {
-                "wireless_strong".to_string()
-            };
-            if let Ok(signal) = network.signal.parse::<u32>() {
-                if signal < 70 {
-                    icon = icon.replace("strong", "weak");
-                } else if signal < 30 {
-                    icon = icon.replace("strong", "low");
-                }
-            }
+
+            let icon = get_network_icon(network.flags.clone(), network.signal.clone());
+
             node!(
                 Div::new(),
                 lay![
@@ -1013,4 +1006,22 @@ impl Component for NetworkingScreen {
         // base = base.push(node!(Scrollable::new(), lay![size: [440, 380]]).push(content_node));
         Some(base)
     }
+}
+
+pub fn get_network_icon(flags: String, signal: String) -> String {
+    let mut icon = if flags.contains("WPA") {
+        "secured_wireless_strong".to_string()
+    } else {
+        "wireless_strong".to_string()
+    };
+
+    if let Ok(signal_strength) = signal.parse::<u32>() {
+        if signal_strength < 30 {
+            icon = icon.replace("strong", "low");
+        } else if signal_strength < 70 {
+            icon = icon.replace("strong", "weak");
+        }
+    }
+
+    icon
 }
