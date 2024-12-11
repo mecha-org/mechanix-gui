@@ -6,6 +6,7 @@ use std::process::id;
 use anyhow::{bail, Result};
 use identity_manager::{GetMachineIdResponse, GetProvisionStatusResponse, IdentityClient};
 use lazy_static::lazy_static;
+use local_ip_address::linux::local_ip;
 use mctk_core::context::Context;
 use mctk_macros::Model;
 use settings_manager::{GetSettingsResponse, SettingsClient};
@@ -19,8 +20,9 @@ lazy_static! {
         is_provisioned: Context::new(false),
         os_info: Context::new(None),
         provision_name: Context::new("My Comet".to_string()),
-        provision_id: Context::new(" ".to_string()),
-        provision_icon_url: Context::new("".to_string())
+        provision_id: Context::new("".to_string()),
+        provision_icon_url: Context::new("".to_string()),
+        ip_address: Context::new("".to_string()),
     };
 }
 
@@ -38,6 +40,7 @@ pub struct DeviceModel {
     pub provision_name: Context<String>,
     pub provision_id: Context<String>,
     pub provision_icon_url: Context<String>,
+    pub ip_address: Context<String>,
 }
 
 impl DeviceModel {
@@ -96,6 +99,10 @@ impl DeviceModel {
                 hostname: info.nodename.to_string(),
             };
             DeviceModel::get().os_info.set(Some(os_info));
+
+            // ip_address
+            let local_ip = local_ip().unwrap();
+            DeviceModel::get().ip_address.set(local_ip.to_string());
         });
     }
 

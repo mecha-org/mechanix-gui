@@ -58,6 +58,7 @@ impl Component for AboutDevice {
         let provision_machine_id = DeviceModel::get().provision_id.get().clone();
         let provision_machine_name = DeviceModel::get().provision_name.get().clone();
         let provision_machine_icon_url = DeviceModel::get().provision_icon_url.get().clone();
+        let ip_adderss = DeviceModel::get().ip_address.get().clone();
 
         let wifi_mac_address: String = "28:cd:c4:c2:e8:33".to_string();
         let ethernet_mac_address: String = "c0:3e:ba:3e:94:47".to_string();
@@ -72,74 +73,74 @@ impl Component for AboutDevice {
             ]
         );
 
-        let mut content_node = node!(
-            Div::new(),
+        let mut scrollable = node!(
+            Scrollable::new(),
             lay![
-                size_pct: [100, 90],
+                size: [440, 380],
+            ]
+        );
+
+        let mut content_node = node!(
+            Div::new().bg(Color::TRANSPARENT),
+            lay![
+                size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
         );
 
-        let provision_device_details = node!(
-            Div::new().bg(Color::TRANSPARENT),
+        let provision_device_image = node!(
+            Div::new(),
             lay![
-                size_pct: [100, 25],
+                size_pct: [100, 18],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
+                axis_alignment: Alignment::Center,
                 cross_alignment: Alignment::Start,
-                margin: [0., 0., 10., 0.]
             ]
         )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [25, Auto]
-                ]
-            )
-            .push(node!(
-                widgets::Image::new("device_icon"),
-                lay![
-                    size: [75, 75],
-                    padding: [0., 0., 0., 2.]
-                ]
-            )),
+        .push(node!(
+            widgets::Image::new("device_icon"),
+            lay![
+                size: [70, 70],
+            ]
+        ));
+        let provision_device_details_row_1 = node!(
+            Div::new(),
+            lay![
+            size_pct: [100, 6],
+            direction: Direction::Row,
+            axis_alignment: Alignment::Center,
+            cross_alignment: Alignment::Center,
+            ]
         )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [60, Auto],
-                    direction: Direction::Column,
-                    axis_alignment: Alignment::Stretch,
-                    cross_alignment: Alignment::Stretch,
-                ]
-            )
-            .push(node!(
-                Text::new(txt!(provision_machine_name)) // name
-                    .style("color", Color::WHITE)
-                    .style("size", 18.0)
-                    .style("line_height", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold),
-                lay![
-                    size_pct: [Auto, 50],
-                    padding:[0., 0.,10., 0.]
-                ]
-            ))
-            .push(node!(
-                Text::new(txt!(provision_machine_id))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 18.0)
-                    .style("line_height", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold),
-                lay![
-                    size_pct: [Auto, 50],
-                ]
-            )),
-        );
+        .push(node!(
+            Text::new(txt!(provision_machine_name))
+                .style("color", Color::WHITE)
+                .style("size", 18.0)
+                .style("line_height", 20.0)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Bold),
+            lay![]
+        ));
+
+        let provision_device_details_row_2 = node!(
+            Div::new(),
+            lay![
+            size_pct: [100, 6],
+            direction: Direction::Row,
+            axis_alignment: Alignment::Center,
+            cross_alignment: Alignment::Start,
+            ]
+        )
+        .push(node!(
+            Text::new(txt!(provision_machine_id.clone()))
+                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("size", 16.0)
+                .style("line_height", 18.0)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Medium),
+            lay![]
+        ));
 
         let details_row_1 = node!(
             Div::new(),
@@ -147,7 +148,7 @@ impl Component for AboutDevice {
                 size_pct: [100, Auto],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
+                cross_alignment: Alignment::Start,
             ]
         )
         .push(
@@ -171,7 +172,7 @@ impl Component for AboutDevice {
                 ]
             ))
             .push(node!(
-                Text::new(txt!(os_info.hostname))
+                Text::new(txt!(format!("{}.local", os_info.hostname)))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -204,7 +205,7 @@ impl Component for AboutDevice {
                 ]
             ))
             .push(node!(
-                Text::new(txt!("Comet"))
+                Text::new(txt!(ip_adderss))
                     .style("color", Color::WHITE)
                     .style("size", 18.0)
                     .style("line_height", 20.0)
@@ -428,26 +429,35 @@ impl Component for AboutDevice {
             Div::new(),
             lay![
                 direction: Direction::Row,
-                margin: [5.0, 0.0, 0.0, 0.0],
+                margin: [2.0, 0.0, 0.0, 0.0],
             ]
         );
-        content_node = content_node.push(start_node);
 
-        // if provisioned_status.clone() == true {
-        // }
-        content_node = content_node.push(provision_device_details);
+        // content_node = content_node.push(start_node);
+        content_node = content_node.push(provision_device_image);
+        content_node = content_node.push(provision_device_details_row_1);
+        if provision_machine_id.clone().len() > 0 {
+            content_node = content_node.push(provision_device_details_row_2);
+        }
 
         content_node = content_node.push(node!(
             HDivider { size: 1. },
             lay![
-                margin: [0., 0., 10., 0.]
+                margin: [15., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_1);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider { size: 1. },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [10., 0., 20., 0.]
+            ]
+        ));
+
+        content_node = content_node.push(node!(
+            HDivider { size: 1. },
+            lay![
+                margin: [20., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_2);
@@ -472,7 +482,7 @@ impl Component for AboutDevice {
             ]
         ));
 
-        // base = base.push(header_node);
+        scrollable = scrollable.push(content_node);
 
         base = base.push(header_node!(
             "About Device",
@@ -480,8 +490,8 @@ impl Component for AboutDevice {
                 route: Routes::SettingsList
             }))
         ));
+        base = base.push(scrollable);
 
-        base = base.push(content_node);
         Some(base)
     }
 }
