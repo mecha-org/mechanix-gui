@@ -1,7 +1,7 @@
 use crate::{
     screens::{
         about::about_device::AboutDevice,
-        battery::battery_screen::BatteryScreen,
+        battery::battery_screen::{BatteryScreen, BatteryScreenRoute},
         bluetooth::{
             bluetooth_pairing_enter_code::BluetoothPairingEnterCode,
             bluetooth_screen::BluetoothScreen,
@@ -75,11 +75,9 @@ pub enum Routes {
     BluetoothPairingVerifyCode,
     BluetoothPairingEnterCode,
     BluetoothDeviceInfo,
-    ScreenOffTime,
     DisplayScreen,
     AppearanceScreen,
     BatteryScreen,
-    PerformanceModes,
     SoundScreen,
     AboutScreen,
     LockScreen,
@@ -103,6 +101,7 @@ pub enum Message {
     ChangeRoute { route: Routes },
     ChangeSoundScreenRoute { route: SoundScreenRoute },
     ChangeDisplayScreenRoute { route: DisplayScreenRoute },
+    ChangeBatteryScreenRoute { route: BatteryScreenRoute },
 }
 
 pub enum NetworkMessage {
@@ -197,7 +196,7 @@ impl Component for SettingsApp {
                 }
             },
             Routes::DisplayScreen => base = base.push(node!(DisplayScreen::new())),
-            Routes::BatteryScreen => base = base.push(node!(BatteryScreen {})),
+            Routes::BatteryScreen => base = base.push(node!(BatteryScreen::new())),
             Routes::AboutScreen => base = base.push(node!(AboutDevice {})),
             Routes::BluetoothScreen => base = base.push(node!(BluetoothScreen {})),
             Routes::BluetoothPairingEnterCode => {

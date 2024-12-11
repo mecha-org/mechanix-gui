@@ -7,12 +7,38 @@ use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
 
 use super::battery_model::BatteryModel;
+use super::performance_mode::PerformanceMode;
+
+#[derive(Debug, Clone)]
+pub enum BatteryScreenRoute {
+    BatteryScreen,
+    PerformanceMode,
+}
+
+struct BatteryScreenState {
+    pub route: BatteryScreenRoute,
+}
 
 #[derive(Debug)]
+#[component(State = "BatteryScreenState")]
 pub struct BatteryScreen {}
+
+impl BatteryScreen {
+    pub fn new() -> Self {
+        BatteryScreen {
+            dirty: false,
+            state: Some(BatteryScreenState {
+                route: BatteryScreenRoute::BatteryScreen,
+            }),
+        }
+    }
+}
+
+#[state_component_impl(BatteryScreenState)]
 impl Component for BatteryScreen {
     fn init(&mut self) {
         BatteryModel::update();
+        self.state_mut().route = BatteryScreenRoute::BatteryScreen;
     }
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
@@ -31,10 +57,11 @@ impl Component for BatteryScreen {
                 size_pct: [100, 80],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 10.0, 0.0, 10.0],
+                padding: [5.0, 0.0, 0.0, 0.0],
             ]
         );
 
+        // TODO : update view
         let battery_percentage = node!(
             Slider::new()
                 .value(*BatteryModel::get().battery_percentage.get() as u8)
@@ -55,11 +82,10 @@ impl Component for BatteryScreen {
         main_node = main_node.push(tab_item_node!(
             [text_node("Mode")],
             [text_bold_node("Balenced"), icon_node("right_arrow_icon")],
-            route: Routes::PerformanceModes
+            on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
         ));
         main_node = main_node.push(node!(HDivider { size: 1. }));
 
-        // base = base.push(footer_node!(Routes::SettingsList));
         base = base.push(header_node!(
             "Battery",
             Box::new(|| {
@@ -68,7 +94,26 @@ impl Component for BatteryScreen {
                 })
             })
         ));
-        base = base.push(main_node);
+
+        match self.state_ref().route {
+            BatteryScreenRoute::BatteryScreen => {
+                base = base.push(main_node);
+            }
+            BatteryScreenRoute::PerformanceMode => base = base.push(node!(PerformanceMode {})),
+        }
+
         Some(base)
+    }
+
+    fn update(&mut self, msg: prelude::Message) -> Vec<prelude::Message> {
+        if let Some(msg) = msg.downcast_ref::<Message>() {
+            match msg {
+                Message::ChangeBatteryScreenRoute { route } => {
+                    self.state_mut().route = route.clone();
+                }
+                _ => (),
+            }
+        }
+        vec![msg]
     }
 }
