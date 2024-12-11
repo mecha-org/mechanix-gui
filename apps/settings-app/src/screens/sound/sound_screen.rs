@@ -57,7 +57,6 @@ impl component::Component for SoundScreen {
                 size_pct: [100],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 10.0, 0.0, 10.0],
             ]
         );
 
@@ -103,13 +102,13 @@ impl component::Component for SoundScreen {
         main_node = main_node.push(text_bold_node("OUTPUT"));
         main_node = main_node.push(output_slider);
         // // NOTE: Hide
-        // main_node = main_node.push(output_device);
+        main_node = main_node.push(output_device);
 
         main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
         main_node = main_node.push(text_bold_node("INPUT"));
         main_node = main_node.push(input_slider);
         // // NOTE: Hide
-        // main_node = main_node.push(input_device);
+        main_node = main_node.push(input_device);
 
         // main_node = main_node.push(footer_node!(Routes::SettingsList));
 

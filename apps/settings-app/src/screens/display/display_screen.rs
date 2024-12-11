@@ -5,13 +5,9 @@ use crate::{
     gui::{Message, Routes},
     shared::h_divider::HDivider,
 };
-use mctk_core::component::*;
-use mctk_core::event::*;
-use mctk_core::style::Styled;
-use mctk_core::widgets::*;
-use mctk_core::*;
 
 use super::brightness_model::BrightnessModel;
+use super::screen_off_time::ScreenOffTime;
 
 #[derive(Debug, Clone)]
 pub enum DisplayScreenRoute {
@@ -42,6 +38,7 @@ impl DisplayScreen {
 impl Component for DisplayScreen {
     fn init(&mut self) {
         BrightnessModel::update();
+        self.state_mut().route = DisplayScreenRoute::DisplayScreen;
     }
 
     fn view(&self) -> Option<Node> {
@@ -61,7 +58,6 @@ impl Component for DisplayScreen {
                 size_pct: [100, 80],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 10.0, 0.0, 10.0],
             ]
         );
 
@@ -90,10 +86,9 @@ impl Component for DisplayScreen {
         main_node = main_node.push(text_node("BRIGHTNESS"));
         main_node = main_node.push(slider);
 
-        // // Note: Hide
-        // main_node = main_node.push(node!(HDivider { size: 1. }));
-        // main_node = main_node.push(screen_off_time);
-        // main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(screen_off_time);
+        main_node = main_node.push(node!(HDivider { size: 1. }));
 
         base = base.push(header_node!(
             "Display",
@@ -111,7 +106,13 @@ impl Component for DisplayScreen {
                 })
             }
         ));
-        base = base.push(main_node);
+
+        match self.state_ref().route {
+            DisplayScreenRoute::DisplayScreen => {
+                base = base.push(main_node);
+            }
+            DisplayScreenRoute::ScreenOffTime => base = base.push(node!(ScreenOffTime {})),
+        }
         // base = base.push(footer_node!(Routes::SettingsList));
 
         Some(base)

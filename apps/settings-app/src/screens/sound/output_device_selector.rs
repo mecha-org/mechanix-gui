@@ -10,19 +10,19 @@ impl Component for OutputDeviceSelector {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
             lay![
-                size_pct: [80],
+                size_pct: [100, Auto],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
+                padding: [5.0, 0.0, 5.0, 0.0],
             ]
         );
 
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size_pct: [100],
+                size_pct: [100, Auto],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [0.0],
             ]
         );
 

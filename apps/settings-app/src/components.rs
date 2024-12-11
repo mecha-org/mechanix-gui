@@ -369,7 +369,7 @@ pub fn radio_node(options: Vec<&str>) -> Node {
             //.multi_select(true)
             .max_columns(1),
         // .on_change(Box::new(|s| msg!(HelloEvent::RadioSelect { selection: s }))),
-        lay![margin: [0], size: [450, Auto]]
+        lay![ size: [440, Auto]]
     );
     radio
 }

@@ -8,10 +8,9 @@ use mctk_core::{
     widgets::{Div, Text},
     Color, Node,
 };
-use mechanix_status_bar_components::settings::Bluetooth;
 
 use super::component::SettingsRowComponent;
-use crate::{components::*, tab_item_node};
+use crate::components::*;
 use crate::{
     gui::{Message, NetworkScreenRoutes, Routes},
     shared::h_divider::HDivider,

@@ -67,7 +67,7 @@ impl Component for AboutDevice {
             Div::new(),
             lay![
                 size_pct: [100],
-                // padding: [5.0, 0.0, 5.0, 0.0],
+                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]

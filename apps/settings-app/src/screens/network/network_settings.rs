@@ -1,9 +1,7 @@
 use std::hash::Hash;
 
-use super::component::NetworkRowComponent;
 use super::networking::ClicableIconComponent;
 use super::wireless_model::WirelessModel;
-use crate::AppMessage;
 use crate::{
     components::{header_node, text_node},
     gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
@@ -125,13 +123,23 @@ impl Component for NetworkSettings {
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
                     .style("radius", 10.),
                 lay![
-                    size: [52, 52],
-                    padding: [0, 0, 0, 20.],
+                    size: [42, 42],
+                    padding: [0, 0, 0, 2.],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ]
             ))
-            .push(text_node),
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [100, Auto],
+                        direction: Direction::Column,
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(text_node),
+            ),
         );
 
         let mut scrollable_section = node!(

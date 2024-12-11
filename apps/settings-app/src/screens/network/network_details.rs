@@ -1,34 +1,25 @@
 use std::hash::Hash;
 
-use super::component::NetworkRowComponent;
 use super::wireless_model::WirelessModel;
-use crate::AppMessage;
 use crate::{
-    components::{header_node, text_node},
-    gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
-    main,
+    gui::{Message, NetworkScreenRoutes, Routes},
     shared::h_divider::HDivider,
 };
 
-use mctk_core::prelude::cosmic_text::rustybuzz::ttf_parser::Fixed;
-use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
-use mctk_core::renderables::Image;
 use mctk_core::widgets::Button;
 use mctk_core::{
-    component::{self, Component},
+    component::Component,
     lay,
     layout::{Alignment, Dimension, Direction, Size},
     msg, node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{self, Div, IconButton, IconType, Text, Toggle},
+    widgets::{self, Div, IconButton, IconType, Text},
     Color, Node,
 };
 use mctk_macros::{component, state_component_impl};
 
-use mechanix_status_bar_components::types::WirelessStatus;
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use zbus::message;
 
 enum NetworkDetailsMessage {
     openModel(bool),
@@ -134,9 +125,6 @@ impl Component for NetworkDetails {
             ]
         );
 
-        // // TODO:
-        // 1. show selected network name in header; for long name , add suffix ".."
-        // 2. show forget-(delete_icon) only when it is saved network
         let header_node = node!(
             Div::new(),
             lay![
@@ -176,13 +164,23 @@ impl Component for NetworkDetails {
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
                     .style("radius", 10.),
                 lay![
-                    size: [52, 52],
-                    padding: [0, 0, 0, 20.],
+                    size: [42, 42],
+                    padding: [0, 0, 0, 2.],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ]
             ))
-            .push(text_node),
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [100, Auto],
+                        direction: Direction::Column,
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(text_node),
+            ),
         )
         .push(
             node!(
