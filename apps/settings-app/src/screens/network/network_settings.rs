@@ -242,14 +242,14 @@ impl Component for NetworkSettings {
                 )
                 .push(node!(
                     IconButton::new("delete_icon")
-                        // .on_click(Box::new(move || {
-                        //     WirelessModel::forget_saved_network(network.ssid.clone());
-                        //     msg!(())
-                        // }))
-                        .on_click(Box::new(move || msg!(SavedNetworksMessage::OpenModel(
-                            !is_model_open,
-                            network.ssid.clone()
-                        ))))
+                        .on_click(Box::new(move || {
+                            WirelessModel::forget_saved_network(network.ssid.clone());
+                            msg!(())
+                        }))
+                        // .on_click(Box::new(move || msg!(SavedNetworksMessage::OpenModel(
+                        //     !is_model_open,
+                        //     network.ssid.clone()
+                        // ))))
                         .icon_type(IconType::Png)
                         .style(
                             "size",
