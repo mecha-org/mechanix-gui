@@ -336,10 +336,10 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Name"))
+                Text::new(txt!("Name".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -366,10 +366,10 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Status"))
+                Text::new(txt!("Status".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -406,10 +406,10 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Frequency"))
+                Text::new(txt!("Frequency".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -440,10 +440,10 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("IP Address"))
+                Text::new(txt!("IP Address".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -480,10 +480,10 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("MAC Address"))
+                Text::new(txt!("MAC Address".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -510,10 +510,10 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Security"))
+                Text::new(txt!("Security".to_uppercase()))
                     .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 15.0)
-                    .style("line_height", 17.5)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
