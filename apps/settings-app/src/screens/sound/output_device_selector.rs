@@ -26,7 +26,7 @@ impl Component for OutputDeviceSelector {
             ]
         );
 
-        main_node = main_node.push(text_node("Select Output Device"));
+        main_node = main_node.push(text_bold_node("Select Output Device"));
         main_node = main_node.push(radio_node(vec!["Speakers", "Headphones"]));
         base = base.push(main_node);
         Some(base)

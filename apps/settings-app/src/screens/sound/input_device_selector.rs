@@ -26,7 +26,7 @@ impl Component for InputDeviceSelector {
             ]
         );
 
-        main_node = main_node.push(text_node("Select Input Device"));
+        main_node = main_node.push(text_bold_node("Select Input Device"));
         main_node = main_node.push(radio_node(vec![
             "Inbuilt Microphone",
             "External Microphone",

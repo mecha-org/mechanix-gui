@@ -58,6 +58,7 @@ impl Component for DisplayScreen {
                 size_pct: [100, 80],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
+                padding: [5.0, 0.0, 0.0, 0.0],
             ]
         );
 
@@ -74,7 +75,7 @@ impl Component for DisplayScreen {
                 .col_spacing(7.75)
                 .row_spacing(7.75)
                 .col_width(4.),
-            lay![size: [Auto, 45], margin:[10., 10., 45., 0.]]
+            lay![size: [Auto, 45], margin:[15., 10., 45., 0.]]
         );
 
         let screen_off_time = tab_item_node!(
@@ -85,7 +86,7 @@ impl Component for DisplayScreen {
 
         main_node = main_node.push(text_bold_node("Brightness"));
 
-        main_node = main_node.push(slider); // TODO : update view
+        main_node = main_node.push(slider);
 
         main_node = main_node.push(node!(HDivider { size: 1. }));
         main_node = main_node.push(screen_off_time);
@@ -114,7 +115,6 @@ impl Component for DisplayScreen {
             }
             DisplayScreenRoute::ScreenOffTime => base = base.push(node!(ScreenOffTime {})),
         }
-        // base = base.push(footer_node!(Routes::SettingsList));
 
         Some(base)
     }

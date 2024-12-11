@@ -57,6 +57,7 @@ impl component::Component for SoundScreen {
                 size_pct: [100],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
+                padding: [5.0, 0.0, 0.0, 0.0],
             ]
         );
 
@@ -98,19 +99,16 @@ impl component::Component for SoundScreen {
             [icon_node("right_arrow_icon")],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectInputDevice }))),
         );
-        main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
-        main_node = main_node.push(text_bold_node("OUTPUT"));
+
+        // main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
+        main_node = main_node.push(text_bold_node("Output"));
         main_node = main_node.push(output_slider);
-        // // NOTE: Hide
         main_node = main_node.push(output_device);
 
         main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
-        main_node = main_node.push(text_bold_node("INPUT"));
+        main_node = main_node.push(text_bold_node("Input"));
         main_node = main_node.push(input_slider);
-        // // NOTE: Hide
         main_node = main_node.push(input_device);
-
-        // main_node = main_node.push(footer_node!(Routes::SettingsList));
 
         base = base.push(header_node!(
             "Sound",
