@@ -1,5 +1,6 @@
 use std::hash::Hash;
 
+use crate::screens::network::wireless_model::WirelessModel;
 use crate::AppMessage;
 use crate::{components::*, header_node, tab_item_node};
 use crate::{
@@ -33,6 +34,7 @@ pub struct AboutDevice {}
 impl Component for AboutDevice {
     fn init(&mut self) {
         DeviceModel::update();
+        WirelessModel::update_mac_addresses();
     }
 
     fn render_hash(&self, hasher: &mut ComponentHasher) {
@@ -60,8 +62,8 @@ impl Component for AboutDevice {
         let provision_machine_icon_url = DeviceModel::get().provision_icon_url.get().clone();
         let ip_adderss = DeviceModel::get().ip_address.get().clone();
 
-        let wifi_mac_address: String = "28:cd:c4:c2:e8:33".to_string();
-        let ethernet_mac_address: String = "c0:3e:ba:3e:94:47".to_string();
+        let wifi_mac_address: String = WirelessModel::get().wireless_mac_address.get().clone();
+        let ethernet_mac_address: String = WirelessModel::get().ethernet_mac_address.get().clone();
 
         let mut base: Node = node!(
             Div::new(),

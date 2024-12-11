@@ -36,6 +36,8 @@ lazy_static! {
         is_enabled: Context::new(false),
         is_streaming: Context::new(false),
         state: Context::new(WifiState::Disconnected),
+        wireless_mac_address: Context::new("".to_string()),
+        ethernet_mac_address: Context::new("".to_string()),
     };
 }
 
@@ -56,6 +58,8 @@ pub struct WirelessModel {
     pub is_enabled: Context<bool>,
     pub is_streaming: Context<bool>,
     pub state: Context<WifiState>,
+    pub wireless_mac_address: Context<String>,
+    pub ethernet_mac_address: Context<String>,
 }
 
 impl WirelessModel {
@@ -92,6 +96,23 @@ impl WirelessModel {
         "/org/freedesktop/NetworkManager/Devices/2".to_string()
     }
 
+    async fn get_ethernet_device_path() -> String {
+        let connection = zbus::Connection::system().await.unwrap();
+        let proxy = network_manager::NetworkManagerProxy::new(&connection)
+            .await
+            .unwrap();
+        let devices = proxy.get_all_devices().await.unwrap();
+        for device in devices {
+            let device_proxy = device::DeviceProxy::new(&connection, device.clone())
+                .await
+                .unwrap();
+            if device_proxy.device_type().await.unwrap() == 1 {
+                return device.to_string();
+            }
+        }
+        "/org/freedesktop/NetworkManager/Devices/2".to_string()
+    }
+
     pub fn scan() {
         RUNTIME.spawn(async {
             let conneciton = zbus::Connection::system().await.unwrap();
@@ -121,6 +142,31 @@ impl WirelessModel {
             // WirelessModel::get()
             //     .connected_network
             //     .set(Some(connected_network));
+        });
+    }
+
+    pub fn update_mac_addresses() {
+        RUNTIME.spawn(async {
+            let device_path = Self::get_wifi_device_path().await;
+            let device_proxy =
+                device::DeviceProxy::new(&zbus::Connection::system().await.unwrap(), device_path)
+                    .await
+                    .unwrap();
+            let wifi_mac_address = device_proxy.hw_address().await.unwrap();
+
+            let device_path = Self::get_ethernet_device_path().await;
+            let device_proxy =
+                device::DeviceProxy::new(&zbus::Connection::system().await.unwrap(), device_path)
+                    .await
+                    .unwrap();
+            let ethernet_mac_address = device_proxy.hw_address().await.unwrap();
+
+            WirelessModel::get()
+                .wireless_mac_address
+                .set(wifi_mac_address.to_string());
+            WirelessModel::get()
+                .ethernet_mac_address
+                .set(ethernet_mac_address.to_string());
         });
     }
 
