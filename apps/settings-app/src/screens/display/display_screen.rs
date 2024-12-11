@@ -83,8 +83,9 @@ impl Component for DisplayScreen {
             on_click: Some(Box::new(move || msg!(Message::ChangeDisplayScreenRoute { route: DisplayScreenRoute::ScreenOffTime } ))),
         );
 
-        main_node = main_node.push(text_node("BRIGHTNESS"));
-        main_node = main_node.push(slider);
+        main_node = main_node.push(text_bold_node("Brightness"));
+
+        main_node = main_node.push(slider); // TODO : update view
 
         main_node = main_node.push(node!(HDivider { size: 1. }));
         main_node = main_node.push(screen_off_time);

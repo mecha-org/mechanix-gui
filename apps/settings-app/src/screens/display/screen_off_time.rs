@@ -5,34 +5,33 @@ pub struct ScreenOffTime {}
 impl Component for ScreenOffTime {
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
-            widgets::Div::new().bg(Color::BLACK),
+            Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
                 padding: [5.0, 0.0, 5.0, 0.0],
-                direction: layout::Direction::Column,
-                cross_alignment: layout::Alignment::Stretch,
+                direction: Direction::Column,
             ]
         );
 
         let mut scrollable = node!(
             Scrollable::new(),
             lay![
-                size: [440, 400],
+                size: [440, 370],
             ]
-        );
-
-        let mut main_node = node!(
-            widgets::Div::new(),
+        )
+        .push(node!(
+            Div::new(),
             lay![
-                size_pct: [100, Auto],
-                cross_alignment: layout::Alignment::Stretch,
-                direction: layout::Direction::Column,
+                size: [440, Auto],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
             ]
-        );
-        main_node = main_node.push(radio_node(vec!["10s", "20s", "30s", "60s", "5m", "Never"]));
+        ));
 
-        base = base.push(header_node("Screen off time"));
-        scrollable = scrollable.push(main_node);
+        let sub_header = text_bold_node("Screen off time");
+        scrollable = scrollable.push(radio_node(vec!["10s", "20s", "30s", "60s", "5m", "Never"]));
+
+        base = base.push(sub_header);
 
         base = base.push(scrollable);
         Some(base)
