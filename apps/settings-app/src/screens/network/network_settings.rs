@@ -143,7 +143,7 @@ impl Component for NetworkSettings {
         );
 
         let mut scrollable_section = node!(
-            Scrollable::new(),
+            Scrollable::new(size!(440, 400)),
             lay![
                 size: [440, 400],
                 direction: Direction::Column,

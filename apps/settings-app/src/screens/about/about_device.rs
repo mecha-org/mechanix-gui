@@ -76,7 +76,7 @@ impl Component for AboutDevice {
         );
 
         let mut scrollable = node!(
-            Scrollable::new(),
+            Scrollable::new(size!(440, 380)),
             lay![
                 size: [440, 380],
             ]

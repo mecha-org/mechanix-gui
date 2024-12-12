@@ -14,7 +14,7 @@ impl Component for ScreenOffTime {
         );
 
         let mut scrollable = node!(
-            Scrollable::new(),
+            Scrollable::new(size!(440, 370)),
             lay![
                 size: [440, 370],
             ]

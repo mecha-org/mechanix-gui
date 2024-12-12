@@ -906,7 +906,7 @@ impl Component for NetworkingScreen {
         //
         // content_node = content_node.push(node!(HDivider { size: 1. }));
         let mut scrollable_section = node!(
-            Scrollable::new(),
+            Scrollable::new(size!(440, 320)),
             lay![
                 size: [440, 320],
                 direction: Direction::Column,

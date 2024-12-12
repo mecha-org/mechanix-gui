@@ -346,7 +346,7 @@ impl Component for SettingsScreen {
         .push(node!(HDivider { size: 1. }));
 
         let mut scrollable = node!(
-            Scrollable::new(),
+            Scrollable::new(size!(440, 400)),
             lay![
                 size: [440, 400],
             ]
