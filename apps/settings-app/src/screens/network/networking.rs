@@ -328,10 +328,12 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                Toggle::new(status).on_change(Box::new(|value| {
-                    WirelessModel::toggle_wireless();
-                    Box::new(())
-                })),
+                Toggle::new(status)
+                    .toggle_type(widgets::ToggleType::Type1)
+                    .on_change(Box::new(|value| {
+                        WirelessModel::toggle_wireless();
+                        Box::new(())
+                    })),
                 lay![]
             )),
         );
