@@ -9,6 +9,7 @@ use zbus::{proxy, zvariant::Type, Connection, Result};
 )]
 trait PowerBusInterface {
     async fn session_logout(&self) -> Result<()>;
+    async fn get_cpu_governer(&self) -> Result<String>;
 }
 
 pub struct Power;
@@ -18,6 +19,13 @@ impl Power {
         let connection = Connection::session().await?;
         let proxy = PowerBusInterfaceProxy::new(&connection).await?;
         let reply = proxy.session_logout().await?;
+        Ok(reply)
+    }
+
+    pub async fn get_cpu_governer() -> Result<String> {
+        let connection = Connection::session().await?;
+        let proxy = PowerBusInterfaceProxy::new(&connection).await?;
+        let reply = proxy.get_cpu_governer().await?;
         Ok(reply)
     }
 }
