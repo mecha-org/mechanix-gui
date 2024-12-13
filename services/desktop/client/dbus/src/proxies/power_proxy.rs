@@ -21,11 +21,4 @@ impl Power {
         let reply = proxy.session_logout().await?;
         Ok(reply)
     }
-
-    pub async fn get_cpu_governer() -> Result<String> {
-        let connection = Connection::session().await?;
-        let proxy = PowerBusInterfaceProxy::new(&connection).await?;
-        let reply = proxy.get_cpu_governer().await?;
-        Ok(reply)
-    }
 }
