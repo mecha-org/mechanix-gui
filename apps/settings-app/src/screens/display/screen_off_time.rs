@@ -1,4 +1,6 @@
-use crate::components::*;
+use font_cache::TextSegment;
+
+use crate::{components::*, radio_node};
 
 #[derive(Debug)]
 pub struct ScreenOffTime {}
@@ -29,7 +31,12 @@ impl Component for ScreenOffTime {
         ));
 
         let sub_header = text_bold_node("Screen off time");
-        scrollable = scrollable.push(radio_node(vec!["10s", "20s", "30s", "60s", "5m", "Never"]));
+        let options = vec!["10s", "20s", "30s", "60s", "5m", "Never"];
+        let mut options_vec: Vec<(Vec<TextSegment>, Vec<TextSegment>)> = vec![];
+        for (i, option) in options.into_iter().enumerate() {
+            options_vec.push((txt!(option), txt!(option)));
+        }
+        scrollable = scrollable.push(radio_node!(options_vec, txt!("30s")));
 
         base = base.push(sub_header);
 

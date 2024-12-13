@@ -1,5 +1,8 @@
+use font_cache::TextSegment;
+
 use crate::gui::Message;
 use crate::gui::Routes;
+use crate::radio_node;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
@@ -27,10 +30,17 @@ impl Component for InputDeviceSelector {
         );
 
         main_node = main_node.push(text_bold_node("Select Input Device"));
-        main_node = main_node.push(radio_node(vec![
-            "Inbuilt Microphone",
-            "External Microphone",
-        ]));
+        let options = vec![
+            (
+                txt!("Inbuilt Microphone".to_string()),
+                txt!("Inbuilt Microphone".to_string()),
+            ),
+            (
+                txt!("External Microphone".to_string()),
+                txt!("External Microphone".to_string()),
+            ),
+        ];
+        main_node = main_node.push(radio_node!(options, txt!("Inbuilt Microphone")));
         base = base.push(main_node);
         Some(base)
     }

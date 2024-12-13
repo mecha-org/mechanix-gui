@@ -1,12 +1,14 @@
 use crate::gui::Message;
 use crate::gui::Routes;
 use crate::header_node;
+use crate::main;
 use crate::shared::h_divider::HDivider;
 use crate::shared::slider::Slider;
 use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
 
 use super::battery_model::BatteryModel;
+use super::component::StatusIndicator;
 use super::performance_mode::PerformanceMode;
 
 #[derive(Debug, Clone)]
@@ -41,6 +43,8 @@ impl Component for BatteryScreen {
         self.state_mut().route = BatteryScreenRoute::BatteryScreen;
     }
     fn view(&self) -> Option<Node> {
+        let current_mode = BatteryModel::get().cureent_mode.get().clone();
+
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
             lay![
@@ -61,27 +65,67 @@ impl Component for BatteryScreen {
             ]
         );
 
-        // TODO : update view
-        let battery_percentage = node!(
-            Slider::new()
-                .value(*BatteryModel::get().battery_percentage.get() as u8)
-                .slider_type(SliderType::Line)
-                .active_color(Color::rgb(102., 226., 0.))
-                // .on_slide(Box::new(|value| Box::new(())))
-                .col_spacing(8.)
-                .col_width(3.75)
-                .disabled(true),
-            lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
+        let available_battery_percentage = *BatteryModel::get().battery_percentage.get() as u8;
+
+        main_node = main_node.push(node!(
+            Div::new(),
+            lay![
+                size: [Auto, 10],
+            ]
+        ));
+        main_node = main_node.push(
+            node!(
+                Div::new(),
+                lay![
+                    size: [440, 40],
+                    direction: Direction::Row,
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Stretch,
+                ]
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [80, Auto],
+                    ]
+                )
+                .push(node!(
+                    StatusIndicator::new(available_battery_percentage),
+                    lay![]
+                )),
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [20, Auto],
+                        axis_alignment: Alignment::End,
+                        cross_alignment: Alignment::Center,
+                    ]
+                )
+                .push(text_node(
+                    format!(" {}% ", available_battery_percentage).as_str(),
+                )),
+            ),
         );
 
-        main_node = main_node.push(text_node(
-            format!(" {}%", *BatteryModel::get().battery_percentage.get() as u8).as_str(),
+        main_node = main_node.push(node!(
+            Div::new(),
+            lay![
+                size: [Auto, 20],
+            ]
         ));
-        main_node = main_node.push(battery_percentage);
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+
+        main_node = main_node.push(node!(
+            HDivider { size: 1. },
+            lay![
+                padding: [10., 0., 0., 0.]
+            ]
+        ));
         main_node = main_node.push(tab_item_node!(
             [text_node("Mode")],
-            [text_bold_node("Balenced"), icon_node("right_arrow_icon")],
+            [text_bold_node(&current_mode), icon_node("right_arrow_icon")],
             on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
         ));
         main_node = main_node.push(node!(HDivider { size: 1. }));

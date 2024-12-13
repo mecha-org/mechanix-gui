@@ -359,19 +359,34 @@ macro_rules! tab_item_node {
     }};
 }
 
-pub fn radio_node(options: Vec<&str>) -> Node {
-    let options = options.into_iter().map(|x| txt!(x.to_string())).collect();
-    let radio = node!(
-        RadioButtons::new(options, 0,)
-            .direction(mctk_core::layout::Direction::Column)
-            .style("font_size", 18.0)
-            .style("padding", 0.)
-            //.multi_select(true)
-            .max_columns(1),
-        // .on_change(Box::new(|s| msg!(HelloEvent::RadioSelect { selection: s }))),
-        lay![ size: [440, Auto]]
-    );
-    radio
+#[macro_export]
+macro_rules! radio_node {
+    ($options:expr, $selcted_option: expr, $on_change:expr) => {{
+        let radio = node!(
+            RadioButtons::new($options)
+                .selected($selcted_option)
+                .direction(mctk_core::layout::Direction::Column)
+                .style("font_size", 18.0)
+                .style("padding", 0.)
+                .max_columns(1)
+                .on_change($on_change),
+            lay![ size: [440, Auto]]
+        );
+        radio
+    }};
+
+    ($options:expr, $selcted_option: expr) => {{
+        let radio = node!(
+            RadioButtons::new($options)
+                .selected($selcted_option)
+                .direction(mctk_core::layout::Direction::Column)
+                .style("font_size", 18.0)
+                .style("padding", 0.)
+                .max_columns(1),
+            lay![ size: [440, Auto]]
+        );
+        radio
+    }};
 }
 
 // #[derive(Default)]
@@ -456,44 +471,3 @@ impl Component for ClicableIconComponent {
         Some(base)
     }
 }
-
-// -----------------
-
-// impl TabItemComponent {
-//     pub fn new(
-//         left_nodes: Vec<Node>,
-//         right_nodes: Vec<Node>,
-//         on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
-//     ) -> Self {
-//         let mut left = node!(
-//             Div::new(),
-//             lay![
-//                 size_pct: [50],
-//                 axis_alignment: Alignment::Start
-//             ],
-//         );
-//         for node in left_nodes {
-//             left = left.push(node);
-//         }
-//
-//         let mut right = node!(
-//             Div::new(),
-//             lay![
-//                 size_pct: [50],
-//                 axis_alignment: Alignment::End
-//             ],
-//         );
-//         for node in right_nodes {
-//             right = right.push(node);
-//         }
-//
-//         Self {
-//             dirty: false,
-//             state: Some(TabItemState {
-//                 left: Some(left),
-//                 right: Some(right),
-//                 on_click,
-//             }),
-//         }
-//     }
-// }

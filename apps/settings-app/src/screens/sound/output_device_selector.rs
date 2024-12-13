@@ -1,5 +1,6 @@
 use crate::gui::Message;
 use crate::gui::Routes;
+use crate::radio_node;
 use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
@@ -27,7 +28,14 @@ impl Component for OutputDeviceSelector {
         );
 
         main_node = main_node.push(text_bold_node("Select Output Device"));
-        main_node = main_node.push(radio_node(vec!["Speakers", "Headphones"]));
+        let options = vec![
+            (txt!("Speakers".to_string()), txt!("Speakers".to_string())),
+            (
+                txt!("Headphones".to_string()),
+                txt!("Headphones".to_string()),
+            ),
+        ];
+        main_node = main_node.push(radio_node!(options, txt!("Speakers")));
         base = base.push(main_node);
         Some(base)
     }
