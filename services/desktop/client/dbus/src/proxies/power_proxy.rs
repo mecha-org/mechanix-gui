@@ -9,7 +9,6 @@ use zbus::{proxy, zvariant::Type, Connection, Result};
 )]
 trait PowerBusInterface {
     async fn session_logout(&self) -> Result<()>;
-    async fn get_cpu_governer(&self) -> Result<String>;
 }
 
 pub struct Power;
