@@ -6,10 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mctk_core = { git="https://github.com/namana-mecha/mctk.git", rev="11859c378cd486381680534fba588b5247d14e8f" }
-mctk_smithay = { git="https://github.com/namana-mecha/mctk.git", rev="11859c378cd486381680534fba588b5247d14e8f" }
-mctk_macros = { git="https://github.com/namana-mecha/mctk.git", rev="11859c378cd486381680534fba588b5247d14e8f" }
-mctk_camera = { git="https://github.com/namana-mecha/mctk.git", rev="11859c378cd486381680534fba588b5247d14e8f" }
+mctk_core = { git="https://github.com/namana-mecha/mctk.git", rev="56cfc27b4261" }
+mctk_smithay = { git="https://github.com/namana-mecha/mctk.git", rev="56cfc27b4261" }
+mctk_macros = { git="https://github.com/namana-mecha/mctk.git", rev="56cfc27b4261" }
+mctk_camera = { git="https://github.com/namana-mecha/mctk.git", rev="56cfc27b4261" }
+# mctk_core = { path = "../../../mctk/core" }
+# mctk_smithay = { path = "../../../mctk/backends/smithay/" }
+# mctk_macros = { path = "../../../mctk/macros" }
+# mctk_camera = { path = "../../../mctk/camera" }
+
 anyhow = { version = "1.0.75", features = ["backtrace"]}
 gstreamer = "0.23.2"
 gstreamer-app = "0.23.2"

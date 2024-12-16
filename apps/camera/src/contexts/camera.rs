@@ -1,10 +1,10 @@
-use std::sync::Mutex;
+use std::{collections::HashMap, sync::Mutex};
 
 use image::{GenericImageView, ImageBuffer};
 use lazy_static::lazy_static;
 use mctk_camera::{
     camera::GstCamera,
-    types::{CameraFormat, FrameFormat},
+    types::{CameraFormat, FrameFormat, Resolution},
 };
 use mctk_core::{context::Context, reexports::femtovg::rgb::FromSlice};
 use mctk_macros::Model;
@@ -18,10 +18,17 @@ lazy_static! {
     pub static ref CAMERA: Camera = Camera {
         frame_buffer: Context::new(ImageBuffer::default()),
         is_initialized: Context::new(false),
-        fps: Context::new(30),
+
+        compatible_resoultions: Context::new(HashMap::new()),
+
         device_index: Context::new(0),
-        height: Context::new(480),
-        width: Context::new(640),
+
+        fps: Context::new(30),
+        height: Context::new(320),
+        width: Context::new(180),
+
+        capture_height: Context::new(720),
+        capture_width: Context::new(1280),
     };
     pub static ref GST_CAMERA: Mutex<Option<GstCamera>> = Mutex::new(None);
 }
@@ -30,10 +37,17 @@ lazy_static! {
 pub struct Camera {
     is_initialized: Context<bool>,
     pub frame_buffer: Context<ImageBuffer<image::Rgb<u8>, Vec<u8>>>,
-    pub fps: Context<u32>,
+
+    pub compatible_resoultions: Context<HashMap<Resolution, Vec<u32>>>,
+
     pub device_index: Context<usize>,
+
+    pub fps: Context<u32>,
     pub width: Context<u32>,
     pub height: Context<u32>,
+
+    pub capture_height: Context<u32>,
+    pub capture_width: Context<u32>,
 }
 
 impl Camera {
@@ -49,7 +63,7 @@ impl Camera {
                 Some(CameraFormat::new_from(
                     *CAMERA.width.get(),
                     *CAMERA.height.get(),
-                    FrameFormat::MJPEG,
+                    FrameFormat::YUYV,
                     *CAMERA.fps.get(),
                 )),
             ) {
@@ -62,7 +76,7 @@ impl Camera {
                                 CameraFormat::new_from(
                                     *CAMERA.width.get(),
                                     *CAMERA.height.get(),
-                                    FrameFormat::MJPEG,
+                                    FrameFormat::YUYV,
                                     *CAMERA.fps.get(),
                                 )
                             );
@@ -79,6 +93,14 @@ impl Camera {
                 }
             };
             *GST_CAMERA.lock().unwrap() = camera;
+            let compatible_resolutions = GST_CAMERA
+                .lock()
+                .unwrap()
+                .as_mut()
+                .unwrap()
+                .compatible_list_by_resolution(FrameFormat::YUYV)
+                .unwrap();
+            CAMERA.compatible_resoultions.set(compatible_resolutions);
             CAMERA.is_initialized.set(true);
         }
     }
@@ -108,9 +130,21 @@ impl Camera {
                 .stop_stream()
                 .unwrap();
 
+            let height = *CAMERA.capture_height.get();
+            let width = *CAMERA.capture_width.get();
+            let fps = CAMERA.compatible_resoultions.get()[&Resolution {
+                height_y: height,
+                width_x: width,
+            }][0];
+
             let camera = match GstCamera::new(
                 *CAMERA.device_index.get(),
-                Some(CameraFormat::new_from(1280, 720, FrameFormat::MJPEG, 30)),
+                Some(CameraFormat::new_from(
+                    width,
+                    height,
+                    FrameFormat::YUYV,
+                    fps,
+                )),
             ) {
                 Ok(mut c) => {
                     match c.open_stream() {
@@ -118,7 +152,7 @@ impl Camera {
                             println!("camera open success");
                             println!(
                                 "camera format: {:?}",
-                                CameraFormat::new_from(1280, 720, FrameFormat::MJPEG, 30)
+                                CameraFormat::new_from(1280, 720, FrameFormat::YUYV, 30)
                             );
                         }
                         Err(err) => {
@@ -150,13 +184,37 @@ impl Camera {
         });
     }
 
+    pub fn pick_optimal_display_resolution() {
+        let ideal_height = 640;
+        let ideal_width = 480;
+
+        let mut height = *CAMERA.height.get();
+        let mut width = *CAMERA.width.get();
+        let mut fps = *CAMERA.fps.get();
+
+        for resolution in CAMERA.compatible_resoultions.get().keys() {
+            if ((resolution.height_y * resolution.width_x) as i64
+                - (ideal_height * ideal_width) as i64)
+                .abs()
+                < ((height * width) as i64 - (ideal_height * ideal_width) as i64).abs()
+            {
+                height = resolution.height_y;
+                width = resolution.width_x;
+                fps = CAMERA.compatible_resoultions.get().get(resolution).unwrap()[0];
+            }
+        }
+
+        CAMERA.height.set(height);
+        CAMERA.width.set(width);
+        CAMERA.fps.set(fps);
+    }
+
     pub fn start_fetching() {
         RUNTIME.spawn(async move {
             loop {
                 Camera::get();
                 match GST_CAMERA.lock().unwrap().as_mut().unwrap().frame() {
                     Ok(f) => {
-                        println!("got frame!");
                         Self::get().frame_buffer.set(f);
                     }
                     Err(e) => {
