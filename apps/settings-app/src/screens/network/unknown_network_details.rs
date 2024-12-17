@@ -1,14 +1,11 @@
-use super::component::NetworkRowComponent;
 use super::wireless_model::WirelessModel;
-use crate::AppMessage;
 use crate::{
     components::{header_node, text_node},
     gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
     main,
-    shared::h_divider::HDivider,
 };
 
-use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
+use mctk_core::{reexports::smithay_client_toolkit::reexports::calloop::channel::Sender, widgets::HDivider};
 use mctk_core::renderables::Image;
 use mctk_core::{
     component::{self, Component},
@@ -529,33 +526,33 @@ impl Component for UnknownNetworkDetails {
         content_node = content_node.push(start_node);
 
         // content_node = content_node.push(selected_network_node);
-        // content_node = content_node.push(node!(HDivider { size: 1. }, lay![
+        // content_node = content_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }, lay![
         //     margin: [0.0, 0.0, 30.0, 0.0],
         // ]));
 
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [0., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_1);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider { size: 0.5 , color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_2);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider { size: 0.5 , color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_3);
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [10., 0., 10., 0.]
             ]

@@ -2,16 +2,9 @@ use std::hash::Hash;
 
 use super::networking::ClicableIconComponent;
 use super::wireless_model::WirelessModel;
-use crate::{
-    components::{header_node, text_node},
-    gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
-    main,
-    shared::h_divider::HDivider,
-};
+use crate::gui::{Message, NetworkScreenRoutes, Routes};
 
-use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
-use mctk_core::renderables::Image;
-use mctk_core::widgets::{Button, Scrollable};
+use mctk_core::widgets::{Button, HDivider, Scrollable};
 use mctk_core::{
     component::{self, Component},
     lay,
@@ -19,7 +12,7 @@ use mctk_core::{
     msg, node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{self, Div, IconButton, IconType, Text, Toggle},
+    widgets::{self, Div, IconButton, IconType, Text},
     Color, Node,
 };
 use mctk_macros::{component, state_component_impl};
@@ -290,7 +283,7 @@ impl Component for NetworkSettings {
                 ],
             )
             .push(row)
-            .push(node!(HDivider { size: 1.0 }))
+            .push(node!(HDivider { size: 0.8, color: Color::rgba(83., 83., 83., 1.) }))
             .key(2 * i as u64);
 
             scrollable_section = scrollable_section.push(row);

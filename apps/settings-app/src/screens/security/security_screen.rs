@@ -40,7 +40,7 @@ impl Component for SecurityScreen {
         main_node = main_node.push(header_node("Security"));
         main_node = main_node.push(tab_item_node!([text_node("Enable Lock")], [toggle]));
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
         base = base.push(footer_node!(Routes::SettingsList));
         base = base.push(main_node);
         Some(base)

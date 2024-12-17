@@ -13,7 +13,6 @@ use super::component::SettingsRowComponent;
 use crate::{components::*, shared::style_constants::DISABLED_TEXT};
 use crate::{
     gui::{Message, NetworkScreenRoutes, Routes},
-    shared::h_divider::HDivider,
 };
 
 #[derive(Debug)]
@@ -69,7 +68,8 @@ impl Component for SettingsScreen {
             title: "Network".to_string(),
             value: self.connected_network_name.to_string(),
             icon_1: "wireless_good".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Png,
+            icon_2: "white_right_arrow".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::Network {
@@ -93,14 +93,15 @@ impl Component for SettingsScreen {
                     axis_alignment: Alignment::Stretch,
                 ]
             )
-            .push(node!(HDivider { size: 1. })),
+            .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)})),
         );
 
         let bluetooth_row = node!(SettingsRowComponent {
             title: "Bluetooth".to_string(),
             value: "".to_string(),
             icon_1: "bluetooth_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Svg,
+            icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,
             // on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
@@ -115,13 +116,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(bluetooth_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let display_row = node!(SettingsRowComponent {
             title: "Display".to_string(),
             value: "".to_string(),
             icon_1: "display_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Png,
+            icon_2: "white_right_arrow".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::DisplayScreen
@@ -135,13 +137,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(display_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let battery_row = node!(SettingsRowComponent {
             title: "Battery".to_string(),
             value: "".to_string(),
             icon_1: "battery_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Png,
+            icon_2: "white_right_arrow".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::BatteryScreen
@@ -155,13 +158,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(battery_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let appearance_row = node!(SettingsRowComponent {
             title: "Appearance".to_string(),
             value: "".to_string(),
             icon_1: "appearance_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Svg,
+            icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,
         },);
@@ -173,13 +177,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(appearance_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let sound_row = node!(SettingsRowComponent {
             title: "Sound".to_string(),
             value: "".to_string(),
             icon_1: "sound_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Png,
+            icon_2: "white_right_arrow".to_string(),
             color: Color::WHITE,
             // on_click: None,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
@@ -194,13 +199,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(sound_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let lock_row = node!(SettingsRowComponent {
             title: "Lock".to_string(),
             value: "".to_string(),
             icon_1: "lock_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Svg,
+            icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,
         },);
@@ -212,13 +218,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(lock_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let date_time_row = node!(SettingsRowComponent {
             title: "Date & Time".to_string(),
             value: "".to_string(),
             icon_1: "date_time_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Svg,
+            icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,
         },);
@@ -230,13 +237,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(date_time_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let language_row = node!(SettingsRowComponent {
             title: "Language".to_string(),
             value: "".to_string(),
             icon_1: "language_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Svg,
+            icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,
             // on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
@@ -251,13 +259,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(language_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let update_row = node!(SettingsRowComponent {
             title: "Update".to_string(),
             value: "".to_string(),
             icon_1: "update_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Svg,
+            icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,
         },);
@@ -269,13 +278,14 @@ impl Component for SettingsScreen {
             ]
         )
         .push(update_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let about_row = node!(SettingsRowComponent {
             title: "About".to_string(),
             value: "".to_string(),
             icon_1: "about_icon".to_string(),
-            icon_2: "right_arrow_icon".to_string(),
+            icon_1_type: IconType::Png,
+            icon_2: "white_right_arrow".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::AboutScreen
@@ -289,12 +299,12 @@ impl Component for SettingsScreen {
             ]
         )
         .push(about_row)
-        .push(node!(HDivider { size: 1. }));
+        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 400)),
+            Scrollable::new(size!(440, 380)),
             lay![
-                size: [440, 400],
+                size: [440, 380],
             ]
         );
 

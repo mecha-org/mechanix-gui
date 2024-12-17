@@ -2,7 +2,6 @@ use crate::gui::Message;
 use crate::gui::Routes;
 use crate::header_node;
 use crate::main;
-use crate::shared::h_divider::HDivider;
 use crate::shared::slider::Slider;
 use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
@@ -118,17 +117,23 @@ impl Component for BatteryScreen {
         ));
 
         main_node = main_node.push(node!(
-            HDivider { size: 1. },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 padding: [10., 0., 0., 0.]
             ]
         ));
         main_node = main_node.push(tab_item_node!(
             [text_node("Mode")],
-            [text_bold_node(&current_mode), icon_node("right_arrow_icon")],
+            [text_bold_node(&current_mode), icon_node("white_right_arrow")],
             on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
         ));
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
 
         base = base.push(header_node!(
             "Battery",

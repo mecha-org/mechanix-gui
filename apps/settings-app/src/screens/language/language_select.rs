@@ -1,5 +1,4 @@
 use crate::gui::{Message, Routes};
-use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
 #[derive(Debug)]
@@ -36,11 +35,11 @@ impl Component for LanguageSelect {
             main_node = main_node.push(
                 tab_item_node!(
                     [text_bold_node(language), text_node(language_type)],
-                    [icon_node("right_arrow_icon")]
+                    [icon_node("white_right_arrow")]
                 )
                 .key((i + 1) as u64),
             );
-            main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
+            main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(2 * i as u64));
         }
         // main_node = main_node.push(footer_node!(Routes::LanguageScreen));
         base = base.push(main_node);

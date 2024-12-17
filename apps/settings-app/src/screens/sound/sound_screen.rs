@@ -90,13 +90,13 @@ impl component::Component for SoundScreen {
 
         let output_device = tab_item_node!(
             [text_node("Output Speaker")],
-            [icon_node("right_arrow_icon")],
+            [icon_node("white_right_arrow")],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectOutputDevice }))),
         );
 
         let input_device = tab_item_node!(
             [text_node("Input Microphone")],
-            [icon_node("right_arrow_icon")],
+            [icon_node("white_right_arrow")],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectInputDevice }))),
         );
 

@@ -17,7 +17,6 @@ use crate::{
         sound::sound_screen::{SoundScreen, SoundScreenRoute},
     },
     settings::{self, MainSettings},
-    shared::h_divider::HDivider,
     AppMessage, AppParams, WirelessMessage,
 };
 use mctk_core::{
@@ -28,7 +27,7 @@ use mctk_core::{
     reexports::smithay_client_toolkit::reexports::calloop,
     size_pct,
     style::Styled,
-    widgets::Div,
+    widgets::{Div, HDivider},
     Color, Node,
 };
 use mctk_macros::{component, state_component_impl};
@@ -149,7 +148,7 @@ impl Component for SettingsApp {
             ]
         );
         app_node = app_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 padding: [2.0, 20.0, 2.0, 20.0],
             ],

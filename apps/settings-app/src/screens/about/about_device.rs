@@ -7,7 +7,7 @@ use crate::{
     components::{header_node, text_node},
     gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
     main,
-    shared::h_divider::HDivider,
+   
 };
 
 use mctk_core::prelude::ComponentHasher;
@@ -443,42 +443,42 @@ impl Component for AboutDevice {
         }
 
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [15., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_1);
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [10., 0., 20., 0.]
             ]
         ));
 
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [20., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_2);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider { size: 0.5, color: Color::rgba(83., 83., 83., 1.)},
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_3);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider { size: 0.5, color: Color::rgba(83., 83., 83., 1.)},
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_4);
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
             lay![
                 margin: [10., 0., 10., 0.]
             ]

@@ -188,18 +188,17 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // ------------------------------//
-    assets.insert(
-        "bluetooth_icon".to_string(),
-        AssetParams::new(modules.bluetooth.icon),
-    );
+    if let icon = modules.bluetooth.icon {
+        svgs.insert("bluetooth_icon".to_string(), icon);
+    }
+
     assets.insert(
         "display_icon".to_string(),
         AssetParams::new(modules.display.icon),
     );
-    assets.insert(
-        "appearance_icon".to_string(),
-        AssetParams::new(modules.appearance.icon),
-    );
+    if let icon = modules.appearance.icon {
+        svgs.insert("appearance_icon".to_string(), icon);
+    }
     assets.insert(
         "battery_icon".to_string(),
         AssetParams::new(modules.battery.icon),
@@ -208,19 +207,24 @@ async fn main() -> anyhow::Result<()> {
         "sound_icon".to_string(),
         AssetParams::new(modules.sound.icon),
     );
-    assets.insert("lock_icon".to_string(), AssetParams::new(modules.lock.icon));
-    assets.insert(
-        "date_time_icon".to_string(),
-        AssetParams::new(modules.date_time.icon),
-    );
-    assets.insert(
-        "language_icon".to_string(),
-        AssetParams::new(modules.language.icon),
-    );
-    assets.insert(
-        "update_icon".to_string(),
-        AssetParams::new(modules.update.icon),
-    );
+
+    if let icon = modules.lock.icon {
+        svgs.insert("lock_icon".to_string(), icon);
+    }
+
+    if let icon = modules.date_time.icon {
+        svgs.insert("date_time_icon".to_string(), icon);
+    }
+
+    if let icon = modules.language.icon {
+        svgs.insert("language_icon".to_string(), icon);
+    }
+    
+
+    if let icon = modules.update.icon {
+        svgs.insert("update_icon".to_string(), icon);
+    }
+    
     assets.insert(
         "about_icon".to_string(),
         AssetParams::new(modules.about.icon.default),
@@ -229,10 +233,13 @@ async fn main() -> anyhow::Result<()> {
         "device_icon".to_string(),
         AssetParams::new(modules.about.icon.device),
     );
-    assets.insert(
-        "right_arrow_icon".to_string(),
-        AssetParams::new(modules.see_options.right_arrow_icon),
-    );
+
+    if let icon = modules.see_options.white_right_arrow {
+        svgs.insert("white_right_arrow".to_string(), icon);
+    }
+    if let icon = modules.see_options.grey_right_arrow {
+        svgs.insert("grey_right_arrow".to_string(), icon);
+    }
     assets.insert(
         "connected_icon".to_string(),
         AssetParams::new(modules.see_options.connected_icon),
@@ -281,6 +288,7 @@ async fn main() -> anyhow::Result<()> {
         namespace,
     };
 
+    println!("checking svg -------------> {:?} ", svgs.get("bluetooth_icon"));
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
     let settings = Arc::new(RwLock::new(settings));

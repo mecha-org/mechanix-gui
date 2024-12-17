@@ -1,10 +1,7 @@
 use crate::shared::slider::{Slider, SliderType};
 use crate::{components::*, header_node, tab_item_node};
 
-use crate::{
-    gui::{Message, Routes},
-    shared::h_divider::HDivider,
-};
+use crate::gui::{Message, Routes};
 
 use super::brightness_model::BrightnessModel;
 use super::screen_off_time::ScreenOffTime;
@@ -80,7 +77,7 @@ impl Component for DisplayScreen {
 
         let screen_off_time = tab_item_node!(
             [text_node("Screen Time")],
-            [text_bold_node("30s"), icon_node("right_arrow_icon")],
+            [text_bold_node("30s"), icon_node("white_right_arrow")],
             on_click: Some(Box::new(move || msg!(Message::ChangeDisplayScreenRoute { route: DisplayScreenRoute::ScreenOffTime } ))),
         );
 
@@ -88,9 +85,15 @@ impl Component for DisplayScreen {
 
         main_node = main_node.push(slider);
 
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
         main_node = main_node.push(screen_off_time);
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
 
         base = base.push(header_node!(
             "Display",
