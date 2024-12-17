@@ -176,7 +176,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [70, Auto],
+                    size_pct: [80, Auto],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ],
@@ -221,9 +221,9 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [30, Auto],
+                    size_pct: [20, Auto],
                     axis_alignment: Alignment::End,
-                    padding: [0, 0, 0, 0.],
+                    padding: [0, 0, 0, 10.],
                 ]
             )
             .push(node!(
@@ -293,11 +293,11 @@ impl Component for NetworkingScreen {
         let toggle_row = node!(
             Div::new(),
             lay![
-                size: [480, 50],
+                size: [Auto, 50],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
-                padding: [5., 0., 15., 0.],
+                padding: [5., 0., 5., 0.],
             ]
         )
         .push(
@@ -900,13 +900,6 @@ impl Component for NetworkingScreen {
             )),
         );
 
-        content_node = content_node.push(toggle_row);
-        content_node = content_node.push(node!(HDivider { size: 1. }));
-        // content_node = content_node.push(node!(HDivider { size: 1. }));
-
-        // content_node = content_node.push(available_network_text);
-        //
-        // content_node = content_node.push(node!(HDivider { size: 1. }));
         let mut scrollable_section = node!(
             Scrollable::new(size!(440, 320)),
             lay![
@@ -924,92 +917,106 @@ impl Component for NetworkingScreen {
             ]
         ));
 
-        if WirelessModel::get().connected_network.get().is_some() && status.clone() == true {
-            scrollable_section = scrollable_section.push(connected_network_row);
-        }
         let mut key = 0;
 
-        scrollable_section = scrollable_section.push(
-            node!(
-                Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
-                lay![
-                    direction: Direction::Row,
-                    size: [480, Auto],
-                    cross_alignment: Alignment::Stretch
-                ]
-            )
-            .push(node!(
-                Div::new(),
-                lay![
-                    size: [ 480, 1 ]
-                ]
-            )),
-        );
-        for (network, network_id) in saved_available_networks.iter() {
-            if network.name.clone().len() > 0 {
-                scrollable_section =
-                    scrollable_section.push(saved_network_row_component(network.clone()).key(key));
-                key += 1;
-                scrollable_section = scrollable_section
-                    .push(
-                        node!(
-                            Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
-                            lay![
-                                direction: Direction::Row,
-                                size: [480, Auto],
-                                cross_alignment: Alignment::Stretch
-                            ]
-                        )
-                        .push(node!(
-                            Div::new(),
-                            lay![
-                                size: [ 480, 1 ]
-                            ]
-                        )),
-                    )
-                    .key(key);
-                key += 1;
-            }
-        }
-        for network in unsaved_available_networks.iter() {
-            if network.name.clone().len() > 0 {
-                key += 1;
-
-                scrollable_section = scrollable_section
-                    .push(unsaved_available_network_row_component(network.clone()).key(key));
-                scrollable_section = scrollable_section
-                    .push(
-                        node!(
-                            Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
-                            lay![
-                                direction: Direction::Row,
-                                size: [480, Auto],
-                                cross_alignment: Alignment::Stretch
-                            ]
-                        )
-                        .push(node!(
-                            Div::new(),
-                            lay![
-                                size: [ 480, 1 ]
-                            ]
-                        )),
-                    )
-                    .key(key);
-            }
-        }
-        content_node = content_node.push(scrollable_section);
+        content_node = content_node.push(toggle_row);
         content_node = content_node.push(node!(HDivider { size: 1. }));
+        if WirelessModel::get().connected_network.get().is_some() || status.clone() == true {
+            scrollable_section = scrollable_section.push(connected_network_row);
 
-        // content_node = content_node.push(view_all_text);
-        // content_node = content_node.push(advanced_nextwork_text);
+            scrollable_section = scrollable_section.push(
+                node!(
+                    Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
+                    lay![
+                        direction: Direction::Row,
+                        size: [480, Auto],
+                        cross_alignment: Alignment::Stretch
+                    ]
+                )
+                .push(node!(
+                    Div::new(),
+                    lay![
+                        size: [ 480, 1 ]
+                    ]
+                )),
+            );
+
+            for (network, network_id) in saved_available_networks.iter() {
+                if network.name.clone().len() > 0 {
+                    scrollable_section = scrollable_section
+                        .push(saved_network_row_component(network.clone()).key(key));
+                    key += 2;
+                    scrollable_section = scrollable_section
+                        .push(
+                            node!(
+                                Div::new().border(
+                                    Color::rgb(132., 132., 132.),
+                                    0.5,
+                                    (0., 0., 0., 0.)
+                                ),
+                                lay![
+                                    direction: Direction::Row,
+                                    size: [480, Auto],
+                                    cross_alignment: Alignment::Stretch
+                                ]
+                            )
+                            .push(node!(
+                                Div::new(),
+                                lay![
+                                    size: [ 480, 1 ]
+                                ]
+                            )),
+                        )
+                        .key(key);
+                    key += 2;
+                }
+            }
+            for network in unsaved_available_networks.iter() {
+                if network.name.clone().len() > 0 {
+                    key += 1;
+
+                    scrollable_section = scrollable_section
+                        .push(unsaved_available_network_row_component(network.clone()).key(key));
+                    scrollable_section = scrollable_section
+                        .push(
+                            node!(
+                                Div::new().border(
+                                    Color::rgb(132., 132., 132.),
+                                    0.5,
+                                    (0., 0., 0., 0.)
+                                ),
+                                lay![
+                                    direction: Direction::Row,
+                                    size: [480, Auto],
+                                    cross_alignment: Alignment::Stretch
+                                ]
+                            )
+                            .push(node!(
+                                Div::new(),
+                                lay![
+                                    size: [ 480, 1 ]
+                                ]
+                            )),
+                        )
+                        .key(key);
+                }
+            }
+        }
+
+        if status.clone() == true {
+            content_node = content_node.push(scrollable_section);
+            content_node = content_node.push(node!(HDivider { size: 1. }));
+        }
 
         // content_node = content_node.push(node!(HDivider { size: 1. }));
-        // content_node = content_node.push(advanced_network_row);
+
+        // content_node = content_node.push(available_network_text);
+        //
         // content_node = content_node.push(node!(HDivider { size: 1. }));
 
         base = base.push(header_node);
         base = base.push(content_node);
-        // base = base.push(node!(Scrollable::new(), lay![size: [440, 380]]).push(content_node));
+
         Some(base)
     }
 }

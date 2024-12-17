@@ -596,7 +596,7 @@ impl Component for NetworkDetails {
                 ]
             )
             .push(node!(
-                Text::new(txt!("Are you sure?"))
+                Text::new(txt!("Forget this network? "))
                     .style("color", Color::WHITE)
                     .style("size", 20.)
                     .style("line_height", 22.)
@@ -654,7 +654,7 @@ impl Component for NetworkDetails {
                 )),
             )
             .push(node!(
-                Button::new(txt!("Disconnect"))
+                Button::new(txt!("Forget"))
                     .style("text_color", Color::RED)
                     .style("background_color", Color::DARK_GREY)
                     .style("active_color", Color::MID_GREY)
