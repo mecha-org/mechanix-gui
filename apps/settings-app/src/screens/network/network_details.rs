@@ -583,10 +583,11 @@ impl Component for NetworkDetails {
 
         // note : in border with width, does not match with radius  - 1. is the border width
         let modal = node!(
-            Div::new()
-                .bg(Color::BLUE)
-                .bg(Color::rgba(29., 29., 29., 1.))
-                .border(Color::rgba(127., 127., 135., 1.), 0., (10., 10., 10., 10.)),
+            Div::new().bg(Color::rgba(29., 29., 29., 1.)).border(
+                Color::rgba(127., 127., 135., 1.),
+                0.,
+                (10., 10., 10., 10.)
+            ),
             lay![
                 size: [320, 160],
                 direction: Direction::Column,
