@@ -256,10 +256,9 @@ async fn main() -> anyhow::Result<()> {
         "add_icon".to_string(),
         AssetParams::new(modules.footer.add_icon),
     );
-    assets.insert(
-        "tick_icon".to_string(),
-        AssetParams::new(modules.footer.tick_icon),
-    );
+    if let icon = modules.footer.tick_icon {
+        svgs.insert("tick_icon".to_string(), icon);
+    }
     assets.insert(
         "delete_icon".to_string(),
         AssetParams::new(modules.footer.delete_icon),

@@ -174,7 +174,7 @@ impl Component for AddNetwork {
                             }
                         })
                     }))
-                    .icon_type(IconType::Png)
+                    .icon_type(IconType::Svg)
                     .style(
                         "size",
                         Size {
