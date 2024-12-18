@@ -679,9 +679,14 @@ impl Component for NetworkDetails {
                         .style("radius", 8.)
                         // .style("border_color", Color::rgba(127., 127., 135., 1.))
                         // .style("border_width", 1.)
-                        .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
-                            !is_model_open
-                        )))),
+                        .on_click(Box::new(move || {
+                            WirelessModel::disconnect();
+                            msg!(Message::ChangeRoute {
+                                route: Routes::Network {
+                                    screen: NetworkScreenRoutes::Networking
+                                }
+                            })
+                        })),
                     lay![
                         size_pct: [48, 100],
                         padding: [0., 12., 0., 0.],
