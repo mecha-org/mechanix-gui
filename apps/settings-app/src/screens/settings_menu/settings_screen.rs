@@ -63,7 +63,6 @@ impl Component for SettingsScreen {
         );
 
         header = header.push(header_text);
-        // let wireless_status = self.state_ref().wireless_status.clone();
         let network_row = node!(SettingsRowComponent {
             title: "Network".to_string(),
             value: self.connected_network_name.to_string(),
