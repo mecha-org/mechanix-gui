@@ -1,12 +1,12 @@
 use crate::{
     gui::{Message, Routes},
-    shared::h_divider::HDivider,
 };
 pub use mctk_core::component::*;
 pub use mctk_core::layout::*;
 pub use mctk_core::style::*;
 pub use mctk_core::widgets::*;
 pub use mctk_core::*;
+use prelude::euclid::rect;
 
 #[derive(Default, Debug, Clone)]
 pub struct ScreenRoute {
@@ -234,6 +234,27 @@ pub fn icon_node(name: &str) -> Node {
             padding: [0., 0., 0., 0.]
         ]
     );
+    icon_node
+}
+
+pub fn get_icon(name: &str, icon_type: IconType, margin: Rect) -> Node {
+    let icon_node = match icon_type {
+        IconType::Svg => node!(
+            Svg::new(name.to_owned()),
+            lay![
+                size: [24, 24],
+                margin: margin.clone(),
+            ]
+        ),
+        IconType::Png => node!(
+            Image::new(name.to_owned()),
+            lay![
+                size: [24, 24],
+                margin: margin.clone(),
+            ]
+        ),
+    };
+
     icon_node
 }
 

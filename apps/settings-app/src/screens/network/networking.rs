@@ -1,18 +1,11 @@
-use super::component::NetworkRowComponent;
 use super::wireless_model::WirelessModel;
-use crate::AppMessage;
 use crate::{
-    components::{header_node, text_node, ComponentHasher},
-    gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
-    main,
-    shared::h_divider::HDivider,
+    components::ComponentHasher,
+    gui::{Message, NetworkScreenRoutes, Routes},
 };
 use std::hash::Hash;
 
-use mctk_core::event;
-use mctk_core::reexports::femtovg::img::save_buffer;
-use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
-use mctk_core::renderables::Image;
+use mctk_core::{event, widgets::HDivider}; 
 use mctk_core::widgets::Scrollable;
 use mctk_core::{
     component::{self, Component},
@@ -24,10 +17,9 @@ use mctk_core::{
     widgets::{self, Div, IconButton, IconType, Text, Toggle},
     Color, Node,
 };
-use mctk_macros::{component, state_component_impl};
+use mctk_macros::component;
 
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use zbus::message;
 
 enum NetworkingMessage {
     handleClickOnMore,
@@ -874,7 +866,7 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                IconButton::new("right_arrow_icon")
+                IconButton::new("white_right_arrow")
                     // .on_click(Box::new(|| msg!(Message::ChangeRoute {
                     //     route: Routes::Network {
                     //         screen: NetworkScreenRoutes::AddNetwork
@@ -920,13 +912,13 @@ impl Component for NetworkingScreen {
         let mut key = 0;
 
         content_node = content_node.push(toggle_row);
-        content_node = content_node.push(node!(HDivider { size: 1. }));
+        content_node = content_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
         if WirelessModel::get().connected_network.get().is_some() || status.clone() == true {
             scrollable_section = scrollable_section.push(connected_network_row);
 
             scrollable_section = scrollable_section.push(
                 node!(
-                    Div::new().border(Color::rgb(132., 132., 132.), 0.5, (0., 0., 0., 0.)),
+                    Div::new().border(Color::rgb(83., 83., 83.), 0.8, (0., 0., 0., 0.)),
                     lay![
                         direction: Direction::Row,
                         size: [480, Auto],
@@ -950,7 +942,7 @@ impl Component for NetworkingScreen {
                         .push(
                             node!(
                                 Div::new().border(
-                                    Color::rgb(132., 132., 132.),
+                                    Color::rgb(83., 83., 83.),
                                     0.5,
                                     (0., 0., 0., 0.)
                                 ),
@@ -981,8 +973,8 @@ impl Component for NetworkingScreen {
                         .push(
                             node!(
                                 Div::new().border(
-                                    Color::rgb(132., 132., 132.),
-                                    0.5,
+                                    Color::rgb(83., 83., 83.),
+                                    0.8,
                                     (0., 0., 0., 0.)
                                 ),
                                 lay![
@@ -1005,14 +997,14 @@ impl Component for NetworkingScreen {
 
         if status.clone() == true {
             content_node = content_node.push(scrollable_section);
-            content_node = content_node.push(node!(HDivider { size: 1. }));
+            content_node = content_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
         }
 
-        // content_node = content_node.push(node!(HDivider { size: 1. }));
+        // content_node = content_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
 
         // content_node = content_node.push(available_network_text);
         //
-        // content_node = content_node.push(node!(HDivider { size: 1. }));
+        // content_node = content_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
 
         base = base.push(header_node);
         base = base.push(content_node);

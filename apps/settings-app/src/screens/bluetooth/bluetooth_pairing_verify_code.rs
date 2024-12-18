@@ -1,6 +1,3 @@
-use crate::gui::Message;
-use crate::gui::Routes;
-use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
 #[derive(Debug)]
@@ -41,9 +38,9 @@ impl Component for BluetoothPairingVerifyCode {
                 axis_alignment: layout::Alignment::Center
             ]
         );
-        main_node = main_node.push(node!(HDivider { size: 1. }).key(9));
+        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(9));
         main_node = main_node.push(text_node);
-        main_node = main_node.push(node!(HDivider { size: 1. }).key(10));
+        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(10));
         // base = base.push(footer_node!(
         //     Routes::BluetoothScreen,
         //     "tick_icon",

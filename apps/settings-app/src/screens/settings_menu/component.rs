@@ -7,14 +7,17 @@ use mctk_core::{
     node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{Div, Image, Text},
+    widgets::{Div, IconType, Image, Svg, Text},
     Color,
 };
+
+use crate::components::get_icon;
 
 pub struct SettingsRowComponent {
     pub title: String,
     pub value: String,
     pub icon_1: String,
+    pub icon_1_type: IconType,
     pub icon_2: String,
     pub color: Color,
     pub on_click: Option<Box<dyn Fn() -> Message + Send + Sync>>,
@@ -24,8 +27,9 @@ impl Debug for SettingsRowComponent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SettingsRowComponent")
             .field("title", &self.title)
-            .field("icon", &self.icon_1)
-            .field("icon", &self.icon_2)
+            .field("icon_1", &self.icon_1)
+            .field("icon_1_type", &self.icon_1_type)
+            .field("icon_2", &self.icon_2)
             .finish()
     }
 }
@@ -41,6 +45,7 @@ impl Component for SettingsRowComponent {
         let title = self.title.clone();
         let value = self.value.clone();
         let icon_1 = self.icon_1.clone();
+        let icon_1_type = self.icon_1_type.clone();
         let icon_2 = self.icon_2.clone();
         let color = self.color.clone();
 
@@ -78,14 +83,7 @@ impl Component for SettingsRowComponent {
                         cross_alignment: Alignment::Center,
                     ],
                 )
-                .push(node!(
-                    Image::new(icon_1),
-                    lay![
-                        size: [24, 24],
-                        margin:[0., 0., 0., 20.],
-
-                    ]
-                ))
+                .push(get_icon(&icon_1, icon_1_type, rect![0., 0., 0., 24.]))
                 .push(
                     node!(
                         Div::new(),
@@ -108,14 +106,7 @@ impl Component for SettingsRowComponent {
                     ]
                 )
                 .push(value_node)
-                .push(node!(
-                    Image::new(icon_2),
-                    lay![
-                        size: [24, 24],
-                        margin: [0., 0., 0., 5.],
-                        cross_alignment:Alignment::Center,
-                    ]
-                )),
+                .push(get_icon(&icon_2, IconType::Svg, rect![0., 0., 0., 5.]))
             ),
         )
     }

@@ -1,32 +1,21 @@
 use std::fmt::Debug;
 
-use crate::AppMessage;
-use crate::{
-    components::{header_node, text_node},
-    gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
-    main,
-    shared::h_divider::HDivider,
-};
+use crate::gui::{Message, NetworkScreenRoutes, Routes};
 
 use lazy_static::lazy_static;
 use mctk_core::context::Context;
-use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
-use mctk_core::renderables::Image;
-use mctk_core::widgets::TextBox;
+use mctk_core::widgets::{HDivider, TextBox};
 use mctk_core::{
-    component::{self, Component},
+    component::Component,
     lay,
     layout::{Alignment, Dimension, Direction, Size},
     msg, node, rect, size, size_pct,
     style::{FontWeight, Styled},
     txt,
-    widgets::{self, Div, IconButton, IconType, Text, Toggle},
+    widgets::{Div, IconButton, IconType, Text},
     Color, Node,
 };
-use mctk_macros::{component, state_component_impl};
-
-use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-use zbus::message;
+use mctk_macros::component;
 
 use super::wireless_model::WirelessModel;
 
@@ -36,8 +25,6 @@ lazy_static! {
         password: Context::new("".to_string()),
     };
 }
-
-enum NetworkingMessage {}
 
 struct Form {
     pub ssid: Context<String>,
@@ -170,7 +157,8 @@ impl Component for AddNetwork {
                 Div::new(),
                 lay![
                     size_pct: [20, Auto],
-                    axis_alignment: Alignment::End
+                    axis_alignment: Alignment::End,
+                    padding: [0, 0, 0, 10.],
                 ]
             )
             .push(node!(
@@ -216,8 +204,17 @@ impl Component for AddNetwork {
             ]
         );
 
-        // Add 'Network name'
         let name_input_text = node!(
+            Div::new(),
+            lay![
+                size: [Auto, 35],
+                direction: Direction::Row,
+                axis_alignment: Alignment::Stretch,
+                cross_alignment:Alignment::Center,
+                padding: [5., 0., 0., 0.],
+            ]
+        )
+        .push(node!(
             Text::new(txt!("Name (SSID)"))
                 .style("color", Color::WHITE)
                 .style("size", 16.0)
@@ -225,27 +222,11 @@ impl Component for AddNetwork {
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
-                margin: [25.0, 0.0, 10.0, 0.0],
+                padding: [5., 0., 0., 0.],
             ]
-        );
+        ));
 
-        let name_input_value = if FORM.ssid.get().clone().len() > 0 {
-            node!(
-                Div::new().bg(Color::TRANSPARENT),
-                lay![
-                    size_pct: [100, 12],
-                    direction: Direction::Row,
-                    axis_alignment: Alignment::Stretch,
-                    cross_alignment: Alignment::End
-                ]
-            )
-            .push(node!(Text::new(txt!(network_name))
-                .style("color", Color::rgba(197., 197., 197., 1.))
-                .style("size", 20.0)
-                .style("line_height", 22.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),))
-        } else {
+        let name_input_value = if FORM.ssid.get().clone().len() == 0 {
             node!(
                 TextBox::new(Some("".to_string()))
                     .style("background_color", Color::TRANSPARENT)
@@ -255,19 +236,45 @@ impl Component for AddNetwork {
                     .style("cursor_color", Color::WHITE)
                     .style("placeholder_color", Color::rgb(107., 107., 107.))
                     .on_change(Box::new(|s| {
-                        FORM.ssid.set(s.to_string());
+                        FORM.password.set(s.to_string());
                         msg!(())
                     }))
-                    .placeholder("Enter Name"),
+                    .placeholder("Enter name"),
                 lay![
-                    size_pct: [100, 12],
+                    size_pct: [100, 8],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch
                 ]
             )
+        } else {
+            node!(
+                Div::new().bg(Color::TRANSPARENT),
+                lay![
+                    size_pct: [100, 8],
+                    direction: Direction::Row,
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::End
+                ]
+            )
+            .push(node!(Text::new(txt!(network_name.clone()))
+                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("size", 20.0)
+                .style("line_height", 22.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Normal),))
         };
 
         let password_input_text = node!(
+            Div::new(),
+            lay![
+                size: [Auto, 35],
+                direction: Direction::Row,
+                axis_alignment: Alignment::Stretch,
+                cross_alignment:Alignment::Center,
+                padding: [5., 0., 0., 0.],
+            ]
+        )
+        .push(node!(
             Text::new(txt!("Password"))
                 .style("color", Color::WHITE)
                 .style("size", 16.0)
@@ -275,9 +282,9 @@ impl Component for AddNetwork {
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
-                margin: [25.0, 0.0, 10.0, 0.0],
+                padding: [5., 0., 0., 0.],
             ]
-        );
+        ));
 
         let password_input_value = node!(
             TextBox::new(Some("".to_string()))
@@ -291,9 +298,9 @@ impl Component for AddNetwork {
                     FORM.password.set(s.to_string());
                     msg!(())
                 }))
-                .placeholder("Enter Password"),
+                .placeholder("Enter password"),
             lay![
-                size_pct: [100, 12],
+                size_pct: [100, 8],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch
             ]
@@ -302,15 +309,20 @@ impl Component for AddNetwork {
         content_node = content_node.push(name_input_text);
         content_node = content_node.push(name_input_value);
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider { size: 0.8 , color: Color::rgba(83., 83., 83., 1.) },
             lay![
-                margin: [0.0, 0.0, 10.0, 0.0],
+                margin: [2.0, 0.0, 25.0, 0.0],
             ]
         ));
 
         content_node = content_node.push(password_input_text);
         content_node = content_node.push(password_input_value);
-        content_node = content_node.push(node!(HDivider { size: 1. }));
+        content_node = content_node.push(node!(
+            HDivider { size: 0.8 , color: Color::rgba(83., 83., 83., 1.) },
+            lay![
+                margin: [2.0, 0.0, 10.0, 0.0],
+            ]
+        ));
 
         base = base.push(header_node);
         base = base.push(content_node);

@@ -1,8 +1,5 @@
 // use crate::footer_node;
-use crate::gui::Message;
-use crate::gui::Routes;
-use crate::shared::h_divider::HDivider;
-use crate::{components::*, tab_item_node};
+use crate::components::*;
 
 #[derive(Debug)]
 pub struct BluetoothPairingEnterCode {}
@@ -53,9 +50,9 @@ impl Component for BluetoothPairingEnterCode {
                 padding: [0, 10, 0, 10]
             ]
         ));
-        main_node = main_node.push(node!(HDivider { size: 1. }).key(9));
+        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(9));
         main_node = main_node.push(text_box);
-        main_node = main_node.push(node!(HDivider { size: 1. }).key(10));
+        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(10));
         // base = base.push(footer_node!(
         //     Routes::BluetoothScreen,
         //     "tick_icon",
