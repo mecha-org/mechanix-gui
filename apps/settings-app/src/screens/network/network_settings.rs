@@ -283,12 +283,16 @@ impl Component for NetworkSettings {
                 ],
             )
             .push(row)
-            .push(node!(HDivider { size: 0.8, color: Color::rgba(83., 83., 83., 1.) }))
+            .push(node!(HDivider {
+                size: 0.8,
+                color: Color::rgba(83., 83., 83., 1.)
+            }))
             .key(2 * i as u64);
 
             scrollable_section = scrollable_section.push(row);
         }
 
+        // todo: update & implement modal
         let modal = node!(
             Div::new()
                 .bg(Color::DARK_GREY)
