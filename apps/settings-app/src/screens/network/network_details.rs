@@ -1,12 +1,9 @@
 use std::hash::Hash;
 
 use super::wireless_model::WirelessModel;
-use crate::{
-    gui::{Message, NetworkScreenRoutes, Routes},
-    shared::h_divider::HDivider,
-};
+use crate::gui::{Message, NetworkScreenRoutes, Routes};
 
-use mctk_core::widgets::Button;
+use mctk_core::widgets::{Button, HDivider};
 use mctk_core::{
     component::Component,
     lay,
@@ -187,7 +184,8 @@ impl Component for NetworkDetails {
                 Div::new(),
                 lay![
                     size_pct: [20, Auto],
-                    axis_alignment: Alignment::End
+                    axis_alignment: Alignment::End,
+                    margin: [0., 0., 0., 10.]
                 ]
             )
             .push(node!(
@@ -544,28 +542,34 @@ impl Component for NetworkDetails {
         // ]));
 
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [0., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_1);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider { size: 0.8 , color: Color::rgba(83., 83., 83., 1.)},
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_2);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider { size: 0.8 , color: Color::rgba(83., 83., 83., 1.)},
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_3);
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [10., 0., 10., 0.]
             ]
