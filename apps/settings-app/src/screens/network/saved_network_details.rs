@@ -2,6 +2,7 @@ use std::hash::Hash;
 
 use super::wireless_model::WirelessModel;
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
+use crate::utils::truncate;
 
 use mctk_core::widgets::{Button, HDivider};
 use mctk_core::{
@@ -41,14 +42,6 @@ impl SavedNetworkDetails {
                 mac,
             }),
         }
-    }
-}
-
-fn truncate(s: String, max_length: usize) -> String {
-    if s.len() <= max_length {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max_length - 3])
     }
 }
 
@@ -107,7 +100,7 @@ impl Component for SavedNetworkDetails {
         );
 
         let text_node = node!(
-            Text::new(txt!("Network Details"))
+            Text::new(txt!("Network Information"))
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("size", 28.0)
                 .style("line_height", 17.5)

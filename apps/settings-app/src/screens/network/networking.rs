@@ -1,7 +1,7 @@
 use super::wireless_model::WirelessModel;
 use crate::{
     components::ComponentHasher,
-    gui::{Message, NetworkScreenRoutes, Routes},
+    gui::{Message, NetworkScreenRoutes, Routes}, utils::truncate,
 };
 use std::hash::Hash;
 
@@ -33,14 +33,6 @@ pub struct ClicableIconComponent {
 impl std::fmt::Debug for ClicableIconComponent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ClicableIconComponent").finish()
-    }
-}
-
-fn truncate(s: String, max_length: usize) -> String {
-    if s.len() <= max_length {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max_length - 3])
     }
 }
 

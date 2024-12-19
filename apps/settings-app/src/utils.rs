@@ -16,3 +16,11 @@ pub fn fill_grid_with_true(rows: usize, cols: usize, mut num_true: usize) -> Vec
 
     grid
 }
+
+pub fn truncate(s: String, max_length: usize) -> String {
+    if s.len() <= max_length {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max_length - 3])
+    }
+}

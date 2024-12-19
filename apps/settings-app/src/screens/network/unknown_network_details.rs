@@ -2,7 +2,7 @@ use super::wireless_model::WirelessModel;
 use crate::{
     components::{header_node, text_node},
     gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
-    main,
+    main, utils::truncate,
 };
 
 use mctk_core::{reexports::smithay_client_toolkit::reexports::calloop::channel::Sender, widgets::HDivider};
@@ -57,14 +57,6 @@ impl UnknownNetworkDetails {
             }
         }
         None
-    }
-}
-
-fn truncate(s: String, max_length: usize) -> String {
-    if s.len() <= max_length {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max_length - 3])
     }
 }
 
@@ -124,7 +116,7 @@ impl Component for UnknownNetworkDetails {
         );
 
         let text_node = node!(
-            Text::new(txt!("Network Details"))
+            Text::new(txt!("Network Information"))
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("size", 28.0)
                 .style("line_height", 17.5)
