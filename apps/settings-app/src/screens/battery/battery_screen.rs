@@ -127,7 +127,7 @@ impl Component for BatteryScreen {
         ));
         main_node = main_node.push(tab_item_node!(
             [text_node("Mode")],
-            [text_bold_node(&current_mode), icon_node("white_right_arrow")],
+            [text_bold_node(&current_mode), get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
             on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
         ));
         main_node = main_node.push(node!(HDivider {

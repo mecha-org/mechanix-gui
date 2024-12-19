@@ -52,10 +52,10 @@ impl Component for DisplayScreen {
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size_pct: [100, 80],
+                size_pct: [100, 90],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 0.0, 0.0, 0.0],
+                margin: [10., 0., 0., 0.],
             ]
         );
 
@@ -77,21 +77,21 @@ impl Component for DisplayScreen {
 
         let screen_off_time = tab_item_node!(
             [text_node("Screen Time")],
-            [text_bold_node("30s"), icon_node("white_right_arrow")],
+            [text_bold_node("30s"), get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
             on_click: Some(Box::new(move || msg!(Message::ChangeDisplayScreenRoute { route: DisplayScreenRoute::ScreenOffTime } ))),
         );
 
-        main_node = main_node.push(text_bold_node("Brightness"));
+        main_node = main_node.push(sub_header_node("Brightness"));
 
         main_node = main_node.push(slider);
 
         main_node = main_node.push(node!(HDivider {
-            size: 1.,
+            size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }));
         main_node = main_node.push(screen_off_time);
         main_node = main_node.push(node!(HDivider {
-            size: 1.,
+            size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }));
 

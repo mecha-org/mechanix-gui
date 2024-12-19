@@ -98,11 +98,10 @@ impl Component for AddNetwork {
             lay![
                 size_pct: [100, 10],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
-                margin: [0., 0., 5., 0.],
-                // position_type: Absolute,
+                axis_alignment: Alignment::Stretch,
                 position: [0., 0., Auto, 0.],
+                margin: [0., 0., 10., 0.]
             ]
         )
         .push(

@@ -24,7 +24,7 @@ impl Component for OutputDeviceSelector {
             ]
         );
 
-        main_node = main_node.push(text_bold_node("Select Output Device"));
+        main_node = main_node.push(sub_header_node("Select Output Device"));
         let options = vec![
             (txt!("Speakers".to_string()), txt!("Speakers".to_string())),
             (

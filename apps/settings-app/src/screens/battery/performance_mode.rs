@@ -44,7 +44,7 @@ impl Component for PerformanceMode {
         main_node = main_node.push(text_node("proceeding. increase the temperature of the"));
         main_node = main_node.push(text_node("device significantly."));
 
-        let sub_header = text_bold_node("Performance Mode");
+        let sub_header = sub_header_node("Performance Mode");
 
         base = base.push(sub_header);
         base = base.push(main_node);

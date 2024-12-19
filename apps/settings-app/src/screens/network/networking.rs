@@ -969,13 +969,7 @@ impl Component for NetworkingScreen {
                 color: Color::rgba(83., 83., 83., 1.)
             }));
         }
-
-        // content_node = content_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
-
-        // content_node = content_node.push(available_network_text);
-        //
-        // content_node = content_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
-
+        
         base = base.push(header_node);
         base = base.push(content_node);
 

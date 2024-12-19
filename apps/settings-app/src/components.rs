@@ -41,15 +41,12 @@ macro_rules! header_node {
     ($title:expr, $back_on_click:expr) => {{
         let text_node = node!(
             Text::new(txt!($title))
-                .style("color", Color::rgb(197.0, 197.0, 197.0))
-                .style("size", 28.0)
-                .style("line_height", 20.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Medium),
-            lay![
-                size_pct: [100, Auto],
-            ]
-        );
+            .with_class("text-3xl leading-7 font-space-grotesk font-normal")
+            .style("color", Color::rgb(197., 197., 197.)),
+        lay![
+            size_pct: [100, Auto],
+            axis_alignment: Alignment::Center,
+        ]);
         let header_node = node!(
             Div::new(),
             lay![
@@ -118,15 +115,12 @@ macro_rules! header_node {
     ($title:expr, $back_on_click:expr, $right_icon:expr) => {{
         let text_node = node!(
             Text::new(txt!($title))
-                .style("color", Color::WHITE)
-                .style("size", 28.0)
-                .style("line_height", 20.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Medium),
-            lay![
-                size_pct: [100, Auto],
-            ]
-        );
+            .with_class("text-3xl leading-7 font-space-grotesk font-normal")
+            .style("color", Color::rgb(197., 197., 197.)),
+        lay![
+            size_pct: [100, Auto],
+            axis_alignment: Alignment::Center,
+        ]);
         let header_node = node!(
             Div::new(),
             lay![
@@ -188,6 +182,16 @@ macro_rules! header_node {
         );
         header_node
     }};
+}
+
+pub fn sub_header_node(text: &str) -> Node {
+    let text_node = node!(
+        widgets::Text::new(txt!(text))
+        .with_class("text-l leading-6 font-space-grotesk font-normal")
+        .style("color", Color::rgb(197., 197., 197.)),
+        lay![margin: [0.0, 10.0, 0.0, 10.0]]
+    );
+    text_node
 }
 
 pub fn get_header_node(text: &str) -> Node {

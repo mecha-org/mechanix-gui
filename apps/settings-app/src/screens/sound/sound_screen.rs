@@ -90,23 +90,23 @@ impl component::Component for SoundScreen {
 
         let output_device = tab_item_node!(
             [text_node("Output Speaker")],
-            [icon_node("white_right_arrow")],
+            [get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectOutputDevice }))),
         );
 
         let input_device = tab_item_node!(
             [text_node("Input Microphone")],
-            [icon_node("white_right_arrow")],
+            [get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectInputDevice }))),
         );
 
         // main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        main_node = main_node.push(text_bold_node("Output"));
+        main_node = main_node.push(sub_header_node("Output"));
         main_node = main_node.push(output_slider);
         main_node = main_node.push(output_device);
 
         main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
-        main_node = main_node.push(text_bold_node("Input"));
+        main_node = main_node.push(sub_header_node("Input"));
         main_node = main_node.push(input_slider);
         main_node = main_node.push(input_device);
 

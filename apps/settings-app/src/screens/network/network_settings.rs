@@ -344,7 +344,6 @@ impl Component for NetworkSettings {
         // if is_model_open.clone() == true {
         // base = base.push(modal);
         // base = base.push(node!(Div::new().bg(Color::RED), lay![size: [440, 400]]));
-
         // }
         Some(base)
     }

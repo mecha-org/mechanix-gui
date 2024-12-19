@@ -30,7 +30,7 @@ impl Component for ScreenOffTime {
             ]
         ));
 
-        let sub_header = text_bold_node("Screen off time");
+        let sub_header = sub_header_node("Screen off time");
         let options = vec!["10s", "20s", "30s", "60s", "5m", "Never"];
         let mut options_vec: Vec<(Vec<TextSegment>, Vec<TextSegment>)> = vec![];
         for (i, option) in options.into_iter().enumerate() {

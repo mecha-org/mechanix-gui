@@ -24,7 +24,7 @@ impl Component for InputDeviceSelector {
             ]
         );
 
-        main_node = main_node.push(text_bold_node("Select Input Device"));
+        main_node = main_node.push(sub_header_node("Select Input Device"));
         let options = vec![
             (
                 txt!("Inbuilt Microphone".to_string()),
