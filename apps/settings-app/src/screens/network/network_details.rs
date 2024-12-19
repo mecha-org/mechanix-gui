@@ -603,7 +603,7 @@ impl Component for NetworkDetails {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [100, 70],
+                    size_pct: [100, 72],
                     cross_alignment: Alignment::Start,
                     axis_alignment: Alignment::Start,
                 ]
@@ -625,7 +625,7 @@ impl Component for NetworkDetails {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [100, 30],
+                    size_pct: [100, 28],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Stretch,
@@ -634,7 +634,7 @@ impl Component for NetworkDetails {
             .push(node!(
                 Div::new(),
                 lay![
-                    size_pct: [20, 100]
+                    size_pct: [28, 100]
                     axis_alignment: Alignment::Start,
                 ]
             ))
@@ -642,7 +642,7 @@ impl Component for NetworkDetails {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [80, 100]
+                        size_pct: [72, 100]
                         axis_alignment: Alignment::Stretch,
                     ]
                 )
@@ -662,7 +662,7 @@ impl Component for NetworkDetails {
                         )))),
                     lay![
                         size_pct: [48, 100],
-                        padding: [0., 0., 0., 10.],
+                        padding: [0., 0., 0., 12.],
                         axis_alignment: Alignment::Start,
 
                     ]
