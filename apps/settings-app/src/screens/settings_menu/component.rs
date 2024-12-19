@@ -52,23 +52,27 @@ impl Component for SettingsRowComponent {
         let text_node = node!(Text::new(txt!(title))
             .style("color", color)
             .style("size", 20.0)
-            .style("line_height", 20.)
+            .style("line_height", 24.)
             .style("font", "Space Grotesk")
             .style("font_weight", FontWeight::Medium));
 
-        let value_node = node!(Text::new(txt!(value))
-            .style("color", Color::rgb(197.0, 197.0, 197.0))
-            .style("size", 20.0)
-            .style("line_height", 20.)
-            .style("font", "Space Grotesk")
-            .style("font_weight", FontWeight::Medium));
+        let value_node = node!(
+            Text::new(txt!(value))
+                .style("color", Color::rgb(197.0, 197.0, 197.0))
+                .style("size", 20.0)
+                .style("line_height", 24.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Medium),
+            lay![
+                margin: [0., 0., 0., 10.],
+            ]
+        );
 
         Some(
             node!(
                 Div::new(),
                 lay![
-                    padding: [10, 0, 10, 0],
-                    size_pct: [100],
+                    size: [440, 60],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
@@ -78,12 +82,12 @@ impl Component for SettingsRowComponent {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [70],
+                        size_pct: [70, 100],
                         axis_alignment: Alignment::Start,
                         cross_alignment: Alignment::Center,
                     ],
                 )
-                .push(get_icon(&icon_1, icon_1_type, rect![0., 0., 0., 24.]))
+                .push(get_icon(&icon_1, icon_1_type, rect![0., 0., 0., 20.]))
                 .push(
                     node!(
                         Div::new(),
@@ -100,13 +104,13 @@ impl Component for SettingsRowComponent {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [30, Auto],
+                        size_pct: [30, 100],
                         axis_alignment: Alignment::End,
                         cross_alignment:Alignment::Center,
                     ]
                 )
                 .push(value_node)
-                .push(get_icon(&icon_2, IconType::Svg, rect![0., 0., 0., 5.]))
+                .push(get_icon(&icon_2, IconType::Svg, rect![0., 0., 0., 10.])),
             ),
         )
     }

@@ -23,7 +23,7 @@ impl Component for BluetoothPairingVerifyCode {
             ]
         );
 
-        main_node = main_node.push(header_node("Verify the Code for Mecha"));
+        main_node = main_node.push(get_header_node("Verify the Code for Mecha"));
         let text_node = node!(
             widgets::Text::new(txt!("1234 5678"))
                 .style("color", Color::WHITE)
@@ -38,9 +38,21 @@ impl Component for BluetoothPairingVerifyCode {
                 axis_alignment: layout::Alignment::Center
             ]
         );
-        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(9));
+        main_node = main_node.push(
+            node!(HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            })
+            .key(9),
+        );
         main_node = main_node.push(text_node);
-        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(10));
+        main_node = main_node.push(
+            node!(HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            })
+            .key(10),
+        );
         // base = base.push(footer_node!(
         //     Routes::BluetoothScreen,
         //     "tick_icon",

@@ -1,17 +1,10 @@
 use std::hash::Hash;
 
+use crate::gui::{Message, Routes};
 use crate::screens::network::wireless_model::WirelessModel;
-use crate::AppMessage;
-use crate::{components::*, header_node, tab_item_node};
-use crate::{
-    components::{header_node, text_node},
-    gui::{Message, NetworkMessage, NetworkScreenRoutes, Routes},
-    main,
-   
-};
+use crate::{components::*, header_node};
 
 use mctk_core::prelude::ComponentHasher;
-use mctk_core::renderables::Image;
 use mctk_core::{
     component::Component,
     lay,
@@ -88,6 +81,7 @@ impl Component for AboutDevice {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                margin: [10., 0., 0., 0.],
             ]
         );
 
@@ -427,15 +421,6 @@ impl Component for AboutDevice {
             )),
         );
 
-        let start_node = node!(
-            Div::new(),
-            lay![
-                direction: Direction::Row,
-                margin: [2.0, 0.0, 0.0, 0.0],
-            ]
-        );
-
-        // content_node = content_node.push(start_node);
         content_node = content_node.push(provision_device_image);
         content_node = content_node.push(provision_device_details_row_1);
         if provision_machine_id.clone().len() > 0 {
@@ -443,42 +428,60 @@ impl Component for AboutDevice {
         }
 
         content_node = content_node.push(node!(
-            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [15., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_1);
         content_node = content_node.push(node!(
-            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [10., 0., 20., 0.]
             ]
         ));
 
         content_node = content_node.push(node!(
-            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [20., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_2);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5, color: Color::rgba(83., 83., 83., 1.)},
+            HDivider {
+                size: 0.5,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_3);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5, color: Color::rgba(83., 83., 83., 1.)},
+            HDivider {
+                size: 0.5,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [10., 0., 10., 0.]
             ]
         ));
         content_node = content_node.push(details_row_4);
         content_node = content_node.push(node!(
-            HDivider { size: 1., color: Color::rgba(83., 83., 83., 1.) },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [10., 0., 10., 0.]
             ]

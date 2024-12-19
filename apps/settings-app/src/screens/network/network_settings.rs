@@ -1,8 +1,8 @@
-use std::hash::Hash;
-
 use super::networking::ClicableIconComponent;
 use super::wireless_model::WirelessModel;
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
+use crate::{components::*, header_node};
+use std::hash::Hash;
 
 use mctk_core::widgets::{Button, HDivider, Scrollable};
 use mctk_core::{
@@ -64,77 +64,6 @@ impl Component for NetworkSettings {
             ]
         );
 
-        let text_node = node!(
-            Text::new(txt!("Saved Networks"))
-                .style("color", Color::rgb(197.0, 197.0, 197.0))
-                .style("size", 28.0)
-                .style("line_height", 20.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
-            lay![
-                size_pct: [100, Auto],
-            ]
-        );
-
-        let header_node = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 10],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-                margin: [0., 0., 5., 0.],
-                position: [0., 0., Auto, 0.],
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ],
-            )
-            .push(node!(
-                IconButton::new("back_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::Networking
-                        }
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [42, 42],
-                    padding: [0, 0, 0, 2.],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ]
-            ))
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Start,
-                    ]
-                )
-                .push(text_node),
-            ),
-        );
-
         let mut scrollable_section = node!(
             Scrollable::new(size!(440, 400)),
             lay![
@@ -169,11 +98,10 @@ impl Component for NetworkSettings {
             let row = node!(
                 Div::new(),
                 lay![
-                    size: [440, 50],
+                    size: [440, 60],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
-                    // padding: [5., 0., 12., 0.],
                 ],
             )
             .push(
@@ -275,11 +203,10 @@ impl Component for NetworkSettings {
             let row = node!(
                 Div::new(),
                 lay![
-                    size: [440, 50],
+                    size: [440, 60],
                     direction: Direction::Column,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Stretch,
-                    // padding: [5., 0., 12., 0.],
                 ],
             )
             .push(row)
@@ -401,7 +328,17 @@ impl Component for NetworkSettings {
             )),
         );
 
-        base = base.push(header_node);
+        base = base.push(header_node!(
+            "Saved Networks",
+            Box::new(|| {
+                msg!(Message::ChangeRoute {
+                    route: Routes::Network {
+                        screen: NetworkScreenRoutes::Networking
+                    }
+                })
+            })
+        ));
+
         base = base.push(scrollable_section);
 
         // if is_model_open.clone() == true {

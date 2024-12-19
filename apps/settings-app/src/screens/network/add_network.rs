@@ -201,6 +201,7 @@ impl Component for AddNetwork {
                 size_pct: [100, 90],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                margin: [10., 0., 0., 0.],
             ]
         );
 
@@ -309,7 +310,10 @@ impl Component for AddNetwork {
         content_node = content_node.push(name_input_text);
         content_node = content_node.push(name_input_value);
         content_node = content_node.push(node!(
-            HDivider { size: 0.8 , color: Color::rgba(83., 83., 83., 1.) },
+            HDivider {
+                size: 0.8,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [2.0, 0.0, 25.0, 0.0],
             ]
@@ -318,7 +322,10 @@ impl Component for AddNetwork {
         content_node = content_node.push(password_input_text);
         content_node = content_node.push(password_input_value);
         content_node = content_node.push(node!(
-            HDivider { size: 0.8 , color: Color::rgba(83., 83., 83., 1.) },
+            HDivider {
+                size: 0.8,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 margin: [2.0, 0.0, 10.0, 0.0],
             ]

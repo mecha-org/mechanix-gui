@@ -23,11 +23,14 @@ impl Component for BluetoothDeviceInfo {
             ]
         );
 
-        main_node = main_node.push(header_node("Mecha's Bluetooth Device"));
+        main_node = main_node.push(get_header_node("Mecha's Bluetooth Device"));
         main_node = main_node.push(text_node("Device Type"));
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
         main_node = main_node.push(tab_item_node!([text_bold_node("Mecha")], []));
-        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
+        main_node = main_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
         // base = base.push(footer_node!(
         //     Routes::BluetoothScreen,
         //     "delete_icon",

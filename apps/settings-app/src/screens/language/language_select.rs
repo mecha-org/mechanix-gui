@@ -30,7 +30,7 @@ impl Component for LanguageSelect {
             ("Chinese", "Chinese, simplified"),
         ];
 
-        main_node = main_node.push(header_node("Language Select"));
+        main_node = main_node.push(get_header_node("Language Select"));
         for (i, (language, language_type)) in values.into_iter().enumerate() {
             main_node = main_node.push(
                 tab_item_node!(
@@ -39,7 +39,13 @@ impl Component for LanguageSelect {
                 )
                 .key((i + 1) as u64),
             );
-            main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(2 * i as u64));
+            main_node = main_node.push(
+                node!(HDivider {
+                    size: 1.,
+                    color: Color::rgba(83., 83., 83., 1.)
+                })
+                .key(2 * i as u64),
+            );
         }
         // main_node = main_node.push(footer_node!(Routes::LanguageScreen));
         base = base.push(main_node);

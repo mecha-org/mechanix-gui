@@ -10,14 +10,20 @@ use mctk_core::{
 };
 
 use super::component::SettingsRowComponent;
-use crate::{components::*, screens::network::wireless_model::WirelessModel, shared::style_constants::DISABLED_TEXT, utils::truncate};
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::header_node;
-
+use crate::{
+    components::*, screens::network::wireless_model::WirelessModel,
+    shared::style_constants::DISABLED_TEXT, utils::truncate,
+};
 
 #[derive(Debug)]
-pub struct SettingsScreen {
-    pub connected_network_name: String,
+pub struct SettingsScreen {}
+
+impl SettingsScreen {
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 
 #[derive(Debug)]
@@ -40,8 +46,8 @@ impl Component for SettingsScreen {
         let mut connected_network_name = "    ".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
             connected_network_name = connected_network.name.clone();
+            connected_network_name = truncate(connected_network_name, 8);
         }
-        connected_network_name = truncate(connected_network_name, 8);
 
         let network_row = node!(SettingsRowComponent {
             title: "Network".to_string(),
@@ -72,7 +78,10 @@ impl Component for SettingsScreen {
                     axis_alignment: Alignment::Stretch,
                 ]
             )
-            .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)})),
+            .push(node!(HDivider {
+                size: 0.8,
+                color: Color::rgba(83.0, 83.0, 83.0, 1.)
+            })),
         );
 
         let bluetooth_row = node!(SettingsRowComponent {
@@ -95,7 +104,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(bluetooth_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let display_row = node!(SettingsRowComponent {
             title: "Display".to_string(),
@@ -116,7 +128,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(display_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let battery_row = node!(SettingsRowComponent {
             title: "Battery".to_string(),
@@ -137,7 +152,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(battery_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let appearance_row = node!(SettingsRowComponent {
             title: "Appearance".to_string(),
@@ -156,7 +174,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(appearance_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let sound_row = node!(SettingsRowComponent {
             title: "Sound".to_string(),
@@ -178,7 +199,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(sound_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let lock_row = node!(SettingsRowComponent {
             title: "Lock".to_string(),
@@ -197,7 +221,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(lock_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let date_time_row = node!(SettingsRowComponent {
             title: "Date & Time".to_string(),
@@ -216,7 +243,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(date_time_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let language_row = node!(SettingsRowComponent {
             title: "Language".to_string(),
@@ -238,7 +268,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(language_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let update_row = node!(SettingsRowComponent {
             title: "Update".to_string(),
@@ -257,7 +290,10 @@ impl Component for SettingsScreen {
             ]
         )
         .push(update_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let about_row = node!(SettingsRowComponent {
             title: "About".to_string(),
@@ -278,12 +314,15 @@ impl Component for SettingsScreen {
             ]
         )
         .push(about_row)
-        .push(node!(HDivider {size: 0.8, color: Color::rgba(83.0, 83.0, 83.0, 1.)}));
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83.0, 83.0, 83.0, 1.)
+        }));
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 380)),
+            Scrollable::new(size!(440, 370)),
             lay![
-                size: [440, 380],
+                size: [440, 370],
             ]
         );
 
@@ -310,8 +349,20 @@ impl Component for SettingsScreen {
 
         scrollable = scrollable.push(list_items);
 
+        let content_node = node!(
+            Div::new(),
+            lay![
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+                size: [440, Auto],
+                margin: [10., 0., 0., 0.],
+                position: [Auto, 0., 0., 0.],
+            ]
+        )
+        .push(scrollable);
+
         base = base.push(header_node!("Settings"));
-        base = base.push(scrollable);
+        base = base.push(content_node);
 
         Some(base)
     }

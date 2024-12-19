@@ -1,6 +1,4 @@
-use crate::{
-    gui::{Message, Routes},
-};
+use crate::gui::{Message, Routes};
 pub use mctk_core::component::*;
 pub use mctk_core::layout::*;
 pub use mctk_core::style::*;
@@ -18,29 +16,26 @@ macro_rules! header_node {
     ($title:expr) => {{
         let text_node = node!(
             Text::new(txt!($title))
-                .style("size", 28.0)
-                .style("line_height", 20.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal)
-                .style("color", Color::rgb(197.0, 197.0, 197.0)),
-            lay![
-                size_pct: [100, Auto],
-                axis_alignment: Alignment::Start,
-            ]
-        );
+            .with_class("text-3xl leading-7 font-space-grotesk font-normal")
+            .style("color", Color::rgb(197., 197., 197.)),
+        lay![
+            size_pct: [100, Auto],
+            axis_alignment: Alignment::Center,
+        ]);
+
         let header_node = node!(
             Div::new(),
             lay![
                 size_pct: [100, 10],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
-                margin: [0., 0., 20., 0.],
+                axis_alignment: Alignment::Stretch,
                 position: [0., 0., Auto, 0.],
+                margin: [0., 0., 10., 0.]
             ]
         )
         .push(text_node);
-           
+
         header_node
     }};
     ($title:expr, $back_on_click:expr) => {{
@@ -60,11 +55,10 @@ macro_rules! header_node {
             lay![
                 size_pct: [100, 10],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
-                margin: [0., 0., 10., 0.],
-                // position_type: Absolute,
+                axis_alignment: Alignment::Stretch,
                 position: [0., 0., Auto, 0.],
+                margin: [0., 0., 10., 0.]
             ]
         )
         .push(
@@ -138,11 +132,10 @@ macro_rules! header_node {
             lay![
                 size_pct: [100, 10],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
-                margin: [0., 0., 10., 0.],
-                // position_type: Absolute,
+                axis_alignment: Alignment::Stretch,
                 position: [0., 0., Auto, 0.],
+                margin: [0., 0., 10., 0.]
             ]
         )
         .push(
@@ -197,7 +190,7 @@ macro_rules! header_node {
     }};
 }
 
-pub fn header_node(text: &str) -> Node {
+pub fn get_header_node(text: &str) -> Node {
     let mut header = node!(
         widgets::Div::new(),
         // Div::new().bg(Color::MID_GREY),
@@ -519,4 +512,84 @@ impl Component for ClicableIconComponent {
         );
         Some(base)
     }
+}
+
+#[derive(Debug, Clone)]
+pub struct DetailRow {
+    pub key: String,
+    pub value: String,
+}
+
+pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
+    let row_node = node!(
+        Div::new(),
+        lay![
+            size: [440, 60],
+            direction: Direction::Row,
+            axis_alignment: Alignment::Stretch,
+            cross_alignment: Alignment::Center,
+        ]
+    )
+    .push(
+        node!(
+            Div::new(),
+            lay![
+                size_pct: [50, Auto],
+                axis_alignment: Alignment::Start,
+                direction: Direction::Column,
+            ]
+        )
+        .push(node!(
+            Text::new(txt!(key_val_1.key.to_owned()))
+                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("size", 14.0)
+                .style("line_height", 18.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Normal),
+            lay![
+                margin: [0.0, 0.0, 8.0, 0.0],
+            ]
+        ))
+        .push(node!(
+            Text::new(txt!(key_val_1.value.to_owned()))
+                .style("color", Color::WHITE)
+                .style("size", 18.0)
+                .style("line_height", 20.0)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Bold),
+            lay![]
+        )),
+    )
+    .push(
+        node!(
+            Div::new(),
+            lay![
+                size_pct: [50, Auto],
+                axis_alignment: Alignment::Start,
+                direction: Direction::Column,
+            ]
+        )
+        .push(node!(
+            Text::new(txt!(key_val_2.key.to_owned()))
+                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("size", 14.0)
+                .style("line_height", 18.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Normal),
+            lay![
+                margin: [0.0, 0.0, 8.0, 0.0],
+            ]
+        ))
+        .push(node!(
+            Text::new(txt!(key_val_2.value.to_owned()))
+                .style("color", Color::WHITE)
+                .style("size", 18.0)
+                .style("line_height", 20.0)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Bold),
+            lay![]
+        )),
+    );
+
+    row_node
 }
