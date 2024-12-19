@@ -15,6 +15,34 @@ pub struct ScreenRoute {
 
 #[macro_export]
 macro_rules! header_node {
+    ($title:expr) => {{
+        let text_node = node!(
+            Text::new(txt!($title))
+                .style("size", 28.0)
+                .style("line_height", 20.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Normal)
+                .style("color", Color::rgb(197.0, 197.0, 197.0)),
+            lay![
+                size_pct: [100, Auto],
+                axis_alignment: Alignment::Start,
+            ]
+        );
+        let header_node = node!(
+            Div::new(),
+            lay![
+                size_pct: [100, 10],
+                direction: Direction::Row,
+                axis_alignment: Alignment::Stretch,
+                cross_alignment: Alignment::Center,
+                margin: [0., 0., 20., 0.],
+                position: [0., 0., Auto, 0.],
+            ]
+        )
+        .push(text_node);
+           
+        header_node
+    }};
     ($title:expr, $back_on_click:expr) => {{
         let text_node = node!(
             Text::new(txt!($title))

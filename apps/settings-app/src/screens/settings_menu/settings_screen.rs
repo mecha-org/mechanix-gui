@@ -10,10 +10,10 @@ use mctk_core::{
 };
 
 use super::component::SettingsRowComponent;
-use crate::{components::*, shared::style_constants::DISABLED_TEXT};
-use crate::{
-    gui::{Message, NetworkScreenRoutes, Routes},
-};
+use crate::{components::*, screens::network::wireless_model::WirelessModel, shared::style_constants::DISABLED_TEXT, utils::truncate};
+use crate::gui::{Message, NetworkScreenRoutes, Routes};
+use crate::header_node;
+
 
 #[derive(Debug)]
 pub struct SettingsScreen {
@@ -37,35 +37,15 @@ impl Component for SettingsScreen {
             ]
         );
 
-        //Title
-        let mut header = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 10],
-                direction: Direction::Row,
-                cross_alignment: Alignment::Center,
-                margin: [0., 0., 5., 0.],
-                position: [0., 0., Auto, 0.],
-            ]
-        );
+        let mut connected_network_name = "    ".to_string();
+        if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
+            connected_network_name = connected_network.name.clone();
+        }
+        connected_network_name = truncate(connected_network_name, 8);
 
-        let header_text = node!(
-            Text::new(txt!("Settings"))
-                .style("font", "Space Grotesk")
-                .style("size", 28.)
-                .style("line_height", 20.)
-                .style("color", Color::rgb(197.0, 197.0, 197.0))
-                .style("font_weight", FontWeight::Normal),
-            lay![
-                size_pct: [100, Auto],
-                margin:[2.0, 5.0, 2.0, 5.0],
-            ]
-        );
-
-        header = header.push(header_text);
         let network_row = node!(SettingsRowComponent {
             title: "Network".to_string(),
-            value: self.connected_network_name.to_string(),
+            value: connected_network_name,
             icon_1: "wireless_good".to_string(),
             icon_1_type: IconType::Png,
             icon_2: "white_right_arrow".to_string(),
@@ -330,7 +310,7 @@ impl Component for SettingsScreen {
 
         scrollable = scrollable.push(list_items);
 
-        base = base.push(header);
+        base = base.push(header_node!("Settings"));
         base = base.push(scrollable);
 
         Some(base)
