@@ -7,7 +7,6 @@ use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
 
 use super::battery_model::BatteryModel;
-use super::component::StatusIndicator;
 use super::performance_mode::PerformanceMode;
 
 #[derive(Debug, Clone)]
@@ -64,70 +63,35 @@ impl Component for BatteryScreen {
             ]
         );
 
-        let available_battery_percentage = *BatteryModel::get().battery_percentage.get() as u8;
+        // let available_battery_percentage = *BatteryModel::get().battery_percentage.get() as u8;
 
-        let status_indicator = node!(
+        // let status_indicator = node!(
+        //     Slider::new()
+        //         .value(available_battery_percentage)
+        //         .slider_type(SliderType::Line)
+        //         .active_color(Color::rgb(102., 226., 0.))
+        //         // .on_slide(Box::new(|value| Box::new(())))
+        //         .col_spacing(8.)
+        //         .col_width(5.),
+        //     lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
+        // );
+
+        let battery_percentage_widget = node!(
             Slider::new()
-                .value(available_battery_percentage)
+                .value(*BatteryModel::get().battery_percentage.get() as u8)
                 .slider_type(SliderType::Line)
                 .active_color(Color::rgb(102., 226., 0.))
                 // .on_slide(Box::new(|value| Box::new(())))
                 .col_spacing(8.)
-                .col_width(5.),
+                .col_width(3.75)
+                .disabled(true),
             lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
         );
 
-        main_node = main_node.push(node!(
-            Div::new(),
-            lay![
-                size: [Auto, 10],
-            ]
+        main_node = main_node.push(text_node(
+            format!(" {}%", *BatteryModel::get().battery_percentage.get() as u8).as_str(),
         ));
-        main_node = main_node.push(
-            node!(
-                Div::new(),
-                lay![
-                    size: [440, 40],
-                    direction: Direction::Row,
-                    axis_alignment: Alignment::Stretch,
-                    cross_alignment: Alignment::Stretch,
-                ]
-            )
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [80, Auto],
-                    ]
-                )
-                .push(status_indicator),
-                // .push(node!(
-                //     StatusIndicator::new(available_battery_percentage),
-                //     lay![]
-                // )),
-            )
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [20, Auto],
-                        axis_alignment: Alignment::End,
-                        cross_alignment: Alignment::Center,
-                    ]
-                )
-                .push(text_node(
-                    format!(" {}% ", available_battery_percentage).as_str(),
-                )),
-            ),
-        );
-
-        main_node = main_node.push(node!(
-            Div::new(),
-            lay![
-                size: [Auto, 20],
-            ]
-        ));
-
+        main_node = main_node.push(battery_percentage_widget);
         main_node = main_node.push(node!(
             HDivider {
                 size: 1.,
