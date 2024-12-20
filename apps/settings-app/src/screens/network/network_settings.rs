@@ -106,14 +106,15 @@ impl Component for NetworkSettings {
             )
             .push(
                 node!(ClicableIconComponent {
-                    on_click: Some(Box::new(move || {
-                        WirelessModel::select_network(network.network_id.clone());
-                        msg!(Message::ChangeRoute {
-                            route: Routes::Network {
-                                screen: NetworkScreenRoutes::Networking
-                            }
-                        })
-                    }))
+                    // on_click: Some(Box::new(move || {
+                    //     WirelessModel::select_network(network.network_id.clone());
+                    //     msg!(Message::ChangeRoute {
+                    //         route: Routes::Network {
+                    //             screen: NetworkScreenRoutes::Networking
+                    //         }
+                    //     })
+                    // }))
+                    on_click: None
                 })
                 .push(node!(
                     widgets::Image::new(icon),

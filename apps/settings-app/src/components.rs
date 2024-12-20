@@ -187,8 +187,8 @@ macro_rules! header_node {
 pub fn sub_header_node(text: &str) -> Node {
     let text_node = node!(
         widgets::Text::new(txt!(text))
-        .with_class("text-l leading-6 font-space-grotesk font-normal")
-        .style("color", Color::rgb(197., 197., 197.)),
+            .with_class("text-l leading-6 font-space-grotesk font-normal")
+            .style("color", Color::rgb(197., 197., 197.)),
         lay![margin: [0.0, 10.0, 0.0, 10.0]]
     );
     text_node
@@ -551,7 +551,7 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
-                margin: [0.0, 0.0, 8.0, 0.0],
+                margin: [0.0, 0.0, 6.0, 0.0],
             ]
         ))
         .push(node!(
@@ -581,7 +581,7 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
-                margin: [0.0, 0.0, 8.0, 0.0],
+                margin: [0.0, 0.0, 6.0, 0.0],
             ]
         ))
         .push(node!(

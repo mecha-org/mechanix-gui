@@ -215,7 +215,7 @@ impl Component for NetworkDetails {
                 size_pct: [100, 90],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [10., 0., 0., 0.],
+                margin: [12., 0., 0., 0.],
             ]
         );
 
@@ -352,7 +352,7 @@ impl Component for NetworkDetails {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
         content_node = content_node.push(details_row_2);
@@ -362,7 +362,7 @@ impl Component for NetworkDetails {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
         content_node = content_node.push(details_row_3);
@@ -372,7 +372,7 @@ impl Component for NetworkDetails {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
 

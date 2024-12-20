@@ -865,9 +865,9 @@ impl Component for NetworkingScreen {
         );
 
         let mut scrollable_section = node!(
-            Scrollable::new(size!(440, 320)),
+            Scrollable::new(size!(440, 310)),
             lay![
-                size: [440, 320],
+                size: [440, 310],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -969,7 +969,7 @@ impl Component for NetworkingScreen {
                 color: Color::rgba(83., 83., 83., 1.)
             }));
         }
-        
+
         base = base.push(header_node);
         base = base.push(content_node);
 

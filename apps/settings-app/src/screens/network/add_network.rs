@@ -207,7 +207,7 @@ impl Component for AddNetwork {
         let name_input_text = node!(
             Div::new(),
             lay![
-                size: [Auto, 35],
+                size: [Auto, 40],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
@@ -216,11 +216,8 @@ impl Component for AddNetwork {
         )
         .push(node!(
             Text::new(txt!("Name (SSID)"))
-                .style("color", Color::WHITE)
-                .style("size", 16.0)
-                .style("line_height", 18.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
+                .with_class("text-l leading-6 font-space-grotesk font-normal")
+                .style("color", Color::rgb(197., 197., 197.)),
             lay![
                 padding: [5., 0., 0., 0.],
             ]
@@ -267,7 +264,7 @@ impl Component for AddNetwork {
         let password_input_text = node!(
             Div::new(),
             lay![
-                size: [Auto, 35],
+                size: [Auto, 40],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
@@ -276,11 +273,8 @@ impl Component for AddNetwork {
         )
         .push(node!(
             Text::new(txt!("Password"))
-                .style("color", Color::WHITE)
-                .style("size", 16.0)
-                .style("line_height", 18.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
+                .with_class("text-l leading-6 font-space-grotesk font-normal")
+                .style("color", Color::rgb(197., 197., 197.)),
             lay![
                 padding: [5., 0., 0., 0.],
             ]

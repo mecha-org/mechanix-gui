@@ -69,9 +69,9 @@ impl Component for AboutDevice {
         );
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 360)),
+            Scrollable::new(size!(440, 375)),
             lay![
-                size: [440, 360],
+                size: [440, 375],
             ]
         );
 
@@ -118,6 +118,7 @@ impl Component for AboutDevice {
             lay![]
         ));
 
+        let provision_machine_id = "7672232hjbjbh-23321".to_string();
         let provision_device_details_row_2 = node!(
             Div::new(),
             lay![
@@ -193,7 +194,7 @@ impl Component for AboutDevice {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
         content_node = content_node.push(details_row_1);
@@ -203,17 +204,24 @@ impl Component for AboutDevice {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
 
+        // content_node = content_node.push(node!(
+        //     HDivider {
+        //         size: 0.8,
+        //         color: Color::rgba(83., 83., 83., 1.)
+        //     },
+        //     lay![
+        //         margin: [8., 0., 8., 0.]
+        //     ]
+        // ));
         content_node = content_node.push(node!(
-            HDivider {
-                size: 0.8,
-                color: Color::rgba(83., 83., 83., 1.)
-            },
+            Div::new(),
             lay![
-                margin: [10., 0., 10., 0.]
+                size: [440, 15],
+                direction: Direction::Row,
             ]
         ));
         content_node = content_node.push(details_row_2);
@@ -223,7 +231,7 @@ impl Component for AboutDevice {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
         content_node = content_node.push(details_row_3);
@@ -233,7 +241,7 @@ impl Component for AboutDevice {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
         content_node = content_node.push(details_row_4);
@@ -243,12 +251,11 @@ impl Component for AboutDevice {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
 
         scrollable = scrollable.push(content_node);
-
 
         let content = node!(
             Div::new().bg(Color::TRANSPARENT),
