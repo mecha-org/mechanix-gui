@@ -66,6 +66,17 @@ impl Component for BatteryScreen {
 
         let available_battery_percentage = *BatteryModel::get().battery_percentage.get() as u8;
 
+        let status_indicator = node!(
+            Slider::new()
+                .value(available_battery_percentage)
+                .slider_type(SliderType::Line)
+                .active_color(Color::rgb(102., 226., 0.))
+                // .on_slide(Box::new(|value| Box::new(())))
+                .col_spacing(8.)
+                .col_width(5.),
+            lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
+        );
+
         main_node = main_node.push(node!(
             Div::new(),
             lay![
@@ -89,10 +100,11 @@ impl Component for BatteryScreen {
                         size_pct: [80, Auto],
                     ]
                 )
-                .push(node!(
-                    StatusIndicator::new(available_battery_percentage),
-                    lay![]
-                )),
+                .push(status_indicator),
+                // .push(node!(
+                //     StatusIndicator::new(available_battery_percentage),
+                //     lay![]
+                // )),
             )
             .push(
                 node!(
