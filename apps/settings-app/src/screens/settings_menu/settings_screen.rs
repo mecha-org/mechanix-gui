@@ -320,9 +320,9 @@ impl Component for SettingsScreen {
         }));
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 370)),
+            Scrollable::new(size!(440, 360)),
             lay![
-                size: [440, 370],
+                size: [440, 360],
             ]
         );
 
