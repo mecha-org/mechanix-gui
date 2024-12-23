@@ -135,8 +135,8 @@ impl Component for NetworkSettings {
                     .push(node!(
                         Text::new(txt!(network.ssid.clone()))
                             .style("color", Color::WHITE)
-                            .style("size", 18.0)
-                            .style("line_height", 20.0)
+                            .style("size", 20.0)
+                            .style("line_height", 24.0)
                             .style("font", "Space Grotesk")
                             .style("font_weight", FontWeight::Normal),
                         lay![
@@ -144,20 +144,7 @@ impl Component for NetworkSettings {
                             axis_alignment: Alignment::Start,
                             cross_alignment: Alignment::Center,
                         ]
-                    )), // .push(node!(
-                        //     // mini status
-                        //     Text::new(txt!("Saved"))
-                        //         .style("color", Color::WHITE)
-                        //         .style("size", 14.0)
-                        //         .style("line_height", 18.)
-                        //         .style("font", "Space Grotesk")
-                        //         .style("font_weight", FontWeight::Normal),
-                        //     lay![
-                        //         direction: Direction::Row,
-                        //         axis_alignment: Alignment::Start,
-                        //         cross_alignment: Alignment::Center,
-                        //     ]
-                        // )),
+                    )),
                 ),
             )
             .push(
@@ -201,7 +188,7 @@ impl Component for NetworkSettings {
             )
             .key(i as u64);
 
-            let row = node!(
+            let row_node = node!(
                 Div::new(),
                 lay![
                     size: [440, 60],
@@ -217,7 +204,7 @@ impl Component for NetworkSettings {
             }))
             .key(2 * i as u64);
 
-            scrollable_section = scrollable_section.push(row);
+            scrollable_section = scrollable_section.push(row_node);
         }
 
         // todo: update & implement modal

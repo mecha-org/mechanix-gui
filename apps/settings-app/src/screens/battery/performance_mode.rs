@@ -1,5 +1,3 @@
-use font_cache::TextSegment;
-
 use crate::{components::*, radio_node, screens::battery::battery_model::BatteryModel};
 
 #[derive(Debug)]
@@ -18,7 +16,7 @@ impl Component for PerformanceMode {
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size: [440, Auto],
+                size_pct: [100, 90],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -38,11 +36,101 @@ impl Component for PerformanceMode {
             Box::new(|x| msg!(BatteryModel::set_mode(&x)))
         ));
 
-        main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
-        main_node = main_node.push(text_node("Higher performance will use battery faster"));
-        main_node = main_node.push(text_node("and Check ambient temperature before"));
-        main_node = main_node.push(text_node("proceeding. increase the temperature of the"));
-        main_node = main_node.push(text_node("device significantly."));
+        main_node = main_node.push(node!(
+            Div::new().bg(Color::TRANSPARENT),
+            lay![size_pct: [100, 8]]
+        ));
+
+        main_node = main_node.push(
+            node!(
+                Div::new().bg(Color::TRANSPARENT),
+                lay![
+                    size_pct: [100, 60],
+                    direction: Direction::Column,
+                    cross_alignment: Alignment::Stretch,
+                    axis_alignment: Alignment::Start,
+                ]
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [100, 15],
+                        direction: Direction::Row,
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(
+                    node!(
+                        Div::new().bg(Color::TRANSPARENT),
+                        lay![
+                            size_pct: [5, 100],
+                            axis_alignment: Alignment::Start,
+                        ]
+                    )
+                    .push(get_text_node("**", Color::RED)),
+                )
+                .push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [95, 100],
+                            axis_alignment: Alignment::Start,
+                        ]
+                    )
+                    .push(get_text_node(
+                        "Higher performance will use battery faster and ",
+                        Color::rgb(197.0, 197.0, 197.0),
+                    )),
+                ),
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [100, 15],
+                        direction: Direction::Row,
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [100, 100],
+                            axis_alignment: Alignment::Start,
+                        ]
+                    )
+                    .push(get_text_node(
+                        "increase the temperature of the device significantly.",
+                        Color::rgb(197.0, 197.0, 197.0),
+                    )),
+                ),
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [100, 20],
+                        direction: Direction::Row,
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [100, 100],
+                            axis_alignment: Alignment::Start,
+                        ]
+                    )
+                    .push(get_text_node(
+                        "Check ambient temperature before proceeding.",
+                        Color::rgb(197.0, 197.0, 197.0),
+                    )),
+                ),
+            ),
+        );
 
         let sub_header = sub_header_node("Performance Mode");
 
@@ -50,4 +138,19 @@ impl Component for PerformanceMode {
         base = base.push(main_node);
         Some(base)
     }
+}
+
+pub fn get_text_node(text: &str, color: Color) -> Node {
+    let text_node = node!(
+        widgets::Text::new(txt!(text))
+            .style("color", color)
+            .style("size", 16.0)
+            .style("line_height", 22.)
+            .style("font", "Space Grotesk")
+            .style("font_weight", FontWeight::Medium),
+        lay![
+        margin: [5.0, 0.0, 5.0, 0.0]
+        ]
+    );
+    text_node
 }

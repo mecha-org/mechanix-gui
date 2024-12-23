@@ -57,7 +57,7 @@ impl component::Component for SoundScreen {
                 size_pct: [100],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 0.0, 0.0, 0.0],
+                padding: [5.0, 8.0, 0.0, 8.0],
             ]
         );
 
@@ -72,7 +72,7 @@ impl component::Component for SoundScreen {
                 }))
                 .col_spacing(8.)
                 .col_width(3.75),
-            lay![size: [Auto, 45], margin:[10., 10., 0., 10.]]
+            lay![size: [Auto, 45], margin:[5., 0., 5., 0.]]
         );
         let input_slider = node!(
             Slider::new()
@@ -85,7 +85,7 @@ impl component::Component for SoundScreen {
                 }))
                 .col_spacing(8.)
                 .col_width(3.75),
-            lay![size: [Auto, 45], margin:[10., 10., 0., 10.]]
+            lay![size: [Auto, 45], margin:[5., 0., 5., 0.]]
         );
 
         let output_device = tab_item_node!(
@@ -100,7 +100,6 @@ impl component::Component for SoundScreen {
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectInputDevice }))),
         );
 
-        // main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
         main_node = main_node.push(sub_header_node("Output"));
         main_node = main_node.push(output_slider);
         main_node = main_node.push(output_device);

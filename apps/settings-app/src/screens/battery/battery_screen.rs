@@ -49,49 +49,52 @@ impl Component for BatteryScreen {
                 size_pct: [100],
                 padding: [5.0, 0.0, 5.0, 0.0],
                 direction: layout::Direction::Column,
-                cross_alignment: layout::Alignment::Stretch,
             ]
         );
 
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size_pct: [100, 80],
+                size_pct: [100, 90],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                margin: [10.0, 0.0, 0.0, 0.0],
+                padding: [10., 0., 0., 0.],
             ]
         );
 
-        // let available_battery_percentage = *BatteryModel::get().battery_percentage.get() as u8;
-
-        // let status_indicator = node!(
-        //     Slider::new()
-        //         .value(available_battery_percentage)
-        //         .slider_type(SliderType::Line)
-        //         .active_color(Color::rgb(102., 226., 0.))
-        //         // .on_slide(Box::new(|value| Box::new(())))
-        //         .col_spacing(8.)
-        //         .col_width(5.),
-        //     lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
-        // );
-
         let battery_percentage_widget = node!(
             StatusIndicator::new()
-                // .value(*BatteryModel::get().battery_percentage.get() as u8)
-                .value(100)
+                .value(*BatteryModel::get().battery_percentage.get() as u8)
                 .slider_type(SliderType::BatteryLine)
                 .active_color(Color::rgb(102., 226., 0.))
-                // .on_slide(Box::new(|value| Box::new(())))
                 .col_spacing(10.)
                 .col_width(14.)
                 .disabled(true),
-            lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
+            lay![size: [Auto, 45], margin:[5., 5., 35., 0.]]
         );
 
-        main_node = main_node.push(text_node(
-            format!(" {}% charged", *BatteryModel::get().battery_percentage.get() as u8).as_str(),
+        let charging_text_node = node!(
+            Div::new(),
+            lay![
+               size: [440, 50],
+               cross_alignment: Alignment::Center,
+               axis_alignment: Alignment::Stretch,
+            ]
+        )
+        .push(node!(
+            widgets::Text::new(txt!(format!(
+                " {}% charged",
+                *BatteryModel::get().battery_percentage.get() as u8
+            )
+            .as_str()))
+            .with_class("text-l leading-6 font-space-grotesk font-normal")
+            .style("color", Color::rgb(197., 197., 197.)),
+            lay![
+                padding: [5., 0., 5., 0.],
+            ]
         ));
+        main_node = main_node.push(charging_text_node);
+
         main_node = main_node.push(battery_percentage_widget);
         main_node = main_node.push(node!(
             HDivider {
@@ -114,11 +117,19 @@ impl Component for BatteryScreen {
 
         base = base.push(header_node!(
             "Battery",
-            Box::new(|| {
-                msg!(Message::ChangeRoute {
-                    route: Routes::SettingsList
+            if let BatteryScreenRoute::BatteryScreen = self.state_ref().route {
+                Box::new(|| {
+                    msg!(Message::ChangeRoute {
+                        route: Routes::SettingsList,
+                    })
                 })
-            })
+            } else {
+                Box::new(|| {
+                    msg!(Message::ChangeBatteryScreenRoute {
+                        route: BatteryScreenRoute::BatteryScreen,
+                    })
+                })
+            }
         ));
 
         match self.state_ref().route {

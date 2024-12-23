@@ -1,11 +1,11 @@
+use crate::components::Dimension::Auto;
 use mctk_core::component::{ComponentHasher, Message};
 use mctk_core::event::{self, Event};
 use mctk_core::layout::{Alignment, Direction};
 use mctk_core::{component, msg, state_component_impl, Color, Point, Scale, AABB};
 use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
 use std::fmt::Debug;
-use std::hash::{Hash, Hasher};
-use crate::components::Dimension::Auto;  // If `Auto` is defined in the `Dimension` enum under `components`.
+use std::hash::{Hash, Hasher}; // If `Auto` is defined in the `Dimension` enum under `components`.
 
 use crate::utils::fill_grid_with_true;
 
@@ -14,7 +14,7 @@ pub enum SliderType {
     #[default]
     Box,
     Line,
-    BatteryLine
+    BatteryLine,
 }
 #[derive(Debug, Default)]
 pub struct SliderState {
@@ -239,7 +239,10 @@ impl Component for StatusIndicator {
     }
 
     fn on_drag(&mut self, event: &mut Event<event::Drag>) {
-        println!("StatusIndicator::on_drag() {:?}", event.relative_logical_position());
+        println!(
+            "StatusIndicator::on_drag() {:?}",
+            event.relative_logical_position()
+        );
         if let Some(value) = self.handle_on_drag(
             event.relative_logical_position(),
             event.current_logical_aabb(),
@@ -364,15 +367,14 @@ impl Component for StatusIndicator {
                     v_line
                 }
                 SliderType::BatteryLine => {
-                   
                     let color = if grid[0][i] == true {
                         self.active_color
                     } else {
                         Color::rgb(49., 49., 49.)
                     };
 
-                    let v_line : Node ;
-                    if i == grid[0].len() -1 {
+                    let v_line: Node;
+                    if i == grid[0].len() - 1 {
                         v_line = node!(
                             Div::new().bg(Color::TRANSPARENT),
                             lay![
@@ -385,13 +387,12 @@ impl Component for StatusIndicator {
                         .push(node!(
                             Div::new().bg(color),
                             lay![
-                                size:[col_width, 20],
+                                size:[10, 20],
                                 margin: [0., 0., 0., col_spacing],
                             ]
                         ))
                         .key(i as u64);
-                    }
-                    else {
+                    } else {
                         v_line = node!(
                             Div::new().bg(color),
                             lay![
@@ -402,7 +403,6 @@ impl Component for StatusIndicator {
                         .key(i as u64);
                     }
                     v_line
-                   
                 }
             };
             slider = slider.push(col);

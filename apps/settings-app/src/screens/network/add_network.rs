@@ -207,7 +207,7 @@ impl Component for AddNetwork {
         let name_input_text = node!(
             Div::new(),
             lay![
-                size: [Auto, 40],
+                size: [Auto, 50],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
@@ -264,7 +264,7 @@ impl Component for AddNetwork {
         let password_input_text = node!(
             Div::new(),
             lay![
-                size: [Auto, 40],
+                size: [Auto, 50],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,

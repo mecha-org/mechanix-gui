@@ -69,9 +69,9 @@ impl Component for AboutDevice {
         );
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 375)),
+            Scrollable::new(size!(440, 370)),
             lay![
-                size: [440, 375],
+                size: [440, 370],
             ]
         );
 
@@ -119,7 +119,6 @@ impl Component for AboutDevice {
             lay![]
         ));
 
-        let provision_machine_id = "7672232hjbjbh-23321".to_string();
         let provision_device_details_row_2 = node!(
             Div::new(),
             lay![
@@ -208,8 +207,8 @@ impl Component for AboutDevice {
             machine_detail_node = machine_detail_node.push(node!(
                 Text::new(txt!(provision_machine_id))
                     .style("color", Color::WHITE)
-                    .style("size", 20.0)
-                    .style("line_height", 24.0)
+                    .style("size", 18.0)
+                    .style("line_height", 22.0)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
@@ -231,7 +230,7 @@ impl Component for AboutDevice {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [30, 100],
+                    size_pct: [20, 100],
                     axis_alignment: Alignment::Start,
 
                 ]
@@ -242,7 +241,7 @@ impl Component for AboutDevice {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [70, 100],
+                    size_pct: [80, 100],
                     axis_alignment: Alignment::Start,
 
                 ]
@@ -333,7 +332,7 @@ impl Component for AboutDevice {
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 size_pct: [100, 90],
-                margin: [10., 0., 0., 0.],
+                margin: [20., 0., 0., 0.],
                 position: [Auto, 0., 0., 0.],
             ]
         )

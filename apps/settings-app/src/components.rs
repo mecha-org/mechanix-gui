@@ -186,11 +186,21 @@ macro_rules! header_node {
 
 pub fn sub_header_node(text: &str) -> Node {
     let text_node = node!(
+        Div::new().bg(Color::TRANSPARENT),
+        lay![
+           size: [440, 45],
+           cross_alignment: Alignment::Center,
+           axis_alignment: Alignment::Stretch,
+        ]
+    )
+    .push(node!(
         widgets::Text::new(txt!(text))
             .with_class("text-l leading-6 font-space-grotesk font-normal")
             .style("color", Color::rgb(197., 197., 197.)),
-        lay![margin: [0.0, 10.0, 0.0, 10.0]]
-    );
+        lay![
+            padding: [5., 0., 5., 0.],
+        ]
+    ));
     text_node
 }
 
@@ -245,7 +255,7 @@ pub fn text_node(text: &str) -> Node {
             .style("line_height", 20.)
             .style("font", "Space Grotesk")
             .style("font_weight", FontWeight::Medium),
-        lay![margin: [0.0, 10.0, 0.0, 10.0]]
+        lay![margin: [5.0, 0.0, 5.0, 0.0]]
     );
     text_node
 }
