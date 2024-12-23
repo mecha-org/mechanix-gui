@@ -2,12 +2,12 @@ use crate::gui::Message;
 use crate::gui::Routes;
 use crate::header_node;
 use crate::main;
-use crate::shared::slider::Slider;
-use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
 
 use super::battery_model::BatteryModel;
 use super::performance_mode::PerformanceMode;
+use super::status_indicator::SliderType;
+use super::status_indicator::StatusIndicator;
 
 #[derive(Debug, Clone)]
 pub enum BatteryScreenRoute {
@@ -59,7 +59,7 @@ impl Component for BatteryScreen {
                 size_pct: [100, 80],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 0.0, 0.0, 0.0],
+                margin: [10.0, 0.0, 0.0, 0.0],
             ]
         );
 
@@ -77,19 +77,20 @@ impl Component for BatteryScreen {
         // );
 
         let battery_percentage_widget = node!(
-            Slider::new()
-                .value(*BatteryModel::get().battery_percentage.get() as u8)
-                .slider_type(SliderType::Line)
+            StatusIndicator::new()
+                // .value(*BatteryModel::get().battery_percentage.get() as u8)
+                .value(100)
+                .slider_type(SliderType::BatteryLine)
                 .active_color(Color::rgb(102., 226., 0.))
                 // .on_slide(Box::new(|value| Box::new(())))
-                .col_spacing(8.)
-                .col_width(3.75)
+                .col_spacing(10.)
+                .col_width(14.)
                 .disabled(true),
             lay![size: [Auto, 45], margin:[10., 10., 50., 10.]]
         );
 
         main_node = main_node.push(text_node(
-            format!(" {}%", *BatteryModel::get().battery_percentage.get() as u8).as_str(),
+            format!(" {}% charged", *BatteryModel::get().battery_percentage.get() as u8).as_str(),
         ));
         main_node = main_node.push(battery_percentage_widget);
         main_node = main_node.push(node!(
