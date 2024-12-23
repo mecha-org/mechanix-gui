@@ -3,4 +3,3 @@ pub mod battery_screen;
 pub mod client;
 // pub mod component;
 pub mod performance_mode;
-pub mod status_indicator;

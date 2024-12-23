@@ -1,13 +1,12 @@
 use crate::gui::Message;
 use crate::gui::Routes;
 use crate::header_node;
-use crate::main;
+use crate::shared::slider::Slider;
+use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
 
 use super::battery_model::BatteryModel;
 use super::performance_mode::PerformanceMode;
-use super::status_indicator::SliderType;
-use super::status_indicator::StatusIndicator;
 
 #[derive(Debug, Clone)]
 pub enum BatteryScreenRoute {
@@ -63,7 +62,7 @@ impl Component for BatteryScreen {
         );
 
         let battery_percentage_widget = node!(
-            StatusIndicator::new()
+            Slider::new()
                 .value(*BatteryModel::get().battery_percentage.get() as u8)
                 .slider_type(SliderType::BatteryLine)
                 .active_color(Color::rgb(102., 226., 0.))
