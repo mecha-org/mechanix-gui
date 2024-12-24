@@ -11,7 +11,7 @@ impl Component for InputDeviceSelector {
                 size_pct: [100, Auto],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
-                padding: [5.0, 0.0, 5.0, 0.0],
+                padding: [10.0, 0.0, 5.0, 0.0],
             ]
         );
 
@@ -24,7 +24,15 @@ impl Component for InputDeviceSelector {
             ]
         );
 
-        main_node = main_node.push(sub_header_node("Select Input Device"));
+        let sub_header = node!(
+            Div::new(),
+            lay![
+                margin: [0., 8., 0., 8.]
+            ]
+        )
+        .push(sub_header_node("Select Input Device"));
+
+        main_node = main_node.push(sub_header);
         let options = vec![
             (
                 txt!("Inbuilt Microphone".to_string()),

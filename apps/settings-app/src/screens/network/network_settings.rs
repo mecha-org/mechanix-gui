@@ -79,6 +79,7 @@ impl Component for NetworkSettings {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                padding: [0., 8., 0., 8.]
             ]
         ));
 

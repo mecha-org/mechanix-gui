@@ -303,7 +303,9 @@ impl Component for NetworkingScreen {
                         WirelessModel::toggle_wireless();
                         Box::new(())
                     })),
-                lay![]
+                lay![
+                    padding: [0., 0., 0., 5.]
+                ]
             )),
         );
 

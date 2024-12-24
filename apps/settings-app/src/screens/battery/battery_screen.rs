@@ -46,7 +46,6 @@ impl Component for BatteryScreen {
             widgets::Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
-                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: layout::Direction::Column,
             ]
         );
@@ -57,7 +56,8 @@ impl Component for BatteryScreen {
                 size_pct: [100, 90],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [10., 0., 0., 0.],
+                margin: [10., 0., 0., 0.],
+                padding: [0., 8., 0., 8.]
             ]
         );
 
@@ -69,30 +69,16 @@ impl Component for BatteryScreen {
                 .col_spacing(10.)
                 .col_width(14.)
                 .disabled(true),
-            lay![size: [Auto, 45], margin:[5., 5., 35., 0.]]
+            lay![size: [Auto, 45], margin:[5., 5., 35., 5.]]
         );
 
-        let charging_text_node = node!(
-            Div::new(),
-            lay![
-               size: [440, 50],
-               cross_alignment: Alignment::Center,
-               axis_alignment: Alignment::Stretch,
-            ]
-        )
-        .push(node!(
-            widgets::Text::new(txt!(format!(
+        main_node = main_node.push(sub_header_node(
+            format!(
                 " {}% charged",
                 *BatteryModel::get().battery_percentage.get() as u8
             )
-            .as_str()))
-            .with_class("text-l leading-6 font-space-grotesk font-normal")
-            .style("color", Color::rgb(197., 197., 197.)),
-            lay![
-                padding: [5., 0., 5., 0.],
-            ]
+            .as_str(),
         ));
-        main_node = main_node.push(charging_text_node);
 
         main_node = main_node.push(battery_percentage_widget);
         main_node = main_node.push(node!(

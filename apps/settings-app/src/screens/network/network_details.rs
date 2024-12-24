@@ -457,7 +457,7 @@ impl Component for NetworkDetails {
                         )))),
                     lay![
                         size_pct: [48, 100],
-                        padding: [0., 0., 0., 12.],
+                        padding: [0., 0., 0., 8.],
                         axis_alignment: Alignment::Start,
 
                     ]

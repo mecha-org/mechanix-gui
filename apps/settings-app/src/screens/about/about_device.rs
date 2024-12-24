@@ -81,6 +81,7 @@ impl Component for AboutDevice {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                padding: [0.0, 8.0, 0.0, 8.0],
             ]
         );
 
@@ -207,8 +208,8 @@ impl Component for AboutDevice {
             machine_detail_node = machine_detail_node.push(node!(
                 Text::new(txt!(provision_machine_id))
                     .style("color", Color::WHITE)
-                    .style("size", 18.0)
-                    .style("line_height", 22.0)
+                    .style("size", 14.0)
+                    .style("line_height", 18.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![

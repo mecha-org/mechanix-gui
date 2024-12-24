@@ -10,15 +10,25 @@ impl Component for ScreenOffTime {
             Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
-                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: Direction::Column,
+                cross_alignment: layout::Alignment::Stretch,
+            ]
+        );
+
+        let mut main_node = node!(
+            widgets::Div::new(),
+            lay![
+                size_pct: [100, 90],
+                cross_alignment: layout::Alignment::Stretch,
+                direction: layout::Direction::Column,
+                margin: [10., 0., 0., 0.],
             ]
         );
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 350)),
+            Scrollable::new(size!(440, 320)),
             lay![
-                size: [440, 350],
+                size: [440, 320],
             ]
         )
         .push(node!(
@@ -27,10 +37,18 @@ impl Component for ScreenOffTime {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                margin: [0., 8., 0., 8.]
             ]
         ));
 
-        let sub_header = sub_header_node("Screen off time");
+        let sub_header = node!(
+            Div::new(),
+            lay![
+                margin: [0., 8., 0., 8.]
+            ]
+        )
+        .push(sub_header_node("Screen off time"));
+
         let options = vec!["10s", "20s", "30s", "60s", "5m", "Never"];
         let mut options_vec: Vec<(Vec<TextSegment>, Vec<TextSegment>)> = vec![];
         for (i, option) in options.into_iter().enumerate() {
@@ -38,9 +56,10 @@ impl Component for ScreenOffTime {
         }
         scrollable = scrollable.push(radio_node!(options_vec, txt!("30s")));
 
-        base = base.push(sub_header);
+        main_node = main_node.push(sub_header);
+        main_node = main_node.push(scrollable);
 
-        base = base.push(scrollable);
+        base = base.push(main_node);
         Some(base)
     }
 }

@@ -5,10 +5,9 @@ pub struct PerformanceMode {}
 impl Component for PerformanceMode {
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
-            widgets::Div::new().bg(Color::BLACK),
+            widgets::Div::new(),
             lay![
                 size_pct: [100],
-                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: Direction::Column,
             ]
         );
@@ -17,8 +16,9 @@ impl Component for PerformanceMode {
             widgets::Div::new(),
             lay![
                 size_pct: [100, 90],
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
+                cross_alignment: layout::Alignment::Stretch,
+                direction: layout::Direction::Column,
+                margin: [10., 0., 0., 0.],
             ]
         );
 
@@ -30,17 +30,25 @@ impl Component for PerformanceMode {
         for (i, mode) in modes.into_iter().enumerate() {
             available_modes_txt.push((txt!(mode.clone()), txt!(mode.clone())));
         }
+
+        let sub_header = node!(
+            Div::new(),
+            lay![
+                margin: [0., 8., 0., 8.]
+            ]
+        )
+        .push(sub_header_node("Performance Mode"));
+
+        main_node = main_node.push(sub_header);
         main_node = main_node.push(radio_node!(
             available_modes_txt,
             txt!(current_mode),
             Box::new(|x| msg!(BatteryModel::set_mode(&x)))
         ));
-
         main_node = main_node.push(node!(
             Div::new().bg(Color::TRANSPARENT),
             lay![size_pct: [100, 8]]
         ));
-
         main_node = main_node.push(
             node!(
                 Div::new().bg(Color::TRANSPARENT),
@@ -131,10 +139,6 @@ impl Component for PerformanceMode {
                 ),
             ),
         );
-
-        let sub_header = sub_header_node("Performance Mode");
-
-        base = base.push(sub_header);
         base = base.push(main_node);
         Some(base)
     }

@@ -201,6 +201,7 @@ impl Component for AddNetwork {
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 margin: [10., 0., 0., 0.],
+                padding: [0., 8., 0., 8.]
             ]
         );
 

@@ -43,7 +43,6 @@ impl Component for DisplayScreen {
             widgets::Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
-                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
             ]
@@ -55,7 +54,8 @@ impl Component for DisplayScreen {
                 size_pct: [100, 90],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 0.0, 0.0, 0.0],
+                margin: [10., 0., 0., 0.],
+                padding: [0., 8., 0., 8.]
             ]
         );
 
@@ -72,8 +72,7 @@ impl Component for DisplayScreen {
                 .col_spacing(7.75)
                 .row_spacing(7.75)
                 .col_width(4.),
-            // lay![size: [Auto, 45], margin:[15., 10., 45., 0.]]
-            lay![size: [Auto, 45], margin:[5., 0., 35., 0.]]
+            lay![size: [Auto, 45], margin:[5., 5., 35., 5.]]
         );
 
         let screen_off_time = tab_item_node!(

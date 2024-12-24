@@ -186,7 +186,7 @@ macro_rules! header_node {
 
 pub fn sub_header_node(text: &str) -> Node {
     let text_node = node!(
-        Div::new().bg(Color::TRANSPARENT),
+        Div::new(),
         lay![
            size: [440, 45],
            cross_alignment: Alignment::Center,
@@ -197,9 +197,7 @@ pub fn sub_header_node(text: &str) -> Node {
         widgets::Text::new(txt!(text))
             .with_class("text-l leading-6 font-space-grotesk font-normal")
             .style("color", Color::rgb(197., 197., 197.)),
-        lay![
-            padding: [5., 0., 5., 0.],
-        ]
+        lay![]
     ));
     text_node
 }
