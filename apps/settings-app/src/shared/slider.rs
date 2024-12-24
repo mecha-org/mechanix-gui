@@ -13,6 +13,7 @@ pub enum SliderType {
     #[default]
     Box,
     Line,
+    BatteryLine,
 }
 #[derive(Debug, Default)]
 pub struct SliderState {
@@ -360,6 +361,44 @@ impl Component for Slider {
                         ]
                     )
                     .key(i as u64);
+                    v_line
+                }
+                SliderType::BatteryLine => {
+                    let color = if grid[0][i] == true {
+                        self.active_color
+                    } else {
+                        Color::rgb(49., 49., 49.)
+                    };
+
+                    let v_line: Node;
+                    if i == grid[0].len() - 1 {
+                        v_line = node!(
+                            Div::new().bg(Color::TRANSPARENT),
+                            lay![
+                                size:[col_width, Auto],
+                                margin: [0., 0., 0., col_spacing],
+                                direction: Direction::Column,
+                                axis_alignment: Alignment::Center
+                            ]
+                        )
+                        .push(node!(
+                            Div::new().bg(color),
+                            lay![
+                                size:[10, 20],
+                                margin: [0., 0., 0., col_spacing],
+                            ]
+                        ))
+                        .key(i as u64);
+                    } else {
+                        v_line = node!(
+                            Div::new().bg(color),
+                            lay![
+                                size:[col_width, Auto],
+                                margin: [0., 0., 0., col_spacing],
+                            ]
+                        )
+                        .key(i as u64);
+                    }
                     v_line
                 }
             };

@@ -31,13 +31,9 @@ use mctk_smithay::{
     xdg_shell::xdg_window::{XdgWindow, XdgWindowParams},
     WindowInfo, WindowMessage, WindowOptions,
 };
-use mechanix_status_bar_components::types::WirelessStatus;
-use mechanix_system_dbus_client::wireless::{
-    KnownNetworkListResponse, KnownNetworkResponse, WirelessInfoResponse,
-};
+
 use screens::{about::device_model::DeviceModel, battery::battery_model::BatteryModel};
-// use screens::wireless::handler::{WirelessDetailsItem, WirelessServiceHandle};
-use settings::{AppSettings, MainSettings};
+use settings::MainSettings;
 use std::{
     collections::HashMap,
     fs,
@@ -188,18 +184,17 @@ async fn main() -> anyhow::Result<()> {
     );
 
     // ------------------------------//
-    assets.insert(
-        "bluetooth_icon".to_string(),
-        AssetParams::new(modules.bluetooth.icon),
-    );
+    if let icon = modules.bluetooth.icon {
+        svgs.insert("bluetooth_icon".to_string(), icon);
+    }
+
     assets.insert(
         "display_icon".to_string(),
         AssetParams::new(modules.display.icon),
     );
-    assets.insert(
-        "appearance_icon".to_string(),
-        AssetParams::new(modules.appearance.icon),
-    );
+    if let icon = modules.appearance.icon {
+        svgs.insert("appearance_icon".to_string(), icon);
+    }
     assets.insert(
         "battery_icon".to_string(),
         AssetParams::new(modules.battery.icon),
@@ -208,19 +203,23 @@ async fn main() -> anyhow::Result<()> {
         "sound_icon".to_string(),
         AssetParams::new(modules.sound.icon),
     );
-    assets.insert("lock_icon".to_string(), AssetParams::new(modules.lock.icon));
-    assets.insert(
-        "date_time_icon".to_string(),
-        AssetParams::new(modules.date_time.icon),
-    );
-    assets.insert(
-        "language_icon".to_string(),
-        AssetParams::new(modules.language.icon),
-    );
-    assets.insert(
-        "update_icon".to_string(),
-        AssetParams::new(modules.update.icon),
-    );
+
+    if let icon = modules.lock.icon {
+        svgs.insert("lock_icon".to_string(), icon);
+    }
+
+    if let icon = modules.date_time.icon {
+        svgs.insert("date_time_icon".to_string(), icon);
+    }
+
+    if let icon = modules.language.icon {
+        svgs.insert("language_icon".to_string(), icon);
+    }
+
+    if let icon = modules.update.icon {
+        svgs.insert("update_icon".to_string(), icon);
+    }
+
     assets.insert(
         "about_icon".to_string(),
         AssetParams::new(modules.about.icon.default),
@@ -229,10 +228,13 @@ async fn main() -> anyhow::Result<()> {
         "device_icon".to_string(),
         AssetParams::new(modules.about.icon.device),
     );
-    assets.insert(
-        "right_arrow_icon".to_string(),
-        AssetParams::new(modules.see_options.right_arrow_icon),
-    );
+
+    if let icon = modules.see_options.white_right_arrow {
+        svgs.insert("white_right_arrow".to_string(), icon);
+    }
+    if let icon = modules.see_options.grey_right_arrow {
+        svgs.insert("grey_right_arrow".to_string(), icon);
+    }
     assets.insert(
         "connected_icon".to_string(),
         AssetParams::new(modules.see_options.connected_icon),
@@ -249,10 +251,9 @@ async fn main() -> anyhow::Result<()> {
         "add_icon".to_string(),
         AssetParams::new(modules.footer.add_icon),
     );
-    assets.insert(
-        "tick_icon".to_string(),
-        AssetParams::new(modules.footer.tick_icon),
-    );
+    if let icon = modules.footer.tick_icon {
+        svgs.insert("tick_icon".to_string(), icon);
+    }
     assets.insert(
         "delete_icon".to_string(),
         AssetParams::new(modules.footer.delete_icon),
@@ -281,6 +282,10 @@ async fn main() -> anyhow::Result<()> {
         namespace,
     };
 
+    println!(
+        "checking svg -------------> {:?} ",
+        svgs.get("bluetooth_icon")
+    );
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
     let settings = Arc::new(RwLock::new(settings));
@@ -351,23 +356,7 @@ async fn main() -> anyhow::Result<()> {
                         let _ = window_tx_2.send(WindowMessage::Send {
                             message: msg!(NetworkMessage::ConnectedNetworkName { name: name }),
                         });
-                    } // WirelessMessage::ConnectedNetworkDetails { details } => {
-                      //     let _ = window_tx_2.send(WindowMessage::Send {
-                      //         message: msg!(NetworkMessage::ConnectedNetworkDetails {
-                      //             details: details
-                      //         }),
-                      //     });
-                      // }
-                      // WirelessMessage::AvailableNetworksList { list } => {
-                      //     let _ = window_tx_2.send(WindowMessage::Send {
-                      //         message: msg!(NetworkMessage::AvailableNetworksList { list: list }),
-                      //     });
-                      // }
-                      // WirelessMessage::KnownNetworksList { list } => {
-                      //     let _ = window_tx_2.send(WindowMessage::Send {
-                      //         message: msg!(NetworkMessage::KnownNetworksList { list: list }),
-                      //     });
-                      // }
+                    }
                 },
                 AppMessage::NotFound => todo!(),
                 _ => (),
@@ -375,8 +364,6 @@ async fn main() -> anyhow::Result<()> {
             calloop::channel::Event::Closed => {}
         };
     });
-    // // NOTE: not working with API for now
-    // init_services(settings.clone(), app_channel, wireless_msg_rx);
 
     loop {
         event_loop.dispatch(None, &mut app).unwrap();
@@ -388,31 +375,3 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 }
-
-// fn init_services(
-//     settings: Arc<RwLock<MainSettings>>,
-//     app_channel: Sender<AppMessage>,
-//     wireless_msg_rx: Receiver<WirelessMessage>,
-// ) -> JoinHandle<()> {
-//     thread::spawn(move || {
-//         let runtime = Builder::new_multi_thread()
-//             .worker_threads(1)
-//             .enable_all()
-//             .build()
-//             .unwrap();
-
-//         let wireless_f = run_wireless_handler(app_channel.clone(), wireless_msg_rx);
-
-//         runtime
-//             .block_on(runtime.spawn(async move { tokio::join!(wireless_f) }))
-//             .unwrap();
-//     })
-// }
-
-// async fn run_wireless_handler(
-//     app_channel: Sender<AppMessage>,
-//     wireless_msg_rx: Receiver<WirelessMessage>,
-// ) {
-//     let mut wireless_service_handle = WirelessServiceHandle::new(app_channel);
-//     wireless_service_handle.run(wireless_msg_rx).await;
-// }

@@ -17,7 +17,6 @@ use crate::{
         sound::sound_screen::{SoundScreen, SoundScreenRoute},
     },
     settings::{self, MainSettings},
-    shared::h_divider::HDivider,
     AppMessage, AppParams, WirelessMessage,
 };
 use mctk_core::{
@@ -27,8 +26,7 @@ use mctk_core::{
     node, rect,
     reexports::smithay_client_toolkit::reexports::calloop,
     size_pct,
-    style::Styled,
-    widgets::Div,
+    widgets::{Div, HDivider},
     Color, Node,
 };
 use mctk_macros::{component, state_component_impl};
@@ -38,15 +36,6 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-// #[derive(Default, Debug, Clone)]
-// pub enum NetworkScreenRoutes {
-//     #[default]
-//     NetworkScreen,
-//     NetworkDetailsScreen, // available or connected/manage/known
-//     ManageNetworksScreen,
-//     AvailableNetworksScreen,
-//     ConnectNetworkEnterCode,
-// }
 #[derive(Default, Debug, Clone)]
 pub enum NetworkScreenRoutes {
     #[default]
@@ -132,8 +121,6 @@ impl Component for SettingsApp {
             app_channel: None,
             current_route: Routes::default(),
             connected_network_name: String::from(""),
-            // connected_network_details: None,
-            // available_networks_list: vec![],
             known_networks_list: vec![],
             add_network_name: String::from(""),
         });
@@ -149,7 +136,10 @@ impl Component for SettingsApp {
             ]
         );
         app_node = app_node.push(node!(
-            HDivider { size: 1. },
+            HDivider {
+                size: 1.,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
                 padding: [2.0, 20.0, 2.0, 20.0],
             ],
@@ -166,19 +156,10 @@ impl Component for SettingsApp {
         );
 
         match &self.state_ref().current_route {
-            Routes::SettingsList => {
-                base = base.push(node!(SettingsScreen {
-                    connected_network_name: self.state_ref().connected_network_name.clone()
-                }))
-            }
+            Routes::SettingsList => base = base.push(node!(SettingsScreen::new())),
             Routes::SoundScreen => base = base.push(node!(SoundScreen::new())),
             Routes::Network { screen } => match screen {
-                NetworkScreenRoutes::Networking => {
-                    base = base.push(node!(NetworkingScreen::new(
-                        self.state_ref().wireless_Status.clone(),
-                        self.state_ref().connected_network_name.clone() // self.state_ref().connected_network_details.clone()
-                    )))
-                }
+                NetworkScreenRoutes::Networking => base = base.push(node!(NetworkingScreen::new())),
                 NetworkScreenRoutes::AddNetwork { ssid } => {
                     base = base.push(node!(AddNetwork::new(ssid.to_string())))
                 }

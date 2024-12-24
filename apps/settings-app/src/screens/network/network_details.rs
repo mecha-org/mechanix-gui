@@ -1,12 +1,11 @@
 use std::hash::Hash;
 
 use super::wireless_model::WirelessModel;
-use crate::{
-    gui::{Message, NetworkScreenRoutes, Routes},
-    shared::h_divider::HDivider,
-};
+use crate::components::{detail_row, DetailRow};
+use crate::gui::{Message, NetworkScreenRoutes, Routes};
+use crate::utils::truncate;
 
-use mctk_core::widgets::Button;
+use mctk_core::widgets::{Button, HDivider};
 use mctk_core::{
     component::Component,
     lay,
@@ -60,14 +59,6 @@ impl NetworkDetails {
     }
 }
 
-fn truncate(s: String, max_length: usize) -> String {
-    if s.len() <= max_length {
-        s.to_string()
-    } else {
-        format!("{}...", &s[..max_length - 3])
-    }
-}
-
 #[state_component_impl(NetworkDetailsState)]
 impl Component for NetworkDetails {
     fn init(&mut self) {
@@ -114,7 +105,7 @@ impl Component for NetworkDetails {
         );
 
         let text_node = node!(
-            Text::new(txt!("Network Details"))
+            Text::new(txt!("Network Information"))
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
                 .style("size", 28.0)
                 .style("line_height", 17.5)
@@ -130,9 +121,10 @@ impl Component for NetworkDetails {
             lay![
                 size_pct: [100, 10],
                 direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
-                margin: [0., 0., 5., 0.],
+                axis_alignment: Alignment::Stretch,
+                position: [0., 0., Auto, 0.],
+                margin: [0., 0., 10., 0.]
             ]
         )
         .push(
@@ -187,7 +179,8 @@ impl Component for NetworkDetails {
                 Div::new(),
                 lay![
                     size_pct: [20, Auto],
-                    axis_alignment: Alignment::End
+                    axis_alignment: Alignment::End,
+                    margin: [0., 0., 0., 10.]
                 ]
             )
             .push(node!(
@@ -222,6 +215,7 @@ impl Component for NetworkDetails {
                 size_pct: [100, 90],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                margin: [12., 0., 0., 0.],
             ]
         );
 
@@ -299,379 +293,203 @@ impl Component for NetworkDetails {
         )
         .push(selected_network_row);
 
-        // details text
-        let details_text = node!(
-            Text::new(txt!("Details"))
-                .style("color", Color::rgba(197., 197., 197., 1.))
-                .style("size", 18.0)
-                .style("line_height", 20.0)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Bold),
-            lay![
-                direction: Direction::Row,
-                margin: [20.0, 0.0, 10.0, 0.0],
-            ]
+        let details_row_1 = detail_row(
+            DetailRow {
+                key: "NAME".to_uppercase(),
+                value: truncate(connected_network.name.clone(), 17),
+            },
+            DetailRow {
+                key: "STATUS".to_uppercase(),
+                value: network_status.to_string(),
+            },
         );
 
-        // NOTE: removed subnet and gatway to mac address and Name
-        // status, passphrase - security
-        let details_row_1 = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, Auto],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [50, Auto],
-                    axis_alignment: Alignment::Start,
-                    direction: Direction::Column,
-                ]
-            )
-            .push(node!(
-                Text::new(txt!("Name".to_uppercase()))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 14.0)
-                    .style("line_height", 18.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
-                lay![
-                    margin: [0.0, 0.0, 4.0, 0.0],
-                ]
-            ))
-            .push(node!(
-                Text::new(txt!(truncate(connected_network.name.clone(), 17)))
-                    .style("color", Color::WHITE)
-                    .style("size", 18.0)
-                    .style("line_height", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold),
-                lay![]
-            )),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [50, Auto],
-                    axis_alignment: Alignment::Start,
-                    direction: Direction::Column,
-                ]
-            )
-            .push(node!(
-                Text::new(txt!("Status".to_uppercase()))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 14.0)
-                    .style("line_height", 18.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
-                lay![
-                    margin: [0.0, 0.0, 4.0, 0.0],
-                ]
-            ))
-            .push(node!(
-                Text::new(txt!(network_status))
-                    .style("color", Color::WHITE)
-                    .style("size", 18.0)
-                    .style("line_height", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold),
-                lay![]
-            )),
-        );
-
-        let details_row_2 = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, Auto],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [50, Auto],
-                    axis_alignment: Alignment::Start,
-                    direction: Direction::Column,
-                ]
-            )
-            .push(node!(
-                Text::new(txt!("Frequency".to_uppercase()))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 14.0)
-                    .style("line_height", 18.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
-                lay![
-                    margin: [0.0, 0.0, 4.0, 0.0],
-                ]
-            ))
-            .push(node!(
-                Text::new(txt!(if connected_network.frequency.starts_with("2") {
+        let details_row_2 = detail_row(
+            DetailRow {
+                key: "Frequency".to_uppercase(),
+                value: if connected_network.frequency.starts_with("2") {
                     "2.4 GHz"
                 } else {
                     "5 GHz"
-                }))
-                .style("color", Color::WHITE)
-                .style("size", 18.0)
-                .style("line_height", 20.0)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Bold),
-                lay![]
-            )),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [50, Auto],
-                    axis_alignment: Alignment::Start,
-                    direction: Direction::Column,
-                ]
-            )
-            .push(node!(
-                Text::new(txt!("IP Address".to_uppercase()))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 14.0)
-                    .style("line_height", 18.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
-                lay![
-                    margin: [0.0, 0.0, 4.0, 0.0],
-                ]
-            ))
-            .push(node!(
-                Text::new(txt!(ip_address))
-                    .style("color", Color::WHITE)
-                    .style("size", 18.0)
-                    .style("line_height", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold),
-                lay![]
-            )),
+                }
+                .to_string(),
+            },
+            DetailRow {
+                key: "IP Address".to_uppercase(),
+                value: ip_address.to_string(),
+            },
         );
 
-        let details_row_3 = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, Auto],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [50, Auto],
-                    axis_alignment: Alignment::Start,
-                    direction: Direction::Column,
-                ]
-            )
-            .push(node!(
-                Text::new(txt!("MAC Address".to_uppercase()))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 14.0)
-                    .style("line_height", 18.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
-                lay![
-                    margin: [0.0, 0.0, 4.0, 0.0],
-                ]
-            ))
-            .push(node!(
-                Text::new(txt!(connected_network.mac))
-                    .style("color", Color::WHITE)
-                    .style("size", 18.0)
-                    .style("line_height", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold),
-                lay![]
-            )),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [50, Auto],
-                    axis_alignment: Alignment::Start,
-                    direction: Direction::Column,
-                ]
-            )
-            .push(node!(
-                Text::new(txt!("Security".to_uppercase()))
-                    .style("color", Color::rgba(197., 197., 197., 1.))
-                    .style("size", 14.0)
-                    .style("line_height", 18.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
-                lay![
-                    margin: [0.0, 0.0, 4.0, 0.0],
-                ]
-            ))
-            .push(node!(
-                Text::new(txt!(security))
-                    .style("color", Color::WHITE)
-                    .style("size", 18.0)
-                    .style("line_height", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Bold),
-                lay![]
-            )),
+        let details_row_3 = detail_row(
+            DetailRow {
+                key: "MAC Address".to_uppercase(),
+                value: connected_network.mac.to_string(),
+            },
+            DetailRow {
+                key: "Security".to_uppercase(),
+                value: security.to_string(),
+            },
         );
-
-        let start_node = node!(
-            Div::new(),
-            lay![
-                direction: Direction::Row,
-                margin: [20.0, 0.0, 10.0, 0.0],
-            ]
-        );
-        content_node = content_node.push(start_node);
 
         // content_node = content_node.push(selected_network_node);
         // content_node = content_node.push(node!(HDivider { size: 1. }, lay![
         //     margin: [0.0, 0.0, 30.0, 0.0],
         // ]));
 
-        content_node = content_node.push(node!(
-            HDivider { size: 1. },
-            lay![
-                margin: [0., 0., 10., 0.]
-            ]
-        ));
+        // content_node = content_node.push(node!(
+        //     HDivider {
+        //         size: 0.8,
+        //         color: Color::rgba(83., 83., 83., 1.)
+        //     },
+        //     lay![
+        //         margin: [0., 0., 10., 0.]
+        //     ]
+        // ));
         content_node = content_node.push(details_row_1);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider {
+                size: 0.6,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
         content_node = content_node.push(details_row_2);
         content_node = content_node.push(node!(
-            HDivider { size: 0.5 },
+            HDivider {
+                size: 0.6,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
         content_node = content_node.push(details_row_3);
         content_node = content_node.push(node!(
-            HDivider { size: 1. },
+            HDivider {
+                size: 0.8,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
 
+        // note : in border with width, does not match with radius  - 1. is the border width
         let modal = node!(
-            Div::new()
-                .bg(Color::DARK_GREY)
-                .border(Color::DARK_GREY, 1., (10., 10., 10., 10.)),
+            Div::new().bg(Color::rgba(29., 29., 29., 1.)).border(
+                Color::rgba(127., 127., 135., 1.),
+                0.,
+                (10., 10., 10., 10.)
+            ),
             lay![
-                size: [280, 180],
+                size: [320, 160],
                 direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
                 position_type: Absolute,
-                position: [120., 80., 0., 0.],
+                position: [140., 60., 0., 0.],
+                cross_alignment: Alignment::Stretch,
+                axis_alignment: Alignment::Stretch,
+                padding: [15., 15., 15., 10.]
+
             ]
         )
         .push(
             node!(
-                Div::new().border(Color::TRANSPARENT, 1., (10., 10., 10., 10.)),
-                // Div::new(),
+                Div::new(),
                 lay![
-                size_pct: [100, 70],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Center,
-                cross_alignment: Alignment::Center,
-                padding:[0., 20., 0., 0.]
+                    size_pct: [100, 72],
+                    cross_alignment: Alignment::Start,
+                    axis_alignment: Alignment::Start,
                 ]
             )
             .push(node!(
-                Text::new(txt!("Are you sure?"))
+                Text::new(txt!("Forget this network?"))
                     .style("color", Color::WHITE)
-                    .style("size", 20.)
-                    .style("line_height", 22.)
+                    .style("size", 18.)
+                    .style("line_height", 20.)
                     .style("font", "Space Grotesk")
                     .style("font_weight", FontWeight::Normal),
                 lay![
-                    size_pct: [100, 50],
-                ],
+                    size: [Auto],
+                ]
             )),
         )
         .push(
+            // BUTTONS
             node!(
-                Div::new().border(Color::TRANSPARENT, 1.5, (0., 10., 10., 10.)),
+                Div::new(),
                 lay![
-                    size_pct: [100, 30],
+                    size_pct: [100, 28],
                     direction: Direction::Row,
-                    cross_alignment: Alignment::Stretch,
                     axis_alignment: Alignment::Stretch,
-                    padding: [0., 0., 5., 0.]
+                    cross_alignment: Alignment::Stretch,
                 ]
             )
             .push(node!(
-                Button::new(txt!("Cancel"))
-                    .style("text_color", Color::WHITE)
-                    .style("background_color", Color::DARK_GREY)
-                    .style("active_color", Color::MID_GREY)
-                    .style("font_size", 20.)
-                    .style("line_height", 22.)
-                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
-                        !is_model_open
-                    )))),
+                Div::new(),
                 lay![
-                    size_pct: [48, Auto],
+                    size_pct: [28, 100]
+                    axis_alignment: Alignment::Start,
                 ]
             ))
             .push(
                 node!(
-                    Div::new().bg(Color::TRANSPARENT),
+                    Div::new(),
                     lay![
-                     size_pct: [4, Auto],
-                     axis_alignment: Alignment::Center,
-                     cross_alignment: Alignment::Center
+                        size_pct: [72, 100]
+                        axis_alignment: Alignment::Stretch,
                     ]
                 )
                 .push(node!(
-                    Text::new(txt!("|"))
-                        .style("color", Color::LIGHT_GREY)
-                        .style("size", 20.)
-                        .style("line_height", 22.)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                    Button::new(txt!("Cancel"))
+                        .style("text_color", Color::WHITE)
+                        // .style("background_color", Color::rgba(29., 29., 29., 1.))
+                        .style("background_color", Color::rgba(68., 68., 68., 1.))
+                        .style("active_color", Color::rgba(82., 81., 81., 1.))
+                        .style("font_size", 16.)
+                        .style("line_height", 18.)
+                        .style("radius", 8.)
+                        // .style("border_color", Color::rgba(127., 127., 135., 1.))
+                        // .style("border_width", 1.)
+                        .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
+                            !is_model_open
+                        )))),
                     lay![
-                        cross_alignment: Alignment::Center
+                        size_pct: [48, 100],
+                        padding: [0., 0., 0., 8.],
+                        axis_alignment: Alignment::Start,
+
+                    ]
+                ))
+                .push(node!(
+                    Button::new(txt!("Forget"))
+                        // .style("text_color", Color::BLACK)
+                        // .style("background_color", Color::rgba(29., 29., 29., 1.))
+                        // .style("active_color", Color::rgba(82., 81., 81., 1.))
+                        .style("text_color", Color::BLACK)
+                        .style("background_color", Color::WHITE)
+                        .style("active_color", Color::rgba(194., 184., 184., 1.))
+                        .style("font_size", 16.)
+                        .style("line_height", 18.)
+                        .style("radius", 8.)
+                        // .style("border_color", Color::rgba(127., 127., 135., 1.))
+                        // .style("border_width", 1.)
+                        .on_click(Box::new(move || {
+                            WirelessModel::disconnect();
+                            msg!(Message::ChangeRoute {
+                                route: Routes::Network {
+                                    screen: NetworkScreenRoutes::Networking
+                                }
+                            })
+                        })),
+                    lay![
+                        size_pct: [48, 100],
+                        padding: [0., 12., 0., 0.],
+                        axis_alignment: Alignment::End,
                     ]
                 )),
-            )
-            .push(node!(
-                Button::new(txt!("Disconnect"))
-                    .style("text_color", Color::RED)
-                    .style("background_color", Color::DARK_GREY)
-                    .style("active_color", Color::MID_GREY)
-                    .style("font_size", 20.)
-                    .style("line_height", 22.)
-                    .on_click(Box::new(move || {
-                        WirelessModel::disconnect();
-                        msg!(Message::ChangeRoute {
-                            route: Routes::Network {
-                                screen: NetworkScreenRoutes::Networking
-                            }
-                        })
-                    })),
-                lay![
-                    size_pct: [48, Auto],
-                ]
-            )),
+            ),
         );
 
         if is_model_open.clone() == true {

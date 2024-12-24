@@ -45,7 +45,6 @@ impl component::Component for SoundScreen {
             widgets::Div::new().bg(Color::BLACK),
             lay![
                 size_pct: [100],
-                padding: [5.0, 0.0, 5.0, 0.0],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
             ]
@@ -54,10 +53,11 @@ impl component::Component for SoundScreen {
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size_pct: [100],
+                size_pct: [100, 90],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                padding: [5.0, 0.0, 0.0, 0.0],
+                margin: [10., 0., 0., 0.],
+                padding: [0., 8., 0., 8.]
             ]
         );
 
@@ -72,7 +72,7 @@ impl component::Component for SoundScreen {
                 }))
                 .col_spacing(8.)
                 .col_width(3.75),
-            lay![size: [Auto, 45], margin:[10., 10., 0., 10.]]
+            lay![size: [Auto, 45], margin:[5., 5., 5., 5.]]
         );
         let input_slider = node!(
             Slider::new()
@@ -85,30 +85,37 @@ impl component::Component for SoundScreen {
                 }))
                 .col_spacing(8.)
                 .col_width(3.75),
-            lay![size: [Auto, 45], margin:[10., 10., 0., 10.]]
+            lay![size: [Auto, 45], margin:[5., 5., 5., 5.]]
         );
 
         let output_device = tab_item_node!(
             [text_node("Output Speaker")],
-            [icon_node("right_arrow_icon")],
+            [get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectOutputDevice }))),
         );
 
         let input_device = tab_item_node!(
             [text_node("Input Microphone")],
-            [icon_node("right_arrow_icon")],
+            [get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
             on_click: Some(Box::new(move || msg!(Message::ChangeSoundScreenRoute { route: SoundScreenRoute::SelectInputDevice }))),
         );
 
-        // main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
-        main_node = main_node.push(text_bold_node("Output"));
+        main_node = main_node.push(sub_header_node("Output"));
         main_node = main_node.push(output_slider);
         main_node = main_node.push(output_device);
+        main_node = main_node.push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
 
         main_node = main_node.push(node!(Div::new(), lay![size: [20]]));
-        main_node = main_node.push(text_bold_node("Input"));
+        main_node = main_node.push(sub_header_node("Input"));
         main_node = main_node.push(input_slider);
         main_node = main_node.push(input_device);
+        main_node = main_node.push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
 
         base = base.push(header_node!(
             "Sound",

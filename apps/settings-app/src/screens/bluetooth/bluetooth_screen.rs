@@ -1,7 +1,6 @@
 // use crate::footer_node;
 use crate::gui::Message;
 use crate::gui::Routes;
-use crate::shared::h_divider::HDivider;
 use crate::{components::*, tab_item_node};
 
 #[derive(Debug)]
@@ -85,16 +84,16 @@ impl Component for BluetoothScreen {
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
         main_node = main_node.push(tab_item_node!(
             [text_bold_node("mecha compute")],
-            [icon_node("connected_icon"), icon_node("right_arrow_icon")],
+            [icon_node("connected_icon"), icon_node("white_right_arrow")],
             route: Routes::BluetoothDeviceInfo
         ));
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
         for (i, device) in devices.into_iter().enumerate() {
             main_node = main_node.push(
-                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")], route: Routes::BluetoothPairingEnterCode)
+                tab_item_node!([text_bold_node(device)], [icon_node("white_right_arrow")], route: Routes::BluetoothPairingEnterCode)
                     .key((i + 1) as u64),
             );
-            main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
+            main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(2 * i as u64));
         }
 
         main_node = main_node.push(node!(Div::new(), lay![size: [50]]));
@@ -102,15 +101,15 @@ impl Component for BluetoothScreen {
         main_node = main_node.push(node!(Div::new(), lay![size: [10]]));
         main_node = main_node.push(tab_item_node!(
             [text_bold_node("mecha compute")],
-            [icon_node("connected_icon"), icon_node("right_arrow_icon")]
+            [icon_node("connected_icon"), icon_node("white_right_arrow")]
         ));
-        main_node = main_node.push(node!(HDivider { size: 1. }));
+        main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }));
         for (i, device) in devices.into_iter().enumerate() {
             main_node = main_node.push(
-                tab_item_node!([text_bold_node(device)], [icon_node("right_arrow_icon")])
+                tab_item_node!([text_bold_node(device)], [icon_node("white_right_arrow")])
                     .key((i + 1) as u64),
             );
-            main_node = main_node.push(node!(HDivider { size: 1. }).key(2 * i as u64));
+            main_node = main_node.push(node!(HDivider { size: 1. , color: Color::rgba(83., 83., 83., 1.) }).key(2 * i as u64));
         }
         base = base.push(main_node);
         Some(base)

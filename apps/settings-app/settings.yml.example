@@ -40,7 +40,7 @@ modules:
       strong: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_strong_icon.png
       error: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_error_icon.png
       not_found: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_not_found_icon.svg
-      wireless_settings: /usr/share/mechanix/apps/settings/assets/icons/wireless_settings_icon.png
+      wireless_settings: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_settings_icon.png
     secured_icon:
       off: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_off_icon.png
       on: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_on_icon.png
@@ -49,34 +49,35 @@ modules:
       strong: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_strong_icon.png
       error: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_error_icon.png
   bluetooth:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/bluetooth_icon.png
+    icon: /usr/share/mechanix/apps/settings/assets/icons/bluetooth_off_icon.svg
   display:
     icon: /usr/share/mechanix/apps/settings/assets/icons/display_icon.png
   appearance:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/appearance_icon.png
+    icon: /usr/share/mechanix/apps/settings/assets/icons/appearance_icon.svg
   battery:
     icon: /usr/share/mechanix/apps/settings/assets/icons/battery_icon.png
   sound:
     icon: /usr/share/mechanix/apps/settings/assets/icons/sound_icon.png
   lock:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/lock_icon.png
+    icon: /usr/share/mechanix/apps/settings/assets/icons/lock_icon.svg
   date_time:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/date_time_icon.png
+    icon: /usr/share/mechanix/apps/settings/assets/icons/date_time_icon.svg
   language:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/language_icon.png
+    icon: /usr/share/mechanix/apps/settings/assets/icons/language_icon.svg
   update:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/update_icon.png
+    icon: /usr/share/mechanix/apps/settings/assets/icons/update_icon.svg
   about:
     icon: 
       default: /usr/share/mechanix/apps/settings/assets/icons/about_icon.png
       device: /usr/share/mechanix/apps/settings/assets/icons/device_icon.png
   see_options:
-    right_arrow_icon: /usr/share/mechanix/apps/settings/assets/icons/right_arrow_icon.png
+    white_right_arrow: /usr/share/mechanix/apps/settings/assets/icons/white_right_arrow.svg
+    grey_right_arrow: /usr/share/mechanix/apps/settings/assets/icons/grey_right_arrow.svg
     info_icon: /usr/share/mechanix/apps/settings/assets/icons/info_icon.png
     connected_icon: /usr/share/mechanix/apps/settings/assets/icons/connected_icon.png
   footer:
     back_icon: /usr/share/mechanix/apps/settings/assets/icons/back_icon.png
-    tick_icon: /usr/share/mechanix/apps/settings/assets/icons/tick_icon.png
+    tick_icon: /usr/share/mechanix/apps/settings/assets/icons/tick_icon.svg
     delete_icon: /usr/share/mechanix/apps/settings/assets/icons/delete_icon.png
     add_icon: /usr/share/mechanix/apps/settings/assets/icons/add_icon.png
   not_found:

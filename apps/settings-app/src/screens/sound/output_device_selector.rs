@@ -1,8 +1,5 @@
-use crate::gui::Message;
-use crate::gui::Routes;
+use crate::components::*;
 use crate::radio_node;
-use crate::shared::h_divider::HDivider;
-use crate::{components::*, tab_item_node};
 
 #[derive(Debug)]
 pub struct OutputDeviceSelector {}
@@ -14,7 +11,7 @@ impl Component for OutputDeviceSelector {
                 size_pct: [100, Auto],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
-                padding: [5.0, 0.0, 5.0, 0.0],
+                padding: [10.0, 0.0, 5.0, 0.0],
             ]
         );
 
@@ -27,7 +24,15 @@ impl Component for OutputDeviceSelector {
             ]
         );
 
-        main_node = main_node.push(text_bold_node("Select Output Device"));
+        let sub_header = node!(
+            Div::new(),
+            lay![
+                margin: [0., 8., 0., 8.]
+            ]
+        )
+        .push(sub_header_node("Select Output Device"));
+
+        main_node = main_node.push(sub_header);
         let options = vec![
             (txt!("Speakers".to_string()), txt!("Speakers".to_string())),
             (
