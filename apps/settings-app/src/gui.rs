@@ -17,7 +17,7 @@ use crate::{
         sound::sound_screen::{SoundScreen, SoundScreenRoute},
     },
     settings::{self, MainSettings},
-    AppMessage, AppParams, WirelessMessage,
+    AppMessage, AppParams,
 };
 use mctk_core::{
     component::{self, Component, RootComponent},
@@ -79,10 +79,6 @@ pub struct SettingsAppState {
     settings: Arc<RwLock<MainSettings>>,
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
     current_route: Routes,
-    connected_network_name: String,
-    known_networks_list: Vec<KnownNetworkResponse>,
-    wireless_Status: bool,
-    add_network_name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -91,13 +87,6 @@ pub enum Message {
     ChangeSoundScreenRoute { route: SoundScreenRoute },
     ChangeDisplayScreenRoute { route: DisplayScreenRoute },
     ChangeBatteryScreenRoute { route: BatteryScreenRoute },
-}
-
-pub enum NetworkMessage {
-    WirelessStatus { status: bool },
-    ConnectedNetworkName { name: String },
-    KnownNetworksList { list: Vec<KnownNetworkResponse> },
-    Toggle(bool),
 }
 
 /// # SettingsApp State
@@ -117,12 +106,8 @@ impl Component for SettingsApp {
 
         self.state = Some(SettingsAppState {
             settings: Arc::new(RwLock::new(MainSettings::default())),
-            wireless_Status: false,
             app_channel: None,
             current_route: Routes::default(),
-            connected_network_name: String::from(""),
-            known_networks_list: vec![],
-            add_network_name: String::from(""),
         });
     }
 
@@ -208,28 +193,6 @@ impl Component for SettingsApp {
             }
         }
 
-        if let Some(msg) = message.downcast_ref::<NetworkMessage>() {
-            match msg {
-                NetworkMessage::WirelessStatus { status } => {
-                    self.state_mut().wireless_Status = status.clone();
-                }
-                NetworkMessage::ConnectedNetworkName { name } => {
-                    self.state_mut().connected_network_name = name.to_string();
-                }
-                NetworkMessage::KnownNetworksList { list } => {
-                    self.state_mut().known_networks_list = list.clone();
-                }
-                NetworkMessage::Toggle(value) => {
-                    if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                        let _ = app_channel.send(AppMessage::Wireless {
-                            message: WirelessMessage::Toggle {
-                                value: Some(value.clone()),
-                            },
-                        });
-                    }
-                }
-            }
-        }
         vec![]
     }
 }

@@ -10,8 +10,6 @@ mod utils;
 use crate::gui::SettingsApp;
 use crate::screens::network::wireless_model::WirelessModel;
 use crate::screens::sound::sound_model::SoundModel;
-use futures::StreamExt;
-use gui::{Message, NetworkMessage};
 use mctk_core::{
     context::{self, Model},
     msg,
@@ -56,29 +54,26 @@ pub struct UiParams {
     // theme: AppTheme,
 }
 
-#[derive(Debug)]
-pub enum WirelessMessage {
-    Status { status: Option<bool> },
-    Toggle { value: Option<bool> },
-    ConnectedNetworkName { name: String },
-    // ConnectedNetworkDetails {
-    //     details: Option<WirelessDetailsItem>,
-    // },
-    // AvailableNetworksList {
-    //     list: Vec<WirelessDetailsItem>,
-    // },
-    // KnownNetworksList {
-    //     // manage networks
-    //     list: Vec<KnownNetworkResponse>,
-    // },
-    getStatus,
-}
+// #[derive(Debug)]
+// pub enum WirelessMessage {
+//     Status { status: Option<bool> },
+//     Toggle { value: Option<bool> },
+//     ConnectedNetworkName { name: String },
+//     // ConnectedNetworkDetails {
+//     //     details: Option<WirelessDetailsItem>,
+//     // },
+//     // AvailableNetworksList {
+//     //     list: Vec<WirelessDetailsItem>,
+//     // },
+//     // KnownNetworksList {
+//     //     // manage networks
+//     //     list: Vec<KnownNetworkResponse>,
+//     // },
+//     getStatus,
+// }
 
 #[derive(Debug)]
-pub enum AppMessage {
-    Wireless { message: WirelessMessage },
-    NotFound,
-}
+pub enum AppMessage {}
 
 #[derive(Default, Clone)]
 pub struct AppParams {
@@ -304,10 +299,8 @@ async fn main() -> anyhow::Result<()> {
             settings: settings.clone(),
         },
     );
-    let app_channel = app_channel_tx.clone();
 
     let handle = event_loop.handle();
-    let window_tx_2 = window_tx.clone();
     let window_tx_channel = window_tx.clone();
     let context_handler = context::get_static_context_handler();
     context_handler.register_on_change(Box::new(move || {
@@ -320,47 +313,9 @@ async fn main() -> anyhow::Result<()> {
     BatteryModel::get().register_context_handler(context_handler);
     DeviceModel::get().register_context_handler(context_handler);
 
-    let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
-    // let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
-
     let _ = handle.insert_source(app_channel_rx, move |event, _, _| {
         let _ = match event {
-            calloop::channel::Event::Msg(msg) => match msg {
-                AppMessage::Wireless { message } => match message {
-                    WirelessMessage::Status { status } => {
-                        if let Some(value) = status {
-                            let _ = window_tx_2.send(WindowMessage::Send {
-                                message: msg!(NetworkMessage::WirelessStatus { status: value }),
-                            });
-                        } else {
-                            println!("No Wireless Value found");
-                        }
-                    }
-                    WirelessMessage::getStatus => {
-                        let wireless_msg_tx_cloned = wireless_msg_tx.clone();
-                        futures::executor::block_on(async move {
-                            //let (tx, rx) = oneshot::channel();
-                            let res = wireless_msg_tx_cloned.clone().send(message).await;
-                            //let res = rx.await.expect("no reply from service");
-                        });
-                    }
-                    WirelessMessage::Toggle { .. } => {
-                        let wireless_msg_tx_cloned = wireless_msg_tx.clone();
-                        futures::executor::block_on(async move {
-                            //let (tx, rx) = oneshot::channel();
-                            let res = wireless_msg_tx_cloned.clone().send(message).await;
-                            //let res = rx.await.expect("no reply from service");
-                        });
-                    }
-                    WirelessMessage::ConnectedNetworkName { name } => {
-                        let _ = window_tx_2.send(WindowMessage::Send {
-                            message: msg!(NetworkMessage::ConnectedNetworkName { name: name }),
-                        });
-                    }
-                },
-                AppMessage::NotFound => todo!(),
-                _ => (),
-            },
+            calloop::channel::Event::Msg(msg) => match msg {},
             calloop::channel::Event::Closed => {}
         };
     });
