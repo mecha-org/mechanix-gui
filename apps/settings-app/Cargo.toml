@@ -1,14 +1,14 @@
 [package]
 name = "mechanix-settings"
 description = "Mechanix launcher component for the Mechanix shell"
-version = "0.1.2"
-edition = "2021"
-authors = ["Sweta <swetar@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
-license = "MIT"
-repository = "https://github.com/mecha-org/mechanix-gui"
-homepage = "https://mecha.so"
-categories = ["gui"]
-keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

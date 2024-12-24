@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = [
+    "settings-app",
+]
+default-members = ["settings-app"]
+
+[workspace.package]
+version = "0.1.6"
+authors = [
+   "Sweta <swetar@mechasystems.com>", 
+   "Naman <namana-mecha@mechasystems.com>"
+]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+categories = ["gui"]
+keywords = [
+    "linux",
+    "shell",
+    "mobile",
+    "gui",
+    "ui",
+    "graphics",
+    "interface",
+    "widgets",
+]
