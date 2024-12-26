@@ -1,0 +1,12 @@
+pub mod settings_menu;
+// pub mod wireless;
+pub mod bluetooth;
+pub mod display;
+pub mod network;
+// pub mod appearance;
+pub mod about;
+pub mod battery;
+pub mod sound;
+// pub mod lock;
+// pub mod date_time;
+pub mod language;
