@@ -55,7 +55,7 @@ depends = "$auto"
 assets = [
     # binary
     [
-        "target/aarch64-unknown-linux-gnu/release/mechanix-settings",
+        "../target/release/mechanix-settings",
         "/usr/bin/",
         "755",
     ],
