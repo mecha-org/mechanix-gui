@@ -55,7 +55,8 @@ jobs:
           libxkbcommon-dev \
           libdbus-1-dev \
           libpam0g-dev \
-          libclang-dev
+          libclang-dev \
+          protobuf-compiler
 
       - name: Set up Git SSH key
         run: |
