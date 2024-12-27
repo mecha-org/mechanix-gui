@@ -163,15 +163,20 @@ impl Component for AddNetwork {
             .push(node!(
                 IconButton::new("tick_icon")
                     .on_click(Box::new(|| {
-                        WirelessModel::connect_to_network(
-                            FORM.ssid.get().clone(),
-                            FORM.password.get().clone(),
-                        );
-                        msg!(Message::ChangeRoute {
-                            route: Routes::Network {
-                                screen: NetworkScreenRoutes::Networking
-                            }
-                        })
+                        if !FORM.password.get().clone().is_empty() {
+                            WirelessModel::connect_to_network(
+                                FORM.ssid.get().clone(),
+                                FORM.password.get().clone(),
+                            );
+                            return msg!(Message::ChangeRoute {
+                                route: Routes::Network {
+                                    screen: NetworkScreenRoutes::Networking
+                                }
+                            });
+                        } else {
+                            println!("HANDLE PWD VALIDATION!");
+                        }
+                        Box::new(())
                     }))
                     .icon_type(IconType::Svg)
                     .style(

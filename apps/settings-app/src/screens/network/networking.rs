@@ -616,7 +616,7 @@ impl Component for NetworkingScreen {
                 node!(ClicableIconComponent {
                     on_click: Some(Box::new(move || {
                         if network.flags.clone().to_lowercase().contains("open") {
-                            WirelessModel::connect_to_saved_network(ssid.clone());
+                            WirelessModel::connect_to_open_network(ssid.clone());
                             msg!(Message::ChangeRoute {
                                 route: Routes::Network {
                                     screen: NetworkScreenRoutes::Networking
