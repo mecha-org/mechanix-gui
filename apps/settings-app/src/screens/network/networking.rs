@@ -323,7 +323,7 @@ impl Component for NetworkingScreen {
         let mut icon = "wireless_good".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
             connected_network_name = connected_network.name.clone();
-            icon = get_network_icon(connected_network.flags, connected_network.signal);
+            icon = get_network_icon(connected_network.flags, Some(connected_network.signal));
         }
         connected_network_name = truncate(connected_network_name, 30);
 
@@ -491,7 +491,7 @@ impl Component for NetworkingScreen {
         let saved_network_row_component = |network: WirelessInfoResponse| {
             let ssid = network.name.clone();
 
-            let icon = get_network_icon(network.flags.clone(), network.signal.clone());
+            let icon = get_network_icon(network.flags.clone(), Some(network.signal.clone()));
 
             node!(
                 Div::new(),
@@ -600,11 +600,9 @@ impl Component for NetworkingScreen {
 
         let unsaved_available_network_row_component = |network: WirelessInfoResponse| {
             let ssid = network.name.clone();
-            let icon = if network.flags.contains("WPA") {
-                "secured_wireless_strong".to_string()
-            } else {
-                "wireless_strong".to_string()
-            };
+
+            let icon = get_network_icon(network.flags.clone(), Some(network.signal.clone()));
+
             node!(
                 Div::new(),
                 lay![
@@ -616,11 +614,22 @@ impl Component for NetworkingScreen {
             )
             .push(
                 node!(ClicableIconComponent {
-                    on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::AddNetwork { ssid: ssid.clone() }
+                    on_click: Some(Box::new(move || {
+                        if network.flags.clone().to_lowercase().contains("open") {
+                            WirelessModel::connect_to_saved_network(ssid.clone());
+                            msg!(Message::ChangeRoute {
+                                route: Routes::Network {
+                                    screen: NetworkScreenRoutes::Networking
+                                }
+                            })
+                        } else {
+                            msg!(Message::ChangeRoute {
+                                route: Routes::Network {
+                                    screen: NetworkScreenRoutes::AddNetwork { ssid: ssid.clone() }
+                                }
+                            })
                         }
-                    })))
+                    }))
                 },)
                 .push(node!(
                     widgets::Image::new(icon),
@@ -982,18 +991,20 @@ impl Component for NetworkingScreen {
     }
 }
 
-pub fn get_network_icon(flags: String, signal: String) -> String {
+pub fn get_network_icon(flags: String, signal: Option<String>) -> String {
     let mut icon = if flags.contains("WPA") {
         "secured_wireless_strong".to_string()
     } else {
         "wireless_strong".to_string()
     };
 
-    if let Ok(signal_strength) = signal.parse::<u32>() {
-        if signal_strength < 30 {
-            icon = icon.replace("strong", "low");
-        } else if signal_strength < 70 {
-            icon = icon.replace("strong", "weak");
+    if let Some(signal_str) = signal {
+        if let Ok(signal_strength) = signal_str.parse::<u32>() {
+            if signal_strength < 30 {
+                icon = icon.replace("strong", "low");
+            } else if signal_strength < 70 {
+                icon = icon.replace("strong", "weak");
+            }
         }
     }
 

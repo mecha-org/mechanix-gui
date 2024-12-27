@@ -1,4 +1,4 @@
-use super::networking::ClicableIconComponent;
+use super::networking::{get_network_icon, ClicableIconComponent};
 use super::wireless_model::WirelessModel;
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::{components::*, header_node};
@@ -91,11 +91,8 @@ impl Component for NetworkSettings {
             .into_iter()
             .enumerate()
         {
-            let mut icon = if network.flags.contains("WPA") {
-                "secured_wireless_strong".to_string()
-            } else {
-                "wireless_strong".to_string()
-            };
+            let icon = get_network_icon(network.flags.clone(), None);
+
             let row = node!(
                 Div::new(),
                 lay![
