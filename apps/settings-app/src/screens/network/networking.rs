@@ -327,11 +327,13 @@ impl Component for NetworkingScreen {
         }
         connected_network_name = truncate(connected_network_name, 30);
 
-        let connected_status = match *WirelessModel::get().state.get() {
-            super::wireless_model::WifiState::Connecting => "Connecting...",
-            super::wireless_model::WifiState::Connected => "Connected",
-            _ => "Disconnected",
-        };
+        // let connected_status = match *WirelessModel::get().state.get() {
+        //     super::wireless_model::WifiState::Connecting => "Connecting...",
+        //     super::wireless_model::WifiState::Connected => "Connected",
+        //     _ => "Disconnected",
+        // };
+
+        let connected_status = *WirelessModel::get().state.get();
 
         let connected_network_row = node!(
             Div::new(),
@@ -381,7 +383,8 @@ impl Component for NetworkingScreen {
                 ))
                 .push(node!(
                     // mini status
-                    Text::new(txt!(connected_status))
+                    // Text::new(txt!(connected_status))
+                    Text::new(txt!(connected_status.to_string()))
                         .style("color", Color::WHITE)
                         .style("size", 14.0)
                         .style("line_height", 18.)

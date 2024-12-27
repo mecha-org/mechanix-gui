@@ -1,3 +1,4 @@
+use core::fmt;
 use std::collections::HashMap;
 
 use futures::StreamExt;
@@ -36,18 +37,31 @@ lazy_static! {
         is_enabled: Context::new(false),
         is_streaming: Context::new(false),
         state: Context::new(WifiState::Disconnected),
+        connected_status: Context::new("".to_string()),
         wireless_mac_address: Context::new("".to_string()),
         ethernet_mac_address: Context::new("".to_string()),
     };
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum WifiState {
     Connecting,
     Connected,
     Disconnected,
     Disconnecting,
     Unknown,
+}
+
+impl fmt::Display for WifiState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WifiState::Connecting => write!(f, "Connecting.."),
+            WifiState::Connected => write!(f, "Connected"),
+            WifiState::Disconnected => write!(f, "Disconnected"),
+            WifiState::Disconnecting => write!(f, "Disconnecting.."),
+            WifiState::Unknown => write!(f, ""),
+        }
+    }
 }
 
 #[derive(Model)]
@@ -58,6 +72,7 @@ pub struct WirelessModel {
     pub is_enabled: Context<bool>,
     pub is_streaming: Context<bool>,
     pub state: Context<WifiState>,
+    pub connected_status: Context<String>,
     pub wireless_mac_address: Context<String>,
     pub ethernet_mac_address: Context<String>,
 }
@@ -70,6 +85,11 @@ impl WirelessModel {
     pub fn toggle_wireless() {
         RUNTIME.spawn(async {
             let is_enabled = *WirelessModel::get().is_enabled.get();
+
+            if is_enabled == false {
+                WirelessModel::get().state.set(WifiState::Connecting);
+            }
+
             let connection = zbus::Connection::system().await.unwrap();
             let proxy = network_manager::NetworkManagerProxy::new(&connection)
                 .await
