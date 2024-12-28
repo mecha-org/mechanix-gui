@@ -126,7 +126,7 @@ impl Component for SettingsApp {
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                padding: [2.0, 20.0, 2.0, 20.0],
+                padding: [2.0, 20.0, 10.0, 20.0],
             ],
         ));
         let mut base: Node = node!(

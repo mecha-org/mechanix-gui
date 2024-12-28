@@ -7,13 +7,13 @@ use tokio::runtime::Runtime;
 lazy_static! {
     static ref RUNTIME: Runtime = Runtime::new().unwrap();
     static ref BATTERY_MODEL: BrightnessModel = BrightnessModel {
-        brightness_percentage: Context::new(0.0)
+        brightness_percentage: Context::new(5. as u8)
     };
 }
 
 #[derive(Model)]
 pub struct BrightnessModel {
-    pub brightness_percentage: Context<f64>,
+    pub brightness_percentage: Context<u8>,
 }
 
 impl BrightnessModel {
@@ -21,11 +21,22 @@ impl BrightnessModel {
         &BATTERY_MODEL
     }
 
-    pub fn set_brightness(value: f64) {
+    pub fn set_brightness(value: u8) {
         RUNTIME.spawn(async move {
-            Display::set_brightness_percentage((value * 254.0) as u8)
+            Display::set_brightness_percentage((value as f32 / 100. * 254.).max(5.) as u8)
                 .await
                 .unwrap();
+
+            // let brightness = match Display::set_brightness_percentage(
+            //     (value as f32 / 100. * 254.).max(5.) as u8,
+            // )
+            // .await
+            // {
+            //     Ok(v) => v,
+            //     Err(e) => {
+            //         println!("error while setting brightness {}", e)
+            //     }
+            // };
         });
     }
 
@@ -34,8 +45,9 @@ impl BrightnessModel {
             if let Ok(brightness) = Display::get_brightness_percentage().await {
                 BrightnessModel::get()
                     .brightness_percentage
-                    .set((1.0 / 255.0) * brightness as f64);
+                    .set(((brightness as f32 / 254. * 100.) as u8).into());
             }
+
             // match BrightnessService::get_brightness_value().await {
             //     Ok(value) => {
             //     BrightnessModel::get().brightness_percentage.set(value);

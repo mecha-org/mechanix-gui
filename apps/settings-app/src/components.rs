@@ -421,10 +421,12 @@ macro_rules! radio_node {
                 .selected($selcted_option)
                 .direction(mctk_core::layout::Direction::Column)
                 .style("font_size", 18.0)
-                .style("padding", 0.)
+                .style("padding", 8.)
                 .max_columns(1)
                 .on_change($on_change),
-            lay![ size: [440, Auto]]
+            lay![
+                size: [440, Auto],
+            ]
         );
         radio
     }};
@@ -435,9 +437,11 @@ macro_rules! radio_node {
                 .selected($selcted_option)
                 .direction(mctk_core::layout::Direction::Column)
                 .style("font_size", 18.0)
-                .style("padding", 0.)
+                .style("padding", 8.)
                 .max_columns(1),
-            lay![ size: [440, Auto]]
+            lay![
+                size: [440, Auto],
+            ]
         );
         radio
     }};
@@ -554,8 +558,8 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
         .push(node!(
             Text::new(txt!(key_val_1.key.to_owned()))
                 .style("color", Color::rgba(197., 197., 197., 1.))
-                .style("size", 14.0)
-                .style("line_height", 18.)
+                .style("size", 16.0)
+                .style("line_height", 20.)
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
@@ -566,7 +570,7 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
             Text::new(txt!(key_val_1.value.to_owned()))
                 .style("color", Color::WHITE)
                 .style("size", 18.0)
-                .style("line_height", 20.0)
+                .style("line_height", 22.0)
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Bold),
             lay![]
@@ -584,8 +588,8 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
         .push(node!(
             Text::new(txt!(key_val_2.key.to_owned()))
                 .style("color", Color::rgba(197., 197., 197., 1.))
-                .style("size", 14.0)
-                .style("line_height", 18.)
+                .style("size", 16.0)
+                .style("line_height", 20.)
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
@@ -596,7 +600,7 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
             Text::new(txt!(key_val_2.value.to_owned()))
                 .style("color", Color::WHITE)
                 .style("size", 18.0)
-                .style("line_height", 20.0)
+                .style("line_height", 22.0)
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Bold),
             lay![]

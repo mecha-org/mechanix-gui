@@ -47,6 +47,7 @@ impl component::Component for SoundScreen {
                 size_pct: [100],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
+                padding: [5.0, 0.0, 5.0, 0.0],
             ]
         );
 

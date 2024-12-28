@@ -277,10 +277,6 @@ async fn main() -> anyhow::Result<()> {
         namespace,
     };
 
-    println!(
-        "checking svg -------------> {:?} ",
-        svgs.get("bluetooth_icon")
-    );
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
     let settings = Arc::new(RwLock::new(settings));

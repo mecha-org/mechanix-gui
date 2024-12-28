@@ -45,6 +45,7 @@ simple-base64 = "0.23.2"
 thiserror = "1.0.59"
 uname = "0.1.1"
 local-ip-address="0.6.3"
+get_if_addrs = "0.5.3"
 
 [build-dependencies]
 tonic-build = "0.9.2"

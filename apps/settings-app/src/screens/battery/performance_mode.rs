@@ -9,6 +9,7 @@ impl Component for PerformanceMode {
             lay![
                 size_pct: [100],
                 direction: Direction::Column,
+                padding: [5.0, 0.0, 5.0, 0.0],
             ]
         );
 
@@ -40,6 +41,21 @@ impl Component for PerformanceMode {
         .push(sub_header_node("Performance Mode"));
 
         main_node = main_node.push(sub_header);
+
+        // main_node = main_node.push(
+        //     node!(
+        //         Div::new().bg(Color::DARK_GREY),
+        //         lay![
+        //             size: [440, Auto],
+        //             // padding: [0., 8., 0., 8.],
+        //         ]
+        //     )
+        //     .push(radio_node!(
+        //         available_modes_txt,
+        //         txt!(current_mode),
+        //         Box::new(|x| msg!(BatteryModel::set_mode(&x)))
+        //     )),
+        // );
         main_node = main_node.push(radio_node!(
             available_modes_txt,
             txt!(current_mode),
@@ -57,13 +73,14 @@ impl Component for PerformanceMode {
                     direction: Direction::Column,
                     cross_alignment: Alignment::Stretch,
                     axis_alignment: Alignment::Start,
+                    margin: [0., 8., 0., 8.]
                 ]
             )
             .push(
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [100, 15],
+                        size_pct: [100, 20],
                         direction: Direction::Row,
                         axis_alignment: Alignment::Start,
                     ]
@@ -96,7 +113,7 @@ impl Component for PerformanceMode {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [100, 15],
+                        size_pct: [100, 20],
                         direction: Direction::Row,
                         axis_alignment: Alignment::Start,
                     ]
@@ -149,7 +166,7 @@ pub fn get_text_node(text: &str, color: Color) -> Node {
         widgets::Text::new(txt!(text))
             .style("color", color)
             .style("size", 16.0)
-            .style("line_height", 22.)
+            .style("line_height", 20.)
             .style("font", "Space Grotesk")
             .style("font_weight", FontWeight::Medium),
         lay![

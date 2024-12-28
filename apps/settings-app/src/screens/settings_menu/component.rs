@@ -82,7 +82,7 @@ impl Component for SettingsRowComponent {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [70, 100],
+                        size_pct: [70, Auto],
                         axis_alignment: Alignment::Start,
                         cross_alignment: Alignment::Center,
                     ],
@@ -104,7 +104,7 @@ impl Component for SettingsRowComponent {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [30, 100],
+                        size_pct: [30, Auto],
                         axis_alignment: Alignment::End,
                         cross_alignment:Alignment::Center,
                     ]
