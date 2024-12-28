@@ -24,6 +24,8 @@ lazy_static! {
         provision_id: Context::new("".to_string()),
         provision_icon_url: Context::new("".to_string()),
         ip_address: Context::new("".to_string()),
+        wireless_ip_address: Context::new("-".to_string()),
+        ethernet_ip_address: Context::new("-".to_string()),
     };
 }
 
@@ -42,6 +44,8 @@ pub struct DeviceModel {
     pub provision_id: Context<String>,
     pub provision_icon_url: Context<String>,
     pub ip_address: Context<String>,
+    pub wireless_ip_address: Context<String>,
+    pub ethernet_ip_address: Context<String>,
 }
 
 impl DeviceModel {
@@ -103,20 +107,18 @@ impl DeviceModel {
             };
             DeviceModel::get().os_info.set(Some(os_info));
 
-            let mut wlan_ip = None;
-            let mut ethernet_ip = None;
-
             match get_if_addrs() {
                 Ok(interfaces) => {
                     for interface in interfaces {
                         println!("CHECKKKK interface {:?} ", interface);
-                        if interface.name.contains("wlan") {
+                        if interface.name.contains("wlan") || interface.name.contains("wlp") {
                             if let IfAddr::V4(v4_addr) = interface.addr {
-                                wlan_ip = Some(v4_addr.ip);
+                                DeviceModel::get().wireless_ip_address.set(v4_addr.ip.to_string());
+
                             }
-                        } else if interface.name.contains("eth") {
+                        } else if interface.name.contains("enp") || interface.name.contains("eth") {
                             if let IfAddr::V4(v4_addr) = interface.addr {
-                                ethernet_ip = Some(v4_addr.ip);
+                                DeviceModel::get().ethernet_ip_address.set(v4_addr.ip.to_string());
                             }
                         }
                     }
@@ -124,10 +126,7 @@ impl DeviceModel {
                 Err(e) => eprintln!("Error fetching interfaces: {}", e),
             }
 
-            println!(
-                " CHECKKKKK wlan_ip & ethernet_ip {:?} ----------- {:?}",
-                &wlan_ip, &ethernet_ip
-            );
+            
 
             // // ip_address
             // let local_ip = local_ip().unwrap();

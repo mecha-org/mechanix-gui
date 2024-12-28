@@ -56,8 +56,11 @@ impl Component for AboutDevice {
         let provision_machine_name = DeviceModel::get().provision_name.get().clone();
         let ip_adderss = DeviceModel::get().ip_address.get().clone();
 
-        let wifi_mac_address: String = WirelessModel::get().wireless_mac_address.get().clone();
+        let wireless_mac_address: String = WirelessModel::get().wireless_mac_address.get().clone();
         let ethernet_mac_address: String = WirelessModel::get().ethernet_mac_address.get().clone();
+
+        let wireless_ip_address: String = DeviceModel::get().wireless_ip_address.get().clone();
+        let ethernet_ip_address: String = DeviceModel::get().ethernet_ip_address.get().clone();
 
         let mut base: Node = node!(
             Div::new(),
@@ -164,19 +167,19 @@ impl Component for AboutDevice {
 
         let details_row_2 = detail_row(
             DetailRow {
-                key: "Wlan Ip Address".to_uppercase(),
-                value: " ".to_string(),
+                key: "Wireless Ip Address".to_uppercase(),
+                value: wireless_ip_address.to_string(),
             },
             DetailRow {
                 key: "Ethernet Ip Address".to_uppercase(),
-                value: " ".to_string(),
+                value: ethernet_ip_address.to_string(),
             },
         );
 
         let details_row_3 = detail_row(
             DetailRow {
-                key: "Wi-Fi MAC Address".to_uppercase(),
-                value: wifi_mac_address.to_string(),
+                key: "Wireless MAC Address".to_uppercase(),
+                value: wireless_mac_address.to_string(),
             },
             DetailRow {
                 key: "Ethernet MAC Address".to_uppercase(),
