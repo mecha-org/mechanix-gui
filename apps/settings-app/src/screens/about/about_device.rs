@@ -30,12 +30,12 @@ impl Component for AboutDevice {
         WirelessModel::update_mac_addresses();
     }
 
-    fn render_hash(&self, hasher: &mut ComponentHasher) {
-        DeviceModel::get().is_provisioned.get().hash(hasher);
-        DeviceModel::get().provision_id.get().hash(hasher);
-        DeviceModel::get().provision_name.get().hash(hasher);
-        DeviceModel::get().provision_icon_url.get().hash(hasher);
-    }
+    // fn render_hash(&self, hasher: &mut ComponentHasher) {
+    //     DeviceModel::get().is_provisioned.get().hash(hasher);
+    //     DeviceModel::get().provision_id.get().hash(hasher);
+    //     DeviceModel::get().provision_name.get().hash(hasher);
+    //     DeviceModel::get().provision_icon_url.get().hash(hasher);
+    // }
 
     fn view(&self) -> Option<Node> {
         let os_info_option = DeviceModel::get().os_info.get().clone();
@@ -49,10 +49,11 @@ impl Component for AboutDevice {
             }
         };
 
-        let provisioned_status = DeviceModel::get().is_provisioned.get().clone();
-        let provision_machine_id = DeviceModel::get().provision_id.get().clone();
+        // let provisioned_status = DeviceModel::get().is_provisioned.get().clone();
+        // let provision_machine_id = DeviceModel::get().provision_id.get().clone();
+        // let provision_machine_icon_url = DeviceModel::get().provision_icon_url.get().clone();
+
         let provision_machine_name = DeviceModel::get().provision_name.get().clone();
-        let provision_machine_icon_url = DeviceModel::get().provision_icon_url.get().clone();
         let ip_adderss = DeviceModel::get().ip_address.get().clone();
 
         let wifi_mac_address: String = WirelessModel::get().wireless_mac_address.get().clone();
@@ -69,9 +70,9 @@ impl Component for AboutDevice {
         );
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 370)),
+            Scrollable::new(size!(440, 280)),
             lay![
-                size: [440, 370],
+                size: [440, 280],
             ]
         );
 
@@ -101,56 +102,56 @@ impl Component for AboutDevice {
                 size: [60, 60],
             ]
         ));
-        let provision_device_details_row_1 = node!(
-            Div::new(),
-            lay![
-            size_pct: [100, 8],
-            direction: Direction::Row,
-            axis_alignment: Alignment::Start,
-            cross_alignment: Alignment::Center,
-            ]
-        )
-        .push(node!(
-            Text::new(txt!(provision_machine_name.clone()))
-                .style("color", Color::WHITE)
-                .style("size", 20.0)
-                .style("line_height", 24.0)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
-            lay![]
-        ));
+        // let provision_device_details_row_1 = node!(
+        //     Div::new(),
+        //     lay![
+        //     size_pct: [100, 8],
+        //     direction: Direction::Row,
+        //     axis_alignment: Alignment::Start,
+        //     cross_alignment: Alignment::Center,
+        //     ]
+        // )
+        // .push(node!(
+        //     Text::new(txt!(provision_machine_name.clone()))
+        //         .style("color", Color::WHITE)
+        //         .style("size", 20.0)
+        //         .style("line_height", 24.0)
+        //         .style("font", "Space Grotesk")
+        //         .style("font_weight", FontWeight::Normal),
+        //     lay![]
+        // ));
 
-        let provision_device_details_row_2 = node!(
-            Div::new(),
-            lay![
-            size_pct: [100, 6],
-            direction: Direction::Row,
-            axis_alignment: Alignment::Start,
-            cross_alignment: Alignment::Start,
-            ]
-        )
-        .push(node!(
-            Text::new(txt!(provision_machine_id.clone()))
-                .style("color", Color::WHITE)
-                .style("size", 16.0)
-                .style("line_height", 18.0)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Bold),
-            lay![]
-        ));
+        // let provision_device_details_row_2 = node!(
+        //     Div::new(),
+        //     lay![
+        //     size_pct: [100, 6],
+        //     direction: Direction::Row,
+        //     axis_alignment: Alignment::Start,
+        //     cross_alignment: Alignment::Start,
+        //     ]
+        // )
+        // .push(node!(
+        //     Text::new(txt!(provision_machine_id.clone()))
+        //         .style("color", Color::WHITE)
+        //         .style("size", 16.0)
+        //         .style("line_height", 18.0)
+        //         .style("font", "Space Grotesk")
+        //         .style("font_weight", FontWeight::Bold),
+        //     lay![]
+        // ));
+
+        // let details_row_1 = detail_row(
+        //     DetailRow {
+        //         key: "Host name".to_uppercase(),
+        //         value: format!("{}.local", os_info.hostname),
+        //     },
+        //     DetailRow {
+        //         key: "IP Address".to_uppercase(),
+        //         value: ip_adderss.to_string(),
+        //     },
+        // );
 
         let details_row_1 = detail_row(
-            DetailRow {
-                key: "Host name".to_uppercase(),
-                value: format!("{}.local", os_info.hostname),
-            },
-            DetailRow {
-                key: "IP Address".to_uppercase(),
-                value: ip_adderss.to_string(),
-            },
-        );
-
-        let details_row_2 = detail_row(
             DetailRow {
                 key: "Make".to_uppercase(),
                 value: "Mecha".to_string(),
@@ -158,6 +159,17 @@ impl Component for AboutDevice {
             DetailRow {
                 key: "Model".to_uppercase(),
                 value: "Comet".to_string(),
+            },
+        );
+
+        let details_row_2 = detail_row(
+            DetailRow {
+                key: "Wlan Ip Address".to_uppercase(),
+                value: " ".to_string(),
+            },
+            DetailRow {
+                key: "Ethernet Ip Address".to_uppercase(),
+                value: " ".to_string(),
             },
         );
 
@@ -202,21 +214,32 @@ impl Component for AboutDevice {
             lay![
                 size_pct: [100, 50],
             ]
+        ))
+        .push(node!(
+            Text::new(txt!(os_info.hostname.clone()))
+                .style("color", Color::WHITE)
+                .style("size", 18.0)
+                .style("line_height", 20.)
+                .style("font", "Space Grotesk")
+                .style("font_weight", FontWeight::Normal),
+            lay![
+                size_pct: [100, 50],
+            ]
         ));
 
-        if provision_machine_id.clone().len() > 0 {
-            machine_detail_node = machine_detail_node.push(node!(
-                Text::new(txt!(provision_machine_id))
-                    .style("color", Color::WHITE)
-                    .style("size", 14.0)
-                    .style("line_height", 18.)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
-                lay![
-                    size_pct: [100, 50],
-                ]
-            ));
-        }
+        // if provision_machine_id.clone().len() > 0 {
+        //     machine_detail_node = machine_detail_node.push(node!(
+        //         Text::new(txt!(provision_machine_id))
+        //             .style("color", Color::WHITE)
+        //             .style("size", 14.0)
+        //             .style("line_height", 18.)
+        //             .style("font", "Space Grotesk")
+        //             .style("font_weight", FontWeight::Normal),
+        //         lay![
+        //             size_pct: [100, 50],
+        //         ]
+        //     ));
+        // }
         let start_node = node!(
             Div::new(),
             lay![
@@ -224,7 +247,8 @@ impl Component for AboutDevice {
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Stretch,
-                margin: [0., 0., 10., 0.],
+                margin: [0., 0., 20., 0.],
+                padding: [0.0, 8.0, 0.0, 8.0],
             ]
         )
         .push(
@@ -250,7 +274,7 @@ impl Component for AboutDevice {
             .push(machine_detail_node),
         );
 
-        content_node = content_node.push(start_node);
+        // content_node = content_node.push(start_node);
 
         // content_node = content_node.push(provision_device_image);
         // content_node = content_node.push(provision_device_details_row_1);
@@ -332,11 +356,12 @@ impl Component for AboutDevice {
             lay![
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                size_pct: [100, 90],
+                size: [440, Auto],
                 margin: [20., 0., 0., 0.],
-                position: [Auto, 0., 0., 0.],
+                // padding: [0.0, 8.0, 0.0, 8.0],
             ]
         )
+        .push(start_node)
         .push(scrollable);
 
         base = base.push(header_node!(
