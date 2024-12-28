@@ -3,7 +3,9 @@ use crate::{components::*, header_node, tab_item_node};
 
 use crate::gui::{Message, Routes};
 
-use super::brightness_model::BrightnessModel;
+use std::hash::Hash;
+
+use super::brightness_model::{self, BrightnessModel};
 use super::screen_off_time::ScreenOffTime;
 
 #[derive(Debug, Clone)]
@@ -38,6 +40,16 @@ impl Component for DisplayScreen {
         self.state_mut().route = DisplayScreenRoute::DisplayScreen;
     }
 
+    // fn render_hash(&self, hasher: &mut ComponentHasher) {
+    //     if BrightnessModel::get().brightness_percentage.get().clone() {
+    //         1_i32.hash(hasher);
+    //     } else {
+    //         0_i32.hash(hasher);
+    //     }
+
+    //     self.props_hash(hasher);
+    // }
+
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -45,6 +57,7 @@ impl Component for DisplayScreen {
                 size_pct: [100],
                 direction: layout::Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
+                padding: [5.0, 0.0, 5.0, 0.0],
             ]
         );
 
@@ -59,12 +72,14 @@ impl Component for DisplayScreen {
             ]
         );
 
+        let brightness_value = *BrightnessModel::get().brightness_percentage.get() as u8;
+
         let slider = node!(
             Slider::new()
-                .value(*BrightnessModel::get().brightness_percentage.get() as u8)
+                .value(brightness_value)
                 .slider_type(SliderType::Box)
                 .on_slide_end(Box::new(|value| {
-                    BrightnessModel::set_brightness(value as f64);
+                    BrightnessModel::set_brightness(value as u8);
                     Box::new(())
                 }))
                 .active_color(Color::rgb(15., 168., 255.))

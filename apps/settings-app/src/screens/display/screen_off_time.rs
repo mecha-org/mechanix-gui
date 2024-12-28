@@ -12,6 +12,7 @@ impl Component for ScreenOffTime {
                 size_pct: [100],
                 direction: Direction::Column,
                 cross_alignment: layout::Alignment::Stretch,
+                padding: [5.0, 0.0, 5.0, 0.0],
             ]
         );
 
@@ -26,9 +27,9 @@ impl Component for ScreenOffTime {
         );
 
         let mut scrollable = node!(
-            Scrollable::new(size!(440, 320)),
+            Scrollable::new(size!(440, 310)),
             lay![
-                size: [440, 320],
+                size: [440, 310],
             ]
         )
         .push(node!(
@@ -37,7 +38,6 @@ impl Component for ScreenOffTime {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [0., 8., 0., 8.]
             ]
         ));
 

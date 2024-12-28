@@ -23,39 +23,38 @@ impl BrightnessModel {
 
     pub fn set_brightness(value: u8) {
         RUNTIME.spawn(async move {
-            Display::set_brightness_percentage((value as f32 / 100. * 254.).max(5.) as u8)
-                .await
-                .unwrap();
+            let result =
+                Display::set_brightness_percentage((value as f32 / 100. * 254.).max(5.) as u8)
+                    .await;
 
-            // let brightness = match Display::set_brightness_percentage(
-            //     (value as f32 / 100. * 254.).max(5.) as u8,
-            // )
-            // .await
-            // {
-            //     Ok(v) => v,
-            //     Err(e) => {
-            //         println!("error while setting brightness {}", e)
-            //     }
-            // };
+            match result {
+                Ok(v) => {
+                    BrightnessModel::update();
+                    v
+                }
+                Err(e) => {
+                    eprintln!("BrightnessModel::error while setting brightness {}", e)
+                }
+            };
         });
     }
 
     pub fn update() {
         RUNTIME.spawn(async {
-            if let Ok(brightness) = Display::get_brightness_percentage().await {
-                BrightnessModel::get()
-                    .brightness_percentage
-                    .set(((brightness as f32 / 254. * 100.) as u8).into());
-            }
+            match Display::get_brightness_percentage().await {
+                Ok(value) => {
+                    BrightnessModel::get()
+                        .brightness_percentage
+                        .set(((value as f32 / 254. * 100.) as u8).into());
+                }
+                Err(e) => {
+                    eprintln!(
+                        "BrightnessModel::error while getting brightness value {}",
+                        e
+                    );
+                }
+            };
 
-            // match BrightnessService::get_brightness_value().await {
-            //     Ok(value) => {
-            //     BrightnessModel::get().brightness_percentage.set(value);
-            //     }
-            //     Err(e) => {
-            //         error!(task, "error while getting brightness value {}", e);
-            //     }
-            // };
             // let mut stream_res = BrightnessService::get_notification_stream().await;
             // if let Err(e) = stream_res.as_ref() {
             //     error!(task, "error while getting brightness stream {}", e);
