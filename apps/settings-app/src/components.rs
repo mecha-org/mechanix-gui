@@ -16,7 +16,8 @@ macro_rules! header_node {
     ($title:expr) => {{
         let text_node = node!(
             Text::new(txt!($title))
-            .with_class("text-3xl leading-7 font-space-grotesk font-normal")
+            .with_class("text-3xl leading-7 font-normal")
+            .style("font", "Inter")
             .style("color", Color::rgb(197., 197., 197.)),
         lay![
             size_pct: [100, Auto],
@@ -275,14 +276,14 @@ pub fn get_icon(name: &str, icon_type: IconType, margin: Rect) -> Node {
         IconType::Svg => node!(
             Svg::new(name.to_owned()),
             lay![
-                size: [24, 24],
+                size: [28, 28],
                 margin: margin.clone(),
             ]
         ),
         IconType::Png => node!(
             Image::new(name.to_owned()),
             lay![
-                size: [24, 24],
+                size: [28, 28],
                 margin: margin.clone(),
             ]
         ),

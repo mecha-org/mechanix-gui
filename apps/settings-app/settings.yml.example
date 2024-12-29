@@ -29,6 +29,10 @@ fonts:
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Regular.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-SemiBold.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-SemiBold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Bold.ttf
 modules:
   wireless:
     icon:

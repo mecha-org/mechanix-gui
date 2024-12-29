@@ -51,17 +51,15 @@ impl Component for SettingsRowComponent {
 
         let text_node = node!(Text::new(txt!(title))
             .style("color", color)
-            .style("size", 20.0)
-            .style("line_height", 24.)
-            .style("font", "Space Grotesk")
-            .style("font_weight", FontWeight::Medium));
+            .with_class("text-2xl leading-7 font-normal")
+            .style("font", "Inter"));
 
         let value_node = node!(
             Text::new(txt!(value))
                 .style("color", Color::rgb(197.0, 197.0, 197.0))
+                .style("font", "Inter")
                 .style("size", 20.0)
                 .style("line_height", 24.)
-                .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Medium),
             lay![
                 margin: [0., 0., 0., 10.],
@@ -87,7 +85,7 @@ impl Component for SettingsRowComponent {
                         cross_alignment: Alignment::Center,
                     ],
                 )
-                .push(get_icon(&icon_1, icon_1_type, rect![0., 0., 0., 20.]))
+                .push(get_icon(&icon_1, icon_1_type, rect![0., 20., 0., 20.]))
                 .push(
                     node!(
                         Div::new(),
