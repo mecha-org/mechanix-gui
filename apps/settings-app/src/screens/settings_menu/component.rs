@@ -107,8 +107,8 @@ impl Component for SettingsRowComponent {
                         cross_alignment:Alignment::Center,
                     ]
                 )
-                .push(value_node)
-                .push(get_icon(&icon_2, IconType::Svg, rect![0., 0., 0., 10.])),
+                .push(value_node),
+                // .push(get_icon(&icon_2, IconType::Svg, rect![0., 0., 0., 10.])),
             ),
         )
     }

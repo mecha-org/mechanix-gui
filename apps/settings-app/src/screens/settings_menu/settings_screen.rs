@@ -54,7 +54,7 @@ impl Component for SettingsScreen {
             value: connected_network_name,
             icon_1: "wireless_good".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::Network {
@@ -114,7 +114,7 @@ impl Component for SettingsScreen {
             value: "".to_string(),
             icon_1: "display_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::DisplayScreen
@@ -138,7 +138,7 @@ impl Component for SettingsScreen {
             value: "".to_string(),
             icon_1: "battery_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::BatteryScreen
@@ -184,7 +184,7 @@ impl Component for SettingsScreen {
             value: "".to_string(),
             icon_1: "sound_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             // on_click: None,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
@@ -300,7 +300,7 @@ impl Component for SettingsScreen {
             value: "".to_string(),
             icon_1: "about_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::AboutScreen

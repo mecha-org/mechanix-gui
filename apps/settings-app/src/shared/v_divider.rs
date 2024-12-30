@@ -11,6 +11,7 @@ use std::hash::Hash;
 #[derive(Debug)]
 pub struct VDivider {
     pub size: f32,
+    pub color: Color,
 }
 
 impl Component for VDivider {
@@ -21,7 +22,7 @@ impl Component for VDivider {
     fn view(&self) -> Option<Node> {
         Some(
             node!(
-                Div::new().border(Color::rgb(132., 132., 132.), self.size, (0., 0., 0., 0.)),
+                Div::new().border(self.color, self.size, (0., 0., 0., 0.)),
                 lay![
                     direction: Direction::Column,
                     size_pct: [Auto, 100],

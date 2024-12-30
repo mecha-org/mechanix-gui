@@ -2,6 +2,8 @@ use super::wireless_model::WirelessModel;
 use crate::{
     components::ComponentHasher,
     gui::{Message, NetworkScreenRoutes, Routes},
+    header_node,
+    shared::v_divider::VDivider,
     utils::truncate,
 };
 use std::hash::Hash;
@@ -18,14 +20,7 @@ use mctk_core::{
     Color, Node,
 };
 use mctk_core::{event, widgets::HDivider};
-use mctk_macros::component;
-
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-
-enum NetworkingMessage {
-    handleClickOnMore,
-    handleClickOnBack,
-}
 
 pub struct ClicableIconComponent {
     pub on_click: Option<Box<dyn Fn() -> Box<Message> + Send + Sync>>,
@@ -191,6 +186,7 @@ impl Component for NetworkingScreen {
                 lay![
                     size_pct: [20, Auto],
                     axis_alignment: Alignment::End,
+                    cross_alignment: Alignment::Stretch,
                     padding: [0, 0, 0, 10.],
                 ]
             )
@@ -221,6 +217,7 @@ impl Component for NetworkingScreen {
                     cross_alignment: Alignment::Center,
                 ]
             ))
+            // .push(node!(VDivider { size: 1.5 }))
             .push(node!(
                 IconButton::new("wireless_settings")
                     .on_click(Box::new(|| msg!(Message::ChangeRoute {
@@ -984,7 +981,28 @@ impl Component for NetworkingScreen {
             }));
         }
 
-        base = base.push(header_node);
+        // base = base.push(header_node);
+
+        base = base.push(header_node!(
+            "Network",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::SettingsList
+            })),
+            "add_icon",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::Network {
+                    screen: NetworkScreenRoutes::AddNetwork {
+                        ssid: "".to_string()
+                    }
+                }
+            })),
+            "wireless_settings",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::Network {
+                    screen: NetworkScreenRoutes::NetworkSettings
+                }
+            }))
+        ));
         base = base.push(content_node);
 
         Some(base)
