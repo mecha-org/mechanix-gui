@@ -4,11 +4,11 @@ use image::{GenericImageView, ImageBuffer};
 use lazy_static::lazy_static;
 use mctk_camera::{
     camera::GstCamera,
-    types::{CameraFormat, FrameFormat, Resolution},
+    types::{yuyv422_to_rgb, CameraFormat, FrameFormat, Resolution},
 };
 use mctk_core::{context::Context, reexports::femtovg::rgb::FromSlice};
 use mctk_macros::Model;
-use rgb::Rgb;
+use rgb::Rgba;
 
 lazy_static! {
     pub static ref RUNTIME: tokio::runtime::Runtime = tokio::runtime::Builder::new_multi_thread()
@@ -36,7 +36,7 @@ lazy_static! {
 #[derive(Model)]
 pub struct Camera {
     is_initialized: Context<bool>,
-    pub frame_buffer: Context<ImageBuffer<image::Rgb<u8>, Vec<u8>>>,
+    pub frame_buffer: Context<ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
 
     pub compatible_resoultions: Context<HashMap<Resolution, Vec<u32>>>,
 
@@ -105,8 +105,8 @@ impl Camera {
         }
     }
 
-    pub fn get_buffer() -> Box<[Rgb<u8>]> {
-        Box::from(Self::get().frame_buffer.get().as_rgb())
+    pub fn get_buffer() -> Box<[Rgba<u8>]> {
+        Box::from(Self::get().frame_buffer.get().as_rgba())
     }
 
     pub fn get_height() -> u32 {
@@ -169,6 +169,9 @@ impl Camera {
             let mut camera = camera.unwrap();
             loop {
                 if let Ok(frame) = camera.frame() {
+                    let buffer = yuyv422_to_rgb(frame.as_raw(), true).unwrap();
+                    let frame: ImageBuffer<image::Rgba<u8>, Vec<u8>> =
+                        ImageBuffer::from_raw(width, height, buffer).unwrap();
                     frame.save("frame2.jpg").unwrap();
                     break;
                 }
@@ -207,6 +210,18 @@ impl Camera {
         CAMERA.height.set(height);
         CAMERA.width.set(width);
         CAMERA.fps.set(fps);
+
+        // Pick Highest resolution for capture
+        let mut height = 0;
+        let mut width = 0;
+        for resolution in CAMERA.compatible_resoultions.get().keys() {
+            if resolution.height_y * resolution.width_x > height * width {
+                height = resolution.height_y;
+                width = resolution.width_x;
+            }
+        }
+        CAMERA.capture_height.set(height);
+        CAMERA.capture_width.set(width);
     }
 
     pub fn start_fetching() {
