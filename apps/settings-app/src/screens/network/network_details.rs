@@ -3,6 +3,7 @@ use std::hash::Hash;
 use super::wireless_model::WirelessModel;
 use crate::components::{detail_row, DetailRow};
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
+use crate::header_node;
 use crate::utils::truncate;
 
 use mctk_core::widgets::{Button, HDivider};
@@ -116,99 +117,6 @@ impl Component for NetworkDetails {
             ]
         );
 
-        let header_node = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 10],
-                direction: Direction::Row,
-                cross_alignment: Alignment::Center,
-                axis_alignment: Alignment::Stretch,
-                position: [0., 0., Auto, 0.],
-                margin: [0., 0., 10., 0.]
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ],
-            )
-            .push(node!(
-                IconButton::new("back_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::Networking
-                        }
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [42, 42],
-                    padding: [0, 0, 0, 2.],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ]
-            ))
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Start,
-                    ]
-                )
-                .push(text_node),
-            ),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End,
-                    margin: [0., 0., 0., 10.]
-                ]
-            )
-            .push(node!(
-                IconButton::new("delete_icon")
-                    .on_click(Box::new(move || msg!(NetworkDetailsMessage::openModel(
-                        !is_model_open
-                    ))))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [52, 52],
-                    axis_alignment: Alignment::End,
-                    cross_alignment: Alignment::Center,
-                    padding: [0., 0., 0., 2.]
-                ]
-            )),
-        );
-
         let mut content_node = node!(
             Div::new(),
             lay![
@@ -296,7 +204,7 @@ impl Component for NetworkDetails {
         let details_row_1 = detail_row(
             DetailRow {
                 key: "NAME".to_uppercase(),
-                value: truncate(connected_network.name.clone(), 17),
+                value: truncate(connected_network.clone().name.clone(), 17),
             },
             DetailRow {
                 key: "STATUS".to_uppercase(),
@@ -495,7 +403,29 @@ impl Component for NetworkDetails {
         if is_model_open.clone() == true {
             base = base.push(modal);
         }
-        base = base.push(header_node);
+
+        let network_name = truncate(connected_network.name.clone(), 20);
+
+        // // CONFIRM : THIS disconnect or forget
+        base = base.push(header_node!(
+            network_name,
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::Network {
+                    screen: NetworkScreenRoutes::Networking
+                }
+            })),
+            "delete_icon",
+            Box::new(move || {
+                // WirelessModel::disconnect();
+                WirelessModel::forget_saved_network(connected_network.clone().name.to_string());
+                msg!(Message::ChangeRoute {
+                    route: Routes::Network {
+                        screen: NetworkScreenRoutes::Networking
+                    }
+                })
+            })
+        ));
+
         base = base.push(content_node);
         Some(base)
     }

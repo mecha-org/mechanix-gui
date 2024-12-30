@@ -3,7 +3,6 @@ use crate::{
     components::ComponentHasher,
     gui::{Message, NetworkScreenRoutes, Routes},
     header_node,
-    shared::v_divider::VDivider,
     utils::truncate,
 };
 use std::hash::Hash;
@@ -124,127 +123,6 @@ impl Component for NetworkingScreen {
             .style("font", "Space Grotesk")
             .style("font_weight", FontWeight::Normal),);
 
-        let header_node = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 10],
-                direction: Direction::Row,
-                cross_alignment: Alignment::Center,
-                axis_alignment: Alignment::Stretch,
-                position: [0., 0., Auto, 0.],
-                margin: [0., 0., 10., 0.]
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ],
-            )
-            .push(node!(
-                IconButton::new("back_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::SettingsList
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [42, 42],
-                    padding: [0, 0, 0, 2.],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ]
-            ))
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Start,
-                    ]
-                )
-                .push(text_node),
-            ),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End,
-                    cross_alignment: Alignment::Stretch,
-                    padding: [0, 0, 0, 10.],
-                ]
-            )
-            .push(node!(
-                IconButton::new("add_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::AddNetwork {
-                                ssid: "".to_string()
-                            }
-                        }
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(40.0),
-                            height: Dimension::Px(40.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [52, 52],
-                    axis_alignment: Alignment::End,
-                    cross_alignment: Alignment::Center,
-                ]
-            ))
-            // .push(node!(VDivider { size: 1.5 }))
-            .push(node!(
-                IconButton::new("wireless_settings")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::NetworkSettings
-                        }
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [52, 52],
-                    axis_alignment: Alignment::End,
-                    cross_alignment: Alignment::Center,
-                ]
-            )),
-        );
-
         let mut content_node = node!(
             Div::new(),
             lay![
@@ -263,7 +141,7 @@ impl Component for NetworkingScreen {
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
-                padding: [5., 0., 5., 0.],
+                padding: [5., 10., 5., 0.],
             ]
         )
         .push(
@@ -278,9 +156,8 @@ impl Component for NetworkingScreen {
             .push(node!(
                 Text::new(txt!("Wireless"))
                     .style("color", Color::WHITE)
-                    .style("size", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                    .style("font", "Inter")
+                    .with_class("text-2xl leading-7 font-normal"),
                 lay![]
             )),
         )
@@ -291,18 +168,17 @@ impl Component for NetworkingScreen {
                     size_pct: [20, 40],
                     axis_alignment: Alignment::End,
                     cross_alignment: Alignment::Center,
+                    padding: [0., 0., 0., 10.]
                 ]
             )
             .push(node!(
                 Toggle::new(status)
-                    .toggle_type(widgets::ToggleType::Type1)
+                    .toggle_type(widgets::ToggleType::Type3)
                     .on_change(Box::new(|value| {
                         WirelessModel::toggle_wireless();
                         Box::new(())
                     })),
-                lay![
-                    padding: [0., 0., 0., 5.]
-                ]
+                lay![]
             )),
         );
 
@@ -352,8 +228,8 @@ impl Component for NetworkingScreen {
             .push(node!(
                 widgets::Image::new(icon),
                 lay![
-                    size: [24, 24],
-                    margin:[0., 0., 0., 20.],
+                    size: [28, 28],
+                    margin:[0., 10., 0., 20.],
                 ]
             ))
             .push(
@@ -368,10 +244,8 @@ impl Component for NetworkingScreen {
                 .push(node!(
                     Text::new(txt!(connected_network_name.clone()))
                         .style("color", Color::WHITE)
-                        .style("size", 20.0)
-                        .style("line_height", 24.0)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                        .style("font", "Inter")
+                        .with_class("text-2xl leading-7 font-normal"),
                     lay![
                         direction: Direction::Row,
                         axis_alignment: Alignment::Start,
@@ -380,13 +254,10 @@ impl Component for NetworkingScreen {
                 ))
                 .push(node!(
                     // mini status
-                    // Text::new(txt!(connected_status))
                     Text::new(txt!(connected_status.to_string()))
-                        .style("color", Color::WHITE)
-                        .style("size", 14.0)
-                        .style("line_height", 18.)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                        .style("color", Color::rgba(45., 138., 255., 1.))
+                        .style("font", "Inter")
+                        .with_class("text-sm leading-5 font-normal"),
                     lay![
                         direction: Direction::Row,
                         axis_alignment: Alignment::Start,
@@ -513,8 +384,8 @@ impl Component for NetworkingScreen {
                 .push(node!(
                     widgets::Image::new(icon),
                     lay![
-                        size: [24, 24],
-                        margin:[0., 0., 0., 20.],
+                        size: [28, 28],
+                        margin:[0., 10., 0., 20.],
                     ]
                 ))
                 .push(
@@ -529,10 +400,8 @@ impl Component for NetworkingScreen {
                     .push(node!(
                         Text::new(txt!(truncate(network.name.clone(), 30)))
                             .style("color", Color::WHITE)
-                            .style("size", 20.0)
-                            .style("line_height", 24.0)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
+                            .style("font", "Inter")
+                            .with_class("text-2xl leading-7 font-normal"),
                         lay![
                             direction: Direction::Row,
                             axis_alignment: Alignment::Start,
@@ -543,10 +412,8 @@ impl Component for NetworkingScreen {
                         // mini status
                         Text::new(txt!("Saved"))
                             .style("color", Color::WHITE)
-                            .style("size", 14.0)
-                            .style("line_height", 18.)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
+                            .style("font", "Inter")
+                            .with_class("text-sm leading-5 font-normal"),
                         lay![
                             direction: Direction::Row,
                             axis_alignment: Alignment::Start,
@@ -631,8 +498,8 @@ impl Component for NetworkingScreen {
                 .push(node!(
                     widgets::Image::new(icon),
                     lay![
-                        size: [24, 24],
-                        margin:[0., 0., 0., 20.],
+                        size: [28, 28],
+                        margin:[0., 10., 0., 20.],
                     ]
                 ))
                 .push(
@@ -647,10 +514,8 @@ impl Component for NetworkingScreen {
                     .push(node!(
                         Text::new(txt!(truncate(network.name.clone(), 28)))
                             .style("color", Color::WHITE)
-                            .style("size", 20.0)
-                            .style("line_height", 24.0)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
+                            .style("font", "Inter")
+                            .with_class("text-2xl leading-7 font-normal"),
                         lay![
                             direction: Direction::Row,
                             axis_alignment: Alignment::Start,
@@ -718,7 +583,7 @@ impl Component for NetworkingScreen {
             .push(node!(
                 widgets::Image::new("wireless_good"),
                 lay![
-                    size: [24, 24],
+                    size: [28, 28],
                     margin:[0., 0., 0., 20.],
                 ]
             ))
@@ -876,9 +741,9 @@ impl Component for NetworkingScreen {
         );
 
         let mut scrollable_section = node!(
-            Scrollable::new(size!(440, 310)),
+            Scrollable::new(size!(440, 300)),
             lay![
-                size: [440, 310],
+                size: [440, 300],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -980,8 +845,6 @@ impl Component for NetworkingScreen {
                 color: Color::rgba(83., 83., 83., 1.)
             }));
         }
-
-        // base = base.push(header_node);
 
         base = base.push(header_node!(
             "Network",

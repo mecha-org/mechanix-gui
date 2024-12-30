@@ -123,11 +123,12 @@ impl Component for UnknownNetworkDetails {
                 margin: [10., 0., 0., 0.],
             ]
         );
+        let truncate_network_name = truncate(network.clone().name.clone(), 20);
 
         let details_row_1 = detail_row(
             DetailRow {
                 key: "NAME".to_uppercase(),
-                value: truncate(network.name.clone(), 17),
+                value: truncate_network_name.to_string(),
             },
             DetailRow {
                 key: "Status".to_uppercase(),
@@ -193,8 +194,19 @@ impl Component for UnknownNetworkDetails {
             ]
         ));
 
+        // base = base.push(header_node!(
+        //     "Network Information",
+        //     Box::new(|| {
+        //         msg!(Message::ChangeRoute {
+        //             route: Routes::Network {
+        //                 screen: NetworkScreenRoutes::Networking
+        //             }
+        //         })
+        //     })
+        // ));
+
         base = base.push(header_node!(
-            "Network Information",
+            truncate_network_name.clone(),
             Box::new(|| {
                 msg!(Message::ChangeRoute {
                     route: Routes::Network {
@@ -203,6 +215,7 @@ impl Component for UnknownNetworkDetails {
                 })
             })
         ));
+
         base = base.push(content_node);
 
         Some(base)

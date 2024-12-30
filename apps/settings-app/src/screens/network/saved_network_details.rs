@@ -121,10 +121,13 @@ impl Component for SavedNetworkDetails {
             ]
         );
 
+        let full_network_name = network.clone().name.clone();
+        let truncate_network_name = truncate(network.clone().name.clone(), 20);
+
         let details_row_1 = detail_row(
             DetailRow {
                 key: "NAME".to_uppercase(),
-                value: truncate(network.name.clone(), 17),
+                value: truncate_network_name.clone(),
             },
             DetailRow {
                 key: "STATUS".to_uppercase(),
@@ -290,7 +293,7 @@ impl Component for SavedNetworkDetails {
                         // .style("border_color", Color::rgba(127., 127., 135., 1.))
                         // .style("border_width", 1.)
                         .on_click(Box::new(move || {
-                            WirelessModel::forget_saved_network(network.name.clone());
+                            WirelessModel::forget_saved_network(network.clone().name.clone());
                             msg!(Message::ChangeRoute {
                                 route: Routes::Network {
                                     screen: NetworkScreenRoutes::Networking
@@ -311,8 +314,17 @@ impl Component for SavedNetworkDetails {
         }
 
         base = base.push(header_node!(
-            "Network Information",
+            truncate_network_name.clone(),
             Box::new(|| {
+                msg!(Message::ChangeRoute {
+                    route: Routes::Network {
+                        screen: NetworkScreenRoutes::Networking
+                    }
+                })
+            }),
+            "delete_icon",
+            Box::new(move || {
+                WirelessModel::forget_saved_network(full_network_name.to_string());
                 msg!(Message::ChangeRoute {
                     route: Routes::Network {
                         screen: NetworkScreenRoutes::Networking

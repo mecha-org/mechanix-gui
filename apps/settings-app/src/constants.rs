@@ -28,7 +28,7 @@ pub const CONNECTED_ICON: &str = concatcp!(ASSET_PATH, "connected_icon.png");
 pub const BACK_ICON: &str = concatcp!(ASSET_PATH, "back_icon.png");
 pub const ADD_ICON: &str = concatcp!(ASSET_PATH, "add_icon.png");
 pub const DELETE_ICON: &str = concatcp!(ASSET_PATH, "delete_icon.png");
-pub const TICK_ICON: &str = concatcp!(ASSET_PATH, "tick_icon.svg");
+pub const CONFIRM_ICON: &str = concatcp!(ASSET_PATH, "confirm_icon.png");
 
 // about
 pub const ABOUT_ICON: &str = concatcp!(ASSET_PATH, "about_icon.png");

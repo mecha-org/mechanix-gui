@@ -81,7 +81,7 @@ modules:
     connected_icon: /usr/share/mechanix/apps/settings/assets/icons/connected_icon.png
   footer:
     back_icon: /usr/share/mechanix/apps/settings/assets/icons/back_icon.png
-    tick_icon: /usr/share/mechanix/apps/settings/assets/icons/tick_icon.svg
+    confirm_icon: /usr/share/mechanix/apps/settings/assets/icons/confirm_icon.png
     delete_icon: /usr/share/mechanix/apps/settings/assets/icons/delete_icon.png
     add_icon: /usr/share/mechanix/apps/settings/assets/icons/add_icon.png
   not_found:

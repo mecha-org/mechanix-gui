@@ -302,6 +302,7 @@ impl WirelessModel {
                     .unwrap();
             if device_proxy.disconnect().await.is_ok() {
                 println!("Disconnected from wifi");
+                WirelessModel::scan();
             }
         });
     }

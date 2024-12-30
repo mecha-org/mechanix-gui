@@ -64,13 +64,40 @@ impl Component for NetworkSettings {
             ]
         );
 
-        let mut scrollable_section = node!(
-            Scrollable::new(size!(440, 400)),
+        let mut content_node = node!(
+            Div::new(),
             lay![
-                size: [440, 400],
+                size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
+                margin: [10., 0., 0., 0.],
+            ]
+        );
+
+        let saved_networks_text_row = node!(
+            Div::new(),
+            lay![
+                size: [Auto, 50],
+                direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
+                cross_alignment:Alignment::Center,
+                padding: [5., 10., 5., 0.],
+            ]
+        )
+        .push(node!(
+            Text::new(txt!("Saved Networks"))
+                .style("color", Color::WHITE)
+                .with_class("text-2xl leading-7 font-normal")
+                .style("font", "Inter"),
+            lay![]
+        ));
+
+        let mut scrollable_section = node!(
+            Scrollable::new(size!(440, 300)),
+            lay![
+                size: [440, 300],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
             ]
         )
         .push(node!(
@@ -79,7 +106,6 @@ impl Component for NetworkSettings {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                padding: [0., 8., 0., 8.]
             ]
         ));
 
@@ -91,8 +117,6 @@ impl Component for NetworkSettings {
             .into_iter()
             .enumerate()
         {
-            let icon = get_network_icon(network.flags.clone(), None);
-
             let row = node!(
                 Div::new(),
                 lay![
@@ -114,13 +138,6 @@ impl Component for NetworkSettings {
                     // }))
                     on_click: None
                 })
-                .push(node!(
-                    widgets::Image::new(icon),
-                    lay![
-                        size: [24, 24],
-                        margin:[0., 0., 0., 20.],
-                    ]
-                ))
                 .push(
                     node!(
                         Div::new(),
@@ -128,15 +145,14 @@ impl Component for NetworkSettings {
                             size_pct: [100, Auto],
                             direction: Direction::Column,
                             axis_alignment: Alignment::Stretch,
+                            padding: [0., 10., 0., 0.]
                         ]
                     )
                     .push(node!(
                         Text::new(txt!(network.ssid.clone()))
                             .style("color", Color::WHITE)
-                            .style("size", 20.0)
-                            .style("line_height", 24.0)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
+                            .style("font", "Inter")
+                            .with_class("text-2xl leading-7 font-normal"),
                         lay![
                             direction: Direction::Row,
                             axis_alignment: Alignment::Start,
@@ -315,7 +331,7 @@ impl Component for NetworkSettings {
         );
 
         base = base.push(header_node!(
-            "Saved Networks",
+            "Network Settings",
             Box::new(|| {
                 msg!(Message::ChangeRoute {
                     route: Routes::Network {
@@ -325,7 +341,17 @@ impl Component for NetworkSettings {
             })
         ));
 
-        base = base.push(scrollable_section);
+        content_node = content_node.push(saved_networks_text_row);
+        content_node = content_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
+        content_node = content_node.push(scrollable_section);
+        content_node = content_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
+        base = base.push(content_node);
 
         // if is_model_open.clone() == true {
         // base = base.push(modal);
