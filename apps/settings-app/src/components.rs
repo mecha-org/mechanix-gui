@@ -450,8 +450,9 @@ pub fn sub_header_node(text: &str) -> Node {
     )
     .push(node!(
         widgets::Text::new(txt!(text))
-            .with_class("text-l leading-6 font-space-grotesk font-normal")
-            .style("color", Color::rgb(197., 197., 197.)),
+            .style("color", Color::rgba(250., 251., 252., 1.))
+            .style("font", "Inter")
+            .with_class("text-xl leading-6 font-normal"),
         lay![]
     ));
     text_node

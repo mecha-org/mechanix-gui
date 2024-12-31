@@ -76,7 +76,7 @@ impl Component for NetworkSettings {
         let saved_networks_text_row = node!(
             Div::new(),
             lay![
-                size: [Auto, 60],
+                size: [Auto, 68],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
@@ -85,9 +85,9 @@ impl Component for NetworkSettings {
         )
         .push(node!(
             Text::new(txt!("Saved Networks"))
-                .style("color", Color::WHITE)
+                .style("color", Color::rgba(250., 251., 252., 1.))
                 .style("font", "Inter")
-                .with_class("text-2xl leading-7 font-normal"),
+                .with_class("text-xl leading-6 font-normal"),
             lay![]
         ));
 

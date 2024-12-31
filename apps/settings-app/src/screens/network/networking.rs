@@ -154,9 +154,9 @@ impl Component for NetworkingScreen {
             )
             .push(node!(
                 Text::new(txt!("Wireless"))
-                    .style("color", Color::WHITE)
+                    .style("color", Color::rgba(250., 251., 252., 1.))
                     .style("font", "Inter")
-                    .with_class("text-2xl leading-7 font-normal"),
+                    .with_class("text-xl leading-6 font-normal"),
                 lay![]
             )),
         )
@@ -391,7 +391,7 @@ impl Component for NetworkingScreen {
                     node!(
                         Div::new(),
                         lay![
-                            size_pct: [100, Auto],
+                            size_pct: [100, 100],
                             direction: Direction::Column,
                             axis_alignment: Alignment::Stretch,
                         ]
@@ -505,7 +505,7 @@ impl Component for NetworkingScreen {
                     node!(
                         Div::new(),
                         lay![
-                            size_pct: [100, Auto],
+                            size_pct: [100, 100],
                             direction: Direction::Column,
                             axis_alignment: Alignment::Stretch,
                         ]
