@@ -6,7 +6,7 @@ use crate::utils::truncate;
 
 use lazy_static::lazy_static;
 use mctk_core::context::Context;
-use mctk_core::widgets::{HDivider, TextBox};
+use mctk_core::widgets::{HDivider, TextBox, VDivider};
 use mctk_core::{
     component::Component,
     lay,
@@ -83,50 +83,73 @@ impl Component for AddNetwork {
             ]
         );
 
-        let text_node = node!(
-            Text::new(txt!("Add Network"))
-                .style("color", Color::rgb(197.0, 197.0, 197.0))
-                .style("size", 28.0)
-                .style("line_height", 20.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),
-            lay![
-                size_pct: [100, Auto],
-            ]
-        );
-
         let mut content_node = node!(
             Div::new(),
             lay![
                 size_pct: [100, 90],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [10., 0., 0., 0.],
-                padding: [0., 8., 0., 8.]
             ]
         );
 
-        let name_input_text = node!(
+        let name_row_node = node!(
             Div::new(),
             lay![
-                size: [Auto, 50],
+                size: [440, 68],
                 direction: Direction::Row,
+                cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::Stretch,
-                cross_alignment:Alignment::Center,
-                padding: [5., 0., 0., 0.],
+                position: [0., 0., Auto, 0.],
             ]
         )
-        .push(node!(
-            Text::new(txt!("Name (SSID)"))
-                .with_class("text-l leading-6 font-space-grotesk font-normal")
-                .style("color", Color::rgb(197., 197., 197.)),
-            lay![
-                padding: [5., 0., 0., 0.],
-            ]
-        ));
-
-        let name_input_value = if FORM.ssid.get().clone().len() == 0 {
+        .push(
             node!(
+                Div::new().bg(Color::TRANSPARENT),
+                lay![
+                    size_pct: [38, 100],
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Center,
+                ],
+            )
+            .push(node!(
+                Text::new(txt!("Name"))
+                    .style("color", Color::rgba(255., 255., 255., 1.))
+                    .style("font", "Inter")
+                    .with_class("text-xl leading-6 font-medium"),
+                lay![
+                    margin: [0.0, 10.0, 0.0, 0.0],
+                    axis_alignment: Alignment::Start,
+                ]
+            )),
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [2, 100],
+                    cross_alignment: Alignment::Stretch,
+                ]
+            )
+            .push(node!(
+                mctk_core::widgets::VDivider {
+                    size: 0.8,
+                    color: Color::rgba(83., 83., 83., 1.),
+                },
+                lay![
+                    axis_alignment: Alignment::Start,
+                ]
+            )),
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [60, 100],
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Stretch,
+                ]
+            )
+            .push(node!(
                 TextBox::new(Some("".to_string()))
                     .style("background_color", Color::TRANSPARENT)
                     .style("font_size", 20.)
@@ -138,93 +161,88 @@ impl Component for AddNetwork {
                         FORM.password.set(s.to_string());
                         msg!(())
                     }))
-                    .placeholder("Enter name"),
+                    .placeholder("Enter SSID"),
                 lay![
-                    size_pct: [100, 8],
-                    direction: Direction::Row,
-                    axis_alignment: Alignment::Stretch
+                    axis_alignment: Alignment::End,
                 ]
-            )
-        } else {
+            )),
+        );
+
+        let password_row_node = node!(
+            Div::new(),
+            lay![
+                size: [440, 68],
+                direction: Direction::Row,
+                cross_alignment: Alignment::Stretch,
+                axis_alignment: Alignment::Stretch,
+                position: [0., 0., Auto, 0.],
+            ]
+        )
+        .push(
             node!(
                 Div::new().bg(Color::TRANSPARENT),
                 lay![
-                    size_pct: [100, 8],
-                    direction: Direction::Row,
+                    size_pct: [38, 100],
                     axis_alignment: Alignment::Stretch,
-                    cross_alignment: Alignment::End
+                    cross_alignment: Alignment::Center,
+                ],
+            )
+            .push(node!(
+                Text::new(txt!("Password"))
+                    .style("color", Color::rgba(255., 255., 255., 1.))
+                    .style("font", "Inter")
+                    .with_class("text-xl leading-6 font-medium"),
+                lay![
+                    margin: [0.0, 10.0, 0.0, 0.0],
+                    axis_alignment: Alignment::Start,
+                ]
+            )),
+        )
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [2, 100],
+                    cross_alignment: Alignment::Stretch,
                 ]
             )
-            .push(node!(Text::new(txt!(network_name.clone()))
-                .style("color", Color::rgba(197., 197., 197., 1.))
-                .style("size", 20.0)
-                .style("line_height", 22.)
-                .style("font", "Space Grotesk")
-                .style("font_weight", FontWeight::Normal),))
-        };
-
-        let password_input_text = node!(
-            Div::new(),
-            lay![
-                size: [Auto, 50],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment:Alignment::Center,
-                padding: [5., 0., 0., 0.],
-            ]
+            .push(node!(
+                mctk_core::widgets::VDivider {
+                    size: 0.8,
+                    color: Color::rgba(83., 83., 83., 1.),
+                },
+                lay![
+                    axis_alignment: Alignment::Start,
+                ]
+            )),
         )
-        .push(node!(
-            Text::new(txt!("Password"))
-                .with_class("text-l leading-6 font-space-grotesk font-normal")
-                .style("color", Color::rgb(197., 197., 197.)),
-            lay![
-                padding: [5., 0., 0., 0.],
-            ]
-        ));
-
-        let password_input_value = node!(
-            TextBox::new(Some("".to_string()))
-                .style("background_color", Color::TRANSPARENT)
-                .style("font_size", 20.)
-                .style("text_color", Color::WHITE)
-                .style("border_color", Color::TRANSPARENT)
-                .style("cursor_color", Color::WHITE)
-                .style("placeholder_color", Color::rgb(107., 107., 107.))
-                .on_change(Box::new(|s| {
-                    FORM.password.set(s.to_string());
-                    msg!(())
-                }))
-                .placeholder("Enter password"),
-            lay![
-                size_pct: [100, 8],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch
-            ]
+        .push(
+            node!(
+                Div::new(),
+                lay![
+                    size_pct: [60, 100],
+                    axis_alignment: Alignment::Stretch,
+                    cross_alignment: Alignment::Stretch,
+                ]
+            )
+            .push(node!(
+                TextBox::new(Some("".to_string()))
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("font_size", 20.)
+                    .style("text_color", Color::WHITE)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("cursor_color", Color::WHITE)
+                    .style("placeholder_color", Color::rgb(107., 107., 107.))
+                    .on_change(Box::new(|s| {
+                        FORM.password.set(s.to_string());
+                        msg!(())
+                    }))
+                    .placeholder("Enter password"),
+                lay![
+                    axis_alignment: Alignment::End,
+                ]
+            )),
         );
-
-        content_node = content_node.push(name_input_text);
-        content_node = content_node.push(name_input_value);
-        content_node = content_node.push(node!(
-            HDivider {
-                size: 0.8,
-                color: Color::rgba(83., 83., 83., 1.)
-            },
-            lay![
-                margin: [2.0, 0.0, 25.0, 0.0],
-            ]
-        ));
-
-        content_node = content_node.push(password_input_text);
-        content_node = content_node.push(password_input_value);
-        content_node = content_node.push(node!(
-            HDivider {
-                size: 0.8,
-                color: Color::rgba(83., 83., 83., 1.)
-            },
-            lay![
-                margin: [2.0, 0.0, 10.0, 0.0],
-            ]
-        ));
 
         let header_text = if FORM.ssid.get().clone().len() == 0 {
             "Add Network"
@@ -260,6 +278,19 @@ impl Component for AddNetwork {
             })
         ));
 
+        if FORM.ssid.get().clone().len() == 0 {
+            content_node = content_node.push(name_row_node);
+            content_node = content_node.push(node!(HDivider {
+                size: 0.8,
+                color: Color::rgba(83., 83., 83., 1.)
+            }));
+        }
+
+        content_node = content_node.push(password_row_node);
+        content_node = content_node.push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
         base = base.push(content_node);
         Some(base)
     }

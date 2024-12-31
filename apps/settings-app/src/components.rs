@@ -27,7 +27,7 @@ macro_rules! header_node {
         let header_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 10],
+                size: [440, 60],
                 direction: Direction::Row,
                 cross_alignment: Alignment::Center,
                 axis_alignment: Alignment::Stretch,
@@ -39,6 +39,7 @@ macro_rules! header_node {
 
         header_node
     }};
+
     ($title:expr, $back_on_click:expr) => {{
         let text_node = node!(
             Text::new(txt!($title))
@@ -115,7 +116,8 @@ macro_rules! header_node {
         let result_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 14],
+                // size_pct: [100, 14],
+                size: [440, 60],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::Stretch,
@@ -140,8 +142,6 @@ macro_rules! header_node {
         ));
         result_node
     }};
-
-
 
     ($title:expr, $back_on_click:expr, $right_icon_1:expr, $right_icon_1_on_click:expr) => {{
 
@@ -184,7 +184,7 @@ macro_rules! header_node {
                             width: Dimension::Px(34.0),
                             height: Dimension::Px(34.0),
                         }
-        )
+                    )
                     .style("background_color", Color::TRANSPARENT)
                     .style("border_color", Color::TRANSPARENT)
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
@@ -207,48 +207,46 @@ macro_rules! header_node {
                     cross_alignment: Alignment::Stretch,
                 ]
             )
-            .push(node!(mctk_core::widgets::VDivider {
-            size: 0.8,
-            color: Color::rgba(83., 83., 83., 1.)
-        }
-    ))
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [50, 100],
-                    axis_alignment: Alignment::Center,
-                    cross_alignment: Alignment::Center,
-                ]
-            )
-            .push(
-            node!(
-            IconButton::new($right_icon_1)
-            .on_click($right_icon_1_on_click)
-            .icon_type(IconType::Png)
-            .with_class(" border-0 p-0")
-            .style(
-                "size",
-                Size {
-                    width: Dimension::Px(34.0),
-                    height: Dimension::Px(34.0),
-                }
-            )
-            .style("background_color", Color::TRANSPARENT)
-            .style("border_color", Color::TRANSPARENT)
-            .style("active_color", Color::rgba(85., 85., 85., 0.50))
-            .style("radius", 10.),
-            lay![
-                axis_alignment: Alignment::Center,
-                cross_alignment: Alignment::Center,
-            ]
+            .push(node!(
+                mctk_core::widgets::VDivider {size: 0.8, color: Color::rgba(83., 83., 83., 1.)}
             ))
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [50, 100],
+                        axis_alignment: Alignment::Center,
+                        cross_alignment: Alignment::Center,
+                    ]
+                )
+                .push(node!(
+                    IconButton::new($right_icon_1)
+                    .on_click($right_icon_1_on_click)
+                    .icon_type(IconType::Png)
+                    .with_class(" border-0 p-0")
+                    .style(
+                        "size",
+                        Size {
+                            width: Dimension::Px(34.0),
+                            height: Dimension::Px(34.0),
+                        }
+                    )
+                    .style("background_color", Color::TRANSPARENT)
+                    .style("border_color", Color::TRANSPARENT)
+                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
+                    .style("radius", 10.),
+                    lay![
+                        axis_alignment: Alignment::Center,
+                        cross_alignment: Alignment::Center,
+                    ]
+                ))
         ),
         );
         let result_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 14],
+                // size_pct: [100, 14],
+                size: [440, 60],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::Stretch,
@@ -274,9 +272,7 @@ macro_rules! header_node {
         result_node
     }};
 
-
     ($title:expr, $back_on_click:expr, $right_icon_1:expr, $right_icon_1_on_click:expr, $right_icon_2:expr, $right_icon_2_on_click:expr) => {{
-
         let text_node = node!(
             Text::new(txt!($title))
             .with_class("text-3xl leading-8 font-normal")
@@ -415,7 +411,8 @@ macro_rules! header_node {
         let result_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 14],
+                // size_pct: [100, 14],
+                size: [440, 60],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::Stretch,
@@ -798,7 +795,7 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
     let row_node = node!(
         Div::new(),
         lay![
-            size: [440, 60],
+            size: [440, 68],
             direction: Direction::Row,
             axis_alignment: Alignment::Stretch,
             cross_alignment: Alignment::Center,
@@ -861,6 +858,56 @@ pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
                 .style("line_height", 22.0)
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Bold),
+            lay![]
+        )),
+    );
+
+    row_node
+}
+
+pub fn single_detail_row(key_val_1: DetailRow) -> Node {
+    let row_node = node!(
+        Div::new(),
+        lay![
+            size: [440, 68],
+            direction: Direction::Row,
+            axis_alignment: Alignment::Stretch,
+            cross_alignment: Alignment::Center,
+        ]
+    )
+    .push(
+        node!(
+            Div::new(),
+            lay![
+                size_pct: [50, Auto],
+                axis_alignment: Alignment::Start,
+                direction: Direction::Column,
+            ]
+        )
+        .push(node!(
+            Text::new(txt!(key_val_1.key.to_owned()))
+                .style("color", Color::rgba(255., 255., 255., 1.))
+                .style("font", "Inter")
+                .with_class("text-2xl leading-7 font-medium"),
+            lay![
+                margin: [0.0, 10.0, 0.0, 0.0],
+            ]
+        )),
+    )
+    .push(
+        node!(
+            Div::new(),
+            lay![
+                size_pct: [50, Auto],
+                axis_alignment: Alignment::End,
+                direction: Direction::Column,
+            ]
+        )
+        .push(node!(
+            Text::new(txt!(key_val_1.value.to_owned()))
+                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("font", "Inter")
+                .with_class("text-2xl leading-7 font-medium"),
             lay![]
         )),
     );

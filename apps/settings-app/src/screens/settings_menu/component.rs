@@ -56,8 +56,9 @@ impl Component for SettingsRowComponent {
 
         let value_node = node!(
             Text::new(txt!(value))
-                .with_class("text-l leading-5 font-normal")
-                .style("font", "Inter"),
+                .style("color", Color::rgba(197., 197., 197., 1.))
+                .style("font", "Inter")
+                .with_class("text-xl leading-6 font-normal"),
             lay![
                 margin: [0., 0., 0., 10.],
             ]
@@ -67,7 +68,7 @@ impl Component for SettingsRowComponent {
             node!(
                 Div::new(),
                 lay![
-                    size: [440, 60],
+                    size: [440, 68],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,

@@ -129,7 +129,6 @@ impl Component for NetworkingScreen {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [10., 0., 0., 0.],
             ]
         );
 
@@ -137,7 +136,7 @@ impl Component for NetworkingScreen {
         let toggle_row = node!(
             Div::new(),
             lay![
-                size: [Auto, 50],
+                size: [Auto, 68],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
@@ -211,7 +210,7 @@ impl Component for NetworkingScreen {
         let connected_network_row = node!(
             Div::new(),
             lay![
-                size: [440, 60],
+                size: [440, 68],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
@@ -364,7 +363,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size: [440, 60],
+                    size: [440, 68],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
@@ -470,7 +469,7 @@ impl Component for NetworkingScreen {
             node!(
                 Div::new(),
                 lay![
-                    size: [440, 60],
+                    size: [440, 68],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,

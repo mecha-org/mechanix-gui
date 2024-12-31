@@ -10,11 +10,14 @@ use mctk_core::{
 };
 
 use super::component::SettingsRowComponent;
-use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::header_node;
 use crate::{
     components::*, screens::network::wireless_model::WirelessModel,
     shared::style_constants::DISABLED_TEXT, utils::truncate,
+};
+use crate::{
+    gui::{Message, NetworkScreenRoutes, Routes},
+    screens::battery::battery_model::BatteryModel,
 };
 
 #[derive(Debug)]
@@ -45,7 +48,7 @@ impl Component for SettingsScreen {
 
         let mut connected_network_name = "    ".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
-            connected_network_name = connected_network.name.clone();
+            connected_network_name = connected_network.clone().name.clone();
             connected_network_name = truncate(connected_network_name, 12);
         }
 
@@ -133,9 +136,15 @@ impl Component for SettingsScreen {
             color: Color::rgba(83.0, 83.0, 83.0, 1.)
         }));
 
+        let battery_percentage = if *BatteryModel::get().battery_percentage.get() > 0.0 {
+            format!(" {}% ", *BatteryModel::get().battery_percentage.get() as u8)
+        } else {
+            "".to_string()
+        };
+
         let battery_row = node!(SettingsRowComponent {
             title: "Battery".to_string(),
-            value: "".to_string(),
+            value: battery_percentage,
             icon_1: "battery_icon".to_string(),
             icon_1_type: IconType::Png,
             icon_2: "".to_string(),
@@ -336,15 +345,15 @@ impl Component for SettingsScreen {
         );
 
         list_items = list_items.push(network_div);
-        list_items = list_items.push(bluetooth_div);
+        // list_items = list_items.push(bluetooth_div);
         list_items = list_items.push(display_div);
-        list_items = list_items.push(appearance_div);
+        // list_items = list_items.push(appearance_div);
         list_items = list_items.push(battery_div);
         list_items = list_items.push(sound_div);
-        list_items = list_items.push(lock_div);
-        list_items = list_items.push(date_time_div);
-        list_items = list_items.push(language_div);
-        list_items = list_items.push(update_div);
+        // list_items = list_items.push(lock_div);
+        // list_items = list_items.push(date_time_div);
+        // list_items = list_items.push(language_div);
+        // list_items = list_items.push(update_div);
         list_items = list_items.push(about_div);
 
         scrollable = scrollable.push(list_items);
@@ -355,7 +364,6 @@ impl Component for SettingsScreen {
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 size: [440, Auto],
-                margin: [10., 0., 0., 0.],
                 position: [Auto, 0., 0., 0.],
             ]
         )

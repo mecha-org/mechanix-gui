@@ -70,14 +70,13 @@ impl Component for NetworkSettings {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [10., 0., 0., 0.],
             ]
         );
 
         let saved_networks_text_row = node!(
             Div::new(),
             lay![
-                size: [Auto, 50],
+                size: [Auto, 60],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
@@ -87,8 +86,8 @@ impl Component for NetworkSettings {
         .push(node!(
             Text::new(txt!("Saved Networks"))
                 .style("color", Color::WHITE)
-                .with_class("text-2xl leading-7 font-normal")
-                .style("font", "Inter"),
+                .style("font", "Inter")
+                .with_class("text-2xl leading-7 font-normal"),
             lay![]
         ));
 
@@ -120,7 +119,7 @@ impl Component for NetworkSettings {
             let row = node!(
                 Div::new(),
                 lay![
-                    size: [440, 60],
+                    size: [440, 68],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
@@ -205,7 +204,7 @@ impl Component for NetworkSettings {
             let row_node = node!(
                 Div::new(),
                 lay![
-                    size: [440, 60],
+                    size: [440, Auto],
                     direction: Direction::Column,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Stretch,

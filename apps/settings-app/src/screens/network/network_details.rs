@@ -1,12 +1,13 @@
+use std::collections::HashMap;
 use std::hash::Hash;
 
 use super::wireless_model::WirelessModel;
-use crate::components::{detail_row, DetailRow};
+use crate::components::{detail_row, single_detail_row, DetailRow};
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::header_node;
 use crate::utils::truncate;
 
-use mctk_core::widgets::{Button, HDivider};
+use mctk_core::widgets::{Button, HDivider, Scrollable};
 use mctk_core::{
     component::Component,
     lay,
@@ -76,7 +77,6 @@ impl Component for NetworkDetails {
         } else {
             "-".to_string()
         };
-        let mut text_color = Color::WHITE;
         let connected_network_option = WirelessModel::get().connected_network.get().clone();
         let mut network_status = "Connected";
         let mut security = "-".to_string();
@@ -120,161 +120,111 @@ impl Component for NetworkDetails {
         let mut content_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 90],
+                size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [12., 0., 0., 0.],
+                // margin: [10., 0., 0., 0.],
             ]
         );
 
-        let selected_network_row = node!(
+        let mut scrollable_section = node!(
+            Scrollable::new(size!(440, 340)),
+            lay![
+                size: [440, 340],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        )
+        .push(node!(
             Div::new(),
             lay![
-                size_pct: [100, Auto],
-                direction: Direction::Row,
+                size: [440, Auto],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        ));
+
+        // single_detail_row
+
+        let rows_node = node!(
+            Div::new(),
+            lay![
+                size: [440, Auto],
+                direction: Direction::Column,
                 axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center,
-                padding: [5., 0., 15., 0.],
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
-                ]
-            )
-            .push(node!(
-                widgets::Image::new("wifi_icon"),
-                lay![
-                    size: [24, 24],
-                    margin:[0., 0., 0., 20.],
-                ]
-            ))
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Stretch,
-                    ]
-                )
-                .push(node!(
-                    Text::new(txt!("Status"))
-                        .style("color", Color::WHITE)
-                        .style("size", 15.0)
-                        .style("line_height", 17.50)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
-                    lay![
-                        direction: Direction::Row,
-                        axis_alignment: Alignment::Start,
-                        cross_alignment: Alignment::Center,
-                    ]
-                ))
-                .push(node!(
-                    // mini status
-                    Text::new(txt!(network_status))
-                        .style("color", Color::WHITE)
-                        .style("size", 14.0)
-                        .style("line_height", 20.0)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Bold),
-                    lay![
-                        direction: Direction::Row,
-                        axis_alignment: Alignment::Start,
-                        cross_alignment: Alignment::Center,
-                    ]
-                )),
-            ),
-        );
-
-        let selected_network_node = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 15],
-                direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-            ]
+            ],
         )
-        .push(selected_network_row);
-
-        let details_row_1 = detail_row(
-            DetailRow {
-                key: "NAME".to_uppercase(),
-                value: truncate(connected_network.clone().name.clone(), 17),
-            },
-            DetailRow {
-                key: "STATUS".to_uppercase(),
-                value: network_status.to_string(),
-            },
-        );
-
-        let details_row_2 = detail_row(
-            DetailRow {
-                key: "Frequency".to_uppercase(),
-                value: if connected_network.frequency.starts_with("2") {
-                    "2.4 GHz"
-                } else {
-                    "5 GHz"
-                }
-                .to_string(),
-            },
-            DetailRow {
-                key: "IP Address".to_uppercase(),
-                value: ip_address.to_string(),
-            },
-        );
-
-        let details_row_3 = detail_row(
-            DetailRow {
-                key: "MAC Address".to_uppercase(),
-                value: connected_network.mac.to_string(),
-            },
-            DetailRow {
-                key: "Security".to_uppercase(),
-                value: security.to_string(),
-            },
-        );
-
-        // content_node = content_node.push(selected_network_node);
-        // content_node = content_node.push(node!(HDivider { size: 1. }, lay![
-        //     margin: [0.0, 0.0, 30.0, 0.0],
-        // ]));
-
-        // content_node = content_node.push(node!(
-        //     HDivider {
-        //         size: 0.8,
-        //         color: Color::rgba(83., 83., 83., 1.)
-        //     },
-        //     lay![
-        //         margin: [0., 0., 10., 0.]
-        //     ]
-        // ));
-        content_node = content_node.push(details_row_1);
-        content_node = content_node.push(node!(
+        .push(single_detail_row(DetailRow {
+            key: "Name".to_string(),
+            value: truncate(connected_network.clone().name.clone(), 17),
+        }))
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }))
+        .push(single_detail_row(DetailRow {
+            key: "Status".to_string(),
+            value: network_status.to_string(),
+        }))
+        .push(node!(
             HDivider {
-                size: 0.6,
+                size: 0.8,
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
                 margin: [8., 0., 8., 0.]
             ]
-        ));
-        content_node = content_node.push(details_row_2);
-        content_node = content_node.push(node!(
+        ))
+        .push(single_detail_row(DetailRow {
+            key: "Frequency".to_string(),
+            value: if connected_network.frequency.starts_with("2") {
+                "2.4 GHz"
+            } else {
+                "5 GHz"
+            }
+            .to_string(),
+        }))
+        .push(node!(
             HDivider {
-                size: 0.6,
+                size: 0.8,
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
                 margin: [8., 0., 8., 0.]
             ]
-        ));
-        content_node = content_node.push(details_row_3);
-        content_node = content_node.push(node!(
+        ))
+        .push(single_detail_row(DetailRow {
+            key: "IP Address".to_string(),
+            value: ip_address.to_string(),
+        }))
+        .push(node!(
+            HDivider {
+                size: 0.8,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
+            lay![
+                margin: [8., 0., 8., 0.]
+            ]
+        ))
+        .push(single_detail_row(DetailRow {
+            key: "MAC Address".to_string(),
+            value: connected_network.mac.to_string(),
+        }))
+        .push(node!(
+            HDivider {
+                size: 0.8,
+                color: Color::rgba(83., 83., 83., 1.)
+            },
+            lay![
+                margin: [8., 0., 8., 0.]
+            ]
+        ))
+        .push(single_detail_row(DetailRow {
+            key: "Security".to_string(),
+            value: security.to_string(),
+        }))
+        .push(node!(
             HDivider {
                 size: 0.8,
                 color: Color::rgba(83., 83., 83., 1.)
@@ -283,6 +233,7 @@ impl Component for NetworkDetails {
                 margin: [8., 0., 8., 0.]
             ]
         ));
+        scrollable_section = scrollable_section.push(rows_node);
 
         // note : in border with width, does not match with radius  - 1. is the border width
         let modal = node!(
@@ -425,7 +376,7 @@ impl Component for NetworkDetails {
                 })
             })
         ));
-
+        content_node = content_node.push(scrollable_section);
         base = base.push(content_node);
         Some(base)
     }
