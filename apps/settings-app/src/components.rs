@@ -207,7 +207,7 @@ macro_rules! header_node {
                     cross_alignment: Alignment::Stretch,
                 ]
             )
-            .push(node!(VDivider {
+            .push(node!(mctk_core::widgets::VDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }
@@ -339,7 +339,7 @@ macro_rules! header_node {
                     cross_alignment: Alignment::Stretch,
                 ]
             )
-            .push(node!(VDivider {
+            .push(node!(mctk_core::widgets::VDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }
@@ -376,7 +376,7 @@ macro_rules! header_node {
             ]
             ))
         )
-            .push(node!(VDivider {
+            .push(node!(mctk_core::widgets::VDivider {
                 size: 0.8,
                 color: Color::rgba(83., 83., 83., 1.)
             }))
