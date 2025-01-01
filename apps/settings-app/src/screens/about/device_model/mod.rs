@@ -20,7 +20,7 @@ lazy_static! {
     static ref DEVICE_MODEL: DeviceModel = DeviceModel {
         is_provisioned: Context::new(false),
         os_info: Context::new(None),
-        provision_name: Context::new("My Comet".to_string()),
+        provision_name: Context::new("My Mecha Comet".to_string()),
         provision_id: Context::new("".to_string()),
         provision_icon_url: Context::new("".to_string()),
         ip_address: Context::new("".to_string()),
