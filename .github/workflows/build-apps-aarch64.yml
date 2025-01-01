@@ -37,8 +37,8 @@ jobs:
             path: apps
       
           - name: Files
-            package: mechanix-camera
-            artifact: mechanix-camera-aarch64-unknown-linux-gnu.tar.gz
+            package: mechanix-files
+            artifact: mechanix-files-aarch64-unknown-linux-gnu.tar.gz
             path: apps
 
     runs-on: ubicloud-standard-2-arm
