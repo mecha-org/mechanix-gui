@@ -888,7 +888,7 @@ pub fn single_detail_row(key_val_1: DetailRow) -> Node {
             Text::new(txt!(key_val_1.key.to_owned()))
                 .style("color", Color::rgba(255., 255., 255., 1.))
                 .style("font", "Inter")
-                .with_class("text-xl leading-6 font-medium"),
+                .with_class("text-2xl leading-7 font-medium"),
             lay![
                 margin: [0.0, 10.0, 0.0, 0.0],
             ]
@@ -906,11 +906,10 @@ pub fn single_detail_row(key_val_1: DetailRow) -> Node {
             Text::new(txt!(key_val_1.value.trim().to_owned()))
                 .style("color", Color::rgba(197., 197., 197., 1.))
                 .style("font", "Inter")
-                .with_class("text-xl leading-6 font-medium"),
+                .with_class("text-2xl leading-7 font-medium"),
             lay![
                 axis_alignment: Alignment::End,
                 cross_alignment: Alignment::End,
-                margin: [0., 20., 0.,0.]
             ]
         )),
     );
