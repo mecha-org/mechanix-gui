@@ -36,6 +36,10 @@ pub struct SettingsItem {
     on_click: Routes,
 }
 impl Component for SettingsScreen {
+    fn init(&mut self) {
+        BatteryModel::update();
+    }
+
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             Div::new().bg(Color::BLACK),
@@ -136,7 +140,7 @@ impl Component for SettingsScreen {
             color: Color::rgba(83.0, 83.0, 83.0, 1.)
         }));
 
-        let battery_percentage = if *BatteryModel::get().battery_percentage.get() > 0.0 {
+        let battery_percentage = if *BatteryModel::get().battery_percentage.get() > 0 {
             format!(" {}% ", *BatteryModel::get().battery_percentage.get() as u8)
         } else {
             "".to_string()
@@ -170,7 +174,7 @@ impl Component for SettingsScreen {
             title: "Appearance".to_string(),
             value: "".to_string(),
             icon_1: "appearance_icon".to_string(),
-            icon_1_type: IconType::Svg,
+            icon_1_type: IconType::Png,
             icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,

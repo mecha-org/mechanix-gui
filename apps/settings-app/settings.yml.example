@@ -57,7 +57,7 @@ modules:
   display:
     icon: /usr/share/mechanix/apps/settings/assets/icons/display_icon.png
   appearance:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/appearance_icon.svg
+    icon: /usr/share/mechanix/apps/settings/assets/icons/appearance_icon.png
   battery:
     icon: /usr/share/mechanix/apps/settings/assets/icons/battery_icon.png
   sound:

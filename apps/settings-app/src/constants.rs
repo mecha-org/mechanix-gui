@@ -14,7 +14,7 @@ pub const BACKGROUND_IMAGE: &str = concatcp!(ASSET_PATH, "mecha_background_color
 // settings
 pub const BLUETOOTH_ICON: &str = concatcp!(ASSET_PATH, "bluetooth_off_icon.svg");
 pub const DISPLAY_ICON: &str = concatcp!(ASSET_PATH, "display_icon.png");
-pub const APPEARANCE_ICON: &str = concatcp!(ASSET_PATH, "appearance_icon.svg");
+pub const APPEARANCE_ICON: &str = concatcp!(ASSET_PATH, "appearance_icon.png");
 pub const BATTERY_ICON: &str = concatcp!(ASSET_PATH, "battery_icon.png");
 pub const SOUND_ICON: &str = concatcp!(ASSET_PATH, "sound_icon.png");
 pub const LOCK_ICON: &str = concatcp!(ASSET_PATH, "lock_icon.svg");

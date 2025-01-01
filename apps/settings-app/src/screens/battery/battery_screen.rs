@@ -1,3 +1,5 @@
+use upower::BatteryStatus;
+
 use crate::gui::Message;
 use crate::gui::Routes;
 use crate::header_node;
@@ -62,11 +64,43 @@ impl Component for BatteryScreen {
             ]
         );
 
+        let battery_percentage_value = *BatteryModel::get().battery_percentage.get() as u8;
+        // let battery_percentage_value = 50;
+        let mut charge_text = "";
+
+        let battery_status = BatteryModel::get().battery_status_value.get();
+
+        if *battery_status == BatteryStatus::Unknown {
+            charge_text = "";
+        } else if *battery_status == BatteryStatus::Charging {
+            charge_text = "Charging";
+        } else if *battery_status == BatteryStatus::Discharging {
+            charge_text = "Discharging";
+        } else {
+            charge_text = "Charded";
+        }
+
+        // green
+        let mut active_color = Color::rgb(52., 199., 89.);
+        let mut inactive_color = Color::rgb(74., 108., 82.);
+
+        if battery_percentage_value <= 20 {
+            // red
+            active_color = Color::rgb(199., 52., 52.);
+            inactive_color = Color::rgb(132., 92., 92.);
+        } else if battery_percentage_value <= 40 {
+            // yellow
+            active_color = Color::rgb(199., 160., 52.);
+            inactive_color = Color::rgb(152., 144., 106.);
+        }
+
         let battery_percentage_widget = node!(
             Slider::new()
-                .value(*BatteryModel::get().battery_percentage.get() as u8)
+                // .value(*BatteryModel::get().battery_percentage.get() as u8)   // OG
+                .value(battery_percentage_value)
                 .slider_type(SliderType::BatteryLine)
-                .active_color(Color::rgb(102., 226., 0.))
+                .active_color(active_color)
+                .inactive_color(inactive_color)
                 .col_spacing(10.)
                 .col_width(14.)
                 .disabled(true),
@@ -74,11 +108,7 @@ impl Component for BatteryScreen {
         );
 
         main_node = main_node.push(sub_header_node(
-            format!(
-                " {}% charged",
-                *BatteryModel::get().battery_percentage.get() as u8
-            )
-            .as_str(),
+            format!("{} ({}%)", charge_text, battery_percentage_value).as_str(),
         ));
 
         main_node = main_node.push(battery_percentage_widget);
@@ -92,8 +122,8 @@ impl Component for BatteryScreen {
             ]
         ));
         main_node = main_node.push(tab_item_node!(
-            [text_node("Performance mode")],
-            [text_bold_node(&current_mode), get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
+            [text_node("Power mode")],
+            [text_bold_node(&current_mode)],
             on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
         ));
         main_node = main_node.push(node!(HDivider {

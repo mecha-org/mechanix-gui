@@ -187,9 +187,10 @@ async fn main() -> anyhow::Result<()> {
         "display_icon".to_string(),
         AssetParams::new(modules.display.icon),
     );
-    if let icon = modules.appearance.icon {
-        svgs.insert("appearance_icon".to_string(), icon);
-    }
+    assets.insert(
+        "appearance_icon".to_string(),
+        AssetParams::new(modules.appearance.icon),
+    );
     assets.insert(
         "battery_icon".to_string(),
         AssetParams::new(modules.battery.icon),

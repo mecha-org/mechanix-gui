@@ -104,7 +104,7 @@ impl Component for PerformanceMode {
                         ]
                     )
                     .push(get_text_node(
-                        "Higher performance will use battery faster and ",
+                        "Higher performance will use battery",
                         Color::rgb(197.0, 197.0, 197.0),
                     )),
                 ),
@@ -127,7 +127,7 @@ impl Component for PerformanceMode {
                         ]
                     )
                     .push(get_text_node(
-                        "increase the temperature of the device significantly.",
+                        "faster and increase the temperature of ",
                         Color::rgb(197.0, 197.0, 197.0),
                     )),
                 ),
@@ -150,7 +150,30 @@ impl Component for PerformanceMode {
                         ]
                     )
                     .push(get_text_node(
-                        "Check ambient temperature before proceeding.",
+                        "the device significantly. Check ambient",
+                        Color::rgb(197.0, 197.0, 197.0),
+                    )),
+                ),
+            )
+            .push(
+                node!(
+                    Div::new(),
+                    lay![
+                        size_pct: [100, 20],
+                        direction: Direction::Row,
+                        axis_alignment: Alignment::Start,
+                    ]
+                )
+                .push(
+                    node!(
+                        Div::new(),
+                        lay![
+                            size_pct: [100, 100],
+                            axis_alignment: Alignment::Start,
+                        ]
+                    )
+                    .push(get_text_node(
+                        "temperature before proceeding.",
                         Color::rgb(197.0, 197.0, 197.0),
                     )),
                 ),
@@ -165,10 +188,8 @@ pub fn get_text_node(text: &str, color: Color) -> Node {
     let text_node = node!(
         widgets::Text::new(txt!(text))
             .style("color", color)
-            .style("size", 16.0)
-            .style("line_height", 20.)
-            .style("font", "Space Grotesk")
-            .style("font_weight", FontWeight::Medium),
+            .style("font", "Inter")
+            .with_class("text-xl leading-6 font-medium"),
         lay![
         margin: [5.0, 0.0, 5.0, 0.0]
         ]

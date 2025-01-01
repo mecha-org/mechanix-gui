@@ -92,7 +92,7 @@ impl Component for DisplayScreen {
 
         let screen_off_time = tab_item_node!(
             [text_node("Screen Time")],
-            [text_bold_node("30s"), get_icon("white_right_arrow", IconType::Svg, rect![0., 0., 0., 10.])],
+            [text_bold_node("30s")],
             on_click: Some(Box::new(move || msg!(Message::ChangeDisplayScreenRoute { route: DisplayScreenRoute::ScreenOffTime } ))),
         );
 

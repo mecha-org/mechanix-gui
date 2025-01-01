@@ -492,10 +492,8 @@ pub fn text_bold_node(text: &str) -> Node {
     let text_node = node!(
         widgets::Text::new(txt!(text))
             .style("color", Color::WHITE)
-            .style("size", 20.0)
-            .style("line_height", 20.)
-            .style("font", "Space Grotesk")
-            .style("font_weight", FontWeight::Bold),
+            .style("font", "Inter")
+            .with_class("text-xl leading-6 font-bold"),
         lay![margin: [0.0, 10.0, 0.0, 10.0]]
     );
     text_node
@@ -505,11 +503,11 @@ pub fn text_node(text: &str) -> Node {
     let text_node = node!(
         widgets::Text::new(txt!(text))
             .style("color", Color::rgb(197.0, 197.0, 197.0))
-            .style("size", 20.0)
-            .style("line_height", 20.)
-            .style("font", "Space Grotesk")
-            .style("font_weight", FontWeight::Medium),
-        lay![margin: [5.0, 0.0, 5.0, 0.0]]
+            .style("font", "Inter")
+            .with_class("text-xl leading-6 font-medium"),
+        lay![
+        margin: [5.0, 0.0, 5.0, 0.0]
+        ]
     );
     text_node
 }
