@@ -1,6 +1,6 @@
 use super::wireless_model::WirelessModel;
 use crate::{
-    components::{detail_row, single_detail_row, DetailRow},
+    components::{single_detail_row, DetailRow},
     gui::{Message, NetworkScreenRoutes, Routes},
     header_node,
     utils::truncate,

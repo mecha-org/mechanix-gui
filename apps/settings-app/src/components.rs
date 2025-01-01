@@ -792,7 +792,7 @@ pub struct DetailRow {
     pub value: String,
 }
 
-pub fn detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
+pub fn parallel_detail_row(key_val_1: DetailRow, key_val_2: DetailRow) -> Node {
     let row_node = node!(
         Div::new(),
         lay![
@@ -880,16 +880,15 @@ pub fn single_detail_row(key_val_1: DetailRow) -> Node {
         node!(
             Div::new(),
             lay![
-                size_pct: [50, Auto],
+                size_pct: [40, Auto],
                 axis_alignment: Alignment::Start,
-                direction: Direction::Column,
             ]
         )
         .push(node!(
             Text::new(txt!(key_val_1.key.to_owned()))
                 .style("color", Color::rgba(255., 255., 255., 1.))
                 .style("font", "Inter")
-                .with_class("text-2xl leading-7 font-medium"),
+                .with_class("text-xl leading-6 font-medium"),
             lay![
                 margin: [0.0, 10.0, 0.0, 0.0],
             ]
@@ -899,17 +898,20 @@ pub fn single_detail_row(key_val_1: DetailRow) -> Node {
         node!(
             Div::new(),
             lay![
-                size_pct: [50, Auto],
+                size_pct: [60, Auto],
                 axis_alignment: Alignment::End,
-                direction: Direction::Column,
             ]
         )
         .push(node!(
-            Text::new(txt!(key_val_1.value.to_owned()))
+            Text::new(txt!(key_val_1.value.trim().to_owned()))
                 .style("color", Color::rgba(197., 197., 197., 1.))
                 .style("font", "Inter")
-                .with_class("text-2xl leading-7 font-medium"),
-            lay![]
+                .with_class("text-xl leading-6 font-medium"),
+            lay![
+                axis_alignment: Alignment::End,
+                cross_alignment: Alignment::End,
+                margin: [0., 20., 0.,0.]
+            ]
         )),
     );
 

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 use super::wireless_model::WirelessModel;
-use crate::components::{detail_row, single_detail_row, DetailRow};
+use crate::components::{ single_detail_row, DetailRow};
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::header_node;
 use crate::utils::truncate;
@@ -128,9 +128,9 @@ impl Component for NetworkDetails {
         );
 
         let mut scrollable_section = node!(
-            Scrollable::new(size!(440, 340)),
+            Scrollable::new(size!(440, 380)),
             lay![
-                size: [440, 340],
+                size: [440, 380],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]

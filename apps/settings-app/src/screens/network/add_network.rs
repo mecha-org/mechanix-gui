@@ -131,7 +131,7 @@ impl Component for AddNetwork {
                 ]
             )
             .push(node!(
-                mctk_core::widgets::VDivider {
+               VDivider {
                     size: 0.8,
                     color: Color::rgba(83., 83., 83., 1.),
                 },
