@@ -1,0 +1,50 @@
+[package]
+name = "mechanix-camera"
+description = "System camera app"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mctk_core = { workspace = true }
+mctk_macros = { workspace = true }
+mctk_smithay = { workspace = true }
+
+[package.metadata.deb]
+name = "mechanix-camera"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-camera",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/apps/camera/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/apps/camera/settings.yml",
+        "644",
+    ],
+    # desktop file
+    [
+        "src/assets/linux/org.mechanix.camera.desktop", 
+        "/usr/share/applications/", 
+        "644"
+    ],
+
+]

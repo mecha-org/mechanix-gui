@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+TryExec=mechanix-files -s /etc/mechanix/apps/files/settings.yml
+Exec=mechanix-files -s /etc/mechanix/apps/files/settings.yml
+Icon=/usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mechanix_files_icon.png
+Terminal=false
+Categories=System;
+
+Name=Files
+GenericName=Files
+Comment=System File manager app
