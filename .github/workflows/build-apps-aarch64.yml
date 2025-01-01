@@ -26,9 +26,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Settings App
+          - name: Settings
             package: mechanix-settings
             artifact: mechanix-settings-aarch64-unknown-linux-gnu.tar.gz
+            path: apps
+
+          - name: Camera
+            package: mechanix-camera
+            artifact: mechanix-camera-aarch64-unknown-linux-gnu.tar.gz
+            path: apps
+      
+          - name: Files
+            package: mechanix-camera
+            artifact: mechanix-camera-aarch64-unknown-linux-gnu.tar.gz
             path: apps
 
     runs-on: ubicloud-standard-2-arm
