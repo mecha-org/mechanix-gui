@@ -68,6 +68,7 @@ jobs:
           libclang-dev \
           protobuf-compiler \
           libpulse-dev \
+          libunwind-dev \
           libgstreamer1.0-dev \
           libgstreamer-plugins-base1.0-dev \
           libgstreamer-plugins-bad1.0-dev \
