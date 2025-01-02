@@ -13,9 +13,30 @@ keywords.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mctk_core = { workspace = true }
-mctk_macros = { workspace = true }
-mctk_smithay = { workspace = true }
+mctk_core = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
+mctk_smithay = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
+mctk_macros = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
+mctk_camera = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
+
+anyhow = { version = "1.0.75", features = ["backtrace"]}
+gstreamer = "0.23.2"
+gstreamer-app = "0.23.2"
+gstreamer-video = "0.23.2"
+image = { version = "0.24.9", features = ["jpeg"] }
+jpeg-decoder = "0.3.0"
+lazy_static = "1.5.0"
+rand = "0.8.5"
+regex = "1.7"
+smithay-client-toolkit = "0.18.0"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"]}
+thiserror = "1.0"
+tokio = { version = "1.33", features = ["full"] }
+rgb = "0.8.50"
+serde = "1.0.217"
+serde_yaml = "0.9.34"
+dirs = "5.0.1"
+const_format = "0.2.34"
 
 [package.metadata.deb]
 name = "mechanix-camera"
