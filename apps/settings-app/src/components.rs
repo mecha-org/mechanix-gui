@@ -491,10 +491,10 @@ pub fn get_header_node(text: &str) -> Node {
 pub fn text_bold_node(text: &str) -> Node {
     let text_node = node!(
         widgets::Text::new(txt!(text))
-            .style("color", Color::WHITE)
+            .style("color", Color::rgba(197., 197., 197., 1.))
             .style("font", "Inter")
             .with_class("text-xl leading-6 font-bold"),
-        lay![margin: [0.0, 10.0, 0.0, 10.0]]
+        lay![margin: [0.0, 0.0, 0.0, 10.0]]
     );
     text_node
 }

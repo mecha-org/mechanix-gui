@@ -60,12 +60,10 @@ impl Component for BatteryScreen {
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
                 margin: [10., 0., 0., 0.],
-                padding: [0., 8., 0., 8.]
             ]
         );
 
         let battery_percentage_value = *BatteryModel::get().battery_percentage.get() as u8;
-        // let battery_percentage_value = 50;
         let mut charge_text = "";
 
         let battery_status = BatteryModel::get().battery_status_value.get();
@@ -104,28 +102,37 @@ impl Component for BatteryScreen {
                 .col_spacing(10.)
                 .col_width(14.)
                 .disabled(true),
-            lay![size: [Auto, 45], margin:[5., 5., 35., 5.]]
+            lay![size: [Auto, 45], margin:[5., 15., 35., 5.]]
         );
 
-        main_node = main_node.push(sub_header_node(
+        let sub_header = node!(
+            Div::new(),
+            lay![
+                margin: [0., 10., 0., 8.]
+            ]
+        ).push(sub_header_node(
             format!("{} ({}%)", charge_text, battery_percentage_value).as_str(),
         ));
-
+        
+        main_node = main_node.push(sub_header);
         main_node = main_node.push(battery_percentage_widget);
-        main_node = main_node.push(node!(
-            HDivider {
-                size: 1.,
-                color: Color::rgba(83., 83., 83., 1.)
-            },
-            lay![
-                padding: [10., 0., 0., 0.]
-            ]
-        ));
-        main_node = main_node.push(tab_item_node!(
-            [text_node("Power mode")],
-            [text_bold_node(&current_mode)],
-            on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
-        ));
+        main_node = main_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
+        main_node = main_node .push(
+            node!(
+                Div::new(),
+                lay![
+                    margin: [0., 10., 0., 8.]
+                ]
+            )
+            .push(tab_item_node!(
+                [text_node("Power mode")],
+                [text_bold_node(&current_mode)],
+                on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
+            ))
+        );
         main_node = main_node.push(node!(HDivider {
             size: 1.,
             color: Color::rgba(83., 83., 83., 1.)
