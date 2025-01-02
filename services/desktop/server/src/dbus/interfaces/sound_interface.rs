@@ -15,7 +15,7 @@ use zbus::{
 #[derive(Clone, Copy)]
 pub struct SoundBusInterface {}
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
 // `Type` treats `SourceInformationResponse` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct SourceInformationResponse {
@@ -24,7 +24,7 @@ pub struct SourceInformationResponse {
     pub prop_list: HashMap<String, String>,
 }
 
-#[derive(DeserializeDict, SerializeDict, Type, Debug)]
+#[derive(DeserializeDict, SerializeDict, Type, Debug, Clone)]
 // `Type` treats `SinkInformationResponse` is an alias for `a{sv}`.
 #[zvariant(signature = "a{sv}")]
 pub struct SinkInformationResponse {

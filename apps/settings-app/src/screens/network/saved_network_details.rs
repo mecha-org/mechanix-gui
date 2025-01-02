@@ -114,81 +114,107 @@ impl Component for SavedNetworkDetails {
         let mut content_node = node!(
             Div::new(),
             lay![
-                size_pct: [100, 90],
+                size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [10., 0., 0., 0.],
+                margin: [0., 0., 0., 0.],
             ]
         );
 
-        let details_row_1 = detail_row(
-            DetailRow {
-                key: "NAME".to_uppercase(),
-                value: truncate(network.name.clone(), 17),
-            },
-            DetailRow {
-                key: "STATUS".to_uppercase(),
-                value: network_status.to_string(),
-            },
-        );
+        let mut scrollable_section = node!(
+            Scrollable::new(size!(440, 340)),
+            lay![
+                size: [440, 340],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        )
+        .push(node!(
+            Div::new(),
+            lay![
+                size: [440, Auto],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        ));
 
-        let details_row_2 = detail_row(
-            DetailRow {
-                key: "Frequency".to_uppercase(),
-                value: if network.frequency.starts_with("2") {
-                    "2.4 GHz"
-                } else {
-                    "5 GHz"
-                }
-                .to_string(),
-            },
-            DetailRow {
-                key: "Signal".to_uppercase(),
-                value: signal_strength.to_string(),
-            },
-        );
+        let full_network_name = network.clone().name.clone();
+        let truncate_network_name = truncate(network.clone().name.clone(), 20);
 
-        let details_row_3 = detail_row(
-            DetailRow {
-                key: "MAC Address".to_uppercase(),
-                value: network.mac.to_string(),
-            },
-            DetailRow {
-                key: "Security".to_uppercase(),
-                value: security.to_string(),
-            },
-        );
-
-        content_node = content_node.push(details_row_1);
-        content_node = content_node.push(node!(
+        let rows_node = node!(
+            Div::new(),
+            lay![
+                size: [440, Auto],
+                direction: Direction::Column,
+                axis_alignment: Alignment::Stretch,
+                cross_alignment: Alignment::Stretch,
+            ],
+        )
+        .push(single_detail_row(DetailRow {
+            key: "Name".to_string(),
+            value: truncate_network_name.clone(),
+        }))
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }))
+        .push(single_detail_row(DetailRow {
+            key: "Status".to_string(),
+            value: network_status.to_string(),
+        }))
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }))
+        .push(single_detail_row(DetailRow {
+            key: "Frequency".to_string(),
+            value: if network.frequency.starts_with("2") {
+                "2.4 GHz"
+            } else {
+                "5 GHz"
+            }
+            .to_string(),
+        }))
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }))
+        .push(single_detail_row(DetailRow {
+            key: "Signal".to_string(),
+            value: signal_strength.to_string(),
+        }))
+        .push(node!(HDivider {
+            size: 0.8,
+            color: Color::rgba(83., 83., 83., 1.)
+        }))
+        .push(single_detail_row(DetailRow {
+            key: "MAC Address".to_string(),
+            value: network.mac.to_string(),
+        }))
+        .push(node!(
             HDivider {
-                size: 0.5,
+                size: 0.8,
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
-        ));
-        content_node = content_node.push(details_row_2);
-        content_node = content_node.push(node!(
+        ))
+        .push(single_detail_row(DetailRow {
+            key: "Security".to_string(),
+            value: security.to_string(),
+        }))
+        .push(node!(
             HDivider {
-                size: 0.5,
+                size: 0.8,
                 color: Color::rgba(83., 83., 83., 1.)
             },
             lay![
-                margin: [10., 0., 10., 0.]
+                margin: [8., 0., 8., 0.]
             ]
         ));
-        content_node = content_node.push(details_row_3);
-        content_node = content_node.push(node!(
-            HDivider {
-                size: 1.,
-                color: Color::rgba(83., 83., 83., 1.)
-            },
-            lay![
-                margin: [10., 0., 10., 0.]
-            ]
-        ));
+
+        scrollable_section = scrollable_section.push(rows_node);
 
         // note : in border with width, does not match with radius  - 1. is the border width
         let modal = node!(
@@ -290,7 +316,7 @@ impl Component for SavedNetworkDetails {
                         // .style("border_color", Color::rgba(127., 127., 135., 1.))
                         // .style("border_width", 1.)
                         .on_click(Box::new(move || {
-                            WirelessModel::forget_saved_network(network.name.clone());
+                            WirelessModel::forget_saved_network(network.clone().name.clone());
                             msg!(Message::ChangeRoute {
                                 route: Routes::Network {
                                     screen: NetworkScreenRoutes::Networking
@@ -311,8 +337,17 @@ impl Component for SavedNetworkDetails {
         }
 
         base = base.push(header_node!(
-            "Network Information",
+            truncate_network_name.clone(),
             Box::new(|| {
+                msg!(Message::ChangeRoute {
+                    route: Routes::Network {
+                        screen: NetworkScreenRoutes::Networking
+                    }
+                })
+            }),
+            "delete_icon",
+            Box::new(move || {
+                WirelessModel::forget_saved_network(full_network_name.to_string());
                 msg!(Message::ChangeRoute {
                     route: Routes::Network {
                         screen: NetworkScreenRoutes::Networking
@@ -321,6 +356,7 @@ impl Component for SavedNetworkDetails {
             })
         ));
 
+        content_node = content_node.push(scrollable_section);
         base = base.push(content_node);
         Some(base)
     }

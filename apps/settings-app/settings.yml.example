@@ -29,6 +29,11 @@ fonts:
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Regular.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-SemiBold.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-SemiBold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Bold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_24pt-Bold.ttf
 modules:
   wireless:
     icon:
@@ -53,7 +58,7 @@ modules:
   display:
     icon: /usr/share/mechanix/apps/settings/assets/icons/display_icon.png
   appearance:
-    icon: /usr/share/mechanix/apps/settings/assets/icons/appearance_icon.svg
+    icon: /usr/share/mechanix/apps/settings/assets/icons/appearance_icon.png
   battery:
     icon: /usr/share/mechanix/apps/settings/assets/icons/battery_icon.png
   sound:
@@ -77,7 +82,7 @@ modules:
     connected_icon: /usr/share/mechanix/apps/settings/assets/icons/connected_icon.png
   footer:
     back_icon: /usr/share/mechanix/apps/settings/assets/icons/back_icon.png
-    tick_icon: /usr/share/mechanix/apps/settings/assets/icons/tick_icon.svg
+    confirm_icon: /usr/share/mechanix/apps/settings/assets/icons/confirm_icon.png
     delete_icon: /usr/share/mechanix/apps/settings/assets/icons/delete_icon.png
     add_icon: /usr/share/mechanix/apps/settings/assets/icons/add_icon.png
   not_found:

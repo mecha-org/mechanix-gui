@@ -67,7 +67,7 @@ impl Component for BluetoothPairingEnterCode {
         );
         // base = base.push(footer_node!(
         //     Routes::BluetoothScreen,
-        //     "tick_icon",
+        //     "confirm_icon",
         //     Box::new(|| msg!(Message::ChangeRoute {
         //         route: Routes::BluetoothScreen,
         //     }))

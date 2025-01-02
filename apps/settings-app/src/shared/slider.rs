@@ -28,6 +28,7 @@ pub struct Slider {
     pub slider_type: SliderType,
     pub height: u8,
     pub active_color: Color,
+    pub inactive_color: Color,
     pub col_width: f32,
     pub col_spacing: f32,
     pub row_spacing: f32,
@@ -92,6 +93,10 @@ impl Slider {
     }
     pub fn active_color(mut self, color: Color) -> Self {
         self.active_color = color;
+        self
+    }
+    pub fn inactive_color(mut self, color: Color) -> Self {
+        self.inactive_color = color;
         self
     }
     pub fn on_slide(mut self, f: Box<dyn Fn(u8) -> Message + Send + Sync>) -> Self {
@@ -367,7 +372,8 @@ impl Component for Slider {
                     let color = if grid[0][i] == true {
                         self.active_color
                     } else {
-                        Color::rgb(49., 49., 49.)
+                        self.inactive_color
+                        // Color::rgb(49., 49., 49.)
                     };
 
                     let v_line: Node;

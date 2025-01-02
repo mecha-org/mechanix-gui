@@ -16,9 +16,9 @@ keywords.workspace = true
 anyhow = "1.0.71"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
-mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
-mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
-mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_core = { git = "https://github.com/mecha-org/mctk.git", branch = "dev" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git", branch = "dev" }
+mctk_smithay = { git = "https://github.com/mecha-org/mctk.git", branch = "dev"}
 xdg = "2.4.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -45,6 +45,7 @@ simple-base64 = "0.23.2"
 thiserror = "1.0.59"
 uname = "0.1.1"
 local-ip-address="0.6.3"
+get_if_addrs = "0.5.3"
 
 [build-dependencies]
 tonic-build = "0.9.2"

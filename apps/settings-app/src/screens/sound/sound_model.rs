@@ -1,32 +1,46 @@
+use std::collections::HashMap;
+
 use futures::StreamExt;
 use lazy_static::lazy_static;
 use mctk_core::context::Context;
 use mctk_macros::Model;
-use mechanix_desktop_dbus_client::sound::{NotificationStream, Sound};
+use mechanix_desktop_dbus_client::sound::{
+    SinkInformationResponse,
+    Sound,
+    SourceInformationResponse,
+    // Sound,
+};
 use pulsectl::controllers::DeviceControl;
 use pulsectl::controllers::SinkController;
 use pulsectl::controllers::SourceController;
 use tokio::runtime::Runtime;
 use tokio::select;
 
+use serde::{Deserialize, Serialize};
+use tracing::info;
+use zbus::{
+    proxy,
+    zvariant::{DeserializeDict, SerializeDict, Type},
+    Connection, Result,
+};
+
 lazy_static! {
     static ref RUNTIME: Runtime = Runtime::new().unwrap();
     static ref SOUND_MODEL: SoundModel = SoundModel {
         input_devices: Context::new(vec![]),
         input_volume: Context::new(50.0),
-        output_device: Context::new(vec![]),
+        output_devices: Context::new(vec![]),
         output_volume: Context::new(0.0),
-
         listen_to_stream: Context::new(false)
     };
 }
 
 #[derive(Model)]
 pub struct SoundModel {
-    pub input_devices: Context<Vec<String>>,
+    pub input_devices: Context<Vec<SinkInformationResponse>>,
     pub input_volume: Context<f64>,
 
-    pub output_device: Context<Vec<String>>,
+    pub output_devices: Context<Vec<SourceInformationResponse>>,
     pub output_volume: Context<f64>,
 
     pub listen_to_stream: Context<bool>,
@@ -92,6 +106,25 @@ impl SoundModel {
                 }
                 std::thread::sleep(std::time::Duration::from_secs(1));
             }
+        });
+    }
+
+    pub fn get_input_devices() {
+        RUNTIME.spawn(async move {
+            let input_devices = mechanix_desktop_dbus_client::sound::Sound::get_input_devices()
+                .await
+                .unwrap();
+            SoundModel::get().input_devices.set(input_devices);
+        });
+    }
+
+    pub fn get_output_devices() {
+        RUNTIME.spawn(async move {
+            let output_devices = mechanix_desktop_dbus_client::sound::Sound::get_output_devices()
+                .await
+                .unwrap();
+
+            SoundModel::get().output_devices.set(output_devices);
         });
     }
 }

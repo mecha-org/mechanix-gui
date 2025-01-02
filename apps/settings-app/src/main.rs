@@ -187,9 +187,10 @@ async fn main() -> anyhow::Result<()> {
         "display_icon".to_string(),
         AssetParams::new(modules.display.icon),
     );
-    if let icon = modules.appearance.icon {
-        svgs.insert("appearance_icon".to_string(), icon);
-    }
+    assets.insert(
+        "appearance_icon".to_string(),
+        AssetParams::new(modules.appearance.icon),
+    );
     assets.insert(
         "battery_icon".to_string(),
         AssetParams::new(modules.battery.icon),
@@ -246,9 +247,11 @@ async fn main() -> anyhow::Result<()> {
         "add_icon".to_string(),
         AssetParams::new(modules.footer.add_icon),
     );
-    if let icon = modules.footer.tick_icon {
-        svgs.insert("tick_icon".to_string(), icon);
-    }
+    assets.insert(
+        "confirm_icon".to_string(),
+        AssetParams::new(modules.footer.confirm_icon),
+    );
+
     assets.insert(
         "delete_icon".to_string(),
         AssetParams::new(modules.footer.delete_icon),
@@ -277,10 +280,6 @@ async fn main() -> anyhow::Result<()> {
         namespace,
     };
 
-    println!(
-        "checking svg -------------> {:?} ",
-        svgs.get("bluetooth_icon")
-    );
     //subscribe to events channel
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
     let settings = Arc::new(RwLock::new(settings));

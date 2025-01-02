@@ -120,15 +120,15 @@ impl Component for SettingsApp {
                 cross_alignment: Alignment::Stretch,
             ]
         );
-        app_node = app_node.push(node!(
-            HDivider {
-                size: 1.,
-                color: Color::rgba(83., 83., 83., 1.)
-            },
-            lay![
-                padding: [2.0, 20.0, 2.0, 20.0],
-            ],
-        ));
+        // app_node = app_node.push(node!(
+        //     HDivider {
+        //         size: 1.,
+        //         color: Color::rgba(83., 83., 83., 1.)
+        //     },
+        //     lay![
+        //         padding: [2.0, 20.0, 10.0, 20.0],
+        //     ],
+        // ));
         let mut base: Node = node!(
             Div::new().bg(Color::BLACK),
             lay![

@@ -2,6 +2,7 @@ use super::wireless_model::WirelessModel;
 use crate::{
     components::ComponentHasher,
     gui::{Message, NetworkScreenRoutes, Routes},
+    header_node,
     utils::truncate,
 };
 use std::hash::Hash;
@@ -18,14 +19,7 @@ use mctk_core::{
     Color, Node,
 };
 use mctk_core::{event, widgets::HDivider};
-use mctk_macros::component;
-
 use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
-
-enum NetworkingMessage {
-    handleClickOnMore,
-    handleClickOnBack,
-}
 
 pub struct ClicableIconComponent {
     pub on_click: Option<Box<dyn Fn() -> Box<Message> + Send + Sync>>,
@@ -129,132 +123,12 @@ impl Component for NetworkingScreen {
             .style("font", "Space Grotesk")
             .style("font_weight", FontWeight::Normal),);
 
-        let header_node = node!(
-            Div::new(),
-            lay![
-                size_pct: [100, 10],
-                direction: Direction::Row,
-                cross_alignment: Alignment::Center,
-                axis_alignment: Alignment::Stretch,
-                position: [0., 0., Auto, 0.],
-                margin: [0., 0., 10., 0.]
-            ]
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [80, Auto],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ],
-            )
-            .push(node!(
-                IconButton::new("back_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::SettingsList
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [42, 42],
-                    padding: [0, 0, 0, 2.],
-                    axis_alignment: Alignment::Start,
-                    cross_alignment: Alignment::Center,
-                ]
-            ))
-            .push(
-                node!(
-                    Div::new(),
-                    lay![
-                        size_pct: [100, Auto],
-                        direction: Direction::Column,
-                        axis_alignment: Alignment::Start,
-                    ]
-                )
-                .push(text_node),
-            ),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [20, Auto],
-                    axis_alignment: Alignment::End,
-                    padding: [0, 0, 0, 10.],
-                ]
-            )
-            .push(node!(
-                IconButton::new("add_icon")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::AddNetwork {
-                                ssid: "".to_string()
-                            }
-                        }
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(40.0),
-                            height: Dimension::Px(40.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [52, 52],
-                    axis_alignment: Alignment::End,
-                    cross_alignment: Alignment::Center,
-                ]
-            ))
-            .push(node!(
-                IconButton::new("wireless_settings")
-                    .on_click(Box::new(|| msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::NetworkSettings
-                        }
-                    })))
-                    .icon_type(IconType::Png)
-                    .style(
-                        "size",
-                        Size {
-                            width: Dimension::Px(34.0),
-                            height: Dimension::Px(34.0),
-                        }
-                    )
-                    .style("background_color", Color::TRANSPARENT)
-                    .style("border_color", Color::TRANSPARENT)
-                    .style("active_color", Color::rgba(85., 85., 85., 0.50))
-                    .style("radius", 10.),
-                lay![
-                    size: [52, 52],
-                    axis_alignment: Alignment::End,
-                    cross_alignment: Alignment::Center,
-                ]
-            )),
-        );
-
         let mut content_node = node!(
             Div::new(),
             lay![
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [10., 0., 0., 0.],
             ]
         );
 
@@ -262,11 +136,11 @@ impl Component for NetworkingScreen {
         let toggle_row = node!(
             Div::new(),
             lay![
-                size: [Auto, 50],
+                size: [Auto, 68],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment:Alignment::Center,
-                padding: [5., 0., 5., 0.],
+                padding: [5., 10., 5., 0.],
             ]
         )
         .push(
@@ -280,10 +154,9 @@ impl Component for NetworkingScreen {
             )
             .push(node!(
                 Text::new(txt!("Wireless"))
-                    .style("color", Color::WHITE)
-                    .style("size", 20.0)
-                    .style("font", "Space Grotesk")
-                    .style("font_weight", FontWeight::Normal),
+                    .style("color", Color::rgba(250., 251., 252., 1.))
+                    .style("font", "Inter")
+                    .with_class("text-xl leading-6 font-medium"),
                 lay![]
             )),
         )
@@ -294,18 +167,17 @@ impl Component for NetworkingScreen {
                     size_pct: [20, 40],
                     axis_alignment: Alignment::End,
                     cross_alignment: Alignment::Center,
+                    padding: [0., 0., 0., 10.]
                 ]
             )
             .push(node!(
                 Toggle::new(status)
-                    .toggle_type(widgets::ToggleType::Type1)
+                    .toggle_type(widgets::ToggleType::Type3)
                     .on_change(Box::new(|value| {
                         WirelessModel::toggle_wireless();
                         Box::new(())
                     })),
-                lay![
-                    padding: [0., 0., 0., 5.]
-                ]
+                lay![]
             )),
         );
 
@@ -323,20 +195,22 @@ impl Component for NetworkingScreen {
         let mut icon = "wireless_good".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
             connected_network_name = connected_network.name.clone();
-            icon = get_network_icon(connected_network.flags, connected_network.signal);
+            icon = get_network_icon(connected_network.flags, Some(connected_network.signal));
         }
         connected_network_name = truncate(connected_network_name, 30);
 
-        let connected_status = match *WirelessModel::get().state.get() {
-            super::wireless_model::WifiState::Connecting => "Connecting...",
-            super::wireless_model::WifiState::Connected => "Connected",
-            _ => "Disconnected",
-        };
+        // let connected_status = match *WirelessModel::get().state.get() {
+        //     super::wireless_model::WifiState::Connecting => "Connecting...",
+        //     super::wireless_model::WifiState::Connected => "Connected",
+        //     _ => "Disconnected",
+        // };
+
+        let connected_status = *WirelessModel::get().state.get();
 
         let connected_network_row = node!(
             Div::new(),
             lay![
-                size: [440, 60],
+                size: [440, 68],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
@@ -353,8 +227,8 @@ impl Component for NetworkingScreen {
             .push(node!(
                 widgets::Image::new(icon),
                 lay![
-                    size: [24, 24],
-                    margin:[0., 0., 0., 20.],
+                    size: [28, 28],
+                    margin:[0., 10., 0., 20.],
                 ]
             ))
             .push(
@@ -369,10 +243,8 @@ impl Component for NetworkingScreen {
                 .push(node!(
                     Text::new(txt!(connected_network_name.clone()))
                         .style("color", Color::WHITE)
-                        .style("size", 20.0)
-                        .style("line_height", 24.0)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                        .style("font", "Inter")
+                        .with_class("text-2xl leading-7 font-normal"),
                     lay![
                         direction: Direction::Row,
                         axis_alignment: Alignment::Start,
@@ -381,12 +253,10 @@ impl Component for NetworkingScreen {
                 ))
                 .push(node!(
                     // mini status
-                    Text::new(txt!(connected_status))
-                        .style("color", Color::WHITE)
-                        .style("size", 14.0)
-                        .style("line_height", 18.)
-                        .style("font", "Space Grotesk")
-                        .style("font_weight", FontWeight::Normal),
+                    Text::new(txt!(connected_status.to_string()))
+                        .style("color", Color::rgba(45., 138., 255., 1.))
+                        .style("font", "Inter")
+                        .with_class("text-sm leading-5 font-normal"),
                     lay![
                         direction: Direction::Row,
                         axis_alignment: Alignment::Start,
@@ -488,12 +358,12 @@ impl Component for NetworkingScreen {
         let saved_network_row_component = |network: WirelessInfoResponse| {
             let ssid = network.name.clone();
 
-            let icon = get_network_icon(network.flags.clone(), network.signal.clone());
+            let icon = get_network_icon(network.flags.clone(), Some(network.signal.clone()));
 
             node!(
                 Div::new(),
                 lay![
-                    size: [440, 60],
+                    size: [440, 68],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
@@ -513,15 +383,15 @@ impl Component for NetworkingScreen {
                 .push(node!(
                     widgets::Image::new(icon),
                     lay![
-                        size: [24, 24],
-                        margin:[0., 0., 0., 20.],
+                        size: [28, 28],
+                        margin:[0., 10., 0., 20.],
                     ]
                 ))
                 .push(
                     node!(
                         Div::new(),
                         lay![
-                            size_pct: [100, Auto],
+                            size_pct: [100, 100],
                             direction: Direction::Column,
                             axis_alignment: Alignment::Stretch,
                         ]
@@ -529,10 +399,8 @@ impl Component for NetworkingScreen {
                     .push(node!(
                         Text::new(txt!(truncate(network.name.clone(), 30)))
                             .style("color", Color::WHITE)
-                            .style("size", 20.0)
-                            .style("line_height", 24.0)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
+                            .style("font", "Inter")
+                            .with_class("text-2xl leading-7 font-normal"),
                         lay![
                             direction: Direction::Row,
                             axis_alignment: Alignment::Start,
@@ -543,10 +411,8 @@ impl Component for NetworkingScreen {
                         // mini status
                         Text::new(txt!("Saved"))
                             .style("color", Color::WHITE)
-                            .style("size", 14.0)
-                            .style("line_height", 18.)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
+                            .style("font", "Inter")
+                            .with_class("text-sm leading-5 font-normal"),
                         lay![
                             direction: Direction::Row,
                             axis_alignment: Alignment::Start,
@@ -597,15 +463,13 @@ impl Component for NetworkingScreen {
 
         let unsaved_available_network_row_component = |network: WirelessInfoResponse| {
             let ssid = network.name.clone();
-            let icon = if network.flags.contains("WPA") {
-                "secured_wireless_strong".to_string()
-            } else {
-                "wireless_strong".to_string()
-            };
+
+            let icon = get_network_icon(network.flags.clone(), Some(network.signal.clone()));
+
             node!(
                 Div::new(),
                 lay![
-                    size: [440, 60],
+                    size: [440, 68],
                     direction: Direction::Row,
                     axis_alignment: Alignment::Stretch,
                     cross_alignment: Alignment::Center,
@@ -613,24 +477,35 @@ impl Component for NetworkingScreen {
             )
             .push(
                 node!(ClicableIconComponent {
-                    on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-                        route: Routes::Network {
-                            screen: NetworkScreenRoutes::AddNetwork { ssid: ssid.clone() }
+                    on_click: Some(Box::new(move || {
+                        if network.flags.clone().to_lowercase().contains("open") {
+                            WirelessModel::connect_to_open_network(ssid.clone());
+                            msg!(Message::ChangeRoute {
+                                route: Routes::Network {
+                                    screen: NetworkScreenRoutes::Networking
+                                }
+                            })
+                        } else {
+                            msg!(Message::ChangeRoute {
+                                route: Routes::Network {
+                                    screen: NetworkScreenRoutes::AddNetwork { ssid: ssid.clone() }
+                                }
+                            })
                         }
-                    })))
+                    }))
                 },)
                 .push(node!(
                     widgets::Image::new(icon),
                     lay![
-                        size: [24, 24],
-                        margin:[0., 0., 0., 20.],
+                        size: [28, 28],
+                        margin:[0., 10., 0., 20.],
                     ]
                 ))
                 .push(
                     node!(
                         Div::new(),
                         lay![
-                            size_pct: [100, Auto],
+                            size_pct: [100, 100],
                             direction: Direction::Column,
                             axis_alignment: Alignment::Stretch,
                         ]
@@ -638,10 +513,8 @@ impl Component for NetworkingScreen {
                     .push(node!(
                         Text::new(txt!(truncate(network.name.clone(), 28)))
                             .style("color", Color::WHITE)
-                            .style("size", 20.0)
-                            .style("line_height", 24.0)
-                            .style("font", "Space Grotesk")
-                            .style("font_weight", FontWeight::Normal),
+                            .style("font", "Inter")
+                            .with_class("text-2xl leading-7 font-normal"),
                         lay![
                             direction: Direction::Row,
                             axis_alignment: Alignment::Start,
@@ -709,7 +582,7 @@ impl Component for NetworkingScreen {
             .push(node!(
                 widgets::Image::new("wireless_good"),
                 lay![
-                    size: [24, 24],
+                    size: [28, 28],
                     margin:[0., 0., 0., 20.],
                 ]
             ))
@@ -867,9 +740,9 @@ impl Component for NetworkingScreen {
         );
 
         let mut scrollable_section = node!(
-            Scrollable::new(size!(440, 310)),
+            Scrollable::new(size!(440, 300)),
             lay![
-                size: [440, 310],
+                size: [440, 300],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -972,25 +845,46 @@ impl Component for NetworkingScreen {
             }));
         }
 
-        base = base.push(header_node);
+        base = base.push(header_node!(
+            "Network",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::SettingsList
+            })),
+            "add_icon",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::Network {
+                    screen: NetworkScreenRoutes::AddNetwork {
+                        ssid: "".to_string()
+                    }
+                }
+            })),
+            "wireless_settings",
+            Box::new(|| msg!(Message::ChangeRoute {
+                route: Routes::Network {
+                    screen: NetworkScreenRoutes::NetworkSettings
+                }
+            }))
+        ));
         base = base.push(content_node);
 
         Some(base)
     }
 }
 
-pub fn get_network_icon(flags: String, signal: String) -> String {
+pub fn get_network_icon(flags: String, signal: Option<String>) -> String {
     let mut icon = if flags.contains("WPA") {
         "secured_wireless_strong".to_string()
     } else {
         "wireless_strong".to_string()
     };
 
-    if let Ok(signal_strength) = signal.parse::<u32>() {
-        if signal_strength < 30 {
-            icon = icon.replace("strong", "low");
-        } else if signal_strength < 70 {
-            icon = icon.replace("strong", "weak");
+    if let Some(signal_str) = signal {
+        if let Ok(signal_strength) = signal_str.parse::<u32>() {
+            if signal_strength < 30 {
+                icon = icon.replace("strong", "low");
+            } else if signal_strength < 70 {
+                icon = icon.replace("strong", "weak");
+            }
         }
     }
 

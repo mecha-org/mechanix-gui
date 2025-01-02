@@ -1,3 +1,4 @@
+use core::fmt;
 use std::collections::HashMap;
 
 use futures::StreamExt;
@@ -36,18 +37,31 @@ lazy_static! {
         is_enabled: Context::new(false),
         is_streaming: Context::new(false),
         state: Context::new(WifiState::Disconnected),
+        connected_status: Context::new("".to_string()),
         wireless_mac_address: Context::new("".to_string()),
         ethernet_mac_address: Context::new("".to_string()),
     };
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum WifiState {
     Connecting,
     Connected,
     Disconnected,
     Disconnecting,
     Unknown,
+}
+
+impl fmt::Display for WifiState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WifiState::Connecting => write!(f, "Connecting.."),
+            WifiState::Connected => write!(f, "Connected"),
+            WifiState::Disconnected => write!(f, "Disconnected"),
+            WifiState::Disconnecting => write!(f, "Disconnecting.."),
+            WifiState::Unknown => write!(f, ""),
+        }
+    }
 }
 
 #[derive(Model)]
@@ -58,6 +72,7 @@ pub struct WirelessModel {
     pub is_enabled: Context<bool>,
     pub is_streaming: Context<bool>,
     pub state: Context<WifiState>,
+    pub connected_status: Context<String>,
     pub wireless_mac_address: Context<String>,
     pub ethernet_mac_address: Context<String>,
 }
@@ -70,6 +85,11 @@ impl WirelessModel {
     pub fn toggle_wireless() {
         RUNTIME.spawn(async {
             let is_enabled = *WirelessModel::get().is_enabled.get();
+
+            if is_enabled == false {
+                WirelessModel::get().state.set(WifiState::Connecting);
+            }
+
             let connection = zbus::Connection::system().await.unwrap();
             let proxy = network_manager::NetworkManagerProxy::new(&connection)
                 .await
@@ -201,6 +221,50 @@ impl WirelessModel {
         });
     }
 
+    pub fn connect_to_open_network(ssid: String) {
+        RUNTIME.spawn(async move {
+            let connection = zbus::Connection::system().await.unwrap();
+            let proxy = network_manager::NetworkManagerProxy::new(&connection)
+                .await
+                .unwrap();
+
+            let device = ObjectPath::try_from(Self::get_wifi_device_path().await).unwrap();
+            let specific_object = ObjectPath::try_from("/").unwrap();
+            let mut connection = HashMap::new();
+
+            let mut connection_connection = HashMap::new();
+            let binding = Value::from(ssid.clone());
+            connection_connection.insert("id", &binding);
+            let binding = Value::from("802-11-wireless");
+            connection_connection.insert("type", &binding);
+            let binding = Value::from(Uuid::new_v4().to_string());
+            connection_connection.insert("uuid", &binding);
+            connection.insert("connection", connection_connection);
+
+            let mut connection_wireless = HashMap::new();
+            let binding = Value::from(ssid.clone().as_bytes().to_vec());
+            connection_wireless.insert("ssid", &binding);
+            let binding = Value::from("infrastructure");
+            connection_wireless.insert("mode", &binding);
+            connection.insert("802-11-wireless", connection_wireless);
+
+            let mut connection_ipv4 = HashMap::new();
+            let binding = Value::from("auto");
+            connection_ipv4.insert("method", &binding);
+            connection.insert("ipv4", connection_ipv4);
+
+            let mut connection_ipv6 = HashMap::new();
+            let binding = Value::from("ignore");
+            connection_ipv6.insert("method", &binding);
+            connection.insert("ipv6", connection_ipv6);
+
+            proxy
+                .add_and_activate_connection(connection, &device, &specific_object)
+                .await
+                .unwrap();
+        });
+    }
+
     pub fn forget_saved_network(ssid: String) {
         RUNTIME.spawn(async move {
             let connection = zbus::Connection::system().await.unwrap();
@@ -238,6 +302,7 @@ impl WirelessModel {
                     .unwrap();
             if device_proxy.disconnect().await.is_ok() {
                 println!("Disconnected from wifi");
+                WirelessModel::scan();
             }
         });
     }

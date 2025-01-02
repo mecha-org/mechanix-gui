@@ -10,11 +10,14 @@ use mctk_core::{
 };
 
 use super::component::SettingsRowComponent;
-use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::header_node;
 use crate::{
     components::*, screens::network::wireless_model::WirelessModel,
     shared::style_constants::DISABLED_TEXT, utils::truncate,
+};
+use crate::{
+    gui::{Message, NetworkScreenRoutes, Routes},
+    screens::battery::battery_model::BatteryModel,
 };
 
 #[derive(Debug)]
@@ -33,6 +36,10 @@ pub struct SettingsItem {
     on_click: Routes,
 }
 impl Component for SettingsScreen {
+    fn init(&mut self) {
+        BatteryModel::update();
+    }
+
     fn view(&self) -> Option<Node> {
         let mut base: Node = node!(
             Div::new().bg(Color::BLACK),
@@ -45,8 +52,8 @@ impl Component for SettingsScreen {
 
         let mut connected_network_name = "    ".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
-            connected_network_name = connected_network.name.clone();
-            connected_network_name = truncate(connected_network_name, 8);
+            connected_network_name = connected_network.clone().name.clone();
+            connected_network_name = truncate(connected_network_name, 12);
         }
 
         let network_row = node!(SettingsRowComponent {
@@ -54,7 +61,7 @@ impl Component for SettingsScreen {
             value: connected_network_name,
             icon_1: "wireless_good".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::Network {
@@ -114,7 +121,7 @@ impl Component for SettingsScreen {
             value: "".to_string(),
             icon_1: "display_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::DisplayScreen
@@ -133,12 +140,18 @@ impl Component for SettingsScreen {
             color: Color::rgba(83.0, 83.0, 83.0, 1.)
         }));
 
+        let battery_percentage = if *BatteryModel::get().battery_percentage.get() > 0 {
+            format!(" {}% ", *BatteryModel::get().battery_percentage.get() as u8)
+        } else {
+            "".to_string()
+        };
+
         let battery_row = node!(SettingsRowComponent {
             title: "Battery".to_string(),
-            value: "".to_string(),
+            value: battery_percentage,
             icon_1: "battery_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::BatteryScreen
@@ -161,7 +174,7 @@ impl Component for SettingsScreen {
             title: "Appearance".to_string(),
             value: "".to_string(),
             icon_1: "appearance_icon".to_string(),
-            icon_1_type: IconType::Svg,
+            icon_1_type: IconType::Png,
             icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
             on_click: None,
@@ -184,7 +197,7 @@ impl Component for SettingsScreen {
             value: "".to_string(),
             icon_1: "sound_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             // on_click: None,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
@@ -300,7 +313,7 @@ impl Component for SettingsScreen {
             value: "".to_string(),
             icon_1: "about_icon".to_string(),
             icon_1_type: IconType::Png,
-            icon_2: "white_right_arrow".to_string(),
+            icon_2: "".to_string(),
             color: Color::WHITE,
             on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
                 route: Routes::AboutScreen
@@ -336,15 +349,15 @@ impl Component for SettingsScreen {
         );
 
         list_items = list_items.push(network_div);
-        list_items = list_items.push(bluetooth_div);
+        // list_items = list_items.push(bluetooth_div);
         list_items = list_items.push(display_div);
-        list_items = list_items.push(appearance_div);
+        // list_items = list_items.push(appearance_div);
         list_items = list_items.push(battery_div);
         list_items = list_items.push(sound_div);
-        list_items = list_items.push(lock_div);
-        list_items = list_items.push(date_time_div);
-        list_items = list_items.push(language_div);
-        list_items = list_items.push(update_div);
+        // list_items = list_items.push(lock_div);
+        // list_items = list_items.push(date_time_div);
+        // list_items = list_items.push(language_div);
+        // list_items = list_items.push(update_div);
         list_items = list_items.push(about_div);
 
         scrollable = scrollable.push(list_items);
@@ -355,7 +368,6 @@ impl Component for SettingsScreen {
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 size: [440, Auto],
-                margin: [10., 0., 0., 0.],
                 position: [Auto, 0., 0., 0.],
             ]
         )

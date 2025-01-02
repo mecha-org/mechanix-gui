@@ -4,6 +4,7 @@ pub mod settings_manager;
 use std::process::id;
 
 use anyhow::{bail, Result};
+use get_if_addrs::{get_if_addrs, IfAddr};
 use identity_manager::{GetMachineIdResponse, GetProvisionStatusResponse, IdentityClient};
 use lazy_static::lazy_static;
 use local_ip_address::linux::local_ip;
@@ -19,10 +20,12 @@ lazy_static! {
     static ref DEVICE_MODEL: DeviceModel = DeviceModel {
         is_provisioned: Context::new(false),
         os_info: Context::new(None),
-        provision_name: Context::new("My Comet".to_string()),
+        provision_name: Context::new("My Mecha Comet".to_string()),
         provision_id: Context::new("".to_string()),
         provision_icon_url: Context::new("".to_string()),
         ip_address: Context::new("".to_string()),
+        wireless_ip_address: Context::new("-".to_string()),
+        ethernet_ip_address: Context::new("-".to_string()),
     };
 }
 
@@ -41,6 +44,8 @@ pub struct DeviceModel {
     pub provision_id: Context<String>,
     pub provision_icon_url: Context<String>,
     pub ip_address: Context<String>,
+    pub wireless_ip_address: Context<String>,
+    pub ethernet_ip_address: Context<String>,
 }
 
 impl DeviceModel {
@@ -50,46 +55,48 @@ impl DeviceModel {
 
     pub fn update() {
         RUNTIME.spawn(async {
-            let status = match Self::check_provision_device_data().await {
-                Ok(data) => data.status,
-                Err(e) => {
-                    println!("error while getting provision status: {}", e);
-                    false
-                }
-            };
+            // // NOTE: show general device info
 
-            DeviceModel::get().is_provisioned.set(status);
+            // let status = match Self::check_provision_device_data().await {
+            //     Ok(data) => data.status,
+            //     Err(e) => {
+            //         println!("error while getting provision status: {}", e);
+            //         false
+            //     }
+            // };
 
-            if *DeviceModel::get().is_provisioned.get() {
-                let machine_id = match Self::get_machine_id().await {
-                    Ok(data) => data.machine_id,
-                    Err(e) => {
-                        println!("error while getting machine id: {}", e);
-                        "-".to_string()
-                    }
-                };
-                DeviceModel::get().provision_id.set(machine_id);
+            // DeviceModel::get().is_provisioned.set(status);
 
-                let machine_name =
-                    match Self::get_machine_info("identity.machine.name".to_string()).await {
-                        Ok(data) => data.value,
-                        Err(e) => {
-                            println!("error while getting machine name: {}", e);
-                            "-".to_string()
-                        }
-                    };
-                DeviceModel::get().provision_name.set(machine_name);
+            // if *DeviceModel::get().is_provisioned.get() {
+            //     let machine_id = match Self::get_machine_id().await {
+            //         Ok(data) => data.machine_id,
+            //         Err(e) => {
+            //             println!("error while getting machine id: {}", e);
+            //             "-".to_string()
+            //         }
+            //     };
+            //     DeviceModel::get().provision_id.set(machine_id);
 
-                let machine_icon_url =
-                    match Self::get_machine_info("identity.machine.icon_url".to_string()).await {
-                        Ok(data) => data.value,
-                        Err(e) => {
-                            println!("error while getting machine name: {}", e);
-                            "-".to_string()
-                        }
-                    };
-                DeviceModel::get().provision_icon_url.set(machine_icon_url);
-            }
+            //     let machine_name =
+            //         match Self::get_machine_info("identity.machine.name".to_string()).await {
+            //             Ok(data) => data.value,
+            //             Err(e) => {
+            //                 println!("error while getting machine name: {}", e);
+            //                 "-".to_string()
+            //             }
+            //         };
+            //     DeviceModel::get().provision_name.set(machine_name);
+
+            //     let machine_icon_url =
+            //         match Self::get_machine_info("identity.machine.icon_url".to_string()).await {
+            //             Ok(data) => data.value,
+            //             Err(e) => {
+            //                 println!("error while getting machine name: {}", e);
+            //                 "-".to_string()
+            //             }
+            //         };
+            //     DeviceModel::get().provision_icon_url.set(machine_icon_url);
+            // }
 
             // os_info
             let info = uname().unwrap();
@@ -100,9 +107,30 @@ impl DeviceModel {
             };
             DeviceModel::get().os_info.set(Some(os_info));
 
-            // ip_address
-            let local_ip = local_ip().unwrap();
-            DeviceModel::get().ip_address.set(local_ip.to_string());
+            match get_if_addrs() {
+                Ok(interfaces) => {
+                    for interface in interfaces {
+                        println!("CHECKKKK interface {:?} ", interface);
+                        if interface.name.contains("wlan") || interface.name.contains("wlp") {
+                            if let IfAddr::V4(v4_addr) = interface.addr {
+                                DeviceModel::get().wireless_ip_address.set(v4_addr.ip.to_string());
+
+                            }
+                        } else if interface.name.contains("enp") || interface.name.contains("eth") {
+                            if let IfAddr::V4(v4_addr) = interface.addr {
+                                DeviceModel::get().ethernet_ip_address.set(v4_addr.ip.to_string());
+                            }
+                        }
+                    }
+                }
+                Err(e) => eprintln!("Error fetching interfaces: {}", e),
+            }
+
+            
+
+            // // ip_address
+            // let local_ip = local_ip().unwrap();
+            // DeviceModel::get().ip_address.set(local_ip.to_string());
         });
     }
 
