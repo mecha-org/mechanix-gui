@@ -39,7 +39,7 @@ pub fn folder_modal_view() -> node::Node {
             .style("font_size", 16.0)
             .style("line_height", 18.0)
             .on_click(Box::new(|| msg!(Message::Paste))),
-        lay![margin: [0., 5., 5., 5.], size_pct: [100, 25]]
+        lay![margin: [0., 5., 5., 5.],]
     ))
     .push(node!(
         Button::new(txt!("Delete"))
@@ -49,7 +49,7 @@ pub fn folder_modal_view() -> node::Node {
             .style("font_size", 16.0)
             .style("line_height", 18.0)
             .on_click(Box::new(|| msg!(Message::DeleteSelected))),
-        lay![margin: [5., 5., 5., 5.], size_pct: [100, 25]]
+        lay![margin: [5., 5., 5., 5.],]
     ))
     .push(node!(
         Button::new(txt!("Rename"))
@@ -59,7 +59,7 @@ pub fn folder_modal_view() -> node::Node {
             .style("font_size", 16.0)
             .style("line_height", 18.0)
             .on_click(Box::new(|| msg!(Message::RenameSelected))),
-        lay![margin: [5., 5., 5., 5.], size_pct: [100, 25]]
+        lay![margin: [5., 5., 5., 5.],]
     ))
     .push(node!(
         Button::new(txt!("Close"))
@@ -69,6 +69,6 @@ pub fn folder_modal_view() -> node::Node {
             .style("font_size", 16.0)
             .style("line_height", 18.0)
             .on_click(Box::new(|| msg!(Message::OpenFolderOptionsModal(false)))),
-        lay![margin: [5., 5., 5., 5.], size_pct: [100, 25]]
+        lay![margin: [5., 5., 5., 5.],]
     ))
 }

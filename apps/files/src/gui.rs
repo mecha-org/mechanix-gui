@@ -130,7 +130,7 @@ pub fn read_entries(path: PathBuf) -> Vec<PathBuf> {
 #[state_component_impl(FileManagerState)]
 impl Component for FileManager {
     fn init(&mut self) {
-        let current_path = PathBuf::from("/home");
+        let current_path = PathBuf::from("/home/mecha");
         let entries = read_entries(current_path.clone());
 
         self.state = Some(FileManagerState {
@@ -155,7 +155,7 @@ impl Component for FileManager {
             disable_click: false,
         });
 
-        self.state_ref();
+
     }
 
     fn update(&mut self, msg: component::Message) -> Vec<component::Message> {
@@ -179,7 +179,7 @@ impl Component for FileManager {
                             self.state_mut().message = "No parent directory.".to_string();
                         }
                     }
-                    self.state_ref();
+                    
                 }
 
                 Message::SelectEntry(path) => {
@@ -226,7 +226,7 @@ impl Component for FileManager {
                             }
                         }
                     }
-                    self.state_ref();
+                    
                 }
 
                 Message::DeleteSelected => {
@@ -243,7 +243,7 @@ impl Component for FileManager {
                     } else {
                         self.state_mut().message = "No file/folder selected.".to_string();
                     }
-                    self.state_ref();
+                    
                 }
 
                 Message::CreateFolder => {
@@ -251,7 +251,7 @@ impl Component for FileManager {
                     self.state_mut().is_create_rename_modal_open = true;
                     self.state_mut().is_file_action_modal_open = false;
                     self.state_mut().is_folder_options_modal_open = false;
-                    self.state_ref();
+                    
                 }
 
                 Message::RenameSelected => {
@@ -261,12 +261,12 @@ impl Component for FileManager {
                         self.state_mut().is_folder_options_modal_open = false;
                         self.state_mut().is_file_action_modal_open = false;
                     }
-                    self.state_ref();
+                    
                 }
 
                 Message::UpdateFolderName(name) => {
                     self.state_mut().folder_name = name.clone(); // Update folder name from TextBox
-                    self.state_ref();
+                    
                 }
 
                 Message::CopySelected => {
@@ -276,7 +276,7 @@ impl Component for FileManager {
                     } else {
                         self.state_mut().message = "No file/folder selected.".to_string();
                     }
-                    self.state_ref();
+                    
                 }
 
                 Message::Paste => {
@@ -308,7 +308,7 @@ impl Component for FileManager {
                     }
 
                     self.state_mut().entries = read_entries(self.state_ref().current_path.clone());
-                    self.state_ref();
+                    
                 }
 
                 Message::OpenModal(value) => {
@@ -318,27 +318,26 @@ impl Component for FileManager {
                     } else {
                         self.state_mut().disable_click = false; // Enable clicks when modal is closed
                     }
-                    self.state_ref();
+                    
                 }
 
                 Message::OpenFolderOptionsModal(value) => {
                     self.state_mut().is_folder_options_modal_open = *value;
                     self.state_mut().is_file_action_modal_open = false;
                     self.state_mut().is_create_rename_modal_open = false;
-                    self.state_ref();
                 }
 
                 Message::OpenActionModal(value) => {
                     self.state_mut().is_create_rename_modal_open = *value; // Open or close the action modal
                     self.state_mut().is_file_action_modal_open = false;
-                    self.state_ref();
+                    
                 }
 
                 Message::OpenDeleteModal(value) => {
                     println!("OpenDeleteModal: {}", value);
                     self.state_mut().is_delete_modal_open = *value; // Open or close the action modal
                     self.state_mut().is_file_action_modal_open = false;
-                    self.state_ref();
+                    
                 }
 
                 Message::ConfirmAction => {
@@ -392,7 +391,7 @@ impl Component for FileManager {
                         _ => {}
                     }
                     self.state_mut().is_create_rename_modal_open = false; // Close modal after action
-                    self.state_ref();
+                    
                 }
                 // Handle deletion confirmation
                 Message::ConfirmDelete => {
@@ -436,6 +435,10 @@ impl Component for FileManager {
 
     fn render_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
         self.state_ref().is_delete_modal_open.hash(hasher);
+        self.state_ref().is_folder_options_modal_open.hash(hasher);
+        self.state_ref().is_create_rename_modal_open.hash(hasher);
+        self.state_ref().is_delete_modal_open.hash(hasher);
+        self.state_ref().is_file_action_modal_open.hash(hasher);
     }
     fn view(&self) -> Option<mctk_core::Node> {
         let file_manager_state = self.state_ref();
@@ -445,6 +448,7 @@ impl Component for FileManager {
 
         let current_path = file_manager_state.current_path.clone();
         let entries = file_manager_state.entries.clone();
+        let is_modal_open = self.state_ref().is_create_rename_modal_open || self.state_ref().is_delete_modal_open || self.state_ref().is_file_action_modal_open || self.state_ref().is_folder_options_modal_open;
 
         let mut root = node!(
             Div::new().bg(Color::BLACK),
@@ -573,7 +577,8 @@ impl Component for FileManager {
             title: "..".to_string(),
             icon_1: "fold_icon".to_string(),
             icon_2: "".to_string(),
-            selected_entry: None
+            selected_entry: None,
+            is_modal_open: is_modal_open
         };
 
         if file_manager_state.is_folder_options_modal_open {
@@ -584,6 +589,8 @@ impl Component for FileManager {
                 file_manager_state,
             ));
         }
+
+      
 
         if file_manager_state.is_delete_modal_open {
             entries_div = entries_div.push(delete_modal::delete_modal_view(file_manager_state));
@@ -629,22 +636,17 @@ impl Component for FileManager {
                 icon_1: main_icon,
                 icon_2: righticon,
                 selected_entry: Some(entry_clone),
+                is_modal_open: is_modal_open
             };
 
             entries_div = entries_div.push(node!(btn_row).key(i as u64));
-            entries_div = entries_div.push(
-                node!(HDivider {
-                    size: 0.5,
-                    color: Color::MID_GREY
-                })
-                .key((i + 1) as u64),
-            );
+            
         }
 
         let mut scrollable_section = node!(
-            Scrollable::new(size!(440, 380)),
+            Scrollable::new(size!(440, 360)),
             lay![
-                size: [440, 380],
+                size: [440, 360],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]

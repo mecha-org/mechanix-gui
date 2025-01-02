@@ -18,7 +18,7 @@ pub fn confirmation_modal_view(file_manager_state: &FileManagerState) -> node::N
             size: [320, 160],
             direction: Direction::Column,
             position_type: Absolute,
-            position: [140., 60., 0., 0.],
+            position: [80., 60., 0., 0.],
             cross_alignment: Alignment::Stretch,
             axis_alignment: Alignment::Stretch,
             padding: [15., 15.,  15., 10.]

@@ -1,6 +1,6 @@
 use const_format::concatcp;
 
-pub const APP_ID: &str = "mechanix-files";
+pub const APP_ID: &str = "org.mechanix.files";
 
 // default locations for the configuration file (settings.yml) and icons when settings.yml not found in env/arg
 pub const HOME_DIR_CONFIG_PATH: &str = "/.config";

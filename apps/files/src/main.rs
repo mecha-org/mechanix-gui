@@ -5,6 +5,8 @@ use mctk_smithay::xdg_shell::xdg_window;
 use mctk_smithay::{WindowInfo, WindowOptions};
 use settings::MainSettings;
 use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 use std::time::Duration;
 use tracing_subscriber::EnvFilter;
 
@@ -32,7 +34,11 @@ async fn main() -> anyhow::Result<()> {
     };
     // Initialize the font database
     let mut fonts = cosmic_text::fontdb::Database::new();
-    fonts.load_system_fonts();
+    for path in settings.fonts.paths.clone() {
+        if let Ok(content) = fs::read(Path::new(&path)) {
+            fonts.load_font_data(content);
+        }
+    }
 
     // Initialize the asset manager
     let mut assets: HashMap<String, AssetParams> = HashMap::new();
@@ -114,8 +120,13 @@ async fn main() -> anyhow::Result<()> {
         );
 
     loop {
+        if app.is_exited {
+            break;
+        }
+
         event_loop
             .dispatch(Duration::from_millis(16), &mut app)
             .unwrap();
     }
+    Ok(())
 }
