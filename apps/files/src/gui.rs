@@ -130,7 +130,7 @@ pub fn read_entries(path: PathBuf) -> Vec<PathBuf> {
 #[state_component_impl(FileManagerState)]
 impl Component for FileManager {
     fn init(&mut self) {
-        let current_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
+        let current_path = PathBuf::from("/home");
         let entries = read_entries(current_path.clone());
 
         self.state = Some(FileManagerState {
@@ -472,7 +472,7 @@ impl Component for FileManager {
         let header_node = node!(
             Div::new().bg(Color::TRANSPARENT),
             lay![
-                size_pct: [100, 10],
+                size: [440, 60],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
@@ -571,16 +571,9 @@ impl Component for FileManager {
         let back_row = EntryRow {
             is_file: false,
             title: "..".to_string(),
-            value: "".to_string(),
             icon_1: "fold_icon".to_string(),
             icon_2: "".to_string(),
-            color: Color::WHITE,
-            selected_entry: None,
-            is_file_action_modal_open: file_manager_state.is_file_action_modal_open, // Pass the modal state
-            is_folder_options_modal_open: file_manager_state.is_folder_options_modal_open,
-            is_create_rename_modal_open: file_manager_state.is_create_rename_modal_open,
-            is_delete_modal_open: file_manager_state.is_delete_modal_open,
-            disable_click: false, // Initialize the flag to allow clicks
+            selected_entry: None
         };
 
         if file_manager_state.is_folder_options_modal_open {
@@ -633,16 +626,9 @@ impl Component for FileManager {
             let btn_row = EntryRow {
                 is_file: entry.is_file(),
                 title: name.to_string(),
-                value: "".to_string(),
                 icon_1: main_icon,
                 icon_2: righticon,
-                color: Color::WHITE,
                 selected_entry: Some(entry_clone),
-                is_file_action_modal_open: file_manager_state.is_file_action_modal_open, // Pass the modal state
-                is_folder_options_modal_open: file_manager_state.is_folder_options_modal_open,
-                is_create_rename_modal_open: file_manager_state.is_create_rename_modal_open,
-                is_delete_modal_open: file_manager_state.is_delete_modal_open,
-                disable_click: false, // Initialize the flag to allow clicks
             };
 
             entries_div = entries_div.push(node!(btn_row).key(i as u64));

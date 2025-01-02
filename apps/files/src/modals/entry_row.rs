@@ -46,16 +46,9 @@ impl Component for ClicableIconComponent {
 pub struct EntryRow {
     pub is_file: bool,
     pub title: String,
-    pub value: String,
     pub icon_1: String,
     pub icon_2: String,
-    pub color: Color,
     pub selected_entry: Option<Arc<PathBuf>>,
-    pub is_file_action_modal_open: bool,
-    pub is_create_rename_modal_open: bool,
-    pub is_delete_modal_open: bool,
-    pub is_folder_options_modal_open: bool,
-    pub disable_click: bool,
 }
 
 impl std::fmt::Debug for EntryRow {
@@ -107,7 +100,7 @@ impl Component for EntryRow {
             lay![
                 //padding: [10, 10, 10, 10],
                 //size_pct: [100, Auto],
-                size:[440,60],
+                size:[440,68],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Stretch,
                 cross_alignment: Alignment::Center,
