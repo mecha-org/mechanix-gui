@@ -43,28 +43,28 @@ async fn main() -> Result<()> {
 
     handles.push(_bluetooth_handle);
 
-    let wireless_bus = WirelessBusInterface {
-        path: config.interfaces.network.device.clone(),
-    };
-    let _wireless_bus_connection = connection::Builder::system()?
-        .name("org.mechanix.services.Wireless")?
-        .serve_at("/org/mechanix/services/Wireless", wireless_bus.clone())?
-        .build()
-        .await?;
+    // let wireless_bus = WirelessBusInterface {
+    //     path: config.interfaces.network.device.clone(),
+    // };
+    // let _wireless_bus_connection = connection::Builder::system()?
+    //     .name("org.mechanix.services.Wireless")?
+    //     .serve_at("/org/mechanix/services/Wireless", wireless_bus.clone())?
+    //     .build()
+    //     .await?;
 
-    let wireless_handle = tokio::spawn(async move {
-        if let Err(e) = wireless_event_notification_stream(
-            config.interfaces.network.device.clone(),
-            &wireless_bus,
-            &_wireless_bus_connection,
-        )
-        .await
-        {
-            println!("Error in wireless notification stream: {}", e);
-        }
-    });
+    // let wireless_handle = tokio::spawn(async move {
+    //     if let Err(e) = wireless_event_notification_stream(
+    //         config.interfaces.network.device.clone(),
+    //         &wireless_bus,
+    //         &_wireless_bus_connection,
+    //     )
+    //     .await
+    //     {
+    //         println!("Error in wireless notification stream: {}", e);
+    //     }
+    // });
 
-    handles.push(wireless_handle);
+    // handles.push(wireless_handle);
 
     let display_bus = DisplayBusInterface {
         path: config.interfaces.display.device.clone(),

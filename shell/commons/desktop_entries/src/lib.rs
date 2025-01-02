@@ -6,162 +6,158 @@ use core::cmp::{self, Ordering};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::rc::Rc;
+
 use std::str::FromStr;
 use std::{fs, io, iter, slice};
 use xdg::{BaseDirectories, BaseDirectoriesError};
 
 #[derive(Debug)]
-pub struct DesktopEntries {
-    pub entries: Vec<DesktopEntry>,
-}
+pub struct DesktopEntries;
 
 impl DesktopEntries {
-    /// Get icons for all installed applications.
-    pub fn new() -> Result<Self, Error> {
+    /// Parse a `.desktop` file and return a `DesktopEntry`, including icon handling.
+    fn parse_desktop_file(
+        path: &Path,
+        content: &str,
+        custom_loader: &IconLoader,
+        default_loader: &IconLoader,
+    ) -> Result<DesktopEntry, Error> {
+        let lines = content
+            .lines()
+            .take_while(|line| line.trim_end() == "[Desktop Entry]" || !line.starts_with('['));
+
+        let mut icon_name = None;
+        let mut exec = None;
+        let mut name = None;
+
+        for line in lines {
+            let (key, value) = match line.split_once('=') {
+                Some((key, value)) => (key.trim_end(), value.trim_start()),
+                None => continue,
+            };
+
+            match key {
+                "Name" => name = Some(value.to_owned()),
+                "Icon" => icon_name = Some(value.to_owned()),
+                "Exec" => {
+                    let filtered = value
+                        .split(' ')
+                        .filter(|arg| !matches!(*arg, "%f" | "%F" | "%u" | "%U" | "%k"));
+                    exec = Some(filtered.collect::<Vec<_>>().join(" "));
+                }
+                "NoDisplay" | "Hidden" | "Terminal" => {
+                    if value.trim() == "true" {
+                        return Err(Error::InvalidData);
+                    }
+                }
+                _ => (),
+            }
+        }
+
+        let exec = exec.ok_or_else(|| Error::InvalidData)?;
+
+        let name = name.ok_or_else(|| Error::InvalidData)?;
+
+        let mut icon_path = None;
+        if let Some(icon) = &icon_name {
+            let path = Path::new(icon);
+            if path.is_absolute() {
+                icon_path = Some(path.to_path_buf());
+            } else if let Ok(path) = custom_loader.icon_path(icon, 256) {
+                icon_path = Some(path.to_path_buf());
+            } else if let Ok(path) = default_loader.icon_path(icon, 256) {
+                icon_path = Some(path.to_path_buf());
+            }
+        }
+
+        Ok(DesktopEntry {
+            app_id: path
+                .file_stem()
+                .and_then(|os_str| os_str.to_str())
+                .unwrap_or_default()
+                .to_string(),
+            icon_name,
+            icon_path,
+            name,
+            exec,
+        })
+    }
+
+    /// Load a `.desktop` file from a specific path.
+    pub fn from_path(path: &Path) -> Result<DesktopEntry, Error> {
+        // Get all directories containing icons for icon loading.
+        let base_dirs = BaseDirectories::new()?;
+        let dirs = base_dirs.get_data_dirs();
+        let custom_loader = IconLoader::new(&dirs, "Papirus-PNG");
+        let default_loader = IconLoader::new(&dirs, "hicolor");
+
+        // Read the file content and parse it.
+        let content = fs::read_to_string(path).map_err(|err| Error::InvalidData)?;
+        Self::parse_desktop_file(path, &content, &custom_loader, &default_loader)
+    }
+
+    /// Get all `.desktop` files from a directory.
+    fn get_desktop_files_from_dirs(dirs: &[PathBuf]) -> Vec<PathBuf> {
+        dirs.iter()
+            .rev()
+            .flat_map(|d| fs::read_dir(d.join("applications")).ok())
+            .flat_map(|dir| {
+                dir.filter_map(|entry| entry.ok())
+                    .filter(|entry| {
+                        entry
+                            .file_type()
+                            .map_or(false, |ft| ft.is_file() || ft.is_symlink())
+                    })
+                    .filter(|entry| entry.file_name().to_string_lossy().ends_with(".desktop"))
+                    .map(|entry| entry.path())
+            })
+            .collect()
+    }
+
+    /// Get all installed applications.
+    pub fn all() -> Result<Vec<DesktopEntry>, Error> {
         // Get all directories containing desktop files.
         let base_dirs = BaseDirectories::new()?;
-        let user_dirs = base_dirs.get_data_home();
-        let dirs = base_dirs.get_data_dirs();
+        let user_dir = base_dirs.get_data_home();
+        let mut dirs = base_dirs.get_data_dirs();
+        dirs.push(user_dir);
 
-        // Initialize icon loader.
-        let loader = IconLoader::new(&dirs, "hicolor");
+        // Initialize icon loaders.
+        let custom_loader = IconLoader::new(&dirs, "Papirus-PNG");
+        let default_loader = IconLoader::new(&dirs, "hicolor");
 
-        let mut desktop_entries = DesktopEntries {
-            entries: Vec::new(),
-        };
+        // Find all `.desktop` files.
+        let desktop_files = Self::get_desktop_files_from_dirs(&dirs);
 
-        // Find all desktop files in these directories, then look for their icons and
-        // executables.
-        let mut entries = HashMap::new();
-        for dir_entry in dirs
-            .iter()
-            .rev()
-            .chain(iter::once(&user_dirs))
-            .flat_map(|d| fs::read_dir(d.join("applications")).ok())
-        {
-            for file in dir_entry
-                .filter_map(|entry| entry.ok())
-                .filter(|entry| {
-                    entry
-                        .file_type()
-                        .map_or(false, |ft| ft.is_file() || ft.is_symlink())
-                })
-                .filter(|entry| entry.file_name().to_string_lossy().ends_with(".desktop"))
-            {
-                let desktop_file = match fs::read_to_string(file.path()) {
-                    Ok(desktop_file) => desktop_file,
+        // Parse each `.desktop` file.
+        let mut desktop_entries = Vec::new();
+        let exclude_entries = HashSet::from(["Document Scanner".to_string(), "Mines".to_string()]);
+
+        for path in desktop_files {
+            if let Ok(content) = fs::read_to_string(&path) {
+                match Self::parse_desktop_file(&path, &content, &custom_loader, &default_loader) {
+                    Ok(entry) => {
+                        if !exclude_entries.contains(&entry.name) {
+                            desktop_entries.push(entry);
+                        }
+                    }
                     Err(_) => continue,
-                };
-
-                // Ignore all groups other than the `Desktop Entry` one.
-                //
-                // Since `Desktop Entry` must be the first group, we just stop at the next group
-                // header.
-                let lines = desktop_file.lines().take_while(|line| {
-                    line.trim_end() == "[Desktop Entry]" || !line.starts_with('[')
-                });
-
-                let mut icon_name = None;
-                let mut exec = None;
-                let mut name = None;
-
-                // Find name, icon, and executable for the desktop entry.
-                for line in lines {
-                    // Get K/V pairs, allowing for whitespace around the assignment operator.
-                    let (key, value) = match line.split_once('=') {
-                        Some((key, value)) => (key.trim_end(), value.trim_start()),
-                        None => continue,
-                    };
-
-                    match key {
-                        "Name" => name = Some(value.to_owned()),
-                        "Icon" => icon_name = Some(value.to_owned()),
-                        "Exec" => {
-                            // Remove %f/%F/%u/%U/%k variables.
-                            let filtered = value
-                                .split(' ')
-                                .filter(|arg| !matches!(*arg, "%f" | "%F" | "%u" | "%U" | "%k"));
-                            exec = Some(filtered.collect::<Vec<_>>().join(" "));
-                        }
-                        // Ignore explicitly hidden entries.
-                        "NoDisplay" if value.trim() == "true" => {
-                            exec = None;
-                            break;
-                        }
-                        _ => (),
-                    }
-                }
-
-                // Hide entries without `Exec=`.
-                let exec = match exec {
-                    Some(exec) => exec,
-                    None => {
-                        entries.remove(&file.file_name());
-                        continue;
-                    }
-                };
-
-                let mut exclude_entries = HashSet::new();
-                exclude_entries.insert("Document Scanner".to_string());
-                exclude_entries.insert("Mines".to_string());
-
-                if exclude_entries.contains(&name.clone().unwrap_or_default()) {
-                    entries.remove(&file.file_name());
-                    continue;
-                }
-
-                let mut icon_path = None;
-                if let Some(icon) = icon_name.clone() {
-                    let path = Path::new(&icon);
-                    if !path.is_absolute() {
-                        if let Ok(path) = loader.icon_path(&icon, 96) {
-                            icon_path = Some(path.to_path_buf())
-                        };
-                    } else {
-                        icon_path = Some(path.to_path_buf());
-                    }
-                }
-
-                if let Some(name) = name {
-                    entries.insert(
-                        file.file_name(),
-                        DesktopEntry {
-                            app_id: "".to_string(),
-                            icon_name,
-                            icon_path,
-                            name,
-                            exec,
-                        },
-                    );
                 }
             }
         }
-        desktop_entries.entries = entries.into_values().collect();
 
         // Sort entries for consistent display order.
-        desktop_entries
-            .entries
-            .sort_unstable_by(|first, second| first.name.cmp(&second.name));
-
-        // println!("desktop_entries {:?}", desktop_entries);
+        desktop_entries.sort_unstable_by(|first, second| first.name.cmp(&second.name));
 
         Ok(desktop_entries)
     }
 
-    /// Create an iterator over all applications.
-    pub fn iter(&self) -> slice::Iter<'_, DesktopEntry> {
-        self.entries.iter()
-    }
-
-    /// Get the desktop entry at the specified index.
-    pub fn get(&self, index: usize) -> Option<&DesktopEntry> {
-        self.entries.get(index)
-    }
-
-    /// Number of installed applications.
-    pub fn len(&self) -> usize {
-        self.entries.len()
+    pub fn get_dirs() -> Result<Vec<PathBuf>, Error> {
+        let base_dirs = BaseDirectories::new()?;
+        let user_dir = base_dirs.get_data_home();
+        let mut dirs = base_dirs.get_data_dirs();
+        dirs.push(user_dir);
+        Ok(dirs)
     }
 }
 
@@ -274,8 +270,38 @@ impl IconLoader {
                 };
 
                 // Get the directory storing the icons themselves.
-                let mut dir_path = dir_entry.path();
+                let mut dir_path = dir_entry.path().clone();
                 dir_path.push("apps");
+
+                for file in fs::read_dir(dir_path).into_iter().flatten().flatten() {
+                    // Get last path segment from file.
+                    let file_name = match file.file_name().into_string() {
+                        Ok(file_name) => file_name,
+                        Err(_) => continue,
+                    };
+
+                    // Strip extension.
+                    let name = match (file_name.rsplit_once('.'), image_type) {
+                        (Some((name, _)), ImageType::Symbolic) => {
+                            match name.strip_prefix("-symbolic") {
+                                Some(name) => name,
+                                None => continue,
+                            }
+                        }
+                        (Some((name, _)), _) => name,
+                        (None, _) => continue,
+                    };
+
+                    // Add icon to our icon loader.
+                    icons
+                        .entry(name.to_owned())
+                        .or_default()
+                        .insert(image_type, file.path());
+                }
+
+                // Get the directory storing the icons themselves.
+                let mut dir_path = dir_entry.path().clone();
+                dir_path.push("categories");
 
                 for file in fs::read_dir(dir_path).into_iter().flatten().flatten() {
                     // Get last path segment from file.
@@ -345,10 +371,12 @@ impl IconLoader {
         let mut ideal_icon = match icons.next() {
             // Short-circuit if the first icon is an exact match.
             Some((ImageType::SizedBitmap(icon_size), path)) if *icon_size == size => {
-                return Ok(path.as_path())
+                return Ok(path.as_path());
             }
             Some(first_icon) => first_icon,
-            None => return Err(Error::NotFound),
+            None => {
+                return Err(Error::NotFound);
+            }
         };
 
         // Find the ideal icon.
@@ -372,6 +400,7 @@ pub enum Error {
     BaseDirectories(BaseDirectoriesError),
     Io(io::Error),
     NotFound,
+    InvalidData,
 }
 
 impl From<BaseDirectoriesError> for Error {
