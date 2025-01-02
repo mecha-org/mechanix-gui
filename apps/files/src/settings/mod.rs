@@ -1,5 +1,5 @@
 use crate::constants::{self, BASE_SETTINGS_PATH, HOME_DIR_CONFIG_PATH};
-use crate::errors::{SettingsAppError, SettingsAppErrorCodes};
+use crate::errors::{FilesAppError, FilesAppErrorCodes};
 use anyhow::bail;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -205,8 +205,8 @@ pub fn read_settings_yml() -> Result<MainSettings> {
     let file_path = find_config_path();
 
     if file_path.is_none() {
-        bail!(SettingsAppError::new(
-            SettingsAppErrorCodes::SettingsReadError,
+        bail!(FilesAppError::new(
+            FilesAppErrorCodes::SettingsReadError,
             format!("settings.yml path not found",),
         ));
     }
@@ -220,8 +220,8 @@ pub fn read_settings_yml() -> Result<MainSettings> {
     let settings_file_handle = match File::open(file_path.unwrap()) {
         Ok(file) => file,
         Err(e) => {
-            bail!(SettingsAppError::new(
-                SettingsAppErrorCodes::SettingsReadError,
+            bail!(FilesAppError::new(
+                FilesAppErrorCodes::SettingsReadError,
                 format!(
                     "cannot read the settings.yml in the path - {}",
                     e.to_string()
@@ -234,8 +234,8 @@ pub fn read_settings_yml() -> Result<MainSettings> {
     let config: MainSettings = match serde_yaml::from_reader(settings_file_handle) {
         Ok(config) => config,
         Err(e) => {
-            bail!(SettingsAppError::new(
-                SettingsAppErrorCodes::SettingsParseError,
+            bail!(FilesAppError::new(
+                FilesAppErrorCodes::SettingsParseError,
                 format!("error parsing the settings.yml - {}", e.to_string()),
             ));
         }

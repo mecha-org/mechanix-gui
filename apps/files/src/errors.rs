@@ -6,19 +6,19 @@ use tracing::error;
 ///
 /// Implements standard errors for the app drawer
 #[derive(Debug, Default, Clone, Copy)]
-pub enum SettingsAppErrorCodes {
+pub enum FilesAppErrorCodes {
     #[default]
     UnknownError,
     SettingsReadError,
     SettingsParseError,
 }
 
-impl fmt::Display for SettingsAppErrorCodes {
+impl fmt::Display for FilesAppErrorCodes {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            SettingsAppErrorCodes::UnknownError => write!(f, "UnknownError"),
-            SettingsAppErrorCodes::SettingsReadError => write!(f, "SettingsReadError"),
-            SettingsAppErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
+            FilesAppErrorCodes::UnknownError => write!(f, "UnknownError"),
+            FilesAppErrorCodes::SettingsReadError => write!(f, "SettingsReadError"),
+            FilesAppErrorCodes::SettingsParseError => write!(f, "SettingsParseError"),
         }
     }
 }
@@ -26,15 +26,15 @@ impl fmt::Display for SettingsAppErrorCodes {
 /// # SettingsAppError
 ///
 /// Implements a standard error type for all app drawer related errors
-/// includes the error code (`SettingsAppErrorCodes`) and a message
+/// includes the error code (`FilesAppErrorCodes`) and a message
 #[derive(Debug, Default)]
-pub struct SettingsAppError {
-    pub code: SettingsAppErrorCodes,
+pub struct FilesAppError {
+    pub code: FilesAppErrorCodes,
     pub message: String,
 }
 
-impl SettingsAppError {
-    pub fn new(code: SettingsAppErrorCodes, message: String) -> Self {
+impl FilesAppError {
+    pub fn new(code: FilesAppErrorCodes, message: String) -> Self {
         error!("error: (code: {:?}, message: {})", code, message);
         Self {
             code,
@@ -43,7 +43,7 @@ impl SettingsAppError {
     }
 }
 
-impl std::fmt::Display for SettingsAppError {
+impl std::fmt::Display for FilesAppError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "(code: {:?}, message: {})", self.code, self.message)
     }
