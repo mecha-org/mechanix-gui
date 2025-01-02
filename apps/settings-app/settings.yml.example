@@ -1,6 +1,6 @@
 title: Settings App # Empty
 app:
-  id: mechanix-settings # settings
+  id: org.mechanix.settings # settings
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false

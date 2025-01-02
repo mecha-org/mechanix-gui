@@ -23,7 +23,7 @@ impl Default for MainSettings {
         Self {
             app: AppSettings::default(),
             window: WindowSettings::default(),
-            title: String::from("Launcher"),
+            title: String::from("Camera"),
             layout: LayoutSettings::default(),
             modules: Modules::default(),
             fonts: CustomFonts::default(),
@@ -46,7 +46,7 @@ pub struct AppSettings {
 impl Default for AppSettings {
     fn default() -> Self {
         Self {
-            id: Some(String::from("Launcher")),
+            id: Some(String::from("org.mechanix.camera")),
             text_multithreading: false,
             antialiasing: false,
             try_opengles_first: true,

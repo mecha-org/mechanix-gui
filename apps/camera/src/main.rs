@@ -10,13 +10,9 @@ use contexts::camera::Camera;
 use contexts::state::State;
 use mctk_core::context::Model;
 use mctk_core::prelude::*;
-use mctk_core::reexports::smithay_client_toolkit::{
-    reexports::calloop::{self, channel::Event},
-    shell::wlr_layer,
-};
+use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::{self, channel::Event};
 use mctk_core::renderables::Renderable;
-use mctk_smithay::layer_shell::layer_surface::LayerOptions;
-use mctk_smithay::layer_shell::layer_window::{LayerWindow, LayerWindowParams};
+use mctk_smithay::xdg_shell::xdg_window::{self, XdgWindow, XdgWindowParams};
 use mctk_smithay::{WindowInfo, WindowMessage, WindowOptions};
 use smithay_client_toolkit::reexports::calloop::channel::Sender;
 use std::any::Any;
@@ -147,9 +143,8 @@ async fn main() {
     Camera::get().width.set(config.width);
     Camera::init();
 
-    let id = 1;
     let ui_t = std::thread::spawn(move || {
-        let _ = launch_ui(id);
+        let _ = launch_ui();
     });
     ui_t.join().unwrap();
 }
@@ -161,7 +156,7 @@ impl RootComponent<AppParams> for App {
     }
 }
 
-fn launch_ui(id: i32) -> anyhow::Result<()> {
+fn launch_ui() -> anyhow::Result<()> {
     let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let svgs: HashMap<String, String> = HashMap::new();
 
@@ -187,33 +182,35 @@ fn launch_ui(id: i32) -> anyhow::Result<()> {
     fonts.load_system_fonts();
 
     let window_opts = WindowOptions {
-        height: 480_u32,
-        width: 480_u32,
+        height: settings.window.size.1 as u32,
+        width: settings.window.size.0 as u32,
         scale_factor: 1.0,
     };
 
-    println!("id: {id:?}");
-    let window_info = WindowInfo {
-        id: format!("{:?}{:?}", "mctk.examples.camera".to_string(), id),
-        title: format!("{:?}{:?}", "mctk.examples.camera".to_string(), id),
-        namespace: format!("{:?}{:?}", "mctk.examples.camera".to_string(), id),
+    let app_id = settings
+        .app
+        .id
+        .unwrap_or(String::from("org.mechanix.camera"));
+    let title = if !settings.title.is_empty() {
+        settings.title.clone()
+    } else {
+        "Camera".to_string()
     };
-    let layer_shell_opts = LayerOptions {
-        anchor: wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::TOP,
-        layer: wlr_layer::Layer::Top,
-        keyboard_interactivity: wlr_layer::KeyboardInteractivity::Exclusive,
-        namespace: Some(window_info.namespace.clone()),
-        zone: 0_i32,
+    let namespace = app_id.clone();
+
+    let window_info = WindowInfo {
+        id: app_id,
+        title,
+        namespace,
     };
 
     let (app_channel_tx, app_channel_rx) = calloop::channel::channel();
-    let (mut app, mut event_loop, window_tx) = LayerWindow::open_blocking::<App, AppParams>(
-        LayerWindowParams {
+    let (mut app, mut event_loop, window_tx) = XdgWindow::open_blocking::<App, AppParams>(
+        XdgWindowParams {
             window_info,
             window_opts,
             fonts,
             assets,
-            layer_shell_opts,
             svgs,
             ..Default::default()
         },
