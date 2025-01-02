@@ -271,7 +271,7 @@ async fn main() -> anyhow::Result<()> {
         .app
         .id
         .clone()
-        .unwrap_or(String::from("mechanix-settings"));
+        .unwrap_or(String::from("org.mechanix.settings"));
     let namespace = app_id.clone();
 
     let window_info = WindowInfo {

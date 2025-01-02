@@ -1,6 +1,6 @@
-title: Camera App # Empty
+title: Camera # Empty
 app:
-  id: mechanix-camera # camera
+  id: org.mechanix.camera # camera
   text_multithreading: true # false
   antialiasing: true # false
   try_opengles_first: true # false
