@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "settings-app",
+    "settings-app", "camera",  "files"
 ]
-default-members = ["settings-app"]
+default-members = ["settings-app", "camera",  "files"]
 
 [workspace.package]
 version = "0.1.6"
@@ -26,3 +26,8 @@ keywords = [
     "interface",
     "widgets",
 ]
+
+[workspace.dependencies]
+mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }

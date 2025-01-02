@@ -1,6 +1,6 @@
 [package]
 name = "mechanix-settings"
-description = "Mechanix launcher component for the Mechanix shell"
+description = "Settings app"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -72,6 +72,13 @@ assets = [
         "settings.yml.example",
         "/etc/mechanix/apps/settings/settings.yml",
         "644",
+    ],
+
+    # desktop file
+    [
+        "src/assets/linux/org.mechanix.settings.desktop", 
+        "/usr/share/applications/", 
+        "644"
     ],
 ]
 
