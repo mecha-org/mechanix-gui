@@ -3,6 +3,7 @@ use upower::BatteryStatus;
 use crate::gui::Message;
 use crate::gui::Routes;
 use crate::header_node;
+use crate::main;
 use crate::shared::slider::Slider;
 use crate::shared::slider::SliderType;
 use crate::{components::*, tab_item_node};
@@ -42,7 +43,7 @@ impl Component for BatteryScreen {
         self.state_mut().route = BatteryScreenRoute::BatteryScreen;
     }
     fn view(&self) -> Option<Node> {
-        let current_mode = BatteryModel::get().cureent_mode.get().clone();
+        let mut current_mode = BatteryModel::get().cureent_mode.get().clone();
 
         let mut base: Node = node!(
             widgets::Div::new().bg(Color::BLACK),
@@ -110,29 +111,22 @@ impl Component for BatteryScreen {
             lay![
                 margin: [0., 10., 0., 8.]
             ]
-        ).push(sub_header_node(
+        )
+        .push(sub_header_node(
             format!("{} ({}%)", charge_text, battery_percentage_value).as_str(),
         ));
-        
+
         main_node = main_node.push(sub_header);
         main_node = main_node.push(battery_percentage_widget);
         main_node = main_node.push(node!(HDivider {
             size: 1.,
             color: Color::rgba(83., 83., 83., 1.)
         }));
-        main_node = main_node .push(
-            node!(
-                Div::new(),
-                lay![
-                    margin: [0., 10., 0., 8.]
-                ]
-            )
-            .push(tab_item_node!(
-                [text_node("Power mode")],
-                [text_bold_node(&current_mode)],
-                on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
-            ))
-        );
+        main_node = main_node.push(tab_item_node!(
+            [text_node("Power mode")],
+            [text_bold_node(&current_mode)],
+            on_click: Some(Box::new(move || msg!(Message::ChangeBatteryScreenRoute { route: BatteryScreenRoute::PerformanceMode } ))),
+        ));
         main_node = main_node.push(node!(HDivider {
             size: 1.,
             color: Color::rgba(83., 83., 83., 1.)

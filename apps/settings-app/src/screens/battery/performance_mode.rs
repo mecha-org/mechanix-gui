@@ -1,4 +1,4 @@
-use crate::{components::*, radio_node, screens::battery::battery_model::BatteryModel};
+use crate::{components::*, main, radio_node, screens::battery::battery_model::BatteryModel};
 
 #[derive(Debug)]
 pub struct PerformanceMode {}
@@ -23,14 +23,20 @@ impl Component for PerformanceMode {
             ]
         );
 
-        let modes: Vec<String> = BatteryModel::get().available_modes.get().clone();
-        let current_mode = BatteryModel::get().cureent_mode.get().clone();
-
-        let mut available_modes_txt = vec![];
-
-        for (i, mode) in modes.into_iter().enumerate() {
-            available_modes_txt.push((txt!(mode.clone()), txt!(mode.clone())));
-        }
+        let mut scrollable_node = node!(
+            Scrollable::new(size!(440, 280)),
+            lay![
+                size: [440, 280],
+            ]
+        )
+        .push(node!(
+            Div::new(),
+            lay![
+                size: [440, Auto],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
+            ]
+        ));
 
         let sub_header = node!(
             Div::new(),
@@ -40,22 +46,29 @@ impl Component for PerformanceMode {
         )
         .push(sub_header_node("Performance Mode"));
 
-        main_node = main_node.push(sub_header);
+        let modes: Vec<String> = BatteryModel::get().available_modes.get().clone();
+        let current_mode = BatteryModel::get().cureent_mode.get().clone();
 
-        main_node = main_node.push(radio_node!(
+        let mut available_modes_txt = vec![];
+
+        for (i, mode) in modes.into_iter().enumerate() {
+            available_modes_txt.push((txt!(mode.clone()), txt!(mode.clone())));
+        }
+
+        scrollable_node = scrollable_node.push(radio_node!(
             available_modes_txt,
             txt!(current_mode),
             Box::new(|x| msg!(BatteryModel::set_mode(&x)))
         ));
-        main_node = main_node.push(node!(
+        scrollable_node = scrollable_node.push(node!(
             Div::new().bg(Color::TRANSPARENT),
             lay![size_pct: [100, 8]]
         ));
-        main_node = main_node.push(
+        scrollable_node = scrollable_node.push(
             node!(
                 Div::new().bg(Color::TRANSPARENT),
                 lay![
-                    size_pct: [100, 60],
+                    size_pct: [100, Auto],
                     direction: Direction::Column,
                     cross_alignment: Alignment::Stretch,
                     axis_alignment: Alignment::Start,
@@ -188,6 +201,9 @@ impl Component for PerformanceMode {
                 ),
             ),
         );
+
+        main_node = main_node.push(sub_header);
+        main_node = main_node.push(scrollable_node);
         base = base.push(main_node);
         Some(base)
     }

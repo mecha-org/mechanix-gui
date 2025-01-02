@@ -68,12 +68,10 @@ impl Component for DisplayScreen {
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
                 margin: [10., 0., 0., 0.],
-                padding: [0., 8., 0., 8.]
             ]
         );
 
         let brightness_value = *BrightnessModel::get().brightness_percentage.get() as u8;
-
         let slider = node!(
             Slider::new()
                 .value(brightness_value)
@@ -87,7 +85,7 @@ impl Component for DisplayScreen {
                 .col_spacing(7.75)
                 .row_spacing(7.75)
                 .col_width(4.),
-            lay![size: [Auto, 45], margin:[5., 5., 35., 5.]]
+            lay![size: [Auto, 45], margin:[5., 15., 35., 5.]]
         );
 
         let screen_off_time = tab_item_node!(
@@ -96,10 +94,16 @@ impl Component for DisplayScreen {
             on_click: Some(Box::new(move || msg!(Message::ChangeDisplayScreenRoute { route: DisplayScreenRoute::ScreenOffTime } ))),
         );
 
-        main_node = main_node.push(sub_header_node("Brightness"));
+        let sub_header = node!(
+            Div::new(),
+            lay![
+                margin: [0., 10., 0., 8.]
+            ]
+        )
+        .push(sub_header_node("Brightness"));
 
+        main_node = main_node.push(sub_header);
         main_node = main_node.push(slider);
-
         main_node = main_node.push(node!(HDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)

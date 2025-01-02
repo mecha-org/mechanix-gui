@@ -210,7 +210,7 @@ impl Component for NetworkSettings {
             scrollable_section = scrollable_section.push(row_node);
         }
 
-        // todo: update & implement modal
+        // Possible Feature : update & implement modal
         let modal = node!(
             Div::new()
                 .bg(Color::DARK_GREY)

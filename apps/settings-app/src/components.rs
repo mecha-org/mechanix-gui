@@ -506,7 +506,7 @@ pub fn text_node(text: &str) -> Node {
             .style("font", "Inter")
             .with_class("text-xl leading-6 font-medium"),
         lay![
-        margin: [5.0, 0.0, 5.0, 0.0]
+        margin: [5.0, 10.0, 5.0, 0.0]
         ]
     );
     text_node
