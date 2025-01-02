@@ -33,6 +33,7 @@ fonts:
     - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Medium.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/Inter-SemiBold.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Bold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_24pt-Bold.ttf
 modules:
   wireless:
     icon:
