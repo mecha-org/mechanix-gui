@@ -443,7 +443,7 @@ pub fn sub_header_node(text: &str) -> Node {
     let text_node = node!(
         Div::new(),
         lay![
-           size: [440, 45],
+           size: [440, 68],
            cross_alignment: Alignment::Center,
            axis_alignment: Alignment::Stretch,
         ]
@@ -452,7 +452,7 @@ pub fn sub_header_node(text: &str) -> Node {
         widgets::Text::new(txt!(text))
             .style("color", Color::rgba(250., 251., 252., 1.))
             .style("font", "Inter")
-            .with_class("text-xl leading-6 font-normal"),
+            .with_class("text-xl leading-6 font-medium"),
         lay![]
     ));
     text_node
@@ -502,7 +502,7 @@ pub fn text_bold_node(text: &str) -> Node {
 pub fn text_node(text: &str) -> Node {
     let text_node = node!(
         widgets::Text::new(txt!(text))
-            .style("color", Color::rgb(197.0, 197.0, 197.0))
+            .style("color", Color::rgb(250.0, 251.0, 252.0))
             .style("font", "Inter")
             .with_class("text-xl leading-6 font-medium"),
         lay![

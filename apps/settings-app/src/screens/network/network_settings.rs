@@ -76,20 +76,10 @@ impl Component for NetworkSettings {
         let saved_networks_text_row = node!(
             Div::new(),
             lay![
-                size: [Auto, 68],
-                direction: Direction::Row,
-                axis_alignment: Alignment::Stretch,
-                cross_alignment:Alignment::Center,
-                padding: [5., 10., 5., 0.],
+                margin: [0., 10., 0., 8.]
             ]
         )
-        .push(node!(
-            Text::new(txt!("Saved Networks"))
-                .style("color", Color::rgba(250., 251., 252., 1.))
-                .style("font", "Inter")
-                .with_class("text-xl leading-6 font-normal"),
-            lay![]
-        ));
+        .push(sub_header_node("Saved Networks"));
 
         let mut scrollable_section = node!(
             Scrollable::new(size!(440, 300)),

@@ -1,8 +1,7 @@
-use std::collections::HashMap;
 use std::hash::Hash;
 
 use super::wireless_model::WirelessModel;
-use crate::components::{ single_detail_row, DetailRow};
+use crate::components::{single_detail_row, DetailRow};
 use crate::gui::{Message, NetworkScreenRoutes, Routes};
 use crate::header_node;
 use crate::utils::truncate;
@@ -357,7 +356,7 @@ impl Component for NetworkDetails {
 
         let network_name = truncate(connected_network.name.clone(), 20);
 
-        // // CONFIRM : THIS disconnect or forget
+        // // NOTE : THIS shall forget connected network & only disconnect when toggle is disabled
         base = base.push(header_node!(
             network_name,
             Box::new(|| msg!(Message::ChangeRoute {

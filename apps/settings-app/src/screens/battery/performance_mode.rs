@@ -35,27 +35,13 @@ impl Component for PerformanceMode {
         let sub_header = node!(
             Div::new(),
             lay![
-                margin: [0., 8., 0., 8.]
+                margin: [0., 10., 0., 8.]
             ]
         )
         .push(sub_header_node("Performance Mode"));
 
         main_node = main_node.push(sub_header);
 
-        // main_node = main_node.push(
-        //     node!(
-        //         Div::new().bg(Color::DARK_GREY),
-        //         lay![
-        //             size: [440, Auto],
-        //             // padding: [0., 8., 0., 8.],
-        //         ]
-        //     )
-        //     .push(radio_node!(
-        //         available_modes_txt,
-        //         txt!(current_mode),
-        //         Box::new(|x| msg!(BatteryModel::set_mode(&x)))
-        //     )),
-        // );
         main_node = main_node.push(radio_node!(
             available_modes_txt,
             txt!(current_mode),
@@ -76,6 +62,39 @@ impl Component for PerformanceMode {
                     margin: [0., 8., 0., 8.]
                 ]
             )
+            // .push(
+            //     node!(
+            //         Div::new(),
+            //         lay![
+            //             size_pct: [100, 20],
+            //             direction: Direction::Row,
+            //             axis_alignment: Alignment::Start,
+            //         ]
+            //     )
+            //     .push(
+            //         node!(
+            //             Div::new().bg(Color::TRANSPARENT),
+            //             lay![
+            //                 size_pct: [5, 100],
+            //                 axis_alignment: Alignment::Start,
+            //             ]
+            //         )
+            //         .push(get_text_node("**", Color::RED)),
+            //     )
+            //     .push(
+            //         node!(
+            //             Div::new(),
+            //             lay![
+            //                 size_pct: [95, 100],
+            //                 axis_alignment: Alignment::Start,
+            //             ]
+            //         )
+            //         .push(get_text_node(
+            //             "Higher performance will use battery",
+            //             Color::rgb(197.0, 197.0, 197.0),
+            //         )),
+            //     ),
+            // )
             .push(
                 node!(
                     Div::new(),
@@ -87,19 +106,9 @@ impl Component for PerformanceMode {
                 )
                 .push(
                     node!(
-                        Div::new().bg(Color::TRANSPARENT),
-                        lay![
-                            size_pct: [5, 100],
-                            axis_alignment: Alignment::Start,
-                        ]
-                    )
-                    .push(get_text_node("**", Color::RED)),
-                )
-                .push(
-                    node!(
                         Div::new(),
                         lay![
-                            size_pct: [95, 100],
+                            size_pct: [100, 100],
                             axis_alignment: Alignment::Start,
                         ]
                     )
@@ -127,7 +136,7 @@ impl Component for PerformanceMode {
                         ]
                     )
                     .push(get_text_node(
-                        "faster and increase the temperature of ",
+                        "faster & increase the temperature of ",
                         Color::rgb(197.0, 197.0, 197.0),
                     )),
                 ),
@@ -189,7 +198,7 @@ pub fn get_text_node(text: &str, color: Color) -> Node {
         widgets::Text::new(txt!(text))
             .style("color", color)
             .style("font", "Inter")
-            .with_class("text-xl leading-6 font-medium"),
+            .with_class("text-xl leading-6 font-normal"),
         lay![
         margin: [5.0, 0.0, 5.0, 0.0]
         ]

@@ -44,7 +44,7 @@ impl Component for ScreenOffTime {
         let sub_header = node!(
             Div::new(),
             lay![
-                margin: [0., 8., 0., 8.]
+                margin: [0., 10., 0., 8.]
             ]
         )
         .push(sub_header_node("Screen off time"));

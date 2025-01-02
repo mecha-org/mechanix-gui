@@ -156,7 +156,7 @@ impl Component for NetworkingScreen {
                 Text::new(txt!("Wireless"))
                     .style("color", Color::rgba(250., 251., 252., 1.))
                     .style("font", "Inter")
-                    .with_class("text-xl leading-6 font-normal"),
+                    .with_class("text-xl leading-6 font-medium"),
                 lay![]
             )),
         )
