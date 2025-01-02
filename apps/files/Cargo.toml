@@ -17,6 +17,16 @@ mctk_core = { workspace = true }
 mctk_macros = { workspace = true }
 mctk_smithay = { workspace = true }
 
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+fs_extra = "1.2"
+dirs = "5.0.1"
+const_format = "0.2.32"
+
 [package.metadata.deb]
 name = "mechanix-files"
 depends = "$auto"
