@@ -188,8 +188,8 @@ impl Camera {
     }
 
     pub fn pick_optimal_display_resolution() {
-        let ideal_height = 640;
-        let ideal_width = 480;
+        let ideal_height = 720;
+        let ideal_width = 1280;
 
         let mut height = *CAMERA.height.get();
         let mut width = *CAMERA.width.get();
@@ -210,6 +210,7 @@ impl Camera {
         CAMERA.height.set(height);
         CAMERA.width.set(width);
         CAMERA.fps.set(fps);
+        println!("picked resolution: {}x{} @ {}fps", width, height, fps);
 
         // Pick Highest resolution for capture
         let mut height = 0;

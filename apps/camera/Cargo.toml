@@ -10,6 +10,10 @@ mctk_core = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera
 mctk_smithay = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
 mctk_macros = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
 mctk_camera = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
+# mctk_core = { path="../../../mctk/core/"}
+# mctk_smithay = { path="../../../mctk/backends/smithay/"}
+# mctk_macros = { path="../../../mctk/macros//"}
+# mctk_camera = { path="../../../mctk/camera/"}
 
 anyhow = { version = "1.0.75", features = ["backtrace"]}
 gstreamer = "0.23.2"
@@ -26,3 +30,7 @@ tracing-subscriber = { version = "0.3.17", features = ["env-filter"]}
 thiserror = "1.0"
 tokio = { version = "1.33", features = ["full"] }
 rgb = "0.8.50"
+serde = "1.0.217"
+serde_yaml = "0.9.34"
+dirs = "5.0.1"
+const_format = "0.2.34"

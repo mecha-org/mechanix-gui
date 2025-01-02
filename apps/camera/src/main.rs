@@ -1,4 +1,6 @@
 mod components;
+mod config;
+mod constants;
 mod contexts;
 
 use components::footer::Footer;
@@ -160,8 +162,26 @@ impl RootComponent<AppParams> for App {
 }
 
 fn launch_ui(id: i32) -> anyhow::Result<()> {
-    let assets: HashMap<String, AssetParams> = HashMap::new();
+    let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let svgs: HashMap<String, String> = HashMap::new();
+
+    let settings = match crate::config::read_settings_yml() {
+        Ok(settings) => settings,
+        Err(e) => {
+            println!("error while reading settings {:?}", e);
+            crate::config::MainSettings::default()
+        }
+    };
+    println!("settings {:?}", settings.modules);
+    assets.insert(
+        "back_icon".to_string(),
+        AssetParams::new(settings.modules.back_icon),
+    );
+
+    assets.insert(
+        "settings_icon".to_string(),
+        AssetParams::new(settings.modules.settings_icon),
+    );
 
     let mut fonts = cosmic_text::fontdb::Database::new();
     fonts.load_system_fonts();

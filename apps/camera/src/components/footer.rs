@@ -57,10 +57,21 @@ impl Component for Footer {
         ));
 
         let settings_icon = node!(
-            Button::new(txt!("settings")).on_click(Box::new(|| {
-                state::State::set_settings_state(true);
-                msg!(())
-            })),
+            IconButton::new("settings_icon")
+                .icon_type(IconType::Png)
+                .style(
+                    "size",
+                    Size {
+                        width: Dimension::Px(40.0),
+                        height: Dimension::Px(40.0),
+                    }
+                )
+                .style("text_color", Color::WHITE)
+                .style("background_color", Color::BLACK)
+                .on_click(Box::new(|| {
+                    state::State::set_settings_state(true);
+                    msg!(())
+                })),
             lay![
                 size: size!(50.0, 50.0),
                 direction: Direction::Row,

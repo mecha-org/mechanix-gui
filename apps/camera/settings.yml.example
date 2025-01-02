@@ -1,0 +1,34 @@
+title: Camera App # Empty
+app:
+  id: mechanix-camera # camera
+  text_multithreading: true # false
+  antialiasing: true # false
+  try_opengles_first: true # false
+window:
+  size: [480, 440] # [1024, 768]
+  position: [0, 0] # [0, 0]
+  min_size: [480, 40] # None
+  max_size: null # None
+  visible: true # true
+  resizable: true # true
+  decorations: true # true
+  transparent: true # false
+  always_on_top: false # false
+  icon_path: null # Todo
+layout:
+  left: []
+  center: []
+  right: []
+fonts:
+  paths:
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceMono-Bold.ttf
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceMono-BoldItalic.ttf
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceMono-Italic.ttf
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceMono-Regular.ttf
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceGrotesk-Bold.ttf
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceGrotesk-Regular.ttf
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceGrotesk-SemiBold.ttf
+    - /usr/share/mechanix/apps/camera/assets/fonts/SpaceGrotesk-Medium.ttf
+modules:
+  back_icon: /usr/share/mechanix/apps/camera/assets/icons/back_icon.png
+  settings_icon: /usr/share/mechanix/apps/camera/assets/icons/settings_icon.png
