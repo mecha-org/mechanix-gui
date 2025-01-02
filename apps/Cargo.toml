@@ -9,7 +9,8 @@ default-members = ["settings-app", "camera",  "files"]
 version = "0.1.6"
 authors = [
    "Sweta <swetar@mechasystems.com>", 
-   "Naman <namana-mecha@mechasystems.com>"
+   "Naman <namana-mecha@mechasystems.com>",
+   "Minesh <mineshp-mecha@mechasystems.com>",
 ]
 edition = "2021"
 license = "MIT"
@@ -31,3 +32,9 @@ keywords = [
 mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
 mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
 mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"]}
+anyhow = { version = "1.0.75", features = ["backtrace"]}
+tokio = { version = "1.33", features = ["full"] }
