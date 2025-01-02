@@ -26,10 +26,8 @@ impl Component for CPU {
                 ]
             )
             .push(node!(Text::new(txt!("CPU"))
-                .style("color", Color::WHITE)
-                .style("size", 15.0)
-                .style("font", "SpaceMono-Bold")
-                .style("font_weight", FontWeight::Bold),))
+                .with_class("text-white font-space-mono font-bold")
+                .style("size", 15.0),))
             .push(node!(
                 CPUCurve {
                     usages: self.usages.clone()

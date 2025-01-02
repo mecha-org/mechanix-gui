@@ -16,9 +16,8 @@ impl Component for IpAddress {
 
     fn view(&self) -> Option<Node> {
         Some(node!(Text::new(txt!(self.ip_address.clone()))
+            .with_class("font-space-mono font-normal")
             .style("color", Color::rgb(201., 201., 201.))
-            .style("size", 15.0)
-            .style("font", "SpaceMono-Bold")
-            .style("font_weight", FontWeight::Normal)))
+            .style("size", 15.0)))
     }
 }

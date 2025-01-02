@@ -23,19 +23,14 @@ impl Component for Clock {
 
         let time_node = node!(
             Text::new(txt!(time))
+                .with_class("font-space-mono font-bold")
                 .style("color", Color::rgb(230., 230., 230.))
-                .style("size", 72.0)
-                .style("font", "SpaceMono-Bold")
-                .style("font_weight", FontWeight::Bold),
+                .style("size", 72.0),
             lay![]
         );
 
         let date_node = node!(
-            Text::new(txt!(date))
-                .style("color", Color::WHITE)
-                .style("size", 16.0)
-                .style("font", "SpaceMono-Bold")
-                .style("font_weight", FontWeight::Bold),
+            Text::new(txt!(date)).with_class("text-white text-sm font-space-mono font-bold"),
             lay![
                 size_pct: [100],
             ]

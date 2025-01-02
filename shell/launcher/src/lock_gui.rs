@@ -29,7 +29,7 @@ pub struct LockscreenState {
     time: String,
     date: String,
     app_channel: Option<Sender<AppMessage>>,
-    session_lock_sender: Option<Sender<SessionLockMessage>>,
+    // session_lock_sender: Option<Sender<SessionLockMessage>>,
 }
 
 #[component(State = "LockscreenState")]
@@ -57,7 +57,7 @@ impl Component for Lockscreen {
             time: String::from(""),
             date: String::from(""),
             app_channel: None,
-            session_lock_sender: None,
+            // session_lock_sender: None,
         });
     }
 
@@ -176,9 +176,9 @@ impl RootComponent<AppParams> for Lockscreen {
         let app_channel = app_params.app_channel.clone();
         self.state_mut().app_channel = app_channel;
 
-        let session_lock_window = window.downcast_ref::<SessionLockWindow>();
-        if session_lock_window.is_some() {
-            self.state_mut().session_lock_sender = Some(session_lock_window.unwrap().sender());
-        }
+        // let session_lock_window = window.downcast_ref::<SessionLockWindow>();
+        // if session_lock_window.is_some() {
+        //     self.state_mut().session_lock_sender = Some(session_lock_window.unwrap().sender());
+        // }
     }
 }

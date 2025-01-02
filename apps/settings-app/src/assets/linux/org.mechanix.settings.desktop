@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+TryExec=mechanix-settings -s /etc/mechanix/apps/settings/settings.yml
+Exec=mechanix-settings -s /etc/mechanix/apps/settings/settings.yml
+Icon=/usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mechanix_settings_icon.png
+Terminal=false
+Categories=System;
+
+Name=Settings
+GenericName=Settings
+Comment=Settings app

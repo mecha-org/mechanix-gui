@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
+use crate::action::Modifier;
 use crate::gui::{self, Message};
 use crate::layout::{KeyButton, Point};
 use crate::settings::ClickAreaConfigs;
@@ -18,6 +19,7 @@ use mctk_core::{
     lay, msg, node, size_pct, state_component_impl, widgets::Div, Color, Pos, Scale, AABB,
 };
 use mctk_macros::component;
+use wayland_protocols_async::zwp_input_method_v2::handler::ContentPurpose;
 
 #[derive(Debug, Default)]
 pub struct TouchPanelState {
@@ -49,6 +51,8 @@ pub struct TouchPanel {
     pub next_char_prob: HashMap<String, f64>,
     pub current_view: String,
     pub click_area_configs: ClickAreaConfigs,
+    pub purpose: ContentPurpose,
+    pub active_mods: HashSet<Modifier>,
 }
 
 impl TouchPanel {
@@ -57,6 +61,8 @@ impl TouchPanel {
         next_char_prob: HashMap<String, f64>,
         current_view: String,
         click_area_configs: ClickAreaConfigs,
+        purpose: ContentPurpose,
+        active_mods: HashSet<Modifier>,
     ) -> Self {
         // println!("TouchPanel::new()");
 
@@ -70,8 +76,10 @@ impl TouchPanel {
             }),
             click_area_configs,
             current_view,
+            purpose,
             dirty: false,
             next_char_prob: next_char_prob.clone(),
+            active_mods,
         }
     }
 
@@ -105,12 +113,12 @@ impl TouchPanel {
                                 && position.y <= bl.y
                                 && position.y <= br.y
                             {
-                                println!(
-                                    "Clicked button at index: {:?} {:?} {:?}",
-                                    (i, j),
-                                    button,
-                                    tr
-                                );
+                                // println!(
+                                //     "Clicked button at index: {:?} {:?} {:?}",
+                                //     (i, j),
+                                //     button,
+                                //     tr
+                                // );
 
                                 possible_buttons.push(button.clone());
 
@@ -119,7 +127,7 @@ impl TouchPanel {
                         }
                     }
 
-                    println!("possible buttons {:?}", possible_buttons,);
+                    // println!("possible buttons {:?}", possible_buttons,);
 
                     if possible_buttons.len() > 0 {
                         let next_char_prob = self.state_ref().next_char_prob.clone();
@@ -143,12 +151,12 @@ impl TouchPanel {
                         ));
                     }
 
-                    println!("after click {:?}", self.state_ref().next_char_prob.clone());
+                    // println!("after click {:?}", self.state_ref().next_char_prob.clone());
                 }
             }
         }
 
-        println!("return_messages {:?}", return_messages.len());
+        // println!("return_messages {:?}", return_messages.len());
         return_messages
     }
 
@@ -214,11 +222,13 @@ impl Component for TouchPanel {
     fn props_hash(&self, hasher: &mut component::ComponentHasher) {
         self.next_char_prob.len().hash(hasher);
         self.current_view.hash(hasher);
+        self.purpose.hash(hasher);
+        self.active_mods.len().hash(hasher);
         // self.view.hash(hasher);
     }
 
     fn new_props(&mut self) {
-        println!("TouchPanel:: new_props()");
+        // println!("TouchPanel:: new_props()");
         self.state_mut().next_char_prob = self.next_char_prob.clone();
         //Find posibilities of next keys
         //Update proximity martrix based on that
@@ -339,6 +349,7 @@ impl Component for TouchPanel {
     }
 
     fn on_mouse_down(&mut self, event: &mut Event<MouseDown>) {
+        // println!("TouchPanel::on_mouse_down()");
         event.stop_bubbling();
         let msgs = self.handle_press(event.relative_logical_position());
         for mesg in msgs {
@@ -347,6 +358,7 @@ impl Component for TouchPanel {
     }
 
     fn on_mouse_up(&mut self, _event: &mut Event<MouseUp>) {
+        // println!("TouchPanel::on_mouse_up()");
         self.handle_release();
     }
 
@@ -365,7 +377,7 @@ impl Component for TouchPanel {
     fn view(&self) -> Option<mctk_core::Node> {
         Some(node!(
             Div::new().bg(Color::TRANSPARENT),
-            lay![ size_pct: [100] ]
+            lay![ size_pct: [100],]
         ))
     }
 
@@ -376,6 +388,7 @@ impl Component for TouchPanel {
         println!("TouchPanel::render()");
         let proximity_matrix = self.state_ref().proximity_matrix.clone();
         let show_click_area = self.click_area_configs.visible;
+        let active_mods = self.active_mods.clone();
 
         let width = context.aabb.width();
         let height = context.aabb.height();
@@ -404,6 +417,15 @@ impl Component for TouchPanel {
                     }
                 };
 
+                match col.action {
+                    crate::action::Action::ApplyModifier(modifier) => {
+                        if active_mods.contains(&modifier) {
+                            button_color = Color::rgba(255., 255., 255., 0.25);
+                        }
+                    }
+                    _ => (),
+                }
+
                 let button = RectInstanceBuilder::default()
                     .pos(col_pos)
                     .scale(Scale {
@@ -411,8 +433,8 @@ impl Component for TouchPanel {
                         height: button_height,
                     })
                     .color(button_color)
-                    .border_size(1.)
-                    .border_color(Color::TRANSPARENT)
+                    .border_size((1., 1., 1., 1.))
+                    .border_color(Color::DARK_GREY)
                     .build()
                     .unwrap();
 
@@ -455,7 +477,7 @@ impl Component for TouchPanel {
                         height: (p_bl.y - p_tl.y) as f32,
                     })
                     .color(Color::TRANSPARENT)
-                    .border_size(1.)
+                    .border_size((1., 1., 1., 1.))
                     .border_color(Color::WHITE)
                     .build()
                     .unwrap();

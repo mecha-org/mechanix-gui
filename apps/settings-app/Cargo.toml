@@ -1,0 +1,83 @@
+[package]
+name = "mechanix-settings"
+description = "Settings app"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.71"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }
+xdg = "2.4.1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+const_format = "0.2.32"
+dirs = "5.0.1"
+tokio = { version = "1.35.1", features = ["full"] }
+zbus = { version = "4.1.2", features = ["tokio"] }
+mechanix_system_dbus_client = { path = "../../services/system/client/dbus" }
+mechanix_desktop_dbus_client = { path = "../../services/desktop/client/dbus" }
+mechanix_status_bar_components = { path = "../../shell/commons/status-bar" }
+futures-util = "0.3.30"
+futures = "0.3.30"
+regex="1.11.1"
+lazy_static = "1.5.0"
+sysinfo = "0.32.1"
+upower = { path = "../../commons/upower" }
+uuid = "1.11.0"
+pulsectl-rs = "0.3.2"
+serde_json = "1.0"
+tonic = "0.9.2"
+tokio-util = "0.7.10"
+prost = "0.11.9"
+simple-base64 = "0.23.2"
+thiserror = "1.0.59"
+uname = "0.1.1"
+local-ip-address="0.6.3"
+
+[build-dependencies]
+tonic-build = "0.9.2"
+
+[package.metadata.deb]
+name = "mechanix-settings"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-settings",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/apps/settings/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/apps/settings/settings.yml",
+        "644",
+    ],
+
+    # desktop file
+    [
+        "src/assets/linux/org.mechanix.settings.desktop", 
+        "/usr/share/applications/", 
+        "644"
+    ],
+]
+

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+package identity;
+
+service IdentityService {
+  rpc getMachineId (GetMachineIdRequest) returns (GetMachineIdResponse);
+  rpc getProvisionStatus (GetProvisionStatusRequest) returns (GetProvisionStatusResponse);
+  rpc getMachineCert(GetMachineCertRequest) returns (GetMachineCertResponse);
+}
+
+message GetMachineIdRequest {}
+message GetProvisionStatusRequest {}
+
+message GetMachineIdResponse {
+  string machine_id = 1;
+}
+message GetProvisionStatusResponse {
+  bool status = 1;
+}
+message GetMachineCertRequest {}
+message GetMachineCertResponse {
+  string common_name = 1;
+  string expiry = 2;
+  string fingerprint = 3;
+  string public_cert = 4;
+  string ca_bundle = 5;
+  string root_cert = 6;
+  string serial_number = 7;
+}

@@ -1,7 +1,14 @@
 [package]
-name = "camera"
-version = "0.1.0"
-edition = "2021"
+name = "mechanix-camera"
+description = "System camera app"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -10,10 +17,6 @@ mctk_core = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera
 mctk_smithay = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
 mctk_macros = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
 mctk_camera = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
-# mctk_core = { path="../../../mctk/core/"}
-# mctk_smithay = { path="../../../mctk/backends/smithay/"}
-# mctk_macros = { path="../../../mctk/macros//"}
-# mctk_camera = { path="../../../mctk/camera/"}
 
 anyhow = { version = "1.0.75", features = ["backtrace"]}
 gstreamer = "0.23.2"
@@ -34,3 +37,35 @@ serde = "1.0.217"
 serde_yaml = "0.9.34"
 dirs = "5.0.1"
 const_format = "0.2.34"
+
+[package.metadata.deb]
+name = "mechanix-camera"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-camera",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/apps/camera/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/apps/camera/settings.yml",
+        "644",
+    ],
+    # desktop file
+    [
+        "src/assets/linux/org.mechanix.camera.desktop", 
+        "/usr/share/applications/", 
+        "644"
+    ],
+
+]

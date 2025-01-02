@@ -79,75 +79,51 @@ impl Component for SettingsPanel {
                 axis_alignment: Alignment::Start,
             ]
         );
-        row_1 = row_1.push(node!(
-            IconButton::new(format!("lg{:?}", wireless_status.to_string()))
-                .icon_type(IconType::Png)
-                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
-                    gui::SettingNames::Wireless
-                ))))
-                .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgb(43., 43., 43.))
-                .style("padding", 23.),
-            lay![
-                size: [88],
-            ]
-        ));
+        row_1 = row_1.push(node!(IconButton::new(format!(
+            "lg{:?}",
+            wireless_status.to_string()
+        ))
+        .icon_type(IconType::Png)
+        .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+            gui::SettingNames::Wireless
+        ))))
+        .with_class("btn-xxl border-0 p-7")
+        .style("active_color", Color::rgb(43., 43., 43.))));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
-        row_1 = row_1.push(node!(
-            IconButton::new(format!("lg{:?}", bluetooth_status.to_string()))
-                .icon_type(IconType::Png)
-                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
-                    gui::SettingNames::Bluetooth
-                ))))
-                .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgb(43., 43., 43.))
-                .style("padding", 23.),
-            lay![
-                size: [88],
-            ]
-        ));
+        row_1 = row_1.push(node!(IconButton::new(format!(
+            "lg{:?}",
+            bluetooth_status.to_string()
+        ))
+        .icon_type(IconType::Png)
+        .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+            gui::SettingNames::Bluetooth
+        ))))
+        .with_class("btn-xxl border-0 p-7")
+        .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
-        row_1 = row_1.push(node!(
-            IconButton::new(rotation_status.to_string())
-                .icon_type(IconType::Png)
-                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
-                    gui::SettingNames::Rotation
-                ))))
-                .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgb(43., 43., 43.))
-                .style("padding", 23.),
-            lay![
-                size: [88],
-            ]
-        ));
+        row_1 = row_1.push(node!(IconButton::new(rotation_status.to_string())
+            .icon_type(IconType::Png)
+            .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                gui::SettingNames::Rotation
+            ))))
+            .with_class("btn-xxl border-0 p-7")
+            .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
-        row_1 = row_1.push(node!(
-            IconButton::new("terminal_icon")
-                .icon_type(IconType::Png)
-                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
-                    gui::SettingNames::Terminal
-                ))))
-                .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgb(43., 43., 43.))
-                .style("padding", 23.),
-            lay![
-                size: [88],
-            ]
-        ));
+        row_1 = row_1.push(node!(IconButton::new("terminal_icon")
+            .icon_type(IconType::Png)
+            .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                gui::SettingNames::Terminal
+            ))))
+            .with_class("btn-xxl border-0 p-7")
+            .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
-        row_1 = row_1.push(node!(
-            IconButton::new("power_icon")
-                .icon_type(IconType::Png)
-                .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
-                    gui::SettingNames::Power
-                ))))
-                .style("background_color", Color::TRANSPARENT)
-                .style("active_color", Color::rgb(43., 43., 43.))
-                .style("padding", 23.),
-            lay![
-                size: [88],
-            ]
-        ));
+        row_1 = row_1.push(node!(IconButton::new("power_icon")
+            .icon_type(IconType::Png)
+            .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                gui::SettingNames::Power
+            ))))
+            .with_class("btn-xxl border-0 p-7")
+            .style("active_color", Color::rgb(43., 43., 43.)),));
 
         println!("swipe - height {:?}", swipe - height);
 
@@ -156,7 +132,7 @@ impl Component for SettingsPanel {
                 scissor: Some(true),
                 background_color: Color::TRANSPARENT,
                 border_color: Color::TRANSPARENT,
-                border_width: 0.,
+                border_width: (0., 0., 0., 0.),
                 radius: (0., 0., 0., 0.),
                 swipe
             },
@@ -173,7 +149,7 @@ impl Component for SettingsPanel {
                 scissor: Some(false),
                 background_color: Color::TRANSPARENT,
                 border_color: Color::TRANSPARENT,
-                border_width: 0.,
+                border_width: (0., 0., 0., 0.),
                 radius: (0., 0., 0., 0.),
                 swipe: swipe
             },
