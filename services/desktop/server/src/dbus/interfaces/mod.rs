@@ -1,7 +1,10 @@
 mod sound_interface;
 pub use sound_interface::SoundBusInterface;
 
-pub use sound_interface::{sound_event_notification_stream, SoundNotificationEvent};
+pub use sound_interface::{
+    sound_event_notification_stream, SinkInformationResponse, SoundNotificationEvent,
+    SourceInformationResponse,
+};
 
 mod power_interface;
 pub use power_interface::PowerBusInterface;
