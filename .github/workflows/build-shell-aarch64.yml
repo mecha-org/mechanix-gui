@@ -110,7 +110,8 @@ jobs:
           libxkbcommon-dev \
           libdbus-1-dev \
           libpam0g-dev \
-          libclang-dev
+          libclang-dev \
+          libpulse-dev
 
       - name: Set up Git SSH key
         run: |
