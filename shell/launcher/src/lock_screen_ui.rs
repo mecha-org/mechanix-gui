@@ -102,9 +102,6 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
             .send(WindowMessage::Send { message: msg!(0) })
             .unwrap();
     }));
-    WirelessModel::get().register_context_handler(context_handler);
-    ClockModel::get().register_context_handler(context_handler);
-    BatteryModel::get().register_context_handler(context_handler);
 
     // let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
@@ -147,11 +144,11 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
     });
 
     loop {
-        event_loop.dispatch(None, &mut app).unwrap();
-
         if app.is_exited {
             break;
         }
+
+        event_loop.dispatch(None, &mut app).unwrap();
     }
     //End
     Ok(())
