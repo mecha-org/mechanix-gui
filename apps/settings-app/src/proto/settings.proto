@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/struct.proto";
+package settings;
+
+service SettingsService {
+  rpc get(GetSettingsRequest) returns (GetSettingsResponse);
+  rpc set(SetSettingsRequest) returns (SetSettingsResponse);
+}
+
+message GetSettingsRequest {
+  string key = 1;
+}
+
+message GetSettingsResponse {
+  string value = 1;
+}
+message SetSettingsRequest {
+  map<string, string> settings = 1;
+}
+
+message SetSettingsResponse {
+  bool success = 1;
+}

@@ -1,4 +1,6 @@
-use mechanix_desktop_dbus_server::SoundNotificationEvent;
+use mechanix_desktop_dbus_server::{
+    SinkInformationResponse, SoundNotificationEvent, SourceInformationResponse,
+};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use zbus::{proxy, zvariant::Type, Connection, Result};
@@ -11,6 +13,8 @@ use zbus::{proxy, zvariant::Type, Connection, Result};
 trait SoundBusInterface {
     async fn set_output_device_volume(&self, volume: f64, device: String) -> Result<()>;
     async fn get_output_device_volume(&self, device: String) -> Result<f64>;
+    async fn get_connected_input_devices(&self) -> Result<Vec<SinkInformationResponse>>;
+    async fn get_connected_output_devices(&self) -> Result<Vec<SourceInformationResponse>>;
     #[zbus(signal)]
     async fn notification(&self, event: SoundNotificationEvent) -> Result<()>;
 }
@@ -40,5 +44,19 @@ impl Sound {
         let proxy = SoundBusInterfaceProxy::new(&connection).await?;
         let stream = proxy.receive_notification().await?;
         Ok(stream)
+    }
+
+    pub async fn get_input_devices() -> Result<Vec<SinkInformationResponse>> {
+        let connection = Connection::session().await?;
+        let proxy = SoundBusInterfaceProxy::new(&connection).await?;
+        let reply = proxy.get_connected_input_devices().await?;
+        Ok(reply)
+    }
+
+    pub async fn get_output_devices() -> Result<Vec<SourceInformationResponse>> {
+        let connection = Connection::session().await?;
+        let proxy = SoundBusInterfaceProxy::new(&connection).await?;
+        let reply = proxy.get_connected_output_devices().await?;
+        Ok(reply)
     }
 }

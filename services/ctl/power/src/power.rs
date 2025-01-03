@@ -61,7 +61,7 @@ impl Power {
     }
 
     // we need to get all available governors form  reading this file /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors and list it
-    pub fn get_available_governors() -> Result<Vec<String>, std::io::Error> {
+    pub fn get_available_governors(&self) -> Result<Vec<String>, std::io::Error> {
         let governor_path =
             Path::new("/sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors");
 
@@ -80,7 +80,7 @@ impl Power {
     }
 
     //get current governor by reading this file /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-    pub fn get_current_cpu_governor() -> Result<String, std::io::Error> {
+    pub fn get_current_cpu_governor(&self) -> Result<String, std::io::Error> {
         let governor_path = Path::new("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
 
         let mut buffer = String::new();

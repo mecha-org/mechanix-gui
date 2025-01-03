@@ -1,0 +1,60 @@
+[package]
+name = "mechanix-files"
+description = "File manager app"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+mctk_core = { workspace = true }
+mctk_macros = { workspace = true }
+mctk_smithay = { workspace = true }
+
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+fs_extra = "1.2"
+dirs = "5.0.1"
+const_format = "0.2.32"
+
+[package.metadata.deb]
+name = "mechanix-files"
+depends = "$auto"
+assets = [
+    # binary
+    [
+        "../target/release/mechanix-files",
+        "/usr/bin/",
+        "755",
+    ],
+    #assets
+    [
+        "src/assets/**/*",
+        "/usr/share/mechanix/apps/files/assets/",
+        "644",
+    ],
+
+    # settings
+    [
+        "settings.yml.example",
+        "/etc/mechanix/apps/files/settings.yml",
+        "644",
+    ],
+    # desktop file
+    [
+        "src/assets/linux/org.mechanix.files.desktop", 
+        "/usr/share/applications/", 
+        "644"
+    ],
+
+]

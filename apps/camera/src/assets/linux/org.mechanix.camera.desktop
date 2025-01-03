@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+TryExec=mechanix-camera -s /etc/mechanix/apps/camera/settings.yml
+Exec=mechanix-camera -s /etc/mechanix/apps/camera/settings.yml
+Icon=/usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mechanix_camera_icon.png
+Terminal=false
+Categories=System;
+
+Name=Camera
+GenericName=Camera
+Comment=System camera app

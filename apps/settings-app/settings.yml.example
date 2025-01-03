@@ -1,0 +1,91 @@
+title: Settings App # Empty
+app:
+  id: org.mechanix.settings # settings
+  text_multithreading: true # false
+  antialiasing: true # false
+  try_opengles_first: true # false
+window:
+  size: [480, 440] # [1024, 768]
+  position: [0, 0] # [0, 0]
+  min_size: [480, 40] # None
+  max_size: null # None
+  visible: true # true
+  resizable: true # true
+  decorations: true # true
+  transparent: true # false
+  always_on_top: false # false
+  icon_path: null # Todo
+layout:
+  left: []
+  center: []
+  right: []
+fonts:
+  paths:
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-Bold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-BoldItalic.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-Italic.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Bold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-SemiBold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-SemiBold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Bold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_24pt-Bold.ttf
+modules:
+  wireless:
+    icon:
+      off: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_off_icon.png
+      on: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_on_icon.png
+      low: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_low_icon.png
+      weak: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_weak_icon.png
+      good: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_good_icon.png
+      strong: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_strong_icon.png
+      error: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_error_icon.png
+      not_found: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_not_found_icon.svg
+      wireless_settings: /usr/share/mechanix/apps/settings/assets/icons/wireless/wireless_settings_icon.png
+    secured_icon:
+      off: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_off_icon.png
+      on: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_on_icon.png
+      low: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_low_icon.png
+      weak: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_weak_icon.png
+      strong: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_strong_icon.png
+      error: /usr/share/mechanix/apps/settings/assets/icons/wireless/secured/secured_wireless_error_icon.png
+  bluetooth:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/bluetooth_off_icon.svg
+  display:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/display_icon.png
+  appearance:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/appearance_icon.png
+  battery:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/battery_icon.png
+  sound:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/sound_icon.png
+  lock:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/lock_icon.svg
+  date_time:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/date_time_icon.svg
+  language:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/language_icon.svg
+  update:
+    icon: /usr/share/mechanix/apps/settings/assets/icons/update_icon.svg
+  about:
+    icon: 
+      default: /usr/share/mechanix/apps/settings/assets/icons/about_icon.png
+      device: /usr/share/mechanix/apps/settings/assets/icons/device_icon.png
+  see_options:
+    white_right_arrow: /usr/share/mechanix/apps/settings/assets/icons/white_right_arrow.svg
+    grey_right_arrow: /usr/share/mechanix/apps/settings/assets/icons/grey_right_arrow.svg
+    info_icon: /usr/share/mechanix/apps/settings/assets/icons/info_icon.png
+    connected_icon: /usr/share/mechanix/apps/settings/assets/icons/connected_icon.png
+  footer:
+    back_icon: /usr/share/mechanix/apps/settings/assets/icons/back_icon.png
+    confirm_icon: /usr/share/mechanix/apps/settings/assets/icons/confirm_icon.png
+    delete_icon: /usr/share/mechanix/apps/settings/assets/icons/delete_icon.png
+    add_icon: /usr/share/mechanix/apps/settings/assets/icons/add_icon.png
+  not_found:
+    icon:
+      default: /usr/share/mechanix/apps/settings/assets/icons/not_found_icon.png
+      small: /usr/share/mechanix/apps/settings/assets/icons/not_found_small_icon.png

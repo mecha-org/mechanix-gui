@@ -1,0 +1,34 @@
+title: Files
+app:
+  id: org.mechanix.files
+  text_multithreading: true
+  antialiasing: true
+  try_opengles_first: true
+window:
+  size: [480, 440]
+  position: [0, 0]
+  min_size: [480, 40]
+  max_size: null
+  visible: true
+  resizable: true
+  decorations: true
+  transparent: true
+  always_on_top: false
+  icon_path: null
+layout:
+  left: []
+  center: []
+  right: []
+fonts:
+  paths:
+    - /usr/share/mechanix/apps/files/assets/fonts/SpaceGrotesk-Regular.ttf
+icons:
+  fold_icon: /usr/share/mechanix/apps/files/assets/icons/fold.png
+  file_icon: /usr/share/mechanix/apps/files/assets/icons/file.png
+  arrow_icon: /usr/share/mechanix/apps/files/assets/icons/arrow.png
+  back_icon: /usr/share/mechanix/apps/files/assets/icons/back.png
+  add_icon: /usr/share/mechanix/apps/files/assets/icons/add.png
+  dots_icon: /usr/share/mechanix/apps/files/assets/icons/dots.png
+  pdf_icon: /usr/share/mechanix/apps/files/assets/icons/pdf.png
+  img_icon: /usr/share/mechanix/apps/files/assets/icons/img_file.png
+  unfold_dir_icon: /usr/share/mechanix/apps/files/assets/icons/unfold_dir.png

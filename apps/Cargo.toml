@@ -1,0 +1,40 @@
+[workspace]
+resolver = "2"
+members = [
+    "settings-app", "camera",  "files"
+]
+default-members = ["settings-app", "camera",  "files"]
+
+[workspace.package]
+version = "0.1.6"
+authors = [
+   "Sweta <swetar@mechasystems.com>", 
+   "Naman <namana-mecha@mechasystems.com>",
+   "Minesh <mineshp-mecha@mechasystems.com>",
+]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+categories = ["gui"]
+keywords = [
+    "linux",
+    "shell",
+    "mobile",
+    "gui",
+    "ui",
+    "graphics",
+    "interface",
+    "widgets",
+]
+
+[workspace.dependencies]
+mctk_core = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git" }
+mctk_smithay = { git = "https://github.com/mecha-org/mctk.git" }
+serde = { version = "1.0.163", features = ["derive"] }
+serde_yaml = "0.9.21"
+tracing = "0.1.37"
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"]}
+anyhow = { version = "1.0.75", features = ["backtrace"]}
+tokio = { version = "1.33", features = ["full"] }

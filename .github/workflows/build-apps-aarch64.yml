@@ -1,0 +1,158 @@
+name: Apps - Build aarch64
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - dev-arm64-build
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTUP_MAX_RETRIES: 10
+  MACOSX_DEPLOYMENT_TARGET: 10.7
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  MECHANIX_APTLY_SERVER_ENDPOINT: ${{ vars.MECHANIX_APTLY_SERVER_ENDPOINT }}
+  MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
+  MECHANIX_APTLY_DEB_REPOSITORY_NAME: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}
+  MECHANIX_APTLY_S3_PUBLISH_ENDPOINT: ${{ vars.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT }}
+
+jobs:
+  build:
+    environment: dev
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Settings
+            package: mechanix-settings
+            artifact: mechanix-settings-aarch64-unknown-linux-gnu.tar.gz
+            path: apps
+
+          - name: Camera
+            package: mechanix-camera
+            artifact: mechanix-camera-aarch64-unknown-linux-gnu.tar.gz
+            path: apps
+      
+          - name: Files
+            package: mechanix-files
+            artifact: mechanix-files-aarch64-unknown-linux-gnu.tar.gz
+            path: apps
+
+    runs-on: ubicloud-standard-2-arm
+    continue-on-error: false
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.83.0
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          rustup default 1.83.0
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Update apt
+        run: sudo apt update
+
+      - name: Install dependencies
+        run: |
+          sudo apt install \
+          libwayland-dev \
+          libxkbcommon-dev \
+          libdbus-1-dev \
+          libpam0g-dev \
+          libclang-dev \
+          protobuf-compiler \
+          libpulse-dev \
+          libunwind-dev \
+          libgstreamer1.0-dev \
+          libgstreamer-plugins-base1.0-dev \
+          libgstreamer-plugins-bad1.0-dev \
+          gstreamer1.0-plugins-base \
+          gstreamer1.0-plugins-good \
+          gstreamer1.0-plugins-bad \
+          gstreamer1.0-plugins-ugly \
+          gstreamer1.0-libav \
+          gstreamer1.0-tools \
+          gstreamer1.0-x \
+          gstreamer1.0-alsa \
+          gstreamer1.0-gl \
+          gstreamer1.0-gtk3 \
+          gstreamer1.0-qt5 \
+          gstreamer1.0-pulseaudio
+
+      - name: Set up Git SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Build [${{ matrix.package }}]
+        run: |
+          cd ${{ matrix.path }}
+          cargo --config net.git-fetch-with-cli=true fetch
+          cargo build --release --package ${{ matrix.package }}
+          ls -la
+
+      - name: Package deb [${{ matrix.package }}]
+        run: |
+          cd ${{ matrix.path }}
+          cargo deb --no-build --package ${{ matrix.package }}
+          ls -la
+
+      - name: Extract package details
+        id: package_details
+        run: |
+          cd ${{ matrix.path }}
+          PACKAGE_NAME=$(ls target/debian/*.deb | xargs basename)
+          FOLDER_NAME=$(echo $PACKAGE_NAME | sed -r 's/_[0-9]+\.[0-9]+\.[0-9]+-[0-9]+.*$//')
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "folder_name=$FOLDER_NAME" >> $GITHUB_OUTPUT
+          echo "Package Name: $PACKAGE_NAME"
+          echo "Folder Name: $FOLDER_NAME"
+
+      - name: Upload package to Aptly
+        run: |
+          cd ${{ matrix.path }}
+          echo "Uploading package: ${{ steps.package_details.outputs.package_name }}"
+          echo "To folder: ${{ steps.package_details.outputs.folder_name }}"
+          curl -X POST -F file=@target/debian/${{ steps.package_details.outputs.package_name }} ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/files/${{ steps.package_details.outputs.folder_name }}
+      
+      - name: Add package to local repo
+        run: |
+          echo "Adding package from folder: ${{ steps.package_details.outputs.folder_name }}"
+          curl -X POST ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/repos/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}/file/${{ steps.package_details.outputs.folder_name }}
+      
+      - name: Update local published repo
+        run: |
+          echo "Updating local published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
+          curl -X PUT -H 'Content-Type: application/json' --data '{
+            "Architectures": ["arm64", "amd64"],
+            "Signing": {"Skip": true}
+          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/:./${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
+      
+      - name: Update S3 published repo
+        run: |
+          echo "Updating S3 published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
+          curl -X PUT -H 'Content-Type: application/json' --data '{
+            "Sources": [{"Name": "${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}"}],
+            "Architectures": ["arm64", "amd64"],
+            "Signing": {"Skip": true}
+          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT}}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}    
+      
+      - name: Prepare artifacts [${{ matrix.package }}]
+        run: |
+          mkdir build
+          cp ${{ matrix.path }}/target/release/${{ matrix.package }} ./build
+          cp ${{ matrix.path }}/target/debian/*.deb ./build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ./build/*
