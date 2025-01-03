@@ -64,10 +64,9 @@ impl Component for DisplayScreen {
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                size_pct: [100, 90],
-                cross_alignment: layout::Alignment::Stretch,
-                direction: layout::Direction::Column,
-                margin: [10., 0., 0., 0.],
+                size: [440, Auto],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
             ]
         );
 

@@ -368,7 +368,6 @@ impl Component for SettingsScreen {
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 size: [440, Auto],
-                position: [Auto, 0., 0., 0.],
             ]
         )
         .push(scrollable);

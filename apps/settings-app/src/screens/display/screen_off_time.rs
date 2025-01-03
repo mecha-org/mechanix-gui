@@ -16,15 +16,22 @@ impl Component for ScreenOffTime {
             ]
         );
 
-        let mut main_node = node!(
-            widgets::Div::new(),
+        let mut content_node = node!(
+            Div::new(),
             lay![
-                size_pct: [100, 90],
-                cross_alignment: layout::Alignment::Stretch,
-                direction: layout::Direction::Column,
-                margin: [10., 0., 0., 0.],
+                size: [440, Auto],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
             ]
         );
+
+        let sub_header = node!(
+            Div::new(),
+            lay![
+                margin: [0., 10., 0., 8.]
+            ]
+        )
+        .push(sub_header_node("Screen off time"));
 
         let mut scrollable = node!(
             Scrollable::new(size!(440, 288)),
@@ -41,14 +48,6 @@ impl Component for ScreenOffTime {
             ]
         ));
 
-        let sub_header = node!(
-            Div::new(),
-            lay![
-                margin: [0., 10., 0., 8.]
-            ]
-        )
-        .push(sub_header_node("Screen off time"));
-
         let options = vec!["10s", "20s", "30s", "60s", "5m", "Never"];
         let mut options_vec: Vec<(Vec<TextSegment>, Vec<TextSegment>)> = vec![];
         for (i, option) in options.into_iter().enumerate() {
@@ -56,10 +55,14 @@ impl Component for ScreenOffTime {
         }
         scrollable = scrollable.push(radio_node!(options_vec, txt!("30s")));
 
-        main_node = main_node.push(sub_header);
-        main_node = main_node.push(scrollable);
+        content_node = content_node.push(sub_header);
+        content_node = content_node.push(node!(HDivider {
+            size: 1.,
+            color: Color::rgba(83., 83., 83., 1.)
+        }));
+        content_node = content_node.push(scrollable);
 
-        base = base.push(main_node);
+        base = base.push(content_node);
         Some(base)
     }
 }
