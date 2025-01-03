@@ -5,6 +5,7 @@ use crate::{
     header_node,
     utils::truncate,
 };
+use core::net;
 use std::hash::Hash;
 
 use mctk_core::widgets::Scrollable;
@@ -48,6 +49,7 @@ impl Component for ClicableIconComponent {
             lay![
                 size_pct: [80, Auto],
                 axis_alignment: Alignment::Start,
+
             ]
         );
         Some(base)
@@ -391,7 +393,7 @@ impl Component for NetworkingScreen {
                     node!(
                         Div::new(),
                         lay![
-                            size_pct: [100, 100],
+                            size_pct: [100, Auto],
                             direction: Direction::Column,
                             axis_alignment: Alignment::Stretch,
                         ]
@@ -791,7 +793,7 @@ impl Component for NetworkingScreen {
                     scrollable_section = scrollable_section
                         .push(
                             node!(
-                                Div::new().border(Color::rgb(83., 83., 83.), 0.5, (0., 0., 0., 0.)),
+                                Div::new().border(Color::rgb(83., 83., 83.), 0.8, (0., 0., 0., 0.)),
                                 lay![
                                     direction: Direction::Row,
                                     size: [480, Auto],
@@ -809,6 +811,7 @@ impl Component for NetworkingScreen {
                     key += 2;
                 }
             }
+
             for network in unsaved_available_networks.iter() {
                 if network.name.clone().len() > 0 {
                     key += 1;
@@ -833,6 +836,7 @@ impl Component for NetworkingScreen {
                             )),
                         )
                         .key(key);
+                    key += 2;
                 }
             }
         }
