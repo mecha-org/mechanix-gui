@@ -1,9 +1,12 @@
 use crate::action::Modifier;
+use crate::components::scrollable::Scrollable;
 use crate::components::touch_panel::TouchPanel;
+use crate::layout::KeyButton;
+use crate::model::KeyboardModel;
 use crate::settings::{self, KeyboardSettings};
 use crate::{action, AppMessage, AppParams};
 use mctk_core::component::RootComponent;
-use mctk_core::layout::{Alignment, PositionType};
+use mctk_core::layout::{Alignment, Dimension, PositionType};
 use mctk_core::reexports::smithay_client_toolkit::reexports::calloop::channel::Sender;
 use mctk_core::style::{HorizontalPosition, Styled};
 use mctk_core::widgets::{Button, IconButton, IconType};
@@ -23,17 +26,18 @@ use wayland_protocols_async::zwp_input_method_v2::handler::ContentPurpose;
 /// Each of them are handled in the ``impl Application()::update()``
 #[derive(Debug, Clone)]
 pub enum Message {
-    KeyClicked(crate::action::Action, Vec<crate::layout::KeyCode>),
+    KeyPressed(KeyButton),
+    KeyReleased,
     SuggestionClicked(String),
     UpdateSuggestions {
         suggestions: Vec<String>,
         suggested_for: String,
         next_char_prob: HashMap<String, f64>,
     },
-    ContentInfo {
-        purpose: ContentPurpose,
+    Scrolling {
+        status: bool,
     },
-    Reset,
+    Maximize,
     // UpdateKeyboardWindow {
     //     keyboard_window: KeyboardWindow,
     // },
@@ -58,13 +62,10 @@ pub struct KeyboardState {
     settings: KeyboardSettings,
     layouts: HashMap<ContentPurpose, crate::layout::ParsedLayout>,
     purpose: ContentPurpose,
-    current_view: String,
     app_channel: Option<Sender<AppMessage>>,
-    suggestions: Vec<String>,
-    suggested_for: String,
-    next_char_prob: HashMap<String, f64>,
-    keyboard_window: KeyboardWindow,
     active_mods: HashSet<Modifier>,
+    is_scrolling: bool,
+    key_pressed: Option<KeyButton>,
 }
 
 #[component(State = "KeyboardState")]
@@ -76,7 +77,8 @@ impl Keyboard {}
 #[state_component_impl(KeyboardState)]
 impl Component for Keyboard {
     fn render_hash(&self, hasher: &mut component::ComponentHasher) {
-        self.state_ref().keyboard_window.hash(hasher);
+        self.state_ref().key_pressed.hash(hasher);
+        self.state_ref().purpose.hash(hasher);
     }
 
     fn init(&mut self) {
@@ -115,131 +117,152 @@ impl Component for Keyboard {
         self.state = Some(KeyboardState {
             settings,
             layouts: layouts,
-            current_view: String::from("base"),
             app_channel: None,
-            suggestions: vec![],
-            suggested_for: String::new(),
-            next_char_prob: HashMap::new(),
             purpose: ContentPurpose::Normal,
-            keyboard_window: KeyboardWindow::Maximized,
             active_mods: HashSet::new(),
+            is_scrolling: false,
+            key_pressed: None,
         });
     }
 
     fn update(&mut self, message: component::Message) -> Vec<component::Message> {
         println!("App was sent: {:?}", message.downcast_ref::<Message>());
+        println!("");
         match message.downcast_ref::<Message>() {
-            Some(Message::KeyClicked(action, keycodes)) => match action {
-                action::Action::SetView(view) => {
-                    self.state_mut().current_view = view.clone();
+            Some(Message::KeyPressed(key_pressed)) => {
+                self.state_mut().key_pressed = Some(key_pressed.clone());
+            }
+            Some(Message::KeyReleased) => {
+                println!("Message::KeyReleased");
+                if self.state_ref().is_scrolling {
+                    self.state_mut().key_pressed = None;
+                    return vec![];
                 }
-                action::Action::LockView {
-                    lock,
-                    unlock,
-                    latches,
-                    looks_locked_from,
-                } => {
-                    if self.state_ref().current_view == lock.clone() {
-                        self.state_mut().current_view = unlock.clone();
-                    } else {
-                        self.state_mut().current_view = lock.clone();
-                    }
-                }
-                action::Action::ApplyModifier(m) => {
-                    println!("modifier is {:?}", m);
-                    let mut mods = self.state_ref().active_mods.clone();
-                    if mods.contains(m) {
-                        mods.remove(m);
-                    } else {
-                        mods.insert(m.clone());
-                    }
 
-                    self.state_mut().active_mods = mods.clone();
-                    if let Some(app_channel) = &self.state_ref().app_channel {
-                        let _ = app_channel.send(AppMessage::ApplyModifiers { mods });
+                if let Some(key_pressed) = self.state_ref().key_pressed.clone() {
+                    let KeyButton {
+                        action, keycodes, ..
+                    } = key_pressed;
+
+                    match action {
+                        action::Action::SetView(view) => {
+                            // self.state_mut().current_view = view.clone();
+                            KeyboardModel::get().current_view.set(view.clone());
+                        }
+                        action::Action::LockView {
+                            lock,
+                            unlock,
+                            latches,
+                            looks_locked_from,
+                        } => {
+                            let current_view = KeyboardModel::get().current_view.get().clone();
+                            if current_view == lock.clone() {
+                                KeyboardModel::get().current_view.set(unlock.clone());
+                            } else {
+                                KeyboardModel::get().current_view.set(lock.clone());
+                            }
+                        }
+                        action::Action::ApplyModifier(m) => {
+                            println!("modifier is {:?}", m);
+                            let mut mods = self.state_ref().active_mods.clone();
+                            if mods.contains(&m) {
+                                mods.remove(&m);
+                            } else {
+                                mods.insert(m.clone());
+                            }
+
+                            self.state_mut().active_mods = mods.clone();
+                            if let Some(app_channel) = &self.state_ref().app_channel {
+                                let _ = app_channel.send(AppMessage::ApplyModifiers { mods });
+                            };
+                        }
+                        action::Action::Submit { text, keys } => {
+                            println!("text {:?} keys {:?}", text, keys);
+                            if let Some(app_channel) = &self.state_ref().app_channel {
+                                let _ = app_channel.send(AppMessage::TextkeyPressed {
+                                    keycode: keycodes[0].clone(),
+                                });
+                            };
+                            let current_view = KeyboardModel::get().current_view.get().clone();
+                            if current_view == "upper".to_string() {
+                                KeyboardModel::get().current_view.set("base".to_string())
+                            }
+                        }
+                        action::Action::Erase => {
+                            KeyboardModel::erase();
+                        }
+                        action::Action::ShowPreferences => {}
+                        action::Action::Minimize => {
+                            KeyboardModel::minimize();
+                        }
+                        action::Action::Maximize => {
+                            KeyboardModel::maximize();
+                        }
                     };
+
+                    self.state_mut().key_pressed = None;
                 }
-                action::Action::Submit { text, keys } => {
-                    // println!("text {:?} keys {:?}", text, keys);
-                    if let Some(app_channel) = &self.state_ref().app_channel {
-                        let _ = app_channel.send(AppMessage::TextkeyPressed {
-                            keycode: keycodes[0].clone(),
-                        });
-                    };
-                    if self.state_ref().current_view == "upper".to_string() {
-                        self.state_mut().current_view = "base".to_string()
-                    }
-                }
-                action::Action::Erase => {
-                    if let Some(app_channel) = &self.state_ref().app_channel {
-                        let _ = app_channel.send(AppMessage::Erase);
-                    };
-                }
-                action::Action::ShowPreferences => {}
-                action::Action::Minimize => {
-                    self.state_mut().keyboard_window = KeyboardWindow::Minimized;
-                    self.state_mut().current_view = "minimize".to_string();
-                    if let Some(app_channel) = &self.state_ref().app_channel {
-                        let _ = app_channel.send(AppMessage::Minimize);
-                    }
-                }
-                action::Action::Maximize => {
-                    self.state_mut().keyboard_window = KeyboardWindow::Maximized;
-                    self.state_mut().current_view = "base".to_string();
-                    if let Some(app_channel) = &self.state_ref().app_channel {
-                        let _ = app_channel.send(AppMessage::Maximize);
-                    }
-                }
-            },
+            }
             Some(Message::UpdateSuggestions {
                 suggestions,
                 suggested_for,
                 next_char_prob,
             }) => {
-                self.state_mut().suggestions = suggestions.clone();
-                self.state_mut().suggested_for = suggested_for.clone();
-                self.state_mut().next_char_prob = next_char_prob.clone();
+                // self.state_mut().suggestions = suggestions.clone();
+                // self.state_mut().suggested_for = suggested_for.clone();
+                // self.state_mut().next_char_prob = next_char_prob.clone();
             }
             Some(Message::SuggestionClicked(suggestion)) => {
                 // println!("Suggestion clicked: {}", suggestion);
-                if let Some(app_channel) = &self.state_ref().app_channel {
-                    let _ = app_channel.send(AppMessage::SuggestionPressed {
-                        suggestion: suggestion.clone(),
-                        suggested_for: self.state_ref().suggested_for.clone(),
-                    });
-                }
-            }
-            Some(Message::ContentInfo { purpose }) => {
-                self.state_mut().purpose = purpose.clone();
+                // if let Some(app_channel) = &self.state_ref().app_channel {
+                //     let _ = app_channel.send(AppMessage::SuggestionPressed {
+                //         suggestion: suggestion.clone(),
+                //         suggested_for: self.state_ref().suggested_for.clone(),
+                //     });
+                // }
+                KeyboardModel::suggestion_pressed(suggestion.clone());
             }
             // Some(Message::UpdateKeyboardWindow { keyboard_window }) => {
             //     self.state_mut().keyboard_window = keyboard_window.clone();
             // }
-            Some(Message::Reset) => {
-                self.state_mut().keyboard_window = KeyboardWindow::Maximized;
-                self.state_mut().current_view = String::from("base");
+            Some(Message::Scrolling { status }) => {
+                println!("Message::Scrolling");
+                if *status {
+                    self.state_mut().key_pressed = None;
+                }
+                self.state_mut().is_scrolling = *status;
             }
             _ => (),
         }
+
         vec![]
     }
 
     fn view(&self) -> Option<Node> {
         //Render view from layout
-        let purpose = self.state_ref().purpose;
-        let keyboard_window = self.state_ref().keyboard_window;
+        let purpose = KeyboardModel::get()
+            .purpose
+            .get()
+            .clone()
+            .unwrap_or(ContentPurpose::Normal);
+        let keyboard_window = if KeyboardModel::get().maximize.get().clone() {
+            KeyboardWindow::Maximized
+        } else {
+            KeyboardWindow::Minimized
+        };
         let layout = self.state_ref().layouts.get(&purpose).unwrap().clone();
-        let current_view = self.state_ref().current_view.clone();
+        let current_view = KeyboardModel::get().current_view.get().clone();
         let view = layout.views.get(&current_view).unwrap();
-        let suggestions = self.state_ref().suggestions.clone();
-        let next_char_prob = self.state_ref().next_char_prob.clone();
+        let suggestions = KeyboardModel::get().suggestions.get().clone();
+        let next_char_prob = KeyboardModel::get().next_char_prob.get().clone();
         let click_area = self.state_ref().settings.click_area.clone();
         let active_mods = self.state_ref().active_mods.clone();
+        let is_scrolling = self.state_ref().is_scrolling.clone();
         let mut main_div = node!(
             Div::new().bg(if keyboard_window == KeyboardWindow::Maximized {
                 Color::BLACK
             } else {
-                Color::TRANSPARENT
+                Color::BLACK
             }),
             lay![
                 size_pct: [100 , 100],
@@ -252,10 +275,10 @@ impl Component for Keyboard {
         let mut suggestion_row = node!(
             Div::new(),
             lay![
-                size: [Auto, 48],
+                size: [Auto, 36],
                 direction: layout::Direction::Row,
                 axis_alignment: Alignment::Stretch,
-                cross_alignment: Alignment::Center
+                cross_alignment: Alignment::Center,
             ]
         );
 
@@ -270,31 +293,159 @@ impl Component for Keyboard {
                         .style("radius", 4.6)
                         .style("text_color", Color::WHITE)
                         .style("font_size", 16.)
+                        .style("line_height", 22.)
                         .style("active_color", Color::rgba(255., 255., 255., 0.50))
                         .style("background_color", Color::TRANSPARENT),
                     lay![
-                        margin: [0., 2.5, 0., 2.5],
+                        size: [Auto, 28],
                     ],
                 )
                 .key(i as u64),
             );
         }
 
-        if purpose == ContentPurpose::Normal {
+        if purpose == ContentPurpose::Normal || purpose == ContentPurpose::Alpha {
             main_div = main_div.push(suggestion_row);
         }
 
-        main_div = main_div.push(node!(
-            TouchPanel::new(
-                view.clone(),
-                next_char_prob,
-                self.state_ref().current_view.clone(),
-                click_area,
-                purpose,
-                active_mods
-            ),
-            lay![ margin: [8., if purpose == ContentPurpose::Terminal { 12. } else { 0. }, 0., 0.]]
-        ));
+        match keyboard_window {
+            KeyboardWindow::Maximized => {
+                main_div = main_div.push(
+                    node!(
+                        Scrollable::new(
+                            size!(480, Dimension::Px(210.)),
+                            if purpose == ContentPurpose::Terminal {
+                                70.
+                            } else {
+                                0.
+                            }
+                        ),
+                        lay![]
+                    ).key(if purpose == ContentPurpose::Terminal {
+                        10 as u64
+                    }  else {
+                        100 as u64
+                    })
+                    .push(
+                        node!(
+                            TouchPanel::new(
+                                view.clone(),
+                                next_char_prob,
+                                current_view,
+                                click_area,
+                                purpose,
+                                active_mods,
+                                self.state_ref().key_pressed.clone()
+                            ),
+                            lay![
+                            margin: [4., 6. , 0., 0.]
+                            size: [ if purpose == ContentPurpose::Terminal {748. } else { 474. }, Dimension::Px(210.)]
+                            ]
+                        )
+                        .key(if self.state_ref().key_pressed.is_some() {
+                            10 as u64
+                        }
+                        else {
+                            1000 as u64
+                        }),
+                    ),
+                );
+            }
+            KeyboardWindow::Minimized => {
+                main_div = main_div.push(node!(
+                    TouchPanel::new(
+                        view.clone(),
+                        next_char_prob,
+                        current_view,
+                        click_area,
+                        purpose,
+                        active_mods,
+                        self.state_ref().key_pressed.clone()
+                    ),
+                    lay![
+                    margin: [4., 6. , 0., 0.]
+                    size: [ if purpose == ContentPurpose::Terminal {748. } else { 474. }, Dimension::Px(210.)]
+                    ]
+                )
+                .key(if self.state_ref().key_pressed.is_some() {
+                    11 as u64
+                }
+                else {
+                    1100 as u64
+                }),);
+            }
+        }
+
+        // match keyboard_window {
+        //     KeyboardWindow::Maximized => {
+
+        //     }
+        //     KeyboardWindow::Minimized => {
+        //         main_div = main_div.push(node!(
+        //             IconButton::new("window-max")
+        //                 .on_click(Box::new(|| msg!(Message::Maximize)))
+        //                 .style("size", size!(60, 40)),
+        //             lay![size:[80, 60]]
+        //         ));
+        //     }
+        // }
+
+        // main_div = main_div.push(
+        //     node!(
+        //         Scrollable::new(
+        //             size!(480, Dimension::Px(210.)),
+        //             if purpose == ContentPurpose::Terminal {
+        //                 70.
+        //             } else {
+        //                 0.
+        //             }
+        //         ),
+        //         lay![]
+        //     ).key(if purpose == ContentPurpose::Normal {
+        //         10 as u64
+        //     } else {
+        //         100 as u64
+        //     })
+        //     .push(
+        //         node!(
+        //             TouchPanel::new(
+        //                 view.clone(),
+        //                 next_char_prob,
+        //                 self.state_ref().current_view.clone(),
+        //                 click_area,
+        //                 purpose,
+        //                 active_mods,
+        //                 self.state_ref().key_pressed.clone()
+        //             ),
+        //             lay![
+        //             margin: [4., 6. , 0., 0.]
+        //             size: [ if purpose == ContentPurpose::Terminal {748. } else { 474. }, Dimension::Px(210.)]
+        //             ]
+        //         )
+        //         .key(if self.state_ref().key_pressed.is_some() {
+        //             10 as u64
+        //         }
+        //         else {
+        //             100 as u64
+        //         }),
+        //     ),
+        // );
+
+        // main_div = main_div.push(node!(
+        //     TouchPanel::new(
+        //         view.clone(),
+        //         next_char_prob,
+        //         self.state_ref().current_view.clone(),
+        //         click_area,
+        //         purpose,
+        //         active_mods,
+        //         self.state_ref().key_pressed.clone()
+        //     ),
+        //     lay![
+        //         margin: [4., 6. , 0., 0.]
+        //         size: [480., 244.]
+        //     ]
+        // ));
 
         Some(main_div)
     }

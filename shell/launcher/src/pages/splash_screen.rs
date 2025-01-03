@@ -31,8 +31,8 @@ impl Component for SplashScreen {
             start = start.push(node!(
                 Image::new(app.name),
                 lay![
-                    size: [120],
-                    margin: [176., 200., 0.,0.]
+                    size: [100],
+                    margin: [156., 190., 0.,0.]
                 ]
             ));
         }

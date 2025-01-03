@@ -207,9 +207,9 @@ impl Layout {
                                 .clone(),
                         )
                     });
-                    Row::new(add_offsets(buttons, |button| button.size.0).collect())
+                    Row::new(add_offsets(buttons, |button| button.size.0 + 12.).collect())
                 });
-                let rows = add_offsets(rows, |row| row.get_size().height).collect();
+                let rows = add_offsets(rows, |row| row.get_size().height + 10.).collect();
                 (name.clone(), crate::layout::View::new(rows))
             })
             .collect();

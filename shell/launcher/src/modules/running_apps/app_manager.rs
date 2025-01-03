@@ -195,7 +195,9 @@ impl AppManagerService {
 
     pub fn start_app(&self, app_id: &str) -> Result<bool> {
         let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
-        let app = desktop_entries.iter().find(|entry| entry.app_id == app_id);
+        let app = desktop_entries
+            .iter()
+            .find(|entry| entry.app_id.to_lowercase() == app_id.to_lowercase());
 
         if app.is_none() {
             return Ok(false);
