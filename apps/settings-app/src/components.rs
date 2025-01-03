@@ -64,7 +64,7 @@ macro_rules! header_node {
             node!(
                 Div::new(),
                 lay![
-                    size_pct: [70, Auto],
+                    size_pct: [72, Auto],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ],
@@ -85,8 +85,8 @@ macro_rules! header_node {
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
                     .style("radius", 10.),
                 lay![
-                    size: [42, 42],
-                    padding: [0, 0, 0, 2.],
+                    size: [52, 52],
+                    padding: [0, 0, 0, 20.],
                     axis_alignment: Alignment::Start,
                     cross_alignment: Alignment::Center,
                 ]
@@ -95,22 +95,13 @@ macro_rules! header_node {
                 node!(
                     Div::new(),
                     lay![
-                        size_pct: [100, Auto],
+                        size_pct: [28, Auto],
                         direction: Direction::Column,
                         axis_alignment: Alignment::Start,
                     ]
                 )
                 .push(text_node),
             ),
-        )
-        .push(
-            node!(
-                Div::new(),
-                lay![
-                    size_pct: [30, Auto],
-                    axis_alignment: Alignment::End
-                ]
-            )
         );
 
         let result_node = node!(
@@ -674,8 +665,7 @@ macro_rules! radio_node {
             RadioButtons::new($options)
                 .selected($selcted_option)
                 .direction(mctk_core::layout::Direction::Column)
-                .style("font_size", 18.0)
-                .style("padding", 8.)
+                .with_class("text-xl leading-6 font-medium")
                 .max_columns(1)
                 .on_change($on_change),
             lay![
@@ -690,8 +680,7 @@ macro_rules! radio_node {
             RadioButtons::new($options)
                 .selected($selcted_option)
                 .direction(mctk_core::layout::Direction::Column)
-                .style("font_size", 18.0)
-                .style("padding", 8.)
+                .with_class("text-xl leading-6 font-medium")
                 .max_columns(1),
             lay![
                 size: [440, Auto],
@@ -886,7 +875,7 @@ pub fn single_detail_row(key_val_1: DetailRow) -> Node {
             Text::new(txt!(key_val_1.key.to_owned()))
                 .style("color", Color::rgba(255., 255., 255., 1.))
                 .style("font", "Inter")
-                .with_class("text-2xl leading-7 font-medium"),
+                .with_class("text-xl leading-6 font-medium"),
             lay![
                 margin: [0.0, 10.0, 0.0, 0.0],
             ]
@@ -898,13 +887,14 @@ pub fn single_detail_row(key_val_1: DetailRow) -> Node {
             lay![
                 size_pct: [60, Auto],
                 axis_alignment: Alignment::End,
+                padding: [0., 0., 0., 10.]
             ]
         )
         .push(node!(
             Text::new(txt!(key_val_1.value.trim().to_owned()))
                 .style("color", Color::rgba(197., 197., 197., 1.))
                 .style("font", "Inter")
-                .with_class("text-2xl leading-7 font-medium"),
+                .with_class("text-xl leading-6 font-medium"),
             lay![
                 axis_alignment: Alignment::End,
                 cross_alignment: Alignment::End,
