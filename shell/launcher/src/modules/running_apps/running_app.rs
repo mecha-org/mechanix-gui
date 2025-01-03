@@ -191,9 +191,9 @@ impl Component for RunningApp {
             if state == SwipeState::CompletingSwipe {
                 // println!("dy {:?} min_dy {:?}", dy, min_dy);
                 if dy <= min_dy {
-                    event.emit(msg!(Message::AppInstanceCloseClicked(
-                        self.app_details.instances.get(0).unwrap().instance_key,
-                    )));
+                    event.emit(msg!(Message::AppClose {
+                        app_id: self.app_details.app_id.clone(),
+                    }));
                     self.state_mut().swipe = None;
                     return;
                 }
@@ -218,9 +218,10 @@ impl Component for RunningApp {
     }
 
     fn on_click(&mut self, event: &mut Event<mctk_core::event::Click>) {
-        event.emit(msg!(Message::AppInstanceClicked(
-            self.app_details.instances.get(0).unwrap().instance_key,
-        )));
+        event.emit(msg!(Message::AppOpen {
+            app_id: self.app_details.app_id.clone(),
+            layer: None
+        }));
     }
 
     fn on_drag_start(&mut self, event: &mut Event<mctk_core::event::DragStart>) {

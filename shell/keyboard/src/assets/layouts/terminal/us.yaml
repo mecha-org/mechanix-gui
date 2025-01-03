@@ -1,237 +1,185 @@
 ---
 outlines:
-    default: { width: 46, height: 46 }
-    altline: { width: 56, height: 46 }
-    halfwidth: { width: 17.665, height: 46 }
-    action:    { width: 59,     height: 46 }
-    wide: { width: 56, height: 46 }
-    spaceline: { width: 230.3, height: 46 }
-    special: { width: 44, height: 46 }
-    large: { width: 44, height: 46 }
-    small:     { width: 66,  height: 46 }
+  default: { width: 36, height: 42 }
+  altline: { width: 58, height: 42 }
+  change-view: { width: 58, height: 42 }
+  change-view-2: { width: 54, height: 42 }
+  wide: { width: 54, height: 42 }
+  spaceline: { width: 208.3, height: 42 }
+  special: { width: 44, height: 42 }
+  large: { width: 58, height: 42 }
 
 views:
-    base:
-        - "show_actions Ctrl Alt ↑ ↓ ← →"
-        - "q w e r t y u i o p"
-        - "PeriodSmall a s d f g h j k l MinusSmall"
-        - "Shift_L   z x c v b n m  BackSpace"
-        - "show_numbers preferences      space        Return minimize"
-    minimize:
-        - "maximize"
-    upper:
-        - "TabSmall Ctrl Alt PgUp PgDn Home End"
-        - "Q W E R T Y U I O P"
-        - "SlashSmall A S D F G H J K L PipeSmall"
-        - "Shift_L   Z X C V B N M  BackSpace"
-        - "show_numbers preferences      space        show_actions Return"
-    numbers:
-        - "TabSmall Ctrl Alt ↑ ↓ ← →"
-        - "1 2 3 4 5 6 7 8 9 0"
-        - "\\ * # $ / & - + ( ) _"
-        - "show_symbols   , \" ' colon ; ! ?  BackSpace"
-        - "show_letters preferences         space        period Return"
-    symbols:
-        - "TabSmall Ctrl Alt ↑ ↓ ← →"
-        - "~ ` · √ π τ ÷ × ¶ @"
-        - "© ® £ € ¥ ^ ° { }"
-        - "show_numbers_from_symbols   % | < > = [ ]  BackSpace"
-        - "show_letters preferences         space        period Return"
-    actions:
-        - "TabSmall Ctrl Alt PgUp PgDn Home End"
-        - "F1  F2  F3  F4  F5  F6"
-        - "F7  F8  F9  F10 F11 F12"
-        - "Esc Tab Pause Insert Up Del"
-        - "show_letters_actions Menu Break Left Down Right"
+  base:
+    - "Esc q w e r t y u i o p Home End Del"
+    - "Tab a s d f g h j k l . mpt_l mpt_l mpt_l"
+    - "⌕ Shift_L   z x c v b n m  BackSpace mpt_l UP mpt_l"
+    - "Ctrl show_numbers show_function         space       minimize Return LEFT DOWN RIGHT"
+  minimize:
+    - "maximize"
+  upper:
+    - "Esc Q W E R T Y U I O P Home End Del"
+    - "Tab A S D F G H J K L . mpt_l mpt_l mpt_l"
+    - "⌕ Shift_L   Z X C V B N M  BackSpace mpt_l UP mpt_l"
+    - "Ctrl show_numbers show_function         space       minimize Return LEFT DOWN RIGHT"
+  numbers:
+    - "Esc 1 2 3 4 5 6 7 8 9 0 Home End Del"
+    - "Tab ! @ # $ % ^ & * ( ) mpt_l mpt_l mpt_l"
+    - "⌕ show_symbols   - ' '' : ; , ?  BackSpace mpt_l UP mpt_l"
+    - "Ctrl show_letters show_function         space       minimize Return LEFT DOWN RIGHT"
+  symbols:
+    - "Esc ↑ ↓ ← → e e \\ | { } Home End Del"
+    - "Tab + ` ~ = / _ < > [ ] mpt_l mpt_l mpt_l"
+    - "⌕ show_numbers_from_symbols   - ' '' : ; , ?  BackSpace mpt_l UP mpt_l"
+    - "Ctrl show_letters show_function         space       minimize Return LEFT DOWN RIGHT"
+  function:
+    - "Esc F1     F2     F3     F4     F5     F6 F7 F8 F9 F10 Home End Del"
+    - "Tab F11 F12 mpt_d mpt_d mpt_d mpt_d mpt_d mpt_d mpt_d mpt_d mpt_l mpt_l mpt_l"
+    - "⌕ mpt_cv mpt_d mpt_d mpt_d mpt_d mpt_d mpt_d mpt_d  mpt_alt mpt_l UP mpt_l"
+    - "Ctrl show_letters mpt_d         space       minimize mpt_l LEFT DOWN RIGHT"
 
 buttons:
-    Shift_L:
-        action:
-            locking:
-                lock_view: "upper"
-                unlock_view: "base"
-        outline: "altline"
-        icon: "key-shift"
-    BackSpace:
-        outline: "altline"
-        icon: "edit-clear-symbolic"
-        action: erase
-    preferences:
-        action: "show_prefs"
-        outline: "special"
-        icon: "keyboard-mode-symbolic"
-    minimize:
-        action: "minimize"
-        outline: "altline"
-        icon: "window-min"
-    maximize:
-        action: "maximize"
-        outline: "altline"
-        icon: "window-max"
-    show_numbers:
-        action:
-            set_view: "numbers"
-        outline: "altline"
-        label: "123"
-    show_numbers_from_symbols:
-        action:
-            set_view: "numbers"
-        outline: "altline"
-        label: "123"
-    show_letters:
-        action:
-            set_view: "base"
-        outline: "altline"
-        label: "ABC"
-    show_letters_actions:
-        action:
-            set_view: "base"
-        outline: "wide"
-        label: "ABC"
-    show_symbols:
-        action:
-            set_view: "symbols"
-        outline: "altline"
-        label: "τ=\\"
-    show_actions:
-        action:
-            set_view: "actions"
-        outline: "altline"
-        label: ">_"
-    period:
-        outline: "large"
-        text: "."
-    space:
-        outline: "spaceline"
-        text: " "
-    Return:
-        outline: "wide"
-        icon: "key-enter"
-        keysym: "Return"
-    colon:
-        text: ":"
-    F1:
-        outline: "action"
-        keysym: "F1"
-    F2:
-        outline: "action"
-        keysym: "F2"
-    F3:
-        outline: "action"
-        keysym: "F3"
-    F4:
-        outline: "action"
-        keysym: "F4"
-    F5:
-        outline: "action"
-        keysym: "F5"
-    F6:
-        outline: "action"
-        keysym: "F6"
-    F7:
-        outline: "action"
-        keysym: "F7"
-    F8:
-        outline: "action"
-        keysym: "F8"
-    F9:
-        outline: "action"
-        keysym: "F9"
-    F10:
-        outline: "action"
-        keysym: "F10"
-    F11:
-        outline: "action"
-        keysym: "F11"
-    F12:
-        outline: "action"
-        keysym: "F12"
-    Esc:
-        outline: "action"
-        keysym: "Escape"
-    Tab:
-        outline: "action"
-        keysym: "Tab"
-    TabSmall:
-        outline: "small"
-        keysym: "Tab"
-        label: "Tab"
-    Del:
-        outline: "action"
-        keysym: "Delete"
-    Insert:
-        outline: "action"
-        keysym: "Insert"
-    Menu:
-        outline: "action"
-        keysym: "Menu"
-    Pause:
-        outline: "action"
-        keysym: "Pause"
-    Break:
-        outline: "action"
-        keysym: "Break"
-    Home:
-        outline: "small"
-        keysym: "Home"
-    End:
-        outline: "small"
-        keysym: "End"
-    PgUp:
-        outline: "small"
-        keysym: "Page_Up"
-    PgDn:
-        outline: "small"
-        keysym: "Page_Down"
-    "↑":
-        outline: "small"
-        keysym: "Up"
-    "↓":
-        outline: "small"
-        keysym: "Down"
-    "←":
-        outline: "small"
-        keysym: "Left"
-    "→":
-        outline: "small"
-        keysym: "Right"
-    Up:
-        label: "↑"
-        outline: "action"
-        keysym: "Up"
-    Left:
-        label: "←"
-        outline: "action"
-        keysym: "Left"
-    Down:
-        label: "↓"
-        outline: "action"
-        keysym: "Down"
-    Right:
-        label: "→"
-        outline: "action"
-        keysym: "Right"
-    Ctrl:
-        modifier: "Control"
-        outline: "small"
-        label: "Ctrl"
-    Alt:
-        modifier: "Alt"
-        outline: "small"
-        label: "Alt"
-    MinusSmall:
-        outline: "halfwidth"
-        text: "-"
-    SlashSmall:
-        outline: "halfwidth"
-        text: "/"
-    PipeSmall:
-        outline: "halfwidth"
-        text: "|"
-    PeriodSmall:
-        outline: "halfwidth"
-        text: "."
-    "\\":
-        outline: "halfwidth"
-    _:
-        outline: "halfwidth"
+  Shift_L:
+    action:
+      locking:
+        lock_view: "upper"
+        unlock_view: "base"
+    outline: "change-view"
+    icon: "key-shift"
+  BackSpace:
+    outline: "altline"
+    icon: "edit-clear-symbolic"
+    action: "erase"
+  preferences:
+    action: "show_prefs"
+    outline: "special"
+    icon: "keyboard-mode-symbolic"
+  minimize:
+    action: "minimize"
+    outline: "large"
+    icon: "window-min"
+  maximize:
+    action: "maximize"
+    outline: "large"
+    icon: "window-max"
+  show_numbers:
+    action:
+      set_view: "numbers"
+    outline: "change-view-2"
+    label: "1#!"
+  show_numbers_from_symbols:
+    action:
+      set_view: "numbers"
+    outline: "change-view"
+    label: "2/2"
+  show_letters:
+    action:
+      set_view: "base"
+    outline: "change-view-2"
+    label: "ABC"
+  show_symbols:
+    action:
+      set_view: "symbols"
+    outline: "change-view"
+    label: "1/2"
+  .:
+    outline: "default"
+  space:
+    outline: "spaceline"
+    label: " "
+    text: " "
+  Return:
+    outline: "large"
+    icon: "key-enter"
+    # label: "Done"
+    keysym: "Return"
+  F1:
+    keysym: "F1"
+  F2:
+    keysym: "F2"
+  F3:
+    keysym: "F3"
+  F4:
+    keysym: "F4"
+  F5:
+    keysym: "F5"
+  F6:
+    keysym: "F6"
+  F7:
+    keysym: "F7"
+  F8:
+    keysym: "F8"
+  F9:
+    keysym: "F9"
+  F10:
+    keysym: "F10"
+  F11:
+    keysym: "F11"
+  F12:
+    keysym: "F12"
+  Esc:
+    outline: "large"
+    keysym: "Escape"
+    label: "ESC"
+  Tab:
+    outline: "large"
+    keysym: "Tab"
+    label: "TAB"
+  ⌕:
+    outline: "large"
+  Ctrl:
+    outline: "large"
+    modifier: "Control"
+    label: "Ctrl"
+  Home:
+    outline: "large"
+    keysym: "Home"
+    label: "HOME"
+  End:
+    outline: "large"
+    keysym: "End"
+    label: "END"
+  Del:
+    outline: "large"
+    keysym: "Delete"
+    label: "DEL"
+  LEFT:
+    outline: "large"
+    keysym: "Left"
+    label: "←"
+  DOWN:
+    outline: "large"
+    keysym: "Down"
+    label: "↓"
+  RIGHT:
+    outline: "large"
+    keysym: "Right"
+    label: "→"
+  UP:
+    outline: "large"
+    keysym: "Up"
+    label: "↑"
+  show_function:
+    action:
+      set_view: "function"
+    outline: "default"
+    label: "Fn"
+  show_base_from_function:
+    action:
+      set_view: "base"
+    outline: "default"
+    label: "Fn"
+  mpt_d:
+    label: ""
+  mpt_l:
+    outline: "large"
+    label: ""
+  mpt_cv: 
+    outline: "change-view"
+    label: ""
+  mpt_cv2:
+    outline: "change-view-2"
+    label: ""
+  mpt_alt:
+    outline: "altline"
+    label: ""

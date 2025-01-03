@@ -23,11 +23,7 @@ use std::any::Any;
 pub struct LockscreenState {
     settings: LauncherSettings,
     custom_theme: LauncherTheme,
-    battery_level: BatteryLevel,
-    wireless_status: WirelessStatus,
     bluetooth_status: BluetoothStatus,
-    time: String,
-    date: String,
     app_channel: Option<Sender<AppMessage>>,
     // session_lock_sender: Option<Sender<SessionLockMessage>>,
 }
@@ -51,21 +47,13 @@ impl Component for Lockscreen {
         self.state = Some(LockscreenState {
             settings,
             custom_theme,
-            battery_level: BatteryLevel::default(),
-            wireless_status: WirelessStatus::default(),
             bluetooth_status: BluetoothStatus::default(),
-            time: String::from(""),
-            date: String::from(""),
             app_channel: None,
             // session_lock_sender: None,
         });
     }
 
     fn view(&self) -> Option<Node> {
-        let time = self.state_ref().time.clone();
-        let date = self.state_ref().date.clone();
-        let battery_level = self.state_ref().battery_level.clone();
-        let wireless_status = self.state_ref().wireless_status.clone();
         let bluetooth_status = self.state_ref().bluetooth_status.clone();
         let settings = self.state_ref().settings.clone();
 
@@ -83,11 +71,7 @@ impl Component for Lockscreen {
         start_node = start_node.push(node!(
             HomeUi {
                 settings,
-                battery_level,
-                wireless_status,
                 bluetooth_status,
-                time,
-                date,
                 is_lock_screen: true,
                 ..Default::default()
             },
@@ -101,19 +85,8 @@ impl Component for Lockscreen {
         // println!("App was sent: {:?}", message);
         if let Some(msg) = message.downcast_ref::<Message>() {
             match msg {
-                Message::Clock { time, date } => {
-                    self.state_mut().time = time.clone();
-                    self.state_mut().date = date.clone().to_uppercase();
-                }
-                Message::Wireless { status } => {
-                    self.state_mut().wireless_status = status.clone();
-                }
                 Message::Bluetooth { status } => {
                     self.state_mut().bluetooth_status = status.clone();
-                }
-                Message::Battery { level, status } => {
-                    let battery_level = get_formatted_battery_level(level, status);
-                    self.state_mut().battery_level = battery_level;
                 }
                 Message::Unlock => {
                     if let Some(app_channel) = &self.state_ref().app_channel {

@@ -187,8 +187,8 @@ pub fn get_connected_input_devices<'a>(
         .unwrap();
 
     list_of_input_devices.iter().for_each(|device| {
-        println!("--------------Input device----------------");
-        println!("{:?}", device);
+        // println!("--------------Input device----------------");
+        // println!("{:?}", device);
     });
 
     Ok(list_of_input_devices)

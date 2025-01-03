@@ -35,12 +35,12 @@ pub struct TouchPanelState {
         )>,
     >,
     pub next_char_prob: HashMap<String, f64>,
-    pub key_pressing: Option<KeyButton>,
 }
 
 #[derive(Debug)]
 pub enum TouchPanelMsg {
-    Clicked { position: crate::layout::Point },
+    Pressed { position: crate::layout::Point },
+    Released,
 }
 
 #[component(State = "TouchPanelState")]
@@ -53,6 +53,7 @@ pub struct TouchPanel {
     pub click_area_configs: ClickAreaConfigs,
     pub purpose: ContentPurpose,
     pub active_mods: HashSet<Modifier>,
+    pub key_pressing: Option<KeyButton>,
 }
 
 impl TouchPanel {
@@ -63,6 +64,7 @@ impl TouchPanel {
         click_area_configs: ClickAreaConfigs,
         purpose: ContentPurpose,
         active_mods: HashSet<Modifier>,
+        key_pressing: Option<KeyButton>,
     ) -> Self {
         // println!("TouchPanel::new()");
 
@@ -72,7 +74,6 @@ impl TouchPanel {
             state: Some(TouchPanelState {
                 proximity_matrix: Vec::new(),
                 next_char_prob: HashMap::new(),
-                key_pressing: None,
             }),
             click_area_configs,
             current_view,
@@ -80,6 +81,7 @@ impl TouchPanel {
             dirty: false,
             next_char_prob: next_char_prob.clone(),
             active_mods,
+            key_pressing,
         }
     }
 
@@ -90,7 +92,7 @@ impl TouchPanel {
         let message = msg.downcast_ref::<TouchPanelMsg>();
         if let Some(message) = message {
             match message {
-                TouchPanelMsg::Clicked { position } => {
+                TouchPanelMsg::Pressed { position } => {
                     println!("got click at {:?}", position);
                     //based on x and y of position find position in proximity_matrix
 
@@ -103,6 +105,10 @@ impl TouchPanel {
                             //     println!("checking click {:?} {:?} {:?} {:?}", tl, bl, tr, br);
                             // }
                             // println!("checking click {:?} {:?} {:?} {:?}", tl, bl, tr, br);
+
+                            if button.name == "mpt_l" || button.name == "mpt_d" {
+                                continue;
+                            }
 
                             if position.x >= tl.x
                                 && position.x >= bl.x
@@ -144,14 +150,24 @@ impl TouchPanel {
                             }
                         }
 
-                        self.state_mut().key_pressing = Some(possible_button.clone());
-                        return_messages.push(gui::Message::KeyClicked(
-                            possible_button.action.clone(),
-                            possible_button.keycodes.clone(),
-                        ));
+                        println!("TouchPanelMsg::Pressed {:?}", Some(possible_button.clone()));
+                        return_messages.push(gui::Message::KeyPressed(possible_button));
                     }
 
                     // println!("after click {:?}", self.state_ref().next_char_prob.clone());
+                }
+                TouchPanelMsg::Released => {
+                    return_messages.push(gui::Message::KeyReleased);
+                    // println!(
+                    //     "TouchPanelMsg::Released {:?}",
+                    //     self.state_ref().key_pressing.clone()
+                    // );
+                    // if let Some(key_pressing) = self.state_ref().key_pressing.clone() {
+                    //     return_messages.push(gui::Message::KeyClicked(
+                    //         key_pressing.action.clone(),
+                    //         key_pressing.keycodes.clone(),
+                    //     ));
+                    // }
                 }
             }
         }
@@ -193,7 +209,7 @@ impl TouchPanel {
     }
 
     fn handle_press(&mut self, position: mctk_core::Point) -> Vec<Message> {
-        let msgs = self.update(msg!(TouchPanelMsg::Clicked {
+        let msgs = self.update(msg!(TouchPanelMsg::Pressed {
             position: Point {
                 x: position.x as f64,
                 y: position.y as f64
@@ -202,21 +218,22 @@ impl TouchPanel {
         msgs.clone()
     }
 
-    fn handle_release(&mut self) {
-        self.state_mut().key_pressing = None;
+    fn handle_release(&mut self) -> Vec<Message> {
+        let msgs = self.update(msg!(TouchPanelMsg::Released));
+        msgs.clone()
     }
 }
 
 #[state_component_impl(TouchPanelState)]
 impl Component for TouchPanel {
     fn init(&mut self) {
+        // println!("rows are  {:?}", self.view.rows);
         self.state_mut().proximity_matrix = self.get_positonal_matric();
     }
 
     fn render_hash(&self, hasher: &mut component::ComponentHasher) {
         self.state_ref().proximity_matrix.len().hash(hasher);
         self.state_ref().next_char_prob.len().hash(hasher);
-        self.state_ref().key_pressing.hash(hasher);
     }
 
     fn props_hash(&self, hasher: &mut component::ComponentHasher) {
@@ -224,6 +241,7 @@ impl Component for TouchPanel {
         self.current_view.hash(hasher);
         self.purpose.hash(hasher);
         self.active_mods.len().hash(hasher);
+        self.key_pressing.hash(hasher);
         // self.view.hash(hasher);
     }
 
@@ -357,9 +375,12 @@ impl Component for TouchPanel {
         }
     }
 
-    fn on_mouse_up(&mut self, _event: &mut Event<MouseUp>) {
-        // println!("TouchPanel::on_mouse_up()");
-        self.handle_release();
+    fn on_mouse_up(&mut self, event: &mut Event<MouseUp>) {
+        println!("TouchPanel::on_mouse_up()");
+        let msgs = self.handle_release();
+        for mesg in msgs {
+            event.emit(Box::new(mesg).clone());
+        }
     }
 
     fn on_touch_down(&mut self, event: &mut Event<mctk_core::event::TouchDown>) {
@@ -370,8 +391,11 @@ impl Component for TouchPanel {
         }
     }
 
-    fn on_touch_up(&mut self, _event: &mut Event<mctk_core::event::TouchUp>) {
-        self.handle_release();
+    fn on_touch_up(&mut self, event: &mut Event<mctk_core::event::TouchUp>) {
+        let msgs = self.handle_release();
+        for mesg in msgs {
+            event.emit(Box::new(mesg).clone());
+        }
     }
 
     fn view(&self) -> Option<mctk_core::Node> {
@@ -385,7 +409,6 @@ impl Component for TouchPanel {
         &mut self,
         context: mctk_core::component::RenderContext,
     ) -> Option<Vec<mctk_core::renderables::Renderable>> {
-        println!("TouchPanel::render()");
         let proximity_matrix = self.state_ref().proximity_matrix.clone();
         let show_click_area = self.click_area_configs.visible;
         let active_mods = self.active_mods.clone();
@@ -394,6 +417,8 @@ impl Component for TouchPanel {
         let height = context.aabb.height();
 
         let mut pos: Pos = context.aabb.pos;
+        println!("TouchPanel::render() {:?} {:?} {:?}", pos, width, height);
+
         let mut rs = vec![];
 
         for (i, (row_dp, row)) in self.view.rows.clone().into_iter().enumerate() {
@@ -404,16 +429,20 @@ impl Component for TouchPanel {
             };
 
             for (j, (col_dp, col)) in row.buttons.clone().into_iter().enumerate() {
+                if col.name == "empty_large" {
+                    continue;
+                }
+
                 let mut col_pos = row_pos;
                 col_pos.x += col_dp as f32;
 
                 let button_width = col.size.0 as f32;
                 let button_height = col.size.1 as f32;
 
-                let mut button_color = Color::TRANSPARENT;
-                if let Some(key_pressing) = self.state_ref().key_pressing.clone() {
+                let mut button_color = Color::rgb(47., 47., 48.);
+                if let Some(key_pressing) = self.key_pressing.clone() {
                     if key_pressing.name == col.name {
-                        button_color = Color::rgba(255., 255., 255., 0.25);
+                        button_color = Color::rgb(72., 72., 74.);
                     }
                 };
 
@@ -433,8 +462,7 @@ impl Component for TouchPanel {
                         height: button_height,
                     })
                     .color(button_color)
-                    .border_size((1., 1., 1., 1.))
-                    .border_color(Color::DARK_GREY)
+                    .radius((6., 6., 6., 6.))
                     .build()
                     .unwrap();
 
@@ -444,6 +472,26 @@ impl Component for TouchPanel {
                     || col.name == "space"
                     || col.name == "Return"
                     || col.name == "show_letters"
+                    || col.name == "show_function"
+                    || col.name == "show_base_from_function"
+                    || col.name == "Home"
+                    || col.name == "End"
+                    || col.name == "Del"
+                    || col.name == "Esc"
+                    || col.name == "Tab"
+                    || col.name == "Ctrl"
+                    || col.name == "F1"
+                    || col.name == "F2"
+                    || col.name == "F3"
+                    || col.name == "F4"
+                    || col.name == "F5"
+                    || col.name == "F6"
+                    || col.name == "F7"
+                    || col.name == "F8"
+                    || col.name == "F9"
+                    || col.name == "F10"
+                    || col.name == "F11"
+                    || col.name == "F12"
                 {
                     font_size = 16.;
                 }
@@ -456,7 +504,8 @@ impl Component for TouchPanel {
                 let name_margin = (0., 0., 0., 0.);
                 let name_pos = Pos {
                     x: col_pos.x,
-                    y: col_pos.y + (line_height / 2.),
+                    //todo remove 2.
+                    y: col_pos.y + (line_height / 2.) - 2.,
                     z: 100.,
                 };
                 let icon_scale = Scale {

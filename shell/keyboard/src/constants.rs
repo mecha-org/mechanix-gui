@@ -10,10 +10,14 @@ pub const ASSETS_PATH: &str = concatcp!(USR_SHARE_PATH, APP_PATH, "/assets/");
 pub const ICONS_PATH: &str = concatcp!(ASSETS_PATH, "icons/");
 pub const LAYOUTS_PATH: &str = concatcp!(ASSETS_PATH, "layouts/");
 pub const TERMINAL_PATH: &str = concatcp!(LAYOUTS_PATH, "terminal/");
+pub const EMAIL_PATH: &str = concatcp!(LAYOUTS_PATH, "email/");
+pub const URL_PATH: &str = concatcp!(LAYOUTS_PATH, "url/");
 pub const TRIE_PATH: &str = concatcp!(ASSETS_PATH, "trie/");
 
 pub const LAYOUT_EXAMPLE_PATH: &str = concatcp!(LAYOUTS_PATH, "us.yaml");
 pub const TERMINAL_EXAMPLE_PATH: &str = concatcp!(TERMINAL_PATH, "us.yaml");
+pub const EMAIL_EXAMPLE_PATH: &str = concatcp!(EMAIL_PATH, "us.yaml");
+pub const URL_EXAMPLE_PATH: &str = concatcp!(URL_PATH, "us.yaml");
 pub const TRIE_RAW_FILE: &str = concatcp!(TRIE_PATH, "words_raw.tsv");
 pub const TRIE_CACHED_FILE: &str =
     concatcp!(HOME_DIR_CONFIG_PATH, APP_PATH, "/caches/words_cached.json");

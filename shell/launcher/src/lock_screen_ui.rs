@@ -1,13 +1,15 @@
 use crate::gui::Message;
 use crate::init_services_lock;
+use crate::modules::battery::model::BatteryModel;
+use crate::modules::clock::model::ClockModel;
 use crate::AppMessage;
 use crate::AppParams;
-use crate::BatteryMessage;
 use crate::BluetoothMessage;
 use crate::InitServicesParamsLock;
-use crate::WirelessMessage;
 use crate::{lock_gui, UiParams};
 use logind::get_current_session;
+use mctk_core::context;
+use mctk_core::context::Model;
 use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer;
 use mctk_core::{
     msg,
@@ -16,12 +18,10 @@ use mctk_core::{
 use mctk_smithay::layer_shell::layer_surface::LayerOptions;
 use mctk_smithay::layer_shell::layer_window::LayerWindow;
 use mctk_smithay::layer_shell::layer_window::LayerWindowParams;
-use mctk_smithay::session_lock::lock_window::SessionLockMessage;
-use mctk_smithay::session_lock::lock_window::SessionLockWindow;
-use mctk_smithay::session_lock::lock_window::SessionLockWindowParams;
 use mctk_smithay::WindowInfo;
 use mctk_smithay::WindowMessage;
 use mctk_smithay::WindowOptions;
+use networkmanager::WirelessModel;
 use tokio::sync::mpsc;
 
 pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
@@ -95,6 +95,16 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
 
     let handle = event_loop.handle();
     let window_tx_2 = window_tx.clone();
+    let window_tx_3 = window_tx.clone();
+    let context_handler = context::get_static_context_handler();
+    context_handler.register_on_change(Box::new(move || {
+        window_tx_3
+            .send(WindowMessage::Send { message: msg!(0) })
+            .unwrap();
+    }));
+    WirelessModel::get().register_context_handler(context_handler);
+    ClockModel::get().register_context_handler(context_handler);
+    BatteryModel::get().register_context_handler(context_handler);
 
     // let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
@@ -102,24 +112,6 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
             calloop::channel::Event::Msg(msg) => match msg {
-                AppMessage::Clock { date, time } => {
-                    //println!("AppMessage::Clock {:?}", current_time);
-                    println!("sending clock message to homescreen");
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::Clock {
-                            date: date.clone(),
-                            time: time.clone()
-                        }),
-                    });
-                }
-                AppMessage::Wireless { message } => match message {
-                    WirelessMessage::Status { status } => {
-                        let _ = window_tx_2.send(WindowMessage::Send {
-                            message: msg!(Message::Wireless { status }),
-                        });
-                    }
-                    _ => (),
-                },
                 AppMessage::Bluetooth { message } => match message {
                     BluetoothMessage::Status { status } => {
                         let _ = window_tx_2.send(WindowMessage::Send {
@@ -127,13 +119,6 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
                         });
                     }
                     _ => (),
-                },
-                AppMessage::Battery { message } => match message {
-                    BatteryMessage::Status { level, status } => {
-                        let _ = window_tx_2.send(WindowMessage::Send {
-                            message: msg!(Message::Battery { level, status }),
-                        });
-                    }
                 },
                 AppMessage::Unlock => {
                     zbus::block_on(async move {

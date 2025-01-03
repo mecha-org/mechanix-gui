@@ -65,7 +65,7 @@ impl Component for Closer {
     }
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
-        println!("Closer::on_touch_drag() {:?}", event.logical_delta());
+        // println!("Closer::on_touch_drag() {:?}", event.logical_delta());
         if let Some(msg) = self.handle_on_drag(event.logical_delta()) {
             event.emit(msg);
         };

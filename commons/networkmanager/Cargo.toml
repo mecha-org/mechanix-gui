@@ -1,0 +1,21 @@
+[package]
+name = "networkmanager"
+documentation = "https://docs.mecha.so"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1.33", features = ["full"] }
+zbus = { version = "4.1.2", features = ["tokio"] }
+serde = { version = "1.0.163", features = ["derive"] }
+uuid = "1.11.0"
+anyhow = "1"
+mctk_core = { git = "https://github.com/mecha-org/mctk.git", rev = "7c88787de053200cda4f7f02c050129e7c372d6d" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git", rev = "7c88787de053200cda4f7f02c050129e7c372d6d" }
+futures = "0.3.30"
+lazy_static = "1.5.0"

@@ -19,7 +19,7 @@ use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::{
     },
 };
 
-use crate::AppMessage;
+use crate::{modules::applications::model::DesktopEntriesModel, AppMessage};
 
 use super::running_app::{AppDetails, AppInstance};
 
@@ -36,26 +36,34 @@ pub enum AppManagerMessage {
     CloseAllApps {
         reply_to: oneshot::Sender<Result<bool>>,
     },
+    LaunchApp {
+        app_id: String,
+        reply_to: oneshot::Sender<Result<bool>>,
+    },
+    CloseApp {
+        app_id: String,
+        reply_to: oneshot::Sender<Result<bool>>,
+    },
 }
 
 #[derive(Debug, Clone)]
 pub struct AppInstanceState {
     app_id: String,
     title: String,
+    state: Option<Vec<ToplevelWState>>,
 }
 
+#[derive(Debug, Clone)]
 pub struct AppManagerService {
     pub apps: IndexMap<String, IndexMap<ToplevelKey, AppInstanceState>>,
     pub top_level_sender: Option<mpsc::Sender<ToplevelMessage>>,
-    pub desktop_entries: Vec<DesktopEntry>,
 }
 
 impl AppManagerService {
-    pub fn new(desktop_entries: Vec<DesktopEntry>) -> Self {
+    pub fn new() -> Self {
         Self {
             apps: IndexMap::new(),
             top_level_sender: None,
-            desktop_entries,
         }
     }
 
@@ -98,8 +106,13 @@ impl AppManagerService {
                 .await;
             let tl_meta = rx.await.unwrap();
 
-            if let Some(ToplevelMeta { app_id, title, .. }) = tl_meta {
-                let _ = &self.add_app(app_id, tl, title);
+            if let Some(ToplevelMeta {
+                app_id,
+                title,
+                state,
+            }) = tl_meta
+            {
+                let _ = &self.add_app(app_id, tl, title, state);
             };
         }
 
@@ -125,6 +138,14 @@ impl AppManagerService {
                             let res = self.close_all_apps().await;
                             let _ = reply_to.send(res);
                         }
+                        AppManagerMessage::LaunchApp { app_id, reply_to }=> {
+                            let res = self.launch_app(&app_id).await;
+                            let _ = reply_to.send(res);
+                        }
+                        AppManagerMessage::CloseApp { app_id, reply_to }=> {
+                            let res = self.close_app(&app_id).await;
+                            let _ = reply_to.send(res);
+                        }
                     }
                 }
 
@@ -133,7 +154,7 @@ impl AppManagerService {
                         continue;
                     }
 
-                    println!("event received {:?}", event);
+                    // println!("event received {:?}", event);
 
                     match event.unwrap() {
                         // ToplevelEvent::Created {
@@ -147,15 +168,23 @@ impl AppManagerService {
                             app_id,
                             state,
                         } => {
-                            let _ = &self.add_app(app_id, key, title);
-                            info!("all apps are {:?}", self.get_all_apps());
+                            let _ = &self.add_app(app_id.clone().to_lowercase(), key, title, state);
+                            let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+                            let formatted_apps = format_apps_from_map_to_vec(self.apps.clone(), desktop_entries.clone());
+                            let active_apps_count = self.get_active_apps_count();
 
-                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated { apps: format_apps_from_map_to_vec(self.apps.clone(), self.desktop_entries.clone()) });
+                            let mut possible_app_id = "".to_string();
+                            if let Some(entry) = find_desktop_entry(&app_id.to_lowercase(), &desktop_entries){
+                                possible_app_id = entry.app_id.clone();
+                            };
+                            println!("possible_app_id {:?}", possible_app_id);
+                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated  { app_id: possible_app_id, apps: formatted_apps , active_apps_count });
                         }
                         ToplevelEvent::Closed { key } => {
                             let _ = &self.remove_app_instance(key);
-
-                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated { apps: format_apps_from_map_to_vec(self.apps.clone(), self.desktop_entries.clone()) });
+                            let active_apps_count = self.get_active_apps_count();
+                            let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated { app_id: "".to_string(), apps: format_apps_from_map_to_vec(self.apps.clone(), desktop_entries.clone()), active_apps_count });
                         }
                         _ => {}
                     }
@@ -164,34 +193,64 @@ impl AppManagerService {
         }
     }
 
-    pub fn start_app(&self, app_id: &str, exec: &str) -> Result<bool> {
+    pub fn start_app(&self, app_id: &str) -> Result<bool> {
+        let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+        let app = desktop_entries
+            .iter()
+            .find(|entry| entry.app_id.to_lowercase() == app_id.to_lowercase());
+
+        if app.is_none() {
+            return Ok(false);
+        }
+
+        let app = app.unwrap();
+        let exec = app.exec.clone();
         if !exec.is_empty() {
             let mut args: Vec<String> = vec!["-c".to_string()];
             args.push(exec.to_string());
-            let _ = spawn_command("sh".to_string(), args);
+            let res = spawn_command("sh".to_string(), args);
+            if let Err(why) = res {
+                println!("AppManagerService::start_app() error {:?}", why);
+            };
         }
 
         Ok(true)
     }
 
-    pub async fn launch_app(&self, app_id: &str, exec: &str) -> Result<bool> {
+    pub async fn launch_app(&self, app_id: &str) -> Result<bool> {
         //check if app is already open, then launch that
         //else spawn app
         let is_app_launched;
 
         if self.is_app_already_running(app_id) {
+            println!("activating old instance {:?}", app_id);
             is_app_launched = match self.activate_app(app_id).await {
                 Ok(v) => v,
                 Err(e) => bail!(e),
             };
         } else {
-            is_app_launched = match self.start_app(app_id, exec) {
+            println!("launching new instance {:?}", app_id);
+            is_app_launched = match self.start_app(app_id) {
                 Ok(v) => v,
                 Err(e) => bail!(e),
             }
         }
 
         Ok(is_app_launched)
+    }
+
+    pub async fn close_app(&self, app_id: &str) -> Result<bool> {
+        let top_level_keys = match self.get_all_instances(app_id) {
+            Some(top_level_keys) => top_level_keys,
+            None => IndexMap::new(),
+        };
+
+        let mut res = Ok(false);
+        for (top_level_key, _) in top_level_keys {
+            res = self.close_app_instance(top_level_key).await;
+        }
+
+        res
     }
 
     pub async fn close_app_instance(&self, key: ToplevelKey) -> Result<bool> {
@@ -312,6 +371,7 @@ impl AppManagerService {
         app_id: String,
         new_instance: ToplevelKey,
         title: String,
+        state: Option<Vec<ToplevelWState>>,
     ) -> Result<bool> {
         if !(app_id.len() > 0) {
             return Ok(false);
@@ -327,6 +387,7 @@ impl AppManagerService {
             AppInstanceState {
                 app_id: app_id.clone(),
                 title,
+                state,
             },
         );
         self.apps.insert(app_id, instances);
@@ -371,6 +432,20 @@ impl AppManagerService {
         Ok(self.apps.clone())
     }
 
+    pub fn get_active_apps_count(&self) -> i32 {
+        let mut active_apps_count = 0;
+        for (_, tl_key_map) in self.apps.clone() {
+            for (_, app) in tl_key_map {
+                if let Some(state) = app.state {
+                    if !state.contains(&ToplevelWState::Minimized) {
+                        active_apps_count += 1;
+                    }
+                };
+            }
+        }
+        active_apps_count
+    }
+
     pub fn remove_app_instance(&mut self, instance_to_remove: ToplevelKey) -> Result<bool> {
         let app_op = self
             .apps
@@ -406,19 +481,10 @@ fn format_apps_from_map_to_vec(
         let mut icon: Option<String> = None;
         let mut icon_type: Option<IconType> = None;
         let mut path: Option<String> = None;
-        if let Some(entry) = desktop_entries.clone().into_iter().find(|entry| {
-            app_id.to_lowercase() == entry.app_id.to_lowercase()
-                || Some(app_id.clone()) == entry.icon_name
-                || entry
-                    .exec
-                    .clone()
-                    .to_lowercase()
-                    .contains(&app_id.to_lowercase())
-        }) {
+        if let Some(entry) = find_desktop_entry(&app_id, &desktop_entries) {
             name = Some(entry.name);
             icon = entry.icon_name;
             if let Some(icon_path) = entry.icon_path {
-                println!("icon path {:?}", icon_path);
                 if let Some(ext) = icon_path.extension() {
                     if ext == "png" {
                         path = Some(icon_path.clone().into_os_string().into_string().unwrap());
@@ -456,4 +522,21 @@ fn format_apps_from_map_to_vec(
     }
 
     apps_vec
+}
+
+fn find_desktop_entry(
+    app_id: &String,
+    desktop_entries: &Vec<DesktopEntry>,
+) -> Option<DesktopEntry> {
+    println!("find_desktop_entry {:?}", app_id);
+    let entry = desktop_entries.clone().into_iter().find(|entry| {
+        app_id.to_lowercase() == entry.app_id.to_lowercase()
+            || Some(app_id.clone()) == entry.icon_name
+            || entry
+                .exec
+                .clone()
+                .to_lowercase()
+                .contains(&app_id.to_lowercase())
+    });
+    entry
 }

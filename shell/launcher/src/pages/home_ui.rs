@@ -1,7 +1,9 @@
 use std::collections::VecDeque;
 
 use crate::gui::{self, Message};
+use crate::modules::applications::model::DesktopEntriesModel;
 use crate::modules::clock::component::Clock;
+use crate::modules::clock::model::ClockModel;
 use crate::modules::controls::Controls;
 use crate::modules::cpu::component::CPU;
 use crate::modules::ip_address::component::IpAddress;
@@ -12,43 +14,43 @@ use crate::modules::pinned_app::PinnedApp;
 use crate::modules::uptime::component::Uptime;
 use crate::settings::LauncherSettings;
 use crate::shared::h_divider::HDivider;
-use crate::shared::slider::{Slider, SliderType};
 use crate::shared::v_divider::VDivider;
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
+use desktop_entries::DesktopEntry;
 use mctk_core::layout::{Alignment, Direction};
-use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
+use mctk_core::{
+    component::Component,
+    lay, node, rect, size, size_pct,
+    widgets::{Div, SlideBar, SlideBarType},
+    Node,
+};
 use mctk_core::{msg, Color};
 
 #[derive(Debug, Default)]
 pub struct HomeUi {
     pub settings: LauncherSettings,
-    pub battery_level: BatteryLevel,
-    pub wireless_status: WirelessStatus,
     pub bluetooth_status: BluetoothStatus,
-    pub time: String,
-    pub date: String,
     pub cpu_usage: VecDeque<u8>,
     pub uptime: String,
     pub machine_name: String,
-    pub ip_address: String,
     pub online: bool,
     pub used_memory: u64,
     pub is_lock_screen: bool,
     pub disable_activity: bool,
+    pub pinned_apps: Vec<DesktopEntry>,
 }
 
 impl Component for HomeUi {
+    fn init(&mut self) {
+        DesktopEntriesModel::run();
+    }
+
     fn view(&self) -> Option<Node> {
         let cpu_usage = self.cpu_usage.clone();
         let uptime = self.uptime.clone();
         let machine_name = self.machine_name.clone();
-        let ip_address = self.ip_address.clone();
         let online = self.online.clone();
         let used_memory = self.used_memory;
-        let time = self.time.clone();
-        let date = self.date.clone();
-        let battery_level = self.battery_level.clone();
-        let wireless_status = self.wireless_status.clone();
         let bluetooth_status = self.bluetooth_status.clone();
         let is_lock_screen = self.is_lock_screen;
         let disable_activity = self.disable_activity;
@@ -73,8 +75,12 @@ impl Component for HomeUi {
             ]
         );
 
+        let clock = self.settings.modules.clock.clone();
         row_1 = row_1.push(node!(
-            Clock { date, time },
+            Clock {
+                date_format: clock.date.clone(),
+                time_format: clock.time.clone(),
+            },
             lay![
                 size_pct: [50, Auto]
             ]
@@ -82,8 +88,6 @@ impl Component for HomeUi {
 
         row_1 = row_1.push(node!(
             Controls {
-                battery_level,
-                wireless_status,
                 bluetooth_status,
                 is_lock_screen
             },
@@ -110,7 +114,7 @@ impl Component for HomeUi {
         ));
 
         row_2 = row_2.push(node!(
-            IpAddress { ip_address },
+            IpAddress {},
             lay![
                 size_pct: [50, Auto],
                 axis_alignment: Alignment::End,
@@ -193,11 +197,12 @@ impl Component for HomeUi {
             ]
         );
 
-        for (i, app) in self.settings.modules.apps.clone().into_iter().enumerate() {
+        for (i, app) in self.pinned_apps.clone().into_iter().enumerate() {
             row_4 = row_4.push(
-                node!(PinnedApp::new(app.app_id.clone(), app.icon.unwrap())
-                    .on_click(Box::new(move || msg!(Message::AppClicked {
-                        app_id: app.app_id.clone()
+                node!(PinnedApp::new(app.clone())
+                    .on_click(Box::new(move || msg!(Message::AppOpen {
+                        app_id: app.app_id.clone(),
+                        layer: None
                     })))
                     .disabled(disable_activity))
                 .key(i as u64),
@@ -265,8 +270,8 @@ impl Component for HomeUi {
             start_node = start_node.push(row_4);
         } else {
             start_node = start_node.push(node!(
-                Slider::new()
-                    .slider_type(SliderType::Box)
+                SlideBar::new()
+                    .slider_type(SlideBarType::Box)
                     .on_slide_end(Box::new(|value| {
                         if value > 90 {
                             msg!(gui::Message::Unlock)
@@ -274,6 +279,7 @@ impl Component for HomeUi {
                             msg!("none")
                         }
                     }))
+                    // .has_idle_animation(true)
                     .fill_random_on_start(true)
                     .fill_random_on_slide(true)
                     .reset_on_slide_end(true)

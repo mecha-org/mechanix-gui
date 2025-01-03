@@ -1,12 +1,19 @@
 use crate::{
     init_services_home,
     modules::{
-        power_options::service::PowerOptionsService, running_apps::app_manager::AppManagerMessage,
+        applications::model::DesktopEntriesModel, battery::model::BatteryModel,
+        clock::model::ClockModel, power_options::service::PowerOptionsService,
+        running_apps::app_manager::AppManagerMessage,
     },
     AppMessage, AppParams, BatteryMessage, BluetoothMessage, BrightnessMessage,
-    InitServicesParamsHome, RunningAppsMessage, SoundMessage, UiParams, WirelessMessage,
+    InitServicesParamsHome, RunningAppsMessage, SoundMessage, UiParams,
 };
-use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
+use mctk_core::context::Model;
+use mctk_core::{
+    context::{self},
+    reexports::smithay_client_toolkit::shell::wlr_layer::Layer,
+};
+use networkmanager::{IpAddressModel, WirelessModel};
 use std::sync::{Arc, RwLock};
 use tokio::sync::{mpsc, oneshot};
 use tracing::error;
@@ -36,6 +43,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
         settings,
         theme,
         installed_apps,
+        pinned_apps,
     } = ui_params;
 
     let window_opts = WindowOptions {
@@ -82,18 +90,33 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
         AppParams {
             app_channel: Some(app_channel_tx.clone()),
             installed_apps: Some(installed_apps.clone()),
+            pinned_apps: Some(pinned_apps.clone()),
         },
     );
 
     let handle = event_loop.handle();
 
     let window_tx_2 = window_tx.clone();
+    let window_tx_3 = window_tx.clone();
+    let context_handler = context::get_static_context_handler();
+    context_handler.register_on_change(Box::new(move || {
+        window_tx_3
+            .send(WindowMessage::Send { message: msg!(0) })
+            .unwrap();
+    }));
+    // context_handler.register_context(&WirelessModel::get().connected_network);
+    IpAddressModel::get().register_context_handler(context_handler);
+    WirelessModel::get().register_context_handler(context_handler);
+    ClockModel::get().register_context_handler(context_handler);
+    BatteryModel::get().register_context_handler(context_handler);
+    DesktopEntriesModel::get().register_context_handler(context_handler);
+
     // let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
     let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
     let (sound_msg_tx, sound_msg_rx) = mpsc::channel(128);
     let (app_manager_msg_tx, app_manager_msg_rx) = mpsc::channel(128);
-
+    let app_channel_tx_2 = app_channel_tx.clone();
     let _ = handle.insert_source(app_channel_rx, move |event: Event<AppMessage>, _, app| {
         let _ = match event {
             // calloop::channel::Event::Msg(msg) => app.app.push_message(msg),
@@ -111,16 +134,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                 AppMessage::MachineName { name } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::MachineName { name }),
-                    });
-                }
-                AppMessage::IpAddress { address } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::IpAddress { address }),
-                    });
-                }
-                AppMessage::PowerOptions { show } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::PowerOptions { show }),
                     });
                 }
                 AppMessage::Net { online } => {
@@ -144,14 +157,10 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                             message: msg!(Message::RunningAppsToggle { show: value }),
                         });
 
-                        if value == true {
-                            layer_shell_opts.layer = Layer::Top;
-                            let _ =
-                                layer_tx
-                                    .clone()
-                                    .send(LayerWindowMessage::ReconfigureLayerOpts {
-                                        opts: layer_shell_opts.clone(),
-                                    });
+                        if value {
+                            let _ = app_channel_tx_2
+                                .clone()
+                                .send(AppMessage::ChangeLayer(Layer::Top));
                         }
                     }
                 },
@@ -166,29 +175,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         message: msg!(Message::ChangeLayer(layer)),
                     });
                 }
-                AppMessage::Clock { date, time } => {
-                    //println!("AppMessage::Clock {:?}", current_time);
-                    println!("sending clock message to homescreen");
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::Clock {
-                            date: date.clone(),
-                            time: time.clone()
-                        }),
-                    });
-                }
-                AppMessage::Wireless { message } => match message {
-                    WirelessMessage::Status { status } => {
-                        let _ = window_tx_2.send(WindowMessage::Send {
-                            message: msg!(Message::Wireless { status }),
-                        });
-                    }
-                    WirelessMessage::Toggle { .. } => {
-                        // let wireless_msg_tx_cloned = wireless_msg_tx.clone();
-                        // futures::executor::block_on(async move {
-                        //     let res = wireless_msg_tx_cloned.clone().send(message).await;
-                        // });
-                    }
-                },
                 AppMessage::Bluetooth { message } => match message {
                     BluetoothMessage::Status { status } => {
                         let _ = window_tx_2.send(WindowMessage::Send {
@@ -199,13 +185,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         let bluetooth_msg_tx_cloned = bluetooth_msg_tx.clone();
                         futures::executor::block_on(async move {
                             let res = bluetooth_msg_tx_cloned.clone().send(message).await;
-                        });
-                    }
-                },
-                AppMessage::Battery { message } => match message {
-                    BatteryMessage::Status { level, status } => {
-                        let _ = window_tx_2.send(WindowMessage::Send {
-                            message: msg!(Message::Battery { level, status }),
                         });
                     }
                 },
@@ -235,84 +214,20 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         });
                     }
                 },
-                AppMessage::AppsUpdated { apps } => {
+                AppMessage::AppsUpdated {
+                    apps,
+                    app_id,
+                    active_apps_count,
+                } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::AppsUpdated { apps }),
-                    });
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::AppOpening { value: false }),
-                    });
-                }
-                AppMessage::AppInstanceClicked(instance) => {
-                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let (tx, rx) = oneshot::channel();
-                        println!("sending message to wayland to activate app instance");
-                        let _ = app_manager_msg_tx2
-                            .clone()
-                            .send(AppManagerMessage::ActivateAppInstance {
-                                instance,
-                                reply_to: tx,
-                            })
-                            .await;
-                        println!("message sent to wayland to activate app instance");
-                        let res = rx.await.expect("no reply from service");
-
-                        match res {
-                            Ok(r) => {
-                                println!("activate app instance res from wayland {:?}", r);
-                            }
-                            Err(e) => {
-                                error!("activate app instance error from wayland {}", e);
-                            }
-                        }
+                        message: msg!(Message::AppsUpdated {
+                            apps,
+                            app_id,
+                            active_apps_count
+                        }),
                     });
                 }
-                AppMessage::AppInstanceCloseClicked(instance) => {
-                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let (tx, rx) = oneshot::channel();
-                        println!("sending message to wayland to close app instance");
-                        let _ = app_manager_msg_tx2
-                            .send(AppManagerMessage::CloseAppInstance {
-                                instance,
-                                reply_to: tx,
-                            })
-                            .await;
-                        println!("message sent to wayland to close app instance");
-                        let res = rx.await.expect("no reply from service");
 
-                        match res {
-                            Ok(r) => {
-                                println!("close app instance res from wayland {:?}", r);
-                            }
-                            Err(e) => {
-                                error!("close app instance error from wayland {}", e);
-                            }
-                        }
-                    })
-                }
-                AppMessage::CloseAllApps => {
-                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
-                    futures::executor::block_on(async move {
-                        let (tx, rx) = oneshot::channel();
-                        println!("sending message to wayland to close all apps instance");
-                        let _ = app_manager_msg_tx2
-                            .send(AppManagerMessage::CloseAllApps { reply_to: tx })
-                            .await;
-                        println!("message sent to wayland to close all apps instance");
-                        let res = rx.await.expect("no reply from service");
-
-                        match res {
-                            Ok(r) => {
-                                println!("close all apps instance res from wayland {:?}", r);
-                            }
-                            Err(e) => {
-                                println!("close all apps instance error from wayland {}", e);
-                            }
-                        }
-                    })
-                }
                 AppMessage::ShutDown => {
                     println!("AppMessage::ShutDown");
                     let _ = PowerOptionsService::shutdown();
@@ -322,6 +237,50 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                     let _ = PowerOptionsService::restart();
                 }
                 AppMessage::Unlock => {}
+                AppMessage::AppOpen { app_id } => {
+                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
+                    futures::executor::block_on(async move {
+                        let (tx, rx) = oneshot::channel();
+                        let _ = app_manager_msg_tx2
+                            .send(AppManagerMessage::LaunchApp {
+                                app_id,
+                                reply_to: tx,
+                            })
+                            .await;
+                        let res = rx.await.expect("no reply from service");
+
+                        match res {
+                            Ok(r) => {
+                                println!("AppMessage::AppOpen response {:?}", r);
+                            }
+                            Err(e) => {
+                                println!("AppMessage::AppOpen error {}", e);
+                            }
+                        }
+                    })
+                }
+                AppMessage::AppClose { app_id } => {
+                    let app_manager_msg_tx2 = app_manager_msg_tx.clone();
+                    futures::executor::block_on(async move {
+                        let (tx, rx) = oneshot::channel();
+                        let _ = app_manager_msg_tx2
+                            .send(AppManagerMessage::CloseApp {
+                                app_id,
+                                reply_to: tx,
+                            })
+                            .await;
+                        let res = rx.await.expect("no reply from service");
+
+                        match res {
+                            Ok(r) => {
+                                println!("AppMessage::AppClose response {:?}", r);
+                            }
+                            Err(e) => {
+                                println!("AppMessage::AppClose error {}", e);
+                            }
+                        }
+                    })
+                }
             },
             calloop::channel::Event::Closed => {}
         };
@@ -330,12 +289,10 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     init_services_home(InitServicesParamsHome {
         settings,
         app_channel: app_channel_tx,
-        // wireless_msg_rx,
         bluetooth_msg_rx,
         brightness_msg_rx,
         sound_msg_rx,
         app_manager_msg_rx,
-        installed_apps,
     });
 
     loop {

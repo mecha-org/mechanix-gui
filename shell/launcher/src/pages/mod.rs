@@ -5,4 +5,5 @@ pub mod home_ui;
 pub mod notifications;
 pub mod power_options;
 pub mod settings_panel;
+pub mod splash_screen;
 pub mod status_bar;

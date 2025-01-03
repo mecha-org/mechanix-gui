@@ -1,6 +1,5 @@
 use std::hash::{Hash, Hasher};
 
-use command::spawn_command;
 use desktop_entries::DesktopEntry;
 use mctk_core::{
     component::Component,
@@ -108,8 +107,10 @@ impl Component for AppDrawer {
                             translations,
                             ..Default::default()
                         };
-                        bubble_msgs
-                            .push(msg!(gui::Message::AppListAppClicked { app: app.clone() }));
+                        bubble_msgs.push(msg!(gui::Message::AppOpen {
+                            app_id: app.app_id.clone(),
+                            layer: None
+                        }));
                         bubble_msgs.push(msg!(gui::Message::Swipe { swipe }));
                     }
                 }
@@ -124,9 +125,10 @@ impl Component for AppDrawer {
             match message {
                 AppInfoMessage::Launch { app } => {
                     if !app.exec.is_empty() {
-                        let mut args: Vec<String> = vec!["-c".to_string()];
-                        args.push(app.exec.clone());
-                        let _ = spawn_command("sh".to_string(), args);
+                        bubble_msgs.push(msg!(gui::Message::AppOpen {
+                            app_id: app.app_id.clone(),
+                            layer: None
+                        }));
                     }
                     self.state_mut().app_info_app = None;
                 }

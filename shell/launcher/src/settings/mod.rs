@@ -358,19 +358,15 @@ impl Default for CloseIconPath {
 
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct TerminalModule {
-    pub icon: CloseIconPath,
-    pub run_command: Vec<String>,
+    pub app_id: String,
+    pub icon: String,
 }
 
 impl Default for TerminalModule {
     fn default() -> Self {
         TerminalModule {
-            icon: CloseIconPath::default(),
-            run_command: vec![
-                "sh".to_string(),
-                "-c".to_string(),
-                "alacritty --working-directory=/home/mecha".to_string(),
-            ],
+            app_id: "alacritty".to_owned(),
+            icon: TERMINAL_ICON.to_owned(),
         }
     }
 }
@@ -461,7 +457,7 @@ pub struct Modules {
     pub bluetooth: Bluetooth,
     pub wireless: Wireless,
     pub battery: Battery,
-    pub apps: Vec<App>,
+    pub pinned_apps: Vec<String>,
     pub background: BackgroundModule,
     pub rotation: RotationModule,
     pub power: PowerModule,
@@ -506,7 +502,8 @@ impl Default for LayoutSettings {
 /// Clock module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Clock {
-    pub format: String,
+    pub date: String,
+    pub time: String,
 }
 
 /// Bluetooth module
@@ -764,61 +761,15 @@ impl Default for CustomFonts {
 impl Default for Modules {
     fn default() -> Self {
         Self {
-            apps: vec![
-                App{
-                    app_id: "mecha-connect".to_string(),
-                    name: "Mecha Connect".to_string(),
-                    icon: Some(MECHA_CONNECT_ICON.to_owned()),
-                    run_command:  [
-                        "sh",
-                        "-c",
-                        "MECHA_CONNECT_APP_SETTINGS_PATH=/etc/mecha/connect/settings-demo.yml mecha-connect",
-                      ].map(String::from).to_vec(),
-                },
-                App{
-                    app_id: "mecha-llama".to_string(),
-                    name: "Mecha LLama".to_string(),
-                    icon: Some(MECHA_LLAMA_ICON.to_owned()),
-                    run_command: [
-                        "sh", 
-                        "-c",
-                        "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland https://mecha-voice-ai-demo.vercel.app/"
-                      ].map(String::from).to_vec(),
-                },
-                App{
-                    app_id: "mecha-vision".to_string(),
-                    name: "Mecha Vision".to_string(),
-                    icon: Some(MECHA_VISION_ICON.to_owned()),
-                    run_command: [
-                        "sh", 
-                        "-c",
-                        "LD_LIBRARY_PATH=/home/mecha/.pipeless /home/mecha/.pipeless/pipeless add stream --input-uri 'v4l2' --output-uri 'screen' --frame-path 'cats'"
-                      ].map(String::from).to_vec(),
-                },
-                App{
-                    app_id: "mecha-terminal".to_string(),
-                    name: "Mecha Terminal".to_string(),
-                    icon: Some(MECHA_TERMINAL_ICON.to_owned()),
-                    run_command: [
-                        "sh", 
-                        "-c",
-                        "alacritty"
-                      ].map(String::from).to_vec(),
-                },
-                App{
-                    app_id: "mecha-gaming".to_string(),
-                    name: "Mecha Gaming".to_string(),
-                    icon: Some(MECHA_GAMING_ICON.to_owned()),
-                    run_command: [
-                        "sh", 
-                        "-c",
-                        "chromium --user-agent='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36' --ozone-platform=wayland https://guccigrip.gucci.com/"
-                      ].map(String::from).to_vec(),
-                },
+            pinned_apps: vec![
+                String::from("mecha-connect"),
+                String::from("alacritty"),
+                String::from("firefox-esr"),
             ],
             background: BackgroundModule::default(),
             clock: Clock {
-                format: "%I:%M %p".to_string(),
+                time: "%H:%M".to_string(),
+                date: "%e %B  %A".to_string(),
             },
             bluetooth: Bluetooth {
                 icon: BluetoothIcons::default(),
@@ -830,7 +781,10 @@ impl Default for Modules {
                 icon: BatteryIconPaths::default(),
                 charging_icon: ChargingBatteryIconPaths::default(),
             },
-            rotation: RotationModule { icon: RotationIconPaths::default(), title: "".to_string() },
+            rotation: RotationModule {
+                icon: RotationIconPaths::default(),
+                title: "".to_string(),
+            },
             power: PowerModule::default(),
             lock: LockModule::default(),
             settings: SettingsModule::default(),

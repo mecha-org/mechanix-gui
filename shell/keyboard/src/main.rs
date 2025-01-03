@@ -4,13 +4,15 @@ mod constants;
 mod errors;
 mod gui;
 mod layout;
+mod model;
 mod settings;
 mod trie;
+mod utils;
 
 use action::{Modifier, Modifiers};
 use gui::Keyboard;
 use mctk_core::{
-    msg,
+    context, msg,
     reexports::{
         cosmic_text,
         smithay_client_toolkit::{
@@ -27,6 +29,7 @@ use mctk_smithay::layer_shell::layer_window::{LayerWindowMessage, LayerWindowPar
 use mctk_smithay::WindowOptions;
 use mctk_smithay::{layer_shell::layer_surface::LayerOptions, WindowMessage};
 use mctk_smithay::{layer_shell::layer_window::LayerWindow, WindowInfo};
+use model::KeyboardModel;
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 use std::{collections::HashMap, io::SeekFrom};
@@ -49,6 +52,7 @@ use wayland_protocols_async::{
 };
 
 use crate::gui::Message;
+use mctk_core::context::Model;
 use settings::{Icons, KeyboardSettings, TrieConfigs};
 use tracing::info;
 use tracing_subscriber::EnvFilter;
@@ -60,10 +64,6 @@ pub struct AppParams {
 
 #[derive(Debug)]
 enum AppMessage {
-    Show,
-    Hide,
-    Maximize,
-    Minimize,
     TextkeyPressed {
         keycode: crate::layout::KeyCode,
     },
@@ -75,10 +75,6 @@ enum AppMessage {
     SuggestionPressed {
         suggestion: String,
         suggested_for: String,
-    },
-    Erase,
-    ContentInfo {
-        purpose: ContentPurpose,
     },
     ApplyModifiers {
         mods: HashSet<Modifier>,
@@ -139,6 +135,8 @@ fn main() -> anyhow::Result<()> {
         ContentPurpose::Terminal,
         load_keymap(layouts.terminal.clone()),
     );
+    layouts_map.insert(ContentPurpose::Email, load_keymap(layouts.email.clone()));
+    layouts_map.insert(ContentPurpose::Url, load_keymap(layouts.url.clone()));
 
     let app_id = settings
         .app
@@ -182,9 +180,22 @@ fn main() -> anyhow::Result<()> {
     );
 
     let handle = event_loop.handle();
-
     let window_tx_2 = window_tx.clone();
-    let (virtual_keyboard_msg_tx, virtual_keyboard_msg_rx) = mpsc::channel(128);
+    let window_tx_3 = window_tx.clone();
+    let context_handler = context::get_static_context_handler();
+    context_handler.register_on_change(Box::new(move || {
+        window_tx_3
+            .send(WindowMessage::Send { message: msg!(0) })
+            .unwrap();
+    }));
+    KeyboardModel::get().register_context_handler(context_handler);
+    let trie_configs = settings.trie.clone();
+    KeyboardModel::get().trie_configs.set(Some(trie_configs));
+    KeyboardModel::get().layouts_map.set(layouts_map.clone());
+    KeyboardModel::get().window_tx.set(Some(window_tx.clone()));
+    KeyboardModel::get().layer_tx.set(Some(layer_tx.clone()));
+    KeyboardModel::init();
+
     // create mpsc channel for interacting with the input_method handler
     let (input_method_msg_tx, input_method_msg_rx) = mpsc::channel(128);
     let _ = handle.insert_source(app_channel_rx, move |event: Event<AppMessage>, _, app| {
@@ -193,126 +204,50 @@ fn main() -> anyhow::Result<()> {
             calloop::channel::Event::Msg(msg) => {
                 // println!("app event {:?}", msg);
                 match msg {
-                    AppMessage::Show => {
-                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
-                            width: settings.window.size.0 as u32,
-                            height: settings.window.size.1 as u32,
-                        });
-                        layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
-                            | wlr_layer::Anchor::RIGHT
-                            | wlr_layer::Anchor::BOTTOM;
-                        layer_shell_opts.zone = settings.window.size.1 as i32;
-                        let _ = layer_tx
-                            .clone()
-                            .send(LayerWindowMessage::ReconfigureLayerOpts {
-                                opts: layer_shell_opts.clone(),
-                            });
-                        let _ = window_tx_2.clone().send(WindowMessage::Send {
-                            message: msg!(Message::Reset),
-                        });
-                    }
-                    AppMessage::Hide => {
-                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
-                            width: 1,
-                            height: 1,
-                        });
-                    }
-                    AppMessage::Maximize => {
-                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
-                            width: settings.window.size.0 as u32,
-                            height: settings.window.size.1 as u32,
-                        });
-                        layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
-                            | wlr_layer::Anchor::RIGHT
-                            | wlr_layer::Anchor::BOTTOM;
-                        layer_shell_opts.zone = settings.window.size.1 as i32;
-                        let _ = layer_tx
-                            .clone()
-                            .send(LayerWindowMessage::ReconfigureLayerOpts {
-                                opts: layer_shell_opts.clone(),
-                            });
-                        // let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        //     message: msg!(Message::UpdateKeyboardWindow {
-                        //         keyboard_window: gui::KeyboardWindow::Maximized
-                        //     }),
-                        // });
-
-                        // layer_shell_opts.anchor = wlr_layer::Anchor::LEFT
-                        //     | wlr_layer::Anchor::RIGHT
-                        //     | wlr_layer::Anchor::BOTTOM;
-                        // let _ = layer_tx
-                        //     .clone()
-                        //     .send(LayerWindowMessage::ReconfigureLayerOpts {
-                        //         opts: layer_shell_opts.clone(),
-                        //     });
-                    }
-                    AppMessage::Minimize => {
-                        let _ = window_tx_2.clone().send(WindowMessage::Resize {
-                            width: 80,
-                            height: 60,
-                        });
-                        layer_shell_opts.anchor =
-                            wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM;
-                        layer_shell_opts.zone = 0 as i32;
-                        let _ = layer_tx
-                            .clone()
-                            .send(LayerWindowMessage::ReconfigureLayerOpts {
-                                opts: layer_shell_opts.clone(),
-                            });
-                        // let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        //     message: msg!(Message::UpdateKeyboardWindow {
-                        //         keyboard_window: gui::KeyboardWindow::Minimized
-                        //     }),
-                        // });
-                        // layer_shell_opts.anchor =
-                        //     wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM;
-                        // let _ = layer_tx
-                        //     .clone()
-                        //     .send(LayerWindowMessage::ReconfigureLayerOpts {
-                        //         opts: layer_shell_opts.clone(),
-                        //     });
-                    }
                     AppMessage::TextkeyPressed { keycode } => {
                         println!("AppMessage::TextkeyPressed {:?}", keycode);
+                        KeyboardModel::key_pressed(keycode);
 
-                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
-                        futures::executor::block_on(async move {
-                            let _ = virtual_keyboard_msg_tx
-                                .send(VirtualKeyboardMessage::Key {
-                                    keycode: keycode.code - 8,
-                                    keymotion: KeyMotion::Press,
-                                })
-                                .await;
-                            let _ = virtual_keyboard_msg_tx
-                                .send(VirtualKeyboardMessage::Key {
-                                    keycode: keycode.code - 8,
-                                    keymotion: KeyMotion::Release,
-                                })
-                                .await;
-                        });
+                        // let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
+                        // futures::executor::block_on(async move {
+                        //     let _ = virtual_keyboard_msg_tx
+                        //         .send(VirtualKeyboardMessage::Key {
+                        //             keycode: keycode.code - 8,
+                        //             keymotion: KeyMotion::Press,
+                        //         })
+                        //         .await;
+                        //     let _ = virtual_keyboard_msg_tx
+                        //         .send(VirtualKeyboardMessage::Key {
+                        //             keycode: keycode.code - 8,
+                        //             keymotion: KeyMotion::Release,
+                        //         })
+                        //         .await;
+                        // });
                     }
                     AppMessage::ApplyModifiers { mods } => {
                         println!("AppMessage::ApplyModifiers {:?}", mods);
-                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
+                        KeyboardModel::apply_modifiers(mods);
 
-                        let raw_modifiers = mods
-                            .iter()
-                            .map(|m| match m {
-                                Modifier::Control => Modifiers::CONTROL,
-                                Modifier::Alt => Modifiers::MOD1,
-                                Modifier::Mod4 => Modifiers::MOD4,
-                            })
-                            .fold(Modifiers::empty(), |m, n| m | n);
+                        // let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
 
-                        futures::executor::block_on(async move {
-                            let _ = virtual_keyboard_msg_tx
-                                .send(VirtualKeyboardMessage::SetModifiers {
-                                    depressed: raw_modifiers.bits() as u32,
-                                    latched: 0,
-                                    locked: 0,
-                                })
-                                .await;
-                        });
+                        // let raw_modifiers = mods
+                        //     .iter()
+                        //     .map(|m| match m {
+                        //         Modifier::Control => Modifiers::CONTROL,
+                        //         Modifier::Alt => Modifiers::MOD1,
+                        //         Modifier::Mod4 => Modifiers::MOD4,
+                        //     })
+                        //     .fold(Modifiers::empty(), |m, n| m | n);
+
+                        // futures::executor::block_on(async move {
+                        //     let _ = virtual_keyboard_msg_tx
+                        //         .send(VirtualKeyboardMessage::SetModifiers {
+                        //             depressed: raw_modifiers.bits() as u32,
+                        //             latched: 0,
+                        //             locked: 0,
+                        //         })
+                        //         .await;
+                        // });
                     }
                     AppMessage::SuggestionPressed {
                         suggestion,
@@ -345,55 +280,17 @@ fn main() -> anyhow::Result<()> {
                             }),
                         });
                     }
-                    AppMessage::Erase => {
-                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
-                        futures::executor::block_on(async move {
-                            let _ = virtual_keyboard_msg_tx
-                                .send(VirtualKeyboardMessage::Key {
-                                    keycode: 21 - 8,
-                                    keymotion: KeyMotion::Press,
-                                })
-                                .await;
-                            let _ = virtual_keyboard_msg_tx
-                                .send(VirtualKeyboardMessage::Key {
-                                    keycode: 21 - 8,
-                                    keymotion: KeyMotion::Release,
-                                })
-                                .await;
-                        });
-                    }
-                    AppMessage::ContentInfo { purpose } => {
-                        let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
-                        let layouts_map = layouts_map.clone();
-                        futures::executor::block_on(async move {
-                            if let Some((keymap_raw_fd, keymap_size)) = layouts_map.get(&purpose) {
-                                let _ = virtual_keyboard_msg_tx
-                                    .send(VirtualKeyboardMessage::SetKeymap {
-                                        keymap_raw_fd: *keymap_raw_fd,
-                                        keymap_size: *keymap_size,
-                                    })
-                                    .await;
-                            };
-                        });
-                        let _ = window_tx_2.clone().send(WindowMessage::Send {
-                            message: msg!(Message::ContentInfo { purpose }),
-                        });
-                    }
                 }
             }
             calloop::channel::Event::Closed => {}
         };
     });
 
-    init_services(
-        app_channel,
-        virtual_keyboard_msg_rx,
-        input_method_msg_rx,
-        settings.clone(),
-        default_keymap,
-    );
-
     loop {
+        if app.is_exited {
+            break;
+        }
+
         event_loop.dispatch(None, &mut app).unwrap();
     }
     //End
@@ -401,136 +298,6 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn init_services(
-    app_channel: Sender<AppMessage>,
-    virtual_keyboard_msg_rx: mpsc::Receiver<VirtualKeyboardMessage>,
-    input_method_msg_rx: mpsc::Receiver<InputMethodMessage>,
-    settings: KeyboardSettings,
-    default_keymap: (i32, u32),
-) -> JoinHandle<()> {
-    thread::spawn(move || {
-        let runtime = Builder::new_multi_thread()
-            .worker_threads(1)
-            .enable_all()
-            .build()
-            .unwrap();
-
-        let keyboard_f = run_keyboard_hanlder(default_keymap, virtual_keyboard_msg_rx);
-        let trie_configs = settings.trie.clone();
-        let input_f = InputHandler::new().run_input_handler(
-            app_channel.clone(),
-            input_method_msg_rx,
-            trie_configs,
-        );
-
-        runtime
-            .block_on(runtime.spawn(async move { tokio::join!(keyboard_f, input_f,) }))
-            .unwrap();
-    })
-}
-
-struct InputHandler {}
-impl InputHandler {
-    pub fn new() -> Self {
-        InputHandler {}
-    }
-
-    async fn run_input_handler(
-        mut self,
-        app_channel: Sender<AppMessage>,
-        input_method_msg_rx: mpsc::Receiver<InputMethodMessage>,
-        trie_configs: TrieConfigs,
-    ) {
-        // create mpsc channel for receiving events from the input_method handler
-        let (input_method_event_tx, mut input_method_event_rx) = mpsc::channel(128);
-
-        // create the handler instance
-        let mut input_method_handler = InputMethodHandler::new(input_method_event_tx);
-
-        // start the input_method handler
-        std::thread::spawn(move || {
-            let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
-            let _ = runtime.block_on(input_method_handler.run(input_method_msg_rx));
-        });
-
-        // receive all input_method events
-        if let (Some(raw_file), Some(cached_file)) =
-            (trie_configs.raw_file, trie_configs.cached_file)
-        {
-            let input_method_event_t = tokio::spawn(async move {
-                let trie = get_trie(&raw_file, &cached_file);
-
-                loop {
-                    if let Some(msg) = input_method_event_rx.recv().await {
-                        // println!("InputHandler::run_input_handler() {:?}", msg);
-                        match msg {
-                            InputMethodEvent::Activate => {
-                                //Send message to window to show UI
-                                let _ = app_channel.send(AppMessage::Show);
-                            }
-                            InputMethodEvent::Deactivate => {
-                                //Send message to window to hide UI
-                                let _ = app_channel.send(AppMessage::Hide);
-                            }
-                            InputMethodEvent::SurroundingText {
-                                text,
-                                cursor,
-                                anchor,
-                            } => {
-                                //Send message to window to update UI with text, cursor, and anchor positions
-                                let words = &text.as_str()[0..cursor as usize].split(" ");
-                                if let Some(last) = words.clone().last() {
-                                    let suggestions = trie.search(last);
-                                    let next_char_prob = trie.next_char_probabilities(last);
-                                    let _ = app_channel.send(AppMessage::SuggestionsChanged {
-                                        suggestions,
-                                        suggested_for: last.to_string(),
-                                        next_char_prob,
-                                    });
-                                }
-                            }
-                            InputMethodEvent::ContentType { hint, purpose } => {
-                                //Use purpose to change layout
-                                if let Ok(purpose) = purpose {
-                                    let _ = app_channel.send(AppMessage::ContentInfo { purpose });
-                                }
-                            }
-
-                            _ => (),
-                        }
-                    };
-                }
-            });
-            let _ = input_method_event_t.await.unwrap();
-        };
-    }
-}
-
-// create mpsc channel for interacting with the virtual_keyboard handler
-//let (virtual_keyboard_msg_tx, mut virtual_keyboard_msg_rx) = mpsc::channel(128);
-
-async fn run_keyboard_hanlder(
-    default_keymap: (i32, u32),
-    virtual_keyboard_msg_rx: mpsc::Receiver<VirtualKeyboardMessage>,
-) {
-    // create mpsc channel for receiving events from the virtual_keyboard handler
-    let (virtual_keyboard_event_tx, mut virtual_keyboard_event_rx) = mpsc::channel(128);
-    let mut virtual_keyboard_handler: VirtualKeyboardHandler = VirtualKeyboardHandler::new(
-        default_keymap.0,
-        default_keymap.1,
-        virtual_keyboard_event_tx,
-    );
-
-    // start the virtual_keyboard handler
-    let virtual_keyboard_t = tokio::spawn(async move {
-        println!("running keyboard handler");
-        let _ = virtual_keyboard_handler.run(virtual_keyboard_msg_rx).await;
-    });
-
-    println!("init ready");
-
-    let _ = virtual_keyboard_t.await.unwrap();
-}
 fn load_keymap(layout_path: String) -> (i32, u32) {
     let layout = match crate::layout::Layout::from_file(layout_path) {
         Ok(layout) => layout,

@@ -136,12 +136,16 @@ impl Default for Icons {
 pub struct Layouts {
     pub default: String,
     pub terminal: String,
+    pub email: String,
+    pub url: String,
 }
 impl Default for Layouts {
     fn default() -> Self {
         Self {
             default: LAYOUT_EXAMPLE_PATH.to_owned(),
             terminal: TERMINAL_EXAMPLE_PATH.to_owned(),
+            email: EMAIL_EXAMPLE_PATH.to_owned(),
+            url: URL_EXAMPLE_PATH.to_owned(),
         }
     }
 }
