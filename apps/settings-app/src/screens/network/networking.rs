@@ -785,58 +785,49 @@ impl Component for NetworkingScreen {
                 )),
             );
 
-            for (network, network_id) in saved_available_networks.iter() {
+            for (i, (network, network_id)) in
+                saved_available_networks.clone().into_iter().enumerate()
+            {
                 if network.name.clone().len() > 0 {
-                    scrollable_section = scrollable_section
-                        .push(saved_network_row_component(network.clone()).key(key));
-                    key += 2;
-                    scrollable_section = scrollable_section
-                        .push(
-                            node!(
-                                Div::new().border(Color::rgb(83., 83., 83.), 0.8, (0., 0., 0., 0.)),
-                                lay![
-                                    direction: Direction::Row,
-                                    size: [480, Auto],
-                                    cross_alignment: Alignment::Stretch
-                                ]
-                            )
-                            .push(node!(
-                                Div::new(),
-                                lay![
-                                    size: [ 480, 1 ]
-                                ]
-                            )),
-                        )
-                        .key(key);
-                    key += 2;
+                    let row_node = node!(
+                        Div::new(),
+                        lay![
+                            size: [440, Auto],
+                            direction: Direction::Column,
+                            axis_alignment: Alignment::Stretch,
+                            cross_alignment: Alignment::Stretch,
+                        ],
+                    )
+                    .push(saved_network_row_component(network.clone()).key(i as u64))
+                    .push(node!(HDivider {
+                        size: 0.8,
+                        color: Color::rgba(83., 83., 83., 1.)
+                    }))
+                    .key(2 * i as u64);
+
+                    scrollable_section = scrollable_section.push(row_node);
                 }
             }
 
-            for network in unsaved_available_networks.iter() {
+            for (i, network) in unsaved_available_networks.clone().into_iter().enumerate() {
                 if network.name.clone().len() > 0 {
-                    key += 1;
+                    let row_node = node!(
+                        Div::new(),
+                        lay![
+                            size: [440, Auto],
+                            direction: Direction::Column,
+                            axis_alignment: Alignment::Stretch,
+                            cross_alignment: Alignment::Stretch,
+                        ],
+                    )
+                    .push(unsaved_available_network_row_component(network.clone()).key(i as u64))
+                    .push(node!(HDivider {
+                        size: 0.8,
+                        color: Color::rgba(83., 83., 83., 1.)
+                    }))
+                    .key(2 * i as u64);
 
-                    scrollable_section = scrollable_section
-                        .push(unsaved_available_network_row_component(network.clone()).key(key));
-                    scrollable_section = scrollable_section
-                        .push(
-                            node!(
-                                Div::new().border(Color::rgb(83., 83., 83.), 0.8, (0., 0., 0., 0.)),
-                                lay![
-                                    direction: Direction::Row,
-                                    size: [480, Auto],
-                                    cross_alignment: Alignment::Stretch
-                                ]
-                            )
-                            .push(node!(
-                                Div::new(),
-                                lay![
-                                    size: [ 480, 1 ]
-                                ]
-                            )),
-                        )
-                        .key(key);
-                    key += 2;
+                    scrollable_section = scrollable_section.push(row_node);
                 }
             }
         }
