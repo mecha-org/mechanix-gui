@@ -7,4 +7,4 @@ interfaces:
     power:
       path: /dev/input/event0
     home:
-      path: /dev/input/event1
+      path: /dev/input/event2
