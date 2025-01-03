@@ -111,7 +111,7 @@ impl Component for AboutDevice {
                 Text::new(txt!(provision_machine_name.clone()))
                     .style("color", Color::WHITE)
                     .style("font", "Inter")
-                    .with_class("text-xl leading-6 font-medium"),
+                    .with_class("text-2xl leading-7 font-medium"),
                 lay![]
             )),
         )
@@ -161,7 +161,7 @@ impl Component for AboutDevice {
         )
         .push(single_detail_row(DetailRow {
             key: "Host name".to_string(),
-            value: format!("{}.local", os_info.hostname),
+            value: format!("{}.local ", os_info.hostname),
         }))
         .push(node!(HDivider {
             size: 0.8,
@@ -175,63 +175,50 @@ impl Component for AboutDevice {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }))
-        .push(single_detail_row(
-            DetailRow {
-                key: "Wireless IP".to_string(),
-                value: wireless_ip_address.to_string(),
-               
-            }
-        ))
+        .push(single_detail_row(DetailRow {
+            key: "Wireless IP".to_string(),
+            value: wireless_ip_address.to_string(),
+        }))
         .push(node!(HDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }))
-        .push(single_detail_row(
-            DetailRow {
-                key: "Ethernet IP".to_string(),
-                value: ethernet_ip_address.to_string(),
-            }
-        ))
+        .push(single_detail_row(DetailRow {
+            key: "Ethernet IP".to_string(),
+            value: ethernet_ip_address.to_string(),
+        }))
         .push(node!(HDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }))
-        .push(single_detail_row(
-            DetailRow {
-                key: "Wireless MAC".to_string(),
-                value: wireless_mac_address.to_string(),
-            }
-        ))
+        .push(single_detail_row(DetailRow {
+            key: "Wireless MAC".to_string(),
+            value: wireless_mac_address.to_string(),
+        }))
         .push(node!(HDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }))
-        .push(single_detail_row(
-            DetailRow {
-                key: "Ethernet MAC".to_string(),
-                value: ethernet_mac_address.to_string(),
-            }
-        ))
+        .push(single_detail_row(DetailRow {
+            key: "Ethernet MAC".to_string(),
+            value: ethernet_mac_address.to_string(),
+        }))
         .push(node!(HDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }))
-        .push(single_detail_row(
-            DetailRow {
-                key: "OS".to_string(),
-                value: os_info.name.to_string(),
-            }
-        ))
+        .push(single_detail_row(DetailRow {
+            key: "OS".to_string(),
+            value: os_info.name.to_string(),
+        }))
         .push(node!(HDivider {
             size: 0.8,
             color: Color::rgba(83., 83., 83., 1.)
         }))
-        .push(single_detail_row(
-            DetailRow {
-                key: "Kernel".to_string(),
-                value: os_info.version.to_string(),
-            }
-        ));
+        .push(single_detail_row(DetailRow {
+            key: "Kernel".to_string(),
+            value: os_info.version.to_string(),
+        }));
 
         base = base.push(header_node!(
             "About Device",
