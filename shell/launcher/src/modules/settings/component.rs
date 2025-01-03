@@ -25,7 +25,7 @@ impl Component for Settings {
                 IconButton::new("settings_icon")
                     .icon_type(IconType::Png)
                     .on_click(Box::new(|| msg!(Message::AppOpen {
-                        app_id: "mechanix-settings".to_string(),
+                        app_id: "org.mechanix.settings".to_string(),
                         layer: None
                     })))
                     .style("active_color", Color::TRANSPARENT)

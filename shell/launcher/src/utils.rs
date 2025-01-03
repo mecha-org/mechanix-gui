@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 use mctk_core::AssetParams;
+use networkmanager::WirelessModel;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;
 use upower::BatteryStatus;
@@ -390,4 +391,63 @@ pub fn cubic_bezier(arr: &[f64; 4], t: f64) -> f64 {
     let ut = 1.0 - t;
     let a1 = arr[1] * ut + arr[2] * t;
     ((arr[0] * ut + arr[1] * t) * ut + a1 * t) * ut + (a1 * ut + (arr[2] * ut + arr[3] * t) * t) * t
+}
+
+pub fn get_forttated_wireless_status(wireless_model: &WirelessModel) -> WirelessStatus {
+    let is_enabled = wireless_model.is_enabled.get();
+    if !*is_enabled {
+        return WirelessStatus::Off;
+    }
+    let connected = wireless_model.connected_network.get();
+    if connected.is_none() {
+        return WirelessStatus::On;
+    }
+    let connected = connected.as_ref().unwrap();
+    let signal = connected.signal.parse::<i32>().unwrap();
+
+    if signal <= -80 {
+        return WirelessStatus::Connected(WirelessConnectedState::Low);
+    } else if signal <= -60 {
+        return WirelessStatus::Connected(WirelessConnectedState::Weak);
+    } else if signal <= -40 {
+        return WirelessStatus::Connected(WirelessConnectedState::Good);
+    } else {
+        return WirelessStatus::Connected(WirelessConnectedState::Strong);
+    };
+}
+
+pub async fn get_ip_address() -> Option<String> {
+    let mut ip_address: Option<String> = None;
+    let mut networks = sysinfo::Networks::new_with_refreshed_list();
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    networks.refresh(true);
+    println!("get_ip_address networks are {:?}", networks);
+    for (interface_name, network) in &networks {
+        match interface_name.as_str() {
+            "enp5s0" => {
+                let ip_networks = network.ip_networks();
+                println!("ip_networks are {:?}", ip_networks);
+                for ip_network in ip_networks {
+                    if ip_network.addr.is_ipv4() {
+                        println!("enp5s0 {:?}", ip_network.addr.to_string());
+                        ip_address = Some(ip_network.addr.to_string());
+                        break;
+                    }
+                }
+            }
+            "wlan0" => {
+                let ip_networks = network.ip_networks();
+                println!("ip_networks are {:?}", ip_networks);
+                for ip_network in ip_networks {
+                    if ip_network.addr.is_ipv4() {
+                        println!("wlan0 {:?}", ip_network.addr.to_string());
+                        ip_address = Some(ip_network.addr.to_string());
+                        break;
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+    ip_address
 }

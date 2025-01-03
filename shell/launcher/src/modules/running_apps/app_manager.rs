@@ -19,7 +19,7 @@ use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::{
     },
 };
 
-use crate::AppMessage;
+use crate::{modules::applications::model::DesktopEntriesModel, AppMessage};
 
 use super::running_app::{AppDetails, AppInstance};
 
@@ -57,15 +57,13 @@ pub struct AppInstanceState {
 pub struct AppManagerService {
     pub apps: IndexMap<String, IndexMap<ToplevelKey, AppInstanceState>>,
     pub top_level_sender: Option<mpsc::Sender<ToplevelMessage>>,
-    pub desktop_entries: Vec<DesktopEntry>,
 }
 
 impl AppManagerService {
-    pub fn new(desktop_entries: Vec<DesktopEntry>) -> Self {
+    pub fn new() -> Self {
         Self {
             apps: IndexMap::new(),
             top_level_sender: None,
-            desktop_entries,
         }
     }
 
@@ -171,14 +169,22 @@ impl AppManagerService {
                             state,
                         } => {
                             let _ = &self.add_app(app_id.clone().to_lowercase(), key, title, state);
-                            let formatted_apps = format_apps_from_map_to_vec(self.apps.clone(), self.desktop_entries.clone());
+                            let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+                            let formatted_apps = format_apps_from_map_to_vec(self.apps.clone(), desktop_entries.clone());
                             let active_apps_count = self.get_active_apps_count();
-                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated  { app_id: app_id.to_lowercase(), apps: formatted_apps , active_apps_count });
+
+                            let mut possible_app_id = "".to_string();
+                            if let Some(entry) = find_desktop_entry(&app_id.to_lowercase(), &desktop_entries){
+                                possible_app_id = entry.app_id.clone();
+                            };
+                            println!("possible_app_id {:?}", possible_app_id);
+                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated  { app_id: possible_app_id, apps: formatted_apps , active_apps_count });
                         }
                         ToplevelEvent::Closed { key } => {
                             let _ = &self.remove_app_instance(key);
                             let active_apps_count = self.get_active_apps_count();
-                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated { app_id: "".to_string(), apps: format_apps_from_map_to_vec(self.apps.clone(), self.desktop_entries.clone()), active_apps_count });
+                            let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+                            let _ = app_switcher_sender.send(AppMessage::AppsUpdated { app_id: "".to_string(), apps: format_apps_from_map_to_vec(self.apps.clone(), desktop_entries.clone()), active_apps_count });
                         }
                         _ => {}
                     }
@@ -188,10 +194,8 @@ impl AppManagerService {
     }
 
     pub fn start_app(&self, app_id: &str) -> Result<bool> {
-        let app = self
-            .desktop_entries
-            .iter()
-            .find(|entry| entry.app_id == app_id);
+        let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+        let app = desktop_entries.iter().find(|entry| entry.app_id == app_id);
 
         if app.is_none() {
             return Ok(false);
@@ -475,15 +479,7 @@ fn format_apps_from_map_to_vec(
         let mut icon: Option<String> = None;
         let mut icon_type: Option<IconType> = None;
         let mut path: Option<String> = None;
-        if let Some(entry) = desktop_entries.clone().into_iter().find(|entry| {
-            app_id.to_lowercase() == entry.app_id.to_lowercase()
-                || Some(app_id.clone()) == entry.icon_name
-                || entry
-                    .exec
-                    .clone()
-                    .to_lowercase()
-                    .contains(&app_id.to_lowercase())
-        }) {
+        if let Some(entry) = find_desktop_entry(&app_id, &desktop_entries) {
             name = Some(entry.name);
             icon = entry.icon_name;
             if let Some(icon_path) = entry.icon_path {
@@ -524,4 +520,21 @@ fn format_apps_from_map_to_vec(
     }
 
     apps_vec
+}
+
+fn find_desktop_entry(
+    app_id: &String,
+    desktop_entries: &Vec<DesktopEntry>,
+) -> Option<DesktopEntry> {
+    println!("find_desktop_entry {:?}", app_id);
+    let entry = desktop_entries.clone().into_iter().find(|entry| {
+        app_id.to_lowercase() == entry.app_id.to_lowercase()
+            || Some(app_id.clone()) == entry.icon_name
+            || entry
+                .exec
+                .clone()
+                .to_lowercase()
+                .contains(&app_id.to_lowercase())
+    });
+    entry
 }

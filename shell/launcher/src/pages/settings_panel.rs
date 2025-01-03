@@ -5,6 +5,7 @@ use mctk_core::style::Styled;
 use mctk_core::widgets::{IconButton, IconType, RoundedRect};
 use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
 use mctk_core::{msg, Color};
+use networkmanager::WirelessModel;
 
 use crate::gui;
 use crate::modules::settings_panel::brightness::component::Brightness;
@@ -14,14 +15,13 @@ use crate::modules::settings_panel::sound::component::Sound;
 use crate::shared::h_divider::HDivider;
 use crate::shared::v_divider::VDivider;
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
+use crate::utils::get_forttated_wireless_status;
 
 #[derive(Debug)]
 pub struct SettingsPanel {
     pub swipe: i32,
     pub sound: u8,
     pub brightness: u8,
-    pub battery_level: BatteryLevel,
-    pub wireless_status: WirelessStatus,
     pub bluetooth_status: BluetoothStatus,
     pub rotation_status: RotationStatus,
 }
@@ -30,8 +30,6 @@ impl Component for SettingsPanel {
     fn props_hash(&self, hasher: &mut mctk_core::component::ComponentHasher) {
         self.sound.hash(hasher);
         self.brightness.hash(hasher);
-        self.battery_level.hash(hasher);
-        self.wireless_status.hash(hasher);
         self.bluetooth_status.hash(hasher);
         self.rotation_status.hash(hasher);
     }
@@ -40,10 +38,9 @@ impl Component for SettingsPanel {
         let swipe = self.swipe;
         let sound = self.sound;
         let brightness = self.brightness;
-        let battery_level = self.battery_level;
-        let wireless_status = self.wireless_status;
         let bluetooth_status = self.bluetooth_status;
         let rotation_status = self.rotation_status;
+        let wireless_status = get_forttated_wireless_status(WirelessModel::get());
 
         // println!("view() swipe {:?}", swipe);
         let width = 480;
@@ -101,13 +98,14 @@ impl Component for SettingsPanel {
         .with_class("btn-xxl border-0 p-8")
         .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
-        row_1 = row_1.push(node!(IconButton::new(rotation_status.to_string())
-            .icon_type(IconType::Png)
-            .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
-                gui::SettingNames::Rotation
-            ))))
-            .with_class("btn-xxl border-0 p-8")
-            .style("active_color", Color::rgb(43., 43., 43.)),));
+        row_1 = row_1.push(node!(
+            IconButton::new(rotation_status.to_string())
+                .icon_type(IconType::Png)
+                // .on_click(Box::new(|| msg!(gui::Message::SettingClicked(
+                //     gui::SettingNames::Rotation
+                // ))))
+                .with_class("btn-xxl border-0 p-8"), // .style("active_color", Color::rgb(43., 43., 43.))
+        ));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new("terminal_icon")
             .icon_type(IconType::Png)
@@ -125,7 +123,7 @@ impl Component for SettingsPanel {
             .with_class("btn-xxl border-0 p-8")
             .style("active_color", Color::rgb(43., 43., 43.)),));
 
-        println!("swipe - height {:?}", swipe - height);
+        // println!("swipe - height {:?}", swipe - height);
 
         let sc1 = node!(
             RoundedRect {

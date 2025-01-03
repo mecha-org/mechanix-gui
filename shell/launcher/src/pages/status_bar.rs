@@ -1,17 +1,21 @@
+use std::hash::Hash;
+
 use mctk_core::layout::Alignment;
-use mctk_core::style::{FontWeight, Styled};
+use mctk_core::style::Styled;
 use mctk_core::widgets::{Image, Text};
 use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::Div, Node};
 use mctk_core::{txt, Color};
+use networkmanager::WirelessModel;
 
-use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
+use crate::modules::battery::model::BatteryModel;
+use crate::modules::clock::model::ClockModel;
+use crate::types::{BluetoothStatus, WirelessStatus};
+use crate::utils::{get_formatted_battery_level, get_forttated_wireless_status};
 
 #[derive(Debug)]
 pub struct StatusBar {
-    pub battery_level: BatteryLevel,
-    pub wireless_status: WirelessStatus,
+    pub time_format: String,
     pub bluetooth_status: BluetoothStatus,
-    pub current_time: String,
 }
 
 impl Component for StatusBar {
@@ -36,7 +40,7 @@ impl Component for StatusBar {
                 )
                 .push(node!(
                     Clock {
-                        time: self.current_time.clone(),
+                        time_format: self.time_format.clone()
                     },
                     lay![
                         margin: [0,  0],
@@ -52,24 +56,14 @@ impl Component for StatusBar {
                         axis_alignment: Alignment::End
                     ]
                 )
-                .push(node!(
-                    Wireless {
-                        status: self.wireless_status,
-                    },
-                    lay![margin: [0, 0]]
-                ))
+                .push(node!(Wireless {}, lay![margin: [0, 0]]))
                 .push(node!(
                     Bluetooth {
                         status: self.bluetooth_status,
                     },
                     lay![margin: [0, 20]]
                 ))
-                .push(node!(
-                    Battery {
-                        level: self.battery_level,
-                    },
-                    lay![margin: [0, 0]]
-                )),
+                .push(node!(Battery {}, lay![margin: [0, 0]])),
             ),
         )
     }
@@ -77,13 +71,19 @@ impl Component for StatusBar {
 
 #[derive(Debug)]
 pub struct Clock {
-    pub time: String,
+    pub time_format: String,
 }
 
 impl Component for Clock {
+    fn props_hash(&self, hasher: &mut mctk_core::prelude::ComponentHasher) {
+        self.time_format.hash(hasher);
+    }
+
     fn view(&self) -> Option<Node> {
+        let time = &ClockModel::time(&self.time_format);
+
         Some(node!(
-            Text::new(txt!(self.time.clone()))
+            Text::new(txt!(time.clone()))
                 .with_class("text-white font-space-grotesk font-bold")
                 .style("size", 15.0),
             lay![
@@ -94,14 +94,13 @@ impl Component for Clock {
 }
 
 #[derive(Debug)]
-pub struct Wireless {
-    pub status: WirelessStatus,
-}
+pub struct Wireless {}
 
 impl Component for Wireless {
     fn view(&self) -> Option<Node> {
+        let wireless_status = get_forttated_wireless_status(WirelessModel::get());
         Some(node!(
-            Image::new(format!("sm{:?}", self.status.to_string())),
+            Image::new(format!("sm{:?}", wireless_status.to_string())),
             lay![
                 size: [22, 22],
             ]
@@ -125,14 +124,16 @@ impl Component for Bluetooth {
     }
 }
 #[derive(Debug)]
-pub struct Battery {
-    pub level: BatteryLevel,
-}
+pub struct Battery {}
 
 impl Component for Battery {
     fn view(&self) -> Option<Node> {
+        let level = BatteryModel::level();
+        let status = BatteryModel::status();
+        let battery_level = get_formatted_battery_level(&level, &status);
+
         Some(node!(
-            Image::new(self.level.to_string()),
+            Image::new(battery_level.to_string()),
             lay![
                 size: [22, 22],
             ],

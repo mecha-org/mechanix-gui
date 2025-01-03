@@ -67,6 +67,7 @@ impl Component for PinnedApp {
                 Some("png") => {
                     start = start.push(node!(
                         IconButton::new(self.app.name.clone())
+                            .dynamic_load_icon(path.to_str().unwrap().to_string())
                             .icon_type(IconType::Png)
                             .with_class("btn-xxl border-0 p-4 rounded-xl")
                             .disabled(self.disabled)
@@ -79,6 +80,7 @@ impl Component for PinnedApp {
                 Some("svg") => {
                     start = start.push(node!(
                         IconButton::new(self.app.name.clone())
+                            .dynamic_load_icon(path.to_str().unwrap().to_string())
                             .icon_type(IconType::Svg)
                             .with_class("btn-xxl border-0 p-4 rounded-xl")
                             .disabled(self.disabled)
@@ -90,6 +92,20 @@ impl Component for PinnedApp {
                 }
                 _ => (),
             };
+        } else {
+            start = start.push(node!(
+                IconButton::new(self.app.name.clone())
+                    .dynamic_load_icon(
+                        "/usr/share/icons/Papirus-PNG/symbolic/apps/app-not-found.png".to_string()
+                    )
+                    .icon_type(IconType::Png)
+                    .with_class("btn-xxl border-0 p-4 rounded-xl")
+                    .disabled(self.disabled)
+                    .style("active_color", Color::rgba(42., 42., 44., 0.80)),
+                lay![
+                    size: [Auto],
+                ]
+            ));
         }
 
         Some(start)

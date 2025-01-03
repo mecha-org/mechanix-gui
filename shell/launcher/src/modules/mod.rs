@@ -1,3 +1,4 @@
+pub mod applications;
 pub mod battery;
 pub mod bluetooth;
 pub mod clock;

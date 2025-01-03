@@ -502,7 +502,8 @@ impl Default for LayoutSettings {
 /// Clock module
 #[derive(Debug, Deserialize, Clone, Serialize)]
 pub struct Clock {
-    pub format: String,
+    pub date: String,
+    pub time: String,
 }
 
 /// Bluetooth module
@@ -767,7 +768,8 @@ impl Default for Modules {
             ],
             background: BackgroundModule::default(),
             clock: Clock {
-                format: "%I:%M %p".to_string(),
+                time: "%H:%M".to_string(),
+                date: "%e %B  %A".to_string(),
             },
             bluetooth: Bluetooth {
                 icon: BluetoothIcons::default(),

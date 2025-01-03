@@ -5,18 +5,23 @@ use mctk_core::{component::Component, lay, node, size, size_pct, widgets::Div, N
 use std::hash::Hash;
 
 use crate::types::BatteryLevel;
+use crate::utils::get_formatted_battery_level;
+
+use super::model::BatteryModel;
 
 #[derive(Debug)]
-pub struct Battery {
-    pub battery_level: BatteryLevel,
-}
+pub struct Battery {}
 
 impl Component for Battery {
-    fn props_hash(&self, hasher: &mut component::ComponentHasher) {
-        self.battery_level.hash(hasher);
+    fn init(&mut self) {
+        BatteryModel::run();
     }
 
     fn view(&self) -> Option<Node> {
+        let level = BatteryModel::level();
+        let status = BatteryModel::status();
+        let battery_level = get_formatted_battery_level(&level, &status);
+
         Some(
             node!(
                 Div::new()
@@ -28,7 +33,7 @@ impl Component for Battery {
                 ],
             )
             .push(node!(
-                Image::new(self.battery_level.to_string()),
+                Image::new(battery_level.to_string()),
                 lay![
                     size: [28, 28],
                 ],

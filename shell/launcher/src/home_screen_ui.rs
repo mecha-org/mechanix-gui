@@ -1,12 +1,19 @@
 use crate::{
     init_services_home,
     modules::{
-        power_options::service::PowerOptionsService, running_apps::app_manager::AppManagerMessage,
+        applications::model::DesktopEntriesModel, battery::model::BatteryModel,
+        clock::model::ClockModel, power_options::service::PowerOptionsService,
+        running_apps::app_manager::AppManagerMessage,
     },
     AppMessage, AppParams, BatteryMessage, BluetoothMessage, BrightnessMessage,
-    InitServicesParamsHome, RunningAppsMessage, SoundMessage, UiParams, WirelessMessage,
+    InitServicesParamsHome, RunningAppsMessage, SoundMessage, UiParams,
 };
-use mctk_core::reexports::smithay_client_toolkit::shell::wlr_layer::Layer;
+use mctk_core::context::Model;
+use mctk_core::{
+    context::{self},
+    reexports::smithay_client_toolkit::shell::wlr_layer::Layer,
+};
+use networkmanager::{IpAddressModel, WirelessModel};
 use std::sync::{Arc, RwLock};
 use tokio::sync::{mpsc, oneshot};
 use tracing::error;
@@ -90,6 +97,20 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     let handle = event_loop.handle();
 
     let window_tx_2 = window_tx.clone();
+    let window_tx_3 = window_tx.clone();
+    let context_handler = context::get_static_context_handler();
+    context_handler.register_on_change(Box::new(move || {
+        window_tx_3
+            .send(WindowMessage::Send { message: msg!(0) })
+            .unwrap();
+    }));
+    // context_handler.register_context(&WirelessModel::get().connected_network);
+    IpAddressModel::get().register_context_handler(context_handler);
+    WirelessModel::get().register_context_handler(context_handler);
+    ClockModel::get().register_context_handler(context_handler);
+    BatteryModel::get().register_context_handler(context_handler);
+    DesktopEntriesModel::get().register_context_handler(context_handler);
+
     // let (wireless_msg_tx, wireless_msg_rx) = mpsc::channel(128);
     let (bluetooth_msg_tx, bluetooth_msg_rx) = mpsc::channel(128);
     let (brightness_msg_tx, brightness_msg_rx) = mpsc::channel(128);
@@ -113,11 +134,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                 AppMessage::MachineName { name } => {
                     let _ = window_tx_2.clone().send(WindowMessage::Send {
                         message: msg!(Message::MachineName { name }),
-                    });
-                }
-                AppMessage::IpAddress { address } => {
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::IpAddress { address }),
                     });
                 }
                 AppMessage::Net { online } => {
@@ -159,29 +175,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         message: msg!(Message::ChangeLayer(layer)),
                     });
                 }
-                AppMessage::Clock { date, time } => {
-                    //println!("AppMessage::Clock {:?}", current_time);
-                    println!("sending clock message to homescreen");
-                    let _ = window_tx_2.clone().send(WindowMessage::Send {
-                        message: msg!(Message::Clock {
-                            date: date.clone(),
-                            time: time.clone()
-                        }),
-                    });
-                }
-                AppMessage::Wireless { message } => match message {
-                    WirelessMessage::Status { status } => {
-                        let _ = window_tx_2.send(WindowMessage::Send {
-                            message: msg!(Message::Wireless { status }),
-                        });
-                    }
-                    WirelessMessage::Toggle { .. } => {
-                        // let wireless_msg_tx_cloned = wireless_msg_tx.clone();
-                        // futures::executor::block_on(async move {
-                        //     let res = wireless_msg_tx_cloned.clone().send(message).await;
-                        // });
-                    }
-                },
                 AppMessage::Bluetooth { message } => match message {
                     BluetoothMessage::Status { status } => {
                         let _ = window_tx_2.send(WindowMessage::Send {
@@ -192,13 +185,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                         let bluetooth_msg_tx_cloned = bluetooth_msg_tx.clone();
                         futures::executor::block_on(async move {
                             let res = bluetooth_msg_tx_cloned.clone().send(message).await;
-                        });
-                    }
-                },
-                AppMessage::Battery { message } => match message {
-                    BatteryMessage::Status { level, status } => {
-                        let _ = window_tx_2.send(WindowMessage::Send {
-                            message: msg!(Message::Battery { level, status }),
                         });
                     }
                 },
@@ -303,12 +289,10 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     init_services_home(InitServicesParamsHome {
         settings,
         app_channel: app_channel_tx,
-        // wireless_msg_rx,
         bluetooth_msg_rx,
         brightness_msg_rx,
         sound_msg_rx,
         app_manager_msg_rx,
-        installed_apps,
     });
 
     loop {

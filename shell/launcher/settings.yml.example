@@ -34,11 +34,12 @@ modules:
     icon:
       default:
   pinned_apps:
-    - mecha-connect
-    - alacritty
+    - org.mecha.connect
+    - Alacritty
     - chromium
   clock:
-    format: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+    time: "%H:%M" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+    date: "%e %B  %A" # https://docs.rs/chrono/latest/chrono/format/strftime/index.html
   bluetooth:
     icon:
       sm:
@@ -137,48 +138,3 @@ app_list:
   exclude:
   include:
   custom:
-    - app_id: mecha-connect
-      name: Mecha Connect
-      exec: mecha-connect
-      icon_name: mecha_connect_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mecha_connect_icon.png
-    - app_id: alacritty
-      name: Terminal
-      exec: "alacritty --working-directory=/home/mecha"
-      icon_name: terminal_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/terminal_icon.png
-#    - app_id: firefox-esr
-#      name: Firefox
-#      exec: "MOZ_ENABLE_WAYLAND=1 GDK_BACKEND=wayland firefox-esr --user-agent=\"Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.127 Mobile Safari/537.36\""
-#      icon_name: firefox_icon
-#      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/firefox_icon.png
-    - app_id: org.gnome.Nautilus
-      name: File Manager
-      exec: nautilus
-      icon_name: file_manager_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/file_manager_icon.png
-    - app_id: chocolate-doom
-      name: Doom
-      exec: /usr/games/chocolate-doom -iwad DOOM1.WAD -window 480x480
-      icon_name: doom_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/doom_icon.png
-    - app_id: mednafen
-      name: Game Emulator
-      exec: /usr/games/mednafen -video.fs 1 /usr/games/SuperMario4Advance.gba
-      icon_name: game_emulator_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/game_emulator_icon.png
-    - app_id: mctk.examples.RoverControl
-      name: Rover Control
-      exec: /usr/bin/rover-control -s /etc/mechanix/rover/settings.yml
-      icon_name: rover_control_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/rover_control_icon.png
-    - app_id: mechanix-settings
-      name: Settings
-      exec: mechanix-settings -s /etc/mechanix/apps/settings/settings.yml
-      icon_name: mechanix_settings_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/mechanix_settings_icon.png
-    - app_id: chromium
-      name: Chromium
-      exec: chromium --user-agent="Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.6099.43 Mobile Safari/537.36" --enable-features=UseOzonePlatform --ozone-platform=wayland --enable-wayland-ime
-      icon_name: chromium_icon
-      icon_path: /usr/share/mechanix/shell/launcher/assets/icons/app_drawer/chromium_icon.png

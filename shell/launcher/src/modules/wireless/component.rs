@@ -1,22 +1,19 @@
-use mctk_core::component;
+use crate::utils::get_forttated_wireless_status;
 use mctk_core::layout::Alignment;
 use mctk_core::widgets::Image;
 use mctk_core::{component::Component, lay, node, size, size_pct, widgets::Div, Node};
-use std::hash::Hash;
-
-use crate::types::WirelessStatus;
-
+use networkmanager::WirelessModel;
 #[derive(Debug)]
-pub struct Wireless {
-    pub wireless_status: WirelessStatus,
-}
+pub struct Wireless {}
 
 impl Component for Wireless {
-    fn props_hash(&self, hasher: &mut component::ComponentHasher) {
-        self.wireless_status.hash(hasher);
+    fn init(&mut self) {
+        WirelessModel::start_streaming();
     }
 
     fn view(&self) -> Option<Node> {
+        let wireless_status = get_forttated_wireless_status(WirelessModel::get());
+
         Some(
             node!(
                 Div::new()
@@ -28,7 +25,7 @@ impl Component for Wireless {
                 ],
             )
             .push(node!(
-                Image::new(format!("sm{:?}", self.wireless_status.to_string())),
+                Image::new(format!("sm{:?}", wireless_status.to_string())),
                 lay![
                     size: [28, 28],
                 ],

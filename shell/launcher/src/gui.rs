@@ -1,3 +1,4 @@
+use crate::modules::applications::model::DesktopEntriesModel;
 use crate::modules::cpu::component::GRID_SIZE;
 use crate::modules::running_apps::running_app::{AppDetails, RunningApp};
 use crate::modules::settings_panel::rotation::component::RotationStatus;
@@ -9,11 +10,9 @@ use crate::pages::settings_panel::SettingsPanel;
 use crate::pages::splash_screen::SplashScreen;
 use crate::pages::status_bar::StatusBar;
 use crate::settings::{self, LauncherSettings};
-use crate::types::{BatteryLevel, BluetoothStatus, RestartState, ShutdownState, WirelessStatus};
-use crate::utils::{cubic_bezier, get_formatted_battery_level};
-use crate::{
-    AppMessage, AppParams, BluetoothMessage, BrightnessMessage, SoundMessage, WirelessMessage,
-};
+use crate::types::{BluetoothStatus, RestartState, ShutdownState, WirelessStatus};
+use crate::utils::cubic_bezier;
+use crate::{AppMessage, AppParams, BluetoothMessage, BrightnessMessage, SoundMessage};
 use desktop_entries::DesktopEntry;
 use mctk_core::component::RootComponent;
 use mctk_core::layout::{Alignment, Direction};
@@ -26,6 +25,7 @@ use mctk_core::{component, msg, Color, Point, Pos, Scale, AABB};
 use mctk_core::{
     component::Component, lay, node, rect, size, size_pct, state_component_impl, widgets::Div, Node,
 };
+use networkmanager::WirelessModel;
 use std::any::Any;
 use std::cmp::{max, min};
 use std::collections::{HashSet, VecDeque};
@@ -71,19 +71,8 @@ pub enum Message {
     AppClose {
         app_id: String,
     },
-    Clock {
-        date: String,
-        time: String,
-    },
-    Wireless {
-        status: WirelessStatus,
-    },
     Bluetooth {
         status: BluetoothStatus,
-    },
-    Battery {
-        level: u8,
-        status: BatteryStatus,
     },
     SettingClicked(SettingNames),
     SliderChanged(SliderSettingsNames),
@@ -95,9 +84,6 @@ pub enum Message {
     },
     MachineName {
         name: String,
-    },
-    IpAddress {
-        address: String,
     },
     Net {
         online: bool,
@@ -248,16 +234,12 @@ impl Swipe {
 #[derive(Debug)]
 pub struct LauncherState {
     settings: LauncherSettings,
-    battery_level: BatteryLevel,
     wireless_status: WirelessStatus,
     bluetooth_status: BluetoothStatus,
     rotation_status: RotationStatus,
-    time: String,
-    date: String,
     cpu_usage: VecDeque<u8>,
     uptime: String,
     machine_name: String,
-    ip_address: String,
     online: bool,
     used_memory: u64,
     current_screen: Screens,
@@ -269,8 +251,6 @@ pub struct LauncherState {
     running_apps_count: i32,
     app_channel: Option<Sender<AppMessage>>,
     running_apps: Vec<RunningApp>,
-    installed_apps: Vec<DesktopEntry>,
-    pinned_apps: Vec<DesktopEntry>,
     show_power_options: bool,
     show_running_apps: bool,
     shutdown_pressed: bool,
@@ -379,7 +359,7 @@ impl Launcher {
                     SwipeDirection::Right => todo!(),
                 };
 
-                println!("translations is {:?}", translations);
+                // println!("translations is {:?}", translations);
                 swipe.translations = translations;
                 swipe.state = SwipeState::CompletingSwipe;
                 self.state_mut().swipe = Some(swipe);
@@ -524,10 +504,10 @@ impl Component for Launcher {
                     swipe.dy = (translations[current_translation] as i32)
                         .max(min_dy)
                         .min(max_dy);
-                    println!("swipe.dy {:?}", swipe.dy);
+                    // println!("swipe.dy {:?}", swipe.dy);
                 }
                 if direction == SwipeDirection::Up {
-                    println!("dy {:?} min_dy {:?}", dy, min_dy);
+                    // println!("dy {:?} min_dy {:?}", dy, min_dy);
                     if dy <= min_dy {
                         swipe.state = SwipeState::Completed;
                         // if let Some(app_channel) = self.state_ref().app_channel.clone() {
@@ -539,7 +519,7 @@ impl Component for Launcher {
                         .max(min_dy)
                         .min(max_dy);
                     // swipe.dy = (dy - 8).max(min_dy).min(max_dy);
-                    println!("swipe.dy {:?}", swipe.dy);
+                    //println!("swipe.dy {:?}", swipe.dy);
                 }
                 swipe.current_translation = max(
                     0,
@@ -562,16 +542,12 @@ impl Component for Launcher {
 
         self.state = Some(LauncherState {
             settings,
-            battery_level: BatteryLevel::default(),
             wireless_status: WirelessStatus::default(),
             bluetooth_status: BluetoothStatus::default(),
             rotation_status: RotationStatus::default(),
-            time: String::from(""),
-            date: String::from(""),
             cpu_usage: VecDeque::new(),
             uptime: String::new(),
             machine_name: String::new(),
-            ip_address: String::new(),
             online: false,
             used_memory: 0,
             current_screen: Screens::Home,
@@ -583,8 +559,8 @@ impl Component for Launcher {
             app_channel: None,
             lock_slide: 0,
             running_apps: vec![],
-            installed_apps: vec![],
-            pinned_apps: vec![],
+            // installed_apps: vec![],
+            // pinned_apps: vec![],
             show_power_options: false,
             show_running_apps: false,
             shutdown_pressed: false,
@@ -598,12 +574,8 @@ impl Component for Launcher {
         let cpu_usage = self.state_ref().cpu_usage.clone();
         let uptime = self.state_ref().uptime.clone();
         let machine_name = self.state_ref().machine_name.clone();
-        let ip_address = self.state_ref().ip_address.clone();
         let online = self.state_ref().online.clone();
         let used_memory = self.state_ref().used_memory;
-        let time = self.state_ref().time.clone();
-        let date = self.state_ref().date.clone();
-        let battery_level = self.state_ref().battery_level.clone();
         let wireless_status = self.state_ref().wireless_status.clone();
         let bluetooth_status = self.state_ref().bluetooth_status.clone();
         let rotation_status = self.state_ref().rotation_status.clone();
@@ -616,13 +588,24 @@ impl Component for Launcher {
         let brightness = self.state_ref().brightness;
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
         let running_apps = self.state_ref().running_apps.clone();
-        let installed_apps = self.state_ref().installed_apps.clone();
+        //let installed_apps = self.state_ref().installed_apps.clone();
+        let installed_apps = DesktopEntriesModel::get().entries.get().to_vec();
+        let mut pinned_apps = vec![];
+        for app_id in settings.modules.pinned_apps.clone() {
+            if let Some(app) = installed_apps
+                .iter()
+                .find(|app| app.app_id.to_lowercase() == app_id.to_lowercase())
+            {
+                pinned_apps.push(app.clone());
+            }
+        }
         let show_power_options = self.state_ref().show_power_options;
         let show_running_apps = self.state_ref().show_running_apps;
         let shutdown_pressed = self.state_ref().shutdown_pressed;
         let restart_pressed = self.state_ref().restart_pressed;
         let app_opening = self.state_ref().app_opening.is_some();
-        let pinned_apps = self.state_ref().pinned_apps.clone();
+        // let pinned_apps = self.state_ref().pinned_apps.clone();
+        let clock = self.state_ref().settings.modules.clock.clone();
 
         let mut start_node = node!(
             Div::new().bg(Color::rgba(0., 0., 0., 0.64)),
@@ -642,10 +625,8 @@ impl Component for Launcher {
         {
             start_node = start_node.push(node!(
                 StatusBar {
-                    battery_level,
-                    wireless_status,
                     bluetooth_status,
-                    current_time: time.clone()
+                    time_format: clock.time
                 },
                 lay![ size: [Auto, 36] ]
             ));
@@ -697,8 +678,6 @@ impl Component for Launcher {
                     swipe: down_swipe,
                     sound,
                     brightness,
-                    battery_level,
-                    wireless_status,
                     bluetooth_status,
                     rotation_status
                 },
@@ -753,15 +732,10 @@ impl Component for Launcher {
             start_node = start_node.push(node!(
                 HomeUi {
                     settings,
-                    battery_level,
-                    wireless_status,
                     bluetooth_status,
-                    time,
-                    date,
                     cpu_usage,
                     uptime,
                     machine_name,
-                    ip_address,
                     online,
                     used_memory,
                     is_lock_screen: false,
@@ -782,14 +756,21 @@ impl Component for Launcher {
                 Message::AppOpen { app_id, layer } => {
                     println!("app clicked {:?}", app_id);
 
-                    if let Some(app) = self
-                        .state_ref()
-                        .installed_apps
+                    if let Some(app) = DesktopEntriesModel::get()
+                        .entries
+                        .get()
+                        .to_vec()
                         .iter()
                         .find(|&app| app.app_id == *app_id)
                     {
-                        self.state_mut().app_opening = Some(app.clone());
-                        println!("statring splash screen {:?}", app_id);
+                        let is_already_running = self.state_ref().running_apps.iter().any(|app| {
+                            app.app_details.app_id.to_lowercase() == app_id.to_lowercase()
+                        });
+
+                        if !is_already_running {
+                            self.state_mut().app_opening = Some(app.clone());
+                            println!("statring splash screen {:?}", app_id);
+                        }
                     }
 
                     self.state_mut().running_apps_count = 1;
@@ -803,20 +784,8 @@ impl Component for Launcher {
                         self.state_mut().show_running_apps = false;
                     }
                 }
-                Message::Clock { time, date } => {
-                    self.state_mut().time = time.clone();
-                    self.state_mut().date = date.clone().to_uppercase();
-                }
-                Message::Wireless { status } => {
-                    println!("Message::Wireless {:?}", status);
-                    self.state_mut().wireless_status = status.clone();
-                }
                 Message::Bluetooth { status } => {
                     self.state_mut().bluetooth_status = status.clone();
-                }
-                Message::Battery { level, status } => {
-                    let battery_level = get_formatted_battery_level(level, status);
-                    self.state_mut().battery_level = battery_level;
                 }
                 Message::SettingClicked(settings_name) => {
                     println!("setting clicked: {:?}", settings_name);
@@ -829,16 +798,12 @@ impl Component for Launcher {
                                 WirelessStatus::Connected(_) => false,
                                 WirelessStatus::NotFound => false,
                             };
-                            if let Some(app_channel) = self.state_ref().app_channel.clone() {
-                                if value == true {
-                                    self.state_mut().wireless_status = WirelessStatus::On;
-                                } else {
-                                    self.state_mut().wireless_status = WirelessStatus::Off;
-                                }
-                                let _ = app_channel.send(AppMessage::Wireless {
-                                    message: WirelessMessage::Toggle { value: Some(value) },
-                                });
+                            if value == true {
+                                self.state_mut().wireless_status = WirelessStatus::On;
+                            } else {
+                                self.state_mut().wireless_status = WirelessStatus::Off;
                             }
+                            let _ = WirelessModel::toggle_wireless();
                         }
                         SettingNames::Bluetooth => {
                             let bluetooth_status = self.state_ref().bluetooth_status.clone();
@@ -936,9 +901,6 @@ impl Component for Launcher {
                 Message::MachineName { name } => {
                     self.state_mut().machine_name = name.clone();
                 }
-                Message::IpAddress { address } => {
-                    self.state_mut().ip_address = address.clone();
-                }
                 Message::Net { online } => {
                     self.state_mut().online = online.clone();
                 }
@@ -947,7 +909,7 @@ impl Component for Launcher {
                 }
                 Message::Swipe { swipe } => {
                     // Handle swipe gestures
-                    println!("Swipe detected: {:?}", swipe);
+                    // println!("Swipe detected: {:?}", swipe);
                     self.state_mut().swipe = Some(swipe.clone());
                     // self.state_mut().swipe_gesture = Some(direction.clone());
                 }
@@ -1000,7 +962,7 @@ impl Component for Launcher {
                             SwipeDirection::Left => todo!(),
                             SwipeDirection::Right => todo!(),
                         };
-                        println!("translations is {:?}", translations);
+                        // println!("translations is {:?}", translations);
                         swipe.translations = translations;
                         swipe.state = SwipeState::CompletingSwipe;
                         self.state_mut().swipe = Some(swipe);
@@ -1194,10 +1156,10 @@ impl Component for Launcher {
             return;
         }
 
-        println!(
-            "Launcher::on_drag_start() {:?}",
-            event.physical_mouse_position()
-        );
+        // println!(
+        //     "Launcher::on_drag_start() {:?}",
+        //     event.physical_mouse_position()
+        // );
 
         let aabb = event.current_logical_aabb();
         let pos = event.physical_mouse_position();
@@ -1225,10 +1187,10 @@ impl Component for Launcher {
             return;
         }
 
-        println!(
-            "Launcher::on_touch_drag_start() {:?}",
-            event.physical_touch_position()
-        );
+        // println!(
+        //     "Launcher::on_touch_drag_start() {:?}",
+        //     event.physical_touch_position()
+        // );
         if self.state_ref().swipe.is_some() {
             println!("Swipe already exists");
             return;
@@ -1278,7 +1240,7 @@ impl Component for Launcher {
         }
 
         let logical_delta = event.bounded_logical_delta();
-        println!("Launcher::on_touch_drag() {:?}", logical_delta);
+        // println!("Launcher::on_touch_drag() {:?}", logical_delta);
         if let Some(msg) = self.handle_on_drag(logical_delta) {
             self.update(msg);
         }
@@ -1316,10 +1278,10 @@ impl Component for Launcher {
             println!("not dragging as other apps are running");
             return;
         }
-        println!(
-            "Launcher::on_touch_drag_end() {:?}",
-            event.physical_touch_position()
-        );
+        // println!(
+        //     "Launcher::on_touch_drag_end() {:?}",
+        //     event.physical_touch_position()
+        // );
         self.handle_on_drag_end();
     }
 }
@@ -1328,15 +1290,7 @@ impl RootComponent<AppParams> for Launcher {
     fn root(&mut self, window: &dyn Any, app_params: &dyn Any) {
         let app_params = app_params.downcast_ref::<AppParams>().unwrap();
         let app_channel = app_params.app_channel.clone();
-        let installed_apps = app_params.installed_apps.clone();
-        let pinned_apps = app_params.pinned_apps.clone();
         self.state_mut().app_channel = app_channel;
-        if let Some(apps) = installed_apps {
-            self.state_mut().installed_apps = apps
-        }
-        if let Some(apps) = pinned_apps {
-            self.state_mut().pinned_apps = apps
-        }
     }
 }
 

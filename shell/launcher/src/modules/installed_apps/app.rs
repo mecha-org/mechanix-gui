@@ -128,7 +128,7 @@ impl Component for App {
     }
 
     fn view(&self) -> Option<Node> {
-        let mut name = self.app.name.clone();
+        let mut name: String = self.app.name.clone();
         let mut icon_path = self.app.icon_path.clone();
         let mut icon_box = node!(
             Div::new().border(Color::rgb(43., 43., 43.), 1.5, (0., 0., 0., 0.)),
@@ -145,7 +145,8 @@ impl Component for App {
             match path.extension().and_then(|ext| ext.to_str()) {
                 Some("png") => {
                     icon_box = icon_box.push(node!(
-                        Image::new(name.clone()),
+                        Image::new(name.clone())
+                            .dynamic_load_from(Some(path.to_str().unwrap().to_string())),
                         lay![
                             size_pct: [100],
                         ],
@@ -153,7 +154,8 @@ impl Component for App {
                 }
                 Some("svg") => {
                     icon_box = icon_box.push(node!(
-                        Svg::new(name.clone()),
+                        Svg::new(name.clone())
+                            .dynamic_load_from(Some(path.to_str().unwrap().to_string())),
                         lay![
                             size_pct: [100],
                         ],
@@ -161,6 +163,15 @@ impl Component for App {
                 }
                 _ => (),
             };
+        } else {
+            icon_box = icon_box.push(node!(
+                Image::new(name.clone()).dynamic_load_from(Some(
+                    "/usr/share/icons/Papirus-PNG/symbolic/apps/app-not-found.png".to_string()
+                )),
+                lay![
+                    size_pct: [100],
+                ],
+            ));
         }
 
         Some(icon_box)

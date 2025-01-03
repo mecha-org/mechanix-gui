@@ -67,7 +67,7 @@ impl HomeButtonHandler {
 
                                 let app_channel = self.app_channel.clone();
                                 let min_time_long_press = self.configs.min_time_long_press;
-
+                                let toplevel_msg_tx = toplevel_msg_tx.clone();
                                 // Spawn a task that checks the duration while the button is pressed
                                 tokio::spawn(async move {
                                     loop {
@@ -97,6 +97,7 @@ impl HomeButtonHandler {
                                                     value: true,
                                                 },
                                             });
+                                            let _ = minimize_all(toplevel_msg_tx.clone()).await;
                                             {
                                                 let mut long_press_sent =
                                                     long_press_sent_mutex.lock().await;
