@@ -54,11 +54,9 @@ impl component::Component for SoundScreen {
         let mut main_node = node!(
             widgets::Div::new(),
             lay![
-                // size_pct: [100, 90],
                 size: [440, Auto],
                 cross_alignment: layout::Alignment::Stretch,
                 direction: layout::Direction::Column,
-                margin: [10., 0., 0., 0.],
             ]
         );
 
@@ -106,6 +104,7 @@ impl component::Component for SoundScreen {
             lay![size: [Auto, 45], margin:[5., 15., 12., 10.]]
         );
 
+        // todo
         // let current_output_device = SoundModel::get().current_output_device.get();
         // let current_input_device = SoundModel::get().current_input_device.get();
 

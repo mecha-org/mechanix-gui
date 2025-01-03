@@ -53,7 +53,7 @@ impl Component for SettingsScreen {
         let mut connected_network_name = "    ".to_string();
         if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
             connected_network_name = connected_network.clone().name.clone();
-            connected_network_name = truncate(connected_network_name, 12);
+            connected_network_name = truncate(connected_network_name, 14);
         }
 
         let network_row = node!(SettingsRowComponent {
@@ -368,7 +368,6 @@ impl Component for SettingsScreen {
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
                 size: [440, Auto],
-                position: [Auto, 0., 0., 0.],
             ]
         )
         .push(scrollable);

@@ -34,7 +34,7 @@ impl Component for InputDeviceSelector {
         let sub_header = node!(
             Div::new(),
             lay![
-                margin: [0., 8., 0., 8.]
+                margin: [0., 10., 0., 0.]
             ]
         )
         .push(sub_header_node("Select Input Device"));

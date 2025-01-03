@@ -17,9 +17,8 @@ impl Component for PerformanceMode {
             widgets::Div::new(),
             lay![
                 size_pct: [100, 90],
-                cross_alignment: layout::Alignment::Stretch,
-                direction: layout::Direction::Column,
-                margin: [10., 0., 0., 0.],
+                direction: Direction::Column,
+                cross_alignment: Alignment::Stretch,
             ]
         );
 

@@ -108,14 +108,13 @@ impl Component for UnknownNetworkDetails {
                 size: [440, Auto],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
-                margin: [0., 0., 0., 0.],
             ]
         );
 
         let mut scrollable_section = node!(
-            Scrollable::new(size!(440, 340)),
+            Scrollable::new(size!(440, 370)),
             lay![
-                size: [440, 340],
+                size: [440, 370],
                 direction: Direction::Column,
                 cross_alignment: Alignment::Stretch,
             ]
@@ -140,14 +139,6 @@ impl Component for UnknownNetworkDetails {
                 cross_alignment: Alignment::Stretch,
             ],
         )
-        .push(single_detail_row(DetailRow {
-            key: "Name".to_string(),
-            value: truncate(network.clone().name.clone(), 15),
-        }))
-        .push(node!(HDivider {
-            size: 0.8,
-            color: Color::rgba(83., 83., 83., 1.)
-        }))
         .push(single_detail_row(DetailRow {
             key: "Status".to_string(),
             value: "Not Connected".to_string(),
