@@ -29,9 +29,9 @@ impl Component for Footer {
                 Color::TRANSPARENT
             }),
             lay![
-                size: size!(480.0, 480.0 - 480.0 / aspect_ratio),
+                size: size!(480.0, 440.0 - 440.0 / aspect_ratio),
                 position_type: Absolute,
-                position: [480.0 / aspect_ratio, Auto, Auto, -240.0],
+                position: [440.0 / aspect_ratio, Auto, Auto, -240.0],
                 direction: Direction::Row,
                 axis_alignment: Alignment::Start,
                 cross_alignment: Alignment::Center,
