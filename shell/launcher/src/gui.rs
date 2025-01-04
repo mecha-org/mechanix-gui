@@ -1043,6 +1043,7 @@ impl Component for Launcher {
                     self.state_mut().show_running_apps = *show;
                     self.state_mut().app_opening = None;
                     self.state_mut().running_apps_count = 0;
+                    self.state_mut().swipe = None;
                     if !show && self.state_ref().current_layer != Layer::Bottom {
                         if let Some(app_channel) = self.state_ref().app_channel.clone() {
                             let _ = app_channel.send(AppMessage::ChangeLayer(Layer::Bottom));
