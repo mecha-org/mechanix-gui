@@ -128,7 +128,7 @@ impl Component for Scrollable {
         let start_position = self.state_ref().drag_start_position.x;
 
         // Define snapping points
-        let snap_points = [0.0, 70.0, 286.0];
+        let snap_points = [0.0, 66.0, 286.0];
         let mut next_scroll_position = scroll_position;
 
         let drag_right = event.logical_delta().x.is_sign_negative();
@@ -193,7 +193,7 @@ impl Component for Scrollable {
         let start_position = self.state_ref().drag_start_position.x;
 
         // Define snapping points
-        let snap_points = [0.0, 70.0, 286.0];
+        let snap_points = [0.0, 66.0, 286.0];
         let mut next_scroll_position = scroll_position;
 
         let drag_right = event.logical_delta().x.is_sign_negative();

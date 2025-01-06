@@ -1,13 +1,13 @@
 ---
 outlines:
-  default: { width: 36, height: 42 }
-  altline: { width: 58, height: 42 }
-  change-view: { width: 58, height: 42 }
-  change-view-2: { width: 54, height: 42 }
-  wide: { width: 54, height: 42 }
-  spaceline: { width: 174.3, height: 42 }
-  special: { width: 44, height: 42 }
-  large: { width: 36, height: 42 }
+  default: { width: 39.5, height: 43.7 }
+  altline: { width: 62, height: 43.7 }
+  change-view: { width: 62, height: 43.7 }
+  change-view-2: { width: 62, height: 43.7 }
+  wide: { width: 62, height: 43.7 }
+  spaceline: { width: 176.3, height: 43.7 }
+  special: { width: 44, height: 43.7 }
+  large: { width: 36, height: 43.7 }
 
 views:
   base:

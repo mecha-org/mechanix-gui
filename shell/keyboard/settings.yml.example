@@ -25,6 +25,8 @@ icons:
 layouts:
   default: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
   terminal: /usr/share/mechanix/shell/keyboard/assets/layouts/terminal/us.yaml
+  email: /usr/share/mechanix/shell/keyboard/assets/layouts/email/us.yaml
+  url: /usr/share/mechanix/shell/keyboard/assets/layouts/url/us.yaml
 trie:
   raw_file: /usr/share/mechanix/shell/keyboard/assets/trie/words_raw.tsv
   cached_file: .config/mechanix/shell/keyboard/caches/words_cached.json
