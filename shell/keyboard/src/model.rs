@@ -34,7 +34,7 @@ lazy_static! {
         input_method_msg_tx: Context::new(None),
         virtual_keyboard_msg_tx: Context::new(None),
         trie_configs: Context::new(None),
-        purpose: Context::new(None),
+        purpose: Context::new(Some(ContentPurpose::Normal)),
         layouts_map: Context::new(HashMap::new()),
         window_tx: Context::new(None),
         maximize: Context::new(true),
@@ -228,7 +228,7 @@ impl KeyboardModel {
                                 InputMethodEvent::Deactivate => {
                                     println!("InputMethodEvent::Deactivate");
                                     Self::get().visible.set(false);
-                                    Self::get().purpose.set(None);
+                                    Self::get().purpose.set(Some(ContentPurpose::Normal));
                                     Self::recalculate();
                                     Self::get().maximize.set(true);
                                     Self::get().current_view.set(String::from("base"));

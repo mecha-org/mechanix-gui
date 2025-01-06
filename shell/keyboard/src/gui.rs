@@ -104,10 +104,34 @@ impl Component for Keyboard {
             Ok(layout) => {
                 let parsed_layout = layout.clone().build().unwrap();
                 layouts.insert(ContentPurpose::Terminal, parsed_layout);
-                println!("inserted terminal layout");
+                println!("inserted email layout");
             }
             Err(e) => {
                 println!("Error parsing default layout {:?}", e);
+                panic!("");
+            }
+        };
+
+        match crate::layout::Layout::from_file(settings.layouts.email.clone()) {
+            Ok(layout) => {
+                let parsed_layout = layout.clone().build().unwrap();
+                layouts.insert(ContentPurpose::Email, parsed_layout);
+                println!("inserted email layout");
+            }
+            Err(e) => {
+                println!("Error parsing email layout {:?}", e);
+                panic!("");
+            }
+        };
+
+        match crate::layout::Layout::from_file(settings.layouts.url.clone()) {
+            Ok(layout) => {
+                let parsed_layout = layout.clone().build().unwrap();
+                layouts.insert(ContentPurpose::Url, parsed_layout);
+                println!("inserted url layout");
+            }
+            Err(e) => {
+                println!("Error parsing url layout {:?}", e);
                 panic!("");
             }
         };
@@ -258,11 +282,28 @@ impl Component for Keyboard {
         let click_area = self.state_ref().settings.click_area.clone();
         let active_mods = self.state_ref().active_mods.clone();
         let is_scrolling = self.state_ref().is_scrolling.clone();
+        let key = match purpose {
+            ContentPurpose::Normal => 1,
+            ContentPurpose::Alpha => 2,
+            ContentPurpose::Digits => 3,
+            ContentPurpose::Number => 4,
+            ContentPurpose::Phone => 5,
+            ContentPurpose::Url => 6,
+            ContentPurpose::Email => 7,
+            ContentPurpose::Name => 8,
+            ContentPurpose::Password => 9,
+            ContentPurpose::Pin => 10,
+            ContentPurpose::Date => 11,
+            ContentPurpose::Time => 12,
+            ContentPurpose::Datetime => 13,
+            ContentPurpose::Terminal => 14,
+            _ => 15,
+        };
         let mut main_div = node!(
             Div::new().bg(if keyboard_window == KeyboardWindow::Maximized {
                 Color::BLACK
             } else {
-                Color::BLACK
+                Color::TRANSPARENT
             }),
             lay![
                 size_pct: [100 , 100],
@@ -270,7 +311,8 @@ impl Component for Keyboard {
                 cross_alignment: Alignment::Stretch,
                 axis_alignment: Alignment::Stretch,
             ]
-        );
+        )
+        .key(key);
 
         let mut suggestion_row = node!(
             Div::new(),
@@ -304,6 +346,7 @@ impl Component for Keyboard {
             );
         }
 
+        println!("purpose is {:?}", purpose);
         if purpose == ContentPurpose::Normal || purpose == ContentPurpose::Alpha {
             main_div = main_div.push(suggestion_row);
         }
@@ -315,7 +358,7 @@ impl Component for Keyboard {
                         Scrollable::new(
                             size!(480, Dimension::Px(210.)),
                             if purpose == ContentPurpose::Terminal {
-                                70.
+                                66.
                             } else {
                                 0.
                             }
@@ -339,7 +382,7 @@ impl Component for Keyboard {
                             ),
                             lay![
                             margin: [4., 6. , 0., 0.]
-                            size: [ if purpose == ContentPurpose::Terminal {748. } else { 474. }, Dimension::Px(210.)]
+                            size: [ if purpose == ContentPurpose::Terminal {738. } else { 474. }, Dimension::Px(210.)]
                             ]
                         )
                         .key(if self.state_ref().key_pressed.is_some() {
