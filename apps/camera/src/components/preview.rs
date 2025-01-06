@@ -12,6 +12,7 @@ impl Preview {
 impl Component for Preview {
     fn init(&mut self) {
         camera::Camera::pick_optimal_display_resolution();
+        camera::Camera::init();
         camera::Camera::start_fetching();
     }
 
