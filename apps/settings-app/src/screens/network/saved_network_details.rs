@@ -337,6 +337,7 @@ impl Component for SavedNetworkDetails {
                 })
             }),
             "delete_icon",
+            IconType::Png,
             Box::new(move || {
                 WirelessModel::forget_saved_network(full_network_name.to_string());
                 msg!(Message::ChangeRoute {

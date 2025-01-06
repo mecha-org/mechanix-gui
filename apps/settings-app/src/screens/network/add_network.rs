@@ -44,34 +44,40 @@ impl Debug for Form {
 
 #[derive(Debug)]
 pub struct NetworkScreenState {
-    pub name: String,
+    form: &'static Form,
 }
 
 #[derive(Debug)]
 #[component(State = "NetworkScreenState")]
 pub struct AddNetwork {
-    form: &'static Form,
-    name: String,
+    // form: &'static Form,
+    pub ssid: String,
 }
 
 impl AddNetwork {
-    pub fn new(name: String) -> Self {
+    pub fn new(ssid: String) -> Self {
         Self {
-            state: Some(NetworkScreenState { name: name.clone() }),
+            state: Some(NetworkScreenState { form: &FORM }),
             dirty: false,
-            form: &FORM,
-            name,
+            ssid,
         }
     }
 }
 
 impl Component for AddNetwork {
     fn init(&mut self) {
-        FORM.ssid.set(self.name.clone());
+        FORM.ssid.set(self.ssid.clone());
+        FORM.password.set("".to_string());
     }
 
     fn view(&self) -> Option<Node> {
-        let network_name: String = self.state_ref().name.clone();
+        let network_name: String = self.ssid.clone();
+
+        let header_text = if network_name.clone().len() == 0 {
+            "Add Network"
+        } else {
+            &truncate(network_name.clone(), 20).to_string()
+        };
 
         let mut base: Node = node!(
             Div::new(),
@@ -131,7 +137,7 @@ impl Component for AddNetwork {
                 ]
             )
             .push(node!(
-               VDivider {
+                VDivider {
                     size: 0.8,
                     color: Color::rgba(83., 83., 83., 1.),
                 },
@@ -158,7 +164,7 @@ impl Component for AddNetwork {
                     .style("cursor_color", Color::WHITE)
                     .style("placeholder_color", Color::rgb(107., 107., 107.))
                     .on_change(Box::new(|s| {
-                        FORM.password.set(s.to_string());
+                        FORM.ssid.set(s.to_string());
                         msg!(())
                     }))
                     .placeholder("Enter SSID"),
@@ -244,11 +250,12 @@ impl Component for AddNetwork {
             )),
         );
 
-        let header_text = if FORM.ssid.get().clone().len() == 0 {
-            "Add Network"
-        } else {
-            &truncate(network_name.clone(), 20).to_string()
-        };
+        let confirm_icon =
+            if FORM.password.get().clone().len() == 0 || FORM.ssid.get().clone().len() == 0 {
+                "disable_confirm_icon"
+            } else {
+                "enable_confirm_icon"
+            };
 
         base = base.push(header_node!(
             header_text,
@@ -259,7 +266,8 @@ impl Component for AddNetwork {
                     }
                 })
             }),
-            "confirm_icon",
+            confirm_icon,
+            IconType::Svg,
             Box::new(|| {
                 if !FORM.password.get().clone().is_empty() {
                     WirelessModel::connect_to_network(
@@ -278,7 +286,7 @@ impl Component for AddNetwork {
             })
         ));
 
-        if FORM.ssid.get().clone().len() == 0 {
+        if self.ssid.clone().len() == 0 {
             content_node = content_node.push(name_row_node);
             content_node = content_node.push(node!(HDivider {
                 size: 0.8,

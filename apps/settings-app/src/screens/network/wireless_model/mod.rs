@@ -552,6 +552,30 @@ impl WirelessModel {
         });
     }
 
+    fn stream_device_state() {
+        RUNTIME.spawn(async {
+            let connection = zbus::Connection::system().await.unwrap();
+            let device = Self::get_wifi_device_path().await;
+
+            let device_proxy = device::DeviceProxy::new(&connection, device.clone())
+                .await
+                .unwrap();
+            let mut stream = device_proxy.receive_state_changed().await;
+            while let Some(state_changed) = stream.next().await {
+                if let Ok(state) = state_changed.get().await {
+                    // the device failed to connect to the requested network and is cleaning up the connection request
+                    if state == 120 {
+                        if Self::get().connected_network.get().is_some() {
+                            Self::forget_saved_network(
+                                (*Self::get().connected_network.get()).clone().unwrap().name,
+                            )
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     pub fn start_streaming() {
         if *WirelessModel::get().is_streaming.get() {
             return;
@@ -560,6 +584,7 @@ impl WirelessModel {
         Self::stream_wireless_enabled_status();
         Self::stream_connection();
         Self::stream_wifi_status();
+        Self::stream_device_state();
         Self::stream_scan_result();
         Self::stream_known_networks();
     }

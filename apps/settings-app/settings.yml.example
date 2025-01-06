@@ -83,6 +83,8 @@ modules:
   footer:
     back_icon: /usr/share/mechanix/apps/settings/assets/icons/back_icon.png
     confirm_icon: /usr/share/mechanix/apps/settings/assets/icons/confirm_icon.png
+    enable_confirm_icon: /usr/share/mechanix/apps/settings/assets/icons/enable_confirm_icon.svg
+    disable_confirm_icon: /usr/share/mechanix/apps/settings/assets/icons/disable_confirm_icon.svg
     delete_icon: /usr/share/mechanix/apps/settings/assets/icons/delete_icon.png
     add_icon: /usr/share/mechanix/apps/settings/assets/icons/add_icon.png
   not_found:
