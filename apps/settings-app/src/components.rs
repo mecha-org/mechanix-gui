@@ -134,7 +134,7 @@ macro_rules! header_node {
         result_node
     }};
 
-    ($title:expr, $back_on_click:expr, $right_icon_1:expr, $right_icon_1_on_click:expr) => {{
+    ($title:expr, $back_on_click:expr, $right_icon_1:expr, $right_icon_1_type: expr , $right_icon_1_on_click:expr) => {{
 
         let text_node = node!(
             Text::new(txt!($title))
@@ -213,7 +213,7 @@ macro_rules! header_node {
                 .push(node!(
                     IconButton::new($right_icon_1)
                     .on_click($right_icon_1_on_click)
-                    .icon_type(IconType::Png)
+                    .icon_type($right_icon_1_type)
                     .with_class(" border-0 p-0")
                     .style(
                         "size",

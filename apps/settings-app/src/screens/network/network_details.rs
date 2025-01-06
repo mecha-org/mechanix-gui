@@ -356,6 +356,7 @@ impl Component for NetworkDetails {
                 }
             })),
             "delete_icon",
+            IconType::Png,
             Box::new(move || {
                 // WirelessModel::disconnect();
                 WirelessModel::forget_saved_network(connected_network.clone().name.to_string());

@@ -252,6 +252,14 @@ async fn main() -> anyhow::Result<()> {
         AssetParams::new(modules.footer.confirm_icon),
     );
 
+    if let icon = modules.footer.enable_confirm_icon {
+        svgs.insert("enable_confirm_icon".to_string(), icon);
+    }
+
+    if let icon = modules.footer.disable_confirm_icon {
+        svgs.insert("disable_confirm_icon".to_string(), icon);
+    }
+
     assets.insert(
         "delete_icon".to_string(),
         AssetParams::new(modules.footer.delete_icon),

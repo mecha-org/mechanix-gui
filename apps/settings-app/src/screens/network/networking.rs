@@ -322,26 +322,28 @@ impl Component for NetworkingScreen {
             let mut is_known = false;
             let mut is_current = false;
             let mut network_id = "".to_string();
-            for known_network in known_networks.iter() {
-                if known_network.ssid == network.name {
-                    if known_network.flags.contains("[CURRENT]") {
-                        is_current = true;
+            if !network.name.is_empty() {
+                for known_network in known_networks.iter() {
+                    if known_network.ssid == network.name {
+                        if known_network.flags.contains("[CURRENT]") {
+                            is_current = true;
+                        }
+                        network_id = known_network.network_id.clone();
+                        is_known = true;
+                        break;
                     }
-                    network_id = known_network.network_id.clone();
-                    is_known = true;
-                    break;
                 }
-            }
-            if connected_network_name.clone() == network.name {
-                is_current = true;
-            }
-            if is_current {
-                continue;
-            }
-            if is_known {
-                saved_available_networks.push((network, network_id));
-            } else {
-                unsaved_available_networks.push(network);
+                if connected_network_name.clone() == network.name {
+                    is_current = true;
+                }
+                if is_current {
+                    continue;
+                }
+                if is_known {
+                    saved_available_networks.push((network, network_id));
+                } else {
+                    unsaved_available_networks.push(network);
+                }
             }
         }
 
@@ -399,7 +401,7 @@ impl Component for NetworkingScreen {
                         ]
                     )
                     .push(node!(
-                        Text::new(txt!(truncate(network.name.clone(), 30)))
+                        Text::new(txt!(truncate(network.name.clone(), 22)))
                             .style("color", Color::WHITE)
                             .style("font", "Inter")
                             .with_class("text-2xl leading-7 font-normal"),
@@ -513,7 +515,7 @@ impl Component for NetworkingScreen {
                         ]
                     )
                     .push(node!(
-                        Text::new(txt!(truncate(network.name.clone(), 28)))
+                        Text::new(txt!(truncate(network.name.clone(), 22)))
                             .style("color", Color::WHITE)
                             .style("font", "Inter")
                             .with_class("text-2xl leading-7 font-normal"),
