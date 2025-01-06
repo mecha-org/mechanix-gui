@@ -56,53 +56,54 @@ impl Camera {
     }
 
     pub fn init() {
-        if !*CAMERA.is_initialized.get() {
-            println!("initializing camera");
-            let camera = match GstCamera::new(
-                *CAMERA.device_index.get(),
-                Some(CameraFormat::new_from(
-                    *CAMERA.width.get(),
-                    *CAMERA.height.get(),
-                    FrameFormat::YUYV,
-                    *CAMERA.fps.get(),
-                )),
-            ) {
-                Ok(mut c) => {
-                    match c.open_stream() {
-                        Ok(()) => {
-                            println!("camera open success");
-                            println!(
-                                "camera format: {:?}",
-                                CameraFormat::new_from(
-                                    *CAMERA.width.get(),
-                                    *CAMERA.height.get(),
-                                    FrameFormat::YUYV,
-                                    *CAMERA.fps.get(),
-                                )
-                            );
-                        }
-                        Err(err) => {
-                            println!("failed to open camera stream: {}", err);
-                        }
-                    };
-                    Some(c)
-                }
-                Err(e) => {
-                    println!("failed to create camera, err - {:?}", e);
-                    None
-                }
-            };
-            *GST_CAMERA.lock().unwrap() = camera;
-            let compatible_resolutions = GST_CAMERA
-                .lock()
-                .unwrap()
-                .as_mut()
-                .unwrap()
-                .compatible_list_by_resolution(FrameFormat::YUYV)
-                .unwrap();
-            CAMERA.compatible_resoultions.set(compatible_resolutions);
-            CAMERA.is_initialized.set(true);
+        println!("initializing camera");
+        if let Some(camera) = GST_CAMERA.lock().unwrap().as_mut() {
+            let _ = camera.stop_stream();
         }
+        let camera = match GstCamera::new(
+            *CAMERA.device_index.get(),
+            Some(CameraFormat::new_from(
+                *CAMERA.width.get(),
+                *CAMERA.height.get(),
+                FrameFormat::YUYV,
+                *CAMERA.fps.get(),
+            )),
+        ) {
+            Ok(mut c) => {
+                match c.open_stream() {
+                    Ok(()) => {
+                        println!("camera open success");
+                        println!(
+                            "camera format: {:?}",
+                            CameraFormat::new_from(
+                                *CAMERA.width.get(),
+                                *CAMERA.height.get(),
+                                FrameFormat::YUYV,
+                                *CAMERA.fps.get(),
+                            )
+                        );
+                    }
+                    Err(err) => {
+                        println!("failed to open camera stream: {}", err);
+                    }
+                };
+                Some(c)
+            }
+            Err(e) => {
+                println!("failed to create camera, err - {:?}", e);
+                None
+            }
+        };
+        *GST_CAMERA.lock().unwrap() = camera;
+        let compatible_resolutions = GST_CAMERA
+            .lock()
+            .unwrap()
+            .as_mut()
+            .unwrap()
+            .compatible_list_by_resolution(FrameFormat::YUYV)
+            .unwrap();
+        CAMERA.compatible_resoultions.set(compatible_resolutions);
+        CAMERA.is_initialized.set(true);
     }
 
     pub fn get_buffer() -> Box<[Rgba<u8>]> {
@@ -188,8 +189,8 @@ impl Camera {
     }
 
     pub fn pick_optimal_display_resolution() {
-        let ideal_height = 720;
-        let ideal_width = 1280;
+        let ideal_height = 480;
+        let ideal_width = 640;
 
         let mut height = *CAMERA.height.get();
         let mut width = *CAMERA.width.get();
