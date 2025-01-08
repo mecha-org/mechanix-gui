@@ -75,7 +75,7 @@ impl Component for BatteryScreen {
         } else if *battery_status == BatteryStatus::Discharging {
             charge_text = "Discharging";
         } else {
-            charge_text = "Charded";
+            charge_text = "Charged";
         }
 
         // green
