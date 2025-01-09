@@ -21,19 +21,16 @@ layout:
   right: []
 fonts:
   paths:
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-Bold.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-BoldItalic.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-Italic.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceMono-Regular.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Bold.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Regular.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-SemiBold.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/SpaceGrotesk-Medium.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Regular.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Medium.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-SemiBold.ttf
-    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-Bold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_18pt-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_24pt-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_28pt-Regular.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_18pt-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_24pt-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_28pt-Medium.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter_18pt-Bold.ttf
     - /usr/share/mechanix/apps/settings/assets/fonts/Inter_24pt-Bold.ttf
+    - /usr/share/mechanix/apps/settings/assets/fonts/Inter-28pt-Bold.ttf
 modules:
   wireless:
     icon:

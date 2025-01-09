@@ -49,16 +49,22 @@ impl Component for SettingsRowComponent {
         let icon_2 = self.icon_2.clone();
         let color = self.color.clone();
 
-        let text_node = node!(Text::new(txt!(title))
-            .style("color", color)
-            .style("font", "Inter")
-            .with_class("text-2xl leading-7 font-bold"));
+        let text_node = node!(
+            Text::new(txt!(title))
+                .with_class("text-2xl leading-7 font-bold")
+                .style("font", "Inter")
+                .style("color", Color::rgba(227., 227., 227., 1.)),
+            lay![
+                size_pct: [100, Auto],
+                axis_alignment: Alignment::Center,
+            ]
+        );
 
         let value_node = node!(
             Text::new(txt!(value))
                 .style("color", Color::rgba(197., 197., 197., 1.))
                 .style("font", "Inter")
-                .with_class("text-xl leading-6 font-normal"),
+                .with_class("text-xl leading-8 font-medium"),
             lay![
                 margin: [0., 0., 0., 10.],
             ]

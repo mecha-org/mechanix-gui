@@ -161,7 +161,7 @@ impl Component for AboutDevice {
         )
         .push(single_detail_row(DetailRow {
             key: "Host name".to_string(),
-            value: format!("{}.local ", os_info.hostname),
+            value: format!("{}.local", os_info.hostname),
         }))
         .push(node!(HDivider {
             size: 0.8,

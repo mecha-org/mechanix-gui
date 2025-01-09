@@ -158,7 +158,8 @@ impl Component for AddNetwork {
             .push(node!(
                 TextBox::new(Some("".to_string()))
                     .style("background_color", Color::TRANSPARENT)
-                    .style("font_size", 20.)
+                    .style("font", "Inter")
+                    .with_class("text-xl leading-6 font-medium")
                     .style("text_color", Color::WHITE)
                     .style("border_color", Color::TRANSPARENT)
                     .style("cursor_color", Color::WHITE)
@@ -234,7 +235,8 @@ impl Component for AddNetwork {
             .push(node!(
                 TextBox::new(Some("".to_string()))
                     .style("background_color", Color::TRANSPARENT)
-                    .style("font_size", 20.)
+                    .style("font", "Inter")
+                    .with_class("text-xl leading-6 font-medium")
                     .style("text_color", Color::WHITE)
                     .style("border_color", Color::TRANSPARENT)
                     .style("cursor_color", Color::WHITE)
