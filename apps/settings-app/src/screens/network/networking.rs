@@ -173,7 +173,7 @@ impl Component for NetworkingScreen {
                 ]
             )
             .push(node!(
-                Toggle::new(status)
+                Toggle::new(status.to_owned())
                     .toggle_type(widgets::ToggleType::Type3)
                     .on_change(Box::new(|value| {
                         WirelessModel::toggle_wireless();
@@ -767,7 +767,7 @@ impl Component for NetworkingScreen {
             size: 1.,
             color: Color::rgba(83., 83., 83., 1.)
         }));
-        if WirelessModel::get().connected_network.get().is_some() || status.clone() == true {
+        if WirelessModel::get().connected_network.get().is_some() || status.to_owned() == true {
             scrollable_section = scrollable_section.push(connected_network_row);
 
             scrollable_section = scrollable_section.push(
@@ -842,26 +842,43 @@ impl Component for NetworkingScreen {
             }));
         }
 
-        base = base.push(header_node!(
-            "Network",
-            Box::new(|| msg!(Message::ChangeRoute {
-                route: Routes::SettingsList
-            })),
-            "add_icon",
-            Box::new(|| msg!(Message::ChangeRoute {
-                route: Routes::Network {
-                    screen: NetworkScreenRoutes::AddNetwork {
-                        ssid: "".to_string()
+        if status.to_owned() == true {
+            base = base.push(header_node!(
+                "Network",
+                Box::new(|| msg!(Message::ChangeRoute {
+                    route: Routes::SettingsList
+                })),
+                "add_icon",
+                Box::new(|| msg!(Message::ChangeRoute {
+                    route: Routes::Network {
+                        screen: NetworkScreenRoutes::AddNetwork {
+                            ssid: "".to_string()
+                        }
                     }
-                }
-            })),
-            "wireless_settings",
-            Box::new(|| msg!(Message::ChangeRoute {
-                route: Routes::Network {
-                    screen: NetworkScreenRoutes::NetworkSettings
-                }
-            }))
-        ));
+                })),
+                "wireless_settings",
+                Box::new(|| msg!(Message::ChangeRoute {
+                    route: Routes::Network {
+                        screen: NetworkScreenRoutes::NetworkSettings
+                    }
+                }))
+            ));
+        } else {
+            base = base.push(header_node!(
+                "Network",
+                Box::new(|| msg!(Message::ChangeRoute {
+                    route: Routes::SettingsList
+                })),
+                "wireless_settings",
+                IconType::Png,
+                Box::new(|| msg!(Message::ChangeRoute {
+                    route: Routes::Network {
+                        screen: NetworkScreenRoutes::NetworkSettings
+                    }
+                }))
+            ));
+        }
+
         base = base.push(content_node);
 
         Some(base)
