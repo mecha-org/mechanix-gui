@@ -50,10 +50,14 @@ impl Component for SettingsScreen {
             ]
         );
 
+        let wireless_status: bool = *WirelessModel::get().is_enabled.get();
         let mut connected_network_name = "    ".to_string();
-        if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
-            connected_network_name = connected_network.clone().name.clone();
-            connected_network_name = truncate(connected_network_name, 14);
+
+        if wireless_status == true {
+            if let Some(connected_network) = WirelessModel::get().connected_network.get().clone() {
+                connected_network_name = connected_network.clone().name.clone();
+                connected_network_name = truncate(connected_network_name, 14);
+            }
         }
 
         let network_row = node!(SettingsRowComponent {
@@ -98,10 +102,10 @@ impl Component for SettingsScreen {
             icon_1_type: IconType::Svg,
             icon_2: "grey_right_arrow".to_string(),
             color: DISABLED_TEXT.to_owned(),
-            on_click: None,
-            // on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
-            //     route: Routes::BluetoothScreen
-            // }))),
+            // on_click: None,
+            on_click: Some(Box::new(move || msg!(Message::ChangeRoute {
+                route: Routes::BluetoothScreen
+            }))),
         },);
         let bluetooth_div = node!(
             Div::new(),
@@ -349,7 +353,7 @@ impl Component for SettingsScreen {
         );
 
         list_items = list_items.push(network_div);
-        // list_items = list_items.push(bluetooth_div);
+        list_items = list_items.push(bluetooth_div);
         list_items = list_items.push(display_div);
         // list_items = list_items.push(appearance_div);
         list_items = list_items.push(battery_div);
