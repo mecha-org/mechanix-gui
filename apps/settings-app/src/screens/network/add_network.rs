@@ -18,6 +18,7 @@ use mctk_core::{
     Color, Node,
 };
 use mctk_macros::component;
+use mechanix_system_dbus_client::wireless::WirelessInfoResponse;
 
 use super::wireless_model::WirelessModel;
 
@@ -271,7 +272,19 @@ impl Component for AddNetwork {
             confirm_icon,
             IconType::Svg,
             Box::new(|| {
-                if !FORM.password.get().clone().is_empty() {
+                if !FORM.password.get().clone().is_empty() && !FORM.ssid.get().clone().is_empty() {
+                    let connected_network = Some(WirelessInfoResponse {
+                        name: FORM.ssid.get().clone(),
+                        frequency: "".to_string(),
+                        mac: "".to_string(),
+                        signal: "".to_string(),
+                        flags: "".to_string(),
+                    });
+
+                    WirelessModel::get()
+                        .connected_network
+                        .set(connected_network);
+
                     WirelessModel::connect_to_network(
                         FORM.ssid.get().clone(),
                         FORM.password.get().clone(),
