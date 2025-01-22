@@ -868,13 +868,6 @@ impl Component for NetworkingScreen {
                 "Network",
                 Box::new(|| msg!(Message::ChangeRoute {
                     route: Routes::SettingsList
-                })),
-                "wireless_settings",
-                IconType::Png,
-                Box::new(|| msg!(Message::ChangeRoute {
-                    route: Routes::Network {
-                        screen: NetworkScreenRoutes::NetworkSettings
-                    }
                 }))
             ));
         }
