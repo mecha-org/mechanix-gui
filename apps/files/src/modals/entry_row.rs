@@ -11,9 +11,7 @@ use mctk_core::{msg, node};
 
 use crate::gui::Message;
 
-pub struct ClicableIconComponent {
-    
-}
+pub struct ClicableIconComponent {}
 
 impl std::fmt::Debug for ClicableIconComponent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -22,7 +20,6 @@ impl std::fmt::Debug for ClicableIconComponent {
 }
 
 impl Component for ClicableIconComponent {
-
     fn container(&self) -> Option<Vec<usize>> {
         Some(vec![0])
     }
@@ -44,7 +41,7 @@ pub struct EntryRow {
     pub icon_1: String,
     pub icon_2: String,
     pub selected_entry: Option<Arc<PathBuf>>,
-    pub is_modal_open: bool
+    pub is_modal_open: bool,
 }
 
 #[derive(Debug)]
@@ -52,8 +49,7 @@ pub struct EntryIconText {
     pub icon_1: String,
     pub title: String,
     pub is_modal_open: bool,
-    pub selected_entry: Option<Arc<PathBuf>>
-
+    pub selected_entry: Option<Arc<PathBuf>>,
 }
 
 impl Component for EntryIconText {
@@ -64,9 +60,9 @@ impl Component for EntryIconText {
 
         let opt_pathbuf = self.selected_entry.clone();
         if let Some(pathbuf) = opt_pathbuf {
+            println!("path is:{:?}", &pathbuf);
             event.emit(msg!(Message::SelectEntry(pathbuf.to_path_buf())));
-        }
-        else {
+        } else {
             event.emit(msg!(Message::GoBack));
         }
     }
@@ -79,22 +75,22 @@ impl Component for EntryIconText {
                 margin:[0., 10., 0., 20.],
             ]
         );
-        let text = node!(
-            Text::new(txt!(truncate(self.title.clone(), 25)))
-                .style("color", Color::WHITE)
-                // .style("font", "Inter")
-                .with_class("text-2xl leading-7 font-normal"),
+        let text = node!(Text::new(txt!(truncate(self.title.clone(), 25)))
+            .style("color", Color::WHITE)
+            // .style("font", "Inter")
+            .with_class("text-2xl leading-7 font-normal"),);
+        let mut base = node!(
+            Div::new(),
+            lay![
+                size_pct: [100],
+                direction: Direction::Row,
+            ]
         );
-        let mut base = node!(Div::new(), lay![
-            size_pct: [100],
-            direction: Direction::Row,
-        ]);
         base = base.push(icon);
         base = base.push(text);
         Some(base)
     }
 }
-
 
 impl std::fmt::Debug for EntryRow {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -107,21 +103,31 @@ impl std::fmt::Debug for EntryRow {
 }
 // self.disable_click
 
-
 impl Component for EntryRow {
     fn view(&self) -> Option<node::Node> {
-        let mut row =  node!(Div::new(), lay![size: [440, 68],
-            axis_alignment: Alignment::Stretch,
-            cross_alignment: Alignment::Center
-        ])
-        .push(
-            node!(EntryIconText { icon_1: self.icon_1.clone(), title: self.title.clone(), is_modal_open: self.is_modal_open, selected_entry: self.selected_entry.clone() },)
-        );
+        let mut row = node!(
+            Div::new(),
+            lay![size: [440, 68],
+                axis_alignment: Alignment::Stretch,
+                cross_alignment: Alignment::Center
+            ]
+        )
+        .push(node!(EntryIconText {
+            icon_1: self.icon_1.clone(),
+            title: self.title.clone(),
+            is_modal_open: self.is_modal_open,
+            selected_entry: self.selected_entry.clone()
+        },));
 
         if self.is_file {
+            let file_name = self.title.clone();
+            // println!("entry row is being called,");
             row = row.push(node!(
                 IconButton::new(self.icon_2.clone())
-                    .on_click(Box::new(move || Box::new(Message::OpenModal(true)))) // Open modal when icon 2 is clicked
+                    .on_click(Box::new(move || Box::new(Message::OpenModal(
+                        true,
+                        file_name.to_string()
+                    )))) // Open modal when icon 2 is clicked
                     .icon_type(IconType::Png)
                     .style(
                         "size",
@@ -134,7 +140,6 @@ impl Component for EntryRow {
                     .style("border_color", Color::TRANSPARENT)
                     .style("active_color", Color::rgba(85., 85., 85., 0.50))
                     .style("radius", 4.),
-                
                 lay![
                     size: [52, 52],
                     axis_alignment: Alignment::End,
@@ -142,16 +147,19 @@ impl Component for EntryRow {
                 ]
             ));
         }
-     
+
         let divider = node!(HDivider {
             size: 0.5,
             color: Color::MID_GREY
         });
 
-        let mut base = node!(Div::new(), lay![
-            direction: Direction::Column, 
+        let mut base = node!(
+            Div::new(),
+            lay![
+            direction: Direction::Column,
             cross_alignment: Alignment::Stretch
-            ]);
+            ]
+        );
         base = base.push(row);
         base = base.push(divider);
 
