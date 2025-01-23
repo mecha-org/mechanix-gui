@@ -130,7 +130,7 @@ pub fn read_entries(path: PathBuf) -> Vec<PathBuf> {
 #[state_component_impl(FileManagerState)]
 impl Component for FileManager {
     fn init(&mut self) {
-        let current_path = PathBuf::from("/home/mecha");
+        let current_path = PathBuf::from("/home/vrn21/Developer/mecha/test");
         let entries = read_entries(current_path.clone());
 
         self.state = Some(FileManagerState {
@@ -367,10 +367,16 @@ impl Component for FileManager {
                                             format!("Error renaming file: {}", e);
                                     } else {
                                         self.state_mut().message =
-                                            format!("Renamed to: {:?}", new_path);
+                                            format!("Renamed to: {:?}", &new_path);
                                         self.state_mut().selected_file = None;
-                                        self.state_mut().current_path.pop();
-                                        self.state_mut().current_path.push(new_path);
+                                        self.state_mut().current_path = new_path.clone();
+                                        if self.state_ref().current_path.is_dir() {
+                                            self.state_mut().current_path.pop();
+                                            self.state_mut().current_path.push(new_path);
+                                        } else {
+                                            self.state_mut().current_path.pop();
+                                        }
+
                                         self.state_mut().entries =
                                             read_entries(self.state_ref().current_path.clone());
                                     }
