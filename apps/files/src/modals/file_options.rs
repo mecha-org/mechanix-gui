@@ -66,7 +66,7 @@ pub fn file_options_view() -> node::Node {
             .style("font_size", 16.0)
             .style("line_height", 18.0)
             .style("text_color", Color::WHITE)
-            .on_click(Box::new(|| msg!(Message::OpenModal(false)))),
+            .on_click(Box::new(|| msg!(Message::OpenModal(false, "".to_string())))),
         lay![margin: [5., 5., 5., 5.], size_pct: [100, 20]]
     ))
 }
