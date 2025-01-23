@@ -130,7 +130,7 @@ pub fn read_entries(path: PathBuf) -> Vec<PathBuf> {
 #[state_component_impl(FileManagerState)]
 impl Component for FileManager {
     fn init(&mut self) {
-        let current_path = PathBuf::from("/home/vrn21/Developer/mecha/test/");
+        let current_path = PathBuf::from("/home/mecha");
         let entries = read_entries(current_path.clone());
 
         self.state = Some(FileManagerState {
