@@ -1,7 +1,9 @@
-// use crate::interface::file_chooser::FileChooser;
 use anyhow::Error;
 use gui::xdg_portal_handler::{XDGPortal, XDGPortalParams};
 use interface::file_chooser::FileChooser;
+use interface::notification::Notification;
+use interface::settings::Settings;
+use interface::wallpaper::Wallpaper;
 use mctk_core::reexports::cosmic_text;
 use mctk_core::AssetParams;
 use mctk_smithay::xdg_shell::xdg_window;
@@ -10,6 +12,7 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::time::Duration;
 use tokio::task::JoinHandle;
+use zbus::blocking::connection::Builder;
 use zbus::Connection;
 use zbus::{blocking::connection, conn};
 
@@ -19,16 +22,30 @@ pub mod interface;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    let file_chooser_bus = FileChooser {};
-    let file_chooser_connection = Connection::session().await?;
+    // let bus_conn = connection::Builder::session()?
+    //     .name("org.mechanix.services.portal")?
+    //     .serve_at("/org/freedesktop/portal/desktop", FileChooser {})?
+    //     .serve_at("/org/freedesktop/portal/desktop", Notification {})?
+    //     .serve_at("/org/freedesktop/portal/desktop", Settings {})?
+    //     .serve_at("/org/freedesktop/portal/desktop", Wallpaper {})?
+    //     .build()?;
 
-    file_chooser_connection
-        .request_name("org.mechanix.services.FileChooser")
+    let bus_connection = Connection::session().await?;
+    bus_connection
+        .request_name("org.mechanix.services.portal")
         .await?;
-    file_chooser_connection
+    bus_connection
+        .bus_connection
+        .at("/org/freedesktop/portal/desktop", FileChooser {});
+    bus_connection
         .object_server()
-        .at("/org/freedesktop/portal/desktop", file_chooser_bus)
-        .await?;
+        .at("/org/freedesktop/portal/desktop", Notification {});
+    bus_connection
+        .object_server()
+        .at("/org/freedesktop/portal/desktop", Settings {});
+    bus_connection
+        .object_server()
+        .at("/org/freedesktop/portal/desktop", Wallpaper {});
 
     // let mut fonts = cosmic_text::fontdb::Database::new();
 

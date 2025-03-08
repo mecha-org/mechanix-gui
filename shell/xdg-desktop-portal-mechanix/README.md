@@ -5,7 +5,7 @@ Edit files at
 ```rust
 [portal]
 DBusName=org.mechanix.services.FileChooser
-Interfaces=org.freedesktop.impl.portal.FileChooser
+Interfaces=org.freedesktop.impl.portal.FileChooser;org.freedesktop.impl.portal.Settings;org.freedesktop.impl.portal.Wallpaper;org.freedesktop.impl.portal.Notification;
 UseIn=gnome;sway;xfce;
 ```
 
@@ -14,6 +14,9 @@ UseIn=gnome;sway;xfce;
 ```rust
 [preferred]
 org.freedesktop.impl.portal.FileChooser=mechanix
+org.freedesktop.impl.portal.Settings=mechanix
+org.freedesktop.impl.portal.Wallpaper=mechanix
+org.freedesktop.impl.portal.Notification=mechanix
 default=gnome;gtk;
 ```
 
@@ -50,3 +53,5 @@ gdbus call --session \
     "{}"
 
 ```
+gdbus call --session     --dest org.mechanix.services.Notification     --object-path /org/mechanix/services     --method org.freedesktop.impl.portal.Notification.AddNotification     "/test/handle"     "test_app"     "test_id"     "{'title': <'Test Title'>, 'body': <'Test Body'>, 'priority': <'normal'>}"     "{}"
+(uint32 0, {'notification_id': <'test_id'>})
