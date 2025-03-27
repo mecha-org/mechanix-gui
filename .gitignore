@@ -16,3 +16,4 @@ Cargo.lock
 .vscode
 
 Dockerfile.arm64
+.DS_store

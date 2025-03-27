@@ -1,0 +1,3 @@
+Name=org.mechanix.services
+Exec=/usr/libexec/xdg-desktop-portal-mechanix
+SystemdService=xdg-desktop-portal-mechanix.service

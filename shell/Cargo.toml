@@ -7,6 +7,7 @@ members = [
     # "polkit-agent",
     # "rotate-daemon",
     "commons/*",
+    "xdg-desktop-portal-mechanix",
     # "notification"
 ]
 
@@ -14,13 +15,25 @@ default-members = ["launcher", "keyboard"]
 
 [workspace.package]
 version = "0.1.16"
-authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+authors = [
+    "Akshay Raina <akshayr@mechasystems.com>",
+    "Shoaib Merchant <shoaibm@mechasystems.com>",
+]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/mecha-org/mechanix-gui"
 homepage = "https://mecha.so"
 categories = ["gui"]
-keywords = ["linux", "shell", "mobile", "gui", "ui", "graphics", "interface", "widgets"]
+keywords = [
+    "linux",
+    "shell",
+    "mobile",
+    "gui",
+    "ui",
+    "graphics",
+    "interface",
+    "widgets",
+]
 
 [workspace.dependencies]
 mctk_core = { git = "https://github.com/mecha-org/mctk.git", rev = "7c88787de053200cda4f7f02c050129e7c372d6d" }
@@ -35,21 +48,20 @@ smithay-client-toolkit = "0.18.0"
 image = { version = "0.24.9", features = ["png", "jpeg"] }
 futures = "0.3.30"
 chrono = "0.4.31"
-command = { path = "../commons/command"}
-desktop_entries = { path = "./commons/desktop_entries"}
+command = { path = "../commons/command" }
+desktop_entries = { path = "./commons/desktop_entries" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 futures-util = "0.3.30"
-echo_client = { path = "./commons/echo-client"}
-mechanix_status_bar_components = { path = "./commons/status-bar"}
+echo_client = { path = "./commons/echo-client" }
+mechanix_status_bar_components = { path = "./commons/status-bar" }
 serde = { version = "1.0.163", features = ["derive"] }
 serde_yaml = "0.9.21"
 anyhow = "1.0.79"
 tokio = { version = "1.33", features = ["full"] }
-zbus = { version = "4.1.2", features = ["tokio"] }
-logind = { path = "../commons/logind"}
-upower = { path = "../commons/upower"}
-policykit = { path = "../commons/policykit"}
+logind = { path = "../commons/logind" }
+upower = { path = "../commons/upower" }
+policykit = { path = "../commons/policykit" }
 clap = { version = "4.5.4", features = ["derive", "env"] }
 users = "0.11.0"
 keyring = "2.3.3"
@@ -58,4 +70,5 @@ serde_json = "1.0.118"
 const_format = "0.2.32"
 dirs = "5.0.1"
 lazy_static = "1.5.0"
-networkmanager = { path = "../commons/networkmanager"}
+networkmanager = { path = "../commons/networkmanager" }
+zbus = { version = "4.2.2", features = ["tokio"] }

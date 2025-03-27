@@ -1,0 +1,25 @@
+[package]
+name = "xdg-desktop-portal-mechanix"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+tokio.workspace = true
+mctk_core = { workspace = true }
+mctk_macros = { workspace = true }
+mctk_smithay = { workspace = true }
+zbus = { workspace = true }
+
+
+serde = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+futures = "0.3"
