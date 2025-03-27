@@ -14,7 +14,7 @@ tokio.workspace = true
 mctk_core = { workspace = true }
 mctk_macros = { workspace = true }
 mctk_smithay = { workspace = true }
-zbus.workspace = true
+zbus = { workspace = true }
 
 
 serde = { workspace = true }

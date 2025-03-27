@@ -1,5 +1,5 @@
 use super::file_chooser_handler::FileChooserHandler;
-use crate::interface::file_chooser::FileChooserOptions;
+use crate::interfaces::file_chooser::FileChooserOptions;
 use mctk_core::component::{self, Component, RootComponent};
 use mctk_macros::{component, state_component_impl};
 use std::default;

@@ -30,13 +30,14 @@ pub struct Settings {}
 #[interface(name = "org.freedesktop.impl.portal.Settings")]
 impl Settings {
     async fn read_one(&self, namespace: String, key: String) -> fdo::Result<OwnedValue> {
+        dbg!("Read One Method called, {} {}", &namespace, &key);
         if namespace != APPEARANCE {
             return Err(zbus::fdo::Error::Failed("No such namespace".to_string()));
         }
         match key.as_str() {
-            COLOR_SCHEME => Ok(OwnedValue::from(0)), // Default color scheme
-            ACCENT_COLOR => Ok(AccentColor::new([0.0, 0.0, 0.0]).try_into().unwrap()), // Default accent color
-            CONTRAST => Ok(OwnedValue::from(0)), // Default contrast
+            COLOR_SCHEME => Ok(OwnedValue::from(1)),
+            ACCENT_COLOR => Ok(AccentColor::new([1.1, 1.0, 1.0]).try_into().unwrap()),
+            CONTRAST => Ok(OwnedValue::from(0)),
             _ => Err(zbus::fdo::Error::Failed("No such key".to_string())),
         }
     }
@@ -45,16 +46,17 @@ impl Settings {
         &self,
         namespaces: Vec<&str>,
     ) -> fdo::Result<HashMap<String, HashMap<String, OwnedValue>>> {
+        dbg!("Read all Method called, {:?}", &namespaces);
         if !namespaces.contains(&APPEARANCE) {
             return Err(zbus::fdo::Error::Failed("No such namespace".to_string()));
         }
         let mut output_setting = HashMap::<String, OwnedValue>::new();
-        output_setting.insert(COLOR_SCHEME.to_string(), 0.into()); // Default color scheme
+        output_setting.insert(COLOR_SCHEME.to_string(), 0.into());
         output_setting.insert(
             ACCENT_COLOR.to_string(),
-            OwnedValue::try_from(AccentColor::new([0.0, 0.0, 0.0])).unwrap(), // Default accent color
+            OwnedValue::try_from(AccentColor::new([1.0, 1.0, 1.0])).unwrap(),
         );
-        output_setting.insert(CONTRAST.to_string(), 0.into()); // Default contrast
+        output_setting.insert(CONTRAST.to_string(), 0.into());
         let output = HashMap::<String, HashMap<String, OwnedValue>>::from_iter([(
             APPEARANCE.to_string(),
             output_setting,

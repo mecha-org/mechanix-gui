@@ -1,4 +1,4 @@
-use crate::interface::file_chooser::FileChooserOptions;
+use crate::interfaces::file_chooser::FileChooserOptions;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;

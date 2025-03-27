@@ -1,13 +1,8 @@
 use crate::connections::PortalResponse;
-use crate::gui::xdg_portal_handler::Message;
-use mctk_core::msg;
-use tokio::time::{self, Duration};
 use zbus::zvariant;
 use zbus::{
-    fdo::Error as ZbusError,
     interface,
     zvariant::{DeserializeDict, SerializeDict, Type},
-    SignalContext,
 };
 
 #[derive(Clone, Copy)]
@@ -19,17 +14,17 @@ pub struct WallpaperResult {
     success: bool,
 }
 
-#[derive(Clone, Debug)]
-pub enum WallpaperOptions {
-    SetWallpaperURI(SetWallpaperURIOptions),
-    SetWallpaperFile(SetWallpaperFileOptions),
-}
-
 #[derive(zvariant::DeserializeDict, zvariant::Type, Clone, Debug)]
 #[zvariant(signature = "a{sv}")]
 pub struct SetWallpaperURIOptions {
     show_preview: Option<bool>,
     set_on: Option<String>,
+}
+
+#[derive(Clone, Debug)]
+pub enum WallpaperOptions {
+    SetWallpaperURI(SetWallpaperURIOptions),
+    SetWallpaperFile(SetWallpaperFileOptions),
 }
 
 #[derive(zvariant::DeserializeDict, zvariant::Type, Clone, Debug)]
@@ -48,6 +43,9 @@ impl Wallpaper {
         uri: &str,
         options: SetWallpaperURIOptions,
     ) -> PortalResponse<WallpaperResult> {
+        println!("set_wallpaper_uri called");
+        dbg!(&handle, &parent_window, &uri, &options);
+
         self.run(
             handle,
             parent_window,
@@ -65,6 +63,9 @@ impl Wallpaper {
         fd: i32,
         options: SetWallpaperFileOptions,
     ) -> PortalResponse<WallpaperResult> {
+        println!("set_wallpaper_file called");
+        dbg!(&handle, &parent_window, &fd, &options);
+
         self.run(
             handle,
             parent_window,
@@ -94,15 +95,8 @@ impl Wallpaper {
             &fd
         );
 
-        //send msg! regarding what to call
-        //need to write logic for that
-
-        // let msging: Result<(), ()> = Err(()); //this should be replaced by code that sends a msg![]
-
-        // Box::new(|| msg!(Message::WallpaperRequested(options.clone())));
-
         match options {
-            WallpaperOptions::SetWallpaperURI(s) => {
+            WallpaperOptions::SetWallpaperURI(_) => {
                 // Here you would add the logic to set the wallpaper using the provided URI.
                 // For now, we'll just simulate success.
 
@@ -110,7 +104,7 @@ impl Wallpaper {
 
                 PortalResponse::Success(result)
             }
-            WallpaperOptions::SetWallpaperFile(s) => {
+            WallpaperOptions::SetWallpaperFile(_) => {
                 // Here you would add the logic to set the wallpaper using the provided file descriptor.
                 // For now, we'll just simulate success.
 
@@ -121,3 +115,4 @@ impl Wallpaper {
         }
     }
 }
+//gdbus call --session --dest org.mechanix.services --object-path /org/freedesktop/portal/desktop --method org.freedesktop.impl.portal.Wallpaper.SetWallpaperFile "/test/handle" "test_app" 10  "{'show-preview': <true>, 'set-on': <'both'>}"

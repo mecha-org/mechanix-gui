@@ -13,10 +13,10 @@ UseIn=gnome;sway;xfce;
 
 ```rust
 [preferred]
-org.freedesktop.impl.portal.FileChooser=mechanix
-org.freedesktop.impl.portal.Settings=mechanix
-org.freedesktop.impl.portal.Wallpaper=mechanix
-org.freedesktop.impl.portal.Notification=mechanix
+org.freedesktop.impl.portal.FileChooser=mechanix;
+org.freedesktop.impl.portal.Settings=mechanix;
+org.freedesktop.impl.portal.Wallpaper=mechanix;
+org.freedesktop.impl.portal.Notification=mechanix;
 default=gnome;gtk;
 ```
 

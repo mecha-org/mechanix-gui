@@ -16,7 +16,7 @@ pub struct NotificationResult {
 }
 
 #[derive(zvariant::DeserializeDict, zvariant::Type, Clone, Debug)]
-#[zvariant(signature = "ssa{sv}a{ss}")]
+#[zvariant(signature = "a{sv}")]
 pub struct NotificationOptions {
     title: Option<String>,
     body: Option<String>,
@@ -30,14 +30,12 @@ pub struct NotificationOptions {
 impl Notification {
     async fn add_notification(
         &self,
-        handle: zvariant::ObjectPath<'_>,
         app_id: &str,
         id: &str,
-        notification: NotificationOptions,
-        options: std::collections::HashMap<&str, zvariant::Value<'_>>,
-    ) -> PortalResponse<NotificationResult> {
+        notification: std::collections::HashMap<String, zvariant::Value<'_>>,
+    ) -> PortalResponse<()> {
         println!("add notif");
-        self.run(handle, app_id, id, notification, options).await
+        self.run(app_id, id, notification).await
     }
 
     async fn remove_notification(
@@ -54,23 +52,18 @@ impl Notification {
 impl Notification {
     async fn run(
         &self,
-        handle: zvariant::ObjectPath<'_>,
         app_id: &str,
         id: &str,
-        notification: NotificationOptions,
-        _options: std::collections::HashMap<&str, zvariant::Value<'_>>,
-    ) -> PortalResponse<NotificationResult> {
+        notification: std::collections::HashMap<String, zvariant::Value<'_>>,
+    ) -> PortalResponse<()> {
         dbg!(
-            "Notification received - Handle: {:?}, AppID: {}, ID: {}",
-            &handle,
+            "Notification received - AppID: {}, ID: {}, Notification: {:?}",
             &app_id,
-            &id
+            &id,
+            &notification
         );
-        dbg!(&notification);
 
         // Mock response with notification ID
-        PortalResponse::Success(NotificationResult {
-            notification_id: id.to_string(),
-        })
+        PortalResponse::Success(())
     }
 }

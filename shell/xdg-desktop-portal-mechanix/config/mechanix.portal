@@ -1,0 +1,3 @@
+DBusName=org.mechanix.services
+Interfaces=org.freedesktop.impl.portal.FileChooser;org.freedesktop.impl.portal.Settings;org.freedesktop.impl.portal.Wallpaper;org.freedesktop.impl.portal.Notification;
+UseIn=gnome;sway;xfce;

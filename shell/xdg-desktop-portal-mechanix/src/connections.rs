@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 use std::future::Future;
 use zbus::zvariant;
+use futures::future::{abortable, AbortHandle};
+
 const PORTAL_RESPONSE_SUCCESS: u32 = 0;
 const PORTAL_RESPONSE_CANCELLED: u32 = 1;
 const PORTAL_RESPONSE_OTHER: u32 = 2;
-use futures::future::{abortable, AbortHandle};
+
 
 #[derive(zvariant::Type)]
 #[zvariant(signature = "(ua{sv})")]

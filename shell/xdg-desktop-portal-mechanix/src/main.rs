@@ -1,9 +1,10 @@
 use anyhow::Error;
 use gui::xdg_portal_handler::{XDGPortal, XDGPortalParams};
-use interface::file_chooser::FileChooser;
-use interface::notification::Notification;
-use interface::settings::Settings;
-use interface::wallpaper::Wallpaper;
+use interfaces::access::Access;
+use interfaces::file_chooser::FileChooser;
+use interfaces::notification::Notification;
+use interfaces::settings::Settings;
+use interfaces::wallpaper::Wallpaper;
 use mctk_core::reexports::cosmic_text;
 use mctk_core::AssetParams;
 use mctk_smithay::xdg_shell::xdg_window;
@@ -18,34 +19,23 @@ use zbus::{blocking::connection, conn};
 
 pub mod connections;
 pub mod gui;
-pub mod interface;
+pub mod interfaces;
+
+// const DBUS_NAME: &str = "org.mechanix.services.portal";
+const DBUS_NAME: &str = "org.mechanix.services";
+const DBUS_PATH: &str = "/org/freedesktop/portal/desktop";
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
-    // let bus_conn = connection::Builder::session()?
-    //     .name("org.mechanix.services.portal")?
-    //     .serve_at("/org/freedesktop/portal/desktop", FileChooser {})?
-    //     .serve_at("/org/freedesktop/portal/desktop", Notification {})?
-    //     .serve_at("/org/freedesktop/portal/desktop", Settings {})?
-    //     .serve_at("/org/freedesktop/portal/desktop", Wallpaper {})?
-    //     .build()?;
-
-    let bus_connection = Connection::session().await?;
-    bus_connection
-        .request_name("org.mechanix.services.portal")
+    let connection = zbus::ConnectionBuilder::session()?
+        .name(DBUS_NAME)?
+        .serve_at(DBUS_PATH, Wallpaper {})?
+        .serve_at(DBUS_PATH, Notification {})?
+        .serve_at(DBUS_PATH, Settings {})?
+        .serve_at(DBUS_PATH, FileChooser {})?
+        .serve_at(DBUS_PATH, Access {})?
+        .build()
         .await?;
-    bus_connection
-        .bus_connection
-        .at("/org/freedesktop/portal/desktop", FileChooser {});
-    bus_connection
-        .object_server()
-        .at("/org/freedesktop/portal/desktop", Notification {});
-    bus_connection
-        .object_server()
-        .at("/org/freedesktop/portal/desktop", Settings {});
-    bus_connection
-        .object_server()
-        .at("/org/freedesktop/portal/desktop", Wallpaper {});
 
     // let mut fonts = cosmic_text::fontdb::Database::new();
 
