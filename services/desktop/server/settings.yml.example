@@ -1,6 +1,6 @@
 idle_notify:
   periods:
-    display_off: 100000
+    display_off: 60
     screen_lock: 90000
 lock_button:
   min_time_long_press: 1
