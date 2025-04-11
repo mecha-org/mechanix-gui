@@ -231,10 +231,10 @@ async fn main() {
         installed_apps = entries;
     }
 
-    for app_id in settings.modules.pinned_apps.clone() {
+    for app_id_or_name in settings.modules.pinned_apps.clone() {
         if let Some(app) = installed_apps
             .iter()
-            .find(|app| app.app_id.to_lowercase() == app_id.to_lowercase())
+            .find(|app| (app.app_id.to_lowercase() == app_id_or_name.to_lowercase() || app.name.to_lowercase() == app_id_or_name.to_lowercase()))
         {
             pinned_apps.push(app.clone());
         }
