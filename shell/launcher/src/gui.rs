@@ -588,13 +588,12 @@ impl Component for Launcher {
         let brightness = self.state_ref().brightness;
         let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
         let running_apps = self.state_ref().running_apps.clone();
-        //let installed_apps = self.state_ref().installed_apps.clone();
         let installed_apps = DesktopEntriesModel::get().entries.get().to_vec();
         let mut pinned_apps = vec![];
-        for app_id in settings.modules.pinned_apps.clone() {
+        for app_id_or_name in settings.modules.pinned_apps.clone() {
             if let Some(app) = installed_apps
                 .iter()
-                .find(|app| app.app_id.to_lowercase() == app_id.to_lowercase())
+                .find(|app| app.app_id.to_lowercase() == app_id_or_name.to_lowercase() || app.name.to_lowercase() == app_id_or_name.to_lowercase())
             {
                 pinned_apps.push(app.clone());
             }
@@ -604,7 +603,6 @@ impl Component for Launcher {
         let shutdown_pressed = self.state_ref().shutdown_pressed;
         let restart_pressed = self.state_ref().restart_pressed;
         let app_opening = self.state_ref().app_opening.is_some();
-        // let pinned_apps = self.state_ref().pinned_apps.clone();
         let clock = self.state_ref().settings.modules.clock.clone();
 
         let mut start_node = node!(
