@@ -56,7 +56,7 @@ assets = [
     ],
     #assets
     [
-        "src/assets/**/*",
+        "src/assets/*",
         "/usr/share/mechanix/shell/launcher/assets/",
         "644",
     ],

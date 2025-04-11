@@ -42,8 +42,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
         svgs,
         settings,
         theme,
-        installed_apps,
-        pinned_apps,
     } = ui_params;
 
     let window_opts = WindowOptions {
@@ -89,8 +87,6 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
         },
         AppParams {
             app_channel: Some(app_channel_tx.clone()),
-            installed_apps: Some(installed_apps.clone()),
-            pinned_apps: Some(pinned_apps.clone()),
         },
     );
 

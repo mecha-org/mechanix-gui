@@ -59,8 +59,6 @@ use tracing_subscriber::EnvFilter;
 #[derive(Default, Debug, Clone)]
 pub struct AppParams {
     app_channel: Option<calloop::channel::Sender<AppMessage>>,
-    installed_apps: Option<Vec<DesktopEntry>>,
-    pinned_apps: Option<Vec<DesktopEntry>>,
 }
 
 #[derive(Debug)]
@@ -149,8 +147,6 @@ pub struct UiParams {
     svgs: HashMap<String, String>,
     settings: LauncherSettings,
     theme: LauncherTheme,
-    installed_apps: Vec<DesktopEntry>,
-    pinned_apps: Vec<DesktopEntry>,
 }
 
 #[tokio::main]
@@ -174,71 +170,6 @@ async fn main() {
         Ok(theme) => theme,
         Err(_) => LauncherTheme::default(),
     };
-
-    let mut installed_apps: Vec<DesktopEntry> = vec![];
-    let mut pinned_apps: Vec<DesktopEntry> = vec![];
-    let include_only_apps = settings.app_list.include_only.clone();
-    let exclude_apps = settings.app_list.exclude.clone();
-    let include_apps = settings.app_list.include.clone();
-
-    // installed_apps = settings.app_list.custom.clone();
-
-    // if let Ok(v) = DesktopEntries::new() {
-    //     let entries = v.entries.to_vec();
-    //     if include_only_apps.len() > 0 {
-    //         installed_apps = entries
-    //             .into_iter()
-    //             .filter(|e| include_only_apps.contains(&e.name.to_lowercase()))
-    //             .collect();
-    //     } else if exclude_apps.len() > 0 {
-    //         installed_apps = entries
-    //             .into_iter()
-    //             .filter(|e| !exclude_apps.contains(&e.name.to_lowercase()))
-    //             .collect();
-    //     } else {
-    //         installed_apps = entries;
-    //     }
-    // };
-
-    // if let Ok(entries) = DesktopEntries::all() {
-    //     if include_only_apps.len() > 0 {
-    //         installed_apps = entries
-    //             .into_iter()
-    //             .filter(|e| include_only_apps.contains(&e.name.to_lowercase()))
-    //             .collect();
-    //     } else if exclude_apps.len() > 0 {
-    //         installed_apps = entries
-    //             .into_iter()
-    //             .filter(|e| !exclude_apps.contains(&e.name.to_lowercase()))
-    //             .collect();
-    //     } else {
-    //         installed_apps = entries;
-    //     }
-    // };
-
-    let entries = DesktopEntriesModel::get().entries.get().to_vec();
-    if include_only_apps.len() > 0 {
-        installed_apps = entries
-            .into_iter()
-            .filter(|e| include_only_apps.contains(&e.name.to_lowercase()))
-            .collect();
-    } else if exclude_apps.len() > 0 {
-        installed_apps = entries
-            .into_iter()
-            .filter(|e| !exclude_apps.contains(&e.name.to_lowercase()))
-            .collect();
-    } else {
-        installed_apps = entries;
-    }
-
-    for app_id_or_name in settings.modules.pinned_apps.clone() {
-        if let Some(app) = installed_apps
-            .iter()
-            .find(|app| (app.app_id.to_lowercase() == app_id_or_name.to_lowercase() || app.name.to_lowercase() == app_id_or_name.to_lowercase()))
-        {
-            pinned_apps.push(app.clone());
-        }
-    }
 
     let mut fonts: cosmic_text::fontdb::Database = cosmic_text::fontdb::Database::new();
     for path in settings.fonts.paths.clone() {
@@ -312,8 +243,6 @@ async fn main() {
         svgs,
         settings,
         theme,
-        installed_apps: installed_apps.clone(),
-        pinned_apps: pinned_apps.clone(),
     };
 
     let ui_params_1 = ui_params.clone();
