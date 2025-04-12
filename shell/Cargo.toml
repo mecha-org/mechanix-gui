@@ -61,4 +61,4 @@ lazy_static = "1.5.0"
 networkmanager = { path = "../commons/networkmanager"}
 #Added temporary to fix the issue with the launcher as latest version
 #is depenendent on rust 1.81
-half = { version = "2.4.1" }
+half = "=2.4.1"

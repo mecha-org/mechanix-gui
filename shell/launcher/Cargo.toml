@@ -40,7 +40,6 @@ zbus = { version = "4.1.2", features = ["tokio"] }
 lazy_static = { workspace = true }
 networkmanager = { workspace = true }
 notify = "7.0.0"
-half = { workspace = true }
 
 [build-dependencies]
 tonic-build = "0.9.2"
