@@ -54,10 +54,17 @@ assets = [
         "/usr/bin/",
         "755",
     ],
-    #assets
+    #fonts
     [
-        "src/assets/*",
-        "usr/share/mechanix/shell/launcher/assets",
+        "src/assets/fonts/*",
+        "/usr/share/mechanix/shell/launcher/assets/fonts/",
+        "644",
+    ],
+
+    #icons
+    [
+        "src/assets/icons/*",
+        "/usr/share/mechanix/shell/launcher/assets/icons/",
         "644",
     ],
 
