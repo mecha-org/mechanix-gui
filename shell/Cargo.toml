@@ -13,7 +13,7 @@ members = [
 default-members = ["launcher", "keyboard"]
 
 [workspace.package]
-version = "0.1.19"
+version = "0.1.20"
 authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
 edition = "2021"
 license = "MIT"
@@ -59,6 +59,3 @@ const_format = "0.2.32"
 dirs = "5.0.1"
 lazy_static = "1.5.0"
 networkmanager = { path = "../commons/networkmanager"}
-#Added temporary to fix the issue with the launcher as latest version
-#is depenendent on rust 1.81
-half = "=2.4.1"
