@@ -40,6 +40,7 @@ zbus = { version = "4.1.2", features = ["tokio"] }
 lazy_static = { workspace = true }
 networkmanager = { workspace = true }
 notify = "7.0.0"
+half = { workspace = true }
 
 [build-dependencies]
 tonic-build = "0.9.2"
@@ -54,17 +55,11 @@ assets = [
         "/usr/bin/",
         "755",
     ],
-    #fonts
-    [
-        "src/assets/fonts/*",
-        "/usr/share/mechanix/shell/launcher/assets/fonts/",
-        "644",
-    ],
 
-    #icons
+    #assets
     [
-        "src/assets/icons/*",
-        "/usr/share/mechanix/shell/launcher/assets/icons/",
+        "src/assets/**/*",
+        "/usr/share/mechanix/shell/launcher/assets/",
         "644",
     ],
 
