@@ -45,7 +45,8 @@ async fn main() -> Result<()> {
 
 
     let display_bus = DisplayBusInterface {
-        path: config.interfaces.display.device.clone(),
+        brightness_path: config.interfaces.display.brightness_path.clone(),
+        backlight_path: config.interfaces.display.backlight_path.clone(),
     };
     let _display_bus_connection = connection::Builder::system()?
         .name("org.mechanix.services.Display")?

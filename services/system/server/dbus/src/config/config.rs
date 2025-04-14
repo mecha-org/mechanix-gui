@@ -32,7 +32,8 @@ pub struct Home {
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 pub struct Display {
-    pub device: String,
+    pub brightness_path: String,
+    pub backlight_path: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Default)]

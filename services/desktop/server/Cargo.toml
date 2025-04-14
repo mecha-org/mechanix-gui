@@ -45,7 +45,7 @@ assets = [
     # settings
     [
         "./settings.yml.example",
-        "/etc/mechanix-gui/server/desktop/settings.yml",
+        "/etc/mechanix/server/desktop/settings.yml",
         "644",
     ],
 ]
