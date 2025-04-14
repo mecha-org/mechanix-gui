@@ -1,6 +1,7 @@
 interfaces:
   display:
-    device: /sys/class/backlight/backlight-dsi/brightness
+    brightness_path: /sys/class/backlight/backlight/brightness
+    backlight_path: /sys/class/backlight/backlight/bl_power
   network:
     device: /var/run/wpa_supplicant/wlan0
   hw_buttons:
