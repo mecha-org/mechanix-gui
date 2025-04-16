@@ -130,7 +130,7 @@ impl Display {
                 "failed to open brightness file".to_string(),
             )
         })?;
-        let brightness: u8 = 255;
+        let brightness: u8 = 0;
         // Try to write the brightness value to the file or return an error
 
         if let Err(e) = write!(file, "{}", brightness) {
@@ -161,7 +161,7 @@ impl Display {
                 "failed to open brightness file".to_string(),
             )
         })?;
-        let brightness: u8 = 0;
+        let brightness: u8 = 255;
         // Try to write the brightness value to the file or return an error
 
         if let Err(e) = write!(file, "{}", brightness) {
