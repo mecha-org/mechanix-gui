@@ -13,8 +13,8 @@
 //! # Example
 //!
 //! ```ignore
-//! mechanix_debus_client::bluetooth::proxy::BluezProxy;
-//! mechanix_debus_client::bluetooth::service::BluetoothService;
+//! freedesktop-bluez-client::bluetooth::proxy::BluezProxy;
+//! freedesktop-bluez-client::bluetooth::service::BluetoothService;
 //! # async fn example() -> anyhow::Result<()> {
 //! let proxy = BluezProxy::new(/* ... */);
 //! let service = BluetoothService::new(proxy);

@@ -1,4 +1,4 @@
-//! Basic example: Enable Bluetooth using mechanix_debus_client
+//! Basic example: Enable Bluetooth using freedesktop-bluz-client
 
 use freedesktop_bluz_client::handler::{BluetoothRequest, BluezClient};
 use tokio::sync::mpsc;

@@ -1,6 +1,5 @@
-//! Basic example: Get Battery Percentage using mechanix_debus_client
+//! Basic example: Get Battery Percentage using freedesktop-upower-client
 
-use anyhow::Error;
 use log::{error, info};
 use tokio::sync::mpsc;
 use freedesktop_upower_client::error::UpowerError;

@@ -1,4 +1,4 @@
-//! Basic example: Enable Wifi using mechanix_debus_client
+//! Basic example: Enable Wifi using freedesktop-network-manager-client
 
 use freedesktop_network_manager_client::handler::{Client, NetworkManagerRequest};
 use tokio::sync::mpsc;
