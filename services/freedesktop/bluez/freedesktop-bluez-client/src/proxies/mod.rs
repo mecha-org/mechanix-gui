@@ -41,7 +41,7 @@
 
 use super::interfaces::device::BluetoothDevice;
 use adapter1::Adapter1Proxy;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
 use device::build_device_proxy;
 use log::{debug, error, info, trace};
@@ -68,13 +68,17 @@ pub enum ProxyError {
     #[error("failed to create adapter proxy: {0}")]
     AdapterProxyCreationFailed(String),
 
-    /// Indicates failure to build a proxy object.
-    #[error("proxy build failed: {0}")]
-    BuildProxyFailed(String),
-
     /// Indicates to the caller that the device path is invalid.
     #[error("invalid object path: {0}")]
     InvalidObjectPath(String),
+
+    /// Indicates that the device proxy build is getting failed.
+    #[error("failed to build device proxy: {0}")]
+    BuildDeviceProxyFailed(String),
+
+    /// Indicates that the set device proxy path failed.
+    #[error("failed to set device proxy path: {0}")]
+    SetDeviceProxyPathFailed(String),
 }
 
 #[proxy(
@@ -129,10 +133,13 @@ impl<'a> BluezInterface for BluezProxy<'a> {
                 info!("bluetooth powered state set to true");
                 Ok(())
             }
-            Err(e) => Err(ProxyError::DbusCallFailed(format!(
-                "failed to set bluetooth powered state to true: {}",
-                e
-            ))),
+            Err(e) => {
+                error!("failed to set bluetooth powered state to true: {}", e);
+                return Err(ProxyError::DbusCallFailed(format!(
+                    "failed to set bluetooth powered state to true: {}",
+                    e
+                )));
+            }
         }
     }
 
@@ -191,6 +198,9 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     /// It starts discovery, waits for a short period to allow devices to be found, stops discovery,
     /// then retrieves and filters the managed objects to return discovered Bluetooth devices.
     ///
+    /// # Arguments
+    /// * `discovery_duration` - The duration in milliseconds to wait for device discovery.
+    /// 
     /// # Returns
     ///
     /// * `Ok(Vec<BluetoothDevice>)` - A vector of discovered Bluetooth device properties on success.
@@ -206,7 +216,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// let devices = my_struct.get_available_devices().await?;
+    /// let devices = my_struct.get_available_devices(discovery_duration).await?;
     /// for device in devices {
     ///     println!("{:?}", device);
     /// }
@@ -235,7 +245,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
         }
 
         trace!("discovery started, waiting for devices...");
-        tokio::time::sleep(std::time::Duration::from_millis(discovery_duration)).await; //take timeout in function arg
+        tokio::time::sleep(std::time::Duration::from_millis(discovery_duration)).await;
         trace!("stopping discovery...");
 
         // Stop the discovery process
@@ -281,7 +291,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     ///
     /// # Arguments
     ///
-    /// * `device_address` - The Bluetooth MAC address of the device as a string slice (e.g., `"XX:XX:XX:XX:XX:XX"`).
+    /// * `address` - The Bluetooth MAC address of the device as a string slice (e.g., `"XX:XX:XX:XX:XX:XX"`).
     ///
     /// # Returns
     ///
@@ -302,8 +312,8 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     /// let my_struct = ...; // obtain or create your struct here
     /// my_struct.connect("AA:BB:CC:DD:EE:FF").await?;
     /// ```
-    async fn connect(&self, device_address: &str) -> Result<(), ProxyError> {
-        info!("request to connect to device: {}", device_address);
+    async fn connect(&self, address: &str) -> Result<(), ProxyError> {
+        info!("request to connect to device: {}", address);
         let cn = &self.0.connection();
 
         // Create the device path string
@@ -311,7 +321,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
         let device_path_str = format!(
             "{}_{}",
             DEVICE_OBJECT_PATH,
-            device_address.replace(":", "_")
+            address.replace(":", "_")
         );
         debug!("device path: {}", device_path_str);
 
@@ -329,7 +339,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
         match build_device_proxy(cn, device_path_str.as_str()).await {
             Ok(device_proxy) => match device_proxy.connect().await {
                 Ok(_) => {
-                    info!("connected to device: {}", device_address);
+                    info!("connected to device: {}", address);
                     Ok(())
                 }
                 Err(e) => {
@@ -342,10 +352,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
             },
             Err(e) => {
                 error!("failed to create device proxy: {}", e);
-                Err(ProxyError::BuildProxyFailed(format!(
-                    "failed to create device proxy: {}",
-                    e
-                )))
+                return Err(e.into());
             }
         }
     }
@@ -357,7 +364,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     ///
     /// # Arguments
     ///
-    /// * `device_address` - The Bluetooth MAC address of the device as a string slice (e.g., `"XX:XX:XX:XX:XX:XX"`).
+    /// * `address` - The Bluetooth MAC address of the device as a string slice (e.g., `"XX:XX:XX:XX:XX:XX"`).
     ///
     /// # Returns
     ///
@@ -376,12 +383,12 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     /// ```ignore
     /// my_struct.connect("AA:BB:CC:DD:EE:FF").await?;
     /// ```
-    async fn disconnect(&self, device_address: &str) -> Result<(), ProxyError> {
+    async fn disconnect(&self, address: &str) -> Result<(), ProxyError> {
         let cn = &self.0.connection();
         let device_path_str = format!(
             "{}_{}",
             DEVICE_OBJECT_PATH,
-            device_address.replace(":", "_")
+            address.replace(":", "_")
         );
         let _device_path = match ObjectPath::try_from(device_path_str.as_str()) {
             Ok(path) => path,
@@ -404,11 +411,8 @@ impl<'a> BluezInterface for BluezProxy<'a> {
                 }
             },
             Err(e) => {
-                error!("failed to create device proxy: {}", e);
-                Err(ProxyError::BuildProxyFailed(format!(
-                    "failed to create device proxy: {}",
-                    e
-                )))
+                error!("failed to build device proxy: {}", e);
+                return Err(e.into());
             }
         }
     }

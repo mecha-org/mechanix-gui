@@ -1,4 +1,4 @@
-//! Basic example: Scan available Bluetooth devices using freedesktop-bluez-client
+//! Basic example: PowerOn the Bluetooth device using freedesktop-bluez-client
 
 use freedesktop_bluez_client::errors::BluezError;
 use freedesktop_bluez_client::handler::{BluezRequest, BluezClient};
@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
 
     if let Ok(result) = res_rx.await {
         match result {
-            Ok(percentage) => println!("bluetooth powered on"),
+            Ok(_) => println!("bluetooth powered on"),
             Err(e) => match e {
                 BluezError::Generic => {
                     println!("Generic error occurred");
@@ -34,8 +34,8 @@ async fn main() -> anyhow::Result<()> {
                 BluezError::ProxyError(err) => {
                     println!("Proxy error occurred: {:?}", err);
                 }
-                BluezError::CreateSystemBusError(_) => {
-                    println!("Failed to create system bus");
+                BluezError::InitBusError(_) => {
+                    println!("Failed to initialize system bus");
                 }
                 BluezError::CreateBluezProxyError(_) => {
                     println!("Failed to create Bluez proxy");
@@ -49,7 +49,7 @@ async fn main() -> anyhow::Result<()> {
             },
         }
     } else {
-        eprintln!("Did not receive a response for battery percentage");
+        eprintln!("Did not receive a response for power on request");
     }
 
     // (Optional) gracefully shut down or send more requests...

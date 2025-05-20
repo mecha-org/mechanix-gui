@@ -35,10 +35,10 @@ pub trait BluezInterface: Send + Sync {
     ) -> Result<Vec<BluetoothDevice>, ProxyError>;
 
     /// Connect to a bluetooth device.
-    async fn connect(&self, device_address: &str) -> Result<(), ProxyError>;
+    async fn connect(&self, address: &str) -> Result<(), ProxyError>;
 
     /// Disconnect from a bluetooth device.
-    async fn disconnect(&self, device_address: &str) -> Result<(), ProxyError>;
+    async fn disconnect(&self, address: &str) -> Result<(), ProxyError>;
 
     /// Get connected devices.
     async fn get_connected_devices(&self) -> Result<Vec<BluetoothDevice>, ProxyError>;

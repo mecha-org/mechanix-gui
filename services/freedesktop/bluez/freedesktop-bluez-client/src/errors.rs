@@ -1,4 +1,4 @@
-//! Bluetooth errors
+//! Bluez errors
 
 use super::proxies::ProxyError;
 
@@ -15,8 +15,8 @@ pub enum BluezError {
     ProxyError(#[from] ProxyError),
 
     /// Failure to create the system D-Bus connection.
-    #[error("failed to create system bus: {0}")]
-    CreateSystemBusError(String),
+    #[error("failed to initialize system bus: {0}")]
+    InitBusError(String),
 
     /// Failure to create the BlueZ proxy.
     #[error("failed to create bluez proxy: {0}")]

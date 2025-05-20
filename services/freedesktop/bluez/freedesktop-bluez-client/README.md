@@ -15,7 +15,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-freedesktop_bluez_client = "latest_version"
+freedesktop_bluez_client = "0.1.0" # Use the latest version
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 ```

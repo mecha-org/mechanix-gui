@@ -18,8 +18,11 @@
 //!
 //! [Writing a client proxy]: https://dbus2.github.io/zbus/client.html
 //! [D-Bus standard interfaces]: https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces,
-use anyhow::{Result, bail};
+use anyhow::Result;
+use log::error;
 use zbus::proxy;
+
+use super::ProxyError;
 
 #[proxy(interface = "org.bluez.Device1", assume_defaults = true)]
 pub trait Device1 {
@@ -185,27 +188,27 @@ pub trait Device1 {
 pub async fn build_device_proxy<'a>(
     cn: &zbus::Connection,
     device_path: &'a str,
-) -> Result<Device1Proxy<'a>> {
+) -> Result<Device1Proxy<'a>, ProxyError> {
     let proxy = match Device1Proxy::builder(&cn).destination("org.bluez") {
         Ok(builder) => builder,
         Err(e) => {
-            eprintln!("Failed to create proxy builder: {}", e);
-            bail!("Failed to create proxy builder: {}", e);
+            error!("failed to create proxy builder: {}", e);
+            return Err(ProxyError::BuildDeviceProxyFailed(format!("{}", e)));
         }
     };
 
     let proxy_build = match proxy.path(device_path) {
         Ok(builder) => builder,
         Err(e) => {
-            eprintln!("Failed to set path: {}", e);
-            bail!("Failed to set path: {}", e);
+            error!("failed to set proxy path: {}", e);
+            return Err(ProxyError::SetDeviceProxyPathFailed(format!("{}", e)));
         }
     };
     match proxy_build.build().await {
         Ok(builder) => Ok(builder),
         Err(e) => {
-            eprintln!("Failed to build proxy: {}", e);
-            bail!("Failed to build proxy: {}", e);
+            error!("failed to build proxy from builder: {}", e);
+            return Err(ProxyError::BuildDeviceProxyFailed(format!("{}", e)));
         }
     }
 }

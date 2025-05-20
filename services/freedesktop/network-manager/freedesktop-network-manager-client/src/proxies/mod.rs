@@ -324,7 +324,7 @@ macro_rules! try_property {
 // Implement the NetworkManagerInterface trait for NetworkManagerProxy
 #[async_trait]
 impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
-    /// Enable or disable WiFi via NetworkManager.
+    /// Enable wireless network via NetworkManager.
     async fn enable_wifi(&self) -> Result<(), ProxyError> {
         info!("setting WiFi to true");
         // Call the underlying D-Bus method to set a wireless state.
@@ -346,11 +346,11 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
 
     /// Disable wireless via NetworkManager.
     async fn disable_wifi(&self) -> Result<(), ProxyError> {
-        info!("setting WiFi to true");
+        info!("setting WiFi to false");
         // Call the underlying D-Bus method to set a wireless state.
         match self.set_wireless_enabled(false).await {
             Ok(_) => {
-                info!("wifi is set to true");
+                info!("wifi is set to false");
                 Ok(())
             }
             Err(e) => {

@@ -4,7 +4,7 @@ use super::interfaces::device::BluetoothDevice;
 use crate::errors::BluezError;
 use crate::proxies::BluezProxy;
 use crate::service::BluetoothService;
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use log::error;
 use tokio::sync::oneshot;
 use tokio::{select, sync::mpsc};
@@ -35,14 +35,14 @@ pub enum BluezRequest {
     /// Request to connect to a Bluetooth device by address.
     ConnectDevice {
         /// The address of the Bluetooth device to connect.
-        device_address: String,
+        address: String,
         /// Channel to send the result of the operation.
         reply_to: mpsc::Sender<Result<(), BluezError>>,
     },
     /// Request to disconnect from a Bluetooth device by address.
     DisconnectDevice {
         /// The address of the Bluetooth device to disconnect.
-        device_address: String,
+        address: String,
         /// Channel to send the result of the operation.
         reply_to: mpsc::Sender<Result<(), BluezError>>,
     },
@@ -68,7 +68,7 @@ impl BluezClient {
     /// Returns a [`BluezError`] if the system bus connection cannot be established.
     pub async fn new() -> Result<Self, BluezError> {
         let cn = Connection::system().await.map_err(|e| {
-            BluezError::CreateSystemBusError(format!("failed to connect to system bus: {}", e)) //Dbus_connection_eror
+            BluezError::InitBusError(format!("{}", e)) //Dbus_connection_eror
         })?;
         Ok(Self { cn })
     }
@@ -85,14 +85,17 @@ impl BluezClient {
     /// # Errors
     ///
     /// Returns an error if the BlueZ proxy cannot be created or if a fatal error occurs in the loop.
-    pub async fn run(&mut self, mut bt_request: mpsc::Receiver<BluezRequest>) -> Result<(), BluezError> {
+    pub async fn run(
+        &mut self,
+        mut bt_request: mpsc::Receiver<BluezRequest>,
+    ) -> Result<(), BluezError> {
         // Create a new Bluez proxy for Bluetooth operations.
         let proxy = match BluezProxy::new(&self.cn).await {
             Ok(n) => n,
             Err(e) => {
                 error!("failed to create Bluez proxy: {}", e);
-                return Err(BluezError::CreateBluezProxyError(format!("{}", e)))
-            },
+                return Err(BluezError::CreateBluezProxyError(format!("{}", e)));
+            }
         };
 
         // Create a new Bluetooth service to handle requests.
@@ -124,18 +127,18 @@ impl BluezClient {
                                     log::error!("failed to send the result of available devices: {:?}", e);
                                 }
                             },
-                            BluezRequest::ConnectDevice { device_address, reply_to } => {
+                            BluezRequest::ConnectDevice { address, reply_to } => {
                                 // Handle connecting to a device.
-                                let result = service.connect(&device_address).await;
+                                let result = service.connect(&address).await;
                                 if let Err(e) = reply_to.send(result).await {
-                                    log::error!("failed to send the result of connect to device {}: {:?}", device_address, e);
+                                    log::error!("failed to send the result of connect to device {}: {:?}", address, e);
                                 }
                             },
-                            BluezRequest::DisconnectDevice { device_address, reply_to } => {
+                            BluezRequest::DisconnectDevice { address, reply_to } => {
                                 // Handle disconnecting from a device.
-                                let result = service.disconnect(&device_address).await;
+                                let result = service.disconnect(&address).await;
                                 if let Err(e) = reply_to.send(result).await {
-                                    log::error!("failed to send the result of disconnect from device {}: {:?}", device_address, e);
+                                    log::error!("failed to send the result of disconnect from device {}: {:?}", address, e);
                                 }
                             },
                             BluezRequest::GetConnectedDevices { reply_to } => {

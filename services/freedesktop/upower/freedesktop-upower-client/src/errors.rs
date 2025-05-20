@@ -22,8 +22,8 @@ pub enum UpowerError {
 
     /// Indicates a failure to connect to the system bus.
     /// The associated `String` provides additional details about the error.
-    #[error("failed to connect to system bus {0:?}")]
-    CreateSystemBusError(String),
+    #[error("failed to initialize the system bus {0:?}")]
+    InitSystemBusError(String),
 
     /// Represents an invalid battery level error.
     #[error("invalid battery level {0:?}")]

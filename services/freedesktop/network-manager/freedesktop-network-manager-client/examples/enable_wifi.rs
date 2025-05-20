@@ -6,13 +6,13 @@ use tokio::sync::mpsc;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Create a channel for sending NetworkManager requests
-    let (nm_tx, bt_rx) = mpsc::channel(10);
+    let (nm_tx, nm_rx) = mpsc::channel(10);
 
     // Spawn the NetworkManager handler in a background task
     let _handler = tokio::spawn(async move {
         let mut nm_handler = Client::new().await;
         // Run the handler event loop
-        let _ = nm_handler.run(bt_rx).await;
+        let _ = nm_handler.run(nm_rx).await;
     });
 
     let (reply_to, mut receiver) = mpsc::channel(1);
@@ -33,7 +33,7 @@ async fn main() -> anyhow::Result<()> {
         }
     });
     // Await the result and log it
-    handler.await.unwrap();
+    handler.await?;
 
     // (Optional) gracefully shut down or send more requests...
 

@@ -50,7 +50,7 @@ impl UpowerHandler {
     pub async fn new() -> Result<Self, UpowerError> {
         let cn = Connection::system()
             .await
-            .map_err(|e| UpowerError::CreateSystemBusError(format!("{}", e)))?;
+            .map_err(|e| UpowerError::InitSystemBusError(format!("{}", e)))?;
         Ok(Self { cn })
     }
 
