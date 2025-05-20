@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-zbus = "5.5.0"
-tokio = { version = "1.33", features = ["full"] }
-anyhow = "1.0.98"
-thiserror = "2.0.12"
-async-trait = "0.1.88"
+zbus = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
 bitflags = "2.9.0"
-uuid = {version = "1.16.0", features = ["v4"]}
-log = "0.4.27"
-mockall = "0.13.1"
+uuid = { version = "1.16.0", features = ["v4"] }
+log = { workspace = true }
+mockall = { workspace = true }
