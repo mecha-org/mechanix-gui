@@ -25,7 +25,7 @@
 //! ```
 //!
 //! This abstraction makes it easy to swap out or mock Bluetooth backends for testing or platform support.
-use crate::error::BluezError;
+use crate::errors::BluezError;
 
 use super::interfaces::{device::BluetoothDevice, BluezInterface};
 use anyhow::Result;

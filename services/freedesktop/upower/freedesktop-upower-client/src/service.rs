@@ -3,7 +3,7 @@
 //! Provides high-level, type-safe access to UPower device information
 //! by wrapping an implementation of the `UpowerInterface` trait.
 
-use crate::error::UpowerError;
+use crate::errors::UpowerError;
 use crate::interfaces::device::{BatteryLevel, BatteryState, PowerSourceType, WarningLevel};
 use crate::interfaces::UpowerInterface;
 use anyhow::Result;

@@ -1,6 +1,6 @@
 //! UPower D-Bus service handler for managing power-related device information and events.
 
-use crate::error::UpowerError;
+use crate::errors::UpowerError;
 use crate::interfaces::device::{BatteryLevel, BatteryState, PowerSourceType, WarningLevel};
 use crate::proxies::DeviceProxy;
 use crate::service::UpowerService;

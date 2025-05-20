@@ -1,7 +1,7 @@
 //! Handler to handle NetworkManager requests and events.
 
 use super::interfaces::wireless::WirelessNetworkInfo;
-use crate::error::NetworkManagerError;
+use crate::errors::NetworkManagerError;
 use crate::proxies::NetworkManagerProxy;
 use crate::service::NetworkManagerService;
 use anyhow::{bail, Result};

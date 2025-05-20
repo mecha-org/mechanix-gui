@@ -3,7 +3,7 @@
 use super::interfaces::{
     NetworkManagerInterface,
 };
-use crate::error::NetworkManagerError;
+use crate::errors::NetworkManagerError;
 use anyhow::Result;
 use crate::interfaces::wireless::{NM80211ApFlags, WirelessNetworkInfo};
 

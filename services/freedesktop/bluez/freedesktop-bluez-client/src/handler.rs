@@ -1,7 +1,7 @@
 //! Module contains the `BluezClient` struct, which handles Bluetooth requests.
 
 use super::interfaces::device::BluetoothDevice;
-use crate::error::BluezError;
+use crate::errors::BluezError;
 use crate::proxies::BluezProxy;
 use crate::service::BluetoothService;
 use anyhow::{bail, Result};

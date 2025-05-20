@@ -2,7 +2,7 @@
 
 use log::{error, info};
 use tokio::sync::mpsc;
-use freedesktop_upower_client::error::UpowerError;
+use freedesktop_upower_client::errors::UpowerError;
 use freedesktop_upower_client::handler::{UpowerHandler, UpowerRequest};
 
 #[tokio::main]

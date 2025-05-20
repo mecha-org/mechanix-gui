@@ -1,6 +1,6 @@
 //! Basic example: Scan available Bluetooth devices using freedesktop-bluez-client
 
-use freedesktop_bluez_client::error::BluezError;
+use freedesktop_bluez_client::errors::BluezError;
 use freedesktop_bluez_client::handler::{BluezRequest, BluezClient};
 use tokio::sync::{mpsc, oneshot};
 
