@@ -1,19 +1,19 @@
 //! Bluetooth Device Properties Utilities
 //!
-//! This module defines the [`BluetoothDeviceProps`] struct, which encapsulates common
+//! This module defines the [`BluetoothDevice`] struct, which encapsulates common
 //! Bluetooth device properties and provides utility methods for interfacing with
 //! device property maps (such as those retrieved from D-Bus or BlueZ).
 //!
 //! Main features:
 //! - Strongly-typed representation of Bluetooth device attributes.
-//! - Convenient conversion from property maps to [`BluetoothDeviceProps`].
+//! - Convenient conversion from property maps to [`BluetoothDevice`].
 //! - Handles missing or invalid properties gracefully.
 //!
 //! Intended for use in Bluetooth device management and interface layers.
 
 /// Represents the properties of a Bluetooth device.
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct BluetoothDeviceProps {
+pub struct BluetoothDevice {
     /// The device's human-readable name.
     pub name: String,
 
@@ -45,8 +45,8 @@ pub struct BluetoothDeviceProps {
     pub powered: Option<bool>,
 }
 
-impl BluetoothDeviceProps {
-    /// Constructs a `BluetoothDeviceProps` from a property map, typically obtained from D-Bus.
+impl BluetoothDevice {
+    /// Constructs a `BluetoothDevice` from a property map, typically obtained from D-Bus.
     ///
     /// Returns `None` if the device has no valid name.
     pub fn from_properties(
@@ -63,7 +63,7 @@ impl BluetoothDeviceProps {
             return None; // Return None if name is empty
         }
 
-        Some(BluetoothDeviceProps {
+        Some(BluetoothDevice {
             // Set the device name (already extracted above).
             name,
             // Extract the device address, defaulting to empty string if missing.

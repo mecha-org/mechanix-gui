@@ -1,6 +1,6 @@
-//! Basic example: Enable Bluetooth using freedesktop-bluz-client
+//! Basic example: Enable Bluetooth using freedesktop-bluez-client
 
-use freedesktop_bluz_client::handler::{BluetoothRequest, BluezClient};
+use freedesktop_bluez_client::handler::{BluezRequest, BluezClient};
 use tokio::sync::mpsc;
 
 #[tokio::main]
@@ -17,7 +17,7 @@ async fn main() -> anyhow::Result<()> {
     println!("handler spawned");
     let (res_tx, mut res_rx) = mpsc::channel(10);
     // Example: Enable Bluetooth
-    let request = BluetoothRequest::GetAvailableDevices {
+    let request = BluezRequest::GetAvailableDevices {
         discovery_duration: 5000,
         reply_to: res_tx,
     };

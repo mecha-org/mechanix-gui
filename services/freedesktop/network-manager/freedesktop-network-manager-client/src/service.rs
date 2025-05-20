@@ -1,11 +1,11 @@
 //! NetworkManager helper service
 
-use super::interface::{
+use super::interfaces::{
     NetworkManagerInterface,
 };
 use crate::error::NetworkManagerError;
 use anyhow::Result;
-use crate::interface::wireless::{NM80211ApFlags, WirelessNetworkInfo};
+use crate::interfaces::wireless::{NM80211ApFlags, WirelessNetworkInfo};
 
 /// A service wrapper for interacting with a NetworkManager implementation.
 ///
@@ -123,8 +123,8 @@ impl<T: NetworkManagerInterface> NetworkManagerService<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::interface::wireless::RawAccessPointInfo;
-    use crate::proxy::ProxyError;
+    use crate::interfaces::wireless::RawAccessPointInfo;
+    use crate::proxies::ProxyError;
     use anyhow::Result;
     use mockall::{mock, predicate::*};
 

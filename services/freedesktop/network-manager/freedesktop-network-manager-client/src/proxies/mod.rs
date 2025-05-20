@@ -24,7 +24,7 @@
 //! for interacting with NetworkManager over D-Bus.
 //!
 //! See [`NetworkManagerInterface`] for available methods.
-pub use crate::interface::NetworkManagerInterface;
+pub use crate::interfaces::NetworkManagerInterface;
 pub mod access_point;
 pub mod device;
 pub mod wireless;
@@ -32,7 +32,6 @@ pub mod wireless;
 use std::collections::HashMap;
 
 pub use anyhow::Result;
-use anyhow::bail;
 use async_trait::async_trait;
 pub use device as device_proxy;
 use log::{error, info, trace};
@@ -42,7 +41,7 @@ use zbus::{
     zvariant::{ObjectPath, Value},
 };
 
-use super::interface::wireless::RawAccessPointInfo;
+use super::interfaces::wireless::RawAccessPointInfo;
 
 // Define a constant for WiFi device type (as per NetworkManager specification)
 const WIFI_DEVICE_TYPE: u32 = 2;

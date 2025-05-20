@@ -31,7 +31,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use wireless::{RawAccessPointInfo, WifiStatus};
-use crate::proxy::ProxyError;
+use crate::proxies::ProxyError;
 
 pub mod wireless;
 

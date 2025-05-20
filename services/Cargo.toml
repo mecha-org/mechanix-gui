@@ -18,7 +18,7 @@ members = [
     "desktop/client/dbus",
     "desktop/server",
     "store/server",
-    "store/client/dbus", "freedesktop/network-manager/freedesktop-network-manager-client", "freedesktop/upower/freedesktop-upower-client", "freedesktop/bluz/freedesktop-bluz-client",
+    "store/client/dbus", "freedesktop/network-manager/freedesktop-network-manager-client", "freedesktop/upower/freedesktop-upower-client", "freedesktop/bluez/freedesktop-bluez-client",
 ]
 default-members = ["system/server/dbus", "desktop/server"]
 

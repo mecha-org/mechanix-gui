@@ -15,7 +15,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use crate::proxy::ProxyError;
+use crate::proxies::ProxyError;
 
 pub mod device;
 

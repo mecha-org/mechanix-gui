@@ -34,12 +34,12 @@
 //     ) -> zbus::Result<HashMap<OwnedObjectPath, HashMap<String, HashMap<String, Value<'static>>>>>;
 // }
 
-//! The `proxy` module provides the [`BluezProxy`] type, which implements the [`BluetoothInterface`] trait
+//! The `proxy` module provides the [`BluezProxy`] type, which implements the [`BluezInterface`] trait
 //! for interacting with BlueZ over D-Bus.
 //!
-//! See [`BluetoothInterface`] for available methods.
+//! See [`BluezInterface`] for available methods.
 
-use super::interface::device::BluetoothDeviceProps;
+use super::interfaces::device::BluetoothDevice;
 use adapter1::Adapter1Proxy;
 use anyhow::{bail, Result};
 use async_trait::async_trait;
@@ -49,7 +49,7 @@ use log::{debug, error, info, trace};
 pub mod adapter1;
 pub mod device;
 
-use crate::interface::BluetoothInterface;
+use crate::interfaces::BluezInterface;
 use std::collections::HashMap;
 use zbus::proxy;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue};
@@ -89,7 +89,7 @@ pub trait Bluez {
 }
 
 #[async_trait]
-impl<'a> BluetoothInterface for BluezProxy<'a> {
+impl<'a> BluezInterface for BluezProxy<'a> {
     /// Enables the Bluetooth adapter.
     ///
     /// This asynchronous method sets the powered state of the Bluetooth adapter using the BlueZ D-Bus API.
@@ -193,7 +193,7 @@ impl<'a> BluetoothInterface for BluezProxy<'a> {
     ///
     /// # Returns
     ///
-    /// * `Ok(Vec<BluetoothDeviceProps>)` - A vector of discovered Bluetooth device properties on success.
+    /// * `Ok(Vec<BluetoothDevice>)` - A vector of discovered Bluetooth device properties on success.
     /// * `Err` - If any D-Bus or discovery operation fails.
     ///
     /// # Errors
@@ -214,7 +214,7 @@ impl<'a> BluetoothInterface for BluezProxy<'a> {
     async fn get_available_devices(
         &self,
         discovery_duration: u64,
-    ) -> Result<Vec<BluetoothDeviceProps>, ProxyError> {
+    ) -> Result<Vec<BluetoothDevice>, ProxyError> {
         info!("starting Bluetooth device discovery");
         let cn = &self.0.connection();
         let adapter_proxy = match Adapter1Proxy::new(cn).await {
@@ -262,7 +262,7 @@ impl<'a> BluetoothInterface for BluezProxy<'a> {
         let mut available_devices = Vec::new();
         for (_object_path, interfaces) in managed_objects.iter() {
             if let Some(device_props) = interfaces.get("org.bluez.Device1") {
-                if let Some(device_props) = BluetoothDeviceProps::from_properties(device_props) {
+                if let Some(device_props) = BluetoothDevice::from_properties(device_props) {
                     debug!("found device: {:?}", device_props);
                     available_devices.push(device_props);
                 }
@@ -420,7 +420,7 @@ impl<'a> BluetoothInterface for BluezProxy<'a> {
     ///
     /// # Returns
     ///
-    /// * `Ok(Vec<BluetoothDeviceProps>)` - A vector of properties for each connected Bluetooth device.
+    /// * `Ok(Vec<BluetoothDevice>)` - A vector of properties for each connected Bluetooth device.
     /// * `Err` - If managed objects cannot be retrieved or parsed.
     ///
     /// # Errors
@@ -436,7 +436,7 @@ impl<'a> BluetoothInterface for BluezProxy<'a> {
     ///     println!("{:?}", device);
     /// }
     /// ```
-    async fn get_connected_devices(&self) -> Result<Vec<BluetoothDeviceProps>, ProxyError> {
+    async fn get_connected_devices(&self) -> Result<Vec<BluetoothDevice>, ProxyError> {
         info!("request to get connected devices");
         // Retrieve all managed objects from BlueZ
         // This will include all devices, adapters, etc.
@@ -453,7 +453,7 @@ impl<'a> BluetoothInterface for BluezProxy<'a> {
         let mut connected_devices = Vec::new();
         for (_object_path, interfaces) in managed_objects.iter() {
             if let Some(device_props) = interfaces.get("org.bluez.Device1") {
-                if let Some(device) = BluetoothDeviceProps::from_properties(device_props) {
+                if let Some(device) = BluetoothDevice::from_properties(device_props) {
                     // Check if the device is connected
                     // The connected property is a boolean indicating the connection status
                     if device.connected {

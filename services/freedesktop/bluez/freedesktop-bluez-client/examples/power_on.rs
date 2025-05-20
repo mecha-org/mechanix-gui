@@ -1,7 +1,7 @@
-//! Basic example: Scan available Bluetooth devices using freedesktop-bluz-client
+//! Basic example: Scan available Bluetooth devices using freedesktop-bluez-client
 
-use freedesktop_bluz_client::error::BluetoothError;
-use freedesktop_bluz_client::handler::{BluetoothRequest, BluezClient};
+use freedesktop_bluez_client::error::BluezError;
+use freedesktop_bluez_client::handler::{BluezRequest, BluezClient};
 use tokio::sync::{mpsc, oneshot};
 
 #[tokio::main]
@@ -18,7 +18,7 @@ async fn main() -> anyhow::Result<()> {
     println!("handler spawned");
     let (res_tx, res_rx) = oneshot::channel();
     // Example: Enable Bluetooth
-    let request = BluetoothRequest::SetPoweredOn { reply_to: res_tx };
+    let request = BluezRequest::SetPoweredOn { reply_to: res_tx };
     bt_tx
         .try_send(request)
         .expect("Failed to send Bluetooth request");
@@ -28,19 +28,19 @@ async fn main() -> anyhow::Result<()> {
         match result {
             Ok(percentage) => println!("bluetooth powered on"),
             Err(e) => match e {
-                BluetoothError::Generic => {
+                BluezError::Generic => {
                     println!("Generic error occurred");
                 }
-                BluetoothError::ProxyError(err) => {
+                BluezError::ProxyError(err) => {
                     println!("Proxy error occurred: {:?}", err);
                 }
-                BluetoothError::CreateSystemBusError(_) => {
+                BluezError::CreateSystemBusError(_) => {
                     println!("Failed to create system bus");
                 }
-                BluetoothError::CreateBluezProxyError(_) => {
+                BluezError::CreateBluezProxyError(_) => {
                     println!("Failed to create Bluez proxy");
                 }
-                BluetoothError::CreateAdapterProxyError(_) => {
+                BluezError::CreateAdapterProxyError(_) => {
                     println!("Failed to create adapter proxy");
                 }
                 _ => {

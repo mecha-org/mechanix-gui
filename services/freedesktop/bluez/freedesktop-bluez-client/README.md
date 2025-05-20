@@ -1,4 +1,4 @@
-# freedesktop-bluz-client
+# freedesktop-bluez-client
 
 A Rust library for interacting with Bluetooth via D-Bus and BlueZ on Linux. This crate provides an ergonomic, async API
 for enabling/disabling Bluetooth, scanning for devices, connecting/disconnecting, and more.
@@ -15,7 +15,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-freedesktop_bluz_client = "latest_version"
+freedesktop_bluez_client = "latest_version"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 ```
@@ -25,8 +25,8 @@ anyhow = "1"
 ### 1. Enable Bluetooth
 
 ```aiignore
-use freedesktop_bluz_client::error::BluetoothError;
-use freedesktop_bluz_client::handler::{BluetoothRequest, BluezClient};
+use freedesktop_bluez_client::error::BluezError;
+use freedesktop_bluez_client::handler::{BluezRequest, BluezClient};
 use tokio::sync::{mpsc, oneshot};
 
 #[tokio::main]
@@ -41,7 +41,7 @@ let _handler = tokio::spawn(async move {
 let (res_tx, res_rx) = oneshot::channel();
 
 // Request to power on Bluetooth
-bt_tx.try_send(BluetoothRequest::SetPoweredOn { reply_to: res_tx })
+bt_tx.try_send(BluezRequest::SetPoweredOn { reply_to: res_tx })
     .expect("Failed to send Bluetooth request");
 
 if let Ok(result) = res_rx.await {
@@ -54,43 +54,9 @@ Ok(())
 
 ```
 
-### 2. Scan for Available Devices
-
-```aiignore
-use freedesktop_bluz_client::handler::{BluetoothRequest, BluezClient};
-use tokio::sync::mpsc;
-
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-let (bt_tx, bt_rx) = mpsc::channel(10);
-
-
-let _handler = tokio::spawn(async move {
-    let mut bt_handler = BluezClient::new().await.unwrap();
-    let _ = bt_handler.run(bt_rx).await;
-});
-
-let (res_tx, mut res_rx) = mpsc::channel(10);
-
-// Request to scan for devices for 5 seconds
-bt_tx.try_send(BluetoothRequest::GetAvailableDevices {
-    discovery_duration: 5000,
-    reply_to: res_tx,
-}).expect("Failed to send Bluetooth request");
-
-while let Some(result) = res_rx.recv().await {
-    match result {
-        Ok(devices) => println!("Available devices: {:?}", devices),
-        Err(e) => println!("Error: {:?}", e),
-    }
-}
-Ok(())
-
-```
-
 ## Error Handling
 
-All operations return a `Result` with a custom `BluetoothError` enum, which can represent various error cases such as
+All operations return a `Result` with a custom `BluezError` enum, which can represent various error cases such as
 D-Bus errors, BlueZ proxy errors, or generic failures.
 
 ## Contributing

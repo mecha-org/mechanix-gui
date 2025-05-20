@@ -1,6 +1,6 @@
 //! Upower errors
 
-use crate::proxy::ProxyError;
+use crate::proxies::ProxyError;
 
 /// Represents errors that can occur when interacting with UPower.
 #[derive(Clone, Debug,  thiserror::Error)]

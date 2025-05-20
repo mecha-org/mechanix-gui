@@ -1,6 +1,5 @@
 pub mod error;
-pub mod interface;
-pub mod proxy;
-
+pub mod interfaces;
+pub mod proxies;
 pub mod handler;
 pub mod service;

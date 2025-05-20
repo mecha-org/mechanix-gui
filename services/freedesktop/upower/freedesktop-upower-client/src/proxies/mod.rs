@@ -24,7 +24,7 @@
 //! for interacting with Upower over D-Bus.
 //!
 //! See [`UpowerInterface`] for available methods.
-use crate::interface::UpowerInterface;
+use crate::interfaces::UpowerInterface;
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use log::error;

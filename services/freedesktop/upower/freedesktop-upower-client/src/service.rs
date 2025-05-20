@@ -4,8 +4,8 @@
 //! by wrapping an implementation of the `UpowerInterface` trait.
 
 use crate::error::UpowerError;
-use crate::interface::device::{BatteryLevel, BatteryState, PowerSourceType, WarningLevel};
-use crate::interface::UpowerInterface;
+use crate::interfaces::device::{BatteryLevel, BatteryState, PowerSourceType, WarningLevel};
+use crate::interfaces::UpowerInterface;
 use anyhow::Result;
 
 /// A service wrapper providing convenient methods for accessing UPower device data.
@@ -117,7 +117,7 @@ impl<T: UpowerInterface> UpowerService<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::proxy::ProxyError;
+    use crate::proxies::ProxyError;
     use anyhow::Result;
     use mockall::mock;
 

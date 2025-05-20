@@ -1,6 +1,6 @@
 //! Represents errors that can occur when interacting with NetworkManager.
 
-use crate::proxy::ProxyError;
+use crate::proxies::ProxyError;
 
 /// This enum uses the [`thiserror`](https://docs.rs/thiserror) crate to provide detailed, user-friendly error messages for each variant.
 /// It is marked as `#[non_exhaustive]` to allow for future extension without breaking existing code.

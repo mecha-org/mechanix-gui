@@ -1,5 +1,5 @@
 [package]
-name = "freedesktop-bluz-client"
+name = "freedesktop-bluez-client"
 version = "0.1.0"
 edition = "2024"
 
