@@ -5,6 +5,7 @@ use crate::error::BluetoothError;
 use crate::proxy::BluezProxy;
 use crate::service::BluetoothService;
 use anyhow::{bail, Result};
+use log::error;
 use tokio::sync::oneshot;
 use tokio::{select, sync::mpsc};
 use zbus::Connection;
@@ -56,7 +57,7 @@ pub enum BluetoothRequest {
 /// Handles Bluetooth requests asynchronously using a Tokio mpsc channel.
 pub struct BluezClient {
     /// The D-Bus system connection used for communicating with BlueZ.
-    connection: Connection,
+    cn: Connection,
 }
 
 impl BluezClient {
@@ -66,10 +67,10 @@ impl BluezClient {
     ///
     /// Returns a [`BluetoothError`] if the system bus connection cannot be established.
     pub async fn new() -> Result<Self, BluetoothError> {
-        let connection = Connection::system().await.map_err(|e| {
+        let cn = Connection::system().await.map_err(|e| {
             BluetoothError::CreateSystemBusError(format!("failed to connect to system bus: {}", e)) //Dbus_connection_eror
         })?;
-        Ok(Self { connection })
+        Ok(Self { cn })
     }
 
     /// Runs the Bluetooth handler, processing incoming Bluetooth requests from the provided channel.
@@ -84,11 +85,14 @@ impl BluezClient {
     /// # Errors
     ///
     /// Returns an error if the BlueZ proxy cannot be created or if a fatal error occurs in the loop.
-    pub async fn run(&mut self, mut bt_request: mpsc::Receiver<BluetoothRequest>) -> Result<()> {
+    pub async fn run(&mut self, mut bt_request: mpsc::Receiver<BluetoothRequest>) -> Result<(), BluetoothError> {
         // Create a new Bluez proxy for Bluetooth operations.
-        let proxy = match BluezProxy::new(&self.connection).await {
+        let proxy = match BluezProxy::new(&self.cn).await {
             Ok(n) => n,
-            Err(e) => bail!(BluetoothError::CreateBluezProxyError(format!("{}", e))),
+            Err(e) => {
+                error!("failed to create Bluez proxy: {}", e);
+                return Err(BluetoothError::CreateBluezProxyError(format!("{}", e)))
+            },
         };
 
         // Create a new Bluetooth service to handle requests.

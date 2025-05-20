@@ -5,6 +5,7 @@ use crate::interface::device::{BatteryLevel, BatteryState, PowerSourceType, Warn
 use crate::proxy::DeviceProxy;
 use crate::service::UpowerService;
 use anyhow::{Result, bail};
+use log::error;
 use tokio::{select, sync::mpsc};
 use zbus::Connection;
 
@@ -40,16 +41,16 @@ pub enum UpowerRequest {
 /// Manages the connection and processes incoming requests.
 pub struct UpowerHandler {
     /// zbus system connection for D-Bus communication
-    connection: Connection,
+    cn: Connection,
 }
 
 impl UpowerHandler {
     /// Creates a new UPower handler with a system D-Bus connection.
     pub async fn new() -> Result<Self, UpowerError> {
-        let connection = Connection::system()
+        let cn = Connection::system()
             .await
             .map_err(|e| UpowerError::CreateSystemBusError(format!("{}", e)))?;
-        Ok(Self { connection })
+        Ok(Self { cn })
     }
 
     /// Main event loop that processes incoming UPower requests.
@@ -65,11 +66,14 @@ impl UpowerHandler {
     /// - Uses Tokio's select! macro to handle incoming requests
     /// - Routes requests to appropriate service methods
     /// - Sends responses back through provided reply channels
-    pub async fn run(&mut self, mut request: mpsc::Receiver<UpowerRequest>) -> Result<()> {
+    pub async fn run(&mut self, mut request: mpsc::Receiver<UpowerRequest>) -> Result<(),  UpowerError> {
         // Create the proxy and service with proper error handling
-        let proxy = match DeviceProxy::new(&self.connection).await {
+        let proxy = match DeviceProxy::new(&self.cn).await {
             Ok(n) => n,
-            Err(e) => bail!(UpowerError::CreateDeviceProxyError(format!("{}", e))),
+            Err(e) => {
+                error!("failed to create Device proxy: {}", e);
+                return Err(UpowerError::CreateDeviceProxyError(format!("{}", e)))
+            },
         };
         let service = UpowerService::new(proxy);
 

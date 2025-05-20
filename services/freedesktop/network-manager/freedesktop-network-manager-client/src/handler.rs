@@ -40,14 +40,14 @@ pub enum NetworkManagerRequest {
 /// through an async channel.
 pub struct Client {
     /// D-Bus connection to the system bus.
-    connection: Connection,
+    cn: Connection,
 }
 
 impl Client {
     /// Creates a new Client with a connection to the system D-Bus.
     pub async fn new() -> Self {
         Self {
-            connection: Connection::system().await.unwrap(),
+            cn: Connection::system().await.unwrap(),
         }
     }
 
@@ -61,11 +61,14 @@ impl Client {
     pub async fn run(
         &mut self,
         mut nm_request: mpsc::Receiver<NetworkManagerRequest>,
-    ) -> Result<()> {
+    ) -> Result<(), NetworkManagerError> {
         // 1. Create the NetworkManager proxy and service wrapper.
-        let proxy = match NetworkManagerProxy::new(&self.connection).await {
+        let proxy = match NetworkManagerProxy::new(&self.cn).await {
             Ok(n) => n,
-            Err(e) => bail!(NetworkManagerError::CreateNmProxyError(format!("{}", e))),
+            Err(e) => {
+                error!("failed to create NetworkManager proxy: {}", e);
+                return Err(NetworkManagerError::CreateNmProxyError(format!("{}", e)))
+            },
         };
         let service = NetworkManagerService::new(proxy);
 
