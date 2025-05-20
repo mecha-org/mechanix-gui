@@ -74,7 +74,7 @@ impl<'a> UpowerInterface for DeviceProxy<'a> {
     ///
     /// # Returns
     /// * `Ok(u32)` - The battery level as a percentage (0-100).
-    /// * `Err(anyhow::Error)` - If the battery level could not be retrieved.
+    /// * `Err(ProxyError::DbusCallFailed)` - If the battery level could not be retrieved.
     async fn get_battery_level(&self) -> Result<u32, ProxyError> {
         match self.battery_level().await {
             Ok(level) => Ok(level),
@@ -92,7 +92,7 @@ impl<'a> UpowerInterface for DeviceProxy<'a> {
     ///
     /// # Returns
     /// * `Ok(u32)` - The warning level as a raw integer value.
-    /// * `Err(anyhow::Error)` - If the warning level could not be retrieved.
+    /// * `Err(ProxyError::DbusCallFailed)` - If the warning level could not be retrieved.
     async fn get_warning_level(&self) -> Result<u32, ProxyError> {
         match self.warning_level().await {
             Ok(level) => Ok(level),
@@ -110,7 +110,7 @@ impl<'a> UpowerInterface for DeviceProxy<'a> {
     ///
     /// # Returns
     /// * `Ok(f64)` - The battery percentage (e.g., 75.0).
-    /// * `Err(anyhow::Error)` - If the percentage could not be retrieved.
+    /// * `Err(ProxyError::DbusCallFailed)` - If the percentage could not be retrieved.
     async fn get_percentage(&self) -> Result<f64, ProxyError> {
         match self.percentage().await {
             Ok(percentage) => Ok(percentage),
@@ -128,7 +128,7 @@ impl<'a> UpowerInterface for DeviceProxy<'a> {
     ///
     /// # Returns
     /// * `Ok(u32)` - The battery state as a raw integer value.
-    /// * `Err(anyhow::Error)` - If the state could not be retrieved.
+    /// * `Err(ProxyError::DbusCallFailed)` - If the state could not be retrieved.
     async fn get_state(&self) -> Result<u32, ProxyError> {
         match self.state().await {
             Ok(state) => Ok(state),
@@ -145,7 +145,7 @@ impl<'a> UpowerInterface for DeviceProxy<'a> {
     /// Asynchronously retrieves the type of power source.
     /// # Returns
     /// * `Ok(u32)` - The device types as a raw integer value.
-    /// * `Err(anyhow::Error)` - If the type could not be retrieved.
+    /// * `Err(ProxyError::DbusCallFailed)` - If the type could not be retrieved.
     async fn get_power_source_type(&self) -> Result<u32, ProxyError> {
         match self.type_().await {
             Ok(type_) => Ok(type_),
@@ -163,7 +163,7 @@ impl<'a> UpowerInterface for DeviceProxy<'a> {
     ///
     /// # Returns
     /// * `Ok(String)` - The event string (currently always empty).
-    /// * `Err(anyhow::Error)` - If the event string could not be retrieved.
+    /// * `Err(ProxyError::Error)` - If the event string could not be retrieved.
     async fn get_device_state_change_event(&self) -> Result<String, ProxyError> {
         Ok("".to_string())
     }
