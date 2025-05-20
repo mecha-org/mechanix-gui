@@ -12,6 +12,7 @@ use zbus::Connection;
 /// Enum representing different types of requests that can be sent to the UPower handler.
 /// Each variant contains an MPSC channel sender for returning the operation result.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum UpowerRequest {
     /// Retrieves the current battery level (0-100)
     GetBatteryLevel {
