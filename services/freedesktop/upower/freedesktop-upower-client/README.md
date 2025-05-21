@@ -21,9 +21,9 @@ anyhow = "1"
 log = "0.4"
 ```
 
-## Usage
+## Example
 
-### 1. Get Battery Percentage
+### Get Battery Percentage
 
 ```rust
 use anyhow::Error;
@@ -73,39 +73,6 @@ async fn main() -> anyhow::Result<()> {
 
     Ok(())
 
-```
-
-## UPower Requests
-
-You can send the following requests to the handler:
-
-```rust
-pub enum UpowerRequest {
-    /// Retrieves the current battery level (0-100)
-    GetBatteryLevel {
-        reply_to: mpsc::Sender<Result<BatteryLevel, UpowerError>>,
-    },
-    /// Gets the battery warning level (e.g., low, critical)
-    GetWarningLevel {
-        reply_to: mpsc::Sender<Result<WarningLevel, UpowerError>>,
-    },
-    /// Fetches the exact battery percentage (0.0-100.0)
-    GetPercentage {
-        reply_to: mpsc::Sender<Result<f64, UpowerError>>,
-    },
-    /// Returns the current battery state (e.g., charging, discharging)
-    GetState {
-        reply_to: mpsc::Sender<Result<BatteryState, UpowerError>>,
-    },
-    /// Gets the device power source type (e.g., battery, UPS)
-    GetPowerSourceType {
-        reply_to: mpsc::Sender<Result<PowerSourceType, UpowerError>>,
-    },
-    /// Placeholder for device state change event notifications
-    GetDeviceStateChangeEvent {
-        reply_to: mpsc::Sender<Result<String, UpowerError>>,
-    },
-}
 ```
 
 ## Error Handling

@@ -20,9 +20,9 @@ tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 ```
 
-## Usage
+## Example
 
-### 1. Enable Wi-Fi
+### Enable Wi-Fi
 
 ```rust
 use freedesktop_network_manager_client::handler::{Client, NetworkManagerRequest};
@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
         }
     });
 
-    handler.await.unwrap();
+    handler.await?;
     Ok(())
 ```
 

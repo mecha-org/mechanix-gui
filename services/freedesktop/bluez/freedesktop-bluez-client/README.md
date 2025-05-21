@@ -20,11 +20,11 @@ tokio = { version = "1", features = ["full"] }
 anyhow = "1"
 ```
 
-## Usage
+## Example
 
-### 1. Enable Bluetooth
+### Enable Bluetooth
 
-```aiignore
+```rust
 use freedesktop_bluez_client::error::BluezError;
 use freedesktop_bluez_client::handler::{BluezRequest, BluezClient};
 use tokio::sync::{mpsc, oneshot};
