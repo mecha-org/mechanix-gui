@@ -105,10 +105,18 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// Return an error if the operation fails.
     async fn disconnect(&self) -> Result<(), ProxyError>;
 
-    // /// Get the current wireless connection status.
-    // Async fn current_status(&self) -> Result<WifiStatus>;
-
-    /// Subscribe to wireless-related events (state changes, network list changes, etc.).
-    /// Returns a stream of events.
+    /// Subscribe to NetworkManager WiFi state change events.
+    ///
+    /// This method sets up an event subscription that will send WiFi state updates
+    /// through the provided channel whenever the NetworkManager reports state changes.
+    ///
+    /// # Arguments
+    /// * `sender` - A tokio mpsc::Sender that will be used to send WifiState updates
+    ///             to the subscriber. The sender should remain active for as long as
+    ///             the subscription is needed.
+    ///
+    /// # Returns
+    /// * `Ok(())` - If the subscription was successfully set up
+    /// * `Err(ProxyError)` - If there was an error setting up the subscription
     async fn subscribe_events(&self, sender: mpsc::Sender<WifiState>) -> Result<(), ProxyError>;
 }

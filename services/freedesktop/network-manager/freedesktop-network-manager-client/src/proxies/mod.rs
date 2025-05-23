@@ -605,6 +605,7 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
         }
     }
 
+    /// Subscribe to NetworkManager WiFi state change events.
     async fn subscribe_events(&self, sender: mpsc::Sender<WifiState>) -> Result<(), ProxyError> {
         let cn = self.0.connection();
         let proxy = match NetworkManagerProxy::new(&cn).await {
@@ -620,7 +621,9 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
         let mut stream = proxy.receive_state_changed().await;
         Ok(while let Some(event) = stream.next().await {
             if let Ok(state) = event.get().await {
-                let _ = sender.send(WifiState::from(state)).await;
+                if let Err(err) = sender.send(WifiState::from(state)).await {
+                    error!("failed to send WiFi state: {}", err);
+                }
             }
         })
     }

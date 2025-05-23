@@ -101,7 +101,10 @@ impl Client {
                                 }
                             }
                             NetworkManagerRequest::GetDeviceStateChangeEvent { reply_to } => {
-                                 let mut rx = service.subscribe_events().await;
+                                // Subscribe to NetworkManager state change events
+                                // When events are received, they are forwarded to the reply channel
+                                // This runs in a loop to continuously monitor state changes
+                                let mut rx = service.subscribe_events().await;
                                 while let Some(state) = rx.recv().await {
                                     // Send state to GUI or process as needed
                                     if let Err(e) = reply_to.send(Ok(state)).await {

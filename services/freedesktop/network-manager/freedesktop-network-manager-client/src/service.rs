@@ -5,6 +5,7 @@ use crate::errors::NetworkManagerError;
 use crate::interfaces::wireless::{NM80211ApFlags, WifiState, WirelessNetworkInfo};
 use anyhow::Result;
 use tokio::sync::mpsc;
+const WIFI_STATE_CHANNEL_SIZE: usize = 32;
 
 /// A service wrapper for interacting with a NetworkManager implementation.
 ///
@@ -110,9 +111,35 @@ impl<T: NetworkManagerInterface + Clone + 'static> NetworkManagerService<T> {
     //     self.nm.current_status().await
     // }
 
-    /// Subscribe to Wireless events.
+    /// Subscribes to WiFi state change events from the NetworkManager.
+    ///
+    /// This method creates a channel to receive WiFi state updates and spawns a background
+    /// task that listens for events from the NetworkManager. The events are forwarded
+    /// through the returned receiver.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `mpsc::Receiver<WifiState>` that will receive WiFi state change events.
+    /// The channel has a buffer size of 32 messages.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use tokio;
+    /// use freedesktop_network_manager_client::service::NetworkManagerService;
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    /// let nm_service = NetworkManagerService::new(());
+    ///     let mut rx = nm_service.subscribe_events().await;
+    ///
+    ///     while let Some(state) = rx.recv().await {
+    ///         println!("WiFi state changed: {:?}", state);
+    ///     }
+    /// }
+    /// ```
     pub async fn subscribe_events(&self) -> mpsc::Receiver<WifiState> {
-        let (tx, rx) = mpsc::channel(32);
+        let (tx, rx) = mpsc::channel(WIFI_STATE_CHANNEL_SIZE);
         let proxy = self.nm.clone();
         tokio::spawn(async move {
             let _ = proxy.subscribe_events(tx).await;
@@ -145,9 +172,8 @@ mod tests {
             async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError>;
             async fn connect_to_network(&self, ssid: &str, password: Option<String>) -> Result<(String, String), ProxyError>;
             async fn disconnect(&self) -> Result<(), ProxyError>;
-     async fn subscribe_events(&self, sender: Sender<WifiState>) -> Result<(), ProxyError> {
-        todo!()
-    }}
+            async fn subscribe_events(&self, sender: Sender<WifiState>) -> Result<(), ProxyError>;
+        }
     }
 
     // Helper to make a dummy RawAccessPointInfo

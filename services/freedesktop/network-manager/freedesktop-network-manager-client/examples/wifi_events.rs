@@ -21,7 +21,6 @@ async fn main() -> anyhow::Result<()> {
     nm_tx
         .try_send(request)
         .expect("Failed to send NetworkManager request");
-    println!("NetworkManager enable request sent");
 
     // Wait for the response
     let handler = tokio::spawn(async move {
