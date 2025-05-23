@@ -1,5 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
+use std::fmt;
 
 /// Represents the current status of the Wireless connection.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +15,41 @@ pub enum WifiStatus {
     Disabled,
     /// The status could not be determined.
     Unknown,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum WifiState {
+    Connecting,
+    Connected,
+    Disconnected,
+    Disconnecting,
+    Unknown,
+}
+
+impl From<u32> for WifiState {
+    fn from(value: u32) -> Self {
+        match value {
+            20 => WifiState::Disconnected,
+            30 => WifiState::Disconnecting,
+            (40..60) => WifiState::Connecting,
+            70 => WifiState::Connected,
+            100 => WifiState::Connected,
+            110 => WifiState::Disconnecting,
+            // (60..=70) => WifiState::Connected,
+            _ => WifiState::Unknown,
+        }
+    }
+}
+impl fmt::Display for WifiState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WifiState::Connecting => write!(f, "Connecting.."),
+            WifiState::Connected => write!(f, "Connected"),
+            WifiState::Disconnected => write!(f, "Disconnected"),
+            WifiState::Disconnecting => write!(f, "Disconnecting.."),
+            WifiState::Unknown => write!(f, ""),
+        }
+    }
 }
 
 /// Raw information about a detected Wireless access point.

@@ -33,6 +33,7 @@ use std::collections::HashMap;
 
 pub use anyhow::Result;
 use async_trait::async_trait;
+use futures::StreamExt;
 pub use device as device_proxy;
 use log::{error, info, trace};
 use uuid::Uuid;
@@ -41,11 +42,11 @@ use zbus::{
     zvariant::{ObjectPath, Value},
 };
 
-use super::interfaces::wireless::RawAccessPointInfo;
+use tokio::sync::mpsc;
+use super::interfaces::wireless::{RawAccessPointInfo, WifiState};
 
 // Define a constant for WiFi device type (as per NetworkManager specification)
 const WIFI_DEVICE_TYPE: u32 = 2;
-
 /// Represents errors that can occur when interacting with D-Bus proxies.
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum ProxyError {
@@ -602,6 +603,26 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
                 )));
             }
         }
+    }
+
+    async fn subscribe_events(&self, sender: mpsc::Sender<WifiState>) -> Result<(), ProxyError> {
+        let cn = self.0.connection();
+        let proxy = match NetworkManagerProxy::new(&cn).await {
+            Ok(proxy) => proxy,
+            Err(e) => {
+                error!("failed to create NetworkManager proxy: {}", e);
+                return Err(ProxyError::ProxyCreationFailed(format!(
+                    "failed to create NetworkManager proxy: {}",
+                    e
+                )));
+            }
+        };
+        let mut stream = proxy.receive_state_changed().await;
+        Ok(while let Some(event) = stream.next().await {
+            if let Ok(state) = event.get().await {
+                let _ = sender.send(WifiState::from(state)).await;
+            }
+        })
     }
 }
 

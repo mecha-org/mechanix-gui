@@ -1,6 +1,6 @@
 //! Handler to handle NetworkManager requests and events.
 
-use super::interfaces::wireless::WirelessNetworkInfo;
+use super::interfaces::wireless::{WifiState, WirelessNetworkInfo};
 use crate::errors::NetworkManagerError;
 use crate::proxies::NetworkManagerProxy;
 use crate::service::NetworkManagerService;
@@ -25,7 +25,7 @@ pub enum NetworkManagerRequest {
     /// Request to subscribe to device state change events.
     /// The response will be sent via the provided `reply_to` channel.
     GetDeviceStateChangeEvent {
-        reply_to: mpsc::Sender<Result<String>>,
+        reply_to: mpsc::Sender<Result<WifiState, NetworkManagerError>>,
     },
     /// Request to get a list of available Wireless networks.
     /// The response will be sent via the provided `reply_to` channel.
@@ -67,8 +67,8 @@ impl Client {
             Ok(n) => n,
             Err(e) => {
                 error!("failed to create NetworkManager proxy: {}", e);
-                return Err(NetworkManagerError::CreateNmProxyError(format!("{}", e)))
-            },
+                return Err(NetworkManagerError::CreateNmProxyError(format!("{}", e)));
+            }
         };
         let service = NetworkManagerService::new(proxy);
 
@@ -101,24 +101,14 @@ impl Client {
                                 }
                             }
                             NetworkManagerRequest::GetDeviceStateChangeEvent { reply_to } => {
-                                // Placeholder for subscribing to device state change events.
-                                // Uncomment and implement event streaming as needed.
-                                /*
-                                match service.subscribe_events().await {
-                                    Ok(mut stream) => {
-                                        tokio::spawn(async move {
-                                            while let Some(event) = stream.recv().await {
-                                                // Convert WifiEvent to String (or your format)
-                                                let msg = format!("{:?}", event);
-                                                let _ = reply_to.send(Ok(msg)).await;
-                                            }
-                                        });
-                                    }
-                                    Err(e) => {
-                                        let _ = reply_to.send(Err(e)).await;
+                                 let mut rx = service.subscribe_events().await;
+                                while let Some(state) = rx.recv().await {
+                                    // Send state to GUI or process as needed
+                                    if let Err(e) = reply_to.send(Ok(state)).await {
+                                        log::error!("failed to send response: {:?}", e);
                                     }
                                 }
-                                */
+
                             }
                             NetworkManagerRequest::GetAvailableNetworks { reply_to } => {
                                 // Use the service to list available wireless networks.

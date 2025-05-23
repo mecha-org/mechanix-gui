@@ -30,7 +30,10 @@
 //! ```
 use anyhow::Result;
 use async_trait::async_trait;
+use tokio::sync::mpsc;
+use zbus::export::futures_core::stream::BoxStream;
 use wireless::{RawAccessPointInfo, WifiStatus};
+use crate::interfaces::wireless::WifiState;
 use crate::proxies::ProxyError;
 
 pub mod wireless;
@@ -54,8 +57,9 @@ pub enum WifiEvent {
 ///
 /// Types implementing this trait must be thread-safe (`Send + Sync`).
 ///
+
 #[async_trait]
-pub trait NetworkManagerInterface: Send + Sync {
+pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// Enable the wireless device.
     /// When enabled, all managed interfaces are re-enabled and available to be activated.
     /// # Errors
@@ -104,7 +108,7 @@ pub trait NetworkManagerInterface: Send + Sync {
     // /// Get the current wireless connection status.
     // Async fn current_status(&self) -> Result<WifiStatus>;
 
-    // /// Subscribe to wireless-related events (state changes, network list changes, etc.).
-    // /// Returns a stream of events.
-    // Async fn subscribe_events(&self) -> Result<BoxStream<'static, WifiEvent>>;
+    /// Subscribe to wireless-related events (state changes, network list changes, etc.).
+    /// Returns a stream of events.
+    async fn subscribe_events(&self, sender: mpsc::Sender<WifiState>) -> Result<(), ProxyError>;
 }

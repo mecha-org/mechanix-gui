@@ -1,23 +1,22 @@
 //! NetworkManager helper service
 
-use super::interfaces::{
-    NetworkManagerInterface,
-};
+use super::interfaces::NetworkManagerInterface;
 use crate::errors::NetworkManagerError;
+use crate::interfaces::wireless::{NM80211ApFlags, WifiState, WirelessNetworkInfo};
 use anyhow::Result;
-use crate::interfaces::wireless::{NM80211ApFlags, WirelessNetworkInfo};
+use tokio::sync::mpsc;
 
 /// A service wrapper for interacting with a NetworkManager implementation.
 ///
 /// This generic struct provides high-level methods for managing WiFi connections,
 /// such as enabling/disabling WiFi, listing available networks, and connecting to a network.
 /// The implementation is generic over any type that implements `NetworkManagerInterface`.
-pub struct NetworkManagerService<T: NetworkManagerInterface> {
+pub struct NetworkManagerService<T: NetworkManagerInterface + Clone> {
     /// The underlying NetworkManager interface implementation.
     nm: T,
 }
 
-impl<T: NetworkManagerInterface> NetworkManagerService<T> {
+impl<T: NetworkManagerInterface + Clone + 'static> NetworkManagerService<T> {
     /// Creates a new `NetworkManagerService` with the given NetworkManager interface.
     ///
     /// # Arguments
@@ -67,10 +66,7 @@ impl<T: NetworkManagerInterface> NetworkManagerService<T> {
                 let ssid = String::from_utf8_lossy(&raw_ap.ssid).to_string();
                 let signal_strength = raw_ap.strength;
                 // Determine the security type based on access point flags.
-                let security = if raw_ap
-                    .nm80211_flags()
-                    .contains(NM80211ApFlags::PRIVACY)
-                {
+                let security = if raw_ap.nm80211_flags().contains(NM80211ApFlags::PRIVACY) {
                     "Protected".to_string()
                 } else {
                     "Open".to_string()
@@ -114,10 +110,15 @@ impl<T: NetworkManagerInterface> NetworkManagerService<T> {
     //     self.nm.current_status().await
     // }
 
-    // /// Subscribe to Wireless events.
-    // Pub async fn subscribe_events(&self) -> Result<BoxStream<'static, WifiEvent>> {
-    //     self.nm.subscribe_events().await
-    // }
+    /// Subscribe to Wireless events.
+    pub async fn subscribe_events(&self) -> mpsc::Receiver<WifiState> {
+        let (tx, rx) = mpsc::channel(32);
+        let proxy = self.nm.clone();
+        tokio::spawn(async move {
+            let _ = proxy.subscribe_events(tx).await;
+        });
+        rx
+    }
 }
 
 #[cfg(test)]
@@ -127,10 +128,15 @@ mod tests {
     use crate::proxies::ProxyError;
     use anyhow::Result;
     use mockall::{mock, predicate::*};
+    use tokio::sync::mpsc::Sender;
 
     // 1. Mock the NetworkManagerInterface trait
     mock! {
         pub NetworkManager {}
+
+        impl Clone for NetworkManager {
+            fn clone(&self) -> Self;
+        }
 
         #[async_trait::async_trait]
         impl NetworkManagerInterface for NetworkManager {
@@ -139,7 +145,9 @@ mod tests {
             async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError>;
             async fn connect_to_network(&self, ssid: &str, password: Option<String>) -> Result<(String, String), ProxyError>;
             async fn disconnect(&self) -> Result<(), ProxyError>;
-        }
+     async fn subscribe_events(&self, sender: Sender<WifiState>) -> Result<(), ProxyError> {
+        todo!()
+    }}
     }
 
     // Helper to make a dummy RawAccessPointInfo
