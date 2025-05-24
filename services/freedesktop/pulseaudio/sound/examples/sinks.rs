@@ -1,5 +1,4 @@
 //! Example to get output devices using `get_sinks` method
-//! Basic example: PowerOn the PulseAudio device using freedesktop-bluez-client
 
 use sound::handler::{PulseAudioRequest, PulseAudioClient};
 use tokio::sync::mpsc;
@@ -16,8 +15,7 @@ async fn main() -> anyhow::Result<()> {
     });
     println!("handler spawned");
     let (res_tx, res_rx) = mpsc::channel(10);
-    // Example: Enable PulseAudio
-    let request = PulseAudioRequest::GetOutputDeviceList { reply_to: res_tx };
+    let request = PulseAudioRequest::GetSinks { reply_to: res_tx };
     pactl_tx
         .try_send(request)
         .expect("Failed to send PulseAudio request");

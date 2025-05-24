@@ -24,8 +24,8 @@ pub enum PulseAudioError {
     #[error("failed to init pulseaudio service: {0}")]
     InitPulseAudioServiceError(String),
 
-    /// An error occurred while trying to connect to the PulseAudio server.
-    #[error("failed to connect to PulseAudio server: {0}")]
+    /// An error occurred while trying to send results back to the sender.
+    #[error("failed to send request back to sender: {0}")]
     SendRequestError(String),
 
     /// An error occurred while trying to initialize the pulse handle.
@@ -35,4 +35,16 @@ pub enum PulseAudioError {
     /// An error originating from the pulse handle layer.
     #[error("pulse handle error: {0}")]
     PulseServerError(#[from] PulseServerError),
+
+    /// An error occurred while trying to send a message to the PulseAudio server.
+    #[error("failed to send message to PulseAudio server: {0}")]
+    SendMessageError(String),
+
+    /// An error occurred while trying to receive a message from the PulseAudio server.
+    #[error("the received message from PulseAudio server is unexpected")]
+    UnexpectedMessage,
+
+    /// An error occurred while trying to receive a message from the PulseAudio server.
+    #[error("failed to receive message from PulseAudio server")]
+    ReceiveMessageError,
 }
