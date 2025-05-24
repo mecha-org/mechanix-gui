@@ -1,6 +1,6 @@
 //! Example to get output devices using `get_sinks` method
 
-use sound::handler::{PulseAudioRequest, PulseAudioClient};
+use freedesktop_pulseaudio_client::handler::{PulseAudioRequest, PulseAudioClient};
 use tokio::sync::mpsc;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

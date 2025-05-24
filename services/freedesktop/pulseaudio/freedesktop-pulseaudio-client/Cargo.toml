@@ -1,5 +1,5 @@
 [package]
-name = "sound"
+name = "freedesktop-pulseaudio-client"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

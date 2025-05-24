@@ -8,7 +8,7 @@ use crate::service::{PulseInitError, PulseServerError};
 /// Represents various errors that can occur during PulseAudio operations.
 ///
 /// This enum encapsulates different types of errors that may arise while
-/// interacting with the PulseAudio sound server, such as connection issues,
+/// interacting with the PulseAudio freedesktop-pulseaudio-client server, such as connection issues,
 /// device management failures, or invalid operations.
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]

@@ -82,7 +82,7 @@ pub enum PulseAudioRequest {
     },
 }
 
-/// A client for interacting with the PulseAudio sound server.
+/// A client for interacting with the PulseAudio freedesktop-pulseaudio-client server.
 ///
 /// This struct provides an interface for handling PulseAudio operations asynchronously.
 /// It processes incoming requests through a channel-based communication system and
