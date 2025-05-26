@@ -1,0 +1,11 @@
+[package]
+name = "bevy_mechanix_gui"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.16.0-dev" }
+bevy_styled_widgets = { git = "https://github.com/mecha-org/bevy_mctk.git", rev = "ba4ace34d3161af926d503fa8ca2d620d0210166" }
+bevy_asset_loader = { version = "0.23.0-rc.3", features = ["standard_dynamic_assets"]}
+
+chrono = { version = "0.4", features = ["clock"] }

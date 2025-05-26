@@ -1,0 +1,38 @@
+({
+    "images.parachute": File (
+        path: "examples/images/parachute.png",
+    ),
+    "fonts.primary.300": File (
+        path: "fonts/SpaceGrotesk-Regular.ttf",
+    ),
+    "fonts.primary.400": File (
+        path: "fonts/SpaceGrotesk-Medium.ttf",
+    ),
+    "fonts.primary.500": File (
+        path: "fonts/SpaceGrotesk-SemiBold.ttf",
+    ),
+    "fonts.primary.600": File (
+        path: "fonts/SpaceGrotesk-SemiBold.ttf",
+    ),
+     "fonts.primary.700": File (
+        path: "fonts/SpaceGrotesk-Bold.ttf",
+    ),
+    "fonts.secondary.300": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.400": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.500": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.600": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+    "fonts.secondary.700": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+    "fonts.icons": File (
+        path: "fonts/font-icons.ttf"
+    )
+})
