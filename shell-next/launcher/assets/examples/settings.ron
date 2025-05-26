@@ -1,7 +1,4 @@
 ({
-    "images.parachute": File (
-        path: "examples/images/parachute.png",
-    ),
     "fonts.primary.300": File (
         path: "fonts/SpaceGrotesk-Regular.ttf",
     ),

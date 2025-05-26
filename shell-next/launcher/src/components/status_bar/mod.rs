@@ -20,13 +20,6 @@ use crate::{
 };
 use chrono::Local;
 
-/// Loads image assets
-#[derive(AssetCollection, Resource)]
-pub struct ImageAssets {
-    #[asset(key = "images.parachute")]
-    parachute: Handle<Image>,
-}
-
 /// Defines app asset loading states
 #[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
 enum AssetsLoadingState {
@@ -52,7 +45,6 @@ pub fn run_status_bar() {
             LoadingState::new(AssetsLoadingState::Loading)
                 .continue_to_state(AssetsLoadingState::Loaded)
                 .with_dynamic_assets_file::<StandardDynamicAssetCollection>("examples/settings.ron")
-                .load_collection::<ImageAssets>()
                 .load_collection::<FontAssets>(),
         )
         .add_systems(OnEnter(AssetsLoadingState::Loaded), setup_view_root)
@@ -60,11 +52,7 @@ pub fn run_status_bar() {
 }
 
 /// Initializes the status bar UI layout and data
-fn setup_view_root(
-    mut commands: Commands,
-    image_assets: Res<ImageAssets>,
-    font_assets: Res<FontAssets>,
-) {
+fn setup_view_root(mut commands: Commands, font_assets: Res<FontAssets>) {
     commands.spawn(Camera2d);
 
     // Example system data injected manually
@@ -131,7 +119,6 @@ fn setup_view_root(
                     "sm" => spawn_date(left, date.clone(), current_menu, &font_assets),
                     "lg" => {
                         spawn_menu(left, &font_assets);
-                        // spawn_logo_img(left, &image_assets);
                     }
                     _ => {}
                 });
@@ -153,25 +140,6 @@ fn setup_view_root(
                     }
                 });
         });
-}
-
-/// Spawns the logo image in the left slot of the status bar
-/// This function is called when the current menu is "lg"
-fn spawn_logo_img(
-    parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
-    image_assets: &ImageAssets,
-) {
-    parent.spawn((
-        ImageNode {
-            image: image_assets.parachute.clone(),
-            ..Default::default()
-        },
-        Node {
-            width: Val::Vw(4.),
-            height: Val::Vh(4.),
-            ..Default::default()
-        },
-    ));
 }
 
 /// Spawns a basic menu button (placeholder for future dropdown)

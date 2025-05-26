@@ -1,4 +1,4 @@
-use components::{status_bar::run_status_bar};
+use components::status_bar::run_status_bar;
 
 mod components;
 mod settings;
