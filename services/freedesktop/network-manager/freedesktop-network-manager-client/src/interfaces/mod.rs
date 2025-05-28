@@ -28,13 +28,12 @@
 //! # Ok(())
 //! # }
 //! ```
+use crate::interfaces::wireless::{AccessPointEvent, WifiState};
+use crate::proxies::ProxyError;
 use anyhow::Result;
 use async_trait::async_trait;
 use tokio::sync::mpsc;
-use zbus::export::futures_core::stream::BoxStream;
 use wireless::{RawAccessPointInfo, WifiStatus};
-use crate::interfaces::wireless::WifiState;
-use crate::proxies::ProxyError;
 
 pub mod wireless;
 
@@ -118,5 +117,12 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// # Returns
     /// * `Ok(())` - If the subscription was successfully set up
     /// * `Err(ProxyError)` - If there was an error setting up the subscription
-    async fn subscribe_events(&self, sender: mpsc::Sender<WifiState>) -> Result<(), ProxyError>;
+    async fn subscribe_device_events(
+        &self,
+        sender: mpsc::Sender<WifiState>,
+    ) -> Result<(), ProxyError>;
+    async fn subscribe_access_point_events(
+        &self,
+        sender: mpsc::Sender<Result<AccessPointEvent, ProxyError>>,
+    ) -> Result<(), ProxyError>;
 }

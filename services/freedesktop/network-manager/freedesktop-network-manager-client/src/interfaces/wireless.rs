@@ -64,7 +64,7 @@ pub struct RawAccessPointInfo {
     /// RSN (WPA2/3) specific flags.
     pub rsn_flags: u32,
     /// SSID of the access point as a sequence of bytes.
-    pub ssid: Vec<u8>,
+    pub ssid: String,
     /// Operating frequency (in MHz).
     pub frequency: u32,
     /// Hardware (MAC) address of the access point.
@@ -130,4 +130,17 @@ pub trait NetworkManagerInterface: Send + Sync {
     ///
     /// Returns a vector of `WirelessNetworkInfo` describing each visible network.
     async fn list_networks(&self) -> Result<Vec<WirelessNetworkInfo>>;
+}
+
+#[derive(Debug, Default)]
+pub enum EventType {
+    #[default]
+    Added,
+    Removed,
+}
+#[derive(Debug, Default)]
+pub struct AccessPointEvent {
+    pub event_type: EventType,
+    pub access_point_path: String,
+    pub raw_access_point_info: Option<RawAccessPointInfo>
 }

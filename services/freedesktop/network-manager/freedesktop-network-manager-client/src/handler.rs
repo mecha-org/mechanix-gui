@@ -1,10 +1,10 @@
 //! Handler to handle NetworkManager requests and events.
 
-use super::interfaces::wireless::{WifiState, WirelessNetworkInfo};
+use super::interfaces::wireless::{AccessPointEvent, WifiState, WirelessNetworkInfo};
 use crate::errors::NetworkManagerError;
 use crate::proxies::NetworkManagerProxy;
 use crate::service::NetworkManagerService;
-use anyhow::{bail, Result};
+use anyhow::Result;
 use log::error;
 use tokio::{select, sync::mpsc};
 use zbus::Connection;
@@ -22,15 +22,19 @@ pub enum NetworkManagerRequest {
     DisableWirelessDevice {
         reply_to: mpsc::Sender<Result<(), NetworkManagerError>>,
     },
-    /// Request to subscribe to device state change events.
-    /// The response will be sent via the provided `reply_to` channel.
-    GetDeviceStateChangeEvent {
-        reply_to: mpsc::Sender<Result<WifiState, NetworkManagerError>>,
-    },
     /// Request to get a list of available Wireless networks.
     /// The response will be sent via the provided `reply_to` channel.
     GetAvailableNetworks {
         reply_to: mpsc::Sender<Result<Vec<WirelessNetworkInfo>, NetworkManagerError>>,
+    },
+    /// Request to subscribe to device state change events.
+    /// The response will be sent via the provided `reply_to` channel.
+    SubscribeDeviceStateChangeEvent {
+        reply_to: mpsc::Sender<Result<WifiState, NetworkManagerError>>,
+    },
+    /// Request to subscribe to access point events.
+    SubscribeAccessPointEvents {
+        reply_to: mpsc::Sender<Result<AccessPointEvent, NetworkManagerError>>,
     },
 }
 
@@ -100,19 +104,6 @@ impl Client {
                                     log::error!("failed to send response: {:?}", e);
                                 }
                             }
-                            NetworkManagerRequest::GetDeviceStateChangeEvent { reply_to } => {
-                                // Subscribe to NetworkManager state change events
-                                // When events are received, they are forwarded to the reply channel
-                                // This runs in a loop to continuously monitor state changes
-                                let mut rx = service.subscribe_events().await;
-                                while let Some(state) = rx.recv().await {
-                                    // Send state to GUI or process as needed
-                                    if let Err(e) = reply_to.send(Ok(state)).await {
-                                        log::error!("failed to send response: {:?}", e);
-                                    }
-                                }
-
-                            }
                             NetworkManagerRequest::GetAvailableNetworks { reply_to } => {
                                 // Use the service to list available wireless networks.
                                 match service.list_networks().await {
@@ -127,6 +118,25 @@ impl Client {
                                         }
                                     }
                                 }
+                            }
+                            NetworkManagerRequest::SubscribeDeviceStateChangeEvent { reply_to } => {
+                                // Subscribe to NetworkManager state change events
+                                // When events are received, they are forwarded to the reply channel
+                                // This runs in a loop to continuously monitor state changes
+                                let mut rx = service.subscribe_device_events().await;
+                                while let Some(state) = rx.recv().await {
+                                    // Send state to GUI or process as needed
+                                    if let Err(e) = reply_to.send(Ok(state)).await {
+                                        log::error!("failed to send response: {:?}", e);
+                                    }
+                                }
+
+                            }
+                            NetworkManagerRequest::SubscribeAccessPointEvents { reply_to } => {
+                                // Subscribe to NetworkManager state change events
+                                // When events are received, they are forwarded to the reply channel
+                                // This runs in a loop to continuously monitor state changes
+                                service.subscribe_access_point_events(reply_to).await;
                             }
                         }
                     }

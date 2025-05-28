@@ -2,9 +2,10 @@
 
 use super::interfaces::NetworkManagerInterface;
 use crate::errors::NetworkManagerError;
-use crate::interfaces::wireless::{NM80211ApFlags, WifiState, WirelessNetworkInfo};
+use crate::interfaces::wireless::{AccessPointEvent, NM80211ApFlags, WifiState, WirelessNetworkInfo};
 use anyhow::Result;
 use tokio::sync::mpsc;
+
 const WIFI_STATE_CHANNEL_SIZE: usize = 32;
 
 /// A service wrapper for interacting with a NetworkManager implementation.
@@ -63,8 +64,6 @@ impl<T: NetworkManagerInterface + Clone + 'static> NetworkManagerService<T> {
         raw_access_points
             .into_iter()
             .map(|raw_ap| {
-                // Convert SSID bytes to a UTF-8 string.
-                let ssid = String::from_utf8_lossy(&raw_ap.ssid).to_string();
                 let signal_strength = raw_ap.strength;
                 // Determine the security type based on access point flags.
                 let security = if raw_ap.nm80211_flags().contains(NM80211ApFlags::PRIVACY) {
@@ -74,7 +73,7 @@ impl<T: NetworkManagerInterface + Clone + 'static> NetworkManagerService<T> {
                 };
 
                 Ok(WirelessNetworkInfo {
-                    ssid,
+                    ssid: raw_ap.ssid,
                     signal_strength,
                     security,
                     hw_address: raw_ap.hw_address,
@@ -131,20 +130,39 @@ impl<T: NetworkManagerInterface + Clone + 'static> NetworkManagerService<T> {
     /// #[tokio::main]
     /// async fn main() {
     /// let nm_service = NetworkManagerService::new(());
-    ///     let mut rx = nm_service.subscribe_events().await;
+    ///     let mut rx = nm_service.subscribe_device_events().await;
     ///
     ///     while let Some(state) = rx.recv().await {
     ///         println!("WiFi state changed: {:?}", state);
     ///     }
     /// }
     /// ```
-    pub async fn subscribe_events(&self) -> mpsc::Receiver<WifiState> {
+    pub async fn subscribe_device_events(&self) -> mpsc::Receiver<WifiState> {
         let (tx, rx) = mpsc::channel(WIFI_STATE_CHANNEL_SIZE);
         let proxy = self.nm.clone();
         tokio::spawn(async move {
-            let _ = proxy.subscribe_events(tx).await;
+            let _ = proxy.subscribe_device_events(tx).await;
         });
         rx
+    }
+    pub async fn subscribe_access_point_events(
+        &self,
+        reply_to: mpsc::Sender<Result<AccessPointEvent, NetworkManagerError>>,
+    ) {
+        let (tx, mut rx) = mpsc::channel(WIFI_STATE_CHANNEL_SIZE);
+        let proxy = self.nm.clone();
+        tokio::spawn(async move {
+            let _ = proxy.subscribe_access_point_events(tx).await;
+            while let Some(result) = rx.recv().await {
+                println!("from proxy: {:?}", result);
+                // Map ProxyError to NetworkManagerError using .map_err()
+                let mapped = result.map_err(NetworkManagerError::from);
+                // Send the mapped result to the service's channel
+                if reply_to.send(mapped).await.is_err() {
+                    eprintln!("failed to send access point event to receiver");
+                }                                                                                                                                                                                                                                                                               
+            }
+        });
     }
 }
 
@@ -172,14 +190,15 @@ mod tests {
             async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError>;
             async fn connect_to_network(&self, ssid: &str, password: Option<String>) -> Result<(String, String), ProxyError>;
             async fn disconnect(&self) -> Result<(), ProxyError>;
-            async fn subscribe_events(&self, sender: Sender<WifiState>) -> Result<(), ProxyError>;
+            async fn subscribe_device_events(&self, sender: Sender<WifiState>) -> Result<(), ProxyError>;
+            async fn subscribe_access_point_events(&self, sender: Sender<Result<AccessPointEvent, ProxyError>>) -> Result<(), ProxyError>;
         }
     }
 
     // Helper to make a dummy RawAccessPointInfo
-    fn make_ap(ssid: &[u8], strength: u8, privacy: bool) -> RawAccessPointInfo {
+    fn make_ap(ssid: &str, strength: u8, privacy: bool) -> RawAccessPointInfo {
         RawAccessPointInfo {
-            ssid: ssid.to_vec(),
+            ssid: ssid.to_string(),
             strength,
             hw_address: "00:11:22:33:44:55".to_string(),
             ..Default::default()
@@ -209,8 +228,8 @@ mod tests {
     #[tokio::test]
     async fn test_list_networks_success() {
         let mut mock_nm = MockNetworkManager::new();
-        let ap1 = make_ap(b"TestWifi", 80, true);
-        let ap2 = make_ap(b"OpenNet", 60, false);
+        let ap1 = make_ap("TestWifi", 80, true);
+        let ap2 = make_ap("OpenNet", 60, false);
 
         mock_nm
             .expect_list_networks()

@@ -33,17 +33,19 @@ use std::collections::HashMap;
 
 pub use anyhow::Result;
 use async_trait::async_trait;
-use futures::StreamExt;
 pub use device as device_proxy;
-use log::{error, info, trace};
+use futures::StreamExt;
+use log::{debug, error, info, trace};
 use uuid::Uuid;
 use zbus::{
-    Connection, proxy,
-    zvariant::{ObjectPath, Value},
+    proxy, zvariant::{ObjectPath, Value},
+    Connection,
 };
 
+use super::interfaces::wireless::{AccessPointEvent, EventType, RawAccessPointInfo, WifiState};
+use crate::proxies::access_point::AccessPointProxy;
 use tokio::sync::mpsc;
-use super::interfaces::wireless::{RawAccessPointInfo, WifiState};
+use zbus::zvariant::OwnedObjectPath;
 
 // Define a constant for WiFi device type (as per NetworkManager specification)
 const WIFI_DEVICE_TYPE: u32 = 2;
@@ -312,12 +314,26 @@ pub trait NetworkManager {
     fn wwan_hardware_enabled(&self) -> zbus::Result<bool>;
 }
 
-/// Macro to handle the result of an async operation and continue on error.
+/// A utility macro to simplify handling asynchronous operations and error handling.
+///
+/// The `try_property!` macro is designed to work with asynchronous expressions that return
+/// a `Result` type. It allows the caller to await the expression, handle the `Ok` variant,
+/// and execute a custom error-handling function or operation for the `Err` variant.
+///
+/// # Syntax
+/// ```ignore
+/// try_property!($expression, $on_error);
+/// ```
+///
+/// - `$expression`: An asynchronous expression that resolves to a `Result`.
+/// - `$on_error`: A closure, function, or operation to be executed when the `$expression`
+///   results in an `Err`.
+///
 macro_rules! try_property {
-    ($expr:expr) => {
+    ($expr:expr, $on_err:expr) => {
         match $expr.await {
             Ok(val) => val,
-            Err(_) => continue,
+            Err(e) => $on_err(e),
         }
     };
 }
@@ -329,8 +345,7 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
     async fn enable_wifi(&self) -> Result<(), ProxyError> {
         info!("setting WiFi to true");
         // Call the underlying D-Bus method to set a wireless state.
-        match self.set_wireless_enabled(true).await 
-        {
+        match self.set_wireless_enabled(true).await {
             Ok(_) => {
                 info!("wifi is set to true");
                 Ok(())
@@ -453,16 +468,34 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
                     };
 
                     // Extract properties from the access point.
-                    let ssid_vec = try_property!(access_point_proxy.ssid());
-                    let flags = try_property!(access_point_proxy.flags());
-                    let frequency = try_property!(access_point_proxy.frequency());
-                    let bandwidth = try_property!(access_point_proxy.bandwidth());
-                    let signal_strength = try_property!(access_point_proxy.strength());
-                    let hw_address = try_property!(access_point_proxy.hw_address());
+                    let ssid_vec = try_property!(access_point_proxy.ssid(), |e| {
+                        error!("failed to get SSID for access point: {}", e);
+                        Vec::new()
+                    });
+                    let flags = try_property!(access_point_proxy.flags(), |e| {
+                        error!("failed to get flags for access point: {}", e);
+                        0
+                    });
+                    let frequency = try_property!(access_point_proxy.frequency(), |e| {
+                        error!("failed to get frequency for access point: {}", e);
+                        0
+                    });
+                    let bandwidth = try_property!(access_point_proxy.bandwidth(), |e| {
+                        error!("failed to get bandwidth for access point: {}", e);
+                        0
+                    });
+                    let signal_strength = try_property!(access_point_proxy.strength(), |e| {
+                        error!("failed to get signal strength for access point: {}", e);
+                        0
+                    });
+                    let hw_address = try_property!(access_point_proxy.hw_address(), |e| {
+                        error!("failed to get hardware address for access point: {}", e);
+                        String::new()
+                    });
 
                     // Build the access point info struct.
                     let raw_access_point_info = RawAccessPointInfo {
-                        ssid: ssid_vec,
+                        ssid: String::from_utf8_lossy(&ssid_vec).to_string(),
                         flags,
                         frequency,
                         bandwidth,
@@ -494,15 +527,6 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
                     "failed to get wireless device path: {}",
                     e
                 )));
-            }
-        };
-
-        // Validate the device path.
-        let device = match ObjectPath::try_from(wifi_device_path) {
-            Ok(path) => path,
-            Err(e) => {
-                error!("failed to convert device path: {}", e);
-                return Err(ProxyError::InvalidDevicePath(format!("{}", e)));
             }
         };
 
@@ -550,7 +574,7 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
 
         // Add and activate the connection using the composed settings.
         match self
-            .add_and_activate_connection(connection, &device, &specific_object)
+            .add_and_activate_connection(connection, &wifi_device_path, &specific_object)
             .await
         {
             Ok((new_connection_obj_path, active_connection_obj_path)) => Ok((
@@ -572,7 +596,6 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
     /// Note: This disables the wireless connection, but credentials remain saved.
     async fn disconnect(&self) -> Result<(), ProxyError> {
         let cn = self.0.connection();
-
         // Get the wireless device path.
         let device_path = match get_wireless_device_path(cn).await {
             Ok(path) => path,
@@ -606,18 +629,12 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
     }
 
     /// Subscribe to NetworkManager WiFi state change events.
-    async fn subscribe_events(&self, sender: mpsc::Sender<WifiState>) -> Result<(), ProxyError> {
+    async fn subscribe_device_events(
+        &self,
+        sender: mpsc::Sender<WifiState>,
+    ) -> Result<(), ProxyError> {
         let cn = self.0.connection();
-        let proxy = match NetworkManagerProxy::new(&cn).await {
-            Ok(proxy) => proxy,
-            Err(e) => {
-                error!("failed to create NetworkManager proxy: {}", e);
-                return Err(ProxyError::ProxyCreationFailed(format!(
-                    "failed to create NetworkManager proxy: {}",
-                    e
-                )));
-            }
-        };
+        let proxy = create_nm_proxy(&cn).await?;
         let mut stream = proxy.receive_state_changed().await;
         Ok(while let Some(event) = stream.next().await {
             if let Ok(state) = event.get().await {
@@ -627,25 +644,204 @@ impl<'a> NetworkManagerInterface for NetworkManagerProxy<'a> {
             }
         })
     }
+
+    async fn subscribe_access_point_events(
+        &self,
+        sender: mpsc::Sender<Result<AccessPointEvent, ProxyError>>,
+    ) -> Result<(), ProxyError> {
+        // Get the D-Bus connection from the proxy
+        let cn = self.0.connection();
+        // Get the path to the wireless device
+        let device_path = match get_wireless_device_path(&cn).await {
+            Ok(path) => path,
+            Err(e) => {
+                error!("failed to get WiFi device path: {}", e);
+                return Err(ProxyError::DbusCallFailed(format!(
+                    "failed to get wireless device path: {}",
+                    e
+                )));
+            }
+        };
+
+        // Create a proxy for the wireless device interface
+        let wireless_device_proxy =
+            match wireless::WirelessDeviceProxy::new(&self.0.connection(), &device_path).await {
+                Ok(proxy) => proxy,
+                Err(e) => {
+                    error!("failed to create wireless device proxy: {}", e);
+                    return Err(ProxyError::ProxyCreationFailed(format!(
+                        "failed to create wireless device proxy: {}",
+                        e
+                    )));
+                }
+            };
+
+        // Set up stream subscriptions for both add and remove events
+        let (add_result, remove_result) = futures::join!(
+            wireless_device_proxy.receive_access_point_added(),
+            wireless_device_proxy.receive_access_point_removed()
+        );
+
+        // Handle potential subscription errors
+        let (mut access_point_added_stream, mut access_point_removed_stream) =
+            match (add_result, remove_result) {
+                (Ok(add_stream), Ok(remove_stream)) => (add_stream, remove_stream),
+                (Err(e1), Err(e2)) => {
+                    error!("Dual subscription failure: {e1}, {e2}");
+                    return Err(ProxyError::DbusCallFailed(format!(
+                        "failed to subscribe to both events: {e1} & {e2}"
+                    )));
+                }
+                (Err(e), _) | (_, Err(e)) => {
+                    error!("Partial subscription failure: {e}");
+                    return Err(ProxyError::DbusCallFailed(format!(
+                        "partial subscription failure: {e}"
+                    )));
+                }
+            };
+
+        // Main event loop - handle both add and remove events
+        loop {
+            tokio::select! {
+                // Handle access point added events
+                may_be_ap_added = access_point_added_stream.next() => {
+                    if let Some(ap_added) = may_be_ap_added {
+                        let args = match ap_added.args() {
+                            Ok(args) => args,
+                            Err(e) => {
+                                error!("failed to get access point added args: {}", e);
+                                continue; // Skip this item
+                            }
+                        };
+                        let access_point_path = args.access_point.to_string();
+                        debug!("access point added: {}", access_point_path);
+                        let raw_access_point_info = get_access_point_info(&cn, &args.access_point).await?;
+                        let access_point_event_info = AccessPointEvent {
+                            access_point_path,
+                            event_type: EventType::Added,
+                            raw_access_point_info: Some(raw_access_point_info),
+                            ..Default::default()
+                        };
+                        println!("event to send back: {:?}", access_point_event_info);
+                        // Forward object path to the channel
+                        if sender.send(Ok(access_point_event_info)).await.is_err() {
+                            error!("failed to send access point added: receiver dropped");
+                            continue; // Receiver dropped
+                        }
+                    } else {
+                        continue; // Stream ended
+                    }
+                }
+
+                // Handle access point removed events
+                may_be_ap_removed = access_point_removed_stream.next() => {
+                    if let Some(ap_removed) = may_be_ap_removed {
+                        println!("ap removed");
+                        let args = match ap_removed.args() {
+                            Ok(args) => args,
+                            Err(e) => {
+                                error!("failed to get access point removed args: {}", e);
+                                continue; // Skip this item
+                            }
+                        };
+                        let access_point_path = args.access_point.to_string();
+                        debug!("access point removed: {}", access_point_path);
+                        let access_point_event_info = AccessPointEvent {
+                            access_point_path,
+                            event_type: EventType::Removed,
+                            raw_access_point_info: None, // No info for removed events
+                            ..Default::default()
+                        };
+                        println!("event to send back: {:?}", access_point_event_info);
+                        // Forward object path to the channel
+                        if sender.send(Ok(access_point_event_info)).await.is_err() {
+                            error!("failed to send access point added: receiver dropped");
+                            continue; // Receiver dropped
+                        }
+                    } else {
+                        continue; // Stream ended
+                    }
+                }
+            }
+        }
+    }
+}
+
+async fn get_access_point_info(
+    cn: &&Connection,
+    object_path: &ObjectPath<'_>,
+) -> Result<RawAccessPointInfo, ProxyError> {
+    // Create a proxy for the access point
+    let access_point_proxy = match AccessPointProxy::new(cn, object_path).await {
+        Ok(proxy) => proxy,
+        Err(e) => {
+            error!("failed to create access point proxy: {}", e);
+            return Err(ProxyError::ProxyCreationFailed(format!(
+                "failed to create access point proxy: {}",
+                e
+            )));
+        }
+    };
+    // Get the access point properties
+    // Extract properties from the access point.
+    let ssid_vec = try_property!(access_point_proxy.ssid(), |e| {
+        error!("failed to get SSID for access point: {}", e);
+        Vec::new()
+    });
+    let flags = try_property!(access_point_proxy.flags(), |e| {
+        error!("failed to get flags for access point: {}", e);
+        0
+    });
+    let frequency = try_property!(access_point_proxy.frequency(), |e| {
+        error!("failed to get frequency for access point: {}", e);
+        0
+    });
+    let bandwidth = try_property!(access_point_proxy.bandwidth(), |e| {
+        error!("failed to get bandwidth for access point: {}", e);
+        0
+    });
+    let signal_strength = try_property!(access_point_proxy.strength(), |e| {
+        error!("failed to get signal strength for access point: {}", e);
+        0
+    });
+    let hw_address = try_property!(access_point_proxy.hw_address(), |e| {
+        error!("failed to get hardware address for access point: {}", e);
+        String::new()
+    });
+
+    // Build the access point info struct.
+    Ok(RawAccessPointInfo {
+        ssid: String::from_utf8_lossy(&ssid_vec).to_string(),
+        flags,
+        frequency,
+        bandwidth,
+        strength: signal_strength,
+        hw_address,
+        ..Default::default()
+    })
+}
+
+/// Creates a new NetworkManager proxy from the given D-Bus connection.
+///
+/// # Arguments
+/// * `cn` - The D-Bus connection to use
+///
+/// # Returns
+/// A NetworkManagerProxy or ProxyError if creation fails
+async fn create_nm_proxy(cn: &Connection) -> Result<NetworkManagerProxy<'_>, ProxyError> {
+    NetworkManagerProxy::new(cn).await.map_err(|e| {
+        error!("failed to create NetworkManager proxy: {}", e);
+        ProxyError::ProxyCreationFailed(format!("failed to create NetworkManager proxy: {}", e))
+    })
 }
 
 /// Helper function to find the D-Bus object path of the first WiFi device.
 ///
 /// Returns the object path as a String or an error if no WiFi device is found.
-async fn get_wireless_device_path(cn: &Connection) -> Result<String, ProxyError> {
+async fn get_wireless_device_path(cn: &Connection) -> Result<OwnedObjectPath, ProxyError> {
     info!("getting WiFi device path...");
     // Create a proxy to NetworkManager.
-    let proxy = match NetworkManagerProxy::new(&cn).await {
-        Ok(proxy) => proxy,
-        Err(e) => {
-            error!("failed to create NetworkManager proxy: {}", e);
-            return Err(ProxyError::ProxyCreationFailed(format!(
-                "failed to create NetworkManager proxy: {}",
-                e
-            )));
-        }
-    };
-
+    let proxy = create_nm_proxy(cn).await?;
     // Get all devices.
     let devices = match proxy.get_all_devices().await {
         Ok(devices) => devices,
@@ -673,7 +869,7 @@ async fn get_wireless_device_path(cn: &Connection) -> Result<String, ProxyError>
             Ok(device_type) => {
                 if device_type == WIFI_DEVICE_TYPE {
                     info!("found WiFi device: {}", device);
-                    return Ok(device.to_string());
+                    return Ok(device);
                 }
             }
             Err(e) => {
