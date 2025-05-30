@@ -28,12 +28,12 @@
 //! # Ok(())
 //! # }
 //! ```
-use crate::interfaces::wireless::{AccessPointEvent, WifiState};
+use crate::proxies::wireless::{AccessPointAddedStream, AccessPointRemovedStream};
 use crate::proxies::ProxyError;
 use anyhow::Result;
 use async_trait::async_trait;
-use tokio::sync::mpsc;
 use wireless::{RawAccessPointInfo, WifiStatus};
+use zbus::proxy::PropertyStream;
 
 pub mod wireless;
 
@@ -103,7 +103,10 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// # Errors
     /// Return an error if the operation fails.
     async fn disconnect(&self) -> Result<(), ProxyError>;
-
+    async fn get_access_point_info(
+        &self,
+        object_path: &str,
+    ) -> Result<RawAccessPointInfo, ProxyError>;
     /// Subscribe to NetworkManager WiFi state change events.
     ///
     /// This method sets up an event subscription that will send WiFi state updates
@@ -117,12 +120,8 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// # Returns
     /// * `Ok(())` - If the subscription was successfully set up
     /// * `Err(ProxyError)` - If there was an error setting up the subscription
-    async fn subscribe_device_events(
-        &self,
-        sender: mpsc::Sender<WifiState>,
-    ) -> Result<(), ProxyError>;
+    async fn subscribe_device_events(&self) -> Result<PropertyStream<u32>, ProxyError>;
     async fn subscribe_access_point_events(
         &self,
-        sender: mpsc::Sender<Result<AccessPointEvent, ProxyError>>,
-    ) -> Result<(), ProxyError>;
+    ) -> Result<(AccessPointAddedStream, AccessPointRemovedStream), ProxyError>;
 }

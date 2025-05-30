@@ -1,40 +1,34 @@
 //! Basic example: Enable Wifi using freedesktop-network-manager-client
 
-use freedesktop_network_manager_client::handler::{Client, NetworkManagerRequest};
-use tokio::sync::mpsc;
+use freedesktop_network_manager_client::service::NetworkManagerService;
+use std::thread;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Create a channel for sending NetworkManager requests
-    let (nm_tx, nm_rx) = mpsc::channel(10);
 
+    let network_manager = NetworkManagerService::new().await?;
     // Spawn the NetworkManager handler in a background task
-    let _handler = tokio::spawn(async move {
-        let mut nm_handler = Client::new().await;
-        // Run the handler event loop
-        let _ = nm_handler.run(nm_rx).await;
-    });
+    // let _handler = tokio::spawn(async move {
+    //     let mut nm_handler = Client::new().await;
+    //     // Run the handler event loop
+    //     let _ = nm_handler.run(nm_rx).await;
+    // });
 
-    let (reply_to, mut receiver) = mpsc::channel(1);
-    // Example: Enable NetworkManager
-    let request = NetworkManagerRequest::GetDeviceStateChangeEvent { reply_to };
-    nm_tx
-        .try_send(request)
-        .expect("Failed to send NetworkManager request");
-
+    let receiver = network_manager.subscribe_device_events().await;
     // Wait for the response
-    let handler = tokio::spawn(async move {
-        while let Some(result) = receiver.recv().await {
-            match result {
-                Ok(wifi_state) => println!("Current wifi state is: {:?}", wifi_state),
-                Err(e) => eprintln!("Error getting wifi state: {e}"),
-            }
+    let handler = thread::spawn(move || {
+        // Process messages until the channel closes
+        while let Ok(result) = receiver.recv() {
+            println!("event: {}", result);
         }
+        println!("Device handler thread exiting gracefully.");
     });
 
-    _handler.await.unwrap();
-    // Await the result and log it
-    handler.await.unwrap();
+    // Wait for the thread to finish and handle errors
+    if let Err(e) = handler.join() {
+        eprintln!("Handler thread panicked: {:?}", e);
+    }
 
     // (Optional) gracefully shut down or send more requests...
 
