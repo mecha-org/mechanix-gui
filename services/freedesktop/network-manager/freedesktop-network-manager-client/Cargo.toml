@@ -1,0 +1,15 @@
+[package]
+name = "freedesktop-network-manager-client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+zbus = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+bitflags = "2.9.0"
+uuid = { version = "1.16.0", features = ["v4"] }
+log = { workspace = true }
+mockall = { workspace = true }
