@@ -18,9 +18,9 @@ use zbus::Connection;
 /// This generic struct provides high-level methods for managing WiFi connections,
 /// such as enabling/disabling WiFi, listing available networks, and connecting to a network.
 /// The implementation is generic over any type that implements `NetworkManagerInterface`.
-#[derive(Clone)]
+#[derive()]
 pub struct NetworkManagerService {
-    proxy: NetworkManagerProxy<'static>, // or Arc<...> if needed
+    proxy: NetworkManagerProxy<'static>,
 }
 
 impl NetworkManagerService {

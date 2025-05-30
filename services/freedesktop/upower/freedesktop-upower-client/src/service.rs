@@ -7,17 +7,20 @@ use crate::errors::UpowerError;
 use crate::interfaces::device::{BatteryLevel, BatteryState, PowerSourceType, WarningLevel};
 use crate::interfaces::UpowerInterface;
 use anyhow::Result;
+use log::error;
+use zbus::Connection;
+use crate::proxies::DeviceProxy;
 
 /// A service wrapper providing convenient methods for accessing UPower device data.
 ///
 /// This struct is generic over any type implementing the [`UpowerInterface`] trait,
 /// allowing for flexible backends (e.g., real D-Bus proxy or a mock for testing).
-pub struct UpowerService<T: UpowerInterface> {
-    /// The underlying UPower interface implementation.
-    upower: T,
+pub struct UpowerService<> {
+    proxy: DeviceProxy<'static>,
+
 }
 
-impl<T: UpowerInterface> UpowerService<T> {
+impl UpowerService {
     /// Constructs a new [`UpowerService`] from the given interface implementation.
     ///
     /// # Arguments
@@ -28,8 +31,18 @@ impl<T: UpowerInterface> UpowerService<T> {
     /// use upower::service::UpowerService;
     /// let service = UpowerService::new(my_upower_impl);
     /// ```
-    pub fn new(upower: T) -> Self {
-        Self { upower }
+    pub async fn new() -> Result<Self, UpowerError> {
+        let cn = Connection::system()
+            .await
+            .map_err(|e| UpowerError::InitSystemBusError(format!("{}", e)))?;
+        let proxy = match DeviceProxy::new(&cn).await {
+            Ok(n) => n,
+            Err(e) => {
+                error!("failed to create Device proxy: {}", e);
+                return Err(UpowerError::CreateDeviceProxyError(format!("{}", e)))
+            },
+        };
+        Ok(Self { proxy })
     }
 
     /// Asynchronously retrieves the battery level as a strongly typed [`BatteryLevel`] enum.
@@ -39,7 +52,7 @@ impl<T: UpowerInterface> UpowerService<T> {
     /// * `Err(UpowerError::InvalidBatteryLevel)` if the returned value is not recognized.
     /// * Propagates any error from the underlying interface.
     pub async fn get_battery_level(&self) -> Result<BatteryLevel, UpowerError> {
-        match self.upower.get_battery_level().await {
+        match self.proxy.get_battery_level().await {
             Ok(level) => {
                 // Convert the raw value to the BatteryLevel enum, or return a descriptive error.
                 let level = match BatteryLevel::try_from(level) {
@@ -58,7 +71,7 @@ impl<T: UpowerInterface> UpowerService<T> {
     /// * `Ok(WarningLevel)` on success.
     /// * Propagates any error from the underlying interface.
     pub async fn get_warning_level(&self) -> Result<WarningLevel, UpowerError> {
-        match self.upower.get_warning_level().await {
+        match self.proxy.get_warning_level().await {
             Ok(level) => Ok(WarningLevel::from(level)),
             Err(e) => Err(UpowerError::from(e)),
         }
@@ -70,7 +83,7 @@ impl<T: UpowerInterface> UpowerService<T> {
     /// * `Ok(f64)` containing the battery percentage.
     /// * Propagates any error from the underlying interface.
     pub async fn get_percentage(&self) -> Result<f64, UpowerError> {
-        self.upower.get_percentage().await.map_err(|e| e.into())
+        self.proxy.get_percentage().await.map_err(|e| e.into())
     }
 
     /// Asynchronously retrieves the current battery status as a [`BatteryState`] enum.
@@ -80,7 +93,7 @@ impl<T: UpowerInterface> UpowerService<T> {
     /// * `Err(UpowerError::InvalidBatteryState)` if the returned value is not recognized.
     /// * Propagates any error from the underlying interface.
     pub async fn get_state(&self) -> Result<BatteryState, UpowerError> {
-        match self.upower.get_state().await {
+        match self.proxy.get_state().await {
             Ok(state) => {
                 // Convert the raw value to the BatteryState enum or return a descriptive error.
                 let state = match BatteryState::try_from(state) {
@@ -100,7 +113,7 @@ impl<T: UpowerInterface> UpowerService<T> {
     /// * `Err(UpowerError::InvalidPowerSourceType)` if the returned value is not recognized.
     /// * Propagates any error from the underlying interface.
     pub async fn get_power_source_type(&self) -> Result<PowerSourceType, UpowerError> {
-        match self.upower.get_power_source_type().await {
+        match self.proxy.get_power_source_type().await {
             Ok(type_) => {
                 // Convert the raw value to the PowerSourceType enum, or return a descriptive error.
                 let type_ = match PowerSourceType::try_from(type_) {
@@ -141,7 +154,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_battery_level().returning(|| Ok(3)); // 3 maps to BatteryLevel::Low
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_battery_level().await;
         assert_eq!(result.unwrap(), BatteryLevel::Low);
     }
@@ -151,7 +164,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_battery_level().returning(|| Ok(42)); // 42 is not a valid BatteryLevel
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_battery_level().await;
         assert!(matches!(
             result.unwrap_err(),
@@ -165,7 +178,7 @@ mod tests {
         mock.expect_get_battery_level()
             .returning(|| Err(ProxyError::DbusCallFailed("dbus error".into())));
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_battery_level().await;
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().to_string(), "dbus error");
@@ -176,7 +189,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_warning_level().returning(|| Ok(2)); // Assume 2 is a valid WarningLevel
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_warning_level().await;
         assert_eq!(result.unwrap(), WarningLevel::from(2));
     }
@@ -187,7 +200,7 @@ mod tests {
         mock.expect_get_warning_level()
             .returning(|| Err(ProxyError::DbusCallFailed("dbus error".into())));
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_warning_level().await;
         assert!(result.is_err());
     }
@@ -197,7 +210,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_percentage().returning(|| Ok(77.7)); // Assume 77.7 is a valid percentage
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_percentage().await;
         assert_eq!(result.unwrap(), 77.7);
     }
@@ -207,7 +220,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_state().returning(|| Ok(2)); // 2 maps to some BatteryState
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_state().await;
         assert_eq!(result.unwrap(), BatteryState::try_from(2).unwrap());
     }
@@ -217,7 +230,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_state().returning(|| Ok(99)); // Invalid BatteryState
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_state().await;
         assert!(matches!(
             result.unwrap_err(),
@@ -230,7 +243,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_power_source_type().returning(|| Ok(2)); // 2 maps to Battery
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_power_source_type().await;
         assert_eq!(result.unwrap(), PowerSourceType::try_from(2).unwrap());
     }
@@ -240,7 +253,7 @@ mod tests {
         let mut mock = MockUpowerInterface::new();
         mock.expect_get_power_source_type().returning(|| Ok(99)); // Invalid PowerSourceType
 
-        let service = UpowerService::new(mock);
+        let service = UpowerService::new().await.unwrap();
         let result = service.get_power_source_type().await;
         assert!(matches!(
             result.unwrap_err(),

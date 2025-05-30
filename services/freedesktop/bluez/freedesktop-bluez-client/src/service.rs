@@ -29,20 +29,27 @@ use crate::errors::BluezError;
 
 use super::interfaces::{device::BluetoothDevice, BluezInterface};
 use anyhow::Result;
+use log::info;
+use zbus::Connection;
+use crate::proxies::BluezProxy;
 
-pub struct BluetoothService<T: BluezInterface> {
-    nm: T,
+pub struct BluetoothService<> {
+    proxy: BluezProxy<'static>,
 }
 
-impl<T: BluezInterface> BluetoothService<T> {
+impl BluetoothService {
     /// Creates a new `BluetoothService` wrapping the given Bluetooth interface implementation.
-    ///
-    /// # Arguments
-    ///
-    /// * `nm` - An implementation of the [`BluezInterface`] trait.
-    pub fn new(nm: T) -> Self {
-        Self { nm }
+    pub async fn new() -> Result<Self, BluezError> {
+        let conn = Connection::system()
+            .await
+            .map_err(|e| BluezError::InitBusError(e.to_string()))?;
+        let proxy = BluezProxy::new(&conn)
+            .await
+            .map_err(|e| BluezError::CreateBluezProxyError(e.to_string()))?;
+        info!("bluez proxy created");
+        Ok(Self { proxy })
     }
+
 
     /// Enables the Bluetooth adapter.
     ///
@@ -54,7 +61,7 @@ impl<T: BluezInterface> BluetoothService<T> {
     /// * `Ok(())` if enabling Bluetooth is successful.
     /// * `Err` if enabling Bluetooth fails.
     pub async fn set_powered_on(&self) -> Result<(), BluezError> {
-        self.nm.set_powered_on().await.map_err(BluezError::from)
+        self.proxy.set_powered_on().await.map_err(BluezError::from)
     }
 
     /// Disables the Bluetooth adapter.
@@ -64,7 +71,7 @@ impl<T: BluezInterface> BluetoothService<T> {
     /// * `Ok(())` if disabling Bluetooth is successful.
     /// * `Err` if disabling Bluetooth fails.
     pub async fn set_powered_off(&self) -> Result<(), BluezError> {
-        self.nm
+        self.proxy
             .set_powered_off()
             .await
             .map_err(BluezError::from)
@@ -80,7 +87,7 @@ impl<T: BluezInterface> BluetoothService<T> {
         &self,
         discovery_duration: u64,
     ) -> Result<Vec<BluetoothDevice>, BluezError> {
-        self.nm
+        self.proxy
             .get_available_devices(discovery_duration)
             .await
             .map_err(BluezError::from)
@@ -97,7 +104,7 @@ impl<T: BluezInterface> BluetoothService<T> {
     /// * `Ok(())` if the connection is successful.
     /// * `Err` if the connection fails.
     pub async fn connect(&self, device_address: &str) -> Result<(), BluezError> {
-        self.nm
+        self.proxy
             .connect(device_address)
             .await
             .map_err(BluezError::from)
@@ -114,7 +121,7 @@ impl<T: BluezInterface> BluetoothService<T> {
     /// * `Ok(())` if the disconnection is successful.
     /// * `Err` if the disconnection fails.
     pub async fn disconnect(&self, device_address: &str) -> Result<(), BluezError> {
-        self.nm
+        self.proxy
             .disconnect(device_address)
             .await
             .map_err(BluezError::from)
@@ -127,7 +134,7 @@ impl<T: BluezInterface> BluetoothService<T> {
     /// * `Ok(Vec<BluetoothDevice>)` with a list of connected devices.
     /// * `Err` if retrieval fails.
     pub async fn get_connected_devices(&self) -> Result<Vec<BluetoothDevice>, BluezError> {
-        self.nm.get_connected_devices().await.map_err(BluezError::from)
+        self.proxy.get_connected_devices().await.map_err(BluezError::from)
     }
 }
 
@@ -143,7 +150,7 @@ mod tests {
     async fn test_set_powered_on_success() {
         let mut mock = MockBluezInterface::new();
         mock.expect_set_powered_on().times(1).returning(|| Ok(()));
-        let service = BluetoothService::new(mock);
+        let service = BluetoothService::new().await.unwrap();
         let result = service.set_powered_on().await;
         assert!(result.is_ok());
     }
@@ -155,7 +162,7 @@ mod tests {
             .times(1)
             .returning(|| Err(ProxyError::DbusCallFailed("Failed to power off".to_string())));
 
-        let service = BluetoothService::new(mock);
+        let service = BluetoothService::new().await.unwrap();
         let result = service.set_powered_off().await;
         assert!(result.is_err());
     }
@@ -174,7 +181,7 @@ mod tests {
             .times(1)
             .returning(move |_| Ok(test_devices.clone()));
 
-        let service = BluetoothService::new(mock);
+        let service = BluetoothService::new().await.unwrap();
         let result = service.get_available_devices(1000).await.unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].address, "00:11:22:33:44:55");
@@ -188,7 +195,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = BluetoothService::new(mock);
+        let service = BluetoothService::new().await.unwrap();
         let result = service.connect("00:11:22:33:44:55").await;
         assert!(result.is_ok());
     }
@@ -201,7 +208,7 @@ mod tests {
             .times(1)
             .returning(|_| Ok(()));
 
-        let service = BluetoothService::new(mock);
+        let service = BluetoothService::new().await.unwrap();
         let result = service.disconnect("00:11:22:33:44:55").await;
         assert!(result.is_ok());
     }
@@ -217,7 +224,7 @@ mod tests {
             }])
         });
 
-        let service = BluetoothService::new(mock);
+        let service = BluetoothService::new().await.unwrap();
         let devices = service.get_connected_devices().await.unwrap();
         assert!(!devices.is_empty());
         assert_eq!(devices[0].name, "Connected Device");
