@@ -1,4 +1,10 @@
 ({
+    "images.file.manager.app": File (
+        path: "examples/images/file-manager-app.png",
+    ),
+    "images.app.icon": File (
+        path: "examples/images/app-icon.png",
+    ),
     "fonts.primary.300": File (
         path: "fonts/SpaceGrotesk-Regular.ttf",
     ),

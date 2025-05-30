@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 #[derive(Component, Reflect)]
 #[reflect(from_reflect = false)]
-pub struct StyledButton {
+pub struct StyledAppBundle {
     #[reflect(ignore)]
     pub variant: ButtonVariant,
     #[reflect(ignore)]
@@ -12,6 +12,7 @@ pub struct StyledButton {
     pub text: Option<String>,
     pub icon: Option<String>,
     pub font: Option<Handle<Font>>,
+    pub image: Option<Handle<Image>>,
     #[reflect(ignore)]
     pub on_click: Option<SystemId>,
     pub background_color: Option<Color>,
@@ -25,13 +26,16 @@ pub struct StyledButton {
     pub border_radius: Option<f32>,
 }
 
-impl StyledButton {
+impl StyledAppBundle {
     pub fn builder() -> super::builder::ButtonBuilder {
         super::builder::ButtonBuilder::default()
     }
 }
 #[derive(Component)]
-pub struct StyledButtonText;
+pub struct StyledAppBundleText;
+
+#[derive(Component)]
+pub struct StyledAppBundleIcon;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Component)]
 pub enum ButtonVariant {

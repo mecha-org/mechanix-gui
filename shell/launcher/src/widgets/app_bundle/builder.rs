@@ -5,8 +5,7 @@ use bevy::{
 use bevy_core_widgets::{CoreButton, hover::Hovering};
 
 use super::{
-    ButtonSize, StyledButtonText,
-    components::{AccessibleName, ButtonVariant, StyledButton},
+    components::{AccessibleName, ButtonVariant, StyledAppBundle}, ButtonSize, StyledAppBundleIcon, StyledAppBundleText
 };
 
 #[derive(Default)]
@@ -23,6 +22,7 @@ pub struct ButtonBuilder {
     size: Option<ButtonSize>,
     disabled: bool,
     font: Option<Handle<Font>>,
+    image: Option<Handle<Image>>,
     width: Option<Val>,
     height: Option<Val>,
     border_radius: Option<f32>,
@@ -89,6 +89,11 @@ impl ButtonBuilder {
         self
     }
 
+    pub fn image(mut self, image: Handle<Image>) -> Self {
+        self.image = Some(image);
+        self
+    }
+
     pub fn width(mut self, width: Val) -> Self {
         self.width = Some(width);
         self
@@ -108,7 +113,7 @@ impl ButtonBuilder {
         (
             Node {
                 display: Display::Flex,
-                flex_direction: FlexDirection::Row,
+                flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 align_content: AlignContent::Center,
@@ -121,10 +126,11 @@ impl ButtonBuilder {
             Name::new("Button"),
             Hovering::default(),
             CursorIcon::System(SystemCursorIcon::Pointer),
-            StyledButton {
+            StyledAppBundle {
                 text: self.text.clone(),
                 icon: self.icon.clone(),
                 font: self.font,
+                image: self.image.clone(),
                 variant: self.variant,
                 size: self.size,
                 on_click: self.on_click,
@@ -143,11 +149,34 @@ impl ButtonBuilder {
             },
             AccessibleName(self.text.clone().unwrap_or_else(|| "Button".to_string())),
             TabIndex(0),
-            Children::spawn(Spawn((
-                Text::new(""),
-                TextFont::default(),
-                StyledButtonText,
-            ))),
+            Children::spawn(
+             ( 
+                //  Spawn((
+                //    ImageNode {
+                //        ..Default::default()
+                //    },
+                //    StyledAppBundleText,
+                //)),
+                Spawn(
+                    (
+                    ImageNode {
+                        image: self.image.unwrap(),
+                        ..Default::default()
+                    },
+                    StyledAppBundleIcon,
+                )
+                ),
+                Spawn((Text::new(self.text.clone().unwrap_or_else(|| "".to_string())), TextFont::default(), StyledAppBundleText)),)
+            ),
+            // Children::spawn(Spawn((
+            //     Text::new(""),
+            //     TextFont::default(),
+            //     StyledAppBundleText,
+            // ))),
+            // Children::spawn(Spawn((
+            //     ImageNode::default(),
+            //     StyledAppBundleText,
+            // ))),
         )
     }
 }

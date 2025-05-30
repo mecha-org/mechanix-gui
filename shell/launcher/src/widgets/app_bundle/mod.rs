@@ -5,5 +5,5 @@ mod systems;
 
 pub use builder::*;
 pub use components::*;
-pub use plugin::StyledButtonPlugin;
+pub use plugin::StyledAppBundlePlugin;
 pub use systems::*;

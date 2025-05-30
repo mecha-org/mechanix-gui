@@ -43,6 +43,10 @@ pub enum Icon {
     // SignalBarsLow ,
     // NoSim ,
     // NoSignal ,
+    Folder = 0xe927,
+    Browser = 0xe928,
+    App = 0xe90a1,
+    FileManager = 0xe90f1,
 }
 
 impl Icon {

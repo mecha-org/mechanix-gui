@@ -1,12 +1,17 @@
-use bevy::{color::palettes::css::DARK_GRAY, prelude::*, winit::WinitSettings};
+use bevy::{
+    color::palettes::css::{BLACK, DARK_GRAY}, prelude::*, winit::WinitSettings
+};
 use bevy_asset_loader::prelude::*;
 use bevy_styled_widgets::prelude::ThemeManager;
-use systems::control_click_system;
-mod systems;
 
 use crate::{
-    settings::settings_drawer::SettingsDrawerSettings, utils::{FontAssets, Icon}, widgets::app_bundle::{ButtonSize, ButtonVariant, StyledAppBundle}, StyledWidgetsPlugin
+    StyledWidgetsPlugin,
+    settings::home::HomeScreenSettings,
+    utils::{FontAssets, Icon},
+    widgets::app_bundle::{ButtonVariant, StyledAppBundle},
 };
+mod styles;
+use styles::*;
 
 #[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
 enum AssetsLoadingState {
@@ -15,15 +20,25 @@ enum AssetsLoadingState {
     Loaded,
 }
 
+/// Loads image assets
+#[derive(AssetCollection, Resource)]
+pub struct ImageAssets {
+    #[asset(key = "images.file.manager.app")]
+    file_manager: Handle<Image>,
+
+    #[asset(key = "images.app.icon")]
+    app_icon: Handle<Image>,
+}
+
 #[derive(Component, Debug, Clone)]
 pub struct ControlName(pub String);
 
 #[derive(Default, Debug, Clone)]
 pub struct GuiSettings {
-    pub settings_drawer: SettingsDrawerSettings,
+    pub home: HomeScreenSettings,
 }
 
-pub fn run_settings_drawer() {
+pub fn run_home() {
     App::new()
         .add_plugins((DefaultPlugins, StyledWidgetsPlugin))
         .insert_resource(ThemeManager::default())
@@ -33,24 +48,27 @@ pub fn run_settings_drawer() {
             LoadingState::new(AssetsLoadingState::Loading)
                 .continue_to_state(AssetsLoadingState::Loaded)
                 .with_dynamic_assets_file::<StandardDynamicAssetCollection>("examples/settings.ron")
+                .load_collection::<ImageAssets>()
                 .load_collection::<FontAssets>(),
         )
         .add_systems(OnEnter(AssetsLoadingState::Loaded), setup_view_root)
         .run();
 }
-fn setup_view_root(mut commands: Commands, font_assets: Res<FontAssets>) {
+fn setup_view_root(mut commands: Commands,  image_assets: Res<ImageAssets>, font_assets: Res<FontAssets>) {
     commands.spawn(Camera2d);
 
-    let GuiSettings { settings_drawer } = GuiSettings::default();
-    let SettingsDrawerSettings {
+    let GuiSettings { home } = GuiSettings::default();
+    let HomeScreenSettings {
         width,
         height,
-        menus,
-    } = settings_drawer;
+        pinned_apps,
+        widgets,
+    } = home;
 
     let current_menu = "sm"; //
 
-    let list_menus = menus.get(current_menu).unwrap_or(&vec![]).clone();
+    let pinned_apps = pinned_apps.get(current_menu).unwrap_or(&vec![]).clone();
+    let widgets = widgets.get(current_menu).unwrap_or(&vec![]).clone();
 
     // Create a root node
     commands
@@ -60,18 +78,18 @@ fn setup_view_root(mut commands: Commands, font_assets: Res<FontAssets>) {
                 height: Val::Vh(height),
                 display: Display::Grid,
                 grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
-                grid_template_rows: RepeatedGridTrack::flex(3, 1.0),
-                padding: UiRect::all(Val::Px(28.0)),
-                row_gap: Val::Px(14.0),
-                column_gap: Val::Px(14.0),
+                grid_template_rows: RepeatedGridTrack::flex(4, 1.0),
+                padding: ROOT_PADDING,
+                row_gap: ROW_GAP,
+                column_gap: COLUMN_GAP,
                 ..default()
             },
-            BackgroundColor(DARK_GRAY.into()),
+            // BackgroundColor(DARK_GRAY.into()),
         ))
         .with_children(
             |parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>| {
-                for control_name in list_menus.clone() {
-                    spawn_menu_widget(parent, &font_assets, control_name.as_str());
+                for control_name in pinned_apps.clone() {
+                    spawn_menu_widget(parent, &image_assets, &font_assets, control_name.as_str());
                 }
             },
         );
@@ -79,36 +97,38 @@ fn setup_view_root(mut commands: Commands, font_assets: Res<FontAssets>) {
 
 fn spawn_menu_widget(
     parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
+    image_assets: &ImageAssets,
     font_assets: &FontAssets,
     control_name: &str,
 ) {
-    let grid_column = if control_name == "brightness" || control_name == "volume" {
-        GridPlacement::span(4)
-    } else {
-        GridPlacement::span(1)
-    };
     let FontAssets { font_icons, .. } = font_assets;
 
-    let click_system_id = parent
-        .commands()
-        .register_system(control_click_system(control_name.to_string()));
-
     let icon = match control_name {
-        "airplane_mode" => Icon::AirplaneMode,
-        "auto_rotation" => Icon::AutoRotation,
-        "external_display" => Icon::Monitor,
-        "screen_record" => Icon::ScreenRecord,
-        "wifi" => Icon::WifiConnectedStrong,
-        "bluetooth" => Icon::Bluetooth,
-        "camera" => Icon::Camera,
-        "battery" => Icon::Battery,
-        "terminal" => Icon::Terminal,
-        "voice_record" => Icon::Mic,
-        "calc" => Icon::Calc,
-        "theme" => Icon::Moon,
-        "brightness" => Icon::Brightness,
-        "volume" => Icon::VolumeOn,
+        "App 1" => Icon::Terminal,
+        "App 2" => Icon::Folder,
+        "App 3" => Icon::FileManager,
+        "App 4" => Icon::App,
+        "App 5" => Icon::App,
+        "App 6" => Icon::App,
+        "App 7" => Icon::App,
+        "App 8" => Icon::App,
+        "App 9" => Icon::App,
+        "App 10" => Icon::App,
+        "App 11" => Icon::App,
+        "App 12" => Icon::App,
+        "App 13" => Icon::App,
+        "App 14" => Icon::Moon,
+        "App 15" => Icon::Moon,
+        "App 16" => Icon::Moon,
         _ => Icon::Moon,
+    };
+
+    
+
+   let (grid_column, grid_row) = if control_name == "App 23"  {
+        (GridPlacement::span(2), GridPlacement::span(2))
+    } else {
+        (GridPlacement::span(1), GridPlacement::span(1))
     };
 
     parent.spawn((
@@ -122,11 +142,12 @@ fn spawn_menu_widget(
         },
         Children::spawn(Spawn((
             StyledAppBundle::builder()
-                .icon(icon)
                 .font(font_icons.clone())
+                .image(image_assets.app_icon.clone())
+               // .text(control_name.to_string())
+                .text_color(BLACK.into())
                 .variant(ButtonVariant::Primary)
                 .border_radius(20.)
-                .on_click(click_system_id)
                 .build(),
             ControlName(control_name.to_string()),
         ))),

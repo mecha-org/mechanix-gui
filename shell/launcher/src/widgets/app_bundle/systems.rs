@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 use bevy_core_widgets::{ButtonPressed, InteractionDisabled, hover::Hovering};
-use bevy_styled_widgets::prelude::ThemeManager;
+use bevy_styled_widgets::prelude::{ThemeManager, button};
 
 use super::{
     ButtonSize,
-    components::{ButtonVariant, StyledButton, StyledButtonText},
+    components::{ButtonVariant, StyledAppBundle, StyledAppBundleText},
 };
 
 // Update the button's background color.
@@ -12,11 +12,14 @@ use super::{
 pub fn update_button(
     theme_manager: Res<ThemeManager>,
     children: Query<&mut Children>,
-    mut text_query: Query<(&mut Text, &mut TextColor, &mut TextFont), With<StyledButtonText>>,
+    mut bundle_query: Query<
+        (&mut Text, &mut TextColor, &mut TextFont, &mut ImageNode),
+        With<StyledAppBundleText>,
+    >,
     mut query: Query<(
         Entity,
         &mut Node,
-        &StyledButton,
+        &StyledAppBundle,
         &mut BackgroundColor,
         &mut BorderColor,
         &mut BorderRadius,
@@ -46,7 +49,9 @@ pub fn update_button(
         //Get button text
         if let Ok(children) = children.get(button_entity_id) {
             for child in children.iter() {
-                if let Ok((mut text, mut text_color, mut text_font)) = text_query.get_mut(child) {
+                if let Ok((mut text, mut text_color, mut text_font, mut image_node)) =
+                    bundle_query.get_mut(child)
+                {
                     let button_styles = theme_manager.styles.buttons.clone();
                     let button_size_styles = theme_manager.styles.button_sizes.clone();
                     let button_style = match button.variant {
@@ -74,7 +79,7 @@ pub fn update_button(
                         text.0 = text_str.clone();
                     }
 
-                    //update icon
+                    // update icon
                     if let Some(icon) = button.icon.clone() {
                         if let Some(theme_icon) = theme_icons.get(&icon) {
                             text.0 = theme_icon.clone();
@@ -83,9 +88,14 @@ pub fn update_button(
                         };
                     }
 
-                    //update font
+                    // update font
                     if let Some(font) = &button.font {
                         text_font.font = font.clone();
+                    }
+
+                    // update image
+                    if let Some(image) = &button.image {
+                        image_node.image = image.clone();
                     }
                 }
             }
