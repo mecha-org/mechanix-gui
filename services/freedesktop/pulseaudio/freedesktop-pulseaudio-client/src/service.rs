@@ -14,7 +14,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::thread;
 
-
 const APPLICATION_NAME: &str = "pulseaudio";
 #[derive(Debug, Clone, PartialEq)]
 pub struct DeviceInfo {
@@ -89,7 +88,6 @@ impl<'a> From<&'a pulse::context::introspect::ServerInfo<'a>> for ServerInfo {
     }
 }
 
-
 #[derive(Debug)]
 pub enum Message {
     /// Get a list of output devices
@@ -109,14 +107,13 @@ pub enum Message {
 
     /// Get the default input device
     GetDefaultSource,
-    /// Response containing default input device or error 
+    /// Response containing default input device or error
     SetDefaultSource(Result<DeviceInfo, PulseAudioError>),
 
     /// Set volume for a specific output device by name
     SetSinkVolumeByName(String, ChannelVolumes),
     /// Set volume for a specific input device by name
     SetSourceVolumeByName(String, ChannelVolumes),
-
 }
 pub struct PulseHandle {
     pub to_pulse: tokio::sync::mpsc::Sender<Message>,
@@ -133,6 +130,24 @@ pub enum PulseInitError {
     InitFailed(String),
 }
 
+pub struct PulseAudioService {
+    server: PulseServer,
+}
+impl PulseAudioService {
+    pub fn new() -> Result<Self, PulseInitError> {
+        let server = match PulseServer::connect().and_then(|s| s.init()) {
+            Ok(server) => {
+                info!("connected to pulse server");
+                server
+            }
+            Err(err) => {
+                error!("failed to connect/init server: {:?}", err);
+                return Err(PulseInitError::InitFailed(err.to_string()));
+            }
+        };
+        Ok(Self { server })
+    }
+}
 impl PulseHandle {
     // Create pulse server thread, and bidirectional comms
     pub fn new() -> Self {
@@ -191,9 +206,10 @@ impl PulseHandle {
                                         // Send the error to the receiver
                                         if let Err(err) = from_pulse_send
                                             .send(Message::SetSink({
-                                                Err(PulseAudioError::SendRequestError(
-                                                    format!("{:?}", e),
-                                                ))
+                                                Err(PulseAudioError::SendRequestError(format!(
+                                                    "{:?}",
+                                                    e
+                                                )))
                                             }))
                                             .await
                                         {
@@ -207,8 +223,9 @@ impl PulseHandle {
                                     Ok(sources) => {
                                         trace!("source count: {}", sources.len());
                                         // Send the sinks to the receiver
-                                        if let Err(err) =
-                                            from_pulse_send.send(Message::SetSource(Ok(sources))).await
+                                        if let Err(err) = from_pulse_send
+                                            .send(Message::SetSource(Ok(sources)))
+                                            .await
                                         {
                                             error!("failed to send sinks: {:?}", err);
                                         };
@@ -219,9 +236,10 @@ impl PulseHandle {
                                         // Send the error to the receiver
                                         if let Err(err) = from_pulse_send
                                             .send(Message::SetSource({
-                                                Err(PulseAudioError::SendRequestError(
-                                                    format!("{:?}", e),
-                                                ))
+                                                Err(PulseAudioError::SendRequestError(format!(
+                                                    "{:?}",
+                                                    e
+                                                )))
                                             }))
                                             .await
                                         {
@@ -235,8 +253,9 @@ impl PulseHandle {
                                     Ok(sink) => {
                                         trace!("sink: {:?}", sink);
                                         // Send the sinks to the receiver
-                                        if let Err(err) =
-                                            from_pulse_send.send(Message::SetDefaultSink(Ok(sink))).await
+                                        if let Err(err) = from_pulse_send
+                                            .send(Message::SetDefaultSink(Ok(sink)))
+                                            .await
                                         {
                                             error!("failed to send sinks: {:?}", err);
                                         };
@@ -247,9 +266,10 @@ impl PulseHandle {
                                         // Send the error to the receiver
                                         if let Err(err) = from_pulse_send
                                             .send(Message::SetDefaultSink({
-                                                Err(PulseAudioError::SendRequestError(
-                                                    format!("{:?}", e),
-                                                ))
+                                                Err(PulseAudioError::SendRequestError(format!(
+                                                    "{:?}",
+                                                    e
+                                                )))
                                             }))
                                             .await
                                         {
@@ -263,8 +283,9 @@ impl PulseHandle {
                                     Ok(sink) => {
                                         trace!("sink: {:?}", sink);
                                         // Send the sinks to the receiver
-                                        if let Err(err) =
-                                            from_pulse_send.send(Message::SetDefaultSource(Ok(sink))).await
+                                        if let Err(err) = from_pulse_send
+                                            .send(Message::SetDefaultSource(Ok(sink)))
+                                            .await
                                         {
                                             error!("failed to send sinks: {:?}", err);
                                         };
@@ -275,9 +296,10 @@ impl PulseHandle {
                                         // Send the error to the receiver
                                         if let Err(err) = from_pulse_send
                                             .send(Message::SetDefaultSource({
-                                                Err(PulseAudioError::SendRequestError(
-                                                    format!("{:?}", e),
-                                                ))
+                                                Err(PulseAudioError::SendRequestError(format!(
+                                                    "{:?}",
+                                                    e
+                                                )))
                                             }))
                                             .await
                                         {
@@ -466,10 +488,14 @@ impl PulseServer {
                 self.wait_for_result(op)?;
                 let mut result = device.borrow_mut();
                 result.take().unwrap().ok_or({
-                    PulseServerError::Misc("get_default_sink(): Error getting requested device".to_string())
+                    PulseServerError::Misc(
+                        "get_default_sink(): Error getting requested device".to_string(),
+                    )
                 })
             }
-            Err(_) => Err(PulseServerError::Misc("get_default_sink() failed".to_string())),
+            Err(_) => Err(PulseServerError::Misc(
+                "get_default_sink() failed".to_string(),
+            )),
         }
     }
 
@@ -491,10 +517,14 @@ impl PulseServer {
                 self.wait_for_result(op)?;
                 let mut result = device.borrow_mut();
                 result.take().unwrap().ok_or({
-                    PulseServerError::Misc("get_default_source(): Error getting requested device".to_string())
+                    PulseServerError::Misc(
+                        "get_default_source(): Error getting requested device".to_string(),
+                    )
                 })
             }
-            Err(_) => Err(PulseServerError::Misc("get_default_source() failed".to_string())),
+            Err(_) => Err(PulseServerError::Misc(
+                "get_default_source() failed".to_string(),
+            )),
         }
     }
 
@@ -506,11 +536,10 @@ impl PulseServer {
             info_ref.borrow_mut().as_mut().unwrap().replace(res.into());
         });
         self.wait_for_result(op)?;
-        info.take()
-            .flatten()
-            .ok_or(PulseServerError::Misc("get_server_info(): failed".to_string()))
+        info.take().flatten().ok_or(PulseServerError::Misc(
+            "get_server_info(): failed".to_string(),
+        ))
     }
-
 
     fn set_sink_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
         let op = self
@@ -523,7 +552,6 @@ impl PulseServer {
             .set_sink_volume_by_name(name, volume, None);
         self.wait_for_result(op).ok();
     }
-
 
     /// Sets the volume and mute state for a PulseAudio source (input device) identified by its name.
     ///
@@ -549,8 +577,6 @@ impl PulseServer {
             .set_source_volume_by_name(name, volume, None);
         let _ = self.wait_for_result(op);
     }
-
-
 
     // after building an operation such as get_devices() we need to keep polling
     // the pulse audio server to "wait" for the operation to complete
