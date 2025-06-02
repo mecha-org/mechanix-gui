@@ -1,9 +1,9 @@
-use bevy::prelude::*;
+use bevy::{color::palettes::css::{GREEN, WHITE}, prelude::*};
 use bevy_core_widgets::{ButtonPressed, InteractionDisabled, hover::Hovering};
 use bevy_styled_widgets::prelude::{ThemeManager, button};
 
 use super::{
-    ButtonSize,
+    ButtonSize, StyledAppBundleIcon,
     components::{ButtonVariant, StyledAppBundle, StyledAppBundleText},
 };
 
@@ -12,10 +12,10 @@ use super::{
 pub fn update_button(
     theme_manager: Res<ThemeManager>,
     children: Query<&mut Children>,
-    mut bundle_query: Query<
-        (&mut Text, &mut TextColor, &mut TextFont, &mut ImageNode),
-        With<StyledAppBundleText>,
-    >,
+     mut param_set: ParamSet<(
+        Query<(&mut Text, &mut TextColor, &mut TextFont), With<StyledAppBundleText>>,
+        Query<&mut ImageNode, With<StyledAppBundleIcon>>,
+    )>,
     mut query: Query<(
         Entity,
         &mut Node,
@@ -49,9 +49,10 @@ pub fn update_button(
         //Get button text
         if let Ok(children) = children.get(button_entity_id) {
             for child in children.iter() {
-                if let Ok((mut text, mut text_color, mut text_font, mut image_node)) =
-                    bundle_query.get_mut(child)
-                {
+                // Update Text child
+                if let Ok((mut text, mut text_color, mut text_font)) = param_set.p0().get_mut(child) {
+                  
+                    // Set text color
                     let button_styles = theme_manager.styles.buttons.clone();
                     let button_size_styles = theme_manager.styles.button_sizes.clone();
                     let button_style = match button.variant {
@@ -61,10 +62,13 @@ pub fn update_button(
                         ButtonVariant::Outline => button_styles.outline,
                         ButtonVariant::Ghost => button_styles.ghost,
                     };
-                    let color = button_style.text_color;
-                    text_color.0 = color;
+                    text_color.0 = if button.text_color.is_some() {
+                        button.text_color.unwrap()
+                    } else {
+                        button_style.text_color
+                    };
 
-                    //update font size
+                    // Set font size
                     let button_size_style = match button.size.unwrap_or_default() {
                         ButtonSize::XSmall => button_size_styles.xsmall,
                         ButtonSize::Small => button_size_styles.small,
@@ -74,12 +78,12 @@ pub fn update_button(
                     };
                     text_font.font_size = button_size_style.font_size;
 
-                    //update text
+                    // Set text value
                     if let Some(text_str) = button.text.clone() {
-                        text.0 = text_str.clone();
+                        text.0 = text_str;
                     }
 
-                    // update icon
+                    //update icon
                     if let Some(icon) = button.icon.clone() {
                         if let Some(theme_icon) = theme_icons.get(&icon) {
                             text.0 = theme_icon.clone();
@@ -88,18 +92,20 @@ pub fn update_button(
                         };
                     }
 
-                    // update font
+                    // Optionally update font
                     if let Some(font) = &button.font {
                         text_font.font = font.clone();
                     }
+                }
 
-                    // update image
+                // Update ImageNode child
+                if let Ok(mut image_node) = param_set.p1().get_mut(child) {
                     if let Some(image) = &button.image {
                         image_node.image = image.clone();
                     }
                 }
             }
-        };
+        }
 
         // Update the background color based on the button's state
         let button_style = match button.variant {
@@ -110,24 +116,24 @@ pub fn update_button(
             ButtonVariant::Ghost => button_styles.ghost,
         };
 
-        match (is_disabled, is_pressed, is_hovering) {
-            (true, _, _) => {
-                bg_color.0 = button_style.normal_background;
-                border_color.0 = button_style.border_color;
-            }
-            (_, true, true) => {
-                bg_color.0 = button_style.pressed_background;
-                border_color.0 = button_style.border_color;
-            }
-            (_, false, true) => {
-                bg_color.0 = button_style.hovered_background;
-                border_color.0 = button_style.border_color;
-            }
-            _ => {
-                bg_color.0 = button_style.normal_background;
-                border_color.0 = button_style.border_color;
-            }
-        };
+        // match (is_disabled, is_pressed, is_hovering) {
+        //     (true, _, _) => {
+        //         bg_color.0 = button_style.normal_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        //     (_, true, true) => {
+        //         bg_color.0 = button_style.pressed_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        //     (_, false, true) => {
+        //         bg_color.0 = button_style.hovered_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        //     _ => {
+        //         bg_color.0 = button_style.normal_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        // };
 
         //Update size styles
         let button_size_style = match button.size.unwrap_or_default() {
@@ -156,3 +162,4 @@ pub fn update_button(
         }
     }
 }
+ 

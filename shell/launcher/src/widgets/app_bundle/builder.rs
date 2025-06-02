@@ -5,7 +5,8 @@ use bevy::{
 use bevy_core_widgets::{CoreButton, hover::Hovering};
 
 use super::{
-    components::{AccessibleName, ButtonVariant, StyledAppBundle}, ButtonSize, StyledAppBundleIcon, StyledAppBundleText
+    ButtonSize, StyledAppBundleIcon, StyledAppBundleText,
+    components::{AccessibleName, ButtonVariant, StyledAppBundle},
 };
 
 #[derive(Default)]
@@ -44,6 +45,7 @@ impl ButtonBuilder {
         self
     }
 
+    // for font icons
     pub fn icon<S: Into<String>>(mut self, icon: S) -> Self {
         self.icon = Some(icon.into());
         self
@@ -84,6 +86,7 @@ impl ButtonBuilder {
         self
     }
 
+    // for font icons
     pub fn font(mut self, font: Handle<Font>) -> Self {
         self.font = Some(font);
         self
@@ -149,34 +152,29 @@ impl ButtonBuilder {
             },
             AccessibleName(self.text.clone().unwrap_or_else(|| "Button".to_string())),
             TabIndex(0),
-            Children::spawn(
-             ( 
-                //  Spawn((
-                //    ImageNode {
-                //        ..Default::default()
-                //    },
-                //    StyledAppBundleText,
-                //)),
-                Spawn(
-                    (
+            Children::spawn((
+                Spawn((
                     ImageNode {
                         image: self.image.unwrap(),
                         ..Default::default()
                     },
                     StyledAppBundleIcon,
-                )
-                ),
-                Spawn((Text::new(self.text.clone().unwrap_or_else(|| "".to_string())), TextFont::default(), StyledAppBundleText)),)
-            ),
-            // Children::spawn(Spawn((
-            //     Text::new(""),
-            //     TextFont::default(),
-            //     StyledAppBundleText,
-            // ))),
-            // Children::spawn(Spawn((
-            //     ImageNode::default(),
-            //     StyledAppBundleText,
-            // ))),
+                )),
+                Spawn((
+                    Node {
+                        padding: UiRect {
+                            left: Val::Px(0.),
+                            right: Val::Px(0.),
+                            top: Val::Px(4.0),
+                            bottom: Val::Px(4.0),
+                        },
+                        ..default()
+                    },
+                    Text::new(self.text.clone().unwrap_or_else(|| "TEXT".to_string())),
+                    TextFont::default(),
+                    StyledAppBundleText,
+                )),
+            )),
         )
     }
 }

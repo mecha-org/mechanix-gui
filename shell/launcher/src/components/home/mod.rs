@@ -1,5 +1,5 @@
 use bevy::{
-    color::palettes::css::{BLACK, DARK_GRAY}, prelude::*, winit::WinitSettings
+    color::palettes::css::{LIGHT_GREY}, prelude::*, winit::WinitSettings
 };
 use bevy_asset_loader::prelude::*;
 use bevy_styled_widgets::prelude::ThemeManager;
@@ -84,7 +84,6 @@ fn setup_view_root(mut commands: Commands,  image_assets: Res<ImageAssets>, font
                 column_gap: COLUMN_GAP,
                 ..default()
             },
-            // BackgroundColor(DARK_GRAY.into()),
         ))
         .with_children(
             |parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>| {
@@ -142,10 +141,9 @@ fn spawn_menu_widget(
         },
         Children::spawn(Spawn((
             StyledAppBundle::builder()
-                .font(font_icons.clone())
                 .image(image_assets.app_icon.clone())
-               // .text(control_name.to_string())
-                .text_color(BLACK.into())
+                .text(control_name.to_string())
+                .text_color(LIGHT_GREY.into())
                 .variant(ButtonVariant::Primary)
                 .border_radius(20.)
                 .build(),
