@@ -59,17 +59,16 @@ pub enum WifiEvent {
 
 #[async_trait]
 pub trait NetworkManagerInterface: Send + Sync + Clone {
-    /// Enable the wireless device.
+    /// Toggle the wireless device.
     /// When enabled, all managed interfaces are re-enabled and available to be activated.
-    /// # Errors
-    /// Return an error if the operation fails.
-    async fn enable_wifi(&self) -> Result<(), ProxyError>;
-
-    /// Disable the wireless device.
     /// When disabled, all interfaces that NM manages are deactivated.
+    /// # Arguments
+    /// * `enabled` - If `true`, wireless will be enabled; if `false`, wireless will be disabled.
+    /// 
     /// # Errors
     /// Return an error if the operation fails.
-    async fn disable_wifi(&self) -> Result<(), ProxyError>;
+    async fn toggle_wireless(&self, enabled: bool) -> Result<(), ProxyError>;
+    
 
     /// Get the list of available wireless networks.
     ///

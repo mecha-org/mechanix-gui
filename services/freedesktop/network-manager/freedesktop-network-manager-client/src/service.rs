@@ -50,9 +50,9 @@ impl NetworkManagerService {
     /// # Errors
     ///
     /// Returns an error if the underlying NetworkManager operation fails.
-    pub async fn toggle_wifi(&self, enabled: bool) -> Result<(), NetworkManagerError> {
+    pub async fn toggle_wireless(&self, enabled: bool) -> Result<(), NetworkManagerError> {
         self.proxy
-            .enable_wifi()
+            .toggle_wireless(enabled)
             .await
             .map_err(NetworkManagerError::from)
     }
@@ -310,8 +310,7 @@ mod tests {
     // Err: cannot return reference to temporary value
     #[async_trait::async_trait]
     pub trait NetworkManagerInterfaceMock {
-        async fn enable_wifi(&self) -> Result<(), ProxyError>;
-        async fn disable_wifi(&self) -> Result<(), ProxyError>;
+        async fn toggle_wireless(&self, enabled: bool) -> Result<(), ProxyError>;
         async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError>;
         async fn connect_to_network(&self, ssid: &str, password: Option<String>) -> Result<(String, String), ProxyError>;
         async fn disconnect(&self) -> Result<(), ProxyError>;
@@ -328,8 +327,7 @@ mod tests {
 
         #[async_trait::async_trait]
         impl NetworkManagerInterfaceMock for NetworkManager {
-            async fn enable_wifi(&self) -> Result<(), ProxyError>;
-            async fn disable_wifi(&self) -> Result<(), ProxyError>;
+            async fn toggle_wireless(&self, enabled: bool) -> Result<(), ProxyError>;
             async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError>;
             async fn connect_to_network(&self, ssid: &str, password: Option<String>) -> Result<(String, String), ProxyError>;
             async fn disconnect(&self) -> Result<(), ProxyError>;
@@ -349,23 +347,23 @@ mod tests {
         }
     }
     #[tokio::test]
-    async fn test_toggle_wifi_success() {
+    async fn test_toggle_wireless_success() {
         let mut mock_nm = MockNetworkManager::new();
-        mock_nm.expect_disable_wifi().times(1).returning(|| Ok(()));
+        mock_nm.expect_toggle_wireless().times(1).returning(|_| Ok(()));
 
         let service = NetworkManagerService::new().await.unwrap();
-        assert!(service.toggle_wifi(true).await.is_ok());
+        assert!(service.toggle_wireless(true).await.is_ok());
     }
 
     #[tokio::test]
-    async fn test_toggle_wifi_failure() {
+    async fn test_toggle_wireless_failure() {
         let mut mock_nm = MockNetworkManager::new();
         mock_nm
-            .expect_enable_wifi()
-            .returning(|| Err(ProxyError::DbusCallFailed("Failed to enable WiFi".into())));
+            .expect_toggle_wireless()
+            .returning(|_| Err(ProxyError::DbusCallFailed("Failed to enable WiFi".into())));
 
         let service = NetworkManagerService::new().await.unwrap();
-        assert!(service.toggle_wifi(false).await.is_err());
+        assert!(service.toggle_wireless(false).await.is_err());
     }
 
     #[tokio::test]

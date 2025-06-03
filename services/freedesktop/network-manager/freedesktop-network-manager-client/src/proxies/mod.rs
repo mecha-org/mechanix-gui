@@ -343,11 +343,11 @@ macro_rules! try_property {
 // Implement the NetworkManagerInterface trait for NetworkManagerProxy
 #[async_trait]
 impl NetworkManagerInterface for NetworkManagerProxy<'_> {
-    /// Enable wireless network via NetworkManager.
-    async fn enable_wifi(&self) -> Result<(), ProxyError> {
-        info!("setting WiFi to true");
+    /// Toggle wireless via NetworkManager.
+    async fn toggle_wireless(&self, enabled: bool) -> Result<(), ProxyError> {
+        info!("toggle wireless: {}", enabled);
         // Call the underlying D-Bus method to set a wireless state.
-        match self.set_wireless_enabled(true).await {
+        match self.set_wireless_enabled(enabled).await {
             Ok(_) => {
                 info!("wifi is set to true");
                 Ok(())
@@ -361,26 +361,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
             }
         }
     }
-
-    /// Disable wireless via NetworkManager.
-    async fn disable_wifi(&self) -> Result<(), ProxyError> {
-        info!("setting WiFi to false");
-        // Call the underlying D-Bus method to set a wireless state.
-        match self.set_wireless_enabled(false).await {
-            Ok(_) => {
-                info!("wifi is set to false");
-                Ok(())
-            }
-            Err(e) => {
-                error!("failed to set WiFi: {}", e);
-                Err(ProxyError::DbusCallFailed(format!(
-                    "failed to set WiFi: {}",
-                    e
-                )))
-            }
-        }
-    }
-
+    
     /// List all available Wireless networks by querying all devices, filtering for wireless networks, and collecting access point info.
     async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError> {
         info!("listing available WiFi networks...");
@@ -732,7 +713,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
                 .to_string();
 
             if access_point == ssid {
-                let result =  match connection_proxy.delete().await {
+                let _result =  match connection_proxy.delete().await {
                     Ok(result) => result,
                     Err(e) => {
                         error!("failed to delete connection: {}", e);
