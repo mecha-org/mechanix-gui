@@ -1,71 +1,12 @@
 [package]
 name = "mechanix-launcher"
 description = "Mechanix launcher component for the Mechanix shell"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-categories.workspace = true
-keywords.workspace = true
+version = "0.1.0"
+edition = "2024"
 
 [dependencies]
-anyhow = "1.0.71"
-serde = { version = "1.0.163", features = ["derive"] }
-serde_yaml = "0.9.21"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-serde_ini = "0.2.0"
-tokio = { version = "1.33", features = ["full"] }
-wayland-protocols-async = { workspace = true }
-desktop_ini_utils = { path = "../commons/desktop_ini_utils"}
-mctk_core = { workspace = true }
-mctk_smithay = { workspace = true }
-mctk_macros = { workspace = true }
-command = { workspace = true }
-const_format = { workspace = true }
-dirs = { workspace = true }
-sysinfo = "0.33.0"
-rand = "0.8.5"
-logind = { workspace = true }
-futures = { workspace = true }
-upower ={ workspace = true }
-chrono = { workspace = true }
-mechanix_system_dbus_client = { workspace = true }
-mechanix_desktop_dbus_client = { workspace = true }
-indexmap = "2.1.0"
-desktop_entries = { workspace = true }
-zbus = { version = "4.1.2", features = ["tokio"] }
-lazy_static = { workspace = true }
-networkmanager = { workspace = true }
-notify = "7.0.0"
-
-[build-dependencies]
-tonic-build = "0.9.2"
-
-[package.metadata.deb]
-name = "mechanix-launcher"
-depends = "$auto"
-assets = [
-    # binary
-    [
-        "../target/release/mechanix-launcher",
-        "/usr/bin/",
-        "755",
-    ],
-
-    #assets
-    [
-        "src/assets/**/*",
-        "/usr/share/mechanix/shell/launcher/assets/",
-        "644",
-    ],
-
-    # settings
-    [
-        "settings.yml.example",
-        "/etc/mechanix/shell/launcher/settings.yml",
-        "644",
-    ],
-]
+bevy = { version = "0.16.0-dev" }
+bevy_styled_widgets = { git = "https://github.com/mecha-org/bevy_mctk.git", rev = "ba4ace34d3161af926d503fa8ca2d620d0210166" }
+bevy_asset_loader = { version = "0.23.0-rc.3", features = ["standard_dynamic_assets"]}
+bevy_core_widgets = { git = "https://github.com/viridia/bevy_core_widgets.git",  rev = "c8ef2bb82ec9706d1faea22f29f7786645a22538" }
+chrono = { version = "0.4", features = ["clock"] }
