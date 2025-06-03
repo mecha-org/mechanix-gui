@@ -146,6 +146,8 @@ fn spawn_menu_widget(
                 .text_color(LIGHT_GREY.into())
                 .variant(ButtonVariant::Primary)
                 .border_radius(20.)
+                .width(ICON_WIDTH)
+                .height(ICON_HEIGHT)
                 .build(),
             ControlName(control_name.to_string()),
         ))),

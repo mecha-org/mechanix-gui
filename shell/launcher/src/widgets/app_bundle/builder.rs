@@ -9,6 +9,9 @@ use super::{
     components::{AccessibleName, ButtonVariant, StyledAppBundle},
 };
 
+pub const ICON_WIDTH: f32 = 84.0;
+pub const ICON_HEIGHT: f32 = 84.0;
+
 #[derive(Default)]
 pub struct ButtonBuilder {
     variant: ButtonVariant,
@@ -24,8 +27,8 @@ pub struct ButtonBuilder {
     disabled: bool,
     font: Option<Handle<Font>>,
     image: Option<Handle<Image>>,
-    width: Option<Val>,
-    height: Option<Val>,
+    width: Option<f32>,
+    height: Option<f32>,
     border_radius: Option<f32>,
 }
 
@@ -97,12 +100,12 @@ impl ButtonBuilder {
         self
     }
 
-    pub fn width(mut self, width: Val) -> Self {
+    pub fn width(mut self, width: f32) -> Self {
         self.width = Some(width);
         self
     }
 
-    pub fn height(mut self, height: Val) -> Self {
+    pub fn height(mut self, height: f32) -> Self {
         self.height = Some(height);
         self
     }
@@ -154,6 +157,11 @@ impl ButtonBuilder {
             TabIndex(0),
             Children::spawn((
                 Spawn((
+                    Node {
+                        max_width: Val::Px(self.width.unwrap_or(ICON_WIDTH)),
+                        max_height: Val::Px(self.width.unwrap_or(ICON_HEIGHT)),
+                        ..default()
+                    },
                     ImageNode {
                         image: self.image.unwrap(),
                         ..Default::default()

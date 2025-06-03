@@ -21,8 +21,8 @@ pub struct StyledAppBundle {
     pub hover_border_color: Option<Color>,
     pub text_color: Option<Color>,
     pub disabled: bool,
-    pub width: Option<Val>,
-    pub height: Option<Val>,
+    pub width: Option<f32>,
+    pub height: Option<f32>,
     pub border_radius: Option<f32>,
 }
 
