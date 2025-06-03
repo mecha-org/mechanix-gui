@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{mpsc, LazyLock, Mutex};
+use bevy::ecs::error::info;
 use bevy::log::{error, info};
 use bevy::prelude::{Event, Resource};
 use bevy::tasks::{AsyncComputeTaskPool, IoTaskPool};
@@ -13,9 +14,6 @@ pub struct NetworkManagerServiceResource {
     pub service: Option<NetworkManagerService>,
 }
 
-#[derive(Resource, Default)]
-struct WifiEventChannelInitialized(bool);
-
 #[derive(Resource, Debug, Clone)]
 pub struct WifiStatus {
     pub connected: bool,
@@ -26,15 +24,14 @@ pub struct NetworkResultReceiver {
     receiver: Mutex<Receiver<NetworkResult>>,
 }
 
+#[derive(Resource, Clone)]
+pub struct NetworkResultSender(pub Sender<NetworkResult>);
 #[derive(Event)]
 pub struct NetworkActionEvent(pub NetworkAction);
 
 #[derive(Event)]
 pub struct NetworkResultEvent(pub NetworkResult);
 
-// Resource to hold the sender
-#[derive(Resource, Clone)]
-pub struct NetworkResultSender(pub Sender<NetworkResult>);
 
 #[derive(Debug, Clone)]
 pub enum NetworkAction {
@@ -46,6 +43,7 @@ pub enum NetworkAction {
     DisconnectNetwork,
     SubscribeDeviceEvents,
     SubscribeAccessPointsEvents,
+
 }
 
 #[derive(Debug)]
@@ -74,22 +72,20 @@ pub enum ErrorType {
 ///
 /// The `NetworkManagerService` is not available until the `init_network_manager_service`
 /// system has completed. This is checked with the `service_ready` function.
-pub struct NetworkManagerServicePlugin;
+pub struct NetworkManagerPlugin;
 
-impl Plugin for NetworkManagerServicePlugin {
+impl Plugin for NetworkManagerPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(NetworkManagerServiceResource { service: None })
-            .insert_resource(WifiEventChannelInitialized(false))
             .insert_resource(WifiStatus {
                 connected: false,
                 last_error: None,
             })
             .add_event::<NetworkActionEvent>()
             .add_event::<NetworkResultEvent>()
-            .add_systems(Startup, init_network_manager_service) // Async task so temp move service result to static
+            .add_systems(Startup, (init_network_manager_service, setup_network_channel)) // Async task so temp move service result to static
             .add_systems(Update, poll_service_init) // Once a service is initialized, it will move service from static to resource
-            .add_systems(Update, setup_wifi_event_channel_async) // Async task so temp move result to static
             .add_systems(
                 Update,
                 (
@@ -133,31 +129,6 @@ fn init_network_manager_service() {
         .detach();
 }
 
-// Startup system: create channel and spawn async/event producer
-static WIFI_RX_RESULT: LazyLock<Mutex<Option<Receiver<WifiState>>>> =
-    LazyLock::new(|| Mutex::new(None));
-
-
-fn setup_wifi_event_channel_async(
-    service_res: Res<NetworkManagerServiceResource>,
-    mut wifi_channel_flag: ResMut<WifiEventChannelInitialized>,
-) {
-    if wifi_channel_flag.0 {
-        // Already initialized, do nothing
-        return;
-    }
-    if let Some(service) = &service_res.service {
-        let service = service.clone();
-        bevy::tasks::IoTaskPool::get()
-            .spawn(async move {
-                let receiver = service.subscribe_device_events().await;
-                *WIFI_RX_RESULT.lock().unwrap() = Some(receiver);
-            })
-            .detach();
-        wifi_channel_flag.0 = true; // Mark as initialized
-    }
-}
-
 
 // Polling system to move service from static to resource
 fn poll_service_init(mut resource: ResMut<NetworkManagerServiceResource>) {
@@ -167,12 +138,19 @@ fn poll_service_init(mut resource: ResMut<NetworkManagerServiceResource>) {
     }
 }
 
+// In your plugin setup or a startup system:
+fn setup_network_channel(mut commands: Commands) {
+    let (tx, rx) = std::sync::mpsc::channel();
+    commands.insert_resource(NetworkResultReceiver {
+        receiver: Mutex::new(rx),
+    });
+    commands.insert_resource(NetworkResultSender(tx)); // You define this
+}
 fn handle_network_action_events(
     mut events: EventReader<NetworkActionEvent>,
     mut service: ResMut<NetworkManagerServiceResource>,
-    mut commands: Commands,
+    sender: Res<NetworkResultSender>,
 ) {
-    let (tx, rx): (Sender<NetworkResult>, Receiver<NetworkResult>) = mpsc::channel();
     let pool = AsyncComputeTaskPool::get();
     for event in events.read() {
         let NetworkActionEvent(action) = event;
@@ -182,16 +160,22 @@ fn handle_network_action_events(
                 if let Some(service) = &mut service.service {
                     let service = service.clone();
                     let enable = *enable;
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     pool.spawn(async move {
                         match service.toggle_wireless(enable).await {
                             Ok(status) => {
+                                info!("toggle wireless status: {status:?}");
                                 let wifi_status = WifiStatus {
                                     connected: enable,
                                     last_error: None,
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::ToggleWifi(wifi_status)) {
-                                    error!("failed to send wifi status: {err}");
+                                match result_sender.send(NetworkResult::ToggleWifi(wifi_status)) {
+                                    Ok(res) => {
+                                        info!("sent toggle wifi status: {res:?}");
+                                    }
+                                    Err(err) => {
+                                        error!("failed to send toggle wifi status: {err}");
+                                    }
                                 }
                             }
                             Err(err) => {
@@ -213,7 +197,7 @@ fn handle_network_action_events(
                 info!("network action: list networks");
                 if let Some(service) = &service.service {
                     let service = service.clone();
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     pool.spawn(async move {
                         match service.list_networks().await {
                             Ok(networks) => {
@@ -242,7 +226,7 @@ fn handle_network_action_events(
                     let service = service.clone();
                     let ssid = ssid.clone();
                     let password = password.clone();
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     pool.spawn(async move {
                         match service.connect_network(&ssid, &password).await {
                             Ok(_) => {}
@@ -266,7 +250,7 @@ fn handle_network_action_events(
                 if let Some(service) = &service.service {
                     let service = service.clone();
                     let ssid = ssid.clone();
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     pool.spawn(async move {
                         match service.connect_to_saved_network(&ssid).await {
                             Ok(_) => {}
@@ -290,7 +274,7 @@ fn handle_network_action_events(
                 if let Some(service) = &service.service {
                     let service = service.clone();
                     let ssid = ssid.clone();
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     pool.spawn(async move {
                         match service.forget_saved_network(&ssid).await {
                             Ok(_) => {}
@@ -313,7 +297,7 @@ fn handle_network_action_events(
                 info!("network action: disconnect network");
                 if let Some(service) = &service.service {
                     let service = service.clone();
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     pool.spawn(async move {
                         match service.disconnect_network().await {
                             Ok(_) => {}
@@ -336,7 +320,7 @@ fn handle_network_action_events(
                 info!("network action: subscribe device events");
                 if let Some(service) = &service.service {
                     let service = service.clone();
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     bevy::tasks::IoTaskPool::get()
                         .spawn(async move {
                             let receiver = service.subscribe_device_events().await;
@@ -352,7 +336,7 @@ fn handle_network_action_events(
                 info!("network action: subscribe access points events");
                 if let Some(service) = &service.service {
                     let service = service.clone();
-                    let result_sender = tx.clone();
+                    let result_sender = sender.0.clone();
                     bevy::tasks::IoTaskPool::get()
                         .spawn(async move {
                             let receiver = service.subscribe_access_point_events().await;
@@ -373,9 +357,6 @@ fn handle_network_action_events(
             }
         } // Add more as needed
     }
-    commands.insert_resource(NetworkResultReceiver {
-        receiver: Mutex::new(rx),
-    });
 }
 
 // Polling system to insert write error into an event
@@ -383,8 +364,11 @@ fn poll_network_action_result_events(
     mut network_result_event_writer: EventWriter<NetworkResultEvent>,
     event_receiver: ResMut<NetworkResultReceiver>,
 ) {
-    let receiver = event_receiver.receiver.lock().unwrap();
-    while let Ok(network_result) = receiver.try_recv() {
-        network_result_event_writer.write(NetworkResultEvent(network_result));
+    if let Ok(receiver) = event_receiver.receiver.lock() {
+        while let Ok(event) = receiver.try_recv() {
+            network_result_event_writer.write(NetworkResultEvent(event));
+        }
+    } else {
+        println!("Failed to acquire receiver lock");
     }
 }

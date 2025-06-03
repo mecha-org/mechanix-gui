@@ -11,7 +11,7 @@ async fn main() -> anyhow::Result<()> {
     let network_manager = NetworkManagerService::new().await?;
     // Spawn the NetworkManager handler in a background task
     
-    let receiver = match network_manager.toggle_wifi(true).await {
+    let receiver = match network_manager.toggle_wireless(true).await {
         Ok(()) => {
             println!("Wifi enabled");
             network_manager.subscribe_device_events().await

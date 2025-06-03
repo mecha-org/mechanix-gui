@@ -349,7 +349,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         // Call the underlying D-Bus method to set a wireless state.
         match self.set_wireless_enabled(enabled).await {
             Ok(_) => {
-                info!("wifi is set to true");
+                info!("wifi is set to : {}",enabled);
                 Ok(())
             }
             Err(e) => {
