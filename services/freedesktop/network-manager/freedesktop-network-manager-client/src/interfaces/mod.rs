@@ -95,9 +95,33 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     async fn connect_to_network(
         &self,
         ssid: &str,
-        password: Option<String>,
+        password: &Option<String>,
     ) -> Result<(String, String), ProxyError>;
 
+    /// Connect to a previously saved network.
+    ///
+    /// # Arguments
+    /// * `ssid` - The name of the saved network to connect to.
+    ///
+    /// # Returns
+    /// On success, returns a tuple containing the new connection's object path
+    /// and the active connection's object path, both as `String`.
+    ///
+    /// # Errors
+    /// Return an error if the operation fails.
+    async fn connect_to_saved_network(
+        &self,
+        ssid: &str,
+    ) -> Result<(), ProxyError>;
+
+    /// Forget a previously saved network.
+    ///
+    /// # Arguments
+    /// * `ssid` - The name of the saved network to forget.
+    ///
+    /// # Errors
+    /// Return an error if the operation fails.
+    async fn forget_saved_network(&self, ssid: &str) -> Result<(), ProxyError>;
     /// Disconnect from the current wireless network.
     ///
     /// # Errors

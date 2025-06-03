@@ -11,25 +11,16 @@ async fn main() -> anyhow::Result<()> {
     let network_manager = NetworkManagerService::new().await?;
     // Spawn the NetworkManager handler in a background task
     
-    let receiver = network_manager.subscribe_device_events().await;
-    // Wait for the response
-    let handler = thread::spawn(move || {
-        // Process messages until the channel closes
-        while let Ok(result) = receiver.recv() {
-            println!("event: {}", result);
+    let receiver = match network_manager.toggle_wifi(true).await {
+        Ok(()) => {
+            println!("Wifi enabled");
+            network_manager.subscribe_device_events().await
         }
-        println!("Device handler thread exiting gracefully.");
-    });
-
-    // Wait for the thread to finish and handle errors
-    if let Err(e) = handler.join() {
-        eprintln!("Handler thread panicked: {:?}", e);
-    }
-
-    // (Optional) gracefully shut down or send more requests...
-
-    // Wait for the handler to finish (in real code, you'd keep the handler running)
-    // handler.await?;
+        Err(e) => {
+            println!("Error enabling wifi: {}", e);
+            return Ok(());
+        }
+    };
 
     Ok(())
 }

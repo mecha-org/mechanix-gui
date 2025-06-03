@@ -26,7 +26,9 @@
 //! See [`NetworkManagerInterface`] for available methods.
 pub use crate::interfaces::NetworkManagerInterface;
 pub mod access_point;
+mod connection;
 pub mod device;
+mod settings;
 pub mod wireless;
 
 use std::collections::HashMap;
@@ -41,11 +43,11 @@ use zbus::{
     Connection,
 };
 
-use super::interfaces::wireless::{ RawAccessPointInfo, WifiState};
+use super::interfaces::wireless::{RawAccessPointInfo, WifiState};
 use crate::proxies::access_point::AccessPointProxy;
-use zbus::proxy::PropertyStream;
-use zbus::zvariant::OwnedObjectPath;
 use crate::proxies::wireless::{AccessPointAddedStream, AccessPointRemovedStream};
+use zbus::proxy::PropertyStream;
+use zbus::zvariant::{OwnedObjectPath, Str};
 
 // Define a constant for WiFi device type (as per NetworkManager specification)
 const WIFI_DEVICE_TYPE: u32 = 2;
@@ -514,7 +516,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
     async fn connect_to_network(
         &self,
         ssid: &str,
-        password: Option<String>,
+        password: &Option<String>,
     ) -> Result<(String, String), ProxyError> {
         info!("connecting to network: {}", ssid);
         let cn = self.0.connection();
@@ -556,7 +558,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         let mut connection_wireless_security = HashMap::new();
         let binding = Value::from("wpa-psk");
         connection_wireless_security.insert("key-mgmt", &binding);
-        let binding = Value::from(password.unwrap_or(String::new()));
+        let binding = Value::from(password.clone().unwrap_or_default());
         connection_wireless_security.insert("psk", &binding);
         connection.insert("802-11-wireless-security", connection_wireless_security);
 
@@ -589,6 +591,162 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
                 )))
             }
         }
+    }
+
+    /// Connects to a saved network using the given ssid.
+    ///
+    /// # Parameters
+    ///
+    /// * `ssid` - The ssid of the saved network.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the connection attempt is successful.
+    /// * `Err` if any step fails, with context-specific error information.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The settings proxy could not be created.
+    /// - The connection attempt fails.
+    /// - The wireless device path could not be obtained.
+    /// - The connection could not be activated.
+    ///
+    async fn connect_to_saved_network(&self, ssid: &str) -> Result<(), ProxyError> {
+        info!("connecting saved network...");
+        let cn = self.0.connection();
+        let settings_proxy = match settings::SettingsProxy::new(&cn).await {
+            Ok(proxy) => proxy,
+            Err(e) => {
+                error!("failed to create settings proxy: {}", e);
+                return Err(ProxyError::ProxyCreationFailed(format!(
+                    "failed to create settings proxy: {}",
+                    e
+                )));
+            }
+        };
+
+        let nm_proxy = create_nm_proxy(&cn).await?;
+        let connections = settings_proxy.list_connections().await.unwrap();
+        for c in connections {
+            let connection_proxy = connection::ConnectionProxy::new(&cn, c.clone())
+                .await
+                .unwrap();
+            let settings = connection_proxy.get_settings().await.unwrap();
+            let access_point = (*settings["connection"]["id"])
+                .downcast_ref::<Str>()
+                .unwrap()
+                .to_string();
+            let device_path = get_wireless_device_path(&cn).await?;
+            let device = match ObjectPath::try_from(device_path) {
+                Ok(path) => path,
+                Err(e) => {
+                    error!("failed to get wireless device path: {}", e);
+                    return Err(ProxyError::InvalidDevicePath(format!(
+                        "failed to get wireless device path: {}",
+                        e
+                    )));
+                }
+            };
+            let specific_object = ObjectPath::try_from("/").unwrap();
+            if access_point == ssid {
+                let result = match nm_proxy
+                    .activate_connection(&c, &device, &specific_object)
+                    .await
+                {
+                    Ok(result) => result,
+                    Err(e) => {
+                        error!("failed to activate connection: {}", e);
+                        return Err(ProxyError::DbusCallFailed(format!(
+                            "failed to activate connection: {}",
+                            e
+                        )));
+                    }
+                };
+                info!("activated connection: {}", result);
+                break;
+            }
+        }
+        Ok(())
+    }
+
+    /// Forgets a saved network.
+    ///
+    /// This function takes a SSID of a network to forget and deletes the corresponding connection
+    /// from the network manager. If the network is currently connected, it disconnects the network
+    /// first before forgetting it.
+    ///
+    /// # Errors
+    ///
+    /// * [`ProxyError::ProxyCreationFailed`] if creating a settings proxy fails.
+    /// * [`ProxyError::DbusCallFailed`] if listing connections or getting connection settings fails.
+    /// * [`ProxyError::InvalidDevicePath`] if getting the wireless device path fails.
+    async fn forget_saved_network(&self, ssid: &str) -> Result<(), ProxyError> {
+        info!("forgetting saved network...");
+        let cn = self.0.connection();
+        let settings_proxy = match settings::SettingsProxy::new(&cn).await {
+            Ok(proxy) => proxy,
+            Err(e) => {
+                error!("failed to create settings proxy: {}", e);
+                return Err(ProxyError::ProxyCreationFailed(format!(
+                    "failed to create settings proxy: {}",
+                    e
+                )));
+            }
+        };
+        let connections = match settings_proxy.list_connections().await {
+            Ok(connections) => connections,
+            Err(e) => {
+                error!("failed to list connections: {}", e);
+                return Err(ProxyError::DbusCallFailed(format!(
+                    "failed to list connections: {}",
+                    e
+                )));
+            }
+        };
+        for c in connections {
+            let connection_proxy = match connection::ConnectionProxy::new(&cn, c.clone()).await {
+                Ok(proxy) => proxy,
+                Err(e) => {
+                    error!("failed to create connection proxy: {}", e);
+                    return Err(ProxyError::ProxyCreationFailed(format!(
+                        "failed to create connection proxy: {}",
+                        e
+                    )));
+                }
+            };
+
+            let settings = match connection_proxy.get_settings().await {
+                Ok(settings) => settings,
+                Err(e) => {
+                    error!("failed to get connection settings: {}", e);
+                    return Err(ProxyError::DbusCallFailed(format!(
+                        "failed to get connection settings: {}",
+                        e
+                    )));
+                }
+            };
+            let access_point = (*settings["connection"]["id"])
+                .downcast_ref::<Str>()
+                .unwrap()
+                .to_string();
+
+            if access_point == ssid {
+                let result =  match connection_proxy.delete().await {
+                    Ok(result) => result,
+                    Err(e) => {
+                        error!("failed to delete connection: {}", e);
+                        return Err(ProxyError::DbusCallFailed(format!(
+                            "failed to delete connection: {}",
+                            e
+                        )));
+                    }
+                };
+                info!("deleted connection: {}", access_point);
+                break;
+            }
+        }
+        Ok(())
     }
 
     /// Disconnect from the current wireless network.
@@ -647,29 +805,29 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         // Get the access point properties
         // Extract properties from the access point.
         let ssid_vec = try_property!(access_point_proxy.ssid(), |e| {
-        error!("failed to get SSID for access point: {}", e);
-        Vec::new()
-    });
+            error!("failed to get SSID for access point: {}", e);
+            Vec::new()
+        });
         let flags = try_property!(access_point_proxy.flags(), |e| {
-        error!("failed to get flags for access point: {}", e);
-        0
-    });
+            error!("failed to get flags for access point: {}", e);
+            0
+        });
         let frequency = try_property!(access_point_proxy.frequency(), |e| {
-        error!("failed to get frequency for access point: {}", e);
-        0
-    });
+            error!("failed to get frequency for access point: {}", e);
+            0
+        });
         let bandwidth = try_property!(access_point_proxy.bandwidth(), |e| {
-        error!("failed to get bandwidth for access point: {}", e);
-        0
-    });
+            error!("failed to get bandwidth for access point: {}", e);
+            0
+        });
         let signal_strength = try_property!(access_point_proxy.strength(), |e| {
-        error!("failed to get signal strength for access point: {}", e);
-        0
-    });
+            error!("failed to get signal strength for access point: {}", e);
+            0
+        });
         let hw_address = try_property!(access_point_proxy.hw_address(), |e| {
-        error!("failed to get hardware address for access point: {}", e);
-        String::new()
-    });
+            error!("failed to get hardware address for access point: {}", e);
+            String::new()
+        });
 
         // Build the access point info struct.
         Ok(RawAccessPointInfo {
@@ -683,10 +841,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         })
     }
     /// Subscribe to NetworkManager WiFi state change events.
-    async fn subscribe_device_events(
-        &self
-    ) -> Result<PropertyStream<u32>, ProxyError>
-    {
+    async fn subscribe_device_events(&self) -> Result<PropertyStream<u32>, ProxyError> {
         let cn = self.0.connection();
         let proxy = create_nm_proxy(&cn).await?;
         let stream = proxy.receive_state_changed().await;
@@ -694,7 +849,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
     }
 
     async fn subscribe_access_point_events(
-        &self
+        &self,
     ) -> Result<(AccessPointAddedStream, AccessPointRemovedStream), ProxyError> {
         // Get the D-Bus connection from the proxy
         let cn = self.0.connection();
@@ -730,7 +885,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         );
 
         // Handle potential subscription errors
-        let ( access_point_added_stream, access_point_removed_stream) =
+        let (access_point_added_stream, access_point_removed_stream) =
             match (add_result, remove_result) {
                 (Ok(add_stream), Ok(remove_stream)) => (add_stream, remove_stream),
                 (Err(e1), Err(e2)) => {
@@ -746,11 +901,9 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
                     )));
                 }
             };
-            Ok((access_point_added_stream, access_point_removed_stream))
+        Ok((access_point_added_stream, access_point_removed_stream))
     }
 }
-
-
 
 /// Creates a new NetworkManager proxy from the given D-Bus connection.
 ///

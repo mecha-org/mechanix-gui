@@ -18,7 +18,7 @@ use zbus::Connection;
 /// This generic struct provides high-level methods for managing WiFi connections,
 /// such as enabling/disabling WiFi, listing available networks, and connecting to a network.
 /// The implementation is generic over any type that implements `NetworkManagerInterface`.
-#[derive()]
+#[derive(Clone)]
 pub struct NetworkManagerService {
     proxy: NetworkManagerProxy<'static>,
 }
@@ -50,7 +50,7 @@ impl NetworkManagerService {
     /// # Errors
     ///
     /// Returns an error if the underlying NetworkManager operation fails.
-    pub async fn set_wifi(&self, enabled: bool) -> Result<(), NetworkManagerError> {
+    pub async fn toggle_wifi(&self, enabled: bool) -> Result<(), NetworkManagerError> {
         self.proxy
             .enable_wifi()
             .await
@@ -108,7 +108,7 @@ impl NetworkManagerService {
     pub async fn connect_network(
         &self,
         ssid: &str,
-        password: Option<String>,
+        password: &Option<String>,
     ) -> Result<(), NetworkManagerError> {
         // Attempt to connect to the specified network using the NetworkManager interface.
         self.proxy
@@ -150,6 +150,26 @@ impl NetworkManagerService {
     ///     }
     /// }
     /// ```
+
+    pub async fn connect_to_saved_network(&self, ssid: &str) -> Result<(), NetworkManagerError> {
+        self.proxy
+            .connect_to_saved_network(ssid)
+            .await
+            .map_err(NetworkManagerError::from)
+    }
+    pub async fn forget_saved_network(&self, ssid: &str) -> Result<(), NetworkManagerError> {
+        self.proxy
+            .forget_saved_network(ssid)
+            .await
+            .map_err(NetworkManagerError::from)
+    }
+
+    pub async fn disconnect_network(&self) -> Result<(), NetworkManagerError> {
+        self.proxy
+            .disconnect()
+            .await
+            .map_err(NetworkManagerError::from)
+    }
 
     pub async fn subscribe_device_events(&self) -> mpsc::Receiver<WifiState> {
         let proxy = self.proxy.clone();
@@ -329,23 +349,23 @@ mod tests {
         }
     }
     #[tokio::test]
-    async fn test_set_wifi_success() {
+    async fn test_toggle_wifi_success() {
         let mut mock_nm = MockNetworkManager::new();
         mock_nm.expect_disable_wifi().times(1).returning(|| Ok(()));
 
         let service = NetworkManagerService::new().await.unwrap();
-        assert!(service.set_wifi(true).await.is_ok());
+        assert!(service.toggle_wifi(true).await.is_ok());
     }
 
     #[tokio::test]
-    async fn test_set_wifi_failure() {
+    async fn test_toggle_wifi_failure() {
         let mut mock_nm = MockNetworkManager::new();
         mock_nm
             .expect_enable_wifi()
             .returning(|| Err(ProxyError::DbusCallFailed("Failed to enable WiFi".into())));
 
         let service = NetworkManagerService::new().await.unwrap();
-        assert!(service.set_wifi(false).await.is_err());
+        assert!(service.toggle_wifi(false).await.is_err());
     }
 
     #[tokio::test]
@@ -390,7 +410,7 @@ mod tests {
 
         let service = NetworkManagerService::new().await.unwrap();
         let result = service
-            .connect_network("TestWifi", Some("password123".to_string()))
+            .connect_network("TestWifi", &Some("password123".to_string()))
             .await;
         assert!(result.is_ok());
     }
@@ -404,7 +424,7 @@ mod tests {
 
         let service = NetworkManagerService::new().await.unwrap();
         let result = service
-            .connect_network("TestWifi", Some("wrongpass".to_string()))
+            .connect_network("TestWifi", &Some("wrongpass".to_string()))
             .await;
         assert!(result.is_err());
     }
