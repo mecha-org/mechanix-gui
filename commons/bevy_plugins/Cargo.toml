@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 bevy = { version = "0.16.0-dev" }
 freedesktop-network-manager-client = { path = "../../services/freedesktop/network-manager/freedesktop-network-manager-client" }
+freedesktop-bluez-client = { path = "../../services/freedesktop/bluez/freedesktop-bluez-client" }
