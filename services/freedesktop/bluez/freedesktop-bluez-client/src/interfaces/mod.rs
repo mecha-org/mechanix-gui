@@ -22,16 +22,13 @@ pub mod device;
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait BluezInterface: Send + Sync {
-    /// Power on the bluetooth.
-    async fn set_powered_on(&self) -> Result<(), ProxyError>;
-
-    /// Power off the bluetooth.
-    async fn set_powered_off(&self) -> Result<(), ProxyError>;
+    /// Power on/off the bluetooth.
+    async fn toggle_bluetooth(&self, enabled: bool) -> Result<(), ProxyError>;
 
     /// Scan the bluetooth devices.
     async fn get_available_devices(
         &self,
-        discovery_duration: u64,
+        discovery_duration: core::time::Duration,
     ) -> Result<Vec<BluetoothDevice>, ProxyError>;
 
     /// Connect to a bluetooth device.
