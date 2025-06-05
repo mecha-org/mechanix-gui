@@ -2,20 +2,15 @@ use bevy::log::{error, info};
 use bevy::prelude::*;
 use bevy::prelude::{Event, Resource};
 use freedesktop_pulseaudio_client::service::{DeviceInfo, PulseAudioService};
+use libpulse_binding::volume::ChannelVolumes;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Mutex;
 
-const DISCOVER_DURATION: std::time::Duration = std::time::Duration::from_secs(5);
 /// Holds the async-initialized service, or None if not ready yet.
 pub struct PulseAudioServiceResource {
     pub service: Option<PulseAudioService>,
 }
 
-#[derive(Resource, Debug, Clone)]
-pub struct PulseAudioStatus {
-    pub connected: bool,
-    pub last_error: Option<String>,
-}
 #[derive(Resource)]
 pub struct PulseAudioResultReceiver {
     receiver: Mutex<Receiver<PulseAudioResult>>,
@@ -32,25 +27,23 @@ pub struct PulseAudioResultEvent(pub PulseAudioResult);
 #[derive(Debug, Clone)]
 pub enum PulseAudioAction {
     ListSinks,
-    // ListSources,
-    // GetDefaultSink,
-    // GetDefaultSource,
-    // SetDefaultSink(String),
-    // SetDefaultSource(String),
-    // SetSinkVolumeByName(String, ChannelVolumes),
-    // SetSourceVolumeByName(String, ChannelVolumes),
+    ListSources,
+    GetDefaultSink,
+    GetDefaultSource,
+    SetDefaultSink(String),
+    SetDefaultSource(String),
+    SetSinkVolumeByName(String, ChannelVolumes),
+    SetSourceVolumeByName(String, ChannelVolumes),
 }
 
 #[derive(Debug)]
 pub enum PulseAudioResult {
     ListSinks(Vec<DeviceInfo>),
-    ListSources(Vec<String>),
-    GetDefaultSink(String),
-    GetDefaultSource(String),
+    ListSources(Vec<DeviceInfo>),
+    GetDefaultSink(DeviceInfo),
+    GetDefaultSource(DeviceInfo),
     SetDefaultSink(bool),
     SetDefaultSource(bool),
-    SetSinkVolumeByName(bool),
-    SetSourceVolumeByName(bool),
     Error(ErrorType),
 }
 
@@ -66,7 +59,7 @@ pub enum ErrorType {
 ///
 /// This plugin provides a resource for the `PulseAudioService` which is
 /// initialized asynchronously on startup. It also provides a system for enabling
-/// bluetooth.
+/// pulse_audio.
 ///
 /// The `PulseAudioService` is not available until the `init_pulse_audion_service`
 /// system has completed. This is checked with the `service_ready` function.
@@ -75,21 +68,17 @@ pub struct PulseAudioPlugin;
 impl Plugin for PulseAudioPlugin {
     fn build(&self, app: &mut App) {
         app.insert_non_send_resource(PulseAudioServiceResource { service: None })
-            .insert_resource(PulseAudioStatus {
-                connected: false,
-                last_error: None,
-            })
             .add_event::<PulseAudioActionEvent>()
             .add_event::<PulseAudioResultEvent>()
             .add_systems(
                 Startup,
-                (init_pulse_audion_service, setup_bluetooth_channel),
+                (init_pulse_audion_service, setup_pulse_audio_channel),
             ) // Async task so temp move service result to static
             .add_systems(
                 Update,
                 (
                     handle_pulse_audio_action_events,
-                    poll_bluetooth_action_result_events.after(handle_pulse_audio_action_events),
+                    poll_pulse_audio_action_result_events.after(handle_pulse_audio_action_events),
                 ),
             );
     }
@@ -119,7 +108,7 @@ fn init_pulse_audion_service(mut resource: NonSendMut<PulseAudioServiceResource>
 }
 
 // In your plugin setup or a startup system:
-fn setup_bluetooth_channel(mut commands: Commands) {
+fn setup_pulse_audio_channel(mut commands: Commands) {
     let (tx, rx) = std::sync::mpsc::channel();
     commands.insert_resource(PulseAudioResultReceiver {
         receiver: Mutex::new(rx),
@@ -138,7 +127,7 @@ fn setup_bluetooth_channel(mut commands: Commands) {
 /// sent to the channel as a `PulseAudioResult::Error`.
 fn handle_pulse_audio_action_events(
     mut events: EventReader<PulseAudioActionEvent>,
-    resource_service: NonSend<PulseAudioServiceResource>,
+    mut resource_service: NonSendMut<PulseAudioServiceResource>,
     sender: Res<PulseAudioResultSender>,
 ) {
     for event in events.read() {
@@ -164,32 +153,120 @@ fn handle_pulse_audio_action_events(
                         }
                     }
                 }
-            } // PulseAudioAction::ListSources => {}
-              // PulseAudioAction::GetDefaultSink => {}
-              // PulseAudioAction::GetDefaultSource => {}
-              // PulseAudioAction::SetDefaultSink(_) => {}
-              // PulseAudioAction::SetDefaultSource(_) => {}
-              // PulseAudioAction::SetSinkVolumeByName(_, _) => {}
-              // PulseAudioAction::SetSourceVolumeByName(_, _) => {}
+            }
+            PulseAudioAction::ListSources => {
+                info!("audio action: list sources");
+                if let Some(service) = &resource_service.service {
+                    let server = &service.server;
+                    match server.get_sources() {
+                        Ok(sources) => {
+                            let result = PulseAudioResult::ListSources(sources);
+                            if let Err(e) = sender.0.send(result) {
+                                error!("failed to send list sources result: {e}");
+                            }
+                        }
+                        Err(e) => {
+                            error!("error getting sources: {e}");
+                            let result = PulseAudioResult::Error(ErrorType::ActionFailed {
+                                action: PulseAudioAction::ListSources,
+                                message: format!("Error getting sources: {e}"),
+                            });
+                            if let Err(err) = sender.0.send(result) {
+                                error!("failed to send error result: {err}");
+                            }
+                        }
+                    }
+                }
+            }
+            PulseAudioAction::GetDefaultSink => {
+                info!("audio action: get default sink");
+                if let Some(service) = resource_service.service.as_mut() {
+                    // let server = &service.server;
+                    match service.server.get_default_sink() {
+                        Ok(sink) => {
+                            let result = PulseAudioResult::GetDefaultSink(sink);
+                            if let Err(e) = sender.0.send(result) {
+                                error!("failed to send get default sink result: {e}");
+                            }
+                        }
+                        Err(e) => {
+                            error!("error getting default sink: {e}");
+                            let result = PulseAudioResult::Error(ErrorType::ActionFailed {
+                                action: PulseAudioAction::GetDefaultSink,
+                                message: format!("Error getting default sink: {e}"),
+                            });
+                            if let Err(err) = sender.0.send(result) {
+                                error!("failed to send error result: {err}");
+                            }
+                        }
+                    }
+                }
+            }
+            PulseAudioAction::GetDefaultSource => {
+                info!("audio action: get default source");
+                if let Some(service) = resource_service.service.as_mut() {
+                    // let server = &service.server;
+                    match service.server.get_default_source() {
+                        Ok(source) => {
+                            let result = PulseAudioResult::GetDefaultSource(source);
+                            if let Err(e) = sender.0.send(result) {
+                                error!("failed to send get default source result: {e}");
+                            }
+                        }
+                        Err(e) => {
+                            error!("error getting default source: {e}");
+                            let result = PulseAudioResult::Error(ErrorType::ActionFailed {
+                                action: PulseAudioAction::GetDefaultSource,
+                                message: format!("Error getting default source: {e}"),
+                            });
+                            if let Err(err) = sender.0.send(result) {
+                                error!("failed to send error result: {err}");
+                            }
+                        }
+                    }
+                }
+            }
+            PulseAudioAction::SetDefaultSink(_) => {
+                info!("audio action: set default sink");
+            }
+            PulseAudioAction::SetDefaultSource(_) => {
+                info!("audio action: set default source");
+            }
+            PulseAudioAction::SetSinkVolumeByName(device_name, channel_volumes) => {
+                info!("audio action: set sink volume by name");
+                if let Some(service) = resource_service.service.as_mut() {
+                    service
+                        .server
+                        .set_sink_volume_by_name(&device_name, &channel_volumes);
+                }
+            }
+            PulseAudioAction::SetSourceVolumeByName(device_name, channel_volumes) => {
+                info!("audio action: set source volume by name");
+                if let Some(service) = resource_service.service.as_mut() {
+                    service
+                        .server
+                        .set_source_volume_by_name(&device_name, &channel_volumes);
+                }
+            }
         }
     }
 }
 
 /// Polls the internal event receiver for new events and writes them to the
-/// `bluetooth_result_event_writer` as `PulseAudioResultEvent`s.
+/// `pulse_audio_result_event_writer` as `PulseAudioResultEvent`s.
 ///
 /// This system is typically run once per frame and is used to dispatch events
 /// from the PulseAudio service to the rest of the app.
 ///
 /// The event receiver is accessed by a lock, and if the lock can't be acquired,
 /// the system will print an error message and do nothing.
-fn poll_bluetooth_action_result_events(
-    mut bluetooth_result_event_writer: EventWriter<PulseAudioResultEvent>,
+fn poll_pulse_audio_action_result_events(
+    mut pulse_audio_result_event_writer: EventWriter<PulseAudioResultEvent>,
     event_receiver: ResMut<PulseAudioResultReceiver>,
 ) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
-            bluetooth_result_event_writer.write(PulseAudioResultEvent(event));
+            pulse_audio_result_event_writer.write(PulseAudioResultEvent(event));
         }
     } else {
         error!("failed to acquire receiver lock");

@@ -1,11 +1,11 @@
-use bevy::prelude::*;
-use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{ LazyLock, Mutex};
 use bevy::log::{error, info};
+use bevy::prelude::*;
 use bevy::prelude::{Event, Resource};
 use bevy::tasks::{AsyncComputeTaskPool, IoTaskPool};
 use freedesktop_bluez_client::interfaces::device::BluetoothDevice;
 use freedesktop_bluez_client::service::BluetoothService;
+use std::sync::mpsc::{Receiver, Sender};
+use std::sync::{LazyLock, Mutex};
 
 const DISCOVER_DURATION: std::time::Duration = std::time::Duration::from_secs(5);
 /// Holds the async-initialized service, or None if not ready yet.
@@ -32,7 +32,6 @@ pub struct BluetoothActionEvent(pub BluetoothAction);
 #[derive(Event)]
 pub struct BluetoothResultEvent(pub BluetoothResult);
 
-
 #[derive(Debug, Clone)]
 pub enum BluetoothAction {
     ToggleBluetooth(bool),
@@ -51,7 +50,6 @@ pub enum BluetoothResult {
     ListConnectedDevices(Vec<BluetoothDevice>),
     Error(ErrorType),
 }
-
 
 #[derive(Debug, Clone)]
 pub enum ErrorType {
@@ -73,8 +71,7 @@ pub struct BluetoothPlugin;
 
 impl Plugin for BluetoothPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(BluetoothServiceResource { service: None })
+        app.insert_resource(BluetoothServiceResource { service: None })
             .insert_resource(BluetoothStatus {
                 connected: false,
                 last_error: None,
@@ -103,7 +100,6 @@ fn service_ready(resource: Res<BluetoothServiceResource>) -> bool {
 static SERVICE_RESULT: LazyLock<Mutex<Option<BluetoothService>>> =
     LazyLock::new(|| Mutex::new(None));
 
-
 /// Initializes the `BluetoothService` asynchronously on startup.
 ///
 /// This system is spawned as an IoTaskPool task and will detach itself once
@@ -131,7 +127,6 @@ fn init_bluetooth_service() {
         })
         .detach();
 }
-
 
 // Polling system to move service from static to resource
 fn poll_service_init(mut resource: ResMut<BluetoothServiceResource>) {
@@ -175,14 +170,16 @@ fn handle_bluetooth_action_events(
                     let enable = *enable;
                     let result_sender = sender.0.clone();
                     pool.spawn(async move {
-                        match service.set_powered_on().await {
+                        match service.toggle_bluetooth(true).await {
                             Ok(status) => {
                                 info!("toggle wireless status: {status:?}");
                                 let bluetooth_status = BluetoothStatus {
                                     connected: enable,
                                     last_error: None,
                                 };
-                                match result_sender.send(BluetoothResult::ToggleBluetooth(bluetooth_status)) {
+                                match result_sender
+                                    .send(BluetoothResult::ToggleBluetooth(bluetooth_status))
+                                {
                                     Ok(res) => {
                                         info!("sent toggle bluetooth status: {res:?}");
                                     }
@@ -197,13 +194,15 @@ fn handle_bluetooth_action_events(
                                     action: BluetoothAction::ToggleBluetooth(enable),
                                     message: "Failed to toggle bluetooth".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(BluetoothResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::Error(error_type))
+                                {
                                     error!("failed to send toggle bluetooth error: {err}");
                                 }
                             }
                         }
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::ListAvailableDevices => {
@@ -214,7 +213,9 @@ fn handle_bluetooth_action_events(
                     pool.spawn(async move {
                         match service.get_available_devices(DISCOVER_DURATION).await {
                             Ok(devices) => {
-                                if let Err(err) = result_sender.send(BluetoothResult::ListAvailableDevices(devices)) {
+                                if let Err(err) = result_sender
+                                    .send(BluetoothResult::ListAvailableDevices(devices))
+                                {
                                     error!("failed to send list available devices: {err}");
                                 }
                             }
@@ -224,13 +225,15 @@ fn handle_bluetooth_action_events(
                                     action: BluetoothAction::ListAvailableDevices,
                                     message: "Failed to list available devices".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(BluetoothResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::Error(error_type))
+                                {
                                     error!("failed to send list available devices error: {err}");
                                 }
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::ConnectToDevice(device_address) => {
@@ -243,7 +246,9 @@ fn handle_bluetooth_action_events(
                         match service.connect(&device_address).await {
                             Ok(()) => {
                                 info!("connected to device: {device_address}");
-                                if let Err(err) = result_sender.send(BluetoothResult::ConnectDevice(true)) {
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::ConnectDevice(true))
+                                {
                                     error!("failed to send connect to device: {err}");
                                 }
                             }
@@ -253,13 +258,15 @@ fn handle_bluetooth_action_events(
                                     action: BluetoothAction::ConnectToDevice(device_address),
                                     message: "Failed to connect to device".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(BluetoothResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::Error(error_type))
+                                {
                                     error!("failed to send connect to device error: {err}");
                                 }
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::DisconnectDevice(device_address) => {
@@ -272,7 +279,9 @@ fn handle_bluetooth_action_events(
                         match service.disconnect(&device_address).await {
                             Ok(()) => {
                                 info!("disconnected from device");
-                                if let Err(err) = result_sender.send(BluetoothResult::DisconnectDevice(true)) {
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::DisconnectDevice(true))
+                                {
                                     error!("failed to send disconnect device: {err}");
                                 }
                             }
@@ -282,13 +291,15 @@ fn handle_bluetooth_action_events(
                                     action: BluetoothAction::DisconnectDevice(device_address),
                                     message: "Failed to disconnect from device".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(BluetoothResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::Error(error_type))
+                                {
                                     error!("failed to send disconnect device error: {err}");
                                 }
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::ListConnectedDevices => {
@@ -299,7 +310,9 @@ fn handle_bluetooth_action_events(
                     pool.spawn(async move {
                         match service.get_connected_devices().await {
                             Ok(devices) => {
-                                if let Err(err) = result_sender.send(BluetoothResult::ListConnectedDevices(devices)) {
+                                if let Err(err) = result_sender
+                                    .send(BluetoothResult::ListConnectedDevices(devices))
+                                {
                                     error!("failed to send list connected devices: {err}");
                                 }
                             }
@@ -309,19 +322,20 @@ fn handle_bluetooth_action_events(
                                     action: BluetoothAction::ListConnectedDevices,
                                     message: "Failed to list connected devices".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(BluetoothResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::Error(error_type))
+                                {
                                     error!("failed to send list connected devices error: {err}");
                                 }
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
         } // Add more as needed
     }
 }
-
 
 /// Polls the internal event receiver for new events and writes them to the
 /// `bluetooth_result_event_writer` as `BluetoothResultEvent`s.

@@ -1,7 +1,9 @@
 use bevy::color::palettes::basic::RED;
 use bevy::{prelude::*, winit::WinitSettings};
-use bevy_plugins::pulse_audio::{PulseAudioAction, PulseAudioResult, PulseAudioResultEvent};
-use bevy_plugins::{NetworkManagerPlugin, PulseAudioPlugin};
+use bevy_plugins::pulse_audio::{
+    PulseAudioAction, PulseAudioActionEvent, PulseAudioResult, PulseAudioResultEvent,
+};
+use bevy_plugins::PulseAudioPlugin;
 
 fn main() {
     App::new()
@@ -29,14 +31,6 @@ fn wait_action_result(mut event_reader: EventReader<PulseAudioResultEvent>) {
         }
     }
 }
-#[derive(Event, Debug, Clone)]
-pub struct PulseAudioEvent(pub PulseAudioAction);
-
-#[derive(Resource, Component)]
-struct WifiEventText(String);
-
-#[derive(Clone, Copy, Component)]
-struct WifiStatusText;
 
 #[derive(Component)]
 enum ButtonAction {
@@ -72,7 +66,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             BackgroundColor(NORMAL_BUTTON),
             ButtonAction::Wifi,
         ))
-        .with_child((Text::new("WIFI"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
+        .with_child((Text::new("GetSinks"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
 }
 
 fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
@@ -99,7 +93,6 @@ fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
         .with_child((
             Text::new("Connected"),
             TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            WifiStatusText, // Mark the text component
         ));
 }
 
@@ -115,10 +108,9 @@ fn button_system(
             ),
             (Changed<Interaction>, With<Button>),
         >,
-        Query<&mut Text, With<WifiStatusText>>,
         Query<&mut Text>,
     )>,
-    mut event_writer: EventWriter<PulseAudioEvent>,
+    mut event_writer: EventWriter<PulseAudioActionEvent>,
 ) {
     for (interaction, _, mut border_color, _, actions) in queries.p0().iter_mut() {
         // println!("button text: {}", text.0);
@@ -129,7 +121,7 @@ fn button_system(
                 match actions {
                     Some(ButtonAction::Wifi) => {
                         println!("Wifi button pressed");
-                        event_writer.write(PulseAudioEvent(PulseAudioAction::ListSinks));
+                        event_writer.write(PulseAudioActionEvent(PulseAudioAction::ListSinks));
                     }
                     _ => {
                         println!("no action");

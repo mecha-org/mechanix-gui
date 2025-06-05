@@ -1,6 +1,8 @@
-use bevy::{prelude::*, winit::WinitSettings};
 use bevy::color::palettes::basic::RED;
-use bevy_plugins::bluetooth::{BluetoothAction, BluetoothActionEvent, BluetoothResult, BluetoothResultEvent};
+use bevy::{prelude::*, winit::WinitSettings};
+use bevy_plugins::bluetooth::{
+    BluetoothAction, BluetoothActionEvent, BluetoothResult, BluetoothResultEvent,
+};
 use bevy_plugins::BluetoothPlugin;
 use freedesktop_network_manager_client::interfaces::wireless::WifiState;
 
@@ -16,7 +18,7 @@ fn main() {
 
 fn wait_action_result(mut event_reader: EventReader<BluetoothResultEvent>) {
     for event in event_reader.read() {
-        let actions =  &event.0;
+        let actions = &event.0;
         match actions {
             BluetoothResult::ToggleBluetooth(status) => {
                 info!("wifi result received: {status:?}");
@@ -33,15 +35,9 @@ fn wait_action_result(mut event_reader: EventReader<BluetoothResultEvent>) {
 #[derive(Event, Debug, Clone)]
 pub struct WifiStateEvent(pub WifiState);
 
-#[derive(Resource, Component)]
-struct WifiEventText(String);
-
-#[derive(Clone, Copy, Component)]
-struct WifiStatusText;
-
 #[derive(Component)]
 enum ButtonAction {
-    Wifi,
+    Bluetooth,
 }
 
 const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
@@ -71,12 +67,9 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             BorderColor(Color::BLACK),
             BorderRadius::MAX,
             BackgroundColor(NORMAL_BUTTON),
-            ButtonAction::Wifi,
+            ButtonAction::Bluetooth,
         ))
-        .with_child((
-            Text::new("WIFI"),
-            TextColor(Color::srgb(0.9, 0.9, 0.9)),
-        ));
+        .with_child((Text::new("WIFI"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
 }
 
 fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
@@ -103,7 +96,6 @@ fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
         .with_child((
             Text::new("Connected"),
             TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            WifiStatusText, // Mark the text component
         ));
 }
 
@@ -119,10 +111,9 @@ fn button_system(
             ),
             (Changed<Interaction>, With<Button>),
         >,
-        Query<&mut Text, With<WifiStatusText>>,
         Query<&mut Text>,
     )>,
-    mut event_writer: EventWriter<BluetoothActionEvent>
+    mut event_writer: EventWriter<BluetoothActionEvent>,
 ) {
     for (interaction, _, mut border_color, _, actions) in queries.p0().iter_mut() {
         // println!("button text: {}", text.0);
@@ -131,9 +122,10 @@ fn button_system(
                 println!("pressed");
 
                 match actions {
-                    Some(ButtonAction::Wifi) => {
-                        println!("Wifi button pressed");
-                        event_writer.write(BluetoothActionEvent(BluetoothAction::ToggleBluetooth(true)));
+                    Some(ButtonAction::Bluetooth) => {
+                        println!("button pressed");
+                        event_writer
+                            .write(BluetoothActionEvent(BluetoothAction::ToggleBluetooth(true)));
                     }
                     _ => {
                         println!("no action");
