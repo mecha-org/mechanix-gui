@@ -115,10 +115,7 @@ pub enum Message {
     /// Set volume for a specific input device by name
     SetSourceVolumeByName(String, ChannelVolumes),
 }
-pub struct PulseHandle {
-    pub to_pulse: tokio::sync::mpsc::Sender<Message>,
-    pub from_pulse: tokio::sync::mpsc::Receiver<Message>,
-}
+
 #[derive(Debug, thiserror::Error)]
 pub enum PulseInitError {
     /// Failed to spawn the thread
@@ -131,10 +128,12 @@ pub enum PulseInitError {
 }
 
 pub struct PulseAudioService {
-    server: PulseServer,
+   pub server: PulseServer,
 }
 impl PulseAudioService {
     pub fn new() -> Result<Self, PulseInitError> {
+        // let pulse_handle = PulseHandle::new();
+        // Ok(Self { pulse_handle })
         let server = match PulseServer::connect().and_then(|s| s.init()) {
             Ok(server) => {
                 info!("connected to pulse server");
@@ -148,187 +147,7 @@ impl PulseAudioService {
         Ok(Self { server })
     }
 }
-impl PulseHandle {
-    // Create pulse server thread, and bidirectional comms
-    pub fn new() -> Self {
-        let (to_pulse, mut to_pulse_recv) = tokio::sync::mpsc::channel(50);
-        let (from_pulse_send, from_pulse) = tokio::sync::mpsc::channel(50);
-
-        // this thread should complete by pushing a completed message,
-        // or fail message. This should never complete/fail without pushing
-        // a message. This lets the iced subscription go to sleep while init
-        // finishes. TLDR: be very careful with error handling
-        thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap();
-
-            // take `PulseServer` and handle reciver into async context
-            // to listen for messages that need to be passed to the pulseserver
-            // this lets us put the thread to sleep, but keep hold a single
-            // thread, because pulse audio's API is not multithreaded... at all
-            rt.block_on(async {
-                let mut server = match PulseServer::connect().and_then(|s| s.init()) {
-                    Ok(server) => {
-                        info!("connected to pulse server");
-                        server
-                    }
-                    Err(err) => {
-                        error!("failed to connect/init server: {:?}", err);
-                        return;
-                    }
-                };
-                let mut msgs = Vec::new();
-
-                loop {
-                    if let Some(msg) = to_pulse_recv.recv().await {
-                        info!("received message: {:?}", msg);
-                        msgs.push(msg);
-                    }
-
-                    for msg in msgs.drain(..) {
-                        match msg {
-                            Message::GetSinks => {
-                                match server.get_sinks() {
-                                    Ok(sinks) => {
-                                        trace!("sink count: {}", sinks.len());
-                                        // Send the sinks to the receiver
-                                        if let Err(err) =
-                                            from_pulse_send.send(SetSink(Ok(sinks))).await
-                                        {
-                                            error!("failed to send sinks: {:?}", err);
-                                        };
-                                        info!("sent sinks to receiver");
-                                    }
-                                    Err(e) => {
-                                        error!("failed to get sinks: {:?}", e);
-                                        // Send the error to the receiver
-                                        if let Err(err) = from_pulse_send
-                                            .send(Message::SetSink({
-                                                Err(PulseAudioError::SendRequestError(format!(
-                                                    "{:?}",
-                                                    e
-                                                )))
-                                            }))
-                                            .await
-                                        {
-                                            error!("failed to send error: {:?}", err);
-                                        };
-                                    }
-                                }
-                            }
-                            Message::GetSources => {
-                                match server.get_sources() {
-                                    Ok(sources) => {
-                                        trace!("source count: {}", sources.len());
-                                        // Send the sinks to the receiver
-                                        if let Err(err) = from_pulse_send
-                                            .send(Message::SetSource(Ok(sources)))
-                                            .await
-                                        {
-                                            error!("failed to send sinks: {:?}", err);
-                                        };
-                                        info!("sent sinks to receiver");
-                                    }
-                                    Err(e) => {
-                                        error!("failed to get sinks: {:?}", e);
-                                        // Send the error to the receiver
-                                        if let Err(err) = from_pulse_send
-                                            .send(Message::SetSource({
-                                                Err(PulseAudioError::SendRequestError(format!(
-                                                    "{:?}",
-                                                    e
-                                                )))
-                                            }))
-                                            .await
-                                        {
-                                            error!("failed to send error: {:?}", err);
-                                        };
-                                    }
-                                }
-                            }
-                            Message::GetDefaultSink => {
-                                match server.get_default_sink() {
-                                    Ok(sink) => {
-                                        trace!("sink: {:?}", sink);
-                                        // Send the sinks to the receiver
-                                        if let Err(err) = from_pulse_send
-                                            .send(Message::SetDefaultSink(Ok(sink)))
-                                            .await
-                                        {
-                                            error!("failed to send sinks: {:?}", err);
-                                        };
-                                        info!("sent sinks to receiver");
-                                    }
-                                    Err(e) => {
-                                        error!("failed to get sinks: {:?}", e);
-                                        // Send the error to the receiver
-                                        if let Err(err) = from_pulse_send
-                                            .send(Message::SetDefaultSink({
-                                                Err(PulseAudioError::SendRequestError(format!(
-                                                    "{:?}",
-                                                    e
-                                                )))
-                                            }))
-                                            .await
-                                        {
-                                            error!("failed to send error: {:?}", err);
-                                        };
-                                    }
-                                }
-                            }
-                            Message::GetDefaultSource => {
-                                match server.get_default_source() {
-                                    Ok(sink) => {
-                                        trace!("sink: {:?}", sink);
-                                        // Send the sinks to the receiver
-                                        if let Err(err) = from_pulse_send
-                                            .send(Message::SetDefaultSource(Ok(sink)))
-                                            .await
-                                        {
-                                            error!("failed to send sinks: {:?}", err);
-                                        };
-                                        info!("sent sinks to receiver");
-                                    }
-                                    Err(e) => {
-                                        error!("failed to get sinks: {:?}", e);
-                                        // Send the error to the receiver
-                                        if let Err(err) = from_pulse_send
-                                            .send(Message::SetDefaultSource({
-                                                Err(PulseAudioError::SendRequestError(format!(
-                                                    "{:?}",
-                                                    e
-                                                )))
-                                            }))
-                                            .await
-                                        {
-                                            error!("failed to send error: {:?}", err);
-                                        };
-                                    }
-                                }
-                            }
-                            Message::SetSinkVolumeByName(name, channel_volumes) => {
-                                server.set_sink_volume_by_name(&name, &channel_volumes)
-                            }
-                            Message::SetSourceVolumeByName(name, channel_volumes) => {
-                                server.set_source_volume_by_name(&name, &channel_volumes)
-                            }
-                            _ => {
-                                warn!("message doesn't match")
-                            }
-                        }
-                    }
-                }
-            });
-        });
-        Self {
-            to_pulse,
-            from_pulse,
-        }
-    }
-}
-struct PulseServer {
+pub struct PulseServer {
     mainloop: Rc<RefCell<Mainloop>>,
     context: Rc<RefCell<Context>>,
     introspector: Introspector,
@@ -499,6 +318,7 @@ impl PulseServer {
         }
     }
 
+
     fn get_default_source(&mut self) -> Result<DeviceInfo, PulseServerError> {
         let server_info = self.get_server_info();
         match server_info {
@@ -528,6 +348,16 @@ impl PulseServer {
         }
     }
 
+    /// Gets information about the PulseAudio server.
+    ///
+    /// # Returns
+    ///
+    /// A `ServerInfo` containing information about the server.
+    ///
+    /// # Errors
+    ///
+    /// `PulseServerError::Misc` if an error occurs while retrieving the server
+    /// information.
     pub fn get_server_info(&mut self) -> Result<ServerInfo, PulseServerError> {
         let info = Rc::new(RefCell::new(Some(None)));
         let info_ref = info.clone();

@@ -6,8 +6,9 @@ use freedesktop_pulseaudio_client::service::PulseAudioService;
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let service = PulseAudioService::new()?;
-    let sinks = service.get_sinks().await?;
-    println!("Sinks: {:#?}", sinks);
-
+    match service.server.get_sinks() {
+        Ok(sinks) => println!("Available sinks: {sinks:?}"),
+        Err(e) => println!("Error getting sinks: {e}"),
+    }
     Ok(())
 }

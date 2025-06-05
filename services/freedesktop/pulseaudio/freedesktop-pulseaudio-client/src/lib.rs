@@ -8,6 +8,4 @@ use crate::errors::PulseAudioError;
 use async_trait::async_trait;
 
 pub mod errors;
-// pub mod handler;
-// pub mod pulse;
 pub mod service;
