@@ -1,0 +1,18 @@
+[package]
+name = "freedesktop-pulseaudio-client"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+tokio = { workspace = true }
+log = { workspace = true }
+async-trait = { workspace = true }
+libpulse-binding = "2.28.2"
+anyhow = "1.0.98"
