@@ -94,30 +94,25 @@ pub trait Bluez {
 
 #[async_trait]
 impl<'a> BluezInterface for BluezProxy<'a> {
-    /// Enables the Bluetooth adapter.
+    
+    /// Enables or disables Bluetooth on the adapter.
     ///
-    /// This asynchronous method sets the powered state of the Bluetooth adapter using the BlueZ D-Bus API.
-    /// It creates an adapter proxy and calls the `set_powered` method with the desired state.
+    /// # Arguments
     ///
+    /// * `enabled` - Whether to enable or disable Bluetooth.
     ///
     /// # Returns
     ///
-    /// * `Ok(())` if the adapter powered state is set successfully.
-    /// * `Err` if the adapter proxy cannot be created or the D-Bus call fails.
+    /// * `Ok(())` if the Bluetooth powered state is successfully set.
+    /// * `Err` if setting the Bluetooth powered state fails.
     ///
     /// # Errors
     ///
     /// Returns an error if:
-    /// - The adapter proxy cannot be created.
-    /// - The D-Bus call to set the powered state fails.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// my_struct.set_powered_on().await?;
-    /// ```
-    async fn set_powered_on(&self) -> Result<(), ProxyError> {
-        info!("request to set bluetooth powered state to true");
+    /// - Creating the adapter proxy fails.
+    /// - Setting the Bluetooth powered state fails.
+    async fn toggle_bluetooth(&self, enabled: bool) -> Result<(), ProxyError> {
+        info!("request to set bluetooth powered state to {}", enabled);
 
         let connection = self.0.connection();
         let adapter_proxy = match Adapter1Proxy::new(connection).await {
@@ -128,69 +123,21 @@ impl<'a> BluezInterface for BluezProxy<'a> {
             }
         };
 
-        match adapter_proxy.set_powered(true).await {
+        match adapter_proxy.set_powered(enabled).await {
             Ok(_) => {
-                info!("bluetooth powered state set to true");
+                info!("bluetooth powered state set to {}", enabled);
                 Ok(())
             }
             Err(e) => {
-                error!("failed to set bluetooth powered state to true: {}", e);
+                error!("failed to set bluetooth powered state : {}", e);
                 return Err(ProxyError::DbusCallFailed(format!(
-                    "failed to set bluetooth powered state to true: {}",
+                    "failed to set bluetooth powered state: {}",
                     e
                 )));
             }
         }
     }
 
-    /// Enables the Bluetooth adapter.
-    ///
-    /// This asynchronous method sets the powered state of the Bluetooth adapter using the BlueZ D-Bus API.
-    /// It creates an adapter proxy and calls the `set_powered` method with the desired state.
-    ///
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` if the adapter powered state is set successfully.
-    /// * `Err` if the adapter proxy cannot be created or the D-Bus call fails.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if:
-    /// - The adapter proxy cannot be created.
-    /// - The D-Bus call to set the powered state fails.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// my_struct.set_powered_off().await?;
-    /// ```
-    async fn set_powered_off(&self) -> Result<(), ProxyError> {
-        info!("request to set bluetooth powered state to false");
-
-        let connection = self.0.connection();
-        let adapter_proxy = match Adapter1Proxy::new(connection).await {
-            Ok(proxy) => proxy,
-            Err(e) => {
-                error!("failed to create adapter proxy: {}", e);
-                return Err(ProxyError::AdapterProxyCreationFailed(e.to_string()));
-            }
-        };
-
-        match adapter_proxy.set_powered(false).await {
-            Ok(_) => {
-                info!("bluetooth powered state set to true");
-                Ok(())
-            }
-            Err(e) => {
-                error!("failed to set bluetooth powered state to false: {}", e);
-                Err(ProxyError::DbusCallFailed(format!(
-                    "failed to set bluetooth powered state to false: {}",
-                    e
-                )))
-            }
-        }
-    }
 
     /// Discovers and returns a list of available Bluetooth devices.
     ///
@@ -199,7 +146,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     /// then retrieves and filters the managed objects to return discovered Bluetooth devices.
     ///
     /// # Arguments
-    /// * `discovery_duration` - The duration in milliseconds to wait for device discovery.
+    /// * `discovery_duration` - The duration to scan for Bluetooth devices.
     /// 
     /// # Returns
     ///
@@ -223,7 +170,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     /// ```
     async fn get_available_devices(
         &self,
-        discovery_duration: u64,
+        discovery_duration: core::time::Duration,
     ) -> Result<Vec<BluetoothDevice>, ProxyError> {
         info!("starting Bluetooth device discovery");
         let cn = &self.0.connection();
@@ -245,7 +192,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
         }
 
         trace!("discovery started, waiting for devices...");
-        tokio::time::sleep(std::time::Duration::from_millis(discovery_duration)).await;
+        tokio::time::sleep(discovery_duration).await;
         trace!("stopping discovery...");
 
         // Stop the discovery process

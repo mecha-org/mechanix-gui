@@ -33,6 +33,7 @@ use log::info;
 use zbus::Connection;
 use crate::proxies::BluezProxy;
 
+#[derive(Clone)]
 pub struct BluetoothService<> {
     proxy: BluezProxy<'static>,
 }
@@ -60,24 +61,16 @@ impl BluetoothService {
     ///
     /// * `Ok(())` if enabling Bluetooth is successful.
     /// * `Err` if enabling Bluetooth fails.
-    pub async fn set_powered_on(&self) -> Result<(), BluezError> {
-        self.proxy.set_powered_on().await.map_err(BluezError::from)
+    pub async fn toggle_bluetooth(&self, enabled: bool) -> Result<(), BluezError> {
+        self.proxy.toggle_bluetooth(enabled).await.map_err(BluezError::from)
     }
 
-    /// Disables the Bluetooth adapter.
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` if disabling Bluetooth is successful.
-    /// * `Err` if disabling Bluetooth fails.
-    pub async fn set_powered_off(&self) -> Result<(), BluezError> {
-        self.proxy
-            .set_powered_off()
-            .await
-            .map_err(BluezError::from)
-    }
 
     /// Scans for available Bluetooth devices.
+    ///
+    /// # Arguments
+    ///
+    /// * `discovery_duration` - The duration to scan for Bluetooth devices.
     ///
     /// # Returns
     ///
@@ -85,7 +78,7 @@ impl BluetoothService {
     /// * `Err` if scanning fails.
     pub async fn get_available_devices(
         &self,
-        discovery_duration: u64,
+        discovery_duration: core::time::Duration,
     ) -> Result<Vec<BluetoothDevice>, BluezError> {
         self.proxy
             .get_available_devices(discovery_duration)
@@ -146,24 +139,25 @@ mod tests {
     use mockall::predicate::*;
     use crate::proxies::ProxyError;
 
+    const DISCOVERY_DURATION: core::time::Duration = core::time::Duration::from_secs(5);
     #[tokio::test]
-    async fn test_set_powered_on_success() {
+    async fn test_toggle_bluetooth_success() {
         let mut mock = MockBluezInterface::new();
-        mock.expect_set_powered_on().times(1).returning(|| Ok(()));
+        mock.expect_toggle_bluetooth().times(1).returning(|_| Ok(()));
         let service = BluetoothService::new().await.unwrap();
-        let result = service.set_powered_on().await;
+        let result = service.toggle_bluetooth(true).await;
         assert!(result.is_ok());
     }
 
     #[tokio::test]
     async fn test_set_powered_off_propagates_errors() {
         let mut mock = MockBluezInterface::new();
-        mock.expect_set_powered_off()
+        mock.expect_toggle_bluetooth()
             .times(1)
-            .returning(|| Err(ProxyError::DbusCallFailed("Failed to power off".to_string())));
+            .returning(|_| Err(ProxyError::DbusCallFailed("Failed to power off".to_string())));
 
         let service = BluetoothService::new().await.unwrap();
-        let result = service.set_powered_off().await;
+        let result = service.toggle_bluetooth(false).await;
         assert!(result.is_err());
     }
 
@@ -177,12 +171,12 @@ mod tests {
 
         let mut mock = MockBluezInterface::new();
         mock.expect_get_available_devices()
-            .with(eq(5)) // Assuming 5 seconds for discovery duration
+            .with(eq(DISCOVERY_DURATION)) // Assuming 5 seconds for discovery duration
             .times(1)
             .returning(move |_| Ok(test_devices.clone()));
 
         let service = BluetoothService::new().await.unwrap();
-        let result = service.get_available_devices(1000).await.unwrap();
+        let result = service.get_available_devices(DISCOVERY_DURATION).await.unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].address, "00:11:22:33:44:55");
     }
