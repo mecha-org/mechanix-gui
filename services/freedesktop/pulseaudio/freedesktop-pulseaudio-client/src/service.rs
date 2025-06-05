@@ -288,7 +288,7 @@ impl PulseServer {
         })
     }
 
-    fn get_default_sink(&mut self) -> Result<DeviceInfo, PulseServerError> {
+    pub fn get_default_sink(&mut self) -> Result<DeviceInfo, PulseServerError> {
         let server_info = self.get_server_info();
         match server_info {
             Ok(info) => {
@@ -317,7 +317,7 @@ impl PulseServer {
         }
     }
 
-    fn get_default_source(&mut self) -> Result<DeviceInfo, PulseServerError> {
+    pub fn get_default_source(&mut self) -> Result<DeviceInfo, PulseServerError> {
         let server_info = self.get_server_info();
         match server_info {
             Ok(info) => {
@@ -369,7 +369,7 @@ impl PulseServer {
         ))
     }
 
-    fn set_sink_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
+    pub fn set_sink_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
         let op = self
             .introspector
             .set_sink_mute_by_name(name, volume.is_muted(), None);
@@ -394,7 +394,7 @@ impl PulseServer {
     /// # Note
     /// Both operations are performed independently and their results are ignored.
     /// If either operation fails, no error will be propagated.
-    fn set_source_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
+    pub fn set_source_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
         let op = self
             .introspector
             .set_source_mute_by_name(name, volume.is_muted(), None);
