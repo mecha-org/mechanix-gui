@@ -127,6 +127,7 @@ pub enum PulseInitError {
     InitFailed(String),
 }
 
+#[derive(Clone)]
 pub struct PulseAudioService {
    pub server: PulseServer,
 }
@@ -147,10 +148,11 @@ impl PulseAudioService {
         Ok(Self { server })
     }
 }
+#[derive(Clone)]
 pub struct PulseServer {
     mainloop: Rc<RefCell<Mainloop>>,
     context: Rc<RefCell<Context>>,
-    introspector: Introspector,
+    introspector: Rc<RefCell<Introspector>>,
 }
 
 #[derive(Clone, thiserror::Error, Debug)]
@@ -206,7 +208,7 @@ impl PulseServer {
         ));
 
         // Create an introspector for the context
-        let introspector = context.borrow_mut().introspect();
+        let introspector = Rc::new(RefCell::new(context.borrow_mut().introspect()));
 
         // Connect to the PulseAudio server
         context
@@ -256,7 +258,7 @@ impl PulseServer {
         let list: Rc<RefCell<Option<Vec<DeviceInfo>>>> = Rc::new(RefCell::new(Some(Vec::new())));
         let list_ref = list.clone();
 
-        let operation = self.introspector.get_sink_info_list(
+        let operation = self.introspector.borrow_mut().get_sink_info_list(
             move |sink_list: ListResult<&pulse::context::introspect::SinkInfo>| {
                 if let ListResult::Item(item) = sink_list {
                     list_ref.borrow_mut().as_mut().unwrap().push(item.into());
@@ -275,7 +277,7 @@ impl PulseServer {
         let list: Rc<RefCell<Option<Vec<DeviceInfo>>>> = Rc::new(RefCell::new(Some(Vec::new())));
         let list_ref = list.clone();
 
-        let operation = self.introspector.get_source_info_list(
+        let operation = self.introspector.borrow().get_source_info_list(
             move |sink_list: ListResult<&pulse::context::introspect::SourceInfo>| {
                 if let ListResult::Item(item) = sink_list {
                     list_ref.borrow_mut().as_mut().unwrap().push(item.into());
@@ -296,7 +298,7 @@ impl PulseServer {
                 let name = &info.default_sink_name.unwrap_or_default();
                 let device = Rc::new(RefCell::new(Some(None)));
                 let dev_ref = device.clone();
-                let op = self.introspector.get_sink_info_by_name(
+                let op = self.introspector.borrow_mut().get_sink_info_by_name(
                     name,
                     move |sink_list: ListResult<&SinkInfo>| {
                         if let ListResult::Item(item) = sink_list {
@@ -326,7 +328,7 @@ impl PulseServer {
                 let name = &info.default_source_name.unwrap_or_default();
                 let device = Rc::new(RefCell::new(Some(None)));
                 let dev_ref = device.clone();
-                let op = self.introspector.get_source_info_by_name(
+                let op = self.introspector.borrow_mut().get_source_info_by_name(
                     name,
                     move |source_list: ListResult<&SourceInfo>| {
                         if let ListResult::Item(item) = source_list {
@@ -362,7 +364,7 @@ impl PulseServer {
         let info = Rc::new(RefCell::new(Some(None)));
         let info_ref = info.clone();
 
-        let op = self.introspector.get_server_info(move |res| {
+        let op = self.introspector.borrow_mut().get_server_info(move |res| {
             info_ref.borrow_mut().as_mut().unwrap().replace(res.into());
         });
         self.wait_for_result(op)?;
@@ -374,11 +376,13 @@ impl PulseServer {
     fn set_sink_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
         let op = self
             .introspector
+            .borrow_mut()
             .set_sink_mute_by_name(name, volume.is_muted(), None);
         self.wait_for_result(op).ok();
 
         let op = self
             .introspector
+            .borrow_mut()
             .set_sink_volume_by_name(name, volume, None);
         self.wait_for_result(op).ok();
     }
@@ -399,11 +403,13 @@ impl PulseServer {
     fn set_source_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
         let op = self
             .introspector
+            .borrow_mut()
             .set_source_mute_by_name(name, volume.is_muted(), None);
         let _ = self.wait_for_result(op);
 
         let op = self
             .introspector
+            .borrow_mut()
             .set_source_volume_by_name(name, volume, None);
         let _ = self.wait_for_result(op);
     }
