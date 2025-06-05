@@ -5,6 +5,9 @@
     "images.app.icon": File (
         path: "examples/images/app-icon.png",
     ),
+    "images.widget": File (
+        path: "examples/images/widget.png",
+    ),
     "fonts.primary.300": File (
         path: "fonts/SpaceGrotesk-Regular.ttf",
     ),

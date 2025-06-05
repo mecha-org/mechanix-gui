@@ -158,8 +158,8 @@ impl ButtonBuilder {
             Children::spawn((
                 Spawn((
                     Node {
-                        max_width: Val::Px(self.width.unwrap_or(ICON_WIDTH)),
-                        max_height: Val::Px(self.width.unwrap_or(ICON_HEIGHT)),
+                         max_width: Val::Px(self.width.unwrap_or(ICON_WIDTH)),
+                         max_height: Val::Px(self.width.unwrap_or(ICON_HEIGHT)),
                         ..default()
                     },
                     ImageNode {

@@ -1,12 +1,10 @@
-use bevy::{
-    color::palettes::css::{LIGHT_GREY}, prelude::*, winit::WinitSettings
-};
+use bevy::{color::palettes::css::{LIGHT_BLUE, LIGHT_GREY}, prelude::*, winit::WinitSettings};
 use bevy_asset_loader::prelude::*;
 use bevy_styled_widgets::prelude::ThemeManager;
 
 use crate::{
     StyledWidgetsPlugin,
-    settings::home::HomeScreenSettings,
+    settings::home::{HomeBundleType, HomeEntry, HomeScreenSettings},
     utils::{FontAssets, Icon},
     widgets::app_bundle::{ButtonVariant, StyledAppBundle},
 };
@@ -28,6 +26,9 @@ pub struct ImageAssets {
 
     #[asset(key = "images.app.icon")]
     app_icon: Handle<Image>,
+
+    #[asset(key = "images.widget")]
+    widget_icon: Handle<Image>,
 }
 
 #[derive(Component, Debug, Clone)]
@@ -54,41 +55,42 @@ pub fn run_home() {
         .add_systems(OnEnter(AssetsLoadingState::Loaded), setup_view_root)
         .run();
 }
-fn setup_view_root(mut commands: Commands,  image_assets: Res<ImageAssets>, font_assets: Res<FontAssets>) {
+fn setup_view_root(
+    mut commands: Commands,
+    image_assets: Res<ImageAssets>,
+    font_assets: Res<FontAssets>,
+) {
     commands.spawn(Camera2d);
 
     let GuiSettings { home } = GuiSettings::default();
     let HomeScreenSettings {
         width,
         height,
-        pinned_apps,
-        widgets,
+        grid_template_columns,
+        grid_template_rows,
+        home_entries,
     } = home;
 
     let current_menu = "sm"; //
-
-    let pinned_apps = pinned_apps.get(current_menu).unwrap_or(&vec![]).clone();
-    let widgets = widgets.get(current_menu).unwrap_or(&vec![]).clone();
+    let home_entries = home_entries.get(current_menu).unwrap_or(&vec![]).clone();
 
     // Create a root node
     commands
-        .spawn((
-            Node {
-                width: Val::Vw(width),
-                height: Val::Vh(height),
-                display: Display::Grid,
-                grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
-                grid_template_rows: RepeatedGridTrack::flex(4, 1.0),
-                padding: ROOT_PADDING,
-                row_gap: ROW_GAP,
-                column_gap: COLUMN_GAP,
-                ..default()
-            },
-        ))
+        .spawn((Node {
+            width: Val::Vw(width),
+            height: Val::Vh(height),
+            display: Display::Grid,
+            grid_template_columns: RepeatedGridTrack::flex(grid_template_columns, 1.0),
+            grid_template_rows: RepeatedGridTrack::flex(grid_template_rows, 1.0),
+            padding: ROOT_PADDING,
+            row_gap: ROW_GAP,
+            column_gap: COLUMN_GAP,
+            ..default()
+        },))
         .with_children(
             |parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>| {
-                for control_name in pinned_apps.clone() {
-                    spawn_menu_widget(parent, &image_assets, &font_assets, control_name.as_str());
+                for home_entry in home_entries.clone() {
+                    spawn_menu_widget(parent, &image_assets, &home_entry);
                 }
             },
         );
@@ -97,59 +99,45 @@ fn setup_view_root(mut commands: Commands,  image_assets: Res<ImageAssets>, font
 fn spawn_menu_widget(
     parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
     image_assets: &ImageAssets,
-    font_assets: &FontAssets,
-    control_name: &str,
+    home_entry: &HomeEntry,
 ) {
-    let FontAssets { font_icons, .. } = font_assets;
+    let HomeEntry {
+        name, bundle_type, ..
+    } = home_entry;
 
-    let icon = match control_name {
-        "App 1" => Icon::Terminal,
-        "App 2" => Icon::Folder,
-        "App 3" => Icon::FileManager,
-        "App 4" => Icon::App,
-        "App 5" => Icon::App,
-        "App 6" => Icon::App,
-        "App 7" => Icon::App,
-        "App 8" => Icon::App,
-        "App 9" => Icon::App,
-        "App 10" => Icon::App,
-        "App 11" => Icon::App,
-        "App 12" => Icon::App,
-        "App 13" => Icon::App,
-        "App 14" => Icon::Moon,
-        "App 15" => Icon::Moon,
-        "App 16" => Icon::Moon,
-        _ => Icon::Moon,
-    };
-
-    
-
-   let (grid_column, grid_row) = if control_name == "App 23"  {
+    // kept for widget to use in future
+    let (grid_column, grid_row) = if *bundle_type == HomeBundleType::Widget {
         (GridPlacement::span(2), GridPlacement::span(2))
     } else {
         (GridPlacement::span(1), GridPlacement::span(1))
+    };
+
+    let icon = match *bundle_type {
+        HomeBundleType::App => image_assets.app_icon.clone(),
+        HomeBundleType::Widget => image_assets.widget_icon.clone(),
     };
 
     parent.spawn((
         Node {
             display: Display::Grid,
             grid_column: grid_column,
+            grid_row: grid_row,
             padding: UiRect::all(Val::Px(4.0)),
             align_items: AlignItems::Center,
             justify_items: JustifyItems::Center,
             ..Default::default()
-        },
+        }, 
         Children::spawn(Spawn((
             StyledAppBundle::builder()
-                .image(image_assets.app_icon.clone())
-                .text(control_name.to_string())
+                .image(icon) // todo: dynamic image
+                .text(name.to_string())
                 .text_color(LIGHT_GREY.into())
                 .variant(ButtonVariant::Primary)
                 .border_radius(20.)
-                .width(ICON_WIDTH)
-                .height(ICON_HEIGHT)
+                 .width(ICON_WIDTH)
+                 .height(ICON_HEIGHT)
                 .build(),
-            ControlName(control_name.to_string()),
+            ControlName(name.to_string()),
         ))),
     ));
 }
