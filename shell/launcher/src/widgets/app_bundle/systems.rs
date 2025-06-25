@@ -1,10 +1,14 @@
-use bevy::prelude::*;
+use bevy::{
+    color::palettes::css::{DARK_GREY, GREEN, LIGHT_GREY, RED, WHITE},
+    image,
+    prelude::*,
+};
 use bevy_core_widgets::{ButtonPressed, InteractionDisabled, hover::Hovering};
-use bevy_styled_widgets::prelude::ThemeManager;
+use bevy_styled_widgets::prelude::{ThemeManager, button};
 
 use super::{
-    ButtonSize,
-    components::{ButtonVariant, StyledButton, StyledButtonText},
+    ButtonSize, ICON_HEIGHT, ICON_WIDTH, StyledAppBundleIcon,
+    components::{ButtonVariant, StyledAppBundle, StyledAppBundleText},
 };
 
 // Update the button's background color.
@@ -12,13 +16,14 @@ use super::{
 pub fn update_button(
     theme_manager: Res<ThemeManager>,
     children: Query<&mut Children>,
-    mut text_query: Query<(&mut Text, &mut TextColor, &mut TextFont), With<StyledButtonText>>,
+    mut param_set: ParamSet<(
+        Query<(&mut Text, &mut TextColor, &mut TextFont), With<StyledAppBundleText>>,
+        Query<(&mut Node, &mut ImageNode), (With<StyledAppBundleIcon>, Without<StyledAppBundle>)>,
+    )>,
     mut query: Query<(
         Entity,
         &mut Node,
-        &StyledButton,
-        &mut BackgroundColor,
-        &mut BorderColor,
+        &StyledAppBundle,
         &mut BorderRadius,
         &Hovering,
         &ButtonPressed,
@@ -29,8 +34,6 @@ pub fn update_button(
         button_entity_id,
         mut button_node,
         button,
-        mut bg_color,
-        mut border_color,
         mut border_radius,
         Hovering(is_hovering),
         ButtonPressed(is_pressed),
@@ -46,7 +49,10 @@ pub fn update_button(
         //Get button text
         if let Ok(children) = children.get(button_entity_id) {
             for child in children.iter() {
-                if let Ok((mut text, mut text_color, mut text_font)) = text_query.get_mut(child) {
+                // Update Text child
+                if let Ok((mut text, mut text_color, mut text_font)) = param_set.p0().get_mut(child)
+                {
+                    // Set text color
                     let button_styles = theme_manager.styles.buttons.clone();
                     let button_size_styles = theme_manager.styles.button_sizes.clone();
                     let button_style = match button.variant {
@@ -56,10 +62,13 @@ pub fn update_button(
                         ButtonVariant::Outline => button_styles.outline,
                         ButtonVariant::Ghost => button_styles.ghost,
                     };
-                    let color = button_style.text_color;
-                    text_color.0 = color;
+                    text_color.0 = if button.text_color.is_some() {
+                        button.text_color.unwrap()
+                    } else {
+                        button_style.text_color
+                    };
 
-                    //update font size
+                    // Set font size
                     let button_size_style = match button.size.unwrap_or_default() {
                         ButtonSize::XSmall => button_size_styles.xsmall,
                         ButtonSize::Small => button_size_styles.small,
@@ -69,9 +78,9 @@ pub fn update_button(
                     };
                     text_font.font_size = button_size_style.font_size;
 
-                    //update text
+                    // Set text value
                     if let Some(text_str) = button.text.clone() {
-                        text.0 = text_str.clone();
+                        text.0 = text_str;
                     }
 
                     //update icon
@@ -83,41 +92,55 @@ pub fn update_button(
                         };
                     }
 
-                    //update font
+                    // Optionally update font
                     if let Some(font) = &button.font {
                         text_font.font = font.clone();
                     }
                 }
-            }
-        };
 
-        // Update the background color based on the button's state
-        let button_style = match button.variant {
-            ButtonVariant::Primary => button_styles.primary,
-            ButtonVariant::Secondary => button_styles.secondary,
-            ButtonVariant::Destructive => button_styles.destructive,
-            ButtonVariant::Outline => button_styles.outline,
-            ButtonVariant::Ghost => button_styles.ghost,
-        };
+                // Update ImageNode child
+                if let Ok((mut node, mut image_node)) = param_set.p1().get_mut(child) {
+                    if let Some(image) = &button.image {
+                        image_node.image = image.clone();
+                    }
 
-        match (is_disabled, is_pressed, is_hovering) {
-            (true, _, _) => {
-                bg_color.0 = button_style.normal_background;
-                border_color.0 = button_style.border_color;
+                    match (is_disabled, is_pressed, is_hovering) {
+                        (true, _, _) => {
+                            image_node.color = DARK_GREY.into();
+                        }
+                        (_, true, true) => {
+                            image_node.color = LIGHT_GREY.into();
+                        }
+                        (_, false, true) => {
+                            image_node.color = LIGHT_GREY.into();
+                        } // Hovering
+                        _ => {
+                            image_node.color = WHITE.into();
+                        }
+                    };
+
+                    let app_button_width = button.width.unwrap_or(ICON_WIDTH);
+                    let app_button_height = button.height.unwrap_or(ICON_HEIGHT);
+
+                    let (icon_width, icon_height) = if *is_pressed {
+                        (
+                            Val::Px(app_button_width - 20.),
+                            Val::Px(app_button_height - 20.),
+                        ) // pressed size
+                    } else if *is_hovering {
+                        (
+                            Val::Px(app_button_width - 12.),
+                            Val::Px(app_button_height - 12.),
+                        ) // hover size
+                    } else {
+                        (Val::Px(app_button_width), Val::Px(app_button_height))
+                    };
+
+                    node.width = icon_width;
+                    node.height = icon_height;
+                }
             }
-            (_, true, true) => {
-                bg_color.0 = button_style.pressed_background;
-                border_color.0 = button_style.border_color;
-            }
-            (_, false, true) => {
-                bg_color.0 = button_style.hovered_background;
-                border_color.0 = button_style.border_color;
-            }
-            _ => {
-                bg_color.0 = button_style.normal_background;
-                border_color.0 = button_style.border_color;
-            }
-        };
+        }
 
         //Update size styles
         let button_size_style = match button.size.unwrap_or_default() {

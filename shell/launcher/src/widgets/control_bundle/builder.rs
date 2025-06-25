@@ -5,13 +5,13 @@ use bevy::{
 use bevy_core_widgets::{CoreButton, hover::Hovering};
 
 use super::{
-    ButtonSize, StyledButtonText,
-    components::{AccessibleName, ButtonVariant, StyledButton},
+    ButtonSize, StyledControlText,
+    components::{AccessibleName, ControlVariant, StyledControl},
 };
 
 #[derive(Default)]
-pub struct ButtonBuilder {
-    variant: ButtonVariant,
+pub struct ControlBuilder {
+    variant: ControlVariant,
     on_click: Option<SystemId>,
     background_color: Option<Color>,
     border_color: Option<Color>,
@@ -28,8 +28,8 @@ pub struct ButtonBuilder {
     border_radius: Option<f32>,
 }
 
-impl ButtonBuilder {
-    pub fn variant(mut self, variant: ButtonVariant) -> Self {
+impl ControlBuilder {
+    pub fn variant(mut self, variant: ControlVariant) -> Self {
         self.variant = variant;
         self
     }
@@ -118,10 +118,10 @@ impl ButtonBuilder {
             },
             BorderRadius::default(),
             BorderColor::default(),
-            Name::new("Button"),
+            Name::new("Control"),
             Hovering::default(),
             CursorIcon::System(SystemCursorIcon::Pointer),
-            StyledButton {
+            StyledControl {
                 text: self.text.clone(),
                 icon: self.icon.clone(),
                 font: self.font,
@@ -141,12 +141,12 @@ impl ButtonBuilder {
             CoreButton {
                 on_click: self.on_click,
             },
-            AccessibleName(self.text.clone().unwrap_or_else(|| "Button".to_string())),
+            AccessibleName(self.text.clone().unwrap_or_else(|| "Control".to_string())),
             TabIndex(0),
             Children::spawn(Spawn((
                 Text::new(""),
                 TextFont::default(),
-                StyledButtonText,
+                StyledControlText,
             ))),
         )
     }

@@ -5,10 +5,7 @@ use systems::control_click_system;
 mod systems;
 
 use crate::{
-    StyledWidgetsPlugin,
-    settings::settings_drawer::SettingsDrawerSettings,
-    utils::{FontAssets, Icon},
-    widgets::button::{ButtonSize, ButtonVariant, StyledButton},
+    settings::settings_drawer::SettingsDrawerSettings, utils::{FontAssets, Icon}, widgets::control_bundle::{ControlVariant, StyledControl}, StyledWidgetsPlugin
 };
 
 #[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
@@ -124,10 +121,10 @@ fn spawn_menu_widget(
             ..Default::default()
         },
         Children::spawn(Spawn((
-            StyledButton::builder()
+             StyledControl::builder()
                 .icon(icon)
                 .font(font_icons.clone())
-                .variant(ButtonVariant::Primary)
+                .variant(ControlVariant::Primary)
                 .border_radius(20.)
                 .on_click(click_system_id)
                 .build(),
