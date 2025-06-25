@@ -3,7 +3,7 @@
 use super::interfaces::NetworkManagerInterface;
 use crate::errors::NetworkManagerError;
 use crate::interfaces::wireless::{
-    AccessPointEvent, EventType, NM80211ApFlags, WifiState, WirelessNetworkInfo,
+    AccessPointEvent, EventType, NM80211ApFlags, NMState, WirelessNetworkInfo,
 };
 use crate::proxies::NetworkManagerProxy;
 use anyhow::Result;
@@ -11,7 +11,6 @@ use futures::StreamExt;
 use log::{debug, error, info};
 use std::sync::mpsc;
 use zbus::Connection;
-
 
 /// A service wrapper for interacting with a NetworkManager implementation.
 ///
@@ -90,6 +89,7 @@ impl NetworkManagerService {
                     signal_strength,
                     security,
                     hw_address: raw_ap.hw_address,
+                    is_active: raw_ap.is_active,
                 })
             })
             .collect()
@@ -143,7 +143,7 @@ impl NetworkManagerService {
     /// #[tokio::main]
     /// async fn main() {
     /// let nm_service = NetworkManagerService::new();
-    ///     let mut rx = nm_service.subscribe_device_events().await;
+    ///     let mut rx = nm_service.stream_device_events().await;
     ///
     ///     while let Some(state) = rx.recv().await {
     ///         println!("WiFi state changed: {:?}", state);
@@ -171,28 +171,28 @@ impl NetworkManagerService {
             .map_err(NetworkManagerError::from)
     }
 
-    pub async fn subscribe_device_events(&self) -> mpsc::Receiver<WifiState> {
+    pub async fn stream_device_events(&self) -> mpsc::Receiver<NMState> {
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
 
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
-                match proxy.subscribe_device_events().await {
+                match proxy.stream_device_events().await {
                     Ok(mut stream) => {
                         while let Some(event) = stream.next().await {
                             if let Ok(state) = event.get().await {
                                 info!("state updated: {}", state);
                                 // Blocking send (uses thread park/unpark internally)
-                                if sender.send(WifiState::from(state)).is_err() {
-                                    error!("failed to send device event to receiver");
+                                if let Err(e) = sender.send(NMState::from(state)) {
+                                    error!("failed to send device event to receiver: {}", e);
                                     continue;
                                 }
                             }
                         }
                     }
                     Err(e) => {
-                        error!("Failed to subscribe to device events: {}", e);
+                        error!("Failed to stream to device events: {}", e);
                     }
                 }
             });
@@ -200,7 +200,7 @@ impl NetworkManagerService {
         receiver
     }
 
-    pub async fn subscribe_access_point_events(
+    pub async fn stream_access_point_events(
         &self,
     ) -> mpsc::Receiver<Result<AccessPointEvent, NetworkManagerError>> {
         let proxy = self.proxy.clone();
@@ -210,10 +210,10 @@ impl NetworkManagerService {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 let (mut access_point_added_stream, mut access_point_removed_stream) =
-                    match proxy.subscribe_access_point_events().await {
+                    match proxy.stream_access_point_events().await {
                         Ok((added_stream, removed_stream)) => (added_stream, removed_stream),
                         Err(e) => {
-                            error!("failed to subscribe to access point events: {}", e);
+                            error!("failed to stream to access point events: {}", e);
                             return;
                         }
                     };
@@ -231,7 +231,7 @@ impl NetworkManagerService {
                                     }
                                 };
                                 let access_point_path = args.access_point.to_string();
-                                debug!("access point added: {}", access_point_path);
+                                info!("access point added: {}", access_point_path);
 
                                 let raw_access_point_info = match proxy.get_access_point_info(&args.access_point).await {
                                     Ok(info) => info,
@@ -295,6 +295,61 @@ impl NetworkManagerService {
         });
         receiver
     }
+    pub async fn stream_wireless_enabled_status(&self) -> mpsc::Receiver<bool> {
+        let proxy = self.proxy.clone();
+        let (sender, receiver) = mpsc::channel();
+
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                match proxy.stream_wireless_enabled_status().await {
+                    Ok(mut stream) => {
+                        while let Some(event) = stream.next().await {
+                            if let Ok(state) = event.get().await {
+                                info!("state updated: {}", state);
+                                // Blocking send (uses thread park/unpark internally)
+                                if let Err(e) = sender.send(state) {
+                                    error!("failed to send device event to receiver: {}", e);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error!("Failed to stream to device events: {}", e);
+                    }
+                }
+            });
+        });
+        receiver
+    }
+    pub async fn stream_active_network_strength(&self) -> mpsc::Receiver<u8> {
+        let proxy = self.proxy.clone();
+        let (sender, receiver) = mpsc::channel();
+
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                match proxy.stream_wireless_network_strength().await {
+                    Ok(mut stream) => {
+                        while let Some(event) = stream.next().await {
+                            if let Ok(state) = event.get().await {
+                                // Blocking send (uses thread park/unpark internally)
+                                if let Err(e) = sender.send(state) {
+                                    error!("failed to send strength event to receiver: {}", e);
+                                    continue;
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error!("Failed to stream to device events: {}", e);
+                    }
+                }
+            });
+        });
+        receiver
+    }
 }
 
 #[cfg(test)]
@@ -306,16 +361,25 @@ mod tests {
     use anyhow::Result;
     use mockall::{mock, predicate::*};
 
-    // TODO: Issue with return type of the method subscribe_device_events so i have written a mock trait
+    // TODO: Issue with return type of the method stream_device_events so i have written a mock trait
     // Err: cannot return reference to temporary value
     #[async_trait::async_trait]
     pub trait NetworkManagerInterfaceMock {
         async fn toggle_wireless(&self, enabled: bool) -> Result<(), ProxyError>;
         async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError>;
-        async fn connect_to_network(&self, ssid: &str, password: Option<String>) -> Result<(String, String), ProxyError>;
+        async fn connect_to_network(
+            &self,
+            ssid: &str,
+            password: Option<String>,
+        ) -> Result<(String, String), ProxyError>;
         async fn disconnect(&self) -> Result<(), ProxyError>;
-        async fn get_access_point_info(&self, object_path: &str) -> Result<RawAccessPointInfo, ProxyError>;
-        async fn subscribe_access_point_events(&self) -> Result<(AccessPointAddedStream, AccessPointRemovedStream), ProxyError>;
+        async fn get_access_point_info(
+            &self,
+            object_path: &str,
+        ) -> Result<RawAccessPointInfo, ProxyError>;
+        async fn stream_access_point_events(
+            &self,
+        ) -> Result<(AccessPointAddedStream, AccessPointRemovedStream), ProxyError>;
     }
 
     mock! {
@@ -332,8 +396,8 @@ mod tests {
             async fn connect_to_network(&self, ssid: &str, password: Option<String>) -> Result<(String, String), ProxyError>;
             async fn disconnect(&self) -> Result<(), ProxyError>;
             async fn get_access_point_info(&self, object_path: &str) -> Result<RawAccessPointInfo, ProxyError>;
-            // async fn subscribe_device_events(&self) -> Result<PropertyStream<u32>, ProxyError>;
-            async fn subscribe_access_point_events(&self) -> Result<(AccessPointAddedStream, AccessPointRemovedStream), ProxyError>;
+            // async fn stream_device_events(&self) -> Result<PropertyStream<u32>, ProxyError>;
+            async fn stream_access_point_events(&self) -> Result<(AccessPointAddedStream, AccessPointRemovedStream), ProxyError>;
         }
     }
 
@@ -349,7 +413,10 @@ mod tests {
     #[tokio::test]
     async fn test_toggle_wireless_success() {
         let mut mock_nm = MockNetworkManager::new();
-        mock_nm.expect_toggle_wireless().times(1).returning(|_| Ok(()));
+        mock_nm
+            .expect_toggle_wireless()
+            .times(1)
+            .returning(|_| Ok(()));
 
         let service = NetworkManagerService::new().await.unwrap();
         assert!(service.toggle_wireless(true).await.is_ok());

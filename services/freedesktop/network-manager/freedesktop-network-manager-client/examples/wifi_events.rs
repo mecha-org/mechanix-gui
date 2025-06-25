@@ -15,12 +15,12 @@ async fn main() -> anyhow::Result<()> {
     //     let _ = nm_handler.run(nm_rx).await;
     // });
 
-    let receiver = network_manager.subscribe_device_events().await;
+    let receiver = network_manager.stream_wireless_enabled_status().await;
     // Wait for the response
     let handler = thread::spawn(move || {
         // Process messages until the channel closes
         while let Ok(result) = receiver.recv() {
-            println!("event: {}", result);
+            println!("event: {:?}", result);
         }
         println!("Device handler thread exiting gracefully.");
     });

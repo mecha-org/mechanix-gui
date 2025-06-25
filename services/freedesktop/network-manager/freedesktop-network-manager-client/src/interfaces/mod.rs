@@ -64,11 +64,11 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// When disabled, all interfaces that NM manages are deactivated.
     /// # Arguments
     /// * `enabled` - If `true`, wireless will be enabled; if `false`, wireless will be disabled.
-    /// 
+    ///
     /// # Errors
     /// Return an error if the operation fails.
     async fn toggle_wireless(&self, enabled: bool) -> Result<(), ProxyError>;
-    
+
 
     /// Get the list of available wireless networks.
     ///
@@ -143,8 +143,10 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// # Returns
     /// * `Ok(())` - If the subscription was successfully set up
     /// * `Err(ProxyError)` - If there was an error setting up the subscription
-    async fn subscribe_device_events(&self) -> Result<PropertyStream<u32>, ProxyError>;
-    async fn subscribe_access_point_events(
+    async fn stream_device_events(&self) -> Result<PropertyStream<u32>, ProxyError>;
+    async fn stream_access_point_events(
         &self,
     ) -> Result<(AccessPointAddedStream, AccessPointRemovedStream), ProxyError>;
+    async fn stream_wireless_enabled_status(&self) -> Result<PropertyStream<bool>, ProxyError>;
+    async fn stream_wireless_network_strength(&self) -> Result<PropertyStream<u8>, ProxyError>;
 }

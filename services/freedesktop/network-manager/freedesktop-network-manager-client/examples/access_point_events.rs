@@ -4,9 +4,8 @@ use freedesktop_network_manager_client::service::NetworkManagerService;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-
     let network_manager = NetworkManagerService::new().await?;
-    let receiver = network_manager.subscribe_access_point_events().await;
+    let receiver = network_manager.stream_access_point_events().await;
     // Spawn the NetworkManager handler in a background task
     // Wait for the response
     let handler = tokio::spawn(async move {
@@ -17,7 +16,7 @@ async fn main() -> anyhow::Result<()> {
             }
         }
     });
-    
+
     // Await the result and log it
     handler.await.unwrap();
 

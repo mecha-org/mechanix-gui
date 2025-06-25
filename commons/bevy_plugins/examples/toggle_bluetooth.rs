@@ -4,7 +4,7 @@ use bevy_plugins::bluetooth::{
     BluetoothAction, BluetoothActionEvent, BluetoothResult, BluetoothResultEvent,
 };
 use bevy_plugins::BluetoothPlugin;
-use freedesktop_network_manager_client::interfaces::wireless::WifiState;
+use freedesktop_network_manager_client::interfaces::wireless::{NMState};
 
 fn main() {
     App::new()
@@ -33,7 +33,7 @@ fn wait_action_result(mut event_reader: EventReader<BluetoothResultEvent>) {
     }
 }
 #[derive(Event, Debug, Clone)]
-pub struct WifiStateEvent(pub WifiState);
+pub struct WifiStateEvent(pub NMState);
 
 #[derive(Component)]
 enum ButtonAction {

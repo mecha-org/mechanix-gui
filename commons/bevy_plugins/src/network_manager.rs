@@ -1,12 +1,13 @@
-use bevy::prelude::*;
-use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{mpsc, LazyLock, Mutex};
-use bevy::ecs::error::info;
 use bevy::log::{error, info};
+use bevy::prelude::*;
 use bevy::prelude::{Event, Resource};
 use bevy::tasks::{AsyncComputeTaskPool, IoTaskPool};
-use freedesktop_network_manager_client::interfaces::wireless::{AccessPointEvent, WifiState, WirelessNetworkInfo};
+use freedesktop_network_manager_client::interfaces::wireless::{
+    AccessPointEvent, NMState, WirelessNetworkInfo,
+};
 use freedesktop_network_manager_client::service::NetworkManagerService;
+use std::sync::mpsc::{Receiver, Sender};
+use std::sync::{mpsc, LazyLock, Mutex};
 
 /// Holds the async-initialized service, or None if not ready yet.
 #[derive(Resource)]
@@ -14,11 +15,8 @@ pub struct NetworkManagerServiceResource {
     pub service: Option<NetworkManagerService>,
 }
 
-#[derive(Resource, Debug, Clone)]
-pub struct WifiStatus {
-    pub connected: bool,
-    pub last_error: Option<String>,
-}
+#[derive(Resource, Default, Debug, Clone)]
+pub struct WirelessEnabled(bool);
 #[derive(Resource)]
 pub struct NetworkResultReceiver {
     receiver: Mutex<Receiver<NetworkResult>>,
@@ -26,12 +24,14 @@ pub struct NetworkResultReceiver {
 
 #[derive(Resource, Clone)]
 pub struct NetworkResultSender(pub Sender<NetworkResult>);
+
+#[derive(Resource, Default)]
+pub struct NetworkManagerState {
+    pub initialized: bool,
+    pub stream_started: bool,
+}
 #[derive(Event)]
 pub struct NetworkActionEvent(pub NetworkAction);
-
-#[derive(Event)]
-pub struct NetworkResultEvent(pub NetworkResult);
-
 
 #[derive(Debug, Clone)]
 pub enum NetworkAction {
@@ -41,20 +41,22 @@ pub enum NetworkAction {
     ConnectToSavedNetwork(String),
     ForgetSavedNetwork(String),
     DisconnectNetwork,
-    SubscribeDeviceEvents,
-    SubscribeAccessPointsEvents,
-
+    StreamDeviceEvents,
+    StreamAccessPointsEvents,
+    StreamWirelessEnabledStatus,
+    StreamActiveNetworkStrength,
 }
 
 #[derive(Debug)]
 pub enum NetworkResult {
-    ToggleWifi(WifiStatus),
+    ToggleWifi(WirelessEnabled),
     ListNetworks(Vec<WirelessNetworkInfo>),
-    NetworkDeviceEvent(WifiState),
+    NetworkDeviceEvent(NMState),
     NetworkAccessPointEvent(AccessPointEvent),
+    NetworkStrength(u8),
+    WirelessEnabled(bool),
     Error(ErrorType),
 }
-
 
 #[derive(Debug, Clone)]
 pub enum ErrorType {
@@ -76,16 +78,21 @@ pub struct NetworkManagerPlugin;
 
 impl Plugin for NetworkManagerPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(NetworkManagerServiceResource { service: None })
-            .insert_resource(WifiStatus {
-                connected: false,
-                last_error: None,
-            })
+        app.insert_resource(NetworkManagerServiceResource { service: None })
+            .insert_resource(NetworkManagerState::default())
+            .insert_resource(WirelessEnabled::default())
             .add_event::<NetworkActionEvent>()
-            .add_event::<NetworkResultEvent>()
-            .add_systems(Startup, (init_network_manager_service, setup_network_channel)) // Async task so temp move service result to static
-            .add_systems(Update, poll_service_init) // Once a service is initialized, it will move service from static to resource
+            .add_systems(
+                Startup,
+                (init_network_manager_service, setup_network_channel),
+            ) // Async task so temp move service result to static
+            .add_systems(
+                Update,
+                (
+                    poll_service_init,
+                    start_stream_if_service_ready.after(poll_service_init),
+                ),
+            )
             .add_systems(
                 Update,
                 (
@@ -93,6 +100,25 @@ impl Plugin for NetworkManagerPlugin {
                     poll_network_action_result_events.after(handle_network_action_events),
                 ),
             );
+    }
+}
+fn start_stream_if_service_ready(
+    mut state: ResMut<NetworkManagerState>,
+    service_res: Res<NetworkManagerServiceResource>,
+    mut events: EventWriter<NetworkActionEvent>,
+) {
+    // Only start once, and only when the service is initialized
+    if !state.stream_started {
+        if let Some(service) = &service_res.service {
+            println!("Starting stream...");
+            // events.write(NetworkActionEvent(
+            //     NetworkAction::StreamWirelessEnabledStatus,
+            // ));
+            // events.write(NetworkActionEvent(NetworkAction::StreamDeviceEvents));
+            // events.write(NetworkActionEvent(NetworkAction::StreamAccessPointsEvents));
+            events.write(NetworkActionEvent(NetworkAction::StreamActiveNetworkStrength));
+            state.stream_started = true;
+        }
     }
 }
 /// Checks if the `NetworkManagerService` is ready (i.e. not None).
@@ -129,7 +155,6 @@ fn init_network_manager_service() {
         .detach();
 }
 
-
 // Polling system to move service from static to resource
 fn poll_service_init(mut resource: ResMut<NetworkManagerServiceResource>) {
     let mut lock = SERVICE_RESULT.lock().unwrap();
@@ -147,12 +172,12 @@ fn setup_network_channel(mut commands: Commands) {
     commands.insert_resource(NetworkResultSender(tx)); // You define this
 }
 fn handle_network_action_events(
-    mut events: EventReader<NetworkActionEvent>,
+    mut action_events: EventReader<NetworkActionEvent>,
     mut service: ResMut<NetworkManagerServiceResource>,
     sender: Res<NetworkResultSender>,
 ) {
     let pool = AsyncComputeTaskPool::get();
-    for event in events.read() {
+    for event in action_events.read() {
         let NetworkActionEvent(action) = event;
         match action {
             NetworkAction::ToggleWifi(enable) => {
@@ -163,28 +188,16 @@ fn handle_network_action_events(
                     let result_sender = sender.0.clone();
                     pool.spawn(async move {
                         match service.toggle_wireless(enable).await {
-                            Ok(status) => {
-                                info!("toggle wireless status: {status:?}");
-                                let wifi_status = WifiStatus {
-                                    connected: enable,
-                                    last_error: None,
-                                };
-                                match result_sender.send(NetworkResult::ToggleWifi(wifi_status)) {
-                                    Ok(res) => {
-                                        info!("sent toggle wifi status: {res:?}");
-                                    }
-                                    Err(err) => {
-                                        error!("failed to send toggle wifi status: {err}");
-                                    }
-                                }
-                            }
+                            Ok(status) => {}
                             Err(err) => {
                                 error!("failed to toggle wifi: {err}");
                                 let error_type = ErrorType::ActionFailed {
                                     action: NetworkAction::ToggleWifi(enable),
                                     message: "Failed to toggle WiFi".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::Error(error_type))
+                                {
                                     error!("failed to send toggle wifi error: {err}");
                                 }
                             }
@@ -201,7 +214,9 @@ fn handle_network_action_events(
                     pool.spawn(async move {
                         match service.list_networks().await {
                             Ok(networks) => {
-                                if let Err(err) = result_sender.send(NetworkResult::ListNetworks(networks)) {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::ListNetworks(networks))
+                                {
                                     error!("failed to send networks: {err}");
                                 }
                             }
@@ -211,7 +226,9 @@ fn handle_network_action_events(
                                     action: NetworkAction::ListNetworks,
                                     message: "Failed to list networks".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::Error(error_type))
+                                {
                                     error!("failed to send list networks error: {err}");
                                 }
                             }
@@ -236,7 +253,9 @@ fn handle_network_action_events(
                                     action: NetworkAction::ConnectNetwork(ssid, password),
                                     message: "Failed to connect network".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::Error(error_type))
+                                {
                                     error!("failed to send connect network error: {err}");
                                 }
                             }
@@ -260,7 +279,9 @@ fn handle_network_action_events(
                                     action: NetworkAction::ConnectToSavedNetwork(ssid),
                                     message: "Failed to connect to saved network".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::Error(error_type))
+                                {
                                     error!("failed to send connect to saved network error: {err}");
                                 }
                             }
@@ -284,7 +305,9 @@ fn handle_network_action_events(
                                     action: NetworkAction::ForgetSavedNetwork(ssid),
                                     message: "Failed to forget saved network".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::Error(error_type))
+                                {
                                     error!("failed to send forget saved network error: {err}");
                                 }
                             }
@@ -307,7 +330,9 @@ fn handle_network_action_events(
                                     action: NetworkAction::DisconnectNetwork,
                                     message: "Failed to disconnect network".to_string(),
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::Error(error_type)) {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::Error(error_type))
+                                {
                                     error!("failed to send disconnect network error: {err}");
                                 }
                             }
@@ -316,43 +341,90 @@ fn handle_network_action_events(
                         .detach();
                 }
             }
-            NetworkAction::SubscribeDeviceEvents => {
+            NetworkAction::StreamDeviceEvents => {
                 info!("network action: subscribe device events");
                 if let Some(service) = &service.service {
                     let service = service.clone();
                     let result_sender = sender.0.clone();
-                    bevy::tasks::IoTaskPool::get()
+                    IoTaskPool::get()
                         .spawn(async move {
-                            let receiver = service.subscribe_device_events().await;
-                            while let Ok(device_event) = receiver.try_recv() {
-                                if let Err(err) = result_sender.send(NetworkResult::NetworkDeviceEvent(device_event)) {
+                            let receiver: mpsc::Receiver<NMState> =
+                                service.stream_device_events().await;
+                            while let Ok(device_event) = receiver.recv() {
+                                if let Err(err) = result_sender
+                                    .send(NetworkResult::NetworkDeviceEvent(device_event))
+                                {
                                     error!("failed to send device event: {err}");
                                 }
                             }
-                        }).detach();
+                        })
+                        .detach();
                 }
             }
-            NetworkAction::SubscribeAccessPointsEvents => {
+            NetworkAction::StreamAccessPointsEvents => {
                 info!("network action: subscribe access points events");
                 if let Some(service) = &service.service {
                     let service = service.clone();
                     let result_sender = sender.0.clone();
                     bevy::tasks::IoTaskPool::get()
                         .spawn(async move {
-                            let receiver = service.subscribe_access_point_events().await;
-                            while let Ok(access_point_event_result) = receiver.try_recv() {
-                                let access_point_event = match access_point_event_result{
+                            let receiver = service.stream_access_point_events().await;
+                            while let Ok(access_point_event_result) = receiver.recv() {
+                                let access_point_event = match access_point_event_result {
                                     Ok(access_point_event) => access_point_event,
                                     Err(err) => {
                                         error!("error in access point event: {err}");
                                         continue;
                                     }
                                 };
-                                if let Err(err) = result_sender.send(NetworkResult::NetworkAccessPointEvent(access_point_event)) {
+                                if let Err(err) = result_sender.send(
+                                    NetworkResult::NetworkAccessPointEvent(access_point_event),
+                                ) {
                                     error!("failed to send access point event: {err}");
                                 }
                             }
-                        }).detach();
+                        })
+                        .detach();
+                }
+            }
+            NetworkAction::StreamWirelessEnabledStatus => {
+                info!("network action: subscribe wireless enabled status");
+                if let Some(service) = &service.service {
+                    let service = service.clone();
+                    let sender = sender.0.clone();
+                    IoTaskPool::get()
+                        .spawn(async move {
+                            let receiver: mpsc::Receiver<bool> =
+                                service.stream_wireless_enabled_status().await;
+                            while let Ok(device_event) = receiver.recv() {
+                                if let Err(err) =
+                                    sender.send(NetworkResult::WirelessEnabled(device_event))
+                                {
+                                    error!("failed to send wireless enabled status: {err}");
+                                }
+                            }
+                        })
+                        .detach();
+                }
+            }
+            NetworkAction::StreamActiveNetworkStrength => {
+                info!("network action: stream active network strength");
+                if let Some(service) = &service.service {
+                    let service = service.clone();
+                    let sender = sender.0.clone();
+                    IoTaskPool::get()
+                        .spawn(async move {
+                            let receiver: mpsc::Receiver<u8> =
+                                service.stream_active_network_strength().await;
+                            while let Ok(network_strength) = receiver.recv() {
+                                if let Err(err) =
+                                    sender.send(NetworkResult::NetworkStrength(network_strength))
+                                {
+                                    error!("failed to send wireless enabled status: {err}");
+                                }
+                            }
+                        })
+                        .detach();
                 }
             }
         } // Add more as needed
@@ -360,13 +432,22 @@ fn handle_network_action_events(
 }
 
 // Polling system to insert write error into an event
-fn poll_network_action_result_events(
-    mut network_result_event_writer: EventWriter<NetworkResultEvent>,
-    event_receiver: ResMut<NetworkResultReceiver>,
-) {
+fn poll_network_action_result_events(event_receiver: ResMut<NetworkResultReceiver>, mut wifi_state: ResMut<WirelessEnabled>) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
-            network_result_event_writer.write(NetworkResultEvent(event));
+            match event {
+                NetworkResult::WirelessEnabled(is_enabled) => {
+                    info!("network result: wireless enabled status: {is_enabled}");
+                    wifi_state.0 = is_enabled;
+                }
+                NetworkResult::ListNetworks(networks) => {
+                    info!("network result: list of available networks: {:?}", networks);
+                }
+                NetworkResult::NetworkStrength(network_strength) => {
+                    info!("network result: strength: {:?}", network_strength);
+                }
+                _ => {}
+            }
         }
     } else {
         println!("Failed to acquire receiver lock");

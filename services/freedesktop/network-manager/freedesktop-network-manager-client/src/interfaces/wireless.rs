@@ -1,6 +1,5 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use std::fmt;
 
 /// Represents the current status of the Wireless connection.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -17,40 +16,44 @@ pub enum WifiStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum WifiState {
-    Connecting,
-    Connected,
-    Disconnected,
-    Disconnecting,
-    Unknown,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NMState {
+    Unknown = 0,
+    Asleep = 10,
+    Disconnected = 20,
+    Disconnecting = 30,
+    Connecting = 40,
+    ConnectedLocal = 50,
+    ConnectedSite = 60,
+    ConnectedGlobal = 70,
 }
 
-impl From<u32> for WifiState {
+impl From<u32> for NMState {
     fn from(value: u32) -> Self {
         match value {
-            20 => WifiState::Disconnected,
-            30 => WifiState::Disconnecting,
-            (40..60) => WifiState::Connecting,
-            70 => WifiState::Connected,
-            100 => WifiState::Connected,
-            110 => WifiState::Disconnecting,
-            // (60..=70) => WifiState::Connected,
-            _ => WifiState::Unknown,
+            0 => NMState::Unknown,
+            10 => NMState::Asleep,
+            20 => NMState::Disconnected,
+            30 => NMState::Disconnecting,
+            40 => NMState::Connecting,
+            50 => NMState::ConnectedLocal,
+            60 => NMState::ConnectedSite,
+            70 => NMState::ConnectedGlobal,
+            _ => NMState::Unknown,
         }
     }
 }
-impl fmt::Display for WifiState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            WifiState::Connecting => write!(f, "Connecting.."),
-            WifiState::Connected => write!(f, "Connected"),
-            WifiState::Disconnected => write!(f, "Disconnected"),
-            WifiState::Disconnecting => write!(f, "Disconnecting.."),
-            WifiState::Unknown => write!(f, ""),
-        }
-    }
-}
+// impl fmt::Display for NMState {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             WifiState::Connecting => write!(f, "Connecting.."),
+//             WifiState::Connected => write!(f, "Connected"),
+//             WifiState::Disconnected => write!(f, "Disconnected"),
+//             WifiState::Disconnecting => write!(f, "Disconnecting.."),
+//             WifiState::Unknown => write!(f, ""),
+//         }
+//     }
+// }
 
 /// Raw information about a detected Wireless access point.
 ///
@@ -65,6 +68,8 @@ pub struct RawAccessPointInfo {
     pub rsn_flags: u32,
     /// SSID of the access point as a sequence of bytes.
     pub ssid: String,
+    /// Whether the access point is currently active.
+    pub is_active: bool,
     /// Operating frequency (in MHz).
     pub frequency: u32,
     /// Hardware (MAC) address of the access point.
@@ -118,6 +123,8 @@ pub struct WirelessNetworkInfo {
     pub security: String,
     /// Hardware (MAC) address of the access point.
     pub hw_address: String,
+    
+    pub is_active: bool,
     // Additional fields can be added as needed.
 }
 
@@ -142,5 +149,5 @@ pub enum EventType {
 pub struct AccessPointEvent {
     pub event_type: EventType,
     pub access_point_path: String,
-    pub raw_access_point_info: Option<RawAccessPointInfo>
+    pub raw_access_point_info: Option<RawAccessPointInfo>,
 }

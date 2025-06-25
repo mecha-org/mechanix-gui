@@ -1,8 +1,10 @@
-use bevy::{prelude::*, winit::WinitSettings};
 use bevy::color::palettes::basic::RED;
-use bevy_plugins::network_manager::{NetworkAction, NetworkActionEvent, NetworkResult, NetworkResultEvent};
+use bevy::{prelude::*, winit::WinitSettings};
+use bevy_plugins::network_manager::{
+    NetworkAction, NetworkActionEvent,
+};
 use bevy_plugins::NetworkManagerPlugin;
-use freedesktop_network_manager_client::interfaces::wireless::WifiState;
+use freedesktop_network_manager_client::interfaces::wireless::NMState;
 
 fn main() {
     App::new()
@@ -10,28 +12,12 @@ fn main() {
         .add_plugins(NetworkManagerPlugin)
         .insert_resource(WinitSettings::desktop_app())
         .add_systems(Startup, setup)
-        .add_systems(Update, (button_system, wait_action_result))
+        .add_systems(Update, button_system)
         .run();
 }
 
-fn wait_action_result(mut event_reader: EventReader<NetworkResultEvent>) {
-    for event in event_reader.read() {
-        let actions =  &event.0;
-        match actions {
-            NetworkResult::ToggleWifi(status) => {
-                info!("wifi result received: {status:?}");
-            }
-            NetworkResult::Error(error) => {
-                error!("error: {error:?}");
-            }
-            _ => {
-                info!("no action");
-            }
-        }
-    }
-}
 #[derive(Event, Debug, Clone)]
-pub struct WifiStateEvent(pub WifiState);
+pub struct WifiStateEvent(pub NMState);
 
 #[derive(Resource, Component)]
 struct WifiEventText(String);
@@ -73,10 +59,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             BackgroundColor(NORMAL_BUTTON),
             ButtonAction::Wifi,
         ))
-        .with_child((
-            Text::new("WIFI"),
-            TextColor(Color::srgb(0.9, 0.9, 0.9)),
-        ));
+        .with_child((Text::new("WIFI"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
 }
 
 fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
@@ -122,7 +105,7 @@ fn button_system(
         Query<&mut Text, With<WifiStatusText>>,
         Query<&mut Text>,
     )>,
-    mut event_writer: EventWriter<NetworkActionEvent>
+    mut event_writer: EventWriter<NetworkActionEvent>,
 ) {
     for (interaction, _, mut border_color, _, actions) in queries.p0().iter_mut() {
         // println!("button text: {}", text.0);
