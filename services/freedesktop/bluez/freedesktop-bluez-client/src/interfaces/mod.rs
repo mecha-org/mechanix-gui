@@ -11,15 +11,13 @@
 //!
 //! Implement this trait to provide platform-specific Bluetooth functionality.
 
+use crate::proxies::{InterfacesAddedStream, InterfacesRemovedStream, ProxyError};
 use anyhow::Result;
 use async_trait::async_trait;
 use device::BluetoothDevice;
-use mockall::automock;
-
-use crate::proxies::ProxyError;
+use zbus::proxy::PropertyStream;
 pub mod device;
 
-#[cfg_attr(test, automock)]
 #[async_trait]
 pub trait BluezInterface: Send + Sync {
     /// Power on/off the bluetooth.
@@ -39,4 +37,6 @@ pub trait BluezInterface: Send + Sync {
 
     /// Get connected devices.
     async fn get_connected_devices(&self) -> Result<Vec<BluetoothDevice>, ProxyError>;
+    async fn stream_bluetooth_enabled_status(&self) -> Result<PropertyStream<bool>, ProxyError>;
+    async fn stream_bluetooth_events(&self) -> Result<(InterfacesAddedStream, InterfacesRemovedStream), ProxyError>;
 }

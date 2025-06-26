@@ -1,6 +1,5 @@
 //! Basic example: PowerOn the Bluetooth device using freedesktop-bluez-client
 
-use tokio::sync::{mpsc, oneshot};
 use freedesktop_bluez_client::service::BluetoothService;
 
 #[tokio::main]

@@ -41,7 +41,7 @@
 
 use super::interfaces::device::BluetoothDevice;
 use adapter1::Adapter1Proxy;
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use async_trait::async_trait;
 use device::build_device_proxy;
 use log::{debug, error, info, trace};
@@ -50,8 +50,12 @@ pub mod adapter1;
 pub mod device;
 
 use crate::interfaces::BluezInterface;
+use crate::proxies::device::Device1Proxy;
+use futures::StreamExt;
 use std::collections::HashMap;
+use zbus::fdo::ObjectManagerProxy;
 use zbus::proxy;
+use zbus::proxy::PropertyStream;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue};
 
 const DEVICE_OBJECT_PATH: &str = "/org/bluez/hci0/dev";
@@ -90,11 +94,26 @@ pub trait Bluez {
     fn get_managed_objects(
         &self,
     ) -> zbus::Result<HashMap<OwnedObjectPath, HashMap<String, HashMap<String, OwnedValue>>>>;
+
+    /// Emitted when an interface is added to an object.
+    #[zbus(signal)]
+    fn interfaces_added(
+        &self,
+        object: OwnedObjectPath,
+        interfaces: HashMap<String, HashMap<String, OwnedValue>>,
+    ) -> zbus::Result<()>;
+
+    /// Emitted when an interface is removed from an object.
+    #[zbus(signal)]
+    fn interfaces_removed(
+        &self,
+        object: OwnedObjectPath,
+        interfaces: Vec<String>,
+    ) -> zbus::Result<()>;
 }
 
 #[async_trait]
 impl<'a> BluezInterface for BluezProxy<'a> {
-    
     /// Enables or disables Bluetooth on the adapter.
     ///
     /// # Arguments
@@ -147,7 +166,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     ///
     /// # Arguments
     /// * `discovery_duration` - The duration to scan for Bluetooth devices.
-    /// 
+    ///
     /// # Returns
     ///
     /// * `Ok(Vec<BluetoothDevice>)` - A vector of discovered Bluetooth device properties on success.
@@ -416,5 +435,37 @@ impl<'a> BluezInterface for BluezProxy<'a> {
         info!("found {} connected devices", connected_devices.len());
         // Return the list of connected devices
         Ok(connected_devices)
+    }
+
+    async fn stream_bluetooth_enabled_status(&self) -> Result<PropertyStream<bool>, ProxyError> {
+        let cn = &self.0.connection();
+        let proxy = Adapter1Proxy::new(&cn).await.unwrap();
+        let stream = proxy.receive_powered_changed().await;
+        Ok(stream)
+    }
+    async fn stream_bluetooth_events(&self) -> Result<(InterfacesAddedStream, InterfacesRemovedStream), ProxyError> {
+        let cn = &self.0.connection();
+        let bluez = BluezProxy::new(&cn).await.unwrap();
+        let added = match bluez.receive_interfaces_added().await {
+            Ok(stream) => stream,
+            Err(e) => {
+                error!("failed to stream interfaces added: {}", e);
+                return Err(ProxyError::DbusCallFailed(format!(
+                    "failed to stream interfaces added: {}",
+                    e
+                )));
+            }
+        };
+        let removed = match bluez.receive_interfaces_removed().await {
+            Ok(stream) => stream,
+            Err(e) => {
+                error!("failed to stream interfaces removed: {}", e);
+                return Err(ProxyError::DbusCallFailed(format!(
+                    "failed to stream interfaces removed: {}",
+                    e
+                )));
+            }
+        };
+        Ok((added, removed))
     }
 }

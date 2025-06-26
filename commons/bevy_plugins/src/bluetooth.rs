@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use bevy::prelude::{Event, Resource};
 use bevy::tasks::{AsyncComputeTaskPool, IoTaskPool};
 use freedesktop_bluez_client::interfaces::device::BluetoothDevice;
-use freedesktop_bluez_client::service::BluetoothService;
+use freedesktop_bluez_client::service::{BluetoothEvent, BluetoothService};
 use std::sync::mpsc::{Receiver, Sender};
-use std::sync::{LazyLock, Mutex};
+use std::sync::{mpsc, LazyLock, Mutex};
 
 const DISCOVER_DURATION: std::time::Duration = std::time::Duration::from_secs(5);
 /// Holds the async-initialized service, or None if not ready yet.
@@ -14,11 +14,6 @@ pub struct BluetoothServiceResource {
     pub service: Option<BluetoothService>,
 }
 
-#[derive(Resource, Debug, Clone)]
-pub struct BluetoothStatus {
-    pub connected: bool,
-    pub last_error: Option<String>,
-}
 #[derive(Resource)]
 pub struct BluetoothResultReceiver {
     receiver: Mutex<Receiver<BluetoothResult>>,
@@ -26,11 +21,20 @@ pub struct BluetoothResultReceiver {
 
 #[derive(Resource, Clone)]
 pub struct BluetoothResultSender(pub Sender<BluetoothResult>);
+#[derive(Resource, Clone, Default)]
+pub struct BluetoothEnabledStatus(bool);
+
+#[derive(Resource, Clone, Default)]
+pub struct BluetoothDeviceStateEvent(bool);
+
+#[derive(Resource, Default)]
+pub struct BluetoothState {
+    pub initialized: bool,
+    pub stream_started: bool,
+}
 #[derive(Event)]
 pub struct BluetoothActionEvent(pub BluetoothAction);
 
-#[derive(Event)]
-pub struct BluetoothResultEvent(pub BluetoothResult);
 
 #[derive(Debug, Clone)]
 pub enum BluetoothAction {
@@ -39,11 +43,14 @@ pub enum BluetoothAction {
     ConnectToDevice(String),
     DisconnectDevice(String),
     ListConnectedDevices,
+    StreamPoweredStatus,
+    StreamBluetoothEvent,
 }
 
 #[derive(Debug)]
 pub enum BluetoothResult {
-    ToggleBluetooth(BluetoothStatus),
+    BluetoothStatus(bool),
+    BluetoothEvent(BluetoothEvent),
     ListAvailableDevices(Vec<BluetoothDevice>),
     ConnectDevice(bool),
     DisconnectDevice(bool),
@@ -72,14 +79,12 @@ pub struct BluetoothPlugin;
 impl Plugin for BluetoothPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(BluetoothServiceResource { service: None })
-            .insert_resource(BluetoothStatus {
-                connected: false,
-                last_error: None,
-            })
+            .insert_resource(BluetoothState::default())
+            .insert_resource(BluetoothEnabledStatus::default())
+            .insert_resource(BluetoothDeviceStateEvent::default())
             .add_event::<BluetoothActionEvent>()
-            .add_event::<BluetoothResultEvent>()
             .add_systems(Startup, (init_bluetooth_service, setup_bluetooth_channel)) // Async task so temp move service result to static
-            .add_systems(Update, poll_service_init) // Once a service is initialized, it will move service from static to resource
+            .add_systems(Update, (poll_service_init, start_stream_if_service_ready.after(poll_service_init))) // Once a service is initialized, it will move service from static to resource
             .add_systems(
                 Update,
                 (
@@ -87,6 +92,22 @@ impl Plugin for BluetoothPlugin {
                     poll_bluetooth_action_result_events.after(handle_bluetooth_action_events),
                 ),
             );
+    }
+}
+
+fn start_stream_if_service_ready(
+    mut state: ResMut<BluetoothState>,
+    service_res: Res<BluetoothServiceResource>,
+    mut events: EventWriter<BluetoothActionEvent>,
+) {
+    // Only start once, and only when the service is initialized
+    if !state.stream_started {
+        if let Some(service) = &service_res.service {
+            println!("Starting stream...");
+            // events.write(BluetoothActionEvent(BluetoothAction::StreamPoweredStatus));
+            events.write(BluetoothActionEvent(BluetoothAction::StreamBluetoothEvent));
+            state.stream_started = true;
+        }
     }
 }
 /// Checks if the `BluetoothService` is ready (i.e. not None).
@@ -173,20 +194,6 @@ fn handle_bluetooth_action_events(
                         match service.toggle_bluetooth(true).await {
                             Ok(status) => {
                                 info!("toggle wireless status: {status:?}");
-                                let bluetooth_status = BluetoothStatus {
-                                    connected: enable,
-                                    last_error: None,
-                                };
-                                match result_sender
-                                    .send(BluetoothResult::ToggleBluetooth(bluetooth_status))
-                                {
-                                    Ok(res) => {
-                                        info!("sent toggle bluetooth status: {res:?}");
-                                    }
-                                    Err(err) => {
-                                        error!("failed to send toggle bluetooth status: {err}");
-                                    }
-                                }
                             }
                             Err(err) => {
                                 error!("failed to toggle bluetooth: {err}");
@@ -202,7 +209,7 @@ fn handle_bluetooth_action_events(
                             }
                         }
                     })
-                    .detach();
+                        .detach();
                 }
             }
             BluetoothAction::ListAvailableDevices => {
@@ -233,7 +240,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                    .detach();
+                        .detach();
                 }
             }
             BluetoothAction::ConnectToDevice(device_address) => {
@@ -266,7 +273,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                    .detach();
+                        .detach();
                 }
             }
             BluetoothAction::DisconnectDevice(device_address) => {
@@ -299,7 +306,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                    .detach();
+                        .detach();
                 }
             }
             BluetoothAction::ListConnectedDevices => {
@@ -330,7 +337,47 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                    .detach();
+                        .detach();
+                }
+            }
+            BluetoothAction::StreamPoweredStatus => {
+                info!("network action: stream enabled status");
+                if let Some(service) = &service.service {
+                    let service = service.clone();
+                    let sender = sender.0.clone();
+                    IoTaskPool::get()
+                        .spawn(async move {
+                            let receiver: mpsc::Receiver<bool> =
+                                service.stream_bluetooth_enabled_status().await;
+                            while let Ok(status) = receiver.recv() {
+                                if let Err(err) =
+                                    sender.send(BluetoothResult::BluetoothStatus(status))
+                                {
+                                    error!("failed to send bluetooth status: {err}");
+                                }
+                            }
+                        })
+                        .detach();
+                }
+            }
+            BluetoothAction::StreamBluetoothEvent => {
+                info!("network action: stream connected status");
+                if let Some(service) = &service.service {
+                    let service = service.clone();
+                    let sender = sender.0.clone();
+                    IoTaskPool::get()
+                        .spawn(async move {
+                            let receiver: Receiver<BluetoothEvent> =
+                                service.stream_bluetooth_device_status().await;
+                            while let Ok(status) = receiver.recv() {
+                                if let Err(err) =
+                                    sender.send(BluetoothResult::BluetoothEvent(status))
+                                {
+                                    error!("failed to send bluetooth status: {err}");
+                                }
+                            }
+                        })
+                        .detach();
                 }
             }
         } // Add more as needed
@@ -346,12 +393,32 @@ fn handle_bluetooth_action_events(
 /// The event receiver is accessed by a lock, and if the lock can't be acquired,
 /// the system will print an error message and do nothing.
 fn poll_bluetooth_action_result_events(
-    mut bluetooth_result_event_writer: EventWriter<BluetoothResultEvent>,
     event_receiver: ResMut<BluetoothResultReceiver>,
+    mut bluetooth_enabled_status: ResMut<BluetoothEnabledStatus>,
+    mut bluetooth_connected_status: ResMut<BluetoothDeviceStateEvent>,
 ) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
-            bluetooth_result_event_writer.write(BluetoothResultEvent(event));
+            match event {
+                BluetoothResult::BluetoothStatus(status) => {
+                    info!("bluetooth status updated: {status}");
+                    bluetooth_enabled_status.0 = status;
+                }
+                BluetoothResult::BluetoothEvent(event) => {
+                    info!("bluetooth event updated: {:?}", event);
+                    match event {
+                        BluetoothEvent::DeviceAdded => {
+                            bluetooth_connected_status.0 = true;
+                        }
+                        BluetoothEvent::DeviceRemoved => {
+                            bluetooth_connected_status.0 = false;
+                        }
+                    }
+                }
+                _ => {
+                    // ignore other events
+                }
+            }
         }
     } else {
         error!("failed to acquire receiver lock");
