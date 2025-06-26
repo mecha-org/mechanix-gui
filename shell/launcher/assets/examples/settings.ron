@@ -1,18 +1,36 @@
 ({
+    "fonts.primary.100": File (
+        path: "fonts/Inter_24pt-Light.ttf",
+    ),
+    "fonts.primary.200": File (
+        path: "fonts/Inter_24pt-ExtraLight.ttf",
+    ),
     "fonts.primary.300": File (
-        path: "fonts/SpaceGrotesk-Regular.ttf",
+        path: "fonts/Inter_24pt-Light.ttf",
     ),
     "fonts.primary.400": File (
-        path: "fonts/SpaceGrotesk-Medium.ttf",
+        path: "fonts/Inter_24pt-Regular.ttf",
     ),
     "fonts.primary.500": File (
-        path: "fonts/SpaceGrotesk-SemiBold.ttf",
+        path: "fonts/Inter_24pt-Medium.ttf",
     ),
     "fonts.primary.600": File (
-        path: "fonts/SpaceGrotesk-SemiBold.ttf",
+        path: "fonts/Inter_24pt-SemiBold.ttf",
     ),
-     "fonts.primary.700": File (
-        path: "fonts/SpaceGrotesk-Bold.ttf",
+    "fonts.primary.700": File (
+        path: "fonts/Inter_24pt-Bold.ttf",
+    ),
+    "fonts.primary.800": File (
+        path: "fonts/Inter_24pt-ExtraBold.ttf",
+    ),
+    "fonts.primary.900": File (
+        path: "fonts/Inter_24pt-Black.ttf",
+    ),
+    "fonts.secondary.100": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.200": File (
+        path: "fonts/SpaceMono-Regular.ttf",
     ),
     "fonts.secondary.300": File (
         path: "fonts/SpaceMono-Regular.ttf",
@@ -27,6 +45,12 @@
         path: "fonts/SpaceMono-Bold.ttf",
     ),
     "fonts.secondary.700": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+    "fonts.secondary.800": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+    "fonts.secondary.900": File (
         path: "fonts/SpaceMono-Bold.ttf",
     ),
     "fonts.icons": File (

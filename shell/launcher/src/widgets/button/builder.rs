@@ -4,6 +4,8 @@ use bevy::{
 };
 use bevy_core_widgets::{CoreButton, hover::Hovering};
 
+use crate::settings_panel::{SettingsItem, SettingsItemText};
+
 use super::{
     ButtonSize, StyledButtonText,
     components::{AccessibleName, ButtonVariant, StyledButton},
@@ -26,6 +28,7 @@ pub struct ButtonBuilder {
     width: Option<Val>,
     height: Option<Val>,
     border_radius: Option<f32>,
+    font_size: Option<f32>,
 }
 
 impl ButtonBuilder {
@@ -89,6 +92,11 @@ impl ButtonBuilder {
         self
     }
 
+    pub fn font_size(mut self, font_size: f32) -> Self {
+        self.font_size = Some(font_size);
+        self
+    }
+
     pub fn width(mut self, width: Val) -> Self {
         self.width = Some(width);
         self
@@ -107,24 +115,24 @@ impl ButtonBuilder {
     pub fn build(self) -> impl Bundle {
         (
             Node {
+                width: Val::Percent(60.0),
+                height: Val::Percent(60.0),
                 display: Display::Flex,
-                flex_direction: FlexDirection::Row,
+                flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                align_content: AlignContent::Center,
-                width: Val::Percent(100.),
-                height: Val::Percent(100.),
                 ..default()
             },
-            BorderRadius::default(),
-            BorderColor::default(),
+            BackgroundColor(Color::linear_rgb(0.85, 0.85, 0.85)),
+            BorderRadius::all(Val::Px(12.0)),
+            SettingsItem,
             Name::new("Button"),
             Hovering::default(),
             CursorIcon::System(SystemCursorIcon::Pointer),
             StyledButton {
                 text: self.text.clone(),
                 icon: self.icon.clone(),
-                font: self.font,
+                font: self.font.clone(),
                 variant: self.variant,
                 size: self.size,
                 on_click: self.on_click,
@@ -144,9 +152,16 @@ impl ButtonBuilder {
             AccessibleName(self.text.clone().unwrap_or_else(|| "Button".to_string())),
             TabIndex(0),
             Children::spawn(Spawn((
-                Text::new(""),
-                TextFont::default(),
+                Text::new(self.icon.unwrap_or_default()),
+                TextFont {
+                    font: self.font.unwrap_or_default(),
+                    ..Default::default()
+                },
+                TextColor(Color::linear_rgba(0.24, 0.24, 0.24, 1.)),
                 StyledButtonText,
+                SettingsItemText {
+                    font_size: self.font_size.unwrap_or(32.0),
+                },
             ))),
         )
     }

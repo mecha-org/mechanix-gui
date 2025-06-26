@@ -6,7 +6,20 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.16.0-dev" }
-bevy_styled_widgets = { git = "https://github.com/mecha-org/bevy_mctk.git", rev = "ba4ace34d3161af926d503fa8ca2d620d0210166" }
+bevy_styled_widgets = { git = "https://github.com/mecha-org/bevy_mctk", rev = "7e1b2d3f08cf8b49f00d92a0a5a5f6f502c983a7"}
 bevy_asset_loader = { version = "0.23.0-rc.3", features = ["standard_dynamic_assets"]}
 bevy_core_widgets = { git = "https://github.com/viridia/bevy_core_widgets.git",  rev = "c8ef2bb82ec9706d1faea22f29f7786645a22538" }
 chrono = { version = "0.4", features = ["clock"] }
+bevy_smithay =  { git = "https://github.com/namana-mecha/bevy_smithay.git", rev = "25680f41d9378464bac315d7f9b262008555154a" }
+
+[profile]
+
+[profile.wasm-dev]
+inherits = "dev"
+opt-level = 1
+
+[profile.server-dev]
+inherits = "dev"
+
+[profile.android-dev]
+inherits = "dev"
