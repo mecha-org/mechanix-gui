@@ -1,10 +1,10 @@
 use bevy::color::palettes::basic::RED;
 use bevy::{prelude::*, winit::WinitSettings};
 use bevy_plugins::bluetooth::{
-    BluetoothAction, BluetoothActionEvent, BluetoothResult, BluetoothResultEvent,
+    BluetoothAction, BluetoothActionEvent,
 };
 use bevy_plugins::BluetoothPlugin;
-use freedesktop_network_manager_client::interfaces::wireless::{NMState};
+use freedesktop_network_manager_client::interfaces::wireless::NMState;
 
 fn main() {
     App::new()
@@ -12,26 +12,11 @@ fn main() {
         .add_plugins(BluetoothPlugin)
         .insert_resource(WinitSettings::desktop_app())
         .add_systems(Startup, setup)
-        .add_systems(Update, (button_system, wait_action_result))
+        .add_systems(Update, (button_system))
         .run();
 }
 
-fn wait_action_result(mut event_reader: EventReader<BluetoothResultEvent>) {
-    for event in event_reader.read() {
-        let actions = &event.0;
-        match actions {
-            BluetoothResult::ToggleBluetooth(status) => {
-                info!("wifi result received: {status:?}");
-            }
-            BluetoothResult::Error(error) => {
-                error!("error: {error:?}");
-            }
-            _ => {
-                info!("no action");
-            }
-        }
-    }
-}
+
 #[derive(Event, Debug, Clone)]
 pub struct WifiStateEvent(pub NMState);
 
@@ -69,7 +54,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             BackgroundColor(NORMAL_BUTTON),
             ButtonAction::Bluetooth,
         ))
-        .with_child((Text::new("WIFI"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
+        .with_child((Text::new("Toggle"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
 }
 
 fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
