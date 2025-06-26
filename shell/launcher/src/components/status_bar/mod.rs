@@ -1,339 +1,148 @@
-use bevy::{
-    color::palettes::css,
-    ecs::{
-        relationship::RelatedSpawner,
-        spawn::{self, SpawnWith},
-    },
-    platform::collections::HashMap,
-    prelude::*,
-    winit::WinitSettings,
-};
-use bevy_asset_loader::prelude::*;
-use bevy_styled_widgets::prelude::*;
+use bevy::prelude::*;
+use bevy_styled_widgets::prelude::StyledText;
+use chrono::{Datelike, Timelike};
 
 use crate::{
-    settings::status_bar::{
-        BatteryState, BluetoothState, DateSettings, MobileNetworkState, RightTrayStatus,
-        StatusBarSettings, SystemStatus, WifiState,
-    },
+    styled_card::StyledCard,
     utils::{FontAssets, Icon},
 };
-use chrono::Local;
 
-/// Defines app asset loading states
-#[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
-enum AssetsLoadingState {
-    #[default]
-    Loading,
-    Loaded,
+#[derive(Component)]
+struct Clock;
+
+#[derive(Resource)]
+struct ClockUpdateTimer(Timer);
+
+pub struct ClockPlugin;
+
+impl Plugin for ClockPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(ClockUpdateTimer(Timer::from_seconds(
+            1.,
+            TimerMode::Repeating,
+        )));
+        app.add_systems(Update, update_clock);
+        app.add_systems(Update, update_wireless);
+        app.add_systems(Update, update_battery);
+        app.add_systems(Update, update_bluetooth);
+    }
 }
 
-/// Global UI settings container
-#[derive(Default, Debug, Clone)]
-pub struct GuiSettings {
-    pub status_bar: StatusBarSettings,
+fn update_clock(
+    time: Res<Time>,
+    mut timer: ResMut<ClockUpdateTimer>,
+    mut query: Query<&mut StyledText, With<Clock>>,
+) {
+    if timer.0.tick(time.delta()).just_finished() {
+        for mut styled_text in &mut query {
+            styled_text.content = get_current_datetime();
+        }
+    }
 }
 
-/// Entry point: initializes app with plugin, asset loading, systems
-pub fn run_status_bar() {
-    App::new()
-        .add_plugins((DefaultPlugins, StyledWidgetsPlugin))
-        .insert_resource(ThemeManager::default())
-        .insert_resource(WinitSettings::desktop_app())
-        .init_state::<AssetsLoadingState>()
-        .add_loading_state(
-            LoadingState::new(AssetsLoadingState::Loading)
-                .continue_to_state(AssetsLoadingState::Loaded)
-                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("examples/settings.ron")
-                .load_collection::<FontAssets>(),
-        )
-        .add_systems(OnEnter(AssetsLoadingState::Loaded), setup_view_root)
-        .run();
+#[derive(Component)]
+struct Wireless;
+//Query resource and update in this function
+fn update_wireless(mut query: Query<&mut StyledText, With<Wireless>>) {
+    for mut styled_text in &mut query {
+        styled_text.content = Icon::WirelessHigh.into();
+    }
 }
 
-/// Initializes the status bar UI layout and data
-fn setup_view_root(mut commands: Commands, font_assets: Res<FontAssets>) {
-    commands.spawn(Camera2d);
+#[derive(Component)]
+struct Bluetooth;
 
-    // Example system data injected manually
-    let right_tray_status = RightTrayStatus {
-        headphones_connected: true,
-        monitor_connected: true,
-        terminal_active: true,
-        usb_connected: false,
-    };
+fn update_bluetooth(mut query: Query<&mut StyledText, With<Bluetooth>>) {
+    for mut styled_text in &mut query {
+        styled_text.content = Icon::BluetoothConnected.into();
+    }
+}
 
-    let system_status = SystemStatus {
-        bluetooth_state: BluetoothState::Connected,
-        wifi_state: WifiState::OnButNotConnected,
-        mobile_network_state: MobileNetworkState::Full,
-        battery_state: BatteryState::Charging,
-    };
+#[derive(Component)]
+struct Battery;
 
-    commands.insert_resource(right_tray_status.clone());
-    commands.insert_resource(system_status.clone());
+fn update_battery(mut query: Query<&mut StyledText, With<Battery>>) {
+    for mut styled_text in &mut query {
+        styled_text.content = Icon::BatteryFull.into();
+    }
+}
 
-    // Load settings
-    let GuiSettings { status_bar } = GuiSettings::default();
-    let StatusBarSettings {
-        width,
-        height,
-        menus,
-        date,
-    } = status_bar;
-    let date = DateSettings {
-        time: date.time,
-        date: date.date,
-        day: date.day,
-    };
+fn get_current_datetime() -> String {
+    let now = chrono::Local::now();
+    format!(
+        "{} {} {:02}:{:02}:{:02}",
+        now.day(),
+        now.format("%B"),
+        now.hour(),
+        now.minute(),
+        now.second()
+    )
+}
 
-    // Select menu layout
-    let current_menu = "sm";
-    let list_menus = menus.get(current_menu).unwrap_or(&vec![]).clone();
+pub fn status_bar(font_assets: &FontAssets) -> impl Bundle {
+    let icon_size = 24.;
 
-    // Root status bar node
-    commands
-        .spawn((
-            Node {
-                width: Val::Vw(width),
-                height: Val::Vh(height),
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::SpaceBetween,
-                padding: UiRect::horizontal(Val::Percent(1.5)),
+    (
+        Node {
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
+            display: Display::Flex,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::SpaceBetween,
+            border: UiRect::all(Val::Px(1.)),
+            padding: UiRect {
+                left: Val::Px(28.),
+                right: Val::Px(20.),
                 ..Default::default()
             },
-            Name::new("status_bar"),
-            // RootWindow,
-        ))
-        .with_children(|parent| {
-            // LEFT SLOT
-            parent
-                .spawn((
-                    Node {
-                        align_items: AlignItems::FlexStart,
-                        ..default()
-                    },
-                    Name::new("left_slot"),
-                ))
-                .with_children(|left| match current_menu {
-                    "sm" => spawn_date(left, date.clone(), current_menu, &font_assets),
-                    "lg" => {
-                        spawn_menu(left, &font_assets);
-                    }
-                    _ => {}
-                });
-
-            // RIGHT SLOT
-            parent
-                .spawn((
-                    Node {
-                        align_items: AlignItems::FlexStart,
-                        ..default()
-                    },
-                    Name::new("right_slot"),
-                ))
-                .with_children(|right| {
-                    spawn_right_system(right, &font_assets, &right_tray_status);
-                    spawn_system(right, &font_assets, &system_status);
-                    if current_menu == "lg" {
-                        spawn_date(right, date.clone(), current_menu, &font_assets);
-                    }
-                });
-        });
-}
-
-/// Spawns a basic menu button (placeholder for future dropdown)
-fn spawn_menu(
-    parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
-    font_assets: &FontAssets,
-) {
-    parent.spawn((StyledButton::builder()
-        .text("Menu")
-        .font(font_assets.secondary_700.clone())
-        .variant(ButtonVariant::Secondary)
-        .build(),));
-}
-
-/// Spawns the right system tray icons based on the current status
-fn spawn_right_system(
-    parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
-    font_assets: &FontAssets,
-    right_tray_status: &RightTrayStatus,
-) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            align_items: AlignItems::FlexStart,
-            ..default()
-        })
-        .with_children(|row| {
-            if right_tray_status.headphones_connected {
-                spawn_icon(row, Icon::Headphones, font_assets);
-            }
-
-            if right_tray_status.monitor_connected {
-                spawn_icon(row, Icon::Monitor, font_assets);
-            }
-
-            if right_tray_status.terminal_active {
-                spawn_icon(row, Icon::Terminal, font_assets);
-            }
-
-            if right_tray_status.usb_connected {
-                spawn_icon(row, Icon::Usb, font_assets);
-            }
-        });
-}
-
-/// Spawns system status icons (Bluetooth, Wi-Fi, Battery, etc.)
-fn spawn_system(
-    parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
-    font_assets: &FontAssets,
-    system_status: &SystemStatus,
-) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            align_items: AlignItems::FlexStart,
-            ..default()
-        })
-        .with_children(|row| {
-            if system_status.bluetooth_state != BluetoothState::Off {
-                spawn_icon(
-                    row,
-                    bluetooth_icon_for_state(&system_status.bluetooth_state),
-                    font_assets,
-                );
-            }
-
-            spawn_icon(
-                row,
-                wifi_icon_for_state(&system_status.wifi_state),
-                font_assets,
-            );
-            spawn_icon(
-                row,
-                mobile_network_icon_for_state(&system_status.mobile_network_state),
-                font_assets,
-            );
-            spawn_icon(
-                row,
-                battery_icon_for_state(&system_status.battery_state),
-                font_assets,
-            );
-        });
-}
-
-/// Displays current date and time based on formatting settings
-fn spawn_date(
-    parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
-    date_settings: DateSettings,
-    current_menu: &str,
-    font_assets: &FontAssets,
-) {
-    let now = Local::now();
-
-    let formatted_time = now.format(&date_settings.time).to_string();
-    let formatted_date = now.format(&date_settings.date).to_string();
-    let formatted_day = now.format(&date_settings.day).to_string();
-
-    if current_menu == "sm" {
-        parent
-            .spawn((Node {
-                padding: UiRect::vertical(Val::Px(8.0)),
-                align_items: AlignItems::FlexStart,
-                ..default()
-            },))
-            .with_children(|right| {
-                right.spawn((
-                    Text::new(format!("{} {}", formatted_date, formatted_time)),
-                    TextFont {
-                        font: font_assets.secondary_700.clone(),
-                        font_size: 15.,
-                        ..Default::default()
-                    },
-                ));
-            });
-    }
-
-    if current_menu == "lg" {
-        parent
-            .spawn((Node {
-                padding: UiRect::vertical(Val::Px(8.0)),
-                align_items: AlignItems::FlexStart,
-                ..default()
-            },))
-            .with_children(|right| {
-                right.spawn((
-                    Text::new(format!(
-                        "{}, {} {}",
-                        formatted_day, formatted_date, formatted_time
-                    )),
-                    TextFont {
-                        font: font_assets.secondary_700.clone(),
-                        font_size: 15.,
-                        ..Default::default()
-                    },
-                ));
-            });
-    }
-}
-
-/// Spawns a generic icon inside a ghost-styled button
-fn spawn_icon(
-    parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
-    icon: Icon,
-    font_assets: &FontAssets,
-) {
-    let font_icons = font_assets.font_icons.clone();
-    parent.spawn((StyledButton::builder()
-        .icon(icon)
-        .font(font_icons.clone())
-        .variant(ButtonVariant::Ghost)
-        .build(),));
-}
-
-/// Maps Wi-Fi state to appropriate icon
-fn wifi_icon_for_state(state: &WifiState) -> Icon {
-    match state {
-        WifiState::ConnectedStrong => Icon::WifiConnectedStrong, // Placeholder for strong connection
-        WifiState::Off => Icon::WifiOff,                         // Placeholder for off state
-        WifiState::ConnectedMedium => Icon::WifiMedium,
-        WifiState::ConnectedWeak => Icon::WifiLow,
-        // WifiState::Connecting => Icon::WifiAnimated,             // Placeholder for animation
-        WifiState::ConnectedNoInternet => Icon::WifiNoInternet, // Placeholder for warning
-        WifiState::OnButNotConnected => Icon::WifiOnNotConnected, // Empty bars
-    }
-}
-
-/// Maps bluetooth state to appropriate icon
-fn bluetooth_icon_for_state(state: &BluetoothState) -> Icon {
-    match state {
-        BluetoothState::Connected => Icon::BluetoothConnected,
-        BluetoothState::On => Icon::Bluetooth,
-        _ => todo!(),
-    }
-}
-
-/// Maps battery state to appropriate icon
-fn battery_icon_for_state(state: &BatteryState) -> Icon {
-    match state {
-        BatteryState::Charging => Icon::BatteryCharging,
-        BatteryState::LowBattery => Icon::BatteryLow,
-        BatteryState::CriticallyLow => Icon::BatteryCriticallyLow,
-        BatteryState::ChargedComplete => Icon::BatteryChargedComplete,
-        BatteryState::NoBattery => Icon::BatteryNoBattery,
-    }
-}
-
-/// Maps mobile network state to appropriate icon
-fn mobile_network_icon_for_state(state: &MobileNetworkState) -> Icon {
-    match state {
-        MobileNetworkState::Full => Icon::SignalBarsFull,
-        // MobileNetworkState::Medium => Icon::SignalBarsMedium,
-        // MobileNetworkState::Low => Icon::SignalBarsLow,
-        // MobileNetworkState::NoSimInserted => Icon::NoSim,
-        // MobileNetworkState::NoSignal => Icon::NoSignal,
-        _ => todo!(),
-    }
+            ..Default::default()
+        },
+        BorderColor(Color::linear_rgba(0., 0., 0., 0.2)),
+        StyledCard,
+        children![
+            //Clock
+            (
+                StyledText::builder()
+                    .content(get_current_datetime())
+                    .font_size(16.)
+                    .font(font_assets.primary_600.clone())
+                    .build(),
+                Clock
+            ),
+            //Icons
+            (
+                Node {
+                    align_items: AlignItems::End,
+                    column_gap: Val::Px(12.),
+                    ..Default::default()
+                },
+                children![
+                    (
+                        StyledText::builder()
+                            .content(Icon::BluetoothWarning)
+                            .font_size(icon_size)
+                            .font(font_assets.font_icons.clone())
+                            .build(),
+                        Bluetooth
+                    ),
+                    (
+                        StyledText::builder()
+                            .content(Icon::WirelessWarning)
+                            .font_size(icon_size)
+                            .font(font_assets.font_icons.clone())
+                            .build(),
+                        Wireless
+                    ),
+                    (
+                        StyledText::builder()
+                            .content(Icon::BatteryWarning)
+                            .font_size(icon_size)
+                            .font(font_assets.font_icons.clone())
+                            .build(),
+                        Battery
+                    ),
+                ]
+            )
+        ],
+    )
 }

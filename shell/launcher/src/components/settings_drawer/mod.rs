@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
-enum AssetsLoadingState {
+pub enum AssetsLoadingState {
     #[default]
     Loading,
     Loaded,

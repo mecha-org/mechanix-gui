@@ -48,7 +48,7 @@ pub fn update_button(
             for child in children.iter() {
                 if let Ok((mut text, mut text_color, mut text_font)) = text_query.get_mut(child) {
                     let button_styles = theme_manager.styles.buttons.clone();
-                    let button_size_styles = theme_manager.styles.button_sizes.clone();
+                    // let button_size_styles = theme_manager.styles.button_sizes.clone();
                     let button_style = match button.variant {
                         ButtonVariant::Primary => button_styles.primary,
                         ButtonVariant::Secondary => button_styles.secondary,
@@ -56,18 +56,22 @@ pub fn update_button(
                         ButtonVariant::Outline => button_styles.outline,
                         ButtonVariant::Ghost => button_styles.ghost,
                     };
-                    let color = button_style.text_color;
+                    let color = if *is_pressed {
+                        button_style.pressed_text_color
+                    } else {
+                        button_style.text_color
+                    };
                     text_color.0 = color;
 
                     //update font size
-                    let button_size_style = match button.size.unwrap_or_default() {
-                        ButtonSize::XSmall => button_size_styles.xsmall,
-                        ButtonSize::Small => button_size_styles.small,
-                        ButtonSize::Medium => button_size_styles.medium,
-                        ButtonSize::Large => button_size_styles.large,
-                        ButtonSize::XLarge => button_size_styles.xlarge,
-                    };
-                    text_font.font_size = button_size_style.font_size;
+                    // let button_size_style = match button.size.unwrap_or_default() {
+                    //     ButtonSize::XSmall => button_size_styles.xsmall,
+                    //     ButtonSize::Small => button_size_styles.small,
+                    //     ButtonSize::Medium => button_size_styles.medium,
+                    //     ButtonSize::Large => button_size_styles.large,
+                    //     ButtonSize::XLarge => button_size_styles.xlarge,
+                    // };
+                    // text_font.font_size = button_size_style.font_size;
 
                     //update text
                     if let Some(text_str) = button.text.clone() {
@@ -133,16 +137,16 @@ pub fn update_button(
             Val::Px(button_size_style.padding_vertical),
         );
         button_node.border = UiRect::all(Val::Px(button_size_style.border_width));
-        border_radius.top_left = Val::Px(button_size_style.border_radius);
-        border_radius.top_right = Val::Px(button_size_style.border_radius);
-        border_radius.bottom_left = Val::Px(button_size_style.border_radius);
-        border_radius.bottom_right = Val::Px(button_size_style.border_radius);
+        // border_radius.top_left = Val::Px(button_size_style.border_radius);
+        // border_radius.top_right = Val::Px(button_size_style.border_radius);
+        // border_radius.bottom_left = Val::Px(button_size_style.border_radius);
+        // border_radius.bottom_right = Val::Px(button_size_style.border_radius);
 
-        if button.border_radius.is_some() {
-            border_radius.top_left = Val::Px(button.border_radius.unwrap_or_default());
-            border_radius.top_right = Val::Px(button.border_radius.unwrap_or_default());
-            border_radius.bottom_left = Val::Px(button.border_radius.unwrap_or_default());
-            border_radius.bottom_right = Val::Px(button.border_radius.unwrap_or_default());
-        }
+        // if button.border_radius.is_some() {
+        //     border_radius.top_left = Val::Px(button.border_radius.unwrap_or_default());
+        //     border_radius.top_right = Val::Px(button.border_radius.unwrap_or_default());
+        //     border_radius.bottom_left = Val::Px(button.border_radius.unwrap_or_default());
+        //     border_radius.bottom_right = Val::Px(button.border_radius.unwrap_or_default());
+        // }
     }
 }
