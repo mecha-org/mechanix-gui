@@ -119,6 +119,7 @@ fn start_dependent_streams(
     // Only start once, and only when the service is initialized
     if state.0 == NMState::ConnectedGlobal {
         events.write(NetworkActionEvent(NetworkAction::StreamActiveNetworkStrength));
+        events.write(NetworkActionEvent(NetworkAction::StreamAccessPointsEvents));
     }
 }
 fn start_stream_if_service_ready(
@@ -134,7 +135,6 @@ fn start_stream_if_service_ready(
                 NetworkAction::StreamWirelessEnabledStatus,
             ));
             events.write(NetworkActionEvent(NetworkAction::StreamDeviceEvents));
-            // events.write(NetworkActionEvent(NetworkAction::StreamAccessPointsEvents));
             state.stream_started = true;
         }
     }
@@ -462,6 +462,7 @@ fn poll_network_action_result_events(event_receiver: ResMut<NetworkResultReceive
                     info!("network result: list of available networks: {:?}", networks);
                 }
                 NetworkResult::NetworkStrength(strength) => {
+                    info!("network result: active network strength: {strength}");
                     network_strength.0 = strength;
                 }
                 NetworkResult::NetworkDeviceEvent(device_event) => {

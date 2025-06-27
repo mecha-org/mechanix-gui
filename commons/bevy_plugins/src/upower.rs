@@ -105,7 +105,7 @@ fn start_initial_streams_if_service_ready(
         if let Some(service) = &service_res.service {
             println!("Starting initial streams...");
             events.write(UPowerActionEvent(UPowerAction::StreamDeviceState));
-            // events.write(UPowerActionEvent(UPowerAction::StreamDevicePercentage));
+            events.write(UPowerActionEvent(UPowerAction::StreamDevicePercentage));
             events.write(UPowerActionEvent(UPowerAction::StreamBatteryLevel));
             state.stream_started = true;
         }

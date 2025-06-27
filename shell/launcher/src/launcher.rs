@@ -26,8 +26,8 @@ pub fn run_launcher() {
                 .set(TaskPoolPlugin {
                     task_pool_options: TaskPoolOptions {
                         io: TaskPoolThreadAssignmentPolicy {
-                            min_threads: 4,
-                            max_threads: 8,
+                            min_threads: 9,
+                            max_threads: 10,
                             percent: 0.5,
                             on_thread_spawn: None,
                             on_thread_destroy: None,

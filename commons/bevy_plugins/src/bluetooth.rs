@@ -118,7 +118,7 @@ fn start_initial_streams_if_service_ready(
     if !state.stream_started {
         if let Some(service) = &service_res.service {
             println!("Starting stream...");
-            // events.write(BluetoothActionEvent(BluetoothAction::StreamPoweredStatus));
+            events.write(BluetoothActionEvent(BluetoothAction::StreamPoweredStatus));
             state.stream_started = true;
         }
     }
