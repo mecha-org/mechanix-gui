@@ -21,11 +21,11 @@ pub struct BluetoothResultReceiver {
 
 #[derive(Resource, Clone)]
 pub struct BluetoothResultSender(pub Sender<BluetoothResult>);
-#[derive(Resource, Clone, Default)]
-pub struct BluetoothEnabledStatus(bool);
+#[derive(Resource, Clone, Default, Debug)]
+pub struct BluetoothEnabledStatus(pub bool);
 
 #[derive(Resource, Clone, Default)]
-pub struct BluetoothDeviceStateEvent(bool);
+pub struct BluetoothDeviceConnectedStatus(pub bool);
 
 #[derive(Resource, Default)]
 pub struct BluetoothState {
@@ -34,7 +34,6 @@ pub struct BluetoothState {
 }
 #[derive(Event)]
 pub struct BluetoothActionEvent(pub BluetoothAction);
-
 
 #[derive(Debug, Clone)]
 pub enum BluetoothAction {
@@ -81,21 +80,36 @@ impl Plugin for BluetoothPlugin {
         app.insert_resource(BluetoothServiceResource { service: None })
             .insert_resource(BluetoothState::default())
             .insert_resource(BluetoothEnabledStatus::default())
-            .insert_resource(BluetoothDeviceStateEvent::default())
+            .insert_resource(BluetoothDeviceConnectedStatus::default())
             .add_event::<BluetoothActionEvent>()
             .add_systems(Startup, (init_bluetooth_service, setup_bluetooth_channel)) // Async task so temp move service result to static
-            .add_systems(Update, (poll_service_init, start_stream_if_service_ready.after(poll_service_init))) // Once a service is initialized, it will move service from static to resource
+            .add_systems(
+                Update,
+                (
+                    poll_service_init,
+                    start_initial_streams_if_service_ready.after(poll_service_init),
+                ),
+            ) // Once a service is initialized, it will move service from static to resource
             .add_systems(
                 Update,
                 (
                     handle_bluetooth_action_events,
                     poll_bluetooth_action_result_events.after(handle_bluetooth_action_events),
                 ),
-            );
+            ).add_systems(Update, start_dependent_streams.run_if(resource_changed::<BluetoothEnabledStatus>));
     }
 }
 
-fn start_stream_if_service_ready(
+fn start_dependent_streams(
+    state: ResMut<BluetoothEnabledStatus>,
+    mut events: EventWriter<BluetoothActionEvent>,
+) {
+    // Only start once, and only when the service is initialized
+    if state.0 {
+        events.write(BluetoothActionEvent(BluetoothAction::StreamBluetoothEvent));
+    }
+}
+fn start_initial_streams_if_service_ready(
     mut state: ResMut<BluetoothState>,
     service_res: Res<BluetoothServiceResource>,
     mut events: EventWriter<BluetoothActionEvent>,
@@ -105,7 +119,6 @@ fn start_stream_if_service_ready(
         if let Some(service) = &service_res.service {
             println!("Starting stream...");
             // events.write(BluetoothActionEvent(BluetoothAction::StreamPoweredStatus));
-            events.write(BluetoothActionEvent(BluetoothAction::StreamBluetoothEvent));
             state.stream_started = true;
         }
     }
@@ -341,7 +354,7 @@ fn handle_bluetooth_action_events(
                 }
             }
             BluetoothAction::StreamPoweredStatus => {
-                info!("network action: stream enabled status");
+                info!("bluetooth action: stream enabled status");
                 if let Some(service) = &service.service {
                     let service = service.clone();
                     let sender = sender.0.clone();
@@ -361,7 +374,7 @@ fn handle_bluetooth_action_events(
                 }
             }
             BluetoothAction::StreamBluetoothEvent => {
-                info!("network action: stream connected status");
+                info!("bluetooth action: stream connected status");
                 if let Some(service) = &service.service {
                     let service = service.clone();
                     let sender = sender.0.clone();
@@ -394,24 +407,27 @@ fn handle_bluetooth_action_events(
 /// the system will print an error message and do nothing.
 fn poll_bluetooth_action_result_events(
     event_receiver: ResMut<BluetoothResultReceiver>,
-    mut bluetooth_enabled_status: ResMut<BluetoothEnabledStatus>,
-    mut bluetooth_connected_status: ResMut<BluetoothDeviceStateEvent>,
+    mut bluetooth_status: ResMut<BluetoothEnabledStatus>,
+    mut bluetooth_connection_status: ResMut<BluetoothDeviceConnectedStatus>,
 ) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
             match event {
                 BluetoothResult::BluetoothStatus(status) => {
                     info!("bluetooth status updated: {status}");
-                    bluetooth_enabled_status.0 = status;
+                    bluetooth_status.0 = status;
                 }
                 BluetoothResult::BluetoothEvent(event) => {
-                    info!("bluetooth event updated: {:?}", event);
                     match event {
                         BluetoothEvent::DeviceAdded => {
-                            bluetooth_connected_status.0 = true;
+                            if !bluetooth_connection_status.0 {
+                                bluetooth_connection_status.0 = true;
+                            }
                         }
                         BluetoothEvent::DeviceRemoved => {
-                            bluetooth_connected_status.0 = false;
+                            if bluetooth_connection_status.0 {
+                                bluetooth_connection_status.0 = false;
+                            }
                         }
                     }
                 }

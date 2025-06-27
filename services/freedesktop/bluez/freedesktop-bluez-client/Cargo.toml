@@ -9,5 +9,5 @@ tokio = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 async-trait = { workspace = true }
-log = { workspace = true}
-mockall = { workspace = true }
+log = { workspace = true }
+futures = { workspace = true }

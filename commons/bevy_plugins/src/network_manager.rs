@@ -16,7 +16,10 @@ pub struct NetworkManagerServiceResource {
 }
 
 #[derive(Resource, Default, Debug, Clone)]
-pub struct WirelessEnabled(bool);
+pub struct WirelessEnabled(pub bool);
+
+#[derive(Resource, Default, Debug, Clone)]
+pub struct ActiveNetworkStrength(pub u8);
 #[derive(Resource)]
 pub struct NetworkResultReceiver {
     receiver: Mutex<Receiver<NetworkResult>>,
@@ -30,6 +33,8 @@ pub struct NetworkManagerState {
     pub initialized: bool,
     pub stream_started: bool,
 }
+#[derive(Resource, Default, Debug)]
+pub struct NetworkManagerDeviceStatus(pub NMState);
 #[derive(Event)]
 pub struct NetworkActionEvent(pub NetworkAction);
 
@@ -81,6 +86,8 @@ impl Plugin for NetworkManagerPlugin {
         app.insert_resource(NetworkManagerServiceResource { service: None })
             .insert_resource(NetworkManagerState::default())
             .insert_resource(WirelessEnabled::default())
+            .insert_resource(ActiveNetworkStrength::default())
+            .insert_resource(NetworkManagerDeviceStatus::default())
             .add_event::<NetworkActionEvent>()
             .add_systems(
                 Startup,
@@ -99,7 +106,19 @@ impl Plugin for NetworkManagerPlugin {
                     handle_network_action_events,
                     poll_network_action_result_events.after(handle_network_action_events),
                 ),
-            );
+            )
+            .add_systems(Update, start_dependent_streams.run_if(resource_changed::<NetworkManagerDeviceStatus>));
+    }
+}
+
+
+fn start_dependent_streams(
+    state: ResMut<NetworkManagerDeviceStatus>,
+    mut events: EventWriter<NetworkActionEvent>,
+) {
+    // Only start once, and only when the service is initialized
+    if state.0 == NMState::ConnectedGlobal {
+        events.write(NetworkActionEvent(NetworkAction::StreamActiveNetworkStrength));
     }
 }
 fn start_stream_if_service_ready(
@@ -111,12 +130,11 @@ fn start_stream_if_service_ready(
     if !state.stream_started {
         if let Some(service) = &service_res.service {
             println!("Starting stream...");
-            // events.write(NetworkActionEvent(
-            //     NetworkAction::StreamWirelessEnabledStatus,
-            // ));
-            // events.write(NetworkActionEvent(NetworkAction::StreamDeviceEvents));
+            events.write(NetworkActionEvent(
+                NetworkAction::StreamWirelessEnabledStatus,
+            ));
+            events.write(NetworkActionEvent(NetworkAction::StreamDeviceEvents));
             // events.write(NetworkActionEvent(NetworkAction::StreamAccessPointsEvents));
-            events.write(NetworkActionEvent(NetworkAction::StreamActiveNetworkStrength));
             state.stream_started = true;
         }
     }
@@ -366,7 +384,7 @@ fn handle_network_action_events(
                 if let Some(service) = &service.service {
                     let service = service.clone();
                     let result_sender = sender.0.clone();
-                    bevy::tasks::IoTaskPool::get()
+                    IoTaskPool::get()
                         .spawn(async move {
                             let receiver = service.stream_access_point_events().await;
                             while let Ok(access_point_event_result) = receiver.recv() {
@@ -396,9 +414,9 @@ fn handle_network_action_events(
                         .spawn(async move {
                             let receiver: mpsc::Receiver<bool> =
                                 service.stream_wireless_enabled_status().await;
-                            while let Ok(device_event) = receiver.recv() {
+                            while let Ok(is_enabled) = receiver.recv() {
                                 if let Err(err) =
-                                    sender.send(NetworkResult::WirelessEnabled(device_event))
+                                    sender.send(NetworkResult::WirelessEnabled(is_enabled))
                                 {
                                     error!("failed to send wireless enabled status: {err}");
                                 }
@@ -432,7 +450,7 @@ fn handle_network_action_events(
 }
 
 // Polling system to insert write error into an event
-fn poll_network_action_result_events(event_receiver: ResMut<NetworkResultReceiver>, mut wifi_state: ResMut<WirelessEnabled>) {
+fn poll_network_action_result_events(event_receiver: ResMut<NetworkResultReceiver>, mut wifi_state: ResMut<WirelessEnabled>, mut network_strength: ResMut<ActiveNetworkStrength>, mut network_device_status: ResMut<NetworkManagerDeviceStatus>) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
             match event {
@@ -443,8 +461,11 @@ fn poll_network_action_result_events(event_receiver: ResMut<NetworkResultReceive
                 NetworkResult::ListNetworks(networks) => {
                     info!("network result: list of available networks: {:?}", networks);
                 }
-                NetworkResult::NetworkStrength(network_strength) => {
-                    info!("network result: strength: {:?}", network_strength);
+                NetworkResult::NetworkStrength(strength) => {
+                    network_strength.0 = strength;
+                }
+                NetworkResult::NetworkDeviceEvent(device_event) => {
+                    network_device_status.0 = device_event;
                 }
                 _ => {}
             }

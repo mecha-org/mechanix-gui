@@ -904,8 +904,6 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
                 return Err(e);
             }
         };
-        // Create a proxy for the device.
-
 
         // Create a proxy for the wireless interface.
         let wireless_proxy =

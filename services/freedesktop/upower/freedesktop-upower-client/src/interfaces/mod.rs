@@ -15,6 +15,7 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
+use zbus::proxy::PropertyStream;
 use crate::proxies::ProxyError;
 
 pub mod device;
@@ -44,7 +45,7 @@ pub mod device;
 /// }
 /// ```
 #[async_trait]
-pub trait UpowerInterface: Send + Sync {
+pub trait UPowerInterface: Send + Sync {
     /// Asynchronously get the current battery level as a percentage (0-100).
     async fn get_battery_level(&self) -> Result<u32, ProxyError>;
 
@@ -61,5 +62,7 @@ pub trait UpowerInterface: Send + Sync {
     async fn get_power_source_type(&self) -> Result<u32, ProxyError>;
 
     /// Asynchronously get a device state change event as a string.
-    async fn get_device_state_change_event(&self) -> Result<String, ProxyError>;
+    async fn stream_device_state(&self) -> Result<PropertyStream<u32>, ProxyError>;
+    async fn stream_device_percentage(&self) -> Result<PropertyStream<f64>, ProxyError>;
+    async fn stream_battery_level(&self) -> Result<PropertyStream<u32>, ProxyError>;
 }
