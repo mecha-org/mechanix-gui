@@ -1,0 +1,10 @@
+[package]
+name = "freedesktop-notifications-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-trait = "0.1.88"
+thiserror = "2.0.12"
+tokio = {version = "1.45.1", features = ["full"]}
+zbus = { version = "5.7.1", features = ["tokio", "p2p"] }
