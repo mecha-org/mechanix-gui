@@ -1,7 +1,7 @@
 use crate::utils::Icon;
 use crate::{
     // StyledWidgetsPlugin,
-    components::{status_bar, AssetsLoadingState, ClockPlugin},
+    components::{status_bar, AssetsLoadingState, StatusBarPlugin},
     styled_card::StyledCardPlugin,
     utils::FontAssets,
 };
@@ -72,7 +72,7 @@ pub fn run_launcher() {
                 .load_collection::<FontAssets>(),
         )
         .add_systems(OnEnter(AssetsLoadingState::Loaded), setup)
-        .add_plugins(ClockPlugin)
+        .add_plugins(StatusBarPlugin)
         .add_plugins(StyledCardPlugin)
         .add_plugins(NetworkManagerPlugin)
         .add_plugins(BluetoothPlugin)

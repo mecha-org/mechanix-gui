@@ -16,9 +16,9 @@ struct Clock;
 #[derive(Resource)]
 struct ClockUpdateTimer(Timer);
 
-pub struct ClockPlugin;
+pub struct StatusBarPlugin;
 
-impl Plugin for ClockPlugin {
+impl Plugin for StatusBarPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ClockUpdateTimer(Timer::from_seconds(
             1.,
