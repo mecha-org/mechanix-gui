@@ -119,7 +119,7 @@ fn start_dependent_streams(
     // Only start once, and only when the service is initialized
     if state.0 == NMState::ConnectedGlobal {
         events.write(NetworkActionEvent(NetworkAction::StreamActiveNetworkStrength));
-        events.write(NetworkActionEvent(NetworkAction::StreamAccessPointsEvents));
+        // events.write(NetworkActionEvent(NetworkAction::StreamAccessPointsEvents));
     }
 }
 fn start_stream_if_service_ready(
