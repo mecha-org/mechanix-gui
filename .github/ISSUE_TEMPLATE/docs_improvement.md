@@ -5,7 +5,7 @@ title: ''
 assignees: ''
 ---
 
-## How can bevy_smithay's documentation be improved?
+## How can mechanix-gui's documentation be improved?
 
 Provide a link to the documentation and describe how it could be improved. In what ways is it incomplete, incorrect, or misleading?
 

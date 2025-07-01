@@ -5,7 +5,7 @@ title: ''
 assignees: ''
 ---
 
-## bevy_smithay version
+## mechanix-gui version
 
 The release number or commit hash of the version you're using.
 
