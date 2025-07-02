@@ -5,6 +5,9 @@ edition = "2024"
 
 [dependencies]
 async-trait = "0.1.88"
+futures-util.workspace = true
+serde.workspace = true
 thiserror = "2.0.12"
 tokio = {version = "1.45.1", features = ["full"]}
 zbus = { version = "5.7.1", features = ["tokio", "p2p"] }
+zvariant = "5.5.3"

@@ -1,3 +1,5 @@
+use serde::{ Deserialize, Serialize };
+use zvariant::{ Type, Value };
 use zbus::{ interface };
 use std::collections::HashMap;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -5,7 +7,19 @@ use std::sync::atomic::{ AtomicU32, Ordering };
 use zbus::object_server::SignalEmitter;
 use std::sync::Arc;
 use tokio::{ sync::mpsc::{ Receiver, Sender, channel }, sync::RwLock };
-use crate::notification::Notification;
+use zbus::Connection;
+use crate::errors::{ Error, Result };
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct Notification {
+    pub app_name: String,
+    pub replaces_id: u32,
+    pub app_icon: String,
+    pub summary: String,
+    pub body: String,
+    pub actions: Vec<String>,
+    pub hints: HashMap<String, zbus::zvariant::OwnedValue>,
+    pub expire_timeout: i32,
+}
 
 pub enum Event {
     Show(u32, Notification),
@@ -29,6 +43,22 @@ impl NotificationService {
             sender: Some(sender),
         };
         (service, reciever)
+    }
+
+    pub async fn create_connection() -> Result<(Connection, NotificationService, Receiver<Event>)> {
+        let connection = Connection::session().await.map_err(|e|
+            Error::DbusString(format!("Failed to create D-Bus connection: {}", e))
+        )?;
+
+        let (notification_service, receiver) = NotificationService::new();
+        connection
+            .object_server()
+            .at("/org/freedesktop/Notifications", notification_service.clone()).await
+            .map_err(|e| Error::DbusString(format!("Failed to register object: {}", e)))?;
+        connection
+            .request_name("org.freedesktop.Notifications").await
+            .map_err(|e| Error::DbusString(format!("Failed to request D-Bus name: {}", e)))?;
+        Ok((connection, notification_service, receiver))
     }
 
     pub fn set_sender(&mut self, sender: Sender<Event>) {
@@ -124,8 +154,10 @@ impl NotificationService {
 
         if let Some(sender) = &self.sender {
             let event = if replaces_id == 0 {
+                // dbg!("Notification Recieved and Sent {}",&notification);
                 Event::Show(id, notification)
             } else {
+                // dbg!("Notification Recieved and Replaced {}",&notification);
                 Event::Replace(id, notification)
             };
             let _ = sender.send(event).await;
