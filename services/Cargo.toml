@@ -19,6 +19,7 @@ members = [
     "desktop/server",
     "store/server",
     "store/client/dbus", "freedesktop/network-manager/freedesktop-network-manager-client", "freedesktop/upower/freedesktop-upower-client", "freedesktop/bluez/freedesktop-bluez-client", "freedesktop/pulseaudio/freedesktop-pulseaudio-client",
+    "freedesktop/notifications/freedesktop-notifications-server",
 ]
 default-members = ["system/server/dbus", "desktop/server"]
 
