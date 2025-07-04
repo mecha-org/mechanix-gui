@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use serde::{ Serialize, Deserialize };
-use zvariant::{ OwnedValue, Signature, Str, Structure, Type };
+use zvariant::{ OwnedValue, Structure, Type };
 use std::path::PathBuf;
 use gdk_pixbuf::Pixbuf;
 use glib::Bytes;
