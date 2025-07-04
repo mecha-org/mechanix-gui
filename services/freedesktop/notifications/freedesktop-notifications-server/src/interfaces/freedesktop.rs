@@ -1,5 +1,5 @@
 use serde::{ Deserialize, Serialize };
-use zvariant::{ Type, Value };
+use zvariant::{ Type };
 use zbus::{ interface };
 use std::collections::HashMap;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -24,7 +24,6 @@ pub struct Notification {
 pub enum Event {
     Show(u32, Notification),
     Close(u32),
-    Replace(u32, Notification),
 }
 
 #[derive(Debug, Clone)]
@@ -76,16 +75,10 @@ impl NotificationService {
         let mut notifications = self.notifications.write().await;
         let notification_existed = notifications.remove(&id).is_some();
         drop(notifications);
-
         if notification_existed {
             if let Some(sender) = &self.sender {
-                let _ = sender.send(Event::Close(id));
+                let _ = sender.send(Event::Close(id)).await;
             }
-            //#todo Signal Emmiter Implementation
-            // if let Ok(signl_ext) = SignalEmitter::new()
-            // {
-
-            // }
         }
     }
 
@@ -153,13 +146,7 @@ impl NotificationService {
         drop(notifications);
 
         if let Some(sender) = &self.sender {
-            let event = if replaces_id == 0 {
-                // dbg!("Notification Recieved and Sent {}",&notification);
-                Event::Show(id, notification)
-            } else {
-                // dbg!("Notification Recieved and Replaced {}",&notification);
-                Event::Replace(id, notification)
-            };
+            let event = Event::Show(id,notification);
             let _ = sender.send(event).await;
         }
 
@@ -229,7 +216,7 @@ impl NotificationService {
     /// Note: Clients should not assume the server will generate this signal.
     /// Some servers may not support user interaction at all.
     #[zbus(signal)]
-    async fn action_invoked(
+    pub async fn action_invoked(
         signal_ctxt: &SignalEmitter<'_>,
         id: u32,
         action_key: &str
@@ -249,7 +236,7 @@ impl NotificationService {
     /// Some servers may not support user interaction or activation token generation.
 
     #[zbus(signal)]
-    async fn activation_token(
+    pub async fn activation_token(
         signal_ctxt: &SignalEmitter<'_>,
         id: u32,
         activation_token: &str
@@ -263,7 +250,7 @@ impl NotificationService {
     /// 3 - The notification was closed by a call to CloseNotification.
     /// 4 - Undefined/reserved reasons.
     #[zbus(signal)]
-    async fn notification_closed(
+    pub async fn notification_closed(
         signal_ctxt: &SignalEmitter<'_>,
         id: u32,
         reason: u32
