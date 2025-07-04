@@ -20,8 +20,8 @@
 //! [Writing a client proxy]: https://dbus2.github.io/zbus/client.html
 //! [D-Bus standard interfaces]: https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces,
 //! 
-use crate::interfaces::freedesktop::Notification;
 use zbus::proxy;
+use crate::notification::Notification;
 #[proxy(
     interface = "org.mechanix.Notifications",
     default_service = "org.mechanix.Notifications",

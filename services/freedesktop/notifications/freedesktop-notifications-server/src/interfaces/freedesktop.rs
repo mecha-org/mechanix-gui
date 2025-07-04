@@ -1,5 +1,3 @@
-use serde::{ Deserialize, Serialize };
-use zvariant::{ Type };
 use zbus::{ interface };
 use std::collections::HashMap;
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -9,17 +7,7 @@ use std::sync::Arc;
 use tokio::{ sync::mpsc::{ Receiver, Sender, channel }, sync::RwLock };
 use zbus::Connection;
 use crate::errors::{ Error, Result };
-#[derive(Debug, Clone, Serialize, Deserialize, Type)]
-pub struct Notification {
-    pub app_name: String,
-    pub replaces_id: u32,
-    pub app_icon: String,
-    pub summary: String,
-    pub body: String,
-    pub actions: Vec<String>,
-    pub hints: HashMap<String, zbus::zvariant::OwnedValue>,
-    pub expire_timeout: i32,
-}
+use crate::notification::Notification;
 
 pub enum Event {
     Show(u32, Notification),

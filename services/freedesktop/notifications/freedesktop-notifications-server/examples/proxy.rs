@@ -1,9 +1,10 @@
 use freedesktop_notifications_server::proxies::mechanix::NotificationsProxy;
-use freedesktop_notifications_server::interfaces::freedesktop::Notification;
+use freedesktop_notifications_server::notification::Notification;
 use zbus::Connection;
 use futures_util::stream::StreamExt;
 use tokio::select;
-
+use std::path::PathBuf;
+use std::str::FromStr;
 #[tokio::main]
 async fn main() -> zbus::Result<()> {
     let connection = Connection::session().await?;
@@ -21,6 +22,10 @@ async fn main() -> zbus::Result<()> {
                         match signal.args() {
                             Ok(args) => {
                                 println!("Notification Received: {:?}",args.notification);
+                                let notif_id = args.id;
+                                // dbg!(notif_id);
+                                let image_path = format!("notification{}.png",notif_id);
+                                let _saved = args.notification.get_image().unwrap().save_to_path(PathBuf::from_str(&image_path).unwrap()); 
                             }
                             Err(e) => eprintln!("Error parsing notification_received: {}", e),
                         }

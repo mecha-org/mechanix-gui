@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 async-trait = "0.1.88"
 futures-util.workspace = true
+gdk-pixbuf = "0.20.10"
+glib = "0.20.12"
 serde.workspace = true
 thiserror = "2.0.12"
 tokio = {version = "1.45.1", features = ["full"]}

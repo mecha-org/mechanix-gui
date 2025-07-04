@@ -2,7 +2,8 @@ use zbus::{ object_server::SignalEmitter, Connection, interface, fdo };
 use zvariant::ObjectPath;
 use tokio::sync::mpsc::Receiver;
 use crate::interfaces::freedesktop::NotificationService;
-use crate::interfaces::freedesktop::{ Event, Notification };
+use crate::interfaces::freedesktop::{ Event };
+use crate::notification::Notification;
 
 #[derive(Debug, Clone)]
 pub struct MechanixNotificationService {
