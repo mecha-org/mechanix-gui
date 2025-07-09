@@ -1,7 +1,7 @@
 use zbus::{ object_server::SignalEmitter, Connection, interface, fdo };
 use zvariant::ObjectPath;
 use tokio::sync::mpsc::Receiver;
-use crate::interfaces::freedesktop::NotificationService;
+use crate::interfaces::freedesktop::FreedesktopNotificationService;
 use crate::interfaces::freedesktop::{ FreedesktopNotificationEvent };
 use crate::notification::Notification;
 
@@ -46,7 +46,7 @@ impl MechanixNotificationService {
     pub async fn start_service() -> zbus::Result<()> {
         // Setup freedesktop notification service
         let (freedesktop_connection, service, receiver) =
-            NotificationService::create_connection().await.map_err(|e|
+            FreedesktopNotificationService::create_connection().await.map_err(|e|
                 zbus::Error::Failure(format!("Failed to create freedesktop connection: {}", e))
             )?;
 
@@ -95,7 +95,7 @@ impl MechanixNotificationService {
     /// on the org.freedesktop.Notifications interface
     async fn invoke_action(&self, id: u32, action_key: &str) -> fdo::Result<()> {
         if let Some(emitter) = &self.freedesktop_signal_emitter {
-            NotificationService::action_invoked(emitter, id, action_key).await.map_err(|e|
+            FreedesktopNotificationService::action_invoked(emitter, id, action_key).await.map_err(|e|
                 fdo::Error::Failed(format!("Failed to invoke action: {}", e))
             )
         } else {
@@ -106,7 +106,7 @@ impl MechanixNotificationService {
     /// sends activation token signal on the org.freedesktop.Notifications interface
     async fn send_activation_token(&self, id: u32, activation_token: &str) -> fdo::Result<()> {
         if let Some(emitter) = &self.freedesktop_signal_emitter {
-            NotificationService::activation_token(emitter, id, activation_token).await.map_err(|e|
+            FreedesktopNotificationService::activation_token(emitter, id, activation_token).await.map_err(|e|
                 fdo::Error::Failed(format!("Failed to send activation token: {}", e))
             )
         } else {
@@ -117,7 +117,7 @@ impl MechanixNotificationService {
     /// Close a notification with a specific reason
     async fn close_notification_with_reason(&self, id: u32, reason: u32) -> fdo::Result<()> {
         if let Some(emitter) = &self.freedesktop_signal_emitter {
-            NotificationService::notification_closed(emitter, id, reason).await.map_err(|e|
+            FreedesktopNotificationService::notification_closed(emitter, id, reason).await.map_err(|e|
                 fdo::Error::Failed(format!("Failed to close notification: {}", e))
             )
         } else {

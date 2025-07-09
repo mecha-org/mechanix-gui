@@ -15,13 +15,13 @@ pub enum FreedesktopNotificationEvent {
 }
 
 #[derive(Debug, Clone)]
-pub struct NotificationService {
+pub struct FreedesktopNotificationService {
     next_id: Arc<AtomicU32>,
     notifications: Arc<RwLock<HashMap<u32, Notification>>>,
     sender: Option<Sender<FreedesktopNotificationEvent>>,
 }
 
-impl NotificationService {
+impl FreedesktopNotificationService {
     pub fn new() -> (Self, Receiver<FreedesktopNotificationEvent>) {
         let (sender, reciever) = channel(100);
         let service = Self {
@@ -32,12 +32,12 @@ impl NotificationService {
         (service, reciever)
     }
 
-    pub async fn create_connection() -> Result<(Connection, NotificationService, Receiver<FreedesktopNotificationEvent>)> {
+    pub async fn create_connection() -> Result<(Connection, FreedesktopNotificationService, Receiver<FreedesktopNotificationEvent>)> {
         let connection = Connection::session().await.map_err(|e|
             Error::DbusString(format!("Failed to create D-Bus connection: {}", e))
         )?;
 
-        let (notification_service, receiver) = NotificationService::new();
+        let (notification_service, receiver) = FreedesktopNotificationService::new();
         connection
             .object_server()
             .at("/org/freedesktop/Notifications", notification_service.clone()).await
@@ -54,7 +54,7 @@ impl NotificationService {
 }
 
 #[interface(name = "org.freedesktop.Notifications")]
-impl NotificationService {
+impl FreedesktopNotificationService {
     /// org.freedesktop.Notifications.CloseNotification
     /// Causes a notification to be forcefully closed and removed from the user's view.
     /// The NotificationClosed signal is emitted by this method.
