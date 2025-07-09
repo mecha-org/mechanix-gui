@@ -65,14 +65,14 @@ impl MechanixNotificationService {
 
         connection
             .object_server()
-            .at("/org/mechanix/Notifications", notificationbus.clone()).await?;
+            .at("/org/mechanix/NotificationManager", notificationbus.clone()).await?;
 
-        connection.request_name("org.mechanix.Notifications").await?;
+        connection.request_name("org.mechanix.NotificationManager").await?;
 
-        // gets the signal emitter for org.mechanix.Notifications
+        // gets the signal emitter for org.mechanix.NotificationManager
         let mechanix_signal_emitter = SignalEmitter::from_parts(
             connection.clone(),
-            ObjectPath::try_from("/org/mechanix/Notifications").map_err(|e|
+            ObjectPath::try_from("/org/mechanix/NotificationManager").map_err(|e|
                 zbus::Error::Failure(format!("Invalid object path: {}", e))
             )?
         );
@@ -85,7 +85,7 @@ impl MechanixNotificationService {
     }
 }
 
-#[interface(name = "org.mechanix.Notifications")]
+#[interface(name = "org.mechanix.NotificationManager")]
 impl MechanixNotificationService {
     async fn get_version(&self) -> String {
         env!("CARGO_PKG_VERSION").to_string()

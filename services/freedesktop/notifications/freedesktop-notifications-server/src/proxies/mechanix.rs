@@ -23,9 +23,9 @@
 use zbus::proxy;
 use crate::notification::Notification;
 #[proxy(
-    interface = "org.mechanix.Notifications",
-    default_service = "org.mechanix.Notifications",
-    default_path = "/org/mechanix/Notifications"
+    interface = "org.mechanix.NotificationManager",
+    default_service = "org.mechanix.NotificationManager",
+    default_path = "/org/mechanix/NotificationManager"
 )]
 pub trait Notifications {
     /// CloseNotificationWithReason method
