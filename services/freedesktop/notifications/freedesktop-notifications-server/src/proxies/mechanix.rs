@@ -31,6 +31,9 @@ pub trait Notifications {
     /// CloseNotificationWithReason method
     fn close_notification_with_reason(&self, id: u32, reason: u32) -> zbus::Result<()>;
 
+    /// GetAllNotifications method
+    fn get_all_notifications(&self) -> zbus::Result<Vec<(u32, Notification)>>;
+
     /// GetVersion method
     fn get_version(&self) -> zbus::Result<String>;
 
