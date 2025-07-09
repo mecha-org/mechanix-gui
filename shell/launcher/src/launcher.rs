@@ -1,4 +1,6 @@
-use bevy::{ecs::system::SystemId, prelude::*, winit::WinitPlugin};
+use bevy::{
+    asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
+};
 use bevy_asset_loader::prelude::*;
 use bevy_smithay::{
     SmithayPlugin, SmithayWindowType,
@@ -13,8 +15,10 @@ use bevy_styled_widgets::{
 
 use crate::{
     components::{
-        AssetsLoadingState, ClockPlugin, NavigationBarPlugin, apps_grid, navigation_bar, status_bar,
+        AssetsLoadingState, ClockPlugin, NavigationBarPlugin, app_list, apps_grid, navigation_bar,
+        status_bar, update_apps_categories, update_apps_list,
     },
+    desktop_apps::{DesktopApps, DesktopAppsPlugin},
     styled_card::{StyledCard, StyledCardPlugin},
     utils::FontAssets,
 };
@@ -59,6 +63,11 @@ pub fn run_launcher() {
                     }),
                     ..default()
                 })
+                .set(AssetPlugin {
+                    meta_check: AssetMetaCheck::Never,
+                    unapproved_path_mode: bevy::asset::UnapprovedPathMode::Allow,
+                    ..Default::default()
+                })
                 .disable::<WinitPlugin>(),
             SmithayPlugin {
                 primary_window_type: SmithayWindowType::LayerShell {
@@ -88,6 +97,7 @@ pub fn run_launcher() {
             StyledCardPlugin,
             StyledWidgetsPlugin,
             LauncherUiPlugin,
+            DesktopAppsPlugin,
             // StyledTextPlugin,
             // Custom plugin for organizing UI setup
         ))
@@ -96,11 +106,37 @@ pub fn run_launcher() {
         .run();
 }
 
+fn assets_loaded(load_state: Res<State<AssetsLoadingState>>) -> bool {
+    *load_state == AssetsLoadingState::Loaded
+}
+
 pub struct LauncherUiPlugin;
 
 impl Plugin for LauncherUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AssetsLoadingState::Loaded), setup_launcher_ui);
+        //insert resource only when the assets are loaded
+        app.add_systems(
+            OnEnter(AssetsLoadingState::Loaded),
+            |mut commands: Commands, asset_server: Res<AssetServer>| {
+                let apps = DesktopApps::new(&mut commands, &asset_server);
+                commands.insert_resource(apps);
+            },
+        );
+
+        app.add_systems(
+            Update,
+            update_apps_list
+                .run_if(assets_loaded)
+                .run_if(resource_exists_and_changed::<DesktopApps>),
+        );
+        app.add_systems(
+            Update,
+            update_apps_categories
+                .run_if(assets_loaded)
+                .run_if(resource_exists_and_changed::<DesktopApps>),
+        );
+
         app.add_observer(handle_navigation_events);
     }
 }
@@ -170,7 +206,7 @@ fn spawn_homescreen_window(commands: &mut Commands) {
             ..Default::default()
         },
         StyledCard,
-        spawn_content("Homescreen", on_click),
+        children![apps_grid(),],
     ));
 }
 

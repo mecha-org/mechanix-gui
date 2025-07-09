@@ -232,9 +232,8 @@ fn on_bar_drag_start(
     q_bars: Query<&Bar>,
     time: Res<Time>,
 ) {
-    trigger.propagate(false);
-
     if let Ok(bar) = q_bars.get(trigger.target) {
+        trigger.propagate(false);
         info!("Bar drag started: {:?}", bar);
 
         if matches!(bar, Bar::Center) {
@@ -250,11 +249,11 @@ fn on_bar_drag(
     mut q_swipe_trackers: Query<&mut SwipeTracker>,
     time: Res<Time>,
 ) {
-    trigger.propagate(false);
-
     let Ok((mut node, bar)) = q_bars.get_mut(trigger.target) else {
         return;
     };
+
+    trigger.propagate(false);
 
     if matches!(bar, Bar::Center) {
         if let Ok(mut tracker) = q_swipe_trackers.get_mut(trigger.target) {
@@ -284,11 +283,11 @@ fn on_bar_drag_end(
     q_swipe_trackers: Query<&SwipeTracker>,
     time: Res<Time>,
 ) {
-    trigger.propagate(false);
-
     let Ok(node) = q_bars.get(trigger.target) else {
         return;
     };
+
+    trigger.propagate(false);
 
     let Ok(bar) = q_bar_pos.get(trigger.target) else {
         return;
