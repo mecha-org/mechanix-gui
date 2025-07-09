@@ -17,7 +17,6 @@ pub enum FreedesktopNotificationEvent {
 #[derive(Debug, Clone)]
 pub struct FreedesktopNotificationService {
     next_id: Arc<AtomicU32>,
-    notifications: Arc<RwLock<HashMap<u32, Notification>>>,
     sender: Option<Sender<FreedesktopNotificationEvent>>,
 }
 
@@ -26,13 +25,14 @@ impl FreedesktopNotificationService {
         let (sender, reciever) = channel(100);
         let service = Self {
             next_id: Arc::new(AtomicU32::new(1)),
-            notifications: Arc::new(RwLock::new(HashMap::new())),
             sender: Some(sender),
         };
         (service, reciever)
     }
 
-    pub async fn create_connection() -> Result<(Connection, FreedesktopNotificationService, Receiver<FreedesktopNotificationEvent>)> {
+    pub async fn create_connection() -> Result<
+        (Connection, FreedesktopNotificationService, Receiver<FreedesktopNotificationEvent>)
+    > {
         let connection = Connection::session().await.map_err(|e|
             Error::DbusString(format!("Failed to create D-Bus connection: {}", e))
         )?;
@@ -60,13 +60,8 @@ impl FreedesktopNotificationService {
     /// The NotificationClosed signal is emitted by this method.
     /// If the notification no longer exists, an empty D-BUS Error message is sent back.
     async fn close_notification(&self, id: u32) {
-        let mut notifications = self.notifications.write().await;
-        let notification_existed = notifications.remove(&id).is_some();
-        drop(notifications);
-        if notification_existed {
-            if let Some(sender) = &self.sender {
-                let _ = sender.send(FreedesktopNotificationEvent::Close(id)).await;
-            }
+        if let Some(sender) = &self.sender {
+            let _ = sender.send(FreedesktopNotificationEvent::Close(id)).await;
         }
     }
 
@@ -129,12 +124,11 @@ impl FreedesktopNotificationService {
             expire_timeout,
         };
 
-        let mut notifications = self.notifications.write().await;
-        notifications.insert(id, notification.clone());
-        drop(notifications);
-
         if let Some(sender) = &self.sender {
-            let freedesktop_notification_event = FreedesktopNotificationEvent::Notify(id,notification);
+            let freedesktop_notification_event = FreedesktopNotificationEvent::Notify(
+                id,
+                notification
+            );
             let _ = sender.send(freedesktop_notification_event).await;
         }
 

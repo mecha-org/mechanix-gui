@@ -4,15 +4,22 @@ use tokio::sync::mpsc::Receiver;
 use crate::interfaces::freedesktop::FreedesktopNotificationService;
 use crate::interfaces::freedesktop::{ FreedesktopNotificationEvent };
 use crate::notification::Notification;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 #[derive(Debug, Clone)]
 pub struct MechanixNotificationService {
     freedesktop_signal_emitter: Option<SignalEmitter<'static>>,
+    // Add shared storage for notifications as Vec
+    notifications: Arc<RwLock<Vec<(u32, Notification)>>>,
 }
 
 impl MechanixNotificationService {
     pub fn new() -> Self {
-        Self { freedesktop_signal_emitter: None }
+        Self { 
+            freedesktop_signal_emitter: None,
+            notifications: Arc::new(RwLock::new(Vec::new())),
+        }
     }
 
     pub fn set_signal_emmiter(&mut self, signal_emitter: SignalEmitter<'static>) {
@@ -22,12 +29,21 @@ impl MechanixNotificationService {
     // Start processing events in a background task 
     pub async fn handle_event(
         mut event_receiver: Receiver<FreedesktopNotificationEvent>,
-        signal_emitter: SignalEmitter<'static>
+        signal_emitter: SignalEmitter<'static>,
+        notifications: Arc<RwLock<Vec<(u32, Notification)>>>
     ) {
         tokio::spawn(async move {
             while let Some(event) = event_receiver.recv().await {
                 match event {
                     FreedesktopNotificationEvent::Notify(id, notification) => {
+                        // Store the notification
+                        {
+                            let mut notifs = notifications.write().await;
+                            // Remove existing notification with same ID first
+                            notifs.retain(|(existing_id, _)| *existing_id != id);
+                            notifs.push((id, notification.clone()));
+                        }
+                        
                         let _ = Self::notification_received(
                             &signal_emitter,
                             id,
@@ -35,6 +51,12 @@ impl MechanixNotificationService {
                         ).await;
                     }
                     FreedesktopNotificationEvent::Close(id) => {
+                        // Remove the notification
+                        {
+                            let mut notifs = notifications.write().await;
+                            notifs.retain(|(existing_id, _)| *existing_id != id);
+                        }
+                        
                         let _ = Self::notification_closed(&signal_emitter, id).await;
                     }
                 }
@@ -45,7 +67,7 @@ impl MechanixNotificationService {
     /// Start the complete notification service including freedesktop and mechanix interfaces
     pub async fn start_service() -> zbus::Result<()> {
         // Setup freedesktop notification service
-        let (freedesktop_connection, service, receiver) =
+        let (freedesktop_connection, _service, receiver) =
             FreedesktopNotificationService::create_connection().await.map_err(|e|
                 zbus::Error::Failure(format!("Failed to create freedesktop connection: {}", e))
             )?;
@@ -59,6 +81,7 @@ impl MechanixNotificationService {
 
         // Setup mechanix notification service
         let mut notificationbus = Self::new();
+        let notifications_clone = notificationbus.notifications.clone();
 
         notificationbus.set_signal_emmiter(freedesktop_signal_emitter);
         let connection = Connection::session().await?;
@@ -78,7 +101,7 @@ impl MechanixNotificationService {
         );
 
         // starts event handling
-        Self::handle_event(receiver, mechanix_signal_emitter).await;
+        Self::handle_event(receiver, mechanix_signal_emitter, notifications_clone).await;
 
         std::future::pending::<()>().await;
         Ok(())
@@ -123,6 +146,12 @@ impl MechanixNotificationService {
         } else {
             Err(fdo::Error::Failed("Freedesktop signal emitter not available".to_string()))
         }
+    }
+
+    /// Get all active notifications
+    async fn get_all_notifications(&self) -> Vec<(u32, Notification)> {
+        let notifications = self.notifications.read().await;
+        notifications.clone()
     }
 
     #[zbus(signal)]
