@@ -2,7 +2,7 @@ use zbus::{ object_server::SignalEmitter, Connection, interface, fdo };
 use zvariant::ObjectPath;
 use tokio::sync::mpsc::Receiver;
 use crate::interfaces::freedesktop::NotificationService;
-use crate::interfaces::freedesktop::{ Event };
+use crate::interfaces::freedesktop::{ FreedesktopNotificationEvent };
 use crate::notification::Notification;
 
 #[derive(Debug, Clone)]
@@ -21,20 +21,20 @@ impl MechanixNotificationService {
 
     // Start processing events in a background task 
     pub async fn handle_event(
-        mut event_receiver: Receiver<Event>,
+        mut event_receiver: Receiver<FreedesktopNotificationEvent>,
         signal_emitter: SignalEmitter<'static>
     ) {
         tokio::spawn(async move {
             while let Some(event) = event_receiver.recv().await {
                 match event {
-                    Event::Show(id, notification) => {
+                    FreedesktopNotificationEvent::Notify(id, notification) => {
                         let _ = Self::notification_received(
                             &signal_emitter,
                             id,
                             &notification
                         ).await;
                     }
-                    Event::Close(id) => {
+                    FreedesktopNotificationEvent::Close(id) => {
                         let _ = Self::notification_closed(&signal_emitter, id).await;
                     }
                 }

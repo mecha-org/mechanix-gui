@@ -9,8 +9,8 @@ use zbus::Connection;
 use crate::errors::{ Error, Result };
 use crate::notification::Notification;
 
-pub enum Event {
-    Show(u32, Notification),
+pub enum FreedesktopNotificationEvent {
+    Notify(u32, Notification),
     Close(u32),
 }
 
@@ -18,11 +18,11 @@ pub enum Event {
 pub struct NotificationService {
     next_id: Arc<AtomicU32>,
     notifications: Arc<RwLock<HashMap<u32, Notification>>>,
-    sender: Option<Sender<Event>>,
+    sender: Option<Sender<FreedesktopNotificationEvent>>,
 }
 
 impl NotificationService {
-    pub fn new() -> (Self, Receiver<Event>) {
+    pub fn new() -> (Self, Receiver<FreedesktopNotificationEvent>) {
         let (sender, reciever) = channel(100);
         let service = Self {
             next_id: Arc::new(AtomicU32::new(1)),
@@ -32,7 +32,7 @@ impl NotificationService {
         (service, reciever)
     }
 
-    pub async fn create_connection() -> Result<(Connection, NotificationService, Receiver<Event>)> {
+    pub async fn create_connection() -> Result<(Connection, NotificationService, Receiver<FreedesktopNotificationEvent>)> {
         let connection = Connection::session().await.map_err(|e|
             Error::DbusString(format!("Failed to create D-Bus connection: {}", e))
         )?;
@@ -48,7 +48,7 @@ impl NotificationService {
         Ok((connection, notification_service, receiver))
     }
 
-    pub fn set_sender(&mut self, sender: Sender<Event>) {
+    pub fn set_sender(&mut self, sender: Sender<FreedesktopNotificationEvent>) {
         self.sender = Some(sender);
     }
 }
@@ -65,7 +65,7 @@ impl NotificationService {
         drop(notifications);
         if notification_existed {
             if let Some(sender) = &self.sender {
-                let _ = sender.send(Event::Close(id)).await;
+                let _ = sender.send(FreedesktopNotificationEvent::Close(id)).await;
             }
         }
     }
@@ -134,8 +134,8 @@ impl NotificationService {
         drop(notifications);
 
         if let Some(sender) = &self.sender {
-            let event = Event::Show(id,notification);
-            let _ = sender.send(event).await;
+            let freedesktop_notification_event = FreedesktopNotificationEvent::Notify(id,notification);
+            let _ = sender.send(freedesktop_notification_event).await;
         }
 
         id
