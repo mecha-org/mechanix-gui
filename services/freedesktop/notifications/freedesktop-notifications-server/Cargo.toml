@@ -5,10 +5,13 @@ edition = "2024"
 
 [dependencies]
 async-trait = "0.1.88"
+bincode = "2.0.1"
 futures-util.workspace = true
 gdk-pixbuf = "0.20.10"
 glib = "0.20.12"
 serde.workspace = true
+serde_json.workspace = true
+sled = "0.34.7"
 thiserror = "2.0.12"
 tokio = {version = "1.45.1", features = ["full"]}
 zbus = { version = "5.7.1", features = ["tokio", "p2p"] }
