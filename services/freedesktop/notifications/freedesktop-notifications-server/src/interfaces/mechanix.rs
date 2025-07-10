@@ -5,20 +5,21 @@ use crate::interfaces::freedesktop::FreedesktopNotificationService;
 use crate::interfaces::freedesktop::{ FreedesktopNotificationEvent };
 use crate::notification::Notification;
 use std::sync::Arc;
+use std::collections::HashMap;
 use tokio::sync::RwLock;
 
 #[derive(Debug, Clone)]
 pub struct MechanixNotificationService {
     freedesktop_signal_emitter: Option<SignalEmitter<'static>>,
-    // Add shared storage for notifications as Vec
-    notifications: Arc<RwLock<Vec<(u32, Notification)>>>,
+    // Add shared storage for notifications as HashMap
+    notifications: Arc<RwLock<HashMap<u32, Notification>>>,
 }
 
 impl MechanixNotificationService {
     pub fn new() -> Self {
         Self { 
             freedesktop_signal_emitter: None,
-            notifications: Arc::new(RwLock::new(Vec::new())),
+            notifications: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -30,7 +31,7 @@ impl MechanixNotificationService {
     pub async fn handle_event(
         mut event_receiver: Receiver<FreedesktopNotificationEvent>,
         signal_emitter: SignalEmitter<'static>,
-        notifications: Arc<RwLock<Vec<(u32, Notification)>>>
+        notifications: Arc<RwLock<HashMap<u32, Notification>>>
     ) {
         tokio::spawn(async move {
             while let Some(event) = event_receiver.recv().await {
@@ -39,9 +40,7 @@ impl MechanixNotificationService {
                         // Store the notification
                         {
                             let mut notifs = notifications.write().await;
-                            // Remove existing notification with same ID first
-                            notifs.retain(|(existing_id, _)| *existing_id != id);
-                            notifs.push((id, notification.clone()));
+                            notifs.insert(id, notification.clone());
                         }
                         
                         let _ = Self::notification_received(
@@ -54,7 +53,7 @@ impl MechanixNotificationService {
                         // Remove the notification
                         {
                             let mut notifs = notifications.write().await;
-                            notifs.retain(|(existing_id, _)| *existing_id != id);
+                            notifs.remove(&id);
                         }
                         
                         let _ = Self::notification_closed(&signal_emitter, id).await;
@@ -149,7 +148,7 @@ impl MechanixNotificationService {
     }
 
     /// Get all active notifications
-    async fn get_all_notifications(&self) -> Vec<(u32, Notification)> {
+    async fn get_all_notifications(&self) -> HashMap<u32, Notification> {
         let notifications = self.notifications.read().await;
         notifications.clone()
     }
@@ -164,3 +163,4 @@ impl MechanixNotificationService {
     #[zbus(signal)]
     async fn notification_closed(signal_ctxt: &SignalEmitter<'_>, id: u32) -> zbus::Result<()>;
 }
+   

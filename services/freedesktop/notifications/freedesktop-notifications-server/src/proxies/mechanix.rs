@@ -22,6 +22,7 @@
 //! 
 use zbus::proxy;
 use crate::notification::Notification;
+use std::collections::HashMap;
 #[proxy(
     interface = "org.mechanix.NotificationManager",
     default_service = "org.mechanix.NotificationManager",
@@ -32,7 +33,7 @@ pub trait Notifications {
     fn close_notification_with_reason(&self, id: u32, reason: u32) -> zbus::Result<()>;
 
     /// GetAllNotifications method
-    fn get_all_notifications(&self) -> zbus::Result<Vec<(u32, Notification)>>;
+    fn get_all_notifications(&self) -> zbus::Result<HashMap<u32, Notification>>;
 
     /// GetVersion method
     fn get_version(&self) -> zbus::Result<String>;
