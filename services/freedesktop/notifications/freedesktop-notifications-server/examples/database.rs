@@ -1,4 +1,4 @@
-use freedesktop_notifications_server::proxies::mechanix::NotificationsProxy;
+use freedesktop_notifications_server::proxies::mechanix::MechanixNotificationProxy;
 use freedesktop_notifications_server::database::{get_all_notifications_from_db};
 use zbus::Connection;
 use futures_util::stream::StreamExt;
@@ -7,7 +7,7 @@ use tokio::select;
 #[tokio::main]
 async fn main() -> zbus::Result<()> {
     let connection = Connection::session().await?;
-    let proxy = NotificationsProxy::new(&connection).await?;
+    let proxy = MechanixNotificationProxy::new(&connection).await?;
 
     let mut received_stream = proxy.receive_notification_received().await?;
     let mut closed_stream = proxy.receive_notification_closed().await?;

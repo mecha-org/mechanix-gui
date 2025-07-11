@@ -1,4 +1,4 @@
-use freedesktop_notifications_server::proxies::mechanix::NotificationsProxy;
+use freedesktop_notifications_server::proxies::mechanix::MechanixNotificationProxy;
 use zbus::Connection;
 
 #[tokio::main]

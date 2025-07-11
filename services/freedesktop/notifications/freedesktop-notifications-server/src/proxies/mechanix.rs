@@ -19,7 +19,7 @@
 //!
 //! [Writing a client proxy]: https://dbus2.github.io/zbus/client.html
 //! [D-Bus standard interfaces]: https://dbus.freedesktop.org/doc/dbus-specification.html#standard-interfaces,
-//! 
+//!
 use zbus::proxy;
 use crate::notification::Notification;
 use std::collections::HashMap;
@@ -28,21 +28,21 @@ use std::collections::HashMap;
     default_service = "org.mechanix.NotificationManager",
     default_path = "/org/mechanix/NotificationManager"
 )]
-pub trait Notifications {
+pub trait MechanixNotification {
     /// CloseNotificationWithReason method
-    fn close_notification_with_reason(&self, id: u32, reason: u32) -> zbus::Result<()>;
+    pub fn close_notification_with_reason(&self, id: u32, reason: u32) -> zbus::Result<()>;
 
     /// GetAllNotifications method
-    fn get_all_notifications(&self) -> zbus::Result<HashMap<u32, Notification>>;
+    pub fn get_all_notifications(&self) -> zbus::Result<HashMap<u32, Notification>>;
 
     /// GetVersion method
-    fn get_version(&self) -> zbus::Result<String>;
+    pub fn get_version(&self) -> zbus::Result<String>;
 
     /// InvokeAction method
-    fn invoke_action(&self, id: u32, action_key: &str) -> zbus::Result<()>;
+    pub fn invoke_action(&self, id: u32, action_key: &str) -> zbus::Result<()>;
 
     /// SendActivationToken method
-    fn send_activation_token(&self, id: u32, activation_token: &str) -> zbus::Result<()>;
+    pub fn send_activation_token(&self, id: u32, activation_token: &str) -> zbus::Result<()>;
 
     /// NotificationClosed signal
     #[zbus(signal)]
