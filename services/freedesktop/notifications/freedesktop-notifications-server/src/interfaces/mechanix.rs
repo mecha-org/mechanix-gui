@@ -28,6 +28,15 @@ impl MechanixNotificationService {
         }
     }
 
+    // Helper method to check if notification is resident
+    async fn is_notification_resident(&self, id: u32) -> bool {
+        let notifications = self.notifications.read().await;
+        if let Some(notification) = notifications.get(&id) {
+            notification.is_resident();
+        }
+        false
+    }
+
     pub async fn new_from_database() -> Result<Self, Box<dyn std::error::Error>> {
         let existing_notifications = get_all_notifications_from_db().await?;
         Ok(Self {
@@ -57,9 +66,14 @@ impl MechanixNotificationService {
                         }
 
                         /// Store in database
-                        /// "resident" :BOOLEAN --> When set the server will not automatically remove the notification when an action has been invoked. The notification will remain resident in the server until it is explicitly removed by the user or by the sender. This hint is likely only useful when the server has the "persistence" capability. 
-                        if let Err(e) = add_notification_to_db(id, &notification).await {
-                            eprintln!("Failed to add notification to database: {}", e);
+                        // "transient": BOOLEAN	=> When set the server will treat the notification as transient and by-pass the server's persistence capability, if it should exist. 
+                        if !notification.is_transient() {
+                            if let Err(e) = add_notification_to_db(id, &notification).await {
+                                eprintln!("Failed to add notification to database: {}", e);
+                            }
+                        }
+                        else{
+                            println!("Notification {}, is transient, will not be stored in databse",&id);
                         }
 
                         let _ = Self::notification_received(
@@ -102,7 +116,9 @@ impl MechanixNotificationService {
         );
 
         // Setup mechanix notification service
-        let mut notificationbus = Self::new_from_database().await.expect("Unable to initialize notificaion Service");
+        let mut notificationbus = Self::new_from_database().await.expect(
+            "Unable to initialize notificaion Service"
+        );
         let notifications_clone = notificationbus.notifications.clone();
 
         notificationbus.set_signal_emmiter(freedesktop_signal_emitter);
@@ -165,6 +181,10 @@ impl MechanixNotificationService {
 
     /// Close a notification with a specific reason
     async fn close_notification_with_reason(&self, id: u32, reason: u32) -> fdo::Result<()> {
+
+        if self.is_notification_resident(id).await{
+            return Err(fdo::Error::Failed("Resident Notification can only be closed by Sender".to_string()));
+        }
         if let Some(emitter) = &self.freedesktop_signal_emitter {
             FreedesktopNotificationService::notification_closed(emitter, id, reason).await.map_err(
                 |e| fdo::Error::Failed(format!("Failed to close notification: {}", e))

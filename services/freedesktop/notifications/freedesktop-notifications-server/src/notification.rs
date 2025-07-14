@@ -38,8 +38,36 @@ pub enum Hint {
 }
 
 impl Notification {
-    fn get_hints(&self) -> Hints {
+    pub fn get_hints(&self) -> Hints {
         Hints::from_hashmap(&self.hints)
+    }
+
+    // Helper method to check if notification is resident
+    pub fn is_resident(&self) -> bool {
+        for (key, value) in &self.hints {
+            if key == "resident" {
+                if
+                    let Ok(resident) = <zvariant::OwnedValue as TryInto<bool>>::try_into(
+                        value.try_clone().unwrap()
+                    )
+                {
+                    return resident;
+                }
+            }
+        }
+        false
+    }
+
+    // Helper method to check if notification is transient
+    pub fn is_transient(&self) -> bool {
+        for (key, value) in &self.hints {
+            if key == "transient" {
+                if let Ok(transient) = <zvariant::OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap()) {
+                    return transient;
+                }
+            }
+        }
+        false
     }
 
     pub fn get_image(&self) -> Option<Image> {
@@ -252,7 +280,7 @@ impl Hints {
                     }
                 }
                 unknown_field => {
-                    eprintln!("Unknown Field:{}",unknown_field);
+                    eprintln!("Unknown Field:{}", unknown_field);
                     // Unknown hint, ignore
                 }
             }
