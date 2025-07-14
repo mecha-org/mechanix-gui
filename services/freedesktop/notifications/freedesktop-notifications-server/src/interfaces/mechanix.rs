@@ -50,13 +50,14 @@ impl MechanixNotificationService {
             while let Some(event) = event_receiver.recv().await {
                 match event {
                     FreedesktopNotificationEvent::Notify(id, notification) => {
-                        // Store the notification
+                        /// Store the notification
                         {
                             let mut notifs = notifications.write().await;
                             notifs.insert(id, notification.clone());
                         }
 
-                        // Store in database
+                        /// Store in database
+                        /// "resident" :BOOLEAN --> When set the server will not automatically remove the notification when an action has been invoked. The notification will remain resident in the server until it is explicitly removed by the user or by the sender. This hint is likely only useful when the server has the "persistence" capability. 
                         if let Err(e) = add_notification_to_db(id, &notification).await {
                             eprintln!("Failed to add notification to database: {}", e);
                         }
