@@ -5,7 +5,7 @@ async fn main() -> Result<(), anyhow::Error> {
     // Example: Watch for changes to a key
     println!("Example 1: Watch for changes to a key");
     println!("Press Ctrl+C to stop watching");
-    watch_setting("org.mechanix.keyboard.general.enabled").await?;
+    watch_setting("org.mechanix.keyboard", &Some("general.enabled".to_string())).await?;
 
     // Note: The following examples won't run because the watch_setting function
     // blocks indefinitely. In a real application, you would use these functions
