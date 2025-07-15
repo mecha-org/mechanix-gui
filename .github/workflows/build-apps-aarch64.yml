@@ -41,7 +41,8 @@ jobs:
           - name: Files
             package: mechanix-files
             artifact: mechanix-files-aarch64-unknown-linux-gnu.tar.gz
-            path: files
+            path: apps
+            folder: files
 
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
