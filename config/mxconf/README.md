@@ -66,9 +66,8 @@ The `/src` folder contains the main logic, organized as follows:
    ```
 
 2. Place TOML configuration files in the `schemas` directory. The server will automatically:
-    - Detect new TOML files
-    - Validate them against the schema
-    - Store valid configurations in the database
+    - Detect a new TOML file
+    - Validate them
 
 3. The server stores configurations in `~/.config/mechanix/conf/store/db` using the sled embedded database.
 
