@@ -70,3 +70,19 @@ assets = [
     ],
 
 ]
+
+
+[package.metadata.generate-rpm]
+assets = [
+    # binary
+    { source = "target/release/mechanix-camera", dest = "/usr/bin/mechanix-camera", mode = "755" },
+
+    # assets (using wildcard for all files in assets directory)
+    { source = "src/assets/**/*", dest = "/usr/share/mechanix/apps/camera/assets/", mode = "644" },
+
+    # settings file
+    { source = "settings.yml.example", dest = "/etc/mechanix/apps/camera/settings.yml", mode = "644", config = "noreplace" },
+
+    # desktop file
+    { source = "src/assets/linux/org.mechanix.camera.desktop", dest = "/usr/share/applications/org.mechanix.camera.desktop", mode = "644" },
+]

@@ -2,7 +2,10 @@
 name = "pam-mechanix"
 description = "PAM modules and binaries for authentication"
 documentation = "https://docs.mecha.so"
-authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+authors = [
+    "Akshay Raina <akshayr@mechasystems.com>",
+    "Shoaib Merchant <shoaibm@mechasystems.com>",
+]
 version = "1.0.0"
 edition = "2021"
 license = "MIT"
@@ -37,7 +40,7 @@ assets = [
         "/lib/aarch64-linux-gnu/security/pam_mechanix.so",
         "644",
     ],
-    
+
     # chkpwd bin
     [
         "target/release/mechanix-chkpwd",
@@ -58,4 +61,19 @@ assets = [
         "/etc/pam.d/",
         "644",
     ],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    # PAM module - note: RPM uses different architecture-specific paths
+    { source = "target/release/libpam_mechanix.so", dest = "/lib64/security/pam_mechanix.so", mode = "644" },
+    
+    # chkpwd binary with setuid bit (2755)
+    { source = "target/release/mechanix-chkpwd", dest = "/usr/sbin/mechanix-chkpwd", mode = "2755" },
+    
+    # setpwd binary with setuid bit (2755)
+    { source = "target/release/mechanix-setpwd", dest = "/usr/sbin/mechanix-setpwd", mode = "2755" },
+    
+    # PAM configuration files
+    { source = "etc/pam.d/*", dest = "/etc/pam.d/", mode = "644", config = "noreplace" },
 ]
