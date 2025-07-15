@@ -11,7 +11,7 @@ categories.workspace = true
 keywords.workspace = true
 
 [workspace]
-members = ["cli", "client", "server"]
+members = ["cli", "client", "mxconf", "server"]
 
 [[bin]]
 name = "mechanix-config"
