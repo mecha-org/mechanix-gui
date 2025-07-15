@@ -13,12 +13,12 @@ keywords.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-mctk_core = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
-mctk_smithay = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
-mctk_macros = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
-mctk_camera = { git="https://github.com/namana-mecha/mctk.git", branch="dev-camera" }
+mctk_core = { git = "https://github.com/namana-mecha/mctk.git", branch = "dev-camera" }
+mctk_smithay = { git = "https://github.com/namana-mecha/mctk.git", branch = "dev-camera" }
+mctk_macros = { git = "https://github.com/namana-mecha/mctk.git", branch = "dev-camera" }
+mctk_camera = { git = "https://github.com/namana-mecha/mctk.git", branch = "dev-camera" }
 
-anyhow = { version = "1.0.75", features = ["backtrace"]}
+anyhow = { version = "1.0.75", features = ["backtrace"] }
 gstreamer = "0.23.2"
 gstreamer-app = "0.23.2"
 gstreamer-video = "0.23.2"
@@ -29,7 +29,7 @@ rand = "0.8.5"
 regex = "1.7"
 smithay-client-toolkit = "0.18.0"
 tracing = "0.1.37"
-tracing-subscriber = { version = "0.3.17", features = ["env-filter"]}
+tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 thiserror = "1.0"
 tokio = { version = "1.33", features = ["full"] }
 rgb = "0.8.50"
@@ -64,9 +64,25 @@ assets = [
     ],
     # desktop file
     [
-        "src/assets/linux/org.mechanix.camera.desktop", 
-        "/usr/share/applications/", 
-        "644"
+        "src/assets/linux/org.mechanix.camera.desktop",
+        "/usr/share/applications/",
+        "644",
     ],
 
+]
+
+
+[package.metadata.generate-rpm]
+assets = [
+    # binary
+    { source = "target/release/mechanix-camera", dest = "/usr/bin/mechanix-camera", mode = "755" },
+
+    # assets (using wildcard for all files in assets directory)
+    { source = "src/assets/**/*", dest = "/usr/share/mechanix/apps/camera/assets/", mode = "644" },
+
+    # settings file
+    { source = "settings.yml.example", dest = "/etc/mechanix/apps/camera/settings.yml", mode = "644", config = "noreplace" },
+
+    # desktop file
+    { source = "src/assets/linux/org.mechanix.camera.desktop", dest = "/usr/share/applications/org.mechanix.camera.desktop", mode = "644" },
 ]

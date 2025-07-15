@@ -25,9 +25,12 @@ name = "mechanix_store_server"
 depends = "$auto"
 assets = [
     # binary
-    [
-        "../../target/release/mechanix_store_server",
-        "/usr/bin/",
-        "755",
-    ],
+    ["../../target/release/mechanix_store_server", "/usr/bin/", "755"],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    # binary
+    { source = "target/release/mechanix_store_server", dest = "/usr/bin/mechanix_store_server", mode = "755" },
+
 ]
