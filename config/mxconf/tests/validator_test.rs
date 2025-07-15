@@ -1,4 +1,4 @@
-use mechanix_conf_server::validator::{validate_schema, validate_setting, validate_value};
+use mxconf::validator::{validate_schema, validate_setting, validate_value};
 use toml::Value;
 
 // Custom validation function for testing that doesn't rely on namespace parsing
