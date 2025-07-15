@@ -69,3 +69,14 @@ assets = [
         "644",
     ],
 ]
+
+
+[package.metadata.generate-rpm]
+assets = [
+    # PAM module - note: RPM uses different architecture-specific paths
+    { source = "target/release/mechanix-launcher", dest = "/usr/bin/mechanix-launcher", mode = "644" },
+    # assets directory
+    { source = "src/assets/**/*", dest = "/usr/share/mechanix/shell/launcher/assets/", mode = "644" },
+    # settings file
+    { source = "settings.yml.example", dest = "/etc/mechanix/shell/launcher/settings.yml", mode = "644" },
+]

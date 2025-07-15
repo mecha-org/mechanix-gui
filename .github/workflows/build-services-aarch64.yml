@@ -15,7 +15,7 @@ env:
   CARGO_NET_GIT_FETCH_WITH_CLI: true
   MECHANIX_APTLY_SERVER_ENDPOINT: ${{ vars.MECHANIX_APTLY_SERVER_ENDPOINT }}
   MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
-  MECHANIX_APTLY_DEB_REPOSITORY_NAME: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_NAME }} 
+  MECHANIX_APTLY_DEB_REPOSITORY_NAME: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}
   MECHANIX_APTLY_S3_PUBLISH_ENDPOINT: ${{ vars.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT }}
 
 jobs:
@@ -30,6 +30,7 @@ jobs:
             package: mechanix_system_dbus_server
             artifact: mechanix_system_dbus_server-aarch64-unknown-linux-gnu.tar.gz
             path: services
+            
 
           - name: desktop dbus service
             package: mechanix_desktop_dbus_server
@@ -54,6 +55,9 @@ jobs:
 
       - name: Install cargo-deb
         run: cargo install cargo-deb
+
+      - name: Install cargo-rpm
+        run: cargo install cargo-generate-rpm
 
       - name: Update apt
         run: sudo apt update
@@ -86,6 +90,12 @@ jobs:
           cargo deb --no-build --package ${{ matrix.package }}
           ls -la
 
+      - name: Package rpm [${{ matrix.package }}]
+        run: |
+          cd ${{ matrix.path }}
+          cargo generate-rpm -p ${{ matrix.package }}
+          ls -la    
+
       - name: Extract package details
         id: package_details
         run: |
@@ -103,12 +113,12 @@ jobs:
           echo "Uploading package: ${{ steps.package_details.outputs.package_name }}"
           echo "To folder: ${{ steps.package_details.outputs.folder_name }}"
           curl -X POST -F file=@target/debian/${{ steps.package_details.outputs.package_name }} ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/files/${{ steps.package_details.outputs.folder_name }}
-      
+
       - name: Add package to local repo
         run: |
           echo "Adding package from folder: ${{ steps.package_details.outputs.folder_name }}"
           curl -X POST ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/repos/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}/file/${{ steps.package_details.outputs.folder_name }}
-      
+
       - name: Update local published repo
         run: |
           echo "Updating local published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
@@ -116,7 +126,7 @@ jobs:
             "Architectures": ["arm64", "amd64"],
             "Signing": {"Skip": true}
           }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/:./${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
-      
+
       - name: Update S3 published repo
         run: |
           echo "Updating S3 published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
@@ -124,13 +134,14 @@ jobs:
             "Sources": [{"Name": "${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}"}],
             "Architectures": ["arm64", "amd64"],
             "Signing": {"Skip": true}
-          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT}}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}    
-      
+          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT}}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir build
           cp ${{ matrix.path }}/target/release/${{ matrix.package }} ./build
           cp ${{ matrix.path }}/target/debian/*.deb ./build
+          cp ${{ matrix.path }}/target/generate-rpm/*.rpm ./build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

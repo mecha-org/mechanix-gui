@@ -42,6 +42,9 @@ jobs:
 
       - name: Install cargo-deb
         run: cargo install cargo-deb
+      
+      - name: Install cargo-rpm
+        run: cargo install cargo-generate-rpm  
 
       - name: Update apt
         run: sudo apt update
@@ -73,6 +76,13 @@ jobs:
           cargo deb --no-build
           ls -la
 
+      - name: Package rpm [${{ matrix.package }}]
+        run: |
+          cd ${{ matrix.path }}
+          cargo generate-rpm 
+          ls -la
+
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir build
@@ -80,6 +90,7 @@ jobs:
           cp ${{ matrix.path }}/target/release/${{ matrix.bin }} ./build
           cp ${{ matrix.path }}/etc/pam.d/${{ matrix.conf }} ./build
           cp ${{ matrix.path }}/target/debian/*.deb ./build
+          cp ${{ matrix.path }}/target/generate-rpm/*.rpm ./build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

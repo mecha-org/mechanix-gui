@@ -55,6 +55,7 @@ jobs:
             package: mechanix-launcher
             artifact: mechanix-launcher-aarch64-unknown-linux-gnu.tar.gz
             path: shell
+            folder: launcher
 
           # - name: App Drawer
           #   package: mechanix-app-drawer
@@ -85,6 +86,7 @@ jobs:
             package: mechanix-keyboard
             artifact: mechanix-keyboard-aarch64-unknown-linux-gnu.tar.gz
             path: shell
+            folder: keyboard
 
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
@@ -99,6 +101,9 @@ jobs:
 
       - name: Install cargo-deb
         run: cargo install cargo-deb
+
+      - name: Install cargo-rpm
+        run: cargo install cargo-generate-rpm
 
       - name: Update apt
         run: sudo apt update
@@ -132,6 +137,12 @@ jobs:
           cd ${{ matrix.path }}
           cargo deb --no-build --package ${{ matrix.package }}
           ls -la
+
+      - name: Package rpm [${{ matrix.package }}]
+        run: |
+          cd ${{ matrix.path }}
+          cargo generate-rpm -p ${{ matrix.folder }}
+          ls -la             
 
       - name: Extract package details
         id: package_details
@@ -178,6 +189,7 @@ jobs:
           mkdir build
           cp ${{ matrix.path }}/target/release/${{ matrix.package }} ./build
           cp ${{ matrix.path }}/target/debian/*.deb ./build
+          cp ${{ matrix.path }}/target/generate-rpm/*.rpm ./build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

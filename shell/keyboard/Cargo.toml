@@ -12,8 +12,8 @@ keywords.workspace = true
 
 [dependencies]
 anyhow.workspace = true
-serde.workspace = true 
-serde_json.workspace = true 
+serde.workspace = true
+serde_json.workspace = true
 serde_yaml.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
@@ -57,3 +57,12 @@ assets = [
     ],
 ]
 
+[package.metadata.generate-rpm]
+assets = [
+    # binary
+    { source = "target/release/mechanix-keyboard", dest = "/usr/bin/mechanix-keyboard", mode = "755" },
+    # assets directory
+    { source = "src/assets/**/*", dest = "/usr/share/mechanix/shell/keyboard/assets/", mode = "644" },
+    # settings file
+    { source = "settings.yml.example", dest = "/etc/mechanix/shell/keyboard/settings.yml", mode = "644" },
+]
