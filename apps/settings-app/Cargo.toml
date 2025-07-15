@@ -82,3 +82,17 @@ assets = [
     ],
 ]
 
+[package.metadata.generate-rpm]
+assets = [
+    # binary
+    { source = "target/release/mechanix-settings", dest = "/usr/bin/mechanix-settings", mode = "755" },
+    
+    # assets (using wildcard for all files in assets directory)
+    { source = "src/assets/**/*", dest = "/usr/share/mechanix/apps/settings/assets/", mode = "644" },
+    
+    # settings file
+    { source = "settings.yml.example", dest = "/etc/mechanix/apps/settings/settings.yml", mode = "644", config = "noreplace" },
+    
+    # desktop file
+    { source = "src/assets/linux/org.mechanix.settings.desktop", dest = "/usr/share/applications/org.mechanix.settings.desktop", mode = "644" },
+]
