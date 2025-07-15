@@ -1,5 +1,6 @@
 [package]
 name = "mxconf"
+description = "Configuration system for the Mechanix shell, services and gui apps"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

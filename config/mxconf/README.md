@@ -77,7 +77,7 @@ The application also provides a command-line interface for interacting with the 
 
 1. Get a setting value (wildcard supported):
    ```
-   cargo run --release -- get <key> OR <key.*>
+   cargo run --release -- get <key/key_expr>
    ```
    or
    ```
@@ -98,7 +98,7 @@ The application also provides a command-line interface for interacting with the 
    ```
    or
    ```
-   ./mxconf watch <key>
+   ./mxconf watch <key/key_expr>
    ```
 
 4. List all available schemas:

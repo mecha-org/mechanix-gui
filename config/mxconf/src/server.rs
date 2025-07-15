@@ -57,7 +57,9 @@ impl ConfigServerInterface {
     async fn schema_key_changed(
         &self,
         ctxt: &SignalContext<'_>,
+        schema: &str,
         key: &str,
+        value: &str,
     ) -> Result<(), zbus::Error>;
 
     /// List all available schemas.
@@ -300,7 +302,9 @@ impl ConfigServerInterface {
                 info!("Setting updated: key={}, value={}", key, value);
                 match SignalContext::new(&self.conn, SERVED_AT) {
                     Ok(ctxt) => {
-                        if let Err(e) = self.schema_key_changed(&ctxt, key).await {
+                        let key = key.split('.').skip(3).collect::<Vec<&str>>().join(".");
+                        info!("Emitting notification for key: {}", key);
+                        if let Err(e) = self.schema_key_changed(&ctxt, &schema_name, &key, &value).await {
                             error!("Failed to emit notification for key {}: {}", key, e);
                         } else {
                             debug!("Successfully emitted notification for key: {}", key);

@@ -119,7 +119,7 @@ pub async fn set_setting_table(key: &str, value: &str) -> Result<(), CliError> {
 }
 
 /// Watch for changes to a setting
-pub async fn watch_setting(key: &str) -> Result<(), CliError> {
+pub async fn watch_setting(schema: &str, key: &Option<String>) -> Result<(), CliError> {
     info!("Connecting to D-Bus session for watch_setting");
     let connection = match Connection::session().await {
         Ok(c) => c,
@@ -138,15 +138,27 @@ pub async fn watch_setting(key: &str) -> Result<(), CliError> {
         }
     };
 
-    info!("Watching for changes to key: {}", key);
+    info!("Watching for changes to schema: {} key: {:?}",schema, key);
     // Only listen to signals where key matches the provided key
-    let mut stream = match proxy
-        .receive_signal_with_args("SchemaKeyChanged", &[(0, key)])
-        .await {
-        Ok(s) => s,
-        Err(e) => {
-            error!("Failed to receive signal: {}", e);
-            return Err(CliError::FailedToCreateStream(e));
+    let mut stream = if let Some(k) = key {
+        match proxy
+            .receive_signal_with_args("SchemaKeyChanged", &[(0, schema), (1, k)])
+            .await {
+            Ok(s) => s,
+            Err(e) => {
+                error!("Failed to receive signal: {}", e);
+                return Err(CliError::FailedToCreateStream(e));
+            }
+        }
+    } else {
+        match proxy
+            .receive_signal_with_args("SchemaKeyChanged", &[(0, schema)])
+            .await {
+            Ok(s) => s,
+            Err(e) => {
+                error!("Failed to receive signal: {}", e);
+                return Err(CliError::FailedToCreateStream(e));
+            }
         }
     };
 
@@ -156,34 +168,24 @@ pub async fn watch_setting(key: &str) -> Result<(), CliError> {
         .load_preset(UTF8_FULL)
         .set_content_arrangement(ContentArrangement::Dynamic)
         .set_header(vec!["Status"]);
-    table.add_row(vec![format!("Watching for changes to key: {}", key)]);
+    table.add_row(vec![format!("Watching for changes to: {}", key.clone().unwrap_or(schema.to_string()))]);
     println!("{table}");
 
     // Process signals as they come in
     while let Some(signal) = stream.next().await {
-        if let Ok((signal_key, )) = signal.body::<(String,)>() {
+        if let Ok((schema, signal_key, value)) = signal.body::<(String, String, String)>() {
             info!("Received change signal for key: {}", signal_key);
-            // Get the new value
-            let value = match get_setting(&signal_key).await {
-                Ok(v) => v,
-                Err(e) => {
-                    error!("Failed to get value for key {}: {}", signal_key, e);
-                    return Err(CliError::FailedToGetSetting(e));
-                }
-            };
-
+            
             // Create a table for the change notification
             let mut change_table = Table::new();
             change_table
                 .load_preset(UTF8_FULL)
                 .set_content_arrangement(ContentArrangement::Dynamic)
                 .set_header(vec!["Key", "New Value"]);
-            for (k, v) in &value {
-                change_table.add_row(vec![k, v]);
-            }
+            change_table.add_row(vec![signal_key, value]);
             println!("{change_table}");
         } else {
-            error!("Failed to parse signal body for key: {}", key);
+            error!("Failed to parse signal body for key: {:?}", key);
 
             // Create a table for the error message
             let mut error_table = Table::new();

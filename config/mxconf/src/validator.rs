@@ -260,7 +260,6 @@ pub fn validate_value(schema_entry: &toml::Value, namespace: &str, value: &str) 
 fn get_schema_entry<'a>(schema: &'a toml::Value, path: &[&str]) -> Option<&'a toml::Value> {
     trace!("Getting schema entry for path: {:?}", path);
     let mut current = schema;
-    println!("current value: {}", current);
     for key in path {
         println!("key: {}", key);
         current = current.get(*key)?;

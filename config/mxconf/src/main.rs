@@ -63,8 +63,10 @@ enum Commands {
     },
     /// Watch for changes to a key
     Watch {
+        /// The schema to watch
+        schema: String,
         /// The key to watch
-        key: String,
+        key: Option<String>,
     },
     /// List all available schemas
     ListSchemas,
@@ -217,8 +219,8 @@ async fn main() -> Result<(), ServerError> {
         Some(Commands::Set { key, value }) => {
             set_setting_table(&key, &value).await?;
         }
-        Some(Commands::Watch { key }) => {
-            watch_setting(&key).await?;
+        Some(Commands::Watch { schema, key }) => {
+            watch_setting(&schema, &key).await?;
         }
         Some(Commands::ListSchemas) => {
             list_schemas().await?;

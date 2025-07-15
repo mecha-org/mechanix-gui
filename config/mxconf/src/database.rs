@@ -149,7 +149,7 @@ impl Database {
         let tree = self.get_tree(identifier)?;
         let value_opt = tree.get(key)
             .with_context(|| format!("Failed to get value with key: {}", key))?;
-        
+
         let mut results = HashMap::new();
         if let Some(value) = value_opt {
             let value_str = String::from_utf8_lossy(&value).to_string();
