@@ -9,6 +9,8 @@ embedded database with D-Bus and CLI interfaces.
 - **D-Bus Server**: Exposes a D-Bus interface for retrieving and managing configurations.
 - **Command-Line Interface**: Provides CLI commands to get, set, watch for configuration changes, and list available
   schemas.
+- **Lock down specific settings**: Use the lockdown mode in mxconf to prevent users from changing specific settings.
+- **Manage user and system settings**: Use the profile to manage
 - **Schema Validation**: Validates TOML files.
 - **Embedded Database**: Stores validated configurations in a local embedded database
   using [sled](https://github.com/spacejam/sled).
