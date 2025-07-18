@@ -1,10 +1,15 @@
 name: Pam - Build aarch64
 on:
+  # Allow manual runs
+  workflow_dispatch:
   push:
     branches:
       - main
       - dev
       - dev-arm64-build
+    paths:
+      - 'pam/**'  # only run if changes inside pam folder
+      - '.github/workflows/build-pam-aarch64.yml' # also run if apps workflow is changed
 
 env:
   CARGO_INCREMENTAL: 0
@@ -35,10 +40,10 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust 1.76.0
+      - name: Install Rust 1.85.0
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          rustup default 1.76.0
+          rustup default 1.85.0
 
       - name: Install cargo-deb
         run: cargo install cargo-deb

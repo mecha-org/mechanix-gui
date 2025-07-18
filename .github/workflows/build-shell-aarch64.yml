@@ -1,10 +1,15 @@
 name: Shell - Build aarch64
 on:
+  # Allow manual runs
+  workflow_dispatch:
   push:
     branches:
       - main
       - dev
       - dev-arm64-build
+    paths:
+      - 'shell/**'  # only run if changes inside shell folder
+      - '.github/workflows/build-shell-aarch64.yml' # also run if shell workflow is changed
 
 env:
   CARGO_INCREMENTAL: 0
