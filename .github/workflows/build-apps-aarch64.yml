@@ -1,10 +1,15 @@
 name: Apps - Build aarch64
 on:
+  # Allow manual runs
+  workflow_dispatch:
   push:
     branches:
       - main
       - dev
       - dev-arm64-build
+    paths:
+      - 'apps/**'  # only run if changes inside apps folder
+      - '.github/workflows/build-apps-aarch64.yml' # also run if apps workflow is changed
 
 env:
   CARGO_INCREMENTAL: 0
