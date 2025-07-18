@@ -30,16 +30,18 @@ jobs:
             package: mechanix-settings
             artifact: mechanix-settings-aarch64-unknown-linux-gnu.tar.gz
             path: apps
+            folder: settings-app
 
           - name: Camera
             package: mechanix-camera
             artifact: mechanix-camera-aarch64-unknown-linux-gnu.tar.gz
             path: apps
+            folder: camera
       
           - name: Files
             package: mechanix-files
             artifact: mechanix-files-aarch64-unknown-linux-gnu.tar.gz
-            path: apps
+            path: files
 
     runs-on: ubicloud-standard-2-arm
     continue-on-error: false
@@ -47,13 +49,16 @@ jobs:
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust 1.83.0
+      - name: Install Rust 1.85.0
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          rustup default 1.83.0
+          rustup default 1.85.0
 
       - name: Install cargo-deb
         run: cargo install cargo-deb
+
+      - name: Install cargo-rpm
+        run: cargo install cargo-generate-rpm
 
       - name: Update apt
         run: sudo apt update
@@ -105,6 +110,12 @@ jobs:
           cargo deb --no-build --package ${{ matrix.package }}
           ls -la
 
+      - name: Package rpm [${{ matrix.package }}]
+        run: |
+          cd ${{ matrix.path }}
+          cargo generate-rpm -p ${{ matrix.folder }}
+          ls -la   
+
       - name: Extract package details
         id: package_details
         run: |
@@ -150,6 +161,7 @@ jobs:
           mkdir build
           cp ${{ matrix.path }}/target/release/${{ matrix.package }} ./build
           cp ${{ matrix.path }}/target/debian/*.deb ./build
+          cp ${{ matrix.path }}/target/generate-rpm/*.rpm ./build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
