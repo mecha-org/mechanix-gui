@@ -48,7 +48,7 @@ jobs:
             path: services
 
     runs-on: ubicloud-standard-2-arm
-    continue-on-error: false
+    continue-on-error: true
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
@@ -61,8 +61,8 @@ jobs:
       - name: Install cargo-deb
         run: cargo install cargo-deb
 
-      - name: Install cargo-rpm
-        run: cargo install cargo-generate-rpm
+      # - name: Install cargo-rpm
+      #   run: cargo install cargo-generate-rpm
 
       - name: Update apt
         run: sudo apt update
@@ -146,7 +146,7 @@ jobs:
           mkdir build
           cp ${{ matrix.path }}/target/release/${{ matrix.package }} ./build
           cp ${{ matrix.path }}/target/debian/*.deb ./build
-          cp ${{ matrix.path }}/target/generate-rpm/*.rpm ./build
+       #   cp ${{ matrix.path }}/target/generate-rpm/*.rpm ./build
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

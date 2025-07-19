@@ -49,3 +49,13 @@ assets = [
         "644",
     ],
 ]
+
+[package.metadata.generate-rpm]
+assets = [
+    # binary
+    { source = "target/release/mechanix_desktop_dbus_server", dest = "/usr/bin/mechanix_desktop_dbus_server", mode = "755" },
+
+    # settings file
+    { source = "settings.yml.example", dest = "/etc/mechanix/server/desktop/settings.yml", mode = "644" },
+
+]
