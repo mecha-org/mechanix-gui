@@ -1,8 +1,6 @@
 use mxconf::database::Database;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use tempfile::TempDir;
 use serial_test::serial;
+use tempfile::TempDir;
 
 // Helper function to set up a test database in a temporary directory
 fn setup_test_db() -> (TempDir, Database) {
@@ -48,7 +46,7 @@ fn test_database_insert_settings_and_get() {
     let values = result.unwrap();
     assert!(!values.is_empty(), "Values should not be empty");
     assert!(values.contains_key(key), "Values should contain the key");
-    assert_eq!(values.get(key).unwrap(), &String::from_utf8_lossy(value).to_string(), 
+    assert_eq!(values.get(key).unwrap(), &String::from_utf8_lossy(value).to_string(),
                "Retrieved value should match inserted value");
 }
 
@@ -168,6 +166,6 @@ fn test_database_insert_settings_update() {
     let values = result.unwrap();
     assert!(!values.is_empty(), "Values should not be empty");
     assert!(values.contains_key(key), "Values should contain the key");
-    assert_eq!(values.get(key).unwrap(), &String::from_utf8_lossy(value2).to_string(), 
+    assert_eq!(values.get(key).unwrap(), &String::from_utf8_lossy(value2).to_string(),
                "Retrieved value should match updated value");
 }

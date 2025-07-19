@@ -49,3 +49,15 @@ pub enum ProfileError {
     #[error("toml error: {0}")]
     TomlError(toml::de::Error),
 }
+
+#[derive(Error, Debug)]
+pub enum ValidatorError {
+    #[error("Validator error: {0}")]
+    ValidationError(String),
+    #[error("Invalid schema name: {0}")]
+    InvalidSchemaName(String),
+    #[error("Regex error: {0}")]
+    RegexError(regex::Error),
+    #[error("Invalid schema type")]
+    InvalidSchemaType,
+}

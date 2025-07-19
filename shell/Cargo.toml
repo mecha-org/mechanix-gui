@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = [
+    "launcher",
+]
+
+default-members = ["launcher"]
+
+[workspace.package]
+version = "0.1.20"
+authors = ["Akshay Raina <akshayr@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>"]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mecha-org/mechanix-gui"
+homepage = "https://mecha.so"
+categories = ["gui"]
+keywords = ["linux", "shell", "gui", "ui", "widgets"]
+
+[workspace.dependencies]

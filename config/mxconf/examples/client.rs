@@ -1,4 +1,4 @@
-use mxconf::cli_client::watch_setting;
+use mxconf::cli::watch_setting;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {

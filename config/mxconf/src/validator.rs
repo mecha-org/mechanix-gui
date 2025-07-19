@@ -1,5 +1,6 @@
+use crate::error::ValidatorError;
 use anyhow::Context;
-use log::{info, debug, warn, trace};
+use log::{debug, error, info, trace, warn};
 use regex::Regex;
 use toml::Value;
 
@@ -14,7 +15,7 @@ const ALLOWED_TYPES: &[&str] = &["string", "number", "bool", "array", "tuple", "
 ///
 /// # Arguments
 ///
-/// * `toml` - A reference to a TOML value representing the schema to be validated.
+/// * `toml_file` - A reference to a TOML value representing the schema to be validated.
 ///
 /// # Returns
 ///
@@ -33,84 +34,150 @@ const ALLOWED_TYPES: &[&str] = &["string", "number", "bool", "array", "tuple", "
 ///   - Non-numeric `min` or `max` for numbers.
 ///   - An empty or invalid `options` array for enums, or a default not in options.
 ///
-pub fn validate_schema(toml: &Value) -> Result<(), String> {
-    trace!("Validating schema: {}", toml);
-    let table = toml.as_table().ok_or("Root is not a table")?;
-    for (section, section_val) in table {
-        let section_table = section_val.as_table().ok_or(format!("Section '{}' is not a table", section))?;
-        for (key, val) in section_table {
-            let entry = val.as_table().ok_or(format!("Key '{}' in section '{}' is not a table", key, section))?;
-            debug!("Validating key '{}' in section '{}'", key, section);
 
-            // Type must exist and be valid
-            let type_val = entry.get("type")
-                .and_then(|v| v.as_str())
-                .ok_or(format!("Key '{}' in section '{}' missing or invalid 'type'", key, section))?;
+pub fn validate_schema(toml_file: &Value) -> Result<(), ValidatorError> {
+    let table = as_table(toml_file, "root")?;
 
-            if type_val.trim().is_empty() {
-                return Err(format!("Key '{}' in section '{}' has empty 'type'", key, section));
-            }
-            if !ALLOWED_TYPES.contains(&type_val) {
-                return Err(format!("Key '{}' in section '{}' has invalid 'type': '{}'", key, section, type_val));
-            }
+    for (section_name, section_val) in table {
+        let section = as_table(section_val, &format!("section '{}'", section_name))?;
 
-            // Default must exist
+        for (key, val) in section {
+            let entry = as_table(val, &format!("key '{}' in section '{}'", key, section_name))?;
+
+            debug!("Validating key '{}' in section '{}'", key, section_name);
+
+            let type_val = get_required_str(entry, "type", &key, &section_name)?;
+            validate_type(type_val, &key, &section_name)?;
+
             if !entry.contains_key("default") {
-                return Err(format!("Key '{}' in section '{}' missing 'default'", key, section));
-            }
-            if !entry.contains_key("description") {
-                return Err(format!("Key '{}' in section '{}' missing 'description'", key, section));
+                return Err(missing_field_error("default", key, section_name));
             }
 
-            // Type-specific validations
+            if !entry.contains_key("description") {
+                return Err(missing_field_error("description", key, section_name));
+            }
+
             match type_val {
-                "string" => {
-                    // Optional: Check for max_length
-                    if let Some(max_length) = entry.get("max_length") {
-                        if !max_length.is_integer() {
-                            return Err(format!("Key '{}' in section '{}' has non-integer 'max_length'", key, section));
-                        }
-                    }
-                }
-                "number" => {
-                    // Optional: Check for min and max
-                    if let Some(min) = entry.get("min") {
-                        if !min.is_integer() && !min.is_float() {
-                            return Err(format!("Key '{}' in section '{}' has non-numeric 'min'", key, section));
-                        }
-                    }
-                    if let Some(max) = entry.get("max") {
-                        if !max.is_integer() && !max.is_float() {
-                            return Err(format!("Key '{}' in section '{}' has non-numeric 'max'", key, section));
-                        }
-                    }
-                }
-                "enum" => {
-                    // Must have options
-                    match entry.get("options") {
-                        Some(Value::Array(options)) => {
-                            if options.is_empty() {
-                                return Err(format!("Key '{}' in section '{}' is enum but 'options' array is empty", key, section));
-                            }
-                            let default = entry.get("default")
-                                .and_then(|v| v.as_str())
-                                .ok_or(format!("Key '{}' in section '{}' is enum but missing 'default' string", key, section))?;
-                            // Check default is in options
-                            let found = options.iter().any(|opt| opt.as_str() == Some(default));
-                            if !found {
-                                return Err(format!("Key '{}' in section '{}' has default '{}' not in options {:?}", key, section, default, options));
-                            }
-                        },
-                        _ => return Err(format!("Key '{}' in section '{}' is enum but missing valid 'options' array", key, section)),
-                    }
-                }
-                _ => {} // Add more type-specific checks as needed
+                "string" => validate_string_type(entry, &key, &section_name)?,
+                "number" => validate_number_type(entry, &key, &section_name)?,
+                "enum" => validate_enum_type(entry, &key, &section_name)?,
+                _ => {} // If new types are added, define new validation
             }
         }
     }
+
     info!("Schema validation successful");
     Ok(())
 }
+
+//-------------------------
+// Helper Functions
+//-------------------------
+
+/// Convert a TOML value to a table reference.
+///
+/// This function attempts to treat the given TOML value as a table. If the value is not a table,
+/// it returns an error indicating an invalid schema type.
+///
+/// # Arguments
+///
+/// * `value` - A reference to the TOML value to be converted.
+/// * `context` - A string representing the context in which this conversion is occurring, used for error reporting.
+///
+/// # Returns
+///
+/// * `Ok(&toml::value::Table)` - A reference to the TOML table if the conversion is successful.
+/// * `Err(ValidatorError)` - An error indicating that the value is not a table.
+///
+/// # Errors
+///
+/// This function returns an `InvalidSchemaType` error if the provided value is not a table.
+
+fn as_table<'a>(value: &'a Value, _context: &str) -> Result<&'a toml::value::Table, ValidatorError> {
+    value.as_table().ok_or_else(|| {
+        ValidatorError::InvalidSchemaType
+    })
+}
+
+fn get_required_str<'a>(entry: &'a toml::value::Table, field: &str, key: &str, section: &str) -> Result<&'a str, ValidatorError> {
+    entry.get(field)
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| ValidatorError::ValidationError(format!(
+            "Key '{}' in section '{}' missing or invalid '{}'", key, section, field
+        )))
+}
+
+fn missing_field_error(field: &str, key: &str, section: &str) -> ValidatorError {
+    ValidatorError::ValidationError(format!(
+        "Key '{}' in section '{}' missing '{}'", key, section, field
+    ))
+}
+
+fn validate_type(type_val: &str, key: &str, section: &str) -> Result<(), ValidatorError> {
+    if type_val.trim().is_empty() {
+        return Err(ValidatorError::ValidationError(format!(
+            "Key '{}' in section '{}' has empty 'type'", key, section,
+        )));
+    }
+    if !ALLOWED_TYPES.contains(&type_val) {
+        return Err(ValidatorError::ValidationError(format!(
+            "Key '{}' in section '{}' has invalid 'type': '{}'", key, section, type_val,
+        )));
+    }
+    Ok(())
+}
+
+fn validate_string_type(entry: &toml::value::Table, key: &str, section: &str) -> Result<(), ValidatorError> {
+    if let Some(max_length) = entry.get("max_length") {
+        if !max_length.is_integer() {
+            return Err(ValidatorError::ValidationError(format!(
+                "Key '{}' in section '{}' has non-integer 'max_length'", key, section,
+            )));
+        }
+    }
+    Ok(())
+}
+
+fn validate_number_type(entry: &toml::value::Table, key: &str, section: &str) -> Result<(), ValidatorError> {
+    for field in ["min", "max"] {
+        if let Some(val) = entry.get(field) {
+            if !val.is_integer() && !val.is_float() {
+                return Err(ValidatorError::ValidationError(format!(
+                    "Key '{}' in section '{}' has non-numeric '{}'", key, section, field,
+                )));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn validate_enum_type(entry: &toml::value::Table, key: &str, section: &str) -> Result<(), ValidatorError> {
+    let options = match entry.get("options") {
+        Some(Value::Array(options)) => options,
+        _ => {
+            return Err(ValidatorError::ValidationError(format!(
+                "Key '{}' in section '{}' is enum but missing valid 'options' array", key, section,
+            )));
+        }
+    };
+
+    if options.is_empty() {
+        return Err(ValidatorError::ValidationError(format!(
+            "Key '{}' in section '{}' is enum but 'options' array is empty", key, section,
+        )));
+    }
+
+    let default = get_required_str(entry, "default", key, section)?;
+    let found = options.iter().any(|opt| opt.as_str() == Some(default));
+    if !found {
+        return Err(ValidatorError::ValidationError(format!(
+            "Key '{}' in section '{}' has default '{}' not in options {:?}", key, section, default, options,
+        )));
+    }
+
+    Ok(())
+}
+
 
 /// Validate a new setting with a given value, using the schema for the namespace.
 ///
@@ -267,12 +334,36 @@ fn get_schema_entry<'a>(schema: &'a toml::Value, path: &[&str]) -> Option<&'a to
     Some(current)
 }
 
-pub fn validate_schema_name(schema_name: &str) -> anyhow::Result<()> {
-    log::debug!("Validating schema name: {}", schema_name);
-    let re = Regex::new(r"^org\\.([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+)\\.toml$")?;
+/// Validate a schema name against a predefined pattern.
+///
+/// This function checks if the given schema name matches the expected pattern
+/// for schema files. The pattern requires the schema name to be in the format
+/// `org.<domain>.<app>.toml`, where `<domain>` and `<app>` are alphanumeric
+/// strings with underscores allowed.
+///
+/// # Arguments
+///
+/// * `schema_name` - A string slice representing the schema file name.
+///
+/// # Returns
+///
+/// * `Ok(())` if the schema name is valid.
+/// * `Err(anyhow::Error)` if the schema name does not match the expected pattern.
+///
+/// # Errors
+///
+/// This function returns an error if:
+/// - The schema name does not conform to the pattern `org.<domain>.<app>.toml`.
+pub fn validate_schema_name(schema_name: &str) -> anyhow::Result<(), ValidatorError> {
+    debug!("Validating schema name: {}", schema_name);
+
+    // Corrected regex!
+    let re = Regex::new(r"^org\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.toml$")
+        .map_err(ValidatorError::RegexError)?;
+
     if !re.is_match(schema_name) {
-        warn!("Invalid schema name: {}", schema_name);
-        return Err(anyhow::anyhow!("Invalid schema name: {}", schema_name));
+        error!("Invalid schema name: {}", schema_name);
+        return Err(ValidatorError::InvalidSchemaName(schema_name.to_string()));
     }
     Ok(())
 }

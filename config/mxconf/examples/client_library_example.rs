@@ -1,4 +1,4 @@
-use mxconf::cli_client::{get_setting, list_schemas, set_setting};
+use mxconf::cli::{get_setting, list_schemas, set_setting};
 use std::env;
 
 #[tokio::main]

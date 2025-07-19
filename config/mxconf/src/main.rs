@@ -1,11 +1,13 @@
-mod server;
+mod cli;
 mod database;
-mod utils;
-mod cli_client;
-mod validator;
 mod error;
+mod server;
+mod utils;
+mod validator;
 
-use crate::cli_client::{describe_key, get_setting_table, list_keys, list_schemas, set_setting_table, watch_setting};
+use crate::cli::{
+    describe_key, get_setting_table, list_keys, list_schemas, set_setting_table, watch_setting,
+};
 use crate::error::ServerError;
 use crate::server::{ConfigServerInterface, SERVED_AT};
 use crate::validator::validate_schema;
@@ -19,12 +21,6 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use zbus::ConnectionBuilder;
-
-#[derive(Debug, Serialize, Deserialize)]
-struct Profile {
-    user: User,
-    system: System,
-}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct User {
@@ -133,13 +129,8 @@ fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> 
         Err(e) => return Err(e),
     };
 
-
     // Insert the validated file and checksum into the database
-    match db.insert_checksum(
-        schema_file_name,
-        CHECKSUM_TREE_NAME,
-        &schema_checksum,
-    ) {
+    match db.insert_checksum(schema_file_name, CHECKSUM_TREE_NAME, &schema_checksum) {
         Ok(()) => (),
         Err(e) => {
             return Err(anyhow::anyhow!(
@@ -153,7 +144,6 @@ fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> 
     Ok(())
 }
 
-
 /// Handle a file system event
 ///
 /// # Arguments
@@ -166,15 +156,16 @@ fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> 
 /// * `Ok(())` if the event was handled successfully
 /// * `Err(...)` if there was an error during handling
 fn handle_event(event: Event, db: &mut database::Database) -> Result<()> {
-    info!("Received event: {:?}", event.kind);
+    debug!("Received event: {:?}", event.kind);
     // Only process file creation events
     if event.kind.is_create() || event.kind.is_modify() {
+        debug!("Event received: {:?}", event.kind);
         // Process each path in the event
         for path in &event.paths {
             // Only process TOML files
             if path.extension() == Some("toml".as_ref()) {
                 if let Err(err) = process_toml_file(path, db) {
-                    println!("Error processing TOML file: {}", err);
+                    error!("Failed to process TOML file: {}", err);
                 }
             }
         }
@@ -183,6 +174,54 @@ fn handle_event(event: Event, db: &mut database::Database) -> Result<()> {
     Ok(())
 }
 
+
+/// Load the profile, which contains user and system settings
+mod profile {
+    use crate::error::ProfileError;
+    use crate::{System, User, DEFAULT_PROFILE_PATH};
+    use log::{debug, error, info};
+    use serde::{Deserialize, Serialize};
+    use std::fs::File;
+    use std::io;
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct Profile {
+        pub user: User,
+        pub system: System,
+    }
+
+    pub fn load_profile() -> Result<Profile, ProfileError> {
+        info!("Loading profile...");
+        let profile_path =
+            std::env::var("MXCONF_PROFILE").unwrap_or(DEFAULT_PROFILE_PATH.to_string());
+        debug!("Profile path: {}", profile_path);
+        let home_dir = dirs::home_dir().expect("Failed to get home directory");
+        let profile_path = home_dir.join(profile_path);
+        let profile_file = match File::open(profile_path) {
+            Ok(file) => file,
+            Err(e) => {
+                error!("Failed to open profile file: {}", e);
+                return Err(ProfileError::IoError(e));
+            }
+        };
+        let file_str = match io::read_to_string(profile_file) {
+            Ok(str) => str,
+            Err(e) => {
+                error!("Failed to read profile file: {}", e);
+                return Err(ProfileError::IoError(e));
+            }
+        };
+        let profile: Profile = match toml::from_str(&file_str) {
+            Ok(profile) => profile,
+            Err(e) => {
+                error!("Failed to parse profile file: {}", e);
+                return Err(ProfileError::TomlError(e));
+            }
+        };
+        info!("Profile Loaded!");
+        Ok(profile)
+    }
+}
 /// Main function that sets up a file system watcher and a D-Bus server
 ///
 /// # Returns
@@ -254,7 +293,12 @@ async fn start_server() -> Result<(), ServerError> {
     let home_dir = home_dir().expect("Failed to get home directory");
     let db_path = home_dir.join(DB_PATH).join(profile.user.keystore);
     let schema_dir = home_dir.join(SCHEMA_DIR);
-    debug!("Database path: {}, Schema directory: {}", db_path.display(), schema_dir.display());
+    let key_file_dir = home_dir.join(KEY_FILE_DIR).join(profile.system.keyfiles);
+    debug!(
+        "Database path: {}, Schema directory: {}",
+        db_path.display(),
+        schema_dir.display()
+    );
     // Initialize database
     let db = Arc::new(Mutex::new(database::Database::new(db_path)));
 
@@ -270,14 +314,12 @@ async fn start_server() -> Result<(), ServerError> {
         Err(e) => return Err(ServerError::FailedBuildConnection(e)),
     };
 
-
     info!("D-Bus connection built");
-    let key_file_dir = home_dir.join(KEY_FILE_DIR).join(profile.system.keyfiles);
 
     // Now build the server struct with the connection
     let config_server = ConfigServerInterface {
         db: Arc::clone(&db),
-        conn: conn.clone(), // Clone the connection (it's cheap and ref-counted)
+        conn: conn.clone(),
         key_file_dir,
         schema_dir,
     };
@@ -307,70 +349,34 @@ async fn start_server() -> Result<(), ServerError> {
     let schema_dir_to_watch = home_dir.join(schema_dir);
     // Watch the schemas directory for changes
     let schemas_dir = Path::new(&schema_dir_to_watch);
-    match watcher
-        .watch(schemas_dir, RecursiveMode::Recursive) {
+    match watcher.watch(schemas_dir, RecursiveMode::Recursive) {
         Ok(_) => (),
         Err(e) => {
             error!("Failed to watch schemas directory: {}", e);
             return Err(ServerError::DirWatcherFailed(e.to_string()));
         }
     };
-    debug!("Watching schemas directory: {}", schema_dir_to_watch.display());
+    debug!(
+        "Watching schemas directory: {}",
+        schema_dir_to_watch.display()
+    );
     // Process events as they come in
     while let Ok(event_result) = rx.recv() {
         match event_result {
             Ok(event) => {
-                let mut db_guard = db.lock().unwrap();
+                let mut db_guard = match db.lock() {
+                    Ok(guard) => guard,
+                    Err(e) => {
+                        error!("Failed to lock database: {}", e);
+                        continue;
+                    }
+                };
                 if let Err(err) = handle_event(event, &mut db_guard) {
-                    println!("Error handling event: {}", err);
+                    error!("Error handling event: {}", err);
                 }
             }
-            Err(err) => println!("Watch error: {}", err),
+            Err(err) => error!("Error receiving event: {}", err),
         }
     }
-
-    // We'll never reach this point unless the channel is closed
     Ok(())
-}
-
-mod profile {
-    use crate::error::ProfileError;
-    use crate::{Profile, DEFAULT_PROFILE_PATH};
-    use log::{debug, error, info};
-    use std::fs::File;
-    use std::io;
-
-    pub fn load_profile() -> Result<Profile, ProfileError> {
-        info!("Loading profile...");
-        let profile_path =
-            std::env::var("MXCONF_PROFILE").unwrap_or(DEFAULT_PROFILE_PATH.to_string());
-        debug!("Profile path: {}", profile_path);
-        let home_dir = dirs::home_dir().expect("Failed to get home directory");
-        let profile_path = home_dir.join(profile_path);
-        let profile_file = match File::open(profile_path) {
-            Ok(file) => file,
-            Err(e) => {
-                error!("Failed to open profile file: {}", e);
-                return Err(ProfileError::IoError(e));
-            }
-        };
-        let file_str =
-            match io::read_to_string(profile_file) {
-                Ok(str) => str,
-                Err(e) => {
-                    error!("Failed to read profile file: {}", e);
-                    return Err(ProfileError::IoError(e));
-                }
-            };
-        let profile: Profile = match
-        toml::from_str(&file_str) {
-            Ok(profile) => profile,
-            Err(e) => {
-                error!("Failed to parse profile file: {}", e);
-                return Err(ProfileError::TomlError(e));
-            }
-        };
-        info!("Profile Loaded!");
-        Ok(profile)
-    }
 }

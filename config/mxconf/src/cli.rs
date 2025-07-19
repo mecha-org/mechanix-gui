@@ -173,9 +173,9 @@ pub async fn watch_setting(schema: &str, key: &Option<String>) -> Result<(), Cli
 
     // Process signals as they come in
     while let Some(signal) = stream.next().await {
-        if let Ok((schema, signal_key, value)) = signal.body::<(String, String, String)>() {
+        if let Ok((_schema, signal_key, value)) = signal.body::<(String, String, String)>() {
             info!("Received change signal for key: {}", signal_key);
-            
+
             // Create a table for the change notification
             let mut change_table = Table::new();
             change_table

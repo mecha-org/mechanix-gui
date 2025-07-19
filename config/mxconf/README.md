@@ -53,6 +53,10 @@ The `/src` folder contains the main logic, organized as follows:
    ```
    cargo run --release
    ```
+   Debug logging:
+   ```
+    RUST_LOG=none,mxconf=debug ./target/release/mxconf -s
+   ```
 
 ## Usage
 
