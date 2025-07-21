@@ -75,7 +75,7 @@ The `/src` folder contains the main logic, organized as follows:
     - Detect a new TOML file
     - Validate them
 
-3. The server stores configurations in `~/.config/mechanix/conf/store/db` using the sled embedded database.
+3. The server stores configurations in `~/.config/mxconf/db` using the sled embedded database.
 
 ### CLI Mode
 

@@ -81,7 +81,7 @@ const CONNECTION_BUS_NAME: &str = "org.mechanix.MxConf";
 const SCHEMA_DIR: &str = "/usr/share/mxconf/schemas";
 const DEFAULT_PROFILE_PATH: &str = "/etc/mxconf/profile/default.toml";
 const KEY_FILE_DIR: &str = "/etc/mxconf/keyfiles";
-const DB_PATH: &str = "./conf/mxconf";
+const DB_PATH: &str = ".config/mxconf";
 
 /// Process a TOML file by validating it and storing it in the database
 ///
