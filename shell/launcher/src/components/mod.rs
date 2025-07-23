@@ -1,6 +1,10 @@
 // pub mod settings_drawer;
+pub mod homescreen;
+pub mod navigation_bar;
 pub mod status_bar;
 
+pub use homescreen::*;
+pub use navigation_bar::*;
 pub use status_bar::*;
 // pub use settings_drawer::*;
 
