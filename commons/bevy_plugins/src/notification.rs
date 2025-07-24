@@ -45,17 +45,22 @@ fn load_notifications_from_database(sender: Res<NotificationEventSender>) {
 fn apply_loaded_notifications(
     mut notification_resource: ResMut<AllNotificationsResource>,
     receiver: Res<NotificationEventReceiver>,
+    mut event_writer: EventWriter<NotificationEvent>, // Added
 ) {
     let receiver = receiver.0.lock().unwrap();
     while let Ok(event) = receiver.try_recv() {
         match event {
             NotificationEvent::Recieved(id, notification) => {
-                notification_resource.0.insert(id, notification);
+                notification_resource.0.insert(id.clone(), notification.clone());
                 println!("Notification Recieved");
+                // You can emit a new event here if needed:
+                event_writer.send(NotificationEvent::Recieved(id, notification.clone()));
             }
             NotificationEvent::Closed(id) => {
                 notification_resource.0.remove(&id);
                 println!("Notification Closed");
+                // You can emit a new event here if needed:
+                event_writer.send(NotificationEvent::Closed(id));
             }
         }
     }
