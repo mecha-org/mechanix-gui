@@ -78,98 +78,112 @@ fn create_notification_card(
     created_time: Instant
 ) {
     commands.entity(parent).with_children(|parent| {
-        let notification_image_path = format!("icons/{}.png", notification_id.clone());
+        let notification_image_path = format!("icons/{}.png", notification_id);
         let icon_handle = asset_server.load(notification_image_path);
-        parent
-            .spawn((
+
+        parent.spawn((
+            Node {
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Start,
+                width: Val::Px(484.0), // match screenshot
+                min_height: Val::Px(48.0),
+                padding: UiRect::all(Val::Px(16.0)),
+                ..default()
+            },
+            BackgroundColor(Color::srgba(0.13, 0.13, 0.13, 0.98)), // dark background
+            BorderRadius::all(Val::Px(8.0)),
+            NotificationCard {
+                id: notification_id,
+                created_at: created_time,
+            },
+        ))
+        .with_children(|card| {
+            // Icon
+            card.spawn((
+                ImageNode::new(icon_handle.clone()),
                 Node {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    width: Val::Percent(100.0),
-                    min_height: Val::Px(20.0),
+                    width: Val::Px(24.0),
+                    height: Val::Px(24.0),
+                    margin: UiRect::right(Val::Px(12.0)),
                     ..default()
                 },
-                BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.9)),
-                BorderRadius::all(Val::Px(8.0)),
-                NotificationCard {
-                    id: notification_id.clone(),
-                    created_at: created_time,
+            ));
+
+            // Content column
+            card.spawn((
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    flex_grow: 1.0,
+                    ..default()
                 },
             ))
-            .with_children(|card| {
-                card.spawn((
-                    // ImageNode inserts the texture and all required components automatically[16]
-                    ImageNode::new(icon_handle.clone()),
-                    Node { // layout & size of the image
-                        width: Val::Px(24.0),
-                        height: Val::Px(24.0),
-                        margin: UiRect::right(Val::Px(4.0)),
+            .with_children(|content| {
+                // Title row: app name + timestamp
+                content.spawn((
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                ))
+                .with_children(|title_row| {
+                    // App name
+                    title_row.spawn((
+                        Text::new(&notification.summary),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(Color::WHITE),
+                    ));
+                    // Dot separator
+                    title_row.spawn((
+                        Text::new(" • "),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
+                    ));
+                    // Timestamp (e.g., "4h")
+                    let elapsed = created_time.elapsed().as_secs();
+                    let timestamp = if elapsed >= 3600 {
+                        format!("{}h", elapsed / 3600)
+                    } else if elapsed >= 60 {
+                        format!("{}m", elapsed / 60)
+                    } else {
+                        format!("{}s", elapsed)
+                    };
+                    title_row.spawn((
+                        Text::new(timestamp),
+                        TextFont {
+                            font_size: 12.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
+                    ));
+                });
+
+                // Message
+                let mut body = notification.body.clone();
+                if body.len() > 80 {
+                    body.truncate(77);
+                    body.push_str("...");
+                }
+                content.spawn((
+                    Text::new(body),
+                    TextFont {
+                        font_size: 12.0,
+                        ..default()
+                    },
+                    TextColor(Color::srgba(0.9, 0.9, 0.9, 1.0)),
+                    Node {
+                        margin: UiRect::top(Val::Px(4.0)),
                         ..default()
                     },
                 ));
-                // Notification content (left side)
-                card.spawn((
-                    Node {
-                        flex_direction: FlexDirection::Column,
-                        flex_grow: 1.0,
-                        margin: UiRect::right(Val::Px(5.0)),
-                        ..default()
-                    },
-                )).with_children(|content| {
-                    // Title
-                    content.spawn((
-                        Text::new(&notification.summary),
-                        TextFont {
-                            // font: asset_server.load("fonts/FiraSans-Bold.ttf"), // Use your font
-                            font_size: 8.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(4.0)),
-                            ..default()
-                        },
-                    ));
-
-                    // Message
-                    content.spawn((
-                        Text::new(&notification.body),
-                        TextFont {
-                            // font: asset_server.load("fonts/FiraSans-Regular.ttf"), // Use your font
-                            font_size: 8.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgba(0.8, 0.8, 0.8, 1.0)),
-                    ));
-                });
-
-                // Dismiss button (right side)
-                card.spawn((
-                    Button,
-                    Node {
-                        width: Val::Px(10.0),
-                        height: Val::Px(10.0),
-                        align_items: AlignItems::Center,
-                        justify_content: JustifyContent::Center,
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgba(0.8, 0.2, 0.2, 0.8)),
-                    BorderRadius::all(Val::Px(12.0)),
-                    DismissButton {
-                        notification_id: notification_id,
-                    },
-                )).with_children(|button| {
-                    button.spawn((
-                        Text::new("x"),
-                        TextFont {
-                            font_size: 8.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                });
             });
+        });
     });
 }
 
