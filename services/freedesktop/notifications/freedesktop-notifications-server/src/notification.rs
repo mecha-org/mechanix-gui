@@ -5,6 +5,7 @@ use std::path::{PathBuf,Path};
 use std::fs;
 use gdk_pixbuf::Pixbuf;
 use glib::Bytes;
+use std::time::Duration;
 use freedesktop_icons::lookup;
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Notification {
@@ -39,9 +40,22 @@ pub enum Hint {
     Y(i32),
 }
 
+pub static DEFAULT_EXPIRE_TIMEOUT: i32 = 5000; // Default timeout in milliseconds
+
 impl Notification {
     pub fn get_hints(&self) -> Hints {
         Hints::from_hashmap(&self.hints)
+    }
+
+    pub fn get_expire_timeout(&self)-> std::time::Duration
+    {
+        if self.expire_timeout ==0 || self.is_resident() {
+            Duration::from_millis(0 as u64)
+        } else if self.expire_timeout == -1 {
+            Duration::from_millis(DEFAULT_EXPIRE_TIMEOUT as u64)
+        } else {
+            Duration::from_millis(self.expire_timeout as u64)
+        }
     }
 
     // Helper method to check if notification is resident

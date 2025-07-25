@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::time::Instant;
 // Resource to store active notifications
 #[derive(Resource, Default)]
-struct NotificationStorage {
+struct AllNotifications {
     notifications: HashMap<u32, Notification>,
 }
 
@@ -25,7 +25,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugins(NotificationPlugin)
         .insert_resource(WinitSettings::desktop_app())
-        .init_resource::<NotificationStorage>()
+        .init_resource::<AllNotifications>()
         .add_systems(Startup, (setup, setup_notification_container))
         .add_systems(Update, (
             process_notifications,
@@ -176,7 +176,7 @@ fn create_notification_card(
 fn process_notifications(
     mut events: EventReader<NotificationEvent>,
     mut commands: Commands,
-    mut notification_storage: ResMut<NotificationStorage>,
+    mut notification_storage: ResMut<AllNotifications>,
     container_query: Query<Entity, With<NotificationContainer>>,
     asset_server: Res<AssetServer>
 ) {
@@ -190,12 +190,17 @@ fn process_notifications(
     for event in events.read() {
         match event {
             NotificationEvent::Recieved(id, notification) => {
-                info!("Notification received: id={:?}, application={:?}", &id, &notification.app_name);
+                info!(
+                    "Notification received: id={:?}, application={:?}, expires={:?}",
+                    &id,
+                    &notification.app_name,
+                    notification.get_expire_timeout()
+                );
                 notification_storage.notifications.insert(id.clone(), notification.clone());
                 let notification_image_path = format!("assets/icons/{}.png", id.clone());
-                if let Some(image)= notification.get_image(){
+                if let Some(image) = notification.get_image() {
                     image.save_to_path(notification_image_path.into());
-                    info!("assets/icons/{}.png saved",&id);
+                    info!("assets/icons/{}.png saved", &id);
                 }
                 let current_time = std::time::Instant::now();
                 // Create the notification card
@@ -222,7 +227,7 @@ fn handle_dismiss_buttons(
         (Changed<Interaction>, With<Button>)
     >,
     mut commands: Commands,
-    mut notification_storage: ResMut<NotificationStorage>,
+    mut notification_storage: ResMut<AllNotifications>,
     card_query: Query<(Entity, &NotificationCard)>
 ) {
     for (interaction, dismiss_button) in &mut interaction_query {
@@ -243,21 +248,31 @@ fn handle_dismiss_buttons(
 
 fn auto_dismiss_notifications(
     mut commands: Commands,
-    mut notification_storage: ResMut<NotificationStorage>,
+    mut all_notifications: ResMut<AllNotifications>,
     card_query: Query<(Entity, &NotificationCard)>,
     time: Res<Time>
 ) {
     let current_time = std::time::Instant::now();
     let mut to_remove = Vec::new();
-
     for (entity, card) in &card_query {
-        if current_time.duration_since(card.created_at) > Duration::from_secs(10) {
-            to_remove.push((entity, card.id.clone()));
-        }
+        match all_notifications.notifications.get(&card.id) {
+            Some(notification) => {
+                // Check if the notification has expired
+                if current_time.duration_since(card.created_at) >= notification.get_expire_timeout() &&
+                    notification.get_expire_timeout() != Duration::from_millis(0)
+                {
+                    to_remove.push((entity, card.id.clone()));
+                }
+            }
+            None => {
+                // If the notification is not found, it might have been closed manually
+                to_remove.push((entity, card.id.clone()));
+            }
+        };
     }
 
     for (entity, id) in to_remove {
-        notification_storage.notifications.remove(&id);
+        all_notifications.notifications.remove(&id);
         commands.entity(entity).despawn_recursive();
     }
 }
