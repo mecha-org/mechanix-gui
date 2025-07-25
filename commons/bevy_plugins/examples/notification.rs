@@ -69,121 +69,147 @@ fn setup_notification_container(mut commands: Commands) {
     ));
 }
 
+// --- Bundle functions for notification card UI ---
+
+/// Generates the icon bundle for a notification card.
+fn notification_icon(icon_handle: Handle<Image>) -> impl Bundle {
+    (
+        ImageNode::new(icon_handle),
+        Node {
+            width: Val::Px(24.0),
+            height: Val::Px(24.0),
+            margin: UiRect::right(Val::Px(12.0)),
+            ..default()
+        },
+    )
+}
+
+/// Generates the title row bundle: app name, dot, timestamp.
+fn notification_title_row(summary: &str, created_time: Instant) -> impl Bundle {
+    let elapsed = created_time.elapsed().as_secs();
+    let timestamp = if elapsed >= 3600 {
+        format!("{}h", elapsed / 3600)
+    } else if elapsed >= 60 {
+        format!("{}m", elapsed / 60)
+    } else {
+        format!("{}s", elapsed)
+    };
+
+    (
+        Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            ..default()
+        },
+        children![
+            (
+                Text::new(summary),
+                TextFont { font_size: 12.0, ..default() },
+                TextColor(Color::WHITE),
+            ),
+            (
+                Text::new(" • "),
+                TextFont { font_size: 12.0, ..default() },
+                TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
+            ),
+            (
+                Text::new(timestamp),
+                TextFont { font_size: 12.0, ..default() },
+                TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
+            )
+        ]
+    )
+}
+
+/// Generates the message bundle for a notification card.
+fn notification_message(body: &str) -> impl Bundle {
+    let mut truncated = body.to_string();
+    if truncated.len() > 80 {
+        truncated.truncate(77);
+        truncated.push_str("...");
+    }
+    (
+        Text::new(truncated),
+        TextFont { font_size: 12.0, ..default() },
+        TextColor(Color::srgba(0.9, 0.9, 0.9, 1.0)),
+        Node { margin: UiRect::top(Val::Px(4.0)), ..default() },
+    )
+}
+
+/// Generates the dismiss button bundle for a notification card.
+/// Interactive: clicking this button will dismiss the notification.
+fn notification_dismiss_button(notification_id: u32) -> impl Bundle {
+    (
+        Button,
+        Node {
+            margin: UiRect::left(Val::Px(8.0)),
+            ..default()
+        },
+        DismissButton { notification_id },
+        // Interactive: clicking this button will dismiss the notification
+        children![(
+            Text::new("Dismiss"),
+            TextFont { font_size: 11.0, ..default() },
+            TextColor(Color::srgb(0.9, 0.2, 0.2)), // Custom red color
+        )]
+    )
+}
+
+/// Generates the notification card bundle, composed of sub-bundles.
+fn notification_card_bundle(
+    notification_id: u32,
+    notification: &Notification,
+    icon_handle: Handle<Image>,
+    created_time: Instant,
+) -> impl Bundle {
+    (
+        Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Start,
+            width: Val::Px(484.0),
+            min_height: Val::Px(48.0),
+            padding: UiRect::all(Val::Px(16.0)),
+            ..default()
+        },
+        BackgroundColor(Color::srgba(0.13, 0.13, 0.13, 0.98)),
+        BorderRadius::all(Val::Px(8.0)),
+        NotificationCard { id: notification_id, created_at: created_time },
+        children![
+            notification_icon(icon_handle.clone()),
+            (
+                Node {
+                    flex_direction: FlexDirection::Column,
+                    flex_grow: 1.0,
+                    ..default()
+                },
+                children![
+                    notification_title_row(&notification.summary, created_time),
+                    notification_message(&notification.body),
+                ]
+            ),
+            notification_dismiss_button(notification_id),
+        ]
+    )
+}
+
+// --- Refactored notification card creation ---
+
 fn create_notification_card(
     commands: &mut Commands,
     parent: Entity,
     notification_id: u32,
     notification: Notification,
     asset_server: &Res<AssetServer>,
-    created_time: Instant
+    created_time: Instant,
 ) {
+    let icon_handle = asset_server.load(format!("icons/{}.png", notification_id));
     commands.entity(parent).with_children(|parent| {
-        let notification_image_path = format!("icons/{}.png", notification_id);
-        let icon_handle = asset_server.load(notification_image_path);
-
-        parent.spawn((
-            Node {
-                flex_direction: FlexDirection::Row,
-                align_items: AlignItems::Start,
-                width: Val::Px(484.0), // match screenshot
-                min_height: Val::Px(48.0),
-                padding: UiRect::all(Val::Px(16.0)),
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.13, 0.13, 0.13, 0.98)), // dark background
-            BorderRadius::all(Val::Px(8.0)),
-            NotificationCard {
-                id: notification_id,
-                created_at: created_time,
-            },
-        ))
-        .with_children(|card| {
-            // Icon
-            card.spawn((
-                ImageNode::new(icon_handle.clone()),
-                Node {
-                    width: Val::Px(24.0),
-                    height: Val::Px(24.0),
-                    margin: UiRect::right(Val::Px(12.0)),
-                    ..default()
-                },
-            ));
-
-            // Content column
-            card.spawn((
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    flex_grow: 1.0,
-                    ..default()
-                },
-            ))
-            .with_children(|content| {
-                // Title row: app name + timestamp
-                content.spawn((
-                    Node {
-                        flex_direction: FlexDirection::Row,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                ))
-                .with_children(|title_row| {
-                    // App name
-                    title_row.spawn((
-                        Text::new(&notification.summary),
-                        TextFont {
-                            font_size: 12.0,
-                            ..default()
-                        },
-                        TextColor(Color::WHITE),
-                    ));
-                    // Dot separator
-                    title_row.spawn((
-                        Text::new(" • "),
-                        TextFont {
-                            font_size: 12.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
-                    ));
-                    // Timestamp (e.g., "4h")
-                    let elapsed = created_time.elapsed().as_secs();
-                    let timestamp = if elapsed >= 3600 {
-                        format!("{}h", elapsed / 3600)
-                    } else if elapsed >= 60 {
-                        format!("{}m", elapsed / 60)
-                    } else {
-                        format!("{}s", elapsed)
-                    };
-                    title_row.spawn((
-                        Text::new(timestamp),
-                        TextFont {
-                            font_size: 12.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
-                    ));
-                });
-
-                // Message
-                let mut body = notification.body.clone();
-                if body.len() > 80 {
-                    body.truncate(77);
-                    body.push_str("...");
-                }
-                content.spawn((
-                    Text::new(body),
-                    TextFont {
-                        font_size: 12.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgba(0.9, 0.9, 0.9, 1.0)),
-                    Node {
-                        margin: UiRect::top(Val::Px(4.0)),
-                        ..default()
-                    },
-                ));
-            });
-        });
+        parent.spawn(notification_card_bundle(
+            notification_id,
+            &notification,
+            icon_handle,
+            created_time,
+        ));
     });
 }
 
