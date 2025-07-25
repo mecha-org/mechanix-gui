@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use serde::{ Serialize, Deserialize };
 use zvariant::{ OwnedValue, Structure, Type };
-use std::path::PathBuf;
+use std::path::{PathBuf,Path};
+use std::fs;
 use gdk_pixbuf::Pixbuf;
 use glib::Bytes;
+use freedesktop_icons::lookup;
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Notification {
     pub app_name: String,
@@ -62,7 +64,11 @@ impl Notification {
     pub fn is_transient(&self) -> bool {
         for (key, value) in &self.hints {
             if key == "transient" {
-                if let Ok(transient) = <zvariant::OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap()) {
+                if
+                    let Ok(transient) = <zvariant::OwnedValue as TryInto<bool>>::try_into(
+                        value.try_clone().unwrap()
+                    )
+                {
                     return transient;
                 }
             }
@@ -112,8 +118,19 @@ impl Image {
     pub fn save_to_path(&self, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         match self {
             Image::Name(name) => {
-                // Look up icon in theme and save
-                Err("Icon theme lookup not implemented".into())
+                // Look up icon in theme and sav
+                if let Some(icon) = lookup("firefox").find() {
+                    // Get the best matching file path (there can be multiple for different sizes/types)
+                    if let source_path = icon {
+                        std::fs::copy(&source_path, &path)?;
+                        println!("Saved icon to {}", source_path.display());
+                    } else {
+                        println!("No icon file paths found for 'firefox'");
+                    }
+                } else {
+                    println!("No icon found for 'firefox'");
+                }
+                Ok(())
             }
             Image::File(file_path) => {
                 // Copy existing file

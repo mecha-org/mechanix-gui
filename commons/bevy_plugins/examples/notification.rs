@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use bevy::color::palettes::basic::RED;
 use bevy::{ prelude::*, winit::WinitSettings };
 use bevy_plugins::notification::{ NotificationPlugin, NotificationEvent };
@@ -77,6 +78,8 @@ fn create_notification_card(
     created_time: Instant
 ) {
     commands.entity(parent).with_children(|parent| {
+        let notification_image_path = format!("icons/{}.png", notification_id.clone());
+        let icon_handle = asset_server.load(notification_image_path);
         parent
             .spawn((
                 Node {
@@ -95,6 +98,16 @@ fn create_notification_card(
                 },
             ))
             .with_children(|card| {
+                card.spawn((
+                    // ImageNode inserts the texture and all required components automatically[16]
+                    ImageNode::new(icon_handle.clone()),
+                    Node { // layout & size of the image
+                        width: Val::Px(24.0),
+                        height: Val::Px(24.0),
+                        margin: UiRect::right(Val::Px(4.0)),
+                        ..default()
+                    },
+                ));
                 // Notification content (left side)
                 card.spawn((
                     Node {
@@ -177,9 +190,13 @@ fn process_notifications(
     for event in events.read() {
         match event {
             NotificationEvent::Recieved(id, notification) => {
-                info!("Notification received: id={:?}, notification={:?}", &id, &notification);
+                info!("Notification received: id={:?}, application={:?}", &id, &notification.app_name);
                 notification_storage.notifications.insert(id.clone(), notification.clone());
-
+                let notification_image_path = format!("assets/icons/{}.png", id.clone());
+                if let Some(image)= notification.get_image(){
+                    image.save_to_path(notification_image_path.into());
+                    info!("assets/icons/{}.png saved",&id);
+                }
                 let current_time = std::time::Instant::now();
                 // Create the notification card
                 create_notification_card(
@@ -249,7 +266,7 @@ fn print_notifications(mut events: EventReader<NotificationEvent>) {
     for event in events.read() {
         match event {
             NotificationEvent::Recieved(id, notification) => {
-                info!("Notification received: id={:?}, notification={:?}", id, notification);
+                info!("Notification received: id={:?}", id);
             }
             NotificationEvent::Closed(id) => {
                 info!("Notification closed: id={}", id);

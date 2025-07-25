@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 async-trait = "0.1.88"
 bincode = "2.0.1"
+freedesktop-icons = "0.4.0"
 futures-util.workspace = true
 gdk-pixbuf = "0.20.10"
 glib = "0.20.12"
