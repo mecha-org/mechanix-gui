@@ -1,0 +1,20 @@
+[general]
+enable_search_files = false
+enable_search_actions = true
+
+[apps]
+enable_search_apps = true
+desktop_apps_dir = "/usr/share/applications"
+index_dir = ".config/mxsearch/index"
+searchable_fields = [
+    "name",
+    "generic_name",
+    "comment",
+    "keywords",
+    "categories",
+    "path",
+    "checksum"
+]
+
+
+
