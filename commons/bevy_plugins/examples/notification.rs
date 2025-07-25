@@ -1,20 +1,23 @@
 use bevy::color::palettes::basic::RED;
 use bevy::{ prelude::*, winit::WinitSettings };
 use bevy_plugins::notification::{ NotificationPlugin, NotificationEvent };
+use freedesktop_notifications_server::notification::Notification;
 use tokio::time::Duration;
 use std::collections::HashMap;
+use std::time::Instant;
 // Resource to store active notifications
 #[derive(Resource, Default)]
 struct NotificationStorage {
-    notifications: HashMap<u32, NotificationData>,
+    notifications: HashMap<u32, Notification>,
 }
-#[derive(Clone)]
-struct NotificationData {
-    id: u32,
-    title: String,
-    message: String,
-    created_at: std::time::Instant,
-}
+
+// #[derive(Clone)]
+// struct NotificationData {
+//     id: u32,
+//     title: String,
+//     message: String,
+//     created_at: std::time::Instant,
+// }
 
 fn main() {
     App::new()
@@ -68,8 +71,10 @@ fn setup_notification_container(mut commands: Commands) {
 fn create_notification_card(
     commands: &mut Commands,
     parent: Entity,
-    notification: NotificationData,
-    asset_server: &Res<AssetServer>
+    notification_id: u32,
+    notification: Notification,
+    asset_server: &Res<AssetServer>,
+    created_time: Instant
 ) {
     commands.entity(parent).with_children(|parent| {
         parent
@@ -85,8 +90,8 @@ fn create_notification_card(
                 BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.9)),
                 BorderRadius::all(Val::Px(8.0)),
                 NotificationCard {
-                    id: notification.id.clone(),
-                    created_at: notification.created_at,
+                    id: notification_id.clone(),
+                    created_at: created_time,
                 },
             ))
             .with_children(|card| {
@@ -101,7 +106,7 @@ fn create_notification_card(
                 )).with_children(|content| {
                     // Title
                     content.spawn((
-                        Text::new(&notification.title),
+                        Text::new(&notification.summary),
                         TextFont {
                             // font: asset_server.load("fonts/FiraSans-Bold.ttf"), // Use your font
                             font_size: 8.0,
@@ -116,7 +121,7 @@ fn create_notification_card(
 
                     // Message
                     content.spawn((
-                        Text::new(&notification.message),
+                        Text::new(&notification.body),
                         TextFont {
                             // font: asset_server.load("fonts/FiraSans-Regular.ttf"), // Use your font
                             font_size: 8.0,
@@ -130,8 +135,8 @@ fn create_notification_card(
                 card.spawn((
                     Button,
                     Node {
-                        width: Val::Px(30.0),
-                        height: Val::Px(5.0),
+                        width: Val::Px(10.0),
+                        height: Val::Px(10.0),
                         align_items: AlignItems::Center,
                         justify_content: JustifyContent::Center,
                         ..default()
@@ -139,11 +144,11 @@ fn create_notification_card(
                     BackgroundColor(Color::srgba(0.8, 0.2, 0.2, 0.8)),
                     BorderRadius::all(Val::Px(12.0)),
                     DismissButton {
-                        notification_id: notification.id,
+                        notification_id: notification_id,
                     },
                 )).with_children(|button| {
                     button.spawn((
-                        Text::new("×"),
+                        Text::new("x"),
                         TextFont {
                             font_size: 8.0,
                             ..default()
@@ -172,24 +177,18 @@ fn process_notifications(
     for event in events.read() {
         match event {
             NotificationEvent::Recieved(id, notification) => {
-                info!("Notification received: id={:?}, notification={:?}", id, notification);
+                info!("Notification received: id={:?}, notification={:?}", &id, &notification);
+                notification_storage.notifications.insert(id.clone(), notification.clone());
 
-                let notification_data = NotificationData {
-                    id: id.clone(),
-                    title: "Notification".to_string(), // Extract from your notification data
-                    message: format!("{:?}", notification), // Format as needed
-                    created_at: std::time::Instant::now(),
-                };
-
-                // Store the notification
-                notification_storage.notifications.insert(id.clone(), notification_data.clone());
-
+                let current_time = std::time::Instant::now();
                 // Create the notification card
                 create_notification_card(
                     &mut commands,
                     container,
-                    notification_data,
-                    &asset_server
+                    id.clone(),
+                    notification.clone(),
+                    &asset_server,
+                    current_time
                 );
             }
             NotificationEvent::Closed(id) => {
