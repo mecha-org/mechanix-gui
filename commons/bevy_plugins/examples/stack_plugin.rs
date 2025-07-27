@@ -1,4 +1,3 @@
-
 use bevy::prelude::*;
 // Import Notification struct for demonstration
 // (In real use, import from the correct path)
@@ -18,9 +17,11 @@ pub struct CardStackPlugin;
 impl Plugin for CardStackPlugin {
     fn build(&self, app: &mut App) {
         app
+            .init_resource::<SeparatedCards>()
             .add_systems(Startup, setup_camera)
             .add_systems(Startup, spawn_stacked_cards)
-            .add_systems(Update, card_hover_system);
+            .add_systems(Update, card_hover_system)
+            .add_systems(Update, button_system);
     }
 }
 
@@ -56,8 +57,7 @@ fn spawn_stacked_cards(mut commands: Commands) {
         },
     ];
 
-    // Outer surface: a larger centered background panel
-    commands
+    let surface_entity = commands
         .spawn((
             Node {
                 width: Val::Percent(100.0),
@@ -70,25 +70,28 @@ fn spawn_stacked_cards(mut commands: Commands) {
             BackgroundColor(Color::srgb(0.18, 0.18, 0.19)),
             BorderRadius::all(Val::Px(18.0)),
         ))
-        .with_children(|surface| {
-            // Inner container for the stack, centered inside the surface
-            surface.spawn((
-                Node {
-                    width: Val::Percent(60.0),
-                    height: Val::Percent(40.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    position_type: PositionType::Relative,
-                    ..default()
-                },
-            ))
-            .with_children(|parent| {
-                // Create a notification card for each notification
-                for (i, notif) in notifications.iter().enumerate() {
-                    parent.spawn(create_notification_card(notif, i));
-                }
-            });
+        .id();
+    commands.entity(surface_entity).with_children(|surface| {
+        // Inner container for the stack, centered inside the surface
+        surface.spawn((
+            Node {
+                width: Val::Percent(60.0),
+                height: Val::Percent(40.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Relative,
+                ..default()
+            },
+        ))
+        .with_children(|parent| {
+            // Create a notification card for each notification
+            for (i, notif) in notifications.iter().enumerate() {
+                parent.spawn(create_notification_card(notif, i));
+            }
         });
+    });
+    // Store the surface entity for button spawning
+    commands.insert_resource(StackSurfaceEntity(surface_entity));
 }
 
 /// Creates a notification card UI from a Notification struct.
@@ -161,29 +164,165 @@ fn create_notification_card(notification: &Notification, index: usize) -> impl B
     )
 }
 
+use std::collections::HashSet;
+
+#[derive(Resource, Default)]
+struct SeparatedCards {
+    separated: bool,
+    // Track if buttons are spawned
+    buttons_spawned: bool,
+}
+
+fn separate_all_cards(cards: &mut ResMut<SeparatedCards>) {
+    cards.separated = true;
+}
+
+fn restack_all_cards(cards: &mut ResMut<SeparatedCards>) {
+    cards.separated = false;
+    cards.buttons_spawned = false;
+}
+
+fn spawn_control_buttons(commands: &mut Commands, parent: Entity) {
+    // Horizontal bar above the cards, right-aligned
+    commands.entity(parent).with_children(|p| {
+        p.spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Px(40.0),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::FlexEnd,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Relative,
+                ..default()
+            },
+            // Optionally, add a background color for the bar
+            // BackgroundColor(Color::srgb(0.18, 0.18, 0.19)),
+        ))
+        .with_children(|bar| {
+            // Restack button: '<'
+            bar.spawn((
+                Button,
+                Node {
+                    width: Val::Px(10.0),
+                    height: Val::Px(10.0),
+                    margin: UiRect::all(Val::Px(4.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::WHITE),
+                BorderRadius::all(Val::Px(8.0)),
+                RestackButton,
+                children![
+                    (
+                        Text::new("<"),
+                        TextFont { font_size: 5.0, ..default() },
+                        TextColor(Color::BLACK),
+                    )
+                ]
+            ));
+            // Remove button: 'x'
+            bar.spawn((
+                Button,
+                Node {
+                    width: Val::Px(10.0),
+                    height: Val::Px(10.0),
+                    margin: UiRect::all(Val::Px(4.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                BackgroundColor(Color::WHITE),
+                BorderRadius::all(Val::Px(8.0)),
+                RemoveButton,
+                children![
+                    (
+                        Text::new("x"),
+                        TextFont { font_size: 5.0, ..default() },
+                        TextColor(Color::BLACK),
+                    )
+                ]
+            ));
+        });
+    });
+}
+
+#[derive(Component)]
+struct RemoveButton;
+#[derive(Component)]
+struct RestackButton;
+
 fn card_hover_system(
-    mut query: Query<
-        (&Interaction, &Card, &mut Node),
-        (Changed<Interaction>, With<Card>, With<Button>)
-    >
+    mut query: Query<(&Interaction, &Card, &mut Node), (Changed<Interaction>, With<Card>, With<Button>)>,
+    mut separated: ResMut<SeparatedCards>,
+    mut commands: Commands,
+    surface: Option<Res<StackSurfaceEntity>>,
 ) {
+    let mut any_pressed = false;
     for (interaction, card, mut node) in &mut query {
-        // Base offset step (percent). Adjust as desired.
         let base_offset = (card.index as f32) * 2.0;
+        if separated.separated {
+            node.bottom = Val::Percent(base_offset + 20.0 * (card.index as f32 + 1.0));
+            if let Interaction::Pressed = *interaction {
+                println!("Card {} was clicked when unstacked", card.index);
+            }
+            continue;
+        }
         match *interaction {
             Interaction::Hovered => {
-                // Spread cards further apart on hover
-                println!("Card {} hovered", card.index);
                 node.bottom = Val::Percent(base_offset + 1.0);
             }
             Interaction::None => {
-                // Reset to original stacking offset
                 node.bottom = Val::Percent(base_offset);
             }
             Interaction::Pressed => {
-                // Optionally bring pressed card even higher
-                node.bottom = Val::Percent(base_offset + 20.0);
+                any_pressed = true;
             }
         }
+    }
+    // If any card was pressed and not already separated, separate all and spawn buttons
+    if any_pressed && !separated.separated {
+        separate_all_cards(&mut separated);
+        if let Some(surface) = surface {
+            if !separated.buttons_spawned {
+                spawn_control_buttons(&mut commands, surface.0);
+                separated.buttons_spawned = true;
+            }
+        }
+    }
+}
+
+#[derive(Resource, Clone, Copy)]
+struct StackSurfaceEntity(Entity);
+
+fn button_system(
+    mut commands: Commands,
+    mut remove_query: Query<(Entity, &Interaction), (With<RemoveButton>, Changed<Interaction>)>,
+    mut restack_query: Query<(Entity, &Interaction), (With<RestackButton>, Changed<Interaction>)>,
+    mut separated: ResMut<SeparatedCards>,
+    stack_surface: Option<Res<StackSurfaceEntity>>,
+) {
+    let mut restack_clicked = false;
+    for (entity, interaction) in &mut remove_query {
+        if let Interaction::Pressed = *interaction {
+            // Remove all cards and buttons
+            if let Some(ref surface) = stack_surface {
+                commands.entity(surface.0).despawn_recursive();
+            }
+        }
+    }
+    for (entity, interaction) in &mut restack_query {
+        if let Interaction::Pressed = *interaction {
+            // Restack all cards and remove buttons
+            restack_all_cards(&mut separated);
+            if let Some(ref surface) = stack_surface {
+                commands.entity(surface.0).despawn_recursive();
+            }
+            restack_clicked = true;
+        }
+    }
+    // Respawn the stack if restack was clicked
+    if restack_clicked {
+        spawn_stacked_cards(commands);
     }
 }
