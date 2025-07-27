@@ -35,6 +35,7 @@ fn spawn_stacked_cards(mut commands: Commands) {
             for i in 0..5 {
                 parent
                     .spawn((
+                        Button,
                         Node {
                             width: Val::Percent(50.8),
                             height: Val::Percent(8.0),
@@ -80,6 +81,7 @@ fn card_hover_system(
         match *interaction {
             Interaction::Hovered => {
                 // Spread cards further apart on hover
+                println!("Card {} hovered", card.index);
                 node.bottom = Val::Percent(base_offset + 5.0);
             }
             Interaction::None => {
