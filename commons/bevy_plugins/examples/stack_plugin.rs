@@ -35,63 +35,28 @@ pub struct Card {
 }
 
 fn spawn_stacked_cards(mut commands: Commands) {
-    // Example notifications for demonstration
-    let notifications = vec![
-        Notification {
-            app_name: "Files".to_string(),
-            replaces_id: 0,
-            app_icon: "folder".to_string(),
-            summary: "Files".to_string(),
-            body: "Content of notification goes here, maximum length of 484px".to_string(),
-            actions: vec![],
-            expire_timeout: 0,
-        },
-        Notification {
-            app_name: "Mail".to_string(),
-            replaces_id: 0,
-            app_icon: "mail".to_string(),
-            summary: "Mail".to_string(),
-            body: "You have a new message!".to_string(),
-            actions: vec![],
-            expire_timeout: 0,
-        },
-    ];
-
-    let surface_entity = commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                position_type: PositionType::Absolute,
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.18, 0.18, 0.19)),
-            BorderRadius::all(Val::Px(18.0)),
-        ))
-        .id();
-    commands.entity(surface_entity).with_children(|surface| {
-        // Inner container for the stack, centered inside the surface
-        surface.spawn((
-            Node {
-                width: Val::Percent(60.0),
-                height: Val::Percent(40.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                position_type: PositionType::Relative,
-                ..default()
-            },
-        ))
-        .with_children(|parent| {
-            // Create a notification card for each notification
-            for (i, notif) in notifications.iter().enumerate() {
-                parent.spawn(create_notification_card(notif, i));
-            }
-        });
+    let mut notifications = HashMap::new();
+    notifications.insert(1, Notification {
+        app_name: "Files".to_string(),
+        replaces_id: 0,
+        app_icon: "folder".to_string(),
+        summary: "Files".to_string(),
+        body: "Content of notification goes here, maximum length of 484px".to_string(),
+        actions: vec![],
+        expire_timeout: 0,
     });
-    // Store the surface entity for button spawning
-    commands.insert_resource(StackSurfaceEntity(surface_entity));
+    notifications.insert(2, Notification {
+        app_name: "Files".to_string(),
+        replaces_id: 0,
+        app_icon: "folder".to_string(),
+        summary: "Files".to_string(),
+        body: "Another notification for Files app".to_string(),
+        actions: vec![],
+        expire_timeout: 0,
+    });
+    // You can spawn multiple stacks for different apps if needed
+    let stack_entity = spawn_notification_stack(&mut commands, "Files", &notifications);
+    commands.insert_resource(StackSurfaceEntity(stack_entity));
 }
 
 /// Creates a notification card UI from a Notification struct.
@@ -164,7 +129,7 @@ fn create_notification_card(notification: &Notification, index: usize) -> impl B
     )
 }
 
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 #[derive(Resource, Default)]
 struct SeparatedCards {
@@ -180,71 +145,6 @@ fn separate_all_cards(cards: &mut ResMut<SeparatedCards>) {
 fn restack_all_cards(cards: &mut ResMut<SeparatedCards>) {
     cards.separated = false;
     cards.buttons_spawned = false;
-}
-
-fn spawn_control_buttons(commands: &mut Commands, parent: Entity) {
-    // Horizontal bar above the cards, right-aligned
-    commands.entity(parent).with_children(|p| {
-        p.spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Px(40.0),
-                flex_direction: FlexDirection::Row,
-                justify_content: JustifyContent::FlexEnd,
-                align_items: AlignItems::Center,
-                position_type: PositionType::Relative,
-                ..default()
-            },
-            // Optionally, add a background color for the bar
-            // BackgroundColor(Color::srgb(0.18, 0.18, 0.19)),
-        ))
-        .with_children(|bar| {
-            // Restack button: '<'
-            bar.spawn((
-                Button,
-                Node {
-                    width: Val::Px(10.0),
-                    height: Val::Px(10.0),
-                    margin: UiRect::all(Val::Px(4.0)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::WHITE),
-                BorderRadius::all(Val::Px(8.0)),
-                RestackButton,
-                children![
-                    (
-                        Text::new("<"),
-                        TextFont { font_size: 5.0, ..default() },
-                        TextColor(Color::BLACK),
-                    )
-                ]
-            ));
-            // Remove button: 'x'
-            bar.spawn((
-                Button,
-                Node {
-                    width: Val::Px(10.0),
-                    height: Val::Px(10.0),
-                    margin: UiRect::all(Val::Px(4.0)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(Color::WHITE),
-                BorderRadius::all(Val::Px(8.0)),
-                RemoveButton,
-                children![
-                    (
-                        Text::new("x"),
-                        TextFont { font_size: 5.0, ..default() },
-                        TextColor(Color::BLACK),
-                    )
-                ]
-            ));
-        });
-    });
 }
 
 #[derive(Component)]
@@ -280,15 +180,9 @@ fn card_hover_system(
             }
         }
     }
-    // If any card was pressed and not already separated, separate all and spawn buttons
+    // If any card was pressed and not already separated, just separate all (no extra buttons)
     if any_pressed && !separated.separated {
         separate_all_cards(&mut separated);
-        if let Some(surface) = surface {
-            if !separated.buttons_spawned {
-                spawn_control_buttons(&mut commands, surface.0);
-                separated.buttons_spawned = true;
-            }
-        }
     }
 }
 
@@ -325,4 +219,134 @@ fn button_system(
     if restack_clicked {
         spawn_stacked_cards(commands);
     }
+}
+
+// Spawns a notification stack entity: a column with a button row (app_name left, buttons right) and a stack of cards below
+fn spawn_notification_stack(
+    commands: &mut Commands,
+    app_name: &str,
+    notifications: &HashMap<u32, Notification>,
+) -> Entity {
+    let stack_entity = commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Absolute,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.18, 0.18, 0.19)),
+            BorderRadius::all(Val::Px(18.0)),
+        ))
+        .id();
+    // Button row: app_name left, buttons right
+    commands.entity(stack_entity).with_children(|parent| {
+        parent.spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Px(40.0),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                position_type: PositionType::Relative,
+                ..default()
+            },
+        ))
+        .with_children(|row| {
+            // App name (left)
+            row.spawn((
+                Node {
+                    width: Val::Auto,
+                    height: Val::Auto,
+                    margin: UiRect::left(Val::Px(12.0)),
+                    ..default()
+                },
+                children![
+                    (
+                        Text::new(app_name),
+                        TextFont { font_size: 18.0, ..default() },
+                        TextColor(Color::WHITE),
+                    )
+                ]
+            ));
+            // Button group (right)
+            row.spawn((
+                Node {
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::FlexEnd,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+            ))
+            .with_children(|bar| {
+                // Restack button: '<'
+                bar.spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(24.0),
+                        height: Val::Px(24.0),
+                        margin: UiRect::all(Val::Px(4.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::WHITE),
+                    BorderRadius::all(Val::Px(8.0)),
+                    RestackButton,
+                    children![
+                        (
+                            Text::new("<"),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::BLACK),
+                        )
+                    ]
+                ));
+                // Remove button: 'x'
+                bar.spawn((
+                    Button,
+                    Node {
+                        width: Val::Px(24.0),
+                        height: Val::Px(24.0),
+                        margin: UiRect::all(Val::Px(4.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    BackgroundColor(Color::WHITE),
+                    BorderRadius::all(Val::Px(8.0)),
+                    RemoveButton,
+                    children![
+                        (
+                            Text::new("x"),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::BLACK),
+                        )
+                    ]
+                ));
+            });
+        });
+    });
+    // Cards column
+    commands.entity(stack_entity).with_children(|parent| {
+        parent.spawn((
+            Node {
+                width: Val::Percent(60.0),
+                height: Val::Percent(80.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+                position_type: PositionType::Relative,
+                ..default()
+            },
+        ))
+        .with_children(|cards| {
+            for (i, notif) in notifications.values().enumerate() {
+                cards.spawn(create_notification_card(notif, i));
+            }
+        });
+    });
+    stack_entity
 }
