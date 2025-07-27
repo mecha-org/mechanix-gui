@@ -84,8 +84,15 @@ fn notification_icon(icon_handle: Handle<Image>) -> impl Bundle {
     )
 }
 
+/// Helper to calculate adaptive font size (example: scale with window width)
+fn adaptive_font_size(base: f32, window: &Window) -> f32 {
+    // You can adjust the scaling logic as needed
+    base * (window.width() / 1280.0).clamp(0.8, 2.0)
+}
+
 /// Generates the title row bundle: app name, dot, timestamp.
-fn notification_title_row(summary: &str, created_time: Instant) -> impl Bundle {
+fn notification_title_row(summary: &str, created_time: Instant, window: &Window) -> impl Bundle {
+    let font_size = adaptive_font_size(12.0, window);
     let elapsed = created_time.elapsed().as_secs();
     let timestamp = if elapsed >= 3600 {
         format!("{}h", elapsed / 3600)
@@ -104,17 +111,17 @@ fn notification_title_row(summary: &str, created_time: Instant) -> impl Bundle {
         children![
             (
                 Text::new(summary),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont { font_size, ..default() },
                 TextColor(Color::WHITE),
             ),
             (
                 Text::new(" • "),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont { font_size, ..default() },
                 TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
             ),
             (
                 Text::new(timestamp),
-                TextFont { font_size: 12.0, ..default() },
+                TextFont { font_size, ..default() },
                 TextColor(Color::srgba(0.7, 0.7, 0.7, 1.0)),
             )
         ]
@@ -122,7 +129,8 @@ fn notification_title_row(summary: &str, created_time: Instant) -> impl Bundle {
 }
 
 /// Generates the message bundle for a notification card.
-fn notification_message(body: &str) -> impl Bundle {
+fn notification_message(body: &str, window: &Window) -> impl Bundle {
+    let font_size = adaptive_font_size(12.0, window);
     let mut truncated = body.to_string();
     if truncated.len() > 80 {
         truncated.truncate(77);
@@ -130,27 +138,26 @@ fn notification_message(body: &str) -> impl Bundle {
     }
     (
         Text::new(truncated),
-        TextFont { font_size: 12.0, ..default() },
+        TextFont { font_size, ..default() },
         TextColor(Color::srgba(0.9, 0.9, 0.9, 1.0)),
-        Node { margin: UiRect::top(Val::Px(4.0)), ..default() },
+        Node { margin: UiRect::top(Val::Percent(0.5)), ..default() },
     )
 }
 
 /// Generates the dismiss button bundle for a notification card.
-/// Interactive: clicking this button will dismiss the notification.
-fn notification_dismiss_button(notification_id: u32) -> impl Bundle {
+fn notification_dismiss_button(notification_id: u32, window: &Window) -> impl Bundle {
+    let font_size = adaptive_font_size(11.0, window);
     (
         Button,
         Node {
-            margin: UiRect::left(Val::Px(8.0)),
+            margin: UiRect::left(Val::Percent(1.0)),
             ..default()
         },
         DismissButton { notification_id },
-        // Interactive: clicking this button will dismiss the notification
         children![(
             Text::new("Dismiss"),
-            TextFont { font_size: 11.0, ..default() },
-            TextColor(Color::srgb(0.9, 0.2, 0.2)), // Custom red color
+            TextFont { font_size, ..default() },
+            TextColor(Color::srgb(0.9, 0.2, 0.2)),
         )]
     )
 }
@@ -161,18 +168,19 @@ fn notification_card_bundle(
     notification: &Notification,
     icon_handle: Handle<Image>,
     created_time: Instant,
+    window: &Window,
 ) -> impl Bundle {
     (
         Node {
             flex_direction: FlexDirection::Row,
             align_items: AlignItems::Start,
-            width: Val::Px(484.0),
-            min_height: Val::Px(48.0),
-            padding: UiRect::all(Val::Px(16.0)),
+            width: Val::Percent(90.0), // Adaptive width
+            min_height: Val::Percent(8.0), // Adaptive height
+            padding: UiRect::all(Val::Percent(2.0)), // Adaptive padding
             ..default()
         },
         BackgroundColor(Color::srgba(0.13, 0.13, 0.13, 0.98)),
-        BorderRadius::all(Val::Px(8.0)),
+        BorderRadius::all(Val::Percent(2.0)),
         NotificationCard { id: notification_id, created_at: created_time },
         children![
             notification_icon(icon_handle.clone()),
@@ -183,17 +191,16 @@ fn notification_card_bundle(
                     ..default()
                 },
                 children![
-                    notification_title_row(&notification.summary, created_time),
-                    notification_message(&notification.body),
+                    notification_title_row(&notification.summary, created_time, window),
+                    notification_message(&notification.body, window),
                 ]
             ),
-            notification_dismiss_button(notification_id),
+            notification_dismiss_button(notification_id, window),
         ]
     )
 }
 
 // --- Refactored notification card creation ---
-
 fn create_notification_card(
     commands: &mut Commands,
     parent: Entity,
@@ -201,14 +208,17 @@ fn create_notification_card(
     notification: Notification,
     asset_server: &Res<AssetServer>,
     created_time: Instant,
+    window_query: &Query<&Window>,
 ) {
     let icon_handle = asset_server.load(format!("icons/{}.png", notification_id));
+    let window = window_query.single();
     commands.entity(parent).with_children(|parent| {
         parent.spawn(notification_card_bundle(
             notification_id,
             &notification,
             icon_handle,
             created_time,
+            window.expect("Window should exist"),
         ));
     });
 }
@@ -218,7 +228,8 @@ fn process_notifications(
     mut commands: Commands,
     mut notification_storage: ResMut<AllNotifications>,
     container_query: Query<Entity, With<NotificationContainer>>,
-    asset_server: Res<AssetServer>
+    asset_server: Res<AssetServer>,
+    window_query: Query<&Window>, // <-- Add this parameter
 ) {
     let container = match container_query.get_single() {
         Ok(entity) => entity,
@@ -250,7 +261,8 @@ fn process_notifications(
                     id.clone(),
                     notification.clone(),
                     &asset_server,
-                    current_time
+                    current_time,
+                    &window_query, // <-- Pass it here
                 );
             }
             NotificationEvent::Closed(id) => {
