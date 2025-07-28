@@ -1,3 +1,4 @@
+use bevy::ecs::system::ParamSet;
 use bevy::prelude::*;
 // Import Notification struct for demonstration
 // (In real use, import from the correct path)
@@ -151,15 +152,20 @@ fn restack_all_cards(cards: &mut ResMut<SeparatedCards>) {
 struct RemoveButton;
 #[derive(Component)]
 struct RestackButton;
+#[derive(Component)]
+struct ButtonRow;
 
 fn card_hover_system(
-    mut query: Query<(&Interaction, &Card, &mut Node), (Changed<Interaction>, With<Card>, With<Button>)>,
+    mut param_set: ParamSet<(
+        Query<(&Interaction, &Card, &mut Node), (Changed<Interaction>, With<Card>, With<Button>)>,
+        Query<(Entity, &mut Node), With<ButtonRow>>,
+    )>,
     mut separated: ResMut<SeparatedCards>,
     mut commands: Commands,
     surface: Option<Res<StackSurfaceEntity>>,
 ) {
     let mut any_pressed = false;
-    for (interaction, card, mut node) in &mut query {
+    for (interaction, card, mut node) in &mut param_set.p0() {
         let base_offset = (card.index as f32) * 2.0;
         if separated.separated {
             node.bottom = Val::Percent(base_offset + 20.0 * (card.index as f32 + 1.0));
@@ -180,9 +186,13 @@ fn card_hover_system(
             }
         }
     }
-    // If any card was pressed and not already separated, just separate all (no extra buttons)
+    // If any card was pressed and not already separated, just separate all and show button row
     if any_pressed && !separated.separated {
         separate_all_cards(&mut separated);
+        // Show the button row
+        for (entity, mut node) in &mut param_set.p1() {
+            node.display = Display::Flex;
+        }
     }
 }
 
@@ -242,7 +252,7 @@ fn spawn_notification_stack(
             BorderRadius::all(Val::Px(18.0)),
         ))
         .id();
-    // Button row: app_name left, buttons right
+    // Button row: app_name left, buttons right (hidden by default)
     commands.entity(stack_entity).with_children(|parent| {
         parent.spawn((
             Node {
@@ -252,8 +262,10 @@ fn spawn_notification_stack(
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
                 position_type: PositionType::Relative,
+                display: Display::None, // hidden by default
                 ..default()
             },
+            ButtonRow,
         ))
         .with_children(|row| {
             // App name (left)
