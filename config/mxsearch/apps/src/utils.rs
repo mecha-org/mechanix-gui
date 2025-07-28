@@ -1,12 +1,11 @@
 use configparser::ini::Ini;
 use log::debug;
 use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 
 #[derive(Debug, Default, Clone)]
 pub struct DesktopEntry {
-    pub tp: String,
+    pub type_: String,
     pub name: String,
     pub generic_name: Option<String>,
     pub comment: Option<String>,
@@ -68,7 +67,7 @@ pub fn parse_desktop_entry(path: &Path) -> Option<DesktopEntry> {
             .collect()
     };
     Some(DesktopEntry {
-        tp: get_str("type")?,
+        type_: get_str("type")?,
         name: get_str("name")?,
         generic_name: get_str("genericname"),
         comment: get_str("comment"),

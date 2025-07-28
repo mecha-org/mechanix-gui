@@ -25,7 +25,7 @@ use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Default, Clone)]
 #[zvariant(signature = "dict")]
 pub struct AppInfo {
-    // pub type_: String,
+    pub type_: String,
     pub name: String,
     pub generic_name: String,
     pub keywords: Vec<String>,
@@ -34,6 +34,7 @@ pub struct AppInfo {
     pub categories: Vec<String>,
     pub exec: String,
     pub path: String,
+    pub score: f32,
 }
 /// Public entry point for the app search service.
 
@@ -145,7 +146,7 @@ impl AppSearchService {
     /// Create the Tantivy schema for `.desktop` fields
     fn create_schema() -> Schema {
         let mut schema_builder = tantivy::schema::Schema::builder();
-
+        schema_builder.add_text_field("type", STRING | STORED);
         schema_builder.add_text_field("name", STRING | STORED);
         schema_builder.add_text_field("exec", STORED);
         schema_builder.add_text_field("comment", TEXT);
@@ -343,6 +344,54 @@ impl AppSearchService {
 
         let mut results = Vec::new();
 
+        for (score, doc_addr) in top_docs {
+            let doc: TantivyDocument = searcher.doc(doc_addr)?;
+
+            let mut app = AppInfo::default();
+            for (field, value) in doc.get_sorted_field_values() {
+                let field_name = self.schema.get_field_name(field).to_string();
+                // Join all values into a single string (semicolon-separated)
+                let joined_values = value
+                    .iter()
+                    .filter_map(|val| val.as_str())
+                    .collect::<Vec<_>>()
+                    .join(";");
+
+                set_app_field(&mut app, &field_name, joined_values);
+                app.score = score;
+            }
+
+            results.push(app);
+        }
+
+        Ok(results)
+    }
+    pub fn list_applications(&self, limit: usize) -> tantivy::Result<Vec<AppInfo>> {
+        info!("List applications: limit {}", limit);
+        let field_name = "type";
+        let search_term = "Application";
+        let field_to_lookup = match self.schema.get_field(field_name) {
+            Ok(field) => field,
+            Err(err) => {
+                error!("Failed to get field {}: {}", field_name, err);
+                return Err(err);
+            }
+        };
+
+        let reader = self
+            .index
+            .reader_builder()
+            .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
+            .try_into()?;
+
+        let searcher = reader.searcher();
+        let query_parser = QueryParser::for_index(&self.index, vec![field_to_lookup]);
+        let query = query_parser.parse_query(search_term)?;
+
+        let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
+
+        let mut results = Vec::new();
+
         for (_score, doc_addr) in top_docs {
             let doc: TantivyDocument = searcher.doc(doc_addr)?;
 
@@ -356,21 +405,7 @@ impl AppSearchService {
                     .collect::<Vec<_>>()
                     .join(";");
 
-                match field_name.as_str() {
-                    "name" => app.name = joined_values,
-                    "exec" => app.exec = joined_values,
-                    "comment" => app.comment = joined_values,
-                    "generic_name" => app.generic_name = joined_values,
-                    "categories" => {
-                        app.categories = joined_values.split(';').map(|s| s.to_string()).collect();
-                    }
-                    "keywords" => {
-                        app.keywords = joined_values.split(';').map(|s| s.to_string()).collect();
-                    }
-                    "icon" => app.icon = joined_values,
-                    "path" => app.path = joined_values,
-                    _ => {}
-                }
+                set_app_field(&mut app, &field_name, joined_values);
             }
 
             results.push(app);
@@ -391,6 +426,24 @@ impl AppSearchService {
             handle.abort(); // Stop background task
         }
         Ok(())
+    }
+}
+fn set_app_field(app: &mut AppInfo, field_name: &str, joined_values: String) {
+    match field_name {
+        "type" => app.type_ = joined_values,
+        "name" => app.name = joined_values,
+        "exec" => app.exec = joined_values,
+        "comment" => app.comment = joined_values,
+        "generic_name" => app.generic_name = joined_values,
+        "categories" => {
+            app.categories = joined_values.split(';').map(|s| s.to_string()).collect();
+        }
+        "keywords" => {
+            app.keywords = joined_values.split(';').map(|s| s.to_string()).collect();
+        }
+        "icon" => app.icon = joined_values,
+        "path" => app.path = joined_values,
+        _ => {}
     }
 }
 
@@ -427,6 +480,7 @@ fn feed_doc(
     path: &Path,
 ) -> TantivyDocument {
     doc!(
+        schema.get_field("type").unwrap() => desktop_entry.type_,
         schema.get_field("name").unwrap() => desktop_entry.name,
         schema.get_field("exec").unwrap() => desktop_entry.exec.clone().unwrap_or_default(),
         schema.get_field("comment").unwrap() => desktop_entry.comment.clone().unwrap_or_default(),

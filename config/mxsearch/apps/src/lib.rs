@@ -25,5 +25,6 @@ pub struct Apps {
     pub enable_search_apps: bool,
     pub index_dir: String,
     pub desktop_apps_dir: String,
+    pub search_limit: usize,
     searchable_fields: Vec<String>,
 }

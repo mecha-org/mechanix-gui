@@ -39,23 +39,32 @@ impl ServerInterface {
     /// * `Ok(())` if the signal was emitted successfully
     /// * `Err(...)` if there was an error during emission
 
-    #[dbus_interface(signal)]
-    async fn schema_key_changed(
-        &self,
-        ctxt: &SignalContext<'_>,
-        schema: &str,
-        key: &str,
-        value: &str,
-    ) -> Result<(), zbus::Error>;
-
-    pub async fn search_apps(&self, search: &str) -> zbus::fdo::Result<Vec<AppInfo>> {
+    pub async fn search_applications(&self, search: &str) -> zbus::fdo::Result<Vec<AppInfo>> {
         info!("Search Apps: {}", search);
         if !self.config.apps.enable_search_apps {
             warn!("Search Apps is disabled");
             return Err(ZbusError::Failed("Search Apps is disabled".to_string()));
         }
         // At some point later: perform a search
-        let results = match self.app_search_service.search(search, 10) {
+        let results = match self.app_search_service.search(search, self.config.apps.search_limit) {
+            Ok(results) => results,
+            Err(err) => {
+                error!("Error searching apps: {}", err);
+                return Err(ZbusError::Failed("Error searching apps".to_string()));
+            }
+        };
+        debug!("result: {:?}", results);
+        Ok(results)
+    }
+
+    pub async fn list_applications(&self) -> zbus::fdo::Result<Vec<AppInfo>> {
+        info!("List applications");
+        if !self.config.apps.enable_search_apps {
+            warn!("Search Apps is disabled");
+            return Err(ZbusError::Failed("Search Apps is disabled".to_string()));
+        }
+        // At some point later: perform a search
+        let results = match self.app_search_service.list_applications(self.config.apps.search_limit) {
             Ok(results) => results,
             Err(err) => {
                 error!("Error searching apps: {}", err);
