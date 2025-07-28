@@ -1,39 +1,5 @@
 // --- UI constants ---
-const CARD_WIDTH: f32 = 484.0;
-const CARD_MIN_HEIGHT: f32 = 64.0;
-const CARD_MARGIN: f32 = 8.0;
-const CARD_PADDING: f32 = 16.0;
-const CARD_BORDER_RADIUS: f32 = 12.0;
-const CARD_BORDER_COLOR: Color = Color::linear_rgba(0.2, 0.2, 0.2, 1.0);
-const CARD_BG_COLOR: Color = Color::srgb(0.13, 0.13, 0.13);
-const CARD_Z_OFFSET: f32 = 6.0;
-const CARD_SEPARATION: f32 = 20.0;
-const CARD_HOVER_OFFSET: f32 = 1.0;
-const STACK_CONTAINER_WIDTH: f32 = 100.0;
-const STACK_CONTAINER_HEIGHT: f32 = 100.0;
-const STACK_CONTAINER_BG: Color = Color::srgb(0.18, 0.18, 0.19);
-const STACK_CONTAINER_RADIUS: f32 = 18.0;
-const BUTTON_ROW_HEIGHT: f32 = 40.0;
-const BUTTON_ROW_MARGIN_LEFT: f32 = 12.0;
-const BUTTON_SIZE: f32 = 24.0;
-const BUTTON_MARGIN: f32 = 4.0;
-const BUTTON_RADIUS: f32 = 8.0;
-const BUTTON_BG: Color = Color::WHITE;
-const BUTTON_TEXT_SIZE: f32 = 12.0;
-const BUTTON_TEXT_COLOR: Color = Color::BLACK;
-const APP_NAME_TEXT_SIZE: f32 = 18.0;
-const APP_NAME_TEXT_COLOR: Color = Color::WHITE;
-const CARD_BODY_TEXT_SIZE: f32 = 15.0;
-const CARD_BODY_TEXT_COLOR: Color = Color::srgb(0.9, 0.9, 0.9);
-const CARD_SUMMARY_TEXT_SIZE: f32 = 18.0;
-const CARD_SUMMARY_TEXT_COLOR: Color = Color::WHITE;
-const CARD_TIME_TEXT_SIZE: f32 = 14.0;
-const CARD_TIME_TEXT_COLOR: Color = Color::srgb(0.7, 0.7, 0.7);
-const CARDS_COLUMN_WIDTH: f32 = 60.0;
-const CARDS_COLUMN_HEIGHT: f32 = 80.0;
-const CARDS_COLUMN_MIN_HEIGHT: f32 = 80.0;
-const CARD_SET_MIN_HEIGHT: f32 = 120.0;
-const UNSTACK_ANIMATION_DURATION: f32 = 0.3; // seconds
+// ...existing code...
 
 use bevy::ecs::system::ParamSet;
 use bevy::prelude::*;
@@ -120,20 +86,20 @@ fn create_notification_card(notification: &Notification, index: usize) -> impl B
     (
         Button,
         Node {
-            width: Val::Px(CARD_WIDTH),
-            min_height: Val::Px(CARD_MIN_HEIGHT),
-            margin: UiRect::all(Val::Px(CARD_MARGIN)),
-            padding: UiRect::all(Val::Px(CARD_PADDING)),
+            width: Val::Px(484.0),
+            min_height: Val::Px(64.0),
+            margin: UiRect::all(Val::Px(8.0)),
+            padding: UiRect::all(Val::Px(16.0)),
             flex_direction: FlexDirection::Column,
             justify_content: JustifyContent::Start,
             align_items: AlignItems::Start,
             position_type: PositionType::Absolute,
-            bottom: Val::Percent(index as f32 * CARD_Z_OFFSET),
+            bottom: Val::Percent(index as f32 * 6.0),
             ..default()
         },
-        BorderColor(CARD_BORDER_COLOR),
-        BorderRadius::all(Val::Px(CARD_BORDER_RADIUS)),
-        BackgroundColor(CARD_BG_COLOR),
+        BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
+        BorderRadius::all(Val::Px(12.0)),
+        BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
         ZIndex(index as i32),
         Card { index },
         children![
@@ -148,8 +114,8 @@ fn create_notification_card(notification: &Notification, index: usize) -> impl B
                     // Icon placeholder (could be replaced with ImageNode)
                     (
                         Node {
-                            width: Val::Px(BUTTON_SIZE),
-                            height: Val::Px(BUTTON_SIZE),
+                            width: Val::Px(24.0),
+                            height: Val::Px(24.0),
                             margin: UiRect::right(Val::Px(12.0)),
                             ..default()
                         },
@@ -157,13 +123,13 @@ fn create_notification_card(notification: &Notification, index: usize) -> impl B
                     ),
                     (
                         Text::new(&notification.summary),
-                        TextFont { font_size: CARD_SUMMARY_TEXT_SIZE, ..default() },
-                        TextColor(CARD_SUMMARY_TEXT_COLOR),
+                        TextFont { font_size: 18.0, ..default() },
+                        TextColor(Color::WHITE),
                     ),
                     (
                         Text::new("   ·   3h"),
-                        TextFont { font_size: CARD_TIME_TEXT_SIZE, ..default() },
-                        TextColor(CARD_TIME_TEXT_COLOR),
+                        TextFont { font_size: 14.0, ..default() },
+                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
                     ),
                 ]
             ),
@@ -176,8 +142,8 @@ fn create_notification_card(notification: &Notification, index: usize) -> impl B
                 children![
                     (
                         Text::new(&notification.body),
-                        TextFont { font_size: CARD_BODY_TEXT_SIZE, ..default() },
-                        TextColor(CARD_BODY_TEXT_COLOR),
+                        TextFont { font_size: 15.0, ..default() },
+                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
                     )
                 ]
             )
@@ -186,6 +152,7 @@ fn create_notification_card(notification: &Notification, index: usize) -> impl B
 }
 
 use std::collections::HashMap;
+use std::time::Duration;
 
 #[derive(Resource, Default)]
 struct SeparatedCards {
@@ -222,9 +189,9 @@ fn card_hover_system(
 ) {
     let mut any_pressed = false;
     for (interaction, card, mut node) in &mut param_set.p0() {
-        let base_offset = (card.index as f32) * CARD_HOVER_OFFSET;
+        let base_offset = (card.index as f32) * 1.0;
         if separated.separated {
-            node.bottom = Val::Percent(base_offset + CARD_SEPARATION * (card.index as f32 + 1.0));
+            node.bottom = Val::Percent(base_offset + 20.0 * (card.index as f32 + 1.0));
             if let Interaction::Pressed = *interaction {
                 println!("Card {} was clicked when unstacked", card.index);
             }
@@ -232,7 +199,7 @@ fn card_hover_system(
         }
         match *interaction {
             Interaction::Hovered => {
-                node.bottom = Val::Percent(base_offset + CARD_HOVER_OFFSET);
+                node.bottom = Val::Percent(base_offset + 1.0);
             }
             Interaction::None => {
                 node.bottom = Val::Percent(base_offset);
@@ -247,7 +214,7 @@ fn card_hover_system(
         separate_all_cards(&mut separated);
         // Start animation
         animation.active = true;
-        animation.timer = bevy::time::Timer::from_seconds(UNSTACK_ANIMATION_DURATION, bevy::time::TimerMode::Once);
+        animation.timer = bevy::time::Timer::from_seconds(10000.000, bevy::time::TimerMode::Once);
         // Show the button row
         for (entity, mut node) in &mut param_set.p1() {
             node.display = Display::Flex;
@@ -301,11 +268,11 @@ fn card_unstack_animation_system(
         return;
     }
     animation.timer.tick(time.delta());
-    let t = (animation.timer.elapsed_secs() / UNSTACK_ANIMATION_DURATION).min(1.0);
+    let t = (animation.timer.elapsed_secs() / 0.3).min(1.0);
     for (card, mut node) in &mut query {
         // Animate from stacked to separated
-        let base_offset = (card.index as f32) * CARD_HOVER_OFFSET;
-        let target = base_offset + CARD_SEPARATION * (card.index as f32 + 1.0);
+        let base_offset = (card.index as f32) * 1.0;
+        let target = base_offset + 20.0 * (card.index as f32 + 1.0);
         let start = base_offset;
         node.bottom = Val::Percent(start + (target - start) * t);
     }
@@ -323,16 +290,16 @@ fn spawn_notification_stack(
     let stack_entity = commands
         .spawn((
             Node {
-                width: Val::Percent(STACK_CONTAINER_WIDTH),
-                height: Val::Percent(STACK_CONTAINER_HEIGHT),
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 position_type: PositionType::Absolute,
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            BackgroundColor(STACK_CONTAINER_BG),
-            BorderRadius::all(Val::Px(STACK_CONTAINER_RADIUS)),
+            BackgroundColor(Color::srgb(0.18, 0.18, 0.19)),
+            BorderRadius::all(Val::Px(18.0)),
         ))
         .id();
     // Button row: app_name left, buttons right (hidden by default)
@@ -340,7 +307,7 @@ fn spawn_notification_stack(
         parent.spawn((
             Node {
                 width: Val::Percent(100.0),
-                height: Val::Px(BUTTON_ROW_HEIGHT),
+                height: Val::Px(40.0),
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,
@@ -356,14 +323,14 @@ fn spawn_notification_stack(
                 Node {
                     width: Val::Auto,
                     height: Val::Auto,
-                    margin: UiRect::left(Val::Px(BUTTON_ROW_MARGIN_LEFT)),
+                    margin: UiRect::left(Val::Px(12.0)),
                     ..default()
                 },
                 children![
                     (
                         Text::new(app_name),
-                        TextFont { font_size: APP_NAME_TEXT_SIZE, ..default() },
-                        TextColor(APP_NAME_TEXT_COLOR),
+                        TextFont { font_size: 18.0, ..default() },
+                        TextColor(Color::WHITE),
                     )
                 ]
             ));
@@ -381,21 +348,21 @@ fn spawn_notification_stack(
                 bar.spawn((
                     Button,
                     Node {
-                        width: Val::Px(BUTTON_SIZE),
-                        height: Val::Px(BUTTON_SIZE),
-                        margin: UiRect::all(Val::Px(BUTTON_MARGIN)),
+                        width: Val::Px(24.0),
+                        height: Val::Px(24.0),
+                        margin: UiRect::all(Val::Px(4.0)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    BackgroundColor(BUTTON_BG),
-                    BorderRadius::all(Val::Px(BUTTON_RADIUS)),
+                    BackgroundColor(Color::WHITE),
+                    BorderRadius::all(Val::Px(8.0)),
                     RestackButton,
                     children![
                         (
                             Text::new("<"),
-                            TextFont { font_size: BUTTON_TEXT_SIZE, ..default() },
-                            TextColor(BUTTON_TEXT_COLOR),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::BLACK),
                         )
                     ]
                 ));
@@ -403,21 +370,21 @@ fn spawn_notification_stack(
                 bar.spawn((
                     Button,
                     Node {
-                        width: Val::Px(BUTTON_SIZE),
-                        height: Val::Px(BUTTON_SIZE),
-                        margin: UiRect::all(Val::Px(BUTTON_MARGIN)),
+                        width: Val::Px(24.0),
+                        height: Val::Px(24.0),
+                        margin: UiRect::all(Val::Px(4.0)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    BackgroundColor(BUTTON_BG),
-                    BorderRadius::all(Val::Px(BUTTON_RADIUS)),
+                    BackgroundColor(Color::WHITE),
+                    BorderRadius::all(Val::Px(8.0)),
                     RemoveButton,
                     children![
                         (
                             Text::new("x"),
-                            TextFont { font_size: BUTTON_TEXT_SIZE, ..default() },
-                            TextColor(BUTTON_TEXT_COLOR),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::BLACK),
                         )
                     ]
                 ));
@@ -428,8 +395,8 @@ fn spawn_notification_stack(
     commands.entity(stack_entity).with_children(|parent| {
         parent.spawn((
             Node {
-                width: Val::Percent(CARDS_COLUMN_WIDTH),
-                height: Val::Percent(CARDS_COLUMN_HEIGHT),
+                width: Val::Percent(60.0),
+                height: Val::Percent(80.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 flex_direction: FlexDirection::Column,
