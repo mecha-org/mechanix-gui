@@ -7,7 +7,7 @@ const CARD_BORDER_RADIUS: f32 = 12.0;
 const CARD_BORDER_COLOR: Color = Color::linear_rgba(0.2, 0.2, 0.2, 1.0);
 const CARD_BG_COLOR: Color = Color::srgb(0.13, 0.13, 0.13);
 const CARD_Z_OFFSET: f32 = 6.0;
-const CARD_SEPARATION: f32 = 10.0;
+const CARD_SEPARATION: f32 = 20.0;
 const CARD_HOVER_OFFSET: f32 = 1.0;
 const STACK_CONTAINER_WIDTH: f32 = 100.0;
 const STACK_CONTAINER_HEIGHT: f32 = 100.0;
@@ -33,6 +33,7 @@ const CARDS_COLUMN_WIDTH: f32 = 60.0;
 const CARDS_COLUMN_HEIGHT: f32 = 80.0;
 const CARDS_COLUMN_MIN_HEIGHT: f32 = 80.0;
 const CARD_SET_MIN_HEIGHT: f32 = 120.0;
+const UNSTACK_ANIMATION_DURATION: f32 = 0.3; // seconds
 
 use bevy::ecs::system::ParamSet;
 use bevy::prelude::*;
@@ -55,16 +56,25 @@ impl Plugin for CardStackPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_resource::<SeparatedCards>()
+            .init_resource::<CardUnstackAnimation>()
             .add_systems(Startup, setup_camera)
             .add_systems(Startup, spawn_stacked_cards)
             .add_systems(Update, card_hover_system)
-            .add_systems(Update, button_system);
+            .add_systems(Update, button_system)
+            .add_systems(Update, card_unstack_animation_system);
     }
 }
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2d);
 }
+
+#[derive(Resource, Default)]
+struct CardUnstackAnimation {
+    active: bool,
+    timer: bevy::time::Timer,
+}
+
 
 #[derive(Component)]
 pub struct Card {
@@ -88,6 +98,15 @@ fn spawn_stacked_cards(mut commands: Commands) {
         app_icon: "folder".to_string(),
         summary: "Files".to_string(),
         body: "Another notification for Files app".to_string(),
+        actions: vec![],
+        expire_timeout: 0,
+    });
+    notifications.insert(3, Notification {
+        app_name: "Things".to_string(),
+        replaces_id: 0,
+        app_icon: "folder".to_string(),
+        summary: "Things".to_string(),
+        body: "Another notification for Things app".to_string(),
         actions: vec![],
         expire_timeout: 0,
     });
@@ -197,6 +216,7 @@ fn card_hover_system(
         Query<(Entity, &mut Node), With<ButtonRow>>,
     )>,
     mut separated: ResMut<SeparatedCards>,
+    mut animation: ResMut<CardUnstackAnimation>,
     mut commands: Commands,
     surface: Option<Res<StackSurfaceEntity>>,
 ) {
@@ -225,6 +245,9 @@ fn card_hover_system(
     // If any card was pressed and not already separated, just separate all and show button row
     if any_pressed && !separated.separated {
         separate_all_cards(&mut separated);
+        // Start animation
+        animation.active = true;
+        animation.timer = bevy::time::Timer::from_seconds(UNSTACK_ANIMATION_DURATION, bevy::time::TimerMode::Once);
         // Show the button row
         for (entity, mut node) in &mut param_set.p1() {
             node.display = Display::Flex;
@@ -247,7 +270,7 @@ fn button_system(
         if let Interaction::Pressed = *interaction {
             // Remove all cards and buttons
             if let Some(ref surface) = stack_surface {
-                commands.entity(surface.0).despawn_recursive();
+                commands.entity(surface.0).despawn();
             }
         }
     }
@@ -256,7 +279,7 @@ fn button_system(
             // Restack all cards and remove buttons
             restack_all_cards(&mut separated);
             if let Some(ref surface) = stack_surface {
-                commands.entity(surface.0).despawn_recursive();
+                commands.entity(surface.0).despawn();
             }
             restack_clicked = true;
         }
@@ -264,6 +287,30 @@ fn button_system(
     // Respawn the stack if restack was clicked
     if restack_clicked {
         spawn_stacked_cards(commands);
+    }
+}
+
+// Animate the card positions when unstacking
+fn card_unstack_animation_system(
+    mut animation: ResMut<CardUnstackAnimation>,
+    time: Res<Time>,
+    mut query: Query<(&Card, &mut Node)>,
+    separated: Res<SeparatedCards>,
+) {
+    if !animation.active {
+        return;
+    }
+    animation.timer.tick(time.delta());
+    let t = (animation.timer.elapsed_secs() / UNSTACK_ANIMATION_DURATION).min(1.0);
+    for (card, mut node) in &mut query {
+        // Animate from stacked to separated
+        let base_offset = (card.index as f32) * CARD_HOVER_OFFSET;
+        let target = base_offset + CARD_SEPARATION * (card.index as f32 + 1.0);
+        let start = base_offset;
+        node.bottom = Val::Percent(start + (target - start) * t);
+    }
+    if animation.timer.finished() {
+        animation.active = false;
     }
 }
 
