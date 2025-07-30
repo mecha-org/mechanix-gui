@@ -5,7 +5,7 @@ use bevy_smithay::{
     prelude::{ layer_shell::LayerShellSettings, subsurface::Anchor },
 };
 use bevy_core_widgets::{ CoreButton, CoreScrollArea, InteractionDisabled, Orientation };
-
+use freedesktop_notifications_server::notification::{ Notification };
 use bevy_plugins::notification::{ NotificationPlugin, NotificationEvent };
 use crate::components::apps_grid;
 use crate::launcher::HomescreenWindow;
@@ -17,7 +17,7 @@ pub struct NotificationWindowPlugin;
 impl Plugin for NotificationWindowPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, init_count)
-            .add_systems(Update, spawn_multiple_cards)
+            // .add_systems(Update, spawn_multiple_cards)
             .add_systems(Update, process_notifications);
     }
 }
@@ -130,18 +130,24 @@ pub fn init_count(mut commands: Commands) {
     commands.insert_resource(Count(0));
 }
 
-pub fn spawn_multiple_cards(
-    mut commands: Commands,
-    drawing_surface: Option<Res<NotificationSurfaceEntity>>,
-    asset_server: Res<AssetServer>
-) {
-    let icon_handle = asset_server.load(format!("icons/{}.png", 1));
-    if let Some(ref surface) = drawing_surface {
-        create_card(&mut commands, surface.0, icon_handle)
-    }
-}
+// pub fn spawn_multiple_cards(
+//     mut commands: Commands,
+//     drawing_surface: Option<Res<NotificationSurfaceEntity>>,
+//     asset_server: Res<AssetServer>
+// ) {
+//     let icon_handle = asset_server.load(format!("icons/{}.png", 1));
+//     if let Some(ref surface) = drawing_surface {
+//         create_card(&mut commands, surface.0, icon_handle)
+//     }
+// }
 
-pub fn create_card(commands: &mut Commands, drawing_surface: Entity, icon_handle: Handle<Image>) {
+pub fn create_card(
+    notification: Notification,
+    id: u32,
+    commands: &mut Commands,
+    drawing_surface: Entity,
+    icon_handle: Handle<Image>
+) {
     let card = commands.entity(drawing_surface).with_children(|parent| {
         parent.spawn((
             Node {
@@ -149,7 +155,7 @@ pub fn create_card(commands: &mut Commands, drawing_surface: Entity, icon_handle
                 min_height: Val::Px(81.0),
                 margin: UiRect::all(Val::Px(1.0)),
                 padding: UiRect::all(Val::Px(16.0)),
-                bottom: Val::Percent(1 as f32),
+                bottom: Val::Percent(0.5),
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
@@ -187,7 +193,7 @@ pub fn create_card(commands: &mut Commands, drawing_surface: Entity, icon_handle
                                 ..default()
                             },
                             children![(
-                                Text::new("app_name"),
+                                Text::new(notification.app_name),
                                 TextFont { font_size: 16.0, ..default() },
                                 TextColor(Color::WHITE),
                             )],
@@ -203,7 +209,7 @@ pub fn create_card(commands: &mut Commands, drawing_surface: Entity, icon_handle
                         ..default()
                     },
                     children![(
-                        Text::new("Content of notification goes here"),
+                        Text::new(notification.summary),
                         TextFont { font_size: 16.0, ..default() },
                         TextColor(Color::WHITE),
                     )],
@@ -216,6 +222,8 @@ pub fn create_card(commands: &mut Commands, drawing_surface: Entity, icon_handle
 fn process_notifications(
     mut events: EventReader<NotificationEvent>,
     mut commands: Commands,
+    drawing_surface: Option<Res<NotificationSurfaceEntity>>,
+    asset_server: Res<AssetServer>
 ) {
     for event in events.read() {
         match event {
@@ -226,6 +234,11 @@ fn process_notifications(
                     &notification.app_name,
                     notification.get_expire_timeout()
                 );
+                let image_path = save_notification_image_to_assets(&id, &notification);
+                let icon_handle = asset_server.load(image_path);
+                if let Some(ref surface) = drawing_surface {
+                    create_card(notification.clone(), *id, &mut commands, surface.0, icon_handle);
+                }
             }
             NotificationEvent::Closed(id) => {
                 info!("Notification closed: id={}", id);
@@ -233,4 +246,14 @@ fn process_notifications(
             }
         }
     }
+}
+
+pub fn save_notification_image_to_assets(id: &u32, notification: &Notification) -> String {
+    let notification_image_path = format!("assets/icons/{}.png", id.clone());
+    if let Some(image) = notification.get_image() {
+        image.save_to_path(notification_image_path.clone().into());
+        info!("assets/icons/{}.png saved", &id);
+    }
+    let notification_image_path = format!("icons/{}.png", id.clone());
+    notification_image_path 
 }
