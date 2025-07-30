@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[derive(Component)]
-struct Clock;
+pub struct Clock;
 
 #[derive(Resource)]
 struct ClockUpdateTimer(Timer);
@@ -67,7 +67,7 @@ fn update_battery(mut query: Query<&mut StyledText, With<Battery>>) {
     }
 }
 
-fn get_current_datetime() -> String {
+pub fn get_current_datetime() -> String {
     let now = chrono::Local::now();
     format!(
         "{} {} {:02}:{:02}:{:02}",

@@ -1,24 +1,15 @@
 pub mod button;
 pub mod slider;
 
-use bevy::{
-    app::{App, Plugin},
-    input_focus::InputDispatchPlugin,
-};
-use bevy_core_widgets::CoreWidgetsPlugin;
+use bevy::app::{App, Plugin};
 use button::StyledButtonPlugin;
 
 use crate::widgets::slider::StyledSliderPlugin;
 
-pub struct StyledWidgetsPlugin;
+pub struct LauncherStyledWidgetsPlugin;
 
-impl Plugin for StyledWidgetsPlugin {
+impl Plugin for LauncherStyledWidgetsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            CoreWidgetsPlugin,
-            InputDispatchPlugin,
-            StyledButtonPlugin,
-            StyledSliderPlugin,
-        ));
+        app.add_plugins((StyledButtonPlugin, StyledSliderPlugin));
     }
 }

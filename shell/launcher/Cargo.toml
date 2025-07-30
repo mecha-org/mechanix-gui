@@ -6,9 +6,9 @@ edition = "2024"
 
 [dependencies]
 bevy = { version = "0.16.0-dev" }
-bevy_styled_widgets = { git = "https://github.com/akshayr-mecha/bevy_mctk.git", rev = "71a6c2ef2885adef1d6d8adf238850bb85ebfe59"}
-bevy_asset_loader = { version = "0.23.0-rc.3", features = ["standard_dynamic_assets"]}
-bevy_core_widgets = { git = "https://github.com/akshayr-mecha/bevy_core_widgets.git",  rev = "24966adefc4494815b9d71bc2bf5814e715f6b43" }
+bevy_styled_widgets = { git = "https://github.com/akshayr-mecha/bevy_mctk.git", rev = "d35349e18e26ce81b341a6d60fb3071d3aa3ab9e"}
+bevy_asset_loader = { version = "0.23.0-rc.3", features = ["standard_dynamic_assets", "2d"]}
+bevy_core_widgets = { git = "https://github.com/akshayr-mecha/bevy_core_widgets.git",  rev = "3a1e8795ab2ed3ac5fd252e9f5ab7c890a2415f4" }
 chrono = { version = "0.4", features = ["clock"] }
 bevy_smithay =  { git = "https://github.com/namana-mecha/bevy_smithay.git", rev = "25680f41d9378464bac315d7f9b262008555154a" }
 freedesktop-desktop-entry = "0.7.13"
