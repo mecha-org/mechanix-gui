@@ -307,7 +307,7 @@ fn spawn_notification_stack(
         parent.spawn((
             Node {
                 width: Val::Percent(100.0),
-                height: Val::Px(40.0),
+                height: Val::Percent(5.0),
                 flex_direction: FlexDirection::Row,
                 justify_content: JustifyContent::SpaceBetween,
                 align_items: AlignItems::Center,

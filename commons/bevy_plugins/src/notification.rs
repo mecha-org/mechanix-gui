@@ -131,8 +131,8 @@ impl Plugin for NotificationPlugin {
             .add_event::<NotificationEvent>()
             .add_systems(Startup, spawn_notification_poller)
             .add_systems(Update, (
-                load_notifications_from_database,
-                apply_loaded_notifications,
+                // load_notifications_from_database,
+                apply_loaded_notifications
             ));
     }
 }

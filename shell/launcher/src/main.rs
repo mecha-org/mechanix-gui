@@ -7,9 +7,11 @@ use crate::{
 };
 
 mod components;
+mod desktop_apps;
 mod launcher;
 mod settings;
 mod styled_card;
+mod notification;
 // mod settings_panel;
 mod utils;
 // mod widgets;
