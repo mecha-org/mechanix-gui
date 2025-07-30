@@ -18,7 +18,8 @@ impl Plugin for NotificationWindowPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, init_count)
             // .add_systems(Update, spawn_multiple_cards)
-            .add_systems(Update, process_notifications);
+            .add_systems(Update, process_notifications)
+            .add_systems(Update, clear_all_button_system);
     }
 }
 
@@ -91,6 +92,7 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                         )],
                     ),
                     (
+                        Button,
                         Node {
                             width: Val::Px(78.0),
                             height: Val::Px(30.0),
@@ -116,6 +118,9 @@ pub fn spawn_notification_window(commands: &mut Commands) {
 
     commands.insert_resource(NotificationSurfaceEntity(notification_surface_entity));
 }
+
+#[derive(Component)]
+pub struct Card;
 
 #[derive(Component)]
 pub struct NotificationSurface;
@@ -162,8 +167,8 @@ pub fn create_card(
             BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
             BorderRadius::all(Val::Px(8.0)),
             BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
-            // ZIndex(1 as i32),
-            // Card { index },
+            ZIndex(id as i32),
+            Card,
             children![
                 (
                     Node {
@@ -182,6 +187,7 @@ pub fn create_card(
                                 height: Val::Auto,
                                 ..default()
                             },
+                            BorderRadius::all(Val::Px(4.0)),
                         ),
                         (
                             Node {
@@ -194,7 +200,7 @@ pub fn create_card(
                             },
                             children![(
                                 Text::new(notification.app_name),
-                                TextFont { font_size: 16.0, ..default() },
+                                TextFont { font_size: 20.0, ..default() },
                                 TextColor(Color::WHITE),
                             )],
                         )
@@ -255,5 +261,29 @@ pub fn save_notification_image_to_assets(id: &u32, notification: &Notification) 
         info!("assets/icons/{}.png saved", &id);
     }
     let notification_image_path = format!("icons/{}.png", id.clone());
-    notification_image_path 
+    notification_image_path
+}
+
+fn clear_all_button_system(
+    mut interaction_query: Query<
+        (&Interaction, &ClearAllButton),
+        (Changed<Interaction>, With<Button>)
+    >,
+    mut commands: Commands,
+    card_query: Query<(Entity, &Card)>
+) {
+    for (interaction, entity) in interaction_query.iter_mut() {
+        match *interaction {
+            Interaction::Pressed => {
+                // Handle the "Clear all" button press here
+                println!("Clear All button pressed!");
+                for (entity, id) in card_query {
+                    // all_notifications.notifications.remove(&id);
+                    commands.entity(entity).despawn_recursive();
+                }
+                // Example: commands.entity(entity).despawn_recursive();
+            }
+            _ => {}
+        }
+    }
 }
