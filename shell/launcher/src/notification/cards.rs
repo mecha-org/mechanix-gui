@@ -197,7 +197,7 @@ pub fn create_card(
                 Color::BLACK.with_alpha(0.5), // shadow color
                 Val::Px(4.0), // x offset
                 Val::Px(-4.0), // y offset (negative for “down”)
-                Val::Px(1.0), // spread
+                Val::Px(2.0), // spread
                 Val::Px(8.0) // blur radius
             ),
             Card,
@@ -331,83 +331,83 @@ pub fn get_stack_enitity_of_notification(
                     width: Val::Px(509.0),
                     height: Val::Auto,
                     flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
+                    align_items: AlignItems::Start,
                     ..default()
                 },
                 NotificationStack {
                     app_name: app_name.clone(),
                 },
                 children![(
-                Node {
-                    width: Val::Auto,
-                    height: Val::Auto,
-                    min_height: Val::Px(30.0),
-                    padding: UiRect::all(Val::Px(16.0)),
-                    margin: UiRect::bottom(Val::Px(10.0)),
-                    // top: Val::Px(5.0),
-                    flex_direction: FlexDirection::Row,
-                    justify_content: JustifyContent::SpaceBetween,
-                    align_items: AlignItems::Start,
-                    ..default()
-                },
-                BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
-                BorderRadius::all(Val::Px(8.0)),
-                children![
-                    (
-                        Node {
-                            width: Val::Px(220.0),
-                            height: Val::Px(15.0),
-                            margin: UiRect::right(Val::Px(120.0)),
-                            ..default()
-                        },
-                        children![(
-                            Text::new(&app_name),
-                            TextFont { font_size: 12.0, ..default() },
-                            TextColor(Color::WHITE),
-                        )],
-                    ),
-                    (
-                        Button,
-                        Node {
-                            width: Val::Px(78.0),
-                            height: Val::Auto,
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::right(Val::Px(4.0)),
-                            ..default()
-                        },
-                        BorderRadius::all(Val::Px(8.0)),
-                        StackButton,
-                        BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
-                        children![(
-                            Text::new(">"),
-                            TextFont { font_size: 12.0, ..default() },
-                            TextColor(Color::BLACK),
-                        )],
-                    ),
+                    Node {
+                        width: Val::Px(509.0),
+                        height: Val::Auto,
+                        min_height: Val::Px(30.0),
+                        padding: UiRect::all(Val::Px(16.0)),
+                        margin: UiRect::bottom(Val::Px(10.0)),
+                        // top: Val::Px(5.0),
+                        flex_direction: FlexDirection::Row,
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Start,
+                        ..default()
+                    },
+                    BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
+                    BorderRadius::all(Val::Px(8.0)),
+                    children![
+                        (
+                            Node {
+                                width: Val::Px(220.0),
+                                height: Val::Auto,
+                                margin: UiRect::right(Val::Px(250.0)),
+                                ..default()
+                            },
+                            children![(
+                                Text::new(&app_name),
+                                TextFont { font_size: 20.0, ..default() },
+                                TextColor(Color::WHITE),
+                            )],
+                        ),
+                        (
+                            Button,
+                            Node {
+                                width: Val::Px(28.0),
+                                height: Val::Px(26.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::right(Val::Px(8.0)),
+                                ..default()
+                            },
+                            BorderRadius::all(Val::Px(8.0)),
+                            StackButton,
+                            BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
+                            children![(
+                                Text::new(">"),
+                                TextFont { font_size: 18.0, ..default() },
+                                TextColor(Color::BLACK),
+                            )],
+                        ),
 
-                    (
-                        Button,
-                        Node {
-                            width: Val::Px(78.0),
-                            height: Val::Auto,
-                            // top: Val::Px(8.0),
-                            justify_content: JustifyContent::Center, // <-- Center horizontally
-                            align_items: AlignItems::Center,
-                            margin: UiRect::right(Val::Px(2.0)),
-                            ..default()
-                        },
-                        BorderRadius::all(Val::Px(8.0)),
-                        ClearAllButton,
-                        BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
-                        children![(
-                            Text::new("X"),
-                            TextFont { font_size: 12.0, ..default() },
-                            TextColor(Color::BLACK),
-                        )],
-                    )
-                ],
-            )],
+                        (
+                            Button,
+                            Node {
+                                width: Val::Px(28.0),
+                                height: Val::Px(26.0),
+                                // top: Val::Px(8.0),
+                                justify_content: JustifyContent::Center, // <-- Center horizontally
+                                align_items: AlignItems::Center,
+                                // margin: UiRect::right(Val::Px(10.0)),
+                                ..default()
+                            },
+                            BorderRadius::all(Val::Px(8.0)),
+                            ClearAllButton,
+                            BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
+                            children![(
+                                Text::new("X"),
+                                TextFont { font_size: 18.0, ..default() },
+                                TextColor(Color::BLACK),
+                            )],
+                        )
+                    ],
+                )],
             ))
             .id();
 
@@ -496,9 +496,10 @@ fn stack_button_system(
                 if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
                     if stacking_state.is_stacked {
                         // Absolute inside stack container
-                        if i != 1 {
-                            node.position_type = PositionType::Absolute;
-                            node.bottom = Val::Px((i as f32) * 4.0);
+                        node.position_type = PositionType::Absolute;
+                        node.bottom = Val::Px((i as f32) * 4.0);
+                        if i == 0 {
+                            node.position_type = PositionType::Relative;
                         }
                         // node.left = Val::Px((i as f32) * 6.0);
                         // node.width = Val::Px(508.0 - (i as f32) * 12.0);
