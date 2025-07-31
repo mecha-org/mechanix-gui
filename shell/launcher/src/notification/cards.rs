@@ -19,6 +19,8 @@ impl Plugin for NotificationWindowPlugin {
         app.add_systems(Startup, init_count)
             // .add_systems(Update, spawn_multiple_cards)
             .add_systems(Update, process_notifications)
+            .add_systems(Update, stack_button_system)
+            .add_systems(Startup, init_stacking_state)
             .add_systems(Update, clear_all_button_system);
     }
 }
@@ -69,7 +71,8 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                     height: Val::Auto,
                     min_height: Val::Px(30.0),
                     padding: UiRect::all(Val::Px(16.0)),
-                    bottom: Val::Px(15.0),
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    // top: Val::Px(5.0),
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceBetween,
                     align_items: AlignItems::Start,
@@ -82,7 +85,7 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                         Node {
                             width: Val::Px(220.0),
                             height: Val::Px(30.0),
-                            margin: UiRect::right(Val::Px(200.0)),
+                            margin: UiRect::right(Val::Px(120.0)),
                             ..default()
                         },
                         children![(
@@ -91,6 +94,26 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                             TextColor(Color::WHITE),
                         )],
                     ),
+                    (
+                        Button,
+                        Node {
+                            width: Val::Px(78.0),
+                            height: Val::Px(30.0),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::right(Val::Px(4.0)),
+                            ..default()
+                        },
+                        BorderRadius::all(Val::Px(8.0)),
+                        StackButton,
+                        BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
+                        children![(
+                            Text::new(">"),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::BLACK),
+                        )],
+                    ),
+
                     (
                         Button,
                         Node {
@@ -153,14 +176,15 @@ pub fn create_card(
     drawing_surface: Entity,
     icon_handle: Handle<Image>
 ) {
-    let card = commands.entity(drawing_surface).with_children(|parent| {
-        parent.spawn((
+    // Spawn the card node first, get its Entity
+    let card_entity = commands
+        .spawn((
             Node {
                 width: Val::Px(508.0),
                 min_height: Val::Px(81.0),
                 margin: UiRect::all(Val::Px(1.0)),
                 padding: UiRect::all(Val::Px(16.0)),
-                bottom: Val::Percent(0.5),
+                // bottom: Val::Px(1.0),
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
@@ -193,7 +217,7 @@ pub fn create_card(
                             Node {
                                 width: Val::Auto,
                                 height: Val::Auto,
-                                justify_content: JustifyContent::Center, // <-- Center horizontally
+                                justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 margin: UiRect::left(Val::Px(10.0)),
                                 ..default()
@@ -221,8 +245,11 @@ pub fn create_card(
                     )],
                 )
             ],
-        ));
-    });
+        ))
+        .id();
+
+    // Insert the card as the first child of the drawing_surface
+    commands.entity(drawing_surface).insert_children(1, &[card_entity]);
 }
 
 fn process_notifications(
@@ -282,6 +309,67 @@ fn clear_all_button_system(
                     commands.entity(entity).despawn_recursive();
                 }
                 // Example: commands.entity(entity).despawn_recursive();
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn init_stacking_state(mut commands: Commands) {
+    commands.insert_resource(StackingState::default());
+}
+
+#[derive(Component)]
+pub struct StackButton;
+
+#[derive(Resource, Default)]
+pub struct StackingState{
+    pub is_stacked: bool
+}
+
+fn stack_button_system(
+    mut interaction_query: Query<
+        (&Interaction, &StackButton),
+        (Changed<Interaction>, With<Button>)
+    >,
+    mut stacking_state: ResMut<StackingState>,
+    mut card_query: Query<(Entity, &mut Node, &ZIndex), With<Card>>,
+    mut commands: Commands
+) {
+    for (interaction, _) in interaction_query.iter() {
+        match *interaction {
+            Interaction::Pressed => {
+                println!("Stack button pressed!");
+                stacking_state.is_stacked = !stacking_state.is_stacked;
+
+                // Collect cards sorted by Z-index (newest first)
+                let mut cards: Vec<_> = card_query.iter_mut().collect();
+                cards.sort_by(|a, b| b.2.0.cmp(&a.2.0)); // Sort by ZIndex descending
+
+                if stacking_state.is_stacked {
+                    // Apply stacking effect
+                    for (i, (entity, mut node, _)) in cards.into_iter().enumerate() {
+                        let offset = (i as f32) * 4.0; // 8px offset per card
+
+                        // Modify the node to have absolute positioning with offset
+                        node.position_type = PositionType::Absolute;
+                        // node.left = Val::Px(16.0 + offset); // Base position + offset
+                        node.top = Val::Px(80.0 + offset); // Base position + offset
+                        // node.width = Val::Px(508.0 - offset * 2.0); // Slightly smaller width
+
+                        commands.entity(entity).insert(node.clone());
+                    }
+                } else {
+                    // Reset to normal layout
+                    for (entity, mut node, _) in cards.into_iter() {
+                        node.position_type = PositionType::Relative;
+                        node.left = Val::Auto;
+                        node.top = Val::Auto;
+                        node.width = Val::Px(508.0);
+
+                        commands.entity(entity).insert(node.clone());
+                    }
+                }
             }
             _ => {}
         }
