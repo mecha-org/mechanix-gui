@@ -16,8 +16,9 @@ pub enum WifiStatus {
     Unknown,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NMState {
+    #[default]
     Unknown = 0,
     Asleep = 10,
     Disconnected = 20,
@@ -123,7 +124,7 @@ pub struct WirelessNetworkInfo {
     pub security: String,
     /// Hardware (MAC) address of the access point.
     pub hw_address: String,
-    
+
     pub is_active: bool,
     // Additional fields can be added as needed.
 }

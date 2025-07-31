@@ -1,11 +1,14 @@
-use bevy::prelude::*;
-use bevy_styled_widgets::prelude::StyledText;
-use chrono::{Datelike, Timelike};
-
 use crate::{
     styled_card::StyledCard,
     utils::{FontAssets, Icon},
 };
+use bevy::prelude::*;
+use bevy_plugins::bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus};
+use bevy_plugins::network_manager::{ActiveNetworkStrength, WirelessEnabled};
+use bevy_plugins::upower::{BatteryLevel, DeviceState};
+use bevy_plugins::{UPowerBatteryLevel, UPowerBatteryState};
+use bevy_styled_widgets::prelude::StyledText;
+use chrono::{Datelike, Timelike};
 
 #[derive(Component)]
 struct Clock;
@@ -13,18 +16,39 @@ struct Clock;
 #[derive(Resource)]
 struct ClockUpdateTimer(Timer);
 
-pub struct ClockPlugin;
+pub struct StatusBarPlugin;
 
-impl Plugin for ClockPlugin {
+impl Plugin for StatusBarPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ClockUpdateTimer(Timer::from_seconds(
             1.,
             TimerMode::Repeating,
         )));
         app.add_systems(Update, update_clock);
-        app.add_systems(Update, update_wireless);
-        app.add_systems(Update, update_battery);
-        app.add_systems(Update, update_bluetooth);
+        app.add_systems(
+            Update,
+            update_wireless_state.run_if(resource_changed::<WirelessEnabled>),
+        );
+        app.add_systems(
+            Update,
+            update_wireless_network_strength.run_if(resource_changed::<ActiveNetworkStrength>),
+        );
+        app.add_systems(
+            Update,
+            update_bluetooth_on_powered.run_if(resource_changed::<BluetoothEnabledStatus>),
+        );
+        app.add_systems(
+            Update,
+            update_bluetooth_on_connected.run_if(resource_changed::<BluetoothDeviceConnectedStatus>),
+        );
+        app.add_systems(
+            Update,
+            update_power_icon.run_if(resource_changed::<DeviceState>),
+        );
+        app.add_systems(
+            Update,
+            update_power_icon.run_if(resource_changed::<BatteryLevel>),
+        );
     }
 }
 
@@ -43,27 +67,88 @@ fn update_clock(
 #[derive(Component)]
 struct Wireless;
 //Query resource and update in this function
-fn update_wireless(mut query: Query<&mut StyledText, With<Wireless>>) {
+fn update_wireless_state(
+    mut query: Query<&mut StyledText, With<Wireless>>,
+    wifi_state: Res<WirelessEnabled>,
+) {
     for mut styled_text in &mut query {
-        styled_text.content = Icon::WirelessHigh.into();
+        info!("WirelessEnabled is updated :{:?}", wifi_state);
+        if wifi_state.0 {
+            styled_text.content = Icon::WirelessNone.into();
+        } else {
+            styled_text.content = Icon::WirelessOff.into();
+        }
     }
 }
 
+fn update_wireless_network_strength(
+    mut query: Query<&mut StyledText, With<Wireless>>,
+    active_network_strength: Res<ActiveNetworkStrength>,
+) {
+    for mut styled_text in &mut query {
+        styled_text.content = match active_network_strength.0 {
+            0..=20 => Icon::WirelessLow.into(),
+            21..=50 => Icon::WirelessLow.into(),
+            51..=75 => Icon::WirelessMedium.into(),
+            76..=100 => Icon::WirelessHigh.into(),
+            _ => unreachable!(),
+        }
+    }
+}
 #[derive(Component)]
 struct Bluetooth;
 
-fn update_bluetooth(mut query: Query<&mut StyledText, With<Bluetooth>>) {
+fn update_bluetooth_on_powered(
+    mut query: Query<&mut StyledText, With<Bluetooth>>,
+    bluetooth_state: Res<BluetoothEnabledStatus>,
+) {
     for mut styled_text in &mut query {
-        styled_text.content = Icon::BluetoothConnected.into();
+        if bluetooth_state.0 {
+            styled_text.content = Icon::BluetoothNone.into();
+        } else {
+            styled_text.content = Icon::BluetoothOff.into();
+        }
+    }
+}
+fn update_bluetooth_on_connected(
+    mut query: Query<&mut StyledText, With<Bluetooth>>,
+    connected_status: Res<BluetoothDeviceConnectedStatus>,
+) {
+    for mut styled_text in &mut query {
+        if connected_status.0 {
+            styled_text.content = Icon::BluetoothConnected.into();
+        } else {
+            styled_text.content = Icon::BluetoothNone.into();
+        }
     }
 }
 
 #[derive(Component)]
 struct Battery;
 
-fn update_battery(mut query: Query<&mut StyledText, With<Battery>>) {
+fn update_power_icon(mut query: Query<&mut StyledText, With<Battery>>, state: Res<DeviceState>, level: Res<BatteryLevel>) {
     for mut styled_text in &mut query {
-        styled_text.content = Icon::BatteryFull.into();
+        if state.0 == UPowerBatteryState::Charging {
+            match level.0 {
+                UPowerBatteryLevel::Unknown => {
+                    styled_text.content = Icon::BatteryWarning.into();
+                }
+                UPowerBatteryLevel::None => {}
+                UPowerBatteryLevel::Low => {
+                    styled_text.content = Icon::BatteryLowCharging.into();
+                }
+                UPowerBatteryLevel::Critical => {}
+                UPowerBatteryLevel::Normal => {
+                    styled_text.content = Icon::BatteryMediumCharging.into();
+                }
+                UPowerBatteryLevel::High => {
+                    styled_text.content = Icon::BatteryHighCharging.into();
+                }
+                UPowerBatteryLevel::Full => {
+                    styled_text.content = Icon::BatteryFullCharging.into();
+                }
+            }
+        }
     }
 }
 
@@ -79,7 +164,11 @@ fn get_current_datetime() -> String {
     )
 }
 
-pub fn status_bar(font_assets: &FontAssets) -> impl Bundle {
+pub fn status_bar(
+    font_assets: &FontAssets,
+    wireless_icon: Icon,
+    bluetooth_icon: Icon,
+) -> impl Bundle {
     let icon_size = 24.;
 
     (
@@ -119,7 +208,7 @@ pub fn status_bar(font_assets: &FontAssets) -> impl Bundle {
                 children![
                     (
                         StyledText::builder()
-                            .content(Icon::BluetoothWarning)
+                            .content(bluetooth_icon)
                             .font_size(icon_size)
                             .font(font_assets.font_icons.clone())
                             .build(),
@@ -127,7 +216,7 @@ pub fn status_bar(font_assets: &FontAssets) -> impl Bundle {
                     ),
                     (
                         StyledText::builder()
-                            .content(Icon::WirelessWarning)
+                            .content(wireless_icon)
                             .font_size(icon_size)
                             .font(font_assets.font_icons.clone())
                             .build(),
@@ -135,7 +224,7 @@ pub fn status_bar(font_assets: &FontAssets) -> impl Bundle {
                     ),
                     (
                         StyledText::builder()
-                            .content(Icon::BatteryWarning)
+                            .content(Icon::BatteryEmpty)
                             .font_size(icon_size)
                             .font(font_assets.font_icons.clone())
                             .build(),

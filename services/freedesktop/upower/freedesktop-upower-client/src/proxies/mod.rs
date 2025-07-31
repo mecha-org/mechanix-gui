@@ -24,11 +24,12 @@
 //! for interacting with Upower over D-Bus.
 //!
 //! See [`UpowerInterface`] for available methods.
-use crate::interfaces::UpowerInterface;
-use anyhow::{Result, bail};
+use crate::interfaces::UPowerInterface;
+use anyhow::Result;
 use async_trait::async_trait;
 use log::error;
-use zbus::proxy;
+use zbus::proxy::PropertyStream;
+use zbus::{proxy, Connection};
 
 /// Represents errors that can occur when interacting with D-Bus proxies.
 #[derive(Debug, Clone, thiserror::Error)]
@@ -66,7 +67,7 @@ pub trait Device {
 }
 
 #[async_trait]
-impl<'a> UpowerInterface for DeviceProxy<'a> {
+impl<'a> UPowerInterface for DeviceProxy<'a> {
     /// Asynchronously retrieves the battery level of the device.
     /// The level of the battery for devices which do not report a percentage but rather
     /// a coarse battery level. If the value is None, then the device does not support
@@ -164,7 +165,33 @@ impl<'a> UpowerInterface for DeviceProxy<'a> {
     /// # Returns
     /// * `Ok(String)` - The event string (currently always empty).
     /// * `Err(ProxyError::Error)` - If the event string could not be retrieved.
-    async fn get_device_state_change_event(&self) -> Result<String, ProxyError> {
-        Ok("".to_string())
+    async fn stream_device_state(&self) -> Result<PropertyStream<u32>, ProxyError> {
+        let cn = &self.0.connection();
+        let device_proxy = get_device_proxy(cn).await?;
+        let stream = device_proxy.receive_state_changed().await;
+        Ok(stream)
     }
+    async fn stream_device_percentage(&self) -> Result<PropertyStream<f64>, ProxyError> {
+        let cn = &self.0.connection();
+        let device_proxy = get_device_proxy(cn).await?;
+        let stream = device_proxy.receive_percentage_changed().await;
+        Ok(stream)
+    }
+    async fn stream_battery_level(&self) -> Result<PropertyStream<u32>, ProxyError> {
+        let cn = &self.0.connection();
+        let device_proxy = get_device_proxy(cn).await?;
+        let stream = device_proxy.receive_battery_level_changed().await;
+        Ok(stream)
+    }
+}
+
+async fn get_device_proxy<'a>(cn: &'a Connection) -> Result<DeviceProxy<'a>, ProxyError> {
+    let proxy = match DeviceProxy::new(&cn).await {
+        Ok(n) => n,
+        Err(e) => {
+            error!("failed to create Device proxy: {}", e);
+            return Err(ProxyError::DbusCallFailed(format!("{}", e)));
+        }
+    };
+    Ok(proxy)
 }

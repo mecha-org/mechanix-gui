@@ -1,10 +1,10 @@
 //! Basic example: Get Battery Percentage using freedesktop-upower-client
 
-use freedesktop_upower_client::service::UpowerService;
+use freedesktop_upower_client::service::UPowerService;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let upower_service = UpowerService::new().await?;
+    let upower_service = UPowerService::new().await?;
     // Create a channel to receive the battery percentage result
     let battery_percentage = match upower_service.get_percentage().await {
         Ok(res) => res,
