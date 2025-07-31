@@ -183,7 +183,7 @@ pub fn create_card(
                 width: Val::Px(508.0),
                 min_height: Val::Px(81.0),
                 margin: UiRect::all(Val::Px(1.0)),
-                padding: UiRect::all(Val::Px(16.0)),
+                padding: UiRect::all(Val::Px(10.0)),
                 // bottom: Val::Px(1.0),
                 flex_direction: FlexDirection::Column,
                 ..default()
@@ -192,6 +192,13 @@ pub fn create_card(
             BorderRadius::all(Val::Px(8.0)),
             BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
             ZIndex(id as i32),
+            BoxShadow::new(
+                Color::BLACK.with_alpha(0.5), // shadow color
+                Val::Px(4.0), // x offset
+                Val::Px(-4.0), // y offset (negative for “down”)
+                Val::Px(1.0), // spread
+                Val::Px(8.0) // blur radius
+            ),
             Card,
             children![
                 (
@@ -323,8 +330,8 @@ pub fn init_stacking_state(mut commands: Commands) {
 pub struct StackButton;
 
 #[derive(Resource, Default)]
-pub struct StackingState{
-    pub is_stacked: bool
+pub struct StackingState {
+    pub is_stacked: bool,
 }
 
 fn stack_button_system(
@@ -349,13 +356,13 @@ fn stack_button_system(
                 if stacking_state.is_stacked {
                     // Apply stacking effect
                     for (i, (entity, mut node, _)) in cards.into_iter().enumerate() {
-                        let offset = (i as f32) * 4.0; // 8px offset per card
+                        let offset = (i as f32) * 6.0; // 8px offset per card
 
                         // Modify the node to have absolute positioning with offset
                         node.position_type = PositionType::Absolute;
                         // node.left = Val::Px(16.0 + offset); // Base position + offset
                         node.top = Val::Px(80.0 + offset); // Base position + offset
-                        // node.width = Val::Px(508.0 - offset * 2.0); // Slightly smaller width
+                        node.width = Val::Px(508.0 - offset * 2.0); // Slightly smaller width
 
                         commands.entity(entity).insert(node.clone());
                     }
@@ -375,3 +382,4 @@ fn stack_button_system(
         }
     }
 }
+
