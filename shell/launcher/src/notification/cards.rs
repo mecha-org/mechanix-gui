@@ -20,6 +20,7 @@ impl Plugin for NotificationWindowPlugin {
             // .add_systems(Update, spawn_multiple_cards)
             .add_systems(Update, process_notifications)
             .add_systems(Update, stack_button_system)
+            .add_systems(Update, clear_button_system)
             .add_systems(Startup, init_stacking_state)
             .add_systems(Startup, notification_stacks_init)
             .add_systems(Update, clear_all_button_system);
@@ -28,6 +29,11 @@ impl Plugin for NotificationWindowPlugin {
 
 #[derive(Component)]
 pub struct ClearAllButton;
+
+#[derive(Component)]
+pub struct ClearButton {
+    pub app_name: String,
+}
 
 pub fn spawn_notification_window(commands: &mut Commands) {
     let camera = spawn_camera(
@@ -394,7 +400,7 @@ pub fn get_stack_enitity_of_notification(
                                 ..default()
                             },
                             BorderRadius::all(Val::Px(8.0)),
-                            ClearAllButton,
+                            ClearButton { app_name: app_name.clone() },
                             BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
                             children![(
                                 Text::new("X"),
@@ -425,6 +431,26 @@ pub fn save_notification_image_to_assets(id: &u32, notification: &Notification) 
     }
     let notification_image_path = format!("icons/{}.png", id.clone());
     notification_image_path
+}
+
+pub fn clear_button_system(
+    mut interaction_query: Query<
+        (&Interaction, &ClearButton),
+        (Changed<Interaction>, With<Button>)
+    >,
+    mut commands: Commands,
+    mut stacks: ResMut<NotificationStacks>
+) {
+    for (interaction, clear_btn) in interaction_query.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            let app_name = &clear_btn.app_name;
+            if let Some(&stack) = stacks.0.get(app_name) {
+                commands.entity(stack).despawn();
+                stacks.0.remove(app_name);
+            }
+        }
+    }
+    
 }
 
 fn clear_all_button_system(
