@@ -52,10 +52,9 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                 height: Val::Percent(100.0),
                 display: Display::Flex,
                 flex_direction: FlexDirection::Column,
-                align_items: AlignItems::Center, // <-- Stretch children
                 justify_content: JustifyContent::FlexStart, // <-- Start at top
                 padding: UiRect::all(Val::Px(16.0)),
-                row_gap: Val::Px(16.0),
+                column_gap: Val::Px(16.0),
                 overflow: Overflow::scroll_y(), // <-- Enable vertical scrolling
                 ..Default::default()
             },
@@ -70,9 +69,8 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                 Node {
                     width: Val::Auto,
                     height: Val::Auto,
-                    min_height: Val::Px(30.0),
                     padding: UiRect::all(Val::Px(16.0)),
-                    margin: UiRect::bottom(Val::Px(10.0)),
+                    margin: UiRect::bottom(Val::Px(2.0)),
                     // top: Val::Px(5.0),
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceBetween,
@@ -182,7 +180,7 @@ pub fn create_card(
         .spawn((
             Node {
                 width: Val::Px(508.0),
-                min_height: Val::Px(81.0),
+                height: Val::Px(81.0),
                 margin: UiRect::all(Val::Px(1.0)),
                 padding: UiRect::all(Val::Px(10.0)),
                 // bottom: Val::Px(1.0),
@@ -206,7 +204,6 @@ pub fn create_card(
                     Node {
                         width: Val::Auto,
                         height: Val::Px(24.0),
-                        min_height: Val::Px(24.0),
                         margin: UiRect::right(Val::Px(12.0)),
                         flex_direction: FlexDirection::Row,
                         ..default()
@@ -341,9 +338,8 @@ pub fn get_stack_enitity_of_notification(
                     Node {
                         width: Val::Px(509.0),
                         height: Val::Auto,
-                        min_height: Val::Px(30.0),
                         padding: UiRect::all(Val::Px(16.0)),
-                        margin: UiRect::bottom(Val::Px(10.0)),
+                        margin: UiRect::bottom(Val::Px(5.0)),
                         // top: Val::Px(5.0),
                         flex_direction: FlexDirection::Row,
                         justify_content: JustifyContent::SpaceBetween,
