@@ -1,5 +1,6 @@
 [package]
 name = "logind"
+description = "D-Bus interface proxy for: `org.freedesktop.login1`"
 documentation = "https://docs.mecha.so"
 version = "1.0.0"
 edition = "2021"
