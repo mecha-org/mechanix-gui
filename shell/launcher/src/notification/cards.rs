@@ -21,6 +21,7 @@ impl Plugin for NotificationWindowPlugin {
             .add_systems(Update, process_notifications)
             .add_systems(Update, stack_button_system)
             .add_systems(Startup, init_stacking_state)
+            .add_systems(Startup, notification_stacks_init)
             .add_systems(Update, clear_all_button_system);
     }
 }
@@ -256,13 +257,14 @@ pub fn create_card(
         .id();
 
     // Insert the card as the first child of the drawing_surface
-    commands.entity(drawing_surface).insert_children(1, &[card_entity]);
+    commands.entity(drawing_surface).insert_children(0, &[card_entity]);
 }
 
 fn process_notifications(
     mut events: EventReader<NotificationEvent>,
     mut commands: Commands,
     drawing_surface: Option<Res<NotificationSurfaceEntity>>,
+    mut stacks: ResMut<NotificationStacks>,
     asset_server: Res<AssetServer>
 ) {
     for event in events.read() {
@@ -276,8 +278,10 @@ fn process_notifications(
                 );
                 let image_path = save_notification_image_to_assets(&id, &notification);
                 let icon_handle = asset_server.load(image_path);
+                // let drawing_surface = get_stack_enitity_of_notification()
                 if let Some(ref surface) = drawing_surface {
-                    create_card(notification.clone(), *id, &mut commands, surface.0, icon_handle);
+                    let app_stack = get_stack_enitity_of_notification(surface, notification.clone(), &mut stacks, &mut commands);
+                    create_card(notification.clone(), *id, &mut commands, app_stack, icon_handle);
                 }
             }
             NotificationEvent::Closed(id) => {
@@ -285,6 +289,59 @@ fn process_notifications(
                 // remove_notification_card(&mut commands, id, &mut notification_storage);
             }
         }
+    }
+}
+
+#[derive(Component)]
+pub struct NotificationStack{
+    app_name: String,
+}
+
+use std::collections::HashMap;
+#[derive(Resource,Default)]
+pub struct NotificationStacks(pub HashMap<String,Entity>);
+
+pub fn notification_stacks_init(mut commands: Commands){
+    commands.insert_resource(NotificationStacks(HashMap::new()));
+}
+
+pub fn get_stack_enitity_of_notification(
+    drawing_surface: &Res<NotificationSurfaceEntity>,
+    notification: Notification,
+    stacks: &mut NotificationStacks,
+    commands: &mut Commands,
+) -> Entity {
+    let app_name = notification.app_name.clone();
+
+    // Check if a stack already exists for this app_name
+    if let Some(entity) = stacks.0.get(&app_name) {
+        *entity
+    } else {
+        // Get the parent entity directly
+        let parent = drawing_surface.0;
+
+        let stack_entity = commands
+            .spawn((
+                Node {
+                    width: Val::Px(509.0),
+                    height: Val::Auto,
+                    flex_direction: FlexDirection::Column, 
+                    align_items: AlignItems::Center,
+                    ..default()
+                },
+                NotificationStack {
+                    app_name: app_name.clone(),
+                },
+            ))
+            .id();
+
+        // Insert the new stack as the first child (or change index as needed)
+        commands.entity(parent).insert_children(1, &[stack_entity]);
+
+        // Save in resource
+        stacks.0.insert(app_name, stack_entity);
+
+        stack_entity
     }
 }
 
@@ -335,51 +392,49 @@ pub struct StackingState {
 }
 
 fn stack_button_system(
-    mut interaction_query: Query<
-        (&Interaction, &StackButton),
-        (Changed<Interaction>, With<Button>)
-    >,
+    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<StackButton>)>,
     mut stacking_state: ResMut<StackingState>,
-    mut card_query: Query<(Entity, &mut Node, &ZIndex), With<Card>>,
-    mut commands: Commands
+    stack_query: Query<(Entity, &Children), With<NotificationStack>>,
+    mut node_query: Query<(&ZIndex, &mut Node), With<Card>>,
+    mut commands: Commands,
 ) {
-    for (interaction, _) in interaction_query.iter() {
-        match *interaction {
-            Interaction::Pressed => {
-                println!("Stack button pressed!");
-                stacking_state.is_stacked = !stacking_state.is_stacked;
+    // Toggle on any button press
+    if interaction_query.iter().any(|i| *i == Interaction::Pressed) {
+        stacking_state.is_stacked = !stacking_state.is_stacked;
 
-                // Collect cards sorted by Z-index (newest first)
-                let mut cards: Vec<_> = card_query.iter_mut().collect();
-                cards.sort_by(|a, b| b.2.0.cmp(&a.2.0)); // Sort by ZIndex descending
+        for (stack_entity, children) in stack_query.iter() {
+            // Collect cards in this stack, sorted by ZIndex descending
+            let mut cards: Vec<(Entity, i32)> = children.iter()
+                .filter_map(|child| {
+                    node_query.get(child)
+                        .ok()
+                        .map(|(zidx, _)| (child, zidx.0))
+                })
+                .collect();
+            cards.sort_by(|a, b| b.1.cmp(&a.1));
 
-                if stacking_state.is_stacked {
-                    // Apply stacking effect
-                    for (i, (entity, mut node, _)) in cards.into_iter().enumerate() {
-                        let offset = (i as f32) * 6.0; // 8px offset per card
-
-                        // Modify the node to have absolute positioning with offset
+            // Apply per-stack offsets
+            for (i, (card_ent, _)) in cards.iter().enumerate() {
+                if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
+                    if stacking_state.is_stacked {
+                        // Absolute inside stack container
                         node.position_type = PositionType::Absolute;
-                        // node.left = Val::Px(16.0 + offset); // Base position + offset
-                        node.top = Val::Px(80.0 + offset); // Base position + offset
-                        node.width = Val::Px(508.0 - offset * 2.0); // Slightly smaller width
-
-                        commands.entity(entity).insert(node.clone());
-                    }
-                } else {
-                    // Reset to normal layout
-                    for (entity, mut node, _) in cards.into_iter() {
+                        node.top = Val::Px((i as f32) * 6.0);
+                        node.left = Val::Px((i as f32) * 6.0);
+                        node.width = Val::Px(508.0 - (i as f32) * 12.0);
+                    } else {
+                        // Reset to normal layout
                         node.position_type = PositionType::Relative;
-                        node.left = Val::Auto;
                         node.top = Val::Auto;
+                        node.left = Val::Auto;
                         node.width = Val::Px(508.0);
-
-                        commands.entity(entity).insert(node.clone());
                     }
+                    // Re-insert updated Node
+                    commands.entity(*card_ent).insert(node.clone());
                 }
             }
-            _ => {}
         }
     }
 }
+
 
