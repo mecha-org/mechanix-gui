@@ -257,7 +257,7 @@ pub fn create_card(
         .id();
 
     // Insert the card as the first child of the drawing_surface
-    commands.entity(drawing_surface).insert_children(0, &[card_entity]);
+    commands.entity(drawing_surface).insert_children(1, &[card_entity]);
 }
 
 fn process_notifications(
@@ -280,7 +280,12 @@ fn process_notifications(
                 let icon_handle = asset_server.load(image_path);
                 // let drawing_surface = get_stack_enitity_of_notification()
                 if let Some(ref surface) = drawing_surface {
-                    let app_stack = get_stack_enitity_of_notification(surface, notification.clone(), &mut stacks, &mut commands);
+                    let app_stack = get_stack_enitity_of_notification(
+                        surface,
+                        notification.clone(),
+                        &mut stacks,
+                        &mut commands
+                    );
                     create_card(notification.clone(), *id, &mut commands, app_stack, icon_handle);
                 }
             }
@@ -293,15 +298,15 @@ fn process_notifications(
 }
 
 #[derive(Component)]
-pub struct NotificationStack{
+pub struct NotificationStack {
     app_name: String,
 }
 
 use std::collections::HashMap;
-#[derive(Resource,Default)]
-pub struct NotificationStacks(pub HashMap<String,Entity>);
+#[derive(Resource, Default)]
+pub struct NotificationStacks(pub HashMap<String, Entity>);
 
-pub fn notification_stacks_init(mut commands: Commands){
+pub fn notification_stacks_init(mut commands: Commands) {
     commands.insert_resource(NotificationStacks(HashMap::new()));
 }
 
@@ -309,7 +314,7 @@ pub fn get_stack_enitity_of_notification(
     drawing_surface: &Res<NotificationSurfaceEntity>,
     notification: Notification,
     stacks: &mut NotificationStacks,
-    commands: &mut Commands,
+    commands: &mut Commands
 ) -> Entity {
     let app_name = notification.app_name.clone();
 
@@ -325,13 +330,84 @@ pub fn get_stack_enitity_of_notification(
                 Node {
                     width: Val::Px(509.0),
                     height: Val::Auto,
-                    flex_direction: FlexDirection::Column, 
+                    flex_direction: FlexDirection::Column,
                     align_items: AlignItems::Center,
                     ..default()
                 },
                 NotificationStack {
                     app_name: app_name.clone(),
                 },
+                children![(
+                Node {
+                    width: Val::Auto,
+                    height: Val::Auto,
+                    min_height: Val::Px(30.0),
+                    padding: UiRect::all(Val::Px(16.0)),
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    // top: Val::Px(5.0),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceBetween,
+                    align_items: AlignItems::Start,
+                    ..default()
+                },
+                BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
+                BorderRadius::all(Val::Px(8.0)),
+                children![
+                    (
+                        Node {
+                            width: Val::Px(220.0),
+                            height: Val::Px(15.0),
+                            margin: UiRect::right(Val::Px(120.0)),
+                            ..default()
+                        },
+                        children![(
+                            Text::new(&app_name),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::WHITE),
+                        )],
+                    ),
+                    (
+                        Button,
+                        Node {
+                            width: Val::Px(78.0),
+                            height: Val::Auto,
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            margin: UiRect::right(Val::Px(4.0)),
+                            ..default()
+                        },
+                        BorderRadius::all(Val::Px(8.0)),
+                        StackButton,
+                        BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
+                        children![(
+                            Text::new(">"),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::BLACK),
+                        )],
+                    ),
+
+                    (
+                        Button,
+                        Node {
+                            width: Val::Px(78.0),
+                            height: Val::Auto,
+                            // top: Val::Px(8.0),
+                            justify_content: JustifyContent::Center, // <-- Center horizontally
+                            align_items: AlignItems::Center,
+                            margin: UiRect::right(Val::Px(2.0)),
+                            ..default()
+                        },
+                        BorderRadius::all(Val::Px(8.0)),
+                        ClearAllButton,
+                        BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
+                        children![(
+                            Text::new("X"),
+                            TextFont { font_size: 12.0, ..default() },
+                            TextColor(Color::BLACK),
+                        )],
+                    )
+                ],
+            )],
             ))
             .id();
 
@@ -396,7 +472,7 @@ fn stack_button_system(
     mut stacking_state: ResMut<StackingState>,
     stack_query: Query<(Entity, &Children), With<NotificationStack>>,
     mut node_query: Query<(&ZIndex, &mut Node), With<Card>>,
-    mut commands: Commands,
+    mut commands: Commands
 ) {
     // Toggle on any button press
     if interaction_query.iter().any(|i| *i == Interaction::Pressed) {
@@ -404,9 +480,11 @@ fn stack_button_system(
 
         for (stack_entity, children) in stack_query.iter() {
             // Collect cards in this stack, sorted by ZIndex descending
-            let mut cards: Vec<(Entity, i32)> = children.iter()
+            let mut cards: Vec<(Entity, i32)> = children
+                .iter()
                 .filter_map(|child| {
-                    node_query.get(child)
+                    node_query
+                        .get(child)
                         .ok()
                         .map(|(zidx, _)| (child, zidx.0))
                 })
@@ -418,8 +496,10 @@ fn stack_button_system(
                 if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
                     if stacking_state.is_stacked {
                         // Absolute inside stack container
-                        node.position_type = PositionType::Absolute;
-                        node.top = Val::Px((i as f32) * 2.0);
+                        if i != 1 {
+                            node.position_type = PositionType::Absolute;
+                            node.bottom = Val::Px((i as f32) * 4.0);
+                        }
                         // node.left = Val::Px((i as f32) * 6.0);
                         // node.width = Val::Px(508.0 - (i as f32) * 12.0);
                     } else {
@@ -436,5 +516,3 @@ fn stack_button_system(
         }
     }
 }
-
-
