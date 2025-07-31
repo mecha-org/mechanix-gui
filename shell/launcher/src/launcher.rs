@@ -1,33 +1,7 @@
-use crate::utils::Icon;
+use bevy::app::TaskPoolThreadAssignmentPolicy;
 use bevy::{
     asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
 };
-use bevy_asset_loader::prelude::*;
-use bevy_smithay::{
-    SmithayPlugin, SmithayWindowType,
-    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor},
-};
-use bevy_styled_widgets::{
-    StyledWidgetsPlugin,
-    prelude::{
-        ButtonVariant, StyledButton, StyledButtonPlugin, StyledText, StyledTextPlugin, ThemeManager,
-    },
-};
-
-use crate::{
-    // StyledWidgetsPlugin,
-    components::{status_bar, AssetsLoadingState, StatusBarPlugin},
-    styled_card::StyledCardPlugin,
-    components::{
-        AssetsLoadingState, ClockPlugin, NavigationBarPlugin, app_list, apps_grid, navigation_bar,
-        status_bar, update_apps_categories, update_apps_list,
-    },
-    desktop_apps::{DesktopApps, DesktopAppsPlugin},
-    styled_card::{StyledCard, StyledCardPlugin},
-    utils::FontAssets,
-};
-use bevy::app::TaskPoolThreadAssignmentPolicy;
-use bevy::{prelude::*, winit::WinitPlugin};
 use bevy_asset_loader::prelude::*;
 use bevy_plugins::bluetooth::BluetoothEnabledStatus;
 use bevy_plugins::network_manager::WirelessEnabled;
@@ -37,8 +11,23 @@ use bevy_smithay::{
     prelude::{layer_shell::LayerShellSettings, subsurface::Anchor}, SmithayPlugin,
     SmithayWindowType,
 };
-use bevy_styled_widgets::prelude::{StyledTextPlugin, ThemeManager};
+use bevy_styled_widgets::{
+    prelude::{
+        ButtonVariant, StyledButton, StyledButtonPlugin, StyledText, StyledTextPlugin, ThemeManager,
+    },
+    StyledWidgetsPlugin,
+};
 
+use crate::utils::Icon;
+use crate::{
+    components::{
+        app_list, apps_grid, navigation_bar, status_bar, update_apps_categories,
+        update_apps_list, AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin,
+    },
+    desktop_apps::{DesktopApps, DesktopAppsPlugin},
+    styled_card::{StyledCard, StyledCardPlugin},
+    utils::FontAssets,
+};
 
 #[derive(Debug, Component)]
 pub struct HomescreenWindow;
@@ -81,7 +70,7 @@ pub fn run_launcher() {
                             on_thread_destroy: None,
                         },
                         ..Default::default()
-                    }
+                    },
                 })
                 .set(WindowPlugin {
                     // Configure the primary window for the status bar
@@ -119,20 +108,9 @@ pub fn run_launcher() {
                 .with_dynamic_assets_file::<StandardDynamicAssetCollection>("examples/settings.ron")
                 .load_collection::<FontAssets>(),
         )
-        .add_systems(OnEnter(AssetsLoadingState::Loaded), setup)
-        .add_plugins(StatusBarPlugin)
-        .add_plugins(StyledCardPlugin)
-        .add_plugins(NetworkManagerPlugin)
-        .add_plugins(BluetoothPlugin)
-        .add_plugins(UPowerPlugin)
-        .add_observer(bar_on_click)
-        .add_observer(bar_on_drag_start)
-        .add_observer(bar_on_drag)
-        .add_observer(bar_on_drag_end)
-        .add_systems(Update, animate_bar_drag_end)
         // Add core application plugins
         .add_plugins((
-            ClockPlugin,
+            StatusBarPlugin,
             NavigationBarPlugin,
             StyledCardPlugin,
             StyledWidgetsPlugin,
@@ -141,6 +119,9 @@ pub fn run_launcher() {
             // StyledTextPlugin,
             // Custom plugin for organizing UI setup
         ))
+        .add_plugins(NetworkManagerPlugin)
+        .add_plugins(BluetoothPlugin)
+        .add_plugins(UPowerPlugin)
         // System to exit on Escape key press
         .add_systems(Update, exit_on_esc)
         .run();
@@ -187,22 +168,18 @@ fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
     }
 }
 
-fn setup(mut commands: Commands, theme_manager: Res<ThemeManager>, font_assets: Res<FontAssets>, wireless_enabled: Res<WirelessEnabled>, bluetooth_enabled: Res<BluetoothEnabledStatus>) {
-    //Spawn status bar
-    let wireless_default_icon = if wireless_enabled.0 {
-        Icon::WirelessNone
-    } else {
-        Icon::WirelessOff
-    }.into();
-    let bluetooth_default_icon: Icon = if bluetooth_enabled.0 {
-        Icon::BluetoothNone
-    } else {
-        Icon::BluetoothOff
-    }.into();
-    //Spawn status bar
-    //Spawn status bar camera
-fn setup_launcher_ui(mut commands: Commands, font_assets: Res<FontAssets>) {
-    spawn_status_bar_ui(&mut commands, &font_assets);
+fn setup_launcher_ui(
+    mut commands: Commands,
+    font_assets: Res<FontAssets>,
+    wireless_enabled: Res<WirelessEnabled>,
+    bluetooth_enabled: Res<BluetoothEnabledStatus>,
+) {
+    spawn_status_bar_ui(
+        &mut commands,
+        &font_assets,
+        &wireless_enabled,
+        &bluetooth_enabled,
+    );
 
     spawn_homescreen_window(&mut commands);
 
@@ -211,9 +188,26 @@ fn setup_launcher_ui(mut commands: Commands, font_assets: Res<FontAssets>) {
     spawn_navigation_bar_window(&mut commands);
 }
 
-fn spawn_status_bar_ui(commands: &mut Commands, font_assets: &Res<FontAssets>) {
+fn spawn_status_bar_ui(
+    commands: &mut Commands,
+    font_assets: &Res<FontAssets>,
+    wireless_enabled: &Res<WirelessEnabled>,
+    bluetooth_enabled: &Res<BluetoothEnabledStatus>,
+) {
+    //Spawn status bar
+    let wireless_default_icon = if wireless_enabled.0 {
+        Icon::WirelessNone
+    } else {
+        Icon::WirelessOff
+    }
+    .into();
+    let bluetooth_default_icon: Icon = if bluetooth_enabled.0 {
+        Icon::BluetoothNone
+    } else {
+        Icon::BluetoothOff
+    }
+    .into();
     commands.spawn(Camera2d);
-    //Spawn status bar node
     commands.spawn((
         Node {
             width: Val::Percent(100.),
@@ -222,8 +216,11 @@ fn spawn_status_bar_ui(commands: &mut Commands, font_assets: &Res<FontAssets>) {
             flex_direction: FlexDirection::Column,
             ..Default::default()
         },
-        BackgroundColor(Color::WHITE),
-        children![status_bar(&font_assets, wireless_default_icon, bluetooth_default_icon),],
+        children![status_bar(
+            &font_assets,
+            wireless_default_icon,
+            bluetooth_default_icon
+        )],
     ));
 }
 
