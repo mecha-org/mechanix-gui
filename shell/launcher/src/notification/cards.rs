@@ -192,7 +192,7 @@ pub fn create_card(
             BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
             BorderRadius::all(Val::Px(8.0)),
             BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
-            ZIndex(id as i32),
+            // ZIndex(id as i32),
             BoxShadow::new(
                 Color::BLACK.with_alpha(0.5), // shadow color
                 Val::Px(4.0), // x offset
@@ -419,9 +419,9 @@ fn stack_button_system(
                     if stacking_state.is_stacked {
                         // Absolute inside stack container
                         node.position_type = PositionType::Absolute;
-                        node.top = Val::Px((i as f32) * 6.0);
-                        node.left = Val::Px((i as f32) * 6.0);
-                        node.width = Val::Px(508.0 - (i as f32) * 12.0);
+                        node.top = Val::Px((i as f32) * 2.0);
+                        // node.left = Val::Px((i as f32) * 6.0);
+                        // node.width = Val::Px(508.0 - (i as f32) * 12.0);
                     } else {
                         // Reset to normal layout
                         node.position_type = PositionType::Relative;
