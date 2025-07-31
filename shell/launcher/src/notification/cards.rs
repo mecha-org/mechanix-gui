@@ -121,7 +121,7 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                             // top: Val::Px(8.0),
                             justify_content: JustifyContent::Center, // <-- Center horizontally
                             align_items: AlignItems::Center,
-                            margin: UiRect::right(Val::Px(2.0)),
+                            margin: UiRect::right(Val::Px(5.0)),
                             ..default()
                         },
                         BorderRadius::all(Val::Px(8.0)),
@@ -183,7 +183,7 @@ pub fn create_card(
                 height: Val::Px(81.0),
                 margin: UiRect::all(Val::Px(1.0)),
                 padding: UiRect::all(Val::Px(10.0)),
-                // bottom: Val::Px(1.0),
+                bottom: Val::Px(2.0),
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
@@ -503,6 +503,7 @@ fn stack_button_system(
                         // Reset to normal layout
                         node.position_type = PositionType::Relative;
                         node.top = Val::Auto;
+                        node.bottom = Val::Px(2.0);
                         node.left = Val::Auto;
                         node.width = Val::Px(508.0);
                     }
