@@ -1,7 +1,12 @@
+use bevy::app::TaskPoolThreadAssignmentPolicy;
 use bevy::{
     asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
 };
 use bevy_asset_loader::prelude::*;
+use bevy_plugins::bluetooth::BluetoothEnabledStatus;
+use bevy_plugins::network_manager::WirelessEnabled;
+use bevy_plugins::upower::UPowerPlugin;
+use bevy_plugins::{BluetoothPlugin, NetworkManagerPlugin};
 use bevy_smithay::{
     SmithayPlugin, SmithayWindowType,
     prelude::{layer_shell::LayerShellSettings, subsurface::Anchor},
@@ -13,11 +18,14 @@ use bevy_styled_widgets::{
     },
 };
 
+use crate::components::{
+    FrequentlyUsedApps, RecentSearches, SettingsDrawerPlugin, settings_drawer, universal_search,
+};
+use crate::utils::Icon;
 use crate::{
     components::{
-        AssetsLoadingState, ClockPlugin, FrequentlyUsedApps, NavigationBarPlugin, RecentSearches,
-        SettingsDrawerPlugin, apps_grid, navigation_bar, settings_drawer, status_bar,
-        universal_search, update_apps_categories, update_apps_list, wireless_list_popup,
+        AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin, app_list, apps_grid,
+        navigation_bar, status_bar, update_apps_categories, update_apps_list,
     },
     desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
     // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
@@ -60,6 +68,18 @@ pub fn run_launcher() {
         .add_plugins((
             DefaultPlugins
                 .build()
+                .set(TaskPoolPlugin {
+                    task_pool_options: TaskPoolOptions {
+                        io: TaskPoolThreadAssignmentPolicy {
+                            min_threads: 10, //todo: revisit required
+                            max_threads: 12,
+                            percent: 0.5,
+                            on_thread_spawn: None,
+                            on_thread_destroy: None,
+                        },
+                        ..Default::default()
+                    },
+                })
                 .set(WindowPlugin {
                     // Configure the primary window for the status bar
                     primary_window: Some(Window {
@@ -99,7 +119,7 @@ pub fn run_launcher() {
         )
         // Add core application plugins
         .add_plugins((
-            ClockPlugin,
+            StatusBarPlugin,
             NavigationBarPlugin,
             StyledCardPlugin,
             StyledWidgetsPlugin,
@@ -110,6 +130,9 @@ pub fn run_launcher() {
             SettingsDrawerPlugin, // StyledTextPlugin,
                                   // Custom plugin for organizing UI setup
         ))
+        .add_plugins(NetworkManagerPlugin)
+        .add_plugins(BluetoothPlugin)
+        .add_plugins(UPowerPlugin)
         // System to exit on Escape key press
         .add_systems(Update, exit_on_esc)
         .run();
@@ -175,10 +198,15 @@ fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
 fn setup_launcher_ui(
     mut commands: Commands,
     font_assets: Res<FontAssets>,
-    asset_server: Res<AssetServer>,
-    theme_manager: Res<ThemeManager>,
+    wireless_enabled: Res<WirelessEnabled>,
+    bluetooth_enabled: Res<BluetoothEnabledStatus>,
 ) {
-    spawn_status_bar_ui(&mut commands, &font_assets);
+    spawn_status_bar_ui(
+        &mut commands,
+        &font_assets,
+        &wireless_enabled,
+        &bluetooth_enabled,
+    );
 
     // spawn_homescreen_window(&mut commands, &asset_server, &font_assets);
 
@@ -187,9 +215,26 @@ fn setup_launcher_ui(
     spawn_navigation_bar_window(&mut commands);
 }
 
-fn spawn_status_bar_ui(commands: &mut Commands, font_assets: &Res<FontAssets>) {
+fn spawn_status_bar_ui(
+    commands: &mut Commands,
+    font_assets: &Res<FontAssets>,
+    wireless_enabled: &Res<WirelessEnabled>,
+    bluetooth_enabled: &Res<BluetoothEnabledStatus>,
+) {
+    //Spawn status bar
+    let wireless_default_icon = if wireless_enabled.0 {
+        Icon::WirelessNone
+    } else {
+        Icon::WirelessOff
+    }
+    .into();
+    let bluetooth_default_icon: Icon = if bluetooth_enabled.0 {
+        Icon::BluetoothNone
+    } else {
+        Icon::BluetoothOff
+    }
+    .into();
     commands.spawn((Camera2d, StatusBarWindow));
-
     commands.spawn((
         Node {
             width: Val::Percent(100.),
@@ -198,7 +243,11 @@ fn spawn_status_bar_ui(commands: &mut Commands, font_assets: &Res<FontAssets>) {
             flex_direction: FlexDirection::Column,
             ..Default::default()
         },
-        children![status_bar(font_assets)],
+        children![status_bar(
+            &font_assets,
+            wireless_default_icon,
+            bluetooth_default_icon
+        )],
     ));
 }
 

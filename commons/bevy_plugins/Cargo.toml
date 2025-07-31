@@ -1,0 +1,12 @@
+[package]
+name = "bevy_plugins"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { version = "0.16.0-dev" }
+libpulse-binding = "2.30.1"
+freedesktop-network-manager-client = { path = "../../services/freedesktop/network-manager/freedesktop-network-manager-client" }
+freedesktop-bluez-client = { path = "../../services/freedesktop/bluez/freedesktop-bluez-client" }
+freedesktop-pulseaudio-client = { path = "../../services/freedesktop/pulseaudio/freedesktop-pulseaudio-client" }
+freedesktop-upower-client = { path = "../../services/freedesktop/upower/freedesktop-upower-client" }

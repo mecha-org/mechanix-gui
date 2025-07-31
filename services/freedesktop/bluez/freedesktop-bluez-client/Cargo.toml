@@ -1,0 +1,13 @@
+[package]
+name = "freedesktop-bluez-client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+zbus = { workspace = true }
+tokio = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+log = { workspace = true }
+futures = { workspace = true }
