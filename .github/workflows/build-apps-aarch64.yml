@@ -104,6 +104,18 @@ jobs:
           python3-venv \
           jq
 
+      - name: Install & Configure Pulp CLI
+        run: |
+          python3 -m pip install --user pipx
+          pipx install pulp-cli[pygments]
+          pipx install pulp-cli-deb
+
+          pulp config create \
+            --username "${{ secrets.MECHA_PULP_USERNAME }}" \
+            --password "${{ secrets.MECHA_PULP_PASSWORD }}" \
+            --base-url "${{ vars.MECHA_PULP_API_URL }}:8080" \
+            --overwrite
+
       - name: Set up Git SSH key
         run: |
           mkdir -p ~/.ssh
@@ -160,18 +172,6 @@ jobs:
             "Architectures": ["arm64", "amd64"],
             "Signing": {"Skip": true}
           }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/:./${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
-
-      - name: Install & Configure Pulp CLI
-        run: |
-          python3 -m pip install --user pipx
-          pipx install pulp-cli[pygments]
-          pipx install pulp-cli-deb
-
-          pulp config create \
-            --username "${{ secrets.MECHA_PULP_USERNAME }}" \
-            --password "${{ secrets.MECHA_PULP_PASSWORD }}" \
-            --base-url "${{ vars.MECHA_PULP_API_URL }}:8080" \
-            --overwrite
 
       - name: Upload DEB to Pulp [${{ matrix.package }}]
         run: |
