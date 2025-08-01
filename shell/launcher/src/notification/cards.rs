@@ -76,9 +76,9 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                 Node {
                     width: Val::Auto,
                     height: Val::Auto,
-                    padding: UiRect::all(Val::Px(16.0)),
-                    margin: UiRect::bottom(Val::Px(2.0)),
-                    // top: Val::Px(5.0),
+                    // padding: UiRect::all(Val::Px(5.0)),
+                    margin: UiRect::bottom(Val::Px(10.0)),
+                    top: Val::Px(5.0),
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceBetween,
                     align_items: AlignItems::Start,
@@ -91,7 +91,7 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                         Node {
                             width: Val::Px(220.0),
                             height: Val::Px(30.0),
-                            margin: UiRect::right(Val::Px(120.0)),
+                            // margin: UiRect::left(Val::Px(10.0)),
                             ..default()
                         },
                         children![(
@@ -108,7 +108,7 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                             // top: Val::Px(8.0),
                             justify_content: JustifyContent::Center, // <-- Center horizontally
                             align_items: AlignItems::Center,
-                            margin: UiRect::right(Val::Px(5.0)),
+                            // margin: UiRect::right(Val::Px(2.0)),
                             ..default()
                         },
                         BorderRadius::all(Val::Px(8.0)),
@@ -170,9 +170,9 @@ pub fn create_card(
             Node {
                 width: Val::Px(508.0),
                 height: Val::Px(81.0),
-                margin: UiRect::all(Val::Px(1.0)),
+                margin: UiRect::bottom(Val::Px(7.0)),
                 padding: UiRect::all(Val::Px(10.0)),
-                bottom: Val::Px(2.0),
+                bottom: Val::Auto,
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
@@ -317,6 +317,8 @@ pub fn get_stack_enitity_of_notification(
                 Node {
                     width: Val::Px(509.0),
                     height: Val::Auto,
+                    top: Val::Percent(2.0),
+                    bottom: Val::Percent(7.0),
                     flex_direction: FlexDirection::Column,
                     align_items: AlignItems::Start,
                     ..default()
@@ -343,9 +345,10 @@ pub fn spawn_app_name_row(app_name: String) -> impl Bundle {
         Node {
             width: Val::Px(509.0),
             height: Val::Auto,
-            padding: UiRect::all(Val::Px(16.0)),
-            margin: UiRect::bottom(Val::Px(5.0)),
-            // top: Val::Px(5.0),
+            // padding: UiRect::all(Val::Px(5.0)),
+            margin: UiRect::bottom(Val::Px(15.0)),
+            bottom: Val::Px(5.0),
+            top: Val::Px(5.0),
             flex_direction: FlexDirection::Row,
             justify_content: JustifyContent::SpaceBetween,
             align_items: AlignItems::Start,
@@ -358,7 +361,8 @@ pub fn spawn_app_name_row(app_name: String) -> impl Bundle {
                 Node {
                     width: Val::Px(220.0),
                     height: Val::Auto,
-                    margin: UiRect::right(Val::Px(250.0)),
+                    padding: UiRect::left(Val::Px(2.0)),
+                    margin: UiRect::right(Val::Px(210.0)),
                     ..default()
                 },
                 children![(
@@ -374,7 +378,7 @@ pub fn spawn_app_name_row(app_name: String) -> impl Bundle {
                     height: Val::Px(26.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    margin: UiRect::right(Val::Px(8.0)),
+                    margin: UiRect::right(Val::Px(10.0)),
                     ..default()
                 },
                 BorderRadius::all(Val::Px(8.0)),
@@ -519,6 +523,7 @@ fn stack_button_system(
                             if *is_stacked {
                                 node.position_type = PositionType::Absolute;
                                 node.bottom = Val::Px((i as f32) * 4.0);
+                                node.top = Val::Px(5.0);
                                 if i == 0 {
                                     node.position_type = PositionType::Relative;
                                 }
@@ -577,7 +582,7 @@ fn card_unstack_on_click_system(
                             if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
                                 node.position_type = PositionType::Relative;
                                 node.top = Val::Auto;
-                                node.bottom = Val::Px(2.0);
+                                node.bottom = Val::Auto;
                                 node.left = Val::Auto;
                                 node.width = Val::Px(508.0);
                                 // Only respawn header row if we were previously stacked
