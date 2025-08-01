@@ -31,23 +31,20 @@ pub fn on_slide(
 pub fn update_slider(
     theme_manager: Res<ThemeManager>,
     mut q_slider: Query<
-        (&CoreSlider, &Children, &mut BackgroundColor),
-        (
-            With<StyledSlider>,
-            Or<(Added<StyledSlider>, Changed<Hovering>, Changed<CoreSlider>)>,
-        ),
+        (&CoreSlider, &Children, &StyledSlider, &mut BackgroundColor),
+        (Or<(Added<StyledSlider>, Changed<Hovering>, Changed<CoreSlider>)>,),
     >,
     mut q_filled: Query<
-        (&mut Node, &mut BackgroundColor),
+        (&mut Node, &mut BackgroundColor, &mut BorderRadius),
         (Without<StyledSlider>, Without<Children>),
     >,
 
-    mut q_text_color: Query<&mut TextColor, (Without<StyledSlider>, Without<Children>)>,
+    mut image_query: Query<&mut ImageNode>,
 ) {
     // Get styles from theme manager
     let slider_styles = theme_manager.styles.slider.clone();
 
-    for (slider_state, children, mut bg_color) in q_slider.iter_mut() {
+    for (slider_state, children, slider, mut bg_color) in q_slider.iter_mut() {
         let Some(filled_id) = children.first() else {
             warn!("Slider does not have a filled entity.");
             continue;
@@ -58,7 +55,8 @@ pub fn update_slider(
             continue;
         };
 
-        let Ok((mut node, mut filled_bg_color)) = q_filled.get_mut(*filled_id) else {
+        let Ok((mut node, mut filled_bg_color, mut border_radius)) = q_filled.get_mut(*filled_id)
+        else {
             warn!("Slider filled node not found.");
             continue;
         };
@@ -67,12 +65,29 @@ pub fn update_slider(
         if node.width != filled_width {
             node.width = filled_width;
         }
+        if filled_width == Val::Percent(100.) {
+            *border_radius = BorderRadius::all(Val::Px(12.));
+        } else {
+            *border_radius = BorderRadius {
+                top_left: Val::Px(12.),
+                top_right: Val::Auto,
+                bottom_left: Val::Px(12.),
+                bottom_right: Val::Auto,
+            };
+        }
 
         bg_color.0 = slider_styles.track_color;
         filled_bg_color.0 = slider_styles.filled_color;
 
-        if let Ok(mut text_color) = q_text_color.get_mut(*icon_id) {
-            text_color.0 = slider_styles.icon_color;
+        if let Ok(mut image_node) = image_query.get_mut(*icon_id) {
+            let Some(icon) = slider.icon.clone() else {
+                continue;
+            };
+            let Some(layout) = slider.layout.clone() else {
+                continue;
+            };
+
+            *image_node = ImageNode::from_atlas_image(icon, TextureAtlas::from(layout));
         }
     }
 }

@@ -41,7 +41,7 @@ dark:
     popover: [0.205, 0.0, 0.0]
     popover_foreground: [0.985, 0.0, 0.0]
     primary: [0.3446, 0.0, 0.0]
-    primary_foreground: [0.9189, 0.0, 0.0]
+    primary_foreground: [0.5103, 0.0, 0.0]
     secondary: [0.269, 0.0, 0.0]
     secondary_foreground: [0.985, 0.0, 0.0]
     muted: [0.269, 0.0, 0.0]

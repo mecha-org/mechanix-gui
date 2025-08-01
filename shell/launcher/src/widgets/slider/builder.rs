@@ -6,7 +6,7 @@ use bevy_core_widgets::{CoreSlider, hover::Hovering};
 use bevy_styled_widgets::prelude::ThemeManager;
 
 use crate::{
-    settings_panel::{SettingsItem, SettingsItemText},
+    components::{SettingsItem, SettingsItemText},
     utils::Icon,
 };
 
@@ -19,8 +19,8 @@ pub struct SliderBuilder {
     value: f32,
     root_color: Option<Color>,
     indicator_color: Option<Color>,
-    icon: String,
-    font: Option<Handle<Font>>,
+    pub icon: Option<Handle<Image>>,
+    pub layout: Option<Handle<TextureAtlasLayout>>,
     pub on_change: Option<SystemId<In<f32>>>,
 }
 
@@ -40,13 +40,13 @@ impl SliderBuilder {
         self
     }
 
-    pub fn icon(mut self, icon: String) -> Self {
-        self.icon = icon;
+    pub fn icon(mut self, icon: Handle<Image>) -> Self {
+        self.icon = Some(icon);
         self
     }
 
-    pub fn font(mut self, font: Handle<Font>) -> Self {
-        self.font = Some(font);
+    pub fn layout(mut self, layout: Handle<TextureAtlasLayout>) -> Self {
+        self.layout = Some(layout);
         self
     }
 
@@ -85,6 +85,8 @@ impl SliderBuilder {
                 root_color: self.root_color.clone(),
                 indicator_color: self.indicator_color.clone(),
                 on_change: self.on_change,
+                icon: self.icon.clone(),
+                layout: self.layout.clone(),
             },
             CoreSlider {
                 min: self.min,
@@ -115,13 +117,17 @@ impl SliderBuilder {
                     // ProgressIndicator
                 ),
                 (
-                    Text::new(self.icon.clone()),
-                    TextFont {
-                        font: self.font.unwrap_or_default(),
-                        ..Default::default()
-                    },
-                    TextColor(Color::linear_rgba(0.24, 0.24, 0.24, 1.)),
-                    SettingsItemText { font_size: 32. },
+                    // Text::new(self.icon.clone()),
+                    // TextFont {
+                    //     font: self.font.unwrap_or_default(),
+                    //     ..Default::default()
+                    // },
+                    // TextColor(Color::linear_rgba(0.24, 0.24, 0.24, 1.)),
+                    // SettingsItemText { font_size: 32. },
+                    ImageNode::from_atlas_image(
+                        self.icon.unwrap().clone(),
+                        TextureAtlas::from(self.layout.unwrap().clone()),
+                    ),
                 ),
             ],
         )

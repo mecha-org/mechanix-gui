@@ -8,25 +8,30 @@ use bevy_plugins::network_manager::WirelessEnabled;
 use bevy_plugins::upower::UPowerPlugin;
 use bevy_plugins::{BluetoothPlugin, NetworkManagerPlugin};
 use bevy_smithay::{
-    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor}, SmithayPlugin,
-    SmithayWindowType,
+    SmithayPlugin, SmithayWindowType,
+    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor},
 };
 use bevy_styled_widgets::{
+    StyledWidgetsPlugin,
     prelude::{
         ButtonVariant, StyledButton, StyledButtonPlugin, StyledText, StyledTextPlugin, ThemeManager,
     },
-    StyledWidgetsPlugin,
 };
 
+use crate::components::{
+    FrequentlyUsedApps, RecentSearches, SettingsDrawerPlugin, settings_drawer, universal_search,
+};
 use crate::utils::Icon;
 use crate::{
     components::{
-        app_list, apps_grid, navigation_bar, status_bar, update_apps_categories,
-        update_apps_list, AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin,
+        AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin, app_list, apps_grid,
+        navigation_bar, status_bar, update_apps_categories, update_apps_list,
     },
-    desktop_apps::{DesktopApps, DesktopAppsPlugin},
+    desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
+    // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
     styled_card::{StyledCard, StyledCardPlugin},
     utils::FontAssets,
+    widgets::LauncherStyledWidgetsPlugin,
 };
 
 #[derive(Debug, Component)]
@@ -54,6 +59,9 @@ pub enum NavigationEvents {
     OpenHomescreen,
     OpenSearch,
 }
+
+/// Starts the Bevy launcher UI application.
+///
 
 pub fn run_launcher() {
     App::new()
@@ -86,6 +94,7 @@ pub fn run_launcher() {
                     unapproved_path_mode: bevy::asset::UnapprovedPathMode::Allow,
                     ..Default::default()
                 })
+                .set(ImagePlugin::default_nearest())
                 .disable::<WinitPlugin>(),
             SmithayPlugin {
                 primary_window_type: SmithayWindowType::LayerShell {
@@ -116,8 +125,10 @@ pub fn run_launcher() {
             StyledWidgetsPlugin,
             LauncherUiPlugin,
             DesktopAppsPlugin,
-            // StyledTextPlugin,
-            // Custom plugin for organizing UI setup
+            // SpritesButtonPlugin,
+            LauncherStyledWidgetsPlugin,
+            SettingsDrawerPlugin, // StyledTextPlugin,
+                                  // Custom plugin for organizing UI setup
         ))
         .add_plugins(NetworkManagerPlugin)
         .add_plugins(BluetoothPlugin)
@@ -135,6 +146,22 @@ pub struct LauncherUiPlugin;
 
 impl Plugin for LauncherUiPlugin {
     fn build(&self, app: &mut App) {
+        app.insert_resource(FrequentlyUsedApps(vec![
+            "firefox_firefox".to_string(),
+            "code".to_string(),
+            "microsoft-edge".to_string(),
+            "discord_discord".to_string(),
+            "zulip_zulip".to_string(),
+        ]));
+
+        app.insert_resource(RecentSearches(vec![
+            "sc".to_string(),
+            "code".to_string(),
+            "microsoft".to_string(),
+            "discord".to_string(),
+            "zulip".to_string(),
+        ]));
+
         app.add_systems(OnEnter(AssetsLoadingState::Loaded), setup_launcher_ui);
         //insert resource only when the assets are loaded
         app.add_systems(
@@ -181,9 +208,9 @@ fn setup_launcher_ui(
         &bluetooth_enabled,
     );
 
-    spawn_homescreen_window(&mut commands);
+    // spawn_homescreen_window(&mut commands, &asset_server, &font_assets);
 
-    // spawn_settings_drawer(&mut commands);
+    //  spawn_settings_drawer(&mut commands, &theme_manager);
 
     spawn_navigation_bar_window(&mut commands);
 }
@@ -207,7 +234,7 @@ fn spawn_status_bar_ui(
         Icon::BluetoothOff
     }
     .into();
-    commands.spawn(Camera2d);
+    commands.spawn((Camera2d, StatusBarWindow));
     commands.spawn((
         Node {
             width: Val::Percent(100.),
@@ -224,7 +251,11 @@ fn spawn_status_bar_ui(
     ));
 }
 
-fn spawn_homescreen_window(commands: &mut Commands) {
+fn spawn_homescreen_window(
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    font_assets: &FontAssets,
+) {
     let on_click = commands.register_system(
         |mut commands: Commands, q_homescreen: Option<Single<Entity, With<HomescreenWindow>>>| {
             info!("close homescreen clicked");
@@ -246,6 +277,8 @@ fn spawn_homescreen_window(commands: &mut Commands) {
         },
         HomescreenWindow,
     );
+
+    // let sprites_button = sprites_button_demo(commands, asset_server, font_assets);
 
     commands.spawn((
         UiTargetCamera(camera),
@@ -296,34 +329,45 @@ fn handle_navigation_events(
     mut trigger: Trigger<NavigationEvents>,
     mut commands: Commands,
     q_homescreen: Option<Single<Entity, With<HomescreenWindow>>>,
+    q_status_bar: Option<Single<Entity, With<StatusBarWindow>>>,
+    asset_server: Res<AssetServer>,
+    font_assets: Res<FontAssets>,
+    theme_manager: Res<ThemeManager>,
+    desktop_apps: Res<DesktopApps>,
+    f_used_apps: Res<FrequentlyUsedApps>,
+    recent_searches: Res<RecentSearches>,
 ) {
     info!("event is {:?}", trigger.event());
     match trigger.event() {
         NavigationEvents::OpenSettingDrawer => {
-            spawn_settings_drawer(&mut commands);
+            // if let Some(entity) = q_status_bar {
+            //     commands.entity(entity.into_inner()).despawn();
+            // }
+            spawn_settings_drawer(&mut commands, &theme_manager);
         }
         NavigationEvents::AppSwitcher => {
             spawn_app_switcher(&mut commands);
         }
         NavigationEvents::OpenHomescreen => {
-            spawn_homescreen_window(&mut commands);
+            spawn_homescreen_window(&mut commands, &asset_server, &font_assets);
         }
         NavigationEvents::OpenSearch => {
-            spawn_search(&mut commands);
+            let mut filtered_apps = Vec::new();
+            for app in f_used_apps.0.iter() {
+                desktop_apps
+                    .apps
+                    .iter()
+                    .find(|a| a.app_id == app.to_string())
+                    .map(|app| {
+                        filtered_apps.push(app.clone());
+                    });
+            }
+            spawn_search(&mut commands, filtered_apps, recent_searches.0.clone());
         }
     }
 }
 
-fn spawn_settings_drawer(commands: &mut Commands) {
-    let on_click = commands.register_system(
-        |mut commands: Commands,
-         q_settings_drawer: Option<Single<Entity, With<SettingsDrawerWindow>>>| {
-            info!("close settings panel clicked");
-            if let Some(entity) = q_settings_drawer {
-                commands.entity(entity.into_inner()).despawn();
-            }
-        },
-    );
+fn spawn_settings_drawer(commands: &mut Commands, theme_manager: &ThemeManager) {
     let camera = spawn_camera(
         commands,
         540,
@@ -338,6 +382,8 @@ fn spawn_settings_drawer(commands: &mut Commands) {
         SettingsDrawerWindow,
     );
 
+    let settings_drawer = settings_drawer(commands, theme_manager);
+
     commands.spawn((
         UiTargetCamera(camera),
         Node {
@@ -350,26 +396,22 @@ fn spawn_settings_drawer(commands: &mut Commands) {
             ..Default::default()
         },
         StyledCard,
-        spawn_content("Settings Drawer", on_click),
+        children![settings_drawer],
     ));
 }
 
-fn spawn_search(commands: &mut Commands) {
-    let on_click = commands.register_system(
-        |mut commands: Commands, q_search: Option<Single<Entity, With<SearchWindow>>>| {
-            info!("close search clicked");
-            if let Some(entity) = q_search {
-                commands.entity(entity.into_inner()).despawn();
-            }
-        },
-    );
+fn spawn_search(
+    commands: &mut Commands,
+    freq_used_apps: Vec<DesktopApp>,
+    recent_searches: Vec<String>,
+) {
     let camera = spawn_camera(
         commands,
         540,
         531,
         "Search".to_string(),
         LayerShellSettings {
-            layer: bevy_smithay::prelude::subsurface::Layer::Top,
+            layer: bevy_smithay::prelude::subsurface::Layer::Bottom,
             anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::TOP,
             exclusive_zone: 0,
             ..default()
@@ -377,6 +419,8 @@ fn spawn_search(commands: &mut Commands) {
         SearchWindow,
     );
 
+    let universal_search = universal_search(freq_used_apps, recent_searches);
+
     commands.spawn((
         UiTargetCamera(camera),
         Node {
@@ -389,7 +433,7 @@ fn spawn_search(commands: &mut Commands) {
             ..Default::default()
         },
         StyledCard,
-        spawn_content("Search", on_click),
+        children![universal_search],
     ));
 }
 
