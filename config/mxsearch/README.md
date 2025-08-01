@@ -38,6 +38,55 @@ MxSearch can index and query files from a given directory.
 sudo sysctl -w fs.inotify.max_user_watches=1048576
 ```
 
+- **Crate: `files`**
+    - Configure a dir to watch, and index files.
+    - Allow free-form searching of indexed files.
+    - Configure searchable fields in a settings file.
+        - searchable_fields = [
+          "file_type",
+          "name",
+          "content"
+          ]
+    - Graceful shutdown support (e.g. optional task cancellation).
+    - Load existing entries from the provided directory.
+    - We can configure the depth of the directory to be indexed.
+    - We can configure the allowed extensions to be indexed.
+    - We can configure the max size of the file content to be indexed.
+
+Settings file example:
+
+```toml
+[general]
+[apps]
+enable_search_apps = false
+desktop_apps_dir = "/usr/share/applications"
+index_dir = ".config/mxsearch/index/applications"
+search_limit = 1000
+searchable_fields = [
+    "type",
+    "name",
+    "generic_name",
+    "comment",
+    "keywords",
+    "categories",
+    "path",
+    "checksum"
+]
+[files]
+enable_search_files = true
+files_dir_to_watch = "/home"
+index_dir = ".config/mxsearch/index/files"
+max_depth = 5
+search_limit = 1000
+read_file_content_upto_in_kb = 100
+searchable_fields = [
+    "file_type",
+    "name",
+    "content"
+]
+allowed_extensions = ["txt", "yaml", "rtf", "xml", "toml"]
+```
+
 - **Configurable File Search Service**
     - Enable/disable file search.
     - Define the path to the files you want to include in the search.
@@ -65,10 +114,16 @@ searchable_fields = [
 ## 🚀 Running MxSearch
 
 ```bash
- RUST_LOG=none,mxsearch=debug,apps=debug cargo run
+ RUST_LOG=none,mxsearch=debug,apps=debug,files=debug cargo run
 ```
 
 ## TODOs
 
+Apps
+
 - [ ] Allow index applications from a custom directory ex: snap packages, flatpak packages.
 - [ ] While parsing desktop entry, getting single value from multiple value fields. ex: categories, keywords
+
+Files
+
+- [ ] Watch dir limit reached for /home -> we have to increase the watch limit.
