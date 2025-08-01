@@ -112,6 +112,8 @@ jobs:
 
           PULP_API_URL="${{ env.MECHA_PULP_API_URL }}:8080"
 
+          echo "Pulp API URL: $PULP_API_URL"
+
           pulp config create \
             --username "${{ secrets.MECHA_PULP_USERNAME }}" \
             --password "${{ secrets.MECHA_PULP_PASSWORD }}" \
