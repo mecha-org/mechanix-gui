@@ -77,8 +77,12 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                     width: Val::Auto,
                     height: Val::Auto,
                     // padding: UiRect::all(Val::Px(5.0)),
-                    margin: UiRect::bottom(Val::Px(10.0)),
-                    top: Val::Px(5.0),
+                    margin: UiRect {
+                        top: Val::Px(7.0),
+                        bottom: Val::Px(10.0),
+                        left: Val::ZERO,
+                        right: Val::ZERO,
+                    },
                     flex_direction: FlexDirection::Row,
                     justify_content: JustifyContent::SpaceBetween,
                     align_items: AlignItems::Start,
@@ -317,8 +321,12 @@ pub fn get_stack_enitity_of_notification(
                 Node {
                     width: Val::Px(509.0),
                     height: Val::Auto,
-                    top: Val::Percent(2.0),
-                    bottom: Val::Percent(7.0),
+                    margin: UiRect {
+                        top: Val::Percent(1.0),
+                        bottom: Val::Percent(1.0),
+                        left: Val::ZERO,
+                        right: Val::ZERO,
+                    },
                     flex_direction: FlexDirection::Column,
                     align_items: AlignItems::Start,
                     ..default()
