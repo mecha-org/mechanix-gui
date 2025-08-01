@@ -102,7 +102,7 @@ jobs:
           gstreamer1.0-pulseaudio \
           python3-pip \
           python3-venv \
-          jq 
+          jq
 
       - name: Set up Git SSH key
         run: |
@@ -164,10 +164,8 @@ jobs:
       - name: Install & Configure Pulp CLI
         run: |
           python3 -m pip install --user pipx
-          ~/.local/bin/pipx ensurepath
-          ~/.local/bin/pipx install pulp-cli[pygments]
-          ~/.local/bin/pipx install pulp-cli-deb
-          export PATH="$HOME/.local/bin:$PATH"
+          pipx install pulp-cli[pygments]
+          pipx install pulp-cli-deb
 
           pulp config create \
             --username "${{ secrets.MECHA_PULP_USERNAME }}" \
