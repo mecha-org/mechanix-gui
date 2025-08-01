@@ -8,8 +8,8 @@ on:
       - dev
       - dev-arm64-build
     paths:
-      - 'apps/**'  # only run if changes inside apps folder
-      - '.github/workflows/build-apps-aarch64.yml' # also run if apps workflow is changed
+      - "apps/**" # only run if changes inside apps folder
+      - ".github/workflows/build-apps-aarch64.yml" # also run if apps workflow is changed
 
 env:
   CARGO_INCREMENTAL: 0
@@ -22,6 +22,11 @@ env:
   MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
   MECHANIX_APTLY_DEB_REPOSITORY_NAME: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}
   MECHANIX_APTLY_S3_PUBLISH_ENDPOINT: ${{ vars.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT }}
+  MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
+  MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
+  MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
+  MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
+  MECHA_PULP_RPMS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}
 
 jobs:
   build:
@@ -42,7 +47,7 @@ jobs:
             artifact: mechanix-camera-aarch64-unknown-linux-gnu.tar.gz
             path: apps
             folder: camera
-      
+
           - name: Files
             package: mechanix-files
             artifact: mechanix-files-aarch64-unknown-linux-gnu.tar.gz
@@ -94,7 +99,10 @@ jobs:
           gstreamer1.0-gl \
           gstreamer1.0-gtk3 \
           gstreamer1.0-qt5 \
-          gstreamer1.0-pulseaudio
+          gstreamer1.0-pulseaudio \
+          python3-pip \
+          python3-venv \
+          jq 
 
       - name: Set up Git SSH key
         run: |
@@ -120,7 +128,7 @@ jobs:
         run: |
           cd ${{ matrix.path }}
           cargo generate-rpm -p ${{ matrix.folder }}
-          ls -la   
+          ls -la
 
       - name: Extract package details
         id: package_details
@@ -139,12 +147,12 @@ jobs:
           echo "Uploading package: ${{ steps.package_details.outputs.package_name }}"
           echo "To folder: ${{ steps.package_details.outputs.folder_name }}"
           curl -X POST -F file=@target/debian/${{ steps.package_details.outputs.package_name }} ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/files/${{ steps.package_details.outputs.folder_name }}
-      
+
       - name: Add package to local repo
         run: |
           echo "Adding package from folder: ${{ steps.package_details.outputs.folder_name }}"
           curl -X POST ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/repos/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}/file/${{ steps.package_details.outputs.folder_name }}
-      
+
       - name: Update local published repo
         run: |
           echo "Updating local published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
@@ -152,7 +160,57 @@ jobs:
             "Architectures": ["arm64", "amd64"],
             "Signing": {"Skip": true}
           }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/:./${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
-      
+
+      - name: Install & Configure Pulp CLI
+        run: |
+          python3 -m pip install --user pipx
+          ~/.local/bin/pipx ensurepath
+          ~/.local/bin/pipx install pulp-cli[pygments]
+          ~/.local/bin/pipx install pulp-cli-deb
+          export PATH="$HOME/.local/bin:$PATH"
+
+          pulp config create \
+            --username "${{ secrets.MECHA_PULP_USERNAME }}" \
+            --password "${{ secrets.MECHA_PULP_PASSWORD }}" \
+            --base-url "${{ vars.MECHA_PULP_API_URL }}:8080" \
+            --overwrite
+
+      - name: Upload DEB to Pulp [${{ matrix.package }}]
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          cd ${{ matrix.path }}
+          DEB_FILE=$(ls target/debian/*.deb | head -n1)
+
+          pulp deb content upload \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --file="$DEB_FILE"
+
+          PUB_HREF=$(pulp deb publication create \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
+
+          pulp deb distribution update \
+            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+
+      - name: Upload RPM to Pulp [${{ matrix.package }}]
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          cd ${{ matrix.path }}
+          RPM_FILE=$(ls target/generate-rpm/*.rpm | head -n1)
+
+          pulp rpm content upload \
+            --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --file="$RPM_FILE"
+
+          PUB_HREF=$(pulp rpm publication create \
+            --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
+
+          pulp rpm distribution update \
+            --name="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --publication="$PUB_HREF"
+
       - name: Update S3 published repo
         run: |
           echo "Updating S3 published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
@@ -160,8 +218,8 @@ jobs:
             "Sources": [{"Name": "${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}"}],
             "Architectures": ["arm64", "amd64"],
             "Signing": {"Skip": true}
-          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT}}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}    
-      
+          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT}}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir build
