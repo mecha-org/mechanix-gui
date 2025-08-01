@@ -359,7 +359,7 @@ pub fn get_stack_enitity_of_notification(
                                 ..default()
                             },
                             BorderRadius::all(Val::Px(8.0)),
-                            StackButton{app_name:app_name.clone(), is_stacked:false},
+                            StackButton { app_name: app_name.clone(), is_stacked: false },
                             BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
                             children![(
                                 Text::new(">"),
@@ -430,7 +430,6 @@ pub fn clear_button_system(
             }
         }
     }
-    
 }
 
 fn clear_all_button_system(
@@ -458,8 +457,8 @@ fn clear_all_button_system(
 }
 
 #[derive(Component)]
-pub struct StackButton{
-    pub app_name : String,
+pub struct StackButton {
+    pub app_name: String,
     pub is_stacked: bool,
 }
 
@@ -468,7 +467,10 @@ pub struct StackButton{
 pub struct AppStackingState(pub std::collections::HashMap<String, bool>);
 
 fn stack_button_system(
-    mut interaction_query: Query<(&Interaction, &StackButton), (Changed<Interaction>, With<Button>)>,
+    mut interaction_query: Query<
+        (&Interaction, &StackButton),
+        (Changed<Interaction>, With<Button>)
+    >,
     stacks: Res<NotificationStacks>,
     stack_query: Query<&Children, With<NotificationStack>>,
     mut node_query: Query<(&ZIndex, &mut Node), With<Card>>,
@@ -479,10 +481,17 @@ fn stack_button_system(
         if *interaction == Interaction::Pressed {
             let app_name = &stack_btn.app_name;
             // Toggle stacking state for this app
-            let is_stacked = app_stacking.0.entry(app_name.clone()).and_modify(|v| *v = !*v).or_insert(true);
+            let is_stacked = app_stacking.0
+                .entry(app_name.clone())
+                .and_modify(|v| {
+                    *v = !*v;
+                })
+                .or_insert(true);
 
             if let Some(&stack_entity) = stacks.0.get(app_name) {
                 if let Ok(children) = stack_query.get(stack_entity) {
+                    let header_entity = children[0];
+                    
                     // Collect cards in this stack, sorted by ZIndex ascending (bottom to top)
                     let mut cards: Vec<(Entity, i32)> = children
                         .iter()
@@ -498,18 +507,20 @@ fn stack_button_system(
                     // Apply stacking or unstacking
                     for (i, (card_ent, _)) in cards.iter().enumerate() {
                         if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
-                             if *is_stacked {
+                            if *is_stacked {
                                 node.position_type = PositionType::Absolute;
                                 node.bottom = Val::Px((i as f32) * 4.0);
                                 if i == 0 {
                                     node.position_type = PositionType::Relative;
                                 }
+                                commands.entity(header_entity).despawn();
                             } else {
                                 node.position_type = PositionType::Relative;
                                 node.top = Val::Auto;
                                 node.bottom = Val::Px(2.0);
                                 node.left = Val::Auto;
                                 node.width = Val::Px(508.0);
+                                commands.entity(stack_entity).insert_children(0, &[header_entity]);
                             }
                             commands.entity(*card_ent).insert(node.clone());
                         }
