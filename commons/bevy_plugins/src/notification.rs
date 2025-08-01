@@ -5,7 +5,7 @@ use freedesktop_notifications_server::proxies::mechanix::MechanixNotificationPro
 use freedesktop_notifications_server::notification::Notification;
 use freedesktop_notifications_server::database::get_all_notifications_from_db;
 use zbus::Connection;
-use std::sync::{Arc, Mutex};
+use std::sync::{ Arc, Mutex };
 use tokio::select;
 use std::sync::mpsc::{ channel, Receiver, Sender };
 use futures_util::stream::StreamExt;
@@ -26,26 +26,28 @@ pub struct NotificationEventReceiver(pub Arc<Mutex<Receiver<NotificationEvent>>>
 #[derive(Resource)]
 pub struct NotificationEventSender(pub Sender<NotificationEvent>);
 
-fn load_notifications_from_database(sender: Res<NotificationEventSender>) {
-    IoTaskPool::get()
-        .spawn({
-            let sender = sender.0.clone();
-            async move {
-                let notifications = get_all_notifications_from_db().await.expect(
-                    "Notification Fetching from database failed"
-                );
-                for (id, notification) in notifications.iter().map(|(id, n)| (*id, n.clone())) {
-                    let _ = sender.send(NotificationEvent::Recieved(id, notification));
-                }
-            }
-        })
-        .detach();
-}
+// fn load_notifications_from_database(mut commands: Commands,  mut event_writer: EventWriter<NotificationEvent>) {
+//     let (tx, rx) = std::sync::mpsc::channel();
+//     IoTaskPool::get()
+//         .spawn(async move {
+//             let notifications = get_all_notifications_from_db().await.expect(
+//                 "Notification Fetching from database failed"
+//             );
+//             let _ = tx.send(notifications);
+//         })
+//         .detach();
+
+//     if let Ok(notifications) = rx.try_recv() {
+//         for (id,notification) in notifications{
+//             event_writer.send(NotificationEvent::Recieved(id, notification.clone()));
+//         }
+//     }
+// }
 
 fn apply_loaded_notifications(
     mut notification_resource: ResMut<AllNotificationsResource>,
     receiver: Res<NotificationEventReceiver>,
-    mut event_writer: EventWriter<NotificationEvent>, // Added
+    mut event_writer: EventWriter<NotificationEvent> // Added
 ) {
     let receiver = receiver.0.lock().unwrap();
     while let Ok(event) = receiver.try_recv() {
@@ -130,9 +132,7 @@ impl Plugin for NotificationPlugin {
         app.insert_resource(AllNotificationsResource(HashMap::new()))
             .add_event::<NotificationEvent>()
             .add_systems(Startup, spawn_notification_poller)
-            .add_systems(Update, (
-                // load_notifications_from_database,
-                apply_loaded_notifications
-            ));
+            // .add_systems(Startup, load_notifications_from_database)
+            .add_systems(Update, apply_loaded_notifications);
     }
 }

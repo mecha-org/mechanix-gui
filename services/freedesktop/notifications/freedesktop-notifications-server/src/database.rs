@@ -56,5 +56,6 @@ pub async fn get_all_notifications_from_db() -> Result<
         notifications.insert(id, notification);
     }
 
+    db.flush()?;
     Ok(notifications)
 }
