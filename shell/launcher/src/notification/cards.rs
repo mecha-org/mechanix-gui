@@ -21,6 +21,7 @@ impl Plugin for NotificationWindowPlugin {
             .add_systems(Update, process_notifications)
             .add_systems(Update, stack_button_system)
             .add_systems(Update, clear_button_system)
+            .add_systems(Update, card_unstack_on_click_system)
             .add_systems(Startup, notification_stacks_init)
             .add_systems(Update, clear_all_button_system)
             .init_resource::<AppStackingState>();
@@ -128,7 +129,9 @@ pub fn spawn_notification_window(commands: &mut Commands) {
 }
 
 #[derive(Component)]
-pub struct Card;
+pub struct Card {
+    pub app_name: String,
+}
 
 #[derive(Component)]
 pub struct NotificationSurface;
@@ -173,6 +176,7 @@ pub fn create_card(
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
+            Button,
             BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
             BorderRadius::all(Val::Px(8.0)),
             BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
@@ -184,7 +188,7 @@ pub fn create_card(
                 Val::Px(2.0), // spread
                 Val::Px(8.0) // blur radius
             ),
-            Card,
+            Card { app_name: notification.app_name.clone() },
             children![
                 (
                     Node {
@@ -320,76 +324,7 @@ pub fn get_stack_enitity_of_notification(
                 NotificationStack {
                     app_name: app_name.clone(),
                 },
-                children![(
-                    Node {
-                        width: Val::Px(509.0),
-                        height: Val::Auto,
-                        padding: UiRect::all(Val::Px(16.0)),
-                        margin: UiRect::bottom(Val::Px(5.0)),
-                        // top: Val::Px(5.0),
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::SpaceBetween,
-                        align_items: AlignItems::Start,
-                        ..default()
-                    },
-                    BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
-                    BorderRadius::all(Val::Px(8.0)),
-                    children![
-                        (
-                            Node {
-                                width: Val::Px(220.0),
-                                height: Val::Auto,
-                                margin: UiRect::right(Val::Px(250.0)),
-                                ..default()
-                            },
-                            children![(
-                                Text::new(&app_name),
-                                TextFont { font_size: 20.0, ..default() },
-                                TextColor(Color::WHITE),
-                            )],
-                        ),
-                        (
-                            Button,
-                            Node {
-                                width: Val::Px(28.0),
-                                height: Val::Px(26.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                margin: UiRect::right(Val::Px(8.0)),
-                                ..default()
-                            },
-                            BorderRadius::all(Val::Px(8.0)),
-                            StackButton { app_name: app_name.clone(), is_stacked: false },
-                            BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
-                            children![(
-                                Text::new(">"),
-                                TextFont { font_size: 18.0, ..default() },
-                                TextColor(Color::BLACK),
-                            )],
-                        ),
-
-                        (
-                            Button,
-                            Node {
-                                width: Val::Px(28.0),
-                                height: Val::Px(26.0),
-                                // top: Val::Px(8.0),
-                                justify_content: JustifyContent::Center, // <-- Center horizontally
-                                align_items: AlignItems::Center,
-                                // margin: UiRect::right(Val::Px(10.0)),
-                                ..default()
-                            },
-                            BorderRadius::all(Val::Px(8.0)),
-                            ClearButton { app_name: app_name.clone() },
-                            BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
-                            children![(
-                                Text::new("X"),
-                                TextFont { font_size: 18.0, ..default() },
-                                TextColor(Color::BLACK),
-                            )],
-                        )
-                    ],
-                )],
+                children![spawn_app_name_row(app_name.clone())],
             ))
             .id();
 
@@ -401,6 +336,79 @@ pub fn get_stack_enitity_of_notification(
 
         stack_entity
     }
+}
+
+pub fn spawn_app_name_row(app_name: String) -> impl Bundle {
+    (
+        Node {
+            width: Val::Px(509.0),
+            height: Val::Auto,
+            padding: UiRect::all(Val::Px(16.0)),
+            margin: UiRect::bottom(Val::Px(5.0)),
+            // top: Val::Px(5.0),
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::SpaceBetween,
+            align_items: AlignItems::Start,
+            ..default()
+        },
+        BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
+        BorderRadius::all(Val::Px(8.0)),
+        children![
+            (
+                Node {
+                    width: Val::Px(220.0),
+                    height: Val::Auto,
+                    margin: UiRect::right(Val::Px(250.0)),
+                    ..default()
+                },
+                children![(
+                    Text::new(&app_name),
+                    TextFont { font_size: 20.0, ..default() },
+                    TextColor(Color::WHITE),
+                )],
+            ),
+            (
+                Button,
+                Node {
+                    width: Val::Px(28.0),
+                    height: Val::Px(26.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    margin: UiRect::right(Val::Px(8.0)),
+                    ..default()
+                },
+                BorderRadius::all(Val::Px(8.0)),
+                StackButton { app_name: app_name.clone(), is_stacked: false },
+                BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
+                children![(
+                    Text::new(">"),
+                    TextFont { font_size: 18.0, ..default() },
+                    TextColor(Color::BLACK),
+                )],
+            ),
+
+            (
+                Button,
+                Node {
+                    width: Val::Px(28.0),
+                    height: Val::Px(26.0),
+                    // top: Val::Px(8.0),
+                    justify_content: JustifyContent::Center, // <-- Center horizontally
+                    align_items: AlignItems::Center,
+                    // margin: UiRect::right(Val::Px(10.0)),
+                    ..default()
+                },
+                BorderRadius::all(Val::Px(8.0)),
+                ClearButton { app_name: app_name.clone() },
+                BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
+                children![(
+                    Text::new("X"),
+                    TextFont { font_size: 18.0, ..default() },
+                    TextColor(Color::BLACK),
+                )],
+            )
+        ],
+    )
 }
 
 pub fn save_notification_image_to_assets(id: &u32, notification: &Notification) -> String {
@@ -467,17 +475,18 @@ pub struct StackButton {
 pub struct AppStackingState(pub std::collections::HashMap<String, bool>);
 
 fn stack_button_system(
-    mut interaction_query: Query<
+    mut stack_btn_interaction_query: Query<
         (&Interaction, &StackButton),
         (Changed<Interaction>, With<Button>)
     >,
+    mut card_interaction_query: Query<(&Interaction, &Card), (Changed<Interaction>, With<Button>)>,
     stacks: Res<NotificationStacks>,
     stack_query: Query<&Children, With<NotificationStack>>,
     mut node_query: Query<(&ZIndex, &mut Node), With<Card>>,
     mut app_stacking: ResMut<AppStackingState>,
     mut commands: Commands
 ) {
-    for (interaction, stack_btn) in interaction_query.iter_mut() {
+    for (interaction, stack_btn) in stack_btn_interaction_query.iter_mut() {
         if *interaction == Interaction::Pressed {
             let app_name = &stack_btn.app_name;
             // Toggle stacking state for this app
@@ -491,7 +500,7 @@ fn stack_button_system(
             if let Some(&stack_entity) = stacks.0.get(app_name) {
                 if let Ok(children) = stack_query.get(stack_entity) {
                     let header_entity = children[0];
-                    
+
                     // Collect cards in this stack, sorted by ZIndex ascending (bottom to top)
                     let mut cards: Vec<(Entity, i32)> = children
                         .iter()
@@ -520,10 +529,65 @@ fn stack_button_system(
                                 node.bottom = Val::Px(2.0);
                                 node.left = Val::Auto;
                                 node.width = Val::Px(508.0);
-                                commands.entity(stack_entity).insert_children(0, &[header_entity]);
+                                // commands.entity(stack_entity).insert_children(0, &[header_entity]);
                             }
                             commands.entity(*card_ent).insert(node.clone());
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn card_unstack_on_click_system(
+    mut card_interaction_query: Query<(&Interaction, &Card), (Changed<Interaction>, With<Button>)>,
+    stacks: Res<NotificationStacks>,
+    stack_query: Query<&Children, With<NotificationStack>>,
+    mut node_query: Query<(&ZIndex, &mut Node), With<Card>>,
+    mut app_stacking: ResMut<AppStackingState>,
+    mut commands: Commands
+) {
+    for (interaction, card) in card_interaction_query.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            let app_name = &card.app_name;
+            println!("Clicked on {}'s Card", &app_name);
+            // Check if stacking was enabled for this app
+            let was_stacked = app_stacking.0.get(app_name).copied().unwrap_or(false);
+            // Set stacking to false (unstack)
+            if was_stacked == true {
+                app_stacking.0.insert(app_name.clone(), false);
+
+                if let Some(&stack_entity) = stacks.0.get(app_name) {
+                    if let Ok(children) = stack_query.get(stack_entity) {
+                        // Collect cards in this stack, sorted by ZIndex ascending (bottom to top)
+                        let mut cards: Vec<(Entity, i32)> = children
+                            .iter()
+                            .filter_map(|child| {
+                                node_query
+                                    .get(child)
+                                    .ok()
+                                    .map(|(zidx, _)| (child, zidx.0))
+                            })
+                            .collect();
+                        cards.sort_by(|a, b| a.1.cmp(&b.1));
+
+                        // Apply stacking or unstacking
+                        for (i, (card_ent, _)) in cards.iter().enumerate() {
+                            if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
+                                node.position_type = PositionType::Relative;
+                                node.top = Val::Auto;
+                                node.bottom = Val::Px(2.0);
+                                node.left = Val::Auto;
+                                node.width = Val::Px(508.0);
+                                // Only respawn header row if we were previously stacked
+                                commands.entity(*card_ent).insert(node.clone());
+                            }
+                        }
+                        let header_entity = commands
+                            .spawn(spawn_app_name_row(app_name.clone()))
+                            .id();
+                        commands.entity(stack_entity).insert_children(0, &[header_entity]);
                     }
                 }
             }
