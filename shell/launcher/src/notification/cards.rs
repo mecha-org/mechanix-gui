@@ -21,9 +21,9 @@ impl Plugin for NotificationWindowPlugin {
             .add_systems(Update, process_notifications)
             .add_systems(Update, stack_button_system)
             .add_systems(Update, clear_button_system)
-            .add_systems(Startup, init_stacking_state)
             .add_systems(Startup, notification_stacks_init)
-            .add_systems(Update, clear_all_button_system);
+            .add_systems(Update, clear_all_button_system)
+            .init_resource::<AppStackingState>();
     }
 }
 
@@ -99,26 +99,6 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                             TextColor(Color::WHITE),
                         )],
                     ),
-                    (
-                        Button,
-                        Node {
-                            width: Val::Px(78.0),
-                            height: Val::Px(30.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            margin: UiRect::right(Val::Px(4.0)),
-                            ..default()
-                        },
-                        BorderRadius::all(Val::Px(8.0)),
-                        StackButton,
-                        BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
-                        children![(
-                            Text::new(">"),
-                            TextFont { font_size: 12.0, ..default() },
-                            TextColor(Color::BLACK),
-                        )],
-                    ),
-
                     (
                         Button,
                         Node {
@@ -379,7 +359,7 @@ pub fn get_stack_enitity_of_notification(
                                 ..default()
                             },
                             BorderRadius::all(Val::Px(8.0)),
-                            StackButton,
+                            StackButton{app_name:app_name.clone(), is_stacked:false},
                             BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
                             children![(
                                 Text::new(">"),
@@ -477,64 +457,63 @@ fn clear_all_button_system(
     }
 }
 
-pub fn init_stacking_state(mut commands: Commands) {
-    commands.insert_resource(StackingState::default());
-}
-
 #[derive(Component)]
-pub struct StackButton;
-
-#[derive(Resource, Default)]
-pub struct StackingState {
+pub struct StackButton{
+    pub app_name : String,
     pub is_stacked: bool,
 }
 
+// Persistent stacking state per app
+#[derive(Resource, Default)]
+pub struct AppStackingState(pub std::collections::HashMap<String, bool>);
+
 fn stack_button_system(
-    mut interaction_query: Query<&Interaction, (Changed<Interaction>, With<StackButton>)>,
-    mut stacking_state: ResMut<StackingState>,
-    stack_query: Query<(Entity, &Children), With<NotificationStack>>,
+    mut interaction_query: Query<(&Interaction, &StackButton), (Changed<Interaction>, With<Button>)>,
+    stacks: Res<NotificationStacks>,
+    stack_query: Query<&Children, With<NotificationStack>>,
     mut node_query: Query<(&ZIndex, &mut Node), With<Card>>,
+    mut app_stacking: ResMut<AppStackingState>,
     mut commands: Commands
 ) {
-    // Toggle on any button press
-    if interaction_query.iter().any(|i| *i == Interaction::Pressed) {
-        stacking_state.is_stacked = !stacking_state.is_stacked;
+    for (interaction, stack_btn) in interaction_query.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            let app_name = &stack_btn.app_name;
+            // Toggle stacking state for this app
+            let is_stacked = app_stacking.0.entry(app_name.clone()).and_modify(|v| *v = !*v).or_insert(true);
 
-        for (stack_entity, children) in stack_query.iter() {
-            // Collect cards in this stack, sorted by ZIndex descending
-            let mut cards: Vec<(Entity, i32)> = children
-                .iter()
-                .filter_map(|child| {
-                    node_query
-                        .get(child)
-                        .ok()
-                        .map(|(zidx, _)| (child, zidx.0))
-                })
-                .collect();
-            cards.sort_by(|a, b| b.1.cmp(&a.1));
+            if let Some(&stack_entity) = stacks.0.get(app_name) {
+                if let Ok(children) = stack_query.get(stack_entity) {
+                    // Collect cards in this stack, sorted by ZIndex ascending (bottom to top)
+                    let mut cards: Vec<(Entity, i32)> = children
+                        .iter()
+                        .filter_map(|child| {
+                            node_query
+                                .get(child)
+                                .ok()
+                                .map(|(zidx, _)| (child, zidx.0))
+                        })
+                        .collect();
+                    cards.sort_by(|a, b| a.1.cmp(&b.1));
 
-            // Apply per-stack offsets
-            for (i, (card_ent, _)) in cards.iter().enumerate() {
-                if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
-                    if stacking_state.is_stacked {
-                        // Absolute inside stack container
-                        node.position_type = PositionType::Absolute;
-                        node.bottom = Val::Px((i as f32) * 4.0);
-                        if i == 0 {
-                            node.position_type = PositionType::Relative;
+                    // Apply stacking or unstacking
+                    for (i, (card_ent, _)) in cards.iter().enumerate() {
+                        if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
+                             if *is_stacked {
+                                node.position_type = PositionType::Absolute;
+                                node.bottom = Val::Px((i as f32) * 4.0);
+                                if i == 0 {
+                                    node.position_type = PositionType::Relative;
+                                }
+                            } else {
+                                node.position_type = PositionType::Relative;
+                                node.top = Val::Auto;
+                                node.bottom = Val::Px(2.0);
+                                node.left = Val::Auto;
+                                node.width = Val::Px(508.0);
+                            }
+                            commands.entity(*card_ent).insert(node.clone());
                         }
-                        // node.left = Val::Px((i as f32) * 6.0);
-                        // node.width = Val::Px(508.0 - (i as f32) * 12.0);
-                    } else {
-                        // Reset to normal layout
-                        node.position_type = PositionType::Relative;
-                        node.top = Val::Auto;
-                        node.bottom = Val::Px(2.0);
-                        node.left = Val::Auto;
-                        node.width = Val::Px(508.0);
                     }
-                    // Re-insert updated Node
-                    commands.entity(*card_ent).insert(node.clone());
                 }
             }
         }
