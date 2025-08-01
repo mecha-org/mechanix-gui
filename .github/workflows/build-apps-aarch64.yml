@@ -110,10 +110,12 @@ jobs:
           pipx install pulp-cli[pygments]
           pipx inject pulp-cli pulp-cli-deb
 
+          PULP_API_URL="${{ env.MECHA_PULP_API_URL }}:8080"
+
           pulp config create \
             --username "${{ secrets.MECHA_PULP_USERNAME }}" \
             --password "${{ secrets.MECHA_PULP_PASSWORD }}" \
-            --base-url "${{ vars.MECHA_PULP_API_URL }}:8080" \
+            --base-url "$PULP_API_URL" \
             --overwrite
 
       - name: Set up Git SSH key
@@ -180,16 +182,16 @@ jobs:
           DEB_FILE=$(ls target/debian/*.deb | head -n1)
 
           pulp deb content upload \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --file="$DEB_FILE"
 
           PUB_HREF=$(pulp deb publication create \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
+            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
 
           pulp deb distribution update \
-            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --name="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --base-path="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
 
       - name: Upload RPM to Pulp [${{ matrix.package }}]
         run: |
@@ -198,15 +200,15 @@ jobs:
           RPM_FILE=$(ls target/generate-rpm/*.rpm | head -n1)
 
           pulp rpm content upload \
-            --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --repository="${{ env.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
             --file="$RPM_FILE"
 
           PUB_HREF=$(pulp rpm publication create \
-            --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
+            --repository="${{ env.MECHA_PULP_RPMS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
 
           pulp rpm distribution update \
-            --name="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
-            --base-path="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --name="${{ env.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --base-path="${{ env.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
             --publication="$PUB_HREF"
 
       - name: Update S3 published repo
