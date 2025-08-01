@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "mxsearch",
+    "mxsearch", "mxsearch/files"
 ]
 default-members = ["mxsearch"]
 

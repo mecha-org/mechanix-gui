@@ -32,6 +32,11 @@ MxSearch supports searching installed Linux applications using `.desktop` files.
 ### 📂 Files Search
 
 MxSearch can index and query files from a given directory.
+=> Increase the watch file limit
+
+```bash
+sudo sysctl -w fs.inotify.max_user_watches=1048576
+```
 
 - **Configurable File Search Service**
     - Enable/disable file search.

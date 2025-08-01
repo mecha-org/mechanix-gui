@@ -4,7 +4,8 @@ mod server;
 use crate::error::ServerError;
 use crate::server::{ServerInterface, SERVED_AT};
 use anyhow::{Context, Result};
-use apps::{AppSearchService, Apps};
+use apps::{AppSearchService, Apps as AppSearchConfig};
+use files::{FileSearchService, FilesConfig as FileSearchConfig};
 use log::{debug, error, info};
 use serde::Deserialize;
 use std::fs;
@@ -19,7 +20,8 @@ pub struct General {}
 #[derive(Debug, Deserialize, Clone)]
 pub struct SearchConfig {
     pub general: General,
-    pub apps: Apps,
+    pub apps: AppSearchConfig,
+    pub files: FileSearchConfig,
 }
 fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
     let content = fs::read_to_string(path)?;
@@ -36,10 +38,10 @@ fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
 #[tokio::main]
 async fn main() -> Result<(), ServerError> {
     env_logger::init();
-    let search_config = load_config("settings.toml")
+    let config = load_config("settings.toml")
         .context("Failed to load config")
         .unwrap();
-    debug!("Loaded config: {:#?}", search_config);
+    debug!("Loaded config: {:#?}", config);
 
     // Build the connection first
     let conn = match ConnectionBuilder::session() {
@@ -55,7 +57,7 @@ async fn main() -> Result<(), ServerError> {
 
     debug!("D-Bus connection built");
 
-    let mut app_search_service = match AppSearchService::new(&search_config.apps) {
+    let mut app_search_service = match AppSearchService::new(&config.apps) {
         Ok(s) => s,
         Err(e) => {
             error!("Failed to create app search service: {}", e);
@@ -63,18 +65,40 @@ async fn main() -> Result<(), ServerError> {
         }
     };
 
-    match app_search_service.run().await {
-        Ok(()) => debug!("AppSearchService started"),
+    let mut file_search_service = match FileSearchService::new(&config.files) {
+        Ok(s) => s,
         Err(e) => {
-            error!("Failed to start AppSearchService: {}", e);
-            return Err(ServerError::FailedStartAppSearchService(e));
+            error!("Failed to create file search service: {}", e);
+            return Err(ServerError::FailedStartFileSearchService(e));
+        }
+    };
+
+    if config.apps.enable_search_apps {
+        match app_search_service.run().await {
+            Ok(()) => debug!("AppSearchService started"),
+            Err(e) => {
+                error!("Failed to start AppSearchService: {}", e);
+                return Err(ServerError::FailedStartAppSearchService(e));
+            }
+        }
+    }
+
+    if config.files.enable_search_files {
+        match file_search_service.run().await {
+            Ok(()) => debug!("FileSearchService started"),
+            Err(e) => {
+                error!("Failed to start FileSearchService: {}", e);
+                return Err(ServerError::FailedStartFileSearchService(e));
+            }
         }
     }
     let arc_app_search_service = Arc::new(app_search_service);
+    let arc_file_search_service = Arc::new(file_search_service);
     // Build and register the D-Bus server (blocking until shutdown)
     let config_server = ServerInterface {
-        config: search_config.clone(),
+        config: config.clone(),
         app_search_service: arc_app_search_service.clone(),
+        file_search_service: arc_file_search_service.clone(),
     };
 
     debug!("D-Bus server registered at {}", SERVED_AT);

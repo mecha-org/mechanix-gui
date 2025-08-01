@@ -125,6 +125,10 @@ impl AppSearchService {
                     continue;
                 }
             };
+            debug!(
+                "Found desktop entry: {:?} {:?}",
+                desktop_entry.name, desktop_entry.comment
+            );
 
             let doc = feed_doc(&schema, &desktop_entry, checksum, &path);
             if let Ok(writer) = index_writer.lock() {
