@@ -108,7 +108,7 @@ jobs:
         run: |
           python3 -m pip install --user pipx
           pipx install pulp-cli[pygments]
-          pipx install pulp-cli-deb
+          pipx inject pulp-cli pulp-cli-deb
 
           pulp config create \
             --username "${{ secrets.MECHA_PULP_USERNAME }}" \
