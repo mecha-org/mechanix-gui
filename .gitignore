@@ -17,3 +17,4 @@ Cargo.lock
 
 Dockerfile.arm64
 .idea
+config/mxsearch/settings.toml
