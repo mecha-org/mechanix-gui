@@ -12,6 +12,34 @@ use crate::launcher::HomescreenWindow;
 use crate::launcher::spawn_camera;
 pub struct NotificationWindow;
 
+#[derive(Component)]
+pub struct ActionElement {
+    pub id: u32,
+    pub action_id: String,
+}
+
+pub fn get_actions_row(actions: Vec<String>) -> impl Bundle {
+    // Check if we have display text actions (pairs: action_id, display_text)
+    let has_actions = actions.len() >= 2;
+    
+    (
+        Node {
+            width: Val::Px(509.0),
+            height: if has_actions { Val::Auto } else { Val::Px(0.0) },
+            margin: if has_actions { 
+                UiRect::top(Val::Px(8.0)) 
+            } else { 
+                UiRect::ZERO 
+            },
+            flex_direction: FlexDirection::Row,
+            justify_content: JustifyContent::SpaceEvenly,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(8.0),
+            ..default()
+        },
+    )
+}
+
 pub struct NotificationWindowPlugin;
 
 impl Plugin for NotificationWindowPlugin {
@@ -23,6 +51,7 @@ impl Plugin for NotificationWindowPlugin {
             .add_systems(Update, clear_button_system)
             .add_systems(Update, card_close_button_system)
             .add_systems(Update, card_unstack_on_click_system)
+            .add_systems(Update, action_button_system)
             .add_systems(Startup, notification_stacks_init)
             .add_systems(Update, clear_all_button_system)
             .init_resource::<AppStackingState>();
@@ -179,10 +208,11 @@ pub fn create_card(
 ) {
     let app_name = &notification.app_name;
     let is_stacked = app_stacking.0.get(app_name).copied().unwrap_or(false);
-    
+
     // Count existing cards in this stack to determine positioning
     let existing_card_count = if let Ok(children) = stack_query.get(drawing_surface) {
-        children.iter()
+        children
+            .iter()
             .filter(|&child| card_query.get(child).is_ok())
             .count()
     } else {
@@ -194,7 +224,8 @@ pub fn create_card(
         .spawn((
             Node {
                 width: Val::Px(508.0),
-                height: Val::Px(81.0),
+                height: Val::Auto,
+                min_height: Val::Px(81.0),
                 margin: UiRect::bottom(Val::Px(7.0)),
                 padding: UiRect::all(Val::Px(10.0)),
                 bottom: if is_stacked && existing_card_count > 0 {
@@ -277,7 +308,7 @@ pub fn create_card(
                                 TextColor(Color::WHITE),
                             )],
                         )
-                    ]
+                    ],
                 ),
                 (
                     Button,
@@ -303,9 +334,10 @@ pub fn create_card(
         .spawn((
             Node {
                 width: Val::Px(484.0),
-                height: Val::Px(15.0),
-                top: Val::Px(8.0),
-                margin: UiRect::all(Val::Px(1.0)),
+                height: Val::Px(25.0),
+                top: Val::Px(10.0),
+                left: Val::Px(3.0),
+                margin: UiRect{bottom: Val::Px(5.0),..default()},
                 ..default()
             },
             children![(
@@ -316,8 +348,54 @@ pub fn create_card(
         ))
         .id();
 
+    let actions_row = commands.spawn(get_actions_row(notification.actions.clone())).id();
+    
+    // Add action buttons as children to the actions row if actions exist
+    if !notification.actions.is_empty() {
+        // Split actions into tuples of (action_id, action_text)
+        let action_tuples: Vec<(String, String)> = notification.actions
+            .chunks(2)
+            .filter_map(|chunk| {
+                if chunk.len() == 2 {
+                    Some((chunk[0].clone(), chunk[1].clone()))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        
+        let action_buttons: Vec<Entity> = action_tuples
+            .iter()
+            .enumerate()
+            .map(|(index, (action_id, action_text))| {
+                commands.spawn((
+                    Button,
+                    Node {
+                        width: Val::Auto,
+                        height: Val::Px(28.0),
+                        padding: UiRect::horizontal(Val::Px(12.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    ActionElement {
+                        id: index as u32,
+                        action_id: action_id.clone(),
+                    },
+                    children![(
+                        Text::new(action_text),
+                        TextFont { font_size: 16.0, ..default() },
+                        TextColor(Color::WHITE),
+                    )],
+                )).id()
+            })
+            .collect();
+        
+        commands.entity(actions_row).add_children(&action_buttons);
+    }
+
     // Add the header and body as children to the card
-    commands.entity(card_entity).add_children(&[card_header, card_body]);
+    commands.entity(card_entity).add_children(&[card_header, card_body, actions_row]);
 
     // Insert the card - if stacked, insert at index 1 (after header), otherwise at the end
     let insert_index = if is_stacked { 1 } else { 1 };
@@ -354,10 +432,10 @@ fn process_notifications(
                         &mut commands
                     );
                     create_card(
-                        notification.clone(), 
-                        *id, 
-                        &mut commands, 
-                        app_stack, 
+                        notification.clone(),
+                        *id,
+                        &mut commands,
+                        app_stack,
                         icon_handle,
                         &app_stacking,
                         &stack_query,
@@ -551,26 +629,27 @@ fn card_close_button_system(
     for (interaction, close_btn) in interaction_query.iter_mut() {
         if *interaction == Interaction::Pressed {
             let card_entity = close_btn.card_entity;
-            
+
             // Get the card's app_name to find its stack
             if let Ok(card) = card_query.get(card_entity) {
                 let app_name = &card.app_name;
-                
+
                 // Despawn only the specific card
                 commands.entity(card_entity).despawn();
-                
+
                 // Check if this was the last card in the stack
                 if let Some(&stack_entity) = stacks.0.get(app_name) {
                     if let Ok(children) = stack_query.get(stack_entity) {
                         // Count remaining cards (excluding the header row at index 0)
-                        let remaining_cards = children.iter()
+                        let remaining_cards = children
+                            .iter()
                             .skip(1) // Skip header
                             .filter(|&child| {
                                 // Check if it's still a valid card and not the one we just despawned
                                 child != card_entity && card_query.get(child).is_ok()
                             })
                             .count();
-                        
+
                         // If no cards remain, remove the entire stack
                         if remaining_cards == 0 {
                             commands.entity(stack_entity).despawn();
@@ -600,15 +679,15 @@ fn clear_all_button_system(
             Interaction::Pressed => {
                 // Handle the "Clear all" button press here
                 println!("Clear All button pressed!");
-                
+
                 // Despawn all notification stacks (which will recursively despawn their children including cards and headers)
                 for stack_entity in stack_query.iter() {
                     commands.entity(stack_entity).despawn();
                 }
-                
+
                 // Clear the stacks resource
                 stacks.0.clear();
-                
+
                 // Clear the app stacking state
                 app_stacking.0.clear();
             }
@@ -654,14 +733,14 @@ fn stack_button_system(
                     if children.is_empty() {
                         continue;
                     }
-                    
+
                     let header_entity = children[0];
 
                     // Apply stacking or unstacking
                     if *is_stacked {
                         // Stacking: hide header and stack cards
                         commands.entity(header_entity).despawn();
-                        
+
                         let mut card_index = 0;
                         for child in children.iter() {
                             if let Ok((_, mut node)) = node_query.get_mut(child) {
@@ -685,7 +764,7 @@ fn stack_button_system(
                                 node.width = Val::Px(508.0);
                             }
                         }
-                        
+
                         // Respawn header at the beginning
                         let new_header_entity = commands
                             .spawn(spawn_app_name_row(app_name.clone()))
@@ -749,6 +828,22 @@ fn card_unstack_on_click_system(
                     }
                 }
             }
+        }
+    }
+}
+
+fn action_button_system(
+    mut interaction_query: Query<
+        (&Interaction, &ActionElement),
+        (Changed<Interaction>, With<Button>)
+    >,
+) {
+    for (interaction, action_element) in interaction_query.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            println!("Action button pressed: id={}, action_id={}", 
+                action_element.id, action_element.action_id);
+            // Here you can add logic to handle the specific action
+            // For example, send the action back to the notification server
         }
     }
 }
