@@ -2,6 +2,7 @@ pub mod bluetooth;
 pub mod network_manager;
 pub mod pulse_audio;
 pub mod upower;
+mod universal_search;
 
 pub use crate::bluetooth::BluetoothPlugin;
 pub use crate::network_manager::NetworkManagerPlugin;
