@@ -21,6 +21,7 @@ impl Plugin for NotificationWindowPlugin {
             .add_systems(Update, process_notifications)
             .add_systems(Update, stack_button_system)
             .add_systems(Update, clear_button_system)
+            .add_systems(Update, card_close_button_system)
             .add_systems(Update, card_unstack_on_click_system)
             .add_systems(Startup, notification_stacks_init)
             .add_systems(Update, clear_all_button_system)
@@ -34,6 +35,11 @@ pub struct ClearAllButton;
 #[derive(Component)]
 pub struct ClearButton {
     pub app_name: String,
+}
+
+#[derive(Component)]
+pub struct CardCloseButton {
+    pub card_entity: Entity,
 }
 
 pub fn spawn_notification_window(commands: &mut Commands) {
@@ -222,13 +228,28 @@ pub fn create_card(
                 Val::Px(8.0) // blur radius
             ),
             Card { app_name: notification.app_name.clone() },
+        ))
+        .id();
+
+    // Now add the children to the card, including the close button that references the card entity
+    let card_header = commands
+        .spawn((
+            Node {
+                width: Val::Auto,
+                height: Val::Px(24.0),
+                margin: UiRect::right(Val::Px(12.0)),
+                flex_direction: FlexDirection::Row,
+                justify_content: JustifyContent::SpaceBetween,
+                align_items: AlignItems::Center,
+                ..default()
+            },
             children![
                 (
                     Node {
                         width: Val::Auto,
-                        height: Val::Px(24.0),
-                        margin: UiRect::right(Val::Px(12.0)),
+                        height: Val::Auto,
                         flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
                         ..default()
                     },
                     children![
@@ -256,25 +277,47 @@ pub fn create_card(
                                 TextColor(Color::WHITE),
                             )],
                         )
-                    ],
+                    ]
                 ),
                 (
+                    Button,
                     Node {
-                        width: Val::Px(484.0),
-                        height: Val::Px(15.0),
-                        top: Val::Px(8.0),
-                        margin: UiRect::all(Val::Px(1.0)),
+                        width: Val::Px(20.0),
+                        height: Val::Px(20.0),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
                         ..default()
                     },
+                    CardCloseButton { card_entity },
                     children![(
-                        Text::new(notification.summary),
-                        TextFont { font_size: 16.0, ..default() },
+                        Text::new("×"),
+                        TextFont { font_size: 20.0, ..default() },
                         TextColor(Color::WHITE),
                     )],
                 )
             ],
         ))
         .id();
+
+    let card_body = commands
+        .spawn((
+            Node {
+                width: Val::Px(484.0),
+                height: Val::Px(15.0),
+                top: Val::Px(8.0),
+                margin: UiRect::all(Val::Px(1.0)),
+                ..default()
+            },
+            children![(
+                Text::new(notification.summary),
+                TextFont { font_size: 16.0, ..default() },
+                TextColor(Color::WHITE),
+            )],
+        ))
+        .id();
+
+    // Add the header and body as children to the card
+    commands.entity(card_entity).add_children(&[card_header, card_body]);
 
     // Insert the card - if stacked, insert at index 1 (after header), otherwise at the end
     let insert_index = if is_stacked { 1 } else { 1 };
@@ -456,7 +499,7 @@ pub fn spawn_app_name_row(app_name: String) -> impl Bundle {
                 ClearButton { app_name: app_name.clone() },
                 BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
                 children![(
-                    Text::new("X"),
+                    Text::new("×"),
                     TextFont { font_size: 18.0, ..default() },
                     TextColor(Color::BLACK),
                 )],
@@ -489,6 +532,54 @@ pub fn clear_button_system(
             if let Some(&stack) = stacks.0.get(app_name) {
                 commands.entity(stack).despawn();
                 stacks.0.remove(app_name);
+            }
+        }
+    }
+}
+
+fn card_close_button_system(
+    mut interaction_query: Query<
+        (&Interaction, &CardCloseButton),
+        (Changed<Interaction>, With<Button>)
+    >,
+    mut commands: Commands,
+    card_query: Query<&Card>,
+    stack_query: Query<&Children, With<NotificationStack>>,
+    mut stacks: ResMut<NotificationStacks>,
+    mut app_stacking: ResMut<AppStackingState>
+) {
+    for (interaction, close_btn) in interaction_query.iter_mut() {
+        if *interaction == Interaction::Pressed {
+            let card_entity = close_btn.card_entity;
+            
+            // Get the card's app_name to find its stack
+            if let Ok(card) = card_query.get(card_entity) {
+                let app_name = &card.app_name;
+                
+                // Despawn only the specific card
+                commands.entity(card_entity).despawn();
+                
+                // Check if this was the last card in the stack
+                if let Some(&stack_entity) = stacks.0.get(app_name) {
+                    if let Ok(children) = stack_query.get(stack_entity) {
+                        // Count remaining cards (excluding the header row at index 0)
+                        let remaining_cards = children.iter()
+                            .skip(1) // Skip header
+                            .filter(|&child| {
+                                // Check if it's still a valid card and not the one we just despawned
+                                child != card_entity && card_query.get(child).is_ok()
+                            })
+                            .count();
+                        
+                        // If no cards remain, remove the entire stack
+                        if remaining_cards == 0 {
+                            commands.entity(stack_entity).despawn();
+                            stacks.0.remove(app_name);
+                            // Also clear the stacking state for this app
+                            app_stacking.0.remove(app_name);
+                        }
+                    }
+                }
             }
         }
     }
@@ -541,7 +632,6 @@ fn stack_button_system(
         (&Interaction, &StackButton),
         (Changed<Interaction>, With<Button>)
     >,
-    mut card_interaction_query: Query<(&Interaction, &Card), (Changed<Interaction>, With<Button>)>,
     stacks: Res<NotificationStacks>,
     stack_query: Query<&Children, With<NotificationStack>>,
     mut node_query: Query<(&ZIndex, &mut Node), With<Card>>,
@@ -561,41 +651,46 @@ fn stack_button_system(
 
             if let Some(&stack_entity) = stacks.0.get(app_name) {
                 if let Ok(children) = stack_query.get(stack_entity) {
+                    if children.is_empty() {
+                        continue;
+                    }
+                    
                     let header_entity = children[0];
 
-                    // Collect cards in this stack, sorted by ZIndex ascending (bottom to top)
-                    let mut cards: Vec<(Entity, i32)> = children
-                        .iter()
-                        .filter_map(|child| {
-                            node_query
-                                .get(child)
-                                .ok()
-                                .map(|(zidx, _)| (child, zidx.0))
-                        })
-                        .collect();
-                    cards.sort_by(|a, b| a.1.cmp(&b.1));
-
                     // Apply stacking or unstacking
-                    for (i, (card_ent, _)) in cards.iter().enumerate() {
-                        if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
-                            if *is_stacked {
+                    if *is_stacked {
+                        // Stacking: hide header and stack cards
+                        commands.entity(header_entity).despawn();
+                        
+                        let mut card_index = 0;
+                        for child in children.iter() {
+                            if let Ok((_, mut node)) = node_query.get_mut(child) {
                                 node.position_type = PositionType::Absolute;
-                                node.bottom = Val::Px((i as f32) * 4.0);
+                                node.bottom = Val::Px((card_index as f32) * 4.0);
                                 node.top = Val::Px(5.0);
-                                if i == 0 {
+                                if card_index == 0 {
                                     node.position_type = PositionType::Relative;
                                 }
-                                commands.entity(header_entity).despawn();
-                            } else {
+                                card_index += 1;
+                            }
+                        }
+                    } else {
+                        // Unstacking: show cards separately and respawn header
+                        for child in children.iter() {
+                            if let Ok((_, mut node)) = node_query.get_mut(child) {
                                 node.position_type = PositionType::Relative;
                                 node.top = Val::Auto;
                                 node.bottom = Val::Px(2.0);
                                 node.left = Val::Auto;
                                 node.width = Val::Px(508.0);
-                                // commands.entity(stack_entity).insert_children(0, &[header_entity]);
                             }
-                            commands.entity(*card_ent).insert(node.clone());
                         }
+                        
+                        // Respawn header at the beginning
+                        let new_header_entity = commands
+                            .spawn(spawn_app_name_row(app_name.clone()))
+                            .id();
+                        commands.entity(stack_entity).insert_children(0, &[new_header_entity]);
                     }
                 }
             }
@@ -636,7 +731,7 @@ fn card_unstack_on_click_system(
                         cards.sort_by(|a, b| a.1.cmp(&b.1));
 
                         // Apply stacking or unstacking
-                        for (i, (card_ent, _)) in cards.iter().enumerate() {
+                        for (_, (card_ent, _)) in cards.iter().enumerate() {
                             if let Ok((_, mut node)) = node_query.get_mut(*card_ent) {
                                 node.position_type = PositionType::Relative;
                                 node.top = Val::Auto;
