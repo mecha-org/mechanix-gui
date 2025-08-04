@@ -166,8 +166,23 @@ pub fn create_card(
     id: u32,
     commands: &mut Commands,
     drawing_surface: Entity,
-    icon_handle: Handle<Image>
+    icon_handle: Handle<Image>,
+    app_stacking: &AppStackingState,
+    stack_query: &Query<&Children, With<NotificationStack>>,
+    card_query: &Query<Entity, With<Card>>
 ) {
+    let app_name = &notification.app_name;
+    let is_stacked = app_stacking.0.get(app_name).copied().unwrap_or(false);
+    
+    // Count existing cards in this stack to determine positioning
+    let existing_card_count = if let Ok(children) = stack_query.get(drawing_surface) {
+        children.iter()
+            .filter(|&child| card_query.get(child).is_ok())
+            .count()
+    } else {
+        0
+    };
+
     // Spawn the card node first, get its Entity
     let card_entity = commands
         .spawn((
@@ -176,7 +191,21 @@ pub fn create_card(
                 height: Val::Px(81.0),
                 margin: UiRect::bottom(Val::Px(7.0)),
                 padding: UiRect::all(Val::Px(10.0)),
-                bottom: Val::Auto,
+                bottom: if is_stacked && existing_card_count > 0 {
+                    Val::Px((existing_card_count as f32) * 4.0)
+                } else {
+                    Val::Auto
+                },
+                position_type: if is_stacked && existing_card_count > 0 {
+                    PositionType::Absolute
+                } else {
+                    PositionType::Relative
+                },
+                top: if is_stacked && existing_card_count > 0 {
+                    Val::Px(5.0)
+                } else {
+                    Val::Auto
+                },
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
@@ -184,11 +213,11 @@ pub fn create_card(
             BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
             BorderRadius::all(Val::Px(8.0)),
             BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
-            // ZIndex(id as i32),
+            ZIndex(id as i32),
             BoxShadow::new(
                 Color::BLACK.with_alpha(0.5), // shadow color
                 Val::Px(4.0), // x offset
-                Val::Px(-4.0), // y offset (negative for “down”)
+                Val::Px(-4.0), // y offset (negative for "down")
                 Val::Px(2.0), // spread
                 Val::Px(8.0) // blur radius
             ),
@@ -247,8 +276,9 @@ pub fn create_card(
         ))
         .id();
 
-    // Insert the card as the first child of the drawing_surface
-    commands.entity(drawing_surface).insert_children(1, &[card_entity]);
+    // Insert the card - if stacked, insert at index 1 (after header), otherwise at the end
+    let insert_index = if is_stacked { 1 } else { 1 };
+    commands.entity(drawing_surface).insert_children(insert_index, &[card_entity]);
 }
 
 fn process_notifications(
@@ -256,7 +286,10 @@ fn process_notifications(
     mut commands: Commands,
     drawing_surface: Option<Res<NotificationSurfaceEntity>>,
     mut stacks: ResMut<NotificationStacks>,
-    asset_server: Res<AssetServer>
+    asset_server: Res<AssetServer>,
+    app_stacking: Res<AppStackingState>,
+    stack_query: Query<&Children, With<NotificationStack>>,
+    card_query: Query<Entity, With<Card>>
 ) {
     for event in events.read() {
         match event {
@@ -277,7 +310,16 @@ fn process_notifications(
                         &mut stacks,
                         &mut commands
                     );
-                    create_card(notification.clone(), *id, &mut commands, app_stack, icon_handle);
+                    create_card(
+                        notification.clone(), 
+                        *id, 
+                        &mut commands, 
+                        app_stack, 
+                        icon_handle,
+                        &app_stacking,
+                        &stack_query,
+                        &card_query
+                    );
                 }
             }
             NotificationEvent::Closed(id) => {
