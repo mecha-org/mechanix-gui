@@ -13,3 +13,9 @@ pub enum ServerError {
     #[error("Failed to start dbus server: {0}")]
     FailedStartDBusServer(zbus::Error),
 }
+
+#[derive(Error, Debug)]
+pub enum ServiceError {
+    #[error("Failed to build connection: {0}")]
+    CreateProxyError(String),
+}
