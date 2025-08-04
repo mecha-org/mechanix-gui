@@ -1,5 +1,6 @@
 mod error;
 mod server;
+mod service;
 
 use crate::error::ServerError;
 use crate::server::{ServerInterface, SERVED_AT};

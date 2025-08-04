@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
 members = [
-    "mxsearch", "mxsearch/files"
+    "../mxsearch", "../mxsearch/files"
 ]
-default-members = ["mxsearch"]
+default-members = ["../mxsearch"]
 
 [workspace.package]
 version = "0.1.0"

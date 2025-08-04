@@ -62,6 +62,19 @@ impl ServerInterface {
         Ok(results)
     }
 
+    /// Lists available applications.
+    ///
+    /// This function queries the application search service to retrieve a list of applications.
+    /// It checks if the search functionality is enabled before proceeding.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `ZbusError::Failed` if the search functionality is disabled or if there is
+    /// an error during the retrieval of applications.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `AppInfo` representing the available applications if successful.
     pub async fn list_applications(&self) -> zbus::fdo::Result<Vec<AppInfo>> {
         info!("List applications");
         if !self.config.apps.enable_search_apps {
