@@ -500,18 +500,26 @@ fn clear_all_button_system(
         (Changed<Interaction>, With<Button>)
     >,
     mut commands: Commands,
-    card_query: Query<(Entity, &Card)>
+    stack_query: Query<Entity, With<NotificationStack>>,
+    mut stacks: ResMut<NotificationStacks>,
+    mut app_stacking: ResMut<AppStackingState>
 ) {
-    for (interaction, entity) in interaction_query.iter_mut() {
+    for (interaction, _) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Pressed => {
                 // Handle the "Clear all" button press here
                 println!("Clear All button pressed!");
-                for (entity, id) in card_query {
-                    // all_notifications.notifications.remove(&id);
-                    commands.entity(entity).despawn_recursive();
+                
+                // Despawn all notification stacks (which will recursively despawn their children including cards and headers)
+                for stack_entity in stack_query.iter() {
+                    commands.entity(stack_entity).despawn();
                 }
-                // Example: commands.entity(entity).despawn_recursive();
+                
+                // Clear the stacks resource
+                stacks.0.clear();
+                
+                // Clear the app stacking state
+                app_stacking.0.clear();
             }
             _ => {}
         }
