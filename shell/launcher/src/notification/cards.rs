@@ -27,7 +27,7 @@ pub fn get_actions_row(actions: Vec<String>) -> impl Bundle {
             width: Val::Px(509.0),
             height: if has_actions { Val::Auto } else { Val::Px(0.0) },
             margin: if has_actions { 
-                UiRect::top(Val::Px(8.0)) 
+                UiRect::top(Val::Px(10.0)) 
             } else { 
                 UiRect::ZERO 
             },
@@ -367,27 +367,52 @@ pub fn create_card(
         let action_buttons: Vec<Entity> = action_tuples
             .iter()
             .enumerate()
-            .map(|(index, (action_id, action_text))| {
-                commands.spawn((
-                    Button,
-                    Node {
-                        width: Val::Auto,
-                        height: Val::Px(28.0),
-                        padding: UiRect::horizontal(Val::Px(12.0)),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    ActionElement {
-                        id: index as u32,
-                        action_id: action_id.clone(),
-                    },
-                    children![(
-                        Text::new(action_text),
-                        TextFont { font_size: 16.0, ..default() },
-                        TextColor(Color::WHITE),
-                    )],
-                )).id()
+            .flat_map(|(index, (action_id, action_text))| {
+                let mut elements = vec![
+                    commands.spawn((
+                        Button,
+                        Node {
+                            width: Val::Auto,
+                            height: Val::Px(28.0),
+                            padding: UiRect::horizontal(Val::Px(12.0)),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                        ActionElement {
+                            id: index as u32,
+                            action_id: action_id.clone(),
+                        },
+                        children![(
+                            Text::new(action_text),
+                            TextFont { font_size: 16.0, ..default() },
+                            TextColor(Color::WHITE),
+                        )],
+                    )).id()
+                ];
+
+                // Add separator if not the last element
+                if index < action_tuples.len() - 1 {
+                    elements.push(
+                        commands.spawn((
+                            Node {
+                                width: Val::Auto,
+                                height: Val::Px(28.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                padding: UiRect::horizontal(Val::Px(8.0)),
+                                ..default()
+                            },
+                            children![(
+                                Text::new("|"),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(Color::linear_rgba(0.6, 0.6, 0.6, 1.0)),
+                            )],
+                        )).id()
+                    );
+                }
+
+                elements
             })
             .collect();
         
