@@ -8,6 +8,7 @@ use bevy_core_widgets::{ CoreButton, CoreScrollArea, InteractionDisabled, Orient
 use freedesktop_notifications_server::notification::{ Notification };
 use bevy_plugins::notification::{ NotificationPlugin, NotificationEvent };
 use crate::components::apps_grid;
+use std::time::{SystemTime, Duration};
 use crate::launcher::HomescreenWindow;
 use crate::launcher::spawn_camera;
 pub struct NotificationWindow;
@@ -17,6 +18,14 @@ pub struct ActionElement {
     pub id: u32,
     pub action_id: String,
 }
+
+#[derive(Component)]
+pub struct NotificationTimestamp {
+    pub created_at: SystemTime,
+}
+
+#[derive(Resource)]
+pub struct TimestampUpdateTimer(Timer);
 
 pub fn get_actions_row(actions: Vec<String>) -> impl Bundle {
     // Check if we have display text actions (pairs: action_id, display_text)
@@ -40,6 +49,27 @@ pub fn get_actions_row(actions: Vec<String>) -> impl Bundle {
     )
 }
 
+fn format_time_elapsed(created_at: SystemTime) -> String {
+    let now = SystemTime::now();
+    if let Ok(elapsed) = now.duration_since(created_at) {
+        let secs = elapsed.as_secs();
+        if secs < 60 {
+            "now".to_string()
+        } else if secs < 3600 {
+            let mins = secs / 60;
+            format!("{}m", mins)
+        } else if secs < 86400 {
+            let hours = secs / 3600;
+            format!("{}h", hours)
+        } else {
+            let days = secs / 86400;
+            format!("{}d", days)
+        }
+    } else {
+        "now".to_string()
+    }
+}
+
 pub struct NotificationWindowPlugin;
 
 impl Plugin for NotificationWindowPlugin {
@@ -54,6 +84,8 @@ impl Plugin for NotificationWindowPlugin {
             .add_systems(Update, action_button_system)
             .add_systems(Startup, notification_stacks_init)
             .add_systems(Update, clear_all_button_system)
+            .add_systems(Update, update_notification_timestamps)
+            .add_systems(Startup, init_timestamp_timer)
             .init_resource::<AppStackingState>();
     }
 }
@@ -185,6 +217,13 @@ pub fn init_count(mut commands: Commands) {
     commands.insert_resource(Count(0));
 }
 
+pub fn init_timestamp_timer(mut commands: Commands) {
+    commands.insert_resource(TimestampUpdateTimer(Timer::from_seconds(
+        60.0,
+        TimerMode::Repeating,
+    )));
+}
+
 // pub fn spawn_multiple_cards(
 //     mut commands: Commands,
 //     drawing_surface: Option<Res<NotificationSurfaceEntity>>,
@@ -306,6 +345,37 @@ pub fn create_card(
                                 Text::new(notification.app_name),
                                 TextFont { font_size: 20.0, ..default() },
                                 TextColor(Color::WHITE),
+                            )],
+                        ),
+                        (
+                            Node {
+                                width: Val::Auto,
+                                height: Val::Auto,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::left(Val::Px(8.0)),
+                                ..default()
+                            },
+                            children![(
+                                Text::new("•"),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(Color::linear_rgba(0.7, 0.7, 0.7, 1.0)),
+                            )],
+                        ),
+                        (
+                            Node {
+                                width: Val::Auto,
+                                height: Val::Auto,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::left(Val::Px(8.0)),
+                                ..default()
+                            },
+                            NotificationTimestamp { created_at: SystemTime::now() },
+                            children![(
+                                Text::new(format_time_elapsed(SystemTime::now())),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(Color::linear_rgba(0.7, 0.7, 0.7, 1.0)),
                             )],
                         )
                     ],
@@ -869,6 +939,28 @@ fn action_button_system(
                 action_element.id, action_element.action_id);
             // Here you can add logic to handle the specific action
             // For example, send the action back to the notification server
+        }
+    }
+}
+
+fn update_notification_timestamps(
+    mut timestamp_query: Query<(&NotificationTimestamp, &Children)>,
+    mut text_query: Query<&mut Text>,
+    time: Res<Time>,
+    mut timer: ResMut<TimestampUpdateTimer>,
+) {
+    // Update every 30 seconds to avoid excessive updates
+    if !timer.0.tick(time.delta()).just_finished() {
+        return;
+    }
+    
+    for (timestamp, children) in timestamp_query.iter_mut() {
+        // Find the text node among the children and update it
+        for child in children.iter() {
+            if let Ok(mut text) = text_query.get_mut(child) {
+                **text = format_time_elapsed(timestamp.created_at);
+                break;
+            }
         }
     }
 }
