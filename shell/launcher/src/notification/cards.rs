@@ -8,6 +8,7 @@ use bevy_core_widgets::{ CoreButton, CoreScrollArea, InteractionDisabled, Orient
 use freedesktop_notifications_server::notification::{ Notification };
 use bevy_plugins::notification::{ NotificationPlugin, NotificationEvent };
 use crate::components::apps_grid;
+use std::time::{ SystemTime, Duration };
 use crate::launcher::HomescreenWindow;
 use crate::launcher::spawn_camera;
 pub struct NotificationWindow;
@@ -18,18 +19,30 @@ pub struct ActionElement {
     pub action_id: String,
 }
 
+#[derive(Component)]
+pub struct NotificationTimestamp {
+    pub created_at: SystemTime,
+}
+
+#[derive(Resource)]
+pub struct TimestampUpdateTimer(Timer);
+
 pub fn get_actions_row(actions: Vec<String>) -> impl Bundle {
     // Check if we have display text actions (pairs: action_id, display_text)
     let has_actions = actions.len() >= 2;
-    
+
     (
         Node {
             width: Val::Px(509.0),
-            height: if has_actions { Val::Auto } else { Val::Px(0.0) },
-            margin: if has_actions { 
-                UiRect::top(Val::Px(10.0)) 
-            } else { 
-                UiRect::ZERO 
+            height: if has_actions {
+                Val::Auto
+            } else {
+                Val::Px(0.0)
+            },
+            margin: if has_actions {
+                UiRect::top(Val::Px(10.0))
+            } else {
+                UiRect::ZERO
             },
             flex_direction: FlexDirection::Row,
             justify_content: JustifyContent::SpaceEvenly,
@@ -38,6 +51,27 @@ pub fn get_actions_row(actions: Vec<String>) -> impl Bundle {
             ..default()
         },
     )
+}
+
+fn format_time_elapsed(created_at: SystemTime) -> String {
+    let now = SystemTime::now();
+    if let Ok(elapsed) = now.duration_since(created_at) {
+        let secs = elapsed.as_secs();
+        if secs < 60 {
+            "now".to_string()
+        } else if secs < 3600 {
+            let mins = secs / 60;
+            format!("{}m", mins)
+        } else if secs < 86400 {
+            let hours = secs / 3600;
+            format!("{}h", hours)
+        } else {
+            let days = secs / 86400;
+            format!("{}d", days)
+        }
+    } else {
+        "now".to_string()
+    }
 }
 
 pub struct NotificationWindowPlugin;
@@ -54,6 +88,8 @@ impl Plugin for NotificationWindowPlugin {
             .add_systems(Update, action_button_system)
             .add_systems(Startup, notification_stacks_init)
             .add_systems(Update, clear_all_button_system)
+            .add_systems(Update, update_notification_timestamps)
+            .add_systems(Startup, init_timestamp_timer)
             .init_resource::<AppStackingState>();
     }
 }
@@ -152,11 +188,11 @@ pub fn spawn_notification_window(commands: &mut Commands) {
                         },
                         BorderRadius::all(Val::Px(8.0)),
                         ClearAllButton,
-                        BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
+                        BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
                         children![(
                             Text::new("Clear all"),
                             TextFont { font_size: 12.0, ..default() },
-                            TextColor(Color::BLACK),
+                            TextColor(Color::WHITE),
                         )],
                     )
                 ],
@@ -183,6 +219,10 @@ pub struct Count(pub i32);
 
 pub fn init_count(mut commands: Commands) {
     commands.insert_resource(Count(0));
+}
+
+pub fn init_timestamp_timer(mut commands: Commands) {
+    commands.insert_resource(TimestampUpdateTimer(Timer::from_seconds(60.0, TimerMode::Repeating)));
 }
 
 // pub fn spawn_multiple_cards(
@@ -307,6 +347,37 @@ pub fn create_card(
                                 TextFont { font_size: 20.0, ..default() },
                                 TextColor(Color::WHITE),
                             )],
+                        ),
+                        (
+                            Node {
+                                width: Val::Auto,
+                                height: Val::Auto,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::left(Val::Px(8.0)),
+                                ..default()
+                            },
+                            children![(
+                                Text::new("•"),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(Color::linear_rgba(0.7, 0.7, 0.7, 1.0)),
+                            )],
+                        ),
+                        (
+                            Node {
+                                width: Val::Auto,
+                                height: Val::Auto,
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                margin: UiRect::left(Val::Px(8.0)),
+                                ..default()
+                            },
+                            NotificationTimestamp { created_at: SystemTime::now() },
+                            children![(
+                                Text::new(format_time_elapsed(SystemTime::now())),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(Color::linear_rgba(0.7, 0.7, 0.7, 1.0)),
+                            )],
                         )
                     ],
                 ),
@@ -337,7 +408,7 @@ pub fn create_card(
                 height: Val::Px(25.0),
                 top: Val::Px(10.0),
                 left: Val::Px(3.0),
-                margin: UiRect{bottom: Val::Px(5.0),..default()},
+                margin: UiRect { bottom: Val::Px(5.0), ..default() },
                 ..default()
             },
             children![(
@@ -349,73 +420,73 @@ pub fn create_card(
         .id();
 
     let actions_row = commands.spawn(get_actions_row(notification.actions.clone())).id();
-    
+
     // Add action buttons as children to the actions row if actions exist
     if !notification.actions.is_empty() {
         // Split actions into tuples of (action_id, action_text)
         let action_tuples: Vec<(String, String)> = notification.actions
             .chunks(2)
             .filter_map(|chunk| {
-                if chunk.len() == 2 {
-                    Some((chunk[0].clone(), chunk[1].clone()))
-                } else {
-                    None
-                }
+                if chunk.len() == 2 { Some((chunk[0].clone(), chunk[1].clone())) } else { None }
             })
             .collect();
-        
+
         let action_buttons: Vec<Entity> = action_tuples
             .iter()
             .enumerate()
             .flat_map(|(index, (action_id, action_text))| {
                 let mut elements = vec![
-                    commands.spawn((
-                        Button,
-                        Node {
-                            width: Val::Auto,
-                            height: Val::Px(28.0),
-                            padding: UiRect::horizontal(Val::Px(12.0)),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                        ActionElement {
-                            id: index as u32,
-                            action_id: action_id.clone(),
-                        },
-                        children![(
-                            Text::new(action_text),
-                            TextFont { font_size: 16.0, ..default() },
-                            TextColor(Color::WHITE),
-                        )],
-                    )).id()
+                    commands
+                        .spawn((
+                            Button,
+                            Node {
+                                width: Val::Auto,
+                                height: Val::Px(28.0),
+                                padding: UiRect::horizontal(Val::Px(12.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            ActionElement {
+                                id: index as u32,
+                                action_id: action_id.clone(),
+                            },
+                            children![(
+                                Text::new(action_text),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(Color::WHITE),
+                            )],
+                        ))
+                        .id()
                 ];
 
                 // Add separator if not the last element
                 if index < action_tuples.len() - 1 {
                     elements.push(
-                        commands.spawn((
-                            Node {
-                                width: Val::Auto,
-                                height: Val::Px(28.0),
-                                justify_content: JustifyContent::Center,
-                                align_items: AlignItems::Center,
-                                padding: UiRect::horizontal(Val::Px(8.0)),
-                                ..default()
-                            },
-                            children![(
-                                Text::new("|"),
-                                TextFont { font_size: 16.0, ..default() },
-                                TextColor(Color::linear_rgba(0.6, 0.6, 0.6, 1.0)),
-                            )],
-                        )).id()
+                        commands
+                            .spawn((
+                                Node {
+                                    width: Val::Auto,
+                                    height: Val::Px(28.0),
+                                    justify_content: JustifyContent::Center,
+                                    align_items: AlignItems::Center,
+                                    padding: UiRect::horizontal(Val::Px(8.0)),
+                                    ..default()
+                                },
+                                children![(
+                                    Text::new("|"),
+                                    TextFont { font_size: 16.0, ..default() },
+                                    TextColor(Color::linear_rgba(0.6, 0.6, 0.6, 1.0)),
+                                )],
+                            ))
+                            .id()
                     );
                 }
 
                 elements
             })
             .collect();
-        
+
         commands.entity(actions_row).add_children(&action_buttons);
     }
 
@@ -574,16 +645,16 @@ pub fn spawn_app_name_row(app_name: String) -> impl Bundle {
                     height: Val::Px(26.0),
                     justify_content: JustifyContent::Center,
                     align_items: AlignItems::Center,
-                    margin: UiRect::right(Val::Px(10.0)),
+                    margin: UiRect::right(Val::Px(5.0)),
                     ..default()
                 },
                 BorderRadius::all(Val::Px(8.0)),
                 StackButton { app_name: app_name.clone(), is_stacked: false },
-                BackgroundColor(Color::srgb(100.0, 100.0, 100.0)),
+                BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
                 children![(
-                    Text::new(">"),
+                    Text::new("⌄"),
                     TextFont { font_size: 18.0, ..default() },
-                    TextColor(Color::BLACK),
+                    TextColor(Color::WHITE),
                 )],
             ),
 
@@ -600,11 +671,11 @@ pub fn spawn_app_name_row(app_name: String) -> impl Bundle {
                 },
                 BorderRadius::all(Val::Px(8.0)),
                 ClearButton { app_name: app_name.clone() },
-                BackgroundColor(Color::srgb(77.0, 77.0, 77.0)),
+                BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
                 children![(
                     Text::new("×"),
                     TextFont { font_size: 18.0, ..default() },
-                    TextColor(Color::BLACK),
+                    TextColor(Color::WHITE),
                 )],
             )
         ],
@@ -861,14 +932,39 @@ fn action_button_system(
     mut interaction_query: Query<
         (&Interaction, &ActionElement),
         (Changed<Interaction>, With<Button>)
-    >,
+    >
 ) {
     for (interaction, action_element) in interaction_query.iter_mut() {
         if *interaction == Interaction::Pressed {
-            println!("Action button pressed: id={}, action_id={}", 
-                action_element.id, action_element.action_id);
+            println!(
+                "Action button pressed: id={}, action_id={}",
+                action_element.id,
+                action_element.action_id
+            );
             // Here you can add logic to handle the specific action
             // For example, send the action back to the notification server
+        }
+    }
+}
+
+fn update_notification_timestamps(
+    mut timestamp_query: Query<(&NotificationTimestamp, &Children)>,
+    mut text_query: Query<&mut Text>,
+    time: Res<Time>,
+    mut timer: ResMut<TimestampUpdateTimer>
+) {
+    // Update every 30 seconds to avoid excessive updates
+    if !timer.0.tick(time.delta()).just_finished() {
+        return;
+    }
+
+    for (timestamp, children) in timestamp_query.iter_mut() {
+        // Find the text node among the children and update it
+        for child in children.iter() {
+            if let Ok(mut text) = text_query.get_mut(child) {
+                **text = format_time_elapsed(timestamp.created_at);
+                break;
+            }
         }
     }
 }
