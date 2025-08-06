@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::log::{ error, info };
 use std::collections::HashMap;
-use freedesktop_notifications_server::proxies::mechanix::MechanixNotificationProxy;
+use freedesktop_notifications_server::proxies::mechanix::{ MechanixNotificationProxy };
 use freedesktop_notifications_server::notification::Notification;
 use freedesktop_notifications_server::database::get_all_notifications_from_db;
 use zbus::Connection;
@@ -18,6 +18,7 @@ pub struct AllNotificationsResource(HashMap<u32, Notification>);
 pub enum NotificationEvent {
     Recieved(u32, Notification),
     Closed(u32),
+    ActionInvoked(u32, String), // id, action_id
 }
 
 #[derive(Resource)]
@@ -64,6 +65,7 @@ fn apply_loaded_notifications(
                 // You can emit a new event here if needed:
                 event_writer.send(NotificationEvent::Closed(id));
             }
+            _ => {}
         }
     }
 }
@@ -125,6 +127,40 @@ fn spawn_notification_poller(mut commands: Commands) {
     commands.insert_resource(NotificationEventSender(tx));
 }
 
+fn handle_action_invoked(mut event_reader: EventReader<NotificationEvent>) {
+    for event in event_reader.read() {
+        if let NotificationEvent::ActionInvoked(id, action_id) = event {
+            let id = *id;
+            let action_id = action_id.clone();
+
+            // Use AsyncComputeTaskPool instead of IoTaskPool for async operations
+            AsyncComputeTaskPool::get()
+                .spawn(async move {
+                    // Create a new tokio runtime for this task
+                    let rt = tokio::runtime::Runtime::new().unwrap();
+                    rt.block_on(async move {
+                        match Connection::session().await {
+                            Ok(connection) => {
+                                match MechanixNotificationProxy::new(&connection).await {
+                                    Ok(proxy) => {
+                                        if let Err(e) = proxy.invoke_action(id, &action_id).await {
+                                            error!("Failed to invoke action {} for notification {}: {}", action_id, id, e);
+                                        } else {
+                                            info!("Successfully invoked action {} for notification {}", action_id, id); 
+                                        }
+                                    }
+                                    Err(e) => error!("Failed to create proxy: {}", e),
+                                }
+                            }
+                            Err(e) => error!("Failed to connect to session bus: {}", e),
+                        }
+                    });
+                })
+                .detach();
+        }
+    }
+}
+
 pub struct NotificationPlugin;
 
 impl Plugin for NotificationPlugin {
@@ -133,6 +169,6 @@ impl Plugin for NotificationPlugin {
             .add_event::<NotificationEvent>()
             .add_systems(Startup, spawn_notification_poller)
             // .add_systems(Startup, load_notifications_from_database)
-            .add_systems(Update, apply_loaded_notifications);
+            .add_systems(Update, (apply_loaded_notifications, handle_action_invoked));
     }
 }

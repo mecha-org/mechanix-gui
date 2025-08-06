@@ -17,6 +17,7 @@ pub struct NotificationWindow;
 pub struct ActionElement {
     pub id: u32,
     pub action_id: String,
+    pub action_text: String,
 }
 
 #[derive(Component)]
@@ -450,6 +451,7 @@ pub fn create_card(
                             ActionElement {
                                 id: index as u32,
                                 action_id: action_id.clone(),
+                                action_text: action_text.clone(),
                             },
                             children![(
                                 Text::new(action_text),
@@ -542,6 +544,9 @@ fn process_notifications(
             NotificationEvent::Closed(id) => {
                 info!("Notification closed: id={}", id);
                 // remove_notification_card(&mut commands, id, &mut notification_storage);
+            }
+            _ => {
+                // Handle other events
             }
         }
     }
@@ -932,15 +937,22 @@ fn action_button_system(
     mut interaction_query: Query<
         (&Interaction, &ActionElement),
         (Changed<Interaction>, With<Button>)
-    >
+    >,
+    mut event_writer: EventWriter<NotificationEvent>
 ) {
     for (interaction, action_element) in interaction_query.iter_mut() {
         if *interaction == Interaction::Pressed {
             println!(
                 "Action button pressed: id={}, action_id={}",
                 action_element.id,
-                action_element.action_id
+                action_element.action_text
             );
+
+            let notification_event = NotificationEvent::ActionInvoked(action_element.id.clone(), action_element.action_text.clone());
+            // println!("Action Invoked: {} for notification {}", action_element.action_id, action_element.id);
+            // Forward the event
+            event_writer.send(notification_event);
+
             // Here you can add logic to handle the specific action
             // For example, send the action back to the notification server
         }
