@@ -1,9 +1,11 @@
-use crate::universal_search::ErrorType::ActionFailed;
+use crate::mxsearch::ErrorType::ActionFailed;
+use bevy::ecs::system::SystemId;
 use bevy::log::{error, info};
 use bevy::prelude::*;
 use bevy::prelude::{Event, Resource};
 use bevy::tasks::{AsyncComputeTaskPool, IoTaskPool};
 use mxsearch::service::MxSearchService;
+use mxsearch::{AppInfo, FileInfo};
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{LazyLock, Mutex};
 
@@ -13,8 +15,6 @@ pub struct MxSearchServiceResource {
     pub service: Option<MxSearchService>,
 }
 
-#[derive(Resource, Default, Debug, Clone)]
-pub struct WirelessEnabled(bool);
 #[derive(Resource)]
 pub struct MxSearchResultReceiver {
     receiver: Mutex<Receiver<MxSearchResult>>,
@@ -22,6 +22,26 @@ pub struct MxSearchResultReceiver {
 
 #[derive(Resource, Clone)]
 pub struct MxSearchResultSender(pub Sender<MxSearchResult>);
+
+#[derive(Debug, Clone)]
+pub enum SearchResultType {
+    App,
+    File,
+}
+
+#[derive(Debug, Clone)]
+pub struct SearchResult {
+    pub name: String,
+    pub icon: String,
+    pub on_click: Option<SystemId>,
+    pub _type: SearchResultType,
+}
+
+#[derive(Resource, Clone, Default)]
+pub struct AppSearchResult(pub Vec<SearchResult>);
+
+#[derive(Resource, Clone, Default)]
+pub struct FileSearchResult(pub Vec<SearchResult>);
 
 #[derive(Event)]
 pub struct MxSearchActionEvent(pub MxSearchAction);
@@ -35,6 +55,8 @@ pub enum MxSearchAction {
 
 #[derive(Debug)]
 pub enum MxSearchResult {
+    Applications(Vec<AppInfo>),
+    Files(Vec<FileInfo>),
     Error(ErrorType),
 }
 
@@ -52,8 +74,11 @@ pub struct UniversalSearchPlugin;
 impl Plugin for UniversalSearchPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(MxSearchServiceResource { service: None })
+            .insert_resource(AppSearchResult::default())
+            .insert_resource(FileSearchResult::default())
             .add_event::<MxSearchActionEvent>()
             .add_systems(Startup, (init_mxsearch_service, setup_channel)) // Async task so temp move service result to static
+            .add_systems(Update, poll_service_init)
             .add_systems(
                 Update,
                 (
@@ -149,8 +174,16 @@ fn handle_action_events(
                     let result_sender = sender.0.clone();
                     let query = query.clone();
                     pool.spawn(async move {
+                        info!("about to send query: {query}");
                         match service.search_applications(&query).await {
-                            Ok(status) => {}
+                            Ok(apps) => {
+                                info!("found {} applications", apps.len());
+                                if let Err(err) =
+                                    result_sender.send(MxSearchResult::Applications(apps))
+                                {
+                                    error!("failed to send list applications: {err}");
+                                }
+                            }
                             Err(err) => {
                                 error!("failed to list applications: {err}");
                                 let error_type = ActionFailed {
@@ -166,6 +199,8 @@ fn handle_action_events(
                         }
                     })
                     .detach();
+                } else {
+                    error!("service not initialized");
                 }
             }
             MxSearchAction::SearchFiles(query) => {
@@ -176,7 +211,12 @@ fn handle_action_events(
                     let query = query.clone();
                     pool.spawn(async move {
                         match service.search_files(&query).await {
-                            Ok(status) => {}
+                            Ok(files) => {
+                                info!("found {} files", files.len());
+                                if let Err(err) = result_sender.send(MxSearchResult::Files(files)) {
+                                    error!("failed to send files a search result: {err}");
+                                }
+                            }
                             Err(err) => {
                                 error!("failed to search files: {err}");
                                 let error_type = ActionFailed {
@@ -201,12 +241,37 @@ fn handle_action_events(
 // Polling system to insert write error into an event
 fn poll_action_result_events(
     event_receiver: ResMut<MxSearchResultReceiver>,
-    mut wifi_state: ResMut<WirelessEnabled>,
+    mut app_search_result: ResMut<AppSearchResult>,
+    mut file_search_result: ResMut<FileSearchResult>,
 ) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
             match event {
-                _ => {}
+                MxSearchResult::Error(_) => {}
+                MxSearchResult::Applications(apps) => {
+                    let mut app_list: Vec<SearchResult> = Vec::new();
+                    for app in apps {
+                        app_list.push(SearchResult {
+                            name: app.name,
+                            icon: app.icon,
+                            on_click: None,
+                            _type: SearchResultType::App,
+                        });
+                    }
+                    app_search_result.0 = app_list;
+                }
+                MxSearchResult::Files(files) => {
+                    let mut file_result: Vec<SearchResult> = Vec::new();
+                    for file_info in files {
+                        file_result.push(SearchResult {
+                            name: format!("{}.{}",file_info.name, file_info.file_type),
+                            icon: String::new(),
+                            on_click: None,
+                            _type: SearchResultType::File,
+                        });
+                    }
+                    file_search_result.0 = file_result;
+                }
             }
         }
     } else {
