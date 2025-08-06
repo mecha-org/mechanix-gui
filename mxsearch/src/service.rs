@@ -40,28 +40,19 @@ impl MxSearchService {
 
     /// Get a setting from the server
     pub async fn list_applications(&self) -> Result<Vec<AppInfo>, anyhow::Error> {
-        debug!("Connecting to D-Bus session for get_setting");
-        let connection = Connection::session().await?;
-        // Create a proxy for the ConfigServer interface
-        let proxy = MxSearchProxy::new(&connection).await?;
-        let applications = proxy.list_applications().await?;
+        debug!("Connecting to D-Bus session for list_applications");
+        let applications = self.proxy.list_applications().await?;
         Ok(applications)
     }
     pub async fn search_applications(&self, search: &str) -> Result<Vec<AppInfo>, anyhow::Error> {
-        debug!("Connecting to D-Bus session for get_setting");
-        let connection = Connection::session().await?;
-        // Create a proxy for the ConfigServer interface
-        let proxy = MxSearchProxy::new(&connection).await?;
-        let applications = proxy.search_applications(search).await?;
+        debug!("Connecting to D-Bus session for search_applications");
+        let applications = self.proxy.search_applications(search).await?;
         Ok(applications)
     }
 
-    pub async fn search_files(&self,search: &str) -> Result<Vec<FileInfo>, anyhow::Error> {
-        debug!("Connecting to D-Bus session for get_setting");
-        let connection = Connection::session().await?;
-        // Create a proxy for the ConfigServer interface
-        let proxy = MxSearchProxy::new(&connection).await?;
-        let files = proxy.search_files(search).await?;
+    pub async fn search_files(&self, search: &str) -> Result<Vec<FileInfo>, anyhow::Error> {
+        debug!("Connecting to D-Bus session for search_files");
+        let files = self.proxy.search_files(search).await?;
         Ok(files)
     }
 }
