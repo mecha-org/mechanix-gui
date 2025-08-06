@@ -17,7 +17,6 @@ pub struct NotificationWindow;
 pub struct ActionElement {
     pub id: u32,
     pub action_id: String,
-    pub action_text: String,
 }
 
 #[derive(Component)]
@@ -48,7 +47,7 @@ pub fn get_actions_row(actions: Vec<String>) -> impl Bundle {
             flex_direction: FlexDirection::Row,
             justify_content: JustifyContent::SpaceEvenly,
             align_items: AlignItems::Center,
-            column_gap: Val::Px(8.0),
+            // row_gap: Val::Px(1.0),
             ..default()
         },
     )
@@ -288,6 +287,10 @@ pub fn create_card(
                 ..default()
             },
             Button,
+            ActionElement {
+                id: id as u32,
+                action_id: "default".to_string(),
+            },
             BorderColor(Color::linear_rgba(0.2, 0.2, 0.2, 1.0)),
             BorderRadius::all(Val::Px(8.0)),
             BackgroundColor(Color::srgb(0.13, 0.13, 0.13)),
@@ -449,9 +452,8 @@ pub fn create_card(
                                 ..default()
                             },
                             ActionElement {
-                                id: index as u32,
+                                id: id as u32,
                                 action_id: action_id.clone(),
-                                action_text: action_text.clone(),
                             },
                             children![(
                                 Text::new(action_text),
@@ -945,10 +947,13 @@ fn action_button_system(
             println!(
                 "Action button pressed: id={}, action_id={}",
                 action_element.id,
-                action_element.action_text
+                action_element.action_id
             );
 
-            let notification_event = NotificationEvent::ActionInvoked(action_element.id.clone(), action_element.action_text.clone());
+            let notification_event = NotificationEvent::ActionInvoked(
+                action_element.id.clone(),
+                action_element.action_id.clone()
+            );
             // println!("Action Invoked: {} for notification {}", action_element.action_id, action_element.id);
             // Forward the event
             event_writer.send(notification_event);
