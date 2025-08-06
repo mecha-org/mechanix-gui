@@ -1,23 +1,87 @@
-use bevy::{prelude::*, winit::WinitPlugin};
+use bevy::app::TaskPoolThreadAssignmentPolicy;
+use bevy::{
+    asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
+};
 use bevy_asset_loader::prelude::*;
+use bevy_plugins::bluetooth::BluetoothEnabledStatus;
+use bevy_plugins::network_manager::WirelessEnabled;
+use bevy_plugins::upower::UPowerPlugin;
+use bevy_plugins::{BluetoothPlugin, NetworkManagerPlugin};
 use bevy_smithay::{
     SmithayPlugin, SmithayWindowType,
     prelude::{layer_shell::LayerShellSettings, subsurface::Anchor},
 };
-use bevy_styled_widgets::prelude::{StyledTextPlugin, ThemeManager};
-
-use crate::{
-    // StyledWidgetsPlugin,
-    components::{AssetsLoadingState, ClockPlugin, status_bar},
-    styled_card::StyledCardPlugin,
-    utils::FontAssets,
+use bevy_styled_widgets::{
+    StyledWidgetsPlugin,
+    prelude::{
+        ButtonVariant, StyledButton, StyledButtonPlugin, StyledText, StyledTextPlugin, ThemeManager,
+    },
 };
+
+use crate::components::{
+    FrequentlyUsedApps, RecentSearches, SettingsDrawerPlugin, settings_drawer, universal_search,
+};
+use crate::utils::Icon;
+use crate::{
+    components::{
+        AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin, app_list, apps_grid,
+        navigation_bar, status_bar, update_apps_categories, update_apps_list,
+    },
+    desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
+    // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
+    styled_card::{StyledCard, StyledCardPlugin},
+    utils::FontAssets,
+    widgets::LauncherStyledWidgetsPlugin,
+};
+
+#[derive(Debug, Component)]
+pub struct HomescreenWindow;
+
+#[derive(Debug, Component)]
+pub struct StatusBarWindow;
+
+#[derive(Debug, Component)]
+pub struct SearchWindow;
+
+#[derive(Debug, Component)]
+pub struct NavigationBarWindow;
+
+#[derive(Debug, Component)]
+pub struct SettingsDrawerWindow;
+
+#[derive(Debug, Component)]
+pub struct AppSwitcherWindow;
+
+#[derive(Debug, Event, PartialEq, Eq)]
+pub enum NavigationEvents {
+    OpenSettingDrawer,
+    AppSwitcher,
+    OpenHomescreen,
+    OpenSearch,
+}
+
+/// Starts the Bevy launcher UI application.
+///
+
 pub fn run_launcher() {
     App::new()
         .add_plugins((
             DefaultPlugins
                 .build()
+                .set(TaskPoolPlugin {
+                    task_pool_options: TaskPoolOptions {
+                        io: TaskPoolThreadAssignmentPolicy {
+                            min_threads: 10, //todo: revisit required
+                            max_threads: 12,
+                            percent: 0.5,
+                            on_thread_spawn: None,
+                            on_thread_destroy: None,
+                        },
+                        ..Default::default()
+                    },
+                })
                 .set(WindowPlugin {
+                    // Configure the primary window for the status bar
                     primary_window: Some(Window {
                         title: "Status Bar".to_string(),
                         resolution: (540.0, 44.0).into(),
@@ -25,6 +89,12 @@ pub fn run_launcher() {
                     }),
                     ..default()
                 })
+                .set(AssetPlugin {
+                    meta_check: AssetMetaCheck::Never,
+                    unapproved_path_mode: bevy::asset::UnapprovedPathMode::Allow,
+                    ..Default::default()
+                })
+                .set(ImagePlugin::default_nearest())
                 .disable::<WinitPlugin>(),
             SmithayPlugin {
                 primary_window_type: SmithayWindowType::LayerShell {
@@ -37,15 +107,9 @@ pub fn run_launcher() {
                     },
                 },
             },
-            // SmithayPlugin {
-            //     primary_window_type: SmithayWindowType::LayerShell {
-            //         settings: LayerShellSettings::default(),
-            //     },
-            // },
-            // StyledWidgetsPlugin,
-            StyledTextPlugin,
         ))
         .insert_resource(ThemeManager::default())
+        // Asset loading state and configuration
         .init_state::<AssetsLoadingState>()
         .add_loading_state(
             LoadingState::new(AssetsLoadingState::Loading)
@@ -53,30 +117,77 @@ pub fn run_launcher() {
                 .with_dynamic_assets_file::<StandardDynamicAssetCollection>("examples/settings.ron")
                 .load_collection::<FontAssets>(),
         )
-        .add_systems(OnEnter(AssetsLoadingState::Loaded), setup)
-        .add_plugins(ClockPlugin)
-        .add_plugins(StyledCardPlugin)
-        .add_observer(bar_on_click)
-        .add_observer(bar_on_drag_start)
-        .add_observer(bar_on_drag)
-        .add_observer(bar_on_drag_end)
-        .add_systems(Update, animate_bar_drag_end)
+        // Add core application plugins
+        .add_plugins((
+            StatusBarPlugin,
+            NavigationBarPlugin,
+            StyledCardPlugin,
+            StyledWidgetsPlugin,
+            LauncherUiPlugin,
+            DesktopAppsPlugin,
+            // SpritesButtonPlugin,
+            LauncherStyledWidgetsPlugin,
+            SettingsDrawerPlugin, // StyledTextPlugin,
+                                  // Custom plugin for organizing UI setup
+        ))
+        .add_plugins(NetworkManagerPlugin)
+        .add_plugins(BluetoothPlugin)
+        .add_plugins(UPowerPlugin)
+        // System to exit on Escape key press
         .add_systems(Update, exit_on_esc)
         .run();
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum BarPos {
-    Left,
-    Center,
-    Right,
+fn assets_loaded(load_state: Res<State<AssetsLoadingState>>) -> bool {
+    *load_state == AssetsLoadingState::Loaded
 }
 
-#[derive(Debug, Component)]
-pub struct Bar(BarPos);
+pub struct LauncherUiPlugin;
 
-#[derive(Debug, Component)]
-pub struct BarDragEnd(Val, f32);
+impl Plugin for LauncherUiPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(FrequentlyUsedApps(vec![
+            "firefox_firefox".to_string(),
+            "code".to_string(),
+            "microsoft-edge".to_string(),
+            "discord_discord".to_string(),
+            "zulip_zulip".to_string(),
+        ]));
+
+        app.insert_resource(RecentSearches(vec![
+            "sc".to_string(),
+            "code".to_string(),
+            "microsoft".to_string(),
+            "discord".to_string(),
+            "zulip".to_string(),
+        ]));
+
+        app.add_systems(OnEnter(AssetsLoadingState::Loaded), setup_launcher_ui);
+        //insert resource only when the assets are loaded
+        app.add_systems(
+            OnEnter(AssetsLoadingState::Loaded),
+            |mut commands: Commands, asset_server: Res<AssetServer>| {
+                let apps = DesktopApps::new(&mut commands, &asset_server);
+                commands.insert_resource(apps);
+            },
+        );
+
+        app.add_systems(
+            Update,
+            update_apps_list
+                .run_if(assets_loaded)
+                .run_if(resource_exists_and_changed::<DesktopApps>),
+        );
+        app.add_systems(
+            Update,
+            update_apps_categories
+                .run_if(assets_loaded)
+                .run_if(resource_exists_and_changed::<DesktopApps>),
+        );
+
+        app.add_observer(handle_navigation_events);
+    }
+}
 
 fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
     if keys.just_pressed(KeyCode::Escape) {
@@ -84,11 +195,46 @@ fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
     }
 }
 
-fn setup(mut commands: Commands, theme_manager: Res<ThemeManager>, font_assets: Res<FontAssets>) {
+fn setup_launcher_ui(
+    mut commands: Commands,
+    font_assets: Res<FontAssets>,
+    wireless_enabled: Res<WirelessEnabled>,
+    bluetooth_enabled: Res<BluetoothEnabledStatus>,
+) {
+    spawn_status_bar_ui(
+        &mut commands,
+        &font_assets,
+        &wireless_enabled,
+        &bluetooth_enabled,
+    );
+
+    // spawn_homescreen_window(&mut commands, &asset_server, &font_assets);
+
+    //  spawn_settings_drawer(&mut commands, &theme_manager);
+
+    spawn_navigation_bar_window(&mut commands);
+}
+
+fn spawn_status_bar_ui(
+    commands: &mut Commands,
+    font_assets: &Res<FontAssets>,
+    wireless_enabled: &Res<WirelessEnabled>,
+    bluetooth_enabled: &Res<BluetoothEnabledStatus>,
+) {
     //Spawn status bar
-    //Spawn status bar camera
-    commands.spawn(Camera2d);
-    //Spawn status bar node
+    let wireless_default_icon = if wireless_enabled.0 {
+        Icon::WirelessNone
+    } else {
+        Icon::WirelessOff
+    }
+    .into();
+    let bluetooth_default_icon: Icon = if bluetooth_enabled.0 {
+        Icon::BluetoothNone
+    } else {
+        Icon::BluetoothOff
+    }
+    .into();
+    commands.spawn((Camera2d, StatusBarWindow));
     commands.spawn((
         Node {
             width: Val::Percent(100.),
@@ -97,91 +243,76 @@ fn setup(mut commands: Commands, theme_manager: Res<ThemeManager>, font_assets: 
             flex_direction: FlexDirection::Column,
             ..Default::default()
         },
-        BackgroundColor(Color::WHITE),
-        children![status_bar(&font_assets),],
+        children![status_bar(
+            &font_assets,
+            wireless_default_icon,
+            bluetooth_default_icon
+        )],
     ));
+}
 
-    //Spawn apps list window
-    let apps_list_entity = commands
-        .spawn((
-            Window {
-                title: "Apps list".to_string(),
-                resolution: (540., 531.).into(),
-                ..default()
-            },
-            SmithayWindowType::LayerShell {
-                settings: LayerShellSettings {
-                    size: (540, 531),
-                    layer: bevy_smithay::prelude::subsurface::Layer::Bottom,
-                    anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::TOP,
-                    exclusive_zone: 0,
-                    ..Default::default()
-                },
-            },
-        ))
-        .id();
+fn spawn_homescreen_window(
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    font_assets: &FontAssets,
+) {
+    let on_click = commands.register_system(
+        |mut commands: Commands, q_homescreen: Option<Single<Entity, With<HomescreenWindow>>>| {
+            info!("close homescreen clicked");
+            if let Some(entity) = q_homescreen {
+                commands.entity(entity.into_inner()).despawn();
+            }
+        },
+    );
+    let camera = spawn_camera(
+        commands,
+        540,
+        531,
+        "Home screen".to_string(),
+        LayerShellSettings {
+            layer: bevy_smithay::prelude::subsurface::Layer::Bottom,
+            anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::TOP,
+            exclusive_zone: 0,
+            ..default()
+        },
+        HomescreenWindow,
+    );
 
-    let apps_list_window_camera = commands
-        .spawn((
-            Camera {
-                target: bevy::render::camera::RenderTarget::Window(
-                    bevy::window::WindowRef::Entity(apps_list_entity),
-                ),
-                clear_color: ClearColorConfig::Custom(Color::default()),
-                ..default()
-            },
-            Camera2d,
-        ))
-        .id();
+    // let sprites_button = sprites_button_demo(commands, asset_server, font_assets);
 
     commands.spawn((
-        UiTargetCamera(apps_list_window_camera),
+        UiTargetCamera(camera),
         Node {
             width: Val::Percent(100.),
             height: Val::Percent(100.),
             display: Display::Flex,
             flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
             ..Default::default()
         },
-        BackgroundColor(Color::WHITE),
+        StyledCard,
         children![apps_grid(),],
     ));
+}
 
-    //Spawn bottom bar
-    let bottom_bar_entity = commands
-        .spawn((
-            Window {
-                title: "Bottom bar".to_string(),
-                resolution: (540., 44.).into(),
-                ..default()
-            },
-            SmithayWindowType::LayerShell {
-                settings: LayerShellSettings {
-                    size: (540, 44),
-                    layer: bevy_smithay::prelude::subsurface::Layer::Top,
-                    anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
-                    exclusive_zone: 44,
-                    ..Default::default()
-                },
-            },
-        ))
-        .id();
-
-    let bottom_bar_window_camera = commands
-        .spawn((
-            Camera {
-                target: bevy::render::camera::RenderTarget::Window(
-                    bevy::window::WindowRef::Entity(bottom_bar_entity),
-                ),
-                clear_color: ClearColorConfig::Custom(Color::default()),
-                ..default()
-            },
-            Camera2d,
-        ))
-        .id();
+fn spawn_navigation_bar_window(commands: &mut Commands) {
+    let camera = spawn_camera(
+        commands,
+        540,
+        44,
+        "Navigation bar".to_string(),
+        LayerShellSettings {
+            layer: bevy_smithay::prelude::subsurface::Layer::Top,
+            anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
+            exclusive_zone: 44,
+            ..default()
+        },
+        NavigationBarWindow,
+    );
 
     commands.spawn((
-        UiTargetCamera(bottom_bar_window_camera),
+        UiTargetCamera(camera),
         Node {
             width: Val::Percent(100.),
             height: Val::Percent(100.),
@@ -190,153 +321,208 @@ fn setup(mut commands: Commands, theme_manager: Res<ThemeManager>, font_assets: 
             ..Default::default()
         },
         BackgroundColor(Color::NONE),
-        children![bottom_bar(),],
+        children![navigation_bar()],
     ));
-
-    // UiTargetCamera(window_camera);
-
-    // bottom_bar(),
 }
 
-fn apps_grid() -> impl Bundle {
-    (
+fn handle_navigation_events(
+    mut trigger: Trigger<NavigationEvents>,
+    mut commands: Commands,
+    q_homescreen: Option<Single<Entity, With<HomescreenWindow>>>,
+    q_status_bar: Option<Single<Entity, With<StatusBarWindow>>>,
+    asset_server: Res<AssetServer>,
+    font_assets: Res<FontAssets>,
+    theme_manager: Res<ThemeManager>,
+    desktop_apps: Res<DesktopApps>,
+    f_used_apps: Res<FrequentlyUsedApps>,
+    recent_searches: Res<RecentSearches>,
+) {
+    info!("event is {:?}", trigger.event());
+    match trigger.event() {
+        NavigationEvents::OpenSettingDrawer => {
+            // if let Some(entity) = q_status_bar {
+            //     commands.entity(entity.into_inner()).despawn();
+            // }
+            spawn_settings_drawer(&mut commands, &theme_manager);
+        }
+        NavigationEvents::AppSwitcher => {
+            spawn_app_switcher(&mut commands);
+        }
+        NavigationEvents::OpenHomescreen => {
+            spawn_homescreen_window(&mut commands, &asset_server, &font_assets);
+        }
+        NavigationEvents::OpenSearch => {
+            let mut filtered_apps = Vec::new();
+            for app in f_used_apps.0.iter() {
+                desktop_apps
+                    .apps
+                    .iter()
+                    .find(|a| a.app_id == app.to_string())
+                    .map(|app| {
+                        filtered_apps.push(app.clone());
+                    });
+            }
+            spawn_search(&mut commands, filtered_apps, recent_searches.0.clone());
+        }
+    }
+}
+
+fn spawn_settings_drawer(commands: &mut Commands, theme_manager: &ThemeManager) {
+    let camera = spawn_camera(
+        commands,
+        540,
+        531,
+        "Settings Drawer".to_string(),
+        LayerShellSettings {
+            layer: bevy_smithay::prelude::subsurface::Layer::Top,
+            anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::TOP,
+            exclusive_zone: 0,
+            ..default()
+        },
+        SettingsDrawerWindow,
+    );
+
+    let settings_drawer = settings_drawer(commands, theme_manager);
+
+    commands.spawn((
+        UiTargetCamera(camera),
         Node {
             width: Val::Percent(100.),
             height: Val::Percent(100.),
             display: Display::Flex,
+            flex_direction: FlexDirection::Column,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
-            border: UiRect::all(Val::Px(1.)),
             ..Default::default()
         },
-        BorderColor(Color::linear_rgba(0., 0., 0., 0.2)),
-        children![(
-            Text::new("Apps / Widgets surface"),
-            TextFont {
-                font_size: 24.,
-                ..Default::default()
-            },
-            TextColor(Color::BLACK)
-        )],
-    )
+        StyledCard,
+        children![settings_drawer],
+    ));
 }
 
-fn bottom_bar() -> impl Bundle {
-    (
+fn spawn_search(
+    commands: &mut Commands,
+    freq_used_apps: Vec<DesktopApp>,
+    recent_searches: Vec<String>,
+) {
+    let camera = spawn_camera(
+        commands,
+        540,
+        531,
+        "Search".to_string(),
+        LayerShellSettings {
+            layer: bevy_smithay::prelude::subsurface::Layer::Bottom,
+            anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::TOP,
+            exclusive_zone: 0,
+            ..default()
+        },
+        SearchWindow,
+    );
+
+    let universal_search = universal_search(freq_used_apps, recent_searches);
+
+    commands.spawn((
+        UiTargetCamera(camera),
         Node {
             width: Val::Percent(100.),
             height: Val::Percent(100.),
             display: Display::Flex,
-            flex_direction: FlexDirection::Row,
-            ..Default::default()
-        },
-        children![
-            bottom_bar_item(BarPos::Left),
-            bottom_bar_item(BarPos::Center),
-            bottom_bar_item(BarPos::Right)
-        ],
-    )
-}
-
-const BAR_BOTTOM_DISTANCE: f32 = 12.;
-
-fn bottom_bar_item(pos: BarPos) -> impl Bundle {
-    let mut width = Val::Percent(25.);
-    let height = Val::Percent(100.);
-    if pos == BarPos::Center {
-        width = Val::Percent(50.);
-    }
-
-    (
-        Node {
-            width,
-            height,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
-            border: UiRect::all(Val::Px(0.5)),
             ..Default::default()
         },
-        BorderColor(Color::linear_rgba(0., 0., 0., 0.2)),
-        children![(
-            Node {
-                width: Val::Percent(70.),
-                height: Val::Px(8.),
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(BAR_BOTTOM_DISTANCE),
-                ..Default::default()
+        StyledCard,
+        children![universal_search],
+    ));
+}
+
+fn spawn_camera(
+    commands: &mut Commands,
+    width: u32,
+    height: u32,
+    title: String,
+    mut settings: LayerShellSettings,
+    marker: impl Bundle,
+) -> Entity {
+    settings.size = (width, height);
+    let entity = commands
+        .spawn((
+            Window {
+                title: title.into(),
+                resolution: (width as f32, height as f32).into(),
+                ..default()
             },
-            BorderRadius::all(Val::Px(8.)),
-            BackgroundColor(Color::linear_rgb(0.74, 0.74, 0.74)),
-            Bar(pos)
-        )],
-    )
+            SmithayWindowType::LayerShell { settings },
+            marker,
+        ))
+        .id();
+
+    commands
+        .spawn((
+            Camera {
+                target: bevy::render::camera::RenderTarget::Window(
+                    bevy::window::WindowRef::Entity(entity),
+                ),
+                clear_color: ClearColorConfig::Custom(Color::default()),
+                ..default()
+            },
+            Camera2d,
+        ))
+        .id()
 }
 
-fn bar_on_drag_start(
-    mut trigger: Trigger<Pointer<DragStart>>,
-    mut q_state: Query<(&mut Node, &Bar)>,
-) {
-    trigger.propagate(false);
-    if let Ok((mut node, Bar(pos))) = q_state.get_mut(trigger.target) {
-        println!("bar drag started {:?}", pos);
-    }
+fn spawn_content<S: Into<String>>(title: S, on_click: SystemId) -> impl Bundle {
+    children![
+        StyledText::builder().content(title).font_size(28.).build(),
+        Node {
+            margin: UiRect::vertical(Val::Px(10.)),
+            ..Default::default()
+        },
+        StyledButton::builder()
+            .text("Close")
+            .variant(ButtonVariant::Secondary)
+            .on_click(on_click)
+            .build()
+    ]
 }
 
-fn bar_on_drag(mut trigger: Trigger<Pointer<Drag>>, mut q_state: Query<&mut Node, With<Bar>>) {
-    trigger.propagate(false);
-    if let Ok(mut node) = q_state.get_mut(trigger.target) {
-        let distance = trigger.distance.y.abs();
-        node.bottom = Val::Px(BAR_BOTTOM_DISTANCE + distance);
-    }
-}
+fn spawn_app_switcher(commands: &mut Commands) {
+    let on_click = commands.register_system(
+        |mut commands: Commands,
+         q_app_switcher: Option<Single<Entity, With<AppSwitcherWindow>>>| {
+            info!("close app switcher clicked");
+            if let Some(entity) = q_app_switcher {
+                commands.entity(entity.into_inner()).despawn();
+            }
+        },
+    );
+    let camera = spawn_camera(
+        commands,
+        540,
+        531,
+        "App Switcher".to_string(),
+        LayerShellSettings {
+            layer: bevy_smithay::prelude::subsurface::Layer::Top,
+            anchor: Anchor::LEFT | Anchor::RIGHT | Anchor::TOP,
+            exclusive_zone: 0,
+            ..default()
+        },
+        AppSwitcherWindow,
+    );
 
-fn bar_on_drag_end(
-    mut trigger: Trigger<Pointer<DragEnd>>,
-    mut commands: Commands,
-    mut q_state: Query<&Node, With<Bar>>,
-    time: Res<Time>,
-) {
-    trigger.propagate(false);
-    if let Ok(node) = q_state.get_mut(trigger.target) {
-        commands
-            .entity(trigger.target)
-            .insert(BarDragEnd(node.bottom, time.elapsed_secs()));
-    }
-}
-
-fn bar_on_click(mut trigger: Trigger<Pointer<Click>>, mut q_state: Query<(&Bar)>) {
-    trigger.propagate(false);
-    if let Ok((Bar(pos))) = q_state.get_mut(trigger.target) {
-        println!("bar clicked {:?}", pos);
-    }
-}
-
-fn animate_bar_drag_end(
-    mut commands: Commands,
-    mut q_state: Query<(Entity, &mut Node, &BarDragEnd)>,
-    time: Res<Time>,
-) {
-    let now = time.elapsed_secs();
-    for (entity, mut node, BarDragEnd(drag_ended_at, start_time)) in q_state.iter_mut() {
-        let start = match drag_ended_at {
-            Val::Px(val) => *val,
-            _ => 0.,
-        };
-        let end = BAR_BOTTOM_DISTANCE;
-
-        let animation_duration = 0.5;
-        let elapsed = now - start_time;
-
-        let progress = (elapsed / animation_duration).min(1.0);
-
-        if progress >= 1.0 {
-            commands.entity(entity).remove::<BarDragEnd>();
-            continue;
-        }
-
-        let eased_progress = progress * progress * progress;
-
-        let new_bottom = start + (end - start) * eased_progress;
-
-        node.bottom = Val::Px(new_bottom);
-    }
+    commands.spawn((
+        UiTargetCamera(camera),
+        Node {
+            width: Val::Percent(100.),
+            height: Val::Percent(100.),
+            display: Display::Flex,
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..Default::default()
+        },
+        StyledCard,
+        spawn_content("App Switcher", on_click),
+    ));
 }

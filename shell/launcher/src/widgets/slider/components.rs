@@ -12,6 +12,8 @@ pub struct StyledSlider {
     pub indicator_color: Option<Color>,
     #[reflect(ignore)]
     pub on_change: Option<SystemId<In<f32>>>,
+    pub icon: Option<Handle<Image>>,
+    pub layout: Option<Handle<TextureAtlasLayout>>,
 }
 
 impl StyledSlider {

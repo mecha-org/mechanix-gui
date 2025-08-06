@@ -4,7 +4,10 @@ use bevy::{
 };
 use bevy_core_widgets::{CoreButton, hover::Hovering};
 
-use crate::settings_panel::{SettingsItem, SettingsItemText};
+use crate::{
+    components::{SettingsItem, SettingsItemText},
+    widgets::button::AnimationConfig,
+};
 
 use super::{
     ButtonSize, StyledButtonText,
@@ -15,16 +18,22 @@ use super::{
 pub struct ButtonBuilder {
     variant: ButtonVariant,
     on_click: Option<SystemId>,
+    on_long_press: Option<SystemId>,
     background_color: Option<Color>,
     border_color: Option<Color>,
     hover_background_color: Option<Color>,
     hover_border_color: Option<Color>,
     text_color: Option<Color>,
     text: Option<String>,
-    icon: Option<String>,
+    icon: Option<Handle<Image>>,
+    layout: Option<Handle<TextureAtlasLayout>>,
+    on_press_icon: Option<Handle<Image>>,
+    on_press_layout: Option<Handle<TextureAtlasLayout>>,
     size: Option<ButtonSize>,
     disabled: bool,
     font: Option<Handle<Font>>,
+    active: Option<bool>,
+    active_background_color: Option<Color>,
     width: Option<Val>,
     height: Option<Val>,
     border_radius: Option<f32>,
@@ -42,13 +51,33 @@ impl ButtonBuilder {
         self
     }
 
+    pub fn on_long_press(mut self, system_id: SystemId) -> Self {
+        self.on_long_press = Some(system_id);
+        self
+    }
+
     pub fn text<S: Into<String>>(mut self, text: S) -> Self {
         self.text = Some(text.into());
         self
     }
 
-    pub fn icon<S: Into<String>>(mut self, icon: S) -> Self {
-        self.icon = Some(icon.into());
+    pub fn icon(mut self, icon: Handle<Image>) -> Self {
+        self.icon = Some(icon);
+        self
+    }
+
+    pub fn layout(mut self, layout: Handle<TextureAtlasLayout>) -> Self {
+        self.layout = Some(layout);
+        self
+    }
+
+    pub fn on_press_icon(mut self, icon: Handle<Image>) -> Self {
+        self.on_press_icon = Some(icon);
+        self
+    }
+
+    pub fn on_press_layout(mut self, layout: Handle<TextureAtlasLayout>) -> Self {
+        self.on_press_layout = Some(layout);
         self
     }
 
@@ -92,6 +121,16 @@ impl ButtonBuilder {
         self
     }
 
+    pub fn active(mut self, active: bool) -> Self {
+        self.active = Some(active);
+        self
+    }
+
+    pub fn active_background_color(mut self, color: Color) -> Self {
+        self.active_background_color = Some(color);
+        self
+    }
+
     pub fn font_size(mut self, font_size: f32) -> Self {
         self.font_size = Some(font_size);
         self
@@ -132,6 +171,9 @@ impl ButtonBuilder {
             StyledButton {
                 text: self.text.clone(),
                 icon: self.icon.clone(),
+                layout: self.layout.clone(),
+                on_press_icon: self.on_press_icon.clone(),
+                on_press_layout: self.on_press_layout.clone(),
                 font: self.font.clone(),
                 variant: self.variant,
                 size: self.size,
@@ -145,23 +187,37 @@ impl ButtonBuilder {
                 width: self.width,
                 height: self.height,
                 border_radius: self.border_radius,
+                active: self.active,
+                active_background_color: self.active_background_color,
             },
             CoreButton {
                 on_click: self.on_click,
+                on_long_press: self.on_long_press,
             },
             AccessibleName(self.text.clone().unwrap_or_else(|| "Button".to_string())),
             TabIndex(0),
             Children::spawn(Spawn((
-                Text::new(self.icon.unwrap_or_default()),
-                TextFont {
-                    font: self.font.unwrap_or_default(),
-                    ..Default::default()
-                },
-                TextColor(Color::linear_rgba(0.24, 0.24, 0.24, 1.)),
-                StyledButtonText,
-                SettingsItemText {
-                    font_size: self.font_size.unwrap_or(32.0),
-                },
+                // Text::new(self.icon.unwrap_or_default()),
+                // TextFont {
+                //     font: self.font.unwrap_or_default(),
+                //     ..Default::default()
+                // },
+                // TextColor(Color::linear_rgba(0.24, 0.24, 0.24, 1.)),
+                // StyledButtonText,
+                // SettingsItemText {
+                //     font_size: self.font_size.unwrap_or(32.0),
+                // },
+                ImageNode::from_atlas_image(
+                    self.icon.unwrap().clone(),
+                    TextureAtlas::from(self.layout.unwrap().clone()),
+                ),
+                // Node {
+                //     width: Val::Px(80.),
+                //     height: Val::Px(80.),
+                //     ..default()
+                // },
+                // Wireless(true),
+                AnimationConfig::new(0, 29, 60),
             ))),
         )
     }

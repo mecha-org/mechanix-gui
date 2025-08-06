@@ -1,7 +1,8 @@
 /// Represents the battery level of a device.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub enum BatteryLevel {
     /// The battery level is unknown.
+    #[default]
     Unknown,
     /// The battery level is not applicable (e.g., the device does not use coarse level reporting).
     None,
@@ -16,26 +17,26 @@ pub enum BatteryLevel {
     /// The battery level is full.
     Full,
 }
-impl TryFrom<u32> for BatteryLevel {
-    type Error = &'static str;
-    fn try_from(value: u32) -> std::prelude::v1::Result<Self, Self::Error> {
+impl From<u32> for BatteryLevel {
+    fn from(value: u32) -> Self {
         match value {
-            0 => Ok(BatteryLevel::Unknown),
-            1 => Ok(BatteryLevel::None),
-            3 => Ok(BatteryLevel::Low),
-            4 => Ok(BatteryLevel::Critical),
-            6 => Ok(BatteryLevel::Normal),
-            7 => Ok(BatteryLevel::High),
-            8 => Ok(BatteryLevel::Full),
-            _ => Err("Invalid battery level"),
+            0 => BatteryLevel::Unknown,
+            1 => BatteryLevel::None,
+            3 => BatteryLevel::Low,
+            4 => BatteryLevel::Critical,
+            6 => BatteryLevel::Normal,
+            7 => BatteryLevel::High,
+            8 => BatteryLevel::Full,
+            _ => BatteryLevel::Unknown,
         }
     }
 }
 
 /// Represents the various possible states of a battery.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum BatteryState {
     /// The battery status is unknown.
+    #[default]
     Unknown,
     /// The battery is currently charging.
     Charging,
@@ -51,18 +52,17 @@ pub enum BatteryState {
     PendingDischarge,
 }
 
-impl TryFrom<u32> for BatteryState {
-    type Error = ();
-    fn try_from(value: u32) -> std::prelude::v1::Result<Self, Self::Error> {
+impl From<u32> for BatteryState {
+    fn from(value: u32) -> Self {
         match value {
-            0 => Ok(BatteryState::Unknown),
-            1 => Ok(BatteryState::Charging),
-            2 => Ok(BatteryState::Discharging),
-            3 => Ok(BatteryState::Empty),
-            4 => Ok(BatteryState::FullCharged),
-            5 => Ok(BatteryState::PendingCharge),
-            6 => Ok(BatteryState::PendingDischarge),
-            _ => Err(()),
+            0 => BatteryState::Unknown,
+            1 => BatteryState::Charging,
+            2 => BatteryState::Discharging,
+            3 => BatteryState::Empty,
+            4 => BatteryState::FullCharged,
+            5 => BatteryState::PendingCharge,
+            6 => BatteryState::PendingDischarge,
+            _ => BatteryState::Unknown
         }
     }
 }

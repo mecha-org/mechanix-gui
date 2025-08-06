@@ -182,7 +182,6 @@ impl NetworkManagerService {
                     Ok(mut stream) => {
                         while let Some(event) = stream.next().await {
                             if let Ok(state) = event.get().await {
-                                info!("state updated: {}", state);
                                 // Blocking send (uses thread park/unpark internally)
                                 if let Err(e) = sender.send(NMState::from(state)) {
                                     error!("failed to send device event to receiver: {}", e);
@@ -324,6 +323,7 @@ impl NetworkManagerService {
         receiver
     }
     pub async fn stream_active_network_strength(&self) -> mpsc::Receiver<u8> {
+        info!("service-action:: streaming active network strength");
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
 

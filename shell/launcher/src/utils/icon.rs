@@ -81,6 +81,15 @@ pub enum Icon {
     WirelessNone = 0xe4f0,
     WirelessOff = 0xe4f2,
     WirelessWarning = 0xe4f4,
+
+    Search = 0xe30c,
+    ArrowUpRight = 0xe092,
+    ArrowSquareUp = 0xe07c,
+
+    XCircle = 0xe4f8,
+
+    Settings = 0xe272,
+    Power = 0xe3da,
 }
 
 impl Icon {

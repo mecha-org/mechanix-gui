@@ -11,4 +11,3 @@ thiserror = { workspace = true }
 async-trait = { workspace = true }
 log = { workspace = true }
 futures = { workspace = true }
-mockall = { workspace = true }
