@@ -55,28 +55,48 @@ sudo sysctl -w fs.inotify.max_user_watches=1048576
 
 ### ⚙️ App Actions Search
 
-**Overview**  
+## Overview
+
 This service indexes configuration schemas into a Tantivy search index.
 Each config file is parsed and indexed with its metadata and nested action sections.
 It maintains data consistency by using checksum validation to avoid unnecessary re-indexing.
 
-## Features
+- Applications installed on the system register their **App Actions** to **mxsearch**.
+- This allows mxsearch to return App Actions as part of search results.
+- App Actions are stored as **TOML** files inside the directory:  
+  `/usr/share/mxsearch/actions`
 
-- Provides full-text and exact matching search capabilities for app actions for quick lookup.
-- Parses configuration schemas containing global data and nested action blocks.
-- Indexes each action block as a separate document with searchable fields.
-- Stores checksums for indexed files to detect changes for re-indexing.
-- Supports fast searching by file path to find existing indexed documents.
-- Uses a structured Tantivy schema optimized for configuration elements.
+## Example: Settings App Actions file
 
-## Searching Functionality for App Actions
+```toml
+name = "Settings"
+icon = "path/to/icon.png"
+description = "Manage system settings"
+exec = "mechanix-settings"
 
-You can perform powerful searches over your indexed app actions, leveraging Tantivy’s full-text search and exact
-matching:
+[EnableWifi]
+action = "Enable WiFi"
+description = "Enable wireless network"
+arg = { path = "network" }
 
-- **Search by action name or description:** Quickly find actions like "Enable WiFi" or any keyword in descriptions.
-- **Filter by section names:** Narrow down results to specific config sections (like `[EnableBluetooth]`).
-- **Lookup by argument values:** For example, find all actions where the argument `path` equals `"network"`.
+[Files]
+Action = "Search Files"
+Description = "Search by file name"
+Arg = { path = "%KEYWORD%" }
+```
+
+File path: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
+
+- `%KEYWORD%` is a reserved placeholder that passes the user's search key to the app action.
+
+## Functionality
+
+- mxsearch indexes the `/usr/share/mxsearch/actions` directory.
+- It uses checksums to detect changes and refresh the index accordingly.
+- Endpoints include:
+    - Search App Actions
+
+---
 
 ## Workflow
 
