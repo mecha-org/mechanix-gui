@@ -1,23 +1,37 @@
+use crate::components::{search_result_item, SearchResult, SearchResultsComponent};
+use crate::components::{
+    settings_drawer, universal_search, AppSearchResultUiResource, FrequentlyUsedApps,
+    RecentSearches, SearchText, SettingsDrawerPlugin,
+};
+use crate::utils::Icon;
+use crate::{
+    components::{
+        app_list, apps_grid, navigation_bar, status_bar, update_apps_categories,
+        update_apps_list, AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin,
+    },
+    desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
+    // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
+    styled_card::{StyledCard, StyledCardPlugin},
+    utils::FontAssets,
+    widgets::LauncherStyledWidgetsPlugin,
+};
 use bevy::app::TaskPoolThreadAssignmentPolicy;
 use bevy::asset::AssetPath;
 use bevy::{
     asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
 };
-use crate::components::{
-    search_result_item,  SearchResult, SearchResultsComponent,
-};
 use bevy_asset_loader::prelude::*;
 use bevy_plugins::bluetooth::BluetoothEnabledStatus;
+use bevy_plugins::mxsearch::{AppActionsSearchResult, FileSearchResult};
 use bevy_plugins::mxsearch::{AppSearchResult, SearchResultType};
 use bevy_plugins::network_manager::{NetworkManagerDeviceStatus, WirelessEnabled};
 use bevy_plugins::upower::UPowerPlugin;
 use bevy_plugins::{
-    BluetoothPlugin, MxSearchAction, MxSearchActionEvent, NetworkManagerPlugin,
-    MxSearchPlugin,
+    BluetoothPlugin, MxSearchAction, MxSearchActionEvent, MxSearchPlugin, NetworkManagerPlugin,
 };
 use bevy_smithay::{
-    SmithayPlugin, SmithayWindowType,
-    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor},
+    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor}, SmithayPlugin,
+    SmithayWindowType,
 };
 use bevy_styled_widgets::{
     prelude::{
@@ -27,20 +41,6 @@ use bevy_styled_widgets::{
 };
 use freedesktop_icons::lookup;
 use std::path::Path;
-use bevy_plugins::mxsearch::FileSearchResult;
-use crate::components::{FrequentlyUsedApps, RecentSearches, SettingsDrawerPlugin, settings_drawer, universal_search, AppSearchResultUiResource, SearchText};
-use crate::utils::Icon;
-use crate::{
-    components::{
-        AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin, app_list, apps_grid,
-        navigation_bar, status_bar, update_apps_categories, update_apps_list,
-    },
-    desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
-    // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
-    styled_card::{StyledCard, StyledCardPlugin},
-    utils::FontAssets,
-    widgets::LauncherStyledWidgetsPlugin,
-};
 
 #[derive(Debug, Component)]
 pub struct HomescreenWindow;
@@ -202,6 +202,10 @@ impl Plugin for LauncherUiPlugin {
         );
         app.add_systems(
             Update,
+            feed_app_action_search_results.run_if(resource_changed::<AppActionsSearchResult>),
+        );
+        app.add_systems(
+            Update,
             update_search_results_ui.run_if(resource_changed::<AppSearchResultUiResource>),
         );
         app.add_systems(
@@ -231,6 +235,10 @@ fn search_text_updated(
     )));
 
     action_events.write(MxSearchActionEvent(MxSearchAction::SearchFiles(
+        search_text.0.clone(),
+    )));
+
+    action_events.write(MxSearchActionEvent(MxSearchAction::SearchAppActions(
         search_text.0.clone(),
     )));
 }
@@ -273,6 +281,29 @@ fn feed_file_search_results(
             icon: lookup_icon(&file.icon, &SearchResultType::File, &asset_server),
             on_click: None,
             _type: universal_search::SearchResultType::File,
+        };
+        if !app_search_feed.0.iter().any(|r| r.name == result.name) {
+            final_results.push(result);
+        }
+    }
+    app_search_feed.0.extend(final_results);
+}
+
+fn feed_app_action_search_results(
+    action_search_result: Res<AppActionsSearchResult>,
+    mut app_search_feed: ResMut<AppSearchResultUiResource>,
+    asset_server: Res<AssetServer>,
+) {
+    let files = action_search_result.0.clone();
+    println!("Final Result of app actions: {:?}", files);
+    let mut final_results: Vec<SearchResult> = Vec::new();
+    //TODO: revisit for svg icon issue, currently it's configured with default icon only
+    for file in files {
+        let result = SearchResult {
+            name: file.name,
+            icon: lookup_icon(&file.icon, &SearchResultType::Action, &asset_server),
+            on_click: None,
+            _type: universal_search::SearchResultType::Action,
         };
         if !app_search_feed.0.iter().any(|r| r.name == result.name) {
             final_results.push(result);
@@ -657,6 +688,7 @@ fn lookup_icon(
     let default_icon = match search_result_type {
         SearchResultType::App => Path::new("icons/default_app_icon.png"),
         SearchResultType::File => Path::new("icons/default_file_icon.png"),
+        SearchResultType::Action => Path::new("icons/rotation_on.png"),
     };
 
     let path = Path::new(&icon);
