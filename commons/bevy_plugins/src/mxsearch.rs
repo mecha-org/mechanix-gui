@@ -69,9 +69,9 @@ pub enum ErrorType {
 }
 
 /// Plugin to search files and applications
-pub struct UniversalSearchPlugin;
+pub struct MxSearchPlugin;
 
-impl Plugin for UniversalSearchPlugin {
+impl Plugin for MxSearchPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(MxSearchServiceResource { service: None })
             .insert_resource(AppSearchResult::default())
@@ -264,7 +264,7 @@ fn poll_action_result_events(
                     let mut file_result: Vec<SearchResult> = Vec::new();
                     for file_info in files {
                         file_result.push(SearchResult {
-                            name: format!("{}.{}",file_info.name, file_info.file_type),
+                            name: format!("{}.{}", file_info.name, file_info.file_type),
                             icon: String::new(),
                             on_click: None,
                             _type: SearchResultType::File,
