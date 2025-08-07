@@ -6,7 +6,6 @@ default-members = ["mxconf"]
 
 [workspace.package]
 version = "0.1.0"
-authors = ["mineshp@mechasystems.com"]
 authors = [
     "Shoaib Merchant <shoaibm@mechasystems.com>",
     "Minesh Purohit <mineshp@mechasystems.com>",
