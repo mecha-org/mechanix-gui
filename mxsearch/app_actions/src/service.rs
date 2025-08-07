@@ -1,5 +1,5 @@
-use crate::utils::{ActionSchema, ActionSetting, Arg, parse_action_schema};
-use crate::{AppActionsConfig, utils};
+use crate::utils::{parse_action_schema, ActionSchema, ActionSetting, Arg};
+use crate::{utils, AppActionsConfig};
 use log::{debug, error, info, warn};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::Deserialize;
@@ -11,13 +11,13 @@ use std::{
     time::Duration,
 };
 use tantivy::query::TermQuery;
-use tantivy::schema::{Field, IndexRecordOption, STRING, Value};
+use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
 use tantivy::{
-    Document, Index, IndexReader, IndexWriter, TantivyDocument, TantivyError, Term,
-    collector::TopDocs,
-    doc,
-    query::QueryParser,
-    schema::{STORED, Schema, TEXT},
+    collector::TopDocs, doc, query::QueryParser, schema::{Schema, STORED, TEXT}, Document, Index, IndexReader,
+    IndexWriter,
+    TantivyDocument,
+    TantivyError,
+    Term,
 };
 use tokio::{sync::mpsc, task::JoinHandle, time};
 use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
@@ -25,15 +25,15 @@ use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Default, Clone)]
 #[zvariant(signature = "dict")]
 pub struct AppActions {
-    name: String,
-    icon: String,
-    exec: String,
-    section: String,
-    action: String,
-    description: String,
-    arg_key: String,
-    arg_value: String,
-    score: f32,
+    pub name: String,
+    pub icon: String,
+    pub exec: String,
+    pub section: String,
+    pub action: String,
+    pub description: String,
+    pub arg_key: String,
+    pub arg_value: String,
+    pub score: f32,
 }
 pub enum FileIndexState {
     IndexedAndUpToDate, // indexed & checksum matches
