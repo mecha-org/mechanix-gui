@@ -42,7 +42,6 @@ pub async fn get_all_notifications_from_db() -> Result<
 
     for result in db.iter() {
         let (key, value) = result?;
-
         /// Convert key from big-endian bytes back to u32
         let id_bytes: [u8; 4] = key
             .as_ref()
@@ -52,10 +51,8 @@ pub async fn get_all_notifications_from_db() -> Result<
 
         /// Deserialize notification from JSON
         let notification: Notification = serde_json::from_slice(&value)?;
-
         notifications.insert(id, notification);
     }
-
     db.flush()?;
     Ok(notifications)
 }

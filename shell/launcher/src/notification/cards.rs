@@ -502,6 +502,8 @@ pub fn create_card(
     commands.entity(drawing_surface).insert_children(insert_index, &[card_entity]);
 }
 
+use crate::components::AssetsLoadingState;
+
 fn process_notifications(
     mut events: EventReader<NotificationEvent>,
     mut commands: Commands,
@@ -510,8 +512,12 @@ fn process_notifications(
     asset_server: Res<AssetServer>,
     app_stacking: Res<AppStackingState>,
     stack_query: Query<&Children, With<NotificationStack>>,
-    card_query: Query<Entity, With<Card>>
+    card_query: Query<Entity, With<Card>>,
+    load_state: Res<State<AssetsLoadingState>>
 ) {
+    if *load_state != AssetsLoadingState::Loaded {
+        return;
+    }
     for event in events.read() {
         match event {
             NotificationEvent::Recieved(id, notification) => {

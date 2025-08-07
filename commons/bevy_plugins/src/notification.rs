@@ -8,7 +8,6 @@ use zbus::Connection;
 use std::sync::{ Arc, Mutex };
 use tokio::select;
 use std::sync::mpsc::{ channel, Receiver, Sender };
-use futures_util::stream::StreamExt;
 use bevy::tasks::{ AsyncComputeTaskPool, IoTaskPool };
 
 #[derive(Resource)]
@@ -27,28 +26,29 @@ pub struct NotificationEventReceiver(pub Arc<Mutex<Receiver<NotificationEvent>>>
 #[derive(Resource)]
 pub struct NotificationEventSender(pub Sender<NotificationEvent>);
 
-// fn load_notifications_from_database(mut commands: Commands,  mut event_writer: EventWriter<NotificationEvent>) {
-//     let (tx, rx) = std::sync::mpsc::channel();
-//     IoTaskPool::get()
-//         .spawn(async move {
-//             let notifications = get_all_notifications_from_db().await.expect(
-//                 "Notification Fetching from database failed"
-//             );
-//             let _ = tx.send(notifications);
-//         })
-//         .detach();
+fn load_notifications_from_database(_commands: Commands, mut event_writer: EventWriter<NotificationEvent>) {
+    let (tx, rx) = std::sync::mpsc::channel();
+    IoTaskPool::get()
+        .spawn(async move {
+            let notifications = get_all_notifications_from_db().await.expect(
+                "Notification Fetching from database failed"
+            );
+            let _ = tx.send(notifications);
+        })
+        .detach();
 
-//     if let Ok(notifications) = rx.try_recv() {
-//         for (id,notification) in notifications{
-//             event_writer.send(NotificationEvent::Recieved(id, notification.clone()));
-//         }
-//     }
-// }
+    if let Ok(notifications) = rx.try_recv() {
+        for (id,notification) in notifications{
+            info!("Loaded notification with ID: {}", id);
+            event_writer.write(NotificationEvent::Recieved(id, notification.clone()));
+        }
+    }
+}
 
 fn apply_loaded_notifications(
     mut notification_resource: ResMut<AllNotificationsResource>,
     receiver: Res<NotificationEventReceiver>,
-    mut event_writer: EventWriter<NotificationEvent> // Added
+    mut event_writer: EventWriter<NotificationEvent>
 ) {
     let receiver = receiver.0.lock().unwrap();
     while let Ok(event) = receiver.try_recv() {
@@ -56,14 +56,12 @@ fn apply_loaded_notifications(
             NotificationEvent::Recieved(id, notification) => {
                 notification_resource.0.insert(id.clone(), notification.clone());
                 println!("Notification Recieved");
-                // You can emit a new event here if needed:
-                event_writer.send(NotificationEvent::Recieved(id, notification.clone()));
+                event_writer.write(NotificationEvent::Recieved(id, notification.clone()));
             }
             NotificationEvent::Closed(id) => {
                 notification_resource.0.remove(&id);
                 println!("Notification Closed");
-                // You can emit a new event here if needed:
-                event_writer.send(NotificationEvent::Closed(id));
+                event_writer.write(NotificationEvent::Closed(id));
             }
             _ => {}
         }
@@ -133,10 +131,8 @@ fn handle_action_invoked(mut event_reader: EventReader<NotificationEvent>) {
             let id = *id;
             let action_id = action_id.clone();
 
-            // Use AsyncComputeTaskPool instead of IoTaskPool for async operations
             AsyncComputeTaskPool::get()
                 .spawn(async move {
-                    // Create a new tokio runtime for this task
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     rt.block_on(async move {
                         match Connection::session().await {
@@ -161,14 +157,87 @@ fn handle_action_invoked(mut event_reader: EventReader<NotificationEvent>) {
     }
 }
 
+#[derive(Resource)]
+struct NotificationLoader {
+    receiver: Arc<Mutex<std::sync::mpsc::Receiver<Result<HashMap<u32, Notification>, String>>>>,
+    completed: bool,
+}
+
+fn start_notification_loading(mut commands: Commands) {
+    let (tx, rx) = std::sync::mpsc::channel();
+    let rx = Arc::new(Mutex::new(rx));
+    
+    AsyncComputeTaskPool::get()
+        .spawn(async move {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async move {
+                match Connection::session().await {
+                    Ok(connection) => {
+                        match MechanixNotificationProxy::new(&connection).await {
+                            Ok(proxy) => {
+                                match proxy.get_all_notifications().await {
+                                    Ok(notifications) => {
+                                        let _ = tx.send(Ok(notifications));
+                                    }
+                                    Err(e) => {
+                                        let _ = tx.send(Err(format!("Failed to get notifications from proxy: {}", e)));
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                let _ = tx.send(Err(format!("Failed to create proxy: {}", e)));
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        let _ = tx.send(Err(format!("Failed to connect to session bus: {}", e)));
+                    }
+                }
+            });
+        })
+        .detach();
+
+    commands.insert_resource(NotificationLoader {
+        receiver: rx,
+        completed: false,
+    });
+}
+
+fn check_notification_loading(
+    mut loader: ResMut<NotificationLoader>,
+    mut event_writer: EventWriter<NotificationEvent>,
+) {
+    if loader.completed {
+        return;
+    }
+
+    let receiver = loader.receiver.lock().unwrap();
+    if let Ok(result) = receiver.try_recv() {
+        drop(receiver); // Release the lock before modifying loader
+        loader.completed = true;
+        
+        match result {
+            Ok(notifications) => {
+                info!("Loading {} notifications from database", notifications.len());
+                for (id, notification) in notifications {
+                    info!("Loaded notification with ID: {}", id);
+                    event_writer.write(NotificationEvent::Recieved(id, notification.clone()));
+                }
+            }
+            Err(e) => {
+                error!("Failed to get notifications: {}", e);
+            }
+        }
+    }
+}
+
 pub struct NotificationPlugin;
 
 impl Plugin for NotificationPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(AllNotificationsResource(HashMap::new()))
             .add_event::<NotificationEvent>()
-            .add_systems(Startup, spawn_notification_poller)
-            // .add_systems(Startup, load_notifications_from_database)
-            .add_systems(Update, (apply_loaded_notifications, handle_action_invoked));
+            .add_systems(Startup, (spawn_notification_poller, start_notification_loading))
+            .add_systems(Update, (apply_loaded_notifications, handle_action_invoked, check_notification_loading));
     }
 }
