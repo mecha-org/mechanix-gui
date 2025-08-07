@@ -1,5 +1,8 @@
+use crate::utils::{parse_action_schema, ActionSchema, ActionSetting, Arg};
+use crate::{utils, AppActionsConfig};
 use log::{debug, error, info, warn};
-use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use serde::Deserialize;
 use std::fs::read_dir;
 use std::{
     collections::HashMap,
@@ -7,15 +10,13 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
-
-use crate::AppActionsConfig;
 use tantivy::query::TermQuery;
 use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
 use tantivy::{
-    collector::TopDocs, doc, query::QueryParser, schema::{Schema, STORED, TEXT}, Document, Index,
-    IndexReader,
+    collector::TopDocs, doc, query::QueryParser, schema::{Schema, STORED, TEXT}, Document, Index, IndexReader,
     IndexWriter,
     TantivyDocument,
+    TantivyError,
     Term,
 };
 use tokio::{sync::mpsc, task::JoinHandle, time};
@@ -23,20 +24,24 @@ use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
 
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Default, Clone)]
 #[zvariant(signature = "dict")]
-pub struct AppInfo {
-    pub type_: String,
-    pub name: String,
-    pub generic_name: String,
-    pub keywords: Vec<String>,
-    pub comment: String,
-    pub icon: String,
-    pub categories: Vec<String>,
-    pub exec: String,
-    pub path: String,
-    pub score: f32,
+pub struct AppActions {
+    name: String,
+    icon: String,
+    exec: String,
+    section: String,
+    action: String,
+    description: String,
+    arg_key: String,
+    arg_value: String,
+    score: f32,
 }
-/// Public entry point for the app search service.
+pub enum FileIndexState {
+    IndexedAndUpToDate, // indexed & checksum matches
+    IndexedAndStale,    // indexed & checksum mismatch
+    NotIndexed,         // not in the index at all
+}
 
+/// Public entry point for the app actions service.
 #[derive()]
 pub struct AppActionsService {
     config: AppActionsConfig,
@@ -48,11 +53,61 @@ pub struct AppActionsService {
 }
 
 impl AppActionsService {
-    /* fn load_existing_desktop_entries(
+    fn get_index_state(
+        schema: &Schema,
+        new_checksum: &str,
+        file_path: &PathBuf,
+        index_reader: &IndexReader,
+        search_limit: usize,
+    ) -> Result<FileIndexState, TantivyError> {
+        // Check if last_modified is same then do not index
+        let field = match schema.get_field("path") {
+            Ok(field) => field,
+            Err(err) => {
+                error!("Failed to get the field: {}", err);
+                return Err(err);
+            }
+        };
+        let term = Term::from_field_text(field, &file_path.to_string_lossy().to_string());
+        // check if the entry is already in the index
+        let existing_entry = extract_doc(index_reader, &term, search_limit)?;
+        if let Some(existing_entry) = existing_entry {
+            // verify checksum
+            let old_checksum_field = schema.get_field("checksum")?;
+            let old_checksum_value = match existing_entry.get_first(old_checksum_field) {
+                Some(v) => v,
+                None => {
+                    warn!(
+                        "The checksum field isn't found for entry: {}",
+                        file_path.display()
+                    );
+                    return Ok(FileIndexState::NotIndexed);
+                }
+            };
+            if let Some(last_modified_field_value) = old_checksum_value.as_str() {
+                return if last_modified_field_value == new_checksum {
+                    debug!(
+                        "Entry already exists, and last_modified is the same for path: {}",
+                        file_path.display()
+                    );
+                    Ok(FileIndexState::IndexedAndUpToDate)
+                } else {
+                    debug!(
+                        "Entry already exists, but last_modified is different for a path: {}",
+                        file_path.display()
+                    );
+                    Ok(FileIndexState::IndexedAndStale)
+                };
+            }
+        }
+        Ok(FileIndexState::NotIndexed)
+    }
+    fn load_existing_desktop_entries(
         desktop_app_dir: &str,
         index_reader: &IndexReader,
         index_writer: &Arc<Mutex<IndexWriter>>,
         schema: &Schema,
+        search_limit: usize,
     ) {
         info!("Loading existing desktop entries");
         let existing_desktop_entries = read_dir(&desktop_app_dir).unwrap();
@@ -72,7 +127,11 @@ impl AppActionsService {
                 &path.to_string_lossy().to_string(),
             );
             // check if the entry is already in the index
-            let existing_entry = extract_doc_given_app_path(index_reader, &term).unwrap();
+            let existing_entry =
+                extract_doc(index_reader, &term, search_limit).unwrap_or_else(|e| {
+                    error!("Failed to extract doc: {}", e);
+                    None
+                });
             if let Some(existing_entry) = existing_entry {
                 debug!("Entry already exists for path: {}", path.display());
                 // verify checksum
@@ -98,42 +157,30 @@ impl AppActionsService {
                     // If checksums don't match, then delete the entry
                     warn!("Checksum mismatch for entry: {}", path.display());
                     if let Ok(writer) = index_writer.lock() {
-                        let term = Term::from_field_text(
-                            schema.get_field("path").unwrap(),
-                            &path.to_string_lossy().to_string(),
-                        );
-                        let doc =
-                            extract_doc_given_app_path(&index_reader, &term).unwrap_or_else(|e| {
-                                error!("Failed to extract doc: {}", e);
-                                None
-                            });
-                        if let Some(_doc) = doc {
-                            let _result = writer.delete_term(term);
-                            info!("Removed indexed app entry: {}", path.display());
-                        }
+                        let _result = writer.delete_term(term);
+                        info!("Removed indexed action entry: {}", path.display());
                     }
                 } else {
                     debug!("Checksum match for entry: {}", path.display());
                     continue;
                 }
             }
-            let desktop_entry = match parse_desktop_entry(&path) {
+            let action_schema = match parse_action_schema(&path) {
                 Some(d) => d,
                 None => {
-                    warn!("Failed to parse desktop entry: {}", path.display());
+                    warn!("Failed to parse action schema: {}", path.display());
                     continue;
                 }
             };
-            debug!(
-                "Found desktop entry: {:?} {:?}",
-                desktop_entry.name, desktop_entry.comment
-            );
+            debug!("Found action schema: {:?}", action_schema.name);
 
-            let doc = feed_doc(&schema, &desktop_entry, checksum, &path);
+            let docs = feed_docs(&schema, &action_schema, checksum, &path);
             if let Ok(writer) = index_writer.lock() {
-                match writer.add_document(doc) {
-                    Ok(_) => (),
-                    Err(e) => error!("Failed to index app entry: {}", e),
+                for doc in docs {
+                    match writer.add_document(doc) {
+                        Ok(_) => info!("Indexed existing action schema: {}", action_schema.name),
+                        Err(e) => error!("Failed to index the existing action schema: {}", e),
+                    }
                 }
             }
         }
@@ -145,20 +192,23 @@ impl AppActionsService {
             }
         };
         info!("Finished loading existing entries");
-    } */
+    }
     /// Create the Tantivy schema for `.desktop` fields
     fn create_schema() -> Schema {
         let mut schema_builder = tantivy::schema::Schema::builder();
-        schema_builder.add_text_field("type", STRING | STORED);
+        // top-level fields
         schema_builder.add_text_field("name", STRING | STORED);
-        schema_builder.add_text_field("exec", STORED);
-        schema_builder.add_text_field("comment", TEXT);
-        schema_builder.add_text_field("generic_name", STRING | STORED);
-        schema_builder.add_text_field("categories", STRING | STORED);
-        schema_builder.add_text_field("keywords", TEXT | STORED);
-        schema_builder.add_text_field("icon", STORED);
+        schema_builder.add_text_field("icon", STRING | STORED);
+        schema_builder.add_text_field("exec", STRING | STORED);
         schema_builder.add_text_field("checksum", STORED);
-        schema_builder.add_text_field("path", STRING);
+        schema_builder.add_text_field("path", STRING | STORED);
+
+        // section fields (each config block)
+        schema_builder.add_text_field("section", STRING | STORED); // e.g. EnableWifi, EnableBluetooth
+        schema_builder.add_text_field("action", TEXT | STORED); // searchable action text
+        schema_builder.add_text_field("description", TEXT | STORED); // searchable description
+        schema_builder.add_text_field("arg_key", STRING | STORED); // e.g. "path"
+        schema_builder.add_text_field("arg_value", STRING | STORED); // e.g. "network", "bluetooth"
 
         schema_builder.build()
     }
@@ -189,17 +239,33 @@ impl AppActionsService {
         })
     }
 
+    /// Starts the App Actions service.
+    ///
+    /// This function starts a separate task which watches the `schema_dir` for new or modified
+    /// TOML files. When a change is detected, it will parse the TOML file, generate a checksum,
+    /// and index the file in the Tantivy index. The index will be committed to disk after every
+    /// change.
+    ///
+    /// The service will also load existing entries from the index on startup.
+    ///
+    /// If the watch path does not exist, this function will return an error.
+    ///
+    /// This function is marked as `async` because it uses async I/O to read the watch path and
+    /// index the files. However, it does not use `await` because it uses a separate task to do
+    /// the work.
     pub async fn run(&mut self) -> anyhow::Result<()> {
         info!("Starting App Action watcher...");
         // Load existing entries, this should be in a separate task
         let schema = self.schema.clone(); // make sure schema is Arc or Clone
         let index_reader = self.index.reader()?; // Make sure this is thread safe
-        // Self::load_existing_desktop_entries(
-        //     &self.config.desktop_apps_dir,
-        //     &index_reader,
-        //     &self.writer.clone(),
-        //     &schema,
-        // );
+        let search_limit = self.config.search_limit;
+        Self::load_existing_desktop_entries(
+            &self.config.schema_dir,
+            &index_reader,
+            &self.writer.clone(),
+            &schema,
+            search_limit,
+        );
         let watch_path: PathBuf = self.config.schema_dir.clone().into();
         if !watch_path.exists() {
             anyhow::bail!("Watch path does not exist: {}", watch_path.display());
@@ -243,6 +309,7 @@ impl AppActionsService {
                 return Ok(());
             }
         };
+
         self.index_worker_handle = Some(tokio::spawn(async move {
             let debounce_duration = Duration::from_secs(2);
             let mut pending = Vec::new();
@@ -257,28 +324,142 @@ impl AppActionsService {
 
                         for event in pending.drain(..) {
                             if let Some(path) = event.paths.get(0) {
-                                if path.extension().and_then(|s| s.to_str()) == Some("desktop") &&
+                                if path.extension().and_then(|s| s.to_str()) == Some("toml") &&
+                                !path.starts_with(".") &&
                                    (event.kind.is_create() || event.kind.is_modify()) || event.kind.is_remove() {
-                                    debug!("File created or modified: {}", path.display());
                                     unique_paths.insert(path.clone(), event.kind.clone());
                                 }
                             }
                         }
 
                         for (path, kind) in unique_paths {
-                            if kind.is_create() || kind.is_modify() {
-                                info!("New schema detected: {}", path.display());
-                            } else if kind.is_remove() {
-                                info!("Removing indexed app entry: {:?}", path.file_name());
+                               match kind {
+                                EventKind::Any => {}
+                                EventKind::Access(_) => {}
+                                EventKind::Create(_) => {
+                                  debug!("New schema detected: {}", path.display());
+                                  if let Some(action_schema) = utils::parse_action_schema(&path) {
+                                    debug!("action_schema: {:?}", action_schema);
+                                    let checksum = match generate_checksum(&path) {
+                                        Ok(c) => c,
+                                        Err(e) => {
+                                            warn!("Failed to generate checksum for {}: {}", path.display(), e);
+                                            String::new()
+                                        }
+                                    };
+                                    let docs = feed_docs(&schema, &action_schema, checksum, &path);
+                                    if let Ok(writer) = writer.lock() {
+                                            for doc in docs {
+                                                match writer.add_document(doc) {
+                                                Ok(_) => info!("Indexed action entry: {}", action_schema.name),
+                                                Err(e) => error!("Failed to index action entry: {}", e),
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                EventKind::Modify(_) => {
+                                    debug!("Schema modification detected: {}", path.display());
+                                    if let Some(action_schema) = utils::parse_action_schema(&path) {
+                                        let checksum = match generate_checksum(&path) {
+                                        Ok(c) => c,
+                                        Err(e) => {
+                                            warn!("Failed to generate checksum for {}: {}", path.display(), e);
+                                            String::new()
+                                            }
+                                        };
+                                        let state = match Self::get_index_state(&schema, &checksum, &path, &reader, search_limit) {
+                                            Ok(state) => state,
+                                            Err(e) => {
+                                                error!("Failed to get index state for {}: {}", path.display(), e);
+                                                continue;
+                                            }
+                                        };
+                                        match state {
+                                            FileIndexState::IndexedAndUpToDate => {
+                                                debug!(
+                                                    "Entry already exists, and checksum is the same for schema: {}",
+                                                    action_schema.name
+                                                );
+                                                continue;
+                                            }
+                                            FileIndexState::IndexedAndStale => {
+                                                if let Ok(writer) = writer.lock() {
+                                                    let field = match schema.get_field("path") {
+                                                        Ok(field) => field,
+                                                        Err(err) => {
+                                                            error!("Failed to get field - path: {}", err);
+                                                            continue;
+                                                        }
+                                                    };
+                                                    //TODO: we can delete this in get_index_state or return from that function
+                                                    let term = Term::from_field_text(
+                                                        field,
+                                                        &path.to_string_lossy().to_string(),
+                                                    );
+                                                    let doc =
+                                                        extract_doc(&index_reader, &term, search_limit).unwrap_or_else(|e| {
+                                                            error!("Failed to extract doc: {}", e);
+                                                            None
+                                                        });
+                                                    if let Some(_doc) = doc {
+                                                        let _result = writer.delete_term(term);
+                                                        info!("Removed indexed file entry: {:?}", path.file_name());
+                                                    }
+                                                    let docs = feed_docs(&schema, &action_schema, checksum, &path);
+                                                    for doc in docs {
+                                                        match writer.add_document(doc) {
+                                                            Ok(_) => info!("Indexed new action schema: {}", action_schema.name),
+                                                            Err(e) => error!("Failed to index the new action schema: {}", e),
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            FileIndexState::NotIndexed => {
+                                                 let docs = feed_docs(&schema, &action_schema, checksum, &path);
+                                                if let Ok(writer) = writer.lock() {
+                                                    for doc in docs {
+                                                        match writer.add_document(doc) {
+                                                            Ok(_) => info!("Indexed new action schema: {}", action_schema.name),
+                                                            Err(e) => error!("Failed to index new action schema: {}", e),
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                EventKind::Remove(_) => {
+                                    debug!("Removing indexed action entry: {:?}", path.file_name());
+                                    if let Ok(writer) = writer.lock() {
+                                        let field = match schema.get_field("path") {
+                                            Ok(field) => field,
+                                            Err(err) => {
+                                                error!("Failed to get field - path: {}", err);
+                                                continue;
+                                            }
+                                        };
+                                        let term = Term::from_field_text(field, &path.to_string_lossy().to_string());
+                                       let doc= extract_doc(&reader, &term, search_limit).unwrap_or_else(|e| {
+                                                error!("Failed to extract doc: {}", e);
+                                                None
+                                            });
+                                        if let Some(_doc) = doc {
+                                            let _result =writer.delete_term(term);
+                                            info!("Removed indexed action entry: {:?}", path.file_name());
+                                        }
+                                    }
+                                }
+                                EventKind::Other => {}
                             }
                         }
-                        // if let Ok(mut writer) = writer.lock() {
-                        //     if let Err(e) = writer.commit() {
-                        //         error!("Failed to commit index: {:?}", e);
-                        //     } else {
-                        //         info!("Committed indexed app data to disk.");
-                        //     }
-                        // }
+                        if let Ok(mut writer) = writer.lock() {
+                            if let Err(e) = writer.commit() {
+                                error!("Failed to commit index: {:?}", e);
+                            } else {
+                                info!("Committed indexed app data to disk.");
+                            }
+                        }
                     }
                 }
             }
@@ -286,9 +467,8 @@ impl AppActionsService {
         Ok(())
     }
 
-    /// Search indexed applications using a free-form query.
-    pub fn search(&self, query_str: &str, limit: usize) -> tantivy::Result<Vec<AppInfo>> {
-        info!("Search Apps: {}", query_str);
+    /// Search indexed action using a free-form query.
+    pub fn search(&self, query_str: &str, limit: usize) -> tantivy::Result<Vec<AppActions>> {
         let fields: Vec<Field> = self
             .config
             .searchable_fields
@@ -305,6 +485,7 @@ impl AppActionsService {
             })
             .collect();
 
+        // Define reload policy to reload the index on commit
         let reader = self
             .index
             .reader_builder()
@@ -322,7 +503,7 @@ impl AppActionsService {
         for (score, doc_addr) in top_docs {
             let doc: TantivyDocument = searcher.doc(doc_addr)?;
 
-            let mut app = AppInfo::default();
+            let mut app_action = AppActions::default();
             for (field, value) in doc.get_sorted_field_values() {
                 let field_name = self.schema.get_field_name(field).to_string();
                 // Join all values into a single string (semicolon-separated)
@@ -332,58 +513,11 @@ impl AppActionsService {
                     .collect::<Vec<_>>()
                     .join(";");
 
-                set_app_field(&mut app, &field_name, joined_values);
-                app.score = score;
+                set_app_field(&mut app_action, &field_name, joined_values);
+                app_action.score = score;
             }
 
-            results.push(app);
-        }
-
-        Ok(results)
-    }
-    pub fn list_applications(&self, limit: usize) -> tantivy::Result<Vec<AppInfo>> {
-        info!("List applications: limit {}", limit);
-        let field_name = "type";
-        let search_term = "Application";
-        let field_to_lookup = match self.schema.get_field(field_name) {
-            Ok(field) => field,
-            Err(err) => {
-                error!("Failed to get field {}: {}", field_name, err);
-                return Err(err);
-            }
-        };
-
-        let reader = self
-            .index
-            .reader_builder()
-            .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
-            .try_into()?;
-
-        let searcher = reader.searcher();
-        let query_parser = QueryParser::for_index(&self.index, vec![field_to_lookup]);
-        let query = query_parser.parse_query(search_term)?;
-
-        let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
-
-        let mut results = Vec::new();
-
-        for (_score, doc_addr) in top_docs {
-            let doc: TantivyDocument = searcher.doc(doc_addr)?;
-
-            let mut app = AppInfo::default();
-            for (field, value) in doc.get_sorted_field_values() {
-                let field_name = self.schema.get_field_name(field).to_string();
-                // Join all values into a single string (semicolon-separated)
-                let joined_values = value
-                    .iter()
-                    .filter_map(|val| val.as_str())
-                    .collect::<Vec<_>>()
-                    .join(";");
-
-                set_app_field(&mut app, &field_name, joined_values);
-            }
-
-            results.push(app);
+            results.push(app_action);
         }
 
         Ok(results)
@@ -403,70 +537,79 @@ impl AppActionsService {
         Ok(())
     }
 }
-fn set_app_field(app: &mut AppInfo, field_name: &str, joined_values: String) {
+
+/// Set a field on an `AppActions` struct based on the given `field_name` and
+/// `joined_values`.
+///
+/// If the `field_name` does not match any of the fields on `AppActions`, this
+/// function does nothing.
+///
+/// # Arguments
+///
+/// * `app`: the `AppActions` to modify
+/// * `field_name`: the name of the field to set
+/// * `joined_values`: the value to set the field to, which should be a single
+///   string which is the result of joining multiple values together with a
+///   semicolon separator.
+fn set_app_field(app: &mut AppActions, field_name: &str, joined_values: String) {
     match field_name {
-        "type" => app.type_ = joined_values,
         "name" => app.name = joined_values,
-        "exec" => app.exec = joined_values,
-        "comment" => app.comment = joined_values,
-        "generic_name" => app.generic_name = joined_values,
-        "categories" => {
-            app.categories = joined_values.split(';').map(|s| s.to_string()).collect();
-        }
-        "keywords" => {
-            app.keywords = joined_values.split(';').map(|s| s.to_string()).collect();
-        }
         "icon" => app.icon = joined_values,
-        "path" => app.path = joined_values,
+        "exec" => app.exec = joined_values,
+        "section" => app.section = joined_values,
+        "action" => app.action = joined_values,
+        "description" => app.description = joined_values,
+        "arg_key" => app.arg_key = joined_values,
+        "arg_value" => app.arg_value = joined_values,
         _ => {}
     }
 }
 
-/// Creates a `TantivyDocument` from a `DesktopEntry`, with the given checksum and path.
-///
-/// This function takes a `DesktopEntry` and creates a new `TantivyDocument` with the fields:
-///
-/// - `name`: the application name
-/// - `exec`: the application executable
-/// - `comment`: the application description
-/// - `generic_name`: the application generic name
-/// - `categories`: the application categories, joined with `;`
-/// - `keywords`: the application keywords, joined with `;`
-/// - `icon`: the application icon
-/// - `path`: the path to the `.desktop` file
-/// - `checksum`: the checksum of the `.desktop` file
-///
-/// If any of the fields are missing in the `DesktopEntry`, they will be filled with default values.
-///
-/// # Arguments
-///
-/// * `schema`: the `Schema` to use for creating the `TantivyDocument`
-/// * `desktop_entry`: the `DesktopEntry` to create the `TantivyDocument` from
-/// * `checksum`: the checksum of the `.desktop` file
-/// * `path`: the path to the `.desktop` file
-///
-/// # Returns
-///
-/// A `TantivyDocument` with the fields filled in from the `DesktopEntry`, checksum and path.
-// fn feed_doc(
-//     schema: &Schema,
-//     desktop_entry: &DesktopEntry,
-//     checksum: String,
-//     path: &Path,
-// ) -> TantivyDocument {
-//     doc!(
-//         schema.get_field("type").unwrap() => desktop_entry.type_,
-//         schema.get_field("name").unwrap() => desktop_entry.name,
-//         schema.get_field("exec").unwrap() => desktop_entry.exec.clone().unwrap_or_default(),
-//         schema.get_field("comment").unwrap() => desktop_entry.comment.clone().unwrap_or_default(),
-//         schema.get_field("generic_name").unwrap() => desktop_entry.generic_name.clone().unwrap_or_default(),
-//         schema.get_field("categories").unwrap() => desktop_entry.categories.join(";"),
-//         schema.get_field("keywords").unwrap() => desktop_entry.keywords.join(";"),
-//         schema.get_field("icon").unwrap() => desktop_entry.icon.clone().unwrap_or_default(),
-//         schema.get_field("path").unwrap() => path.to_string_lossy().to_string(),
-//         schema.get_field("checksum").unwrap() => checksum
-//     )
-// }
+/// Create a `Vec` of `TantivyDocument`s from a `&ActionSchema`, with the given checksum and path.
+pub fn feed_docs(
+    schema: &Schema,
+    action_schema: &ActionSchema,
+    checksum: String,
+    path: &Path,
+) -> Vec<TantivyDocument> {
+    let mut docs = Vec::new();
+
+    // Get tantivy fields once for efficiency:
+    let name_field = schema.get_field("name").unwrap();
+    let icon_field = schema.get_field("icon").unwrap();
+    let exec_field = schema.get_field("exec").unwrap();
+    let section_field = schema.get_field("section").unwrap();
+    let action_field = schema.get_field("action").unwrap();
+    let description_field = schema.get_field("description").unwrap();
+    let arg_key_field = schema.get_field("arg_key").unwrap();
+    let arg_value_field = schema.get_field("arg_value").unwrap();
+    let path_field = schema.get_field("path").unwrap();
+    let checksum_field = schema.get_field("checksum").unwrap();
+
+    for (section_name, action_setting) in &action_schema.actions {
+        // Create document per action section
+        let mut doc = TantivyDocument::default();
+
+        // top-level fields
+        doc.add_text(name_field, &action_schema.name);
+        doc.add_text(icon_field, &action_schema.icon);
+        doc.add_text(exec_field, &action_schema.exec);
+
+        // section-level fields
+        doc.add_text(section_field, section_name); // e.g. "EnableWifi"
+        doc.add_text(action_field, &action_setting.action); // e.g. "Enable WiFi"
+        doc.add_text(description_field, &action_setting.description); // e.g. "Enable wireless network"
+
+        doc.add_text(arg_key_field, "path"); // because your Arg has only `path` key
+        doc.add_text(arg_value_field, &action_setting.arg.path); // e.g. "network"
+
+        doc.add_text(path_field, &path.to_string_lossy());
+        doc.add_text(checksum_field, &checksum);
+
+        docs.push(doc);
+    }
+    docs
+}
 
 /// Generates a SHA256 checksum for the file at the given path.
 ///
@@ -501,9 +644,10 @@ fn generate_checksum(file_path: &PathBuf) -> Result<String, std::io::Error> {
 // A simple helper function to fetch a single document
 // given its id from our index.
 // It will be helpful to check our work.
-fn extract_doc_given_app_path(
+fn extract_doc(
     reader: &IndexReader,
     app_path: &Term,
+    search_limit: usize,
 ) -> tantivy::Result<Option<TantivyDocument>> {
     let searcher = reader.searcher();
 
@@ -513,7 +657,7 @@ fn extract_doc_given_app_path(
     // The second argument is here to tell we don't care about decoding positions,
     // or term frequencies.
     let term_query = TermQuery::new(app_path.clone(), IndexRecordOption::Basic);
-    let top_docs = searcher.search(&term_query, &TopDocs::with_limit(200))?;
+    let top_docs = searcher.search(&term_query, &TopDocs::with_limit(search_limit))?;
 
     if let Some((_score, doc_address)) = top_docs.first() {
         let doc = searcher.doc(*doc_address)?;

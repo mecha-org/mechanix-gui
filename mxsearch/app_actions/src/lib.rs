@@ -1,6 +1,8 @@
 use serde::Deserialize;
 
 pub mod service;
+mod utils;
+
 pub use crate::service::AppActionsService;
 
 #[derive(Debug, Deserialize, Clone)]
