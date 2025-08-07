@@ -1,5 +1,5 @@
-use crate::utils::{parse_action_schema, ActionSchema, ActionSetting, Arg};
-use crate::{utils, AppActionsConfig};
+use crate::utils::{ActionSchema, ActionSetting, Arg, parse_action_schema};
+use crate::{AppActionsConfig, utils};
 use log::{debug, error, info, warn};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::Deserialize;
@@ -11,13 +11,13 @@ use std::{
     time::Duration,
 };
 use tantivy::query::TermQuery;
-use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
+use tantivy::schema::{Field, IndexRecordOption, STRING, Value};
 use tantivy::{
-    collector::TopDocs, doc, query::QueryParser, schema::{Schema, STORED, TEXT}, Document, Index, IndexReader,
-    IndexWriter,
-    TantivyDocument,
-    TantivyError,
-    Term,
+    Document, Index, IndexReader, IndexWriter, TantivyDocument, TantivyError, Term,
+    collector::TopDocs,
+    doc,
+    query::QueryParser,
+    schema::{STORED, Schema, TEXT},
 };
 use tokio::{sync::mpsc, task::JoinHandle, time};
 use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
@@ -513,7 +513,7 @@ impl AppActionsService {
                     .collect::<Vec<_>>()
                     .join(";");
 
-                set_app_field(&mut app_action, &field_name, joined_values);
+                set_app_action_field(&mut app_action, &field_name, joined_values, &query_str);
                 app_action.score = score;
             }
 
@@ -538,20 +538,25 @@ impl AppActionsService {
     }
 }
 
-/// Set a field on an `AppActions` struct based on the given `field_name` and
-/// `joined_values`.
+/// Populate fields of `AppActions` from a given `joined_values` string
+/// (semicolon-separated) based on a `field_name`.
 ///
-/// If the `field_name` does not match any of the fields on `AppActions`, this
-/// function does nothing.
+/// If `field_name` is "arg_value" and the value is "%KEYWORD%", the
+/// `search_query` is used instead.
 ///
-/// # Arguments
+/// # Parameters
 ///
-/// * `app`: the `AppActions` to modify
-/// * `field_name`: the name of the field to set
-/// * `joined_values`: the value to set the field to, which should be a single
-///   string which is the result of joining multiple values together with a
-///   semicolon separator.
-fn set_app_field(app: &mut AppActions, field_name: &str, joined_values: String) {
+/// * `app`: The `AppActions` instance to populate.
+/// * `field_name`: The name of the field to populate.
+/// * `joined_values`: The value to assign to the field.
+/// * `search_query`: The search string to use if the `field_name` is
+///   "arg_value" and the value is "%KEYWORD%".
+fn set_app_action_field(
+    app: &mut AppActions,
+    field_name: &str,
+    joined_values: String,
+    search_query: &str,
+) {
     match field_name {
         "name" => app.name = joined_values,
         "icon" => app.icon = joined_values,
@@ -560,7 +565,13 @@ fn set_app_field(app: &mut AppActions, field_name: &str, joined_values: String) 
         "action" => app.action = joined_values,
         "description" => app.description = joined_values,
         "arg_key" => app.arg_key = joined_values,
-        "arg_value" => app.arg_value = joined_values,
+        "arg_value" => {
+            if joined_values.to_lowercase() == "%keyword%" {
+                app.arg_value = search_query.to_string();
+            } else {
+                app.arg_value = joined_values;
+            }
+        }
         _ => {}
     }
 }
