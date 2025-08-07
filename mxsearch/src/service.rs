@@ -41,7 +41,7 @@ impl MxSearchService {
     /// Get a setting from the server
     pub async fn list_applications(&self) -> Result<Vec<AppInfo>, anyhow::Error> {
         debug!("Connecting to D-Bus session for list_applications");
-        let applications =self.proxy.list_applications().await?;
+        let applications = self.proxy.list_applications().await?;
         Ok(applications)
     }
     pub async fn search_applications(&self, search: &str) -> Result<Vec<AppInfo>, anyhow::Error> {

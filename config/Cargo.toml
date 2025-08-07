@@ -6,7 +6,10 @@ default-members = ["mxconf"]
 
 [workspace.package]
 version = "0.1.0"
-authors = ["Minesh Purohit <mineshp@mechasystems.com>", "Shoaib Merchant <shoaibm@mechasystems.com>", ]
+authors = [
+    "Shoaib Merchant <shoaibm@mechasystems.com>",
+    "Minesh Purohit <mineshp@mechasystems.com>",
+]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/mecha-org/mechanix-gui"

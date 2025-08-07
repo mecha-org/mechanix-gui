@@ -4,7 +4,11 @@ use bevy::{
 };
 use bevy_core_widgets::{CoreButton, CoreScrollArea};
 
-use crate::{desktop_apps::DesktopApp, launcher::SearchWindow, utils::Icon};
+use crate::{
+    desktop_apps::{self, DesktopApp, DesktopApps},
+    launcher::SearchWindow,
+    utils::{FontAssets, Icon},
+};
 
 #[derive(Debug, Resource, Clone)]
 pub struct FrequentlyUsedApps(pub Vec<String>);

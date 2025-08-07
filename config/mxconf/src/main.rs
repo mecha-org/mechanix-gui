@@ -174,6 +174,7 @@ fn handle_event(event: Event, db: &mut database::Database) -> Result<()> {
     Ok(())
 }
 
+
 /// Load the profile, which contains user and system settings
 mod profile {
     use crate::error::ProfileError;

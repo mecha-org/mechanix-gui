@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_core_widgets::{ButtonPressed, InteractionDisabled, hover::Hovering};
 use bevy_styled_widgets::prelude::ThemeManager;
 
+use crate::widgets::button::AnimationConfig;
+
 use super::{
     ButtonSize,
     components::{ButtonVariant, StyledButton, StyledButtonText},
@@ -12,7 +14,7 @@ use super::{
 pub fn update_button(
     theme_manager: Res<ThemeManager>,
     children: Query<&mut Children>,
-    mut text_query: Query<(&mut Text, &mut TextColor, &mut TextFont), With<StyledButtonText>>,
+    mut image_query: Query<&mut ImageNode>,
     mut query: Query<(
         Entity,
         &mut Node,
@@ -33,7 +35,7 @@ pub fn update_button(
         mut border_color,
         mut border_radius,
         Hovering(is_hovering),
-        ButtonPressed(is_pressed),
+        ButtonPressed { is_pressed, .. },
         is_disabled,
     ) in query.iter_mut()
     {
@@ -46,51 +48,15 @@ pub fn update_button(
         //Get button text
         if let Ok(children) = children.get(button_entity_id) {
             for child in children.iter() {
-                if let Ok((mut text, mut text_color, mut text_font)) = text_query.get_mut(child) {
-                    let button_styles = theme_manager.styles.buttons.clone();
-                    // let button_size_styles = theme_manager.styles.button_sizes.clone();
-                    let button_style = match button.variant {
-                        ButtonVariant::Primary => button_styles.primary,
-                        ButtonVariant::Secondary => button_styles.secondary,
-                        ButtonVariant::Destructive => button_styles.destructive,
-                        ButtonVariant::Outline => button_styles.outline,
-                        ButtonVariant::Ghost => button_styles.ghost,
+                if let Ok(mut image_node) = image_query.get_mut(child) {
+                    let Some(icon) = button.icon.clone() else {
+                        continue;
                     };
-                    let color = if *is_pressed {
-                        button_style.pressed_text_color
-                    } else {
-                        button_style.text_color
+                    let Some(layout) = button.layout.clone() else {
+                        continue;
                     };
-                    text_color.0 = color;
 
-                    //update font size
-                    // let button_size_style = match button.size.unwrap_or_default() {
-                    //     ButtonSize::XSmall => button_size_styles.xsmall,
-                    //     ButtonSize::Small => button_size_styles.small,
-                    //     ButtonSize::Medium => button_size_styles.medium,
-                    //     ButtonSize::Large => button_size_styles.large,
-                    //     ButtonSize::XLarge => button_size_styles.xlarge,
-                    // };
-                    // text_font.font_size = button_size_style.font_size;
-
-                    //update text
-                    if let Some(text_str) = button.text.clone() {
-                        text.0 = text_str.clone();
-                    }
-
-                    //update icon
-                    if let Some(icon) = button.icon.clone() {
-                        if let Some(theme_icon) = theme_icons.get(&icon) {
-                            text.0 = theme_icon.clone();
-                        } else {
-                            text.0 = icon;
-                        };
-                    }
-
-                    //update font
-                    if let Some(font) = &button.font {
-                        text_font.font = font.clone();
-                    }
+                    *image_node = ImageNode::from_atlas_image(icon, TextureAtlas::from(layout));
                 }
             }
         };
@@ -104,16 +70,52 @@ pub fn update_button(
             ButtonVariant::Ghost => button_styles.ghost,
         };
 
-        match (is_disabled, is_pressed, is_hovering) {
-            (true, _, _) => {
+        // let is_active = button.active.unwrap_or(false);
+        // let active_background = button
+        //     .active_background_color
+        //     .unwrap_or(button_style.normal_background);
+
+        // match (is_disabled, is_pressed, is_hovering) {
+        //     (true, _, _) => {
+        //         bg_color.0 = button_style.normal_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        //     (_, true, true) => {
+        //         bg_color.0 = button_style.pressed_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        //     (_, false, true) => {
+        //         bg_color.0 = button_style.hovered_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        //     _ => {
+        //         bg_color.0 = button_style.normal_background;
+        //         border_color.0 = button_style.border_color;
+        //     }
+        // };
+
+        let is_active = button.active.unwrap_or(false);
+
+        match (is_disabled, is_active, is_pressed, is_hovering) {
+            (true, _, _, _) => {
                 bg_color.0 = button_style.normal_background;
                 border_color.0 = button_style.border_color;
             }
-            (_, true, true) => {
+            (false, true, false, _) => {
+                bg_color.0 = button
+                    .active_background_color
+                    .unwrap_or(button_style.active_background);
+                border_color.0 = button_style.border_color;
+            }
+            (false, true, true, _) => {
                 bg_color.0 = button_style.pressed_background;
                 border_color.0 = button_style.border_color;
             }
-            (_, false, true) => {
+            (false, false, true, true) => {
+                bg_color.0 = button_style.pressed_background;
+                border_color.0 = button_style.border_color;
+            }
+            (false, false, false, true) => {
                 bg_color.0 = button_style.hovered_background;
                 border_color.0 = button_style.border_color;
             }
@@ -121,7 +123,7 @@ pub fn update_button(
                 bg_color.0 = button_style.normal_background;
                 border_color.0 = button_style.border_color;
             }
-        };
+        }
 
         //Update size styles
         let button_size_style = match button.size.unwrap_or_default() {
@@ -148,5 +150,31 @@ pub fn update_button(
         //     border_radius.bottom_left = Val::Px(button.border_radius.unwrap_or_default());
         //     border_radius.bottom_right = Val::Px(button.border_radius.unwrap_or_default());
         // }
+    }
+}
+
+// This system loops through all the sprites in the `TextureAtlas`, from  `first_sprite_index` to
+// `last_sprite_index` (both defined in `AnimationConfig`).
+pub fn execute_animations(
+    time: Res<Time>,
+    mut query: Query<(&mut AnimationConfig, &mut ImageNode)>,
+) {
+    for (mut config, mut sprite) in &mut query {
+        // We track how long the current sprite has been displayed for
+        config.frame_timer.tick(time.delta());
+
+        // If it has been displayed for the user-defined amount of time (fps)...
+        if config.frame_timer.just_finished() {
+            if let Some(atlas) = &mut sprite.texture_atlas {
+                if atlas.index == config.last_sprite_index {
+                    // ...and it IS the last frame, then stop
+                } else {
+                    // ...and it is NOT the last frame, then we move to the next frame...
+                    atlas.index += 1;
+                    // ...and reset the frame timer to start counting all over again
+                    config.frame_timer = AnimationConfig::timer_from_fps(config.fps);
+                }
+            }
+        }
     }
 }

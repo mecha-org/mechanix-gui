@@ -1,37 +1,23 @@
-use crate::components::{
-    search_result_item, settings_drawer, universal_search, AppSearchResultUiResource,
-    FrequentlyUsedApps, RecentSearches, SearchResult, SearchResultsComponent, SearchText,
-    SettingsDrawerPlugin,
-};
-use crate::utils::Icon;
-use crate::{
-    components::{
-        app_list, apps_grid, navigation_bar, status_bar, update_apps_categories,
-        update_apps_list, AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin,
-    },
-    desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
-    // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
-    styled_card::{StyledCard, StyledCardPlugin},
-    utils::FontAssets,
-    widgets::LauncherStyledWidgetsPlugin,
-};
 use bevy::app::TaskPoolThreadAssignmentPolicy;
 use bevy::asset::AssetPath;
 use bevy::{
     asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
 };
+use crate::components::{
+    search_result_item,  SearchResult, SearchResultsComponent,
+};
 use bevy_asset_loader::prelude::*;
 use bevy_plugins::bluetooth::BluetoothEnabledStatus;
-use bevy_plugins::mxsearch::{AppSearchResult, FileSearchResult, SearchResultType};
+use bevy_plugins::mxsearch::{AppSearchResult, SearchResultType};
 use bevy_plugins::network_manager::{NetworkManagerDeviceStatus, WirelessEnabled};
 use bevy_plugins::upower::UPowerPlugin;
 use bevy_plugins::{
     BluetoothPlugin, MxSearchAction, MxSearchActionEvent, NetworkManagerPlugin,
-    UniversalSearchPlugin,
+    MxSearchPlugin,
 };
 use bevy_smithay::{
-    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor}, SmithayPlugin,
-    SmithayWindowType,
+    SmithayPlugin, SmithayWindowType,
+    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor},
 };
 use bevy_styled_widgets::{
     prelude::{
@@ -41,6 +27,20 @@ use bevy_styled_widgets::{
 };
 use freedesktop_icons::lookup;
 use std::path::Path;
+use bevy_plugins::mxsearch::FileSearchResult;
+use crate::components::{FrequentlyUsedApps, RecentSearches, SettingsDrawerPlugin, settings_drawer, universal_search, AppSearchResultUiResource, SearchText};
+use crate::utils::Icon;
+use crate::{
+    components::{
+        AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin, app_list, apps_grid,
+        navigation_bar, status_bar, update_apps_categories, update_apps_list,
+    },
+    desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
+    // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
+    styled_card::{StyledCard, StyledCardPlugin},
+    utils::FontAssets,
+    widgets::LauncherStyledWidgetsPlugin,
+};
 
 #[derive(Debug, Component)]
 pub struct HomescreenWindow;
@@ -141,7 +141,7 @@ pub fn run_launcher() {
         .add_plugins(NetworkManagerPlugin)
         .add_plugins(BluetoothPlugin)
         .add_plugins(UPowerPlugin)
-        .add_plugins(UniversalSearchPlugin)
+        .add_plugins(MxSearchPlugin)
         // System to exit on Escape key press
         .add_systems(Update, exit_on_esc)
         .run();

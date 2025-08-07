@@ -6,6 +6,7 @@ use freedesktop_icons::lookup;
 
 #[derive(Debug, Clone)]
 pub struct DesktopApp {
+    pub app_id: String,
     pub name: String,
     pub icon: Handle<Image>,
     pub categories: Vec<String>,
@@ -15,6 +16,7 @@ pub struct DesktopApp {
 
 impl DesktopApp {
     pub fn new(
+        app_id: &str,
         name: &str,
         icon: Handle<Image>,
         exec: String,
@@ -22,6 +24,7 @@ impl DesktopApp {
         on_click: SystemId,
     ) -> Self {
         Self {
+            app_id: app_id.to_string(),
             name: name.to_string(),
             icon: icon,
             exec,
@@ -48,6 +51,17 @@ impl DesktopApps {
 
     pub fn get_app_by_name(&self, name: &str) -> Option<&DesktopApp> {
         self.apps.iter().find(|app| app.name == name)
+    }
+
+    pub fn get_app_by_id(&self, id: &str) -> Option<&DesktopApp> {
+        self.apps.iter().find(|app| app.app_id == id)
+    }
+
+    pub fn get_apps_by_ids(&self, ids: Vec<String>) -> Vec<&DesktopApp> {
+        self.apps
+            .iter()
+            .filter(|app| ids.contains(&app.app_id))
+            .collect()
     }
 
     pub fn get_apps_by_category(&self, category: &str) -> Vec<&DesktopApp> {
@@ -110,6 +124,7 @@ fn get_desktop_apps(commands: &mut Commands, asset_server: &Res<AssetServer>) ->
             }
         })
         .filter_map(|entry| {
+            let app_id = &entry.appid;
             let name = &entry.name(&locales);
             let icon_name = entry.icon().unwrap_or_default();
             let categories = entry
@@ -146,6 +161,7 @@ fn get_desktop_apps(commands: &mut Commands, asset_server: &Res<AssetServer>) ->
             });
 
             return Some(DesktopApp::new(
+                &app_id,
                 &name.clone().unwrap(),
                 icon,
                 exec.to_string(),

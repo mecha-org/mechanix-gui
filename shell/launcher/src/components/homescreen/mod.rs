@@ -4,7 +4,10 @@ use bevy::{
 };
 use bevy_core_widgets::{CoreButton, CoreScrollArea, InteractionDisabled, Orientation};
 
-use crate::desktop_apps::{self, DesktopApp, DesktopApps};
+use crate::{
+    components::{FrequentlyUsedApps, frequently_used_app},
+    desktop_apps::{self, DesktopApp, DesktopApps},
+};
 
 #[derive(Debug, Component)]
 pub struct AppsCategoriesList;
@@ -114,6 +117,7 @@ fn app_card(app: &DesktopApp) -> impl Bundle {
         children![(ImageNode::new(app.icon.clone()),)],
         CoreButton {
             on_click: Some(app.on_click),
+            on_long_press: None,
         },
         BorderRadius::all(Val::Px(11.82)),
         BackgroundColor(Color::oklch(0.2891, 0., 0.)),
@@ -143,7 +147,10 @@ fn app_group_card(apps: Vec<DesktopApp>, on_click: Option<SystemId>) -> impl Bun
                 parent.spawn(small_app_card(app));
             }
         })),
-        CoreButton { on_click },
+        CoreButton {
+            on_click,
+            on_long_press: None,
+        },
     )
 }
 
@@ -185,6 +192,7 @@ fn popup_apps_group(apps: Vec<DesktopApp>, on_popup_click: SystemId) -> impl Bun
         BackgroundColor(Color::oklcha(0.3867, 0., 0., 0.95)),
         CoreButton {
             on_click: Some(on_popup_click),
+            on_long_press: None,
         },
         children![(
             Node {
@@ -234,6 +242,7 @@ fn app_group_app(app: DesktopApp) -> impl Bundle {
                 BackgroundColor(Color::oklch(0.2891, 0., 0.)),
                 CoreButton {
                     on_click: Some(app.on_click),
+                    on_long_press: None,
                 },
                 children![ImageNode::new(app.icon.clone()),]
             ),
@@ -293,6 +302,7 @@ fn app_list_app(app: &DesktopApp) -> impl Bundle {
         },
         CoreButton {
             on_click: Some(app.on_click),
+            on_long_press: None,
         },
         children![
             (
@@ -325,12 +335,6 @@ pub fn update_apps_list(
         commands.entity(parent).despawn_related::<Children>();
         commands.entity(parent).with_children(|parent| {
             for app in desktop_apps.apps.iter() {
-                let exec = app.exec.clone();
-                let commands = parent.commands_mut();
-                let on_click = commands.register_system(move || {
-                    let exec = exec.clone();
-                    let _ = DesktopApps::run_app_exec(exec);
-                });
                 parent.spawn(app_list_app(app));
             }
         });
@@ -442,7 +446,8 @@ fn search_box(on_text_input_click: SystemId, on_cancel: SystemId) -> impl Bundle
                     ..Default::default()
                 },
                 CoreButton {
-                    on_click: Some(on_text_input_click)
+                    on_click: Some(on_text_input_click),
+                    on_long_press: None,
                 },
                 BorderRadius::all(Val::Px(32.),),
                 BackgroundColor(Color::oklcha(0.3211, 0., 0., 0.95)),
@@ -454,7 +459,8 @@ fn search_box(on_text_input_click: SystemId, on_cancel: SystemId) -> impl Bundle
             (
                 Text::new("Cancel"),
                 CoreButton {
-                    on_click: Some(on_cancel)
+                    on_click: Some(on_cancel),
+                    on_long_press: None,
                 }
             )
         ],

@@ -11,7 +11,7 @@ use bevy_styled_widgets::prelude::StyledText;
 use chrono::{Datelike, Timelike};
 
 #[derive(Component)]
-struct Clock;
+pub struct Clock;
 
 #[derive(Resource)]
 struct ClockUpdateTimer(Timer);
@@ -152,7 +152,7 @@ fn update_power_icon(mut query: Query<&mut StyledText, With<Battery>>, state: Re
     }
 }
 
-fn get_current_datetime() -> String {
+pub fn get_current_datetime() -> String {
     let now = chrono::Local::now();
     format!(
         "{} {} {:02}:{:02}:{:02}",
