@@ -22,6 +22,7 @@ pub struct ServerInterface {
     pub(crate) config: SearchConfig,
     pub app_search_service: Arc<AppSearchService>,
     pub file_search_service: Arc<files::FileSearchService>,
+    pub app_actions_service: Arc<app_actions::AppActionsService>,
 }
 
 #[dbus_interface(name = "org.mechanix.MxSearch")]
