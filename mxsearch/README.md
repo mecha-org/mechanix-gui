@@ -53,6 +53,41 @@ sudo sysctl -w fs.inotify.max_user_watches=1048576
     - We can configure the allowed extensions to be indexed.
     - We can configure the max size of the file content to be indexed.
 
+### ⚙️ App Actions Search
+
+**Overview**  
+This service indexes configuration schemas into a Tantivy search index.
+Each config file is parsed and indexed with its metadata and nested action sections.
+It maintains data consistency by using checksum validation to avoid unnecessary re-indexing.
+
+## Features
+
+- Provides full-text and exact matching search capabilities for app actions for quick lookup.
+- Parses configuration schemas containing global data and nested action blocks.
+- Indexes each action block as a separate document with searchable fields.
+- Stores checksums for indexed files to detect changes for re-indexing.
+- Supports fast searching by file path to find existing indexed documents.
+- Uses a structured Tantivy schema optimized for configuration elements.
+
+## Searching Functionality for App Actions
+
+You can perform powerful searches over your indexed app actions, leveraging Tantivy’s full-text search and exact
+matching:
+
+- **Search by action name or description:** Quickly find actions like "Enable WiFi" or any keyword in descriptions.
+- **Filter by section names:** Narrow down results to specific config sections (like `[EnableBluetooth]`).
+- **Lookup by argument values:** For example, find all actions where the argument `path` equals `"network"`.
+
+## Workflow
+
+### On Service Start
+
+1. Compute the checksum of the config file.
+2. Search the Tantivy index for documents matching the file path.
+3. Compare stored checksum(s) with the newly computed checksum.
+4. If checksum matches, no action needed (index is current).
+5. If not, parse the config file and re-index all action documents with the updated checksum.
+
 Settings file example:
 
 ```toml
@@ -85,13 +120,15 @@ searchable_fields = [
     "content"
 ]
 allowed_extensions = ["txt", "yaml", "rtf", "xml", "toml"]
+[app_actions]
+enable_search = true
+index_dir = ".config/mxsearch/index/app_actions"
+schema_dir = "/usr/share/mxsearch/actions"
+search_limit = 15
+searchable_fields = [
+    "action",
+]
 ```
-
-- **Configurable File Search Service**
-    - Enable/disable file search.
-    - Define the path to the files you want to include in the search.
-
----
 
 ## 🛠️ Configuration Example (`config.toml`)
 
