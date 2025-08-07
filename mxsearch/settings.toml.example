@@ -27,5 +27,14 @@ searchable_fields = [
     "content"
 ]
 allowed_extensions = ["txt", "yaml", "rtf", "xml", "toml"]
-
+[app_actions]
+enable_search = true
+index_dir = ".config/mxsearch/index/app_actions"
+schema_dir = "/usr/share/mxsearch/actions"
+search_limit = 15
+searchable_fields = [
+    "action",
+    "name",
+    "description"
+]
 
