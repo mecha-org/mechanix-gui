@@ -406,6 +406,7 @@ fn search_results(results: Vec<SearchResult>) -> impl Bundle {
 pub enum SearchResultType {
     App,
     File,
+    Action,
 }
 
 #[derive(Debug, Clone)]
@@ -464,6 +465,7 @@ fn search_result_item(result: SearchResult) -> impl Bundle {
                         Text::new(match result._type {
                             SearchResultType::App => Icon::ArrowSquareUp,
                             SearchResultType::File => Icon::ArrowUpRight,
+                            SearchResultType::Action => Icon::ArrowUpRight,
                         }),
                         TextFont {
                             font_size: 16.,

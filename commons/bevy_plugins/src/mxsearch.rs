@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy::prelude::{Event, Resource};
 use bevy::tasks::{AsyncComputeTaskPool, IoTaskPool};
 use mxsearch::service::MxSearchService;
-use mxsearch::{AppInfo, FileInfo};
+use mxsearch::{AppActions, AppInfo, FileInfo};
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{LazyLock, Mutex};
 
@@ -27,6 +27,7 @@ pub struct MxSearchResultSender(pub Sender<MxSearchResult>);
 pub enum SearchResultType {
     App,
     File,
+    Action,
 }
 
 #[derive(Debug, Clone)]
@@ -43,6 +44,9 @@ pub struct AppSearchResult(pub Vec<SearchResult>);
 #[derive(Resource, Clone, Default)]
 pub struct FileSearchResult(pub Vec<SearchResult>);
 
+#[derive(Resource, Clone, Default)]
+pub struct AppActionsSearchResult(pub Vec<SearchResult>);
+
 #[derive(Event)]
 pub struct MxSearchActionEvent(pub MxSearchAction);
 
@@ -51,12 +55,14 @@ pub enum MxSearchAction {
     ListApplications,
     SearchApplications(String),
     SearchFiles(String),
+    SearchAppActions(String),
 }
 
 #[derive(Debug)]
 pub enum MxSearchResult {
     Applications(Vec<AppInfo>),
     Files(Vec<FileInfo>),
+    AppActions(Vec<AppActions>),
     Error(ErrorType),
 }
 
@@ -76,6 +82,7 @@ impl Plugin for MxSearchPlugin {
         app.insert_resource(MxSearchServiceResource { service: None })
             .insert_resource(AppSearchResult::default())
             .insert_resource(FileSearchResult::default())
+            .insert_resource(AppActionsSearchResult::default())
             .add_event::<MxSearchActionEvent>()
             .add_systems(Startup, (init_mxsearch_service, setup_channel)) // Async task so temp move service result to static
             .add_systems(Update, poll_service_init)
@@ -234,6 +241,39 @@ fn handle_action_events(
                     .detach();
                 }
             }
+            MxSearchAction::SearchAppActions(query) => {
+                info!("search app actions: {query}");
+                if let Some(service) = &mut service.service {
+                    let service = service.clone();
+                    let result_sender = sender.0.clone();
+                    let query = query.clone();
+                    pool.spawn(async move {
+                        match service.search_app_actions(&query).await {
+                            Ok(app_actions) => {
+                                info!("found {} app actions", app_actions.len());
+                                if let Err(err) =
+                                    result_sender.send(MxSearchResult::AppActions(app_actions))
+                                {
+                                    error!("failed to send action a search result: {err}");
+                                }
+                            }
+                            Err(err) => {
+                                error!("failed to app actions: {err}");
+                                let error_type = ActionFailed {
+                                    action: MxSearchAction::ListApplications,
+                                    message: "Failed to app actions".to_string(),
+                                };
+                                if let Err(err) =
+                                    result_sender.send(MxSearchResult::Error(error_type))
+                                {
+                                    error!("failed to send app actions error: {err}");
+                                }
+                            }
+                        }
+                    })
+                    .detach();
+                }
+            }
         }
     }
 }
@@ -271,6 +311,18 @@ fn poll_action_result_events(
                         });
                     }
                     file_search_result.0 = file_result;
+                }
+                MxSearchResult::AppActions(actions) => {
+                    let mut actions_result: Vec<SearchResult> = Vec::new();
+                    for app_action in actions {
+                        actions_result.push(SearchResult {
+                            name: format!("{}", app_action.action),
+                            icon: String::new(),
+                            on_click: None,
+                            _type: SearchResultType::Action,
+                        });
+                    }
+                    file_search_result.0 = actions_result;
                 }
             }
         }
