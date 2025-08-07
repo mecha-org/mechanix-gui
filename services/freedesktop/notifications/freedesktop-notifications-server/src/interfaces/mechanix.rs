@@ -71,6 +71,9 @@ impl MechanixNotificationService {
                             if let Err(e) = add_notification_to_db(id, &notification).await {
                                 eprintln!("Failed to add notification to database: {}", e);
                             }
+                            else{
+                                println!("Notification {}, added to database",&id);
+                            }
                         }
                         else{
                             println!("Notification {}, is transient, will not be stored in databse",&id);
@@ -197,7 +200,28 @@ impl MechanixNotificationService {
     /// Get all active notifications
     async fn get_all_notifications(&self) -> HashMap<u32, Notification> {
         let notifications = self.notifications.read().await;
-        notifications.clone()
+        
+        // If no notifications in memory, load from database
+        if notifications.is_empty() {
+            drop(notifications); // Release read lock
+            
+            match get_all_notifications_from_db().await {
+                Ok(db_notifications) => {
+                    if !db_notifications.is_empty() {
+                        println!("Loaded {} notifications from database", db_notifications.len());
+                        db_notifications
+                    } else {
+                        HashMap::new()
+                    }
+                }
+                Err(e) => {
+                    eprintln!("Failed to load notifications from database: {}", e);
+                    HashMap::new()
+                }
+            }
+        } else {
+            notifications.clone()
+        }
     }
 
     #[zbus(signal)]
