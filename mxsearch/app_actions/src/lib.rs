@@ -1,14 +1,15 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use serde::Deserialize;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod service;
+mod utils;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub use crate::service::AppActionsService;
+pub use crate::service::AppActions;
+#[derive(Debug, Deserialize, Clone)]
+pub struct AppActionsConfig {
+    pub enable_search: bool,
+    pub index_dir: String,
+    pub schema_dir: String,
+    pub search_limit: usize,
+    searchable_fields: Vec<String>,
 }

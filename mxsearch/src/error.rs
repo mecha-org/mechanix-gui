@@ -10,6 +10,8 @@ pub enum ServerError {
     FailedStartAppSearchService(anyhow::Error),
     #[error("Failed to start file search service: {0}")]
     FailedStartFileSearchService(anyhow::Error),
+    #[error("Failed to start app actions service: {0}")]
+    FailedStartAppActionsService(anyhow::Error),
     #[error("Failed to start dbus server: {0}")]
     FailedStartDBusServer(zbus::Error),
 }

@@ -1,5 +1,6 @@
 use crate::SearchConfig;
 use anyhow::Result;
+use app_actions::service::AppActions;
 use apps::{AppInfo, AppSearchService};
 use files::FileInfo;
 use log::{debug, error, info, warn};
@@ -22,6 +23,7 @@ pub struct ServerInterface {
     pub(crate) config: SearchConfig,
     pub app_search_service: Arc<AppSearchService>,
     pub file_search_service: Arc<files::FileSearchService>,
+    pub app_actions_service: Arc<app_actions::AppActionsService>,
 }
 
 #[dbus_interface(name = "org.mechanix.MxSearch")]
@@ -95,6 +97,20 @@ impl ServerInterface {
         debug!("result: {:?}", results);
         Ok(results)
     }
+
+    /// Searches for files matching the given search string.
+    ///
+    /// This function queries the file search service to retrieve a list of files matching the search string.
+    /// It checks if the search functionality is enabled before proceeding.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `ZbusError::Failed` if the search functionality is disabled or if there is
+    /// an error during the retrieval of files.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `FileInfo` representing the matching files if successful.
     pub async fn search_files(&self, search: &str) -> zbus::fdo::Result<Vec<FileInfo>> {
         info!("Search files: {}", search);
         if !self.config.files.enable_search_files {
@@ -110,6 +126,46 @@ impl ServerInterface {
             Err(err) => {
                 error!("Error searching files: {}", err);
                 return Err(ZbusError::Failed("Error searching files".to_string()));
+            }
+        };
+        debug!("result: {:?}", results);
+        Ok(results)
+    }
+
+    /// Searches for app actions matching the given search string.
+    ///
+    /// This function queries the app actions service to retrieve a list of app actions
+    /// matching the search string. It checks if the search functionality is enabled before proceeding.
+    ///
+    /// # Arguments
+    ///
+    /// * `search` - A search string to query app actions.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `ZbusError::Failed` if the search functionality is disabled or if there is
+    /// an error during the retrieval of app actions.
+    ///
+    /// # Returns
+    ///
+    /// A vector of `AppActions` representing the matching app actions if successful.
+    pub async fn search_app_actions(&self, search: &str) -> zbus::fdo::Result<Vec<AppActions>> {
+        info!("Search app actions: {}", search);
+        if !self.config.app_actions.enable_search {
+            warn!("Search App Action is disabled");
+            return Err(ZbusError::Failed(
+                "Search App Action is disabled".to_string(),
+            ));
+        }
+        // At some point later: perform a search
+        let results = match self
+            .app_actions_service
+            .search(search, self.config.apps.search_limit)
+        {
+            Ok(results) => results,
+            Err(err) => {
+                error!("Error searching app actions: {}", err);
+                return Err(ZbusError::Failed("Error searching app actions".to_string()));
             }
         };
         debug!("result: {:?}", results);

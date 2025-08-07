@@ -5,6 +5,7 @@ mod service;
 use crate::error::ServerError;
 use crate::server::{ServerInterface, SERVED_AT};
 use anyhow::{Context, Result};
+use app_actions::{AppActionsConfig, AppActionsService};
 use apps::{AppSearchService, Apps as AppSearchConfig};
 use files::{FileSearchService, FilesConfig as FileSearchConfig};
 use log::{debug, error, info};
@@ -23,6 +24,7 @@ pub struct SearchConfig {
     pub general: General,
     pub apps: AppSearchConfig,
     pub files: FileSearchConfig,
+    pub app_actions: AppActionsConfig,
 }
 fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
     let content = fs::read_to_string(path)?;
@@ -74,6 +76,14 @@ async fn main() -> Result<(), ServerError> {
         }
     };
 
+    let mut app_action_service = match AppActionsService::new(&config.app_actions) {
+        Ok(s) => s,
+        Err(e) => {
+            error!("Failed to create app actions service: {}", e);
+            return Err(ServerError::FailedStartAppActionsService(e));
+        }
+    };
+
     if config.apps.enable_search_apps {
         match app_search_service.run().await {
             Ok(()) => debug!("AppSearchService started"),
@@ -93,13 +103,25 @@ async fn main() -> Result<(), ServerError> {
             }
         }
     }
+
+    if config.app_actions.enable_search {
+        match app_action_service.run().await {
+            Ok(()) => debug!("FileSearchService started"),
+            Err(e) => {
+                error!("Failed to start FileSearchService: {}", e);
+                return Err(ServerError::FailedStartAppActionsService(e));
+            }
+        }
+    }
     let arc_app_search_service = Arc::new(app_search_service);
     let arc_file_search_service = Arc::new(file_search_service);
+    let arc_app_actions_service = Arc::new(app_action_service);
     // Build and register the D-Bus server (blocking until shutdown)
     let config_server = ServerInterface {
         config: config.clone(),
         app_search_service: arc_app_search_service.clone(),
         file_search_service: arc_file_search_service.clone(),
+        app_actions_service: arc_app_actions_service.clone(),
     };
 
     debug!("D-Bus server registered at {}", SERVED_AT);
@@ -113,6 +135,14 @@ async fn main() -> Result<(), ServerError> {
         Ok(()) => {
             info!("Received SIGINT, shutting down");
             match arc_app_search_service.shutdown().await {
+                Ok(()) => info!("Shutdown successful"),
+                Err(e) => error!("Failed to shutdown: {}", e),
+            }
+            match arc_file_search_service.shutdown().await {
+                Ok(()) => info!("Shutdown successful"),
+                Err(e) => error!("Failed to shutdown: {}", e),
+            }
+            match arc_app_actions_service.shutdown().await {
                 Ok(()) => info!("Shutdown successful"),
                 Err(e) => error!("Failed to shutdown: {}", e),
             }
