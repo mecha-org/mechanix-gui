@@ -26,6 +26,8 @@ tokio = { workspace = true }
 fs_extra = "1.2"
 dirs = "5.0.1"
 const_format = "0.2.32"
+chrono = { version = "0.4", default-features = false, features = ["std","clock"] }
+
 
 [package.metadata.deb]
 name = "mechanix-files"
@@ -52,8 +54,8 @@ assets = [
     ],
     # desktop file
     [
-        "src/assets/linux/org.mechanix.files.desktop", 
-        "/usr/share/applications/", 
+        "src/assets/linux/org.mechanix.files.desktop",
+        "/usr/share/applications/",
         "644"
     ],
 

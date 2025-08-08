@@ -42,6 +42,8 @@ pub fn confirmation_modal_view(file_manager_state: &FileManagerState) -> node::N
                 .style("font", "Space Grotesk")
                 .style("font_weight", FontWeight::Normal),
             lay![
+                axis_alignment: Alignment::Center,
+                cross_alignment: Alignment::Center,
                 size: [Auto],
             ]
         )),

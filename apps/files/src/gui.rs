@@ -10,14 +10,16 @@ use mctk_core::{event, Node};
 use mctk_core::{lay, msg, rect, size, size_pct, txt, Color};
 use mctk_macros::{component, state_component_impl};
 use std::fs;
+use std::fs::File;
 use std::hash::Hash;
 use std::io;
+use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::folder_options;
 use crate::modals::entry_row::EntryRow;
-use crate::modals::{confirmation_modal, delete_modal, file_options, file_viewer};
+use crate::modals::{confirmation_modal, delete_modal, file_details, file_options, file_viewer};
 
 pub struct ClicableIconComponent {
     pub on_click: Option<Box<dyn Fn() -> Box<Message> + Send + Sync>>,
@@ -64,13 +66,15 @@ pub enum Message {
     RenameSelected,
     CopySelected,
     Paste,
-    OpenModal(bool),
+    OpenModal(bool, String),
     OpenFolderOptionsModal(bool),
     OpenActionModal(bool),
     OpenDeleteModal(bool),
     ConfirmAction,
     ConfirmDelete,
     UpdateFolderName(String),
+    FetchFileContent,
+    GetDetailsFile,
 }
 
 #[derive(Debug)]
@@ -78,9 +82,11 @@ pub struct FileManagerState {
     pub current_path: PathBuf,
     pub entries: Vec<PathBuf>,
     pub selected_file: Option<PathBuf>,
+    pub file_reader: Option<BufReader<File>>,
     pub copied_file: Option<PathBuf>,
     pub message: String,
     pub file_viewer_open: bool,
+    pub file_details_open: bool,
     pub view_file: Option<PathBuf>,
     pub file_content: Option<String>,
     pub file_is_image: bool,
@@ -130,16 +136,18 @@ pub fn read_entries(path: PathBuf) -> Vec<PathBuf> {
 #[state_component_impl(FileManagerState)]
 impl Component for FileManager {
     fn init(&mut self) {
-        let current_path = PathBuf::from("/home/mecha");
+        let current_path = PathBuf::from("/home/mecha/");
         let entries = read_entries(current_path.clone());
 
         self.state = Some(FileManagerState {
             current_path,
             entries,
             selected_file: None,
+            file_reader: None,
             copied_file: None,
             message: String::new(),
             file_viewer_open: false,
+            file_details_open: false,
             view_file: None,
             file_content: None,
             file_is_image: false,
@@ -154,8 +162,6 @@ impl Component for FileManager {
             folder_name: "".to_string(),
             disable_click: false,
         });
-
-
     }
 
     fn update(&mut self, msg: component::Message) -> Vec<component::Message> {
@@ -166,11 +172,14 @@ impl Component for FileManager {
                         self.state_mut().file_viewer_open = false;
                         self.state_mut().view_file = None;
                         self.state_mut().file_content = None;
+                        self.state_mut().file_reader = None;
                         self.state_mut().file_is_image = false;
                         self.state_mut().file_is_pdf = false;
                         self.state_mut().file_no_preview = false;
+                    } else if self.state_mut().file_details_open {
+                        self.state_mut().file_details_open = false;
                     } else {
-                        if let Some(parent) = self.state_ref().current_path.parent() {
+                        if let Some(parent) = self.state_ref().current_path.clone().parent() {
                             self.state_mut().current_path = parent.to_path_buf();
                             self.state_mut().message = "Went back.".to_string();
                             self.state_mut().entries =
@@ -179,7 +188,6 @@ impl Component for FileManager {
                             self.state_mut().message = "No parent directory.".to_string();
                         }
                     }
-                    
                 }
 
                 Message::SelectEntry(path) => {
@@ -210,23 +218,60 @@ impl Component for FileManager {
                         } else if self.state_mut().file_is_pdf {
                             // Handle PDF loading if necessary
                         } else if ext == "txt" {
-                            match fs::read_to_string(&path) {
-                                Ok(content) => {
-                                    self.state_mut().file_content = Some(content);
-                                }
-                                Err(_) => {
-                                    self.state_mut().file_no_preview = true;
+                            self.state_mut().file_no_preview = false;
+                            let file = File::open(path.clone()).unwrap();
+                            let mut reader = BufReader::new(file);
+                            let mut lines = Vec::new();
+
+                            // Read up to 30 lines (or fewer if the file has less)
+                            for line in reader.by_ref().lines().take(30) {
+                                match line {
+                                    Ok(content) => lines.push(content),
+                                    Err(e) => {
+                                        eprintln!("Error reading line: {}", e);
+                                        break;
+                                    }
                                 }
                             }
-                        } else {
-                            if let Ok(content) = fs::read_to_string(&path) {
-                                self.state_mut().file_content = Some(content);
+                            // Join lines with newlines
+                            if !lines.is_empty() {
+                                self.state_mut().file_content = Some(lines.join("\n"));
                             } else {
                                 self.state_mut().file_no_preview = true;
                             }
+
+                            self.state_mut().file_reader = Some(reader);
+                        } else {
+                            self.state_mut().file_no_preview = false;
+
+                            match File::open(&path) {
+                                Ok(file) => {
+                                    let reader = BufReader::new(file);
+                                    let mut lines = Vec::new();
+
+                                    for line in reader.lines().take(30) {
+                                        match line {
+                                            Ok(content) => lines.push(content),
+                                            Err(e) => {
+                                                eprintln!("Error reading line: {}", e);
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if !lines.is_empty() {
+                                        self.state_mut().file_content = Some(lines.join("\n"));
+                                    } else {
+                                        self.state_mut().file_no_preview = true;
+                                    }
+                                }
+                                Err(e) => {
+                                    eprintln!("Error opening file: {}", e);
+                                    self.state_mut().file_no_preview = true;
+                                }
+                            }
                         }
                     }
-                    
                 }
 
                 Message::DeleteSelected => {
@@ -243,7 +288,6 @@ impl Component for FileManager {
                     } else {
                         self.state_mut().message = "No file/folder selected.".to_string();
                     }
-                    
                 }
 
                 Message::CreateFolder => {
@@ -251,7 +295,6 @@ impl Component for FileManager {
                     self.state_mut().is_create_rename_modal_open = true;
                     self.state_mut().is_file_action_modal_open = false;
                     self.state_mut().is_folder_options_modal_open = false;
-                    
                 }
 
                 Message::RenameSelected => {
@@ -261,12 +304,10 @@ impl Component for FileManager {
                         self.state_mut().is_folder_options_modal_open = false;
                         self.state_mut().is_file_action_modal_open = false;
                     }
-                    
                 }
 
                 Message::UpdateFolderName(name) => {
                     self.state_mut().folder_name = name.clone(); // Update folder name from TextBox
-                    
                 }
 
                 Message::CopySelected => {
@@ -276,21 +317,23 @@ impl Component for FileManager {
                     } else {
                         self.state_mut().message = "No file/folder selected.".to_string();
                     }
-                    
+                    self.state_mut().is_file_action_modal_open = false;
+                    self.state_mut().is_folder_options_modal_open = false;
                 }
 
                 Message::Paste => {
+                    self.state_mut().is_file_action_modal_open = false;
+                    self.state_mut().is_folder_options_modal_open = false;
                     let state = self.state_mut();
                     if let Some(copied) = &state.copied_file {
-                        let dest = state.current_path.join(copied.file_name().unwrap());
-
+                        let dest = &state.current_path;
                         let res: io::Result<()> = if copied.is_dir() {
                             let opts = CopyOptions::new();
                             fs_extra::dir::copy(copied, &dest, &opts)
                                 .map(|_| ())
                                 .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
                         } else {
-                            fs::copy(copied, &dest)
+                            fs::copy(copied, &dest.join(copied.file_name().unwrap()))
                                 .map(|_| ())
                                 .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))
                         };
@@ -300,25 +343,26 @@ impl Component for FileManager {
                                 state.message = "Pasted successfully.".to_string();
                             }
                             Err(e) => {
+                                println!("Error pasting: {}", &e);
                                 state.message = format!("Error pasting: {}", e);
                             }
                         }
                     } else {
                         state.message = "No file/folder copied.".to_string();
                     }
-
                     self.state_mut().entries = read_entries(self.state_ref().current_path.clone());
-                    
                 }
 
-                Message::OpenModal(value) => {
+                Message::OpenModal(value, file_name) => {
                     self.state_mut().is_file_action_modal_open = *value;
                     if *value {
                         self.state_mut().disable_click = true; // Disable clicks when modal is open
+                        self.state_mut().selected_file =
+                            Some(self.state_ref().current_path.join(file_name));
                     } else {
                         self.state_mut().disable_click = false; // Enable clicks when modal is closed
+                        self.state_mut().selected_file = None;
                     }
-                    
                 }
 
                 Message::OpenFolderOptionsModal(value) => {
@@ -330,14 +374,12 @@ impl Component for FileManager {
                 Message::OpenActionModal(value) => {
                     self.state_mut().is_create_rename_modal_open = *value; // Open or close the action modal
                     self.state_mut().is_file_action_modal_open = false;
-                    
                 }
 
                 Message::OpenDeleteModal(value) => {
                     println!("OpenDeleteModal: {}", value);
                     self.state_mut().is_delete_modal_open = *value; // Open or close the action modal
                     self.state_mut().is_file_action_modal_open = false;
-                    
                 }
 
                 Message::ConfirmAction => {
@@ -378,10 +420,16 @@ impl Component for FileManager {
                                             format!("Error renaming file: {}", e);
                                     } else {
                                         self.state_mut().message =
-                                            format!("Renamed to: {:?}", new_path);
+                                            format!("Renamed to: {:?}", &new_path);
                                         self.state_mut().selected_file = None;
-                                        self.state_mut().current_path.pop();
-                                        self.state_mut().current_path.push(new_path);
+                                        self.state_mut().current_path = new_path.clone();
+                                        if self.state_ref().current_path.is_dir() {
+                                            self.state_mut().current_path.pop();
+                                            self.state_mut().current_path.push(new_path);
+                                        } else {
+                                            self.state_mut().current_path.pop();
+                                        }
+
                                         self.state_mut().entries =
                                             read_entries(self.state_ref().current_path.clone());
                                     }
@@ -391,7 +439,6 @@ impl Component for FileManager {
                         _ => {}
                     }
                     self.state_mut().is_create_rename_modal_open = false; // Close modal after action
-                    
                 }
                 // Handle deletion confirmation
                 Message::ConfirmDelete => {
@@ -399,7 +446,6 @@ impl Component for FileManager {
                         if selected.is_dir() {
                             match fs::remove_dir_all(&selected) {
                                 Ok(_) => {
-                                    println!("Deleted: {}", self.state_ref().delete_item_name);
                                     self.state_mut().message =
                                         format!("Deleted: {:?}", self.state_ref().delete_item_name);
                                     self.state_mut().selected_file = None;
@@ -427,6 +473,51 @@ impl Component for FileManager {
                     self.state_mut().is_delete_modal_open = false; // Close delete modal
                     self.state_mut().entries = read_entries(self.state_ref().current_path.clone());
                 }
+                Message::FetchFileContent => {
+                    self.state_mut().message = "FetchFileContent".to_string();
+
+                    // Get a mutable reference to state once
+                    let state = self.state_mut();
+
+                    if let Some(reader) = &mut state.file_reader {
+                        let mut lines = Vec::new();
+
+                        // Read the next 15 lines
+                        for line in reader.by_ref().lines().take(15) {
+                            match line {
+                                Ok(content) => lines.push(content),
+                                Err(e) => {
+                                    eprintln!("Error reading line: {}", e);
+                                    break;
+                                }
+                            }
+                        }
+
+                        if !lines.is_empty() {
+                            // Ensure `file_content` is initialized before appending
+                            match &mut state.file_content {
+                                Some(existing_content) => {
+                                    existing_content.push('\n');
+                                    existing_content.push_str(&lines.join("\n"));
+                                }
+                                None => {
+                                    state.file_content = Some(lines.join("\n"));
+                                }
+                            }
+                        } else {
+                            // Handle end-of-file: no more lines to read
+                            state.file_no_preview = true;
+                            state.message = "End of file reached.".to_string();
+                            state.file_reader = None;
+                        }
+                    } else {
+                        state.message = "No file is open for reading.".to_string();
+                    }
+                }
+                Message::GetDetailsFile => {
+                    self.state_mut().message = "Get,DetailsFile".to_string();
+                    self.state_mut().file_details_open = true;
+                }
             }
         }
 
@@ -446,9 +537,16 @@ impl Component for FileManager {
             return Some(file_viewer::file_viewer_view(file_manager_state));
         }
 
+        if file_manager_state.file_details_open {
+            return Some(file_details::file_details_view(file_manager_state));
+        }
+
         let current_path = file_manager_state.current_path.clone();
         let entries = file_manager_state.entries.clone();
-        let is_modal_open = self.state_ref().is_create_rename_modal_open || self.state_ref().is_delete_modal_open || self.state_ref().is_file_action_modal_open || self.state_ref().is_folder_options_modal_open;
+        let is_modal_open = self.state_ref().is_create_rename_modal_open
+            || self.state_ref().is_delete_modal_open
+            || self.state_ref().is_file_action_modal_open
+            || self.state_ref().is_folder_options_modal_open;
 
         let mut root = node!(
             Div::new().bg(Color::BLACK),
@@ -578,19 +676,18 @@ impl Component for FileManager {
             icon_1: "fold_icon".to_string(),
             icon_2: "".to_string(),
             selected_entry: None,
-            is_modal_open: is_modal_open
+            is_modal_open: is_modal_open,
+            current_path: current_path.clone().parent().unwrap().to_path_buf(),
         };
 
         if file_manager_state.is_folder_options_modal_open {
-            entries_div = entries_div.push(folder_options::folder_modal_view());
+            entries_div = entries_div.push(folder_options::folder_modal_view(self.state_ref()));
         }
         if file_manager_state.is_create_rename_modal_open {
             entries_div = entries_div.push(confirmation_modal::confirmation_modal_view(
                 file_manager_state,
             ));
         }
-
-      
 
         if file_manager_state.is_delete_modal_open {
             entries_div = entries_div.push(delete_modal::delete_modal_view(file_manager_state));
@@ -636,11 +733,11 @@ impl Component for FileManager {
                 icon_1: main_icon,
                 icon_2: righticon,
                 selected_entry: Some(entry_clone),
-                is_modal_open: is_modal_open
+                is_modal_open: is_modal_open,
+                current_path: entry.clone(),
             };
 
             entries_div = entries_div.push(node!(btn_row).key(i as u64));
-            
         }
 
         let mut scrollable_section = node!(

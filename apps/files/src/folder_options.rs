@@ -4,7 +4,7 @@ use mctk_core::style::Styled;
 use mctk_core::widgets::{Button, Div};
 use mctk_core::{lay, msg, rect, size, size_pct, txt, Color};
 
-use crate::gui::Message;
+use crate::gui::{FileManagerState, Message};
 
 /// folder_modal_view
 ///
@@ -13,9 +13,9 @@ use crate::gui::Message;
 /// The modal is styled with a dark background and dark border.
 /// The buttons are styled with a white text color and a dark grey active color.
 /// The modal is positioned at the top left corner of the screen.
-pub fn folder_modal_view() -> node::Node {
+pub fn folder_modal_view(state: &FileManagerState) -> node::Node {
     // Create the modal for folder options
-    node!(
+    let mut modal = node!(
         Div::new().bg(Color::rgba(29., 29., 29., 1.)).border(
             Color::rgba(127., 127., 135., 1.),
             0.,
@@ -32,43 +32,71 @@ pub fn folder_modal_view() -> node::Node {
         ]
     )
     .push(node!(
-        Button::new(txt!("Paste"))
+        Button::new(txt!("Copy"))
             .style("background_color", Color::TRANSPARENT)
             .style("active_color", Color::MID_GREY)
-            .style("text_color", Color::WHITE)
             .style("font_size", 16.0)
             .style("line_height", 18.0)
-            .on_click(Box::new(|| msg!(Message::Paste))),
-        lay![margin: [0., 5., 5., 5.],]
-    ))
-    .push(node!(
-        Button::new(txt!("Delete"))
-            .style("background_color", Color::TRANSPARENT)
-            .style("active_color", Color::MID_GREY)
             .style("text_color", Color::WHITE)
-            .style("font_size", 16.0)
-            .style("line_height", 18.0)
-            .on_click(Box::new(|| msg!(Message::DeleteSelected))),
-        lay![margin: [5., 5., 5., 5.],]
-    ))
-    .push(node!(
-        Button::new(txt!("Rename"))
-            .style("background_color", Color::TRANSPARENT)
-            .style("active_color", Color::MID_GREY)
-            .style("text_color", Color::WHITE)
-            .style("font_size", 16.0)
-            .style("line_height", 18.0)
-            .on_click(Box::new(|| msg!(Message::RenameSelected))),
-        lay![margin: [5., 5., 5., 5.],]
-    ))
-    .push(node!(
-        Button::new(txt!("Close"))
-            .style("background_color", Color::TRANSPARENT)
-            .style("active_color", Color::MID_GREY)
-            .style("text_color", Color::WHITE)
-            .style("font_size", 16.0)
-            .style("line_height", 18.0)
-            .on_click(Box::new(|| msg!(Message::OpenFolderOptionsModal(false)))),
-        lay![margin: [5., 5., 5., 5.],]
-    ))
+            .on_click(Box::new(|| msg!(Message::CopySelected))),
+        lay![margin: [5., 5., 5., 5.], size_pct: [100, 20]]
+    ));
+
+    //handle whether copy is available or not to determine if paste button is available
+    modal = match state.copied_file {
+        Some(_) => modal.push(node!(
+            Button::new(txt!("Paste"))
+                .style("background_color", Color::TRANSPARENT)
+                .style("active_color", Color::MID_GREY)
+                .style("text_color", Color::WHITE)
+                .style("font_size", 16.0)
+                .style("line_height", 18.0)
+                .on_click(Box::new(|| msg!(Message::Paste))),
+            lay![margin: [0., 5., 5., 5.],]
+        )),
+        None => modal.push(node!(
+            Button::new(txt!("Paste"))
+                .style("background_color", Color::TRANSPARENT)
+                .style("active_color", Color::MID_GREY)
+                .style("text_color", Color::DARK_GREY)
+                .style("font_size", 16.0)
+                .style("line_height", 18.0)
+                .on_click(Box::new(|| msg!(Message::Paste))),
+            lay![margin: [0., 5., 5., 5.],]
+        )),
+    };
+
+    modal = modal
+        .push(node!(
+            Button::new(txt!("Delete"))
+                .style("background_color", Color::TRANSPARENT)
+                .style("active_color", Color::MID_GREY)
+                .style("text_color", Color::WHITE)
+                .style("font_size", 16.0)
+                .style("line_height", 18.0)
+                .on_click(Box::new(|| msg!(Message::DeleteSelected))),
+            lay![margin: [5., 5., 5., 5.],]
+        ))
+        .push(node!(
+            Button::new(txt!("Rename"))
+                .style("background_color", Color::TRANSPARENT)
+                .style("active_color", Color::MID_GREY)
+                .style("text_color", Color::WHITE)
+                .style("font_size", 16.0)
+                .style("line_height", 18.0)
+                .on_click(Box::new(|| msg!(Message::RenameSelected))),
+            lay![margin: [5., 5., 5., 5.],]
+        ))
+        .push(node!(
+            Button::new(txt!("Close"))
+                .style("background_color", Color::TRANSPARENT)
+                .style("active_color", Color::MID_GREY)
+                .style("text_color", Color::WHITE)
+                .style("font_size", 16.0)
+                .style("line_height", 18.0)
+                .on_click(Box::new(|| msg!(Message::OpenFolderOptionsModal(false)))),
+            lay![margin: [5., 5., 5., 5.],]
+        ));
+
+    modal
 }

@@ -50,15 +50,25 @@ pub fn file_options_view() -> node::Node {
         lay![margin: [5., 5., 5., 5.], size_pct: [100,20]]
     ))
     .push(node!(
-        Button::new(txt!("Paste"))
+        Button::new(txt!("Details"))
             .style("background_color", Color::TRANSPARENT)
             .style("active_color", Color::MID_GREY)
             .style("font_size", 15.0)
             .style("line_height", 24.0)
             .style("text_color", Color::WHITE)
-            .on_click(Box::new(|| msg!(Message::Paste))),
+            .on_click(Box::new(|| msg!(Message::GetDetailsFile))),
         lay![margin: [5., 5., 5., 5.], size_pct: [100, 20]]
     ))
+    // .push(node!(
+    //     Button::new(txt!("Paste"))
+    //         .style("background_color", Color::TRANSPARENT)
+    //         .style("active_color", Color::MID_GREY)
+    //         .style("font_size", 15.0)
+    //         .style("line_height", 24.0)
+    //         .style("text_color", Color::WHITE)
+    //         .on_click(Box::new(|| msg!(Message::Paste))),
+    //     lay![margin: [5., 5., 5., 5.], size_pct: [100, 20]]
+    // ))
     .push(node!(
         Button::new(txt!("Close"))
             .style("background_color", Color::TRANSPARENT)
@@ -66,7 +76,7 @@ pub fn file_options_view() -> node::Node {
             .style("font_size", 16.0)
             .style("line_height", 18.0)
             .style("text_color", Color::WHITE)
-            .on_click(Box::new(|| msg!(Message::OpenModal(false)))),
+            .on_click(Box::new(|| msg!(Message::OpenModal(false, "".to_string())))),
         lay![margin: [5., 5., 5., 5.], size_pct: [100, 20]]
     ))
 }

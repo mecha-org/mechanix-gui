@@ -1,21 +1,66 @@
+use crate::gui::{FileManagerState, Message};
+use chrono::{DateTime, Local};
 use mctk_core::layout::{Alignment, Dimension, Direction, Size};
 use mctk_core::node;
 use mctk_core::style::FontWeight;
 use mctk_core::style::Styled;
-use mctk_core::widgets::{Div, IconButton, IconType, Image, Text};
-use mctk_core::widgets::{HDivider, Scrollable};
+use mctk_core::widgets::HDivider;
+use mctk_core::widgets::{Div, IconButton, IconType, Text};
 use mctk_core::{lay, msg, rect, size, size_pct, txt, Color};
 
-use crate::gui::{FileManagerState, Message};
+#[derive(Debug)]
+struct FileDetails {
+    file_name: String,
+    file_size: String,
+    last_modified: String,
+    full_path: String,
+}
 
 // File viewer layout
-pub fn file_viewer_view(s: &FileManagerState) -> node::Node {
+pub fn file_details_view(s: &FileManagerState) -> node::Node {
     let file_name = s
-        .view_file
-        .as_ref()
-        .and_then(|p| p.file_name())
-        .map(|n| n.to_string_lossy().to_string())
-        .unwrap_or_default();
+        .selected_file
+        .clone()
+        .unwrap()
+        .file_name()
+        .clone()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
+
+    let file_size = s
+        .selected_file
+        .clone()
+        .unwrap()
+        .metadata()
+        .unwrap()
+        .len()
+        .to_string();
+
+    let last_modified: DateTime<Local> = s
+        .selected_file
+        .clone()
+        .unwrap()
+        .metadata()
+        .unwrap()
+        .modified()
+        .unwrap()
+        .into();
+
+    let full_path = s
+        .selected_file
+        .clone()
+        .unwrap()
+        .to_string_lossy()
+        .to_string();
+
+    let last_modified = last_modified.format("%d %b %Y %I:%M%p").to_string();
+    let file_details = FileDetails {
+        file_name,
+        file_size,
+        last_modified,
+        full_path,
+    };
 
     let header = node!(
         Div::new().bg(Color::BLACK),
@@ -43,7 +88,7 @@ pub fn file_viewer_view(s: &FileManagerState) -> node::Node {
         lay![margin: [5., 5., 5., 5.], size: [32, 34]]
     ))
     .push(node!(
-        Text::new(txt!(file_name))
+        Text::new(txt!("Details"))
             .style("color", Color::WHITE)
             .style("size", 24.0)
             .style("line_height", 24.)
@@ -101,66 +146,15 @@ pub fn file_viewer_view(s: &FileManagerState) -> node::Node {
         ]
     );
 
-    if s.file_is_image {
-        if let Some(file) = &s.view_file {
-            let file_path = file.to_string_lossy().to_string();
-            let img_new = Image::new(file_path.clone());
-            content = content.push(node!(
-                Image::dynamic_load_from(img_new, Some(file_path)),
-                lay![size: [200, 200], margin: [10., 10., 10., 10.]]
-            ));
-        } else {
-            content = content.push(node!(Text::new(txt!("No file selected"))
-                .style("color", Color::WHITE)
-                .style("size", 18.0)
-                .style("line_height", 24.0)
-                .style("font", "Space Grotesk")));
-        }
-    } else if s.file_is_pdf {
-        content = content.push(node!(Text::new(txt!("PDF viewing is not implemented"))
+    content = content.push(node!(
+        Text::new(txt!(format!("{:?}", file_details)))
             .style("color", Color::WHITE)
-            .style("size", 18.0)
-            .style("line_height", 24.0)
-            .style("font", "Space Grotesk")));
-    } else if let Some(content_str) = &s.file_content {
-        // Scrollable text area
-        let scrollable = Scrollable::new(size!(440, 320))
-            .on_scroll_end(Box::new(|| msg!(Message::FetchFileContent)));
-        let mut scroll = node!(
-            scrollable,
-            lay![
-                size: [440, 320],
-                direction: Direction::Column,
-                cross_alignment: Alignment::Stretch,
-            ]
-        );
+            .style("size", 30.0)
+            .style("line_height", 24.)
+            .style("font", "Space Grotesk")
+            .style("font_weight", FontWeight::Normal),
+        lay![margin: [5., 5., 5., 5.]]
+    ));
 
-        scroll = scroll.push(node!(
-            Text::new(txt!(content_str.clone()))
-                .style("color", Color::WHITE)
-                .style("size", 14.0)
-                .style("line_height", 20.0)
-                .style("font", "Space Grotesk"),
-            lay![margin: [5., 5., 5., 5.]]
-        ));
-
-        content = content.push(scroll);
-    } else if s.file_no_preview {
-        content = content.push(node!(Text::new(txt!(
-            "No preview available for this file."
-        ))
-        .style("color", Color::WHITE)
-        .style("size", 18.0)
-        .style("line_height", 24.0)
-        .style("font", "Space Grotesk")));
-    } else {
-        content = content.push(node!(Text::new(txt!("Loading or no file selected."))
-            .style("color", Color::WHITE)
-            .style("size", 18.0)
-            .style("line_height", 24.0)
-            .style("font", "Space Grotesk")));
-    }
-
-    root = root.push(content);
     root
 }
