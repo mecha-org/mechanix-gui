@@ -283,6 +283,7 @@ fn poll_action_result_events(
     event_receiver: ResMut<MxSearchResultReceiver>,
     mut app_search_result: ResMut<AppSearchResult>,
     mut file_search_result: ResMut<FileSearchResult>,
+    mut app_actions_search_result: ResMut<AppActionsSearchResult>,
 ) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
@@ -311,6 +312,7 @@ fn poll_action_result_events(
                         });
                     }
                     file_search_result.0 = file_result;
+                    info!("FILES LOADED TO PLUGIN RESOURCE")
                 }
                 MxSearchResult::AppActions(actions) => {
                     let mut actions_result: Vec<SearchResult> = Vec::new();
@@ -322,7 +324,7 @@ fn poll_action_result_events(
                             _type: SearchResultType::Action,
                         });
                     }
-                    file_search_result.0 = actions_result;
+                    app_actions_search_result.0 = actions_result;
                 }
             }
         }
