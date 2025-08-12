@@ -18,12 +18,12 @@ pub const SERVED_AT: &str = "/org/mechanix/MxSearch";
 /// settings are changed.
 ///
 /// The interface is served at the path defined by the SERVED_AT constant.
-#[derive(Clone)]
+#[derive()]
 pub struct ServerInterface {
     pub(crate) config: SearchConfig,
-    pub app_search_service: Arc<AppSearchService>,
-    pub file_search_service: Arc<files::FileSearchService>,
-    pub app_actions_service: Arc<app_actions::AppActionsService>,
+    pub app_search_service: AppSearchService,
+    pub file_search_service: files::FileSearchService,
+    pub app_actions_service: app_actions::AppActionsService,
 }
 
 #[dbus_interface(name = "org.mechanix.MxSearch")]

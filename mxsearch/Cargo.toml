@@ -18,3 +18,6 @@ apps = { path = "apps" }
 files = { path = "files" }
 app_actions = { path = "app_actions" }
 
+[profile.release]
+debug = true
+strip = false

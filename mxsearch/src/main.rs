@@ -113,15 +113,12 @@ async fn main() -> Result<(), ServerError> {
             }
         }
     }
-    let arc_app_search_service = Arc::new(app_search_service);
-    let arc_file_search_service = Arc::new(file_search_service);
-    let arc_app_actions_service = Arc::new(app_action_service);
     // Build and register the D-Bus server (blocking until shutdown)
     let config_server = ServerInterface {
         config: config.clone(),
-        app_search_service: arc_app_search_service.clone(),
-        file_search_service: arc_file_search_service.clone(),
-        app_actions_service: arc_app_actions_service.clone(),
+        app_search_service: app_search_service,
+        file_search_service: file_search_service,
+        app_actions_service: app_action_service,
     };
 
     debug!("D-Bus server registered at {}", SERVED_AT);
@@ -131,23 +128,23 @@ async fn main() -> Result<(), ServerError> {
         return Err(ServerError::FailedStartDBusServer(e));
     }
     // Wait for SIGINT (Ctrl+C)
-    match tokio::signal::ctrl_c().await {
-        Ok(()) => {
-            info!("Received SIGINT, shutting down");
-            match arc_app_search_service.shutdown().await {
-                Ok(()) => info!("Shutdown successful"),
-                Err(e) => error!("Failed to shutdown: {}", e),
-            }
-            match arc_file_search_service.shutdown().await {
-                Ok(()) => info!("Shutdown successful"),
-                Err(e) => error!("Failed to shutdown: {}", e),
-            }
-            match arc_app_actions_service.shutdown().await {
-                Ok(()) => info!("Shutdown successful"),
-                Err(e) => error!("Failed to shutdown: {}", e),
-            }
-        }
-        Err(e) => error!("Failed to receive SIGINT: {}", e),
-    }
+    // match tokio::signal::ctrl_c().await {
+    //     Ok(()) => {
+    //         info!("Received SIGINT, shutting down");
+    //         match arc_app_search_service.shutdown().await {
+    //             Ok(()) => info!("Shutdown successful"),
+    //             Err(e) => error!("Failed to shutdown: {}", e),
+    //         }
+    //         match arc_file_search_service.shutdown().await {
+    //             Ok(()) => info!("Shutdown successful"),
+    //             Err(e) => error!("Failed to shutdown: {}", e),
+    //         }
+    //         match arc_app_actions_service.shutdown().await {
+    //             Ok(()) => info!("Shutdown successful"),
+    //             Err(e) => error!("Failed to shutdown: {}", e),
+    //         }
+    //     }
+    //     Err(e) => error!("Failed to receive SIGINT: {}", e),
+    // }
     Ok(())
 }
