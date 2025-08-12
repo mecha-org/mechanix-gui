@@ -9,7 +9,7 @@ pub use crate::service::FileSearchService;
 pub use service::FileInfo;
 #[derive(Debug, Deserialize, Clone)]
 pub struct FilesConfig {
-    pub enable_search_files: bool,
+    pub enable_search: bool,
     pub index_dir: String,
     pub files_dir_to_watch: String,
     pub max_depth: usize,

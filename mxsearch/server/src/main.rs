@@ -27,6 +27,7 @@ pub struct SearchConfig {
     pub app_actions: AppActionsConfig,
 }
 fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
+    info!("Loading config from {}", path.as_ref().display());
     let content = fs::read_to_string(path)?;
     let config: SearchConfig = toml::from_str(&content)?;
     Ok(config)
@@ -84,7 +85,7 @@ async fn main() -> Result<(), ServerError> {
         }
     };
 
-    if config.apps.enable_search_apps {
+    if config.apps.enable_search {
         match app_search_service.run().await {
             Ok(()) => debug!("AppSearchService started"),
             Err(e) => {
@@ -94,7 +95,7 @@ async fn main() -> Result<(), ServerError> {
         }
     }
 
-    if config.files.enable_search_files {
+    if config.files.enable_search {
         match file_search_service.run().await {
             Ok(()) => debug!("FileSearchService started"),
             Err(e) => {
@@ -128,23 +129,11 @@ async fn main() -> Result<(), ServerError> {
         return Err(ServerError::FailedStartDBusServer(e));
     }
     // Wait for SIGINT (Ctrl+C)
-    // match tokio::signal::ctrl_c().await {
-    //     Ok(()) => {
-    //         info!("Received SIGINT, shutting down");
-    //         match arc_app_search_service.shutdown().await {
-    //             Ok(()) => info!("Shutdown successful"),
-    //             Err(e) => error!("Failed to shutdown: {}", e),
-    //         }
-    //         match arc_file_search_service.shutdown().await {
-    //             Ok(()) => info!("Shutdown successful"),
-    //             Err(e) => error!("Failed to shutdown: {}", e),
-    //         }
-    //         match arc_app_actions_service.shutdown().await {
-    //             Ok(()) => info!("Shutdown successful"),
-    //             Err(e) => error!("Failed to shutdown: {}", e),
-    //         }
-    //     }
-    //     Err(e) => error!("Failed to receive SIGINT: {}", e),
-    // }
+    match tokio::signal::ctrl_c().await {
+        Ok(()) => {
+            info!("Received SIGINT, shutting down");
+        }
+        Err(e) => error!("Failed to receive SIGINT: {}", e),
+    }
     Ok(())
 }
