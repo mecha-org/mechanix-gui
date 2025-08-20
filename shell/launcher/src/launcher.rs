@@ -1,4 +1,5 @@
 use bevy::app::TaskPoolThreadAssignmentPolicy;
+use bevy::render::view::screenshot::Screenshot;
 use bevy::{
     asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
 };
@@ -19,8 +20,9 @@ use bevy_styled_widgets::{
 };
 
 use crate::components::{
-    FrequentlyUsedApps, RecentSearches, SettingsDrawerPlugin, settings_drawer, universal_search,
+    FrequentlyUsedApps, RecentSearches, screenshot::ScreenshotUiPlugin, SettingsDrawerPlugin, settings_drawer, universal_search,
 };
+
 use crate::utils::Icon;
 use crate::{
     components::{
@@ -126,6 +128,7 @@ pub fn run_launcher() {
             LauncherUiPlugin,
             DesktopAppsPlugin,
             // SpritesButtonPlugin,
+            ScreenshotUiPlugin,
             LauncherStyledWidgetsPlugin,
             SettingsDrawerPlugin, // StyledTextPlugin,
                                   // Custom plugin for organizing UI setup
@@ -437,7 +440,7 @@ fn spawn_search(
     ));
 }
 
-fn spawn_camera(
+pub fn spawn_camera(
     commands: &mut Commands,
     width: u32,
     height: u32,

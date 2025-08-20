@@ -3,7 +3,7 @@ pub mod navigation_bar;
 pub mod settings_drawer;
 pub mod status_bar;
 pub mod universal_search;
-
+pub mod screenshot;
 pub use homescreen::*;
 pub use navigation_bar::*;
 pub use settings_drawer::*;

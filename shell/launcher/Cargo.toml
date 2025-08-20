@@ -15,6 +15,10 @@ bevy_plugins = { path = "../../commons/bevy_plugins" }
 freedesktop-desktop-entry = "0.7.13"
 freedesktop-icons = "0.4.0"
 shlex = "1.3.0"
+tokio = { version = "1.0", features = ["full"] }
+image = { version = "0.25", features = ["png"] }
+wayland-protocols-async = {git="https://github.com/mecha-org/wayland-protocols-async.git", rev = "0c2c8f6ab9d944e24fdff89f08fd8fe6a67eb6d3"}
+
 
 [profile]
 

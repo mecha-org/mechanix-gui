@@ -8,6 +8,7 @@ mod desktop_apps;
 mod launcher;
 mod settings;
 mod settings_panel;
+
 // mod sprites_button;
 mod styled_card;
 mod utils;
