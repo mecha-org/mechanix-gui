@@ -1,0 +1,13 @@
+[package]
+name = "mxconf"
+description = "Service for providing, storing global configuration for the applications and services" 
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]

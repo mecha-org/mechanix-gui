@@ -1,0 +1,13 @@
+[package]
+name = "mxconf_dbus"
+description = "D-Bus interface used to access the configuration server" 
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
