@@ -13,6 +13,7 @@ keywords.workspace = true
 [dependencies]
 mxconf_dbus = { workspace = true }
 bevy = { workspace = true }
+bevy_wayland = { workspace = true }
 app_drawer = { path = "../app_drawer" }
 background = { path = "../background" }
 homescreen = { path = "../homescreen" }

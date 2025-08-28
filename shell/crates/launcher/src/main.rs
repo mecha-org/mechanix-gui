@@ -1,22 +1,20 @@
-use background::prelude::*;
-use bevy::prelude::*;
-use homescreen::prelude::*;
-use lockscreen::prelude::*;
-use navigation_bar::prelude::*;
-use notifications_drawer::prelude::*;
-use running_apps::prelude::*;
-use settings_drawer::prelude::*;
-use status_bar::prelude::*;
-use universal_search::prelude::*;
-
-pub struct LauncherPlugin;
-
-impl Plugin for LauncherPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_plugins((StatusBarPlugin, SettingsDrawerPlugin));
-    }
-}
+use bevy::{prelude::*, window::ExitCondition, winit::WinitPlugin};
+use bevy_wayland::prelude::*;
+use mechanix_launcher::LauncherPlugin;
 
 fn main() {
-    println!("Hello, world!");
+    App::new()
+        .add_plugins((
+            DefaultPlugins
+                .build()
+                .disable::<WinitPlugin>()
+                .set(WindowPlugin {
+                    primary_window: None,
+                    exit_condition: ExitCondition::DontExit,
+                    ..Default::default()
+                }),
+            WaylandPlugin,
+            LauncherPlugin,
+        ))
+        .run();
 }

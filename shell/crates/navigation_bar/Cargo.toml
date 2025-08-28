@@ -10,3 +10,5 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+bevy = { workspace = true }
+bevy_wayland = { workspace = true }

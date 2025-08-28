@@ -45,21 +45,24 @@ pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
 }
 
 pub fn setup(mut commands: Commands) {
+    let width = 540.;
+    let height = 44.;
+
     // ui camera
     let window_ent = commands
         .spawn((
             Window {
-                resolution: WindowResolution::new(540.0, 44.0),
-
+                resolution: WindowResolution::new(width, height),
                 ..default()
             },
             LayerShellSettings {
-                anchor: Anchor::LEFT | Anchor::TOP,
+                anchor: Anchor::TOP,
                 layer: Layer::Top,
-                size: LayerShellWindowSize::Fixed(540, 44),
+                exclusive_zone: height as i32,
                 keyboard_interactivity: KeyboardInteractivity::OnDemand,
                 ..default()
             },
+            InputRegion(Rect::new(0., 0., width, height)),
         ))
         .id();
     let camera_ent = commands

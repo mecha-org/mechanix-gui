@@ -42,6 +42,8 @@ bevy = { version = "0.16.1", default-features = false, features = [
     "multi_threaded",
     "default_font",
     "bevy_state",
+    "png",
+    "bevy_ui_picking_backend",
 ] }
 bevy_wayland = { path = "../../temp/bevy_wayland" }
 bevy_asset_loader = { version = "0.23.0-rc.3", features = [
