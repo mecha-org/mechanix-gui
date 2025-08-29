@@ -33,3 +33,19 @@ thiserror = "2.0.12"
 tempfile = "3.10.1"
 mockall = "0.12.1"
 serial_test = "2.0.0"
+
+[package.metadata.deb]
+maintainer = "Minesh Purohit <mineshp@mechasystems.com>"
+extended-description = """\
+Configuration system for the Mechanix shell, services and gui apps."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../target/release/mxconf",
+        "usr/bin/",
+        "755",
+    ],
+]

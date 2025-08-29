@@ -4,6 +4,10 @@ version = "0.0.0"
 edition = "2021"
 publish = false
 
+[[bin]]
+name = "mxsearch"
+path = "server/src/main.rs"
+
 [package.metadata]
 # This crate is a metadata placeholder to avoid nested Cargo workspaces.
 # Actual search crates are included in the root workspace:
