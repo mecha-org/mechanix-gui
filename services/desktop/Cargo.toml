@@ -14,7 +14,7 @@ keywords.workspace = true
 
 
 [package.metadata.deb]
-maintainer = "Aksha Raina <akshar@mechasystems.com>"
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
 extended-description = """\
 Service for running session services."""
 depends = "$auto"
