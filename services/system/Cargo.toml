@@ -1,6 +1,6 @@
 [package]
 name = "mechanix-system-services"
-description = "Service for running system services" 
+description = "Service for running system services"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -11,3 +11,19 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+
+[package.metadata.deb]
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+extended-description = """\
+Service for running system services."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../target/release/mechanix-system-services",
+        "usr/bin/",
+        "755",
+    ],
+]
