@@ -12,3 +12,19 @@ keywords.workspace = true
 
 [dependencies]
 mxconf_dbus = { workspace = true}
+
+[package.metadata.deb]
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+extended-description = """\
+Launcher application."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../target/release/mechanix-launcher",
+        "usr/bin/",
+        "755",
+    ],
+]
