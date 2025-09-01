@@ -1,42 +1,12 @@
-use crate::components::*;
-use crate::constants::*;
-use bevy::{color::palettes::basic::*, prelude::*, window::WindowResolution};
-use bevy_wayland::prelude::*;
-
-#[allow(clippy::type_complexity)]
-pub fn button_system(
-    mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &mut BorderColor,
-            &Children,
-        ),
-        (Changed<Interaction>, With<Button>),
-    >,
-    mut text_query: Query<&mut Text>,
-) {
-    for (interaction, mut color, mut border_color, children) in &mut interaction_query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
-        match *interaction {
-            Interaction::Pressed => {
-                **text = "Press".to_string();
-                *color = PRESSED_BUTTON.into();
-                border_color.0 = RED.into();
-            }
-            Interaction::Hovered => {
-                **text = "Hover".to_string();
-                *color = HOVERED_BUTTON.into();
-                border_color.0 = Color::WHITE;
-            }
-            Interaction::None => {
-                **text = "Button".to_string();
-                *color = NORMAL_BUTTON.into();
-                border_color.0 = Color::BLACK;
-            }
-        }
-    }
-}
+use crate::{ClockUpdateTimer, components::*};
+use bevy_plugins::{
+    UPowerBatteryState,
+    bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus},
+    network_manager::{ActiveNetworkStrength, WirelessEnabled},
+    upower::{DevicePercentage, DeviceState},
+};
+use chrono::{Datelike, Timelike};
+use types::prelude::IconAssets;
 
 pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
     if keys.just_pressed(KeyCode::Escape) {
@@ -44,38 +14,169 @@ pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
     }
 }
 
-pub fn setup(mut commands: Commands) {
-    let width = 540.;
-    let height = 44.;
+pub fn get_current_datetime() -> String {
+    let now = chrono::Local::now();
+    format!(
+        "{} {} {:02}:{:02}:{:02}",
+        now.day(),
+        now.format("%B"),
+        now.hour(),
+        now.minute(),
+        now.second()
+    )
+}
 
-    // ui camera
-    let window_ent = commands
-        .spawn((
-            Window {
-                resolution: WindowResolution::new(width, height),
-                ..default()
-            },
-            LayerShellSettings {
-                anchor: Anchor::TOP,
-                layer: Layer::Top,
-                exclusive_zone: height as i32,
-                keyboard_interactivity: KeyboardInteractivity::OnDemand,
-                ..default()
-            },
-            InputRegion(Rect::new(0., 0., width, height)),
-        ))
-        .id();
-    let camera_ent = commands
-        .spawn((
-            Camera2d,
-            Camera {
-                target: bevy::render::camera::RenderTarget::Window(
-                    bevy::window::WindowRef::Entity(window_ent),
-                ),
-                clear_color: ClearColorConfig::Custom(Color::NONE),
-                ..default()
-            },
-        ))
-        .id();
-    commands.spawn((UiTargetCamera(camera_ent), button()));
+pub fn update_clock(
+    time: Res<Time>,
+    mut timer: ResMut<ClockUpdateTimer>,
+    mut query: Query<&mut Text, With<Clock>>,
+) {
+    if timer.0.tick(time.delta()).just_finished() {
+        for mut text in &mut query {
+            text.0 = get_current_datetime();
+        }
+    }
+}
+pub fn update_wireless_state(
+    mut query: Query<&mut ImageNode, With<Wireless>>,
+    wifi_state: Res<WirelessEnabled>,
+    icon_assets: Res<IconAssets>,
+) {
+    for mut image_node in &mut query {
+        info!("WirelessEnabled is updated :{:?}", wifi_state);
+        if wifi_state.0 {
+            image_node.image = icon_assets.wifi_on.clone();
+        } else {
+            image_node.image = icon_assets.wifi_off.clone();
+        }
+    }
+}
+pub fn update_wireless_network_strength(
+    icon_assets: Res<IconAssets>,
+    mut query: Query<&mut ImageNode, With<Wireless>>,
+    active_network_strength: Res<ActiveNetworkStrength>,
+) {
+    for mut wireless_icon in &mut query {
+        wireless_icon.image = match active_network_strength.0 {
+            0..=20 => icon_assets.wifi_low.clone(),
+            21..=50 => icon_assets.wifi_low.clone(), // Ask for icon
+            51..=75 => icon_assets.wifi_medium.clone(),
+            76..=100 => icon_assets.wifi_high.clone(),
+            _ => unreachable!(),
+        }
+    }
+}
+
+pub fn update_bluetooth_on_powered(
+    icon_assets: Res<IconAssets>,
+    mut query: Query<&mut ImageNode, With<Bluetooth>>,
+    bluetooth_state: Res<BluetoothEnabledStatus>,
+) {
+    for mut icon in &mut query {
+        if bluetooth_state.0 {
+            icon.image = icon_assets.bluetooth_on.clone();
+        } else {
+            icon.image = icon_assets.bluetooth_off.clone();
+        }
+    }
+}
+
+pub fn update_bluetooth_on_connected(
+    icon_assets: Res<IconAssets>,
+    mut query: Query<&mut ImageNode, With<Bluetooth>>,
+    connected_status: Res<BluetoothDeviceConnectedStatus>,
+) {
+    for mut icon in &mut query {
+        if connected_status.0 {
+            icon.image = icon_assets.bluetooth_connected.clone();
+        } else {
+            icon.image = icon_assets.bluetooth_on.clone();
+        }
+    }
+}
+
+pub fn update_power_icon(
+    icon_assets: Res<IconAssets>,
+    mut query: Query<&mut ImageNode, With<Battery>>,
+    device_percentage: Res<DevicePercentage>,
+    device_state: Res<DeviceState>,
+) {
+    for mut styled_text in &mut query {
+        match (device_state.0.clone(), device_percentage.0.round() as u32) {
+            (UPowerBatteryState::Charging, p) if p >= 95 => {
+                styled_text.image = icon_assets.battery_100_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 90 => {
+                styled_text.image = icon_assets.battery_90_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 80 => {
+                styled_text.image = icon_assets.battery_80_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 70 => {
+                styled_text.image = icon_assets.battery_70_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 60 => {
+                styled_text.image = icon_assets.battery_60_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 50 => {
+                styled_text.image = icon_assets.battery_50_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 40 => {
+                styled_text.image = icon_assets.battery_40_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 30 => {
+                styled_text.image = icon_assets.battery_30_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 20 => {
+                styled_text.image = icon_assets.battery_20_charging.clone();
+            }
+            (UPowerBatteryState::Charging, p) if p >= 10 => {
+                styled_text.image = icon_assets.battery_10_charging.clone();
+            }
+            (UPowerBatteryState::Charging, _) => {
+                styled_text.image = icon_assets.battery_0_charging.clone();
+            }
+
+            (UPowerBatteryState::Discharging, p) if p >= 95 => {
+                styled_text.image = icon_assets.battery_100.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 90 => {
+                styled_text.image = icon_assets.battery_90.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 80 => {
+                styled_text.image = icon_assets.battery_80.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 70 => {
+                styled_text.image = icon_assets.battery_70.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 60 => {
+                styled_text.image = icon_assets.battery_60.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 50 => {
+                styled_text.image = icon_assets.battery_50.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 40 => {
+                styled_text.image = icon_assets.battery_40.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 30 => {
+                styled_text.image = icon_assets.battery_30.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 20 => {
+                styled_text.image = icon_assets.battery_20.clone();
+            }
+            (UPowerBatteryState::Discharging, p) if p >= 10 => {
+                styled_text.image = icon_assets.battery_10.clone();
+            }
+            (UPowerBatteryState::Discharging, _) => {
+                styled_text.image = icon_assets.battery_empty.clone();
+            }
+            (UPowerBatteryState::Empty, _) => {
+                styled_text.image = icon_assets.battery_empty.clone();
+            }
+            _ => {
+                // Default fallback icon
+                styled_text.image = icon_assets.battery_empty.clone();
+            }
+        }
+    }
 }

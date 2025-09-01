@@ -12,6 +12,10 @@ keywords.workspace = true
 [dependencies]
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
+bevy_asset_loader = { workspace = true }
+types = { path = "../types" }
+bevy_plugins = { path = "../../../shared/bevy_plugins" }
+chrono = { version = "0.4", features = ["clock"] }
 
 [[example]]
 name = "status_bar"
