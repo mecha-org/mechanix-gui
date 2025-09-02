@@ -1,0 +1,18 @@
+[package]
+name = "status_bar"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+bevy = { workspace = true }
+bevy_wayland = { workspace = true }
+
+[[example]]
+name = "status_bar"
+path = "examples/status_bar.rs"

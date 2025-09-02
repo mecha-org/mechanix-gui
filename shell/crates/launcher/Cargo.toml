@@ -11,7 +11,19 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-mxconf_dbus = { workspace = true}
+mxconf_dbus = { workspace = true }
+bevy = { workspace = true }
+bevy_wayland = { workspace = true }
+app_drawer = { path = "../app_drawer" }
+background = { path = "../background" }
+homescreen = { path = "../homescreen" }
+lockscreen = { path = "../lockscreen" }
+navigation_bar = { path = "../navigation_bar" }
+notifications_drawer = { path = "../notifications_drawer" }
+running_apps = { path = "../running_apps" }
+settings_drawer = { path = "../settings_drawer" }
+status_bar = { path = "../status_bar" }
+universal_search = { path = "../universal_search" }
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"
@@ -23,7 +35,7 @@ priority = "optional"
 assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
-        "../../target/release/mechanix-launcher",
+        "../../../target/release/mechanix-launcher",
         "usr/bin/",
         "755",
     ],

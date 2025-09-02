@@ -1,0 +1,17 @@
+[package]
+name = "universal_search"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[features]
+standalone = []
+
+[dependencies]
+bevy = { workspace = true }
+bevy_wayland = { workspace = true }

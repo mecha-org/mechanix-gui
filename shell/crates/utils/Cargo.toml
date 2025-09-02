@@ -1,0 +1,15 @@
+[package]
+name = "utils"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+bevy = { workspace = true }
+bevy_asset_loader = { workspace = true }
+types = { path = "../types" }

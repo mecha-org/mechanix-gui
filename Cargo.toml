@@ -4,25 +4,17 @@ members = [
     "services/desktop",
     "services/conf",
     "services/system",
-    "services/search/apps",
-    "services/search/files",
-    "services/search/server",
-    "services/search/app_actions",
-    "shell/launcher",
-    "shell/keyboard",
-    "shell/notification",
-    "dbus/freedesktop/bluez",
-    "dbus/freedesktop/networkmanager",
-    "dbus/freedesktop/pulseaudio",
-    "dbus/freedesktop/upower",
+    "services/search/*",
+    "shell/crates/*",
+    "dbus/freedesktop/*",
     "dbus/mechanix/mxconf",
 ]
 
 [workspace.package]
 version = "0.0.0"
 authors = [
-    "Akshay Raina <akshayr@mechasystems.com>", 
-    "Shoaib Merchant <shoaibm@mechasystems.com>"
+    "Akshay Raina <akshayr@mechasystems.com>",
+    "Shoaib Merchant <shoaibm@mechasystems.com>",
 ]
 edition = "2021"
 license = "MIT"
@@ -41,3 +33,20 @@ zbus = "3.14.1"
 serde = { version = "1.0.219", features = ["derive"] }
 futures = "0.3.31"
 thiserror = "2.0.12"
+bevy = { version = "0.16.1", default-features = false, features = [
+    "bevy_ui",
+    "bevy_window",
+    "trace",
+    "bevy_winit",
+    "wayland",
+    "multi_threaded",
+    "default_font",
+    "bevy_state",
+    "png",
+    "bevy_ui_picking_backend",
+] }
+bevy_wayland = { git = "https://github.com/namana-mecha/bevy_wayland.git", rev = "541e0e646f813602f0e89621a17e5bcbde20d2fc" }
+bevy_asset_loader = { version = "0.23.0-rc.3", features = [
+    "standard_dynamic_assets",
+    "2d",
+] }
