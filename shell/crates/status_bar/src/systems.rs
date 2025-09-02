@@ -1,11 +1,13 @@
 use crate::{ClockUpdateTimer, components::*};
 use bevy_plugins::{
     UPowerBatteryState,
+    NetworkManagerDeviceState,
     bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus},
     network_manager::{ActiveNetworkStrength, WirelessEnabled},
     upower::{DevicePercentage, DeviceState},
 };
 use chrono::{Datelike, Timelike};
+use bevy_plugins::network_manager::NetworkManagerDeviceStatus;
 use types::prelude::IconAssets;
 
 pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
@@ -67,6 +69,19 @@ pub fn update_wireless_network_strength(
     }
 }
 
+pub fn update_wireless_device_status(
+    mut query: Query<&mut ImageNode, With<Wireless>>,
+    wireless_enabled_status: Res<WirelessEnabled>,
+    wireless_device_status: Res<NetworkManagerDeviceStatus>,
+    icon_assets: Res<IconAssets>,
+) {
+    for mut image_node in &mut query {
+        info!("enabled status:{:?}, device status: {:?}", wireless_enabled_status, wireless_device_status);
+        if wireless_device_status.0 == NetworkManagerDeviceState::ConnectedLocal && wireless_enabled_status.0 {
+            image_node.image = icon_assets.wifi_on.clone();
+        }
+    }
+}
 pub fn update_bluetooth_on_powered(
     icon_assets: Res<IconAssets>,
     mut query: Query<&mut ImageNode, With<Bluetooth>>,

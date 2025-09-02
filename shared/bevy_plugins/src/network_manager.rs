@@ -2,7 +2,7 @@ use bevy::log::{error, info};
 use bevy::prelude::*;
 use bevy::prelude::{Event, Resource};
 use bevy::tasks::{IoTaskPool};
-use networkmanager::interfaces::wireless::{ NMState, WirelessNetworkInfo,
+pub(crate) use networkmanager::interfaces::wireless::{NMState, WirelessNetworkInfo,
 };
 use networkmanager::service::NetworkManagerService;
 use std::sync::mpsc::{Receiver, Sender};

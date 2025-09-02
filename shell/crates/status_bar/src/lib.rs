@@ -16,6 +16,7 @@ use bevy_plugins::{
 use bevy_wayland::prelude::{
     Anchor, InputRegion, KeyboardInteractivity, Layer, LayerShellSettings,
 };
+use bevy_plugins::network_manager::NetworkManagerDeviceStatus;
 use systems::*;
 use types::{AssetsLoadingState, prelude::IconAssets};
 
@@ -56,8 +57,15 @@ impl Plugin for StatusBarPlugin {
         );
         app.add_systems(
             Update,
-            update_wireless_network_strength.run_if(resource_changed::<ActiveNetworkStrength>)
-            .run_if(in_state(AssetsLoadingState::Loaded)),
+            update_wireless_network_strength
+                .run_if(resource_changed::<ActiveNetworkStrength>)
+                .run_if(in_state(AssetsLoadingState::Loaded)),
+        )
+        .add_systems(
+            Update,
+            update_wireless_device_status
+                .run_if(resource_changed::<NetworkManagerDeviceStatus>)
+                .run_if(in_state(AssetsLoadingState::Loaded)),
         );
         app.add_systems(
             Update,
