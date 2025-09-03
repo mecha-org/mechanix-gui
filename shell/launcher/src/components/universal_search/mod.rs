@@ -2,7 +2,7 @@ use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith, system::SystemId},
     prelude::*,
 };
-use bevy_core_widgets::CoreButton;
+use bevy_core_widgets::{CoreButton, CoreScrollArea};
 
 use crate::{
     desktop_apps::{self, DesktopApp, DesktopApps},
@@ -28,6 +28,9 @@ pub struct SearchResultsComponent;
 #[derive(Debug, Resource)]
 pub struct SearchText(pub String);
 
+#[derive(Debug, Default, Resource)]
+pub struct AppSearchResultUiResource(pub Vec<SearchResult>);
+
 pub fn universal_search(
     freq_used_apps: Vec<DesktopApp>,
     recent_searches: Vec<String>,
@@ -46,7 +49,10 @@ pub fn universal_search(
             let mut commands = parent.world_mut().commands();
             let on_search_click = commands.register_system(move |mut commands: Commands| {});
             let on_cancel_click = commands.register_system(
-                |mut commands: Commands, q_search: Option<Single<Entity, With<SearchWindow>>>| {
+                |mut commands: Commands,
+                 mut search_text: ResMut<SearchText>,
+                 q_search: Option<Single<Entity, With<SearchWindow>>>| {
+                    search_text.0 = String::new();
                     if let Some(entity) = q_search {
                         commands.entity(entity.into_inner()).despawn();
                     }
@@ -55,8 +61,10 @@ pub fn universal_search(
 
             let on_clear_click = commands.register_system(
                 |mut commands: Commands,
+                 mut search_text: ResMut<SearchText>,
                 q_search: Query<Entity, With<SearchResultsComponent>>,
                  mut q_input: Query<(&mut Text, &mut TextColor), With<SearchInput>>| {
+                    search_text.0 = String::new();
                     for (mut text, mut text_color) in q_input.iter_mut() {
                         text.0 = "Just type...".to_string();
                         text_color.0 = Color::oklch(0.5999, 0., 0.);
@@ -150,8 +158,8 @@ fn search_items(recent_searches: Vec<String>) -> impl Bundle {
                 let on_click =
                     commands.register_system(
                         move |mut commands: Commands,
-                              desktop_apps: Res<DesktopApps>,
                               mut q_universal_search: Query<Entity, With<UniversalSearch>>,
+                              search_result: Res<AppSearchResultUiResource>,
                               mut q_input: Query<
                             (&mut Text, &mut TextColor),
                             With<SearchInput>,
@@ -161,54 +169,17 @@ fn search_items(recent_searches: Vec<String>) -> impl Bundle {
                                 text.0 = cloned_item.clone();
                                 text_color.0 = Color::WHITE;
                             }
-
+                            let final_results = search_result.0.clone();
                             for universal_search in q_universal_search.iter_mut() {
                                 let mut browser_apps: Vec<SearchResult> = vec![];
                                 let mut results: Vec<SearchResult> = vec![];
 
-                                desktop_apps.apps.clone().into_iter().for_each(|app| {
-                                    if ["firefox_firefox", "microsoft-edge"]
-                                        .contains(&app.app_id.as_str())
-                                    {
-                                        let cloned_exec = app.exec.clone();
-                                        let cloned_item2 = cloned_item.clone();
-                                        let on_click = commands.register_system(move || {
-                                            let url = format!(
-                                                "https://www.google.com/search?q={}",
-                                                cloned_item2.clone()
-                                            );
-                                            let cmd = cloned_exec.to_string()
-                                                + " --new-tab "
-                                                + url.as_str();
-                                            info!("Running command: {}", cmd);
-                                            let _ = DesktopApps::run_app_exec(cmd);
-                                        });
-                                        browser_apps.push(SearchResult {
-                                            name: format!(
-                                                "Search {} on {}",
-                                                cloned_item.clone(),
-                                                app.name.clone()
-                                            ),
-                                            icon: app.icon.clone(),
-                                            on_click: on_click,
-                                            _type: SearchResultType::App,
-                                        });
-                                    }
-
-                                    if app.name.contains(cloned_item.as_str()) {
-                                        results.push(SearchResult {
-                                            name: app.name.clone(),
-                                            icon: app.icon.clone(),
-                                            on_click: app.on_click,
-                                            _type: SearchResultType::File,
-                                        });
-                                    }
-                                });
-
                                 let entity = commands.spawn_empty().id();
                                 results.append(&mut browser_apps);
-                                let sr =
-                                    commands.entity(entity).insert(search_results(results)).id();
+                                let sr = commands
+                                    .entity(entity)
+                                    .insert(search_results(final_results.clone()))
+                                    .id();
 
                                 commands.entity(universal_search).add_child(sr);
                             }
@@ -389,7 +360,14 @@ fn search_results(results: Vec<SearchResult>) -> impl Bundle {
             padding: UiRect::all(Val::Px(16.)),
             position_type: PositionType::Absolute,
             flex_direction: FlexDirection::Column,
+            display: Display::Flex,
+            overflow: Overflow::scroll_y(),
             ..Default::default()
+        },
+        CoreScrollArea,
+        ScrollPosition {
+            offset_x: 0.0,
+            offset_y: 0.0,
         },
         SearchResultsComponent,
         BackgroundColor(Color::oklch(0.173, 0., 0.)),
@@ -406,17 +384,18 @@ fn search_results(results: Vec<SearchResult>) -> impl Bundle {
 pub enum SearchResultType {
     App,
     File,
+    Action,
 }
 
 #[derive(Debug, Clone)]
 pub struct SearchResult {
     pub name: String,
     pub icon: Handle<Image>,
-    pub on_click: SystemId,
+    pub on_click: Option<SystemId>,
     pub _type: SearchResultType,
 }
 
-fn search_result_item(result: SearchResult) -> impl Bundle {
+pub fn search_result_item(result: SearchResult) -> impl Bundle {
     (
         Node {
             flex_direction: FlexDirection::Column,
@@ -433,7 +412,7 @@ fn search_result_item(result: SearchResult) -> impl Bundle {
                     ..Default::default()
                 },
                 CoreButton {
-                    on_click: Some(result.on_click),
+                    on_click: None,
                     on_long_press: None,
                 },
                 Children::spawn(SpawnWith(move |parent: &mut RelatedSpawner<ChildOf>| {
@@ -464,6 +443,7 @@ fn search_result_item(result: SearchResult) -> impl Bundle {
                         Text::new(match result._type {
                             SearchResultType::App => Icon::ArrowSquareUp,
                             SearchResultType::File => Icon::ArrowUpRight,
+                            SearchResultType::Action => Icon::ArrowUpRight,
                         }),
                         TextFont {
                             font_size: 16.,

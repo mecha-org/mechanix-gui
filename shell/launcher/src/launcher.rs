@@ -1,31 +1,13 @@
-use bevy::app::TaskPoolThreadAssignmentPolicy;
-use bevy::{
-    asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
-};
-use bevy_asset_loader::prelude::*;
-use bevy_plugins::bluetooth::BluetoothEnabledStatus;
-use bevy_plugins::network_manager::WirelessEnabled;
-use bevy_plugins::upower::UPowerPlugin;
-use bevy_plugins::{BluetoothPlugin, NetworkManagerPlugin};
-use bevy_smithay::{
-    SmithayPlugin, SmithayWindowType,
-    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor},
-};
-use bevy_styled_widgets::{
-    StyledWidgetsPlugin,
-    prelude::{
-        ButtonVariant, StyledButton, StyledButtonPlugin, StyledText, StyledTextPlugin, ThemeManager,
-    },
-};
-
+use crate::components::{search_result_item, SearchResult, SearchResultsComponent};
 use crate::components::{
-    FrequentlyUsedApps, RecentSearches, SettingsDrawerPlugin, settings_drawer, universal_search,
+    settings_drawer, universal_search, AppSearchResultUiResource, FrequentlyUsedApps,
+    RecentSearches, SearchText, SettingsDrawerPlugin,
 };
 use crate::utils::Icon;
 use crate::{
     components::{
-        AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin, app_list, apps_grid,
-        navigation_bar, status_bar, update_apps_categories, update_apps_list,
+        app_list, apps_grid, navigation_bar, status_bar, update_apps_categories,
+        update_apps_list, AssetsLoadingState, NavigationBarPlugin, StatusBarPlugin,
     },
     desktop_apps::{self, DesktopApp, DesktopApps, DesktopAppsPlugin},
     // sprites_button::{SpritesButtonPlugin, sprites_button_demo},
@@ -33,6 +15,32 @@ use crate::{
     utils::FontAssets,
     widgets::LauncherStyledWidgetsPlugin,
 };
+use bevy::app::TaskPoolThreadAssignmentPolicy;
+use bevy::asset::AssetPath;
+use bevy::{
+    asset::AssetMetaCheck, ecs::system::SystemId, prelude::*, scene::ron::de, winit::WinitPlugin,
+};
+use bevy_asset_loader::prelude::*;
+use bevy_plugins::bluetooth::BluetoothEnabledStatus;
+use bevy_plugins::mxsearch::{AppActionsSearchResult, FileSearchResult};
+use bevy_plugins::mxsearch::{AppSearchResult, SearchResultType};
+use bevy_plugins::network_manager::{NetworkManagerDeviceStatus, WirelessEnabled};
+use bevy_plugins::upower::UPowerPlugin;
+use bevy_plugins::{
+    BluetoothPlugin, MxSearchAction, MxSearchActionEvent, MxSearchPlugin, NetworkManagerPlugin,
+};
+use bevy_smithay::{
+    prelude::{layer_shell::LayerShellSettings, subsurface::Anchor}, SmithayPlugin,
+    SmithayWindowType,
+};
+use bevy_styled_widgets::{
+    prelude::{
+        ButtonVariant, StyledButton, StyledButtonPlugin, StyledText, StyledTextPlugin, ThemeManager,
+    },
+    StyledWidgetsPlugin,
+};
+use freedesktop_icons::lookup;
+use std::path::Path;
 
 #[derive(Debug, Component)]
 pub struct HomescreenWindow;
@@ -133,6 +141,7 @@ pub fn run_launcher() {
         .add_plugins(NetworkManagerPlugin)
         .add_plugins(BluetoothPlugin)
         .add_plugins(UPowerPlugin)
+        .add_plugins(MxSearchPlugin)
         // System to exit on Escape key press
         .add_systems(Update, exit_on_esc)
         .run();
@@ -157,11 +166,12 @@ impl Plugin for LauncherUiPlugin {
         app.insert_resource(RecentSearches(vec![
             "sc".to_string(),
             "code".to_string(),
-            "microsoft".to_string(),
+            "terminal".to_string(),
             "discord".to_string(),
             "zulip".to_string(),
+            // "terminal".to_string(),
         ]));
-
+        app.insert_resource(AppSearchResultUiResource::default());
         app.add_systems(OnEnter(AssetsLoadingState::Loaded), setup_launcher_ui);
         //insert resource only when the assets are loaded
         app.add_systems(
@@ -180,12 +190,147 @@ impl Plugin for LauncherUiPlugin {
         );
         app.add_systems(
             Update,
+            search_text_updated.run_if(resource_exists_and_changed::<SearchText>),
+        );
+        app.add_systems(
+            Update,
+            feed_app_search_results.run_if(resource_changed::<AppSearchResult>),
+        );
+        app.add_systems(
+            Update,
+            feed_file_search_results.run_if(resource_changed::<FileSearchResult>),
+        );
+        app.add_systems(
+            Update,
+            feed_app_action_search_results.run_if(resource_changed::<AppActionsSearchResult>),
+        );
+        app.add_systems(
+            Update,
+            update_search_results_ui.run_if(resource_changed::<AppSearchResultUiResource>),
+        );
+        app.add_systems(
+            Update,
             update_apps_categories
                 .run_if(assets_loaded)
                 .run_if(resource_exists_and_changed::<DesktopApps>),
         );
 
         app.add_observer(handle_navigation_events);
+    }
+}
+
+fn search_text_updated(
+    mut action_events: EventWriter<MxSearchActionEvent>,
+    mut app_search_feed: ResMut<AppSearchResultUiResource>,
+    search_text: Res<SearchText>,
+) {
+    println!("Search text updated: {}", search_text.0);
+    // On earch search first clear existing search results
+    if search_text.0.is_empty() {
+        println!("SEARCH TEXT IS EMPTY");
+        app_search_feed.0.clear();
+    }
+    action_events.write(MxSearchActionEvent(MxSearchAction::SearchApplications(
+        search_text.0.clone(),
+    )));
+
+    action_events.write(MxSearchActionEvent(MxSearchAction::SearchFiles(
+        search_text.0.clone(),
+    )));
+
+    action_events.write(MxSearchActionEvent(MxSearchAction::SearchAppActions(
+        search_text.0.clone(),
+    )));
+}
+
+fn feed_app_search_results(
+    app_search_result: Res<AppSearchResult>,
+    mut app_search_feed: ResMut<AppSearchResultUiResource>,
+    asset_server: Res<AssetServer>,
+) {
+    let apps = app_search_result.0.clone();
+    println!("Final Result of search: {:?}", apps);
+    let mut final_results: Vec<SearchResult> = Vec::new();
+    //TODO: revisit for svg icon issue, currently it's configured with default icon only
+    for app in apps {
+        let result = SearchResult {
+            name: app.name,
+            icon: lookup_icon(&app.icon, &app._type, &asset_server),
+            on_click: None,
+            _type: universal_search::SearchResultType::App,
+        };
+        if !app_search_feed.0.iter().any(|r| r.name == result.name) {
+            final_results.push(result);
+        }
+    }
+    app_search_feed.0.extend(final_results);
+}
+
+fn feed_file_search_results(
+    file_search_result: Res<FileSearchResult>,
+    mut app_search_feed: ResMut<AppSearchResultUiResource>,
+    asset_server: Res<AssetServer>,
+) {
+    let files = file_search_result.0.clone();
+    println!("Final Result of search: {:?}", files);
+    let mut final_results: Vec<SearchResult> = Vec::new();
+    //TODO: revisit for svg icon issue, currently it's configured with default icon only
+    for file in files {
+        let result = SearchResult {
+            name: file.name,
+            icon: lookup_icon(&file.icon, &SearchResultType::File, &asset_server),
+            on_click: None,
+            _type: universal_search::SearchResultType::File,
+        };
+        if !app_search_feed.0.iter().any(|r| r.name == result.name) {
+            final_results.push(result);
+        }
+    }
+    app_search_feed.0.extend(final_results);
+}
+
+fn feed_app_action_search_results(
+    action_search_result: Res<AppActionsSearchResult>,
+    mut app_search_feed: ResMut<AppSearchResultUiResource>,
+    asset_server: Res<AssetServer>,
+) {
+    let files = action_search_result.0.clone();
+    println!("Final Result of app actions: {:?}", files);
+    let mut final_results: Vec<SearchResult> = Vec::new();
+    //TODO: revisit for svg icon issue, currently it's configured with default icon only
+    for file in files {
+        let result = SearchResult {
+            name: file.name,
+            icon: lookup_icon(&file.icon, &SearchResultType::Action, &asset_server),
+            on_click: None,
+            _type: universal_search::SearchResultType::Action,
+        };
+        if !app_search_feed.0.iter().any(|r| r.name == result.name) {
+            final_results.push(result);
+        }
+    }
+    app_search_feed.0.extend(final_results);
+}
+fn update_search_results_ui(
+    mut commands: Commands,
+    app_search_results: Res<AppSearchResultUiResource>,
+    query: Query<(Entity, &Children), With<SearchResultsComponent>>,
+) {
+    if !app_search_results.is_changed() {
+        return;
+    }
+    println!("length of a search result: {}", app_search_results.0.len());
+    for (parent_entity, children) in &query {
+        // Despawn all direct children (which are the result entries)
+        for child in children.iter() {
+            commands.entity(child).despawn();
+        }
+        // Spawn the new children
+        for result in &app_search_results.0 {
+            commands.entity(parent_entity).with_children(|parent| {
+                parent.spawn(search_result_item(result.clone()));
+            });
+        }
     }
 }
 
@@ -525,4 +670,34 @@ fn spawn_app_switcher(commands: &mut Commands) {
         StyledCard,
         spawn_content("App Switcher", on_click),
     ));
+}
+
+fn lookup_icon(
+    icon_name: &str,
+    search_result_type: &SearchResultType,
+    asset_server: &AssetServer,
+) -> Handle<Image> {
+    let icon = lookup(&icon_name)
+        .with_size(84)
+        .with_theme("Papirus")
+        .find()
+        .unwrap_or_default()
+        .into_os_string()
+        .into_string()
+        .unwrap();
+    let default_icon = match search_result_type {
+        SearchResultType::App => Path::new("icons/default_app_icon.png"),
+        SearchResultType::File => Path::new("icons/default_file_icon.png"),
+        SearchResultType::Action => Path::new("icons/rotation_on.png"),
+    };
+
+    let path = Path::new(&icon);
+    match path.extension() {
+        Some(ext) if ext == "svg" => asset_server.load(AssetPath::from_path(default_icon)),
+        Some(ext) if ext == "png" => asset_server.load(AssetPath::from_path(path)),
+        _ => {
+            println!("Unsupported icon format: {:?}", path.extension());
+            asset_server.load(AssetPath::from_path(default_icon))
+        }
+    }
 }
