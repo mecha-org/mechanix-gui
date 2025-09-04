@@ -5,6 +5,7 @@ use pulseaudio::service::{DeviceInfo, PulseAudioService};
 use libpulse_binding::volume::ChannelVolumes;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::Mutex;
+use libpulse_binding::context::introspect::SinkInfo;
 
 /// Holds the async-initialized service, or None if not ready yet.
 pub struct PulseAudioServiceResource {
@@ -16,8 +17,19 @@ pub struct PulseAudioResultReceiver {
     receiver: Mutex<Receiver<PulseAudioResult>>,
 }
 
+#[derive(Resource, Default)]
+pub struct AudioManagerState {
+    pub initialized: bool,
+    pub stream_started: bool,
+}
+
 #[derive(Resource, Clone)]
 pub struct PulseAudioResultSender(pub Sender<PulseAudioResult>);
+
+#[derive(Resource,Debug, Default)]
+pub struct DefaultSink(pub DeviceInfo);
+
+
 #[derive(Event)]
 pub struct PulseAudioActionEvent(pub PulseAudioAction);
 
@@ -32,18 +44,19 @@ pub enum PulseAudioAction {
     GetDefaultSource,
     SetDefaultSink(String),
     SetDefaultSource(String),
-    SetSinkVolumeByName(String, ChannelVolumes),
-    SetSourceVolumeByName(String, ChannelVolumes),
+    SetSinkVolumeByName(String, f32),
+    SetSourceVolumeByName(String, f32),
 }
 
 #[derive(Debug)]
 pub enum PulseAudioResult {
     ListSinks(Vec<DeviceInfo>),
     ListSources(Vec<DeviceInfo>),
-    GetDefaultSink(DeviceInfo),
+    DefaultSink(DeviceInfo),
     GetDefaultSource(DeviceInfo),
     SetDefaultSink(bool),
     SetDefaultSource(bool),
+    MainSinkVolume(f32),
     Error(ErrorType),
 }
 
@@ -54,7 +67,6 @@ pub enum ErrorType {
         message: String,
     },
 }
-
 /// PulseAudioManager plugin for Bevy
 ///
 /// This plugin provides a resource for the `PulseAudioService` which is
@@ -68,6 +80,8 @@ pub struct PulseAudioPlugin;
 impl Plugin for PulseAudioPlugin {
     fn build(&self, app: &mut App) {
         app.insert_non_send_resource(PulseAudioServiceResource { service: None })
+            .insert_resource(AudioManagerState::default())
+            .insert_resource(DefaultSink::default())
             .add_event::<PulseAudioActionEvent>()
             .add_event::<PulseAudioResultEvent>()
             .add_systems(
@@ -184,7 +198,7 @@ fn handle_pulse_audio_action_events(
                     // let server = &service.server;
                     match service.server.get_default_sink() {
                         Ok(sink) => {
-                            let result = PulseAudioResult::GetDefaultSink(sink);
+                            let result = PulseAudioResult::DefaultSink(sink);
                             if let Err(e) = sender.0.send(result) {
                                 error!("failed to send get default sink result: {e}");
                             }
@@ -261,12 +275,18 @@ fn handle_pulse_audio_action_events(
 /// The event receiver is accessed by a lock, and if the lock can't be acquired,
 /// the system will print an error message and do nothing.
 fn poll_pulse_audio_action_result_events(
-    mut pulse_audio_result_event_writer: EventWriter<PulseAudioResultEvent>,
     event_receiver: ResMut<PulseAudioResultReceiver>,
+    mut default_sink: ResMut<DefaultSink>,
 ) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
         while let Ok(event) = receiver.try_recv() {
-            pulse_audio_result_event_writer.write(PulseAudioResultEvent(event));
+            match event {
+                PulseAudioResult::DefaultSink(device_info) => {
+                    default_sink.0 = device_info;
+                }
+                _ => {
+                }
+            }
         }
     } else {
         error!("failed to acquire receiver lock");

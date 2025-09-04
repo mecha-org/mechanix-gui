@@ -15,3 +15,8 @@ standalone = []
 [dependencies]
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
+bevy_styled_widgets = { git = "https://github.com/akshayr-mecha/bevy_mctk.git", rev = "d35349e18e26ce81b341a6d60fb3071d3aa3ab9e"}
+bevy_asset_loader = { version = "0.23.0-rc.3", features = ["standard_dynamic_assets", "2d"]}
+bevy_core_widgets = { git = "https://github.com/akshayr-mecha/bevy_core_widgets.git",  rev = "3a1e8795ab2ed3ac5fd252e9f5ab7c890a2415f4" }
+bevy_plugins = { path = "../../../shared/bevy_plugins" }
+chrono = "0.4.41"

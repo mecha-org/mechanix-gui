@@ -152,3 +152,10 @@ pub struct AccessPointEvent {
     pub access_point_path: String,
     pub raw_access_point_info: Option<RawAccessPointInfo>,
 }
+
+#[derive(Debug, Clone, Default)]
+/// A known WiFi network.
+pub struct KnownNetworkResponse {
+    pub ssid: String,
+    pub flags: String,
+}

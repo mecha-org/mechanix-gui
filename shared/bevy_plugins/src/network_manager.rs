@@ -20,6 +20,12 @@ pub struct WirelessEnabled(pub bool);
 #[derive(Resource, Default, Debug, Clone)]
 pub struct ActiveNetworkStrength(pub u8);
 
+#[derive(Resource, Default, Debug, Clone)]
+pub struct KnownNetworkList(pub Vec<WirelessNetworkInfo>);
+
+#[derive(Resource, Default, Debug, Clone)]
+pub struct NetworkList(pub Vec<WirelessNetworkInfo>);
+
 #[derive(Resource)]
 pub struct NetworkResultReceiver {
     receiver: Mutex<Receiver<NetworkResult>>,
@@ -51,6 +57,7 @@ pub struct NetworkActionEvent(pub NetworkAction);
 pub enum NetworkAction {
     ToggleWifi(bool),
     ListNetworks,
+    ListKnownNetworks,
     ConnectNetwork(String, Option<String>),
     ConnectToSavedNetwork(String),
     ForgetSavedNetwork(String),
@@ -64,6 +71,7 @@ pub enum NetworkAction {
 pub enum NetworkResult {
     ToggleWifi(WirelessEnabled),
     ListNetworks(Vec<WirelessNetworkInfo>),
+    ListKnownNetworks(Vec<WirelessNetworkInfo>),
     WirelessEnabled(bool),
     NetworkDeviceEvent(NMState),
     Error(ErrorType),
@@ -94,6 +102,8 @@ impl Plugin for NetworkManagerPlugin {
             .insert_resource(NetworkManagerState::default())
             .insert_resource(NetworkManagerDeviceStatus::default())
             .insert_resource(ActiveNetworkStrength::default())
+            .insert_resource(KnownNetworkList::default())
+            .insert_resource(NetworkList::default())
             .insert_non_send_resource(WirelessStatusReceiver::default())
             .insert_non_send_resource(ActiveNetworkStrengthReceiver::default())
             .insert_non_send_resource(DeviceStateReceiver::default())
@@ -109,7 +119,13 @@ impl Plugin for NetworkManagerPlugin {
                     start_stream_if_service_ready.after(poll_service_init),
                 ),
             )
-            .add_systems(Update, handle_network_action_events)
+            .add_systems(
+                Update,
+                (
+                    handle_network_action_events,
+                    poll_network_action_result_events.after(handle_network_action_events),
+                ),
+            )
             .add_systems(
                 Update,
                 start_dependent_streams.run_if(resource_changed::<NetworkManagerDeviceStatus>),
@@ -136,6 +152,7 @@ fn poll_active_network_strength(
 ) {
     if let Some(receiver) = &active_network_strength_receiver.0 {
         if let Ok(strength) = receiver.try_recv() {
+            info!("Active network strength in plugin: {}", strength);
             active_network_strength.0 = strength;
         }
     }
@@ -150,6 +167,7 @@ fn poll_device_state(
         }
     }
 }
+
 fn start_stream_if_service_ready(
     mut state: ResMut<NetworkManagerState>,
     service_res: Res<NetworkManagerServiceResource>,
@@ -266,7 +284,7 @@ fn handle_network_action_events(
                             }
                         }
                     })
-                    .detach();
+                        .detach();
                 }
             }
             NetworkAction::ListNetworks => {
@@ -297,7 +315,38 @@ fn handle_network_action_events(
                             }
                         }
                     })
-                    .detach();
+                        .detach();
+                }
+            }
+            NetworkAction::ListKnownNetworks => {
+                info!("network action: list known networks");
+                if let Some(service) = &service.service {
+                    let service = service.clone();
+                    let result_sender = sender.0.clone();
+                    pool.spawn(async move {
+                        match service.known_networks().await {
+                            Ok(networks) => {
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::ListKnownNetworks(networks))
+                                {
+                                    error!("failed to send known networks: {err}");
+                                }
+                            }
+                            Err(err) => {
+                                error!("failed to list known networks: {err}");
+                                let error_type = ErrorType::ActionFailed {
+                                    action: NetworkAction::ListKnownNetworks,
+                                    message: "Failed to list known networks".to_string(),
+                                };
+                                if let Err(err) =
+                                    result_sender.send(NetworkResult::Error(error_type))
+                                {
+                                    error!("failed to send list known networks error: {err}");
+                                }
+                            }
+                        }
+                    })
+                        .detach();
                 }
             }
             NetworkAction::ConnectNetwork(ssid, password) => {
@@ -324,7 +373,7 @@ fn handle_network_action_events(
                             }
                         }
                     })
-                    .detach();
+                        .detach();
                 }
             }
             NetworkAction::ConnectToSavedNetwork(ssid) => {
@@ -350,7 +399,7 @@ fn handle_network_action_events(
                             }
                         }
                     })
-                    .detach();
+                        .detach();
                 }
             }
             NetworkAction::ForgetSavedNetwork(ssid) => {
@@ -376,7 +425,7 @@ fn handle_network_action_events(
                             }
                         }
                     })
-                    .detach();
+                        .detach();
                 }
             }
             NetworkAction::DisconnectNetwork => {
@@ -401,7 +450,7 @@ fn handle_network_action_events(
                             }
                         }
                     })
-                    .detach();
+                        .detach();
                 }
             }
             NetworkAction::StreamWirelessEnabledStatus => {
@@ -432,5 +481,29 @@ fn handle_network_action_events(
                 }
             }
         } // Add more as needed
+    }
+}
+// Polling system to insert write error into an event
+fn poll_network_action_result_events(
+    event_receiver: ResMut<NetworkResultReceiver>,
+    mut network_list: ResMut<NetworkList>,
+    mut known_network_list: ResMut<KnownNetworkList>,
+) {
+    if let Ok(receiver) = event_receiver.receiver.lock() {
+        while let Ok(event) = receiver.try_recv() {
+            match event {
+                NetworkResult::ListNetworks(networks) => {
+                    info!("network result: list of available networks: {:?}", networks);
+                    network_list.0 = networks;
+                }
+                NetworkResult::ListKnownNetworks(networks) => {
+                    info!("network result: list of known networks: {:?}", networks);
+                    known_network_list.0 = networks;
+                }
+                _ => {}
+            }
+        }
+    } else {
+        println!("Failed to acquire receiver lock");
     }
 }

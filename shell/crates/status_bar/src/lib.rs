@@ -27,7 +27,6 @@ pub struct StatusBarWindow;
 
 #[derive(Resource)]
 struct ClockUpdateTimer(Timer);
-
 pub struct StatusBarPlugin;
 
 impl Plugin for StatusBarPlugin {
@@ -49,6 +48,16 @@ impl Plugin for StatusBarPlugin {
             TimerMode::Repeating,
         )));
         app.add_systems(Update, update_clock);
+        app.add_systems(
+            OnEnter(AssetsLoadingState::Loaded),
+            // Update,
+            (
+                update_wireless_state,
+                update_bluetooth_on_powered,
+                update_power_icon,
+                update_wireless_network_strength.after(update_wireless_state)
+            ).after(spawn_status_bar_ui).run_if(resource_exists::<IconAssets>),
+        );
         app.add_systems(
             Update,
             update_wireless_state

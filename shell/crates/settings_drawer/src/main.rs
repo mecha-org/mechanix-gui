@@ -1,8 +1,6 @@
 use bevy::{prelude::*, window::ExitCondition, winit::WinitPlugin};
 use bevy_wayland::prelude::*;
-use settings_drawer::SettingsDrawerPlugin;
-
-
+use settings_drawer::{Screens, SettingsDrawerPlugin};
 
 fn main() {
     App::new()
@@ -18,5 +16,6 @@ fn main() {
             WaylandPlugin,
             SettingsDrawerPlugin,
         ))
+        .insert_state(Screens::Loading)
         .run();
 }

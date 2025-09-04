@@ -235,29 +235,29 @@ fn handle_upower_action_events(
                     device_percentage_recv_res.0 = Some(receiver);
                 }
             } // UPowerAction::StreamBatteryLevel => {
-              //     info!("upower action: stream battery level");
-              //     if let Some(service) = &service.service {
-              //         let service = service.clone();
-              //         let sender = sender.0.clone();
-              //         pool.spawn(async move {
-              //             let receiver: Receiver<UPowerBatteryLevel> =
-              //                 service.stream_battery_level().await;
-              //             let sender2 = sender.clone();
-              //             IoTaskPool::get()
-              //                 .spawn(async move {
-              //                     while let Ok(status) = receiver.recv() {
-              //                         if let Err(err) =
-              //                             sender2.send(UPowerResult::BatteryLevel(status))
-              //                         {
-              //                             error!("failed to send upower batter level: {err}");
-              //                         }
-              //                     }
-              //                 })
-              //                 .detach();
-              //         })
-              //         .detach();
-              //     }
-              // }
+            //     info!("upower action: stream battery level");
+            //     if let Some(service) = &service.service {
+            //         let service = service.clone();
+            //         let sender = sender.0.clone();
+            //         pool.spawn(async move {
+            //             let receiver: Receiver<UPowerBatteryLevel> =
+            //                 service.stream_battery_level().await;
+            //             let sender2 = sender.clone();
+            //             IoTaskPool::get()
+            //                 .spawn(async move {
+            //                     while let Ok(status) = receiver.recv() {
+            //                         if let Err(err) =
+            //                             sender2.send(UPowerResult::BatteryLevel(status))
+            //                         {
+            //                             error!("failed to send upower batter level: {err}");
+            //                         }
+            //                     }
+            //                 })
+            //                 .detach();
+            //         })
+            //         .detach();
+            //     }
+            // }
         }
     }
 }

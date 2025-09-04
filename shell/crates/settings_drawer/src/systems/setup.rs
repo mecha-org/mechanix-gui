@@ -1,43 +1,30 @@
-use bevy::{
-    prelude::*,
-    window::{CompositeAlphaMode, WindowResolution},
-};
-use bevy_wayland::prelude::*;
+use bevy::prelude::*;
+use bevy::window::WindowResolution;
+use bevy_wayland::prelude::{Anchor, InputRegion, KeyboardInteractivity, Layer, LayerShellSettings};
 
-use crate::{components::BAR_SIZE, ui::ui};
 
-pub fn setup(mut commands: Commands) {
+#[derive(Resource)]
+pub struct SettingsDrawerCamera(pub Entity);
+
+pub fn pre_setup(mut commands: Commands) {
     let width = 540.;
-    let height = 576.;
-
-    let exclusive_zone = if cfg!(feature = "standalone") {
-        BAR_SIZE.1 as i32
-    } else {
-        -1
-    };
+    let height = 531.;
 
     // ui camera
     let window_ent = commands
         .spawn((
             Window {
                 resolution: WindowResolution::new(width, height),
-                transparent: true,
-                composite_alpha_mode: CompositeAlphaMode::PreMultiplied,
                 ..default()
             },
             LayerShellSettings {
-                anchor: Anchor::BOTTOM,
+                anchor: Anchor::TOP,
                 layer: Layer::Top,
-                exclusive_zone,
+                exclusive_zone: 0,
                 keyboard_interactivity: KeyboardInteractivity::OnDemand,
                 ..default()
             },
-            InputRegion(Rect::new(
-                width - BAR_SIZE.0,
-                height - BAR_SIZE.1,
-                width,
-                height,
-            )),
+            InputRegion(Rect::new(0., 0., width, height)),
         ))
         .id();
     let camera_ent = commands
@@ -52,7 +39,7 @@ pub fn setup(mut commands: Commands) {
             },
         ))
         .id();
-    commands.spawn((UiTargetCamera(camera_ent), ui(&commands)));
+    commands.insert_resource(SettingsDrawerCamera(camera_ent));
 }
 
 pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
