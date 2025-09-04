@@ -7,10 +7,14 @@ use crate::interfaces::wireless::{
 };
 use crate::proxies::NetworkManagerProxy;
 use anyhow::Result;
-use futures::StreamExt;
+use futures::executor::ThreadPool;
+use futures::{FutureExt, StreamExt};
 use log::{debug, error, info};
-use std::sync::mpsc;
+use std::sync::{mpsc, LazyLock};
 use zbus::Connection;
+
+static THREAD_POOL: LazyLock<ThreadPool> =
+    LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
 
 /// A service wrapper for interacting with a NetworkManager implementation.
 ///
@@ -175,26 +179,22 @@ impl NetworkManagerService {
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
 
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_device_events().await {
-                    Ok(mut stream) => {
-                        while let Some(event) = stream.next().await {
-                            if let Ok(state) = event.get().await {
-                                // Blocking send (uses thread park/unpark internally)
-                                if let Err(e) = sender.send(NMState::from(state)) {
-                                    error!("failed to send device event to receiver: {}", e);
-                                    continue;
-                                }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_device_events().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(state) = event.get().await {
+                            if let Err(e) = sender.send(NMState::from(state)) {
+                                error!("failed to send device event to receiver: {}", e);
+                                continue;
                             }
                         }
                     }
-                    Err(e) => {
-                        error!("Failed to stream to device events: {}", e);
-                    }
                 }
-            });
+                Err(e) => {
+                    error!("Failed to stream to device events: {}", e);
+                }
+            }
         });
         receiver
     }
@@ -205,148 +205,131 @@ impl NetworkManagerService {
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
 
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                let (mut access_point_added_stream, mut access_point_removed_stream) =
-                    match proxy.stream_access_point_events().await {
-                        Ok((added_stream, removed_stream)) => (added_stream, removed_stream),
-                        Err(e) => {
-                            error!("failed to stream to access point events: {}", e);
-                            return;
-                        }
-                    };
-
-                loop {
-                    tokio::select! {
-                        // Handle access point added events
-                        may_be_ap_added = access_point_added_stream.next() => {
-                            if let Some(ap_added) = may_be_ap_added {
-                                let args = match ap_added.args() {
-                                    Ok(args) => args,
-                                    Err(e) => {
-                                        error!("failed to get access point added args: {}", e);
-                                        continue; // Skip this item
-                                    }
-                                };
-                                let access_point_path = args.access_point.to_string();
-                                info!("access point added: {}", access_point_path);
-
-                                let raw_access_point_info = match proxy.get_access_point_info(&args.access_point).await {
-                                    Ok(info) => info,
-                                    Err(e) => {
-                                        error!("failed to get access point info: {}", e);
-                                        continue; // Skip this item
-                                    }
-                                };
-
-                                let access_point_event_info = AccessPointEvent {
-                                    access_point_path,
-                                    event_type: EventType::Added,
-                                    raw_access_point_info: Some(raw_access_point_info),
-                                    ..Default::default()
-                                };
-
-                                // Forward object path to the channel
-                                if sender.send(Ok(access_point_event_info)).is_err() {
-                                    error!("failed to send access point added: receiver dropped");
-                                    continue; // Receiver dropped
-                                }
-                            } else {
-                                continue; // Stream ended
-                            }
-                        }
-
-                        // Handle access point removed events
-                        may_be_ap_removed = access_point_removed_stream.next() => {
-                            if let Some(ap_removed) = may_be_ap_removed {
-                                println!("ap removed");
-                                let args = match ap_removed.args() {
-                                    Ok(args) => args,
-                                    Err(e) => {
-                                        error!("failed to get access point removed args: {}", e);
-                                        continue; // Skip this item
-                                    }
-                                };
-                                let access_point_path = args.access_point.to_string();
-                                debug!("access point removed: {}", access_point_path);
-
-                                let access_point_event_info = AccessPointEvent {
-                                    access_point_path,
-                                    event_type: EventType::Removed,
-                                    raw_access_point_info: None,
-                                    ..Default::default()
-                                };
-                                println!("event to send back: {:?}", access_point_event_info);
-
-                                // Forward object path to the channel
-                                if sender.send(Ok(access_point_event_info)).is_err() {
-                                    error!("failed to send access point added: receiver dropped");
-                                    continue; // Receiver dropped
-                                }
-                            } else {
-                                continue; // Stream ended
-                            }
-                        }
+        THREAD_POOL.spawn_ok(async move {
+            let (mut access_point_added_stream, mut access_point_removed_stream) =
+                match proxy.stream_access_point_events().await {
+                    Ok((added_stream, removed_stream)) => (added_stream, removed_stream),
+                    Err(e) => {
+                        error!("failed to stream to access point events: {}", e);
+                        return;
                     }
+                };
+
+            loop {
+                futures::select_biased! {
+                    may_be_ap_added = access_point_added_stream.next().fuse() => {
+                        if let Some(ap_added) = may_be_ap_added {
+                            let args = match ap_added.args() {
+                                Ok(args) => args,
+                                Err(e) => {
+                                    error!("failed to get access point added args: {}", e);
+                                    continue; // Skip this item
+                                }
+                            };
+                            let access_point_path = args.access_point.to_string();
+                            info!("access point added: {}", access_point_path);
+
+                            let raw_access_point_info = match proxy.get_access_point_info(&args.access_point).await {
+                                Ok(info) => info,
+                                Err(e) => {
+                                    error!("failed to get access point info: {}", e);
+                                    continue; // Skip this item
+                                }
+                            };
+
+                            let access_point_event_info = AccessPointEvent {
+                                access_point_path,
+                                event_type: EventType::Added,
+                                raw_access_point_info: Some(raw_access_point_info),
+                                ..Default::default()
+                            };
+
+                            if sender.send(Ok(access_point_event_info)).is_err() {
+                                error!("failed to send access point added: receiver dropped");
+                                continue; // Receiver dropped
+                            }
+                        } else {
+                            continue; // Stream ended
+                        }
+                    },
+                    may_be_ap_removed = access_point_removed_stream.next().fuse() => {
+                        if let Some(ap_removed) = may_be_ap_removed {
+                            let args = match ap_removed.args() {
+                                Ok(args) => args,
+                                Err(e) => {
+                                    error!("failed to get access point removed args: {}", e);
+                                    continue; // Skip this item
+                                }
+                            };
+                            let access_point_path = args.access_point.to_string();
+                            debug!("access point removed: {}", access_point_path);
+
+                            let access_point_event_info = AccessPointEvent {
+                                access_point_path,
+                                event_type: EventType::Removed,
+                                raw_access_point_info: None,
+                                ..Default::default()
+                            };
+
+                            if sender.send(Ok(access_point_event_info)).is_err() {
+                                error!("failed to send access point added: receiver dropped");
+                                continue; // Receiver dropped
+                            }
+                        } else {
+                            continue; // Stream ended
+                        }
+                    },
                 }
-            });
+            }
         });
         receiver
     }
     pub async fn stream_wireless_enabled_status(&self) -> mpsc::Receiver<bool> {
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
-
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_wireless_enabled_status().await {
-                    Ok(mut stream) => {
-                        while let Some(event) = stream.next().await {
-                            if let Ok(state) = event.get().await {
-                                info!("state updated: {}", state);
-                                // Blocking send (uses thread park/unpark internally)
-                                if let Err(e) = sender.send(state) {
-                                    error!("failed to send device event to receiver: {}", e);
-                                    continue;
-                                }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_wireless_enabled_status().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(state) = event.get().await {
+                            info!("state updated: {}", state);
+                            if let Err(e) = sender.send(state) {
+                                error!("failed to send device event to receiver: {}", e);
+                                continue;
                             }
                         }
                     }
-                    Err(e) => {
-                        error!("Failed to stream to device events: {}", e);
-                    }
                 }
-            });
+                Err(e) => {
+                    error!("Failed to stream to device events: {}", e);
+                }
+            }
         });
         receiver
     }
     pub async fn stream_active_network_strength(&self) -> mpsc::Receiver<u8> {
+        println!("service-action:: streaming active network strength");
         info!("service-action:: streaming active network strength");
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
 
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_wireless_network_strength().await {
-                    Ok(mut stream) => {
-                        while let Some(event) = stream.next().await {
-                            if let Ok(state) = event.get().await {
-                                // Blocking send (uses thread park/unpark internally)
-                                if let Err(e) = sender.send(state) {
-                                    error!("failed to send strength event to receiver: {}", e);
-                                    continue;
-                                }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_wireless_network_strength().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(state) = event.get().await {
+                            info!("network strength updated: {}", state);
+                            if let Err(e) = sender.send(state) {
+                                error!("failed to send strength event to receiver: {}", e);
+                                continue;
                             }
                         }
                     }
-                    Err(e) => {
-                        error!("Failed to stream to device events: {}", e);
-                    }
                 }
-            });
+                Err(e) => {
+                    error!("Failed to stream to device events: {}", e);
+                }
+            }
         });
         receiver
     }

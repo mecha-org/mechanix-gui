@@ -12,3 +12,4 @@ keywords.workspace = true
 [dependencies]
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
+mxconf_dbus = { workspace = true }

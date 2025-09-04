@@ -1,0 +1,88 @@
+name: Shell - Build aarch64
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+      - dev-arm64-build
+      - pre-release
+    paths:
+      - "shell/**"
+      - ".github/workflows/build-shell-aarch64.yml"
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTUP_MAX_RETRIES: 10
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Notification
+            package: mechanix-notification
+          - name: Launcher
+            package: mechanix-launcher
+          - name: Keyboard
+            package: mechanix-keyboard
+
+    runs-on: ubicloud-standard-2-arm
+    continue-on-error: false
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust 1.86.0
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.86.0
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            libwayland-dev \
+            libxkbcommon-dev \
+            libdbus-1-dev \
+            libpam0g-dev \
+            libclang-dev \
+            libpulse-dev
+
+      - name: Set up Git SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Build [${{ matrix.package }}]
+        run: |
+          cargo --config net.git-fetch-with-cli=true fetch
+          cargo build --release --package ${{ matrix.package }}
+          ls -la target/release
+
+      - name: Package deb [${{ matrix.package }}]
+        run: |
+          cargo deb --no-build --package ${{ matrix.package }}
+          ls -la target/debian
+
+      - name: Prepare artifacts [${{ matrix.package }}]
+        run: |
+          mkdir -p build
+          cp target/release/${{ matrix.package }} ./build || true
+          cp target/debian/${{ matrix.package }}_*.deb ./build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.package }}-artifacts
+          path: ./build/*

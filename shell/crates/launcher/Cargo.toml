@@ -24,3 +24,19 @@ running_apps = { path = "../running_apps" }
 settings_drawer = { path = "../settings_drawer" }
 status_bar = { path = "../status_bar" }
 universal_search = { path = "../universal_search" }
+
+[package.metadata.deb]
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+extended-description = """\
+Launcher application."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../../target/release/mechanix-launcher",
+        "usr/bin/",
+        "755",
+    ],
+]

@@ -27,16 +27,19 @@
 //! This abstraction makes it easy to swap out or mock Bluetooth backends for testing or platform support.
 
 use crate::errors::BluezError;
-use std::sync::mpsc;
+use std::sync::{mpsc, LazyLock};
 
 use super::interfaces::{device::BluetoothDevice, BluezInterface};
 use crate::proxies::BluezProxy;
 use anyhow::Result;
+use futures::executor::ThreadPool;
 use futures::StreamExt;
 use log::{error, info};
 use zbus::export::ordered_stream::OrderedStreamExt;
 use zbus::Connection;
 
+static THREAD_POOL: LazyLock<ThreadPool> =
+    LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
 #[derive(Clone)]
 pub struct BluetoothService {
     proxy: BluezProxy<'static>,
@@ -146,26 +149,23 @@ impl BluetoothService {
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
 
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_bluetooth_enabled_status().await {
-                    Ok(mut stream) => {
-                        while let Some(event) = stream.next().await {
-                            if let Ok(state) = event.get().await {
-                                // Blocking send (uses thread park/unpark internally)
-                                if let Err(e) = sender.send(state) {
-                                    error!("failed to send strength event to receiver: {}", e);
-                                    continue;
-                                }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_bluetooth_enabled_status().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(state) = event.get().await {
+                            // Blocking send (uses thread park/unpark internally)
+                            if let Err(e) = sender.send(state) {
+                                error!("failed to send strength event to receiver: {}", e);
+                                continue;
                             }
                         }
                     }
-                    Err(e) => {
-                        error!("failed to stream bluetooth enabled status: {}", e);
-                    }
                 }
-            });
+                Err(e) => {
+                    error!("failed to stream bluetooth enabled status: {}", e);
+                }
+            }
         });
         receiver
     }
@@ -174,38 +174,35 @@ impl BluetoothService {
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
 
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_bluetooth_events().await {
-                    Ok((mut added, mut removed)) => {
-                        loop {
-                            tokio::select! {
-                                // Handle InterfacesAdded events
-                                Some(_event) = OrderedStreamExt::next(&mut added) => {
-                                    let event = BluetoothEvent::DeviceAdded;
-                                    // Add your device-added logic here
-                                    if let Err(e) = sender.send(event) {
-                                    error!("failed to send device added event to receiver: {}", e);
-                                    continue;
-                                    }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_bluetooth_events().await {
+                Ok((mut added, mut removed)) => {
+                    loop {
+                        tokio::select! {
+                            // Handle InterfacesAdded events
+                            Some(_event) = OrderedStreamExt::next(&mut added) => {
+                                let event = BluetoothEvent::DeviceAdded;
+                                // Add your device-added logic here
+                                if let Err(e) = sender.send(event) {
+                                error!("failed to send device added event to receiver: {}", e);
+                                continue;
                                 }
-                                // Handle InterfacesRemoved events
-                                Some(_event) = OrderedStreamExt::next(&mut removed) => {
-                                    let event = BluetoothEvent::DeviceRemoved;
-                                    if let Err(e) = sender.send(event) {
-                                    error!("failed to send device removed event to receiver: {}", e);
-                                    continue;
-                                    }
-                                }
-                                // Exit condition
-                                else => break,
                             }
+                            // Handle InterfacesRemoved events
+                            Some(_event) = OrderedStreamExt::next(&mut removed) => {
+                                let event = BluetoothEvent::DeviceRemoved;
+                                if let Err(e) = sender.send(event) {
+                                error!("failed to send device removed event to receiver: {}", e);
+                                continue;
+                                }
+                            }
+                            // Exit condition
+                            else => break,
                         }
                     }
-                    Err(e) => error!("Failed to stream events: {}", e),
                 }
-            });
+                Err(e) => error!("Failed to stream events: {}", e),
+            }
         });
         receiver
     }

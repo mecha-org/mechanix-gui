@@ -8,19 +8,21 @@ use crate::interfaces::device::{BatteryLevel, BatteryState, PowerSourceType, War
 use crate::interfaces::UPowerInterface;
 use crate::proxies::DeviceProxy;
 use anyhow::Result;
+use futures::executor::ThreadPool;
 use futures::StreamExt;
 use log::{error, info};
-use std::sync::mpsc;
+use std::sync::{mpsc, LazyLock};
 use zbus::Connection;
 
+static THREAD_POOL: LazyLock<ThreadPool> =
+    LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
 /// A service wrapper providing convenient methods for accessing UPower device data.
 ///
 /// This struct is generic over any type implementing the [`UpowerInterface`] trait,
 /// allowing for flexible backends (e.g., real D-Bus proxy or a mock for testing).
 #[derive(Clone)]
-pub struct UPowerService<> {
+pub struct UPowerService {
     proxy: DeviceProxy<'static>,
-
 }
 
 impl UPowerService {
@@ -132,27 +134,23 @@ impl UPowerService {
         info!("service-action:: stream device state");
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
-
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_device_state().await {
-                    Ok(mut stream) => {
-                        while let Some(event) = stream.next().await {
-                            if let Ok(state) = event.get().await {
-                                let state = BatteryState::from(state);
-                                if let Err(e) = sender.send(state) {
-                                    error!("failed to send battery state: {}", e);
-                                    continue;
-                                }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_device_state().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(state) = event.get().await {
+                            let state = BatteryState::from(state);
+                            if let Err(e) = sender.send(state) {
+                                error!("failed to send battery state: {}", e);
+                                continue;
                             }
                         }
                     }
-                    Err(e) => {
-                        error!("Failed to stream to device state events: {}", e);
-                    }
                 }
-            });
+                Err(e) => {
+                    error!("Failed to stream to device state events: {}", e);
+                }
+            }
         });
         receiver
     }
@@ -160,26 +158,22 @@ impl UPowerService {
         info!("service-action:: stream device percentage");
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
-
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_device_percentage().await {
-                    Ok(mut stream) => {
-                        while let Some(event) = stream.next().await {
-                            if let Ok(state) = event.get().await {
-                                if let Err(e) = sender.send(state) {
-                                    error!("failed to send device percentage: {}", e);
-                                    continue;
-                                }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_device_percentage().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(state) = event.get().await {
+                            if let Err(e) = sender.send(state) {
+                                error!("failed to send device percentage: {}", e);
+                                continue;
                             }
                         }
                     }
-                    Err(e) => {
-                        error!("Failed to stream to device percentage: {}", e);
-                    }
                 }
-            });
+                Err(e) => {
+                    error!("Failed to stream to device percentage: {}", e);
+                }
+            }
         });
         receiver
     }
@@ -187,26 +181,24 @@ impl UPowerService {
         info!("service-action:: stream battery level");
         let proxy = self.proxy.clone();
         let (sender, receiver) = mpsc::channel();
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                match proxy.stream_battery_level().await {
-                    Ok(mut stream) => {
-                        while let Some(event) = stream.next().await {
-                            if let Ok(state) = event.get().await {
-                                let state = BatteryLevel::from(state);
-                                if let Err(e) = sender.send(state) {
-                                    error!("failed to send battery level: {}", e);
-                                    continue;
-                                }
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.stream_battery_level().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(state) = event.get().await {
+                            info!("battery level is updated: {:}", state);
+                            let state = BatteryLevel::from(state);
+                            if let Err(e) = sender.send(state) {
+                                error!("failed to send battery level: {}", e);
+                                continue;
                             }
                         }
                     }
-                    Err(e) => {
-                        error!("Failed to stream to device percentage: {}", e);
-                    }
                 }
-            });
+                Err(e) => {
+                    error!("Failed to stream to device percentage: {}", e);
+                }
+            }
         });
         receiver
     }
