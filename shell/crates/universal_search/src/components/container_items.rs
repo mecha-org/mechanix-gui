@@ -2,14 +2,16 @@ use bevy::prelude::*;
 
 use crate::systems::NORMAL_BUTTON;
 
-pub fn grid() -> impl Bundle {
+#[derive(Component)]
+pub struct ContainerItems;
+
+pub fn container_items() -> impl Bundle {
     (
+        ContainerItems,
         Node {
-            width: Val::Percent(100.),
-            height: Val::Percent(100.),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
-            ..Default::default()
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            ..default()
         },
         children![(
             Button,
@@ -38,3 +40,5 @@ pub fn grid() -> impl Bundle {
         )],
     )
 }
+
+

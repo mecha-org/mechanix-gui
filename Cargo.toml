@@ -44,6 +44,7 @@ bevy = { version = "0.16.1", default-features = false, features = [
     "bevy_state",
     "png",
     "bevy_ui_picking_backend",
+    "bevy_input_focus",
 ] }
 bevy_wayland = { path = "../../temp/bevy_wayland" }
 bevy_asset_loader = { version = "0.23.0-rc.3", features = [
