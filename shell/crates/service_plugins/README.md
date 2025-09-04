@@ -1,5 +1,5 @@
 
-# Bevy Plugins
+# Service Plugins
 
 This crate provides a collection of Bevy plugins for various network and bluetooth management tasks.
 

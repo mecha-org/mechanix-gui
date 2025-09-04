@@ -1,5 +1,5 @@
 use crate::{ClockUpdateTimer, components::*};
-use bevy_plugins::{
+use service_plugins::{
     UPowerBatteryState,
     NetworkManagerDeviceState,
     bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus},
@@ -7,7 +7,7 @@ use bevy_plugins::{
     upower::{DevicePercentage, DeviceState},
 };
 use chrono::{Datelike, Timelike};
-use bevy_plugins::network_manager::NetworkManagerDeviceStatus;
+use service_plugins::network_manager::NetworkManagerDeviceStatus;
 use types::prelude::IconAssets;
 
 pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {

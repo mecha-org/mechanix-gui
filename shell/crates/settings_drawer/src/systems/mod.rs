@@ -8,9 +8,9 @@ use bevy::{
 use bevy_styled_widgets::prelude::{StyledText, ThemeManager};
 use chrono::{Datelike, Timelike};
 pub use bar::{on_bar_drag, on_bar_drag_end, on_bar_drag_start};
-use bevy_plugins::bluetooth::{BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ListPairedDevices};
-use bevy_plugins::network_manager::{KnownNetworkList, NetworkAction, NetworkActionEvent, WirelessEnabled};
-use bevy_plugins::pulse_audio::{DefaultSink, PulseAudioAction, PulseAudioActionEvent};
+use service_plugins::bluetooth::{BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ListPairedDevices};
+use service_plugins::network_manager::{KnownNetworkList, NetworkAction, NetworkActionEvent, WirelessEnabled};
+use service_plugins::pulse_audio::{DefaultSink, PulseAudioAction, PulseAudioActionEvent};
 pub use button_system::{NORMAL_BUTTON, button_system};
 pub use setup::{exit_on_esc};
 use crate::{bluetooth_clickable_row, divider, list_popup, wireless_clickable_row, AirplaneMode, AirplaneModeEnabled, AutoRotation, Bluetooth, BluetoothEntry, Brightness, ContainerNode, Microphone, MicrophoneEnabled, RotationEnabled, ScreenRecording, ScreenRecordingEnabled, Screens, SettingsDrawerRoot, SettingsItem, SettingsItemText, SettingsPanelBackgroud, SettingsPanelBackgroudEvent, Sound, StyledPopup, Wireless, WirelessEntry};

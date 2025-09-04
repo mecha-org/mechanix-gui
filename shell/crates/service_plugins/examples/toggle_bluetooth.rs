@@ -1,9 +1,9 @@
 use bevy::color::palettes::basic::RED;
 use bevy::{prelude::*, winit::WinitSettings};
-use bevy_plugins::bluetooth::{
+use service_plugins::bluetooth::{
     BluetoothAction, BluetoothActionEvent,
 };
-use bevy_plugins::BluetoothPlugin;
+use service_plugins::BluetoothPlugin;
 use networkmanager::interfaces::wireless::NMState;
 
 fn main() {

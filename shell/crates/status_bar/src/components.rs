@@ -1,7 +1,7 @@
 
 use crate::{systems::get_current_datetime, StatusBarCamera};
 pub use bevy::prelude::*;
-use bevy_plugins::{bluetooth::BluetoothEnabledStatus, network_manager::WirelessEnabled};
+use service_plugins::{bluetooth::BluetoothEnabledStatus, network_manager::WirelessEnabled};
 use types::prelude::IconAssets;
 
 

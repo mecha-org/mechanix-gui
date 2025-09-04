@@ -4,33 +4,24 @@ mod utils;
 mod widgets;
 
 use crate::components::styled_card::{StyledCard, StyledCardPlugin};
-use crate::systems::{AssetsLoadingState, exit_on_esc, get_current_datetime, animate_background, on_animation_background_completed, animate_settings_item, animate_settings_item_text, poll_default_sink_volume, update_wireless_state, set_initial_airplane_mode_state, update_bluetooth_state, update_volume_state, update_airplane_mode_state};
+use crate::systems::{AssetsLoadingState, exit_on_esc, animate_background, on_animation_background_completed, animate_settings_item, animate_settings_item_text, poll_default_sink_volume, update_wireless_state, set_initial_airplane_mode_state, update_bluetooth_state, update_volume_state, update_airplane_mode_state};
 use crate::{
-    components::Clock,
     utils::{FontAssets, Icon},
     widgets::{
         LauncherStyledWidgetsPlugin,
-        button::{ButtonSize, ButtonVariant, StyledButton},
-        slider::StyledSlider,
+        button::{StyledButton},
     },
 };
 use bevy::{
     asset::meta::Settings,
-    color::palettes::{
-        css::{WHITE, WHITE_SMOKE},
-        tailwind::RED_500,
-    },
     ecs::system::SystemId,
     prelude::*,
     reflect::List,
-    render::settings,
-    scene::ron::de,
-    window::CompositeAlphaMode,
 };
 use bevy_asset_loader::prelude::*;
 use bevy_core_widgets::{CoreButton, CoreScrollArea};
-use bevy_plugins::upower::UPowerPlugin;
-use bevy_plugins::{
+use service_plugins::upower::UPowerPlugin;
+use service_plugins::{
     BluetoothPlugin, NetworkManagerPlugin, PulseAudioPlugin,
     bluetooth::{BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ListPairedDevices},
     network_manager::{

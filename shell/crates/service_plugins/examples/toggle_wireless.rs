@@ -1,36 +1,27 @@
 use bevy::color::palettes::basic::RED;
 use bevy::{prelude::*, winit::WinitSettings};
-use bevy_plugins::pulse_audio::{
-    PulseAudioAction, PulseAudioActionEvent, PulseAudioResult, PulseAudioResultEvent,
-};
-use bevy_plugins::PulseAudioPlugin;
+use service_plugins::network_manager::{NetworkAction, NetworkActionEvent};
+use service_plugins::NetworkManagerPlugin;
+use networkmanager::interfaces::wireless::NMState;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugins(PulseAudioPlugin)
+        .add_plugins(NetworkManagerPlugin)
         .insert_resource(WinitSettings::desktop_app())
         .add_systems(Startup, setup)
-        .add_systems(Update, (button_system, wait_action_result))
+        .add_systems(Update, button_system)
         .run();
 }
 
-fn wait_action_result(mut event_reader: EventReader<PulseAudioResultEvent>) {
-    for event in event_reader.read() {
-        let actions = &event.0;
-        match actions {
-            PulseAudioResult::ListSinks(result) => {
-                info!("sinks result received: {result:?}");
-            }
-            PulseAudioResult::Error(error) => {
-                error!("error: {error:?}");
-            }
-            _ => {
-                info!("no action");
-            }
-        }
-    }
-}
+#[derive(Event, Debug, Clone)]
+pub struct WifiStateEvent(pub NMState);
+
+#[derive(Resource, Component)]
+struct WifiEventText(String);
+
+#[derive(Clone, Copy, Component)]
+struct WifiStatusText;
 
 #[derive(Component)]
 enum ButtonAction {
@@ -66,7 +57,7 @@ fn setup(mut commands: Commands, assets: Res<AssetServer>) {
             BackgroundColor(NORMAL_BUTTON),
             ButtonAction::Wifi,
         ))
-        .with_child((Text::new("GetSinks"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
+        .with_child((Text::new("WIFI"), TextColor(Color::srgb(0.9, 0.9, 0.9))));
 }
 
 fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
@@ -93,6 +84,7 @@ fn create_counter_text(commands: &mut Commands, assets: &AssetServer) {
         .with_child((
             Text::new("Connected"),
             TextColor(Color::srgb(0.9, 0.9, 0.9)),
+            WifiStatusText, // Mark the text component
         ));
 }
 
@@ -108,9 +100,10 @@ fn button_system(
             ),
             (Changed<Interaction>, With<Button>),
         >,
+        Query<&mut Text, With<WifiStatusText>>,
         Query<&mut Text>,
     )>,
-    mut event_writer: EventWriter<PulseAudioActionEvent>,
+    mut event_writer: EventWriter<NetworkActionEvent>,
 ) {
     for (interaction, _, mut border_color, _, actions) in queries.p0().iter_mut() {
         // println!("button text: {}", text.0);
@@ -121,7 +114,7 @@ fn button_system(
                 match actions {
                     Some(ButtonAction::Wifi) => {
                         println!("Wifi button pressed");
-                        event_writer.write(PulseAudioActionEvent(PulseAudioAction::ListSinks));
+                        event_writer.write(NetworkActionEvent(NetworkAction::ToggleWifi(true)));
                     }
                     _ => {
                         println!("no action");

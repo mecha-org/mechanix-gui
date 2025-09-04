@@ -7,7 +7,7 @@ use bevy_asset_loader::{
     loading_state::{LoadingState, LoadingStateAppExt, config::ConfigureLoadingState},
     standard_dynamic_asset::StandardDynamicAssetCollection,
 };
-use bevy_plugins::{
+use service_plugins::{
     BluetoothPlugin, NetworkManagerPlugin,
     bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus},
     network_manager::{ActiveNetworkStrength, WirelessEnabled},
@@ -16,7 +16,7 @@ use bevy_plugins::{
 use bevy_wayland::prelude::{
     Anchor, InputRegion, KeyboardInteractivity, Layer, LayerShellSettings,
 };
-use bevy_plugins::network_manager::NetworkManagerDeviceStatus;
+use service_plugins::network_manager::NetworkManagerDeviceStatus;
 use systems::*;
 use types::{AssetsLoadingState, prelude::IconAssets};
 
