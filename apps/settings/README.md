@@ -1,4 +1,4 @@
-# settings
+# mechanix_settings
 
 A new Flutter project.
 

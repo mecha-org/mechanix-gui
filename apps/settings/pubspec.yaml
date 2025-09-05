@@ -1,4 +1,4 @@
-name: settings
+name: mechanix_settings
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -34,6 +34,16 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  nm: ^0.5.0
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
+  logger: ^2.5.0
+  dbus: ^0.7.11
+  collection: ^1.19.0
+  upower: ^0.7.0
+  intl: ^0.20.2
+  bluez: ^0.8.3
+  pulseaudio: ^0.0.8
 
 dev_dependencies:
   flutter_test:
@@ -51,11 +61,47 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/images/wifi_icon.png
+    - assets/images/bluetooth_icon.png
+    - assets/images/display_icon.png
+    - assets/images/appearance_icon.png
+    - assets/images/battery_icon.png
+    - assets/images/back_icon.png
+    - assets/images/info_icon.png
+    - assets/images/add_icon.png
+    - assets/images/settings.png
+    - assets/images/delete_icon.png
+    - assets/images/secured_wireless_low_icon.png
+    - assets/images/secured_wireless_weak_icon.png
+    - assets/images/secured_wireless_strong_icon.png
+    - assets/images/wireless_low_icon.png
+    - assets/images/wireless_weak_icon.png
+    - assets/images/wireless_strong_icon.png
+    - assets/images/sound_icon.png
+    - assets/images/about_icon.png
+    - assets/images/device_icon.png
+    - assets/images/secured_wireless_off_icon.png
+    - assets/images/date_time_icon.png
+    - assets/images/theme_1.png
+    - assets/images/theme_2.png
+    - assets/images/theme_3.png
+    - assets/images/big_wallpaper.png
+    - assets/images/bluetooth_setting_icon.png
+    - assets/images/bluetooth_connection_icon.png
+    - assets/images/right_arrow_button.png
+    - assets/images/network_icon.png
+    - assets/images/language_icon.png
+    - assets/images/camera_icon.png
+    - assets/images/notification_icon.png
+    - assets/images/sound_icon.png
+    - assets/images/apps_icon.png
+    - assets/images/loader.png
+    - assets/images/check_icon.png
+    - assets/images/charging_icon.png
+    - assets/images/secured_wireless_disabled.png
+    - assets/images/settiings_diabled_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
