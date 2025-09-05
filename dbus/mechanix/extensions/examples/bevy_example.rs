@@ -14,7 +14,7 @@ fn handle_extension_events(mut device_interupt_events: EventReader<DeviceInterup
     for event in device_interupt_events.read() {
         match event {
             DeviceInteruptEvent::Added(device) => {
-                if device.is_extension() {
+                
                     info!("╭─────────────────────────────────────╮");
                     info!("│  🔌 EXTENSION DEVICE CONNECTED      │");
                     info!("╰─────────────────────────────────────╯");
@@ -25,12 +25,10 @@ fn handle_extension_events(mut device_interupt_events: EventReader<DeviceInterup
                     info!("Vendor ID:   0x{:04X}", device.vendor_id());
                     info!("Unique ID:   {}", device.unique_id());
                     info!("─────────────────────────────────────");
-                } else {
-                    info!("🔌 Non-Extension Device Connected: {}", device.name());
-                }
-            }
+                
+            },
             DeviceInteruptEvent::Removed(device) => {
-                if device.is_extension() {
+                
                     info!("╭─────────────────────────────────────╮");
                     info!("│  🔌 EXTENSION DEVICE DISCONNECTED  │");
                     info!("╰─────────────────────────────────────╯");
@@ -38,9 +36,6 @@ fn handle_extension_events(mut device_interupt_events: EventReader<DeviceInterup
                     info!(" Path:        {:?}", device.path());
                     info!(" Unique ID:   {}", device.unique_id());
                     info!("─────────────────────────────────────");
-                } else {
-                    info!("🔌 Non-Extension Device Disconnected: {}", device.name());
-                }
             }
         }
     }

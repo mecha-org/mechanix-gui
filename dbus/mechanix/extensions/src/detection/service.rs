@@ -1,6 +1,7 @@
 use evdevil::{ enumerate_hotplug, Evdev };
 use tokio::sync::mpsc;
 use tokio::task;
+use evdev::KeyCode;
 use evdev::EventSummary::Key;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -111,8 +112,8 @@ async fn monitor_device_events(
                 for event in events {
                     let event_summary = event.destructure();
                     match event_summary {
-                        evdev::EventSummary::Key(_, KEY_C, 1) => {
-                            if !key_a_pressed {
+                        evdev::EventSummary::Key(_, key, 1) => {
+                            if key == KeyCode::KEY_A {
                                 key_a_pressed = true;
                                 println!("Extension key 'A' pressed on device: {:?}", path);
                                 
@@ -129,9 +130,9 @@ async fn monitor_device_events(
                                 }
                             }
                         }
-                        evdev::EventSummary::Key(_, KEY_C, 0) => {
-                            if key_a_pressed {
-                                key_a_pressed = false;
+                        evdev::EventSummary::Key(_, key, 0) => {
+                            if key == KeyCode::KEY_A {
+                                // key_a_pressed = false;
                                 println!("Extension key 'A' released on device: {:?}", path);
                                 
                                 // Send Removed event with the same device
