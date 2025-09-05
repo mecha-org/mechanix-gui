@@ -49,8 +49,6 @@ dependencies:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
       ref: main
-
-    # path: /home/ojash/mecha/mechanix-ui/flutter/widgets
   watch_it: ^1.7.0
 
 dev_dependencies:
