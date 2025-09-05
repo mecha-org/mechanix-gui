@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
@@ -6,14 +7,17 @@ import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_label_value.dart';
-import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_toggle.dart';
+import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
 class NetworkDetails extends StatefulWidget {
   const NetworkDetails({super.key});
@@ -106,89 +110,252 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                       ),
                     )
                   : null),
-          body: ContainerWidget(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      ssid,
-                      style: baseHeaderStyle.copyWith(fontSize: 20),
-                    ),
-                    if (!networkDetails.isActive)
-                      TextButton.icon(
-                        onPressed: () => {
-                          onNetworkTap(
-                              context, networkDetails.isSaved, networkDetails)
-                        },
-                        style: ButtonStyle(
-                          backgroundColor:
-                              WidgetStatePropertyAll<Color>(Color(0xFF044DDF)),
-                          shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(),
+          body: SingleChildScrollView(
+            child: ContainerWidget(
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        ssid,
+                        style: baseHeaderStyle.copyWith(fontSize: 20),
+                      ),
+                      if (!networkDetails.isActive)
+                        TextButton.icon(
+                          onPressed: () => {
+                            onNetworkTap(
+                                context, networkDetails.isSaved, networkDetails)
+                          },
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStatePropertyAll<Color>(
+                                Color(0xFF044DDF)),
+                            shape:
+                                WidgetStatePropertyAll<RoundedRectangleBorder>(
+                              RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: BorderSide(),
+                              ),
                             ),
                           ),
-                        ),
-                        icon: const Icon(
-                          Icons.add,
-                          color: Color(0xFFF0F0F0),
-                        ),
-                        label: const Text(
-                          "Join Network",
-                          style: baseHeaderStyle,
-                        ),
-                      )
-                  ],
-                ),
+                          icon: const Icon(
+                            Icons.add,
+                            color: Color(0xFFF0F0F0),
+                          ),
+                          label: const Text(
+                            "Join Network",
+                            style: baseHeaderStyle,
+                          ),
+                        )
+                    ],
+                  ),
 
-                const SizedBox(height: 20),
-                CustomLabelValue(
-                  title: "Network SSID",
-                  value: ssid,
-                ),
-                CustomLabelValue(
-                  title: "Network Type",
-                  value: ssid,
-                ),
-                CustomLabelValue(
-                  title: "Passphrase",
-                  value: accessPoint.rsnFlags.isNotEmpty ? 'WPA/WPA2' : 'None',
-                ),
-                CustomLabelValue(
-                  title: "Frequency",
-                  value: '${accessPoint.frequency} MHz',
-                ),
+                  // const SizedBox(height: 20),
+                  // CustomLabelValue(
+                  //   title: "Network SSID",
+                  //   value: ssid,
+                  // ),
+                  // CustomLabelValue(
+                  //   title: "Network Type",
+                  //   value: ssid,
+                  // ),
+                  // CustomLabelValue(
+                  //   title: "Passphrase",
+                  //   value: accessPoint.rsnFlags.isNotEmpty ? 'WPA/WPA2' : 'None',
+                  // ),
+                  // CustomLabelValue(
+                  //   title: "Frequency",
+                  //   value: '${accessPoint.frequency} MHz',
+                  // ),
 
-                const SizedBox(
-                  height: 20,
-                ),
-                // CustomLabelValue(
-                //   title: "IP Address",
-                //   value: accessPoint.,
-                // ),
-                // CustomLabelValue(
-                //   title: "Subnet Mask",
-                //   value: '${accessPoint.frequency} MHz',
-                // ),
-                // CustomLabelValue(
-                //   title: "Gateway",
-                //   value: '${accessPoint.frequency} MHz',
-                // ),
+                  MechanixSectionList(
+                    title: 'About The Network',
+                    sectionListItems: [
+                      SectionListItems(
+                        title: 'Private Wifi Address',
+                        trailing: Row(
+                          children: [
+                            Text(
+                              'Fixed',
+                              style: context.textTheme.labelLarge,
+                            ).padRight(8),
+                            IconWidget(
+                              iconWidth: 9,
+                              iconHeight: 18,
+                              iconPath: Images.rightIconArrow,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SectionListItems(
+                          title: 'Private Wifi Address',
+                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
+                              style: context.textTheme.labelLarge)),
+                    ],
+                  ),
 
-                // LabelValueListRow(
-                //     title: 'Frequency', value: '${accessPoint.frequency} MHz'),
-                // LabelValueListRow(
-                //     title: 'Hw Address', value: accessPoint.hwAddress),
-                // LabelValueListRow(
-                //   title: 'Security',
-                //   value: accessPoint.rsnFlags.isNotEmpty ? 'WPA/WPA2' : 'None',
-                // ),
-              ],
+                  if (networkDetails.isActive)
+                    MechanixSimpleList(listItems: [
+                      SimpleListItems(
+                          title: 'Limit IP address tracking',
+                          trailing:
+                              CustomToggle(value: true, onChanged: (v) {}))
+                    ]),
+
+                  MechanixSectionList(
+                    title: 'IPV4 Address',
+                    sectionListItems: [
+                      SectionListItems(
+                        title: 'Configure IP',
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.ipv4Address,
+                          );
+                        },
+                        trailing: Row(
+                          children: [
+                            Text('Automatic',
+                                    style: context.textTheme.labelLarge)
+                                .padRight(8),
+                            IconWidget(
+                              iconWidth: 9,
+                              iconHeight: 18,
+                              iconPath: Images.rightIconArrow,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (networkDetails.isActive)
+                        SectionListItems(
+                          title: 'IP Address',
+                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
+                              style: context.textTheme.labelLarge),
+                        ),
+                      if (networkDetails.isActive)
+                        SectionListItems(
+                          title: 'Subnet Mask',
+                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
+                              style: context.textTheme.labelLarge),
+                        ),
+                      if (networkDetails.isActive)
+                        SectionListItems(
+                          title: 'Router',
+                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
+                              style: context.textTheme.labelLarge),
+                        ),
+                    ],
+                  ),
+
+                  if (networkDetails.isActive)
+                    MechanixSectionList(
+                      title: 'IPV6 Address',
+                      sectionListItems: [
+                        SectionListItems(
+                          title: 'IP Address',
+                          trailing: Row(
+                            children: [
+                              Text('2 Addresses',
+                                      style: context.textTheme.labelLarge)
+                                  .padRight(8),
+                              IconWidget(
+                                iconWidth: 9,
+                                iconHeight: 18,
+                                iconPath: Images.rightIconArrow,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SectionListItems(
+                          title: 'Router',
+                          trailing: Text('Automatic',
+                                  style: context.textTheme.labelLarge)
+                              .padRight(8),
+                        ),
+                      ],
+                    ),
+
+                  MechanixSectionList(
+                    title: 'DNS',
+                    sectionListItems: [
+                      SectionListItems(
+                        title: 'Configure DNS',
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.configureDNS,
+                          );
+                        },
+                        trailing: Row(
+                          children: [
+                            Text('Automatic',
+                                    style: context.textTheme.labelLarge)
+                                .padRight(8),
+                            IconWidget(
+                              iconWidth: 9,
+                              iconHeight: 18,
+                              iconPath: Images.rightIconArrow,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  MechanixSectionList(
+                    title: 'HTTP Proxy',
+                    sectionListItems: [
+                      SectionListItems(
+                        title: 'Configure Proxy',
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.configureProxy,
+                            // arguments: {'networkDetails': item},
+                          );
+                        },
+                        trailing: Row(
+                          children: [
+                            Text('OFF', style: context.textTheme.labelLarge)
+                                .padRight(8),
+                            IconWidget(
+                              iconWidth: 9,
+                              iconHeight: 18,
+                              iconPath: Images.rightIconArrow,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  // CustomLabelValue(
+                  //   title: "IP Address",
+                  //   value: accessPoint.,
+                  // ),
+                  // CustomLabelValue(
+                  //   title: "Subnet Mask",
+                  //   value: '${accessPoint.frequency} MHz',
+                  // ),
+                  // CustomLabelValue(
+                  //   title: "Gateway",
+                  //   value: '${accessPoint.frequency} MHz',
+                  // ),
+
+                  // LabelValueListRow(
+                  //     title: 'Frequency', value: '${accessPoint.frequency} MHz'),
+                  // LabelValueListRow(
+                  //     title: 'Hw Address', value: accessPoint.hwAddress),
+                  // LabelValueListRow(
+                  //   title: 'Security',
+                  //   value: accessPoint.rsnFlags.isNotEmpty ? 'WPA/WPA2' : 'None',
+                  // ),
+                ],
+              ),
             ),
           ),
         ));

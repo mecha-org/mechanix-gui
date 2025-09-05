@@ -24,6 +24,8 @@ class RefreshDeviceList extends BluetoothEvent {}
 
 class GetAdapterAlias extends BluetoothEvent {}
 
+class GetDiscoverable extends BluetoothEvent {}
+
 class RenameAdapterEvent extends BluetoothEvent {
   final String newName;
   RenameAdapterEvent(this.newName);
@@ -53,4 +55,9 @@ class SelectDevice extends BluetoothEvent {
   final BlueZDevice selectedDevice;
   // SelectDevice(this.selectedDevice);
   SelectDevice(this.selectedDevice) {}
+}
+
+class DiscoveryEnabled extends BluetoothEvent {
+  final bool isDiscoverable;
+  DiscoveryEnabled(this.isDiscoverable);
 }

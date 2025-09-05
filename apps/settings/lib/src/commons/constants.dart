@@ -46,4 +46,12 @@ class Images {
   static const String loaderIcon = 'assets/images/loader.png';
   static const String checkIcon = 'assets/images/check_icon.png';
   static const String chargingIcon = 'assets/images/charging_icon.png';
+  static const String wifiConnected = 'assets/images/wifi_connected.png';
+  static const String wirelessAdd = 'assets/images/wireless_add.png';
+  static const String cometIcon = 'assets/images/comet_icon.png';
+  static const String speaker = 'assets/images/speaker.png';
+  static const String audioHeadset = 'assets/images/audio_headset.png';
+  static const String mobile = 'assets/images/mobile.png';
+  static const String tv = 'assets/images/tv.png';
+  static const String car = 'assets/images/car.png';
 }

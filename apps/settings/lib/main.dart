@@ -1,42 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/features/about/presentation/about.dart';
 import 'package:mechanix_settings/src/features/appearance/presentation/appearance.dart';
 import 'package:mechanix_settings/src/features/appearance/presentation/apply_wallpaper.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
+import 'package:mechanix_settings/src/features/battery/blocs/battery_event.dart';
 import 'package:mechanix_settings/src/features/battery/data/battery_repository.dart';
 import 'package:mechanix_settings/src/features/battery/data/battery_repository_impl.dart';
-import 'package:mechanix_settings/src/features/battery/blocs/battery_event.dart';
+import 'package:mechanix_settings/src/features/battery/presentation/battery.dart';
+import 'package:mechanix_settings/src/features/battery/presentation/battery_performance.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/data/bluetooth_repository.dart';
 import 'package:mechanix_settings/src/features/bluetooth/data/bluetooth_repository_impl.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/adapter_settings.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/bluetooth.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/bluetooth_device_discoverable.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/device_info/bluetooth_device_info.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/device_types.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/rename_adapter.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/date_settings.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/date_time.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/time_settings.dart';
-import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
-import 'package:mechanix_settings/src/features/network/data/wifi_repository_impl.dart';
+import 'package:mechanix_settings/src/features/display/presentation/display.dart';
+import 'package:mechanix_settings/src/features/display/presentation/settings.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
-import 'package:mechanix_settings/src/features/battery/presentation/battery.dart';
-import 'package:mechanix_settings/src/features/battery/presentation/battery_performance.dart';
+import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
+import 'package:mechanix_settings/src/features/network/data/wifi_repository_impl.dart';
 import 'package:mechanix_settings/src/features/network/presentation/add_network.dart';
+import 'package:mechanix_settings/src/features/network/presentation/configure_dns.dart';
+import 'package:mechanix_settings/src/features/network/presentation/configure_proxy.dart';
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/dns_settings/dns_settings.dart';
 import 'package:mechanix_settings/src/features/network/presentation/ethernet_settings/ethernet_settings.dart';
 import 'package:mechanix_settings/src/features/network/presentation/ipsettings/ip_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/ipv4_address.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/wifi_security.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless.dart';
 import 'package:mechanix_settings/src/features/settings_menu/presentation/menu.dart';
-import 'package:mechanix_settings/src/features/bluetooth/presentation/adapter_settings.dart';
-import 'package:mechanix_settings/src/features/bluetooth/presentation/rename_adapter.dart';
-import 'package:mechanix_settings/src/features/display/presentation/display.dart';
-import 'package:mechanix_settings/src/features/display/presentation/settings.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
 import 'package:mechanix_settings/src/features/sound/data/sound_repository.dart';
@@ -44,10 +52,12 @@ import 'package:mechanix_settings/src/features/sound/data/sound_repository_impl.
 import 'package:mechanix_settings/src/features/sound/presentation/input_devices.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/output_devices.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
-import 'package:mechanix_settings/src/features/about/presentation/about.dart';
-import 'package:mechanix_settings/src/features/date_time/presentation/date_time.dart';
+import 'package:watch_it/watch_it.dart';
+import 'package:widgets/mechanix.dart';
 
-void main() {
+void main() async {
+  di.registerSingleton(ThemeToggle());
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -64,20 +74,53 @@ void main() {
           create: (_) => SoundRepositoryImpl(),
         ),
       ],
-      child: MainApp(),
+      child: MechanixSettingsApp(),
     ),
   );
 }
 
+class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
+  MechanixSettingsApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
+    final mechanixVariant =
+        watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
+
+    return MechanixTheme(
+      data: MechanixThemeData(
+        mechanixVariant: mechanixVariant,
+      ),
+      builder: (context, mechanix, child) => MainApp(
+        darkTheme: mechanix.darkTheme,
+        lightTheme: mechanix.lightTheme,
+        themeMode: themeMode,
+      ),
+    );
+  }
+}
+
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  const MainApp({
+    super.key,
+    required this.lightTheme,
+    required this.darkTheme,
+    required this.themeMode,
+  });
+
+  final ThemeData lightTheme;
+  final ThemeData darkTheme;
+  final ThemeMode themeMode;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: SettingMenu(),
-      theme: ThemeData.dark(),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeMode,
       routes: {
         AppRoutes.wireless: (context) => BlocProvider(
               create: (_) => WirelessSettingsBloc(
@@ -204,7 +247,40 @@ class MainApp extends StatelessWidget {
         AppRoutes.dateSettings: (context) => BlocProvider(
               create: (_) => DateTimeBloc()..add(GetDateTimeData()),
               child: DateSettings(),
-            )
+            ),
+        AppRoutes.configureDNS: (context) => BlocProvider(
+              create: (_) => WirelessSettingsBloc(
+                  wifiRepository: context.read<WifiRepository>())
+                ..add(LoadSavedNetworks()),
+              child: ConfigureDnsWidget(),
+            ),
+        AppRoutes.configureProxy: (context) => BlocProvider(
+              create: (_) => WirelessSettingsBloc(
+                  wifiRepository: context.read<WifiRepository>())
+                ..add(LoadSavedNetworks()),
+              child: ConfigureProxyWidget(),
+            ),
+
+        AppRoutes.ipv4Address: (context) => BlocProvider(
+              create: (_) => WirelessSettingsBloc(
+                  wifiRepository: context.read<WifiRepository>())
+                ..add(LoadSavedNetworks()),
+              child: Ipv4AddressWidget(),
+            ),
+
+        AppRoutes.security: (context) => BlocProvider(
+              create: (_) => WirelessSettingsBloc(
+                  wifiRepository: context.read<WifiRepository>())
+                ..add(LoadSavedNetworks()),
+              child: WifiSecurityWidget(),
+            ),
+        AppRoutes.bluetoothDiscoverable: (context) => BlocProvider(
+              create: (_) => BluetoothBloc(
+                bluetoothRepository: context.read<BluetoothRepository>(),
+              ),
+              child: BluetoothDeviceDiscoverable(),
+            ),
+        AppRoutes.bluetoothDeviceTypes: (context) => DeviceTypes()
       },
     );
   }

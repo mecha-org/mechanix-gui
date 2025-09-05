@@ -2,7 +2,7 @@ name: mechanix_settings
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -44,6 +44,12 @@ dependencies:
   intl: ^0.20.2
   bluez: ^0.8.3
   pulseaudio: ^0.0.8
+  widgets:
+    git:
+      url: https://github.com/mecha-org/mechanix.dart.git
+      path: flutter/widgets
+      ref: main
+  watch_it: ^1.7.0
 
 dev_dependencies:
   flutter_test:
@@ -102,6 +108,14 @@ flutter:
     - assets/images/charging_icon.png
     - assets/images/secured_wireless_disabled.png
     - assets/images/settiings_diabled_icon.png
+    - assets/images/wifi_connected.png
+    - assets/images/wireless_add.png
+    - assets/images/comet_icon.png
+    - assets/images/speaker.png
+    - assets/images/audio_headset.png
+    - assets/images/mobile.png
+    - assets/images/tv.png
+    - assets/images/car.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -8,6 +8,8 @@ import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_state.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
 class Sound extends StatelessWidget {
   const Sound({super.key});
@@ -39,7 +41,8 @@ class Sound extends StatelessWidget {
                       style:
                           const TextStyle(color: Colors.white, fontSize: 24)),
                   trailing: Text(
-                    state.defaultOutputDevice?.description ?? "Select Output Device",
+                    state.defaultOutputDevice?.description ??
+                        "Select Output Device",
                     style: const TextStyle(color: selectColor, fontSize: 20),
                   ),
                   onTap: () {
@@ -53,7 +56,9 @@ class Sound extends StatelessWidget {
                 child: Row(children: [
                   IconButton(
                     onPressed: () {
-                         context.read<SoundBloc>().add(SetOutputDeviceMute(defaultOutputDevice!.name , !defaultOutputDevice.mute));
+                      context.read<SoundBloc>().add(SetOutputDeviceMute(
+                          defaultOutputDevice!.name,
+                          !defaultOutputDevice.mute));
                     },
                     icon: (defaultOutputDevice?.mute ?? true)
                         ? Icon(Icons.volume_mute_rounded)
@@ -65,11 +70,14 @@ class Sound extends StatelessWidget {
                   ),
                   Expanded(
                     child: Slider(
-                      value: ((defaultOutputDevice?.volume ?? 0.0) * 100).round().toDouble(),
+                      value: ((defaultOutputDevice?.volume ?? 0.0) * 100)
+                          .round()
+                          .toDouble(),
                       min: 0.0,
                       max: 100.0,
                       onChanged: (double value) {
-                         context.read<SoundBloc>().add(SetOutputDeviceVolume(defaultOutputDevice!.name , (value/100)));
+                        context.read<SoundBloc>().add(SetOutputDeviceVolume(
+                            defaultOutputDevice!.name, (value / 100)));
                       },
                     ),
                   )
@@ -92,14 +100,14 @@ class Sound extends StatelessWidget {
                   },
                 ),
               ),
-
               const SizedBox(height: 30),
               Padding(
                 padding: const EdgeInsets.only(left: 20.0),
                 child: Row(children: [
                   IconButton(
                     onPressed: () {
-                      context.read<SoundBloc>().add(SetInputDeviceMute(defaultInputDevice!.name, !defaultInputDevice.mute));
+                      context.read<SoundBloc>().add(SetInputDeviceMute(
+                          defaultInputDevice!.name, !defaultInputDevice.mute));
                     },
                     icon: (defaultInputDevice?.mute ?? true)
                         ? Icon(Icons.volume_mute_rounded)
@@ -111,16 +119,32 @@ class Sound extends StatelessWidget {
                   ),
                   Expanded(
                     child: Slider(
-                      value: ((defaultInputDevice?.volume ?? 0.0)*100).round().toDouble(),
+                      value: ((defaultInputDevice?.volume ?? 0.0) * 100)
+                          .round()
+                          .toDouble(),
                       min: 0.0,
                       max: 100.0,
                       onChanged: (double value) {
-                         context.read<SoundBloc>().add(SetInputDeviceVolume(defaultInputDevice!.name , (value/100)));
+                        context.read<SoundBloc>().add(SetInputDeviceVolume(
+                            defaultInputDevice!.name, (value / 100)));
                       },
                     ),
                   )
                 ]),
-              )
+              ),
+              MechanixSectionList(sectionListItems: [
+                SectionListItems(title: 'Launcher Sound'),
+                SectionListItems(title: 'haptics'),
+                SectionListItems(
+                    title: 'Notification Sound',
+                    trailing: Row(
+                      children: [
+                        Text('Bloop', style: context.textTheme.labelLarge)
+                            .padRight(8),
+                        IconWidget(iconPath: Images.rightIconArrow)
+                      ],
+                    ))
+              ])
             ],
           ),
         ),

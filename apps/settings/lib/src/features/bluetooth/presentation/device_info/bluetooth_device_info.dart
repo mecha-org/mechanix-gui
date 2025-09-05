@@ -1,12 +1,15 @@
 import 'package:bluez/bluez.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/device_type.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 
 class BluetoothDeviceInfo extends StatelessWidget {
   const BluetoothDeviceInfo({super.key});
@@ -36,34 +39,23 @@ class BluetoothDeviceInfo extends StatelessWidget {
           rightIcon1: Image.asset(Images.delete),
           rightIcon1OnTap: () => _onForgetNetworkClick(context, selectedDevice),
         ),
-        body: ContainerWidget(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                selectedDevice.alias,
-                style: baseHeaderStyle.copyWith(fontSize: 20),
-              ),
-              Container(
-                decoration: rowBoxDecoration,
-                padding: EdgeInsets.all(10),
-                margin: EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Device Type",
-                      style: baseHeaderStyle.copyWith(fontSize: 14),
-                    ),
-                    Text(
-                      selectedDevice.icon,
-                      style: secondaryHeaderStyle,
-                    )
-                  ],
-                ),
-              ),
-            ],
+        body: SingleChildScrollView(
+          child: ContainerWidget(
+            child: MechanixSimpleList(listItems: [
+              SimpleListItems(
+                  title: 'Device Name',
+                  trailing: Text(
+                    selectedDevice.alias,
+                    style: context.textTheme.labelLarge,
+                  )),
+              SimpleListItems(
+                  title: 'Device Type',
+                  onTap: () => Navigator.pushNamed(
+                      context, AppRoutes.bluetoothDeviceTypes),
+                  trailing: DeviceType(
+                    deviceType: selectedDevice.icon,
+                  )),
+            ]),
           ),
         ));
   }

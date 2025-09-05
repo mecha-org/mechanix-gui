@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/bluetooth/data/bluetooth_repository.dart';
+
 import 'bluetooth_event.dart';
 import 'bluetooth_state.dart';
 
@@ -35,7 +36,8 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
 
     on<GetAdapterAlias>(_onGetAdapterAlias);
     on<RenameAdapterEvent>(_onRenameAdapter);
-
+    on<DiscoveryEnabled>(_onDiscoverable);
+    on<GetDiscoverable>(_isDiscoveryEnable);
     _initializeBluetoothStream();
     _deviceAddedStream();
     _deviceRemovedStream();
@@ -69,7 +71,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       changeStream = stream.listen((device) async {
         if (!isClosed) {
           logger.i("+++++++ Device added +++++++ : $device");
-          add(RefreshDeviceList());  // device
+          add(RefreshDeviceList()); // device
         }
       });
     } catch (e, stackTrace) {
@@ -98,6 +100,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     if (enabled) {
       add(RefreshDeviceList());
       add(GetAdapterAlias());
+      add(GetDiscoverable());
     }
   }
 
@@ -135,9 +138,9 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       await bluetoothRepository.startDiscovery();
       emit(state.copyWith(loading: true));
       // add(RefreshDeviceList());
-      Future.delayed(Duration(seconds: 15), () async {
-        add(StopDiscovery());
-      });
+      // Future.delayed(Duration(seconds: 15), () async {
+      //   add(StopDiscovery());
+      // });
     } catch (e) {
       logger.e('Error starting discovery: $e');
       emit(state.copyWith(error: e.toString(), loading: false));
@@ -246,6 +249,18 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       emit(state.copyWith(error: e.toString()));
       return;
     }
+  }
+
+  void _onDiscoverable(DiscoveryEnabled event, Emitter<BluetoothState> emit) {
+    emit(state.copyWith(isDiscoveryEnabled: event.isDiscoverable));
+  }
+
+  void _isDiscoveryEnable(
+      GetDiscoverable event, Emitter<BluetoothState> emit) async {
+    final enabled = await bluetoothRepository.discoveryEnabled();
+    print('enabled');
+    print(enabled);
+    emit(state.copyWith(isDiscoveryEnabled: enabled));
   }
 
   @override

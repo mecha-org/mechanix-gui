@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/styles/text.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
+import 'package:widgets/extension.dart';
+import 'package:widgets/widgets/textInput/text_input.dart';
 
 class AddNetwork extends StatelessWidget {
   const AddNetwork({super.key});
@@ -71,85 +73,13 @@ class AddNetwork extends StatelessWidget {
                 key: formKey,
                 child: Column(
                   children: [
-                    const SizedBox(height: 10),
-                    // Name Field
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 120,
-                          child: Text("Name", style: labelTextStyle),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: nameController,
-                            style: inputFieldTextStyle,
-                            decoration: const InputDecoration(
-                              hintText: "Enter network name",
-                              border: OutlineInputBorder(),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue),
-                              ),
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a network name';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
+                    MechanixTextInput.textInput(
+                      hintText: 'Name',
+                    ).padBottom(8),
+                    MechanixTextInput.password(
+                      hintText: 'Enter Password',
                     ),
-                    const SizedBox(height: 16),
-                    // Password Field
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 120,
-                          child: Text("Password", style: labelTextStyle),
-                        ),
-                        Expanded(
-                          child: TextFormField(
-                            controller: passwordController,
-                            obscureText: state.obscurePassword,
-                            style: inputFieldTextStyle,
-                            decoration: InputDecoration(
-                              hintText: "Enter password",
-                              border: const OutlineInputBorder(),
-                              focusedBorder: const OutlineInputBorder(
-                                borderSide: BorderSide(color: Colors.blue),
-                              ),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  state.obscurePassword
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                ),
-                                onPressed: () {
-                                  context
-                                      .read<ConnectNetworkBloc>()
-                                      .add(TogglePasswordVisibility());
-                                },
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a password';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                    WirelessProtocols()
                   ],
                 ),
               ),

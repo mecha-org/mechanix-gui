@@ -11,6 +11,8 @@ class AppRoutes {
   static const bluetooth = '/bluetooth';
   static const adapterSettings = '/bluetooth/settings';
   static const adapterRename = '/bluetooth/settings/rename';
+  static const bluetoothDeviceTypes = '/bluetooth/device/types';
+  static const bluetoothDiscoverable = '/bluetooth/settings/discoverable';
   static const battery = '/battery';
   static const batteryPerformance = '/battery/performance';
   static const display = '/display';
@@ -25,4 +27,9 @@ class AppRoutes {
   static const appearance = '/appearance';
   static const applyWallpaper = '/appearance/apply_wallpaper';
   static const bluetoothDeviceInfo = '/bluetooth/info';
+  static const configureDNS = '/wireless/dns/configure';
+  static const configureProxy = '/wireless/proxy/configure';
+  static const ipv4Address = '/wireless/ipv4Address';
+  static const security = '/wireless/security';
+  static const notificationSound = '/sound/notification';
 }

@@ -1,16 +1,18 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
-import 'package:mechanix_settings/src/commons/styles/text.dart';
-import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
+import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
 import 'package:nm/nm.dart';
+import 'package:widgets/widgets/textInput/text_input.dart';
 
 class ConnectSecureNetwork extends StatelessWidget {
   const ConnectSecureNetwork({super.key});
@@ -85,66 +87,33 @@ class ConnectSecureNetwork extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                            child: TextFormField(
-                              obscureText: state.obscurePassword,
-                              style: inputFieldTextStyle,
-                              textInputAction: TextInputAction.done,
-                              decoration: InputDecoration(
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF444444),
-                                    width: 2,
-                                  ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(
-                                    color: Color(0xFF444444),
-                                    width: 2,
-                                  ),
-                                ),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    state.obscurePassword
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                  ),
-                                  onPressed: () {
-                                    context
-                                        .read<ConnectNetworkBloc>()
-                                        .add(TogglePasswordVisibility());
-                                  },
-                                ),
-                              ),
-                              onChanged: (value) {
+                              child: MechanixTextInput.password(
+                            label: 'Wireless Credentials',
+                            isFormField: true,
+                            hintText: 'Enter Password',
+                            onChanged: (value) {
+                              context
+                                  .read<ConnectNetworkBloc>()
+                                  .add(PasswordChanged(value));
+                            },
+                            onFieldSubmitted: (_) {
+                              if (state.password.isNotEmpty) {
                                 context
                                     .read<ConnectNetworkBloc>()
-                                    .add(PasswordChanged(value));
-                              },
-                              onFieldSubmitted: (_) {
-                                if (state.password.isNotEmpty) {
-                                  context
-                                      .read<ConnectNetworkBloc>()
-                                      .add(ConnectToNetwork(accessPoint));
-                                  backNavigation(context);
-                                }
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter a password';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
+                                    .add(ConnectToNetwork(accessPoint));
+                                backNavigation(context);
+                              }
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter a password';
+                              }
+                              return null;
+                            },
+                          )),
                         ],
                       ),
+                      WirelessProtocols()
                     ],
                   ),
                 ),

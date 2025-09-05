@@ -1,5 +1,6 @@
 import 'package:bluez/bluez.dart';
 import 'package:logger/web.dart';
+
 import 'bluetooth_repository.dart';
 
 class BluetoothRepositoryImpl implements BluetoothRepository {
@@ -143,13 +144,16 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   @override
   Future<Stream<bool>> onDeviceRemoved() async {
     await _ensureConnected();
-    
-    return client.deviceRemoved.map((device) {
 
-      
+    return client.deviceRemoved.map((device) {
       logger.i("Device removed: ${device.name} ${device.icon}");
       return true;
     });
+  }
+
+  @override
+  Future<bool> discoveryEnabled() async {
+    return adapter.discovering;
   }
 
   // @override

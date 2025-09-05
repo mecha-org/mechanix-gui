@@ -3,10 +3,11 @@ import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_row_item.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_toggle.dart';
-import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/display/models/types.dart';
+import 'package:widgets/extensions/edge_insets.dart';
+import 'package:widgets/widgets.dart';
+import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
 class Display extends StatefulWidget {
   const Display({super.key});
@@ -109,35 +110,36 @@ class DisplayState extends State<Display> {
                 ),
               ),
             ),
-            const SizedBox(height: 40),
-            CustomRowItem(
-                title: "Auto Brightness",
-                child: CustomToggle(
-                    value: isAutoBrightness,
-                    onChanged: (val) => setState(() {
-                          isAutoBrightness = !isAutoBrightness;
-                        }))),
-            const SizedBox(height: 40),
-            CustomRowItem(
-              title: 'Screen Off Time',
-              child: Text(
-                screenOffTime,
-                style: secondaryHeaderStyle,
-              ),
-              onTap: () async {
-                final result = await Navigator.pushNamed(
-                  context,
-                  AppRoutes.displayScreenOffTime,
-                  arguments: {'screenOffTime': screenOffTime},
-                );
+            MechanixSectionList(title: 'Display Options', sectionListItems: [
+              SectionListItems(
+                  title: 'Auto Brightness',
+                  trailing: CustomToggle(value: true, onChanged: (v) {})),
+              SectionListItems(
+                  title: 'Screen Off Time',
+                  onTap: () async {
+                    final result = await Navigator.pushNamed(
+                      context,
+                      AppRoutes.displayScreenOffTime,
+                      arguments: {'screenOffTime': screenOffTime},
+                    );
 
-                if (result != null && result is String) {
-                  setState(() {
-                    screenOffTime = result;
-                  });
-                }
-              },
-            ),
+                    if (result != null && result is String) {
+                      setState(() {
+                        screenOffTime = result;
+                      });
+                    }
+                  },
+                  trailing: Row(
+                    children: [
+                      Text(screenOffTime).padRight(8),
+                      IconWidget(
+                        iconWidth: 10,
+                        iconHeight: 17,
+                        iconPath: Images.rightIconArrow,
+                      )
+                    ],
+                  ))
+            ]),
           ],
         ),
       ),

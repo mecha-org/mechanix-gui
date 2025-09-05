@@ -2,9 +2,12 @@ import 'package:bluez/bluez.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
-import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/bluetooth_list_row.dart';
+import 'package:widgets/widgets/icon_widget.dart';
+import 'package:widgets/widgets/sectionList/mechanix_section_list.dart';
+import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
 class BluetoothDeviceList extends StatelessWidget {
   final List<BlueZDevice> devices;
@@ -16,29 +19,24 @@ class BluetoothDeviceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(height: 10),
-        ListView.builder(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: devices.length,
-            itemBuilder: (context, index) {
-              final device = devices[index];
-
-              return BluetoothListRow(
-                title: device.name,
-                isConnected: device.connected,
-                isAvailable: device.adapter.powered,
-                onDeviceTap: () => onDeviceTap(device, context),
-                onDeleteTap: () => onDeleteTap(device, context),
-                onSettingsTap: () => onSettingsTap(device, context),
-              );
-            })
-      ],
+    return MechanixSectionList(
+      title: 'Paired Devices',
+      sectionListItems: getDeviceList(context, devices),
     );
   }
+}
+
+List<SectionListItems> getDeviceList(
+    BuildContext context, List<BlueZDevice> devices) {
+  final devicesList = devices
+      .map((device) => SectionListItems(
+          title: device.name,
+          onTap: () => onSettingsTap(context, device),
+          leading: IconWidget(iconPath: Images.audioHeadset),
+          trailing: IconWidget(iconPath: Images.settings)))
+      .toList();
+
+  return devicesList;
 }
 
 void onDeviceTap(BlueZDevice device, BuildContext context) {
@@ -53,7 +51,7 @@ void onDeviceTap(BlueZDevice device, BuildContext context) {
   }
 }
 
-void onSettingsTap(BlueZDevice device, BuildContext context) {
+void onSettingsTap(BuildContext context, BlueZDevice device) {
   // context.read<BluetoothBloc>().add(SelectDevice(device));
   Navigator.pushNamed(
     context,

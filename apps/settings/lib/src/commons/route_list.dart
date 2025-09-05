@@ -26,4 +26,8 @@ final Map<String, RouteMeta> routeMetaMap = {
   '/date_time/date_settings': RouteMeta(backTitle: 'Date & Time'),
   '/appearance': RouteMeta(backTitle: 'Settings'),
   '/appearance/apply_wallpaper': RouteMeta(backTitle: 'Appearance'),
+  '/wireless/dns/configure': RouteMeta(backTitle: 'Configure DNS'),
+  '/wireless/proxy/configure': RouteMeta(backTitle: 'Configure Proxy'),
+  '/wireless/ipv4Address': RouteMeta(backTitle: 'IPV4 Address'),
+  '/wireless/security': RouteMeta(backTitle: 'Security'),
 };

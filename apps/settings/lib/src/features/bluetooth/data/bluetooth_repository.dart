@@ -1,4 +1,3 @@
-
 import 'package:bluez/bluez.dart';
 
 abstract class BluetoothRepository {
@@ -20,4 +19,5 @@ abstract class BluetoothRepository {
   Future<Stream<List<String>>> streamBluetoothEvents();
   Future<Stream<bool>> onDeviceAdded();
   Future<Stream<bool>> onDeviceRemoved();
+  Future<bool> discoveryEnabled();
 }
