@@ -24,24 +24,26 @@ jobs:
           - name: settings app
             folder: settings
             binary: mechanix_settings
-        # Add more apps here as needed
-        #   - name: camera app
-        #     folder: camera
-        #     binary: mechanix_camera
-        #   - name: notes app
-        #     folder: notes
-        #     binary: mechanix_notes
+        # Add more apps here as needed:
+        # - name: camera app
+        #   folder: camera
+        #   binary: mechanix_camera
+        # - name: notes app
+        #   folder: notes
+        #   binary: mechanix_notes
 
     runs-on: ubicloud-standard-2-arm
-    continue-on-error: true
+
     steps:
       # Install dependencies
       - name: Install dependencies
         run: |
-          apt update
-          apt install -y git tar unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
+          sudo apt update
+          sudo apt install -y git tar unzip curl clang cmake pkg-config \
+            libwayland-dev libwayland-cursor0 libwayland-egl1 \
+            libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
 
-      # Checkout
+      # Checkout repository
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
@@ -52,21 +54,22 @@ jobs:
             git clone https://github.com/sony/flutter-elinux.git
             sudo mv flutter-elinux ${FLUTTER_ELINUX_HOME}
           fi
-          export PATH="${FLUTTER_ELINUX_HOME}/bin:$PATH"
           flutter-elinux --version
+        env:
+          PATH: ${{ env.FLUTTER_ELINUX_HOME }}/bin:$PATH
 
       # Build the app
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
-        run: |
-          export PATH="${FLUTTER_ELINUX_HOME}/bin:$PATH"
-          flutter-elinux build elinux
+        run: flutter-elinux build elinux
+        env:
+          PATH: ${{ env.FLUTTER_ELINUX_HOME }}/bin:$PATH
 
       # Prepare artifact
       - name: Prepare artifact ${{ matrix.name }}
         run: |
           mkdir -p build
-          cp apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/${{ matrix.binary }} ./build/
+          cp "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/${{ matrix.binary }}" ./build/ || true
 
       # Upload artifact
       - name: Upload artifact ${{ matrix.name }}
