@@ -39,8 +39,8 @@ jobs:
       # Install dependencies
       - name: Install dependencies
         run: |
-          sudo apt update
-          sudo apt install -y git tar unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
+          apt update
+          apt install -y git tar unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
 
       # Checkout
       - name: Setup | Checkout
