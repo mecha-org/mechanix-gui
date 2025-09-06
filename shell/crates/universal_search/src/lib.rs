@@ -25,6 +25,12 @@ use crate::{
 };
 use headless_widgets::prelude::*;
 
+#[derive(Event)]
+pub struct UniversalSearchOpen;
+
+#[derive(Event)]
+pub struct UniversalSearchClose;
+
 pub struct UniversalSearchPlugin;
 impl Plugin for UniversalSearchPlugin {
     fn build(&self, app: &mut App) {
@@ -40,6 +46,8 @@ impl Plugin for UniversalSearchPlugin {
         app.add_plugins((mock::MockPlugin,));
         app.add_plugins((headless_widgets::CoreWidgetsPlugin));
 
+        app.add_event::<UniversalSearchOpen>();
+        app.add_event::<UniversalSearchClose>();
         app.add_systems(Startup, camera_setup);
         app.add_systems(
             Update,
@@ -48,15 +56,19 @@ impl Plugin for UniversalSearchPlugin {
                 .run_if(fonts_loaded)
                 .run_if(icons_loaded),
         );
+
+        app.add_observer(listen_open_event);
+        app.add_observer(listen_close_event);
+        app.add_systems(Update, listen_close_completed);
         app.add_systems(Update, (button_system, exit_on_esc));
 
         // app.insert_resource(IsOpen(false));
         // app.add_systems(Update, (button_system, effect_system, exit_on_esc));
         // app.add_event::<Action>();
 
-        // app.add_observer(on_bar_drag_start);
-        // app.add_observer(on_bar_drag);
-        // app.add_observer(on_bar_drag_end);
+        app.add_observer(on_bar_drag_start);
+        app.add_observer(on_bar_drag);
+        app.add_observer(on_bar_drag_end);
 
         // app.add_systems(Update, listen_action);
     }
@@ -64,4 +76,5 @@ impl Plugin for UniversalSearchPlugin {
 
 pub mod prelude {
     pub use crate::UniversalSearchPlugin;
+    pub use crate::{UniversalSearchClose, UniversalSearchOpen};
 }

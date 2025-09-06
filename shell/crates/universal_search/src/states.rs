@@ -6,10 +6,7 @@ use animation::{
 };
 use bevy::{color::palettes::css::*, ecs::query, prelude::*};
 
-use crate::{
-    components::{Bar, Container},
-    ui::ParentContainer,
-};
+use crate::ui::{Container, ParentContainer};
 
 // #[derive(Debug, Default, Hash, Eq, PartialEq, Clone, Copy, States)]
 // pub enum AnimationState {

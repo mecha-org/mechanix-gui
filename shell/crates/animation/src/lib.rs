@@ -33,8 +33,11 @@ pub mod prelude {
 
     pub use crate::BevyTweenRegisterSystems;
     pub use crate::DefaultTweenPlugins;
+
+    pub use bevy_tween_helpers::prelude::*;
 }
 
+use bevy_tween_helpers::prelude::BevyTweenHelpersPlugin;
 pub use tween::component_tween_system;
 
 pub use tween::resource_dyn_tween_system;
@@ -51,6 +54,7 @@ impl PluginGroup for DefaultTweenPlugins {
             .add(interpolate::DefaultInterpolatorsPlugin)
             .add(interpolate::DefaultDynInterpolatorsPlugin)
             .add(interpolation::EaseKindPlugin)
+            .add(BevyTweenHelpersPlugin::default())
             .add_group(tween_event::DefaultTweenEventPlugins);
         group
     }

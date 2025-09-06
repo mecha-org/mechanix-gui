@@ -16,12 +16,12 @@ impl Plugin for LauncherPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             BackgroundPlugin,
-            HomescreenPlugin,
-            StatusBarPlugin,
-            SettingsDrawerPlugin,
-            RunningAppsPlugin,
+            // HomescreenPlugin,
+            // StatusBarPlugin,
+            // SettingsDrawerPlugin,
+            // RunningAppsPlugin,
             UniversalSearchPlugin,
-            NotificationsDrawerPlugin,
+            // NotificationsDrawerPlugin,
         ));
     }
 }

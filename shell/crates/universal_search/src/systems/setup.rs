@@ -8,9 +8,8 @@ use bevy_wayland::prelude::*;
 use types::prelude::FontAssets;
 
 use crate::{
-    components::BAR_SIZE,
     icons::UniversalSearchIcons,
-    ui::{BrowserApps, FrequentlyUsedApps, SearchItems, SearchResults, SearchText, ui},
+    ui::{BAR_SIZE, BrowserApps, FrequentlyUsedApps, SearchItems, SearchResults, SearchText, ui},
 };
 
 pub const WINDOW_SIZE: (f32, f32) = (540., 576.);

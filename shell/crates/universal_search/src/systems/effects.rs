@@ -3,8 +3,9 @@ use bevy::prelude::*;
 use bevy_wayland::prelude::InputRegion;
 
 use crate::{
-    components::{BAR_SIZE, Container, ContainerItems, container_items},
+    components::{ContainerItems, container_items},
     systems::setup::{UniversalSearchWindow, WINDOW_SIZE},
+    ui::Container,
 };
 
 pub fn effect_system(

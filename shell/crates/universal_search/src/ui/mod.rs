@@ -1,11 +1,15 @@
 mod frequently_used_apps;
+mod navigation_bar;
 mod search_input;
 mod search_items;
 mod search_results;
 
-pub use crate::ui::{frequently_used_apps::*, search_input::*, search_items::*, search_results::*};
+pub use crate::ui::{
+    frequently_used_apps::*, navigation_bar::*, search_input::*, search_items::*, search_results::*,
+};
 use crate::{
     icons::UniversalSearchIcons,
+    systems::WINDOW_SIZE,
     types::{DesktopApp, SearchResult},
 };
 
@@ -14,6 +18,9 @@ use types::prelude::*;
 
 #[derive(Component)]
 pub struct ParentContainer;
+
+#[derive(Component)]
+pub struct Container;
 
 pub fn ui(
     mut commands: &Commands,
@@ -31,27 +38,12 @@ pub fn ui(
             width: Val::Percent(100.),
             height: Val::Percent(100.),
             flex_direction: FlexDirection::Column,
-            // justify_content: JustifyContent::FlexEnd,
-            // align_items: AlignItems::FlexStart,
-            align_items: AlignItems::Center,
+            justify_content: JustifyContent::FlexEnd,
+            align_items: AlignItems::FlexStart,
             ..Default::default()
         },
-        ParentContainer,
-        children![(
-            Node {
-                width: Val::Percent(100.),
-                height: Val::Percent(100.),
-                padding: UiRect::horizontal(Val::Px(16.)),
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(8.),
-                ..Default::default()
-            },
-            children![
-                frequently_used_apps(apps),
-                search_items(searches, font_assets, icons),
-                search_input(font_assets, icons) // search_results(results, results_for, browser_apps, asset_server)
-            ]
-        )],
+        Container,
+        children![bar(icons.left_nav_bar.clone())],
         // children![bar()],
     )
 }

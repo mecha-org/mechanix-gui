@@ -15,6 +15,9 @@ pub struct UniversalSearchIcons {
 
     #[asset(key = "icons.close")]
     pub close: Handle<Image>,
+
+    #[asset(key = "icons.left_nav_bar")]
+    pub left_nav_bar: Handle<Image>,
 }
 
 #[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]

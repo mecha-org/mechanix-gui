@@ -3,9 +3,6 @@ use bevy::{color::palettes::css::*, prelude::*};
 
 use crate::systems::NORMAL_BUTTON;
 
-#[derive(Component)]
-pub struct Container;
-
 pub fn container() -> impl Bundle {
     (
         Node {
@@ -15,7 +12,6 @@ pub fn container() -> impl Bundle {
             justify_content: JustifyContent::Center,
             ..Default::default()
         },
-        Container,
         AnimationTarget,
         BackgroundColor(DARK_GRAY.into()),
         // children![(

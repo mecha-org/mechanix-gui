@@ -1,6 +1,6 @@
-use bevy::prelude::*;
+use bevy::{ecs::system::command, prelude::*};
 
-use crate::{components::Bar, states::Action};
+use crate::{UniversalSearchClose, UniversalSearchOpen, states::Action, ui::Bar};
 
 pub fn on_bar_drag_start(
     mut trigger: Trigger<Pointer<DragStart>>,
@@ -15,9 +15,10 @@ pub fn on_bar_drag_start(
 pub fn on_bar_drag(
     mut trigger: Trigger<Pointer<Drag>>,
     mut q_bar: Query<(), With<Bar>>,
-    mut event_writer: EventWriter<Action>,
+    // mut event_writer: EventWriter<Action>,
     mut is_open: Local<bool>,
     mut last_above_threshold: Local<bool>,
+    mut commands: Commands,
 ) {
     if let Ok(()) = q_bar.get_mut(trigger.target()) {
         trigger.propagate(false);
@@ -32,14 +33,16 @@ pub fn on_bar_drag(
             if !*is_open {
                 *is_open = true;
                 println!("sending Action::Open");
-                event_writer.write(Action::Open);
+                // event_writer.write(Action::Open);
+                commands.trigger(UniversalSearchOpen);
             }
         } else if distance_y < close_threshold && *last_above_threshold {
             *last_above_threshold = false;
             if *is_open {
                 *is_open = false;
                 println!("sending Action::Close");
-                event_writer.write(Action::Close);
+                // event_writer.write(Action::Close);
+                commands.trigger(UniversalSearchClose);
             }
         }
         // If between close_threshold and open_threshold, do nothing and keep last state.
