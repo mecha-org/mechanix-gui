@@ -1,4 +1,4 @@
-name: Apps - Build Flutter eLinux
+name: Apps - Build aarch64
 
 on:
   workflow_dispatch:
@@ -9,11 +9,10 @@ on:
       - dev-arm64-build
       - pre-release
     paths:
-      - "apps/**"
       - ".github/workflows/build-apps-aarch64.yml"
 
 env:
-  PATH: /opt/flutter-elinux/bin:$PATH
+  FLUTTER_ELINUX_HOME: /opt/flutter-elinux
 
 jobs:
   build:
@@ -49,16 +48,19 @@ jobs:
       # Install Flutter eLinux
       - name: Install Flutter eLinux
         run: |
-          if [ ! -d "/opt/flutter-elinux" ]; then
+          if [ ! -d "${FLUTTER_ELINUX_HOME}" ]; then
             git clone https://github.com/sony/flutter-elinux.git
-            sudo mv flutter-elinux /opt/
+            sudo mv flutter-elinux ${FLUTTER_ELINUX_HOME}
           fi
+          export PATH="${FLUTTER_ELINUX_HOME}/bin:$PATH"
           flutter-elinux --version
 
       # Build the app
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
-        run: flutter-elinux build elinux
+        run: |
+          export PATH="${FLUTTER_ELINUX_HOME}/bin:$PATH"
+          flutter-elinux build elinux
 
       # Prepare artifact
       - name: Prepare artifact ${{ matrix.name }}
