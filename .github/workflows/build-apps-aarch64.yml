@@ -25,27 +25,26 @@ jobs:
           - name: settings app
             folder: settings
             binary: mechanix_settings
-        # Add more apps here as needed  
+        # Add more apps here as needed
         #   - name: camera app
         #     folder: camera
         #     binary: mechanix_camera
         #   - name: notes app
         #     folder: notes
         #     binary: mechanix_notes
-        
 
     runs-on: ubicloud-standard-2-arm
     continue-on-error: true
     steps:
-      # Checkout
-      - name: Setup | Checkout
-        uses: actions/checkout@v4
-
       # Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y tar unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
+          sudo apt install -y git tar unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
+
+      # Checkout
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
 
       # Install Flutter eLinux
       - name: Install Flutter eLinux
