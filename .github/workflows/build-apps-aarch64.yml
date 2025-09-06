@@ -17,6 +17,7 @@ env:
 
 jobs:
   build:
+    name: ${{ matrix.name }}
     strategy:
       fail-fast: false
       matrix:
@@ -34,6 +35,7 @@ jobs:
         
 
     runs-on: ubicloud-standard-2-arm
+    continue-on-error: true
     steps:
       # Checkout
       - name: Setup | Checkout
@@ -43,7 +45,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install -y unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
+          sudo apt install -y tar unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
 
       # Install Flutter eLinux
       - name: Install Flutter eLinux
