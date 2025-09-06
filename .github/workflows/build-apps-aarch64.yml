@@ -1,0 +1,73 @@
+name: Apps - Build Flutter eLinux
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+      - dev-arm64-build
+      - pre-release
+    paths:
+      - "apps/**"
+      - ".github/workflows/build-apps-aarch64.yml"
+
+env:
+  PATH: /opt/flutter-elinux/bin:$PATH
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: settings app
+            folder: settings
+            binary: mechanix_settings
+        # Add more apps here as needed  
+        #   - name: camera app
+        #     folder: camera
+        #     binary: mechanix_camera
+        #   - name: notes app
+        #     folder: notes
+        #     binary: mechanix_notes
+        
+
+    runs-on: ubicloud-standard-2-arm
+    steps:
+      # Checkout
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
+
+      # Install Flutter eLinux
+      - name: Install Flutter eLinux
+        run: |
+          if [ ! -d "/opt/flutter-elinux" ]; then
+            git clone https://github.com/sony/flutter-elinux.git
+            sudo mv flutter-elinux /opt/
+          fi
+          flutter-elinux --version
+
+      # Build the app
+      - name: Build ${{ matrix.name }}
+        working-directory: apps/${{ matrix.folder }}
+        run: flutter-elinux build elinux
+
+      # Prepare artifact
+      - name: Prepare artifact ${{ matrix.name }}
+        run: |
+          mkdir -p build
+          cp apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/${{ matrix.binary }} ./build/
+
+      # Upload artifact
+      - name: Upload artifact ${{ matrix.name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary }}
+          path: ./build/${{ matrix.binary }}
