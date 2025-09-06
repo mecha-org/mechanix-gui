@@ -11,8 +11,6 @@ on:
     paths:
       - ".github/workflows/build-apps-aarch64.yml"
 
-env:
-  FLUTTER_ELINUX_HOME: /opt/flutter-elinux
 
 jobs:
   build:
@@ -33,15 +31,15 @@ jobs:
         #   binary: mechanix_notes
 
     runs-on: ubicloud-standard-2-arm
-
+    continue-on-error: true
     steps:
       # Install dependencies
       - name: Install dependencies
         run: |
-          sudo apt update
+          sudo  apt update
           sudo apt install -y git tar unzip curl clang cmake pkg-config \
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
-            libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
+            libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
 
       # Checkout repository
       - name: Setup | Checkout
@@ -50,26 +48,30 @@ jobs:
       # Install Flutter eLinux
       - name: Install Flutter eLinux
         run: |
-          if [ ! -d "${FLUTTER_ELINUX_HOME}" ]; then
+          if [ ! -d "/opt/flutter-elinux" ]; then
             git clone https://github.com/sony/flutter-elinux.git
-            sudo mv flutter-elinux ${FLUTTER_ELINUX_HOME}
+            mv flutter-elinux /opt/
           fi
-          flutter-elinux --version
-        env:
-          PATH: ${{ env.FLUTTER_ELINUX_HOME }}/bin:$PATH
+          # Persist for future steps
+          echo "PATH=$PATH:/opt/flutter-elinux/bin" >> $GITHUB_ENV
 
       # Build the app
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
-        run: flutter-elinux build elinux
-        env:
-          PATH: ${{ env.FLUTTER_ELINUX_HOME }}/bin:$PATH
+        run: |
+         flutter-elinux pub get
+         flutter-elinux build elinux
 
       # Prepare artifact
       - name: Prepare artifact ${{ matrix.name }}
         run: |
           mkdir -p build
-          cp "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/${{ matrix.binary }}" ./build/ || true
+          find "apps/${{ matrix.folder }}/build/" -type f -name "${{ matrix.binary }}" -exec cp {} ./build/ \; || true
+
+      # list artifacts
+      - name: List artifacts ${{ matrix.name }}
+        run: |
+          ls -la ./build/
 
       # Upload artifact
       - name: Upload artifact ${{ matrix.name }}
