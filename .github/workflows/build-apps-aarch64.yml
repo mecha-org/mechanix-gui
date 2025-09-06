@@ -35,17 +35,17 @@ jobs:
 
     runs-on: ubicloud-standard-2-arm
     steps:
-      # 1️⃣ Checkout
+      # Checkout
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ Install dependencies
+      # Install dependencies
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y unzip curl clang cmake pkg-config libwayland-dev libwayland-cursor0 libwayland-egl1 libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev
 
-      # 3️⃣ Install Flutter eLinux
+      # Install Flutter eLinux
       - name: Install Flutter eLinux
         run: |
           if [ ! -d "/opt/flutter-elinux" ]; then
@@ -54,18 +54,18 @@ jobs:
           fi
           flutter-elinux --version
 
-      # 4️⃣ Build the app
+      # Build the app
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
         run: flutter-elinux build elinux
 
-      # 5️⃣ Prepare artifact
+      # Prepare artifact
       - name: Prepare artifact ${{ matrix.name }}
         run: |
           mkdir -p build
           cp apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/${{ matrix.binary }} ./build/
 
-      # 6️⃣ Upload artifact
+      # Upload artifact
       - name: Upload artifact ${{ matrix.name }}
         uses: actions/upload-artifact@v4
         with:
