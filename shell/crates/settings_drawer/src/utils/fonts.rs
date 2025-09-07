@@ -88,6 +88,14 @@ pub struct FontAssets {
     pub wireless_off: Handle<Image>,
     #[asset(key = "image.wireless_on")]
     pub wireless_on: Handle<Image>,
+    #[asset(key = "image.wireless_low")]
+    pub wireless_low: Handle<Image>,
+    #[asset(key = "image.wireless_medium")]
+    pub wireless_medium: Handle<Image>,
+    #[asset(key = "image.wireless_high")]
+    pub wireless_high: Handle<Image>,
+    #[asset(key = "image.wireless_full")]
+    pub wireless_full: Handle<Image>,
     #[asset(key = "image.bluetooth_off")]
     pub bluetooth_off: Handle<Image>,
     #[asset(key = "image.bluetooth_on")]

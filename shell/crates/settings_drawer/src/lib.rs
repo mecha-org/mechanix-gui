@@ -5,7 +5,7 @@ mod widgets;
 
 use crate::components::styled_card::{StyledCard, StyledCardPlugin};
 use crate::systems::setup::{pre_setup, SettingsDrawerCamera};
-use crate::systems::{animate_background, animate_settings_item, animate_settings_item_text, exit_on_esc, on_animation_background_completed, poll_default_sink_volume, set_initial_airplane_mode_state, update_airplane_mode_state, update_auto_rotation_state, update_bluetooth_state, update_volume_state, update_wireless_state, AssetsLoadingState};
+use crate::systems::{animate_background, animate_settings_item, animate_settings_item_text, exit_on_esc, on_animation_background_completed, poll_default_sink_volume, set_initial_airplane_mode_state, update_active_network_strength, update_airplane_mode_state, update_auto_rotation_state, update_bluetooth_state, update_volume_state, update_wireless_state, AssetsLoadingState};
 use crate::{
     utils::FontAssets,
     widgets::LauncherStyledWidgetsPlugin,
@@ -24,6 +24,7 @@ use bevy_styled_widgets::{
     StyledWidgetsPlugin,
 };
 use core::fmt;
+use service_plugins::network_manager::ActiveNetworkStrength;
 use service_plugins::upower::UPowerPlugin;
 use service_plugins::{
     bluetooth::BluetoothEnabledStatus, network_manager::WirelessEnabled, pulse_audio::DefaultSink,
@@ -201,6 +202,7 @@ impl Plugin for SettingsDrawerPlugin {
                 update_bluetooth_state,
                 update_volume_state,
                 update_auto_rotation_state,
+                update_active_network_strength,
                 // update_microphone_state,
                 // update_screen_recording_state,
             )
@@ -212,6 +214,9 @@ impl Plugin for SettingsDrawerPlugin {
             (
                 update_wireless_state
                     .run_if(resource_changed::<WirelessEnabled>)
+                    .run_if(resource_exists::<FontAssets>),
+                update_active_network_strength
+                    .run_if(resource_changed::<ActiveNetworkStrength>)
                     .run_if(resource_exists::<FontAssets>),
                 update_airplane_mode_state
                     .run_if(resource_changed::<AirplaneModeEnabled>)

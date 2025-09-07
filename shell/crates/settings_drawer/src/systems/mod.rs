@@ -30,9 +30,7 @@ use headless_widgets::CoreButton;
 use service_plugins::bluetooth::{
     BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ListPairedDevices,
 };
-use service_plugins::network_manager::{
-    KnownNetworkList, NetworkAction, NetworkActionEvent, WirelessEnabled,
-};
+use service_plugins::network_manager::{ActiveNetworkStrength, KnownNetworkList, NetworkAction, NetworkActionEvent, WirelessEnabled};
 use service_plugins::pulse_audio::{DefaultSink, PulseAudioAction, PulseAudioActionEvent};
 use service_plugins::upower::DevicePercentage;
 use service_plugins::UPowerBatteryState;
@@ -70,6 +68,21 @@ pub fn update_bluetooth_state(
     }
 }
 
+pub fn update_active_network_strength(
+    assets: Res<FontAssets>,
+    mut query: Query<&mut ImageNode, With<WirelessIcon>>,
+    active_network_strength: Res<ActiveNetworkStrength>,
+) {
+    for mut wireless_icon in &mut query {
+        wireless_icon.image = match active_network_strength.0 {
+            0..=20 => assets.wireless_low.clone(),
+            21..=50 => assets.wireless_medium.clone(), // Ask for icon
+            51..=75 => assets.wireless_high.clone(),
+            76..=100 => assets.wireless_full.clone(),
+            _ => unreachable!(),
+        }
+    }
+}
 pub fn poll_default_sink_volume(mut event_writer: EventWriter<PulseAudioActionEvent>) {
     event_writer.write(PulseAudioActionEvent(PulseAudioAction::GetDefaultSink));
 }
@@ -895,13 +908,13 @@ pub fn on_animation_background_completed(
                                 .build(),
                         ));
                         parent.spawn((
-                            Brightness,
-                            StyledSlider::builder()
-                                .icon(brightness_low.clone())
-                                .max(100.)
-                                .min(0.)
-                                .value(50.)
-                                .build()),
+                                         Brightness,
+                                         StyledSlider::builder()
+                                             .icon(brightness_low.clone())
+                                             .max(100.)
+                                             .min(0.)
+                                             .value(50.)
+                                             .build()),
                         );
                     });
 

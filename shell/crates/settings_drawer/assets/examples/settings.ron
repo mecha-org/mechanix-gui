@@ -115,6 +115,18 @@
     "image.wireless_on": File (
         path: "icons/wireless_on.png",
     ),
+    "image.wireless_low": File (
+        path: "icons/wireless_low.png",
+    ),
+    "image.wireless_medium": File (
+        path: "icons/wireless_medium.png",
+    ),
+    "image.wireless_high": File (
+        path: "icons/wireless_high.png",
+    ),
+    "image.wireless_full": File (
+        path: "icons/wireless_full.png",
+    ),
     "image.bluetooth_off": File (
         path: "icons/bluetooth_off.png",
     ),
