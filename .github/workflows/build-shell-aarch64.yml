@@ -75,10 +75,25 @@ jobs:
           pipx install --force pulp-cli[pygments]
           pipx inject pulp-cli pulp-cli-deb
 
+      - name: Setup | Pulp CLI Configuration
+        env:
+          MECHA_PULP_API_URL: ${{ env.MECHA_PULP_API_URL }}
+          MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
+          MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
+        run: |
+          # Normalize URL (add http:// if missing)
+          if [[ "${MECHA_PULP_API_URL}" != http* ]]; then
+            BASE_URL="http://${MECHA_PULP_API_URL}:8080"
+          else
+            BASE_URL="${MECHA_PULP_API_URL}:8080"
+          fi
+
+          echo "[INFO] Using Pulp base URL: $BASE_URL"
+
           pulp config create \
-            --username "${{ secrets.MECHA_PULP_USERNAME }}" \
-            --password "${{ secrets.MECHA_PULP_PASSWORD }}" \
-            --base-url "${{ env.MECHA_PULP_API_URL }}:8080" \
+            --username "$MECHA_PULP_USERNAME" \
+            --password "$MECHA_PULP_PASSWORD" \
+            --base-url "$BASE_URL" \
             --overwrite
 
       - name: Build [${{ matrix.package }}]
