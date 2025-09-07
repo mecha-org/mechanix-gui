@@ -125,10 +125,7 @@ impl SliderBuilder {
                     // },
                     // TextColor(Color::linear_rgba(0.24, 0.24, 0.24, 1.)),
                     // SettingsItemText { font_size: 32. },
-                    ImageNode::from_atlas_image(
-                        self.icon.unwrap().clone(),
-                        TextureAtlas::from(self.layout.unwrap().clone()),
-                    ),
+                    ImageNode::new(self.icon.unwrap().clone()),
                 ),
             ],
         )

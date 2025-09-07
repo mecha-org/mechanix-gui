@@ -20,3 +20,4 @@ bevy_asset_loader = { version = "0.23.0-rc.3", features = ["standard_dynamic_ass
 bevy_core_widgets = { git = "https://github.com/akshayr-mecha/bevy_core_widgets.git",  rev = "3a1e8795ab2ed3ac5fd252e9f5ab7c890a2415f4" }
 service_plugins = { path = "../service_plugins" }
 chrono = "0.4.41"
+headless_widgets = { path = "../headless_widgets" }

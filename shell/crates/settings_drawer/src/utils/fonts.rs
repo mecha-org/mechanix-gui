@@ -49,138 +49,54 @@ pub struct FontAssets {
     pub font_icons: Handle<Font>, // fonts/font-icons.ttf
 
     // Icons & UI Images
-    #[asset(key = "image.airplane_off")]
-    pub airplane_off: Handle<Image>, // icons/airplane_off.png
-    #[asset(key = "image.airplane_on")]
-    pub airplane_on: Handle<Image>, // icons/airplane_on.png
-
-    #[asset(key = "image.bluetooth_connected")]
-    pub bluetooth_connected: Handle<Image>, // icons/bluetooth_connected.png
-    #[asset(key = "image.bluetooth_none")]
-    pub bluetooth_none: Handle<Image>, // icons/bluetooth_none.png
-    #[asset(key = "image.bluetooth_off")]
-    pub bluetooth_off: Handle<Image>, // icons/bluetooth_off.png
-    #[asset(key = "image.bluetooth_on")]
-    pub bluetooth_on: Handle<Image>, // icons/bluetooth_on.png
-    #[asset(key = "image.bluetooth_warning")]
-    pub bluetooth_warning: Handle<Image>, // icons/bluetooth_warning.png
-
-    #[asset(key = "image.brightness_low")]
-    pub brightness_low: Handle<Image>, // icons/brightness.png
-
-    #[asset(key = "image.calculator")]
-    pub calculator: Handle<Image>, // icons/calculator.png
-    #[asset(key = "image.calculator_pressed")]
-    pub calculator_pressed: Handle<Image>, // icons/calculator_pressed.png
-
-    #[asset(key = "image.camera")]
-    pub camera: Handle<Image>, // icons/camera.png
-    #[asset(key = "image.camera_pressed")]
-    pub camera_pressed: Handle<Image>, // icons/camera_pressed.png
-
-    #[asset(key = "image.cell_signal_high")]
-    pub cell_signal_high: Handle<Image>, // icons/cell_signal_high.png
-
-    #[asset(key = "image.microphone_off")]
-    pub microphone_off: Handle<Image>, // icons/microphone_off.png
-    #[asset(key = "image.microphone_on")]
-    pub microphone_on: Handle<Image>, // icons/microphone_on.png
-
-    #[asset(key = "image.power_saving_off")]
-    pub power_saving_off: Handle<Image>, // icons/power_saving_off.png
-    #[asset(key = "image.power_saving_on")]
-    pub power_saving_on: Handle<Image>, // icons/power_saving_on.png
+    #[asset(key = "image.airplane_tilt")]
+    pub airplane_tilt: Handle<Image>, // icons/airplane_off.png
+    #[asset(key = "image.rotation_on")]
+    pub rotation_on: Handle<Image>, // icons/airplane_off.png
 
     #[asset(key = "image.rotation_off")]
-    pub rotation_off: Handle<Image>, // icons/rotation_off.png
-    #[asset(key = "image.rotation_on")]
-    pub rotation_on: Handle<Image>, // icons/rotation_on.png
+    pub rotation_off: Handle<Image>,
 
-    #[asset(key = "image.screen_recording_off")]
-    pub screen_recording_off: Handle<Image>, // icons/screen_recording_off.png
+    #[asset(key = "image.second_screen_on")]
+    pub second_screen_on: Handle<Image>,
+
+    #[asset(key = "image.second_screen_off")]
+    pub second_screen_off: Handle<Image>,
+    #[asset(key = "image.power_mode_none")]
+    pub power_mode_none: Handle<Image>,
+    #[asset(key = "image.power_mode_low")]
+    pub power_mode_low: Handle<Image>,
+    #[asset(key = "image.power_mode_high")]
+    pub power_mode_high: Handle<Image>,
+    #[asset(key = "image.mic_on")]
+    pub mic_on: Handle<Image>,
+    #[asset(key = "image.mic_off")]
+    pub mic_off: Handle<Image>,
     #[asset(key = "image.screen_recording_on")]
-    pub screen_recording_on: Handle<Image>, // icons/screen_recording_on.png
-
+    pub screen_recording_on: Handle<Image>,
+    #[asset(key = "image.screen_recording_off")]
+    pub screen_recording_off: Handle<Image>,
+    #[asset(key = "image.calculator")]
+    pub calculator: Handle<Image>,
+    #[asset(key = "image.camera")]
+    pub camera: Handle<Image>,
     #[asset(key = "image.sound_low")]
-    pub sound_low: Handle<Image>, // icons/sound_off.png
-
+    pub sound_low: Handle<Image>,
+    #[asset(key = "image.brightness_low")]
+    pub brightness_low: Handle<Image>,
+    #[asset(key = "image.wireless_off")]
+    pub wireless_off: Handle<Image>,
+    #[asset(key = "image.wireless_on")]
+    pub wireless_on: Handle<Image>,
+    #[asset(key = "image.bluetooth_off")]
+    pub bluetooth_off: Handle<Image>,
+    #[asset(key = "image.bluetooth_on")]
+    pub bluetooth_on: Handle<Image>,
     #[asset(key = "image.terminal")]
-    pub terminal: Handle<Image>, // icons/terminal.png
+    pub terminal: Handle<Image>,
+    #[asset(key = "image.cell_signal_none")]
+    pub cell_signal_none: Handle<Image>,
+    #[asset(key = "image.battery_10")]
+    pub battery_10: Handle<Image>,
 
-    #[asset(key = "image.gray_wireless_high")]
-    pub gray_wireless_high: Handle<Image>, // icons/gray_wireless_high.png
-    #[asset(key = "image.gray_wireless_low")]
-    pub gray_wireless_low: Handle<Image>, // icons/wireless_low.png
-    #[asset(key = "image.gray_wireless_medium")]
-    pub gray_wireless_medium: Handle<Image>, // icons/wireless_medium.png
-    #[asset(key = "image.gray_wireless_none")]
-    pub gray_wireless_none: Handle<Image>, // icons/wireless_none.png
-    #[asset(key = "image.gray_wireless_off")]
-    pub gray_wireless_off: Handle<Image>, // icons/wireless_off.png
-    #[asset(key = "image.gray_wireless_warning")]
-    pub gray_wireless_warning: Handle<Image>, // icons/wireless_warning.png
-
-    #[asset(key = "image.blue_wireless_high")]
-    pub blue_wireless_high: Handle<Image>, // icons/blue_wireless_high.png
-    #[asset(key = "image.blue_wireless_low")]
-    pub blue_wireless_low: Handle<Image>, // icons/wireless_low.png
-    #[asset(key = "image.blue_wireless_medium")]
-    pub blue_wireless_medium: Handle<Image>, // icons/wireless_medium.png
-    #[asset(key = "image.blue_wireless_none")]
-    pub blue_wireless_none: Handle<Image>, // icons/wireless_none.png
-
-
-    #[asset(key = "image.blue_secured_wireless_high")]
-    pub blue_secured_wireless_high: Handle<Image>, // icons/blue_secured_wireless_high.png
-    #[asset(key = "image.blue_secured_wireless_low")]
-    pub blue_secured_wireless_low: Handle<Image>, // icons/blue_secured_wireless_low.png
-    #[asset(key = "image.blue_secured_wireless_medium")]
-    pub blue_secured_wireless_medium: Handle<Image>, // icons/blue_secured_wireless_medium.png
-
-
-    #[asset(key = "image.gray_secured_wireless_high")]
-    pub gray_secured_wireless_high: Handle<Image>, // icons/gray_secured_wireless_high.png
-    #[asset(key = "image.gray_secured_wireless_low")]
-    pub gray_secured_wireless_low: Handle<Image>, // icons/gray_secured_wireless_low.png
-    #[asset(key = "image.gray_secured_wireless_medium")]
-    pub gray_secured_wireless_medium: Handle<Image>, // icons/gray_secured_wireless_medium.png
-
-
-    #[asset(key = "image.extend_screen_none")]
-    pub extend_screen_none: Handle<Image>, // icons/wireless_on.png
-    #[asset(key = "image.settings_icon")]
-    pub settings_icon: Handle<Image>,  // icons/settings_icon.png
-    
-
-    // Texture Atlas Layouts
-    #[asset(key = "layout.airplane")]
-    pub layout_airplane: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.bluetooth")]
-    pub layout_bluetooth: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.brightness")]
-    pub layout_brightness: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.calculator")]
-    pub layout_calculator: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.camera")]
-    pub layout_camera: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.cell_signal")]
-    pub layout_cell_signal: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.microphone")]
-    pub layout_microphone: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.power_saving")]
-    pub layout_power_saving: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.rotation")]
-    pub layout_rotation: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.screen_recording")]
-    pub layout_screen_recording: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.sound")]
-    pub layout_sound: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.terminal")]
-    pub layout_terminal: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.wireless")]
-    pub layout_wireless: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.extend_screen")]
-    pub layout_extend_screen: Handle<TextureAtlasLayout>,
-    #[asset(key = "layout.settings")]
-    pub layout_settings: Handle<TextureAtlasLayout>,
 }

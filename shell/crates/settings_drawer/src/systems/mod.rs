@@ -2,23 +2,41 @@ mod bar;
 mod button_system;
 pub mod setup;
 
-use bevy::{
-    prelude::*,
-};
-use bevy_styled_widgets::prelude::{StyledText, ThemeManager};
-use chrono::{Datelike, Timelike};
-pub use bar::{on_bar_drag, on_bar_drag_end, on_bar_drag_start};
-use service_plugins::bluetooth::{BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ListPairedDevices};
-use service_plugins::network_manager::{KnownNetworkList, NetworkAction, NetworkActionEvent, WirelessEnabled};
-use service_plugins::pulse_audio::{DefaultSink, PulseAudioAction, PulseAudioActionEvent};
-pub use button_system::{NORMAL_BUTTON, button_system};
-pub use setup::{exit_on_esc};
-use crate::{bluetooth_clickable_row, divider, list_popup, wireless_clickable_row, AirplaneMode, AirplaneModeEnabled, AutoRotation, Bluetooth, BluetoothEntry, Brightness, ContainerNode, Microphone, MicrophoneEnabled, RotationEnabled, ScreenRecording, ScreenRecordingEnabled, Screens, SettingsDrawerRoot, SettingsItem, SettingsItemText, SettingsPanelBackgroud, SettingsPanelBackgroudEvent, Sound, StyledPopup, Wireless, WirelessEntry};
-use crate::components::Clock;
 use crate::components::styled_card::StyledCard;
+use crate::components::Clock;
+use crate::systems::button_system::HOVERED_BUTTON;
 use crate::utils::{FontAssets, Icon};
 use crate::widgets::button::StyledButton;
-use crate::widgets::slider::StyledSlider;
+use crate::widgets::slider::{AccessibleName, StyledSlider};
+use crate::{
+    divider, list_popup, AirplaneMode, AirplaneModeEnabled, AutoRotation, Bluetooth,
+    BluetoothEntry, BluetoothIcon, Brightness, ContainerNode, Microphone, MicrophoneEnabled,
+    RotationEnabled, ScreenRecording, ScreenRecordingEnabled, Screens, SettingsDrawerRoot,
+    SettingsItem, SettingsItemText, SettingsPanelBackgroud, SettingsPanelBackgroudEvent, Sound,
+    StyledPopup, Wireless, WirelessEntry, WirelessIcon,
+};
+pub use bar::{on_bar_drag, on_bar_drag_end, on_bar_drag_start};
+use bevy::ecs::system::SystemId;
+use bevy::input_focus::tab_navigation::TabIndex;
+use bevy::prelude::*;
+use bevy::window::SystemCursorIcon;
+use bevy::winit::cursor::CursorIcon;
+use bevy_core_widgets::hover::Hovering;
+use bevy_core_widgets::CoreSlider;
+use bevy_styled_widgets::prelude::{StyledText, ThemeManager};
+pub use button_system::{button_system, NORMAL_BUTTON};
+use chrono::{Datelike, Timelike};
+use headless_widgets::CoreButton;
+use service_plugins::bluetooth::{
+    BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ListPairedDevices,
+};
+use service_plugins::network_manager::{
+    KnownNetworkList, NetworkAction, NetworkActionEvent, WirelessEnabled,
+};
+use service_plugins::pulse_audio::{DefaultSink, PulseAudioAction, PulseAudioActionEvent};
+use service_plugins::upower::DevicePercentage;
+use service_plugins::UPowerBatteryState;
+pub use setup::exit_on_esc;
 
 #[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
 pub enum AssetsLoadingState {
@@ -30,30 +48,24 @@ pub enum AssetsLoadingState {
 pub fn get_current_datetime() -> String {
     let now = chrono::Local::now();
     format!(
-        "{} {} {:02}:{:02}:{:02}",
+        "{} {} {:02}:{:02}",
         now.day(),
         now.format("%B"),
         now.hour(),
         now.minute(),
-        now.second()
     )
 }
 pub fn update_bluetooth_state(
-    mut query: Query<&mut StyledButton, With<Bluetooth>>,
+    mut query: Query<&mut ImageNode, With<BluetoothIcon>>,
     bluetooth_state: Res<BluetoothEnabledStatus>,
     font_assets: Res<FontAssets>,
 ) {
-    for mut styled_button in &mut query {
+    for mut bluetooth_icon in &mut query {
         info!("BluetoothEnabledStatus is updated :{:?}", bluetooth_state);
-
         if bluetooth_state.0 {
-            styled_button.active = Some(true);
-            styled_button.icon = Some(font_assets.bluetooth_on.clone());
-            styled_button.layout = Some(font_assets.layout_bluetooth.clone());
+            bluetooth_icon.image = font_assets.bluetooth_on.clone();
         } else {
-            styled_button.active = Some(false);
-            styled_button.icon = Some(font_assets.bluetooth_off.clone());
-            styled_button.layout = Some(font_assets.layout_bluetooth.clone());
+            bluetooth_icon.image = font_assets.bluetooth_off.clone();
         }
     }
 }
@@ -62,7 +74,7 @@ pub fn poll_default_sink_volume(mut event_writer: EventWriter<PulseAudioActionEv
     event_writer.write(PulseAudioActionEvent(PulseAudioAction::GetDefaultSink));
 }
 pub fn update_wireless_state(
-    mut query: Query<&mut StyledButton, With<Wireless>>,
+    mut query: Query<&mut ImageNode, With<WirelessIcon>>,
     wifi_state: Res<WirelessEnabled>,
     font_assets: Res<FontAssets>,
 ) {
@@ -70,15 +82,11 @@ pub fn update_wireless_state(
         "WirelessEnabled is updated Settings drawer :{:?}",
         wifi_state
     );
-    for mut styled_button in &mut query {
+    for mut wireless_image_node in &mut query {
         if wifi_state.0 {
-            styled_button.active = Some(true);
-            styled_button.icon = Some(font_assets.blue_wireless_none.clone());
-            styled_button.layout = Some(font_assets.layout_wireless.clone());
+            wireless_image_node.image = font_assets.wireless_on.clone();
         } else {
-            styled_button.active = Some(false);
-            styled_button.icon = Some(font_assets.gray_wireless_off.clone());
-            styled_button.layout = Some(font_assets.layout_wireless.clone());
+            wireless_image_node.image = font_assets.wireless_off.clone();
         }
     }
 }
@@ -94,128 +102,126 @@ pub fn update_auto_rotation_state(
         if auto_rotation.0 {
             styled_button.active = Some(true);
             styled_button.icon = Some(font_assets.rotation_on.clone());
-            styled_button.layout = Some(font_assets.layout_rotation.clone());
         } else {
             styled_button.active = Some(false);
             styled_button.icon = Some(font_assets.rotation_off.clone());
-            styled_button.layout = Some(font_assets.layout_rotation.clone());
         }
     }
 }
-pub fn update_wireless_list_state(
-    mut commands: Commands,
-    network_list: Res<KnownNetworkList>,
-    container_query: Query<Entity, With<ContainerNode>>,
-    children_query: Query<&Children>,
-    ui_node_query: Query<Entity, With<Node>>,
-    font_assets: Res<FontAssets>,
-) {
-    println!("update_wireless_list_state {:?}", network_list.clone());
-    if network_list.is_changed() {
-        if let Ok(container_entity) = container_query.single() {
-            // First, remove existing UI elements inside the container
-            if let Ok(children) = children_query.get(container_entity) {
-                for child in children.iter() {
-                    if ui_node_query.contains(child) {
-                        commands.entity(child).despawn();
-                    }
-                }
-            }
+// pub fn update_wireless_list_state(
+//     mut commands: Commands,
+//     network_list: Res<KnownNetworkList>,
+//     container_query: Query<Entity, With<ContainerNode>>,
+//     children_query: Query<&Children>,
+//     ui_node_query: Query<Entity, With<Node>>,
+//     font_assets: Res<FontAssets>,
+// ) {
+//     println!("update_wireless_list_state {:?}", network_list.clone());
+//     if network_list.is_changed() {
+//         if let Ok(container_entity) = container_query.single() {
+//             // First, remove existing UI elements inside the container
+//             if let Ok(children) = children_query.get(container_entity) {
+//                 for child in children.iter() {
+//                     if ui_node_query.contains(child) {
+//                         commands.entity(child).despawn();
+//                     }
+//                 }
+//             }
+//
+//             for (i, network) in network_list.0.iter().enumerate() {
+//                 let wireless_clone = network.clone();
+//
+//                 let on_click = commands.register_system(
+//                     move |mut commands: Commands,
+//                           q_status_text: Query<&mut StyledText, With<WirelessEntry>>,
+//                           mut event_writer: EventWriter<NetworkActionEvent>| {
+//                         println!("Wireless entry clicked : {:?} ", wireless_clone);
+//
+//                         if !wireless_clone.is_active {
+//                             event_writer.write(NetworkActionEvent(
+//                                 NetworkAction::ConnectToSavedNetwork(wireless_clone.ssid.clone()),
+//                             ));
+//                             // // Todo: change status to connecting
+//                             // for mut text in q_status_text.iter() {
+//                             //     // text.content = DeviceStatus::Connecting.to_string();
+//                             // }
+//                         }
+//                     },
+//                 );
+//
+//                 commands.entity(container_entity).with_children(|parent| {
+//                     parent.spawn(wireless_clickable_row(
+//                         &network.ssid,
+//                         network.is_active,
+//                         network.signal_strength,
+//                         &network.security,
+//                         &font_assets,
+//                         on_click,
+//                     ));
+//                 });
+//             }
+//         }
+//     }
+// }
 
-            for (i, network) in network_list.0.iter().enumerate() {
-                let wireless_clone = network.clone();
-
-                let on_click = commands.register_system(
-                    move |mut commands: Commands,
-                          q_status_text: Query<&mut StyledText, With<WirelessEntry>>,
-                          mut event_writer: EventWriter<NetworkActionEvent>| {
-                        println!("Wireless entry clicked : {:?} ", wireless_clone);
-
-                        if !wireless_clone.is_active {
-                            event_writer.write(NetworkActionEvent(
-                                NetworkAction::ConnectToSavedNetwork(wireless_clone.ssid.clone()),
-                            ));
-                            // // Todo: change status to connecting
-                            // for mut text in q_status_text.iter() {
-                            //     // text.content = DeviceStatus::Connecting.to_string();
-                            // }
-                        }
-                    },
-                );
-
-                commands.entity(container_entity).with_children(|parent| {
-                    parent.spawn(wireless_clickable_row(
-                        &network.ssid,
-                        network.is_active,
-                        network.signal_strength,
-                        &network.security,
-                        &font_assets,
-                        on_click,
-                    ));
-                });
-            }
-        }
-    }
-}
-
-pub fn update_bluetooth_list_state(
-    mut commands: Commands,
-    bluetooth_list: Res<ListPairedDevices>,
-    container_query: Query<Entity, With<ContainerNode>>,
-    children_query: Query<&Children>,
-    ui_node_query: Query<Entity, With<Node>>,
-    font_assets: Res<FontAssets>,
-) {
-    println!("update_bluetooth_list_state {:?}", bluetooth_list.clone());
-    if bluetooth_list.is_changed() {
-        if let Ok(container_entity) = container_query.single() {
-            // First, remove existing UI elements inside the container
-            if let Ok(children) = children_query.get(container_entity) {
-                for child in children.iter() {
-                    if ui_node_query.contains(child) {
-                        commands.entity(child).despawn();
-                    }
-                }
-            }
-
-            // Now populate the container with the new wireless entries
-            for (i, bluetooth) in bluetooth_list.0.iter().enumerate() {
-                let bluetooth_clone = bluetooth.clone();
-
-                let on_click = commands.register_system(
-                    move |mut commands: Commands,
-                          q_status_text: Query<&mut StyledText, With<BluetoothEntry>>,
-                          mut event_writer: EventWriter<BluetoothActionEvent>| {
-                        println!("Bluetooth entry clicked : {:?} ", bluetooth_clone);
-
-                        if !bluetooth_clone.connected && bluetooth_clone.paired {
-                            event_writer.write(BluetoothActionEvent(
-                                BluetoothAction::ConnectToDevice(bluetooth_clone.address.clone()),
-                            ));
-                        } else {
-                            event_writer.write(BluetoothActionEvent(
-                                BluetoothAction::DisconnectDevice(bluetooth_clone.address.clone()),
-                            ));
-                        }
-                    },
-                );
-
-                commands.entity(container_entity).with_children(|parent| {
-                    parent.spawn(bluetooth_clickable_row(
-                        &bluetooth.name,
-                        bluetooth.connected,
-                        &font_assets,
-                        on_click,
-                    ));
-
-                    if i != bluetooth_list.0.len() - 1 {
-                        parent.spawn(divider());
-                    }
-                });
-            }
-        }
-    }
-}
+// pub fn update_bluetooth_list_state(
+//     mut commands: Commands,
+//     bluetooth_list: Res<ListPairedDevices>,
+//     container_query: Query<Entity, With<ContainerNode>>,
+//     children_query: Query<&Children>,
+//     ui_node_query: Query<Entity, With<Node>>,
+//     font_assets: Res<FontAssets>,
+// ) {
+//     println!("update_bluetooth_list_state {:?}", bluetooth_list.clone());
+//     if bluetooth_list.is_changed() {
+//         if let Ok(container_entity) = container_query.single() {
+//             // First, remove existing UI elements inside the container
+//             if let Ok(children) = children_query.get(container_entity) {
+//                 for child in children.iter() {
+//                     if ui_node_query.contains(child) {
+//                         commands.entity(child).despawn();
+//                     }
+//                 }
+//             }
+//
+//             // Now populate the container with the new wireless entries
+//             for (i, bluetooth) in bluetooth_list.0.iter().enumerate() {
+//                 let bluetooth_clone = bluetooth.clone();
+//
+//                 let on_click = commands.register_system(
+//                     move |mut commands: Commands,
+//                           q_status_text: Query<&mut StyledText, With<BluetoothEntry>>,
+//                           mut event_writer: EventWriter<BluetoothActionEvent>| {
+//                         println!("Bluetooth entry clicked : {:?} ", bluetooth_clone);
+//
+//                         if !bluetooth_clone.connected && bluetooth_clone.paired {
+//                             event_writer.write(BluetoothActionEvent(
+//                                 BluetoothAction::ConnectToDevice(bluetooth_clone.address.clone()),
+//                             ));
+//                         } else {
+//                             event_writer.write(BluetoothActionEvent(
+//                                 BluetoothAction::DisconnectDevice(bluetooth_clone.address.clone()),
+//                             ));
+//                         }
+//                     },
+//                 );
+//
+//                 commands.entity(container_entity).with_children(|parent| {
+//                     parent.spawn(bluetooth_clickable_row(
+//                         &bluetooth.name,
+//                         bluetooth.connected,
+//                         &font_assets,
+//                         on_click,
+//                     ));
+//
+//                     if i != bluetooth_list.0.len() - 1 {
+//                         parent.spawn(divider());
+//                     }
+//                 });
+//             }
+//         }
+//     }
+// }
 
 pub fn update_microphone_state(
     mut query: Query<&mut StyledButton, With<Microphone>>,
@@ -226,12 +232,10 @@ pub fn update_microphone_state(
     for mut styled_button in &mut query {
         if state.0 {
             styled_button.active = Some(true);
-            styled_button.icon = Some(font_assets.microphone_on.clone());
-            styled_button.layout = Some(font_assets.layout_microphone.clone());
+            styled_button.icon = Some(font_assets.mic_on.clone());
         } else {
             styled_button.active = Some(false);
-            styled_button.icon = Some(font_assets.microphone_off.clone());
-            styled_button.layout = Some(font_assets.layout_microphone.clone());
+            styled_button.icon = Some(font_assets.mic_off.clone());
         }
     }
 }
@@ -246,26 +250,27 @@ pub fn update_screen_recording_state(
         if state.0 {
             styled_button.active = Some(true);
             styled_button.icon = Some(font_assets.screen_recording_on.clone());
-            styled_button.layout = Some(font_assets.layout_screen_recording.clone());
         } else {
             styled_button.active = Some(false);
             styled_button.icon = Some(font_assets.screen_recording_off.clone());
-            styled_button.layout = Some(font_assets.layout_screen_recording.clone());
         }
     }
 }
 
-pub fn set_initial_airplane_mode_state(mut query: Query<&mut StyledButton, With<AirplaneMode>>, font_assets: Res<FontAssets>, bluetooth_enabled: ResMut<BluetoothEnabledStatus>,wireless_enabled: ResMut<WirelessEnabled>) {
+pub fn set_initial_airplane_mode_state(
+    mut query: Query<&mut StyledButton, With<AirplaneMode>>,
+    font_assets: Res<FontAssets>,
+    bluetooth_enabled: ResMut<BluetoothEnabledStatus>,
+    wireless_enabled: ResMut<WirelessEnabled>,
+) {
     for mut styled_button in &mut query {
         if !bluetooth_enabled.0 && !wireless_enabled.0 {
             // Airplane mode is activated
             styled_button.active = Some(true);
-            styled_button.icon = Some(font_assets.airplane_on.clone());
-            styled_button.layout = Some(font_assets.layout_airplane.clone());
+            styled_button.icon = Some(font_assets.airplane_tilt.clone());
         } else {
             styled_button.active = Some(false);
-            styled_button.icon = Some(font_assets.airplane_off.clone());
-            styled_button.layout = Some(font_assets.layout_airplane.clone());
+            styled_button.icon = Some(font_assets.airplane_tilt.clone());
         }
     }
 }
@@ -281,8 +286,7 @@ pub fn update_airplane_mode_state(
     for mut styled_button in &mut query {
         if airplane_enabled.0 {
             styled_button.active = Some(true);
-            styled_button.icon = Some(font_assets.airplane_on.clone());
-            styled_button.layout = Some(font_assets.layout_airplane.clone());
+            styled_button.icon = Some(font_assets.airplane_tilt.clone());
             bluetooth_event_writer.write(BluetoothActionEvent(BluetoothAction::ToggleBluetooth(
                 !bluetooth_enabled.0,
             )));
@@ -293,8 +297,7 @@ pub fn update_airplane_mode_state(
             )));
             network_event_writer.write(NetworkActionEvent(NetworkAction::ToggleWifi(true)));
             styled_button.active = Some(false);
-            styled_button.icon = Some(font_assets.airplane_off.clone());
-            styled_button.layout = Some(font_assets.layout_airplane.clone());
+            styled_button.icon = Some(font_assets.airplane_tilt.clone());
         }
     }
 }
@@ -311,7 +314,6 @@ pub fn update_volume_state(
         styled_slider.value = value;
     }
 }
-
 
 pub fn update_popup_background(
     theme_manager: Res<ThemeManager>,
@@ -423,11 +425,10 @@ pub fn toggle_auto_rotation(mut enabled: ResMut<RotationEnabled>) {
 }
 
 pub fn toggle_wireless(
-    mut enabled: ResMut<WirelessEnabled>,
+    enabled: ResMut<WirelessEnabled>,
     mut event_writer: EventWriter<NetworkActionEvent>,
 ) {
-    enabled.0 = !enabled.0;
-    event_writer.write(NetworkActionEvent(NetworkAction::ToggleWifi(enabled.0)));
+    event_writer.write(NetworkActionEvent(NetworkAction::ToggleWifi(!enabled.0)));
 }
 
 // pub fn change_sound_volume(
@@ -503,6 +504,7 @@ pub fn on_animation_background_completed(
     mut bg_query: Query<Entity, With<SettingsPanelBackgroud>>,
     font_assets: Option<Res<FontAssets>>,
     mut screens_state: ResMut<NextState<Screens>>,
+    battery_percentage: Res<DevicePercentage>,
 ) {
     let on_toggle_theme_mode = commands.register_system(toggle_mode);
     let on_toggle_auto_rotation = commands.register_system(toggle_auto_rotation);
@@ -518,6 +520,7 @@ pub fn on_animation_background_completed(
     if font_assets.is_none() {
         return;
     }
+    let battery_10 = font_assets.as_ref().unwrap().battery_10.clone();
     for _event in event_reader.read() {
         // Remove the background component when the animation is completed
         println!("Animation completed");
@@ -531,6 +534,7 @@ pub fn on_animation_background_completed(
                     Node {
                         display: Display::Flex,
                         flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
                         width: Val::Percent(100.0),
                         ..default()
                     },
@@ -545,35 +549,54 @@ pub fn on_animation_background_completed(
                         },
                         children![
                             (
-                                StyledText::builder()
-                                    .content(get_current_datetime())
-                                    .font(font_assets.as_ref().unwrap().primary_500.clone())
-                                    .font_size(16.)
-                                    .build(),
-                                Clock
+                                Text::new(get_current_datetime()),
+                                TextFont {
+                                    font_size: 16.0,
+                                    ..default()
+                                },
+                                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                                TextShadow::default()
                             ),
                             (
-                                Node { ..default() },
+                                Node {
+                                    align_items: AlignItems::Center, // This aligns text and icon vertically
+                                    ..default()
+                                },
                                 children![
-                                    (StyledText::builder()
-                                        .content("65%")
-                                        .font(font_assets.as_ref().unwrap().primary_500.clone())
-                                        .font_size(16.)
-                                        .build(),),
+                                    (
+                                        Text::new(format!("{}%", battery_percentage.0)),
+                                        TextFont {
+                                            font_size: 16.0,
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                                        TextShadow::default()
+                                    ),
                                     (Node {
                                         margin: UiRect::right(Val::Px(1.)),
                                         ..default()
                                     }),
-                                    (StyledText::builder()
-                                        .content(Icon::BatteryFull)
-                                        .font(font_assets.as_ref().unwrap().primary_500.clone())
-                                        .font_size(16.)
-                                        .build(),)
+                                    (
+                                        ImageNode::new(battery_10.clone()),
+                                        Node {
+                                            width: Val::Px(28.),
+                                            height: Val::Px(28.),
+                                            ..Default::default()
+                                        }
+                                    ),
                                 ]
                             ),
                             (
                                 Node { ..default() },
                                 children![
+                                    (
+                                        StyledText::builder()
+                                            .content(Icon::Settings.to_string())
+                                            .font(font_assets.as_ref().unwrap().font_icons.clone())
+                                            .font_size(24.)
+                                            .build(),
+                                        Node { ..default() }
+                                    ),
                                     (
                                         StyledText::builder()
                                             .content(Icon::Power.to_string())
@@ -584,15 +607,7 @@ pub fn on_animation_background_completed(
                                             margin: UiRect::right(Val::Px(16.)),
                                             ..default()
                                         }
-                                    ),
-                                    (
-                                        StyledText::builder()
-                                            .content(Icon::Settings.to_string())
-                                            .font(font_assets.as_ref().unwrap().font_icons.clone())
-                                            .font_size(24.)
-                                            .build(),
-                                        Node { ..default() }
-                                    ),
+                                    )
                                 ]
                             )
                         ]
@@ -600,51 +615,26 @@ pub fn on_animation_background_completed(
                 ));
 
                 let FontAssets {
-                    airplane_off,
-                    airplane_on,
-                    bluetooth_connected,
-                    bluetooth_none,
-                    bluetooth_off,
-                    bluetooth_on,
-                    bluetooth_warning,
-                    brightness_low,
-                    calculator,
-                    calculator_pressed,
-                    camera,
-                    camera_pressed,
-                    cell_signal_high,
-                    microphone_off,
-                    microphone_on,
-                    power_saving_off,
-                    power_saving_on,
-                    rotation_off,
+                    airplane_tilt,
                     rotation_on,
-                    screen_recording_off,
+                    rotation_off,
+                    second_screen_on,
+                    second_screen_off,
+                    power_mode_none,
+                    power_mode_low,
+                    power_mode_high,
+                    mic_on,
+                    mic_off,
                     screen_recording_on,
+                    screen_recording_off,
+                    calculator,
+                    camera,
                     sound_low,
+                    brightness_low,
+                    wireless_off,
+                    bluetooth_off,
                     terminal,
-                    gray_wireless_high,
-                    gray_wireless_low,
-                    gray_wireless_medium,
-                    gray_wireless_off,
-                    gray_wireless_warning,
-                    extend_screen_none,
-                    layout_airplane,
-                    layout_bluetooth,
-                    layout_brightness,
-                    layout_calculator,
-                    layout_camera,
-                    layout_cell_signal,
-                    layout_microphone,
-                    layout_power_saving,
-                    layout_rotation,
-                    layout_screen_recording,
-                    layout_sound,
-                    layout_terminal,
-                    layout_wireless,
-                    layout_extend_screen,
-                    settings_icon,
-                    layout_settings,
+                    cell_signal_none,
                     ..
                 } = &**font_assets.as_ref().unwrap();
 
@@ -677,66 +667,206 @@ pub fn on_animation_background_completed(
                     .with_children(|parent| {
                         parent.spawn((
                             AutoRotation,
-                            StyledButton::builder()
-                                .icon(rotation_off.clone())
-                                .layout(layout_rotation.clone())
-                                .on_click(on_toggle_auto_rotation)
-                                .build(),
+                            (
+                                Node {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::Center,
+                                    ..Default::default()
+                                },
+                                children![(
+                                    ImageNode::new(rotation_on.clone()),
+                                    Node {
+                                        width: Val::Percent(75.),
+                                        height: Val::Percent(75.),
+                                        ..Default::default()
+                                    }
+                                )],
+                                BorderRadius::all(Val::Px(11.82)),
+                                BackgroundColor(NORMAL_BUTTON),
+                                Button,
+                                CoreButton {
+                                    on_click: Some(on_toggle_auto_rotation),
+                                },
+                            ),
                         ));
 
                         parent.spawn((
                             AirplaneMode,
-                            StyledButton::builder()
-                                .icon(airplane_off.clone())
-                                .layout(layout_airplane.clone())
-                                .active_background_color(Color::oklcha(0.7878, 0.1643, 75.13, 0.90))
-                                .on_click(on_toggle_airplane_mode)
-                                .build(),
+                            (
+                                Node {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::Center,
+                                    ..Default::default()
+                                },
+                                children![(
+                                    ImageNode::new(airplane_tilt.clone()),
+                                    Node {
+                                        width: Val::Percent(75.),
+                                        height: Val::Percent(75.),
+                                        ..Default::default()
+                                    }
+                                )],
+                                BorderRadius::all(Val::Px(11.82)),
+                                BackgroundColor(NORMAL_BUTTON),
+                                Button,
+                                CoreButton {
+                                    on_click: Some(on_toggle_airplane_mode),
+                                },
+                            ),
                         ));
 
-                        parent.spawn((StyledButton::builder()
-                                          .icon(extend_screen_none.clone())
-                                          .layout(layout_extend_screen.clone())
-                                          // .on_click(on_click)
-                                          .build(),));
+                        // Screen
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            children![(
+                                ImageNode::new(second_screen_off.clone()),
+                                Node {
+                                    width: Val::Percent(75.),
+                                    height: Val::Percent(75.),
+                                    ..Default::default()
+                                }
+                            )],
+                            BorderRadius::all(Val::Px(11.82)),
+                            BackgroundColor(HOVERED_BUTTON),
+                            Button,
+                            CoreButton { on_click: None },
+                        ));
 
-                        parent.spawn((StyledButton::builder()
-                                          .icon(power_saving_off.clone())
-                                          .layout(layout_power_saving.clone())
-                                          // .on_click(on_click)
-                                          .build(),));
+                        // Power
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            children![(
+                                ImageNode::new(power_mode_high.clone()),
+                                Node {
+                                    width: Val::Percent(75.),
+                                    height: Val::Percent(75.),
+                                    ..Default::default()
+                                }
+                            )],
+                            BorderRadius::all(Val::Px(11.82)),
+                            BackgroundColor(NORMAL_BUTTON),
+                            Button,
+                            CoreButton { on_click: None },
+                        ));
 
-                        parent.spawn((StyledButton::builder()
-                                          .icon(calculator.clone())
-                                          .layout(layout_calculator.clone())
-                                          // .on_click(on_click)
-                                          .build(),));
-
+                        // Microphone
                         parent.spawn((
                             Microphone,
-                            StyledButton::builder()
-                                .icon(microphone_off.clone())
-                                .layout(layout_microphone.clone())
-                                .on_click(on_toggle_microphone)
-                                .build(),
+                            (
+                                Node {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::Center,
+                                    ..Default::default()
+                                },
+                                children![(
+                                    ImageNode::new(mic_off.clone()),
+                                    Node {
+                                        width: Val::Percent(75.),
+                                        height: Val::Percent(75.),
+                                        ..Default::default()
+                                    }
+                                )],
+                                BorderRadius::all(Val::Px(11.82)),
+                                BackgroundColor(NORMAL_BUTTON),
+                                Button,
+                                CoreButton {
+                                    on_click: Some(on_toggle_microphone),
+                                },
+                            ),
                         ));
 
+                        // Screen Recording
                         parent.spawn((
                             ScreenRecording,
-                            StyledButton::builder()
-                                .icon(screen_recording_off.clone())
-                                .layout(layout_screen_recording.clone())
-                                .on_click(on_toggle_screen_recording)
-                                .build(),
+                            (
+                                Node {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    align_items: AlignItems::Center,
+                                    justify_content: JustifyContent::Center,
+                                    ..Default::default()
+                                },
+                                children![(
+                                    ImageNode::new(screen_recording_off.clone()),
+                                    Node {
+                                        width: Val::Percent(75.),
+                                        height: Val::Percent(75.),
+                                        ..Default::default()
+                                    }
+                                )],
+                                BorderRadius::all(Val::Px(11.82)),
+                                BackgroundColor(NORMAL_BUTTON),
+                                Button,
+                                CoreButton {
+                                    on_click: Some(on_toggle_screen_recording),
+                                },
+                            ),
                         ));
 
-                        parent.spawn((StyledButton::builder()
-                                          .icon(camera.clone())
-                                          .layout(layout_camera.clone())
-                                          // .on_click(on_click)
-                                          .build(),));
-                    });
+                        // Calculator
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            children![(
+                                ImageNode::new(calculator.clone()),
+                                Node {
+                                    width: Val::Percent(75.),
+                                    height: Val::Percent(75.),
+                                    ..Default::default()
+                                }
+                            )],
+                            BorderRadius::all(Val::Px(11.82)),
+                            BackgroundColor(NORMAL_BUTTON),
+                            Button,
+                            CoreButton { on_click: None },
+                        ));
 
+                        // Camera
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            children![(
+                                ImageNode::new(camera.clone()),
+                                Node {
+                                    width: Val::Percent(75.),
+                                    height: Val::Percent(75.),
+                                    ..Default::default()
+                                }
+                            )],
+                            BorderRadius::all(Val::Px(11.82)),
+                            BackgroundColor(NORMAL_BUTTON),
+                            Button,
+                            CoreButton { on_click: None },
+                        ));
+                    });
                 parent
                     .spawn((Node {
                         width: Val::Percent(100.0),
@@ -758,7 +888,6 @@ pub fn on_animation_background_completed(
                             Sound,
                             StyledSlider::builder()
                                 .icon(sound_low.clone())
-                                .layout(layout_sound.clone())
                                 .max(100.)
                                 .min(0.)
                                 .value(10.)
@@ -769,7 +898,6 @@ pub fn on_animation_background_completed(
                             Brightness,
                             StyledSlider::builder()
                                 .icon(brightness_low.clone())
-                                .layout(layout_brightness.clone())
                                 .max(100.)
                                 .min(0.)
                                 .value(50.)
@@ -778,56 +906,177 @@ pub fn on_animation_background_completed(
                     });
 
                 parent
-                    .spawn((Node {
-                        width: Val::Percent(100.0),
-                        height: Val::Px(89.0),
-                        display: Display::Grid,
-                        grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
-                        grid_template_rows: RepeatedGridTrack::flex(1, 1.0),
-                        row_gap: Val::Px(0.0),
-                        column_gap: Val::Px(40.0),
-                        align_items: AlignItems::Center,
-                        justify_items: JustifyItems::Center,
-                        justify_content: JustifyContent::Center,
-                        margin: UiRect::top(Val::Px(20.)),
-                        ..default()
-                    },))
+                    .spawn((
+                        Node {
+                            width: Val::Percent(100.0),
+                            height: Val::Px(95.0),
+                            display: Display::Grid,
+                            grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
+                            grid_template_rows: RepeatedGridTrack::flex(1, 1.0),
+                            row_gap: Val::Px(0.0),
+                            column_gap: Val::Px(40.0),
+                            align_items: AlignItems::Center,
+                            justify_items: JustifyItems::Center,
+                            justify_content: JustifyContent::Center,
+                            margin: UiRect::top(Val::Px(20.)),
+                            ..default()
+                        },
+                        // BackgroundColor(Color::linear_rgba(1., 1., 1., 0.8)),
+                    ))
                     .with_children(|parent| {
                         // Spawn the settings items
                         parent.spawn((
                             Wireless,
-                            StyledButton::builder()
-                                .icon(gray_wireless_off.clone())
-                                .layout(layout_wireless.clone())
-                                .on_click(on_toggle_wireless)
-                                .on_long_press(on_long_press_wireless)
-                                .build(),
+                            (
+                                Node {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    align_items: AlignItems::Center,
+                                    flex_direction: FlexDirection::Column, // stack vertically
+                                    justify_content: JustifyContent::Center,
+                                    ..Default::default()
+                                },
+                                children![
+                                    (
+                                        WirelessIcon,
+                                        ImageNode::new(wireless_off.clone()),
+                                        Node {
+                                            width: Val::Percent(75.),
+                                            height: Val::Percent(75.),
+                                            ..Default::default()
+                                        }
+                                    ),
+                                    (
+                                        // Text below icon
+                                        Text::new("office"),
+                                        TextFont {
+                                            font_size: 12.0,
+                                            // font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                                        TextShadow::default()
+                                    )
+                                ],
+                                BorderRadius::all(Val::Px(11.82)),
+                                BackgroundColor(NORMAL_BUTTON),
+                                Button,
+                                CoreButton {
+                                    on_click: Some(on_toggle_wireless),
+                                },
+                            ),
                         ));
 
                         parent.spawn((
                             Bluetooth,
-                            StyledButton::builder()
-                                .icon(bluetooth_off.clone())
-                                .layout(layout_bluetooth.clone())
-                                .on_click(on_toggle_bluetooth)
-                                .on_long_press(on_long_press_bluetooth)
-                                .build(),
+                            (
+                                Node {
+                                    width: Val::Percent(100.),
+                                    height: Val::Percent(100.),
+                                    align_items: AlignItems::Center,
+                                    flex_direction: FlexDirection::Column,
+                                    justify_content: JustifyContent::Center,
+                                    ..Default::default()
+                                },
+                                children![
+                                    (
+                                        BluetoothIcon,
+                                        ImageNode::new(bluetooth_off.clone()),
+                                        Node {
+                                            width: Val::Percent(75.),
+                                            height: Val::Percent(75.),
+                                            ..Default::default()
+                                        }
+                                    ),
+                                    (
+                                        Text::new("office"),
+                                        TextFont {
+                                            font_size: 12.0,
+                                            // font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            ..default()
+                                        },
+                                        TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                                        TextShadow::default()
+                                    )
+                                ],
+                                BorderRadius::all(Val::Px(11.82)),
+                                BackgroundColor(NORMAL_BUTTON),
+                                Button,
+                                CoreButton {
+                                    on_click: Some(on_toggle_airplane_mode),
+                                },
+                            ),
                         ));
 
-                        parent.spawn((StyledButton::builder()
-                                          .icon(terminal.clone())
-                                          .layout(layout_terminal.clone())
-                                          // .on_click(on_toggle_bluetooth)
-                                          .build(),));
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            children![(
+                                ImageNode::new(terminal.clone()),
+                                Node {
+                                    width: Val::Percent(75.),
+                                    height: Val::Percent(75.),
+                                    ..Default::default()
+                                }
+                            )],
+                            BorderRadius::all(Val::Px(11.82)),
+                            BackgroundColor(NORMAL_BUTTON),
+                            Button,
+                            CoreButton {
+                                on_click: Some(on_toggle_airplane_mode),
+                            },
+                        ));
 
-                        parent.spawn((StyledButton::builder()
-                                          .icon(cell_signal_high.clone())
-                                          .layout(layout_cell_signal.clone())
-                                          // .on_click(on_toggle_bluetooth)
-                                          .build(),));
+                        parent.spawn((
+                            Node {
+                                width: Val::Percent(100.),
+                                height: Val::Percent(100.),
+                                align_items: AlignItems::Center,
+                                justify_content: JustifyContent::Center,
+                                ..Default::default()
+                            },
+                            children![(
+                                ImageNode::new(cell_signal_none.clone()),
+                                Node {
+                                    width: Val::Percent(75.),
+                                    height: Val::Percent(75.),
+                                    ..Default::default()
+                                }
+                            )],
+                            BorderRadius::all(Val::Px(11.82)),
+                            BackgroundColor(NORMAL_BUTTON),
+                            Button,
+                            CoreButton {
+                                on_click: Some(on_toggle_airplane_mode),
+                            },
+                        ));
                     });
             });
             screens_state.set(Screens::SettingsDrawer);
+        }
+    }
+}
+
+fn get_icon_by_percentage(device_percentage: f64) -> String {
+    match device_percentage.round() as u32 {
+        p if p >= 95 => Icon::BatteryFull.into(),
+        p if p >= 90 => Icon::BatteryFull.into(),
+        p if p >= 80 => Icon::BatteryFull.into(),
+        p if p >= 70 => Icon::BatteryFull.into(),
+        p if p >= 60 => Icon::BatteryFull.into(),
+        p if p >= 50 => Icon::BatteryFull.into(),
+        p if p >= 40 => Icon::BatteryFull.into(),
+        p if p >= 30 => Icon::BatteryFull.into(),
+        p if p >= 20 => Icon::BatteryFull.into(),
+        p if p >= 10 => Icon::BatteryEmpty.into(),
+        _ => {
+            // Default fallback icon
+            Icon::BatteryEmpty.into()
         }
     }
 }

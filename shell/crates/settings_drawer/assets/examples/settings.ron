@@ -56,300 +56,79 @@
     "fonts.icons": File (
         path: "fonts/font-icons.ttf"
     ),
-    // "image.wireless_enable": File (
-    //     path: "icons/wireless_enable.png",
-    // ),
-    // "layout.wireless_enable": TextureAtlasLayout (
-    //     tile_size_x: 140,
-    //     tile_size_y: 140,
-    //     columns: 6,
-    //     rows: 5
-    // ),
 
-    "layout.airplane": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
+    "image.airplane_tilt": File (
+        path: "icons/airplane_tilt.png",
     ),
 
-    "image.airplane_off": File (
-        path: "icons/airplane_off.png",
+    "image.rotation_on": File (
+        path: "icons/rotation_on.png",
     ),
-
-    "image.airplane_on": File (
-        path: "icons/airplane_on.png",
+    "image.rotation_off": File (
+        path: "icons/rotation_off.png",
     ),
-
-    "layout.bluetooth": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
+    "image.second_screen_on": File (
+        path: "icons/second_screen_on.png",
     ),
-
-    "image.bluetooth_connected": File (
-        path: "icons/bluetooth_connected.png",
+    "image.second_screen_off": File (
+        path: "icons/second_screen_off.png",
     ),
-
-    "image.bluetooth_none": File (
-        path: "icons/bluetooth_none.png",
+    "image.power_mode_none": File (
+        path: "icons/power_mode_none.png",
     ),
-
+    "image.power_mode_high": File (
+        path: "icons/power_mode_high.png",
+    ),
+    "image.power_mode_low": File (
+        path: "icons/power_mode_low.png",
+    ),
+    "image.mic_on": File (
+        path: "icons/mic_on.png",
+    ),
+    "image.mic_off": File (
+        path: "icons/mic_off.png",
+    ),
+    "image.screen_recording_on": File (
+        path: "icons/screen_recording_on.png",
+    ),
+    "image.screen_recording_off": File (
+        path: "icons/screen_recording_off.png",
+    ),
+    "image.screen_recording_off": File (
+        path: "icons/screen_recording_off.png",
+    ),
+    "image.calculator": File (
+        path: "icons/calculator.png",
+    ),
+    "image.camera": File (
+        path: "icons/camera.png",
+    ),
+    "image.sound_low": File (
+        path: "icons/sound_low.png",
+    ),
+    "image.brightness_low": File (
+        path: "icons/brightness_low.png",
+    ),
+    "image.wireless_off": File (
+        path: "icons/wireless_off.png",
+    ),
+    "image.wireless_on": File (
+        path: "icons/wireless_on.png",
+    ),
     "image.bluetooth_off": File (
         path: "icons/bluetooth_off.png",
     ),
     "image.bluetooth_on": File (
         path: "icons/bluetooth_on.png",
     ),
-
-    "image.bluetooth_warning": File (
-        path: "icons/bluetooth_warning.png",
+    "image.cell_signal_none": File (
+        path: "icons/cell_signal_none.png",
     ),
-
-    "layout.brightness": TextureAtlasLayout (
-        tile_size_x: 30,
-        tile_size_y: 30,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.brightness_low": File (
-        path: "icons/brightness.png",
-    ),
-
-    "layout.calculator": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.calculator": File (
-        path: "icons/calculator.png",
-    ),
-
-    "image.calculator_pressed": File (
-        path: "icons/calculator_pressed.png",
-    ),
-
-    "layout.camera": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.camera": File (
-        path: "icons/camera.png",
-    ),
-
-    "image.camera_pressed": File (
-        path: "icons/camera_pressed.png",
-    ),
-
-    "layout.cell_signal": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.cell_signal_high": File (
-        path: "icons/cell_signal_high.png",
-    ),
-
-    "layout.microphone": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.microphone_off": File (
-        path: "icons/microphone_off.png",
-    ),
-  
-    "image.microphone_on": File (
-        path: "icons/microphone_on.png",
-    ),
-
-        "layout.power_saving": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.power_saving_off": File (
-        path: "icons/power_saving_off.png",
-    ),
-
-    "image.power_saving_on": File (
-        path: "icons/power_saving_on.png",
-    ),
-
-    "layout.rotation": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.rotation_off": File (
-        path: "icons/rotation_off.png",
-    ),
-
-    "image.rotation_on": File (
-        path: "icons/rotation_on.png",
-    ),
-
-    "layout.screen_recording": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.screen_recording_off": File (
-        path: "icons/screen_recording_off.png",
-    ),
-
-    "image.screen_recording_on": File (
-        path: "icons/screen_recording_on.png",
-    ),
-
-    "image.sound_low": File (
-        path: "icons/sound_off.png",
-    ),
-    "layout.sound": TextureAtlasLayout (
-        tile_size_x: 30,
-        tile_size_y: 30,
-        columns: 1,
-        rows: 1
-    ),
-
     "image.terminal": File (
         path: "icons/terminal.png",
     ),
-    "layout.terminal": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    // "image.screen_mirroring_off": File (
-    //     path: "icons/monitor.png",
-    // ),
-    // "layout.screen_mirroring_off": TextureAtlasLayout (
-    //     tile_size_x: 40,
-    //     tile_size_y: 40,
-    //     columns: 1,
-    //     rows: 1
-    // ),
-
-    "layout.wireless": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.gray_wireless_warning": File (
-        path: "icons/gray_wireless_warning.png",
-    ),
-
-    "image.gray_wireless_high": File (
-        path: "icons/gray_wireless_high.png",
-    ),
-
-    "image.gray_wireless_low": File (
-        path: "icons/gray_wireless_low.png",
-    ),
-
-    "image.gray_wireless_medium": File (
-        path: "icons/gray_wireless_medium.png",
-    ),
-
-    "image.gray_wireless_none": File (
-        path: "icons/gray_wireless_none.png",
-    ),
-
-    "image.gray_wireless_off": File (
-        path: "icons/gray_wireless_off.png",
-    ),
-
-    
-
-
-
-
-    "image.blue_wireless_high": File (
-        path: "icons/blue_wireless_high.png",
-    ),
-
-    "image.blue_wireless_low": File (
-        path: "icons/blue_wireless_low.png",
-    ),
-
-    "image.blue_wireless_medium": File (
-        path: "icons/blue_wireless_medium.png",
-    ),
-
-    "image.blue_wireless_none": File (
-        path: "icons/blue_wireless_none.png",
-    ),
-
-    
-    
-    "image.blue_secured_wireless_high": File (
-        path: "icons/blue_secured_wireless_high.png",
-    ),
-
-    "image.blue_secured_wireless_low": File (
-        path: "icons/blue_secured_wireless_low.png",
-    ),
-
-    "image.blue_secured_wireless_medium": File (
-        path: "icons/blue_secured_wireless_medium.png",
-    ),
-
-    "image.gray_secured_wireless_high": File (
-        path: "icons/gray_secured_wireless_high.png",
-    ),
-
-    "image.gray_secured_wireless_low": File (
-        path: "icons/gray_secured_wireless_low.png",
-    ),
-
-    "image.gray_secured_wireless_medium": File (
-        path: "icons/gray_secured_wireless_medium.png",
-    ),
-
-
-
-
-    "layout.extend_screen": TextureAtlasLayout (
-        tile_size_x: 44,
-        tile_size_y: 44,
-        columns: 1,
-        rows: 1
-    ),
-
-    "image.extend_screen_none": File (
-        path: "icons/extend_screen_none.png",
-    ),
-
-    "image.settings_icon": File (
-        path: "icons/settings_icon.png",
-    ),
-
-    "layout.settings": TextureAtlasLayout (
-        tile_size_x: 33,
-        tile_size_y: 33,
-        columns: 1,
-        rows: 1
+    "image.battery_10": File (
+        path: "icons/battery_10.png",
     ),
 
 })

@@ -4,40 +4,34 @@ mod utils;
 mod widgets;
 
 use crate::components::styled_card::{StyledCard, StyledCardPlugin};
-use crate::systems::{AssetsLoadingState, exit_on_esc, animate_background, on_animation_background_completed, animate_settings_item, animate_settings_item_text, poll_default_sink_volume, update_wireless_state, set_initial_airplane_mode_state, update_bluetooth_state, update_volume_state, update_airplane_mode_state};
+use crate::systems::setup::{pre_setup, SettingsDrawerCamera};
+use crate::systems::{animate_background, animate_settings_item, animate_settings_item_text, exit_on_esc, on_animation_background_completed, poll_default_sink_volume, set_initial_airplane_mode_state, update_airplane_mode_state, update_auto_rotation_state, update_bluetooth_state, update_volume_state, update_wireless_state, AssetsLoadingState};
 use crate::{
-    utils::{FontAssets, Icon},
-    widgets::{
-        LauncherStyledWidgetsPlugin,
-        button::{StyledButton},
-    },
+    utils::FontAssets,
+    widgets::LauncherStyledWidgetsPlugin,
 };
+use bevy::time::common_conditions::on_timer;
 use bevy::{
-    asset::meta::Settings,
-    ecs::system::SystemId,
+    asset::meta::Settings
+    ,
     prelude::*,
     reflect::List,
 };
 use bevy_asset_loader::prelude::*;
 use bevy_core_widgets::{CoreButton, CoreScrollArea};
-use service_plugins::upower::UPowerPlugin;
-use service_plugins::{
-    BluetoothPlugin, NetworkManagerPlugin, PulseAudioPlugin,
-    bluetooth::{BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ListPairedDevices},
-    network_manager::{
-        ActiveNetworkStrength, KnownNetworkList, NetworkAction, NetworkActionEvent, WirelessEnabled,
-    },
-    pulse_audio::{DefaultSink, PulseAudioAction, PulseAudioActionEvent},
-};
 use bevy_styled_widgets::{
+    prelude::{StyledText, ThemeManager},
     StyledWidgetsPlugin,
-    prelude::{StyledText, StyledTextPlugin, ThemeManager},
 };
 use core::fmt;
+use service_plugins::upower::UPowerPlugin;
+use service_plugins::{
+    bluetooth::BluetoothEnabledStatus, network_manager::WirelessEnabled, pulse_audio::DefaultSink,
+    BluetoothPlugin,
+    NetworkManagerPlugin,
+    PulseAudioPlugin,
+};
 use std::time::Duration;
-use bevy::time::common_conditions::on_timer;
-use crate::systems::setup::{pre_setup, SettingsDrawerCamera};
-use crate::widgets::slider::StyledSliderPlugin;
 
 #[derive(Debug, States, Hash, Clone, Eq, PartialEq)]
 pub enum Screens {
@@ -67,6 +61,13 @@ struct BluetoothEntry;
 
 #[derive(Component)]
 pub struct Wireless;
+
+#[derive(Component)]
+pub struct WirelessIcon;
+
+
+#[derive(Component)]
+pub struct BluetoothIcon;
 
 #[derive(Component)]
 pub struct Sound;
@@ -199,9 +200,9 @@ impl Plugin for SettingsDrawerPlugin {
                 set_initial_airplane_mode_state,
                 update_bluetooth_state,
                 update_volume_state,
+                update_auto_rotation_state,
                 // update_microphone_state,
                 // update_screen_recording_state,
-                // update_auto_rotation_state,
             )
                 .run_if(resource_exists::<FontAssets>),
         );
@@ -221,6 +222,9 @@ impl Plugin for SettingsDrawerPlugin {
                 update_volume_state
                     .run_if(resource_changed::<DefaultSink>)
                     .run_if(resource_exists::<FontAssets>),
+                update_auto_rotation_state
+                    .run_if(resource_changed::<RotationEnabled>)
+                    .run_if(resource_exists::<FontAssets>),
                 // update_bluetooth_list_state
                 //     .run_if(resource_changed::<ListPairedDevices>)
                 //     .run_if(resource_exists::<FontAssets>),
@@ -232,9 +236,6 @@ impl Plugin for SettingsDrawerPlugin {
                 //     .run_if(resource_exists::<FontAssets>),
                 // update_screen_recording_state
                 //     .run_if(resource_changed::<ScreenRecordingEnabled>)
-                //     .run_if(resource_exists::<FontAssets>),
-                // update_auto_rotation_state
-                //     .run_if(resource_changed::<RotationEnabled>)
                 //     .run_if(resource_exists::<FontAssets>),
             ),
         );
@@ -297,7 +298,7 @@ fn setup2(mut commands: Commands, theme_manager: Res<ThemeManager>) {
     ));
 }
 
-pub fn settings_drawer( theme_manager: &ThemeManager) -> impl Bundle {
+pub fn settings_drawer(theme_manager: &ThemeManager) -> impl Bundle {
     (
         //make this transparent
         Node {
@@ -357,154 +358,6 @@ pub fn settings_drawer( theme_manager: &ThemeManager) -> impl Bundle {
     )
 }
 
-fn spawn_menu_widget(
-    parent: &mut bevy::ecs::relationship::RelatedSpawnerCommands<'_, ChildOf>,
-    font_assets: &FontAssets,
-    control_name: &str,
-    on_click: SystemId,
-) {
-    let mut grid_column = GridPlacement::span(1);
-
-    if control_name == "brightness" || control_name == "volume" {
-        grid_column = GridPlacement::span(4);
-    };
-
-    let FontAssets { font_icons, .. } = font_assets;
-
-    // let click_system_id = parent
-    //     .commands()
-    //     .register_system(control_click_system(control_name.to_string()));
-
-    let (icon, layout, on_press_icon, on_press_layout) = match control_name {
-        "airplane_mode" => (
-            font_assets.airplane_off.clone(),
-            font_assets.layout_airplane.clone(),
-            font_assets.airplane_on.clone(),
-            font_assets.layout_airplane.clone(),
-        ),
-
-        "auto_rotation" => (
-            font_assets.rotation_off.clone(),
-            font_assets.layout_rotation.clone(),
-            font_assets.rotation_on.clone(),
-            font_assets.layout_rotation.clone(),
-        ),
-        "screen_record" => (
-            font_assets.screen_recording_off.clone(),
-            font_assets.layout_screen_recording.clone(),
-            font_assets.screen_recording_on.clone(),
-            font_assets.layout_screen_recording.clone(),
-        ),
-        "wifi" => (
-            font_assets.gray_wireless_medium.clone(),
-            font_assets.layout_wireless.clone(),
-            font_assets.gray_wireless_off.clone(),
-            font_assets.layout_wireless.clone(),
-        ),
-        "bluetooth" => (
-            font_assets.bluetooth_off.clone(),
-            font_assets.layout_bluetooth.clone(),
-            font_assets.bluetooth_on.clone(),
-            font_assets.layout_bluetooth.clone(),
-        ),
-        "camera" => (
-            font_assets.camera.clone(),
-            font_assets.layout_camera.clone(),
-            font_assets.camera_pressed.clone(),
-            font_assets.layout_camera.clone(),
-        ),
-        "battery" => (
-            font_assets.power_saving_off.clone(),
-            font_assets.layout_power_saving.clone(),
-            font_assets.power_saving_on.clone(),
-            font_assets.layout_power_saving.clone(),
-        ),
-        "terminal" => (
-            font_assets.terminal.clone(),
-            font_assets.layout_terminal.clone(),
-            font_assets.terminal.clone(),
-            font_assets.layout_terminal.clone(),
-        ),
-        "voice_record" => (
-            font_assets.microphone_off.clone(),
-            font_assets.layout_microphone.clone(),
-            font_assets.microphone_on.clone(),
-            font_assets.layout_microphone.clone(),
-        ),
-        "brightness" => (
-            font_assets.brightness_low.clone(),
-            font_assets.layout_brightness.clone(),
-            font_assets.brightness_low.clone(),
-            font_assets.layout_brightness.clone(),
-        ),
-        "volume" => (
-            font_assets.sound_low.clone(),
-            font_assets.layout_sound.clone(),
-            font_assets.sound_low.clone(),
-            font_assets.layout_sound.clone(),
-        ),
-        // "screen_mirror" => (
-        //     font_assets.screen_mirroring_off.clone(),
-        //     font_assets.screen_mirroring_off_layout.clone(),
-        // ),
-        "calculator" => (
-            font_assets.calculator.clone(),
-            font_assets.layout_calculator.clone(),
-            font_assets.calculator.clone(),
-            font_assets.layout_calculator.clone(),
-        ),
-        "cellular" => (
-            font_assets.cell_signal_high.clone(),
-            font_assets.layout_cell_signal.clone(),
-            font_assets.cell_signal_high.clone(),
-            font_assets.layout_cell_signal.clone(),
-        ),
-        _ => (
-            font_assets.gray_wireless_medium.clone(),
-            font_assets.layout_wireless.clone(),
-            font_assets.gray_wireless_off.clone(),
-            font_assets.layout_wireless.clone(),
-        ),
-    };
-
-    parent.spawn((StyledButton::builder()
-        .icon(icon)
-        .layout(layout)
-        .font(font_icons.clone())
-        .active(false)
-        .on_press_icon(on_press_icon)
-        .on_press_layout(on_press_layout)
-        .active_background_color(Color::oklcha(0.7878, 0.1643, 75.13, 0.90))
-        .on_click(on_click)
-        .build(),));
-
-    // parent.spawn((
-    //     Node {
-    //         width: Val::Percent(60.0),
-    //         height: Val::Percent(60.0),
-    //         display: Display::Flex,
-    //         flex_direction: FlexDirection::Column,
-    //         justify_content: JustifyContent::Center,
-    //         align_items: AlignItems::Center,
-    //         grid_column,
-    //         grid_row: GridPlacement::span(1),
-    //         ..default()
-    //     },
-    //     BackgroundColor(Color::linear_rgb(0.85, 0.85, 0.85)),
-    //     BorderRadius::all(Val::Px(12.0)),
-    //     SettingsItem,
-    //     Children::spawn(Spawn((
-    //         Text::new(icon),
-    //         TextFont {
-    //             font: font_assets.font_icons.clone(),
-    //             font_size: 16.0,
-    //             ..Default::default()
-    //         },
-    //         TextColor(Color::linear_rgba(0.24, 0.24, 0.24, 1.)),
-    //         SettingsItemText,
-    //     ))),
-    // ));
-}
 
 fn popup_click(
     mut commands: Commands,
@@ -521,11 +374,11 @@ pub fn list_popup(
     header_text: &str,
 ) -> impl Bundle {
     let on_popup_click = commands.register_system(popup_click);
-    let FontAssets {
-        settings_icon,
-        layout_settings,
-        ..
-    } = font_assets.clone();
+    // let FontAssets {
+    //     settings_icon,
+    //     layout_settings,
+    //     ..
+    // } = font_assets.clone();
 
     (
         Node {
@@ -581,10 +434,10 @@ pub fn list_popup(
                                 ..default()
                             },
                             children![
-                                StyledButton::builder()
-                                    .icon(settings_icon.clone())
-                                    .layout(layout_settings.clone())
-                                    .build(),
+                                // StyledButton::builder()
+                                //     .icon(settings_icon.clone())
+                                //     .layout(layout_settings.clone())
+                                //     .build(),
                             ]
                         )
                     ]
@@ -632,117 +485,6 @@ pub fn list_popup(
     )
 }
 
-fn wireless_clickable_row(
-    name: &str,
-    is_active: bool,
-    active_network_strength: u8,
-    security: &str,
-    font_assets: &FontAssets,
-    on_click: SystemId,
-) -> impl Bundle {
-    let status = get_device_status(is_active);
-
-    let wireless_icon =
-        get_wireless_icon(is_active, security, active_network_strength, font_assets);
-
-    let icon_size = 24.;
-
-    (
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Px(26.0),
-            justify_content: JustifyContent::SpaceBetween,
-            margin: UiRect::vertical(Val::Px(20.)),
-            ..default()
-        },
-        CoreButton {
-            on_click: Some(on_click),
-            on_long_press: None,
-        },
-        WirelessEntry,
-        children![
-            ImageNode::from_atlas_image(
-                wireless_icon.clone(),
-                TextureAtlas::from(font_assets.layout_wireless.clone()),
-            ),
-            (
-                Node {
-                    width: Val::Percent(100.0),
-                    justify_content: JustifyContent::Start,
-                    align_items: AlignItems::Center,
-                    padding: UiRect {
-                        left: Val::Px(8.),
-                        right: Val::Px(0.),
-                        top: Val::Px(4.),
-                        bottom: Val::Px(0.),
-                    },
-                    ..default()
-                },
-                children![(StyledText::new(name),)]
-            ),
-            StyledText::new(status),
-        ],
-    )
-}
-
-fn get_wireless_icon(
-    is_active: bool,
-    security: &str,
-    strength: u8,
-    font_assets: &FontAssets,
-) -> Handle<Image> {
-    let FontAssets {
-        gray_wireless_low,
-        gray_wireless_medium,
-        gray_wireless_high,
-
-        gray_secured_wireless_low,
-        gray_secured_wireless_medium,
-        gray_secured_wireless_high,
-
-        blue_wireless_low,
-        blue_wireless_medium,
-        blue_wireless_high,
-
-        blue_secured_wireless_low,
-        blue_secured_wireless_medium,
-        blue_secured_wireless_high,
-        layout_wireless,
-        ..
-    } = font_assets.clone();
-
-    match (is_active, security) {
-        (true, "Protected") => match strength {
-            (0..=20) => blue_secured_wireless_low,
-            (21..=50) => blue_secured_wireless_low,
-            (51..=75) => blue_secured_wireless_medium,
-            (76..=100) => blue_secured_wireless_high,
-            _ => unreachable!(),
-        },
-        (true, "Open") => match strength {
-            (0..=20) => blue_wireless_low,
-            (21..=50) => blue_wireless_low,
-            (51..=75) => blue_wireless_medium,
-            (76..=100) => blue_wireless_high,
-            _ => unreachable!(),
-        },
-        (false, "Protected") => match strength {
-            (0..=20) => gray_secured_wireless_low,
-            (21..=50) => gray_secured_wireless_low,
-            (51..=75) => gray_secured_wireless_medium,
-            (76..=100) => gray_secured_wireless_high,
-            _ => unreachable!(),
-        },
-        (false, "Open") => match strength {
-            (0..=20) => gray_wireless_low,
-            (21..=50) => gray_wireless_low,
-            (51..=75) => gray_wireless_medium,
-            (76..=100) => gray_wireless_high,
-            _ => unreachable!(),
-        },
-        _ => unreachable!(),
-    }
-}
 
 // Function to create the status string based on is_active
 fn get_device_status(is_active: bool) -> String {
@@ -751,73 +493,6 @@ fn get_device_status(is_active: bool) -> String {
     } else {
         DeviceStatus::Unknown.to_string()
     }
-}
-
-fn bluetooth_clickable_row(
-    name: &str,
-    is_active: bool,
-    font_assets: &FontAssets,
-    on_click: SystemId,
-) -> impl Bundle {
-    let status: String = if is_active {
-        DeviceStatus::Connected
-    } else {
-        DeviceStatus::Unknown
-    }
-    .to_string();
-
-    let FontAssets {
-        bluetooth_on,
-        bluetooth_off,
-        settings_icon,
-        layout_bluetooth,
-        layout_settings,
-        ..
-    } = font_assets.clone();
-
-    let bluetooth_icon = if is_active {
-        bluetooth_on
-    } else {
-        bluetooth_off
-    };
-    let icon_size = 24.;
-
-    (
-        Node {
-            width: Val::Percent(100.0),
-            height: Val::Px(26.0),
-            justify_content: JustifyContent::SpaceBetween,
-            margin: UiRect::vertical(Val::Px(20.)),
-            ..default()
-        },
-        CoreButton {
-            on_click: Some(on_click),
-            on_long_press: None,
-        },
-        BluetoothEntry,
-        children![
-            ImageNode::from_atlas_image(
-                bluetooth_icon.clone(),
-                TextureAtlas::from(layout_bluetooth.clone()),
-            ),
-            (
-                Node {
-                    width: Val::Percent(100.0),
-                    justify_content: JustifyContent::Start,
-                    align_items: AlignItems::Center,
-                    padding: UiRect {
-                        left: Val::Px(8.),
-                        right: Val::Px(0.),
-                        top: Val::Px(4.),
-                        bottom: Val::Px(0.),
-                    },
-                    ..default()
-                },
-                children![(StyledText::new(name),)]
-            ),
-            StyledText::new(status)
-        ],
-    )
 }
 
 fn divider() -> impl Bundle {

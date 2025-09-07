@@ -1,5 +1,6 @@
 use bevy::{prelude::*, window::ExitCondition, winit::WinitPlugin};
 use bevy_wayland::prelude::*;
+use headless_widgets::CoreWidgetsPlugin;
 use settings_drawer::{Screens, SettingsDrawerPlugin};
 
 fn main() {
@@ -15,6 +16,7 @@ fn main() {
                 }),
             WaylandPlugin,
             SettingsDrawerPlugin,
+            CoreWidgetsPlugin
         ))
         .insert_state(Screens::Loading)
         .run();
