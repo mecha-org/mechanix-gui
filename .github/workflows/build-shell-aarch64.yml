@@ -81,19 +81,23 @@ jobs:
           MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
           MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
         run: |
-          # Normalize URL (add http:// if missing)
-          if [[ "${MECHA_PULP_API_URL}" != http* ]]; then
-            BASE_URL="http://${MECHA_PULP_API_URL}:8080"
-          else
-            BASE_URL="${MECHA_PULP_API_URL}:8080"
+          set -euo pipefail
+
+          # Check that the URL is not empty
+          if [[ -z "$MECHA_PULP_API_URL" ]]; then
+            echo "[ERROR] MECHA_PULP_API_URL is empty. Please set it in the workflow environment."
+            exit 1
           fi
 
-          echo "[INFO] Using Pulp base URL: $BASE_URL"
+          # Construct full Pulp API URL (add port)
+          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
+          echo "[INFO] Using Pulp base URL: $PULP_API_URL"
 
+          # Configure Pulp CLI
           pulp config create \
             --username "$MECHA_PULP_USERNAME" \
             --password "$MECHA_PULP_PASSWORD" \
-            --base-url "$BASE_URL" \
+            --base-url "$PULP_API_URL" \
             --overwrite
 
       - name: Build [${{ matrix.package }}]
