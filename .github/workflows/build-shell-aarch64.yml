@@ -58,6 +58,7 @@ jobs:
             libclang-dev \
             libpulse-dev \
             python3-pip \
+            pipx \
             jq \
             curl
 
@@ -67,6 +68,18 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      # Pulp CLI setup
+      - name: Setup | Pulp CLI
+        run: |
+          pipx install --force pulp-cli[pygments]
+          pipx inject pulp-cli pulp-cli-deb
+
+          pulp config create \
+            --username "${{ secrets.MECHA_PULP_USERNAME }}" \
+            --password "${{ secrets.MECHA_PULP_PASSWORD }}" \
+            --base-url "${{ env.MECHA_PULP_API_URL }}:8080" \
+            --overwrite
 
       - name: Build [${{ matrix.package }}]
         run: |
@@ -92,42 +105,23 @@ jobs:
           path: ./build/*
 
       - name: Publish to Pulp [${{ matrix.package }}]
-        env:
-          MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
-          MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
-          MECHA_PULP_API_URL: ${{ env.MECHA_PULP_API_URL }}
-          MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}
         run: |
           set -euo pipefail
-          export PATH="$HOME/.local/bin:$PATH"
-          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
-
-          echo "[INFO] Installing pulp-cli..."
-          python3 -m pip install --user pipx
-          ~/.local/bin/pipx ensurepath
-          ~/.local/bin/pipx install --force pulp-cli[pygments]
-
-          echo "[INFO] Configuring pulp..."
-          pulp config create \
-            --username "$MECHA_PULP_USERNAME" \
-            --password "$MECHA_PULP_PASSWORD" \
-            --base-url "$PULP_API_URL" \
-            --overwrite
-
           DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
-            --repository="$MECHA_PULP_DEBS_REPOSITORY_NAME" \
+            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --file="$DEB_FILE"
 
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
-            --repository="$MECHA_PULP_DEBS_REPOSITORY_NAME" | jq -r '.pulp_href')
+            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            | jq -r '.pulp_href')
 
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
-            --name="$MECHA_PULP_DEBS_REPOSITORY_NAME" \
-            --base-path="$MECHA_PULP_DEBS_REPOSITORY_NAME" \
-            --repository="$MECHA_PULP_DEBS_REPOSITORY_NAME"
+            --name="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --base-path="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
 
           echo "[INFO] ✅ Package ${{ matrix.package }} published."
