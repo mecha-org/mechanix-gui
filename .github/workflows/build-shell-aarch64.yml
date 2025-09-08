@@ -76,27 +76,20 @@ jobs:
           pipx inject pulp-cli pulp-cli-deb
 
       - name: Setup | Pulp CLI Configuration
+        # Use the 'env' key to map GitHub vars and secrets to environment variables
         env:
-          MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
-          MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
-          MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
+          API_URL_VAR: ${{ vars.MECHA_PULP_API_URL }}
+          PULP_USER: ${{ secrets.MECHA_PULP_USERNAME }}
+          PULP_PASS: ${{ secrets.MECHA_PULP_PASSWORD }}
         run: |
-          set -euo pipefail
-
-          # Check that the URL is not empty
-          if [[ -z "$MECHA_PULP_API_URL" ]]; then
-            echo "[ERROR] MECHA_PULP_API_URL is empty. Please set it in the workflow environment."
-            exit 1
-          fi
-
-          # Construct full Pulp API URL (add port)
-          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
+          # Construct full Pulp API URL (add port), using the env var from above
+          PULP_API_URL="${API_URL_VAR}:8080"
           echo "[INFO] Using Pulp base URL: $PULP_API_URL"
 
-          # Configure Pulp CLI
+          # Configure Pulp CLI using the env vars
           pulp config create \
-            --username "$MECHA_PULP_USERNAME" \
-            --password "$MECHA_PULP_PASSWORD" \
+            --username "$PULP_USER" \
+            --password "$PULP_PASS" \
             --base-url "$PULP_API_URL" \
             --overwrite
 
