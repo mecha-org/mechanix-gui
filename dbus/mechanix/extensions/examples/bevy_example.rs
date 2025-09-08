@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use extensions::plugin::{ ExtensionPlugin, DeviceInteruptEvent };
+use extensions::plugin::{ ExtensionPlugin, ExtensionEvent };
 use extensions::device::Device;
 
 fn main() {
@@ -10,10 +10,10 @@ fn main() {
         .run();
 }
 
-fn handle_extension_events(mut device_interupt_events: EventReader<DeviceInteruptEvent>) {
+fn handle_extension_events(mut device_interupt_events: EventReader<ExtensionEvent>) {
     for event in device_interupt_events.read() {
         match event {
-            DeviceInteruptEvent::Added(device) => {
+            ExtensionEvent::Added(device) => {
                 
                     info!("╭─────────────────────────────────────╮");
                     info!("│  🔌 EXTENSION DEVICE CONNECTED      │");
@@ -27,7 +27,7 @@ fn handle_extension_events(mut device_interupt_events: EventReader<DeviceInterup
                     info!("─────────────────────────────────────");
                 
             },
-            DeviceInteruptEvent::Removed(device) => {
+            ExtensionEvent::Removed(device) => {
                 
                     info!("╭─────────────────────────────────────╮");
                     info!("│  🔌 EXTENSION DEVICE DISCONNECTED  │");

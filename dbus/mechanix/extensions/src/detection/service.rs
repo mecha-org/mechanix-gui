@@ -55,7 +55,7 @@ pub async fn watch_hotplug(
                     evdev_device.name().unwrap_or("Unknown".to_string())
                 );
                 let path = evdev_device.path().to_owned();
-                
+
                 // Cancel existing task for this device if any
                 if let Some(old_task) = device_tasks.remove(&path) {
                     old_task.abort();
@@ -67,7 +67,7 @@ pub async fn watch_hotplug(
                 let task_handle = task::spawn(async move {
                     monitor_device_events(path_clone, event_sender_clone).await;
                 });
-                
+
                 device_tasks.insert(path, task_handle);
             }
             Err(e) => {
@@ -85,10 +85,7 @@ pub async fn watch_hotplug(
     Ok(())
 }
 
-async fn monitor_device_events(
-    path: PathBuf,
-    event_sender: mpsc::Sender<ExtensionServiceEvent>
-) {
+async fn monitor_device_events(path: PathBuf, event_sender: mpsc::Sender<ExtensionServiceEvent>) {
     let mut key_a_pressed = false;
     let mut current_device: Option<Device> = None;
 
@@ -99,12 +96,11 @@ async fn monitor_device_events(
         //     evdev::Device::open(&path_clone)
         //         .and_then(|mut device| device.fetch_events())
         // }).await;
-         let result = task::spawn_blocking(move || {
-            evdev::Device::open(&path_clone)
-                .and_then(|mut device| {
-                    // Collect events into a Vec to own the data
-                    device.fetch_events().map(|events| events.collect::<Vec<_>>())
-                })
+        let result = task::spawn_blocking(move || {
+            evdev::Device::open(&path_clone).and_then(|mut device| {
+                // Collect events into a Vec to own the data
+                device.fetch_events().map(|events| events.collect::<Vec<_>>())
+            })
         }).await;
 
         match result {
@@ -112,41 +108,41 @@ async fn monitor_device_events(
                 for event in events {
                     let event_summary = event.destructure();
                     match event_summary {
-                        evdev::EventSummary::Key(_, key, 1) => {
-                            if key == KeyCode::KEY_A {
-                                key_a_pressed = true;
-                                println!("Extension key 'A' pressed on device: {:?}", path);
-                                
-                                // Create device and send Added event
-                                if let Ok(evdev) = Evdev::open(&path) {
-                                    let device = Device::new(evdev);
-                                    current_device = Some(device.clone());
-                                    if let Err(e) = event_sender.send(
+                        evdev::EventSummary::Key(_, KeyCode::KEY_A, 1) => {
+                            println!("Extension key 'A' pressed on device: {:?}", path);
+
+                            // Create device and send Added event
+                            if let Ok(evdev) = Evdev::open(&path) {
+                                let device = Device::new(evdev);
+                                current_device = Some(device.clone());
+                                if
+                                    let Err(e) = event_sender.send(
                                         ExtensionServiceEvent::Added(device)
-                                    ).await {
-                                        eprintln!("Failed to send Added event: {}", e);
-                                        return;
-                                    }
+                                    ).await
+                                {
+                                    eprintln!("Failed to send Added event: {}", e);
+                                    return;
                                 }
                             }
                         }
-                        evdev::EventSummary::Key(_, key, 0) => {
-                            if key == KeyCode::KEY_A {
-                                // key_a_pressed = false;
-                                println!("Extension key 'A' released on device: {:?}", path);
-                                
-                                // Send Removed event with the same device
-                                if let Some(device) = current_device.take() {
-                                    if let Err(e) = event_sender.send(
+                        evdev::EventSummary::Key(_, KeyCode::KEY_A, 0) => {
+                            println!("Extension key 'A' released on device: {:?}", path);
+
+                            // Send Removed event with the same device
+                            if let Some(device) = current_device.take() {
+                                if
+                                    let Err(e) = event_sender.send(
                                         ExtensionServiceEvent::Removed(device)
-                                    ).await {
-                                        eprintln!("Failed to send Removed event: {}", e);
-                                        return;
-                                    }
+                                    ).await
+                                {
+                                    eprintln!("Failed to send Removed event: {}", e);
+                                    return;
                                 }
                             }
                         }
-                        _ => {}
+                        _ => {
+                            
+                        }
                     }
                 }
             }

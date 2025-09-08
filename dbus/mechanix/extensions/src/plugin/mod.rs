@@ -8,29 +8,29 @@ use std::sync::mpsc::{ channel, Receiver, Sender };
 use std::sync::{ Arc, Mutex };
 
 #[derive(Event, Debug, Clone)]
-pub enum DeviceInteruptEvent {
+pub enum ExtensionEvent {
     Added(Device),
     Removed(Device),
 }
 
 #[derive(Resource)]
-struct DeviceInteruptEventReceiver(pub Arc<Mutex<Receiver<DeviceInteruptEvent>>>);
+struct ExtensionEventReceiver(pub Arc<Mutex<Receiver<ExtensionEvent>>>);
 
 #[derive(Resource)]
-struct DeviceInteruptEventSender(pub Sender<DeviceInteruptEvent>);
+struct ExtensionEventSender(pub Sender<ExtensionEvent>);
 
 fn write_device_interupt_events(
-    receiver: Res<DeviceInteruptEventReceiver>,
-    mut event_writer: EventWriter<DeviceInteruptEvent>
+    receiver: Res<ExtensionEventReceiver>,
+    mut event_writer: EventWriter<ExtensionEvent>
 ) {
     let receiver = receiver.0.lock().unwrap();
     while let Ok(event) = receiver.try_recv() {
         match event {
-            DeviceInteruptEvent::Added(device) => {
-                event_writer.write(DeviceInteruptEvent::Added(device));
+            ExtensionEvent::Added(device) => {
+                event_writer.write(ExtensionEvent::Added(device));
             }
-            DeviceInteruptEvent::Removed(device) => {
-                event_writer.write(DeviceInteruptEvent::Removed(device));
+            ExtensionEvent::Removed(device) => {
+                event_writer.write(ExtensionEvent::Removed(device));
             }
         }
     }
@@ -62,10 +62,10 @@ fn spawn_event_poller(mut commands: Commands) {
                             while let Some(event) = event_receiver.recv().await {
                                 match event {
                                     ExtensionServiceEvent::Added(device) => {
-                                        let _ = tx.send(DeviceInteruptEvent::Added(device));
+                                        let _ = tx.send(ExtensionEvent::Added(device));
                                     }
                                     ExtensionServiceEvent::Removed(device) => {
-                                        let _ = tx.send(DeviceInteruptEvent::Removed(device));
+                                        let _ = tx.send(ExtensionEvent::Removed(device));
                                     }
                                 }
                             }
@@ -97,16 +97,16 @@ fn spawn_event_poller(mut commands: Commands) {
         }
     });
 
-    commands.insert_resource(DeviceInteruptEventReceiver(rx));
-    commands.insert_resource(DeviceInteruptEventSender(tx));
+    commands.insert_resource(ExtensionEventReceiver(rx));
+    commands.insert_resource(ExtensionEventSender(tx));
 }
 
 pub struct ExtensionPlugin;
 
 impl Plugin for ExtensionPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<DeviceInteruptEvent>()
+        app.add_event::<ExtensionEvent>()
             .add_systems(Startup, spawn_event_poller)
-            .add_systems(Update, (write_device_interupt_events));
+            .add_systems(Update, write_device_interupt_events);
     }
 }
