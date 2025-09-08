@@ -21,7 +21,9 @@ use crate::{
     icons::{UniversalSearchIconsPlugin, icons_loaded},
     resources::IsOpen,
     states::{Action, listen_action},
-    ui::{BrowserApps, FrequentlyUsedApps, SearchItems, SearchResults, SearchText},
+    ui::{
+        BrowserApps, FrequentlyUsedApps, SearchInputPlugin, SearchItems, SearchResults, SearchText,
+    },
 };
 use headless_widgets::prelude::*;
 
@@ -45,6 +47,7 @@ impl Plugin for UniversalSearchPlugin {
         app.add_plugins((animation::DefaultTweenPlugins,));
         app.add_plugins((mock::MockPlugin,));
         app.add_plugins((headless_widgets::CoreWidgetsPlugin));
+        app.add_plugins(SearchInputPlugin);
 
         app.add_event::<UniversalSearchOpen>();
         app.add_event::<UniversalSearchClose>();

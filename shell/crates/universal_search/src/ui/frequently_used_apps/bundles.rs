@@ -57,8 +57,6 @@ pub fn frequently_used_app(app: &DesktopApp) -> impl Bundle {
         BorderRadius::all(Val::Px(11.82)),
         BackgroundColor(NORMAL_BUTTON),
         Button,
-        CoreButton {
-            on_click: Some(app.on_click),
-        },
+        CoreButton::new().on_click(app.on_click),
     )
 }

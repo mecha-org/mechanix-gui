@@ -1,7 +1,10 @@
 use bevy::{color::palettes::css::*, ecs::system::SystemId, prelude::*};
 use types::prelude::*;
 
-use crate::icons::UniversalSearchIcons;
+use crate::{
+    icons::UniversalSearchIcons,
+    ui::search_input::components::{SearchClose, SearchInput, SearchInputText},
+};
 pub fn search_input(
     // on_search_click: SystemId,
     // on_cancel_click: SystemId,
@@ -11,11 +14,13 @@ pub fn search_input(
 ) -> impl Bundle {
     (
         Node {
-            left: Val::Px(0.),
-            bottom: Val::Px(0.),
-            width: Val::Percent(100.),
+            left: Val::Px(16.),
+            bottom: Val::Px(4.),
+            right: Val::Px(16.),
+            justify_self: JustifySelf::Stretch,
             height: Val::Px(56.),
             position_type: PositionType::Absolute,
+            border: UiRect::all(Val::Px(1.)),
             padding: UiRect {
                 left: Val::Px(16.),
                 right: Val::Px(16.),
@@ -24,9 +29,11 @@ pub fn search_input(
             },
             ..Default::default()
         },
+        SearchInput,
         ZIndex(999),
-        BackgroundColor(Color::oklch(0.2308, 0., 0.)),
-        BorderRadius::top(Val::Px(16.)),
+        BackgroundColor(Color::oklch(0.3068, 0., 0.)),
+        BorderColor(Color::oklch(0.4568, 0., 0.)),
+        BorderRadius::all(Val::Px(28.)),
         children![
             (
                 Node {
@@ -50,6 +57,7 @@ pub fn search_input(
                     ),
                     (
                         Text::new("Type here..."),
+                        SearchInputText,
                         TextColor(Color::oklch(0.7252, 0., 0.)),
                         TextFont {
                             font: font_assets.primary_400.clone(),
@@ -75,6 +83,7 @@ pub fn search_input(
                         },
                         BorderColor(Color::oklch(0.4202, 0., 0.)),
                         BorderRadius::all(Val::Px(22.)),
+                        SearchClose,
                         children![(
                             Node {
                                 width: Val::Px(14.),
