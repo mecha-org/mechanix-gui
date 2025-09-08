@@ -22,3 +22,12 @@ impl Event for ButtonClicked {
 
     const AUTO_PROPAGATE: bool = true;
 }
+
+#[derive(Clone, Debug)]
+pub struct ButtonLongClicked;
+
+impl Event for ButtonLongClicked {
+    type Traversal = &'static ChildOf;
+
+    const AUTO_PROPAGATE: bool = true;
+}

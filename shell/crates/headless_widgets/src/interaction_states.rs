@@ -1,6 +1,8 @@
+use std::time::Instant;
+
 use bevy::{
     a11y::AccessibilityNode,
-    ecs::{component::HookContext, world::DeferredWorld},
+    ecs::{component::HookContext, entity::Entity, world::DeferredWorld},
     prelude::Component,
 };
 
@@ -32,11 +34,6 @@ fn on_remove_disabled(mut world: DeferredWorld, context: HookContext) {
     }
 }
 
-/// Component that indicates whether a button is currently pressed. This will be true while
-/// a drag action is in progress.
-#[derive(Component, Default, Debug)]
-pub struct ButtonPressed(pub bool);
-
 /// Component that indicates whether a checkbox or radio button is in a checked state.
 #[derive(Component, Default, Debug)]
 #[component(immutable, on_add = on_add_checked, on_replace = on_add_checked)]
@@ -51,4 +48,23 @@ fn on_add_checked(mut world: DeferredWorld, context: HookContext) {
         true => accesskit::Toggled::True,
         false => accesskit::Toggled::False,
     });
+}
+
+/// Component that indicates whether a button is currently pressed. This will be true while
+/// a drag action is in progress.
+#[derive(Component, Default, Debug)]
+pub struct ButtonPressed {
+    pub is_pressed: bool,
+    pub pressed_at: Option<Instant>,
+    pub long_press_sent: bool,
+    pub entity: Option<Entity>,
+}
+
+impl ButtonPressed {
+    pub fn reset(&mut self) {
+        self.is_pressed = false;
+        self.pressed_at = None;
+        self.long_press_sent = false;
+        self.entity = None;
+    }
 }

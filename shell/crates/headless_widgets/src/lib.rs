@@ -3,17 +3,21 @@ use bevy::{
     input_focus::InputDispatchPlugin,
 };
 mod core_button;
+mod core_scrollbar;
 mod events;
 
 mod interaction_states;
 pub use core_button::{CoreButton, CoreButtonPlugin};
+pub use core_scrollbar::{
+    CoreScrollArea, CoreScrollbar, CoreScrollbarPlugin, CoreScrollbarThumb, Orientation,
+};
 pub use interaction_states::{ButtonPressed, Checked, InteractionDisabled};
 
 pub struct CoreWidgetsPlugin;
 
 impl Plugin for CoreWidgetsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((CoreButtonPlugin, InputDispatchPlugin));
+        app.add_plugins((CoreButtonPlugin, CoreScrollbarPlugin, InputDispatchPlugin));
     }
 }
 
