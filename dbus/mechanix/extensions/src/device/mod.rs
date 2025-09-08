@@ -4,6 +4,7 @@ use zvariant::{ Type };
 use serde::{ Serialize, Deserialize };
 use types::{ DeviceType, ConnectionType };
 use evdevil::Evdev;
+use evdev::EventSummary::Key;
 use std::path::PathBuf;
 use std::{ collections::HashSet, fs };
 
@@ -12,6 +13,7 @@ pub struct Device {
     pub path: PathBuf,
     pub device_type: DeviceType,
     pub connection_type: ConnectionType,
+    pub connection_key: String,
     pub name: String,
     pub vendor_id: u16,
     pub unique_id: String,
@@ -20,7 +22,7 @@ pub struct Device {
 impl Device {
     pub fn new(evdev: Evdev) -> Self {
         let path = evdev.path().to_path_buf();
-        let device_type = DeviceType::get_device_type(&evdev);
+        let (device_type,connection_key) = DeviceType::get_device_type(&evdev);
         let connection_type = ConnectionType::get_connection_type(&evdev);
         let name = evdev
             .name()
@@ -41,6 +43,7 @@ impl Device {
             path,
             device_type,
             connection_type,
+            connection_key,
             name,
             vendor_id,
             unique_id,
@@ -79,7 +82,11 @@ impl Device {
         &self.unique_id
     }
 
-    pub fn is_extension(&self)-> bool{
-        *self.device_type() == DeviceType::Extension
+    pub fn connection_key(&self) -> &String {
+        &self.connection_key
+    }
+
+    pub fn is_extension(&self) -> (bool, &String) {
+        (*self.device_type() == DeviceType::Extension, &self.connection_key)
     }
 }

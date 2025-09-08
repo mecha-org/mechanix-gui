@@ -1,7 +1,9 @@
 [[extensions]]
 unique_id = "ea:a9:cd:4d:9f:47"
 name = "Toad One"
+connection_key = "KEY_A"
 
 [[extensions]]
 unique_id = "Unknown"
 name = "AT 2 Keyboard"
+connection_key = "KEY_A"

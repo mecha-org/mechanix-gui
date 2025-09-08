@@ -17,15 +17,20 @@ pub enum DeviceType {
 }
 
 impl DeviceType {
-    pub fn get_device_type(evdev: &Evdev) -> Self {
+    pub fn get_device_type(evdev: &Evdev) -> (Self, String) {
+        // Default key for non-extension devices
+        let default_key = "KEY_RESERVED".to_string();
+
         let unique_id = evdev
             .unique_id()
             .ok()
             .flatten()
             .unwrap_or_else(|| "Unknown".to_string());
-        if is_extension(unique_id) {
-            return Self::Extension;
-        }
+        
+        if let Some(connection_key) = is_extension(unique_id) {
+            return (Self::Extension, connection_key);
+        } 
+
         // Get device name for additional context
         let name = evdev.name().unwrap_or_default().to_lowercase();
 
@@ -33,28 +38,28 @@ impl DeviceType {
         let supported_events = match evdev.supported_events() {
             Ok(events) => events,
             Err(_) => {
-                return Self::Unclassified;
+                return (Self::Unclassified, default_key);
             }
         };
 
         // Video Bus devices
         if name.contains("video bus") || name.contains("video") {
-            return Self::VideoBus;
+            return (Self::VideoBus, default_key);
         }
 
         // Power Button devices
         if name.contains("power") && name.contains("button") {
-            return Self::PowerButton;
+            return (Self::PowerButton, default_key);
         }
 
         // Sleep Button devices
         if name.contains("sleep") && name.contains("button") {
-            return Self::SleepButton;
+            return (Self::SleepButton, default_key);
         }
 
         // Lid Switch devices
         if name.contains("lid") && name.contains("switch") {
-            return Self::LidSwitch;
+            return (Self::LidSwitch, default_key);
         }
 
         // Check by supported keys and switches
@@ -62,12 +67,12 @@ impl DeviceType {
             if let Ok(keys) = evdev.supported_keys() {
                 // Power button typically supports KEY_POWER
                 if keys.contains(Key::KEY_POWER) && !keys.contains(Key::KEY_A) {
-                    return Self::PowerButton;
+                    return (Self::PowerButton, default_key);
                 }
 
                 // Sleep button typically supports KEY_SLEEP or KEY_SUSPEND
                 if keys.contains(Key::KEY_SLEEP) || keys.contains(Key::KEY_SUSPEND) {
-                    return Self::SleepButton;
+                    return (Self::SleepButton, default_key);
                 }
             }
         }
@@ -76,7 +81,7 @@ impl DeviceType {
         if supported_events.contains(EventType::SW) {
             if let Ok(switches) = evdev.supported_switches() {
                 if switches.contains(Switch::LID) {
-                    return Self::LidSwitch;
+                    return (Self::LidSwitch, default_key);
                 }
             }
         }
@@ -85,12 +90,12 @@ impl DeviceType {
         if let Ok(Some(phys)) = evdev.phys() {
             let phys_lower = phys.to_lowercase();
             if phys_lower.contains("video") {
-                return Self::VideoBus;
+                return (Self::VideoBus, default_key);
             }
         }
 
         // Default fallback
-        Self::Unclassified
+        (Self::Unclassified, default_key)
     }
 }
 
@@ -150,26 +155,35 @@ impl ConnectionType {
     }
 }
 
-fn is_extension(id: String) -> bool {
+fn is_extension(id: String) -> Option<String> {
     match fs::read_to_string("./config.toml") {
         Ok(raw) => {
             match toml::from_str::<ExtensionConfig>(&raw) {
                 Ok(cfg) => {
-                    let ids: Vec<String> = cfg.extensions
-                        .into_iter()
-                        .map(|ext| ext.unique_id)
-                        .collect();
-                    ids.contains(&id)
+                    for ext in cfg.extensions {
+                        if ext.unique_id == id {
+                            // Parse the connection_key string to KeyCode
+                            // match KeyCode::from_str(&ext.connection_key) {
+                            //     Ok(key_code) => return Some(key_code),
+                            //     Err(e) => {
+                            //         println!("Error parsing connection key '{}': {}", ext.connection_key, e);
+                            //         return None;
+                            //     }
+                            // }
+                            return Some(ext.connection_key);
+                        }
+                    }
+                    None
                 }
                 Err(e) => {
                     println!("Error parsing TOML: {}", e);
-                    false
+                    None
                 }
             }
         }
         Err(e) => {
             println!("Error reading file: {}", e);
-            false
+            None
         }
     }
 }
@@ -178,6 +192,7 @@ fn is_extension(id: String) -> bool {
 struct Extension {
     unique_id: String,
     name: Option<String>,
+    connection_key: String,
 }
 
 #[derive(Debug, Deserialize)]
