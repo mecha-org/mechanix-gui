@@ -1,3 +1,5 @@
+
+
 use bevy::prelude::*;
 
 use app_drawer::prelude::*;
@@ -8,6 +10,7 @@ use navigation_bar::prelude::*;
 use notifications_drawer::prelude::*;
 use running_apps::prelude::*;
 use settings_drawer::prelude::*;
+use settings_drawer::SettingsDrawerPlugin;
 use status_bar::prelude::*;
 use universal_search::prelude::*;
 

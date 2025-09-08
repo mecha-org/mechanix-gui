@@ -44,7 +44,7 @@ use zbus::{
 };
 
 use super::interfaces::wireless::RawAccessPointInfo;
-use crate::proxies::access_point::AccessPointProxy;
+use crate::{interfaces::wireless::KnownNetworkResponse, proxies::access_point::AccessPointProxy};
 use crate::proxies::wireless::{AccessPointAddedStream, AccessPointRemovedStream, WirelessDeviceProxy};
 use zbus::proxy::PropertyStream;
 use zbus::zvariant::{OwnedObjectPath, Str};
@@ -497,6 +497,65 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         Ok(networks)
     }
 
+    async fn known_networks(&self) -> Result<Vec<KnownNetworkResponse>, ProxyError> {
+        info!("listing known networks");
+
+        let cn = self.0.connection();
+        
+        // get known networks
+         let settings_proxy = match settings::SettingsProxy::new(&cn).await {
+            Ok(proxy) => proxy,
+            Err(e) => {
+                error!("failed to create settings proxy: {}", e);
+                return Err(ProxyError::ProxyCreationFailed(format!(
+                    "failed to create settings proxy: {}",
+                    e
+                )));
+            }
+        };
+
+        let connections = settings_proxy.list_connections().await.unwrap();
+
+        let mut known_networks_list: Vec<KnownNetworkResponse> = Vec::new();
+
+        for c in connections {
+            let connection_proxy = connection::ConnectionProxy::new(&cn, c.clone())
+                .await
+                .unwrap();
+            let settings = connection_proxy.get_settings().await.unwrap();
+
+            if !settings.contains_key("802-11-wireless") {
+                continue;
+            }
+
+            let access_point = (*settings["connection"]["id"])
+                .downcast_ref::<Str>()
+                .unwrap()
+                .to_string();
+
+            let security_flags = if !settings.contains_key("802-11-wireless-security") {
+                "Open".to_string()
+            } else {
+                "WPA-PSK".to_string()
+            };
+            let mut flag = false;
+            for network in known_networks_list.iter() {
+                if network.ssid == access_point {
+                    flag = true;
+                    break;
+                }
+            }
+            if flag {
+                continue;
+            }
+            known_networks_list.push(KnownNetworkResponse {
+                ssid: access_point,
+                flags: security_flags,
+                // is_active: false, // temp
+            });
+        }
+        Ok(known_networks_list)
+    }
     /// Attempt to connect to a WiFi network with the given SSID and optional password.
     async fn connect_to_network(
         &self,

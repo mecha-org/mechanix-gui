@@ -1,5 +1,5 @@
 use bevy::{
-    app::{App, Plugin, Update},
+    app::{App, Plugin},
     input_focus::InputDispatchPlugin,
 };
 mod core_button;
@@ -17,7 +17,11 @@ pub struct CoreWidgetsPlugin;
 
 impl Plugin for CoreWidgetsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((CoreButtonPlugin, CoreScrollbarPlugin, InputDispatchPlugin));
+        if !app.is_plugin_added::<InputDispatchPlugin>() {
+            app.add_plugins(InputDispatchPlugin);
+        }
+
+        app.add_plugins((CoreButtonPlugin, CoreScrollbarPlugin));
     }
 }
 

@@ -1,0 +1,86 @@
+({
+    "image.airplane_tilt": File (
+        path: "icons/airplane_tilt.png",
+    ),
+    "image.rotation_on": File (
+        path: "icons/rotation_on.png",
+    ),
+    "image.rotation_off": File (
+        path: "icons/rotation_off.png",
+    ),
+    "image.second_screen_on": File (
+        path: "icons/second_screen_on.png",
+    ),
+    "image.second_screen_off": File (
+        path: "icons/second_screen_off.png",
+    ),
+    "image.power_mode_none": File (
+        path: "icons/power_mode_none.png",
+    ),
+    "image.power_mode_high": File (
+        path: "icons/power_mode_high.png",
+    ),
+    "image.power_mode_low": File (
+        path: "icons/power_mode_low.png",
+    ),
+    "image.mic_on": File (
+        path: "icons/mic_on.png",
+    ),
+    "image.mic_off": File (
+        path: "icons/mic_off.png",
+    ),
+    "image.screen_recording_on": File (
+        path: "icons/screen_recording_on.png",
+    ),
+    "image.screen_recording_off": File (
+        path: "icons/screen_recording_off.png",
+    ),
+    "image.screen_recording_off": File (
+        path: "icons/screen_recording_off.png",
+    ),
+    "image.calculator": File (
+        path: "icons/calculator.png",
+    ),
+    "image.camera": File (
+        path: "icons/camera.png",
+    ),
+    "image.sound_low": File (
+        path: "icons/sound_low.png",
+    ),
+    "image.brightness_low": File (
+        path: "icons/brightness_low.png",
+    ),
+    "image.wireless_off": File (
+        path: "icons/wireless_off.png",
+    ),
+    "image.wireless_on": File (
+        path: "icons/wireless_on.png",
+    ),
+    "image.wireless_low": File (
+        path: "icons/wireless_low.png",
+    ),
+    "image.wireless_medium": File (
+        path: "icons/wireless_medium.png",
+    ),
+    "image.wireless_high": File (
+        path: "icons/wireless_high.png",
+    ),
+    "image.wireless_full": File (
+        path: "icons/wireless_full.png",
+    ),
+    "image.bluetooth_off": File (
+        path: "icons/bluetooth_off.png",
+    ),
+    "image.bluetooth_on": File (
+        path: "icons/bluetooth_on.png",
+    ),
+    "image.cell_signal_none": File (
+        path: "icons/cell_signal_none.png",
+    ),
+    "image.terminal": File (
+        path: "icons/terminal.png",
+    ),
+    "image.battery_10": File (
+        path: "icons/battery_10.png",
+    ),
+})
