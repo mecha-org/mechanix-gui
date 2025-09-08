@@ -77,7 +77,7 @@ jobs:
 
       - name: Setup | Pulp CLI Configuration
         env:
-          MECHA_PULP_API_URL: ${{ env.MECHA_PULP_API_URL }}
+          MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
           MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
           MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
         run: |
@@ -129,18 +129,18 @@ jobs:
           DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
-            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --file="$DEB_FILE"
 
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
-            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             | jq -r '.pulp_href')
 
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
-            --name="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --base-path="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --repository="${{ env.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
+            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
 
           echo "[INFO] ✅ Package ${{ matrix.package }} published."
