@@ -38,6 +38,7 @@ jobs:
             package: mechanix-keyboard
 
     runs-on: ubicloud-standard-2-arm
+    environment: pre-release
     continue-on-error: false
     steps:
       - name: Setup | Checkout
