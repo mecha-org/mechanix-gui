@@ -18,6 +18,10 @@ env:
   RUST_BACKTRACE: short
   RUSTUP_MAX_RETRIES: 10
   CARGO_NET_GIT_FETCH_WITH_CLI: true
+  MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
+  MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
+  MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
+  MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
 
 jobs:
   build:
@@ -62,13 +66,6 @@ jobs:
             jq \
             curl
 
-      - name: Set up Git SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY_GIT }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-
       # Pulp CLI setup
       - name: Setup | Pulp CLI
         run: |
@@ -76,20 +73,20 @@ jobs:
           pipx inject pulp-cli pulp-cli-deb
 
       - name: Setup | Pulp CLI Configuration
-        # Use the 'env' key to map GitHub vars and secrets to environment variables
-        env:
-          API_URL_VAR: ${{ vars.MECHA_PULP_API_URL }}
-          PULP_USER: ${{ secrets.MECHA_PULP_USERNAME }}
-          PULP_PASS: ${{ secrets.MECHA_PULP_PASSWORD }}
         run: |
-          # Construct full Pulp API URL (add port), using the env var from above
-          PULP_API_URL="${API_URL_VAR}:8080"
+          set -euo pipefail
+          if [[ -z "$MECHA_PULP_API_URL" ]]; then
+            echo "[ERROR] MECHA_PULP_API_URL is empty."
+            exit 1
+          fi
+          # Construct full Pulp API URL (add port)
+          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
           echo "[INFO] Using Pulp base URL: $PULP_API_URL"
 
-          # Configure Pulp CLI using the env vars
+          # Configure Pulp CLI using the correct env vars
           pulp config create \
-            --username "$PULP_USER" \
-            --password "$PULP_PASS" \
+            --username "$MECHA_PULP_USERNAME" \
+            --password "$MECHA_PULP_PASSWORD" \
             --base-url "$PULP_API_URL" \
             --overwrite
 
