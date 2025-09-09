@@ -8,7 +8,7 @@ use log::{debug, error, info, warn};
 use zbus::ConnectionBuilder;
 
 pub const CONNECTION_BUS_NAME: &str = "org.mechanix.services.Display";
-pub const DEFAULT_BRIGHTNESS_FILE_PATH: &str = "/etc/brightness";
+pub const DEFAULT_BRIGHTNESS_FILE_PATH: &str = "/sys/class/backlight/backlight/brightness";
 pub const SERVED_AT: &str = "/org/mechanix/services/Display";
 
 #[tokio::main]
