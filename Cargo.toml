@@ -8,7 +8,8 @@ members = [
     "shell/crates/*",
     "dbus/freedesktop/*",
     "dbus/mechanix/mxconf",
-    "shared/bevy_plugins", "dbus/mechanix/system",
+    "dbus/mechanix/system",
+    "shared/bevy_plugins",
 ]
 
 [workspace.package]
