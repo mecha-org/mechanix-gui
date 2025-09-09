@@ -16,7 +16,6 @@ mxconf_dbus = { workspace = true }
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"
-changelog = "debian/changelog"
 extended-description = """\
 Keyboard application."""
 depends = "$auto"
