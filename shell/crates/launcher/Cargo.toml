@@ -27,7 +27,6 @@ universal_search = { path = "../universal_search" }
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"
-changelog = "debian/changelog"
 extended-description = """\
 Launcher application."""
 depends = "$auto"

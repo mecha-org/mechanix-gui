@@ -99,7 +99,8 @@ jobs:
 
       - name: Package deb [${{ matrix.package }}]
         run: |
-          cargo deb --no-build --package ${{ matrix.package }}
+          sudo apt install -y fakeroot
+          fakeroot cargo deb --no-build --package ${{ matrix.package }}
           ls -la target/debian
 
       - name: Prepare artifacts [${{ matrix.package }}]
