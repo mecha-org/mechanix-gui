@@ -1,13 +1,14 @@
-use crate::{ClockUpdateTimer, components::*};
-use service_plugins::{
-    UPowerBatteryState,
-    NetworkManagerDeviceState,
-    bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus},
-    network_manager::{ActiveNetworkStrength, WirelessEnabled},
-    upower::{DevicePercentage, DeviceState},
-};
+use crate::{components::*, ClockUpdateTimer};
 use chrono::{Datelike, Timelike};
 use service_plugins::network_manager::NetworkManagerDeviceStatus;
+use service_plugins::{
+    bluetooth::{
+        BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ConnectedDeviceCount,
+    },
+    network_manager::{ActiveNetworkStrength, WirelessEnabled},
+    upower::{DevicePercentage, DeviceState},
+    NetworkManagerDeviceState, UPowerBatteryState,
+};
 use types::prelude::IconAssets;
 
 pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
@@ -76,8 +77,13 @@ pub fn update_wireless_device_status(
     icon_assets: Res<IconAssets>,
 ) {
     for mut image_node in &mut query {
-        info!("enabled status:{:?}, device status: {:?}", wireless_enabled_status, wireless_device_status);
-        if wireless_device_status.0 == NetworkManagerDeviceState::ConnectedLocal && wireless_enabled_status.0 {
+        info!(
+            "enabled status:{:?}, device status: {:?}",
+            wireless_enabled_status, wireless_device_status
+        );
+        if wireless_device_status.0 == NetworkManagerDeviceState::ConnectedLocal
+            && wireless_enabled_status.0
+        {
             image_node.image = icon_assets.wifi_on.clone();
         }
     }
@@ -86,10 +92,12 @@ pub fn update_bluetooth_on_powered(
     icon_assets: Res<IconAssets>,
     mut query: Query<&mut ImageNode, With<Bluetooth>>,
     bluetooth_state: Res<BluetoothEnabledStatus>,
+    mut event_writer: EventWriter<BluetoothActionEvent>,
 ) {
     for mut icon in &mut query {
         if bluetooth_state.0 {
             icon.image = icon_assets.bluetooth_on.clone();
+            event_writer.write(BluetoothActionEvent(BluetoothAction::ConnectedDeviceCount));
         } else {
             icon.image = icon_assets.bluetooth_off.clone();
         }
@@ -99,10 +107,10 @@ pub fn update_bluetooth_on_powered(
 pub fn update_bluetooth_on_connected(
     icon_assets: Res<IconAssets>,
     mut query: Query<&mut ImageNode, With<Bluetooth>>,
-    connected_status: Res<BluetoothDeviceConnectedStatus>,
+    connected_device_count: Res<ConnectedDeviceCount>,
 ) {
     for mut icon in &mut query {
-        if connected_status.0 {
+        if connected_device_count.0 > 0 {
             icon.image = icon_assets.bluetooth_connected.clone();
         } else {
             icon.image = icon_assets.bluetooth_on.clone();
@@ -118,7 +126,7 @@ pub fn update_power_icon(
 ) {
     for mut styled_text in &mut query {
         match (device_state.0.clone(), device_percentage.0.round() as u32) {
-            (UPowerBatteryState::Charging, p) if p >= 95 => {
+            (UPowerBatteryState::Charging | UPowerBatteryState::FullCharged, p) if p >= 95 => {
                 styled_text.image = icon_assets.battery_100_charging.clone();
             }
             (UPowerBatteryState::Charging, p) if p >= 90 => {
