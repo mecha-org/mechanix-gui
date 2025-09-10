@@ -25,7 +25,7 @@ pub struct BluetoothResultSender(pub Sender<BluetoothResult>);
 pub struct BluetoothEnabledStatus(pub bool);
 
 #[derive(Resource, Clone, Default)]
-pub struct BluetoothDeviceConnectedStatus(pub bool);
+pub struct ConnectedDeviceCount(pub i32);
 
 #[derive(Resource, Default)]
 pub struct BluetoothState {
@@ -52,6 +52,7 @@ pub enum BluetoothAction {
     ConnectToDevice(String),
     DisconnectDevice(String),
     ListConnectedDevices,
+    ConnectedDeviceCount,
     ListPairedDevices,
     StreamPoweredStatus,
     StreamBluetoothEvent,
@@ -65,6 +66,7 @@ pub enum BluetoothResult {
     ListPairedDevices(Vec<BluetoothDevice>),
     ConnectDevice(bool),
     DisconnectDevice(bool),
+    ConnectedDeviceCount(i32),
     ListConnectedDevices(Vec<BluetoothDevice>),
     Error(ErrorType),
 }
@@ -84,7 +86,6 @@ pub enum ErrorType {
 /// bluetooth.
 ///
 /// The `BluetoothService` is not available until the `init_bluetooth_service`
-/// system has completed. This is checked with the `service_ready` function.
 pub struct BluetoothPlugin;
 
 impl Plugin for BluetoothPlugin {
@@ -92,7 +93,7 @@ impl Plugin for BluetoothPlugin {
         app.insert_resource(BluetoothServiceResource { service: None })
             .insert_resource(BluetoothState::default())
             .insert_resource(BluetoothEnabledStatus::default())
-            .insert_resource(BluetoothDeviceConnectedStatus::default())
+            .insert_resource(ConnectedDeviceCount::default())
             .insert_resource(ListPairedDevices::default())
             .insert_non_send_resource(PoweredStatusReceiver::default())
             .insert_non_send_resource(BluetoothEventReceiver::default())
@@ -131,23 +132,18 @@ fn poll_power_status(
         }
     }
 }
-
 fn poll_bluetooth_event(
+    mut connected_device_count: ResMut<ConnectedDeviceCount>,
     event_receiver: NonSendMut<BluetoothEventReceiver>,
-    mut bluetooth_connection_status: ResMut<BluetoothDeviceConnectedStatus>,
 ) {
     if let Some(event) = &event_receiver.0 {
         if let Ok(bluetooth_event) = event.try_recv() {
             match bluetooth_event {
                 BluetoothEvent::DeviceAdded => {
-                    if !bluetooth_connection_status.0 {
-                        bluetooth_connection_status.0 = true;
-                    }
+                    connected_device_count.0 = connected_device_count.0 + 1;
                 }
                 BluetoothEvent::DeviceRemoved => {
-                    if bluetooth_connection_status.0 {
-                        bluetooth_connection_status.0 = false;
-                    }
+                    connected_device_count.0 = connected_device_count.0 - 1;
                 }
             }
         }
@@ -277,7 +273,7 @@ fn handle_bluetooth_action_events(
                             }
                         }
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::ListAvailableDevices => {
@@ -308,7 +304,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::ListPairedDevices => {
@@ -350,7 +346,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::ConnectToDevice(device_address) => {
@@ -383,7 +379,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::DisconnectDevice(device_address) => {
@@ -416,7 +412,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::ListConnectedDevices => {
@@ -447,7 +443,7 @@ fn handle_bluetooth_action_events(
                             }
                         };
                     })
-                        .detach();
+                    .detach();
                 }
             }
             BluetoothAction::StreamPoweredStatus => {
@@ -469,6 +465,37 @@ fn handle_bluetooth_action_events(
                     event_receiver.0 = Some(receiver);
                 }
             }
+            BluetoothAction::ConnectedDeviceCount => {
+                info!("bluetooth action: connected device count");
+                if let Some(service) = &mut service.service {
+                    let service = service.clone();
+                    let result_sender = sender.0.clone();
+                    pool.spawn(async move {
+                        match service.get_connected_devices().await {
+                            Ok(devices) => {
+                                if let Err(err) = result_sender.send(
+                                    BluetoothResult::ConnectedDeviceCount(devices.len() as i32),
+                                ) {
+                                    error!("failed to send connected devices count : {err}");
+                                }
+                            }
+                            Err(err) => {
+                                error!("failed to get connected devices for count: {err}");
+                                let error_type = ErrorType::ActionFailed {
+                                    action: BluetoothAction::ConnectedDeviceCount,
+                                    message: "Failed to list connected devices".to_string(),
+                                };
+                                if let Err(err) =
+                                    result_sender.send(BluetoothResult::Error(error_type))
+                                {
+                                    error!("failed to send error while getting connecte device list: {err}");
+                                }
+                            }
+                        };
+                    })
+                    .detach();
+                }
+            }
         } // Add more as needed
     }
 }
@@ -484,7 +511,7 @@ fn handle_bluetooth_action_events(
 fn poll_bluetooth_action_result_events(
     event_receiver: ResMut<BluetoothResultReceiver>,
     mut bluetooth_status: ResMut<BluetoothEnabledStatus>,
-    mut bluetooth_connection_status: ResMut<BluetoothDeviceConnectedStatus>,
+    mut connected_device_count: ResMut<ConnectedDeviceCount>,
     mut bluetooth_paired_devices: ResMut<ListPairedDevices>,
 ) {
     if let Ok(receiver) = event_receiver.receiver.lock() {
@@ -494,23 +521,19 @@ fn poll_bluetooth_action_result_events(
                     info!("bluetooth status updated: {status}");
                     bluetooth_status.0 = status;
                 }
-                BluetoothResult::BluetoothEvent(event) => {
-                    match event {
-                        BluetoothEvent::DeviceAdded => {
-                            if !bluetooth_connection_status.0 {
-                                bluetooth_connection_status.0 = true;
-                            }
-                        }
-                        BluetoothEvent::DeviceRemoved => {
-                            if bluetooth_connection_status.0 {
-                                bluetooth_connection_status.0 = false;
-                            }
-                        }
-                    }
+                BluetoothResult::BluetoothEvent(event) => match event {
+                    BluetoothEvent::DeviceAdded => {}
+                    BluetoothEvent::DeviceRemoved => {}
+                },
+                BluetoothResult::ListConnectedDevices(devices) => {
+                    info!("list connected devices: total {:?} ", devices.len());
                 }
                 BluetoothResult::ListPairedDevices(devices) => {
                     info!("list of paired devices: {:?}", devices);
                     bluetooth_paired_devices.0 = devices;
+                }
+                BluetoothResult::ConnectedDeviceCount(device_count) => {
+                    connected_device_count.0 = device_count;
                 }
                 _ => {
                     // ignore other events

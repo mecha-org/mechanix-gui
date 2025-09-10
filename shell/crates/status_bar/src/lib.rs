@@ -8,10 +8,7 @@ use bevy_asset_loader::{
     standard_dynamic_asset::StandardDynamicAssetCollection,
 };
 use service_plugins::{
-    BluetoothPlugin, NetworkManagerPlugin,
-    bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus},
-    network_manager::{ActiveNetworkStrength, WirelessEnabled},
-    upower::{DevicePercentage, DeviceState, UPowerPlugin},
+    bluetooth::{BluetoothEnabledStatus, ConnectedDeviceCount}, network_manager::{ActiveNetworkStrength, WirelessEnabled}, upower::{DevicePercentage, DeviceState, UPowerPlugin}, BluetoothPlugin, NetworkManagerPlugin
 };
 use bevy_wayland::prelude::{
     Anchor, InputRegion, KeyboardInteractivity, Layer, LayerShellSettings,
@@ -85,13 +82,14 @@ impl Plugin for StatusBarPlugin {
         app.add_systems(
             Update,
             update_bluetooth_on_connected
-                .run_if(resource_changed::<BluetoothDeviceConnectedStatus>)
+                .run_if(resource_changed::<ConnectedDeviceCount>)
                 .run_if(in_state(AssetsLoadingState::Loaded)),
         )
         .add_systems(
             Update,
             update_power_icon
                 .run_if(resource_changed::<DevicePercentage>)
+                .run_if(resource_changed::<DeviceState>)
                 .run_if(in_state(AssetsLoadingState::Loaded)),
         );
         app.add_systems(
