@@ -4,6 +4,7 @@ use bevy::{
 };
 mod core_button;
 mod core_scrollbar;
+mod core_slider;
 mod events;
 
 mod interaction_states;
@@ -11,8 +12,9 @@ pub use core_button::{CoreButton, CoreButtonPlugin};
 pub use core_scrollbar::{
     CoreScrollArea, CoreScrollbar, CoreScrollbarPlugin, CoreScrollbarThumb, Orientation,
 };
+pub use core_slider::{CoreSlider, CoreSliderPlugin, SliderDragState};
+pub use events::{ButtonClicked, ValueChange};
 pub use interaction_states::{ButtonPressed, Checked, InteractionDisabled};
-
 pub struct CoreWidgetsPlugin;
 
 impl Plugin for CoreWidgetsPlugin {
@@ -21,7 +23,7 @@ impl Plugin for CoreWidgetsPlugin {
             app.add_plugins(InputDispatchPlugin);
         }
 
-        app.add_plugins((CoreButtonPlugin, CoreScrollbarPlugin));
+        app.add_plugins((CoreButtonPlugin, CoreScrollbarPlugin, CoreSliderPlugin));
     }
 }
 
