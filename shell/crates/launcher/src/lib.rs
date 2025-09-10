@@ -21,7 +21,7 @@ impl Plugin for LauncherPlugin {
             SettingsDrawerPlugin,
             UniversalSearchPlugin,
             // HomescreenPlugin,
-            // RunningAppsPlugin,
+            RunningAppsPlugin,
             // NotificationsDrawerPlugin,
         ));
     }
