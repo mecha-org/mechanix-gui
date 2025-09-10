@@ -8,11 +8,11 @@ use crate::{
     },
 };
 use animation::{
-    combinator::{event, parallel, sequence, tween, tween_exact},
+    combinator::{event, parallel, sequence, tween},
     interpolate::node_to,
     prelude::*,
 };
-use bevy::{color::palettes::css::*, prelude::*};
+use bevy::color::palettes::css::*;
 use types::prelude::FontAssets;
 
 #[derive(Component)]

@@ -1,6 +1,12 @@
 ({
-    "image.airplane_tilt": File (
-        path: "icons/airplane_tilt.png",
+    "image.right_nav_bar": File (
+        path: "icons/right_nav_bar.png",
+    ),
+    "image.airplane_on": File (
+        path: "icons/airplane_on.png",
+    ),
+    "image.airplane_off": File (
+        path: "icons/airplane_off.png",
     ),
     "image.rotation_on": File (
         path: "icons/rotation_on.png",
@@ -77,10 +83,19 @@
     "image.cell_signal_none": File (
         path: "icons/cell_signal_none.png",
     ),
+    "image.cell_signal_high": File (
+        path: "icons/cell_signal_high.png",
+    ),
     "image.terminal": File (
         path: "icons/terminal.png",
     ),
     "image.battery_10": File (
         path: "icons/battery_10.png",
+    ),
+    "image.settings": File (
+        path: "icons/settings.png",
+    ),
+    "image.power": File (
+        path: "icons/power.png",
     ),
 })

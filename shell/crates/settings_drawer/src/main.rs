@@ -1,7 +1,6 @@
-use bevy::{prelude::*, window::ExitCondition, winit::WinitPlugin};
+use bevy::{asset::AssetMetaCheck, prelude::*, window::ExitCondition, winit::WinitPlugin};
 use bevy_wayland::prelude::*;
-use headless_widgets::CoreWidgetsPlugin;
-use settings_drawer::{Screens, SettingsDrawerPlugin};
+use settings_drawer::SettingsDrawerPlugin;
 
 fn main() {
     App::new()
@@ -13,11 +12,14 @@ fn main() {
                     primary_window: None,
                     exit_condition: ExitCondition::DontExit,
                     ..Default::default()
+                })
+                .set(AssetPlugin {
+                    meta_check: AssetMetaCheck::Never,
+                    unapproved_path_mode: bevy::asset::UnapprovedPathMode::Allow,
+                    ..Default::default()
                 }),
             WaylandPlugin,
             SettingsDrawerPlugin,
-            CoreWidgetsPlugin
         ))
-        .insert_state(Screens::Loading)
         .run();
 }
