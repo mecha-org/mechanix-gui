@@ -37,7 +37,7 @@ impl bevy::prelude::Plugin for UniversalSearchIconsPlugin {
             LoadingState::new(UniversalSearchIconsState::Loading)
                 .continue_to_state(UniversalSearchIconsState::Loaded)
                 .on_failure_continue_to_state(UniversalSearchIconsState::Failed)
-                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("icons.ron")
+                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("universal_search.ron")
                 .load_collection::<UniversalSearchIcons>(),
         );
     }

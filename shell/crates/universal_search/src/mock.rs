@@ -64,19 +64,16 @@ fn get_apps(app: &mut App) -> Vec<DesktopApp> {
                 .into_os_string()
                 .into_string()
                 .unwrap();
-            let default_icon = Path::new("icons/default_app_icon.png");
+            let default_icon = AssetPath::from_static(format!("icons/universal_search/files.png",));
 
             let path = Path::new(&icon);
 
             let icon: Handle<Image> = match path.extension() {
-                Some(ext) if ext == "svg" => app
-                    .world_mut()
-                    .load_asset(AssetPath::from_path(default_icon)),
+                Some(ext) if ext == "svg" => app.world_mut().load_asset(default_icon),
                 Some(ext) if ext == "png" => app.world_mut().load_asset(AssetPath::from_path(path)),
                 _ => {
                     println!("Unsupported icon format: {:?}", path.extension());
-                    app.world_mut()
-                        .load_asset(AssetPath::from_path(default_icon))
+                    app.world_mut().load_asset(default_icon)
                 }
             };
 
@@ -104,18 +101,18 @@ fn get_apps(app: &mut App) -> Vec<DesktopApp> {
 }
 
 fn get_past_searches(app: &mut App) -> Vec<SearchResult> {
-    let files_icon = app
-        .world_mut()
-        .load_asset(AssetPath::from_path(Path::new("icons/files.png")));
-    let kitty_icon = app
-        .world_mut()
-        .load_asset(AssetPath::from_path(Path::new("icons/kitty.png")));
-    let mecha_connect_icon = app
-        .world_mut()
-        .load_asset(AssetPath::from_path(Path::new("icons/mecha_connect.png")));
-    let python_icon = app
-        .world_mut()
-        .load_asset(AssetPath::from_path(Path::new("icons/python.png")));
+    let files_icon = app.world_mut().load_asset(AssetPath::from_static(format!(
+        "icons/universal_search/files.png",
+    )));
+    let kitty_icon = app.world_mut().load_asset(AssetPath::from_static(format!(
+        "icons/universal_search/kitty.png",
+    )));
+    let mecha_connect_icon = app.world_mut().load_asset(AssetPath::from_static(format!(
+        "icons/universal_search/mecha_connect.png",
+    )));
+    let python_icon = app.world_mut().load_asset(AssetPath::from_static(format!(
+        "icons/universal_search/python.png",
+    )));
 
     vec![
         SearchResult {
@@ -146,7 +143,7 @@ fn get_past_searches(app: &mut App) -> Vec<SearchResult> {
 }
 
 fn get_search_results(app: &mut App) -> Vec<SearchResult> {
-    let default_icon = Path::new("icons/default_app_icon.png");
+    let default_icon = Path::new("../../assets/icons/universal_search/default_app_icon.png");
     let icon: Handle<Image> = app
         .world_mut()
         .load_asset(AssetPath::from_path(default_icon));
@@ -174,7 +171,7 @@ fn get_search_results(app: &mut App) -> Vec<SearchResult> {
 }
 
 fn get_browser_apps(app: &mut App) -> Vec<DesktopApp> {
-    let default_icon = Path::new("icons/default_app_icon.png");
+    let default_icon = Path::new("../../assets/icons/universal_search/default_app_icon.png");
     let icon: Handle<Image> = app
         .world_mut()
         .load_asset(AssetPath::from_path(default_icon));
