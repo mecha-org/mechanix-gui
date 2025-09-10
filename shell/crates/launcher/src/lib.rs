@@ -19,9 +19,9 @@ impl Plugin for LauncherPlugin {
             BackgroundPlugin,
             StatusBarPlugin,
             SettingsDrawerPlugin,
+            UniversalSearchPlugin,
             // HomescreenPlugin,
             // RunningAppsPlugin,
-            // UniversalSearchPlugin,
             // NotificationsDrawerPlugin,
         ));
     }

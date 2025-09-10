@@ -3,6 +3,7 @@ mod icons;
 mod setup;
 mod ui;
 
+use animation::{DefaultTweenPlugins, TweenCorePlugin};
 use bevy::prelude::*;
 
 use utils::prelude::{FontAssetsPlugin, fonts_loaded};
@@ -24,10 +25,16 @@ use crate::{
 pub struct SettingsDrawerPlugin;
 impl Plugin for SettingsDrawerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FontAssetsPlugin);
+        if !app.is_plugin_added::<FontAssetsPlugin>() {
+            app.add_plugins(FontAssetsPlugin);
+        }
         app.add_plugins(SettingsDrawerIconsPlugin);
-        app.add_plugins((animation::DefaultTweenPlugins,));
-        app.add_plugins((headless_widgets::CoreWidgetsPlugin));
+        if !app.is_plugin_added::<TweenCorePlugin>() {
+            app.add_plugins(DefaultTweenPlugins);
+        }
+        if !app.is_plugin_added::<headless_widgets::CoreWidgetsPlugin>() {
+            app.add_plugins(headless_widgets::CoreWidgetsPlugin);
+        }
         app.add_plugins(UiPlugin);
         app.add_plugins(ServicesPlugins);
 

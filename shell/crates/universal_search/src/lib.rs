@@ -25,6 +25,7 @@ use crate::{
         BrowserApps, FrequentlyUsedApps, SearchInputPlugin, SearchItems, SearchResults, SearchText,
     },
 };
+use animation::{TweenCorePlugin, prelude::*};
 use headless_widgets::prelude::*;
 
 #[derive(Event)]
@@ -42,11 +43,18 @@ impl Plugin for UniversalSearchPlugin {
         app.insert_resource(SearchText("".to_string()));
         app.insert_resource(BrowserApps(vec![]));
 
-        app.add_plugins(FontAssetsPlugin);
+        if !app.is_plugin_added::<FontAssetsPlugin>() {
+            app.add_plugins(FontAssetsPlugin);
+        }
         app.add_plugins(UniversalSearchIconsPlugin);
-        app.add_plugins((animation::DefaultTweenPlugins,));
+
+        if !app.is_plugin_added::<TweenCorePlugin>() {
+            app.add_plugins((DefaultTweenPlugins,));
+        }
         app.add_plugins((mock::MockPlugin,));
-        app.add_plugins((headless_widgets::CoreWidgetsPlugin));
+        if !app.is_plugin_added::<headless_widgets::CoreWidgetsPlugin>() {
+            app.add_plugins(headless_widgets::CoreWidgetsPlugin);
+        }
         app.add_plugins(SearchInputPlugin);
 
         app.add_event::<UniversalSearchOpen>();

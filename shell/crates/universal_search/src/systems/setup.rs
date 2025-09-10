@@ -44,12 +44,12 @@ pub fn camera_setup(mut commands: Commands) {
                 ..default()
             },
             UniversalSearchWindow,
-            // InputRegion(Rect::new(
-            //     0.,
-            //     WINDOW_SIZE.1 - BAR_SIZE.1,
-            //     BAR_SIZE.0,
-            //     WINDOW_SIZE.1,
-            // )),
+            InputRegion(Rect::new(
+                0.,
+                WINDOW_SIZE.1 - BAR_SIZE.1,
+                BAR_SIZE.0,
+                WINDOW_SIZE.1,
+            )),
         ))
         .id();
     let camera_ent = commands

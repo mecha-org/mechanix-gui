@@ -5,7 +5,10 @@ use bevy::{
 use bevy_wayland::prelude::*;
 use types::prelude::FontAssets;
 
-use crate::{icons::SettingsDrawerIcons, ui::ui};
+use crate::{
+    icons::SettingsDrawerIcons,
+    ui::{BAR_SIZE, ui},
+};
 
 pub const WINDOW_SIZE: (f32, f32) = (540., 584.);
 
@@ -33,6 +36,12 @@ pub fn camera_setup(mut commands: Commands) {
                 ..default()
             },
             SettingsDrawerWindow,
+            InputRegion(Rect::new(
+                WINDOW_SIZE.0 - BAR_SIZE.0,
+                WINDOW_SIZE.1 - BAR_SIZE.1,
+                WINDOW_SIZE.0,
+                WINDOW_SIZE.1,
+            )),
         ))
         .id();
     let camera_ent = commands
