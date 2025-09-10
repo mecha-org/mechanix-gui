@@ -1,12 +1,10 @@
 mod components;
 mod constants;
+mod icons;
 mod systems;
 
 use bevy::{prelude::*, window::WindowResolution};
-use bevy_asset_loader::{
-    loading_state::{LoadingState, LoadingStateAppExt, config::ConfigureLoadingState},
-    standard_dynamic_asset::StandardDynamicAssetCollection,
-};
+
 use bevy_wayland::prelude::{
     Anchor, InputRegion, KeyboardInteractivity, Layer, LayerShellSettings,
 };
@@ -18,9 +16,11 @@ use service_plugins::{
     upower::{DevicePercentage, DeviceState, UPowerPlugin},
 };
 use systems::*;
-use types::{AssetsLoadingState, prelude::IconAssets};
+use types::prelude::FontAssets;
+use utils::prelude::{FontAssetsPlugin, fonts_loaded};
 
 use crate::components::spawn_status_bar_ui;
+use crate::icons::{StatusBarIconsPlugin, StatusBarIconsState, icons_loaded};
 
 #[derive(Debug, Component)]
 pub struct StatusBarWindow;
@@ -31,8 +31,12 @@ pub struct StatusBarPlugin;
 
 impl Plugin for StatusBarPlugin {
     fn build(&self, app: &mut App) {
+        app.add_plugins(StatusBarIconsPlugin);
+        if !app.is_plugin_added::<FontAssetsPlugin>() {
+            app.add_plugins(FontAssetsPlugin);
+        }
         app.add_systems(PreStartup, pre_setup);
-        app.add_systems(OnEnter(AssetsLoadingState::Loaded), spawn_status_bar_ui);
+        app.add_systems(OnEnter(StatusBarIconsState::Loaded), spawn_status_bar_ui);
 
         if !app.is_plugin_added::<NetworkManagerPlugin>() {
             app.add_plugins(NetworkManagerPlugin);
@@ -44,12 +48,6 @@ impl Plugin for StatusBarPlugin {
             app.add_plugins(UPowerPlugin);
         }
 
-        app.init_state::<AssetsLoadingState>().add_loading_state(
-            LoadingState::new(AssetsLoadingState::Loading)
-                .continue_to_state(AssetsLoadingState::Loaded)
-                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("status_bar.ron")
-                .load_collection::<IconAssets>(),
-        );
         app.add_systems(Update, exit_on_esc);
         app.insert_resource(ClockUpdateTimer(Timer::from_seconds(
             1.,
@@ -57,7 +55,7 @@ impl Plugin for StatusBarPlugin {
         )));
         app.add_systems(Update, update_clock);
         app.add_systems(
-            OnEnter(AssetsLoadingState::Loaded),
+            OnEnter(StatusBarIconsState::Loaded),
             // Update,
             (
                 update_wireless_state,
@@ -66,50 +64,51 @@ impl Plugin for StatusBarPlugin {
                 update_wireless_network_strength.after(update_wireless_state),
             )
                 .after(spawn_status_bar_ui)
-                .run_if(resource_exists::<IconAssets>),
+                .run_if(icons_loaded)
+                .run_if(fonts_loaded),
         );
         app.add_systems(
             Update,
             update_wireless_state
                 .run_if(resource_changed::<WirelessEnabled>)
-                .run_if(in_state(AssetsLoadingState::Loaded)),
+                .run_if(icons_loaded),
         );
         app.add_systems(
             Update,
             update_wireless_network_strength
                 .run_if(resource_changed::<ActiveNetworkStrength>)
-                .run_if(in_state(AssetsLoadingState::Loaded)),
+                .run_if(icons_loaded),
         )
         .add_systems(
             Update,
             update_wireless_device_status
                 .run_if(resource_changed::<NetworkManagerDeviceStatus>)
-                .run_if(in_state(AssetsLoadingState::Loaded)),
+                .run_if(icons_loaded),
         );
         app.add_systems(
             Update,
             update_bluetooth_on_powered
                 .run_if(resource_changed::<BluetoothEnabledStatus>)
-                .run_if(in_state(AssetsLoadingState::Loaded)),
+                .run_if(icons_loaded),
         );
         app.add_systems(
             Update,
             update_bluetooth_on_connected
                 .run_if(resource_changed::<ConnectedDeviceCount>)
-                .run_if(in_state(AssetsLoadingState::Loaded)),
+                .run_if(icons_loaded),
         )
         .add_systems(
             Update,
             update_power_icon
                 .run_if(resource_changed::<DevicePercentage>)
                 .run_if(resource_changed::<DeviceState>)
-                .run_if(in_state(AssetsLoadingState::Loaded)),
+                .run_if(icons_loaded),
         );
         app.add_systems(
             Update,
             update_power_icon
                 .run_if(resource_changed::<DeviceState>)
-                .run_if(in_state(AssetsLoadingState::Loaded)),
+                .run_if(icons_loaded),
         );
         // app.add_systems(
         //     Update,

@@ -3,7 +3,7 @@ use bevy_asset_loader::prelude::*;
 
 #[derive(AssetCollection, Resource, Clone)]
 #[allow(dead_code)]
-pub struct IconAssets {
+pub struct StatusBarIcons {
     //Wireless Icons
     #[asset(key = "icons.wireless_on")]
     pub wifi_on: Handle<Image>,
@@ -75,4 +75,31 @@ pub struct IconAssets {
     pub battery_90_charging: Handle<Image>,
     #[asset(key = "icons.battery_100_charging")]
     pub battery_100_charging: Handle<Image>,
+}
+
+#[derive(Default, Clone, Eq, PartialEq, Debug, Hash, States)]
+pub enum StatusBarIconsState {
+    #[default]
+    Loading,
+    Loaded,
+    Failed,
+}
+
+pub struct StatusBarIconsPlugin;
+
+impl bevy::prelude::Plugin for StatusBarIconsPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_state::<StatusBarIconsState>();
+        app.add_loading_state(
+            LoadingState::new(StatusBarIconsState::Loading)
+                .continue_to_state(StatusBarIconsState::Loaded)
+                .on_failure_continue_to_state(StatusBarIconsState::Failed)
+                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("status_bar.ron")
+                .load_collection::<StatusBarIcons>(),
+        );
+    }
+}
+
+pub fn icons_loaded(load_state: Res<State<StatusBarIconsState>>) -> bool {
+    *load_state == StatusBarIconsState::Loaded
 }

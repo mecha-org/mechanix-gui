@@ -1,9 +1,7 @@
-
-use crate::{systems::get_current_datetime, StatusBarCamera};
+use crate::{StatusBarCamera, icons::StatusBarIcons, systems::get_current_datetime};
 pub use bevy::prelude::*;
 use service_plugins::{bluetooth::BluetoothEnabledStatus, network_manager::WirelessEnabled};
-use types::prelude::IconAssets;
-
+use types::prelude::FontAssets;
 
 #[derive(Component)]
 pub struct Clock;
@@ -19,7 +17,8 @@ pub struct Battery;
 
 pub fn spawn_status_bar_ui(
     mut commands: Commands,
-    icons: Res<IconAssets>,
+    icons: Res<StatusBarIcons>,
+    fonts: Res<FontAssets>,
     wireless_enabled: Res<WirelessEnabled>,
     bluetooth_enabled: Res<BluetoothEnabledStatus>,
     camera: Res<StatusBarCamera>,
@@ -46,6 +45,7 @@ pub fn spawn_status_bar_ui(
         UiTargetCamera(camera.0.clone()),
         children![status_bar(
             &icons,
+            &fonts,
             wireless_default_icon,
             bluetooth_default_icon,
         )],
@@ -53,9 +53,10 @@ pub fn spawn_status_bar_ui(
 }
 
 pub fn status_bar(
-    icon_assets: &IconAssets,
+    icon_assets: &StatusBarIcons,
+    fonts: &FontAssets,
     wireless_default_icon: &Handle<Image>,
-    bluetooth_default_icon: &Handle<Image>
+    bluetooth_default_icon: &Handle<Image>,
 ) -> impl Bundle {
     let icon_size = 24.;
 
@@ -81,6 +82,7 @@ pub fn status_bar(
             (
                 Text::new(get_current_datetime()),
                 TextFont {
+                    font: fonts.primary_400.clone(),
                     font_size: 16.0,
                     ..default()
                 },
@@ -95,8 +97,8 @@ pub fn status_bar(
                 },
                 children![
                     (
-                       ImageNode::new(wireless_default_icon.clone()),
-                       Node {
+                        ImageNode::new(wireless_default_icon.clone()),
+                        Node {
                             width: Val::Px(icon_size),
                             height: Val::Px(icon_size),
                             ..Default::default()

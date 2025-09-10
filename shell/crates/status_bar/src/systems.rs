@@ -1,15 +1,15 @@
-use crate::{components::*, ClockUpdateTimer};
+use crate::icons::StatusBarIcons;
+use crate::{ClockUpdateTimer, components::*};
 use chrono::{Datelike, Timelike};
 use service_plugins::network_manager::NetworkManagerDeviceStatus;
 use service_plugins::{
+    NetworkManagerDeviceState, UPowerBatteryState,
     bluetooth::{
         BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ConnectedDeviceCount,
     },
     network_manager::{ActiveNetworkStrength, WirelessEnabled},
     upower::{DevicePercentage, DeviceState},
-    NetworkManagerDeviceState, UPowerBatteryState,
 };
-use types::prelude::IconAssets;
 
 pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
     if keys.just_pressed(KeyCode::Escape) {
@@ -20,12 +20,11 @@ pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
 pub fn get_current_datetime() -> String {
     let now = chrono::Local::now();
     format!(
-        "{} {} {:02}:{:02}:{:02}",
+        "{} {} {:02}:{:02}",
         now.day(),
         now.format("%B"),
         now.hour(),
         now.minute(),
-        now.second()
     )
 }
 
@@ -43,7 +42,7 @@ pub fn update_clock(
 pub fn update_wireless_state(
     mut query: Query<&mut ImageNode, With<Wireless>>,
     wifi_state: Res<WirelessEnabled>,
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
 ) {
     for mut image_node in &mut query {
         info!("WirelessEnabled is updated :{:?}", wifi_state);
@@ -55,7 +54,7 @@ pub fn update_wireless_state(
     }
 }
 pub fn update_wireless_network_strength(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Wireless>>,
     active_network_strength: Res<ActiveNetworkStrength>,
 ) {
@@ -74,7 +73,7 @@ pub fn update_wireless_device_status(
     mut query: Query<&mut ImageNode, With<Wireless>>,
     wireless_enabled_status: Res<WirelessEnabled>,
     wireless_device_status: Res<NetworkManagerDeviceStatus>,
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
 ) {
     for mut image_node in &mut query {
         info!(
@@ -89,7 +88,7 @@ pub fn update_wireless_device_status(
     }
 }
 pub fn update_bluetooth_on_powered(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Bluetooth>>,
     bluetooth_state: Res<BluetoothEnabledStatus>,
     mut event_writer: EventWriter<BluetoothActionEvent>,
@@ -105,7 +104,7 @@ pub fn update_bluetooth_on_powered(
 }
 
 pub fn update_bluetooth_on_connected(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Bluetooth>>,
     connected_device_count: Res<ConnectedDeviceCount>,
 ) {
@@ -119,7 +118,7 @@ pub fn update_bluetooth_on_connected(
 }
 
 pub fn update_power_icon(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Battery>>,
     device_percentage: Res<DevicePercentage>,
     device_state: Res<DeviceState>,
