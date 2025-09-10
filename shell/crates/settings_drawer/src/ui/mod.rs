@@ -76,11 +76,17 @@ pub struct ServicesPlugins;
 
 impl Plugin for ServicesPlugins {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            NetworkManagerPlugin,
-            BluetoothPlugin,
-            UPowerPlugin,
-            PulseAudioPlugin,
-        ));
+        if !app.is_plugin_added::<NetworkManagerPlugin>() {
+            app.add_plugins(NetworkManagerPlugin);
+        }
+        if !app.is_plugin_added::<BluetoothPlugin>() {
+            app.add_plugins(BluetoothPlugin);
+        }
+        if !app.is_plugin_added::<UPowerPlugin>() {
+            app.add_plugins(UPowerPlugin);
+        }
+        if !app.is_plugin_added::<PulseAudioPlugin>() {
+            app.add_plugins(PulseAudioPlugin);
+        }
     }
 }

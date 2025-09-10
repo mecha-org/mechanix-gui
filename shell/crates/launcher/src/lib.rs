@@ -1,5 +1,3 @@
-
-
 use bevy::prelude::*;
 
 use app_drawer::prelude::*;
@@ -19,11 +17,11 @@ impl Plugin for LauncherPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             BackgroundPlugin,
+            StatusBarPlugin,
+            SettingsDrawerPlugin,
             // HomescreenPlugin,
-            // StatusBarPlugin,
-            // SettingsDrawerPlugin,
             // RunningAppsPlugin,
-            UniversalSearchPlugin,
+            // UniversalSearchPlugin,
             // NotificationsDrawerPlugin,
         ));
     }

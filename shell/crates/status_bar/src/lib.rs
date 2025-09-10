@@ -7,13 +7,16 @@ use bevy_asset_loader::{
     loading_state::{LoadingState, LoadingStateAppExt, config::ConfigureLoadingState},
     standard_dynamic_asset::StandardDynamicAssetCollection,
 };
-use service_plugins::{
-    bluetooth::{BluetoothEnabledStatus, ConnectedDeviceCount}, network_manager::{ActiveNetworkStrength, WirelessEnabled}, upower::{DevicePercentage, DeviceState, UPowerPlugin}, BluetoothPlugin, NetworkManagerPlugin
-};
 use bevy_wayland::prelude::{
     Anchor, InputRegion, KeyboardInteractivity, Layer, LayerShellSettings,
 };
 use service_plugins::network_manager::NetworkManagerDeviceStatus;
+use service_plugins::{
+    BluetoothPlugin, NetworkManagerPlugin,
+    bluetooth::{BluetoothEnabledStatus, ConnectedDeviceCount},
+    network_manager::{ActiveNetworkStrength, WirelessEnabled},
+    upower::{DevicePercentage, DeviceState, UPowerPlugin},
+};
 use systems::*;
 use types::{AssetsLoadingState, prelude::IconAssets};
 
@@ -30,13 +33,21 @@ impl Plugin for StatusBarPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PreStartup, pre_setup);
         app.add_systems(OnEnter(AssetsLoadingState::Loaded), spawn_status_bar_ui);
-        app.add_plugins(NetworkManagerPlugin);
-        app.add_plugins(BluetoothPlugin);
-        app.add_plugins(UPowerPlugin);
+
+        if !app.is_plugin_added::<NetworkManagerPlugin>() {
+            app.add_plugins(NetworkManagerPlugin);
+        }
+        if !app.is_plugin_added::<BluetoothPlugin>() {
+            app.add_plugins(BluetoothPlugin);
+        }
+        if !app.is_plugin_added::<UPowerPlugin>() {
+            app.add_plugins(UPowerPlugin);
+        }
+
         app.init_state::<AssetsLoadingState>().add_loading_state(
             LoadingState::new(AssetsLoadingState::Loading)
                 .continue_to_state(AssetsLoadingState::Loaded)
-                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("examples/settings.ron")
+                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("status_bar.ron")
                 .load_collection::<IconAssets>(),
         );
         app.add_systems(Update, exit_on_esc);
@@ -52,8 +63,10 @@ impl Plugin for StatusBarPlugin {
                 update_wireless_state,
                 update_bluetooth_on_powered,
                 update_power_icon,
-                update_wireless_network_strength.after(update_wireless_state)
-            ).after(spawn_status_bar_ui).run_if(resource_exists::<IconAssets>),
+                update_wireless_network_strength.after(update_wireless_state),
+            )
+                .after(spawn_status_bar_ui)
+                .run_if(resource_exists::<IconAssets>),
         );
         app.add_systems(
             Update,

@@ -1,0 +1,110 @@
+({
+    "icons.bluetooth_connected": File (
+        path: "icons/status_bar/bluetooth_connected.png",
+    ),
+
+    "icons.bluetooth_none": File (
+        path: "icons/status_bar/bluetooth_none.png",
+    ),
+
+    "icons.bluetooth_off": File (
+        path: "icons/status_bar/bluetooth_off.png",
+    ),
+    "icons.bluetooth_on": File (
+        path: "icons/status_bar/bluetooth_on.png",
+    ),
+
+    "icons.bluetooth_warning": File (
+        path: "icons/status_bar/bluetooth_warning.png",
+    ),
+
+    "icons.wireless_on": File (
+        path: "icons/status_bar/wireless_on.png",
+    ),
+    "icons.wireless_off": File (
+        path: "icons/status_bar/wireless_off.png",
+    ),
+    "icons.wireless_high": File (
+        path: "icons/status_bar/wireless_high.png",
+    ),
+    "icons.wireless_medium": File (
+        path: "icons/status_bar/wireless_medium.png",
+    ),
+    "icons.wireless_low": File (
+        path: "icons/status_bar/wireless_low.png",
+    ),
+    "icons.wireless_fix": File (
+        path: "icons/status_bar/wireless_fix.png",
+    ),
+
+    "icons.extend_screen_none": File (
+        path: "icons/status_bar/extend_screen_none.png",
+    ),
+
+    "icons.battery_10": File (
+        path: "icons/status_bar/battery_10.png",
+    ),
+    "icons.battery_20": File (
+        path: "icons/status_bar/battery_20.png",
+    ),
+    "icons.battery_30": File (
+        path: "icons/status_bar/battery_30.png",
+    ),
+    "icons.battery_40": File (
+        path: "icons/status_bar/battery_40.png",
+    ),
+    "icons.battery_50": File (
+        path: "icons/status_bar/battery_50.png",
+    ),
+    "icons.battery_60": File (
+        path: "icons/status_bar/battery_60.png",
+    ),
+    "icons.battery_70": File (
+        path: "icons/status_bar/battery_70.png",
+    ),
+    "icons.battery_80": File (
+        path: "icons/status_bar/battery_80.png",
+    ),
+    "icons.battery_90": File (
+        path: "icons/status_bar/battery_90.png",
+    ),
+    "icons.battery_100": File (
+        path: "icons/status_bar/battery_100.png",
+    ),
+    "icons.battery_empty": File (
+        path: "icons/status_bar/battery_empty.png",
+    ),
+    "icons.battery_0_charging": File (
+        path: "icons/status_bar/battery_0_charging.png",
+    ),
+    "icons.battery_10_charging": File (
+        path: "icons/status_bar/battery_10_charging.png",
+    ),
+    "icons.battery_20_charging": File (
+        path: "icons/status_bar/battery_20_charging.png",
+    ),
+    "icons.battery_30_charging": File (
+        path: "icons/status_bar/battery_30_charging.png",
+    ),
+    "icons.battery_40_charging": File (
+        path: "icons/status_bar/battery_40_charging.png",
+    ),
+    "icons.battery_50_charging": File (
+        path: "icons/status_bar/battery_50_charging.png",
+    ),
+    "icons.battery_60_charging": File (
+        path: "icons/status_bar/battery_60_charging.png",
+    ),
+    "icons.battery_70_charging": File (
+        path: "icons/status_bar/battery_70_charging.png",
+    ),
+    "icons.battery_80_charging": File (
+        path: "icons/status_bar/battery_80_charging.png",
+    ),
+    "icons.battery_90_charging": File (
+        path: "icons/status_bar/battery_90_charging.png",
+    ),
+    "icons.battery_100_charging": File (
+        path: "icons/status_bar/battery_100_charging.png",
+    ),
+})

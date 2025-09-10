@@ -5,76 +5,74 @@ use bevy_asset_loader::prelude::*;
 #[allow(dead_code)]
 pub struct IconAssets {
     //Wireless Icons
-    #[asset(path = "icons/wifi_on.png")]
-    pub wifi_on: Handle<Image>,    
-    #[asset(path = "icons/wifi_off.png")]
+    #[asset(key = "icons.wireless_on")]
+    pub wifi_on: Handle<Image>,
+    #[asset(key = "icons.wireless_off")]
     pub wifi_off: Handle<Image>,
 
-    #[asset(path = "icons/wifi_high.png")]
+    #[asset(key = "icons.wireless_high")]
     pub wifi_high: Handle<Image>,
 
-    #[asset(path = "icons/wifi_medium.png")]
+    #[asset(key = "icons.wireless_medium")]
     pub wifi_medium: Handle<Image>,
 
-    #[asset(path = "icons/wifi_low.png")]
+    #[asset(key = "icons.wireless_low")]
     pub wifi_low: Handle<Image>,
 
-    #[asset(path = "icons/wifi_fix.png")]
+    #[asset(key = "icons.wireless_fix")]
     pub wifi_fix: Handle<Image>,
 
     //Bluetooth Icons
-    #[asset(path = "icons/bluetooth_on.png")]
+    #[asset(key = "icons.bluetooth_on")]
     pub bluetooth_on: Handle<Image>,
-    #[asset(path = "icons/bluetooth_off.png")]
+    #[asset(key = "icons.bluetooth_off")]
     pub bluetooth_off: Handle<Image>,
-    #[asset(path = "icons/bluetooth_connected.png")]
+    #[asset(key = "icons.bluetooth_connected")]
     pub bluetooth_connected: Handle<Image>,
 
     //Battery Icons
-    #[asset(path = "icons/battery_10.png")]
+    #[asset(key = "icons.battery_10")]
     pub battery_10: Handle<Image>,
-    #[asset(path = "icons/battery_20.png")]
+    #[asset(key = "icons.battery_20")]
     pub battery_20: Handle<Image>,
-    #[asset(path = "icons/battery_30.png")]
+    #[asset(key = "icons.battery_30")]
     pub battery_30: Handle<Image>,
-    #[asset(path = "icons/battery_40.png")]
+    #[asset(key = "icons.battery_40")]
     pub battery_40: Handle<Image>,
-    #[asset(path = "icons/battery_50.png")]
+    #[asset(key = "icons.battery_50")]
     pub battery_50: Handle<Image>,
-    #[asset(path = "icons/battery_60.png")]
+    #[asset(key = "icons.battery_60")]
     pub battery_60: Handle<Image>,
-    #[asset(path = "icons/battery_70.png")]
+    #[asset(key = "icons.battery_70")]
     pub battery_70: Handle<Image>,
-    #[asset(path = "icons/battery_80.png")]
+    #[asset(key = "icons.battery_80")]
     pub battery_80: Handle<Image>,
-    #[asset(path = "icons/battery_90.png")]
+    #[asset(key = "icons.battery_90")]
     pub battery_90: Handle<Image>,
-    #[asset(path = "icons/battery_100.png")]
+    #[asset(key = "icons.battery_100")]
     pub battery_100: Handle<Image>,
-    #[asset(path = "icons/battery_empty.png")]
+    #[asset(key = "icons.battery_empty")]
     pub battery_empty: Handle<Image>,
-    #[asset(path = "icons/battery_0_charging.png")]
+    #[asset(key = "icons.battery_0_charging")]
     pub battery_0_charging: Handle<Image>,
-    #[asset(path = "icons/battery_10_charging.png")]
+    #[asset(key = "icons.battery_10_charging")]
     pub battery_10_charging: Handle<Image>,
-    #[asset(path = "icons/battery_20_charging.png")]
+    #[asset(key = "icons.battery_20_charging")]
     pub battery_20_charging: Handle<Image>,
-    #[asset(path = "icons/battery_30_charging.png")]
+    #[asset(key = "icons.battery_30_charging")]
     pub battery_30_charging: Handle<Image>,
-    #[asset(path = "icons/battery_40_charging.png")]
+    #[asset(key = "icons.battery_40_charging")]
     pub battery_40_charging: Handle<Image>,
-    #[asset(path = "icons/battery_50_charging.png")]
+    #[asset(key = "icons.battery_50_charging")]
     pub battery_50_charging: Handle<Image>,
-    #[asset(path = "icons/battery_60_charging.png")]
+    #[asset(key = "icons.battery_60_charging")]
     pub battery_60_charging: Handle<Image>,
-    #[asset(path = "icons/battery_70_charging.png")]
+    #[asset(key = "icons.battery_70_charging")]
     pub battery_70_charging: Handle<Image>,
-    #[asset(path = "icons/battery_80_charging.png")]
+    #[asset(key = "icons.battery_80_charging")]
     pub battery_80_charging: Handle<Image>,
-    #[asset(path = "icons/battery_90_charging.png")]
+    #[asset(key = "icons.battery_90_charging")]
     pub battery_90_charging: Handle<Image>,
-    #[asset(path = "icons/battery_100_charging.png")]
+    #[asset(key = "icons.battery_100_charging")]
     pub battery_100_charging: Handle<Image>,
-
-
 }

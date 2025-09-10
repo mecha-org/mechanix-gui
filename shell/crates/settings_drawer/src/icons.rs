@@ -116,7 +116,7 @@ impl bevy::prelude::Plugin for SettingsDrawerIconsPlugin {
             LoadingState::new(SettingsDrawerIconsState::Loading)
                 .continue_to_state(SettingsDrawerIconsState::Loaded)
                 .on_failure_continue_to_state(SettingsDrawerIconsState::Failed)
-                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("icons.ron")
+                .with_dynamic_assets_file::<StandardDynamicAssetCollection>("settings_drawer.ron")
                 .load_collection::<SettingsDrawerIcons>(),
         );
     }
