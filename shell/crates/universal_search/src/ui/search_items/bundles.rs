@@ -4,8 +4,8 @@ use bevy::{
 };
 
 use crate::{
+    button_system::NORMAL_BUTTON,
     icons::UniversalSearchIcons,
-    systems::NORMAL_BUTTON,
     types::{SearchResult, SearchResultType},
 };
 use types::prelude::*;

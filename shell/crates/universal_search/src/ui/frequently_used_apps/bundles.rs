@@ -4,7 +4,7 @@ use bevy::{
 };
 use headless_widgets::prelude::*;
 
-use crate::{systems::NORMAL_BUTTON, types::DesktopApp};
+use crate::{button_system::NORMAL_BUTTON, types::DesktopApp};
 
 pub fn frequently_used_apps(freq_used_apps: Vec<DesktopApp>) -> impl Bundle {
     (

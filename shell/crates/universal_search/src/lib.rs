@@ -3,32 +3,36 @@ use bevy::{
     ecs::system::SystemId,
     prelude::*,
 };
-
-mod components;
+mod button_system;
+mod events;
 mod icons;
 mod mock;
 mod resources;
+mod setup;
 mod states;
-mod systems;
 mod types;
 mod ui;
 
 use bevy_wayland::prelude::InputRegion;
-use systems::*;
 use types::*;
 use utils::prelude::{FontAssetsPlugin, fonts_loaded};
 
 use crate::{
+    events::{listen_close_completed, listen_close_event, listen_open_event},
     icons::{UniversalSearchIconsPlugin, icons_loaded},
     resources::IsOpen,
     states::{Action, listen_action},
     ui::{
         BAR_SIZE, BrowserApps, FrequentlyUsedApps, SearchInputPlugin, SearchItems, SearchResults,
-        SearchText,
+        SearchText, on_bar_drag, on_bar_drag_end, on_bar_drag_start,
     },
 };
 use animation::{TweenCorePlugin, prelude::*};
 use headless_widgets::prelude::*;
+pub use setup::{
+    UniversalSearchWindow, UniversalSearchWindowCamera, WINDOW_SIZE, camera_setup, exit_on_esc,
+    setup,
+};
 
 #[derive(Event)]
 pub struct UniversalSearchOpen;
@@ -74,7 +78,7 @@ impl Plugin for UniversalSearchPlugin {
         app.add_observer(listen_open_event);
         app.add_observer(listen_close_event);
         app.add_systems(Update, listen_close_completed);
-        app.add_systems(Update, (button_system, exit_on_esc));
+        app.add_systems(Update, (button_system::button_system, exit_on_esc));
 
         // app.insert_resource(IsOpen(false));
         // app.add_systems(Update, (button_system, effect_system, exit_on_esc));

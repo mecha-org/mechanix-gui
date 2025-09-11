@@ -1,7 +1,7 @@
 use crate::{
+    UniversalSearchWindowCamera, WINDOW_SIZE,
     icons::UniversalSearchIcons,
     prelude::*,
-    systems::{UniversalSearchWindowCamera, WINDOW_SIZE},
     ui::{
         BAR_SIZE, BrowserApps, Container, FrequentlyUsedApps, SearchItems, SearchResults,
         SearchText, frequently_used_apps, search_input, search_items,

@@ -9,7 +9,6 @@ pub use crate::ui::{
 };
 use crate::{
     icons::UniversalSearchIcons,
-    systems::WINDOW_SIZE,
     types::{DesktopApp, SearchResult},
 };
 
