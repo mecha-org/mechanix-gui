@@ -1,0 +1,57 @@
+({
+    "fonts.primary.100": File (
+        path: "fonts/OverusedGrotesk-Light.ttf",
+    ),
+    "fonts.primary.200": File (
+        path: "fonts/OverusedGrotesk-Light.ttf",
+    ),
+    "fonts.primary.300": File (
+        path: "fonts/OverusedGrotesk-Light.ttf",
+    ),
+    "fonts.primary.400": File (
+        path: "fonts/OverusedGrotesk-Roman.ttf",
+    ),
+    "fonts.primary.500": File (
+        path: "fonts/OverusedGrotesk-Medium.ttf",
+    ),
+    "fonts.primary.600": File (
+        path: "fonts/OverusedGrotesk-SemiBold.ttf",
+    ),
+    "fonts.primary.700": File (
+        path: "fonts/OverusedGrotesk-Bold.ttf",
+    ),
+    "fonts.primary.800": File (
+        path: "fonts/OverusedGrotesk-ExtraBold.ttf",
+    ),
+    "fonts.primary.900": File (
+        path: "fonts/OverusedGrotesk-ExtraBold.ttf",
+    ),
+
+    "fonts.secondary.100": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.200": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.300": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.400": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.500": File (
+        path: "fonts/SpaceMono-Regular.ttf",
+    ),
+    "fonts.secondary.600": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+    "fonts.secondary.700": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+    "fonts.secondary.800": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+    "fonts.secondary.900": File (
+        path: "fonts/SpaceMono-Bold.ttf",
+    ),
+})

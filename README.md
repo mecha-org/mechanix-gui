@@ -21,12 +21,21 @@ Build all Rust crates in the workspace
 cargo build
 ```
 
-Run a specific binary crate, for example the launcher shell application
+### Run a specific binary crate, for example the launcher shell application
+
+#### For running from root directory
+
 ```
-cargo run -p mechanix-launcher
+export BEVY_ASSET_ROOT="." && cargo run -p mechanix-launcher
 ```
 
-Run the desktop services application
+#### For running inside shell/crates/{package}
+```
+export BEVY_ASSET_ROOT="../../../" && cargo run
+```
+
+
+#### Run the desktop services application
 ```
 cargo run -p mechanix-desktop-services
 ```

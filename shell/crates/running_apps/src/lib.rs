@@ -10,7 +10,7 @@ pub struct RunningAppsPlugin;
 impl Plugin for RunningAppsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, setup);
-        app.add_systems(Update, (button_system, exit_on_esc));
+        app.add_systems(Update, exit_on_esc);
     }
 }
 
