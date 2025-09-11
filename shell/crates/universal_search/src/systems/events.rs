@@ -77,7 +77,7 @@ pub fn listen_open_event(
                     EaseKind::QuadraticOut,
                     node_position_state.with(node_to(to)),
                 ),
-                event("Release animation completed"),
+                event("UniversalSearchOpened"),
             )));
     }
 }
@@ -92,7 +92,7 @@ pub fn listen_close_event(
     if let Ok((animate_container, from)) = q_animate_container.single() {
         let from = from.clone();
         let mut to = from.clone();
-        to.top = Val::Px(500.);
+        to.top = Val::Px(576.);
         let node_target = animate_container.into_target();
         let mut node_position_state = node_target.state(from);
         commands
@@ -104,7 +104,7 @@ pub fn listen_close_event(
                     EaseKind::QuadraticOut,
                     node_position_state.with(node_to(to)),
                 ),
-                event("Closed"),
+                event("UniversalSearchClosed"),
             )));
     }
 }

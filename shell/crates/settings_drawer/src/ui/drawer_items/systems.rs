@@ -3,13 +3,15 @@ use animation::{
     interpolate::node_to,
     prelude::*,
 };
+use bevy_wayland::prelude::InputRegion;
 use types::prelude::FontAssets;
 
 use crate::{
     icons::SettingsDrawerIcons,
+    setup::{SettingsDrawerWindow, WINDOW_SIZE},
     ui::{
-        ButtonType1, ButtonType2, ButtonType3, ButtonType4, DrawerItemsRoot, SettingsDrawerRoot,
-        drawer_items,
+        BAR_SIZE, ButtonType1, ButtonType2, ButtonType3, ButtonType4, DrawerItemsRoot,
+        SettingsDrawerRoot, drawer_items,
     },
 };
 
@@ -57,7 +59,7 @@ pub fn spawn_drawer_items(
                 EaseKind::QuadraticOut,
                 node_position_state.with(node_to(to)),
             ),
-            event("Release animation completed"),
+            event("SettingsDrawerOpened"),
         )));
 }
 
@@ -91,7 +93,7 @@ pub fn despawn_drawer_items(
             EaseKind::QuadraticOut,
             node_position_state.with(node_to(to)),
         ),
-        event("Release animation completed"),
+        event("SettingsDrawerClosed"),
     )));
 }
 

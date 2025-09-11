@@ -13,6 +13,7 @@ mod systems;
 mod types;
 mod ui;
 
+use bevy_wayland::prelude::InputRegion;
 use systems::*;
 use types::*;
 use utils::prelude::{FontAssetsPlugin, fonts_loaded};
@@ -22,7 +23,8 @@ use crate::{
     resources::IsOpen,
     states::{Action, listen_action},
     ui::{
-        BrowserApps, FrequentlyUsedApps, SearchInputPlugin, SearchItems, SearchResults, SearchText,
+        BAR_SIZE, BrowserApps, FrequentlyUsedApps, SearchInputPlugin, SearchItems, SearchResults,
+        SearchText,
     },
 };
 use animation::{TweenCorePlugin, prelude::*};
@@ -67,6 +69,7 @@ impl Plugin for UniversalSearchPlugin {
                 .run_if(fonts_loaded)
                 .run_if(icons_loaded),
         );
+        app.add_systems(Update, listen_animation_events);
 
         app.add_observer(listen_open_event);
         app.add_observer(listen_close_event);
@@ -88,4 +91,20 @@ impl Plugin for UniversalSearchPlugin {
 pub mod prelude {
     pub use crate::UniversalSearchPlugin;
     pub use crate::{UniversalSearchClose, UniversalSearchOpen};
+}
+
+fn listen_animation_events(
+    mut event_reader: EventReader<TweenEvent<&'static str>>,
+    mut q_input_region: Single<&mut InputRegion, With<UniversalSearchWindow>>,
+) {
+    event_reader.read().for_each(|event| match event.data {
+        "UniversalSearchOpened" => {
+            q_input_region.0 = Rect::new(0., 0., WINDOW_SIZE.0, WINDOW_SIZE.1);
+        }
+        "UniversalSearchClosed" => {
+            q_input_region.0 = Rect::new(0., WINDOW_SIZE.1 - BAR_SIZE.1, BAR_SIZE.0, WINDOW_SIZE.1);
+        }
+
+        _ => (),
+    });
 }

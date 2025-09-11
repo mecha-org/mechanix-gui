@@ -3,17 +3,20 @@ mod icons;
 mod setup;
 mod ui;
 
-use animation::{DefaultTweenPlugins, TweenCorePlugin};
+use animation::{DefaultTweenPlugins, TweenCorePlugin, prelude::TweenEvent};
 use bevy::prelude::*;
 
+use bevy_wayland::prelude::InputRegion;
 use utils::prelude::{FontAssetsPlugin, fonts_loaded};
 
 use crate::{
     events::{listen_close_event, listen_open_event},
     icons::{SettingsDrawerIconsPlugin, icons_loaded},
-    setup::{SettingsDrawerWindowCamera, camera_setup, exit_on_esc},
+    setup::{
+        SettingsDrawerWindow, SettingsDrawerWindowCamera, WINDOW_SIZE, camera_setup, exit_on_esc,
+    },
     ui::{
-        ServicesPlugins, SettingsDrawerState, UiPlugin, despawn_drawer_items, init_state,
+        BAR_SIZE, ServicesPlugins, SettingsDrawerState, UiPlugin, despawn_drawer_items, init_state,
         on_bar_drag, spawn_drawer_items, spawn_navigation_bar, update_active_network_strength,
         update_airplane_mode_state, update_bluetooth_state, update_brightness_state,
         update_cellular_state, update_microphone_state, update_power_saving_mode_state,
@@ -76,10 +79,32 @@ impl Plugin for SettingsDrawerPlugin {
         );
         app.add_systems(OnExit(SettingsDrawerState::Opened), despawn_drawer_items);
 
+        app.add_systems(Update, listen_animation_events);
         app.add_systems(Update, exit_on_esc);
 
         app.add_observer(on_bar_drag);
     }
+}
+
+fn listen_animation_events(
+    mut event_reader: EventReader<TweenEvent<&'static str>>,
+    mut q_input_region: Single<&mut InputRegion, With<SettingsDrawerWindow>>,
+) {
+    event_reader.read().for_each(|event| match event.data {
+        "SettingsDrawerOpened" => {
+            q_input_region.0 = Rect::new(0., 0., WINDOW_SIZE.0, WINDOW_SIZE.1);
+        }
+        "SettingsDrawerClosed" => {
+            q_input_region.0 = Rect::new(
+                WINDOW_SIZE.0 - BAR_SIZE.0,
+                WINDOW_SIZE.1 - BAR_SIZE.1,
+                WINDOW_SIZE.0,
+                WINDOW_SIZE.1,
+            );
+        }
+
+        _ => (),
+    });
 }
 
 pub mod prelude {
