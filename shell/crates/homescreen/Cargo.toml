@@ -12,3 +12,5 @@ keywords.workspace = true
 [dependencies]
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
+chrono = "*"
+derive_builder = "0.20.2"
