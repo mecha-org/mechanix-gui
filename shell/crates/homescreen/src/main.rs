@@ -16,7 +16,6 @@ fn main() {
                     exit_condition: ExitCondition::DontExit,
                     ..Default::default()
                 }),
-            MeshPickingPlugin,
             WaylandPlugin,
             HomescreenPlugin,
         ))

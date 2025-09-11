@@ -14,7 +14,7 @@ use systems::*;
 pub struct HomescreenPlugin;
 impl Plugin for HomescreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((WingWidgetPlugin,));
+        app.add_plugins((WingWidgetPlugin, MeshPickingPlugin));
         app.add_systems(Startup, (setup, spawn_widgets).chain());
         app.add_systems(
             Update,

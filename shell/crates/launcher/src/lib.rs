@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use app_drawer::prelude::*;
 use background::prelude::*;
-use homescreen::prelude::*;
+use homescreen::HomescreenPlugin;
 use lockscreen::prelude::*;
 use navigation_bar::prelude::*;
 use notifications_drawer::prelude::*;
@@ -20,7 +20,7 @@ impl Plugin for LauncherPlugin {
             StatusBarPlugin,
             SettingsDrawerPlugin,
             UniversalSearchPlugin,
-            // HomescreenPlugin,
+            HomescreenPlugin,
             RunningAppsPlugin,
             // NotificationsDrawerPlugin,
         ));
