@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use crate::events::ExtensionServiceEvent;
 use crate::device::Device;
+use crate::detection::i2c;
 use std::str::FromStr;
 
 pub async fn watch_hotplug(
@@ -184,4 +185,80 @@ async fn monitor_device_events(path: PathBuf, event_sender: mpsc::Sender<Extensi
             }
         }
     }
+}
+
+/// Start both hotplug (evdev) and I2C extension detection services concurrently
+pub async fn start_extension_detection(
+    event_sender: mpsc::Sender<ExtensionServiceEvent>
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Starting extension detection services...");
+    
+    // Clone the sender for each detection service
+    let hotplug_sender = event_sender.clone();
+    let i2c_sender = event_sender.clone();
+    
+    // Start hotplug detection task
+    let hotplug_task = task::spawn(async move {
+        if let Err(e) = watch_hotplug(hotplug_sender).await {
+            eprintln!("Hotplug detection error: {}", e);
+        }
+    });
+    
+    // Start I2C detection task
+    let i2c_task = task::spawn(async move {
+        if let Err(e) = i2c::watch_i2c_extensions(i2c_sender).await {
+            eprintln!("I2C detection error: {}", e);
+        }
+    });
+    
+    // Wait for either task to complete (both should run indefinitely)
+    tokio::select! {
+        _ = hotplug_task => {
+            println!("Hotplug detection task ended");
+        }
+        _ = i2c_task => {
+            println!("I2C detection task ended");
+        }
+    }
+    
+    Ok(())
+}
+
+/// Start extension detection with custom I2C buses and addresses for scanning
+pub async fn start_extension_detection_with_scan(
+    event_sender: mpsc::Sender<ExtensionServiceEvent>,
+    i2c_buses: Vec<String>,
+    i2c_addresses: Vec<u16>
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Starting extension detection services with I2C scanning...");
+    
+    // Clone the sender for each detection service
+    let hotplug_sender = event_sender.clone();
+    let i2c_sender = event_sender.clone();
+    
+    // Start hotplug detection task
+    let hotplug_task = task::spawn(async move {
+        if let Err(e) = watch_hotplug(hotplug_sender).await {
+            eprintln!("Hotplug detection error: {}", e);
+        }
+    });
+    
+    // Start I2C scanning task
+    let i2c_task = task::spawn(async move {
+        if let Err(e) = i2c::scan_i2c_buses(i2c_buses, i2c_addresses, i2c_sender).await {
+            eprintln!("I2C scanning error: {}", e);
+        }
+    });
+    
+    // Wait for either task to complete (both should run indefinitely)
+    tokio::select! {
+        _ = hotplug_task => {
+            println!("Hotplug detection task ended");
+        }
+        _ = i2c_task => {
+            println!("I2C scanning task ended");
+        }
+    }
+    
+    Ok(())
 }

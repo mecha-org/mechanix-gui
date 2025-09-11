@@ -50,6 +50,27 @@ impl Device {
         }
     }
 
+    /// Create a new Device for non-evdev devices (like I2C extensions)
+    pub fn new_custom(
+        path: PathBuf,
+        device_type: DeviceType,
+        connection_type: ConnectionType,
+        connection_key: String,
+        name: String,
+        vendor_id: u16,
+        unique_id: String,
+    ) -> Self {
+        Self {
+            path,
+            device_type,
+            connection_type,
+            connection_key,
+            name,
+            vendor_id,
+            unique_id,
+        }
+    }
+
     pub fn evdev(&self) -> Option<Evdev> {
         let evdev = match Evdev::open(&self.path) {
             Ok(evdev) => { Some(evdev) }
