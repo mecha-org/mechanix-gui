@@ -46,7 +46,7 @@ bevy = { version = "0.16.1", default-features = false, features = [
     "bevy_ui_picking_backend",
     "bevy_input_focus",
 ] }
-bevy_wayland = { git = "https://github.com/namana-mecha/bevy_wayland.git", rev = "a91508672e2beecffd065984c94d9d493b3eaf4e" }
+bevy_wayland = { git = "https://github.com/mecha-org/bevy_wayland.git", rev = "a91508672e2beecffd065984c94d9d493b3eaf4e" }
 bevy_asset_loader = { version = "0.23.0", features = [
     "standard_dynamic_assets",
     "2d",
