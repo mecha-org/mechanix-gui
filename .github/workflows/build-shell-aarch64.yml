@@ -56,12 +56,23 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y \
+            g++ \
+            pkg-config \
+            libx11-dev \
+            libudev-dev \
+            libxkbcommon-x11-0 \
+            libgles2-mesa-dev \
+            libgl1-mesa-dev \
+            libegl-dev \
+            libegl1-mesa-dev \
+            libvulkan-dev \
             libwayland-dev \
             libxkbcommon-dev \
             libdbus-1-dev \
             libpam0g-dev \
             libclang-dev \
             libpulse-dev \
+            libasound-dev \
             python3-pip \
             pipx \
             jq \
