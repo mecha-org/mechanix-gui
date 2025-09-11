@@ -76,7 +76,10 @@ jobs:
             python3-pip \
             pipx \
             jq \
-            curl
+            curl \
+            librust-alsa-sys-dev \
+            libpulse-dev \
+            libasound2-dev
 
       # Pulp CLI setup
       - name: Setup | Pulp CLI
