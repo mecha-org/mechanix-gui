@@ -15,5 +15,6 @@ pub fn bar(left_nav_bar: Handle<Image>) -> impl Bundle {
             ..default()
         },
         ImageNode::new(left_nav_bar.clone()),
+        ZIndex(9999),
     )
 }

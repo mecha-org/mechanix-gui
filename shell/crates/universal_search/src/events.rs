@@ -96,7 +96,7 @@ pub fn listen_close_event(
         let node_target = animate_container.into_target();
         let mut node_position_state = node_target.state(from);
         commands
-            .spawn((TweenPriorityToOthersOfType(20)))
+            .entity(animate_container)
             .animation()
             .insert(sequence((
                 tween(
