@@ -10,7 +10,7 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-bevy = { version = "0.16.0-dev" }
+bevy = { workspace = true }
 libpulse-binding = "2.30.1"
 networkmanager = { path = "../../../dbus/freedesktop/networkmanager" }
 bluez = { path = "../../../dbus/freedesktop/bluez" }

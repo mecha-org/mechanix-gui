@@ -11,6 +11,12 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+anyhow = { workspace = true }
+zbus = { workspace = true }
+log  = { workspace = true }
+tokio = { workspace = true }
+env_logger = { workspace = true }
+thiserror = { workspace = true }
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"

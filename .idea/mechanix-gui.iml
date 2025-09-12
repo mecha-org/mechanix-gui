@@ -46,6 +46,11 @@
       <sourceFolder url="file://$MODULE_DIR$/shell/crates/types/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shell/crates/universal_search/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shell/crates/utils/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dbus/mechanix/system/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dbus/mechanix/system/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/animation/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/animation/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/headless_widgets/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shell/notification/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/search/server/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/search/server/src" isTestSource="false" />
