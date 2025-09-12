@@ -51,4 +51,26 @@ assets = [
         "usr/share/mechanix/shell/assets/",
         "755",
     ],
+    [
+        "../../../assets/fonts/*",
+        "usr/share/mechanix/shell/assets/fonts/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/settings_drawer/*",
+        "usr/share/mechanix/shell/assets/icons/settings_drawer/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/status_bar/*",
+        "usr/share/mechanix/shell/assets/icons/status_bar/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/universal_search/*",
+        "usr/share/mechanix/shell/assets/icons/universal_search/",
+        "755",
+    ],
+
+
 ]
