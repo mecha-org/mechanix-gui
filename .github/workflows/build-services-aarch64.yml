@@ -38,6 +38,7 @@ jobs:
             package: mechanix-system-services
 
     runs-on: ubicloud-standard-2-arm
+    environment: pre-release
     continue-on-error: true
     steps:
       - name: Setup | Checkout
