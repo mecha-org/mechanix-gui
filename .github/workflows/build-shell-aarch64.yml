@@ -117,6 +117,26 @@ jobs:
           fakeroot cargo deb --no-build --package ${{ matrix.package }}
           ls -la target/debian
 
+      - name: Repack DEB natively [${{ matrix.package }}]
+        run: |
+          set -euo pipefail
+          DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
+          echo "[INFO] Repacking: $DEB_FILE"
+
+          TMPDIR=$(mktemp -d)
+          trap 'rm -rf "$TMPDIR"' EXIT
+
+          # Extract
+          dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
+
+          # Fix ownership (and add other adjustments if needed)
+          sudo chown -R root:root "$TMPDIR/pkg"
+
+          # Repack with same filename
+          dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"
+
+          echo "[INFO] ✅ Repacked: $DEB_FILE"   
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir -p build
