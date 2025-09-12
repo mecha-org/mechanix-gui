@@ -60,6 +60,30 @@ jobs:
             libpam0g-dev \
             libclang-dev
 
+      # Pulp CLI setup
+      - name: Setup | Pulp CLI
+        run: |
+          pipx install --force pulp-cli[pygments]
+          pipx inject pulp-cli pulp-cli-deb
+
+      - name: Setup | Pulp CLI Configuration
+        run: |
+          set -euo pipefail
+          if [[ -z "$MECHA_PULP_API_URL" ]]; then
+            echo "[ERROR] MECHA_PULP_API_URL is empty."
+            exit 1
+          fi
+          # Construct full Pulp API URL (add port)
+          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
+          echo "[INFO] Using Pulp base URL: $PULP_API_URL"
+
+          # Configure Pulp CLI using the correct env vars
+          pulp config create \
+            --username "$MECHA_PULP_USERNAME" \
+            --password "$MECHA_PULP_PASSWORD" \
+            --base-url "$PULP_API_URL" \
+            --overwrite
+
       - name: Set up Git SSH key
         run: |
           mkdir -p ~/.ssh
