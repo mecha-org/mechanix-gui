@@ -126,11 +126,9 @@ jobs:
           TMPDIR=$(mktemp -d)
           trap 'rm -rf "$TMPDIR"' EXIT
 
-          # Extract
-          dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
-
-          # Repack with same filename
-          dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"
+          # Extract & repack under fakeroot
+          fakeroot dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
+          fakeroot dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"  
 
           echo "[INFO] ✅ Repacked: $DEB_FILE"   
 

@@ -46,9 +46,9 @@ assets = [
         "usr/bin/",
         "755",
     ],
-        [
-        "../../../assets",
-        "usr/share/mechanix/shell",
+    [
+        "../../../assets/*",
+        "usr/share/mechanix/shell/assets/",
         "755",
     ],
 ]
