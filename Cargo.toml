@@ -43,7 +43,7 @@ bevy = { version = "0.16.1", default-features = false, features = [
     "default_font",
     "bevy_state",
     "png",
-    "bevy_ui_picking_backend",
+    "bevy_mesh_picking_backend",
     "bevy_input_focus",
 ] }
 bevy_wayland = { git = "https://github.com/mecha-org/bevy_wayland.git", rev = "a91508672e2beecffd065984c94d9d493b3eaf4e" }
