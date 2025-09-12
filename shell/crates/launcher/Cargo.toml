@@ -25,9 +25,15 @@ settings_drawer = { path = "../settings_drawer" }
 status_bar = { path = "../status_bar" }
 universal_search = { path = "../universal_search" }
 
+libpulse-binding = "2.30.1"
+networkmanager = { path = "../../../dbus/freedesktop/networkmanager" }
+bluez = { path = "../../../dbus/freedesktop/bluez" }
+pulseaudio = { path = "../../../dbus/freedesktop/pulseaudio" }
+upower = { path = "../../../dbus/freedesktop/upower" }
+pollster = "0.4.0"
+
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"
-changelog = "debian/changelog"
 extended-description = """\
 Launcher application."""
 depends = "$auto"
@@ -38,6 +44,11 @@ assets = [
     [
         "../../../target/release/mechanix-launcher",
         "usr/bin/",
+        "755",
+    ],
+    [
+        "../../../assets/*",
+        "usr/share/mechanix/shell/assets/",
         "755",
     ],
 ]

@@ -1,0 +1,101 @@
+({
+    "image.right_nav_bar": File (
+        path: "icons/settings_drawer/right_nav_bar.png",
+    ),
+    "image.airplane_on": File (
+        path: "icons/settings_drawer/airplane_on.png",
+    ),
+    "image.airplane_off": File (
+        path: "icons/settings_drawer/airplane_off.png",
+    ),
+    "image.rotation_on": File (
+        path: "icons/settings_drawer/rotation_on.png",
+    ),
+    "image.rotation_off": File (
+        path: "icons/settings_drawer/rotation_off.png",
+    ),
+    "image.second_screen_on": File (
+        path: "icons/settings_drawer/second_screen_on.png",
+    ),
+    "image.second_screen_off": File (
+        path: "icons/settings_drawer/second_screen_off.png",
+    ),
+    "image.power_mode_none": File (
+        path: "icons/settings_drawer/power_mode_none.png",
+    ),
+    "image.power_mode_high": File (
+        path: "icons/settings_drawer/power_mode_high.png",
+    ),
+    "image.power_mode_low": File (
+        path: "icons/settings_drawer/power_mode_low.png",
+    ),
+    "image.mic_on": File (
+        path: "icons/settings_drawer/mic_on.png",
+    ),
+    "image.mic_off": File (
+        path: "icons/settings_drawer/mic_off.png",
+    ),
+    "image.screen_recording_on": File (
+        path: "icons/settings_drawer/screen_recording_on.png",
+    ),
+    "image.screen_recording_off": File (
+        path: "icons/settings_drawer/screen_recording_off.png",
+    ),
+    "image.screen_recording_off": File (
+        path: "icons/settings_drawer/screen_recording_off.png",
+    ),
+    "image.calculator": File (
+        path: "icons/settings_drawer/calculator.png",
+    ),
+    "image.camera": File (
+        path: "icons/settings_drawer/camera.png",
+    ),
+    "image.sound_low": File (
+        path: "icons/settings_drawer/sound_low.png",
+    ),
+    "image.brightness_low": File (
+        path: "icons/settings_drawer/brightness_low.png",
+    ),
+    "image.wireless_off": File (
+        path: "icons/settings_drawer/wireless_off.png",
+    ),
+    "image.wireless_on": File (
+        path: "icons/settings_drawer/wireless_on.png",
+    ),
+    "image.wireless_low": File (
+        path: "icons/settings_drawer/wireless_low.png",
+    ),
+    "image.wireless_medium": File (
+        path: "icons/settings_drawer/wireless_medium.png",
+    ),
+    "image.wireless_high": File (
+        path: "icons/settings_drawer/wireless_high.png",
+    ),
+    "image.wireless_full": File (
+        path: "icons/settings_drawer/wireless_full.png",
+    ),
+    "image.bluetooth_off": File (
+        path: "icons/settings_drawer/bluetooth_off.png",
+    ),
+    "image.bluetooth_on": File (
+        path: "icons/settings_drawer/bluetooth_on.png",
+    ),
+    "image.cell_signal_none": File (
+        path: "icons/settings_drawer/cell_signal_none.png",
+    ),
+    "image.cell_signal_high": File (
+        path: "icons/settings_drawer/cell_signal_high.png",
+    ),
+    "image.terminal": File (
+        path: "icons/settings_drawer/terminal.png",
+    ),
+    "image.battery_10": File (
+        path: "icons/settings_drawer/battery_10.png",
+    ),
+    "image.settings": File (
+        path: "icons/settings_drawer/settings.png",
+    ),
+    "image.power": File (
+        path: "icons/settings_drawer/power.png",
+    ),
+})

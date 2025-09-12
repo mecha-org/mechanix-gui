@@ -1,40 +1,24 @@
-use bevy::{color::palettes::css::*, prelude::*};
+use bevy::prelude::*;
 
-use crate::systems::NORMAL_BUTTON;
-
-pub const BAR_SIZE: (f32, f32) = (100., 50.);
+pub const BAR_SIZE: (f32, f32) = (120., 30.);
 
 pub fn bar() -> impl Bundle {
     (
         Node {
             width: Val::Px(BAR_SIZE.0),
             height: Val::Px(BAR_SIZE.1),
+            align_items: AlignItems::Center,
+            justify_items: JustifyItems::Center,
             ..default()
         },
         children![(
-            Button,
             Node {
-                width: Val::Px(100.0),
-                height: Val::Px(40.0),
-                border: UiRect::all(Val::Px(5.0)),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
+                width: Val::Percent(100.),
+                height: Val::Px(4.),
                 ..default()
             },
-            BorderColor(Color::BLACK),
-            BorderRadius::MAX,
-            BackgroundColor(NORMAL_BUTTON),
-            children![(
-                Text::new("Button"),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-                TextShadow::default(),
-            )]
+            BorderRadius::all(Val::Px(4.)),
+            BackgroundColor(Color::oklch(0.4202, 0., 0.)),
         )],
     )
 }

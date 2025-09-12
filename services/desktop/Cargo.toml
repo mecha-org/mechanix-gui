@@ -1,7 +1,6 @@
 [package]
 name = "mechanix-session-services"
 description = "Service for running session services"
-version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -9,6 +8,7 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
+version = "0.1.1"
 
 [dependencies]
 zbus = { workspace = true }
