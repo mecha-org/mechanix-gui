@@ -75,6 +75,21 @@ jobs:
           cargo deb --no-build --package ${{ matrix.package }}
           ls -la target/debian
 
+      - name: Repack DEB natively [${{ matrix.package }}]
+        run: |
+          set -euo pipefail
+          DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
+          echo "[INFO] Repacking: $DEB_FILE"
+
+          TMPDIR=$(mktemp -d)
+          trap 'rm -rf "$TMPDIR"' EXIT
+
+          # Extract & repack under fakeroot
+          fakeroot dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
+          fakeroot dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"  
+
+          echo "[INFO] ✅ Repacked: $DEB_FILE"
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir -p build
@@ -86,3 +101,25 @@ jobs:
         with:
           name: ${{ matrix.package }}-artifacts
           path: ./build/*
+
+      - name: Publish to Pulp [${{ matrix.package }}]
+        run: |
+          set -euo pipefail
+          DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
+          echo "[INFO] Uploading: $DEB_FILE"
+          pulp deb content upload \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --file="$DEB_FILE"
+
+          echo "[INFO] Creating publication..."
+          PUB_HREF=$(pulp deb publication create \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            | jq -r '.pulp_href')
+
+          echo "[INFO] Updating distribution..."
+          pulp deb distribution update \
+            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
+
+          echo "[INFO] ✅ Package ${{ matrix.package }} published."
