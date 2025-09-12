@@ -59,19 +59,36 @@ pub async fn set_setting(key: &str, value: &str) -> Result<String, anyhow::Error
 }
 
 /// Watch for changes to a setting
-pub async fn watch_setting(key: &str) -> Result<zbus::SignalStream, anyhow::Error> {
+pub async fn watch_setting(schema: &str, key: Option<String>) -> Result<zbus::SignalStream, anyhow::Error> {
     info!("Connecting to D-Bus session for watch_setting");
     let connection = Connection::session().await?;
 
     // Create a proxy for the ConfigServer interface
     let proxy = ConfigServerProxy::new(&connection).await?;
 
-    info!("Watching for changes to key: {}", key);
+    info!("Watching for changes to schema: {} key: {:?}",schema, key);
     // Only listen to signals where key matches the provided key
-    let stream = proxy
-        .receive_signal_with_args("SchemaKeyChanged", &[(0, key)])
-        .await?;
-
+    let stream = if let Some(k) = key {
+        match proxy
+            .receive_signal_with_args("SchemaKeyChanged", &[(0, schema), (1, &k)])
+            .await {
+            Ok(s) => s,
+            Err(e) => {
+                error!("Failed to receive stream for schema and key: {}", e);
+                return Err(e.into());
+            }
+        }
+    } else {
+        match proxy
+            .receive_signal_with_args("SchemaKeyChanged", &[(0, schema)])
+            .await {
+            Ok(s) => s,
+            Err(e) => {
+                error!("Failed to receive stream for schema: {}", e);
+                return Err(e.into());
+            }
+        }
+    };
     Ok(stream)
 }
 

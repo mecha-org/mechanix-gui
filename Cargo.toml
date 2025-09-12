@@ -8,6 +8,7 @@ members = [
     "shell/crates/*",
     "dbus/freedesktop/*",
     "dbus/mechanix/mxconf",
+    "dbus/mechanix/system",
 ]
 
 [workspace.package]
@@ -33,6 +34,7 @@ zbus = "3.14.1"
 serde = { version = "1.0.219", features = ["derive"] }
 futures = "0.3.31"
 thiserror = "2.0.12"
+env_logger = { version = "0.11.8" }
 bevy = { version = "0.16.1", default-features = false, features = [
     "bevy_ui",
     "bevy_window",

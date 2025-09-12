@@ -11,6 +11,14 @@ keywords.workspace = true
 version = "0.1.1"
 
 [dependencies]
+zbus = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true }
+env_logger = { workspace = true }
+thiserror = { workspace = true }
+mxconf_dbus = { path = "../../dbus/mechanix/mxconf" }
+system_dbus = { path = "../../dbus/mechanix/system" }
 
 
 [package.metadata.deb]
