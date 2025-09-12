@@ -129,9 +129,6 @@ jobs:
           # Extract
           dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
 
-          # Fix ownership (and add other adjustments if needed)
-          sudo chown -R root:root "$TMPDIR/pkg"
-
           # Repack with same filename
           dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"
 
