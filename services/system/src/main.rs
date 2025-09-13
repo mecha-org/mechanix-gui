@@ -12,7 +12,7 @@ use zbus::{connection, ConnectionBuilder};
 pub const DISPLAY_CONNECTION_BUS_NAME: &str = "org.mechanix.services.Display";
 pub const HW_BUTTONS_CONNECTION_BUS_NAME: &str = "org.mechanix.services.HwButton";
 
-pub const DEFAULT_BRIGHTNESS_FILE_PATH: &str = "/sys/class/backlight/backlight/brightness";
+pub const BRIGHTNESS_PATH: &str = "/sys/class/backlight/backlight/brightness";
 pub const POWER_BUTTON_PATH: &str = "/dev/input/event3";
 pub const HOME_BUTTON_PATH: &str = "/dev/input/event3";
 pub const SERVED_AT: &str = "/org/mechanix/services/Display";
@@ -20,8 +20,8 @@ pub const SERVED_AT: &str = "/org/mechanix/services/Display";
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
-    let display_brightness_path = std::env::var("DISPLAY_BRIGHTNESS_FILE_PATH")
-        .unwrap_or(DEFAULT_BRIGHTNESS_FILE_PATH.to_string());
+    let display_brightness_path = std::env::var("BRIGHTNESS_PATH")
+        .unwrap_or(BRIGHTNESS_PATH.to_string());
     debug!("brightness path: {}", display_brightness_path);
 
     let power_button_path =
