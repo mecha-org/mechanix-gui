@@ -10,6 +10,7 @@ on:
       - pre-release
     paths:
       - ".github/workflows/build-apps-aarch64.yml"
+      - "apps/**"
 
 jobs:
   build:
