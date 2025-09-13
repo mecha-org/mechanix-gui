@@ -1,0 +1,40 @@
+[general]
+[apps]
+enable_search_apps = false
+desktop_apps_dir = "/usr/share/applications"
+index_dir = ".config/index/applications"
+search_limit = 10
+searchable_fields = [
+    "type",
+    "name",
+    "generic_name",
+    "comment",
+    "keywords",
+    "categories",
+    "path",
+    "checksum"
+]
+[files]
+enable_search_files = true
+files_dir_to_watch = "/home"
+index_dir = ".config/mxsearch/index/files"
+max_depth = 5
+search_limit = 1000
+read_file_content_upto_in_kb = 100
+searchable_fields = [
+    "file_type",
+    "name",
+    "content"
+]
+allowed_extensions = ["txt", "yaml", "rtf", "xml", "toml"]
+[app_actions]
+enable_search = true
+index_dir = ".config/mxsearch/index/app_actions"
+schema_dir = "/usr/share/mxsearch/actions"
+search_limit = 15
+searchable_fields = [
+    "action",
+    "name",
+    "description"
+]
+

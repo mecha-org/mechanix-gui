@@ -1,7 +1,6 @@
 [package]
 name = "mechanix-session-services"
-description = "Service for running session services" 
-version.workspace = true
+description = "Service for running session services"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -9,5 +8,31 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
+version = "0.1.1"
 
 [dependencies]
+zbus = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true }
+env_logger = { workspace = true }
+thiserror = { workspace = true }
+mxconf_dbus = { path = "../../dbus/mechanix/mxconf" }
+system_dbus = { path = "../../dbus/mechanix/system" }
+
+
+[package.metadata.deb]
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+extended-description = """\
+Service for running session services."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../target/release/mechanix-session-services",
+        "usr/bin/",
+        "755",
+    ],
+]

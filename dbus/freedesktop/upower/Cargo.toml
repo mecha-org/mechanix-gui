@@ -11,3 +11,9 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+anyhow = "1"
+zbus = { version = "5.7.1" }
+futures = { version = "0.3.30", features = ["thread-pool"] }
+thiserror = { version = "2.0.12" }
+async-trait = { version = "0.1.88" }
+log = { version = "0.4.27" }

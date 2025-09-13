@@ -10,8 +10,12 @@ import 'package:mechanix_files/src/features/files/data/file_repository_impl.dart
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:watch_it/watch_it.dart';
+import 'package:widgets/mechanix.dart';
 
 Future<void> main() async {
+  di.registerSingleton(ThemeToggle());
+
   WidgetsFlutterBinding.ensureInitialized();
   final configResult = await connectToMxconf(); // Await the Future properly
   AppConfig().loadFromMap(configResult); // Load into singleton instance
@@ -27,19 +31,52 @@ Future<void> main() async {
           create: (_) => FileRepositoryImpl(),
         ),
       ],
-      child: const MainApp(),
+      child: MechanixFilesApp(),
     ),
   );
 }
 
+class MechanixFilesApp extends StatelessWidget with WatchItMixin {
+  MechanixFilesApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
+    final mechanixVariant =
+        watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
+
+    return MechanixTheme(
+      data: MechanixThemeData(
+        mechanixVariant: mechanixVariant,
+      ),
+      builder: (context, mechanix, child) => MainApp(
+        darkTheme: mechanix.darkTheme,
+        lightTheme: mechanix.lightTheme,
+        themeMode: themeMode,
+      ),
+    );
+  }
+}
+
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  const MainApp({
+    super.key,
+    required this.lightTheme,
+    required this.darkTheme,
+    required this.themeMode,
+  });
+
+  final ThemeData lightTheme;
+  final ThemeData darkTheme;
+  final ThemeMode themeMode;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeMode,
       home: buildFileExplorerPage(context),
       routes: {
         AppRoutes.files: (context) => buildFileExplorerPage(context),

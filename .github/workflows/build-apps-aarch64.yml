@@ -1,0 +1,86 @@
+name: Apps - Build aarch64
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - dev
+      - dev-arm64-build
+      - pre-release
+    paths:
+      - ".github/workflows/build-apps-aarch64.yml"
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: settings app
+            folder: settings
+            binary: mechanix_settings
+
+          - name: camera app
+            folder: camera
+            binary: camera
+
+          - name: notes app
+            folder: notes
+            binary: notes
+
+          - name: files app
+            folder: files
+            binary: mechanix_files
+
+    runs-on: ubicloud-standard-2-arm
+    environment: pre-release
+    continue-on-error: true
+    steps:
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          sudo  apt update
+          sudo apt install -y git tar unzip curl clang cmake pkg-config \
+            libwayland-dev libwayland-cursor0 libwayland-egl1 \
+            libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
+
+      # Checkout repository
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      # Install Flutter eLinux
+      - name: Install Flutter eLinux
+        run: |
+          if [ ! -d "/opt/flutter-elinux" ]; then
+            git clone https://github.com/sony/flutter-elinux.git
+            mv flutter-elinux /opt/
+          fi
+          # Persist for future steps
+          echo "PATH=$PATH:/opt/flutter-elinux/bin" >> $GITHUB_ENV
+
+      # Build the app
+      - name: Build ${{ matrix.name }}
+        working-directory: apps/${{ matrix.folder }}
+        run: |
+          flutter-elinux pub get
+          flutter-elinux build elinux --release
+
+      # Prepare artifact
+      - name: Prepare artifact ${{ matrix.name }}
+        run: |
+          mkdir -p build
+          find "apps/${{ matrix.folder }}/build/" -type f -name "${{ matrix.binary }}" -exec cp {} ./build/ \; || true
+
+      # list artifacts
+      - name: List artifacts ${{ matrix.name }}
+        run: |
+          ls -la ./build/
+
+      # Upload artifact
+      - name: Upload artifact ${{ matrix.name }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary }}
+          path: ./build/${{ matrix.binary }}

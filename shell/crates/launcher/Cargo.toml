@@ -1,0 +1,76 @@
+[package]
+name = "mechanix-launcher"
+description = "Launcher application"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+mxconf_dbus = { workspace = true }
+bevy = { workspace = true }
+bevy_wayland = { workspace = true }
+app_drawer = { path = "../app_drawer" }
+background = { path = "../background" }
+homescreen = { path = "../homescreen" }
+lockscreen = { path = "../lockscreen" }
+navigation_bar = { path = "../navigation_bar" }
+notifications_drawer = { path = "../notifications_drawer" }
+running_apps = { path = "../running_apps" }
+settings_drawer = { path = "../settings_drawer" }
+status_bar = { path = "../status_bar" }
+universal_search = { path = "../universal_search" }
+
+libpulse-binding = "2.30.1"
+networkmanager = { path = "../../../dbus/freedesktop/networkmanager" }
+bluez = { path = "../../../dbus/freedesktop/bluez" }
+pulseaudio = { path = "../../../dbus/freedesktop/pulseaudio" }
+upower = { path = "../../../dbus/freedesktop/upower" }
+pollster = "0.4.0"
+
+[package.metadata.deb]
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+extended-description = """\
+Launcher application."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../../target/release/mechanix-launcher",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "../../../assets/*",
+        "usr/share/mechanix/shell/assets/",
+        "755",
+    ],
+    [
+        "../../../assets/fonts/*",
+        "usr/share/mechanix/shell/assets/fonts/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/settings_drawer/*",
+        "usr/share/mechanix/shell/assets/icons/settings_drawer/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/status_bar/*",
+        "usr/share/mechanix/shell/assets/icons/status_bar/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/universal_search/*",
+        "usr/share/mechanix/shell/assets/icons/universal_search/",
+        "755",
+    ],
+
+
+]

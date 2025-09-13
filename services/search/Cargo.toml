@@ -1,13 +1,17 @@
 [package]
-name = "mxsearch"
-description = "Service for searching files, folders and applications" 
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-repository.workspace = true
-homepage.workspace = true
-categories.workspace = true
-keywords.workspace = true
+name = "mxsearch-meta"
+version = "0.0.0"
+edition = "2021"
+publish = false
 
-[dependencies]
+[[bin]]
+name = "mxsearch"
+path = "server/src/main.rs"
+
+[package.metadata]
+# This crate is a metadata placeholder to avoid nested Cargo workspaces.
+# Actual search crates are included in the root workspace:
+# - services/search/apps
+# - services/search/files
+# - services/search/server
+# - services/search/app_actions

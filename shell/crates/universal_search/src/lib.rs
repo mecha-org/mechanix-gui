@@ -1,0 +1,114 @@
+use bevy::{
+    asset::{AssetMetaCheck, AssetPath},
+    ecs::system::SystemId,
+    prelude::*,
+};
+mod button_system;
+mod events;
+mod icons;
+mod mock;
+mod resources;
+mod setup;
+mod states;
+mod types;
+mod ui;
+
+use bevy_wayland::prelude::InputRegion;
+use types::*;
+use utils::prelude::{FontAssetsPlugin, fonts_loaded};
+
+use crate::{
+    events::{listen_close_completed, listen_close_event, listen_open_event},
+    icons::{UniversalSearchIconsPlugin, icons_loaded},
+    resources::IsOpen,
+    states::{Action, listen_action},
+    ui::{
+        BAR_SIZE, BrowserApps, FrequentlyUsedApps, SearchInputPlugin, SearchItems, SearchResults,
+        SearchText, on_bar_drag, on_bar_drag_end, on_bar_drag_start,
+    },
+};
+use animation::{TweenCorePlugin, prelude::*};
+use headless_widgets::prelude::*;
+pub use setup::{
+    UniversalSearchWindow, UniversalSearchWindowCamera, WINDOW_SIZE, camera_setup, exit_on_esc,
+    setup,
+};
+
+#[derive(Event)]
+pub struct UniversalSearchOpen;
+
+#[derive(Event)]
+pub struct UniversalSearchClose;
+
+pub struct UniversalSearchPlugin;
+impl Plugin for UniversalSearchPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(FrequentlyUsedApps(vec![]));
+        app.insert_resource(SearchItems(vec![]));
+        app.insert_resource(SearchResults(vec![]));
+        app.insert_resource(SearchText("".to_string()));
+        app.insert_resource(BrowserApps(vec![]));
+
+        if !app.is_plugin_added::<FontAssetsPlugin>() {
+            app.add_plugins(FontAssetsPlugin);
+        }
+        app.add_plugins(UniversalSearchIconsPlugin);
+
+        if !app.is_plugin_added::<TweenCorePlugin>() {
+            app.add_plugins((DefaultTweenPlugins,));
+        }
+        app.add_plugins((mock::MockPlugin,));
+        if !app.is_plugin_added::<headless_widgets::CoreWidgetsPlugin>() {
+            app.add_plugins(headless_widgets::CoreWidgetsPlugin);
+        }
+        app.add_plugins(SearchInputPlugin);
+
+        app.add_event::<UniversalSearchOpen>();
+        app.add_event::<UniversalSearchClose>();
+        app.add_systems(Startup, camera_setup);
+        app.add_systems(
+            Update,
+            setup
+                .run_if(resource_exists::<UniversalSearchWindowCamera>)
+                .run_if(fonts_loaded)
+                .run_if(icons_loaded),
+        );
+        app.add_systems(Update, listen_animation_events);
+
+        app.add_observer(listen_open_event);
+        app.add_observer(listen_close_event);
+        app.add_systems(Update, listen_close_completed);
+        app.add_systems(Update, (button_system::button_system, exit_on_esc));
+
+        // app.insert_resource(IsOpen(false));
+        // app.add_systems(Update, (button_system, effect_system, exit_on_esc));
+        // app.add_event::<Action>();
+
+        app.add_observer(on_bar_drag_start);
+        app.add_observer(on_bar_drag);
+        app.add_observer(on_bar_drag_end);
+
+        // app.add_systems(Update, listen_action);
+    }
+}
+
+pub mod prelude {
+    pub use crate::UniversalSearchPlugin;
+    pub use crate::{UniversalSearchClose, UniversalSearchOpen};
+}
+
+fn listen_animation_events(
+    mut event_reader: EventReader<TweenEvent<&'static str>>,
+    mut q_input_region: Single<&mut InputRegion, With<UniversalSearchWindow>>,
+) {
+    event_reader.read().for_each(|event| match event.data {
+        "UniversalSearchOpened" => {
+            q_input_region.0 = Rect::new(0., 0., WINDOW_SIZE.0, WINDOW_SIZE.1);
+        }
+        "UniversalSearchClosed" => {
+            q_input_region.0 = Rect::new(0., WINDOW_SIZE.1 - BAR_SIZE.1, BAR_SIZE.0, WINDOW_SIZE.1);
+        }
+
+        _ => (),
+    });
+}

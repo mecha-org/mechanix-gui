@@ -1,14 +1,11 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! PulseAudio integration library for managing audio devices and controls.
+//!
+//! This library provides a high-level interface for interacting with PulseAudio,
+//! allowing applications to manage audio devices, control volume levels, and
+//! handle audio-related operations asynchronously.
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+use crate::errors::PulseAudioError;
+use async_trait::async_trait;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+pub mod errors;
+pub mod service;

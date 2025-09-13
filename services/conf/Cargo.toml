@@ -1,9 +1,9 @@
 [package]
 name = "mxconf"
-description = "Service for providing, storing global configuration for the applications and services" 
+description = "Configuration system for the Mechanix shell, services and gui apps"
 version.workspace = true
-edition.workspace = true
 authors.workspace = true
+edition.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
@@ -11,3 +11,41 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+notify = "8.0.0"
+serde_json = "1.0.140"
+toml = "0.8.23"
+dirs = "6.0.0"
+sled = "0.34.7"
+anyhow = "1.0.98"
+crc32fast = "1.4.2"
+tokio = { version = "1.46.1", features = ["full"] }
+zbus = "3.14.1"
+futures-util = "0.3.28"
+clap = { version = "4.5.4", features = ["derive"] }
+comfy-table = "7.1.0"
+regex = "1.11.1"
+serde = { version = "1.0.219", features = ["derive"] }
+log = "0.4.27"
+env_logger = "0.11.8"
+thiserror = "2.0.12"
+
+[dev-dependencies]
+tempfile = "3.10.1"
+mockall = "0.12.1"
+serial_test = "2.0.0"
+
+[package.metadata.deb]
+maintainer = "Minesh Purohit <mineshp@mechasystems.com>"
+extended-description = """\
+Configuration system for the Mechanix shell, services and gui apps."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../target/release/mxconf",
+        "usr/bin/",
+        "755",
+    ],
+]
