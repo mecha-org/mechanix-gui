@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'package:music_player/app_routes.dart';
+import 'package:music_player/src/features/player/presentation/music_player_home.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:watch_it/watch_it.dart';
+import 'package:widgets/mechanix.dart';
 
-import 'src/features/player/presentation/music_player.dart';
 
 Future<void> main() async {
+  di.registerSingleton(ThemeToggle());
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize media_kit
@@ -17,66 +21,60 @@ Future<void> main() async {
   Hive.init(dir.path);
 
   // Open box for playlists
+  await Hive.openBox<List>('recentBox'); 
   await Hive.openBox<List>('playlistBox');
   await Hive.openBox<List>('metaBox');
 
-  runApp(const MyApp());
+  runApp(MechanixSettingsApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
+  MechanixSettingsApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
+    final mechanixVariant =
+        watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
+
+    return MechanixTheme(
+      data: MechanixThemeData(
+        mechanixVariant: mechanixVariant,
+      ),
+      builder: (context, mechanix, child) => MainApp(
+        darkTheme: mechanix.darkTheme,
+        lightTheme: mechanix.lightTheme,
+        themeMode: themeMode,
+      ),
+    );
+  }
+}
+
+class MainApp extends StatelessWidget {
+   const MainApp({
+    super.key,
+    required this.lightTheme,
+    required this.darkTheme,
+    required this.themeMode,
+  });
+
+    final ThemeData lightTheme;
+  final ThemeData darkTheme;
+  final ThemeMode themeMode;
+
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Music Player',
-      theme: appTheme,
+      title: 'Music',
+      theme: lightTheme,
+      darkTheme: darkTheme,
+      themeMode: themeMode,
       home: const MusicPlayerPage(),
+      // routes: AppRoutes.player: 
+              
+
     );
   }
 }
-
-final ThemeData appTheme = ThemeData(
-  brightness: Brightness.dark,
-  scaffoldBackgroundColor: const Color.fromRGBO(26, 36, 50, 1), // background
-  primaryColor: const Color(0xFF2C4C7B), // accent
-  secondaryHeaderColor: const Color.fromARGB(
-    255,
-    145,
-    177,
-    226,
-  ), // buttons, highlights
-  cardColor: const Color(0xFF2D3E50), // playlist cards
-  textTheme: const TextTheme(
-    titleLarge: TextStyle(
-      color: Colors.white,
-      fontSize: 18,
-      fontWeight: FontWeight.bold,
-    ),
-    titleMedium: TextStyle(color: Color(0xFFB0B6C1), fontSize: 12),
-    bodyLarge: TextStyle(color: Color(0xFF7D8796), fontSize: 14),
-  ),
-  iconTheme: const IconThemeData(color: Colors.white),
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Color(0xFF2D3E50),
-    elevation: 0,
-    titleTextStyle: TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-    ),
-    iconTheme: IconThemeData(color: Colors.white),
-  ),
-
-  tabBarTheme: const TabBarTheme(
-    labelColor: Color.fromARGB(255, 145, 177, 226), // selected tab text/icon
-    unselectedLabelColor: Colors.white, // unselected tab text/icon
-    indicator: UnderlineTabIndicator(
-      borderSide: BorderSide(
-        color: Color.fromARGB(255, 145, 177, 226),
-        width: 3,
-      ), // underline color
-    ),
-  ),
-);

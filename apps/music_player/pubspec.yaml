@@ -1,4 +1,4 @@
-name: camera
+name: music_player
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -45,6 +45,12 @@ dependencies:
   audio_metadata_reader: ^1.4.1
   flutter_media_metadata: ^1.0.0+1
   audio_metadata_extractor: ^0.0.4
+  widgets:
+    git:
+      url: https://github.com/mecha-org/mechanix.dart.git
+      path: flutter/widgets
+      ref: main
+  watch_it: ^1.7.0
 
 dev_dependencies:
   flutter_test:
@@ -69,9 +75,15 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/dots_three_vertical.png
+    - assets/images/sort.png
+    - assets/images/shuffle.png
+    - assets/images/add_to_playlist.png
+    - assets/images/add_to_queue.png
+    - assets/images/play_next.png
+    - assets/images/favorite.png
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

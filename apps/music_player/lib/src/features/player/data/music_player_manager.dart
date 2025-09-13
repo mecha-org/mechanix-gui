@@ -1,7 +1,6 @@
 import 'dart:io';
-import 'package:audio_metadata_reader/audio_metadata_reader.dart'
-    hide AudioMetadata;
-import 'package:camera/src/features/player/models/types.dart';
+import 'package:audio_metadata_reader/audio_metadata_reader.dart' hide AudioMetadata;
+import 'package:music_player/src/features/player/models/types.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter/foundation.dart';
@@ -14,15 +13,18 @@ class MusicPlayerManager extends ChangeNotifier {
   late final Player player;
   late final Playlist playlist;
 
-  // Hive box for playlists (stores List<String>)
-  final Box<List> _playlistBox = Hive.box('playlistBox');
+  // Hive boxes
+  final Box<List> _playlistBox = Hive.box('playlistBox'); 
   final Box<List> _metaBox = Hive.box('metaBox');
+  final Box<List> _recentBox = Hive.box('recentBox'); // new for recently played
 
   List<String> originalTracks = [];
   List<SongInfo> songInfos = [];
-
-  List<SongInfo> playbackQueue = []; // active queue (all songs or album only)
+  List<SongInfo> playbackQueue = []; 
   int currentIndex = 0;
+
+  // Recently played
+  List<SongInfo> recentSongs = [];
 
   MusicPlayerManager._internal() {
     player = Player();
@@ -35,35 +37,45 @@ class MusicPlayerManager extends ChangeNotifier {
       player.open(playlist, play: false);
 
       if (savedMeta.isNotEmpty) {
-        // restore full metadata
-        songInfos =
-            savedMeta
-                .map((m) => SongInfo.fromJson(Map<String, dynamic>.from(m)))
-                .toList();
+        songInfos = savedMeta
+            .map((m) => SongInfo.fromJson(Map<String, dynamic>.from(m)))
+            .toList();
       } else {
-        // fallback if no metadata yet
-        songInfos =
-            saved.map((path) {
-              final file = File(path);
-              return SongInfo(
-                path: path,
-                title: file.uri.pathSegments.last,
-                artist: "Unknown Artist",
-              );
-            }).toList();
+        songInfos = saved.map((path) {
+          final file = File(path);
+          return SongInfo(
+            path: path,
+            title: file.uri.pathSegments.last,
+            artist: "Unknown Artist",
+          );
+        }).toList();
       }
 
-      // keep your playbackQueue in sync
       playbackQueue = songInfos;
     } else {
       playlist = Playlist([]);
       player.open(playlist, play: false);
+    }
+
+    // Restore recent songs from Hive
+    final savedRecent = _recentBox.get('songs', defaultValue: [])!.cast<Map>();
+    if (savedRecent.isNotEmpty) {
+      recentSongs = savedRecent
+          .map((m) => SongInfo.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
+    } else if (savedRecent == null || (savedRecent as List).isEmpty) {
+      recentSongs = songInfos.take(5).toList();
+      _recentBox.put('songs', recentSongs.map((s) => s.toJson()).toList());
+
     }
   }
 
   Future<void> playAt(int index) async {
     if (index < playlist.medias.length) {
       await player.jump(index);
+      if (index >= 0 && index < playbackQueue.length) {
+        _addToRecent(playbackQueue[index]);
+      }
     }
   }
 
@@ -73,57 +85,82 @@ class MusicPlayerManager extends ChangeNotifier {
   }
 
   Future<void> playAlbum(List<SongInfo> albumSongs, int startIndex) async {
-    final player = this.player;
-
-    // Create a playback queue just for this album
     playbackQueue = albumSongs;
 
-    // Open the album queue in the player
     await player.open(
-      Playlist(
-        albumSongs.map((s) => Media(s.path)).toList(),
-        index: startIndex,
-      ),
+      Playlist(albumSongs.map((s) => Media(s.path)).toList(), index: startIndex),
       play: true,
     );
 
     currentIndex = startIndex;
-
-    // Notify UI (mini player, now playing screen)
-    notifyListeners(); // or setState(() {})
+    _addToRecent(albumSongs[startIndex]);
+    notifyListeners();
   }
 
   Future<void> playAllSongs(int startIndex) async {
-    final player = this.player;
-
     playbackQueue = allSongInfos;
 
     await player.open(
-      Playlist(
-        allSongInfos.map((s) => Media(s.path)).toList(),
-        index: startIndex,
-      ),
+      Playlist(allSongInfos.map((s) => Media(s.path)).toList(), index: startIndex),
       play: true,
     );
 
     currentIndex = startIndex;
+    _addToRecent(allSongInfos[startIndex]);
+    notifyListeners();
+  }
+
+  Future<void> playFilteredSongs(List<SongInfo> filteredSongs, int startIndex) async {
+    playbackQueue = filteredSongs;
+
+    await player.open(
+      Playlist(filteredSongs.map((s) => Media(s.path)).toList(), index: startIndex),
+      play: true,
+    );
+
+    currentIndex = startIndex;
+    _addToRecent(filteredSongs[startIndex]);
+  }
+
+  Future<void> playSong(SongInfo song) async {
+    await player.open(
+      Playlist([Media(song.path)], index: 0),
+      play: true,
+    );
+    playbackQueue = [song];
+    currentIndex = 0;
+    _addToRecent(song);
+  }
+
+  /// PRIVATE: Handle adding to recent list
+  Future<void> _addToRecent(SongInfo song) async {
+    recentSongs.removeWhere((s) => s.path == song.path);
+    recentSongs.insert(0, song);
+
+    if (recentSongs.length > 20) {
+      recentSongs = recentSongs.sublist(0, 20);
+    }
+
+    await _recentBox.put(
+      'songs',
+      recentSongs.map((s) => s.toJson()).toList(),
+    );
+
     notifyListeners();
   }
 
   Future<void> scanAndSaveSongs() async {
-    final tempInfos = <SongInfo>[]; // collect first
+    final tempInfos = <SongInfo>[];
     final home = Directory('/home');
-    final files =
-        await home
-            .list(recursive: true, followLinks: false)
-            .where((entity) {
-              final path = entity.path;
-              if (path.split('/').any((p) => p.startsWith('.'))) return false;
-              return entity is File &&
-                  audioExt.any((ext) => path.toLowerCase().endsWith(ext));
-            })
-            .cast<File>()
-            .toList();
+    final files = await home
+        .list(recursive: true, followLinks: false)
+        .where((entity) {
+          final path = entity.path;
+          if (path.split('/').any((p) => p.startsWith('.'))) return false;
+          return entity is File && audioExt.any((ext) => path.toLowerCase().endsWith(ext));
+        })
+        .cast<File>()
+        .toList();
 
     final seen = <String>{};
     final uniquePaths = <String>[];
@@ -165,13 +202,10 @@ class MusicPlayerManager extends ChangeNotifier {
       }
     }
 
-    // only replace now (UI never goes empty mid-scan)
     songInfos = tempInfos;
 
-    // after songInfos = tempInfos;
     if (currentIndex >= 0 && currentIndex < songInfos.length) {
-      final currentPath =
-          playbackQueue.isNotEmpty ? playbackQueue[currentIndex].path : null;
+      final currentPath = playbackQueue.isNotEmpty ? playbackQueue[currentIndex].path : null;
 
       if (currentPath != null) {
         final restoredIdx = songInfos.indexWhere((s) => s.path == currentPath);
@@ -183,32 +217,12 @@ class MusicPlayerManager extends ChangeNotifier {
     }
 
     await _playlistBox.put('songs', uniquePaths);
-
-    // Also store metadata for restore
     await _metaBox.put('info', tempInfos.map((s) => s.toJson()).toList());
 
-    notifyListeners(); // update UI
+    notifyListeners();
   }
 
-  Future<void> playFilteredSongs(
-    List<SongInfo> filteredSongs,
-    int startIndex,
-  ) async {
-    final player = this.player;
-
-    // Override playbackQueue with only the filtered results
-    playbackQueue = filteredSongs;
-
-    await player.open(
-      Playlist(
-        filteredSongs.map((s) => Media(s.path)).toList(),
-        index: startIndex,
-      ),
-      play: true,
-    );
-
-    currentIndex = startIndex;
-  }
+  
 
   /// Load all saved songs from Hive
   List<String> get allSongs {

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
-import 'package:camera/src/features/player/models/types.dart';
+import 'package:music_player/src/features/player/models/types.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:media_kit/media_kit.dart';
@@ -106,7 +106,7 @@ class _MusicPlayerPageState extends State<MusicPlayerPage> {
           backgroundColor: Theme.of(context).primaryColor,
           title:
               _searchQuery.isEmpty
-                  ? const Text("Music Player")
+                  ? const Text("Music")
                   : TextField(
                     controller: _searchController,
                     autofocus: true,

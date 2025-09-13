@@ -10,6 +10,7 @@ class MiniPlayer extends StatelessWidget {
   final Duration position;
   final Duration duration;
   final int currentIndex;
+  final VoidCallback? onTap;
 
   const MiniPlayer({
     super.key,
@@ -17,6 +18,7 @@ class MiniPlayer extends StatelessWidget {
     required this.position,
     required this.duration,
     required this.currentIndex,
+    this.onTap,
   });
 
   @override
@@ -39,9 +41,11 @@ class MiniPlayer extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.only(left: 60, right: 60, top: 0, bottom: 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
-        borderRadius: BorderRadius.circular(16), // Rounded corners
+        // color: Theme.of(context).primaryColor,
+        color: const Color.fromARGB(255, 54, 52, 52),
+        borderRadius: BorderRadius.circular(12), // Rounded corners
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -57,78 +61,106 @@ class MiniPlayer extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  "$displayTitle — $displayArtist",
-                  style: const TextStyle(color: Colors.white),
-                  overflow: TextOverflow.ellipsis,
+                // child: Text(
+                //   "$displayTitle — $displayArtist",
+                //   style: const TextStyle(color: Colors.white),
+                //   overflow: TextOverflow.ellipsis,
+                // ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayTitle,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      displayArtist,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-
-          // Progress bar
-          Slider(
-            activeColor: Colors.white,
-            thumbColor: Colors.white,
-            inactiveColor: Colors.white24,
-            min: 0,
-            max: duration.inMilliseconds.toDouble().clamp(1, double.infinity),
-            value: position.inMilliseconds.toDouble().clamp(
-              0,
-              duration.inMilliseconds.toDouble(),
-            ),
-            onChanged: (value) {
-              player.seek(Duration(milliseconds: value.toInt()));
-            },
-          ),
-
-          // Controls row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _formatDuration(position),
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-              IconButton(
-                icon: const Icon(Icons.skip_previous, color: Colors.white),
-                onPressed: () async {
-                  final mode = player.state.playlistMode;
-                  if (mode == PlaylistMode.single) {
-                    // Don’t skip, just restart current track
-                    await player.seek(Duration.zero);
-                  } else {
-                    await player.previous();
-                  }
-                },
-              ),
-
-              IconButton(
+                  IconButton(
                 icon: Icon(
-                  isPlaying ? Icons.pause : Icons.play_arrow,
+                  isPlaying ? Icons.pause : Icons.play_arrow_outlined,
                   color: Colors.white,
                 ),
                 onPressed: () => isPlaying ? player.pause() : player.play(),
               ),
-              IconButton(
-                icon: const Icon(Icons.skip_next, color: Colors.white),
-                onPressed: () async {
-                  final mode = player.state.playlistMode;
-                  if (mode == PlaylistMode.single) {
-                    // Don’t skip, just restart current track
-                    await player.seek(Duration.zero);
-                  } else {
-                    await player.next();
-                  }
-                },
-              ),
-              RepeatButton(player: player),
-              Text(
-                _formatDuration(duration),
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
             ],
           ),
+
+          // // Progress bar
+          // Slider(
+          //   activeColor: Colors.white,
+          //   thumbColor: Colors.white,
+          //   inactiveColor: Colors.white24,
+          //   min: 0,
+          //   max: duration.inMilliseconds.toDouble().clamp(1, double.infinity),
+          //   value: position.inMilliseconds.toDouble().clamp(
+          //     0,
+          //     duration.inMilliseconds.toDouble(),
+          //   ),
+          //   onChanged: (value) {
+          //     player.seek(Duration(milliseconds: value.toInt()));
+          //   },
+          // ),
+
+          // // Controls row
+          // Row(
+          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   children: [
+          //     Text(
+          //       _formatDuration(position),
+          //       style: const TextStyle(color: Colors.white, fontSize: 12),
+          //     ),
+          //     IconButton(
+          //       icon: const Icon(Icons.skip_previous, color: Colors.white),
+          //       onPressed: () async {
+          //         final mode = player.state.playlistMode;
+          //         if (mode == PlaylistMode.single) {
+          //           // Don’t skip, just restart current track
+          //           await player.seek(Duration.zero);
+          //         } else {
+          //           await player.previous();
+          //         }
+          //       },
+          //     ),
+
+          //     IconButton(
+          //       icon: Icon(
+          //         isPlaying ? Icons.pause : Icons.play_arrow,
+          //         color: Colors.white,
+          //       ),
+          //       onPressed: () => isPlaying ? player.pause() : player.play(),
+          //     ),
+          //     IconButton(
+          //       icon: const Icon(Icons.skip_next, color: Colors.white),
+          //       onPressed: () async {
+          //         final mode = player.state.playlistMode;
+          //         if (mode == PlaylistMode.single) {
+          //           // Don’t skip, just restart current track
+          //           await player.seek(Duration.zero);
+          //         } else {
+          //           await player.next();
+          //         }
+          //       },
+          //     ),
+          //     RepeatButton(player: player),
+          //     Text(
+          //       _formatDuration(duration),
+          //       style: const TextStyle(color: Colors.white, fontSize: 12),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -141,7 +173,7 @@ class MiniPlayer extends StatelessWidget {
     required Uint8List? artwork,
     required IconData fallbackIcon,
     required bool isSelected,
-    double size = 30,
+    double size = 40,
     double radius = 50,
     required BuildContext context,
   }) {
