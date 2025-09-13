@@ -15,3 +15,9 @@ standalone = []
 [dependencies]
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
+bevy_asset_loader = { workspace = true }
+utils = { path = "../utils" }
+types = { path = "../types" }
+animation = { path = "../animation" }
+service_plugins = { path = "../service_plugins" }
+headless_widgets = { path = "../headless_widgets" }

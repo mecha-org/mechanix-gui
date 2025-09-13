@@ -11,7 +11,6 @@ on:
     paths:
       - ".github/workflows/build-apps-aarch64.yml"
 
-
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -22,15 +21,21 @@ jobs:
           - name: settings app
             folder: settings
             binary: mechanix_settings
-        # Add more apps here as needed:
-        # - name: camera app
-        #   folder: camera
-        #   binary: mechanix_camera
-        # - name: notes app
-        #   folder: notes
-        #   binary: mechanix_notes
+
+          - name: camera app
+            folder: camera
+            binary: camera
+
+          - name: notes app
+            folder: notes
+            binary: notes
+
+          - name: files app
+            folder: files
+            binary: mechanix_files
 
     runs-on: ubicloud-standard-2-arm
+    environment: pre-release
     continue-on-error: true
     steps:
       # Install dependencies
@@ -59,8 +64,8 @@ jobs:
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
         run: |
-         flutter-elinux pub get
-         flutter-elinux build elinux
+          flutter-elinux pub get
+          flutter-elinux build elinux --release
 
       # Prepare artifact
       - name: Prepare artifact ${{ matrix.name }}

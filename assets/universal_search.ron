@@ -1,0 +1,17 @@
+({
+    "icons.search": File (
+        path: "icons/universal_search/search.png",
+    ),
+    "icons.arrow_up_right": File (
+        path: "icons/universal_search/arrow_up_right.png",
+    ),
+    "icons.default_app_icon": File (
+        path: "icons/universal_search/default_app_icon.png",
+    ),
+    "icons.close": File (
+        path: "icons/universal_search/close.png",
+    ),
+    "icons.left_nav_bar": File (
+        path: "icons/universal_search/left_nav_bar.png",
+    ),
+})

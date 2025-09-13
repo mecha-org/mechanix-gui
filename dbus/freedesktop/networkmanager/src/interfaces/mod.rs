@@ -28,6 +28,7 @@
 //! # Ok(())
 //! # }
 //! ```
+use crate::interfaces::wireless::KnownNetworkResponse;
 use crate::proxies::wireless::{AccessPointAddedStream, AccessPointRemovedStream};
 use crate::proxies::ProxyError;
 use anyhow::Result;
@@ -79,6 +80,7 @@ pub trait NetworkManagerInterface: Send + Sync + Clone {
     /// Return an error if the operation fails.
     async fn list_networks(&self) -> Result<Vec<RawAccessPointInfo>, ProxyError>;
 
+    async fn known_networks(&self) -> Result<Vec<KnownNetworkResponse>, ProxyError>;
     /// Select and connect to a specific network by SSID and optional password.
     ///
     /// # Arguments

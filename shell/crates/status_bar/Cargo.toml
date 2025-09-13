@@ -14,7 +14,8 @@ bevy = { workspace = true }
 bevy_wayland = { workspace = true }
 bevy_asset_loader = { workspace = true }
 types = { path = "../types" }
-bevy_plugins = { path = "../../../shared/bevy_plugins" }
+utils = { path = "../utils" }
+service_plugins = { path = "../service_plugins" }
 chrono = { version = "0.4", features = ["clock"] }
 
 [[example]]
