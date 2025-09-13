@@ -3,18 +3,20 @@ use evdev::{Device, EventStream};
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::Type;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Type, Default)]
 pub enum Key {
+    #[default]
+    Unknown,
     Power,
     Home,
-    Unknown,
 }
 
 impl From<evdev::Key> for Key {
     fn from(value: evdev::Key) -> Self {
         match value {
-            evdev::Key::KEY_POWER => Key::Power,
-            evdev::Key::KEY_FN_1 => Key::Home,
+            // todo: replace actual keys instead of using shift keys
+            evdev::Key::KEY_RIGHTSHIFT => Key::Power,
+            evdev::Key::KEY_LEFTSHIFT => Key::Home,
             _ => Key::Unknown,
         }
     }
@@ -22,9 +24,16 @@ impl From<evdev::Key> for Key {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize, Type)]
 pub enum KeyEvent {
+    Unknown(Key),
     Pressed(Key),
     Released(Key),
     Pressing(Key),
+}
+
+impl Default for KeyEvent {
+    fn default() -> Self {
+        Self::Unknown(Key::default())
+    }
 }
 
 pub fn get_device_stream(path: String) -> Result<EventStream> {

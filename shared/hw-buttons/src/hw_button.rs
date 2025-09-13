@@ -12,7 +12,7 @@ impl HwButton {
         Self { event_stream }
     }
 
-    pub async fn poll(&mut self) -> KeyEvent {
+    pub async fn poll(&mut self) -> (Key, KeyEvent) {
         loop {
             let event = self.event_stream.next_event().await.unwrap();
             match event.event_type() {
@@ -23,9 +23,9 @@ impl HwButton {
                         continue;
                     }
                     return match event.value() {
-                        0 => KeyEvent::Released(key),
-                        1 => KeyEvent::Pressed(key),
-                        2 => KeyEvent::Pressing(key),
+                        0 => (key, KeyEvent::Released(key)),
+                        1 => (key, KeyEvent::Pressed(key)),
+                        2 => (key, KeyEvent::Pressing(key)),
                         _ => unreachable!(),
                     };
                 }
