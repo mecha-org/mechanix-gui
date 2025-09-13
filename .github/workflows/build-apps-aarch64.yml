@@ -31,6 +31,7 @@ jobs:
         #   binary: mechanix_notes
 
     runs-on: ubicloud-standard-2-arm
+    environment: pre-release
     continue-on-error: true
     steps:
       # Install dependencies
