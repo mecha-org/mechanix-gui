@@ -573,7 +573,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             Images.delete,
             height: 20,
           ),
-          label: "Delete",
           onTap: () {
             handleDelete();
           },
@@ -946,8 +945,11 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       _showDetailsDialog(context, selectedPath);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Select a single item to view details"),
+        SnackBar(
+          content: Text("Select a single item to view details",
+              style: TextStyle(color: Colors.white)),
+          duration: const Duration(seconds: 1),
+          backgroundColor: Colors.grey[800],
         ),
       );
     }
@@ -1189,7 +1191,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
               return Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius:
@@ -1220,6 +1222,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       style: MechanixSimpleListThemeData(
                         itemPadding: const EdgeInsets.all(4),
                         backgroundColor: Colors.transparent,
+                        widgetMargin: EdgeInsets.only(bottom: 8),
                       ),
                       child: MechanixSimpleList(
                         isDividerRequired: false,
@@ -1555,8 +1558,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     await Clipboard.setData(ClipboardData(text: path));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Path copied to clipboard'),
+        content: Text('Path copied to clipboard',
+            style: TextStyle(color: Colors.white)),
         duration: const Duration(seconds: 2),
+        backgroundColor: Colors.grey[800],
       ),
     );
   }
