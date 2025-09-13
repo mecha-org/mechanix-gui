@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 
 /// A StatefulWidget to view PDF files with search and password protection support.
 class PdfViewerPage extends StatefulWidget {
@@ -63,78 +66,143 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   /// Prompts the user for a password if the PDF is password-protected
   /// TODO: Implement password validation logic for wrong password
   Future<String?> _passwordProvider() async {
-    final controller = TextEditingController();
+    bool obscureText = true;
+    String password = '';
 
-    final result = await showDialog<String>(
+    final result = await showModalBottomSheet<String>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'This file is protected',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+      backgroundColor: Colors.black,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return RawKeyboardListener(
+              focusNode: FocusNode(),
+              autofocus: true,
+              onKey: (event) {
+                if (event.isKeyPressed(LogicalKeyboardKey.enter)) {
+                  Navigator.of(bottomSheetContext).pop(password);
+                }
+              },
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: MechanixTextInputTheme(
+                    style: MechanixTextInputThemeData(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Enter password',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ).padBottom(12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: MechanixTextInput.password(
+                                isPasswordField: obscureText,
+                                onChanged: (value) {
+                                  password = value;
+                                },
+                                inputDecoration: InputDecoration(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 16),
+                                  filled: true,
+                                  fillColor: const Color(0xFF2C2C2E),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  hintText: "Password here",
+                                  hintStyle:
+                                      const TextStyle(color: Colors.white54),
+                                  prefixIcon: const Padding(
+                                    padding:
+                                        EdgeInsets.only(left: 12, right: 8),
+                                    child: Icon(
+                                      Icons.lock,
+                                      color: Colors.white54,
+                                    ),
+                                  ),
+                                  prefixIconConstraints: const BoxConstraints(
+                                    minWidth: 40,
+                                    minHeight: 40,
+                                  ),
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          obscureText
+                                              ? Icons.visibility_off
+                                              : Icons.visibility,
+                                          color: Colors.white54,
+                                        ),
+                                        onPressed: () {
+                                          setModalState(() {
+                                            obscureText = !obscureText;
+                                          });
+                                        },
+                                      ),
+                                      Container(
+                                        width: 1,
+                                        height: 28,
+                                        color: Colors.white24,
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 8),
+                                      ),
+                                      OutlinedButton(
+                                        style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14)),
+                                        onPressed: () {
+                                          password = '';
+                                          Navigator.of(bottomSheetContext)
+                                              .pop();
+                                        },
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                        ),
+                                      ).padRight(6),
+                                    ],
+                                  ),
+                                  suffixIconConstraints: const BoxConstraints(
+                                    minWidth: 80,
+                                    minHeight: 40,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Password',
-                    labelStyle: TextStyle(color: Colors.white70),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white38),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.blueAccent),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(null),
-                      child: const Text('Cancel',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: () =>
-                          Navigator.of(context).pop(controller.text),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor: Colors.blueAccent,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
-                      ),
-                      child: const Text('Open'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
 
     if (!mounted) return null;
 
-    // If dialog was dismissed, optionally close the PDF page
     if (result == null) {
       Navigator.of(context).pop();
       return null;
