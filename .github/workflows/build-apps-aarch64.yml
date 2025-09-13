@@ -61,7 +61,7 @@ jobs:
         working-directory: apps/${{ matrix.folder }}
         run: |
          flutter-elinux pub get
-         flutter-elinux build elinux
+         flutter-elinux build elinux --release
 
       # Prepare artifact
       - name: Prepare artifact ${{ matrix.name }}
