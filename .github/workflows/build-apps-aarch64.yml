@@ -29,7 +29,7 @@ jobs:
 
           - name: notes app
             folder: notes
-            binary: notes
+            binary: mechanix_notes
 
           - name: files app
             folder: files
