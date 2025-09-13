@@ -292,12 +292,12 @@ class _NotesEditorState extends State<NotesEditor> {
                         controller: _controller,
                         focusNode: _focusNode,
                         config: QuillEditorConfig(
-                          onKeyPressed: (event, node) {
-                            if (event.logicalKey == LogicalKeyboardKey.escape) {
-                              FocusScope.of(context).unfocus();
-                            }
-                            return;
-                          },
+                          // onKeyPressed: (event, node) {
+                          //   if (event.logicalKey == LogicalKeyboardKey.escape) {
+                          //     FocusScope.of(context).unfocus();
+                          //   }
+                          //   return;
+                          // },
                           customStyles: quillEditorStyle,
                           enableScribble: false,
                           autoFocus: true,
