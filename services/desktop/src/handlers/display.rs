@@ -1,4 +1,3 @@
-use anyhow::Result;
 use log::{debug, error, info};
 use zbus::export::ordered_stream::OrderedStreamExt;
 
@@ -13,7 +12,7 @@ impl DisplayInterface {
     /// Listens for brightness change signals from the `org.mechanix.settings` schema,
     /// parses the new value, and applies it using `mechanix_system_dbus::set_brightness`.
     /// Logs changes and errors encountered during the process.
-    pub async fn watch_brightness(&self) -> Result<()> {
+    pub async fn watch_brightness(&self) {
         info!("Watching brightness");
         let schema = "org.mechanix.settings";
         let key = "brightness.value";
@@ -32,7 +31,7 @@ impl DisplayInterface {
                                 continue;
                             }
                         };
-                        match system_dbus::set_brightness(brightness).await {
+                        match system_dbus::display_client::set_brightness(brightness).await {
                             Ok(()) => {
                                 info!("Brightness set to: {}", brightness);
                             }
@@ -49,6 +48,5 @@ impl DisplayInterface {
                 eprintln!("Error getting stream for brightness: {:?}", e);
             }
         }
-        Ok(())
     }
 }

@@ -19,6 +19,8 @@ env_logger = { workspace = true }
 thiserror = { workspace = true }
 mxconf_dbus = { path = "../../dbus/mechanix/mxconf" }
 system_dbus = { path = "../../dbus/mechanix/system" }
+mechanix-hw-buttons = { path = "../../shared/hw-buttons" }
+futures-util = "0.3.28"
 
 
 [package.metadata.deb]
