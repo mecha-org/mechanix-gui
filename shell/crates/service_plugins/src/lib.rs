@@ -4,7 +4,7 @@ pub mod bluetooth;
 pub mod network_manager;
 pub mod pulse_audio;
 pub mod upower;
-
+pub mod notification;
 extern crate upower as upower_dbus;
 extern crate networkmanager as networkmanager_dbus;
 extern crate pulseaudio as pulseaudio_dbus;

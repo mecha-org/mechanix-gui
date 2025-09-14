@@ -16,4 +16,5 @@ networkmanager = { path = "../../../dbus/freedesktop/networkmanager" }
 bluez = { path = "../../../dbus/freedesktop/bluez" }
 pulseaudio = { path = "../../../dbus/freedesktop/pulseaudio" }
 upower = { path = "../../../dbus/freedesktop/upower" }
+notification = {path = "../../../dbus/freedesktop/notification" }
 pollster = "0.4.0"

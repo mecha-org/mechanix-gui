@@ -1,0 +1,26 @@
+[package]
+name = "notification"
+description = "D-Bus interface used to access the notifications" 
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+async-trait = "0.1.88"
+bincode = "2.0.1"
+freedesktop-icons = "0.4.0"
+futures-util = "0.3.31"
+gdk-pixbuf = "0.20.10"
+glib = "0.20.12"
+serde.workspace = true
+serde_json = "1.0.145"
+sled = "0.34.7"
+thiserror = "2.0.12"
+tokio = {version = "1.45.1", features = ["full"]}
+zbus = { version = "5.7.1", features = ["tokio", "p2p"] }
+zvariant = "5.5.3"
