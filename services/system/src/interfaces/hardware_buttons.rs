@@ -20,9 +20,15 @@ pub async fn hw_buttons_notification_stream(
     conn: &zbus::Connection,
     power_button_path: String,
     home_button_path: String,
+    volume_up_button_path: String,
+    volume_down_button_path: String,
+    extension_detection_path: String,
 ) -> Result<(), ZbusError> {
     let mut power_button = HwButton::new(power_button_path);
     let mut home_button = HwButton::new(home_button_path);
+    let mut volume_up = HwButton::new(volume_up_button_path);
+    let mut volume_down = HwButton::new(volume_down_button_path);
+    let mut extension_detection = HwButton::new(extension_detection_path);
     loop {
         tokio::select! {
             (key, event) = power_button.poll() => {
@@ -48,6 +54,43 @@ pub async fn hw_buttons_notification_stream(
                     .await?;
                 }
             }
+            (key, event) = volume_up.poll() => {
+                if key == Key::VolumeUp {
+                    println!("volume up button event is {:?}", event);
+                 let ctxt = SignalContext::new(conn, "/org/mechanix/services/HwButton/VolumeUp")?;
+                hw_button_bus
+                    .notification(
+                        &ctxt,
+                        event,
+                    )
+                    .await?;
+                }
+            }
+            (key, event) = volume_down.poll() => {
+                if key == Key::VolumeDown {
+                    println!("volume down button event is {:?}", event);
+                 let ctxt = SignalContext::new(conn, "/org/mechanix/services/HwButton/VolumeDown")?;
+                hw_button_bus
+                    .notification(
+                        &ctxt,
+                        event,
+                    )
+                    .await?;
+                }
+            }
+            (key, event) = extension_detection.poll() => {
+                if key == Key::ExtensionDetection {
+                    println!("extension detection button event is {:?}", event);
+                 let ctxt = SignalContext::new(conn, "/org/mechanix/services/HwButton/ExtensionDetection")?;
+                hw_button_bus
+                    .notification(
+                        &ctxt,
+                        event,
+                    )
+                    .await?;
+                }
+            }
+
         }
     }
 }

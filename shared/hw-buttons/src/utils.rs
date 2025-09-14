@@ -9,6 +9,9 @@ pub enum Key {
     Unknown,
     Power,
     Home,
+    VolumeUp,
+    VolumeDown,
+    ExtensionDetection,
 }
 
 impl From<evdev::Key> for Key {
@@ -17,6 +20,9 @@ impl From<evdev::Key> for Key {
             // todo: replace actual keys instead of using shift keys
             evdev::Key::KEY_RIGHTSHIFT => Key::Power,
             evdev::Key::KEY_LEFTSHIFT => Key::Home,
+            evdev::Key::KEY_HOME => Key::ExtensionDetection,
+            evdev::Key::KEY_UP => Key::VolumeUp,
+            evdev::Key::KEY_DOWN => Key::VolumeDown,
             _ => Key::Unknown,
         }
     }
