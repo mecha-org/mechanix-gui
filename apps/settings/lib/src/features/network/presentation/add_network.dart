@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
-import 'package:widgets/extension.dart';
-import 'package:widgets/widgets/textInput/text_input.dart';
+import 'package:widgets/mechanix.dart';
 
 class AddNetwork extends StatelessWidget {
   const AddNetwork({super.key});
@@ -61,12 +58,8 @@ class AddNetwork extends StatelessWidget {
       child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
         builder: (context, state) {
           return Scaffold(
-            appBar: CustomAppBar(
-              title: "Add Network",
-              leftIcon: Image.asset(Images.back),
-              leftIconOnTap: () => backNavigation(context),
-              rightIcon2: const Icon(Icons.check),
-              rightIcon2OnTap: () => onAddButtonPressed(context, state),
+            appBar: MechanixNavigationBar(
+              title: "New Wireless",
             ),
             body: ContainerWidget(
               child: Form(

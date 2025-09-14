@@ -5,7 +5,6 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
-import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/bluetooth_device_list.dart';
 
 class BluetoothSearchNewDevice extends StatelessWidget {
   final List<BlueZDevice> devices;
@@ -43,9 +42,6 @@ class BluetoothSearchNewDevice extends StatelessWidget {
                     child: CustomLoader(),
                   )
           ],
-        ),
-        BluetoothDeviceList(
-          devices: devices,
         ),
       ],
     );

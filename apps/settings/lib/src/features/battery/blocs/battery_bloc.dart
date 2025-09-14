@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
-import 'package:mechanix_settings/src/features/battery/data/battery_repository.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_event.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_state.dart';
+import 'package:mechanix_settings/src/features/battery/data/battery_repository.dart';
 import 'package:upower/upower.dart';
 
 class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
@@ -13,31 +13,40 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
   StreamSubscription? changeStream;
 
   BatteryBloc({required this.batteryRepository}) : super(BatteryState()) {
-    on<SetBatteryMode>((event, emit) async {
-      await batteryRepository.setBatteryMode(event.mode);
-      add(BatteryInfoRequested());
-    });
-    on<BatteryInfoRequested>((event, emit) async {
+    on<SetBatteryMode>(_setBatteryMode);
+    on<BatteryInfoRequested>(_getBatteryInfo);
+  }
+
+  Future<void> _setBatteryMode(
+      SetBatteryMode event, Emitter<BatteryState> emit) async {
+    await batteryRepository.setBatteryMode(event.mode);
+    add(BatteryInfoRequested());
+  }
+
+  Future<void> _getBatteryInfo(
+      BatteryInfoRequested event, Emitter<BatteryState> emit) async {
+    emit(state.copyWith(
+      batteryPercentage: 0.0,
+      batteryStatus: UPowerDeviceState.unknown,
+    ));
+    try {
+      final batteryInfo = await batteryRepository.getBatteryInfo();
+
       emit(state.copyWith(
-        batteryPercentage: 0.0,
-        status: UPowerDeviceState.unknown,
+        batteryPercentage: batteryInfo.batteryPercentage,
+        batteryStatus: batteryInfo.status,
+        performanceMode: batteryInfo.mode,
+        batteryChargingTime: batteryInfo.batteryChargingTime,
+        batteryRemainingTime: batteryInfo.batteryRemainingTime,
+        availableBatteryModes: batteryInfo.availableBatteryModes,
       ));
-      try {
-        final batteryInfo = await batteryRepository.getBatteryInfo();
-        emit(state.copyWith(
-            batteryPercentage: batteryInfo.batteryPercentage,
-            status: batteryInfo.status,
-            mode: batteryInfo.mode,
-            batteryChargingTime: batteryInfo.batteryChargingTime,
-            batteryRemainingTime: batteryInfo.batteryRemainingTime));
-        _initializeBatteryStream();
-      } catch (e) {
-        emit(state.copyWith(
-          status: UPowerDeviceState.unknown,
-          error: e.toString(),
-        ));
-      }
-    });
+      _initializeBatteryStream();
+    } catch (e) {
+      emit(state.copyWith(
+        batteryStatus: UPowerDeviceState.unknown,
+        error: e.toString(),
+      ));
+    }
   }
 
   Future<void> _initializeBatteryStream() async {
@@ -45,6 +54,8 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
       final stream = await batteryRepository.streamBatteryEvents();
       changeStream = stream.listen((prop) async {
         logger.i("Battery Property Update: $prop");
+
+        add(BatteryInfoRequested());
         // const relevantProps = [
         //   "Percentage",
         //   "State",

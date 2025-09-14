@@ -34,6 +34,14 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     on<SetInputDeviceMute>(_setInputDeviceMute);
     on<SetOutputDeviceMute>(_setOutputDeviceMute);
 
+    on<SetEnableLauncherSoundsEvent>(_setEnableLauncherSounds);
+
+    on<SetEnableVibrationEvent>(_setEnableVibration);
+
+    on<SetVibrationLevelEvent>(_setVibrationLevel);
+
+    on<SetNotificationSoundEvent>(_setNotificationSound);
+
     _initializeServerInfoStream();
     _initializeSourceStream();
     _initializeSinkStream();
@@ -66,6 +74,7 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
         (sink) => sink.name == defaultSink,
         orElse: () => sinks.first,
       );
+      final soundSettings = await soundRepository.getSoundSettings();
 
       logger.i(
           "Default Input Device: ${defaultSourceObject.volume} ---> ${defaultSourceObject.description}");
@@ -75,6 +84,12 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
       emit(state.copyWith(
         defaultInputDevice: defaultSourceObject,
         defaultOutputDevice: defaultSinkObject,
+        enableLauncherSounds: soundSettings.enableSounds,
+        enableVibration: soundSettings.enableVibration,
+        vibrationLevel: soundSettings.vibrationLevel,
+        notificationSound: soundSettings.notificationSound,
+        inputSoundLevel: defaultSourceObject.volume,
+        outputSoundLevel: defaultSinkObject.volume,
       ));
     } catch (e) {
       logger.i("Error initializing sound: $e");
@@ -157,6 +172,10 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     try {
       await soundRepository.setDefaultSource(event.device);
       // check stream change & update state
+      final inputDevice = state.inputDevices
+          .firstWhere((device) => device.name == event.device);
+
+      emit(state.copyWith(defaultInputDevice: inputDevice));
     } catch (e) {
       logger.i("Error setting input device: $e");
       emit(state.copyWith(error: e.toString()));
@@ -167,6 +186,10 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
       SetOutputDevice event, Emitter<SoundState> emit) async {
     try {
       await soundRepository.setDefaultSink(event.device);
+      final outputDevice = state.outputDevices
+          .firstWhere((device) => device.name == event.device);
+
+      emit(state.copyWith(defaultOutputDevice: outputDevice));
     } catch (e) {
       logger.i("Error setting output device: $e");
       emit(state.copyWith(error: e.toString()));
@@ -176,6 +199,7 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
   Future<void> _setInputDeviceVolume(
       SetInputDeviceVolume event, Emitter<SoundState> emit) async {
     try {
+      emit(state.copyWith(inputSoundLevel: event.volume));
       await soundRepository.setSourceVolume(event.device, event.volume);
     } catch (e) {
       logger.i("Error setting source volume: $e");
@@ -186,6 +210,7 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
   Future<void> _setOutputDeviceVolume(
       SetOutputDeviceVolume event, Emitter<SoundState> emit) async {
     try {
+      emit(state.copyWith(outputSoundLevel: event.volume));
       await soundRepository.setSinkVolume(event.device, event.volume);
     } catch (e) {
       logger.i("Error setting sink volume: $e");
@@ -210,6 +235,50 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     } catch (e) {
       logger.i("Error setting sink mute: $e");
       emit(state.copyWith(error: e.toString()));
+    }
+  }
+
+  Future<void> _setEnableLauncherSounds(
+      SetEnableLauncherSoundsEvent event, Emitter<SoundState> emit) async {
+    try {
+      logger.i('set enable sounds ${event.enableLauncherSounds}');
+      await soundRepository.setEnableSounds(event.enableLauncherSounds);
+      emit(state.copyWith(enableLauncherSounds: event.enableLauncherSounds));
+    } catch (error) {
+      logger.e('set enable sounds error $error');
+    }
+  }
+
+  Future<void> _setEnableVibration(
+      SetEnableVibrationEvent event, Emitter<SoundState> emit) async {
+    try {
+      logger.i('Setting enable vibration ${event.enableVibration}');
+      await soundRepository.setEnableVibration(event.enableVibration);
+      emit(state.copyWith(enableVibration: event.enableVibration));
+    } catch (error) {
+      logger.e('Error setting enable vibration $error');
+    }
+  }
+
+  Future<void> _setVibrationLevel(
+      SetVibrationLevelEvent event, Emitter<SoundState> emit) async {
+    try {
+      logger.i('Setting vibration level ${event.vibrationLevel}');
+      await soundRepository.setVibrationLevel(event.vibrationLevel);
+      emit(state.copyWith(vibrationLevel: event.vibrationLevel));
+    } catch (error) {
+      logger.e('Error setting vibration level $error');
+    }
+  }
+
+  Future<void> _setNotificationSound(
+      SetNotificationSoundEvent event, Emitter<SoundState> emit) async {
+    try {
+      logger.i('Setting notification sound ${event.notificationSound}');
+      await soundRepository.setNotificationSound(event.notificationSound);
+      emit(state.copyWith(notificationSound: event.notificationSound));
+    } catch (error) {
+      logger.e('Error setting notification sound $error');
     }
   }
 }

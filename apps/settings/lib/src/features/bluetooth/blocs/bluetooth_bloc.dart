@@ -29,15 +29,11 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     on<ConnectDevice>(_onConnect);
     on<DisconnectDevice>(_onDisconnect);
     on<RemoveDevice>(_onRemoveDevice);
-
-    on<SelectDevice>((event, emit) async {
-      emit(state.copyWith(selectedDevice: event.selectedDevice));
-    });
-
+    on<SelectDevice>(_setSelectBluetoothDevice);
     on<GetAdapterAlias>(_onGetAdapterAlias);
     on<RenameAdapterEvent>(_onRenameAdapter);
-    on<DiscoveryEnabled>(_onDiscoverable);
-    on<GetDiscoverable>(_isDiscoveryEnable);
+    on<DiscoveryEnabled>(_setDeviceDiscoverable);
+    on<CheckDeviceDiscoverable>(_isDeviceDiscoverable);
     _initializeBluetoothStream();
     _deviceAddedStream();
     _deviceRemovedStream();
@@ -100,7 +96,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     if (enabled) {
       add(RefreshDeviceList());
       add(GetAdapterAlias());
-      add(GetDiscoverable());
+      add(CheckDeviceDiscoverable());
     }
   }
 
@@ -137,7 +133,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       logger.i('Starting Bluetooth discovery');
       await bluetoothRepository.startDiscovery();
       emit(state.copyWith(loading: true));
-      // add(RefreshDeviceList());
+      add(RefreshDeviceList());
       // Future.delayed(Duration(seconds: 15), () async {
       //   add(StopDiscovery());
       // });
@@ -251,16 +247,21 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     }
   }
 
-  void _onDiscoverable(DiscoveryEnabled event, Emitter<BluetoothState> emit) {
-    emit(state.copyWith(isDiscoveryEnabled: event.isDiscoverable));
+  Future<void> _setSelectBluetoothDevice(
+      SelectDevice event, Emitter<BluetoothState> emit) async {
+    emit(state.copyWith(selectedDevice: event.selectedDevice));
   }
 
-  void _isDiscoveryEnable(
-      GetDiscoverable event, Emitter<BluetoothState> emit) async {
-    final enabled = await bluetoothRepository.discoveryEnabled();
-    print('enabled');
-    print(enabled);
+  void _isDeviceDiscoverable(
+      CheckDeviceDiscoverable event, Emitter<BluetoothState> emit) async {
+    final enabled = await bluetoothRepository.isDeviceDiscoverable();
     emit(state.copyWith(isDiscoveryEnabled: enabled));
+  }
+
+  void _setDeviceDiscoverable(
+      DiscoveryEnabled event, Emitter<BluetoothState> emit) async {
+    await bluetoothRepository.setDiscoverable(event.isDiscoverable);
+    emit(state.copyWith(isDiscoveryEnabled: event.isDiscoverable));
   }
 
   @override

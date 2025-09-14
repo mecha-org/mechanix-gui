@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:mechanix_settings/app_route.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
@@ -27,13 +26,9 @@ class WirelessAdvanceSettings extends StatelessWidget {
         // ),
         MechanixSectionList(title: 'Advanced Settings', sectionListItems: [
           SectionListItems(
-              title: 'Manage Wireless',
-              onTap: () => onTap(context, AppRoutes.wirelessNetworkSettings),
-              trailing: IconWidget(
-                iconWidth: 9,
-                iconHeight: 18,
-                iconPath: Images.rightIconArrow,
-              ))
+            title: 'Manage Wireless',
+            onTap: () => onTap(context, AppRoutes.wirelessNetworkSettings),
+          )
         ]),
         // CustomLabelValue(
         //   title: "IP Settings",

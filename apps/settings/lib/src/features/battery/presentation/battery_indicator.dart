@@ -1,124 +1,97 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
+import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
+import 'package:mechanix_settings/src/features/battery/blocs/battery_state.dart';
+import 'package:widgets/mechanix.dart';
+
+import '../models/types.dart';
 
 class BatteryIndicator extends StatelessWidget {
-  final int batteryPercentage;
-
-  final double width;
-
   final double height;
-
   final bool isCharging;
+  final double tipHeight;
+  final double tipWidth;
 
   const BatteryIndicator({
     super.key,
-    required this.batteryPercentage,
     required this.isCharging,
-    this.width = 300,
-    this.height = 55,
+    this.height = 72,
+    this.tipHeight = 28.0,
+    this.tipWidth = 8.0,
   });
 
-  Color _getBatteryColor(int percentage) {
-    if (percentage > 20) {
-      return Color(0xFF34C759);
+  Color _getBatteryColor(BatteryState state) {
+    if (state.batteryPercentage > 20) {
+      return getModeDetails(state.performanceMode ?? '').color;
     }
     return Color(0xFFB90C2C);
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width + 15,
-      height: height,
-      child: Row(
-        children: [
-          Container(
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Color(0xFF777777), width: 2),
-              color: Color(0xFF151515),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x66000000), // #00000040 → 40 hex = ~25% opacity
-                  offset: Offset(0, 4),
-                  blurRadius: 16,
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Color(0xFF151515),
-                  offset: Offset(-4, 4),
-                  blurRadius: 16,
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Color(0xFF151515),
-                  offset: Offset(4, -4),
-                  blurRadius: 16,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8 - 2),
-              child: Stack(
+    return BlocBuilder<BatteryBloc, BatteryState>(
+      builder: (context, state) {
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final double availableWidth = constraints.maxWidth;
+            final double batteryWidth =
+                availableWidth - tipWidth; // Subtract space for battery tip
+
+            return SizedBox(
+              width: availableWidth,
+              height: height,
+              child: Row(
                 children: [
-                  AnimatedContainer(
-                    duration: Duration(milliseconds: 300),
-                    width: width * (batteryPercentage / 100),
+                  Container(
+                    width: batteryWidth,
                     height: height,
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: _getBatteryColor(batteryPercentage),
+                      borderRadius: BorderRadius.circular(8),
+                      color: context.colorScheme.secondary,
+                    ),
+                    child: ClipRRect(
+                      child: Stack(
+                        children: [
+                          AnimatedContainer(
+                            duration: Duration(milliseconds: 700),
+                            width:
+                                batteryWidth * (state.batteryPercentage / 100),
+                            height: height,
+                            decoration: BoxDecoration(
+                              color: _getBatteryColor(state),
+                            ),
+                          ),
+                          // Percentage text
+                          Center(
+                            child: IconWidget(
+                                boxWidth: 24,
+                                boxHeight: 28,
+                                iconWidth: 17,
+                                iconHeight: 26,
+                                iconPath: Images.chargingIcon),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  // Percentage text
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (isCharging)
-                          CustomIcon(icon: Image.asset(Images.chargingIcon)),
-                        Text(
-                          '$batteryPercentage%',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: height * 0.35,
-                            fontWeight: FontWeight.bold,
-                            shadows: [
-                              Shadow(
-                                offset: Offset(1, 1),
-                                blurRadius: 2,
-                                color: Colors.black54,
-                              ),
-                            ],
-                          ),
-                        )
-                      ],
+
+                  // Battery tip
+                  Container(
+                    width: tipWidth,
+                    height: tipHeight,
+                    decoration: BoxDecoration(
+                      color: context.colorScheme.secondary,
+                      borderRadius: HorizontalRadius.rightAll(2),
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
-
-          // Battery tip
-          Container(
-            width: 10,
-            height: height * 0.6,
-            margin: EdgeInsets.only(left: 3),
-            decoration: BoxDecoration(
-              color: Colors.grey[600],
-              borderRadius: BorderRadius.only(
-                topRight: Radius.circular(8 / 2),
-                bottomRight: Radius.circular(8 / 2),
-              ),
-            ),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }

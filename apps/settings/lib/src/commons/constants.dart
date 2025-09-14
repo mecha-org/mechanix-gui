@@ -54,4 +54,18 @@ class Images {
   static const String mobile = 'assets/images/mobile.png';
   static const String tv = 'assets/images/tv.png';
   static const String car = 'assets/images/car.png';
+  static const String mic = 'assets/images/mic.png';
+  static const String sunIcon = 'assets/images/sun_icon.png';
+  static const String micOn = 'assets/images/mic_on.png';
+  static const String micOff = 'assets/images/mic_off.png';
+  static const String volumeOn = 'assets/images/volume_on.png';
+  static const String volumeOff = 'assets/images/volume_off.png';
+  static const String searchIcon = 'assets/images/search_icon.png';
+  static const String trash = 'assets/images/trash.png';
+  static const String addRoundedSquare = 'assets/images/add_rounded_square.png';
+  static const String unlinkIcon = 'assets/images/unlink_icon.png';
+  static const String wifiHigh = 'assets/images/wifi_high.png';
+  static const String wifiMedium = 'assets/images/wifi_medium.png';
+  static const String wifiLow = 'assets/images/wifi_low.png';
+  static const String wifiNone = 'assets/images/wifi_none.png';
 }

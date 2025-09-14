@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
@@ -29,30 +28,16 @@ class _ConfigureDnsWidgetState extends State<ConfigureDnsWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: "Configure DNS",
-        leftIcon: Image.asset(Images.back),
-        leftIconOnTap: () => backNavigation(context),
-      ),
+      appBar: MechanixNavigationBar(title: "Configure DNS"),
       body: ContainerWidget(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               MechanixSelect(
-                selectValue: selectedValue,
+                value: selectedValue,
                 onChanged: onChange,
-                onTap: () {},
-                options: [
-                  SelectOption(
-                    label: 'Automatic',
-                    value: 'AUTOMATIC',
-                  ),
-                  SelectOption(
-                    label: 'Static',
-                    value: 'STATIC',
-                  ),
-                ],
+                options: dnsOptions,
               ),
               MechanixSectionList(
                 title: 'Servers',
