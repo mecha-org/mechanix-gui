@@ -9,6 +9,7 @@ import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:nm/nm.dart';
+
 import '../models/saved_networks.dart';
 import 'wifi_repository.dart';
 
@@ -85,6 +86,9 @@ class WifiRepositoryImpl implements WifiRepository {
     var nmAccessPoints = device.wireless?.accessPoints;
     AccessPoints? connectedAccessPoint;
 
+    var ip4Config = device.ip4Config;
+    var ip6Config = device.ip6Config;
+
     for (var nmAccessPoint in nmAccessPoints!) {
       final ssid =
           utf8.decode(nmAccessPoint.ssid); // Convert List<int> to String
@@ -94,14 +98,20 @@ class WifiRepositoryImpl implements WifiRepository {
         var isSaved = savedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
         if (isActive) {
           connectedAccessPoint = AccessPoints(
-              isActive: isActive,
-              isSaved: isSaved,
-              nmAccessPoint: nmAccessPoint);
+            isActive: isActive,
+            isSaved: isSaved,
+            nmAccessPoint: nmAccessPoint,
+            ip4Config: ip4Config,
+            ip6Config: ip6Config,
+          );
         } else {
           var accessPoint = AccessPoints(
-              nmAccessPoint: nmAccessPoint,
-              isActive: isActive,
-              isSaved: isSaved);
+            nmAccessPoint: nmAccessPoint,
+            isActive: isActive,
+            isSaved: isSaved,
+            ip4Config: ip4Config,
+            ip6Config: ip6Config,
+          );
           accessPoints.add(accessPoint);
         }
       }

@@ -24,8 +24,6 @@ class RefreshDeviceList extends BluetoothEvent {}
 
 class GetAdapterAlias extends BluetoothEvent {}
 
-class GetDiscoverable extends BluetoothEvent {}
-
 class RenameAdapterEvent extends BluetoothEvent {
   final String newName;
   RenameAdapterEvent(this.newName);
@@ -53,11 +51,15 @@ class RemoveDevice extends BluetoothEvent {
 
 class SelectDevice extends BluetoothEvent {
   final BlueZDevice selectedDevice;
-  // SelectDevice(this.selectedDevice);
-  SelectDevice(this.selectedDevice) {}
+  SelectDevice(this.selectedDevice);
+
+  @override
+  List<Object?> get props => [selectedDevice];
 }
 
 class DiscoveryEnabled extends BluetoothEvent {
   final bool isDiscoverable;
   DiscoveryEnabled(this.isDiscoverable);
 }
+
+class CheckDeviceDiscoverable extends BluetoothEvent {}

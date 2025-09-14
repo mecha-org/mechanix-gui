@@ -49,7 +49,9 @@ dependencies:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
       ref: main
+
   watch_it: ^1.7.0
+  timezone: ^0.10.1
 
 dev_dependencies:
   flutter_test:
@@ -116,6 +118,20 @@ flutter:
     - assets/images/mobile.png
     - assets/images/tv.png
     - assets/images/car.png
+    - assets/images/mic.png
+    - assets/images/sun_icon.png
+    - assets/images/search_icon.png
+    - assets/images/mic_on.png
+    - assets/images/mic_off.png
+    - assets/images/volume_on.png
+    - assets/images/volume_off.png
+    - assets/images/trash.png
+    - assets/images/add_rounded_square.png
+    - assets/images/unlink_icon.png
+    - assets/images/wifi_high.png
+    - assets/images/wifi_medium.png
+    - assets/images/wifi_low.png
+    - assets/images/wifi_none.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

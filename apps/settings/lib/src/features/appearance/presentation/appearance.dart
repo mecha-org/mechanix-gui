@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/switch_row.dart';
+import 'package:widgets/mechanix.dart';
 
 class Appearance extends StatefulWidget {
   const Appearance({super.key});
@@ -28,10 +28,8 @@ class _AppearanceState extends State<Appearance> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: MechanixNavigationBar(
         title: 'Appearance',
-        leftIcon: Image.asset(Images.back),
-        leftIconOnTap: () => backNavigation(context),
       ),
       body: ContainerWidget(
         child: Column(

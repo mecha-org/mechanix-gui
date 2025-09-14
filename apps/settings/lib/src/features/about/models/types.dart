@@ -1,14 +1,17 @@
 class AboutDetailsType {
-  String deviceName;
-  String iconPath;
-  String hostName;
-  String makeOrModel;
-  String wirelessIpAddress;
-  String wirelessMacAddress;
-  String ethernetIpAddress;
-  String ethernetMacAddress;
-  String os;
-  String kernelVersion;
-  AboutDetailsType({required this.deviceName, required this.iconPath, required this.hostName, required this.makeOrModel, required this.wirelessIpAddress, 
-  required this.wirelessMacAddress, required this.ethernetIpAddress, required this.ethernetMacAddress, required this.os, required this.kernelVersion});
+  final String hostname;
+  final String hardwareModel;
+  final String hardwareSerial;
+  final String firmwareVersion;
+  final String kernelRelease;
+  final String operatingSystemName;
+
+  AboutDetailsType({
+    required this.hostname,
+    required this.hardwareModel,
+    required this.hardwareSerial,
+    required this.firmwareVersion,
+    required this.kernelRelease,
+    required this.operatingSystemName,
+  });
 }

@@ -19,6 +19,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:widgets/mechanix.dart';
 
 class DeviceType extends StatelessWidget {
@@ -33,9 +34,8 @@ class DeviceType extends StatelessWidget {
         return Row(
           children: [
             IconWidget(iconPath: Images.audioHeadset).padRight(8),
-            Text(
-              'Headphone',
-              style: context.textTheme.labelLarge,
+            CustomTrailingText(
+              title: 'Headphone',
             ).padRight(8),
             IconWidget(
               iconWidth: 10,
@@ -49,9 +49,8 @@ class DeviceType extends StatelessWidget {
         return Row(
           children: [
             IconWidget(iconPath: Images.audioHeadset).padRight(8),
-            Text(
-              'Headphone',
-              style: context.textTheme.labelLarge,
+            CustomTrailingText(
+              title: 'Headphone',
             ).padRight(8),
             IconWidget(
               iconWidth: 10,
@@ -65,9 +64,8 @@ class DeviceType extends StatelessWidget {
         return Row(
           children: [
             IconWidget(iconPath: Images.mobile).padRight(8),
-            Text(
-              'Mobile',
-              style: context.textTheme.labelLarge,
+            CustomTrailingText(
+              title: 'Mobile',
             ).padRight(8),
             IconWidget(
               iconWidth: 10,
@@ -81,9 +79,8 @@ class DeviceType extends StatelessWidget {
         return Row(
           children: [
             IconWidget(iconPath: Images.tv).padRight(8),
-            Text(
-              'TV',
-              style: context.textTheme.labelLarge,
+            CustomTrailingText(
+              title: 'TV',
             ).padRight(8),
             IconWidget(
               iconWidth: 10,
@@ -97,9 +94,8 @@ class DeviceType extends StatelessWidget {
         return Row(
           children: [
             IconWidget(iconPath: Images.speaker).padRight(8),
-            Text(
-              'Car',
-              style: context.textTheme.labelLarge,
+            CustomTrailingText(
+              title: 'Car',
             ).padRight(8),
             IconWidget(
               iconWidth: 10,
@@ -112,9 +108,8 @@ class DeviceType extends StatelessWidget {
       default:
         return Row(
           children: [
-            Text(
-              'Other',
-              style: TextStyle(color: context.colorScheme.surfaceDim),
+            CustomTrailingText(
+              title: 'Other',
             ).padRight(8),
             IconWidget(
               iconWidth: 10,
@@ -126,75 +121,3 @@ class DeviceType extends StatelessWidget {
     }
   }
 }
-
-
-
-    // switch (deviceType) {
-    //   case 'audio-headphones':
-    //     return Row(
-    //       children: [
-    //         IconWidget(iconPath: Images.audioHeadset).padRight(8),
-    //         Text('Headphone').padRight(8),
-    //         IconWidget(
-    //           iconWidth: 10,
-    //           iconHeight: 17,
-    //           iconPath: Images.rightIconArrow,
-    //         ).padRight(8)
-    //       ],
-    //     );
-
-    //   case 'audio-headset':
-    //     return Row(
-    //       children: [
-    //         IconWidget(iconPath: Images.audioHeadset).padRight(8),
-    //         Text('Headphone').padRight(8),
-    //         IconWidget(
-    //           iconWidth: 10,
-    //           iconHeight: 17,
-    //           iconPath: Images.rightIconArrow,
-    //         ).padRight(8)
-    //       ],
-    //     );
-
-    //   case 'phone':
-    //     return Row(
-    //       children: [
-    //         IconWidget(iconPath: Images.mobile).padRight(8),
-    //         Text('Mobile').padRight(8),
-    //         IconWidget(
-    //           iconWidth: 10,
-    //           iconHeight: 17,
-    //           iconPath: Images.rightIconArrow,
-    //         ).padRight(8)
-    //       ],
-    //     );
-
-    //   case 'computer':
-    //     return Row(
-    //       children: [
-    //         IconWidget(iconPath: Images.tv).padRight(8),
-    //         Text('TV').padRight(8),
-    //         IconWidget(
-    //           iconWidth: 10,
-    //           iconHeight: 17,
-    //           iconPath: Images.rightIconArrow,
-    //         ).padRight(8)
-    //       ],
-    //     );
-
-    //   case 'multimedia-player':
-    //     return Row(
-    //       children: [
-    //         IconWidget(iconPath: Images.speaker).padRight(8),
-    //         Text('Car').padRight(8),
-    //         IconWidget(
-    //           iconWidth: 10,
-    //           iconHeight: 17,
-    //           iconPath: Images.rightIconArrow,
-    //         ).padRight(8)
-    //       ],
-    //     );
-
-    //   default:
-    //     return null;
-    // }

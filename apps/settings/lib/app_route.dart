@@ -17,6 +17,7 @@ class AppRoutes {
   static const batteryPerformance = '/battery/performance';
   static const display = '/display';
   static const displayScreenOffTime = '/display/screen_offtime';
+  static const lockScreenTimeout = '/display/lock_screen_time';
   static const sound = '/sound';
   static const soundOutputDevices = '/sound/output_devices';
   static const soundInputDevices = '/sound/input_devices';
@@ -32,4 +33,5 @@ class AppRoutes {
   static const ipv4Address = '/wireless/ipv4Address';
   static const security = '/wireless/security';
   static const notificationSound = '/sound/notification';
+  static const vibrationLevel = '/sound/vibrationLevel';
 }

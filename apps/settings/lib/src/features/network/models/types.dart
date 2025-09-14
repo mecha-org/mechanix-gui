@@ -1,4 +1,6 @@
 import 'package:nm/nm.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/select/select_type.dart';
 
 enum WifiStatus {
   connected,
@@ -31,3 +33,46 @@ Map<IpModes, String> ipModesList = {
   IpModes.static: "Static",
 };
 
+enum ConfigureDNS {
+  automaticDhcp,
+  static,
+}
+
+final List<SelectOption<ConfigureDNS>> dnsOptions = [
+  ConfigureDNS.automaticDhcp.toSelectOption('Automatic (DHCP)'),
+  ConfigureDNS.static.toSelectOption('Static'),
+];
+
+enum DnsProxyConfiguration {
+  off,
+  automatic,
+  static,
+}
+
+final List<SelectOption<DnsProxyConfiguration>> dnsProxyOptions = [
+  DnsProxyConfiguration.off.toSelectOption('Off'),
+  DnsProxyConfiguration.automatic.toSelectOption('Automatic'),
+  DnsProxyConfiguration.static.toSelectOption('Static'),
+];
+
+enum WirelessProtocol {
+  none,
+  wep,
+  wpa,
+  wpa2Wpa3,
+  wpa3,
+  wpaEnterprise,
+  wpa2Enterprise,
+  wpa3Enterprise,
+}
+
+final List<SelectOption<WirelessProtocol>> wirelessProtocolOptions = [
+  WirelessProtocol.none.toSelectOption('None'),
+  WirelessProtocol.wep.toSelectOption('WEP'),
+  WirelessProtocol.wpa.toSelectOption('WPA'),
+  WirelessProtocol.wpa2Wpa3.toSelectOption('WPA2/WPA3'),
+  WirelessProtocol.wpa3.toSelectOption('WPA3'),
+  WirelessProtocol.wpaEnterprise.toSelectOption('WPA Enterprise'),
+  WirelessProtocol.wpa2Enterprise.toSelectOption('WPA2 Enterprise'),
+  WirelessProtocol.wpa3Enterprise.toSelectOption('WPA3 Enterprise'),
+];

@@ -2,17 +2,14 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
 import 'package:nm/nm.dart';
-import 'package:widgets/widgets/textInput/text_input.dart';
+import 'package:widgets/mechanix.dart';
 
 class ConnectSecureNetwork extends StatelessWidget {
   const ConnectSecureNetwork({super.key});
@@ -49,40 +46,14 @@ class ConnectSecureNetwork extends StatelessWidget {
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
           builder: (context, state) {
             return Scaffold(
-              appBar: CustomAppBar(
-                title: "Network",
-                leftIcon: Image.asset(Images.back),
-                leftIconOnTap: () => Navigator.pop(context),
-                customChild: TextButton(
-                  onPressed: () => backNavigation(context),
-                  style: ButtonStyle(
-                    backgroundColor:
-                        const WidgetStatePropertyAll<Color>(Color(0xFF3B3B3B)),
-                    padding: const WidgetStatePropertyAll<EdgeInsets>(
-                        EdgeInsets.symmetric(horizontal: 8)),
-                    shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: const BorderSide(),
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    "Cancel",
-                    style: baseHeaderStyle,
-                  ),
-                ),
+              appBar: MechanixNavigationBar(
+                title: "Join ${utf8.decode(accessPoint.ssid)}",
               ),
               body: ContainerWidget(
                 child: Form(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "Enter password to connect to ‘${utf8.decode(accessPoint.ssid)}’",
-                        style: baseHeaderStyle.copyWith(fontSize: 20),
-                      ),
-                      const SizedBox(height: 20),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -115,7 +86,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                       ),
                       WirelessProtocols()
                     ],
-                  ),
+                  ).padTop(8),
                 ),
               ),
             );
