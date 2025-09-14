@@ -167,8 +167,13 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                                       ),
                                       OutlinedButton(
                                         style: OutlinedButton.styleFrom(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 14)),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 14))
+                                            .copyWith(
+                                          splashFactory: NoSplash
+                                              .splashFactory, // Disable ripple animation
+                                        ),
                                         onPressed: () {
                                           password = '';
                                           Navigator.of(bottomSheetContext)

@@ -380,6 +380,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             onPressed: () {
                               viewModeNotifier.value = !viewModeNotifier.value;
                             },
+                            highlightColor: Colors.transparent,
                           );
                         },
                       ),
@@ -388,12 +389,15 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         onPressed: () async {
                           showSortMenu(context, state.currentSortBy);
                         },
+                        highlightColor:
+                            Colors.transparent, // Remove ripple effect on press
                       ),
                       IconButton(
                         icon: const Icon(Icons.search, color: Colors.white),
                         onPressed: () {
                           // Implement search logic
                         },
+                        highlightColor: Colors.transparent,
                       ),
                       Builder(
                         builder: (context) {
@@ -410,6 +414,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                               onPressed: () {
                                 handleSelectionMore(context, state);
                               },
+                              highlightColor: Colors.transparent,
                             ),
                           );
                         },
@@ -874,6 +879,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         vertical: 16),
+                                  ).copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
                                   ),
                                   onPressed: () =>
                                       Navigator.pop(bottomSheetContext),
@@ -893,6 +901,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(50),
                                     ),
+                                  ).copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
                                   ),
                                   onPressed: () {
                                     final trimmedName = zipName.trim();
@@ -1312,6 +1323,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(50),
                           ),
+                        ).copyWith(
+                          splashFactory: NoSplash
+                              .splashFactory, // Disable ripple animation
                         ),
                         onPressed: () => Navigator.of(bottomSheetContext).pop(),
                         child: const Text("Close"),
@@ -1377,8 +1391,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                               children: [
                                 OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                      padding:
-                                          EdgeInsets.symmetric(vertical: 16)),
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 16))
+                                      .copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
+                                  ),
                                   onPressed: () {
                                     Navigator.of(bottomSheetContext).pop();
                                   },
@@ -1396,6 +1414,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(50),
                                     ),
+                                  ).copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
                                   ),
                                   onPressed: () {
                                     final trimmedName = folderName.trim();
@@ -1488,8 +1509,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                               children: [
                                 OutlinedButton(
                                   style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 16)),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 16))
+                                      .copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
+                                  ),
                                   onPressed: () {
                                     Navigator.of(bottomSheetContext).pop();
                                   },
@@ -1508,6 +1533,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(50),
                                     ),
+                                  ).copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
                                   ),
                                   onPressed: () {
                                     final trimmedName = newName.trim();
