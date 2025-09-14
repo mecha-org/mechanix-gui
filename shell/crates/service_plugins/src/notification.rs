@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 use bevy::log::{ error, info };
 use std::collections::HashMap;
-use freedesktop_notifications_server::proxies::mechanix::{ MechanixNotificationProxy };
-use freedesktop_notifications_server::notification::Notification;
-use freedesktop_notifications_server::database::get_all_notifications_from_db;
+use notification::proxies::mechanix::{ MechanixNotificationProxy };
+use notification::notification::Notification;
+use notification::database::get_all_notifications_from_db;
 use zbus::Connection;
 use std::sync::{ Arc, Mutex };
 use tokio::select;
@@ -30,15 +30,15 @@ fn load_notifications_from_database(_commands: Commands, mut event_writer: Event
     let (tx, rx) = std::sync::mpsc::channel();
     IoTaskPool::get()
         .spawn(async move {
-            let notifications = get_all_notifications_from_db().await.expect(
+            let notification = get_all_notifications_from_db().await.expect(
                 "Notification Fetching from database failed"
             );
-            let _ = tx.send(notifications);
+            let _ = tx.send(notification);
         })
         .detach();
 
-    if let Ok(notifications) = rx.try_recv() {
-        for (id,notification) in notifications{
+    if let Ok(notification) = rx.try_recv() {
+        for (id,notification) in notification{
             info!("Loaded notification with ID: {}", id);
             event_writer.write(NotificationEvent::Recieved(id, notification.clone()));
         }
@@ -78,7 +78,7 @@ fn spawn_notification_poller(mut commands: Commands) {
         move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async move {
-                use freedesktop_notifications_server::proxies::mechanix::MechanixNotificationProxy;
+                use notification::proxies::mechanix::MechanixNotificationProxy;
                 use zbus::Connection;
                 use futures_util::stream::StreamExt;
                 use tokio::select;
@@ -176,11 +176,11 @@ fn start_notification_loading(mut commands: Commands) {
                         match MechanixNotificationProxy::new(&connection).await {
                             Ok(proxy) => {
                                 match proxy.get_all_notifications().await {
-                                    Ok(notifications) => {
-                                        let _ = tx.send(Ok(notifications));
+                                    Ok(notification) => {
+                                        let _ = tx.send(Ok(notification));
                                     }
                                     Err(e) => {
-                                        let _ = tx.send(Err(format!("Failed to get notifications from proxy: {}", e)));
+                                        let _ = tx.send(Err(format!("Failed to get notification from proxy: {}", e)));
                                     }
                                 }
                             }
@@ -217,15 +217,15 @@ fn check_notification_loading(
         loader.completed = true;
         
         match result {
-            Ok(notifications) => {
-                info!("Loading {} notifications from database", notifications.len());
-                for (id, notification) in notifications {
+            Ok(notification) => {
+                info!("Loading {} notification from database", notification.len());
+                for (id, notification) in notification {
                     info!("Loaded notification with ID: {}", id);
                     event_writer.write(NotificationEvent::Recieved(id, notification.clone()));
                 }
             }
             Err(e) => {
-                error!("Failed to get notifications: {}", e);
+                error!("Failed to get notification: {}", e);
             }
         }
     }
