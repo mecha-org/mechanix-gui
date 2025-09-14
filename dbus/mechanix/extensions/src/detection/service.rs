@@ -90,11 +90,21 @@ pub async fn watch_hotplug(
 async fn monitor_device_events(path: PathBuf, event_sender: mpsc::Sender<ExtensionServiceEvent>) {
     let mut current_device: Option<Device> = None;
     let mut connection_key: Option<KeyCode> = None;
+    let mut device_name: String = "Unknown".to_string();
+    let mut device_id: String = "Unknown".to_string();
+    let mut is_extension_device = false;
 
     // Initialize device and check if it's an extension
     if let Ok(evdev) = Evdev::open(&path) {
+        device_name = evdev.name().unwrap_or("Unknown".to_string());
+        device_id = format!("{:?}", evdev.unique_id().unwrap_or_default());
+        
         let device = Device::new(evdev);
         let (is_ext, key_str) = device.is_extension();
+        is_extension_device = is_ext;
+        
+        println!("Device initialized: '{}' (ID: {}) - Extension: {} at {:?}", 
+                device_name, device_id, is_extension_device, path);
         
         if is_ext {
             // Parse the connection key
@@ -102,17 +112,16 @@ async fn monitor_device_events(path: PathBuf, event_sender: mpsc::Sender<Extensi
                 Ok(key_code) => {
                     connection_key = Some(key_code);
                     current_device = Some(device.clone());
-                    println!("Monitoring extension device with key: {} at {:?}", key_str, path);
+                    println!("Monitoring extension device '{}' with connection key: {}", device_name, key_str);
                 }
                 Err(e) => {
-                    eprintln!("Failed to parse connection key '{}': {}", key_str, e);
+                    eprintln!("Failed to parse connection key '{}' for device '{}': {}", key_str, device_name, e);
                     return; // Exit if we can't parse the key
                 }
             }
         } else {
-            // Not an extension device, don't monitor
-            println!("Device at {:?} is not an extension, skipping monitoring", path);
-            return;
+            // Not an extension device, but still monitor for debugging
+            println!("Device '{}' is not an extension, monitoring for debug info", device_name);
         }
     } else {
         eprintln!("Failed to open device at {:?}", path);
@@ -134,47 +143,63 @@ async fn monitor_device_events(path: PathBuf, event_sender: mpsc::Sender<Extensi
                 for event in events {
                     let event_summary = event.destructure();
                     match event_summary {
-                        evdev::EventSummary::Key(_, key, 1) => {
-                            // Check if this is the correct connection key for this extension
-                            if let (Some(expected_key), Some(device)) = (&connection_key, &current_device) {
-                                if key == *expected_key {
-                                    println!("Extension connection key pressed on device: {:?}", path);
-                                    
-                                    if let Err(e) = event_sender.send(
-                                        ExtensionServiceEvent::Added(device.clone())
-                                    ).await {
-                                        eprintln!("Failed to send Added event: {}", e);
-                                        return;
+                        evdev::EventSummary::Key(_, key, value) => {
+                            let key_state = match value {
+                                1 => "PRESSED",
+                                0 => "RELEASED",
+                                2 => "REPEAT",
+                                _ => "UNKNOWN"
+                            };
+                            
+                            println!("KEY EVENT: Device '{}' (ID: {}) Extension: {} | Key: {:?} | State: {} | Path: {:?}", 
+                                    device_name, device_id, is_extension_device, key, key_state, path);
+                            
+                            // Handle extension connection key events
+                            if is_extension_device {
+                                if let (Some(expected_key), Some(device)) = (&connection_key, &current_device) {
+                                    if key == *expected_key {
+                                        match value {
+                                            1 => {
+                                                println!("EXTENSION CONNECTION: Key pressed on extension '{}' - ADDING", device_name);
+                                                if let Err(e) = event_sender.send(
+                                                    ExtensionServiceEvent::Added(device.clone())
+                                                ).await {
+                                                    eprintln!("Failed to send Added event: {}", e);
+                                                    return;
+                                                }
+                                            }
+                                            0 => {
+                                                println!("EXTENSION DISCONNECTION: Key released on extension '{}' - REMOVING", device_name);
+                                                if let Err(e) = event_sender.send(
+                                                    ExtensionServiceEvent::Removed(device.clone())
+                                                ).await {
+                                                    eprintln!("Failed to send Removed event: {}", e);
+                                                    return;
+                                                }
+                                            }
+                                            _ => {}
+                                        }
+                                    } else {
+                                        println!("Extension '{}' key event (not connection key): {:?} {}", device_name, key, key_state);
                                     }
                                 }
                             }
                         }
-                        evdev::EventSummary::Key(_, key, 0) => {
-                            // Check if this is the correct connection key for this extension
-                            if let (Some(expected_key), Some(device)) = (&connection_key, &current_device) {
-                                if key == *expected_key {
-                                    println!("Extension connection key released on device: {:?}", path);
-                                    
-                                    if let Err(e) = event_sender.send(
-                                        ExtensionServiceEvent::Removed(device.clone())
-                                    ).await {
-                                        eprintln!("Failed to send Removed event: {}", e);
-                                        return;
-                                    }
-                                }
-                            }
+                        _ => {
+                            // Print other types of events for debugging
+                            println!("OTHER EVENT: Device '{}' (ID: {}) Extension: {} | Event: {:?}", 
+                                    device_name, device_id, is_extension_device, event_summary);
                         }
-                        _ => {}
                     }
                 }
             }
             Ok(Err(_)) | Err(_) => {
                 // Device error or disconnected
-                eprintln!("Device monitoring stopped for: {:?}", path);
+                println!("Device monitoring stopped for: '{}' (ID: {}) at {:?}", device_name, device_id, path);
                 
                 // Send removal event for the device if we have it
                 if let Some(device) = current_device.take() {
-                    println!("Sending removal event for disconnected device: {:?}", path);
+                    println!("Sending removal event for disconnected extension: '{}'", device_name);
                     if let Err(e) = event_sender.send(
                         ExtensionServiceEvent::Removed(device)
                     ).await {
