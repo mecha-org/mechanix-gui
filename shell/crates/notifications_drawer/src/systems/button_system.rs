@@ -1,4 +1,5 @@
 use bevy::{color::palettes::css::RED, prelude::*};
+use crate::components::NotificationButton;
 
 pub const NORMAL_BUTTON: Color = Color::srgb(0.15, 0.15, 0.15);
 pub const HOVERED_BUTTON: Color = Color::srgb(0.25, 0.25, 0.25);
@@ -11,29 +12,32 @@ pub fn button_system(
             &Interaction,
             &mut BackgroundColor,
             &mut BorderColor,
-            &Children,
+            &NotificationButton,
         ),
-        (Changed<Interaction>, With<Button>),
+        (Changed<Interaction>, With<Button>, With<NotificationButton>),
     >,
-    mut text_query: Query<&mut Text>,
 ) {
-    for (interaction, mut color, mut border_color, children) in &mut interaction_query {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+    for (interaction, mut color, mut border_color, notification) in &mut interaction_query {
         match *interaction {
             Interaction::Pressed => {
-                **text = "Press".to_string();
+                // Log the notification interaction
+                info!(
+                    "Notification pressed - ID: {}, Title: '{}', Content: '{}'",
+                    notification.id,
+                    notification.title,
+                    notification.content
+                );
+                
                 *color = PRESSED_BUTTON.into();
                 border_color.0 = RED.into();
             }
             Interaction::Hovered => {
-                **text = "Hover".to_string();
                 *color = HOVERED_BUTTON.into();
                 border_color.0 = Color::WHITE;
             }
             Interaction::None => {
-                **text = "Button".to_string();
                 *color = NORMAL_BUTTON.into();
-                border_color.0 = Color::BLACK;
+                // border_color.0 = Color::WHITE;
             }
         }
     }

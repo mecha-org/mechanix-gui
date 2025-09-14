@@ -12,3 +12,4 @@ keywords.workspace = true
 [dependencies]
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
+bevy_core_widgets = { git = "https://github.com/akshayr-mecha/bevy_core_widgets.git",  rev = "24966adefc4494815b9d71bc2bf5814e715f6b43" }
