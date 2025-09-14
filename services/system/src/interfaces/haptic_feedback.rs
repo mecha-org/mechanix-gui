@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::{error, info, Level};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
@@ -8,12 +8,12 @@ use zbus::{fdo::Error as ZbusError, interface};
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Default, Clone)]
 #[zvariant(signature = "a{sv}")]
 pub struct HapticFeedbackParams {
-    duration: u8,
+    pub duration: i32,
     level: HapticFeedbackLevel,
 }
 
 #[derive(Debug, Default, Clone, Type, Serialize, Deserialize)]
-enum HapticFeedbackLevel {
+pub enum HapticFeedbackLevel {
     #[default]
     LOW,
     MEDIUM,
@@ -27,11 +27,22 @@ pub struct HapticFeedbackInterface {
 
 #[interface(name = "org.mechanix.services.HapticFeedback")]
 impl HapticFeedbackInterface {
+    
+    //({'duration': <0>, 'level': <uint32 0>},)
     pub fn trigger_haptic_feedback(
         &self,
         haptic_feedback: HapticFeedbackParams,
     ) -> Result<(), ZbusError> {
-        info!("Triggering haptic feedback");
+        info!("Triggering haptic feedback: {:?}", haptic_feedback);
+        let mut file = match File::create(&self.path) {
+            Ok(file) => file,
+            Err(e) => {
+                error!("Failed to open haptic feedback file: {}", e);
+                return Err(ZbusError::Failed(
+                    "haptic feedback file not found".to_string(),
+                ));
+            }
+        };
         let mut file = match File::create(&self.path) {
             Ok(file) => file,
             Err(e) => {
