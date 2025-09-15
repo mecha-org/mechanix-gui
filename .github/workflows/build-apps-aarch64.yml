@@ -79,13 +79,18 @@ jobs:
           flutter-elinux pub get
           flutter-elinux build elinux --release
 
+      # Move entire bundle to ./build/<binary>
+      - name: Prepare build folder ${{ matrix.name }}
+        run: |
+          mkdir -p ./build/${{ matrix.binary }}
+          cp -r "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/"* "./build/${{ matrix.binary }}/"
+
       # Package Debian
       - name: Package Debian ${{ matrix.name }}
         run: |
           set -euo pipefail
           app_folder="apps/${{ matrix.folder }}"
 
-          # Extract package name & version from control file
           pkg_name=$(grep '^Package:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_arch=$(dpkg --print-architecture)
@@ -104,47 +109,26 @@ jobs:
           fi
 
           # Copy binary
-          cp "./build/${{ matrix.binary }}" package/usr/bin/${{ matrix.binary }}
+          cp "./build/${{ matrix.binary }}/${{ matrix.binary }}" package/usr/bin/${{ matrix.binary }}
           chmod 755 package/usr/bin/${{ matrix.binary }}
 
           # Copy assets
-          if [ -d "$app_folder/build/elinux/arm64/release/bundle/data" ]; then
-            cp -r "$app_folder/build/elinux/arm64/release/bundle/data/"* package/usr/share/$pkg_name/data/
+          if [ -d "./build/${{ matrix.binary }}/data" ]; then
+            cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/$pkg_name/data/
           fi
 
           # Copy private libraries
-          if [ -d "$app_folder/build/elinux/arm64/release/bundle/lib" ]; then
-            cp -r "$app_folder/build/elinux/arm64/release/bundle/lib/"* package/usr/lib/$pkg_name/
+          if [ -d "./build/${{ matrix.binary }}/lib" ]; then
+            cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/lib/$pkg_name/
           fi
 
-          # Build .deb into ./build/
-          mkdir -p ./build
-          dpkg-deb --build package "./build/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
-
-      # Collect artifacts
-      - name: Collect artifacts ${{ matrix.name }}
-        run: |
-          set -euo pipefail
-          mkdir -p ./build/bin
-          mkdir -p ./build/bundle/${{ matrix.binary }}
+          # Build .deb into ./build/deb/
           mkdir -p ./build/deb
-
-          # Binary
-          cp "./build/${{ matrix.binary }}" ./build/bin/ || true
-
-          # Full release bundle
-          cp -r "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/"* "./build/bundle/${{ matrix.binary }}/" || true
-
-          # Debian package
-          pkg_name=$(grep '^Package:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_version=$(grep '^Version:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_arch=$(dpkg --print-architecture)
-          cp "./build/${pkg_name}_${pkg_version}_${pkg_arch}.deb" ./build/deb/ || true
+          dpkg-deb --build package "./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
 
       # List artifacts
       - name: List artifacts ${{ matrix.name }}
-        run: |
-          ls -la ./build/
+        run: ls -la ./build/
 
       # Setup Pulp CLI
       - name: Setup | Pulp CLI
@@ -152,15 +136,10 @@ jobs:
           pipx install --force pulp-cli[pygments]
           pipx inject pulp-cli pulp-cli-deb
 
-      - name: Setup | Pulp CLI Configuration
+      - name: Configure Pulp CLI
         run: |
           set -euo pipefail
-          if [[ -z "$MECHA_PULP_API_URL" ]]; then
-            echo "[ERROR] MECHA_PULP_API_URL is empty."
-            exit 1
-          fi
           PULP_API_URL="${MECHA_PULP_API_URL}:8080"
-          echo "[INFO] Using Pulp base URL: $PULP_API_URL"
           pulp config create \
             --username "$MECHA_PULP_USERNAME" \
             --password "$MECHA_PULP_PASSWORD" \
@@ -174,7 +153,7 @@ jobs:
           pkg_name=$(grep '^Package:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
           pkg_version=$(grep '^Version:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
           pkg_arch=$(dpkg --print-architecture)
-          DEB_FILE="./build/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+          DEB_FILE="./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
 
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
@@ -194,9 +173,9 @@ jobs:
 
           echo "[INFO] ✅ Package ${{ matrix.binary }} published."
 
-      # Upload artifacts to GitHub
+      # Upload full artifacts
       - name: Upload artifact ${{ matrix.name }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.binary }}
-          path: ./build/
+          path: ./build/${{ matrix.binary }}/
