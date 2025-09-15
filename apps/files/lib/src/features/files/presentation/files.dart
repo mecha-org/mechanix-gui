@@ -17,7 +17,6 @@ import 'package:widgets/constants.dart';
 import 'package:widgets/widgets/bottomSheetModals/mechanix_bottom_sheet_theme.dart';
 import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
 import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_item_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
@@ -969,6 +968,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   void handleSelectionMore(BuildContext context, FilesState state) {
     final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
     selectedPaths.add(currentPath);
+
+    bool actionTaken = false; // Track if any menu item was selected
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -984,7 +986,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
           width: double.infinity,
           child: MechanixMenu(
-            backgroundColor: Color.fromARGB(255, 70, 69, 69),
+            backgroundColor: const Color.fromARGB(255, 70, 69, 69),
             itemPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             items: [
               MechanixMenuItem(
@@ -993,6 +995,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 leadingWidget: Image.asset(Images.listChecks,
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
+                  actionTaken = true;
                   clearSelection();
                   enableSelect();
                   Navigator.of(context).pop();
@@ -1005,6 +1008,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 leadingWidget: Image.asset(Images.createFolder,
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
+                  actionTaken = true;
                   Navigator.of(context).pop();
                   showCreateFolderDialog();
                   clearSelection();
@@ -1017,6 +1021,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 leadingWidget: Image.asset(Images.refresh,
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
+                  actionTaken = true;
                   reload(currentPath);
                   Navigator.of(context).pop();
                   clearSelection();
@@ -1033,6 +1038,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   height: mechanixIconSize,
                 ),
                 onTap: () {
+                  actionTaken = true;
                   _toggleHiddenFiles();
                   Navigator.of(context).pop();
                   clearSelection();
@@ -1045,6 +1051,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 leadingWidget: Image.asset(Images.copy,
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
+                  actionTaken = true;
                   handleCopy();
                   Navigator.of(context).pop();
                   clearSelection();
@@ -1057,6 +1064,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 leadingWidget: const Icon(Icons.copy_all,
                     color: Colors.white70, size: mechanixIconSize),
                 onTap: () {
+                  actionTaken = true;
                   copyPath(currentPath);
                   Navigator.of(context).pop();
                   clearSelection();
@@ -1069,6 +1077,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   layout: MenuItemLayout.iconLeft,
                   leadingWidget: const Icon(Icons.paste, color: Colors.white70),
                   onTap: () {
+                    actionTaken = true;
                     handlePaste(context, state);
                     clearSelection();
                     Navigator.of(context).pop();
@@ -1082,6 +1091,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 leadingWidget: Image.asset(Images.terminal,
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
+                  actionTaken = true;
                   openInTerminal(currentPath);
                   Navigator.of(context).pop();
                   clearSelection();
@@ -1094,6 +1104,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 leadingWidget: Image.asset(Images.info,
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
+                  actionTaken = true;
                   Navigator.of(context).pop();
                   if (selectedPaths.length == 1) {
                     _showDetailsDialog(context, selectedPaths.first);
@@ -1105,7 +1116,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      if (!actionTaken) {
+        // Bottom sheet closed without selecting any option
+        clearSelection();
+      }
+    });
   }
 
   /// Opens a terminal window in the given path.
@@ -1200,6 +1216,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 );
               }
 
+              final items = [
+                buildDetailRow("Type", details.type.toString()),
+                buildDetailRow("Size", formatBytes(details.size)),
+                buildDetailRow("Modified", formatDateTime(details.modified)),
+                buildDetailRow("Accessed", formatDateTime(details.accessed)),
+                buildDetailRow("Changed", formatDateTime(details.changed)),
+                buildDetailRow("Readable", readable),
+                buildDetailRow("Writable", writable),
+                buildDetailRow("Hidden", hidden),
+              ];
+
               return Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -1231,88 +1258,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     const SizedBox(height: 12),
                     MechanixSimpleListTheme(
                       style: MechanixSimpleListThemeData(
-                        itemPadding: const EdgeInsets.all(4),
+                        itemPadding: EdgeInsets.zero,
                         backgroundColor: Colors.transparent,
                         widgetMargin: EdgeInsets.only(bottom: 8),
                       ),
-                      child: MechanixSimpleList(
-                        isDividerRequired: false,
-                        padding: EdgeInsets.zero,
-                        listItems: [
-                          SimpleListItems(
-                            title: "Type",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text('${details.type}',
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                          SimpleListItems(
-                            title: "Size",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text(formatBytes(details.size),
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                          SimpleListItems(
-                            title: "Modified",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text(formatDateTime(details.modified),
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                          SimpleListItems(
-                            title: "Accessed",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text(formatDateTime(details.accessed),
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                          SimpleListItems(
-                            title: "Changed",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text(formatDateTime(details.changed),
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                          SimpleListItems(
-                            title: "Readable",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text(readable,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                          SimpleListItems(
-                            title: "Writable",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text(writable,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                          SimpleListItems(
-                            title: "Hidden",
-                            titleTextStyle: const TextStyle(
-                                color: Colors.white, fontSize: 14),
-                            onTap: () {},
-                            trailing: Text(hidden,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12)),
-                          ),
-                        ],
-                      ),
+                      child: MechanixSimpleList.builder(
+                          isDividerRequired: false,
+                          padding: EdgeInsets.zero,
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            return items[index];
+                          }),
                     ),
                     SizedBox(
                       width: double.infinity,
@@ -1338,6 +1294,21 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget buildDetailRow(String title, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title,
+              style: const TextStyle(color: Colors.white, fontSize: 14)),
+          Text(value,
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        ],
+      ),
     );
   }
 
