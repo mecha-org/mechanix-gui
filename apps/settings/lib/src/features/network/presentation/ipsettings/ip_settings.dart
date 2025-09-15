@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:mechanix_settings/src/features/network/presentation/ipsettings/ip_static_details.dart';
+import 'package:widgets/mechanix.dart';
 
 class IpSettings extends StatefulWidget {
   const IpSettings({super.key});
@@ -23,11 +22,7 @@ class _IpSettingsState extends State<IpSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        title: "Network",
-        leftIcon: Image.asset(Images.back),
-        leftIconOnTap: () => _backNavigation(context),
-      ),
+      appBar: MechanixNavigationBar(title: "Network"),
       body: ContainerWidget(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -10,6 +10,7 @@ on:
       - pre-release
     paths:
       - ".github/workflows/build-apps-aarch64.yml"
+      - "apps/**"
 
 jobs:
   build:
@@ -28,7 +29,7 @@ jobs:
 
           - name: notes app
             folder: notes
-            binary: notes
+            binary: mechanix_notes
 
           - name: files app
             folder: files
@@ -71,7 +72,36 @@ jobs:
       - name: Prepare artifact ${{ matrix.name }}
         run: |
           mkdir -p build
-          find "apps/${{ matrix.folder }}/build/" -type f -name "${{ matrix.binary }}" -exec cp {} ./build/ \; || true
+          # Copy only from bundle directory
+          cp "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/${{ matrix.binary }}" ./build/ || true
+
+      - name: Package Debian ${{ matrix.name }}
+        run: |
+          app_folder="apps/${{ matrix.folder }}"
+
+          # Extract package name & version from control file
+          pkg_name=$(grep '^Package:' "$app_folder/debian/control" | awk '{print $2}')
+          pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
+          pkg_arch=$(dpkg --print-architecture)
+
+          mkdir -p package/DEBIAN
+          cp -r "$app_folder/debian/"* package/DEBIAN/
+          mkdir -p package/usr/bin
+          mkdir -p package/usr/share/$pkg_name
+
+          # Patch control file with correct Architecture field
+          if grep -q '^Architecture:' package/DEBIAN/control; then
+            sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
+          else
+            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control          
+          fi
+
+          # Copy binary
+          cp ./build/${{ matrix.binary }} package/usr/bin/${{ matrix.binary }}
+          chmod 755 package/usr/bin/${{ matrix.binary }}
+
+          # Build .deb package
+          dpkg-deb --build package "${pkg_name}_${pkg_version}_${pkg_arch}.deb"
 
       # list artifacts
       - name: List artifacts ${{ matrix.name }}

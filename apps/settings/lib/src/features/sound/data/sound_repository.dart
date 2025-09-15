@@ -1,12 +1,10 @@
-
+import 'package:mechanix_settings/src/features/sound/data/types.dart';
 import 'package:pulseaudio/pulseaudio.dart';
 
 abstract class SoundRepository {
-
   Future<Stream<PulseAudioServerInfo>> streamSoundServerEvents();
   Future<Stream<PulseAudioSource>> streamSoundSourceEvents();
   Future<Stream<PulseAudioSink>> streamSoundSinkEvents();
-
 
   Future<String> getDefaultSourceName();
   Future<String> getDefaultSinkName();
@@ -23,4 +21,9 @@ abstract class SoundRepository {
   Future<void> setSourceMute(String sourceName, bool mute);
   Future<void> setSourceVolume(String sourceName, double volume);
 
+  Future<DBusSoundSettings> getSoundSettings();
+  Future<void> setEnableSounds(bool enableSounds);
+  Future<void> setEnableVibration(bool enableVibration);
+  Future<void> setVibrationLevel(String vibrationLevel);
+  Future<void> setNotificationSound(String notificationSound);
 }

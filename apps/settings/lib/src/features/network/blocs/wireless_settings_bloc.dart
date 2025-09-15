@@ -8,6 +8,7 @@ import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
 import 'package:nm/nm.dart';
+
 import 'wireless_settings_event.dart';
 import 'wireless_settings_state.dart';
 
@@ -30,7 +31,7 @@ class WirelessSettingsBloc
     on<SelectNetwork>((event, emit) async {
       emit(state.copyWith(selectedAccessPoint: event.selectedAccessPoint));
     });
-    on<LoadSavedNetworks>(_onLoadSavedNetworks);
+    // on<LoadSavedNetworks>(_onLoadSavedNetworks);
     on<ConnectSavedNetwork>(_connectSavedNetwork);
     on<ForgetNetwork>(onForgetNetwork);
     on<DeleteSavedNetwork>(_deleteSavedNetwork);
@@ -45,7 +46,7 @@ class WirelessSettingsBloc
     try {
       final stream = await wifiRepository.streamWifiEvents();
       _wifiEventsSubscription = stream.listen((prop) async {
-        // logger.i("Network Property Update: $prop");
+        logger.i("Network Property Update: $prop");
         if (prop.contains("WirelessEnabled")) {
           add(InitializeWifi());
         }
@@ -184,6 +185,7 @@ class WirelessSettingsBloc
   Future<void> onForgetNetwork(
       ForgetNetwork event, Emitter<WirelessSettingsState> emit) async {
     await wifiRepository.forgetNetwork(event.ssid);
+    add(LoadNetworks());
   }
 
   Future<void> _connectSavedNetwork(

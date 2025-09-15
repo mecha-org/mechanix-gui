@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_row_item.dart';
@@ -10,8 +9,11 @@ import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
-import 'package:nm/nm.dart';
+import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless.dart';
+import 'package:nm/nm.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 
 class NetworkSettings extends StatelessWidget {
   const NetworkSettings({super.key});
@@ -65,28 +67,17 @@ class NetworkSettings extends StatelessWidget {
         }
 
         return Scaffold(
-          appBar: CustomAppBar(
+          appBar: MechanixNavigationBar(
             title: "Network Settings",
-            leftIcon: Image.asset(Images.back),
-            leftIconOnTap: () => _backNavigation(outerContext),
           ),
           body: ContainerWidget(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Manage Networks", style: baseHeaderStyle),
-                Expanded(
-                    child: ListView.builder(
-                  itemCount: state.savedNetworks.length,
-                  itemBuilder: (context, index) {
-                    final item = state.savedNetworks[index];
-                    return SavedNetworkRow(
-                      name: item.ssid,
-                      onTap: () => showDeleteDialog(item.ssid),
-                      accessPoint: item.accessPoint,
-                    );
-                  },
-                ))
+                MechanixSimpleList(
+                  isDividerRequired: true,
+                  listItems: getWireless(state.savedNetworks),
+                )
               ],
             ),
           ),
@@ -94,6 +85,13 @@ class NetworkSettings extends StatelessWidget {
       },
     );
   }
+}
+
+List<SimpleListItems> getWireless(List<SavedNetworks> savedNetworks) {
+  final list =
+      savedNetworks.map((d) => SimpleListItems(title: d.ssid)).toList();
+
+  return list;
 }
 
 class SavedNetworkRow extends StatelessWidget {

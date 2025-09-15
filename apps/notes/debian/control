@@ -1,0 +1,6 @@
+Package: mechanix-notes
+Version: 0.0.1
+Maintainer: Dhanish Patel <dhanishp@mechasystems.com>
+Description: Mechanix Notes app
+  A notes application for Mechanix OS, allowing users to create, edit, and manage their notes seamlessly.
+

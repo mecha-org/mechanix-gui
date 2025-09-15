@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:widgets/mechanix.dart';
 
 class ApplyWallpaper extends StatefulWidget {
   const ApplyWallpaper({super.key});
@@ -23,16 +23,14 @@ class _ApplyWallpaperState extends State<ApplyWallpaper> {
     final imagePath = args['imagePath'] as String;
 
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: MechanixNavigationBar(
         title: 'Apply Wallpaper',
-        leftIcon: Image.asset(Images.back),
-        leftIconOnTap: () => backNavigation(context),
       ),
       body: ContainerWidget(
         child: SizedBox.expand(
           child: Image.asset(
-            Images.wallpaper,    // use imagePath
-            fit: BoxFit.cover,  
+            Images.wallpaper, // use imagePath
+            fit: BoxFit.cover,
           ),
         ),
       ),

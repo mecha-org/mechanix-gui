@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_toggle.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/bluetooth_device_list.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/switch/mechanix_switch.dart';
 
-class Bluetooth extends StatelessWidget {
+class Bluetooth extends StatefulWidget {
   const Bluetooth({super.key});
 
-  void _backNavigation(BuildContext context) {
-    Navigator.pop(context);
-  }
+  @override
+  State<Bluetooth> createState() => _BluetoothState();
+}
 
+class _BluetoothState extends State<Bluetooth> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BluetoothBloc, BluetoothState>(
@@ -39,42 +39,45 @@ class Bluetooth extends StatelessWidget {
       ].toList();
 
       return Scaffold(
-        appBar: CustomAppBar(
-          title: "Bluetooth",
-          leftIcon: Image.asset(Images.back),
-          leftIconOnTap: () => _backNavigation(context),
-        ),
+        appBar: MechanixNavigationBar(title: "Bluetooth"),
         body: ContainerWidget(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              MechanixSimpleList(padding: Spacing.bottom(10), listItems: [
-                SimpleListItems(
-                    title: '${state.adapterAlias ?? 'Bluetooth'}',
-                    trailing: CustomToggle(
-                        value: state.isPowered,
-                        onChanged: (val) => context
-                            .read<BluetoothBloc>()
-                            .add(ToggleBluetooth(val))))
-              ]),
-              if (state.isPowered)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Make device discoverable to everyone').padBottom(40),
-                    TextButton(
-                        onPressed: () => Navigator.pushNamed(
-                            context, AppRoutes.bluetoothDiscoverable),
-                        child: Text('Change'))
-                  ],
+              MechanixSectionList(sectionListItems: [
+                SectionListItems(
+                  title: '${state.adapterAlias ?? 'Bluetooth'}',
+                  defaultTrailingIcon: false,
+                  trailing: MechanixSwitch(
+                      value: state.isPowered,
+                      inactiveText: 'ON',
+                      activeText: 'OFF',
+                      onChanged: (val) => context
+                          .read<BluetoothBloc>()
+                          .add(ToggleBluetooth(val))),
                 ),
+                SectionListItems(
+                  title: 'Device Discoverable',
+                  onTap: () => Navigator.pushNamed(
+                      context, AppRoutes.bluetoothDiscoverable),
+                  trailing: Row(
+                    children: [
+                      CustomTrailingText(
+                              title: state.isDiscoveryEnabled ? 'Yes' : 'No')
+                          .padRight(8),
+                    ],
+                  ),
+                )
+              ]),
               if (state.isPowered && state.devices.isNotEmpty)
                 BluetoothDeviceList(
+                  isPaired: true,
                   devices: connectedAndPairedDevices,
                 ),
               if (state.isPowered)
                 BluetoothDeviceList(
+                  isPaired: false,
                   devices: newDevices,
                 )
             ],

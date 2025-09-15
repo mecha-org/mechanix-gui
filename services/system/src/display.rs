@@ -1,8 +1,8 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader, Write};
 use anyhow::{bail, Context};
 use log::{error, info, warn};
-use zbus::{fdo::Error as ZbusError, dbus_interface};
+use std::fs::File;
+use std::io::{BufRead, BufReader, Write};
+use zbus::{fdo::Error as ZbusError, interface};
 
 
 /// ConfigServerInterface struct for D-Bus interface.
@@ -18,7 +18,7 @@ pub struct DisplayInterface {
     pub path: String,
 }
 
-#[dbus_interface(name = "org.mechanix.services.Display")]
+#[interface(name = "org.mechanix.services.Display")]
 impl DisplayInterface {
     pub fn get_brightness(&self) -> Result<u8, ZbusError> {
         info!("init");

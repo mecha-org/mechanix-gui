@@ -3,65 +3,114 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
+import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:mechanix_settings/src/features/bluetooth/models/device_type.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 
-class BluetoothDeviceInfo extends StatelessWidget {
+class BluetoothDeviceInfo extends StatefulWidget {
   const BluetoothDeviceInfo({super.key});
 
-  void _backNavigation(BuildContext context) {
-    Navigator.pop(context);
+  @override
+  State<BluetoothDeviceInfo> createState() => _BluetoothDeviceInfoState();
+}
+
+class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
+  void onForgetNetworkClick(BlueZDevice? device) {
+    if (device != null) {
+      context.read<BluetoothBloc>().add(RemoveDevice(device.address));
+      Navigator.pop(context);
+    }
+  }
+
+  void onUnLinkClick(BlueZDevice? device) {
+    if (device != null) {
+      context.read<BluetoothBloc>().add(DisconnectDevice(device.address));
+      Navigator.pop(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is! Map<String, dynamic> || !args.containsKey('selectedDevice')) {
-      return const Scaffold(
-        body: Center(
-          child: Text('No device information provided.'),
-        ),
-      );
-    }
-
-    final BlueZDevice selectedDevice = args['selectedDevice'];
-
-    return Scaffold(
-        appBar: CustomAppBar(
-          title: selectedDevice.alias,
-          leftIcon: Image.asset(Images.back),
-          leftIconOnTap: () => _backNavigation(context),
-          rightIcon1: Image.asset(Images.delete),
-          rightIcon1OnTap: () => _onForgetNetworkClick(context, selectedDevice),
-        ),
-        body: SingleChildScrollView(
-          child: ContainerWidget(
-            child: MechanixSimpleList(listItems: [
-              SimpleListItems(
-                  title: 'Device Name',
-                  trailing: Text(
-                    selectedDevice.alias,
-                    style: context.textTheme.labelLarge,
-                  )),
-              SimpleListItems(
-                  title: 'Device Type',
-                  onTap: () => Navigator.pushNamed(
-                      context, AppRoutes.bluetoothDeviceTypes),
-                  trailing: DeviceType(
-                    deviceType: selectedDevice.icon,
-                  )),
-            ]),
+    return BlocBuilder<BluetoothBloc, BluetoothState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: MechanixNavigationBar(
+            title: state.selectedDevice?.alias ?? '',
+            actionWidgets: [
+              IconButton(
+                onPressed: () => onForgetNetworkClick(state.selectedDevice),
+                style: ButtonStyle(
+                  iconColor: WidgetStateProperty.all(Colors.white),
+                  backgroundColor: WidgetStateProperty.all(Color(0xFFB71C1C)),
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  minimumSize: WidgetStateProperty.all(Size(32, 32)),
+                  fixedSize: WidgetStateProperty.all(Size(32, 32)),
+                  padding: WidgetStateProperty.all(EdgeInsets.zero),
+                ),
+                icon: Center(
+                  child: CustomIcon(
+                    icon: Image.asset(Images.trash),
+                    width: 15,
+                    height: 17,
+                  ),
+                ),
+              ).padRight(16)
+            ],
           ),
-        ));
+          body: SingleChildScrollView(
+            child: ContainerWidget(
+              child: Column(
+                children: [
+                  MechanixSimpleList(listItems: [
+                    SimpleListItems(
+                        title: 'Device Name',
+                        trailing: CustomTrailingText(
+                          title: state.selectedDevice?.alias ?? '',
+                        )),
+                    SimpleListItems(
+                        title: 'Device Type',
+                        onTap: () => Navigator.pushNamed(
+                            context, AppRoutes.bluetoothDeviceTypes),
+                        trailing: DeviceType(
+                          deviceType: state.selectedDevice?.icon ?? '',
+                        )),
+                  ]),
+                  SizedBox(
+                    child: TextButton.icon(
+                      onPressed: () => onUnLinkClick(state.selectedDevice),
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.all<Color>(
+                          context.colorScheme.secondary,
+                        ),
+                      ),
+                      label: Text(
+                        'Unlink Device',
+                        style: TextStyle(color: context.colorScheme.onSurface),
+                      ).padVertical(16),
+                      icon: IconWidget(
+                        iconPath: Images.unlinkIcon,
+                        iconHeight: 16,
+                        iconWidth: 16,
+                        iconColor: Colors.white,
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
-}
-
-void _onForgetNetworkClick(BuildContext context, BlueZDevice device) {
-  context.read<BluetoothBloc>().add(RemoveDevice(device.address));
-  Navigator.pop(context);
 }

@@ -1,9 +1,11 @@
+import 'dart:developer';
+
 import 'package:dbus/dbus.dart';
+import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/battery/models/battery_info.dart';
 import 'package:upower/upower.dart';
+
 import 'battery_repository.dart';
-import 'package:logger/web.dart';
-import 'dart:developer';
 
 class BatteryRepositoryImpl implements BatteryRepository {
   final logger = Logger();
@@ -36,6 +38,8 @@ class BatteryRepositoryImpl implements BatteryRepository {
 
     String? batteryMode = await getBatteryModeViaDBus();
 
+    final modes = await getAvailableBatteryModes();
+
     final device = _client.displayDevice;
     double percentage = 0.0;
 
@@ -50,6 +54,7 @@ class BatteryRepositoryImpl implements BatteryRepository {
       mode: batteryMode ?? '',
       batteryChargingTime: device.timeToFull,
       batteryRemainingTime: device.timeToEmpty,
+      availableBatteryModes: modes,
     );
   }
 
@@ -111,7 +116,7 @@ class BatteryRepositoryImpl implements BatteryRepository {
     }
   }
 
-  Future<List<Map<String, String>>> getAvailableBatteryModes() async {
+  Future<List<String>> getAvailableBatteryModes() async {
     final client = DBusClient.system();
 
     try {
@@ -126,18 +131,18 @@ class BatteryRepositoryImpl implements BatteryRepository {
         'Profiles',
       );
 
-      List<Map<String, String>> modes = [];
+      List<String> modes = [];
 
       if (prop is DBusArray) {
         for (var element in prop.children) {
-          if (element is DBusStruct) {
-            // Expected: (Profile: string, Description: string, Driver: string)
-            final profileId = (element.children[0] as DBusString).value;
-            final description = (element.children[1] as DBusString).value;
-            modes.add({
-              'id': profileId,
-              'description': description,
-            });
+          if (element is DBusDict) {
+            final value = element.children[DBusString('Profile')];
+            if (value is DBusVariant) {
+              final variant = value.asVariant();
+              if (variant is DBusString) {
+                modes.add(variant.value);
+              }
+            }
           }
         }
       }

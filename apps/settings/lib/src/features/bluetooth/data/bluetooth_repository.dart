@@ -19,5 +19,6 @@ abstract class BluetoothRepository {
   Future<Stream<List<String>>> streamBluetoothEvents();
   Future<Stream<bool>> onDeviceAdded();
   Future<Stream<bool>> onDeviceRemoved();
-  Future<bool> discoveryEnabled();
+  Future<bool> isDeviceDiscoverable();
+  Future<void> setDiscoverable(bool value);
 }

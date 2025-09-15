@@ -1,4 +1,3 @@
-
 import 'package:equatable/equatable.dart';
 
 abstract class SoundEvent extends Equatable {
@@ -9,8 +8,28 @@ abstract class SoundEvent extends Equatable {
 class InitializeSound extends SoundEvent {}
 
 class GetInputDeviceList extends SoundEvent {}
+
 class GetOutputDeviceList extends SoundEvent {}
 
+class SetEnableLauncherSoundsEvent extends SoundEvent {
+  final bool enableLauncherSounds;
+  SetEnableLauncherSoundsEvent(this.enableLauncherSounds);
+}
+
+class SetEnableVibrationEvent extends SoundEvent {
+  final bool enableVibration;
+  SetEnableVibrationEvent(this.enableVibration);
+}
+
+class SetVibrationLevelEvent extends SoundEvent {
+  final String vibrationLevel;
+  SetVibrationLevelEvent(this.vibrationLevel);
+}
+
+class SetNotificationSoundEvent extends SoundEvent {
+  final String notificationSound;
+  SetNotificationSoundEvent(this.notificationSound);
+}
 
 class SetInputDevice extends SoundEvent {
   final String device;
@@ -33,9 +52,9 @@ class SetInputDeviceVolume extends SoundEvent {
 }
 
 class SetOutputDevice extends SoundEvent {
-    final String device;
+  final String device;
 
-    SetOutputDevice(this.device);
+  SetOutputDevice(this.device);
 }
 
 class SetOutputDeviceVolume extends SoundEvent {

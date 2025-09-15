@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_label_value.dart';
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
+import 'package:widgets/mechanix.dart';
 
 class DnsSettings extends StatelessWidget {
   const DnsSettings({super.key});
@@ -15,11 +15,7 @@ class DnsSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: CustomAppBar(
-          title: "Network",
-          leftIcon: Image.asset(Images.back),
-          leftIconOnTap: () => _backNavigation(context),
-        ),
+        appBar: MechanixNavigationBar(title: "Network"),
         body: ContainerWidget(
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
