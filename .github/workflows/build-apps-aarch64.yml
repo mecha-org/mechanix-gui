@@ -93,8 +93,8 @@ jobs:
           if grep -q '^Architecture:' package/DEBIAN/control; then
             sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
           else
-            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control          fi
-
+            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control          
+          fi
 
           # Copy binary
           cp ./build/${{ matrix.binary }} package/usr/bin/${{ matrix.binary }}
