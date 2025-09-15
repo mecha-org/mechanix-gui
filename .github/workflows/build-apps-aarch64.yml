@@ -84,8 +84,8 @@ jobs:
           pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_arch=$(dpkg --print-architecture)
 
-          mkdir -p package
-          cp -r "$app_folder/debian" package/DEBIAN
+          mkdir -p package/DEBIAN
+          cp -r "$app_folder/debian/"* package/DEBIAN/
           mkdir -p package/usr/bin
           mkdir -p package/usr/share/$pkg_name
 
