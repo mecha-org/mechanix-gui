@@ -89,12 +89,12 @@ jobs:
           mkdir -p package/usr/bin
           mkdir -p package/usr/share/$pkg_name
 
-          # Patch control file with architecture
-          if ! grep -q '^Architecture:' package/DEBIAN/control; then
-            echo "Architecture: $pkg_arch" >> package/DEBIAN/control
-          else
+          # Patch control file with correct Architecture field
+          if grep -q '^Architecture:' package/DEBIAN/control; then
             sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
-          fi
+          else
+            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control          fi
+
 
           # Copy binary
           cp ./build/${{ matrix.binary }} package/usr/bin/${{ matrix.binary }}
