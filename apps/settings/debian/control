@@ -1,0 +1,5 @@
+Package: mechanix-settings
+Version: 0.0.1
+Maintainer: Yogita Hiray <yogitah@mechasystems.com>
+Description: Mechanix Settings app
+  A settings application for Mechanix OS, providing users with an intuitive interface to customize and manage their system preferences.
