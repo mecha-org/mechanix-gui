@@ -98,7 +98,7 @@ jobs:
           mkdir -p package/DEBIAN
           cp -r "$app_folder/debian/"* package/DEBIAN/
           mkdir -p package/usr/bin
-          mkdir -p package/usr/share/$pkg_name/data
+          mkdir -p package/usr/share/mechanix/$pkg_name/data
           mkdir -p package/usr/lib/$pkg_name
 
           # Patch Architecture field
@@ -114,7 +114,7 @@ jobs:
 
           # Copy assets
           if [ -d "./build/${{ matrix.binary }}/data" ]; then
-            cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/$pkg_name/data/
+            cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/mechanix/$pkg_name/data/
           fi
 
           # Copy private libraries
