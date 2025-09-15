@@ -129,9 +129,6 @@ fn as_table<'a>(value: &'a Value, _context: &str) -> Result<&'a toml::value::Tab
 }
 
 fn get_required_str<'a>(entry: &'a toml::value::Table, field: &str, key: &str, section: &str) -> Result<&'a str, ValidatorError> {
-    info!("======================================================================");
-    info!("table: {:?}",entry);
-    info!("validating field: {field}, key: {key}, section: {section}, ");
     entry.get(field)
         .and_then(|v| v.as_str())
         .ok_or_else(|| ValidatorError::ValidationError(format!(
