@@ -17,6 +17,7 @@ use dirs::home_dir;
 use log::{debug, error, info, trace, warn};
 use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
@@ -302,6 +303,8 @@ async fn start_server() -> Result<(), ServerError> {
     // Initialize database
     let db = Arc::new(Mutex::new(database::Database::new(db_path)));
 
+    // Load existing schemas into the database
+
     // Build the connection first
     let conn = match ConnectionBuilder::session() {
         Ok(builder) => match builder.name(CONNECTION_BUS_NAME) {
@@ -349,6 +352,15 @@ async fn start_server() -> Result<(), ServerError> {
     let schema_dir_to_watch = home_dir.join(schema_dir);
     // Watch the schemas directory for changes
     let schemas_dir = Path::new(&schema_dir_to_watch);
+    if !schemas_dir.exists() {
+        match fs::create_dir_all(&schemas_dir) {
+            Ok(_) => (),
+            Err(e) => {
+                error!("Failed to create schemas directory: {}", e);
+                return Err(ServerError::DirWatcherFailed(e.to_string()));
+            }
+        }
+    }
     match watcher.watch(schemas_dir, RecursiveMode::Recursive) {
         Ok(_) => (),
         Err(e) => {

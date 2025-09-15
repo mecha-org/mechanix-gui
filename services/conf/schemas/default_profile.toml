@@ -1,0 +1,5 @@
+[user]
+keystore = "user"       # corresponds to keystore (db) name in HOME_DIR/.config/mxconf/
+
+[system]
+keyfiles = "system"   # location for system-level keys in /etc/mxconf/keyfiles/

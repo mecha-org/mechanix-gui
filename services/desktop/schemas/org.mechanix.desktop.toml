@@ -1,0 +1,24 @@
+[device]
+name = { type = "string", default = "display", description = "Name of the device" }
+
+[notification]
+sound = { type = "number", default = "/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga", description = "Sound to play when notification is received" }
+
+[backgound]
+theme = { type = "enum", default = 'Primary', options = ['Primary', 'Secondary', 'Lockscreen'], description = "Background value" }
+wallpaper = { type = 'string', default = "/usr/share/backgrounds/mx-wallpaper.jpg", description = "Wallpaper to use" }
+
+[settings.display]
+brigtness = { type = "number", default = "128", description = "Brightness of the display" }
+auto_brightness = { type = "bool", default = "false", description = "Auto brightness of the display" }
+timeout = { type = "number", default = 1000, min = 0, max = 10000, description = "Timeout for auto brightness" }
+
+[settings.security]
+lock-timeout = { type = "number", default = 1000, min = 0, max = 10000, description = "Timeout for lock screen" }
+
+[settings.launcher]
+enable_sounds = { type = "bool", default = true, description = "Enable sounds in launcher" }
+
+[settings.haptics]
+enable_vibration = { type = "bool", default = true, description = "Enable vibration in launcher" }
+vibration_level = { type = "enum", default = "HIGH", options = ['LOW', 'MEDIUM', 'HIGH'], description = "Vibration level in launcher" }

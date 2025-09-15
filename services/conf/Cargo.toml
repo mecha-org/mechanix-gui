@@ -48,4 +48,9 @@ assets = [
         "usr/bin/",
         "755",
     ],
+    [
+        "../conf/schemas/default_profile.toml",
+        "etc/mxconf/profile/default_profile.toml",
+        "644",
+    ],
 ]

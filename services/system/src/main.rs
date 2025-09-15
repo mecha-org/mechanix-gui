@@ -1,15 +1,14 @@
-mod display;
 mod error;
 mod interfaces;
 
-use crate::display::DisplayInterface;
 use crate::interfaces::haptic_feedback::{HapticFeedbackInterface, HapticFeedbackParams};
 use crate::interfaces::hardware_buttons::{hw_buttons_notification_stream, HwButtonInterface};
 use anyhow::{Context, Result};
+use interfaces::display::DisplayInterface;
 use log::{debug, error, info, warn};
 use tokio::task::JoinHandle;
-use zbus::{connection, ConnectionBuilder};
 use zbus::zvariant::Type;
+use zbus::{connection, ConnectionBuilder};
 
 pub const DISPLAY_CONNECTION_BUS_NAME: &str = "org.mechanix.services.Display";
 pub const HAPTIC_FEEDBACK_CONNECTION_BUS_NAME: &str = "org.mechanix.services.HapticFeedback";
