@@ -49,11 +49,6 @@ class FileHomePageState extends State<FileHomePage> {
       ),
       body: BlocBuilder<FilesBloc, FilesState>(
         builder: (context, state) {
-          final trailingIcon = const Icon(
-            size: 17,
-            Icons.arrow_forward_ios,
-          );
-
           void onTap(BuildContext context, String path, String title) {
             final filesBloc = BlocProvider.of<FilesBloc>(context);
 
@@ -103,7 +98,6 @@ class FileHomePageState extends State<FileHomePage> {
                           iconPath: Images.home,
                           iconColor: Colors.blueAccent,
                         ),
-                        trailing: trailingIcon,
                       ),
                       SectionListItems(
                         title: "Recents",
@@ -113,7 +107,6 @@ class FileHomePageState extends State<FileHomePage> {
                           iconHeight: 24,
                           iconPath: Images.recent,
                         ),
-                        trailing: trailingIcon,
                       ),
                       SectionListItems(
                         title: "Downloads",
@@ -124,7 +117,6 @@ class FileHomePageState extends State<FileHomePage> {
                           iconPath: Images.downloads,
                           iconColor: Colors.deepPurpleAccent,
                         ),
-                        trailing: trailingIcon,
                       ),
                       SectionListItems(
                         title: "Documents",
@@ -135,7 +127,6 @@ class FileHomePageState extends State<FileHomePage> {
                           iconPath: Images.homeDocuments,
                           iconColor: Colors.orangeAccent,
                         ),
-                        trailing: trailingIcon,
                       ),
                     ],
                   ),
@@ -150,7 +141,6 @@ class FileHomePageState extends State<FileHomePage> {
                           iconHeight: 24,
                           iconPath: Images.hardDrive,
                         ),
-                        trailing: trailingIcon,
                       ),
                     ],
                   ),
