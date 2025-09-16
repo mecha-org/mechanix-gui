@@ -3,7 +3,7 @@ use anyhow::Result;
 async fn main() -> Result<()> {
     // Example: query a config key from the D-Bus service.
     // Call your get_setting function.
-    match system_dbus::get_brightness().await {
+    match system_dbus::display_client::get_brightness().await {
         Ok(brightness) => {
             println!("Received brightness '{}':", brightness);
         }

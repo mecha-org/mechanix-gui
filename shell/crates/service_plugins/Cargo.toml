@@ -17,7 +17,10 @@ bluez = { path = "../../../dbus/freedesktop/bluez" }
 pulseaudio = { path = "../../../dbus/freedesktop/pulseaudio" }
 upower = { path = "../../../dbus/freedesktop/upower" }
 notification = {path = "../../../dbus/freedesktop/notification" }
+system_dbus = { path = "../../../dbus/mechanix/system" }
 pollster = "0.4.0"
 tokio.workspace = true
 zbus = "5.9.0"
 futures-util = "0.3.31"
+
+
