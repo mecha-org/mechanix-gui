@@ -1,6 +1,7 @@
 use bevy::{ prelude::*, window::{ CompositeAlphaMode, WindowResolution } };
 use bevy_wayland::prelude::*;
-use crate::components::cards::{ NotificationSurfaceEntity, NotificationSurface,ClearAllButton };
+use crate::components::surface::{ NotificationSurfaceEntity, NotificationSurface};
+use crate::components::buttons::ClearAllButton;
 use crate::ui::ui;
 use bevy_core_widgets::CoreScrollArea;
 

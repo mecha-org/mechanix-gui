@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::ExitCondition, winit::WinitPlugin};
 use bevy_wayland::prelude::*;
-use notifications_drawer::components::cards::NotificationDrawerPlugin;
+use notifications_drawer::NotificationDrawerPlugin;
 use service_plugins::notification::{ NotificationPlugin };
 
 fn main() {
