@@ -27,7 +27,7 @@ impl Component for Wireless {
             .push(node!(
                 Image::new(format!("sm{:?}", wireless_status.to_string())),
                 lay![
-                    size: [28, 28],
+                    size: [31.5, 31.5],
                 ],
             )),
         )

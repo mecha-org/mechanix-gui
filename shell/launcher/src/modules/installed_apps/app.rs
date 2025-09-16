@@ -133,11 +133,11 @@ impl Component for App {
         let mut icon_box = node!(
             Div::new().border(Color::rgb(43., 43., 43.), 1.5, (0., 0., 0., 0.)),
             lay![
-                 size: [88, 88],
+                 size: [102, 88],
                  axis_alignment: Alignment::Center,
                  cross_alignment: Alignment::Center,
                  margin: [0, 0, 14, 0],
-                 padding: [7]
+                 padding: [20]
             ]
         );
 

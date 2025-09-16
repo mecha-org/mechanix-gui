@@ -19,10 +19,11 @@ impl Component for Uptime {
             node!(Div::new(), lay![direction: Direction::Column])
                 .push(node!(Text::new(txt!("UPTIME"))
                     .with_class("text-white font-space-mono font-bold")
-                    .style("size", 15.0)))
+                    .style("size", 19.0)))
                 .push(node!(
                     Text::new(txt!(self.time.clone()))
-                        .with_class("font-space-mono font-normal text-2xl")
+                        .with_class("font-space-mono font-normal")
+                        .style("size", 27.0)
                         .style("color", Color::rgb(201., 201., 201.)),
                     lay![size_pct: [100]]
                 )),

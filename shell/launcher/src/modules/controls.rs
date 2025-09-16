@@ -20,26 +20,26 @@ impl Component for Controls {
         let mut controls_node = node!(
             Div::new(),
             lay![
-                size: [120, 120],
+                size: [135, 135],
                 axis_alignment: Alignment::Start,
                 direction: Direction::Row,
                 wrap: true,
             ],
         );
 
-        controls_node = controls_node.push(node!(Wireless {}, lay![size: [60, 60]]));
-        controls_node = controls_node.push(node!(Battery {}, lay![size: [60, 60]]));
+        controls_node = controls_node.push(node!(Wireless {}, lay![size: [67.5, 67.5]]));
+        controls_node = controls_node.push(node!(Battery {}, lay![size: [67.5, 67.5]]));
         controls_node = controls_node.push(node!(
             Bluetooth {
                 bluetooth_status: self.bluetooth_status
             },
-            lay![size: [60, 60]]
+            lay![size: [67.5, 67.5]]
         ));
 
         if self.is_lock_screen {
-            controls_node = controls_node.push(node!(Lock {}, lay![size: [60, 60]]));
+            controls_node = controls_node.push(node!(Lock {}, lay![size: [67.5, 67.5]]));
         } else {
-            controls_node = controls_node.push(node!(Settings {}, lay![size: [60, 60]]));
+            controls_node = controls_node.push(node!(Settings {}, lay![size: [67.5, 67.5]]));
         }
 
         Some(controls_node)

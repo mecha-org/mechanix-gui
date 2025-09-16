@@ -10,7 +10,7 @@ use std::hash::Hash;
 
 use crate::utils::fill_grid_with_true;
 
-const MEMORY_GRID_SIZE: (u8, u8) = (7, 10);
+const MEMORY_GRID_SIZE: (u8, u8) = (9, 12);
 
 #[derive(Debug)]
 struct MemoryState {

@@ -12,19 +12,22 @@ use crate::modules::name::component::MachineName;
 use crate::modules::networking::component::Networking;
 use crate::modules::pinned_app::PinnedApp;
 use crate::modules::uptime::component::Uptime;
+use crate::modules::weather::component::Weather;
 use crate::settings::LauncherSettings;
 use crate::shared::h_divider::HDivider;
 use crate::shared::v_divider::VDivider;
 use crate::types::{BatteryLevel, BluetoothStatus, WirelessStatus};
 use desktop_entries::DesktopEntry;
 use mctk_core::layout::{Alignment, Direction};
+use mctk_core::style::Styled;
+use mctk_core::widgets::Text;
 use mctk_core::{
     component::Component,
     lay, node, rect, size, size_pct,
     widgets::{Div, SlideBar, SlideBarType},
     Node,
 };
-use mctk_core::{msg, Color};
+use mctk_core::{msg, txt, Color};
 
 #[derive(Debug, Default)]
 pub struct HomeUi {
@@ -60,7 +63,7 @@ impl Component for HomeUi {
             lay![
                 size_pct: [100],
                 // size: [480, 434]
-                padding: [20., 22., 20., 22.],
+                padding: [22.5, 22.5, 22.5, 22.5],
                 cross_alignment: Alignment::Stretch,
                 direction: Direction::Column
             ]
@@ -69,7 +72,7 @@ impl Component for HomeUi {
         let mut row_1 = node!(
             Div::new(),
             lay![
-                size: [Auto, 123],
+                size: [Auto, 145],
                 direction: Direction::Row,
                 cross_alignment: Alignment::Center
             ]
@@ -100,7 +103,7 @@ impl Component for HomeUi {
         let mut row_2 = node!(
             Div::new(),
             lay![
-                size: [Auto, 56],
+                size: [Auto, 65],
                 direction: Direction::Row,
                 cross_alignment: Alignment::Center
             ]
@@ -121,13 +124,39 @@ impl Component for HomeUi {
             ]
         ));
 
+        let mut row_5 = node!(
+            Div::new(),
+            lay![
+                size: [Auto, 54],
+                direction: Direction::Row,
+                cross_alignment: Alignment::Center
+            ]
+        );
+
+        row_5 = row_5.push(node!(
+            Text::new(txt!("Weather"))
+                .with_class("text-white font-space-mono font-bold")
+                .style("size", 20.0,),
+            lay![
+                size_pct: [50, Auto]
+            ]
+        ));
+
+        row_5 = row_5.push(node!(
+            Weather {},
+            lay![
+                size_pct: [50, Auto],
+                axis_alignment: Alignment::End,
+            ]
+        ));
+
         let mut row_3 = node!(
             Div::new(),
             lay![
-                size: [Auto, 142],
+                size: [Auto, 181],
                 direction: Direction::Row,
                 cross_alignment: Alignment::Stretch,
-                axis_alignment: Alignment::Center,
+                axis_alignment: Alignment::Stretch,
                 // padding: [14., 0., 10., 0.]
             ]
         );
@@ -136,9 +165,9 @@ impl Component for HomeUi {
             node!(
                 Div::new(),
                 lay![
-                    size: [145, Auto],
+                    size: [154.5, Auto],
                     direction: Direction::Column,
-                    padding: [14., 0., 10., 0.]
+                    padding: [15., 0., 16., 0.]
                 ]
             )
             .push(node!(
@@ -146,7 +175,7 @@ impl Component for HomeUi {
                     time: uptime.clone()
                 },
                 lay![
-                    size: [Auto, 58]
+                    size: [Auto, 68]
                 ],
             ))
             .push(node!(
@@ -159,7 +188,7 @@ impl Component for HomeUi {
                 },
                 lay![
                     margin: [8., 0., 0., 0.],
-                    size: [Auto, 58]
+                    size: [Auto, 68]
                 ],
             )),
         );
@@ -168,7 +197,7 @@ impl Component for HomeUi {
             node!(
                 Div::new(),
                 lay![
-                    size: [145, Auto],
+                    size: [154.5, Auto],
                     direction: Direction::Column,
                     padding: [14., 12., 10., 12.]
                 ]
@@ -180,7 +209,7 @@ impl Component for HomeUi {
             node!(
                 Div::new(),
                 lay![
-                    size: [145, Auto],
+                    size: [154.5, Auto],
                     direction: Direction::Column,
                     padding: [14., 12., 10., 12.]
                 ]
@@ -191,7 +220,7 @@ impl Component for HomeUi {
         let mut row_4 = node!(
             Div::new(),
             lay![
-                size: [Auto, 114],
+                size: [Auto, 123],
                 direction: Direction::Row,
                 cross_alignment: Alignment::Center
             ]
@@ -259,6 +288,8 @@ impl Component for HomeUi {
 
         if !is_lock_screen {
             start_node = start_node.push(row_2);
+            start_node = start_node.push(node!(HDivider { size: 1. }));
+            start_node = start_node.push(row_5);
             start_node = start_node.push(node!(HDivider { size: 1. }));
             start_node = start_node.push(row_3);
         } else {

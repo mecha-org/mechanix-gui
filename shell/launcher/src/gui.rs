@@ -32,7 +32,8 @@ use std::collections::{HashSet, VecDeque};
 use std::hash::{Hash, Hasher};
 use upower::BatteryStatus;
 
-pub const BEZIER_POINTS: [f64; 4] = [0.0, 0.0, 480.0, 480.0];
+pub const BEZIER_POINTS: [f64; 4] = [0.0, 0.0, 540.0, 620.0];
+pub const WINDOW_SIZE: [f64; 2] = [540.0, 620.0];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Screens {
@@ -277,7 +278,7 @@ impl Launcher {
                     }
 
                     swipe.dx = -dx as i32;
-                    swipe.dy = (480. + dy) as i32;
+                    swipe.dy = (WINDOW_SIZE[1] as f32 + dy) as i32;
                 }
                 SwipeDirection::Down => {
                     if dy < 0. {
@@ -318,12 +319,12 @@ impl Launcher {
                 let translations = match swipe.direction {
                     SwipeDirection::Up => {
                         let inc = 1.0 / 12.0;
-                        let t = (480 - dy) as f64 / 480.0 + inc;
+                        let t = (WINDOW_SIZE[1] as i32 - dy) as f64 / WINDOW_SIZE[1] + inc;
                         let trans = get_translations(BEZIER_POINTS, t, inc);
                         if trans.len() > 0 {
                             trans
                         } else {
-                            vec![480.]
+                            vec![WINDOW_SIZE[1]]
                         }
 
                         // let mut counter = translate_y.len() - 1;
@@ -336,12 +337,12 @@ impl Launcher {
                     }
                     SwipeDirection::Down => {
                         let inc = 1.0 / 12.0;
-                        let t = dy as f64 / 480.0 + inc;
+                        let t = dy as f64 / WINDOW_SIZE[1] + inc;
                         let trans = get_translations(BEZIER_POINTS, t, inc);
                         if trans.len() > 0 {
                             trans
                         } else {
-                            vec![480.]
+                            vec![WINDOW_SIZE[1]]
                         }
 
                         // let mut counter = 0;
@@ -377,10 +378,10 @@ impl Launcher {
         let top_area = aabb.set_scale(aabb.width(), 36.);
         let left_area = aabb.set_scale(20., aabb.height());
         let right_area = aabb
-            .set_top_left(460., aabb.pos.y)
+            .set_top_left(600., aabb.pos.y)
             .set_scale(20., aabb.height());
         let bottom_area = aabb
-            .set_top_left(aabb.pos.x, 460.)
+            .set_top_left(aabb.pos.x, 600.)
             .set_scale(aabb.width(), 20.);
 
         if !(top_area.is_under(pos)
@@ -421,7 +422,7 @@ impl Launcher {
             });
         } else if bottom_area.is_under(pos) {
             swipe = Some(Swipe {
-                dy: 480,
+                dy: WINDOW_SIZE[1] as i32,
                 max_dy: aabb.height() as i32,
                 min_dy: 0,
                 direction: SwipeDirection::Up,
@@ -515,7 +516,7 @@ impl Component for Launcher {
                         // }
                         // return;
                     }
-                    swipe.dy = (480 - translations[current_translation] as i32)
+                    swipe.dy = (WINDOW_SIZE[1] as i32 - translations[current_translation] as i32)
                         .max(min_dy)
                         .min(max_dy);
                     // swipe.dy = (dy - 8).max(min_dy).min(max_dy);
@@ -591,10 +592,10 @@ impl Component for Launcher {
         let installed_apps = DesktopEntriesModel::get().entries.get().to_vec();
         let mut pinned_apps = vec![];
         for app_id_or_name in settings.modules.pinned_apps.clone() {
-            if let Some(app) = installed_apps
-                .iter()
-                .find(|app| app.app_id.to_lowercase() == app_id_or_name.to_lowercase() || app.name.to_lowercase() == app_id_or_name.to_lowercase())
-            {
+            if let Some(app) = installed_apps.iter().find(|app| {
+                app.app_id.to_lowercase() == app_id_or_name.to_lowercase()
+                    || app.name.to_lowercase() == app_id_or_name.to_lowercase()
+            }) {
                 pinned_apps.push(app.clone());
             }
         }
@@ -647,7 +648,7 @@ impl Component for Launcher {
         }
 
         let mut down_swipe = 0;
-        let mut up_swipe = 480;
+        let mut up_swipe = WINDOW_SIZE[1] as i32;
         if let Some(swipe) = swipe.clone() {
             if (swipe.direction == SwipeDirection::Down && !swipe.is_closer)
                 || (swipe.direction == SwipeDirection::Up && swipe.is_closer)
@@ -687,7 +688,7 @@ impl Component for Launcher {
             ));
         }
 
-        if (up_swipe.abs()) < 460 {
+        if (up_swipe.abs()) < 600 {
             // println!("up_swipe {:?} ", up_swipe);
             start_node = start_node.push(node!(
                 AppDrawer::new(installed_apps, up_swipe, app_opening),
@@ -841,9 +842,9 @@ impl Component for Launcher {
                             let inc = 1.0 / 12.0;
                             let translations = get_translations(BEZIER_POINTS, 0., inc);
                             let swipe = Swipe {
-                                dy: 480 as i32,
+                                dy: WINDOW_SIZE[1] as i32,
                                 min_dy: 0,
-                                max_dy: 480,
+                                max_dy: WINDOW_SIZE[1] as i32,
                                 threshold_dy: 0,
                                 direction: SwipeDirection::Up,
                                 state: SwipeState::CompletingSwipe,
@@ -923,12 +924,12 @@ impl Component for Launcher {
                         let translations = match swipe.direction {
                             SwipeDirection::Up => {
                                 let inc = 1.0 / 12.0;
-                                let t = (480 - dy) as f64 / 480.0 + inc;
+                                let t = (WINDOW_SIZE[1] as i32 - dy) as f64 / WINDOW_SIZE[1] + inc;
                                 let trans = get_translations(BEZIER_POINTS, t, inc);
                                 if trans.len() > 0 {
                                     trans
                                 } else {
-                                    vec![480.]
+                                    vec![WINDOW_SIZE[1]]
                                 }
                                 // let mut counter = translate_y.len() - 1;
                                 // for (i, &value) in translate_y.iter().rev().enumerate() {
@@ -940,12 +941,12 @@ impl Component for Launcher {
                             }
                             SwipeDirection::Down => {
                                 let inc = 1.0 / 12.0;
-                                let t = dy as f64 / 480.0 + inc;
+                                let t = dy as f64 / WINDOW_SIZE[1] + inc;
                                 let trans = get_translations(BEZIER_POINTS, t, inc);
                                 if trans.len() > 0 {
                                     trans
                                 } else {
-                                    vec![480.]
+                                    vec![WINDOW_SIZE[1]]
                                 }
                                 // let mut counter = 0;
                                 // for (i, &value) in translate_y.iter().enumerate() {
