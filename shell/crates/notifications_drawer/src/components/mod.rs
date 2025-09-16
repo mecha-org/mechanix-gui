@@ -3,7 +3,7 @@ use bevy::{
     ecs::{relationship::RelatedSpawner, spawn::SpawnWith},
     prelude::*,
 };
-
+pub mod cards;
 #[derive(Component)]
 pub struct NotificationButton {
     pub id: u32,

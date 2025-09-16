@@ -1,6 +1,7 @@
 use bevy::{prelude::*, window::ExitCondition, winit::WinitPlugin};
 use bevy_wayland::prelude::*;
-use notifications_drawer::NotificationsDrawerPlugin;
+use notifications_drawer::components::cards::NotificationDrawerPlugin;
+use service_plugins::notification::{ NotificationPlugin };
 
 fn main() {
     App::new()
@@ -13,8 +14,9 @@ fn main() {
                     exit_condition: ExitCondition::DontExit,
                     ..Default::default()
                 }),
+            NotificationPlugin,
+            NotificationDrawerPlugin,
             WaylandPlugin,
-            NotificationsDrawerPlugin,
         ))
         .run();
 }

@@ -13,3 +13,6 @@ keywords.workspace = true
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
 bevy_core_widgets = { git = "https://github.com/akshayr-mecha/bevy_core_widgets.git",  rev = "24966adefc4494815b9d71bc2bf5814e715f6b43" }
+bevy_smithay =  { git = "https://github.com/namana-mecha/bevy_smithay.git", rev = "25680f41d9378464bac315d7f9b262008555154a" }
+service_plugins = {path ="../service_plugins"}
+notification = {path ="../../../dbus/freedesktop/notification"}
