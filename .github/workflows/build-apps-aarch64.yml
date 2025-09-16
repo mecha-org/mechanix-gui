@@ -119,7 +119,7 @@ jobs:
 
           # Copy private libraries
           if [ -d "./build/${{ matrix.binary }}/lib" ]; then
-            cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/lib/$pkg_name/
+            cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/share/mechanix/$pkg_name/lib/
           fi
 
           # Build .deb into ./build/deb/
