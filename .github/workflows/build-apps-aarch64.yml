@@ -99,6 +99,7 @@ jobs:
           cp -r "$app_folder/debian/"* package/DEBIAN/
           mkdir -p package/usr/bin
           mkdir -p package/usr/share/mechanix/$pkg_name/data
+          mkdir -p package/usr/share/mechanix/$pkg_name/lib
           mkdir -p package/usr/lib/$pkg_name
 
           # Patch Architecture field
