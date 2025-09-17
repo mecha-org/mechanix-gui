@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use bevy::log::{ error, info };
-use crate::proxy::reciever::ExtensionServiceReceiver;
-use crate::events::ExtensionServiceEvent;
-use crate::device::{ Device, types::DeviceType };
+use extensions::proxy::reciever::ExtensionServiceReceiver;
+use extensions::events::ExtensionServiceEvent;
+use extensions::device::{ Device, types::DeviceType };
 use bevy::tasks::{ AsyncComputeTaskPool, IoTaskPool };
 use std::sync::mpsc::{ channel, Receiver, Sender };
 use std::sync::{ Arc, Mutex };
