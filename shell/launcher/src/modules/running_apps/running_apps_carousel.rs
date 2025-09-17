@@ -6,12 +6,12 @@ use std::{
 use mctk_core::{
     component::{Component, ComponentHasher},
     lay,
-    layout::ScrollPosition,
+    layout::{Direction, ScrollPosition},
     msg, node,
     renderables::{rect::InstanceBuilder, Rect, Renderable},
-    size_pct,
+    size, size_pct,
     widgets::{Div, TransitionPositions},
-    Color, Point, Scale, AABB,
+    Color, Node, Point, Scale, AABB,
 };
 use mctk_macros::{component, state_component_impl};
 
@@ -136,6 +136,10 @@ impl Component for Carousel {
         true
     }
 
+    fn container(&self) -> Option<Vec<usize>> {
+        Some(vec![0, 0])
+    }
+
     fn spacing(&self) -> Scale {
         Scale::new(0., 0.)
     }
@@ -168,7 +172,7 @@ impl Component for Carousel {
                 // let x = (children_len - 2) as f32 * 180. + (children_len - 2 - 1) as f32 * 180.;
                 // + self.spacing().width / 2.;
                 // println!("total_width is {:?}", total_width);
-                self.state_mut().scroll_position = Point::new(total_width - 480., 0.0);
+                self.state_mut().scroll_position = Point::new(total_width - 520., 0.0);
                 // }
                 self.state_mut().init_scroll_position_set = true;
             }
@@ -273,33 +277,36 @@ impl Component for Carousel {
     }
 
     fn on_mouse_down(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::MouseDown>) {
+        event.stop_bubbling();
         self.handle_input_down(event.current_physical_aabb(), event.current_inner_scale())
     }
 
     fn on_touch_down(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDown>) {
+        event.stop_bubbling();
         self.handle_input_down(event.current_physical_aabb(), event.current_inner_scale())
     }
 
     fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
+        event.stop_bubbling();
         if self.state_ref().transition.is_some() {
             return;
         }
         self.handle_drag_start();
-        event.stop_bubbling();
     }
 
     fn on_touch_drag_start(
         &mut self,
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
     ) {
+        event.stop_bubbling();
         if self.state_ref().transition.is_some() {
             return;
         }
         self.handle_drag_start();
-        event.stop_bubbling();
     }
 
     fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
+        event.stop_bubbling();
         if self.state_ref().transition.is_some() {
             return;
         }
@@ -311,6 +318,7 @@ impl Component for Carousel {
     }
 
     fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
+        event.stop_bubbling();
         if self.state_ref().transition.is_some() {
             return;
         }
@@ -322,6 +330,7 @@ impl Component for Carousel {
     }
 
     fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
+        event.stop_bubbling();
         self.handle_drag_end(event.logical_delta());
     }
 
@@ -329,7 +338,23 @@ impl Component for Carousel {
         &mut self,
         event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
     ) {
+        event.stop_bubbling();
         self.handle_drag_end(event.logical_delta());
+    }
+
+    fn view(&self) -> Option<Node> {
+        let scroll_x = self.state_ref().scroll_position.x;
+
+        Some(
+            node!(
+                Div::new(),
+                lay![
+                    size: [Auto]
+                ]
+            )
+            .key((scroll_x * 1000.) as u64)
+            .push(node!(Div::new(),)),
+        )
     }
 
     // fn render(
