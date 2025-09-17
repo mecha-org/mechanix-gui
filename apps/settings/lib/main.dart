@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
+import 'package:mechanix_settings/src/features/about/data/about_repository.dart';
+import 'package:mechanix_settings/src/features/about/data/about_repository_impl.dart';
 import 'package:mechanix_settings/src/features/about/presentation/about.dart';
 import 'package:mechanix_settings/src/features/appearance/presentation/appearance.dart';
 import 'package:mechanix_settings/src/features/appearance/presentation/apply_wallpaper.dart';
@@ -25,7 +28,11 @@ import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.d
 import 'package:mechanix_settings/src/features/date_time/presentation/date_settings.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/date_time.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/time_settings.dart';
+import 'package:mechanix_settings/src/features/display/bloc/display_bloc.dart';
+import 'package:mechanix_settings/src/features/display/data/display_repository.dart';
+import 'package:mechanix_settings/src/features/display/data/display_repository_impl.dart';
 import 'package:mechanix_settings/src/features/display/presentation/display.dart';
+import 'package:mechanix_settings/src/features/display/presentation/lock_screen_timeout.dart';
 import 'package:mechanix_settings/src/features/display/presentation/settings.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
@@ -50,10 +57,13 @@ import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
 import 'package:mechanix_settings/src/features/sound/data/sound_repository.dart';
 import 'package:mechanix_settings/src/features/sound/data/sound_repository_impl.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/input_devices.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/notification_sound.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/output_devices.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/vibration_level.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
@@ -73,6 +83,12 @@ void main() async {
         RepositoryProvider<SoundRepository>(
           create: (_) => SoundRepositoryImpl(),
         ),
+        RepositoryProvider<DisplayRepository>(
+          create: (_) => DisplayRepositoryImpl(),
+        ),
+        RepositoryProvider<AboutRepository>(
+          create: (_) => AboutRepositoryImpl(),
+        ),
       ],
       child: MechanixSettingsApp(),
     ),
@@ -89,9 +105,14 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
         watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
 
     return MechanixTheme(
-      data: MechanixThemeData(
-        mechanixVariant: mechanixVariant,
-      ),
+      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
+        MechanixSwitchThemeData(
+          style: MechanixSwitchStyle(
+            inactiveThumbColor: Color(0xFF989898),
+            inactiveTrackColor: Color(0xFF252525),
+          ),
+        )
+      ]),
       builder: (context, mechanix, child) => MainApp(
         darkTheme: mechanix.darkTheme,
         lightTheme: mechanix.lightTheme,
@@ -115,173 +136,119 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SettingMenu(),
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: themeMode,
-      routes: {
-        AppRoutes.wireless: (context) => BlocProvider(
-              create: (_) => WirelessSettingsBloc(
-                  wifiRepository: context.read<WifiRepository>())
-                ..add(InitializeWifi()),
-              child: WirelessSettings(),
-            ),
-        AppRoutes.wirelessNetworkDetails: (context) => BlocProvider(
-              create: (_) => WirelessSettingsBloc(
-                wifiRepository: context.read<WifiRepository>(),
-              ),
-              child: NetworkDetails(),
-            ),
-        AppRoutes.ipSettings: (context) => IpSettings(),
-        //  BlocProvider(
-        //       create: (_) => WirelessSettingsBloc(
-        //         wifiRepository: context.read<WifiRepository>(),
-        //       ),
-        //       child: IpSettings(),
-        //     ),
-        AppRoutes.ethernetDetails: (context) => EthernetSettings(),
-        //  BlocProvider(
-        //       create: (_) => WirelessSettingsBloc(
-        //         wifiRepository: context.read<WifiRepository>(),
-        //       ),
-        //       child: EthernetSettings(),
-        //     ),
-        AppRoutes.dnsDetails: (context) => DnsSettings(),
-        //  BlocProvider(
-        //       create: (_) => WirelessSettingsBloc(
-        //         wifiRepository: context.read<WifiRepository>(),
-        //       ),
-        //       child: DnsSettings(),
-        //     ),
-        AppRoutes.wirelessNetworkSettings: (context) => BlocProvider(
-              create: (_) => WirelessSettingsBloc(
-                  wifiRepository: context.read<WifiRepository>())
-                ..add(LoadSavedNetworks()),
-              child: NetworkSettings(),
-            ),
-        AppRoutes.wirelessConnectSecureNetwork: (context) => BlocProvider(
-              create: (_) => ConnectNetworkBloc(
-                wifiRepository: context.read<WifiRepository>(),
-              ),
-              child: ConnectSecureNetwork(),
-            ),
-        AppRoutes.wirelessConnectUnknownNetwork: (context) => BlocProvider(
-              create: (_) => ConnectNetworkBloc(
-                wifiRepository: context.read<WifiRepository>(),
-              ),
-              child: AddNetwork(),
-            ),
-        AppRoutes.bluetooth: (context) => BlocProvider(
-              create: (_) => BluetoothBloc(
-                bluetoothRepository: context.read<BluetoothRepository>(),
-              )..add(InitializeBluetooth()),
-              child: Bluetooth(),
-            ),
-        AppRoutes.bluetoothDeviceInfo: (context) => BlocProvider(
-              create: (_) => BluetoothBloc(
-                bluetoothRepository: context.read<BluetoothRepository>(),
-              ),
-              child: BluetoothDeviceInfo(),
-            ),
-        AppRoutes.adapterSettings: (context) => BlocProvider(
-              create: (_) => BluetoothBloc(
-                bluetoothRepository: context.read<BluetoothRepository>(),
-              )..add(GetAdapterAlias()),
-              child: AdapterSettings(),
-            ),
-        AppRoutes.adapterRename: (context) => BlocProvider(
-              create: (_) => BluetoothBloc(
-                bluetoothRepository: context.read<BluetoothRepository>(),
-              )..add(GetAdapterAlias()),
-              child: RenameAdapter(),
-            ),
-        AppRoutes.battery: (context) => BlocProvider(
-              create: (_) => BatteryBloc(
-                  batteryRepository: context.read<BatteryRepository>())
-                ..add(BatteryInfoRequested()),
-              child: Battery(),
-            ),
-        AppRoutes.batteryPerformance: (context) => BlocProvider(
-              create: (_) => BatteryBloc(
-                  batteryRepository: context.read<BatteryRepository>())
-                ..add(BatteryInfoRequested()),
-              child: BatteryPerformance(),
-            ),
-        AppRoutes.display: (context) => Display(),
-        AppRoutes.appearance: (context) => Appearance(),
-        AppRoutes.applyWallpaper: (context) => ApplyWallpaper(),
-        AppRoutes.displayScreenOffTime: (context) => ScreenOffTimeSettings(),
-        AppRoutes.sound: (context) => BlocProvider(
-              create: (_) =>
-                  SoundBloc(soundRepository: context.read<SoundRepository>())
-                    ..add(InitializeSound()),
-              child: Sound(),
-            ),
-        AppRoutes.soundOutputDevices: (context) => BlocProvider(
-              create: (_) =>
-                  SoundBloc(soundRepository: context.read<SoundRepository>())
-                    ..add(
-                        InitializeSound()) // TODO: InitializeSound should be called only once, not on every route change
-                    ..add(GetOutputDeviceList()),
-              child: OutputDevices(),
-            ),
-        AppRoutes.soundInputDevices: (context) => BlocProvider(
-              create: (_) =>
-                  SoundBloc(soundRepository: context.read<SoundRepository>())
-                    ..add(
-                        InitializeSound()) // TODO: InitializeSound should be called only once, not on every route change
-                    ..add(GetInputDeviceList()),
-              child: InputDevices(),
-            ),
-        AppRoutes.about: (context) => About(),
-        AppRoutes.dateTime: (context) => BlocProvider(
-              create: (_) => DateTimeBloc()..add(GetDateTimeData()),
-              child: DateTimeSettings(),
-            ),
-        AppRoutes.timeSettings: (context) => BlocProvider(
-              create: (_) => DateTimeBloc()..add(GetDateTimeData()),
-              child: TimeSettings(),
-            ),
-        AppRoutes.dateSettings: (context) => BlocProvider(
-              create: (_) => DateTimeBloc()..add(GetDateTimeData()),
-              child: DateSettings(),
-            ),
-        AppRoutes.configureDNS: (context) => BlocProvider(
-              create: (_) => WirelessSettingsBloc(
-                  wifiRepository: context.read<WifiRepository>())
-                ..add(LoadSavedNetworks()),
-              child: ConfigureDnsWidget(),
-            ),
-        AppRoutes.configureProxy: (context) => BlocProvider(
-              create: (_) => WirelessSettingsBloc(
-                  wifiRepository: context.read<WifiRepository>())
-                ..add(LoadSavedNetworks()),
-              child: ConfigureProxyWidget(),
-            ),
+    return MultiBlocProvider(
+      providers: [
+        // Sound Bloc
+        BlocProvider(
+          create: (context) =>
+              SoundBloc(soundRepository: context.read<SoundRepository>())
+                ..add(InitializeSound())
+                ..add(GetOutputDeviceList())
+                ..add(GetInputDeviceList()),
+        ),
 
-        AppRoutes.ipv4Address: (context) => BlocProvider(
-              create: (_) => WirelessSettingsBloc(
-                  wifiRepository: context.read<WifiRepository>())
-                ..add(LoadSavedNetworks()),
-              child: Ipv4AddressWidget(),
-            ),
+        // Wireless Bloc
+        BlocProvider(
+          create: (context) => WirelessSettingsBloc(
+              wifiRepository: context.read<WifiRepository>())
+            ..add(InitializeWifi()),
+        ),
 
-        AppRoutes.security: (context) => BlocProvider(
-              create: (_) => WirelessSettingsBloc(
-                  wifiRepository: context.read<WifiRepository>())
-                ..add(LoadSavedNetworks()),
-              child: WifiSecurityWidget(),
-            ),
-        AppRoutes.bluetoothDiscoverable: (context) => BlocProvider(
-              create: (_) => BluetoothBloc(
-                bluetoothRepository: context.read<BluetoothRepository>(),
-              ),
-              child: BluetoothDeviceDiscoverable(),
-            ),
-        AppRoutes.bluetoothDeviceTypes: (context) => DeviceTypes()
-      },
+        // Bluetooth Bloc
+        BlocProvider(
+          create: (context) => BluetoothBloc(
+              bluetoothRepository: context.read<BluetoothRepository>())
+            ..add(InitializeBluetooth()),
+        ),
+
+        // Battery Bloc
+        BlocProvider(
+          create: (context) =>
+              BatteryBloc(batteryRepository: context.read<BatteryRepository>())
+                ..add(BatteryInfoRequested()),
+        ),
+
+        // Display Bloc
+        BlocProvider(
+          create: (context) =>
+              DisplayBloc(displayRepository: context.read<DisplayRepository>())
+                ..add(GetDefaultSettingsEvent()),
+        ),
+
+        // DateTime Bloc
+        BlocProvider(
+          create: (context) => DateTimeBloc()..add(GetDateTimeData()),
+        ),
+
+        // ConnectNetwork Bloc (note: this might need special handling)
+        BlocProvider(
+          create: (context) => ConnectNetworkBloc(
+              wifiRepository: context.read<WifiRepository>()),
+        ),
+
+        // About Bloc
+        BlocProvider(
+          create: (context) =>
+              AboutBloc(aboutRepository: context.read<AboutRepository>())
+                ..add(InitializeAbout()),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: SettingMenu(),
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: themeMode,
+        routes: {
+          // Sound Routes
+          AppRoutes.sound: (context) => Sound(),
+          AppRoutes.vibrationLevel: (context) => VibrationLevel(),
+          AppRoutes.soundOutputDevices: (context) => OutputDevices(),
+          AppRoutes.soundInputDevices: (context) => InputDevices(),
+          AppRoutes.notificationSound: (context) => NotificationSound(),
+
+          // Wireless Routes
+          AppRoutes.wireless: (context) => WirelessSettings(),
+          AppRoutes.wirelessNetworkDetails: (context) => NetworkDetails(),
+          AppRoutes.ipSettings: (context) => IpSettings(),
+          AppRoutes.ethernetDetails: (context) => EthernetSettings(),
+          AppRoutes.dnsDetails: (context) => DnsSettings(),
+          AppRoutes.wirelessNetworkSettings: (context) => NetworkSettings(),
+          AppRoutes.wirelessConnectSecureNetwork: (context) =>
+              ConnectSecureNetwork(),
+          AppRoutes.wirelessConnectUnknownNetwork: (context) => AddNetwork(),
+          AppRoutes.configureDNS: (context) => ConfigureDnsWidget(),
+          AppRoutes.configureProxy: (context) => ConfigureProxyWidget(),
+          AppRoutes.ipv4Address: (context) => Ipv4AddressWidget(),
+          AppRoutes.security: (context) => WifiSecurityWidget(),
+
+          // Bluetooth Routes
+          AppRoutes.bluetooth: (context) => Bluetooth(),
+          AppRoutes.bluetoothDeviceInfo: (context) => BluetoothDeviceInfo(),
+          AppRoutes.adapterSettings: (context) => AdapterSettings(),
+          AppRoutes.adapterRename: (context) => RenameAdapter(),
+          AppRoutes.bluetoothDiscoverable: (context) =>
+              BluetoothDeviceDiscoverable(),
+          AppRoutes.bluetoothDeviceTypes: (context) => DeviceTypes(),
+
+          // Battery Routes
+          AppRoutes.battery: (context) => Battery(),
+          AppRoutes.batteryPerformance: (context) => BatteryPerformance(),
+
+          // Display Routes
+          AppRoutes.display: (context) => DisplayPage(),
+          AppRoutes.appearance: (context) => Appearance(),
+          AppRoutes.applyWallpaper: (context) => ApplyWallpaper(),
+          AppRoutes.displayScreenOffTime: (context) => ScreenOffTimeSettings(),
+          AppRoutes.lockScreenTimeout: (context) => LockScreenTimeout(),
+
+          // Other Routes
+          AppRoutes.about: (context) => About(),
+          AppRoutes.dateTime: (context) => DateTimeSettings(),
+          AppRoutes.timeSettings: (context) => TimeSettings(),
+          AppRoutes.dateSettings: (context) => DateSettings(),
+        },
+      ),
     );
   }
 }

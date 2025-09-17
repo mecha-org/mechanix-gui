@@ -48,6 +48,7 @@ class BluetoothState extends Equatable {
         isPowered,
         loading,
         error,
+        selectedDevice,
         deviceState,
         adapterAlias,
         devices,

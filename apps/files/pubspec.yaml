@@ -55,6 +55,13 @@ dependencies:
   archive: ^3.6.1
   dbus: ^0.7.11
   intl: ^0.20.2
+  widgets:
+    git:
+      url: https://github.com/mecha-org/mechanix.dart.git
+      path: flutter/widgets
+      ref: main
+  watch_it: ^1.7.0
+
 
 dev_dependencies:
   flutter_test:

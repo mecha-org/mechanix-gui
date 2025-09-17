@@ -152,8 +152,13 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   }
 
   @override
-  Future<bool> discoveryEnabled() async {
-    return adapter.discovering;
+  Future<bool> isDeviceDiscoverable() async {
+    return adapter.discoverable;
+  }
+
+  @override
+  Future<void> setDiscoverable(bool value) async {
+    return adapter.setDiscoverable(value);
   }
 
   // @override

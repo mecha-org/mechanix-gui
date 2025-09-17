@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/styles/text.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
+import 'package:widgets/mechanix.dart';
 
 class RenameAdapter extends StatelessWidget {
   const RenameAdapter({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     final formKey = GlobalKey<FormState>();
 
     void backNavigation(BuildContext context) {
@@ -21,7 +19,7 @@ class RenameAdapter extends StatelessWidget {
     }
 
     void saveInfo(BuildContext context, String newName) async {
-        print("1. navigating back with new name: $newName");
+      print("1. navigating back with new name: $newName");
 
       if (formKey.currentState!.validate()) {
         context.read<BluetoothBloc>().add(RenameAdapterEvent(newName));
@@ -32,18 +30,11 @@ class RenameAdapter extends StatelessWidget {
 
     return BlocBuilder<BluetoothBloc, BluetoothState>(
       builder: (context, state) {
-
         final nameController = TextEditingController();
         nameController.text = state.adapterAlias ?? '';
-       
+
         return Scaffold(
-          appBar: CustomAppBar(
-            title: "Rename Device",
-            leftIcon: Image.asset(Images.back),
-            leftIconOnTap: () => backNavigation(context),
-            rightIcon2: const Icon(Icons.check),
-            rightIcon2OnTap: () => saveInfo(context, nameController.text),
-          ),
+          appBar: MechanixNavigationBar(title: "Rename Device"),
           body: ContainerWidget(
             child: Form(
               key: formKey,

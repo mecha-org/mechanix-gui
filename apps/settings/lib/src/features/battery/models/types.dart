@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'package:widgets/widgets/select/select_type.dart';
+
 enum BatteryStatus {
   Unknown,
   Charging,
@@ -10,27 +13,36 @@ enum BatteryStatus {
 
 class ModeOption {
   final String mode;
-  final String content;
+  final String? content;
+  final Color color;
 
   const ModeOption({
     required this.mode,
-    required this.content,
+    this.content,
+    required this.color,
   });
 }
 
-final Map<String, ModeOption> batteryModes = {
-  "low": ModeOption(
-    mode: "Low",
-    content:
-        "Low performance mode reduces battery dissipation and reduces  computation speed in Comet",
-  ),
-  "balanced": ModeOption(
-    mode: "Balanced",
-    content: "Balanced power and performance for everyday use.",
-  ),
-  "high": ModeOption(
-    mode: "High",
-    content:
-        "High performance mode dissipates battery quicker to enhance computations in Comet",
-  ),
-};
+// power-saver, balanced, performance,
+final List<SelectOption<String>> performanceOptions = [
+  SelectOption(value: 'power-saver', label: 'Low'),
+  SelectOption(value: 'balanced', label: 'Balanced'),
+  SelectOption(value: 'performance', label: 'High'),
+];
+
+ModeOption getModeDetails(String value) {
+  switch (value) {
+    case 'power-saver':
+      return ModeOption(mode: "Low", color: Color(0xFFF39C23));
+
+    case 'performance':
+      return ModeOption(
+          mode: "High",
+          content:
+              "High performance mode dissipates battery quicker to enhance computations in Comet",
+          color: Color(0xFF8220DE));
+
+    default:
+      return ModeOption(mode: "Balanced", color: Color(0xFF34C759));
+  }
+}

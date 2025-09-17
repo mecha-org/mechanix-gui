@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:logger/web.dart';
+import 'package:mechanix_settings/src/features/sound/data/dbus_sound_service.dart';
 import 'package:mechanix_settings/src/features/sound/data/sound_repository.dart';
 import 'package:pulseaudio/pulseaudio.dart';
 
@@ -8,6 +9,7 @@ class SoundRepositoryImpl implements SoundRepository {
   final client = PulseAudioClient();
   final logger = Logger();
   bool _connected = false;
+  final DBusSoundService _dBusSoundService = DBusSoundService();
 
   SoundRepositoryImpl() {
     _init();
@@ -41,7 +43,7 @@ class SoundRepositoryImpl implements SoundRepository {
   @override
   Future<Stream<PulseAudioSource>> streamSoundSourceEvents() async {
     await _ensureConnected();
-    return client.onSourceChanged; 
+    return client.onSourceChanged;
   }
 
   @override
@@ -120,7 +122,6 @@ class SoundRepositoryImpl implements SoundRepository {
     }
   }
 
-
   @override
   Future<void> setSourceMute(String sourceName, bool mute) async {
     await _ensureConnected();
@@ -140,7 +141,6 @@ class SoundRepositoryImpl implements SoundRepository {
       logger.e("Error setting audio source volume: $e");
     }
   }
-
 
   @override
   Future<void> setSourceVolume(String sourceName, double volume) async {
@@ -162,4 +162,28 @@ class SoundRepositoryImpl implements SoundRepository {
     }
   }
 
+  @override
+  getSoundSettings() async {
+    return await _dBusSoundService.getSoundSettings();
+  }
+
+  @override
+  setEnableSounds(bool enableSounds) async {
+    return await _dBusSoundService.setEnableSounds(enableSounds);
+  }
+
+  @override
+  setEnableVibration(bool enableVibration) async {
+    return await _dBusSoundService.setEnableVibration(enableVibration);
+  }
+
+  @override
+  setVibrationLevel(String vibrationLevel) async {
+    return await _dBusSoundService.setVibrationLevel(vibrationLevel);
+  }
+
+  @override
+  setNotificationSound(String notificationSound) async {
+    return await _dBusSoundService.setNotificationSound(notificationSound);
+  }
 }

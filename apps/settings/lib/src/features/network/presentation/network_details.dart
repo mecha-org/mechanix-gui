@@ -4,19 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_toggle.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/commons/styles/color.dart';
-import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
 class NetworkDetails extends StatefulWidget {
@@ -67,6 +65,11 @@ class _NetworkDetailsState extends State<NetworkDetails> {
     );
   }
 
+  void onForgetPressed(String ssid) {
+    context.read<WirelessSettingsBloc>().add(ForgetNetwork(ssid));
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final args =
@@ -80,36 +83,66 @@ class _NetworkDetailsState extends State<NetworkDetails> {
               wifiRepository: context.read<WifiRepository>(),
             ),
         child: Scaffold(
-          appBar: CustomAppBar(
+          appBar: MechanixNavigationBar(
               title: ssid,
-              leftIcon: Image.asset(Images.back),
-              leftIconOnTap: _backNavigation,
-              customChild: networkDetails.isActive
-                  ? TextButton.icon(
-                      onPressed: () => _showDeleteDialog(ssid),
-                      style: ButtonStyle(
-                        backgroundColor: const WidgetStatePropertyAll<Color>(
-                            Color(0xFF3B3B3B)),
-                        padding: const WidgetStatePropertyAll<EdgeInsets>(
-                            EdgeInsets.symmetric(horizontal: 8)),
-                        shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            side: const BorderSide(),
+              actionWidgets: networkDetails.isActive
+                  ? [
+                      IconButton(
+                        onPressed: () => onForgetPressed(ssid),
+                        style: ButtonStyle(
+                          iconColor: WidgetStateProperty.all(Colors.white),
+                          backgroundColor:
+                              WidgetStateProperty.all(Color(0xFFB71C1C)),
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                          ),
+                          minimumSize: WidgetStateProperty.all(Size(32, 32)),
+                          fixedSize: WidgetStateProperty.all(Size(32, 32)),
+                          padding: WidgetStateProperty.all(EdgeInsets.zero),
+                        ),
+                        icon: Center(
+                          child: CustomIcon(
+                            icon: Image.asset(Images.trash),
+                            width: 15,
+                            height: 17,
                           ),
                         ),
-                      ),
-                      icon: CustomIcon(
-                        icon: Image.asset(Images.delete),
-                        height: 20,
-                        width: 20,
-                      ),
-                      label: Text(
-                        "Forget Network",
-                        style: baseHeaderStyle,
-                      ),
-                    )
-                  : null),
+                      ).padRight(16)
+                    ]
+                  : !networkDetails.isActive
+                      ? [
+                          TextButton.icon(
+                            onPressed: () => {
+                              onNetworkTap(context, networkDetails.isSaved,
+                                  networkDetails)
+                            },
+                            style: ButtonStyle(
+                              backgroundColor: WidgetStatePropertyAll<Color>(
+                                  Color(0xFF044DDF)),
+                              shape: WidgetStatePropertyAll<
+                                  RoundedRectangleBorder>(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(),
+                                ),
+                              ),
+                            ),
+                            icon: IconWidget(
+                              iconColor: Colors.white,
+                              iconPath: Images.addRoundedSquare,
+                              iconHeight: 20,
+                              iconWidth: 20,
+                            ),
+                            label: Text(
+                              "Join Network",
+                              style: context.textTheme.labelMedium
+                                  ?.copyWith(color: Colors.white),
+                            ),
+                          ).padRight(16)
+                        ]
+                      : null),
           body: SingleChildScrollView(
             child: ContainerWidget(
               child: Column(
@@ -117,38 +150,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        ssid,
-                        style: baseHeaderStyle.copyWith(fontSize: 20),
-                      ),
-                      if (!networkDetails.isActive)
-                        TextButton.icon(
-                          onPressed: () => {
-                            onNetworkTap(
-                                context, networkDetails.isSaved, networkDetails)
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStatePropertyAll<Color>(
-                                Color(0xFF044DDF)),
-                            shape:
-                                WidgetStatePropertyAll<RoundedRectangleBorder>(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: BorderSide(),
-                              ),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.add,
-                            color: Color(0xFFF0F0F0),
-                          ),
-                          label: const Text(
-                            "Join Network",
-                            style: baseHeaderStyle,
-                          ),
-                        )
-                    ],
+                    children: [],
                   ),
 
                   // const SizedBox(height: 20),
@@ -171,37 +173,22 @@ class _NetworkDetailsState extends State<NetworkDetails> {
 
                   MechanixSectionList(
                     title: 'About The Network',
+                    theme: MechanixSectionListThemeData(
+                        widgetPadding: Spacing.only(top: 8, bottom: 40)),
                     sectionListItems: [
                       SectionListItems(
                         title: 'Private Wifi Address',
-                        trailing: Row(
-                          children: [
-                            Text(
-                              'Fixed',
-                              style: context.textTheme.labelLarge,
-                            ).padRight(8),
-                            IconWidget(
-                              iconWidth: 9,
-                              iconHeight: 18,
-                              iconPath: Images.rightIconArrow,
-                            ),
-                          ],
-                        ),
+                        trailing:
+                            CustomTrailingText(title: 'Fixed').padRight(8),
                       ),
                       SectionListItems(
+                          defaultTrailingIcon: false,
                           title: 'Private Wifi Address',
-                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
-                              style: context.textTheme.labelLarge)),
+                          trailing: CustomTrailingText(
+                            title: networkDetails.nmAccessPoint.hwAddress,
+                          )),
                     ],
                   ),
-
-                  if (networkDetails.isActive)
-                    MechanixSimpleList(listItems: [
-                      SimpleListItems(
-                          title: 'Limit IP address tracking',
-                          trailing:
-                              CustomToggle(value: true, onChanged: (v) {}))
-                    ]),
 
                   MechanixSectionList(
                     title: 'IPV4 Address',
@@ -214,36 +201,35 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                             AppRoutes.ipv4Address,
                           );
                         },
-                        trailing: Row(
-                          children: [
-                            Text('Automatic',
-                                    style: context.textTheme.labelLarge)
-                                .padRight(8),
-                            IconWidget(
-                              iconWidth: 9,
-                              iconHeight: 18,
-                              iconPath: Images.rightIconArrow,
-                            ),
-                          ],
-                        ),
+                        trailing:
+                            CustomTrailingText(title: 'Automatic').padRight(8),
                       ),
                       if (networkDetails.isActive)
                         SectionListItems(
+                          defaultTrailingIcon: false,
                           title: 'IP Address',
-                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
-                              style: context.textTheme.labelLarge),
+                          trailing: CustomTrailingText(
+                            title:
+                                '${networkDetails.ip4Config?.addressData.first['address']}',
+                          ),
                         ),
                       if (networkDetails.isActive)
                         SectionListItems(
+                          defaultTrailingIcon: false,
                           title: 'Subnet Mask',
-                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
-                              style: context.textTheme.labelLarge),
+                          trailing: CustomTrailingText(
+                            title:
+                                '${networkDetails.ip4Config?.addressData.first['prefix']}',
+                          ),
                         ),
                       if (networkDetails.isActive)
                         SectionListItems(
+                          defaultTrailingIcon: false,
                           title: 'Router',
-                          trailing: Text(networkDetails.nmAccessPoint.hwAddress,
-                              style: context.textTheme.labelLarge),
+                          trailing: CustomTrailingText(
+                            title:
+                                '${networkDetails.ip4Config?.routeData.first['dest']}',
+                          ),
                         ),
                     ],
                   ),
@@ -254,81 +240,21 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                       sectionListItems: [
                         SectionListItems(
                           title: 'IP Address',
-                          trailing: Row(
-                            children: [
-                              Text('2 Addresses',
-                                      style: context.textTheme.labelLarge)
-                                  .padRight(8),
-                              IconWidget(
-                                iconWidth: 9,
-                                iconHeight: 18,
-                                iconPath: Images.rightIconArrow,
-                              ),
-                            ],
-                          ),
+                          trailing: CustomTrailingText(
+                                  title:
+                                      '${networkDetails.ip6Config?.addressData.length} Addresses')
+                              .padRight(8),
                         ),
                         SectionListItems(
+                          defaultTrailingIcon: false,
                           title: 'Router',
-                          trailing: Text('Automatic',
-                                  style: context.textTheme.labelLarge)
+                          trailing: CustomTrailingText(
+                                  title:
+                                      '${networkDetails.ip6Config?.routeData.first['dest']}')
                               .padRight(8),
                         ),
                       ],
                     ),
-
-                  MechanixSectionList(
-                    title: 'DNS',
-                    sectionListItems: [
-                      SectionListItems(
-                        title: 'Configure DNS',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.configureDNS,
-                          );
-                        },
-                        trailing: Row(
-                          children: [
-                            Text('Automatic',
-                                    style: context.textTheme.labelLarge)
-                                .padRight(8),
-                            IconWidget(
-                              iconWidth: 9,
-                              iconHeight: 18,
-                              iconPath: Images.rightIconArrow,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  MechanixSectionList(
-                    title: 'HTTP Proxy',
-                    sectionListItems: [
-                      SectionListItems(
-                        title: 'Configure Proxy',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.configureProxy,
-                            // arguments: {'networkDetails': item},
-                          );
-                        },
-                        trailing: Row(
-                          children: [
-                            Text('OFF', style: context.textTheme.labelLarge)
-                                .padRight(8),
-                            IconWidget(
-                              iconWidth: 9,
-                              iconHeight: 18,
-                              iconPath: Images.rightIconArrow,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
 
                   const SizedBox(
                     height: 20,

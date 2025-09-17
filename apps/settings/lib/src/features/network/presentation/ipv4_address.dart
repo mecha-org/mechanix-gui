@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
@@ -18,43 +18,31 @@ class _Ipv4AddressWidgetState extends State<Ipv4AddressWidget> {
     Navigator.pop(context);
   }
 
-  String? selectedValue = '';
+  ConfigureDNS? selectedDNS;
 
-  void onChange(SelectOption value) {
+  void _handleDNSChange(SelectOption<ConfigureDNS> option) {
     setState(() {
-      selectedValue = value.value;
+      selectedDNS = option.value;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: MechanixNavigationBar(
         title: "Configure DNS",
-        leftIcon: Image.asset(Images.back),
-        leftIconOnTap: () => backNavigation(context),
       ),
       body: ContainerWidget(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MechanixSelect(
-                selectValue: selectedValue,
-                onChanged: onChange,
-                onTap: () {},
-                options: [
-                  SelectOption(
-                    label: 'Automatic (DHCP)',
-                    value: 'AUTOMATIC_DHCP',
-                  ),
-                  SelectOption(
-                    label: 'Static',
-                    value: 'STATIC',
-                  ),
-                ],
+              MechanixSelect<ConfigureDNS>(
+                options: dnsOptions,
+                value: selectedDNS,
+                onChanged: _handleDNSChange,
               ),
-              if (selectedValue == 'STATIC')
+              if (selectedDNS == 'STATIC')
                 MechanixSectionList(title: 'Static', sectionListItems: [
                   SectionListItems(
                       title: 'IP Settings', trailing: Text('255.255.255.25')),
