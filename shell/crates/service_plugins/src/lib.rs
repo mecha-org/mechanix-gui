@@ -7,6 +7,7 @@ pub mod desktop;
 pub mod network_manager;
 pub mod pulse_audio;
 pub mod upower;
+pub mod extension_detection;
 
 pub use crate::bluetooth::BluetoothPlugin;
 // pub use crate::mxsearch::AppSearchResult;

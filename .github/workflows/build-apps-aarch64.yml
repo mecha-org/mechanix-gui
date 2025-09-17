@@ -12,6 +12,17 @@ on:
       - ".github/workflows/build-apps-aarch64.yml"
       - "apps/**"
 
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUST_BACKTRACE: short
+  RUSTUP_MAX_RETRIES: 10
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+  MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
+  MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
+  MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
+  MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
+
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -38,11 +49,12 @@ jobs:
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
     continue-on-error: true
+
     steps:
       # Install dependencies
       - name: Install dependencies
         run: |
-          sudo  apt update
+          sudo apt update
           sudo apt install -y git tar unzip curl clang cmake pkg-config \
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
             libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
@@ -56,9 +68,8 @@ jobs:
         run: |
           if [ ! -d "/opt/flutter-elinux" ]; then
             git clone https://github.com/sony/flutter-elinux.git
-            mv flutter-elinux /opt/
+            sudo mv flutter-elinux /opt/
           fi
-          # Persist for future steps
           echo "PATH=$PATH:/opt/flutter-elinux/bin" >> $GITHUB_ENV
 
       # Build the app
@@ -68,18 +79,18 @@ jobs:
           flutter-elinux pub get
           flutter-elinux build elinux --release
 
-      # Prepare artifact
-      - name: Prepare artifact ${{ matrix.name }}
+      # Move entire bundle to ./build/<binary>
+      - name: Prepare build folder ${{ matrix.name }}
         run: |
-          mkdir -p build
-          # Copy only from bundle directory
-          cp "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/${{ matrix.binary }}" ./build/ || true
+          mkdir -p ./build/${{ matrix.binary }}
+          cp -r "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/"* "./build/${{ matrix.binary }}/"
 
+      # Package Debian
       - name: Package Debian ${{ matrix.name }}
         run: |
+          set -euo pipefail
           app_folder="apps/${{ matrix.folder }}"
 
-          # Extract package name & version from control file
           pkg_name=$(grep '^Package:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_arch=$(dpkg --print-architecture)
@@ -87,30 +98,85 @@ jobs:
           mkdir -p package/DEBIAN
           cp -r "$app_folder/debian/"* package/DEBIAN/
           mkdir -p package/usr/bin
-          mkdir -p package/usr/share/$pkg_name
+          mkdir -p package/usr/share/mechanix/$pkg_name/data
+          mkdir -p package/usr/share/mechanix/$pkg_name/lib
+          mkdir -p package/usr/lib/$pkg_name
 
-          # Patch control file with correct Architecture field
+          # Patch Architecture field
           if grep -q '^Architecture:' package/DEBIAN/control; then
             sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
           else
-            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control          
+            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control
           fi
 
           # Copy binary
-          cp ./build/${{ matrix.binary }} package/usr/bin/${{ matrix.binary }}
+          cp "./build/${{ matrix.binary }}/${{ matrix.binary }}" package/usr/bin/${{ matrix.binary }}
           chmod 755 package/usr/bin/${{ matrix.binary }}
 
-          # Build .deb package
-          dpkg-deb --build package "${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+          # Copy assets
+          if [ -d "./build/${{ matrix.binary }}/data" ]; then
+            cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/mechanix/$pkg_name/data/
+          fi
 
-      # list artifacts
+          # Copy private libraries
+          if [ -d "./build/${{ matrix.binary }}/lib" ]; then
+            cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/share/mechanix/$pkg_name/lib/
+          fi
+
+          # Build .deb into ./build/deb/
+          mkdir -p ./build/deb
+          dpkg-deb --build package "./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+
+      # List artifacts
       - name: List artifacts ${{ matrix.name }}
-        run: |
-          ls -la ./build/
+        run: ls -la ./build/
 
-      # Upload artifact
+      # Setup Pulp CLI
+      - name: Setup | Pulp CLI
+        run: |
+          pipx install --force pulp-cli[pygments]
+          pipx inject pulp-cli pulp-cli-deb
+
+      - name: Configure Pulp CLI
+        run: |
+          set -euo pipefail
+          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
+          pulp config create \
+            --username "$MECHA_PULP_USERNAME" \
+            --password "$MECHA_PULP_PASSWORD" \
+            --base-url "$PULP_API_URL" \
+            --overwrite
+
+      # Publish .deb to Pulp
+      - name: Publish to Pulp [${{ matrix.binary }}]
+        run: |
+          set -euo pipefail
+          pkg_name=$(grep '^Package:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
+          pkg_version=$(grep '^Version:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
+          pkg_arch=$(dpkg --print-architecture)
+          DEB_FILE="./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+
+          echo "[INFO] Uploading: $DEB_FILE"
+          pulp deb content upload \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --file="$DEB_FILE"
+
+          echo "[INFO] Creating publication..."
+          PUB_HREF=$(pulp deb publication create \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            | jq -r '.pulp_href')
+
+          echo "[INFO] Updating distribution..."
+          pulp deb distribution update \
+            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
+
+          echo "[INFO] ✅ Package ${{ matrix.binary }} published."
+
+      # Upload full artifacts
       - name: Upload artifact ${{ matrix.name }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.binary }}
-          path: ./build/${{ matrix.binary }}
+          path: ./build/${{ matrix.binary }}/

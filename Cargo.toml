@@ -5,10 +5,12 @@ members = [
     "services/conf",
     "services/system",
     "services/search/*",
+    "services/extensions",
     "shell/crates/*",
     "shared/hw-buttons",
     "dbus/freedesktop/*",
     "dbus/mechanix/mxconf",
+    "dbus/mechanix/extensions",
     "dbus/mechanix/system",
 ]
 

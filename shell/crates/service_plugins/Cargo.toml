@@ -18,3 +18,5 @@ pulseaudio = { path = "../../../dbus/freedesktop/pulseaudio" }
 upower = { path = "../../../dbus/freedesktop/upower" }
 pollster = "0.4.0"
 system_dbus = { path = "../../../dbus/mechanix/system" }
+extensions = { path = "../../../dbus/mechanix/extensions" }
+tokio = {workspace = true }

@@ -36,6 +36,8 @@ jobs:
             package: mxsearch
           - name: system dbus service
             package: mechanix-system-services
+          - name: extension service
+            package: mechanix-extension-service
 
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
