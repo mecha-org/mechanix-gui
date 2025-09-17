@@ -4,9 +4,7 @@ use zvariant::{ Type };
 use serde::{ Serialize, Deserialize };
 use types::{ DeviceType, ConnectionType };
 use evdevil::Evdev;
-use evdev::EventSummary::Key;
 use std::path::PathBuf;
-use std::{ collections::HashSet, fs };
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Device {
