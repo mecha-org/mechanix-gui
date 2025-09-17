@@ -466,7 +466,7 @@ impl Component for TouchPanel {
                     .build()
                     .unwrap();
 
-                let mut font_size = 22.;
+                let mut font_size = 26.;
                 let mut line_height = font_size;
                 if col.name == "show_numbers"
                     || col.name == "space"
@@ -492,8 +492,10 @@ impl Component for TouchPanel {
                     || col.name == "F10"
                     || col.name == "F11"
                     || col.name == "F12"
+                    || col.name == "show_symbols"
+                    || col.name == "show_numbers_from_symbols"
                 {
-                    font_size = 16.;
+                    font_size = 18.;
                 }
 
                 let font_weight = FontWeight::Normal;

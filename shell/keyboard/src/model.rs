@@ -376,30 +376,13 @@ impl KeyboardModel {
             purpose,
             KeyboardModel::get().visible.get().clone()
         );
-        match purpose {
-            ContentPurpose::Normal | ContentPurpose::Alpha | ContentPurpose::Name => {
-                width = 480.;
-                height = 244.;
-            }
 
-            ContentPurpose::Terminal
-            | ContentPurpose::Email
-            | ContentPurpose::Url
-            | ContentPurpose::Password
-            | ContentPurpose::Digits
-            | ContentPurpose::Number
-            | ContentPurpose::Phone
-            | ContentPurpose::Pin
-            | ContentPurpose::Date
-            | ContentPurpose::Time
-            | ContentPurpose::Datetime => {
-                width = 480.;
-                height = 210.;
-            }
-            _ => {
-                width = 480.;
-                height = 210.;
-            }
+        if purpose == ContentPurpose::Terminal {
+            width = 540.;
+            height = 240.;
+        } else {
+            width = 540.;
+            height = 276.;
         }
 
         if let (Some(window_tx), Some(layer_tx)) = (
@@ -410,8 +393,7 @@ impl KeyboardModel {
                 width: width as u32,
                 height: height as u32,
             });
-            layer_shell_opts.anchor =
-                wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT | wlr_layer::Anchor::BOTTOM;
+            layer_shell_opts.anchor = wlr_layer::Anchor::BOTTOM;
             layer_shell_opts.zone = height as i32;
             layer_shell_opts.layer = wlr_layer::Layer::Overlay;
             let _ = layer_tx
