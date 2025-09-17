@@ -5,6 +5,8 @@ use zvariant::{ Type };
 use anyhow::Result;
 use toml;
 use std::fs;
+use std::env;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, PartialEq)]
 pub enum DeviceType {
@@ -156,20 +158,20 @@ impl ConnectionType {
 }
 
 fn is_extension(id: String) -> Option<String> {
-    match fs::read_to_string("./config.toml") {
+    // Get config path from environment variable or use default
+    let config_path = env::var("MECHANIX_EXTENSION_CONFIG_PATH")
+        .unwrap_or_else(|_| {
+            let mut path = PathBuf::from(env::var("HOME").unwrap_or_else(|_| ".".to_string()));
+            path.push(".config/mechanix/extensions/config.toml");
+            path.to_string_lossy().to_string()
+        });
+
+    match fs::read_to_string(&config_path) {
         Ok(raw) => {
             match toml::from_str::<ExtensionConfig>(&raw) {
                 Ok(cfg) => {
                     for ext in cfg.extensions {
                         if ext.unique_id == id {
-                            // Parse the connection_key string to KeyCode
-                            // match KeyCode::from_str(&ext.connection_key) {
-                            //     Ok(key_code) => return Some(key_code),
-                            //     Err(e) => {
-                            //         println!("Error parsing connection key '{}': {}", ext.connection_key, e);
-                            //         return None;
-                            //     }
-                            // }
                             return Some(ext.connection_key);
                         }
                     }
@@ -182,7 +184,7 @@ fn is_extension(id: String) -> Option<String> {
             }
         }
         Err(e) => {
-            println!("Error reading file: {}", e);
+            println!("Error reading config file '{}': {}", config_path, e);
             None
         }
     }
