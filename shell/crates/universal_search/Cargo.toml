@@ -15,3 +15,10 @@ standalone = []
 [dependencies]
 bevy = { workspace = true }
 bevy_wayland = { workspace = true }
+bevy_asset_loader = { workspace = true }
+headless_widgets = { path = "../headless_widgets" }
+animation = { path = "../animation" }
+utils = { path = "../utils" }
+types = { path = "../types" }
+freedesktop-desktop-entry = "0.7.13"
+freedesktop-icons = "0.4.0"

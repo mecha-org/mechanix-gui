@@ -1,14 +1,15 @@
+use crate::icons::StatusBarIcons;
 use crate::{ClockUpdateTimer, components::*};
-use bevy_plugins::{
-    UPowerBatteryState,
-    NetworkManagerDeviceState,
-    bluetooth::{BluetoothDeviceConnectedStatus, BluetoothEnabledStatus},
+use chrono::{Datelike, Timelike};
+use service_plugins::network_manager::NetworkManagerDeviceStatus;
+use service_plugins::{
+    NetworkManagerDeviceState, UPowerBatteryState,
+    bluetooth::{
+        BluetoothAction, BluetoothActionEvent, BluetoothEnabledStatus, ConnectedDeviceCount,
+    },
     network_manager::{ActiveNetworkStrength, WirelessEnabled},
     upower::{DevicePercentage, DeviceState},
 };
-use chrono::{Datelike, Timelike};
-use bevy_plugins::network_manager::NetworkManagerDeviceStatus;
-use types::prelude::IconAssets;
 
 pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
     if keys.just_pressed(KeyCode::Escape) {
@@ -19,12 +20,11 @@ pub fn exit_on_esc(keys: Res<ButtonInput<KeyCode>>) {
 pub fn get_current_datetime() -> String {
     let now = chrono::Local::now();
     format!(
-        "{} {} {:02}:{:02}:{:02}",
+        "{} {} {:02}:{:02}",
         now.day(),
         now.format("%B"),
         now.hour(),
         now.minute(),
-        now.second()
     )
 }
 
@@ -42,7 +42,7 @@ pub fn update_clock(
 pub fn update_wireless_state(
     mut query: Query<&mut ImageNode, With<Wireless>>,
     wifi_state: Res<WirelessEnabled>,
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
 ) {
     for mut image_node in &mut query {
         info!("WirelessEnabled is updated :{:?}", wifi_state);
@@ -54,7 +54,7 @@ pub fn update_wireless_state(
     }
 }
 pub fn update_wireless_network_strength(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Wireless>>,
     active_network_strength: Res<ActiveNetworkStrength>,
 ) {
@@ -73,23 +73,30 @@ pub fn update_wireless_device_status(
     mut query: Query<&mut ImageNode, With<Wireless>>,
     wireless_enabled_status: Res<WirelessEnabled>,
     wireless_device_status: Res<NetworkManagerDeviceStatus>,
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
 ) {
     for mut image_node in &mut query {
-        info!("enabled status:{:?}, device status: {:?}", wireless_enabled_status, wireless_device_status);
-        if wireless_device_status.0 == NetworkManagerDeviceState::ConnectedLocal && wireless_enabled_status.0 {
+        info!(
+            "enabled status:{:?}, device status: {:?}",
+            wireless_enabled_status, wireless_device_status
+        );
+        if wireless_device_status.0 == NetworkManagerDeviceState::ConnectedLocal
+            && wireless_enabled_status.0
+        {
             image_node.image = icon_assets.wifi_on.clone();
         }
     }
 }
 pub fn update_bluetooth_on_powered(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Bluetooth>>,
     bluetooth_state: Res<BluetoothEnabledStatus>,
+    mut event_writer: EventWriter<BluetoothActionEvent>,
 ) {
     for mut icon in &mut query {
         if bluetooth_state.0 {
             icon.image = icon_assets.bluetooth_on.clone();
+            event_writer.write(BluetoothActionEvent(BluetoothAction::ConnectedDeviceCount));
         } else {
             icon.image = icon_assets.bluetooth_off.clone();
         }
@@ -97,12 +104,12 @@ pub fn update_bluetooth_on_powered(
 }
 
 pub fn update_bluetooth_on_connected(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Bluetooth>>,
-    connected_status: Res<BluetoothDeviceConnectedStatus>,
+    connected_device_count: Res<ConnectedDeviceCount>,
 ) {
     for mut icon in &mut query {
-        if connected_status.0 {
+        if connected_device_count.0 > 0 {
             icon.image = icon_assets.bluetooth_connected.clone();
         } else {
             icon.image = icon_assets.bluetooth_on.clone();
@@ -111,14 +118,14 @@ pub fn update_bluetooth_on_connected(
 }
 
 pub fn update_power_icon(
-    icon_assets: Res<IconAssets>,
+    icon_assets: Res<StatusBarIcons>,
     mut query: Query<&mut ImageNode, With<Battery>>,
     device_percentage: Res<DevicePercentage>,
     device_state: Res<DeviceState>,
 ) {
     for mut styled_text in &mut query {
         match (device_state.0.clone(), device_percentage.0.round() as u32) {
-            (UPowerBatteryState::Charging, p) if p >= 95 => {
+            (UPowerBatteryState::Charging | UPowerBatteryState::FullCharged, p) if p >= 95 => {
                 styled_text.image = icon_assets.battery_100_charging.clone();
             }
             (UPowerBatteryState::Charging, p) if p >= 90 => {

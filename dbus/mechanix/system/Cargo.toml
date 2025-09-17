@@ -1,0 +1,19 @@
+[package]
+name = "system_dbus"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+zbus = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+mechanix-hw-buttons = { path = "../../../shared/hw-buttons" }
+futures = { version = "0.3.31", features = ["thread-pool"] }

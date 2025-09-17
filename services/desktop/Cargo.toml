@@ -1,7 +1,6 @@
 [package]
 name = "mechanix-session-services"
 description = "Service for running session services"
-version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -9,8 +8,19 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
+version = "0.1.1"
 
 [dependencies]
+zbus = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true }
+env_logger = { workspace = true }
+thiserror = { workspace = true }
+mxconf_dbus = { path = "../../dbus/mechanix/mxconf" }
+system_dbus = { path = "../../dbus/mechanix/system" }
+mechanix-hw-buttons = { path = "../../shared/hw-buttons" }
+futures-util = "0.3.28"
 
 
 [package.metadata.deb]

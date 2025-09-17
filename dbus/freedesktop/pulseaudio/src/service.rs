@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 const APPLICATION_NAME: &str = "pulseaudio";
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct DeviceInfo {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -369,16 +369,27 @@ impl PulseServer {
         ))
     }
 
-    pub fn set_sink_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
-        let op = self
-            .introspector
-            .set_sink_mute_by_name(name, volume.is_muted(), None);
-        self.wait_for_result(op).ok();
-
-        let op = self
-            .introspector
-            .set_sink_volume_by_name(name, volume, None);
-        self.wait_for_result(op).ok();
+    pub fn set_sink_volume_by_name(&mut self, name: &str, volume_to_set: &f32) {
+        if volume_to_set <= &0f32 {
+            let op = self.introspector.set_source_mute_by_name(name, true, None);
+            self.wait_for_result(op).ok();
+        } else {
+            // Clone the volume_to_set value to avoid reference lifetime issues
+            let volume_value = *volume_to_set; // Dereference to get the value
+            let op = self
+                .introspector
+                .get_sink_info_by_name(name, move |sink_info_res| {
+                    if let ListResult::Item(device) = sink_info_res {
+                        let mut current_volume = device.volume;
+                        let mut avg = current_volume.avg();
+                        avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
+                        for i in 1..=current_volume.len() {
+                            current_volume.set(i, avg);
+                        }
+                    }
+                });
+            self.wait_for_result(op).ok();
+        }
     }
 
     /// Sets the volume and mute state for a PulseAudio source (input device) identified by its name.
@@ -394,16 +405,29 @@ impl PulseServer {
     /// # Note
     /// Both operations are performed independently and their results are ignored.
     /// If either operation fails, no error will be propagated.
-    pub fn set_source_volume_by_name(&mut self, name: &str, volume: &ChannelVolumes) {
-        let op = self
-            .introspector
-            .set_source_mute_by_name(name, volume.is_muted(), None);
-        let _ = self.wait_for_result(op);
-
-        let op = self
-            .introspector
-            .set_source_volume_by_name(name, volume, None);
-        let _ = self.wait_for_result(op);
+    pub fn set_source_volume_by_name(&mut self, name: &str, volume_to_set: &f32) {
+        if volume_to_set <= &0f32 {
+            let op = self
+                .introspector
+                .set_source_mute_by_name(name, true, None);
+            let _ = self.wait_for_result(op);
+        } else {
+            // Clone the volume_to_set value to avoid reference lifetime issues
+            let volume_value = *volume_to_set; // Dereference to get the value
+            let op = self
+                .introspector
+                .get_source_info_by_name(name, move |source_info| {
+                    if let ListResult::Item(device) = source_info {
+                        let mut current_volume = device.volume;
+                        let mut avg = current_volume.avg();
+                        avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
+                        for i in 1..=current_volume.len() {
+                            current_volume.set(i, avg);
+                        }
+                    }
+                });
+            self.wait_for_result(op).ok();
+        }
     }
 
     // after building an operation such as get_devices() we need to keep polling

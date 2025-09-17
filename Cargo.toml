@@ -6,14 +6,15 @@ members = [
     "services/system",
     "services/search/*",
     "shell/crates/*",
+    "shared/hw-buttons",
     "dbus/freedesktop/*",
     "dbus/mechanix/mxconf",
     "dbus/mechanix/extensions",
-    "shared/bevy_plugins",
+    "dbus/mechanix/system",
 ]
 
 [workspace.package]
-version = "0.0.0"
+version = "0.0.1"
 authors = [
     "Akshay Raina <akshayr@mechasystems.com>",
     "Shoaib Merchant <shoaibm@mechasystems.com>",
@@ -31,10 +32,11 @@ notify = { version = "8.2.0" }
 tokio = { version = "1.46.1", features = ["full"] }
 log = { version = "0.4.27" }
 anyhow = { version = "1.0.99" }
-zbus = "3.14.1"
+zbus = "4.1.2"
 serde = { version = "1.0.219", features = ["derive"] }
 futures = "0.3.31"
 thiserror = "2.0.12"
+env_logger = { version = "0.11.8" }
 bevy = { version = "0.16.1", default-features = false, features = [
     "bevy_ui",
     "bevy_window",
@@ -45,10 +47,11 @@ bevy = { version = "0.16.1", default-features = false, features = [
     "default_font",
     "bevy_state",
     "png",
-    "bevy_ui_picking_backend",
+    "bevy_mesh_picking_backend",
+    "bevy_input_focus",
 ] }
-bevy_wayland = { git = "https://github.com/namana-mecha/bevy_wayland.git", rev = "541e0e646f813602f0e89621a17e5bcbde20d2fc" }
-bevy_asset_loader = { version = "0.23.0-rc.3", features = [
+bevy_wayland = { git = "https://github.com/mecha-org/bevy_wayland.git", rev = "a91508672e2beecffd065984c94d9d493b3eaf4e" }
+bevy_asset_loader = { version = "0.23.0", features = [
     "standard_dynamic_assets",
     "2d",
 ] }

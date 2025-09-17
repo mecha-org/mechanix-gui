@@ -1,125 +1,254 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
+import 'package:mechanix_settings/src/features/about/data/about_repository.dart';
+import 'package:mechanix_settings/src/features/about/data/about_repository_impl.dart';
+import 'package:mechanix_settings/src/features/about/presentation/about.dart';
+import 'package:mechanix_settings/src/features/appearance/presentation/appearance.dart';
+import 'package:mechanix_settings/src/features/appearance/presentation/apply_wallpaper.dart';
+import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
+import 'package:mechanix_settings/src/features/battery/blocs/battery_event.dart';
+import 'package:mechanix_settings/src/features/battery/data/battery_repository.dart';
+import 'package:mechanix_settings/src/features/battery/data/battery_repository_impl.dart';
+import 'package:mechanix_settings/src/features/battery/presentation/battery.dart';
+import 'package:mechanix_settings/src/features/battery/presentation/battery_performance.dart';
+import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
+import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
+import 'package:mechanix_settings/src/features/bluetooth/data/bluetooth_repository.dart';
+import 'package:mechanix_settings/src/features/bluetooth/data/bluetooth_repository_impl.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/adapter_settings.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/bluetooth.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/bluetooth_device_discoverable.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/device_info/bluetooth_device_info.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/device_types.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/rename_adapter.dart';
+import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.dart';
+import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/date_settings.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/date_time.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/time_settings.dart';
+import 'package:mechanix_settings/src/features/display/bloc/display_bloc.dart';
+import 'package:mechanix_settings/src/features/display/data/display_repository.dart';
+import 'package:mechanix_settings/src/features/display/data/display_repository_impl.dart';
+import 'package:mechanix_settings/src/features/display/presentation/display.dart';
+import 'package:mechanix_settings/src/features/display/presentation/lock_screen_timeout.dart';
+import 'package:mechanix_settings/src/features/display/presentation/settings.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
+import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
+import 'package:mechanix_settings/src/features/network/data/wifi_repository_impl.dart';
+import 'package:mechanix_settings/src/features/network/presentation/add_network.dart';
+import 'package:mechanix_settings/src/features/network/presentation/configure_dns.dart';
+import 'package:mechanix_settings/src/features/network/presentation/configure_proxy.dart';
+import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
+import 'package:mechanix_settings/src/features/network/presentation/dns_settings/dns_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/ethernet_settings/ethernet_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/ipsettings/ip_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/ipv4_address.dart';
+import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
+import 'package:mechanix_settings/src/features/network/presentation/network_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/wifi_security.dart';
+import 'package:mechanix_settings/src/features/network/presentation/wireless.dart';
+import 'package:mechanix_settings/src/features/settings_menu/presentation/menu.dart';
+import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
+import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
+import 'package:mechanix_settings/src/features/sound/data/sound_repository.dart';
+import 'package:mechanix_settings/src/features/sound/data/sound_repository_impl.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/input_devices.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/notification_sound.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/output_devices.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/vibration_level.dart';
+import 'package:watch_it/watch_it.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  di.registerSingleton(ThemeToggle());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<WifiRepository>(
+          create: (_) => WifiRepositoryImpl(),
+        ),
+        RepositoryProvider<BatteryRepository>(
+          create: (_) => BatteryRepositoryImpl(),
+        ),
+        RepositoryProvider<BluetoothRepository>(
+          create: (_) => BluetoothRepositoryImpl(),
+        ),
+        RepositoryProvider<SoundRepository>(
+          create: (_) => SoundRepositoryImpl(),
+        ),
+        RepositoryProvider<DisplayRepository>(
+          create: (_) => DisplayRepositoryImpl(),
+        ),
+        RepositoryProvider<AboutRepository>(
+          create: (_) => AboutRepositoryImpl(),
+        ),
+      ],
+      child: MechanixSettingsApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
+  MechanixSettingsApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
+    final mechanixVariant =
+        watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
+
+    return MechanixTheme(
+      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
+        MechanixSwitchThemeData(
+          style: MechanixSwitchStyle(
+            inactiveThumbColor: Color(0xFF989898),
+            inactiveTrackColor: Color(0xFF252525),
+          ),
+        )
+      ]),
+      builder: (context, mechanix, child) => MainApp(
+        darkTheme: mechanix.darkTheme,
+        lightTheme: mechanix.lightTheme,
+        themeMode: themeMode,
       ),
-      home: const MyHomePage(title: 'Settings'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class MainApp extends StatelessWidget {
+  const MainApp({
+    super.key,
+    required this.lightTheme,
+    required this.darkTheme,
+    required this.themeMode,
+  });
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  final ThemeData lightTheme;
+  final ThemeData darkTheme;
+  final ThemeMode themeMode;
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    return MultiBlocProvider(
+      providers: [
+        // Sound Bloc
+        BlocProvider(
+          create: (context) =>
+              SoundBloc(soundRepository: context.read<SoundRepository>())
+                ..add(InitializeSound())
+                ..add(GetOutputDeviceList())
+                ..add(GetInputDeviceList()),
         ),
+
+        // Wireless Bloc
+        BlocProvider(
+          create: (context) => WirelessSettingsBloc(
+              wifiRepository: context.read<WifiRepository>())
+            ..add(InitializeWifi()),
+        ),
+
+        // Bluetooth Bloc
+        BlocProvider(
+          create: (context) => BluetoothBloc(
+              bluetoothRepository: context.read<BluetoothRepository>())
+            ..add(InitializeBluetooth()),
+        ),
+
+        // Battery Bloc
+        BlocProvider(
+          create: (context) =>
+              BatteryBloc(batteryRepository: context.read<BatteryRepository>())
+                ..add(BatteryInfoRequested()),
+        ),
+
+        // Display Bloc
+        BlocProvider(
+          create: (context) =>
+              DisplayBloc(displayRepository: context.read<DisplayRepository>())
+                ..add(GetDefaultSettingsEvent()),
+        ),
+
+        // DateTime Bloc
+        BlocProvider(
+          create: (context) => DateTimeBloc()..add(GetDateTimeData()),
+        ),
+
+        // ConnectNetwork Bloc (note: this might need special handling)
+        BlocProvider(
+          create: (context) => ConnectNetworkBloc(
+              wifiRepository: context.read<WifiRepository>()),
+        ),
+
+        // About Bloc
+        BlocProvider(
+          create: (context) =>
+              AboutBloc(aboutRepository: context.read<AboutRepository>())
+                ..add(InitializeAbout()),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: SettingMenu(),
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: themeMode,
+        routes: {
+          // Sound Routes
+          AppRoutes.sound: (context) => Sound(),
+          AppRoutes.vibrationLevel: (context) => VibrationLevel(),
+          AppRoutes.soundOutputDevices: (context) => OutputDevices(),
+          AppRoutes.soundInputDevices: (context) => InputDevices(),
+          AppRoutes.notificationSound: (context) => NotificationSound(),
+
+          // Wireless Routes
+          AppRoutes.wireless: (context) => WirelessSettings(),
+          AppRoutes.wirelessNetworkDetails: (context) => NetworkDetails(),
+          AppRoutes.ipSettings: (context) => IpSettings(),
+          AppRoutes.ethernetDetails: (context) => EthernetSettings(),
+          AppRoutes.dnsDetails: (context) => DnsSettings(),
+          AppRoutes.wirelessNetworkSettings: (context) => NetworkSettings(),
+          AppRoutes.wirelessConnectSecureNetwork: (context) =>
+              ConnectSecureNetwork(),
+          AppRoutes.wirelessConnectUnknownNetwork: (context) => AddNetwork(),
+          AppRoutes.configureDNS: (context) => ConfigureDnsWidget(),
+          AppRoutes.configureProxy: (context) => ConfigureProxyWidget(),
+          AppRoutes.ipv4Address: (context) => Ipv4AddressWidget(),
+          AppRoutes.security: (context) => WifiSecurityWidget(),
+
+          // Bluetooth Routes
+          AppRoutes.bluetooth: (context) => Bluetooth(),
+          AppRoutes.bluetoothDeviceInfo: (context) => BluetoothDeviceInfo(),
+          AppRoutes.adapterSettings: (context) => AdapterSettings(),
+          AppRoutes.adapterRename: (context) => RenameAdapter(),
+          AppRoutes.bluetoothDiscoverable: (context) =>
+              BluetoothDeviceDiscoverable(),
+          AppRoutes.bluetoothDeviceTypes: (context) => DeviceTypes(),
+
+          // Battery Routes
+          AppRoutes.battery: (context) => Battery(),
+          AppRoutes.batteryPerformance: (context) => BatteryPerformance(),
+
+          // Display Routes
+          AppRoutes.display: (context) => DisplayPage(),
+          AppRoutes.appearance: (context) => Appearance(),
+          AppRoutes.applyWallpaper: (context) => ApplyWallpaper(),
+          AppRoutes.displayScreenOffTime: (context) => ScreenOffTimeSettings(),
+          AppRoutes.lockScreenTimeout: (context) => LockScreenTimeout(),
+
+          // Other Routes
+          AppRoutes.about: (context) => About(),
+          AppRoutes.dateTime: (context) => DateTimeSettings(),
+          AppRoutes.timeSettings: (context) => TimeSettings(),
+          AppRoutes.dateSettings: (context) => DateSettings(),
+        },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

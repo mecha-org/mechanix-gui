@@ -5,7 +5,7 @@ use apps::{AppInfo, AppSearchService};
 use files::FileInfo;
 use log::{debug, error, info, warn};
 use std::sync::Arc;
-use zbus::{dbus_interface, fdo::Error as ZbusError, SignalContext};
+use zbus::{fdo::Error as ZbusError, interface, SignalContext};
 
 /// The D-Bus path where the ConfigServer interface is served
 pub const SERVED_AT: &str = "/org/mechanix/MxSearch";
@@ -26,7 +26,7 @@ pub struct ServerInterface {
     pub app_actions_service: app_actions::AppActionsService,
 }
 
-#[dbus_interface(name = "org.mechanix.MxSearch")]
+#[interface(name = "org.mechanix.MxSearch")]
 impl ServerInterface {
     /// Signal emitted when a setting is changed.
     ///

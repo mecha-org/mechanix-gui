@@ -17,7 +17,10 @@ env:
   RUST_BACKTRACE: short
   RUSTUP_MAX_RETRIES: 10
   CARGO_NET_GIT_FETCH_WITH_CLI: true
-
+  MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
+  MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
+  MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
+  MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
 jobs:
   build:
     name: ${{ matrix.name }}
@@ -35,6 +38,7 @@ jobs:
             package: mechanix-system-services
 
     runs-on: ubicloud-standard-2-arm
+    environment: pre-release
     continue-on-error: true
     steps:
       - name: Setup | Checkout
@@ -57,6 +61,30 @@ jobs:
             libpam0g-dev \
             libclang-dev
 
+      # Pulp CLI setup
+      - name: Setup | Pulp CLI
+        run: |
+          pipx install --force pulp-cli[pygments]
+          pipx inject pulp-cli pulp-cli-deb
+
+      - name: Setup | Pulp CLI Configuration
+        run: |
+          set -euo pipefail
+          if [[ -z "$MECHA_PULP_API_URL" ]]; then
+            echo "[ERROR] MECHA_PULP_API_URL is empty."
+            exit 1
+          fi
+          # Construct full Pulp API URL (add port)
+          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
+          echo "[INFO] Using Pulp base URL: $PULP_API_URL"
+
+          # Configure Pulp CLI using the correct env vars
+          pulp config create \
+            --username "$MECHA_PULP_USERNAME" \
+            --password "$MECHA_PULP_PASSWORD" \
+            --base-url "$PULP_API_URL" \
+            --overwrite
+
       - name: Set up Git SSH key
         run: |
           mkdir -p ~/.ssh
@@ -75,6 +103,21 @@ jobs:
           cargo deb --no-build --package ${{ matrix.package }}
           ls -la target/debian
 
+      - name: Repack DEB natively [${{ matrix.package }}]
+        run: |
+          set -euo pipefail
+          DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
+          echo "[INFO] Repacking: $DEB_FILE"
+
+          TMPDIR=$(mktemp -d)
+          trap 'rm -rf "$TMPDIR"' EXIT
+
+          # Extract & repack under fakeroot
+          fakeroot dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
+          fakeroot dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"  
+
+          echo "[INFO] ✅ Repacked: $DEB_FILE"
+
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
           mkdir -p build
@@ -86,3 +129,25 @@ jobs:
         with:
           name: ${{ matrix.package }}-artifacts
           path: ./build/*
+
+      - name: Publish to Pulp [${{ matrix.package }}]
+        run: |
+          set -euo pipefail
+          DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
+          echo "[INFO] Uploading: $DEB_FILE"
+          pulp deb content upload \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --file="$DEB_FILE"
+
+          echo "[INFO] Creating publication..."
+          PUB_HREF=$(pulp deb publication create \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            | jq -r '.pulp_href')
+
+          echo "[INFO] Updating distribution..."
+          pulp deb distribution update \
+            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
+
+          echo "[INFO] ✅ Package ${{ matrix.package }} published."

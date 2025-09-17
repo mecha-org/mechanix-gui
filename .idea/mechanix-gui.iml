@@ -27,6 +27,30 @@
       <sourceFolder url="file://$MODULE_DIR$/services/system/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shell/keyboard/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shell/launcher/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shared/bevy_plugins/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shared/bevy_plugins/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/app_drawer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/background/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/homescreen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/keyboard/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/launcher/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/lockscreen/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/navigation_bar/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/notification/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/notifications_drawer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/running_apps/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/service_plugins/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/service_plugins/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/settings_drawer/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/status_bar/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/types/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/universal_search/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/utils/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dbus/mechanix/system/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/dbus/mechanix/system/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/animation/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/animation/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/shell/crates/headless_widgets/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/shell/notification/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/search/server/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/services/search/server/src" isTestSource="false" />
