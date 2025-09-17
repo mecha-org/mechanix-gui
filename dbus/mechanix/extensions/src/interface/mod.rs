@@ -1,4 +1,3 @@
-use evdevil;
 use zbus::{ interface, Connection, object_server::SignalEmitter };
 use tokio::{ sync::mpsc::{ Receiver, Sender, channel } };
 use crate::errors::{ Result, Error };

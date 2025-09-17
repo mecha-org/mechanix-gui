@@ -2,7 +2,6 @@ use evdevil::{ enumerate_hotplug, Evdev };
 use tokio::sync::mpsc;
 use tokio::task;
 use evdev::KeyCode;
-use evdev::EventSummary::Key;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use crate::events::ExtensionServiceEvent;

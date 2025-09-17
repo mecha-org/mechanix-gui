@@ -1,5 +1,4 @@
 use crate::events::ExtensionServiceEvent;
-use crate::device::Device;
 use crate::proxy::extensions::ExtensionServiceProxy;
 use zbus::Connection;
 use futures_lite::stream::StreamExt;

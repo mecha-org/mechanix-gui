@@ -2,7 +2,6 @@ use evdevil::{ Evdev, Bus };
 use evdevil::event::{ EventType, Key, Switch };
 use serde::{ Deserialize, Serialize };
 use zvariant::{ Type };
-use anyhow::Result;
 use toml;
 use std::fs;
 use std::env;
