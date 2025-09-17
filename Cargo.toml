@@ -9,6 +9,7 @@ members = [
     "shared/hw-buttons",
     "dbus/freedesktop/*",
     "dbus/mechanix/mxconf",
+    "dbus/mechanix/extensions",
     "dbus/mechanix/system",
 ]
 
