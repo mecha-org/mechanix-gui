@@ -1,0 +1,33 @@
+[package]
+name = "mechanix-extension-service"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+tokio = {workspace = true}
+extensions = {path = "../../dbus/mechanix/extensions"}
+anyhow = { workspace = true }
+log = { workspace = true }
+env_logger = {workspace = true}
+
+[package.metadata.deb]
+maintainer = "Sandeep Patel <mineshp@mechasystems.com>"
+extended-description = """\
+Detection Service for the Mechanix Extensions"""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../target/release/mechanix-extension-service",
+        "usr/bin/",
+        "755",
+    ],
+]

@@ -5,6 +5,7 @@ members = [
     "services/conf",
     "services/system",
     "services/search/*",
+    "services/extensions",
     "shell/crates/*",
     "shared/hw-buttons",
     "dbus/freedesktop/*",
