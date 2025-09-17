@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
@@ -83,7 +82,8 @@ class FileHomePageState extends State<FileHomePage> {
           }
 
           return SingleChildScrollView(
-            child: ContainerWidget(
+            child: Container(
+              margin: EdgeInsets.all(12),
               child: Column(
                 children: [
                   MechanixSectionList(

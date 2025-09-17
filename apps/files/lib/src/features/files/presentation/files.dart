@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_button.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
@@ -19,6 +20,8 @@ import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
 import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_item_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
+import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 import 'view_mode_notifier.dart';
 import 'grid_view.dart';
@@ -58,6 +61,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   final LayerLink _menuLink = LayerLink();
   OverlayEntry? _menuEntry;
   bool _isMenuOpen = false;
+
+  final downloadsDir = AppConfig().downloadsDir;
+  final documentsDir = AppConfig().documentsDir;
+  final homeDir = AppConfig().homeDir;
 
   @override
   Widget build(BuildContext context) {
@@ -785,19 +792,123 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   void handleMove() {
     final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
     List<String> selectedPathsList = selectedPaths.toList();
-    final filesBloc = BlocProvider.of<FilesBloc>(context); // <- outside builder
+    final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
 
-    BlocProvider.of<FilesBloc>(context)
-        .add(StartMoveMode(selectedPaths.toList()));
-    showDialog(
+    // Start move mode
+    filesBloc.add(StartMoveMode(selectedPathsList));
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => MoveFileDialog(
-        currentPath: currentPath,
-        selectedPaths: selectedPathsList,
-        filesBloc: filesBloc,
-      ),
-    );
-    clearSelection();
+      backgroundColor: Colors.grey[850],
+      isScrollControlled: true,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select destination',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ).padLeft(18).padBottom(4).padTop(14),
+              MechanixSectionListTheme(
+                style: MechanixSectionListThemeData(
+                  height: 42,
+                  dividerPadding: EdgeInsets.zero,
+                  widgetPadding: EdgeInsets.zero,
+                  backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
+                ),
+                child: MechanixSectionList(
+                  sectionListItems: [
+                    SectionListItems(
+                        title: "Home directory",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, homeDir, "Home", filesBloc,
+                            () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.home,
+                          iconColor: Colors.blueAccent,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                    SectionListItems(
+                        title: "Downloads",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, downloadsDir, "Downloads",
+                            filesBloc, () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.downloads,
+                          iconColor: Colors.deepPurpleAccent,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                    SectionListItems(
+                        title: "Documents",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, documentsDir, "Documents",
+                            filesBloc, () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.homeDocuments,
+                          iconColor: Colors.orangeAccent,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                    SectionListItems(
+                        title: "Root (/)",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, "/", "Root", filesBloc,
+                            () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.hardDrive,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(() {
+      // Clear selection only if needed when bottom sheet is closed
+      clearSelection();
+    });
   }
 
   void handleDelete() {
@@ -1022,7 +1133,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
                   actionTaken = true;
-                  reload(currentPath);
+                  final filesBloc = BlocProvider.of<FilesBloc>(context);
+
+                  reload(currentPath, filesBloc);
                   Navigator.of(context).pop();
                   clearSelection();
                 },
@@ -1548,8 +1661,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     filesBloc.add(ToggleHiddenFiles(path: currentPath));
   }
 
-  void reload(String currentPath) {
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
+  void reload(String currentPath, FilesBloc filesBloc) {
     filesBloc.add(LoadFilesAtPath(currentPath));
   }
 
