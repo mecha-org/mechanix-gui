@@ -48,7 +48,6 @@ jobs:
 
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
-    continue-on-error: true
 
     steps:
       # Install dependencies
@@ -90,35 +89,43 @@ jobs:
         run: |
           set -euo pipefail
           app_folder="apps/${{ matrix.folder }}"
-
           pkg_name=$(grep '^Package:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_arch=$(dpkg --print-architecture)
-
           mkdir -p package/DEBIAN
           cp -r "$app_folder/debian/"* package/DEBIAN/
           mkdir -p package/usr/bin
           mkdir -p package/usr/share/mechanix/$pkg_name/data
           mkdir -p package/usr/share/mechanix/$pkg_name/lib
           mkdir -p package/usr/lib/$pkg_name
-
           # Patch Architecture field
           if grep -q '^Architecture:' package/DEBIAN/control; then
             sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
           else
-            echo "Architecture: $pkg_arch" >> package/DEBIAN/control
+            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control
           fi
-
-          dpkg-deb --build package "${pkg_name}_${pkg_version}_${pkg_arch}.deb"
-          mkdir -p ./build/${pkg_name}
-          mv "${pkg_name}_${pkg_version}_${pkg_arch}.deb" ./build/${pkg_name}/
+          # Copy binary
+          cp "./build/${{ matrix.binary }}/${{ matrix.binary }}" package/usr/bin/${{ matrix.binary }}
+          chmod 755 package/usr/bin/${{ matrix.binary }}
+          # Copy assets
+          if [ -d "./build/${{ matrix.binary }}/data" ]; then
+            cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/mechanix/$pkg_name/data/
+          fi
+          # Copy private libraries
+          if [ -d "./build/${{ matrix.binary }}/lib" ]; then
+            cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/share/mechanix/$pkg_name/lib/
+          fi
+          # Build .deb into ./build/deb/
+          mkdir -p ./build/deb
+          dpkg-deb --build package "./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
 
       # Extract package details
       - name: Extract package details
         id: package_details
         run: |
-          PACKAGE_NAME=$(ls build/*/*.deb | xargs basename)
-          FOLDER_NAME=$(echo $PACKAGE_NAME | sed -r 's/_[0-9]+\.[0-9]+\.[0-9]+.*$//')
+          PACKAGE_PATH=$(ls build/deb/*.deb | head -n1)
+          PACKAGE_NAME=$(basename "$PACKAGE_PATH")
+          FOLDER_NAME=$(echo "$PACKAGE_NAME" | cut -d'_' -f1)
           echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "folder_name=$FOLDER_NAME" >> $GITHUB_OUTPUT
           echo "Package Name: $PACKAGE_NAME"
@@ -129,7 +136,7 @@ jobs:
         run: |
           echo "Uploading package: ${{ steps.package_details.outputs.package_name }}"
           echo "To folder: ${{ steps.package_details.outputs.folder_name }}"
-          curl -X POST -F file=@build/${{ steps.package_details.outputs.folder_name }}/${{ steps.package_details.outputs.package_name }} \
+          curl -X POST -F file=@build/deb/${{ steps.package_details.outputs.package_name }} \
             ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/files/${{ steps.package_details.outputs.folder_name }}
 
       # Add package to local repo
@@ -140,6 +147,7 @@ jobs:
 
       # Update local published repo
       - name: Update local published repo
+        continue-on-error: true
         run: |
           echo "Updating local published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
           curl -X PUT -H 'Content-Type: application/json' --data '{
@@ -149,6 +157,7 @@ jobs:
 
       # Update S3 published repo
       - name: Update S3 published repo
+        continue-on-error: true
         run: |
           echo "Updating S3 published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
           curl -X PUT -H 'Content-Type: application/json' --data '{
@@ -162,4 +171,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.binary }}-aarch64
-          path: build/${{ matrix.binary }}/*
+          path: |
+            build/deb/*.deb
+            build/${{ matrix.binary }}/*
