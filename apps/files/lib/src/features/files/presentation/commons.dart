@@ -73,6 +73,10 @@ void handleTap(
     return;
   }
 
+  if (state?.isSearching == true) {
+    state?.clearSearch(); // will reset and remove overlay
+  }
+
   if (file.type == 'dir') {
     _navigateToDirectory(context, currentPath, file);
     return;

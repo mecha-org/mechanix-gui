@@ -53,6 +53,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     on<LoadRecentFiles>(_onLoadRecentFiles);
     on<AddToRecentFiles>(_onAddToRecentFiles);
+
+    on<SearchFilesInDirectory>(_onSearchFilesInDirectory);
   }
 
   Future<void> _onInitializeFiles(
@@ -496,5 +498,25 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     Emitter<FilesState> emit,
   ) async {
     await recentFilesManager.addRecentFile(event.path);
+  }
+
+  Future<void> _onSearchFilesInDirectory(
+    SearchFilesInDirectory event,
+    Emitter<FilesState> emit,
+  ) async {
+    emit(state.copyWith(loading: true, error: null));
+
+    try {
+      final results = await fileRepository.searchFiles(event.path, event.query);
+      emit(state.copyWith(
+        fileSystemList: results,
+        loading: false,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        error: 'Search failed: $e',
+        loading: false,
+      ));
+    }
   }
 }

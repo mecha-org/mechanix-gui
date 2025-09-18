@@ -67,6 +67,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   final homeDir = AppConfig().homeDir;
   final recentDir = AppConfig().recentDir;
 
+  final ValueNotifier<String> searchQuery = ValueNotifier('');
+  bool isSearching = false;
+
   @override
   Widget build(BuildContext context) {
     final isAtRoot = widget.path.isEmpty;
@@ -368,77 +371,87 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           return Scaffold(
             appBar: MechanixNavigationBar(
               leadingWidget: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios,
-                  size: 20,
-                  color: Colors.blue,
-                ),
+                icon: const Icon(Icons.arrow_back_ios,
+                    size: 20, color: Colors.blue),
                 onPressed: selectionMode
                     ? clearSelection
-                    : (isHomePageDir ? homeNavigation : handleBack),
+                    : isSearching
+                        ? clearSearch
+                        : (isHomePageDir ? homeNavigation : handleBack),
               ),
-              title: selectionMode ? "Select" : currentTitle,
+              title: selectionMode
+                  ? "Select"
+                  : isSearching
+                      ? "Search"
+                      : currentTitle,
               titleStyle: context.textTheme.titleLarge,
               actionWidgets: selectionMode
                   ? [
                       Text(
                         "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 14),
                       ).padRight(24),
                     ]
-                  : [
-                      ValueListenableBuilder<bool>(
-                        valueListenable: viewModeNotifier,
-                        builder: (context, isList, _) {
-                          return IconButton(
-                            icon:
-                                Image.asset(isList ? Images.list : Images.grid),
-                            onPressed: () {
-                              viewModeNotifier.value = !viewModeNotifier.value;
+                  : isSearching
+                      ? null
+                      : [
+                          // View toggle
+                          ValueListenableBuilder<bool>(
+                            valueListenable: viewModeNotifier,
+                            builder: (context, isList, _) {
+                              return IconButton(
+                                icon: Image.asset(
+                                    isList ? Images.list : Images.grid),
+                                onPressed: () {
+                                  viewModeNotifier.value =
+                                      !viewModeNotifier.value;
+                                },
+                                highlightColor: Colors.transparent,
+                              );
                             },
-                            highlightColor: Colors.transparent,
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: Image.asset(Images.sortAscending),
-                        onPressed: () async {
-                          showSortMenu(context, state.currentSortBy);
-                        },
-                        highlightColor:
-                            Colors.transparent, // Remove ripple effect on press
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.search, color: Colors.white),
-                        onPressed: () {
-                          // Implement search logic
-                        },
-                        highlightColor: Colors.transparent,
-                      ),
-                      Builder(
-                        builder: (context) {
-                          return MechanixBottomSheetTheme(
-                            data: MechanixBottomSheetThemeData(
-                              backgroundColor:
-                                  WidgetStateProperty.all(Colors.transparent),
-                              borderRadius: 50,
-                              shadowColor:
-                                  WidgetStateProperty.all(Colors.black45),
-                            ),
-                            child: IconButton(
-                              icon: Image.asset(Images.dots),
-                              onPressed: () {
-                                handleSelectionMore(context, state);
-                              },
-                              highlightColor: Colors.transparent,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                          ),
+
+                          // Sort options
+                          IconButton(
+                            icon: Image.asset(Images.sortAscending),
+                            onPressed: () async {
+                              showSortMenu(context, state.currentSortBy);
+                            },
+                            highlightColor: Colors
+                                .transparent, // Remove ripple effect on press
+                          ),
+
+                          // Search toggle
+                          IconButton(
+                            icon: const Icon(Icons.search, color: Colors.white),
+                            onPressed: () {
+                              setState(() => isSearching = true);
+                              showSearchBottomSheet(context, searchQuery);
+                            },
+                          ),
+
+                          // More options
+                          Builder(
+                            builder: (context) {
+                              return MechanixBottomSheetTheme(
+                                data: MechanixBottomSheetThemeData(
+                                  backgroundColor: WidgetStateProperty.all(
+                                      Colors.transparent),
+                                  borderRadius: 50,
+                                  shadowColor:
+                                      WidgetStateProperty.all(Colors.black45),
+                                ),
+                                child: IconButton(
+                                  icon: Image.asset(Images.dots),
+                                  onPressed: () =>
+                                      handleSelectionMore(context, state),
+                                  highlightColor: Colors.transparent,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
             ),
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,20 +459,33 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 const SizedBox(height: 6),
                 Expanded(
                   child: ContainerWidget(
-                    child: ValueListenableBuilder<bool>(
-                      valueListenable: viewModeNotifier,
-                      builder: (context, isGrid, _) {
-                        return isGrid
-                            ? widget.title == 'recent'
-                                ? buildGridViewForRecentFiles(
-                                    context, fileSystemList)
-                                : buildGridView(
-                                    displayedFiles, context, widget.path)
-                            : widget.title == 'recent'
-                                ? buildListViewForRecentFiles(
-                                    context, fileSystemList)
-                                : buildListView(
-                                    displayedFiles, context, widget.path);
+                    child: ValueListenableBuilder<String>(
+                      valueListenable: searchQuery,
+                      builder: (context, query, _) {
+                        final filteredFiles = query.isEmpty
+                            ? displayedFiles
+                            : displayedFiles
+                                .where((file) => file.name
+                                    .toLowerCase()
+                                    .contains(query.toLowerCase()))
+                                .toList();
+
+                        return ValueListenableBuilder<bool>(
+                          valueListenable: viewModeNotifier,
+                          builder: (context, isGrid, _) {
+                            return isGrid
+                                ? widget.title == 'recent'
+                                    ? buildGridViewForRecentFiles(
+                                        context, fileSystemList)
+                                    : buildGridView(
+                                        filteredFiles, context, widget.path)
+                                : widget.title == 'recent'
+                                    ? buildListViewForRecentFiles(
+                                        context, fileSystemList)
+                                    : buildListView(
+                                        filteredFiles, context, widget.path);
+                          },
+                        );
                       },
                     ),
                   ),
@@ -475,6 +501,78 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         },
       ),
     );
+  }
+
+  OverlayEntry? _searchOverlayEntry;
+
+  void showSearchBottomSheet(
+      BuildContext context, ValueNotifier<String> searchQuery) {
+    final overlay = Overlay.of(context);
+    // late OverlayEntry entry;
+
+    _searchOverlayEntry = OverlayEntry(
+      builder: (ctx) => Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            decoration: BoxDecoration(
+              color: const Color(0xFF2C2C2E),
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(Icons.search, color: Colors.white70, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    autofocus: true,
+                    onChanged: (value) => searchQuery.value = value,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      hintText: 'Type here',
+                      hintStyle: TextStyle(color: Colors.white54),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                          // padding: const EdgeInsets.symmetric(vertical: 0),
+                          )
+                      .copyWith(
+                    splashFactory: NoSplash.splashFactory,
+                  ),
+                  onPressed: () {
+                    clearSearch();
+                  },
+                  child: const Icon(Icons.close, color: Colors.white),
+                ),
+              ],
+            ),
+          ).padBottom(8),
+        ),
+      ),
+    );
+
+    overlay.insert(_searchOverlayEntry!);
+  }
+
+  void clearSearch() {
+    setState(() {
+      isSearching = false;
+      searchQuery.value = '';
+    });
+
+    // safely remove overlay if still mounted
+    _searchOverlayEntry?.remove();
+    _searchOverlayEntry = null;
   }
 
   Future<void> showSortMenu(BuildContext context, String selected) async {
@@ -1576,9 +1674,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                       if (hasSelection) {
                                         final newFolderPath =
                                             '$currentPath/$trimmedName';
-                                        debugPrint(
-                                            "newFolderPath :$newFolderPath");
-                                        debugPrint("selectedPaths :$movePaths");
 
                                         filesBloc.add(Move(
                                           sourcePaths: selectedPaths.toList(),

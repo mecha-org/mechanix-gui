@@ -143,3 +143,10 @@ class AddToRecentFiles extends FilesEvent {
   final String path;
   AddToRecentFiles(this.path);
 }
+
+class SearchFilesInDirectory extends FilesEvent {
+  final String path;
+  final String query;
+
+  SearchFilesInDirectory(this.path, this.query);
+}

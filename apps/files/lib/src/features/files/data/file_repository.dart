@@ -33,4 +33,6 @@ abstract class FileRepository {
   Future<void> extractZip(String zipFilePath, String destinationPath);
 
   Future<bool> entityExists(String path);
+
+  Future<List<FileSystemEntity>> searchFiles(String rootPath, String query);
 }
