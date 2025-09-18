@@ -18,10 +18,10 @@ env:
   RUST_BACKTRACE: short
   RUSTUP_MAX_RETRIES: 10
   CARGO_NET_GIT_FETCH_WITH_CLI: true
-  MECHA_PULP_USERNAME: ${{ secrets.MECHA_PULP_USERNAME }}
-  MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
-  MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
-  MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
+  MECHANIX_APTLY_SERVER_ENDPOINT: ${{ vars.MECHANIX_APTLY_SERVER_ENDPOINT }}
+  MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
+  MECHANIX_APTLY_DEB_REPOSITORY_NAME: ${{ vars.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}
+  MECHANIX_APTLY_S3_PUBLISH_ENDPOINT: ${{ vars.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT }}
 
 jobs:
   build:
@@ -48,7 +48,6 @@ jobs:
 
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
-    continue-on-error: true
 
     steps:
       # Install dependencies
@@ -90,93 +89,90 @@ jobs:
         run: |
           set -euo pipefail
           app_folder="apps/${{ matrix.folder }}"
-
           pkg_name=$(grep '^Package:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
           pkg_arch=$(dpkg --print-architecture)
-
           mkdir -p package/DEBIAN
           cp -r "$app_folder/debian/"* package/DEBIAN/
           mkdir -p package/usr/bin
           mkdir -p package/usr/share/mechanix/$pkg_name/data
           mkdir -p package/usr/share/mechanix/$pkg_name/lib
           mkdir -p package/usr/lib/$pkg_name
-
           # Patch Architecture field
           if grep -q '^Architecture:' package/DEBIAN/control; then
             sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
           else
             sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control
           fi
-
           # Copy binary
           cp "./build/${{ matrix.binary }}/${{ matrix.binary }}" package/usr/bin/${{ matrix.binary }}
           chmod 755 package/usr/bin/${{ matrix.binary }}
-
           # Copy assets
           if [ -d "./build/${{ matrix.binary }}/data" ]; then
             cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/mechanix/$pkg_name/data/
           fi
-
           # Copy private libraries
           if [ -d "./build/${{ matrix.binary }}/lib" ]; then
             cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/share/mechanix/$pkg_name/lib/
           fi
-
           # Build .deb into ./build/deb/
           mkdir -p ./build/deb
           dpkg-deb --build package "./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
 
-      # List artifacts
-      - name: List artifacts ${{ matrix.name }}
-        run: ls -la ./build/
-
-      # Setup Pulp CLI
-      - name: Setup | Pulp CLI
+      # Extract package details
+      - name: Extract package details
+        id: package_details
         run: |
-          pipx install --force pulp-cli[pygments]
-          pipx inject pulp-cli pulp-cli-deb
+          PACKAGE_PATH=$(ls build/deb/*.deb | head -n1)
+          PACKAGE_NAME=$(basename "$PACKAGE_PATH")
+          FOLDER_NAME=$(echo "$PACKAGE_NAME" | cut -d'_' -f1)
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "folder_name=$FOLDER_NAME" >> $GITHUB_OUTPUT
+          echo "Package Name: $PACKAGE_NAME"
+          echo "Folder Name: $FOLDER_NAME"
 
-      - name: Configure Pulp CLI
+      # Upload package to Aptly
+      - name: Upload package to Aptly
+        continue-on-error: true
         run: |
-          set -euo pipefail
-          PULP_API_URL="${MECHA_PULP_API_URL}:8080"
-          pulp config create \
-            --username "$MECHA_PULP_USERNAME" \
-            --password "$MECHA_PULP_PASSWORD" \
-            --base-url "$PULP_API_URL" \
-            --overwrite
+          echo "Uploading package: ${{ steps.package_details.outputs.package_name }}"
+          echo "To folder: ${{ steps.package_details.outputs.folder_name }}"
+          curl -X POST -F file=@build/deb/${{ steps.package_details.outputs.package_name }} \
+            ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/files/${{ steps.package_details.outputs.folder_name }}
 
-      # Publish .deb to Pulp
-      - name: Publish to Pulp [${{ matrix.binary }}]
+      # Add package to local repo
+      - name: Add package to local repo
+        continue-on-error: true
         run: |
-          set -euo pipefail
-          pkg_name=$(grep '^Package:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_version=$(grep '^Version:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_arch=$(dpkg --print-architecture)
-          DEB_FILE="./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+          echo "Adding package from folder: ${{ steps.package_details.outputs.folder_name }}"
+          curl -X POST ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/repos/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}/file/${{ steps.package_details.outputs.folder_name }}
 
-          echo "[INFO] Uploading: $DEB_FILE"
-          pulp deb content upload \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --file="$DEB_FILE"
+      # Update local published repo
+      - name: Update local published repo
+        continue-on-error: true
+        run: |
+          echo "Updating local published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
+          curl -X PUT -H 'Content-Type: application/json' --data '{
+            "Architectures": ["arm64", "amd64"],
+            "Signing": {"Skip": true}
+          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/:./${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
 
-          echo "[INFO] Creating publication..."
-          PUB_HREF=$(pulp deb publication create \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            | jq -r '.pulp_href')
+      # Update S3 published repo
+      - name: Update S3 published repo
+        continue-on-error: true
+        run: |
+          echo "Updating S3 published repo for MECHANIX_APTLY_DEB_REPOSITORY_DISTRO: ${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}"
+          curl -X PUT -H 'Content-Type: application/json' --data '{
+            "Sources": [{"Name": "${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}"}],
+            "Architectures": ["arm64", "amd64"],
+            "Signing": {"Skip": true}
+          }' ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/publish/s3:${{ env.MECHANIX_APTLY_S3_PUBLISH_ENDPOINT }}:/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_DISTRO }}
 
-          echo "[INFO] Updating distribution..."
-          pulp deb distribution update \
-            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-
-          echo "[INFO] ✅ Package ${{ matrix.binary }} published."
-
-      # Upload full artifacts
-      - name: Upload artifact ${{ matrix.name }}
+      # Upload artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.binary }}
-          path: ./build/${{ matrix.binary }}/
+          name: ${{ matrix.binary }}-aarch64
+          path: |
+            build/deb/*.deb
+            build/${{ matrix.binary }}/*
