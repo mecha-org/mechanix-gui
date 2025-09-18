@@ -21,4 +21,6 @@ abstract class WifiRepository {
   Future<void> forgetNetwork(String ssid);
   Future<void> disconnectFromNetwork(String ssid);
   Future<void> deleteSavedNetwork(String ssid);
+  Future<NetworkManagerDeviceState?> getNetworkState();
+  Future<void> close();
 }

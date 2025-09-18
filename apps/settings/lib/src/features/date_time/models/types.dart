@@ -121,3 +121,16 @@ final List<WheelScrollOption<int>> longMonths = [
   WheelScrollOption(label: 'November', value: 11),
   WheelScrollOption(label: 'December', value: 12),
 ];
+
+final List<WheelScrollOption<String>> timeZones = [
+  WheelScrollOption(label: 'IST', value: 'Asia/Kolkata'),
+  WheelScrollOption(label: 'PST', value: 'Asia/Manila'),
+  WheelScrollOption(label: 'CEST', value: 'Europe/Luxembourg'),
+  WheelScrollOption(label: 'CST', value: 'Asia/Macau'),
+  WheelScrollOption(label: 'AEST', value: 'Australia/Brisbane'),
+  WheelScrollOption(label: 'ACST', value: 'Australia/Broken_Hill'),
+  WheelScrollOption(label: 'CEST', value: 'Europe/Vatican'),
+];
+
+final WheelScrollOption<String> defaultTimeZones =
+    WheelScrollOption(label: 'IST', value: 'Asia/Kolkata');

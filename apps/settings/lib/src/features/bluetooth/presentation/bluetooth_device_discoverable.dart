@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_toggle.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/switch/mechanix_switch.dart';
 
 class BluetoothDeviceDiscoverable extends StatefulWidget {
   const BluetoothDeviceDiscoverable({super.key});
@@ -39,10 +39,12 @@ class _BluetoothDeviceDiscoverableState
               child: MechanixSimpleList(listItems: [
                 SimpleListItems(
                     title: 'Device discoverable to everyone',
-                    trailing: CustomToggle(
+                    trailing: MechanixSwitch(
+                        allowDrag: false,
                         value: state.isDiscoveryEnabled,
+                        activeText: 'OFF',
+                        inactiveText: 'ON',
                         onChanged: (value) {
-                          print('value ${value}');
                           context
                               .read<BluetoothBloc>()
                               .add(DiscoveryEnabled(value));
@@ -53,7 +55,7 @@ class _BluetoothDeviceDiscoverableState
                           }
                           Navigator.pop(context);
                         }))
-              ]),
+              ]).padTop(8),
             ),
           ),
         );

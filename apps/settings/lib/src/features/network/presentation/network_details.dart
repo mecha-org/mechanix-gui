@@ -6,13 +6,12 @@ import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
-import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
-import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -25,46 +24,6 @@ class NetworkDetails extends StatefulWidget {
 }
 
 class _NetworkDetailsState extends State<NetworkDetails> {
-  void _backNavigation() {
-    Navigator.pop(context);
-  }
-
-  void _showDeleteDialog(String ssid) {
-    final dialog = AlertDialog(
-      backgroundColor: const Color.fromARGB(255, 54, 54, 54),
-      title: const Text('Forget network'),
-      content: const Text(
-        'This device will no longer connect to this network automatically. You may need to enter the password next time.',
-        style: TextStyle(fontSize: 18),
-      ),
-      actions: <Widget>[
-        CustomTextButton(
-          label: 'Cancel',
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-        ),
-        CustomTextButton(
-          label: 'Forget',
-          onPressed: () {
-            context.read<WirelessSettingsBloc>().add(
-                  ForgetNetwork(ssid),
-                );
-            Navigator.of(context).pop();
-            Navigator.pop(context);
-          },
-          textColor: selectColor,
-        ),
-      ],
-    );
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => dialog,
-    );
-  }
-
   void onForgetPressed(String ssid) {
     context.read<WirelessSettingsBloc>().add(ForgetNetwork(ssid));
     Navigator.pop(context);
@@ -72,23 +31,19 @@ class _NetworkDetailsState extends State<NetworkDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, AccessPoints>;
-    final networkDetails = args["networkDetails"] as AccessPoints;
-
-    final accessPoint = networkDetails.nmAccessPoint;
-    final ssid = utf8.decode(accessPoint.ssid);
-    return BlocProvider(
-        create: (context) => WirelessSettingsBloc(
-              wifiRepository: context.read<WifiRepository>(),
-            ),
-        child: Scaffold(
+    return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
+      builder: (context, state) {
+        return Scaffold(
           appBar: MechanixNavigationBar(
-              title: ssid,
-              actionWidgets: networkDetails.isActive
+              title: state.selectedNMAccessPoint != null
+                  ? utf8.decode(state.selectedNMAccessPoint!.ssid)
+                  : '',
+              actionWidgets: (state.deviceState ==
+                      NetworkManagerDeviceState.activated)
                   ? [
                       IconButton(
-                        onPressed: () => onForgetPressed(ssid),
+                        onPressed: () => onForgetPressed(
+                            utf8.decode(state.selectedNMAccessPoint!.ssid)),
                         style: ButtonStyle(
                           iconColor: WidgetStateProperty.all(Colors.white),
                           backgroundColor:
@@ -111,38 +66,33 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                         ),
                       ).padRight(16)
                     ]
-                  : !networkDetails.isActive
-                      ? [
-                          TextButton.icon(
-                            onPressed: () => {
-                              onNetworkTap(context, networkDetails.isSaved,
-                                  networkDetails)
-                            },
-                            style: ButtonStyle(
-                              backgroundColor: WidgetStatePropertyAll<Color>(
-                                  Color(0xFF044DDF)),
-                              shape: WidgetStatePropertyAll<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(),
-                                ),
-                              ),
+                  : [
+                      TextButton.icon(
+                        onPressed: () =>
+                            onNetworkTap(context, state.selectedAccessPoint),
+                        style: ButtonStyle(
+                          backgroundColor:
+                              WidgetStatePropertyAll<Color>(Color(0xFF044DDF)),
+                          shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: BorderSide(),
                             ),
-                            icon: IconWidget(
-                              iconColor: Colors.white,
-                              iconPath: Images.addRoundedSquare,
-                              iconHeight: 20,
-                              iconWidth: 20,
-                            ),
-                            label: Text(
-                              "Join Network",
-                              style: context.textTheme.labelMedium
-                                  ?.copyWith(color: Colors.white),
-                            ),
-                          ).padRight(16)
-                        ]
-                      : null),
+                          ),
+                        ),
+                        icon: IconWidget(
+                          iconColor: Colors.white,
+                          iconPath: Images.addRoundedSquare,
+                          iconHeight: 20,
+                          iconWidth: 20,
+                        ),
+                        label: Text(
+                          "Join Network",
+                          style: context.textTheme.labelMedium
+                              ?.copyWith(color: Colors.white),
+                        ),
+                      ).padRight(16)
+                    ]),
           body: SingleChildScrollView(
             child: ContainerWidget(
               child: Column(
@@ -176,65 +126,56 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                     theme: MechanixSectionListThemeData(
                         widgetPadding: Spacing.only(top: 8, bottom: 40)),
                     sectionListItems: [
-                      SectionListItems(
-                        title: 'Private Wifi Address',
-                        trailing:
-                            CustomTrailingText(title: 'Fixed').padRight(8),
-                      ),
+                      // SectionListItems(
+                      //   title: 'Private Wifi Address',
+                      //   trailing:
+                      //       CustomTrailingText(title: 'Fixed').padRight(8),
+                      // ),
                       SectionListItems(
                           defaultTrailingIcon: false,
                           title: 'Private Wifi Address',
                           trailing: CustomTrailingText(
-                            title: networkDetails.nmAccessPoint.hwAddress,
+                            title: state.selectedNMAccessPoint?.hwAddress ?? '',
                           )),
                     ],
                   ),
 
-                  MechanixSectionList(
-                    title: 'IPV4 Address',
-                    sectionListItems: [
-                      SectionListItems(
-                        title: 'Configure IP',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.ipv4Address,
-                          );
-                        },
-                        trailing:
-                            CustomTrailingText(title: 'Automatic').padRight(8),
-                      ),
-                      if (networkDetails.isActive)
+                  if (state.selectedAccessPoint != null &&
+                      state.selectedNMAccessPoint != null &&
+                      state.selectedAccessPoint!.isActive)
+                    MechanixSectionList(
+                      title: 'IPV4 Address',
+                      sectionListItems: [
                         SectionListItems(
                           defaultTrailingIcon: false,
                           title: 'IP Address',
                           trailing: CustomTrailingText(
                             title:
-                                '${networkDetails.ip4Config?.addressData.first['address']}',
+                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['address'] : ''}',
                           ),
                         ),
-                      if (networkDetails.isActive)
                         SectionListItems(
                           defaultTrailingIcon: false,
                           title: 'Subnet Mask',
                           trailing: CustomTrailingText(
                             title:
-                                '${networkDetails.ip4Config?.addressData.first['prefix']}',
+                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['prefix'] : ''}',
                           ),
                         ),
-                      if (networkDetails.isActive)
                         SectionListItems(
                           defaultTrailingIcon: false,
                           title: 'Router',
                           trailing: CustomTrailingText(
                             title:
-                                '${networkDetails.ip4Config?.routeData.first['dest']}',
+                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.routeData.first['dest'] : ''}',
                           ),
                         ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  if (networkDetails.isActive)
+                  if (state.selectedAccessPoint != null &&
+                      state.selectedNMAccessPoint != null &&
+                      state.selectedAccessPoint!.isActive)
                     MechanixSectionList(
                       title: 'IPV6 Address',
                       sectionListItems: [
@@ -242,7 +183,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                           title: 'IP Address',
                           trailing: CustomTrailingText(
                                   title:
-                                      '${networkDetails.ip6Config?.addressData.length} Addresses')
+                                      '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip6Config?.addressData.length : ''} Addresses')
                               .padRight(8),
                         ),
                         SectionListItems(
@@ -250,7 +191,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                           title: 'Router',
                           trailing: CustomTrailingText(
                                   title:
-                                      '${networkDetails.ip6Config?.routeData.first['dest']}')
+                                      '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip6Config?.routeData.first['dest'] : ''}')
                               .padRight(8),
                         ),
                       ],
@@ -281,25 +222,27 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                   //   value: accessPoint.rsnFlags.isNotEmpty ? 'WPA/WPA2' : 'None',
                   // ),
                 ],
-              ),
+              ).padTop(8),
             ),
           ),
-        ));
+        );
+      },
+    );
   }
 }
 
 Future<void> onNetworkTap(
-    BuildContext context, bool isSaved, AccessPoints accessPoint) async {
-  if (isSaved) {
+    BuildContext context, AccessPoints? selectedAccessPoint) async {
+  if (selectedAccessPoint != null && selectedAccessPoint.isSaved) {
     context
         .read<WirelessSettingsBloc>()
-        .add(ConnectSavedNetwork('', accessPoint.nmAccessPoint));
+        .add(ConnectSavedNetwork('', selectedAccessPoint.nmAccessPoint));
     Navigator.pop(context);
   } else {
     Navigator.pushNamed(
       context,
       AppRoutes.wirelessConnectSecureNetwork,
-      arguments: {'accessPoint': accessPoint.nmAccessPoint},
+      arguments: {'accessPoint': selectedAccessPoint?.nmAccessPoint},
     );
   }
 }

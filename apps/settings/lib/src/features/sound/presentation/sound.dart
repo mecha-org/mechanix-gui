@@ -76,7 +76,7 @@ class Sound extends StatelessWidget {
                   ],
                 ),
               ],
-            ),
+            ).padTop(8),
           ),
         ),
       );

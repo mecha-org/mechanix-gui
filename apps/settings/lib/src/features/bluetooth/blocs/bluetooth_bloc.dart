@@ -11,7 +11,8 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
   final BluetoothRepository bluetoothRepository;
   final logger = Logger();
 
-  StreamSubscription? changeStream;
+  StreamSubscription? _bluetoothDeviceAddedStream;
+  StreamSubscription? _bluetoothDeviceRemovedStream;
 
   BluetoothBloc({required this.bluetoothRepository})
       : super(BluetoothState(
@@ -34,6 +35,9 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     on<RenameAdapterEvent>(_onRenameAdapter);
     on<DiscoveryEnabled>(_setDeviceDiscoverable);
     on<CheckDeviceDiscoverable>(_isDeviceDiscoverable);
+    on<BluetoothDevicesAdded>(_addedBluetoothDevices);
+    on<BluetoothDevicesRemoved>(_removedBluetoothDevices);
+
     _initializeBluetoothStream();
     _deviceAddedStream();
     _deviceRemovedStream();
@@ -64,11 +68,10 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
   Future<void> _deviceAddedStream() async {
     try {
       final stream = await bluetoothRepository.onDeviceAdded();
-      changeStream = stream.listen((device) async {
-        if (!isClosed) {
-          logger.i("+++++++ Device added +++++++ : $device");
-          add(RefreshDeviceList()); // device
-        }
+      _bluetoothDeviceAddedStream = stream.listen((device) async {
+        logger.i("+++++++ Device added +++++++ : ${device}");
+
+        add(BluetoothDevicesAdded(device));
       });
     } catch (e, stackTrace) {
       logger.e('Error listening to device added events: $e, $stackTrace');
@@ -78,10 +81,10 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
   Future<void> _deviceRemovedStream() async {
     try {
       final stream = await bluetoothRepository.onDeviceRemoved();
-      changeStream = stream.listen((device) async {
+      _bluetoothDeviceRemovedStream = stream.listen((device) async {
         if (!isClosed) {
-          logger.i("-------- Device removed -------- : $device");
-          add(RefreshDeviceList());
+          logger.i("-------- Device removed -------- : ${device.name}");
+          add(BluetoothDevicesRemoved(device));
         }
       });
     } catch (e, stackTrace) {
@@ -133,7 +136,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       logger.i('Starting Bluetooth discovery');
       await bluetoothRepository.startDiscovery();
       emit(state.copyWith(loading: true));
-      add(RefreshDeviceList());
+      // add(RefreshDeviceList());
       // Future.delayed(Duration(seconds: 15), () async {
       //   add(StopDiscovery());
       // });
@@ -184,6 +187,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       logger.i('Pairing device with address: ${event.address}');
 
       await bluetoothRepository.pair(event.address);
+
       logger.i('Device paired successfully: ${event.address}');
     } catch (e) {
       logger.e('Error pairing device: $e');
@@ -196,7 +200,16 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     try {
       logger.i('Connecting to device with address: ${event.address}');
       await bluetoothRepository.connect(event.address);
-      add(RefreshDeviceList());
+      final allDevices = await bluetoothRepository.getDevices();
+      final connectedDevice =
+          allDevices.firstWhere((d) => d.address == event.address);
+
+      final updatedDevices = state.devices
+          .map((d) => d.address == event.address ? connectedDevice : d);
+
+      emit(state.copyWith(devices: [...updatedDevices]));
+
+      // add(RefreshDeviceList());
       logger.i('Device connected successfully: ${event.address}');
     } catch (e) {
       logger.e('Error connecting to device: $e');
@@ -208,10 +221,21 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       DisconnectDevice event, Emitter<BluetoothState> emit) async {
     try {
       logger.i('Disconnecting from device with address: ${event.address}');
+
       await bluetoothRepository.disconnect(event.address);
+
+      final allDevices = await bluetoothRepository.getDevices();
+      final disconnectedDevice =
+          allDevices.firstWhere((d) => d.address == event.address);
+
+      final updatedDevices = state.devices
+          .map((d) => d.address == event.address ? disconnectedDevice : d);
+
+      emit(state.copyWith(devices: [...updatedDevices]));
+
       logger.i('Device disconnected successfully: ${event.address}');
     } catch (e) {
-      logger.e('Error disconnecting from device: $e');
+      // logger.e('Error disconnecting from device: $e');
       emit(state.copyWith(error: e.toString()));
     }
   }
@@ -264,9 +288,27 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     emit(state.copyWith(isDiscoveryEnabled: event.isDiscoverable));
   }
 
+  void _addedBluetoothDevices(
+      BluetoothDevicesAdded event, Emitter<BluetoothState> emit) {
+    if (event.device.name != '') {
+      emit(state.copyWith(devices: [...state.devices, event.device]));
+    }
+  }
+
+  void _removedBluetoothDevices(
+      BluetoothDevicesRemoved event, Emitter<BluetoothState> emit) {
+    if (event.device.name != '') {
+      final devices = state.devices
+          .where((device) => device.address != event.device.address)
+          .toList();
+      emit(state.copyWith(devices: devices));
+    }
+  }
+
   @override
   Future<void> close() {
-    changeStream?.cancel();
+    _bluetoothDeviceAddedStream?.cancel();
+    _bluetoothDeviceRemovedStream?.cancel();
     return super.close();
   }
 }

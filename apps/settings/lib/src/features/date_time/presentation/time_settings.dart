@@ -26,8 +26,8 @@ class _TimeSettingsState extends State<TimeSettings> {
   Widget build(BuildContext context) {
     return BlocBuilder<DateTimeBloc, DateTimeState>(
       builder: (context, state) {
-        final currentTimeZoneAbbr = state.listTimezones.isNotEmpty
-            ? state.listTimezones.firstWhere((t) {
+        final currentTimeZoneAbbr = timeZones.isNotEmpty
+            ? timeZones.firstWhere((t) {
                 return t.value == state.selectedTimezone;
               }).label
             : '';
@@ -117,7 +117,7 @@ class _TimeSettingsState extends State<TimeSettings> {
                         selectionWidth: 116,
                         selectionHeight: 56,
                         value: state.selectedTimezone,
-                        options: state.listTimezones,
+                        options: timeZones,
                         onSelectedItemChanged: (value) {
                           context
                               .read<DateTimeBloc>()
@@ -128,7 +128,7 @@ class _TimeSettingsState extends State<TimeSettings> {
                   ),
                   ApplyButton()
                 ],
-              ),
+              ).padTop(8),
             ),
           ),
         );

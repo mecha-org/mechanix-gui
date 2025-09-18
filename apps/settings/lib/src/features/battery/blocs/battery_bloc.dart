@@ -25,10 +25,6 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
 
   Future<void> _getBatteryInfo(
       BatteryInfoRequested event, Emitter<BatteryState> emit) async {
-    emit(state.copyWith(
-      batteryPercentage: 0.0,
-      batteryStatus: UPowerDeviceState.unknown,
-    ));
     try {
       final batteryInfo = await batteryRepository.getBatteryInfo();
 

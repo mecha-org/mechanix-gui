@@ -41,7 +41,7 @@ class _LockScreenTimeoutState extends State<LockScreenTimeout> {
             options: screenOffOptions,
             onChanged: onChanged,
             value: getValue(state.screenTimeout),
-          )),
+          ).padTop(8)),
         );
       },
     );

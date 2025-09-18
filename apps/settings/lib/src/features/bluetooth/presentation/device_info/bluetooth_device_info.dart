@@ -106,7 +106,7 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                     ),
                   )
                 ],
-              ),
+              ).padTop(8),
             ),
           ),
         );

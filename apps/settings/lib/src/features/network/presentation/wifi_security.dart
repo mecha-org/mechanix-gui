@@ -35,7 +35,7 @@ class _WifiSecurityWidgetState extends State<WifiSecurityWidget> {
           onChanged: onChange,
           selectedValue: selectedValue,
         )),
-      ).padHorizontal(16),
+      ).padOnly(left: 16, right: 16, top: 8),
     );
   }
 }

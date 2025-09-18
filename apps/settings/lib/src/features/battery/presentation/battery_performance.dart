@@ -5,7 +5,7 @@ import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_event.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_state.dart';
 import 'package:mechanix_settings/src/features/battery/models/types.dart';
-import 'package:widgets/widgets.dart';
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 
 class BatteryPerformance extends StatefulWidget {
@@ -38,7 +38,7 @@ class BatteryPerformanceState extends State<BatteryPerformance> {
                 )
               ])
             ],
-          ),
+          ).padTop(8),
         ),
       );
     });

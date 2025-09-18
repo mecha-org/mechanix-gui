@@ -60,9 +60,9 @@ class _Ipv4AddressWidgetState extends State<Ipv4AddressWidget> {
                       ))
                 ]).padOnly(top: 40, bottom: 8)
             ],
-          ),
+          ).padTop(8),
         ),
-      ).padHorizontal(16),
+      ),
     );
   }
 }
