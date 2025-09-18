@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_button.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
@@ -19,6 +20,8 @@ import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
 import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_item_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
+import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 import 'view_mode_notifier.dart';
 import 'grid_view.dart';
@@ -58,6 +61,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   final LayerLink _menuLink = LayerLink();
   OverlayEntry? _menuEntry;
   bool _isMenuOpen = false;
+
+  final downloadsDir = AppConfig().downloadsDir;
+  final documentsDir = AppConfig().documentsDir;
+  final homeDir = AppConfig().homeDir;
 
   @override
   Widget build(BuildContext context) {
@@ -551,6 +558,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   Widget _buildFloatingActionMenu(BuildContext context) {
     final allSelected = selectedPaths.length == displayedFiles.length &&
         displayedFiles.isNotEmpty;
+    final hasSelection = selectedPaths.isNotEmpty;
 
     return MechanixFloatingActionMenu(
       height: 48,
@@ -567,19 +575,29 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           iconWidget: Image.asset(
             Images.copy,
             height: 20,
+            color: hasSelection
+                ? Colors.white
+                : Colors.grey, // visually indicate disabled
           ),
-          onTap: () {
-            handleCopy();
-          },
+          onTap: hasSelection
+              ? () {
+                  handleCopy();
+                }
+              : null, // disable if no selection
         ),
         MechanixFabItem(
           iconWidget: Image.asset(
             Images.delete,
             height: 20,
+            color: hasSelection
+                ? Colors.white
+                : Colors.grey, // visually indicate disabled
           ),
-          onTap: () {
-            handleDelete();
-          },
+          onTap: hasSelection
+              ? () {
+                  handleDelete();
+                }
+              : null, // disable if no selection
         ),
         MechanixFabItem(
           anchorLink: _menuLink,
@@ -621,6 +639,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void _toggleMenuOverlay(BuildContext context) {
+    final oneSelected = selectedPaths.length == 1;
+    final hasSelection = selectedPaths.isNotEmpty;
+
     _menuEntry = OverlayEntry(
       builder: (_) => Positioned.fill(
         child: Stack(
@@ -658,26 +679,35 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     itemPadding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     items: [
-                      if (selectedPaths.length == 1)
-                        MechanixMenuItem(
-                          leadingWidget: Image.asset(Images.rename,
-                              color: Colors.white70, height: 20),
-                          label: "Rename",
-                          onTap: () {
-                            _hideMenu();
-                            final selectedPath = selectedPaths.first;
-                            _showRenameDialog(selectedPath);
-                          },
-                        ),
+                      MechanixMenuItem(
+                        leadingWidget: Image.asset(Images.rename,
+                            color: oneSelected ? Colors.white70 : Colors.grey,
+                            height: 20),
+                        label: "Rename",
+                        textStyle: TextStyle(
+                            color: oneSelected ? Colors.white : Colors.grey),
+                        onTap: oneSelected
+                            ? () {
+                                _hideMenu();
+                                final selectedPath = selectedPaths.first;
+                                _showRenameDialog(selectedPath);
+                              }
+                            : null, // Disabled if not exactly one item selected
+                      ),
                       MechanixMenuDivider(),
                       MechanixMenuItem(
                         leadingWidget: Image.asset(Images.move,
-                            color: Colors.white70, height: 20),
+                            color: hasSelection ? Colors.white70 : Colors.grey,
+                            height: 20),
                         label: "Move",
-                        onTap: () {
-                          _hideMenu();
-                          handleMove();
-                        },
+                        textStyle: TextStyle(
+                            color: hasSelection ? Colors.white : Colors.grey),
+                        onTap: hasSelection
+                            ? () {
+                                _hideMenu();
+                                handleMove();
+                              }
+                            : null, // Optional: disable if nothing selected
                       ),
                       MechanixMenuDivider(),
                       MechanixMenuItem(
@@ -686,29 +716,38 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         label: "Create folder",
                         onTap: () {
                           _hideMenu();
-                          showCreateFolderDialog();
-                          clearSelection();
+                          showCreateFolderDialogFloatingMenu();
                         },
                       ),
                       MechanixMenuDivider(),
                       MechanixMenuItem(
                         leadingWidget: Image.asset(Images.compress,
-                            color: Colors.white70, height: 20),
+                            color: hasSelection ? Colors.white70 : Colors.grey,
+                            height: 20),
                         label: "Compress",
-                        onTap: () {
-                          _hideMenu();
-                          handleCompress();
-                        },
+                        textStyle: TextStyle(
+                            color: hasSelection ? Colors.white : Colors.grey),
+                        onTap: hasSelection
+                            ? () {
+                                _hideMenu();
+                                handleCompress();
+                              }
+                            : null, // Optional: disable if nothing selected
                       ),
                       MechanixMenuDivider(),
                       MechanixMenuItem(
                         leadingWidget: Image.asset(Images.info,
-                            color: Colors.white70, height: 20),
+                            color: oneSelected ? Colors.white70 : Colors.grey,
+                            height: 20),
                         label: "Properties",
-                        onTap: () {
-                          _hideMenu();
-                          handleProperties();
-                        },
+                        textStyle: TextStyle(
+                            color: oneSelected ? Colors.white : Colors.grey),
+                        onTap: oneSelected
+                            ? () {
+                                _hideMenu();
+                                handleProperties();
+                              }
+                            : null, // Disabled if not exactly one item selected
                       ),
                     ],
                   ),
@@ -785,19 +824,123 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   void handleMove() {
     final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
     List<String> selectedPathsList = selectedPaths.toList();
-    final filesBloc = BlocProvider.of<FilesBloc>(context); // <- outside builder
+    final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
 
-    BlocProvider.of<FilesBloc>(context)
-        .add(StartMoveMode(selectedPaths.toList()));
-    showDialog(
+    // Start move mode
+    filesBloc.add(StartMoveMode(selectedPathsList));
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => MoveFileDialog(
-        currentPath: currentPath,
-        selectedPaths: selectedPathsList,
-        filesBloc: filesBloc,
-      ),
-    );
-    clearSelection();
+      backgroundColor: Colors.grey[850],
+      isScrollControlled: true,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select destination',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ).padLeft(18).padBottom(4).padTop(14),
+              MechanixSectionListTheme(
+                style: MechanixSectionListThemeData(
+                  height: 42,
+                  dividerPadding: EdgeInsets.zero,
+                  widgetPadding: EdgeInsets.zero,
+                  backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
+                ),
+                child: MechanixSectionList(
+                  sectionListItems: [
+                    SectionListItems(
+                        title: "Home directory",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, homeDir, "Home", filesBloc,
+                            () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.home,
+                          iconColor: Colors.blueAccent,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                    SectionListItems(
+                        title: "Downloads",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, downloadsDir, "Downloads",
+                            filesBloc, () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.downloads,
+                          iconColor: Colors.deepPurpleAccent,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                    SectionListItems(
+                        title: "Documents",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, documentsDir, "Documents",
+                            filesBloc, () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.homeDocuments,
+                          iconColor: Colors.orangeAccent,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                    SectionListItems(
+                        title: "Root (/)",
+                        titleTextStyle: const TextStyle(fontSize: 14),
+                        onTap: () => onTap(context, "/", "Root", filesBloc,
+                            () => reload(currentPath, filesBloc)),
+                        leading: IconWidget(
+                          iconWidth: 20,
+                          iconHeight: 20,
+                          iconPath: Images.hardDrive,
+                        ),
+                        defaultTrailingIcon: false,
+                        trailing: SizedBox(
+                          child: Icon(
+                            size: 16,
+                            Icons.arrow_forward_ios,
+                            color: Colors.grey,
+                          ).padAll(4),
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(() {
+      // Clear selection only if needed when bottom sheet is closed
+      clearSelection();
+    });
   }
 
   void handleDelete() {
@@ -1022,7 +1165,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     color: Colors.white70, height: mechanixIconSize),
                 onTap: () {
                   actionTaken = true;
-                  reload(currentPath);
+                  final filesBloc = BlocProvider.of<FilesBloc>(context);
+
+                  reload(currentPath, filesBloc);
                   Navigator.of(context).pop();
                   clearSelection();
                 },
@@ -1312,6 +1457,134 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
   }
 
+  void showCreateFolderDialogFloatingMenu() {
+    String folderName = ""; // Local variable to track input
+    final filesBloc = BlocProvider.of<FilesBloc>(context);
+    final hasSelection = selectedPaths.isNotEmpty;
+    final movePaths = selectedPaths;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            ),
+            child: MechanixTextInputTheme(
+              style: MechanixTextInputThemeData(
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: MechanixTextInput<String>.textInput(
+                          hintText: "New folder",
+                          onChanged: (value) {
+                            folderName = value; // Update local variable
+                          },
+                          inputDecoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 16),
+                            filled: true,
+                            fillColor: const Color(0xFF2C2C2E),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(50),
+                              borderSide: BorderSide.none,
+                            ),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                              vertical: 16))
+                                      .copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(bottomSheetContext).pop();
+                                  },
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(vertical: 16),
+                                    backgroundColor: Colors.grey[800],
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(50),
+                                    ),
+                                  ).copyWith(
+                                    splashFactory: NoSplash
+                                        .splashFactory, // Disable ripple animation
+                                  ),
+                                  onPressed: () {
+                                    final trimmedName = folderName.trim();
+                                    if (trimmedName.isNotEmpty) {
+                                      final currentPath =
+                                          '/${widget.path.map((e) => e.name).join('/')}';
+
+                                      // Dispatch CreateFolder event
+                                      filesBloc.add(CreateFolder(
+                                        path: currentPath,
+                                        folderName: trimmedName,
+                                      ));
+
+                                      // If there are selected paths, move them into the new folder
+                                      if (hasSelection) {
+                                        final newFolderPath =
+                                            '$currentPath/$trimmedName';
+                                        debugPrint(
+                                            "newFolderPath :$newFolderPath");
+                                        debugPrint("selectedPaths :$movePaths");
+
+                                        filesBloc.add(Move(
+                                          sourcePaths: selectedPaths.toList(),
+                                          destinationPath: newFolderPath,
+                                        ));
+                                        filesBloc.add(CancelMoveMode());
+                                      }
+                                    }
+                                    clearSelection();
+                                    Navigator.of(bottomSheetContext).pop();
+                                  },
+                                  child: Icon(Icons.check),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void showCreateFolderDialog() {
     String folderName = ""; // Local variable to track input
     final filesBloc = BlocProvider.of<FilesBloc>(context);
@@ -1548,8 +1821,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     filesBloc.add(ToggleHiddenFiles(path: currentPath));
   }
 
-  void reload(String currentPath) {
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
+  void reload(String currentPath, FilesBloc filesBloc) {
     filesBloc.add(LoadFilesAtPath(currentPath));
   }
 

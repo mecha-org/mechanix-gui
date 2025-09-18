@@ -249,7 +249,11 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
           isMoveMode: true,
         ));
       } else {
-        await _loadAndEmitSortedFiles(emit: emit, path: event.destinationPath);
+        event.completer?.complete();
+        final firstSource = event.sourcePaths.first;
+        final sourceParent = p.dirname(firstSource);
+
+        await _loadAndEmitSortedFiles(emit: emit, path: sourceParent);
         emit(state.copyWith(loading: false));
       }
     } catch (e) {
