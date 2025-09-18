@@ -133,6 +133,7 @@ jobs:
 
       # Upload package to Aptly
       - name: Upload package to Aptly
+        continue-on-error: true
         run: |
           echo "Uploading package: ${{ steps.package_details.outputs.package_name }}"
           echo "To folder: ${{ steps.package_details.outputs.folder_name }}"
@@ -141,6 +142,7 @@ jobs:
 
       # Add package to local repo
       - name: Add package to local repo
+        continue-on-error: true
         run: |
           echo "Adding package from folder: ${{ steps.package_details.outputs.folder_name }}"
           curl -X POST ${{ env.MECHANIX_APTLY_SERVER_ENDPOINT }}/api/repos/${{ env.MECHANIX_APTLY_DEB_REPOSITORY_NAME }}/file/${{ steps.package_details.outputs.folder_name }}
