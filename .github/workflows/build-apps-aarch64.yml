@@ -44,7 +44,10 @@ jobs:
 
           - name: files app
             folder: files
-            binary: mechanix_files
+            binary: mechanix_files           
+          - name: music app
+            folder: music
+            binary: mechanix_music  
 
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
