@@ -78,6 +78,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     try {
       await notesRepository.deleteNote(event.deleteIds);
       add(LoadNotes());
+      add(SearchEvent(''));
     } catch (e) {
       logger.e('note delete failed $e');
     }

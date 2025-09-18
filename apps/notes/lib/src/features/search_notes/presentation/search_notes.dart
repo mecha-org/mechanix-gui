@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
@@ -18,7 +19,13 @@ class _SearchNotesState extends State<SearchNotes> {
   @override
   void initState() {
     super.initState();
-    context.read<NotesBloc>().add(LoadNotes());
+    context.read<NotesBloc>().add(SearchEvent(''));
+  }
+
+  void onBackClick() {
+    Navigator.pop(context);
+
+    context.read<NotesBloc>().add(SearchEvent(''));
   }
 
   @override
@@ -28,7 +35,15 @@ class _SearchNotesState extends State<SearchNotes> {
         return Scaffold(
           appBar: MechanixNavigationBar(
             title: "Search Notes",
-            titleStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+            leadingWidget: IconButton(
+              icon: Image.asset(NotesIcon.backIcon, height: 20, width: 20),
+              onPressed: () => Navigator.pop(context),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            ),
+            titleStyle: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.normal,
+            ),
           ),
           body: Stack(
             children: [
@@ -42,10 +57,15 @@ class _SearchNotesState extends State<SearchNotes> {
                         selectedNotes: [],
                         isSelectionMode: false,
                         groupedNotes: [
-                          GroupedNotes(label: '', notes: state.searchedNotes ?? []),
+                          GroupedNotes(
+                            label: '',
+                            notes: state.searchedNotes ?? [],
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 80), // padding so list doesn't hide behind bar
+                      const SizedBox(
+                        height: 80,
+                      ), // padding so list doesn't hide behind bar
                     ],
                   ),
                 ),
@@ -54,9 +74,7 @@ class _SearchNotesState extends State<SearchNotes> {
                 left: 0,
                 right: 0,
                 bottom: 30,
-                child: Center(
-                  child: SearchInputBar(),
-                ),
+                child: Center(child: SearchInputBar()),
               ),
             ],
           ),

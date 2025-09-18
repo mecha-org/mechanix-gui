@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
           floatingActionButton:
               !state.isSelectionMode
                   ? Padding(
-                    padding: const EdgeInsets.only(bottom: 15, right: 15),
+                    padding: const EdgeInsets.only(bottom: 36, right: 20),
                     child: SizedBox(
                       height: 64,
                       width: 64,
@@ -142,6 +142,7 @@ class _HomePageState extends State<HomePage> {
             children: [
               Positioned.fill(
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
