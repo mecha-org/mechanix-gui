@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 
 abstract class FilesEvent extends Equatable {
@@ -66,8 +68,13 @@ class CancelCopyMode extends FilesEvent {}
 class Move extends FilesEvent {
   final List<String> sourcePaths;
   final String destinationPath;
+  final Completer<void>? completer;
 
-  Move({required this.sourcePaths, required this.destinationPath});
+  Move({
+    required this.sourcePaths,
+    required this.destinationPath,
+    this.completer,
+  });
 }
 
 class ContinueMoveWithConflictResolution extends FilesEvent {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -412,8 +414,13 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
     final movedCount = state.movedPaths.length;
     final folderName = targetPath.split('/').last;
 
-    await bloc.fileRepository
-        .moveEntities(state.movedPaths, targetPath); // wait for move
+    final completer = Completer<void>();
+    bloc.add(Move(
+      sourcePaths: state.movedPaths,
+      destinationPath: targetPath,
+      completer: completer,
+    ));
+    await completer.future;
     bloc.add(CancelMoveMode());
 
     // safe to reload
@@ -450,6 +457,7 @@ void onTap(
     ),
   );
   // Close any existing bottom sheet
+  Navigator.pop(context, true);
 
   showModalBottomSheet(
     context: context,
