@@ -57,6 +57,7 @@ class WifiRepositoryImpl implements WifiRepository {
     logger.i('Subscribing to WiFi events');
     var client = NetworkManagerClient();
     await client.connect();
+    logger.i('Subscribing to WiFi events prop ${client.propertiesChanged}');
     return client.propertiesChanged;
   }
 
@@ -442,6 +443,31 @@ class WifiRepositoryImpl implements WifiRepository {
         orElse: () => throw Exception('No WiFi device found'));
 
     return device.wireless!.propertiesChanged;
+  }
+
+  @override
+  Future<NetworkManagerDeviceState?> getNetworkState() async {
+    var client = NetworkManagerClient();
+    await client.connect();
+
+    logger.i('getActivateNetworks state - ${client.activeConnections.length}');
+
+    final wifiDevices = client.devices.where(
+      (d) => d.deviceType == NetworkManagerDeviceType.wifi,
+    );
+    final device = wifiDevices.isNotEmpty ? wifiDevices.first : null;
+
+    logger.i('getActivateNetworks devices.length - ${device?.state}');
+
+    if (device != null) {
+      return device.state;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> close() async {
+    await _client.close();
   }
 }
 

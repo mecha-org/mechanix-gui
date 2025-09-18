@@ -29,7 +29,9 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
   Widget build(BuildContext context) {
     return BlocBuilder<DateTimeBloc, DateTimeState>(
       builder: (context, state) {
-        final currentTimeZoneAbbr = '';
+        final currentTimeZoneAbbr = state.selectedTimezone.isNotEmpty
+            ? '(${timeZones.firstWhere((e) => e.value == state.selectedTimezone, orElse: () => defaultTimeZones).label})'
+            : '';
 
         final month = state.systemDateTime?.month != null
             ? longMonths

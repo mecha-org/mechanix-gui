@@ -73,7 +73,7 @@ class RenameAdapter extends StatelessWidget {
                     ],
                   ),
                 ],
-              ),
+              ).padTop(8),
             ),
           ),
         );

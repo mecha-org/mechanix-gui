@@ -41,7 +41,7 @@ class _ConfigureProxyWidgetState extends State<ConfigureProxyWidget> {
             ],
           ),
         ),
-      ).padHorizontal(16),
+      ).padOnly(left: 16, right: 16, top: 8),
     );
   }
 }

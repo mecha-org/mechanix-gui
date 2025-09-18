@@ -124,7 +124,7 @@ class _DisplayPageState extends State<DisplayPage> {
                       )
                     ]).padTop(40),
               ],
-            ),
+            ).padTop(8),
           ),
         );
       },

@@ -47,9 +47,9 @@ class _ConfigureDnsWidgetState extends State<ConfigureDnsWidget> {
                 ],
               ).padOnly(top: 40, bottom: 8)
             ],
-          ),
+          ).padTop(8),
         ),
-      ).padHorizontal(16),
+      ),
     );
   }
 }

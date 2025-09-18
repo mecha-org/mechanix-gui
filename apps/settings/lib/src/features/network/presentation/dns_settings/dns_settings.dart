@@ -59,6 +59,6 @@ class DnsSettings extends StatelessWidget {
               ),
             ),
           ],
-        )));
+        ).padTop(8)));
   }
 }

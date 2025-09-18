@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_toggle.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
+import 'package:widgets/widgets/switch/mechanix_switch.dart';
 
 class WirelessProtocolsList extends StatelessWidget {
   const WirelessProtocolsList(
@@ -21,7 +21,7 @@ class WirelessProtocolsList extends StatelessWidget {
         MechanixSimpleList(listItems: [
           SimpleListItems(
               title: 'Private Wireless Address',
-              trailing: CustomToggle(value: false, onChanged: (v) {}))
+              trailing: MechanixSwitch(value: false, onChanged: (v) {}))
         ]),
         MechanixSelect(
           value: selectedValue,

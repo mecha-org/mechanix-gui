@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
@@ -25,24 +26,16 @@ class ConnectSecureNetwork extends StatelessWidget {
 
     void backNavigation(BuildContext context) {
       Navigator.pop(context);
-      Navigator.pop(context);
     }
 
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
-        listener: (context, state) {
-          if (state.error != null && state.error!.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Authentication failed: ${state.error}',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            );
-          }
+        listenWhen: (context, state) {
+          return state.deviceState == NetworkManagerDeviceState.activated;
         },
+        listener: (context, state) =>
+            Navigator.pushNamed(context, AppRoutes.wireless),
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
           builder: (context, state) {
             return Scaffold(
@@ -58,30 +51,31 @@ class ConnectSecureNetwork extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                              child: MechanixTextInput.password(
-                            label: 'Wireless Credentials',
-                            isFormField: true,
-                            hintText: 'Enter Password',
-                            onChanged: (value) {
-                              context
-                                  .read<ConnectNetworkBloc>()
-                                  .add(PasswordChanged(value));
-                            },
-                            onFieldSubmitted: (_) {
-                              if (state.password.isNotEmpty) {
+                            child: MechanixTextInput.password(
+                              label: 'Wireless Credentials',
+                              isFormField: true,
+                              hintText: 'Enter Password',
+                              onChanged: (value) {
                                 context
                                     .read<ConnectNetworkBloc>()
-                                    .add(ConnectToNetwork(accessPoint));
-                                backNavigation(context);
-                              }
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter a password';
-                              }
-                              return null;
-                            },
-                          )),
+                                    .add(PasswordChanged(value));
+                              },
+                              onFieldSubmitted: (_) {
+                                if (state.password.isNotEmpty) {
+                                  print('connection enter pressed');
+                                  context
+                                      .read<ConnectNetworkBloc>()
+                                      .add(ConnectToNetwork(accessPoint));
+                                }
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a password';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
                         ],
                       ),
                       WirelessProtocols()

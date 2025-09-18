@@ -51,8 +51,7 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
 
     _initializeDBus();
     _streamPropertiesChange();
-
-    // _startUpdatingTime();
+    _startUpdatingTime();
   }
 
   static const service = 'org.freedesktop.timedate1';
@@ -100,12 +99,17 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
       final meridiem = DateFormat('a').format(dateTimeUTC); // 'a' gives AM/PM
       final timezoneOptions = getAllTimezoneAbbreviations(listTimezones);
 
+      if (ntpEnabled) {
+        final WheelScrollOption<String> ntpTimeZone = timezoneOptions
+            .firstWhere((tz) => tz.label == dateTimeUTC.timeZoneName);
+        add(SetTimeZone(ntpTimeZone.value));
+      }
+
       emit(state.copyWith(
         autoDateTime: ntpEnabled,
         systemDateTime: dateTimeUTC,
-        listTimezones: timezoneOptions,
+        // listTimezones: timezoneOptions,
         selectedMeridiem: meridiem,
-        selectedTimezone: currentTimeZone.asString(),
       ));
     } catch (e) {
       logger.e("Error initializing date time data: $e");
@@ -195,6 +199,9 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
         'SetTimezone',
         [DBusString(event.timezone), DBusBoolean(interactiveBoolean)],
       );
+
+      emit(state.copyWith(selectedTimezone: event.timezone));
+
       logger.i("Time Zone set to: ${event.timezone}");
     } catch (e) {
       logger.e("Error setting time zone: $e");
@@ -253,7 +260,7 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
       _timer = Timer.periodic(Duration(seconds: 1), (timer) {
         final currentTime = DateTime.now();
         if (_previousTime == null ||
-            currentTime.second != _previousTime!.second) {
+            currentTime.minute != _previousTime!.minute) {
           _previousTime = currentTime;
           // Update the state with the new system time
           emit(state.copyWith(systemDateTime: currentTime));
@@ -294,6 +301,7 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
     if (state.systemDateTime != null && state.systemDateTime is DateTime) {
       add(SetTime(
           dateTimeToMillisSinceEpoch(event.dateTime, state.systemDateTime!)));
+      add(SetTimeZone(event.timeZone));
     }
 
     emit(state.copyWith(

@@ -31,9 +31,10 @@ class _DeviceTypesState extends State<DeviceTypes> {
       body: SingleChildScrollView(
         child: ContainerWidget(
             child: MechanixSelect(
-                options: bluetoothDeviceOptions,
-                onChanged: onChanged,
-                value: selectValue)),
+                    options: bluetoothDeviceOptions,
+                    onChanged: onChanged,
+                    value: selectValue)
+                .padTop(8)),
       ),
     );
   }

@@ -70,7 +70,7 @@ class _AppearanceState extends State<Appearance> {
               ),
             ),
           ],
-        ),
+        ).padTop(8),
       ),
     );
   }

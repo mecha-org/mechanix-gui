@@ -37,7 +37,7 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
     if (device.paired && !device.connected) {
       context.read<BluetoothBloc>().add(ConnectDevice(device.address));
     } else if (device.connected && device.paired) {
-      context.read<BluetoothBloc>().add(RemoveDevice(device.address));
+      context.read<BluetoothBloc>().add(DisconnectDevice(device.address));
     } else {
       context.read<BluetoothBloc>().add(PairDevice(device.address));
       context.read<BluetoothBloc>().add(ConnectDevice(device.address));
@@ -54,7 +54,7 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
             onTap: () => onDeviceTap(device),
             leading: IconWidget(
               iconPath: Images.audioHeadset,
-              isActive: device.connected,
+              isActive: device.connected && device.paired,
             ),
             trailing: IconButton(
                 onPressed: () => onSettingsTap(device),

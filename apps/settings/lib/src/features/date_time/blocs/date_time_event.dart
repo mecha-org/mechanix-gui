@@ -46,8 +46,15 @@ class SetTime extends DateTimeEvent {
 
 class UpdateSystemDateTimeEvent extends DateTimeEvent {
   final DateTime dateTime;
+  final String timeZone;
 
-  UpdateSystemDateTimeEvent(this.dateTime);
+  UpdateSystemDateTimeEvent({required this.dateTime, required this.timeZone});
+
+  @override
+  List<Object?> get props => [
+        dateTime,
+        timeZone,
+      ];
 }
 
 class SetSelectedDateEvent extends DateTimeEvent {

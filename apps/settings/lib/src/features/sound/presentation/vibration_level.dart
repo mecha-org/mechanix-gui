@@ -35,7 +35,7 @@ class _VibrationLevelState extends State<VibrationLevel> {
                 value: state.vibrationLevel,
                 options: vibrationLevelOptions,
                 onChanged: onChanged,
-              ),
+              ).padTop(8),
             ),
           ),
         );

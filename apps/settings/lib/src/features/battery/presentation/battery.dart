@@ -76,7 +76,7 @@ class BatteryScreenState extends State<Battery> {
                           .padRight(8))
                 ]).padTop(40),
               ],
-            ),
+            ).padTop(8),
           ),
         );
       },
