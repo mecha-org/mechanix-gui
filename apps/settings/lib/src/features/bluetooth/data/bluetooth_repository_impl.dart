@@ -87,6 +87,9 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
 
   @override
   Future<void> startDiscovery() async {
+    final checkPowered = adapter.powered;
+    if (!checkPowered) await adapter.setPowered(true);
+
     if (!adapter.discovering) await adapter.startDiscovery();
   }
 
@@ -133,22 +136,25 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   }
 
   @override
-  Future<Stream<bool>> onDeviceAdded() async {
+  Future<Stream<BlueZDevice>> onDeviceAdded() async {
     await _ensureConnected();
-    return client.deviceAdded.map((device) {
-      logger.i("Device added: ${device.name} --- ${device.address}");
-      return true;
-    });
+    // return client.deviceAdded.map((device) {
+    // logger.i("Device added: ${device.name} --- ${device.address}");
+    //   return true;
+    // });
+
+    return client.deviceAdded;
   }
 
   @override
-  Future<Stream<bool>> onDeviceRemoved() async {
+  Future<Stream<BlueZDevice>> onDeviceRemoved() async {
     await _ensureConnected();
 
-    return client.deviceRemoved.map((device) {
-      logger.i("Device removed: ${device.name} ${device.icon}");
-      return true;
-    });
+    // return client.deviceRemoved.map((device) {
+    // logger.i("Device removed: ${device.name} ${device.icon}");
+    //   return true;
+    // });
+    return client.deviceRemoved;
   }
 
   @override
@@ -158,7 +164,9 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
 
   @override
   Future<void> setDiscoverable(bool value) async {
-    return adapter.setDiscoverable(value);
+    final checkPowered = adapter.powered;
+    if (!checkPowered) await adapter.setPowered(true);
+    await adapter.setDiscoverable(value);
   }
 
   // @override

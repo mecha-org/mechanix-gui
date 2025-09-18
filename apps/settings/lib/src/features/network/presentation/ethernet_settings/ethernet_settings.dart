@@ -53,6 +53,6 @@ class _EthernetSettingsState extends State<EthernetSettings> {
                 ),
               )
           ],
-        )));
+        ).padTop(8)));
   }
 }

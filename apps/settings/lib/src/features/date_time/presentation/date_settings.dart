@@ -130,7 +130,7 @@ class _DateSettingsState extends State<DateSettings> {
                   ),
                   ApplyButton()
                 ],
-              ),
+              ).padTop(8),
             ),
           ),
         );

@@ -1,10 +1,9 @@
 import 'package:equatable/equatable.dart';
-import 'package:widgets/widgets/wheelScroll/wheel_scroll_options_type.dart';
 
 class DateTimeState extends Equatable {
   final bool autoDateTime;
   final bool autoTimeZone;
-  final List<WheelScrollOption<String>> listTimezones;
+  // final List<WheelScrollOption<String>> listTimezones;
   final bool loading;
   final String? error;
   final DateTime? systemDateTime;
@@ -21,7 +20,7 @@ class DateTimeState extends Equatable {
   const DateTimeState({
     required this.autoDateTime,
     required this.autoTimeZone,
-    this.listTimezones = const [],
+    // this.listTimezones = const [],
     this.loading = false,
     this.error,
     this.systemDateTime,
@@ -38,7 +37,7 @@ class DateTimeState extends Equatable {
   DateTimeState copyWith({
     bool? autoDateTime,
     bool? autoTimeZone,
-    List<WheelScrollOption<String>>? listTimezones,
+    // List<WheelScrollOption<String>>? listTimezones,
     bool? loading,
     String? error,
     DateTime? systemDateTime,
@@ -54,7 +53,7 @@ class DateTimeState extends Equatable {
     return DateTimeState(
       autoDateTime: autoDateTime ?? this.autoDateTime,
       autoTimeZone: autoTimeZone ?? this.autoTimeZone,
-      listTimezones: listTimezones ?? this.listTimezones,
+      // listTimezones: listTimezones ?? this.listTimezones,
       loading: loading ?? this.loading,
       error: error,
       systemDateTime: systemDateTime ?? this.systemDateTime,
@@ -73,7 +72,7 @@ class DateTimeState extends Equatable {
   List<Object?> get props => [
         autoDateTime,
         autoTimeZone,
-        listTimezones,
+        // listTimezones,
         loading,
         error,
         systemDateTime,

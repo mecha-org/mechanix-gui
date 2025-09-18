@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/commons/left_transitions.dart';
 import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository_impl.dart';
@@ -111,7 +112,7 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
             inactiveThumbColor: Color(0xFF989898),
             inactiveTrackColor: Color(0xFF252525),
           ),
-        )
+        ),
       ]),
       builder: (context, mechanix, child) => MainApp(
         darkTheme: mechanix.darkTheme,
@@ -197,7 +198,12 @@ class MainApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: SettingMenu(),
         theme: lightTheme,
-        darkTheme: darkTheme,
+        darkTheme: darkTheme.copyWith(
+          scaffoldBackgroundColor: Colors.black,
+          pageTransitionsTheme: PageTransitionsTheme(
+            builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
+          ),
+        ),
         themeMode: themeMode,
         routes: {
           // Sound Routes

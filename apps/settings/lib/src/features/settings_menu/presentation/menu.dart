@@ -6,13 +6,7 @@ import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
 class SettingMenu extends StatelessWidget {
-  SettingMenu({super.key});
-
-  // final trailingIcon = IconWidget(
-  //   iconWidth: 10,
-  //   iconHeight: 17,
-  //   iconPath: Images.rightIconArrow,
-  // );
+  const SettingMenu({super.key});
 
   void onTap(BuildContext context, String route) {
     Navigator.pushNamed(context, route);
@@ -23,16 +17,7 @@ class SettingMenu extends StatelessWidget {
     return Scaffold(
       appBar: MechanixNavigationBar(
         title: "Settings",
-        titleSpacing: 24,
-        actionWidgets: [
-          IconButton(
-                  onPressed: () {},
-                  icon: IconWidget(
-                      iconHeight: 20,
-                      iconWidth: 20,
-                      iconPath: Images.searchIcon))
-              .padRight(22)
-        ],
+        titleSpacing: 16,
       ),
       body: SingleChildScrollView(
         child: ContainerWidget(
@@ -58,7 +43,7 @@ class SettingMenu extends StatelessWidget {
                     iconPath: Images.bluetooth,
                   ),
                 ),
-              ]),
+              ]).padVertical(8),
               MechanixSectionList(title: 'Device', sectionListItems: [
                 SectionListItems(
                   title: 'Battery',
@@ -107,7 +92,7 @@ class SettingMenu extends StatelessWidget {
                 ),
               ]),
             ],
-          ),
+          ).padTop(8),
         ),
       ),
     );

@@ -20,10 +20,14 @@ class _ApplyButtonState extends State<ApplyButton> {
       state.selectedYear,
       state.selectedMonth,
       state.selectedDate,
-      state.selectedHour,
+      state.selectedMeridiem == 'PM'
+          ? state.selectedHour + 12
+          : state.selectedHour,
       state.selectedMinute,
     );
-    context.read<DateTimeBloc>().add(UpdateSystemDateTimeEvent(newDateTime));
+
+    context.read<DateTimeBloc>().add(UpdateSystemDateTimeEvent(
+        dateTime: newDateTime, timeZone: state.selectedTimezone));
     Navigator.pop(context);
   }
 

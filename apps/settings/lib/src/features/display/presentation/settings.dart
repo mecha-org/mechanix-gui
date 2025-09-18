@@ -41,7 +41,7 @@ class ScreenOffTimeSettingsState extends State<ScreenOffTimeSettings> {
             options: screenOffOptions,
             onChanged: onChanged,
             value: getValue(state.screenTimeout),
-          )),
+          ).padTop(8)),
         );
       },
     );

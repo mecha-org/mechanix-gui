@@ -196,6 +196,7 @@ class _NotesEditorState extends State<NotesEditor> {
             ),
             Expanded(
               child: TextFormField(
+                autofocus: false,
                 maxLines: 1,
                 controller: _titleController,
                 maxLength: 25,
@@ -292,15 +293,18 @@ class _NotesEditorState extends State<NotesEditor> {
                         controller: _controller,
                         focusNode: _focusNode,
                         config: QuillEditorConfig(
-                          // onKeyPressed: (event, node) {
-                          //   if (event.logicalKey == LogicalKeyboardKey.escape) {
-                          //     FocusScope.of(context).unfocus();
-                          //   }
-                          //   return;
-                          // },
+                          enableSelectionToolbar: false,
+                          onKeyPressed: (event, node) {
+                            if (event.logicalKey == LogicalKeyboardKey.escape) {
+                              FocusScope.of(context).unfocus();
+                              return KeyEventResult.ignored;
+                            } else {
+                              return KeyEventResult.ignored;
+                            }
+                          },
                           customStyles: quillEditorStyle,
                           enableScribble: false,
-                          autoFocus: true,
+                          autoFocus: false,
                           enableInteractiveSelection: true,
                           placeholder: "Content",
                           embedBuilders: [
@@ -402,18 +406,18 @@ class _NotesEditorState extends State<NotesEditor> {
                           ),
                           onTap: () => toolbarSelection(ToolbarEnum.align),
                         ),
-                        MechanixFabItem(
-                          iconSize: 20,
-                          iconWidget: NotesFabIcon(
-                            iconPath: NotesIcon.addIcon,
-                            iconSize: 20,
-                            color:
-                                selectedToolbar == ToolbarEnum.add
-                                    ? Theme.of(context).disabledColor
-                                    : Colors.white,
-                          ),
-                          onTap: () => toolbarSelection(ToolbarEnum.add),
-                        ),
+                        // MechanixFabItem(
+                        //   iconSize: 20,
+                        //   iconWidget: NotesFabIcon(
+                        //     iconPath: NotesIcon.addIcon,
+                        //     iconSize: 20,
+                        //     color:
+                        //         selectedToolbar == ToolbarEnum.add
+                        //             ? Theme.of(context).disabledColor
+                        //             : Colors.white,
+                        //   ),
+                        //   onTap: () => toolbarSelection(ToolbarEnum.add),
+                        // ),
                       ],
                     ),
                   ),

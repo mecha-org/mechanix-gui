@@ -25,31 +25,26 @@ class AddNetwork extends StatelessWidget {
     }
 
     void onAddButtonPressed(BuildContext context, ConnectNetworkState state) {
-      if (formKey.currentState!.validate()) {
-        context.read<ConnectNetworkBloc>().add(
-              PasswordChanged(passwordController.text),
-            );
-        context.read<ConnectNetworkBloc>().add(
-              ConnectToUnknownNetwork(
-                nameController.text,
-                passwordController.text,
-              ),
-            );
+      context.read<ConnectNetworkBloc>().add(
+            ConnectToUnknownNetwork(
+              state.username,
+              state.password,
+            ),
+          );
 
-        if (state.error != '') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text(
-              'Authentication failed!',
-              style: TextStyle(color: Colors.red),
-            )),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('connecting to network...')),
-          );
-          backNavigation(context);
-        }
+      if (state.error != '') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text(
+            'Authentication failed!',
+            style: TextStyle(color: Colors.red),
+          )),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('connecting to network...')),
+        );
+        backNavigation(context);
       }
     }
 
@@ -68,15 +63,33 @@ class AddNetwork extends StatelessWidget {
                   children: [
                     MechanixTextInput.textInput(
                       hintText: 'Name',
+                      isFormField: true,
+                      onChanged: (value) {
+                        context
+                            .read<ConnectNetworkBloc>()
+                            .add(UsernameChanged(value));
+                      },
                     ).padBottom(8),
                     MechanixTextInput.password(
                       hintText: 'Enter Password',
+                      isFormField: true,
+                      onChanged: (value) {
+                        context
+                            .read<ConnectNetworkBloc>()
+                            .add(PasswordChanged(value));
+                      },
+                      onFieldSubmitted: (_) {
+                        if (state.password.isNotEmpty) {
+                          onAddButtonPressed(context, state);
+                          backNavigation(context);
+                        }
+                      },
                     ),
                     WirelessProtocols()
                   ],
                 ),
               ),
-            ),
+            ).padTop(8),
           );
         },
       ),

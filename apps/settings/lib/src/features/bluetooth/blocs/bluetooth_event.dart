@@ -62,4 +62,20 @@ class DiscoveryEnabled extends BluetoothEvent {
   DiscoveryEnabled(this.isDiscoverable);
 }
 
+class BluetoothDevicesAdded extends BluetoothEvent {
+  final BlueZDevice device;
+  BluetoothDevicesAdded(this.device);
+
+  @override
+  List<Object?> get props => [device];
+}
+
+class BluetoothDevicesRemoved extends BluetoothEvent {
+  final BlueZDevice device;
+  BluetoothDevicesRemoved(this.device);
+
+  @override
+  List<Object?> get props => [device];
+}
+
 class CheckDeviceDiscoverable extends BluetoothEvent {}

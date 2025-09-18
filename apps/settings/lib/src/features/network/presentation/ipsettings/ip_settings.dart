@@ -71,7 +71,7 @@ class _IpSettingsState extends State<IpSettings> {
             if (selectedMode == IpModes.static)
               IpStaticDetails(selectedMode: selectedMode),
           ],
-        ),
+        ).padTop(8),
       ),
     );
   }

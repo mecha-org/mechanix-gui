@@ -53,7 +53,7 @@ class _AboutState extends State<About> {
                 ],
               )
             ],
-          )),
+          ).padTop(8)),
         );
       },
     );

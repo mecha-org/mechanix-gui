@@ -49,4 +49,33 @@ class SelectNetwork extends WirelessSettingsEvent {
   SelectNetwork(this.selectedAccessPoint);
 }
 
+class SelectNetworkPoint extends WirelessSettingsEvent {
+  final NetworkManagerAccessPoint selectedAccessPoint;
+  SelectNetworkPoint(this.selectedAccessPoint);
+}
+
 class ConnectedNetwork extends WirelessSettingsEvent {}
+
+class UpdateAvailableNetworksEvent extends WirelessSettingsEvent {
+  final List<AccessPoints> accessPoints;
+  UpdateAvailableNetworksEvent(this.accessPoints);
+
+  @override
+  List<Object> get props => [accessPoints];
+}
+
+class UpdateConnectedNetworkEvent extends WirelessSettingsEvent {
+  final AccessPoints accessPoint;
+  UpdateConnectedNetworkEvent(this.accessPoint);
+
+  @override
+  List<Object> get props => [accessPoint];
+}
+
+class DeviceConnectionStateEvent extends WirelessSettingsEvent {
+  final NetworkManagerDeviceState deviceState;
+  DeviceConnectionStateEvent(this.deviceState);
+
+  @override
+  List<Object> get props => [deviceState];
+}

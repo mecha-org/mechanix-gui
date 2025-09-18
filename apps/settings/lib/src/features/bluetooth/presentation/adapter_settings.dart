@@ -48,7 +48,7 @@ class AdapterSettings extends StatelessWidget {
                   color: Color.fromARGB(197, 255, 255, 255), fontSize: 24),
             ),
             onTap: () => onTap(context, deviceName),
-          ),
+          ).padTop(8),
         ),
       );
     });

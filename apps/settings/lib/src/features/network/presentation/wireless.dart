@@ -10,14 +10,26 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_e
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
+import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
-class WirelessSettings extends StatelessWidget {
+class WirelessSettings extends StatefulWidget {
   const WirelessSettings({super.key});
+
+  @override
+  State<WirelessSettings> createState() => _WirelessSettingsState();
+}
+
+class _WirelessSettingsState extends State<WirelessSettings> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<WirelessSettingsBloc>().add(LoadNetworks());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +58,9 @@ class WirelessSettings extends StatelessWidget {
                             .add(ToggleWifi(val)),
                       ),
                     ),
-                    if (state.wifiOn && state.connectedNetwork != null)
+                    if (state.wifiOn &&
+                        state.deviceState ==
+                            NetworkManagerDeviceState.activated)
                       SimpleListItems(
                         onTap: () =>
                             onInfoTap(state.connectedNetwork!, context),
@@ -63,7 +77,7 @@ class WirelessSettings extends StatelessWidget {
                                 isActive: true)),
                         trailing: IconButton(
                             onPressed: () =>
-                                onNetworkTap(state.connectedNetwork!, context),
+                                onInfoTap(state.connectedNetwork!, context),
                             icon: SizedBox(
                                 height: 24,
                                 width: 24,
@@ -90,7 +104,7 @@ class WirelessSettings extends StatelessWidget {
                   const WirelessAdvanceSettings()
                 ],
               ),
-            ),
+            ).padTop(8),
           ));
     });
   }
@@ -98,6 +112,10 @@ class WirelessSettings extends StatelessWidget {
 
 void onNetworkTap(AccessPoints item, BuildContext context) {
   context.read<WirelessSettingsBloc>().add(SelectNetwork(item));
+  context
+      .read<WirelessSettingsBloc>()
+      .add(SelectNetworkPoint(item.nmAccessPoint));
+
   if (item.isSaved && !item.isActive) {
     context
         .read<WirelessSettingsBloc>()
@@ -112,10 +130,13 @@ void onNetworkTap(AccessPoints item, BuildContext context) {
 }
 
 void onInfoTap(AccessPoints item, BuildContext context) {
+  context.read<WirelessSettingsBloc>().add(SelectNetwork(item));
+  context
+      .read<WirelessSettingsBloc>()
+      .add(SelectNetworkPoint(item.nmAccessPoint));
   Navigator.pushNamed(
     context,
     AppRoutes.wirelessNetworkDetails,
-    arguments: {'networkDetails': item},
   );
 }
 
@@ -142,7 +163,7 @@ List<SectionListItems> getWifiList(
   final wifi = state.map((s) {
     return SectionListItems(
       title: utf8.decode(s.nmAccessPoint.ssid),
-      onTap: () => onInfoTap(s, context),
+      onTap: () => onNetworkTap(s, context),
       leading: SizedBox(
         height: 24,
         width: 24,
@@ -150,7 +171,7 @@ List<SectionListItems> getWifiList(
       ),
       defaultTrailingIcon: false,
       trailing: IconButton(
-        onPressed: () => onNetworkTap(s, context),
+        onPressed: () => onInfoTap(s, context),
         icon: SizedBox(
           height: 24,
           width: 24,
