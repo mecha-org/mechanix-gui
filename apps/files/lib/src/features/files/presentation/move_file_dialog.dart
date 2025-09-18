@@ -52,6 +52,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
   final downloadsDir = AppConfig().downloadsDir;
   final documentsDir = AppConfig().documentsDir;
   final homeDir = AppConfig().homeDir;
+  final recentDir = AppConfig().recentDir;
 
   List<FileItem> searchResults = [];
 
@@ -69,6 +70,19 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isAtRoot = currentPath.isEmpty;
+    final pathString = '/${currentPath.map((e) => e.name).join('/')}';
+
+    final isDocumentsDir = pathString == documentsDir;
+    final isDownloadsDir = pathString == downloadsDir;
+    final isHomeDir = pathString == homeDir;
+    final isRecentDir = pathString == recentDir;
+    final isHomePageDir = isHomeDir ||
+        isDownloadsDir ||
+        isDocumentsDir ||
+        isAtRoot ||
+        isRecentDir;
+
     return BlocBuilder<FilesBloc, FilesState>(
       bloc: widget.filesBloc,
       builder: (context, state) {
@@ -99,14 +113,14 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         color: Colors.blue,
                       ),
                       onPressed: () {
-                        if (currentPath.isNotEmpty) {
+                        if (isHomePageDir) {
+                          Navigator.pop(context);
+                          moveMainBottomSheet(widget.onMoveCompleted);
+                        } else {
                           setState(() {
                             currentPath.removeLast();
                           });
                           _loadFiles();
-                        } else {
-                          Navigator.pop(context);
-                          moveMainBottomSheet(widget.onMoveCompleted);
                         }
                       },
                     ),
@@ -431,7 +445,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
         content: Text(
             "Moved $movedCount item${movedCount > 1 ? 's' : ''} to '$folderName'",
             style: TextStyle(color: Colors.white)),
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),
     );

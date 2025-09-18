@@ -6,6 +6,7 @@ import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:highlight/highlight_core.dart';
 import 'package:highlight/languages/dart.dart';
 import 'package:highlight/languages/json.dart';
+import 'package:highlight/languages/plaintext.dart';
 import 'package:highlight/languages/sql.dart';
 import 'package:highlight/languages/yaml.dart';
 import 'package:highlight/languages/python.dart';
@@ -82,6 +83,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         return xml;
       case 'rs':
         return rust;
+      case 'txt':
+        return plaintext;
       default:
         return dart; // fallback
     }
@@ -104,6 +107,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       case 'xml':
       case 'rs':
       case 'yml':
+      case 'txt':
         return ext;
       default:
         return 'dart'; // fallback

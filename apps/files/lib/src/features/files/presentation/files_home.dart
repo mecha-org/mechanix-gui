@@ -28,6 +28,7 @@ class FileHomePageState extends State<FileHomePage> {
   final downloadsDir = AppConfig().downloadsDir;
   final documentsDir = AppConfig().documentsDir;
   final homeDir = AppConfig().homeDir;
+  final recentDir = AppConfig().recentDir;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +102,7 @@ class FileHomePageState extends State<FileHomePage> {
                       ),
                       SectionListItems(
                         title: "Recents",
-                        onTap: () => onTap(context, "/recent", "Recents"),
+                        onTap: () => onTap(context, recentDir, "Recents"),
                         leading: IconWidget(
                           iconWidth: 24,
                           iconHeight: 24,

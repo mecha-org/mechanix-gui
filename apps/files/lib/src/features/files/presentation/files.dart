@@ -65,10 +65,23 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   final downloadsDir = AppConfig().downloadsDir;
   final documentsDir = AppConfig().documentsDir;
   final homeDir = AppConfig().homeDir;
+  final recentDir = AppConfig().recentDir;
 
   @override
   Widget build(BuildContext context) {
     final isAtRoot = widget.path.isEmpty;
+    final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
+
+    final isDocumentsDir = currentPath == documentsDir;
+    final isDownloadsDir = currentPath == downloadsDir;
+    final isHomeDir = currentPath == homeDir;
+    final isRecentDir = currentPath == recentDir;
+    final isHomePageDir = isHomeDir ||
+        isDownloadsDir ||
+        isDocumentsDir ||
+        isAtRoot ||
+        isRecentDir;
+
     final backIndex = widget.path.length - 1;
     final currentTitle = backIndex < -1
         ? "Files"
@@ -362,7 +375,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 ),
                 onPressed: selectionMode
                     ? clearSelection
-                    : (isAtRoot ? homeNavigation : handleBack),
+                    : (isHomePageDir ? homeNavigation : handleBack),
               ),
               title: selectionMode ? "Select" : currentTitle,
               titleStyle: context.textTheme.titleLarge,
@@ -951,6 +964,16 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   void handleCopy() {
     BlocProvider.of<FilesBloc>(context)
         .add(StartCopyMode(selectedPaths.toList()));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            "Copied ${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''}",
+            style: TextStyle(color: Colors.white)),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.grey[800],
+      ),
+    );
     clearSelection();
   }
 
@@ -1273,7 +1296,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   /// Tries multiple terminal emulators (gnome-terminal, konsole, xfce4-terminal, xterm).
   Future<void> openInTerminal(String path) async {
     final candidates = [
-      ['gnome-terminal', '--working-directory=$path'],
+      ['alacritty', '--working-directory', path],
+      ['gnome-terminal', '--working-directory', path],
       ['konsole', '--workdir', path],
       ['xfce4-terminal', '--working-directory', path],
       ['xterm', '-e', 'cd $path; bash'],
