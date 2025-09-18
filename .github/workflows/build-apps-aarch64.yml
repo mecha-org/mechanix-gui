@@ -47,7 +47,7 @@ jobs:
             binary: mechanix_files
 
     runs-on: ubicloud-standard-2-arm
-    environment: dev
+    environment: pre-release
     continue-on-error: true
 
     steps:
