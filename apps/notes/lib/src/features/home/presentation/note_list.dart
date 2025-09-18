@@ -86,6 +86,7 @@ class NoteList extends StatelessWidget {
 
   Widget _buildNoteList(List<NoteHive> notes) {
     return ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
       itemCount: notes.length,
       shrinkWrap: true,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -97,9 +98,9 @@ class NoteList extends StatelessWidget {
           height: 64,
           child: MechanixPressableList(
             leadingIconPadding: EdgeInsets.zero,
-            checkboxSpacing: EdgeInsets.only(right: 16,left: 6),
+            checkboxSpacing: EdgeInsets.only(right: 16, left: 6),
             itemPadding: const EdgeInsets.only(
-              left: 12,
+              left: 16,
               right: 12,
               top: 10,
               bottom: 10,

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
+import 'package:mechanix_notes/src/features/custom_slider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
@@ -17,7 +17,6 @@ import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:watch_it/watch_it.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
@@ -60,13 +59,7 @@ class NotesApp extends StatelessWidget with WatchItMixin {
     );
 
     return MechanixTheme(
-      data: MechanixThemeData(
-        mechanixVariant: mechanixVariant,
-        extensions: [
-          MechanixNavigationBarThemeData(
-            backgroundColor: NotesColors.scaffoldBackgroundColor,
-            elevation: 0,
-          ),
+      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
         ],
       ),
       builder:
@@ -102,12 +95,13 @@ class MyApp extends StatelessWidget {
         FlutterQuillLocalizations.delegate,
       ],
       title: 'Notes',
-      theme: darkTheme.copyWith(
-        scaffoldBackgroundColor: NotesColors.scaffoldBackgroundColor,
-      ),
+      theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
       darkTheme: darkTheme.copyWith(
-        scaffoldBackgroundColor: NotesColors.scaffoldBackgroundColor,
+        scaffoldBackgroundColor: Colors.black,
         textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
+        pageTransitionsTheme: PageTransitionsTheme(
+          builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
+        ),
       ),
       themeMode: themeMode,
 

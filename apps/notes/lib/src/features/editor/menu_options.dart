@@ -56,7 +56,8 @@ class MenuOptions extends StatelessWidget {
             followerAnchor: Alignment.topRight,
             offset: const Offset(-20, 40),
             child: SizedBox(
-              width: 185,
+              width: 217,
+              height: 90,
               child: MechanixMenu(
                 backgroundColor: Color.fromRGBO(68, 68, 68, 0.95),
                 items: [
@@ -83,8 +84,8 @@ class MenuOptions extends StatelessWidget {
                   MechanixMenuItem(
                     trailingWidget: SizedBox(
                       child: Image.asset(
-                        NotesIcon.deleteIcon,
                         height: 18,
+                        NotesIcon.deleteIcon,
                         width: 18,
                         color: Color(0xFFFF4949),
                       ),
