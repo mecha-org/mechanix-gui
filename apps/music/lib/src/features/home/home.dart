@@ -23,7 +23,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Colors.black,
+        surfaceTintColor: Colors.black,
+        elevation: 0,
         title:
             _searchQuery.isEmpty
                 ? const Text("Music")
@@ -77,17 +79,20 @@ class _HomePageState extends State<HomePage> {
       ),
       body: BlocBuilder<SongsBloc, SongsState>(
         builder: (context, state) {
-          return SongsListView(
-            songs: state.songs,
-            onSongTap: (song) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AudioPlayer(songDetails: song),
-                ),
-              );
-              // Handle play / navigation
-            },
+          return Scaffold(
+            backgroundColor: Colors.black,
+            body: SongsListView(
+              songs: state.songs,
+              onSongTap: (song) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AudioPlayer(songDetails: song),
+                  ),
+                );
+                // Handle play / navigation
+              },
+            ),
           );
         },
       ),

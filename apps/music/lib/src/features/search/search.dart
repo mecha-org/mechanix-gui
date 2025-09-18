@@ -31,6 +31,7 @@ class _SearchPageState extends State<SearchPage> {
     return BlocBuilder<SongsBloc, SongsState>(
       builder: (context, state) {
         return Scaffold(
+          backgroundColor: Colors.black,
           appBar: MechanixNavigationBar(
             title: "Search Song",
             titleStyle: const TextStyle(
