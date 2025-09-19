@@ -38,57 +38,62 @@ class _WirelessSettingsState extends State<WirelessSettings> {
       return Scaffold(
           appBar: MechanixNavigationBar(title: "Network"),
           body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MechanixSimpleList(isDividerRequired: true, listItems: [
-                    SimpleListItems(
-                      title: 'Wireless',
-                      trailing: MechanixSwitch(
-                        activeText: 'OFF',
-                        inactiveText: 'ON',
-                        style: MechanixSwitchStyle(
-                          inactiveThumbColor: Color(0xFF989898),
-                          inactiveTrackColor: Color(0xFF252525),
+                  MechanixSimpleList(
+                      physics: const BouncingScrollPhysics(),
+                      isDividerRequired: true,
+                      listItems: [
+                        SimpleListItems(
+                          title: 'Wireless',
+                          trailing: MechanixSwitch(
+                            activeText: 'OFF',
+                            inactiveText: 'ON',
+                            style: MechanixSwitchStyle(
+                              inactiveThumbColor: Color(0xFF989898),
+                              inactiveTrackColor: Color(0xFF252525),
+                            ),
+                            value: state.wifiOn,
+                            onChanged: (val) => context
+                                .read<WirelessSettingsBloc>()
+                                .add(ToggleWifi(val)),
+                          ),
                         ),
-                        value: state.wifiOn,
-                        onChanged: (val) => context
-                            .read<WirelessSettingsBloc>()
-                            .add(ToggleWifi(val)),
-                      ),
-                    ),
-                    if (state.wifiOn &&
-                        state.deviceState ==
-                            NetworkManagerDeviceState.activated)
-                      SimpleListItems(
-                        onTap: () =>
-                            onInfoTap(state.connectedNetwork!, context),
-                        title: utf8
-                            .decode(state.connectedNetwork!.nmAccessPoint.ssid),
-                        leading: SizedBox(
-                            height: 24,
-                            width: 24,
-                            // iconColor: context.colorScheme.primary,
-                            child: getWirelessStrengthIcon(
-                                strength: state.connectedNetwork?.nmAccessPoint
-                                        .strength ??
-                                    0,
-                                isActive: true)),
-                        trailing: IconButton(
-                            onPressed: () =>
+                        if (state.wifiOn &&
+                            state.deviceState ==
+                                NetworkManagerDeviceState.activated)
+                          SimpleListItems(
+                            onTap: () =>
                                 onInfoTap(state.connectedNetwork!, context),
-                            icon: SizedBox(
+                            title: utf8.decode(
+                                state.connectedNetwork!.nmAccessPoint.ssid),
+                            leading: SizedBox(
                                 height: 24,
                                 width: 24,
-                                child: IconWidget(
-                                  iconPath: Images.settings,
-                                ))),
-                      )
-                  ]),
+                                // iconColor: context.colorScheme.primary,
+                                child: getWirelessStrengthIcon(
+                                    strength: state.connectedNetwork
+                                            ?.nmAccessPoint.strength ??
+                                        0,
+                                    isActive: true)),
+                            trailing: IconButton(
+                                onPressed: () =>
+                                    onInfoTap(state.connectedNetwork!, context),
+                                icon: SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: IconWidget(
+                                      iconPath: Images.settings,
+                                    ))),
+                          )
+                      ]),
                   if (state.wifiOn && !state.loading && state.networks.isEmpty)
                     // const Center(child: Text("No networks found")),
                     MechanixSectionList(
+                        physics: const BouncingScrollPhysics(),
                         title: 'Available Networks',
                         sectionListItems: [
                           SectionListItems(
@@ -99,6 +104,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                         ]),
                   if (state.wifiOn && state.networks.isNotEmpty)
                     MechanixSectionList(
+                        physics: const BouncingScrollPhysics(),
                         title: 'Available Networks',
                         sectionListItems: getWifiList(context, state.networks)),
                   const WirelessAdvanceSettings()

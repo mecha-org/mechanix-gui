@@ -42,36 +42,40 @@ class _BluetoothState extends State<Bluetooth> {
       return Scaffold(
         appBar: MechanixNavigationBar(title: "Bluetooth"),
         body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: ContainerWidget(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                MechanixSectionList(sectionListItems: [
-                  SectionListItems(
-                    title: '${state.adapterAlias ?? 'Bluetooth'}',
-                    defaultTrailingIcon: false,
-                    trailing: MechanixSwitch(
-                        value: state.isPowered,
-                        inactiveText: 'ON',
-                        activeText: 'OFF',
-                        onChanged: (val) => context
-                            .read<BluetoothBloc>()
-                            .add(ToggleBluetooth(val))),
-                  ),
-                  SectionListItems(
-                    title: 'Device Discoverable',
-                    onTap: () => Navigator.pushNamed(
-                        context, AppRoutes.bluetoothDiscoverable),
-                    trailing: Row(
-                      children: [
-                        CustomTrailingText(
-                                title: state.isDiscoveryEnabled ? 'Yes' : 'No')
-                            .padRight(8),
-                      ],
-                    ),
-                  )
-                ]),
+                MechanixSectionList(
+                    physics: const NeverScrollableScrollPhysics(),
+                    sectionListItems: [
+                      SectionListItems(
+                        title: '${state.adapterAlias ?? 'Bluetooth'}',
+                        defaultTrailingIcon: false,
+                        trailing: MechanixSwitch(
+                            value: state.isPowered,
+                            inactiveText: 'ON',
+                            activeText: 'OFF',
+                            onChanged: (val) => context
+                                .read<BluetoothBloc>()
+                                .add(ToggleBluetooth(val))),
+                      ),
+                      SectionListItems(
+                        title: 'Device Discoverable',
+                        onTap: () => Navigator.pushNamed(
+                            context, AppRoutes.bluetoothDiscoverable),
+                        trailing: Row(
+                          children: [
+                            CustomTrailingText(
+                                    title:
+                                        state.isDiscoveryEnabled ? 'Yes' : 'No')
+                                .padRight(8),
+                          ],
+                        ),
+                      )
+                    ]),
                 if (state.isPowered && state.devices.isNotEmpty)
                   BluetoothDeviceList(
                     isPaired: true,

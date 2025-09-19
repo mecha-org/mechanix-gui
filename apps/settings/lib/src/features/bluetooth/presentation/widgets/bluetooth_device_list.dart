@@ -70,6 +70,7 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
       builder: (context, state) {
         return MechanixSectionList(
           title: widget.isPaired ? 'Paired Devices' : 'Available Devices',
+          physics: const NeverScrollableScrollPhysics(),
           sectionListItems: getDeviceList(devices: widget.devices),
         );
       },

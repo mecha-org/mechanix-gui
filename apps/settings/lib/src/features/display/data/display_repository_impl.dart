@@ -13,7 +13,7 @@ class DisplayRepositoryImpl extends DisplayRepository {
   }
 
   @override
-  setBrightness(int brightness) {
+  setBrightness(double brightness) {
     return _dBusDisplayService.setBrightness(brightness);
   }
 

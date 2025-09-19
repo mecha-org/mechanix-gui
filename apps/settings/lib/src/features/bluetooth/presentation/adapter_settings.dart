@@ -38,17 +38,20 @@ class AdapterSettings extends StatelessWidget {
 
       return Scaffold(
         appBar: MechanixNavigationBar(title: 'Bluetooth Settings'),
-        body: ContainerWidget(
-          child: ListTile(
-            title: Text('Device name',
-                style: const TextStyle(color: Colors.white, fontSize: 24)),
-            trailing: Text(
-              deviceName,
-              style: const TextStyle(
-                  color: Color.fromARGB(197, 255, 255, 255), fontSize: 24),
-            ),
-            onTap: () => onTap(context, deviceName),
-          ).padTop(8),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: ContainerWidget(
+            child: ListTile(
+              title: Text('Device name',
+                  style: const TextStyle(color: Colors.white, fontSize: 24)),
+              trailing: Text(
+                deviceName,
+                style: const TextStyle(
+                    color: Color.fromARGB(197, 255, 255, 255), fontSize: 24),
+              ),
+              onTap: () => onTap(context, deviceName),
+            ).padTop(8),
+          ),
         ),
       );
     });

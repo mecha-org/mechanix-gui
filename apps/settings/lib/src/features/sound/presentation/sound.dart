@@ -25,6 +25,7 @@ class Sound extends StatelessWidget {
       return Scaffold(
         appBar: MechanixNavigationBar(title: 'Sound'),
         body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: ContainerWidget(
             child: Column(
               children: [

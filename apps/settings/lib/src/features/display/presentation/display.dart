@@ -41,90 +41,94 @@ class _DisplayPageState extends State<DisplayPage> {
           appBar: MechanixNavigationBar(
             title: 'Display',
           ),
-          body: ContainerWidget(
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Brightness',
-                      style: context.textTheme.labelLarge,
-                    ),
-                    Text(
-                      '${(state.brightness * 100).round()} %',
-                      style: context.textTheme.labelLarge,
-                    )
-                  ],
-                ).padVertical(8),
-                BlocListener<DisplayBloc, DisplayState>(
-                  listener: (context, state) {
-                    // TODO: implement listener
-                  },
-                  listenWhen: (previous, current) =>
-                      previous.brightness != current.brightness,
-                  child: MechanixSlider.dot(
-                    isDotSlider: true,
-                    initialValue: state.brightness,
-                    onChangeEnd: (value) => context
-                        .read<DisplayBloc>()
-                        .add(SetBrightnessEvent(value)),
-                    onChanged: (value) => context
-                        .read<DisplayBloc>()
-                        .add(SetBrightnessChangeEvent(value)),
-                    theme:
-                        MechanixSliderThemeData(activeColor: Color(0xFFD9D9D9)),
-                    leftIcon: IconWidget(
-                      iconColor: Colors.white,
-                      iconPath: Images.sunIcon,
-                      iconWidth: 20,
-                      iconHeight: 28,
-                      boxHeight: 30,
-                      boxWidth: 30,
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ContainerWidget(
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Brightness',
+                        style: context.textTheme.labelLarge,
+                      ),
+                      Text(
+                        '${(state.brightness * 100).round()} %',
+                        style: context.textTheme.labelLarge,
+                      )
+                    ],
+                  ).padVertical(8),
+                  BlocListener<DisplayBloc, DisplayState>(
+                    listener: (context, state) {
+                      // TODO: implement listener
+                    },
+                    listenWhen: (previous, current) =>
+                        previous.brightness != current.brightness,
+                    child: MechanixSlider.dot(
+                      isDotSlider: true,
+                      initialValue: state.brightness,
+                      onChangeEnd: (value) => context
+                          .read<DisplayBloc>()
+                          .add(SetBrightnessEvent(value)),
+                      onChanged: (value) => context
+                          .read<DisplayBloc>()
+                          .add(SetBrightnessChangeEvent(value)),
+                      theme: MechanixSliderThemeData(
+                          activeColor: Color(0xFFD9D9D9)),
+                      leftIcon: IconWidget(
+                        iconColor: Colors.white,
+                        iconPath: Images.sunIcon,
+                        iconWidth: 20,
+                        iconHeight: 28,
+                        boxHeight: 30,
+                        boxWidth: 30,
+                      ),
                     ),
                   ),
-                ),
-                MechanixSectionList(
-                    title: 'Display Options',
-                    sectionListItems: [
-                      SectionListItems(
-                          title: 'Auto Brightness',
-                          defaultTrailingIcon: false,
-                          trailing: MechanixSwitch(
-                            activeText: 'OFF',
-                            inactiveText: 'ON',
-                            style: MechanixSwitchStyle(
-                              activeTrackColor: Color(0xFF141414),
-                              activeThumbColor: Color(0xFF2D8AFF),
-                            ),
-                            value: state.isAutoBrightness,
-                            onChanged: changeBrightnessAuto,
-                          )),
-                      SectionListItems(
-                        title: 'Screen Off Time',
-                        onTap: () async {
-                          // final result = await
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.displayScreenOffTime,
-                            arguments: {'screenOffTime': state.screenTimeout},
-                          );
-                        },
-                        trailing:
-                            Text(displayLabel(state.screenTimeout)).padRight(8),
-                      ),
-                      SectionListItems(
-                        title: 'Lock Screen Time',
-                        onTap: () async {
-                          Navigator.pushNamed(
-                              context, AppRoutes.lockScreenTimeout);
-                        },
-                        trailing: Text(displayLabel(state.lockScreenTimeout))
-                            .padRight(8),
-                      )
-                    ]).padTop(40),
-              ],
-            ).padTop(8),
+                  MechanixSectionList(
+                      title: 'Display Options',
+                      physics: const BouncingScrollPhysics(),
+                      sectionListItems: [
+                        SectionListItems(
+                            title: 'Auto Brightness',
+                            defaultTrailingIcon: false,
+                            trailing: MechanixSwitch(
+                              activeText: 'OFF',
+                              inactiveText: 'ON',
+                              style: MechanixSwitchStyle(
+                                activeTrackColor: Color(0xFF141414),
+                                activeThumbColor: Color(0xFF2D8AFF),
+                              ),
+                              value: state.isAutoBrightness,
+                              onChanged: changeBrightnessAuto,
+                            )),
+                        SectionListItems(
+                          title: 'Screen Off Time',
+                          onTap: () async {
+                            // final result = await
+                            Navigator.pushNamed(
+                              context,
+                              AppRoutes.displayScreenOffTime,
+                              arguments: {'screenOffTime': state.screenTimeout},
+                            );
+                          },
+                          trailing: Text(displayLabel(state.screenTimeout))
+                              .padRight(8),
+                        ),
+                        SectionListItems(
+                          title: 'Lock Screen Time',
+                          onTap: () async {
+                            Navigator.pushNamed(
+                                context, AppRoutes.lockScreenTimeout);
+                          },
+                          trailing: Text(displayLabel(state.lockScreenTimeout))
+                              .padRight(8),
+                        )
+                      ]).padTop(40),
+                ],
+              ).padTop(8),
+            ),
           ),
         );
       },
