@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:archive/archive_io.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
+import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
@@ -339,5 +340,45 @@ class FileRepositoryImpl implements FileRepository {
 
     final dirExists = await _fs.directory(path).exists();
     return dirExists;
+  }
+
+  @override
+  Future<List<FileSystemEntity>> searchFiles(
+      String rootPath, String query) async {
+    int maxDepth = 2;
+    final dir = _fs.directory(rootPath);
+    final q = query.toLowerCase();
+    final results = <FileSystemEntity>[];
+
+    if (!await dir.exists()) return results;
+
+    final queue = <MapEntry<Directory, int>>[MapEntry(dir, 0)];
+
+    while (queue.isNotEmpty) {
+      final current = queue.removeAt(0);
+      final currentDir = current.key;
+      final depth = current.value;
+
+      if (depth > maxDepth) continue;
+
+      try {
+        await for (final entity in currentDir.list(followLinks: false)) {
+          final name = p.basename(entity.path);
+
+          if (name.startsWith('.')) continue;
+
+          if (name.toLowerCase().contains(q)) {
+            results.add(entity);
+          }
+
+          if (entity is Directory) {
+            queue.add(MapEntry(entity, depth + 1));
+          }
+        }
+      } catch (e, st) {
+        debugPrint("Error while listing ${currentDir.path}: $e\n$st");
+      }
+    }
+    return results;
   }
 }

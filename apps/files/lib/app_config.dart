@@ -37,6 +37,7 @@ class AppConfig {
   String get documentsDir =>
       get('org.mechanix.files.files_home_page.documents_dir') ??
       '/home/mecha/Documents';
+  String get recentDir => '/recent';
   int get recentFilesCount {
     final value = get('org.mechanix.files.general.recent_files_count');
     final parsed = int.tryParse(value ?? '');

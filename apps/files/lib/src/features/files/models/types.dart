@@ -47,6 +47,7 @@ const textFileTypes = [
   '.rb',
   '.xml',
   '.rs',
+  '.txt'
 ];
 
 const audioFileTypes = [

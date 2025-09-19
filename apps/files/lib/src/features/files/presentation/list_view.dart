@@ -6,6 +6,7 @@ import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbo
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
@@ -244,6 +245,92 @@ Widget buildListViewMove(
           sectionListItems: sectionItems,
         ),
       ),
+    ),
+  );
+}
+
+Widget buildSearchResultsList(
+  List<FileSystemEntity> results,
+  BuildContext context,
+) {
+  final state = context.findAncestorStateOfType<FileExplorerPageState>();
+  final isSelectionMode = state?.selectionMode ?? false;
+  final selectedPaths = state?.selectedPaths ?? {};
+
+  return ScrollConfiguration(
+    behavior: ScrollConfiguration.of(context).copyWith(
+      dragDevices: {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      },
+    ),
+    child: ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        final entity = results[index];
+        final fullPath = entity.path;
+        final name = p.basename(fullPath);
+        final isDir = entity is Directory;
+        final isSelected = selectedPaths.contains(fullPath);
+
+        return GestureDetector(
+          onSecondaryTap: () => state?.toggleSelection(fullPath),
+          onLongPress: () => state?.toggleSelection(fullPath),
+          child: ListTile(
+            minVerticalPadding: 12,
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isSelectionMode)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: CustomCircleCheckbox(
+                      isChecked: isSelected,
+                      onTap: () => state?.toggleSelection(fullPath),
+                    ),
+                  ),
+                Container(
+                  width: 50,
+                  height: 50,
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade900,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    isDir ? Icons.folder : Icons.insert_drive_file,
+                    color:
+                        isDir ? Colors.yellow.shade700 : Colors.grey.shade300,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+            title: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            subtitle: Text(
+              fullPath,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            onTap: () {
+              handleTap(
+                context,
+                FileItem(name: entity.basename, type: isDir ? 'dir' : 'file'),
+                pathToSegments(p.dirname(fullPath)),
+                fullPath,
+                isSelectionMode,
+                state,
+              );
+            },
+          ),
+        );
+      },
     ),
   );
 }
