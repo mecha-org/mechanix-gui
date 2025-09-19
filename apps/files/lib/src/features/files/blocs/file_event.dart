@@ -126,8 +126,9 @@ class CompressEntitiesEvent extends FilesEvent {
 class ExtractZipTo extends FilesEvent {
   final String zipFilePath;
   final String targetPath;
+  final Completer<void>? completer;
 
-  ExtractZipTo(this.zipFilePath, this.targetPath);
+  ExtractZipTo(this.zipFilePath, this.targetPath, this.completer);
 }
 
 class StartExtractMode extends FilesEvent {
