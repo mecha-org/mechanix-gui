@@ -14,7 +14,7 @@ impl From<evdev::Key> for Key {
     fn from(value: evdev::Key) -> Self {
         match value {
             evdev::Key::KEY_POWER => Key::Power,
-            evdev::Key::KEY_FN_1 => Key::Home,
+            evdev::Key::SW_KEYPAD_SLIDE => Key::Home,
             _ => Key::Unknown,
         }
     }
