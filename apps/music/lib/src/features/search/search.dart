@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
 import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/features/bloc/songs_event.dart';
 import 'package:mechanix_music/src/features/bloc/songs_state.dart';
@@ -49,7 +50,14 @@ class _SearchPageState extends State<SearchPage> {
                     children: [
                       SongsListView(
                         songs: state.searchedSongs,
-                        onSongTap: (song) {},
+                        onSongTap: (song) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AudioPlayer(songDetails: song),
+                            ),
+                          );
+                        },
                       ),
 
                       const SizedBox(height: 80),

@@ -28,7 +28,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<SeekSong>(_onSeekSong);
     on<UpdateDuration>(_onUpdateDuration);
     on<UpdatePosition>(_onUpdatePosition);
-
+    on<ShuffleToggle>(_shuffleToggle);
+    on<FavouriteToggle>(_toggleFavourite);
     // _initializePlayerListeners();
 
     add(LoadSongsFromHive());
@@ -270,12 +271,23 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
     try {
       final nextIndex = (state.currentIndex + 1) % state.playbackQueue.length;
-
-      // If we're at the last song, we can either stop or loop back to first
-      // Here we're implementing loop behavior
-      await player.next();
-
       final nextSong = state.playbackQueue[nextIndex];
+
+      // If we're at the last song, we need to jump to the first song (index 0)
+      // Otherwise, just go to next
+      if (state.currentIndex == state.playbackQueue.length - 1) {
+        // We're at the last song, jump to first song
+        await player.jump(0);
+      } else {
+        // Normal next song
+        await player.next();
+      }
+
+      // Ensure the song actually starts playing
+      await player.play();
+
+      // Initialize listeners if needed
+      _initializePlayerListeners();
 
       emit(
         state.copyWith(
@@ -285,11 +297,94 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           error: null,
         ),
       );
+
+      logger.i("Playing next song: ${nextSong.title} at index $nextIndex");
     } catch (e) {
       logger.e("Error playing next song: $e");
       emit(state.copyWith(error: "Failed to play next song: $e"));
     }
   }
+
+  Future<void> _shuffleToggle(
+    ShuffleToggle event,
+    Emitter<SongsState> emit,
+  ) async {
+    player.setShuffle(state.isShuffled);
+    emit(state.copyWith(isShuffled: !state.isShuffled));
+  }
+
+  Future<void> _toggleFavourite(
+    FavouriteToggle event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      final currentSong = state.currentSong;
+      if (currentSong == null) {
+        logger.w("No current song to toggle favourite");
+        return;
+      }
+
+      final songsBox = await Hive.openBox<SongInfo>(TableName.songsInfoTable);
+
+      // Update the song's favourite status
+      final updatedSong = SongInfo(
+        index: currentSong.index,
+        id: currentSong.id,
+        path: currentSong.path,
+        title: currentSong.title,
+        artist: currentSong.artist,
+        album: currentSong.album,
+        duration: currentSong.duration,
+        artwork: currentSong.artwork,
+        isFavourite: !currentSong.isFavourite, // Toggle the favourite status
+      );
+      // Find the song in the box and update it
+      final songIndex = songsBox.values.toList().indexWhere(
+        (s) => s.id == currentSong.id,
+      );
+      if (songIndex != -1) {
+        await songsBox.putAt(songIndex, updatedSong);
+      }
+      add(LoadSongsFromHive());
+      // Update the state with the modified song lists
+      // final updatedSongs =
+      //     state.songs.map((song) {
+      //       return song.id == currentSong.id ? updatedSong : song;
+      //     }).toList();
+
+      // final updatedQueue =
+      //     state.playbackQueue.map((song) {
+      //       return song.id == currentSong.id ? updatedSong : song;
+      //     }).toList();
+
+      // final updatedSearchedSongs =
+      //     state.searchedSongs.map((song) {
+      //       return song.id == currentSong.id ? updatedSong : song;
+      //     }).toList();
+
+      // emit(
+      //   state.copyWith(
+      //     currentSong: updatedSong,
+      //     songs: updatedSongs,
+      //     playbackQueue: updatedQueue,
+      //     searchedSongs: updatedSearchedSongs,
+      //     error: null,
+      //   ),
+      // );
+
+      logger.i(
+        "Toggled favourite for song: ${updatedSong.title} - isFavourite: ${updatedSong.isFavourite}",
+      );
+    } catch (e) {
+      logger.e("Error toggling favourite: $e");
+      emit(state.copyWith(error: "Failed to toggle favourite: $e"));
+    }
+  }
+  // Future<void> _onToggleRepeat(
+  //   ToggleRepeat event,
+  //   Emitter<SongsState> emit,
+  // ) async {
+  // }
 
   Future<void> _onPlayPrevious(
     PlayPrevious event,
@@ -303,9 +398,23 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
               ? state.playbackQueue.length - 1
               : state.currentIndex - 1;
 
-      await player.previous();
-
       final prevSong = state.playbackQueue[prevIndex];
+
+      // If we're at the first song, we need to jump to the last song
+      // Otherwise, just go to previous
+      if (state.currentIndex <= 0) {
+        // We're at the first song, jump to last song
+        await player.jump(state.playbackQueue.length - 1);
+      } else {
+        // Normal previous song
+        await player.previous();
+      }
+
+      // Ensure the song actually starts playing
+      await player.play();
+
+      // Initialize listeners if needed
+      _initializePlayerListeners();
 
       emit(
         state.copyWith(
@@ -315,6 +424,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           error: null,
         ),
       );
+
+      logger.i("Playing previous song: ${prevSong.title} at index $prevIndex");
     } catch (e) {
       logger.e("Error playing previous song: $e");
       emit(state.copyWith(error: "Failed to play previous song: $e"));
@@ -324,7 +435,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   Future<void> _onSeekSong(SeekSong event, Emitter<SongsState> emit) async {
     try {
       await player.seek(event.position);
-      emit(state.copyWith(position: event.position));
+      emit(state.copyWith(position: event.position,));
     } catch (e) {
       logger.e("Error seeking to position ${event.position}: $e");
       emit(state.copyWith(error: "Failed to seek: $e"));

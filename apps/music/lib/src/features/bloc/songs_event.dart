@@ -34,6 +34,11 @@ class TogglePlayPause extends SongsEvent {}
 
 class PlayNext extends SongsEvent {}
 
+class ShuffleToggle extends SongsEvent {}
+
+// class  ToggleRepeat extends SongsEvent {}
+class FavouriteToggle extends SongsEvent {}
+
 class PlayPrevious extends SongsEvent {}
 
 class SeekSong extends SongsEvent {

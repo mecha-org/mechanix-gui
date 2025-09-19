@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
+import 'package:widgets/mechanix.dart';
 
 class PlayerVinyl extends StatefulWidget {
   final SongInfo songDetails;
   final double currentPosition;
-  final ValueChanged<double> onPositionChange;
+  final ValueChanged<Duration> onPositionChange; // Changed to Duration
   final Duration currentDuration;
   final Duration totalDuration;
-  final bool isPlaying; // <-- add this to control rotation
+  final bool isPlaying;
 
   const PlayerVinyl({
     super.key,
@@ -29,6 +30,7 @@ class PlayerVinyl extends StatefulWidget {
 class _PlayerVinylState extends State<PlayerVinyl>
     with SingleTickerProviderStateMixin {
   late AnimationController controller;
+  bool _isDragging = false; // Track if user is dragging the slider
 
   String _formatDuration(Duration d) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
@@ -71,7 +73,7 @@ class _PlayerVinylState extends State<PlayerVinyl>
     return Center(
       child: SizedBox(
         width: 380,
-        height: 350,
+        height: 370,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -89,20 +91,23 @@ class _PlayerVinylState extends State<PlayerVinyl>
                         child: SizedBox(
                           width: 300,
                           height: 300,
-                          child: widget.songDetails.artwork != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(300),
-                                  child: Image.memory(
-                                    widget.songDetails.artwork!,
+                          child:
+                              widget.songDetails.artwork != null
+                                  ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(300),
+                                    child: Image.memory(
+                                      widget.songDetails.artwork!,
+                                      width: 300,
+                                      height: 300,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                  : Image.asset(
+                                    MusicIcons.audioImage,
                                     width: 300,
                                     height: 300,
                                     fit: BoxFit.cover,
                                   ),
-                                )
-                              : Image.asset(
-                                  MusicIcons.audioImage,
-                                  fit: BoxFit.cover,
-                                ),
                         ),
                       );
                     },
@@ -110,13 +115,15 @@ class _PlayerVinylState extends State<PlayerVinyl>
                   Positioned(
                     bottom: 0,
                     child: SizedBox(
-                      width: 350,
-                      height: 350,
+                      width: 340,
+                      height: 340,
                       child: SleekCircularSlider(
                         min: 0,
                         max: widget.totalDuration.inSeconds.toDouble(),
                         initialValue:
-                            widget.currentDuration.inSeconds.toDouble(),
+                            _isDragging
+                                ? 0 // Don't update while dragging
+                                : widget.currentDuration.inSeconds.toDouble(),
                         innerWidget: (_) => const SizedBox(),
                         appearance: CircularSliderAppearance(
                           counterClockwise: true,
@@ -129,18 +136,29 @@ class _PlayerVinylState extends State<PlayerVinyl>
                             handlerSize: 8,
                           ),
                           customColors: CustomSliderColors(
-                            progressBarColor: Colors.blueAccent,
+                            progressBarColor: Color(0xFFD9D9D9),
                             trackColor: Colors.grey.shade800,
                             dotColor: Colors.white,
                             hideShadow: true,
                           ),
                         ),
-                        onChange: (v) {
-                          final newDuration = Duration(seconds: v.round());
-                          widget.onPositionChange(
-                            newDuration.inSeconds /
-                                widget.totalDuration.inSeconds,
-                          );
+                        onChangeStart: (double value) {
+                          setState(() {
+                            _isDragging = true;
+                          });
+                        },
+                        onChange: (double value) {
+                          // Convert seconds back to Duration and pass it
+                          final seekPosition = Duration(seconds: value.round());
+                          widget.onPositionChange(seekPosition);
+                        },
+                        onChangeEnd: (double value) {
+                          setState(() {
+                            _isDragging = false;
+                          });
+                          // Final seek when user stops dragging
+                          final seekPosition = Duration(seconds: value.round());
+                          widget.onPositionChange(seekPosition);
                         },
                       ),
                     ),
@@ -154,16 +172,16 @@ class _PlayerVinylState extends State<PlayerVinyl>
               left: 0,
               child: Text(
                 _formatDuration(widget.currentDuration),
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
             ),
             // End time
             Positioned(
               top: 140,
-              right: -5,
+              right: 0,
               child: Text(
                 _formatDuration(widget.totalDuration),
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white,fontSize: 14),
               ),
             ),
             Positioned(

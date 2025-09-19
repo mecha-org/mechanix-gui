@@ -24,7 +24,7 @@ class PlayerControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 40,vertical: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -62,7 +62,7 @@ class PlayerControls extends StatelessWidget {
             color: Colors.white,
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: onShuffleToggle,
             icon: Icon(
               Icons.shuffle,
               color: isShuffled ? Colors.white : Colors.grey.shade600,
