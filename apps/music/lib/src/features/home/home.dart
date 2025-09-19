@@ -6,7 +6,9 @@ import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
 import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/features/bloc/songs_event.dart';
 import 'package:mechanix_music/src/features/bloc/songs_state.dart';
+import 'package:mechanix_music/src/features/home/mini_player.dart';
 import 'package:mechanix_music/src/features/presentation/song_list_view.dart';
+import 'package:widgets/extensions/edge_insets.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,83 +18,72 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _searchQuery = "";
-  final TextEditingController _searchController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        surfaceTintColor: Colors.black,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title:
-            _searchQuery.isEmpty
-                ? const Text("Music")
-                : TextField(
-                  controller: _searchController,
-                  autofocus: true,
-                  style: const TextStyle(color: Colors.white),
-                  cursorColor: Colors.white,
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 12.0,
-                      horizontal: 16.0,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.1),
-                    hintText: "Search...",
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20.0),
-                      borderSide: BorderSide.none,
-                    ),
-                    prefixIcon: const Icon(Icons.search, color: Colors.white),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () {
-                        setState(() {
-                          _searchQuery = "";
-                          _searchController.clear();
-                        });
-                      },
-                    ),
-                  ),
-                  onChanged: (val) {
-                    setState(() => _searchQuery = val.toLowerCase());
-                  },
-                ),
+        title: const Text("Music"),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               Navigator.pushNamed(context, AppRoutes.searchPage);
             },
-          ),
+          ).padRight(5),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               context.read<SongsBloc>().add(ScanSongs());
             },
-          ),
+          ).padRight(5),
         ],
       ),
       body: BlocBuilder<SongsBloc, SongsState>(
         builder: (context, state) {
-          return Scaffold(
-            backgroundColor: Colors.black,
-            body: SongsListView(
-              songs: state.songs,
-              onSongTap: (song) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AudioPlayer(songDetails: song),
+          return Stack(
+            children: [
+              // Song list with padding at bottom so it's not hidden by MiniPlayer
+              Positioned.fill(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SongsListView(
+                        songs: state.songs,
+                        onSongTap: (song) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AudioPlayer(songDetails: song),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 80), // space for MiniPlayer
+                    ],
                   ),
-                );
-                // Handle play / navigation
-              },
-            ),
+                ),
+              ),
+
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child:
+                    state.currentSong != null
+                        ? MiniPlayer(
+                          currentPosition: state.position,
+                          totalDuration: state.duration,
+                          isPlaying: state.isPlaying,
+                          currentIndex: state.currentIndex,
+                          currentSong: state.currentSong!,
+                        )
+                        : SizedBox.shrink(),
+              ),
+            ],
           );
         },
       ),

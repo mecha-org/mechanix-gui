@@ -14,7 +14,7 @@ class MusicSearchBar extends StatefulWidget {
 class _MusicSearchBarState extends State<MusicSearchBar> {
   final TextEditingController _titleController = TextEditingController();
 
-  void searchNotes() {
+  void searchSongs() {
     context.read<SongsBloc>().add(SearchSong(_titleController.value.text));
   }
 
@@ -31,7 +31,7 @@ class _MusicSearchBarState extends State<MusicSearchBar> {
       _titleController.selection = TextSelection.fromPosition(
         TextPosition(offset: _titleController.text.length),
       );
-      searchNotes();
+      searchSongs();
     }
   }
 
@@ -42,7 +42,7 @@ class _MusicSearchBarState extends State<MusicSearchBar> {
       width: 508,
       child: MechanixSearchBar(
         controller: _titleController,
-        onChanged: (value) => searchNotes(),
+        onChanged: (value) => searchSongs(),
         autoFocus: true,
         hintText: "Song Name",
         onBackwardIconPress: _handleBackwardPress,

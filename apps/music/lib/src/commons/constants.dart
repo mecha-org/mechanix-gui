@@ -1,5 +1,5 @@
 class TableName {
-  static const String songsInfoTable = "songs-v1";
+  static const String songsInfoTable = "songs-v2";
   // static const String pathToDb = "/tmp/mechanix_notes";
 }
 

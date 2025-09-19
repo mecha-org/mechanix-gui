@@ -21,7 +21,7 @@ class AudioPlayer extends StatefulWidget {
 class _AudioPlayerState extends State<AudioPlayer>
     with TickerProviderStateMixin {
   // bool isPlaying = true;
-  bool isShuffled = false;
+  // bool isShuffled = false;
   bool isRepeating = false;
   bool isFavorited = false;
   double currentPosition = 0.0;
@@ -35,6 +35,8 @@ class _AudioPlayerState extends State<AudioPlayer>
       duration: const Duration(seconds: 10),
       vsync: this,
     );
+
+    isFavorited = widget.songDetails.isFavourite;
     context.read<SongsBloc>().add(PlaySong(widget.songDetails.index));
     // _startProgressTimer();
   }
@@ -90,41 +92,39 @@ class _AudioPlayerState extends State<AudioPlayer>
         return Scaffold(
           backgroundColor: Colors.black,
           body: SafeArea(
-            child: SizedBox(
-              width: 540,
-              height: 620,
-              child: Column(
-                children: [
-                  PlayerHeader(
-                    songDetails: state.currentSong ?? widget.songDetails,
-                  ),
-                  PlayerVinyl(
-                    songDetails: state.currentSong ?? widget.songDetails,
-                    // controller: _rotationController,
-                    isPlaying: state.isPlaying,
-                    currentPosition: currentPosition,
-                    currentDuration: state.position,
-                    totalDuration: state.duration,
-
-                    onPositionChange:
-                        (v) => setState(() => currentPosition = v),
-                  ),
-                  PlayerSideControls(
-                    isFavorited: isFavorited,
-                    onFavoriteToggle:
-                        () => setState(() => isFavorited = !isFavorited),
-                  ),
-                  PlayerControls(
-                    isPlaying: state.isPlaying,
-                    isRepeating: isRepeating,
-                    isShuffled: isShuffled,
-                    onRepeatToggle:
-                        () => setState(() => isRepeating = !isRepeating),
-                    onShuffleToggle:
-                        () => setState(() => isShuffled = !isShuffled),
-                  ),
-                ],
-              ),
+            child: Column(
+              children: [
+                PlayerHeader(
+                  isFavorited: isFavorited,
+                  songDetails: state.currentSong ?? widget.songDetails,
+                ),
+                PlayerVinyl(
+                  songDetails: state.currentSong ?? widget.songDetails,
+                  isPlaying: state.isPlaying,
+                  currentPosition: currentPosition,
+                  currentDuration: state.position,
+                  totalDuration: state.duration,
+                  onPositionChange: (Duration seekPosition) {
+                    // Trigger seek event in your BLoC
+                    context.read<SongsBloc>().add(SeekSong(seekPosition));
+                  },
+                  // onPositionChange: (v) => setState(() => currentPosition = v),
+                ),
+                PlayerSideControls(
+                  isFavorited: isFavorited,
+                  onFavoriteToggle:
+                      () => setState(() => isFavorited = !isFavorited),
+                ),
+                PlayerControls(
+                  isPlaying: state.isPlaying,
+                  isRepeating: isRepeating,
+                  isShuffled: state.isShuffled,
+                  onRepeatToggle:
+                      () => setState(() => isRepeating = !isRepeating),
+                  onShuffleToggle:
+                      () => context.read<SongsBloc>().add(ShuffleToggle()),
+                ),
+              ],
             ),
           ),
         );

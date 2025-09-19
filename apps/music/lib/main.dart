@@ -74,6 +74,14 @@ class MyApp extends StatelessWidget {
         pageTransitionsTheme: PageTransitionsTheme(
           builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
         ),
+        iconButtonTheme: IconButtonThemeData(
+          style: ButtonStyle(
+            shadowColor: WidgetStatePropertyAll(Colors.transparent),
+            overlayColor: WidgetStatePropertyAll(Colors.transparent),
+            backgroundColor: WidgetStatePropertyAll(Colors.transparent),
+            surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
+          ),
+        ),
       ),
       themeMode: themeMode,
       home: HomePage(),

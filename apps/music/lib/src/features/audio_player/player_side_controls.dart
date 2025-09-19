@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_music/src/commons/icons.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
 
 class PlayerSideControls extends StatelessWidget {
   final bool isFavorited;
@@ -13,16 +15,18 @@ class PlayerSideControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 40,vertical: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             onPressed: onFavoriteToggle,
-            icon: Icon(
-              isFavorited ? Icons.star : Icons.star_border,
-              color: Colors.white,
-              size: 28,
+            icon: SongsIcon(
+              iconPath:
+                  isFavorited
+                      ? MusicIcons.filledFavouriteIcon
+                      : MusicIcons.favouriteIcon,
+              color: isFavorited ? Colors.red : Colors.white,
             ),
           ),
           const Icon(Icons.menu, color: Colors.white, size: 28),

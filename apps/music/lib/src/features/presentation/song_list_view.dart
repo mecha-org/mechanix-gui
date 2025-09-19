@@ -10,9 +10,9 @@ class SongsListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (songs.isEmpty) {
-      return const Center(child: Text("No songs available"));
-    }
+    // if (songs.isEmpty) {
+    //   return const Center(child: Text("No songs available"));
+    // }
 
     return ListView.builder(
       shrinkWrap: true,
@@ -20,6 +20,12 @@ class SongsListView extends StatelessWidget {
       itemBuilder: (context, i) {
         final song = songs[i];
         return ListTile(
+          
+          tileColor: Colors.transparent,
+          hoverColor: Colors.transparent,
+          focusColor: Colors.transparent,
+          splashColor: Colors.transparent,
+            selectedTileColor: Colors.transparent,
           leading: _buildArtworkOrIcon(
             artwork: song.artwork,
             fallbackIcon: Icons.music_note,

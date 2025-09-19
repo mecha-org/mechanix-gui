@@ -19,9 +19,11 @@ class SongInfo extends HiveObject {
   @HiveField(5)
   String? duration;
   @HiveField(6)
+  bool isFavourite;
+  @HiveField(7)
   Uint8List? artwork;
 
-  @HiveField(7)
+  @HiveField(8)
   int index;
 
   SongInfo({
@@ -33,5 +35,6 @@ class SongInfo extends HiveObject {
     this.duration,
     this.artwork,
     required this.index,
+    this.isFavourite = false,
   });
 }

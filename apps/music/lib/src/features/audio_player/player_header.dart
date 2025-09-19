@@ -1,23 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
+import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/features/bloc/songs_event.dart';
+import 'package:widgets/mechanix.dart';
 
 class PlayerHeader extends StatelessWidget {
   final SongInfo songDetails;
-  const PlayerHeader({super.key, required this.songDetails});
+  final bool isFavorited;
+  const PlayerHeader({
+    super.key,
+    required this.songDetails,
+    required this.isFavorited,
+  });
 
   @override
   Widget build(BuildContext context) {
+    void onBackPressed() {
+      if (songDetails.isFavourite != isFavorited) {
+        context.read<SongsBloc>().add(FavouriteToggle());
+      }
+      Navigator.pop(context);
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: const EdgeInsets.only(left: 20,right: 20, bottom: 0,top:20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(
-              Icons.arrow_back_ios,
-              color: Colors.white,
-              size: 24,
+            onPressed: () => onBackPressed(),
+            icon: Image.asset(
+              MechanixIconImages.backIcon,
+              height: 20,
+              width: 20,
+              package: 'widgets',
             ),
           ),
           Expanded(
@@ -45,10 +62,10 @@ class PlayerHeader extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-          ),
+          // IconButton(
+          //   onPressed: () {},
+          //   icon: const Icon(Icons.menu, color: Colors.white, size: 24),
+          // ),
         ],
       ),
     );
