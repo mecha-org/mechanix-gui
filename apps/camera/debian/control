@@ -1,5 +1,5 @@
 Package: mechanix-camera-beta
-Version: 0.0.1
+Version: 0.0.2
 Maintainer: Akshay Raina <akshayr@mechasystems.com>
 Description: Mechanix Camera app
   A camera application for Mechanix OS, allowing users to capture, edit, and manage their photos and videos seamlessly.
