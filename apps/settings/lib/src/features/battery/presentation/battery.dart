@@ -42,41 +42,46 @@ class BatteryScreenState extends State<Battery> {
           appBar: MechanixNavigationBar(
             title: "Battery",
           ),
-          body: ContainerWidget(
-            child: Column(
-              // crossAxisAlignment: CrossAxisAlignment.start,
-              // spacing: 10,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      state.batteryStatus == UPowerDeviceState.charging
-                          ? "$timeText to full change"
-                          : "$timeText left",
-                      style: context.textTheme.labelLarge,
-                    ),
-                    Text(
-                      '$batteryPercentageValue %',
-                      style: context.textTheme.labelLarge,
-                    )
-                  ],
-                ).padVertical(8),
-                BatteryIndicator(
-                  isCharging: UPowerDeviceState.charging == state.batteryStatus,
-                ),
-                MechanixSectionList(title: 'Battery Mode', sectionListItems: [
-                  SectionListItems(
-                      title: 'Performance',
-                      onTap: () => Navigator.pushNamed(
-                          context, AppRoutes.batteryPerformance),
-                      trailing: CustomTrailingText(
-                              title: getModeDetails(state.performanceMode ?? '')
-                                  .mode)
-                          .padRight(8))
-                ]).padTop(40),
-              ],
-            ).padTop(8),
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ContainerWidget(
+              child: Column(
+                // crossAxisAlignment: CrossAxisAlignment.start,
+                // spacing: 10,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        state.batteryStatus == UPowerDeviceState.charging
+                            ? "$timeText to Full Charge"
+                            : "$timeText Left",
+                        style: context.textTheme.labelLarge,
+                      ),
+                      Text(
+                        '$batteryPercentageValue %',
+                        style: context.textTheme.labelLarge,
+                      )
+                    ],
+                  ).padVertical(8),
+                  BatteryIndicator(
+                    isCharging:
+                        UPowerDeviceState.charging == state.batteryStatus,
+                  ),
+                  MechanixSectionList(title: 'Battery Mode', sectionListItems: [
+                    SectionListItems(
+                        title: 'Performance',
+                        onTap: () => Navigator.pushNamed(
+                            context, AppRoutes.batteryPerformance),
+                        trailing: CustomTrailingText(
+                                title:
+                                    getModeDetails(state.performanceMode ?? '')
+                                        .mode)
+                            .padRight(8))
+                  ]).padTop(40),
+                ],
+              ).padTop(8),
+            ),
           ),
         );
       },

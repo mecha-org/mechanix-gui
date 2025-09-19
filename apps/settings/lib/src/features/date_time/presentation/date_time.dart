@@ -63,58 +63,62 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
             title: 'Date and Time',
           ),
           body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MechanixSimpleList(listItems: [
-                    SimpleListItems(
-                        title: 'Auto-time',
-                        trailing: MechanixSwitch(
-                            value: state.autoDateTime,
-                            inactiveText: 'ON',
-                            onChanged: (value) {
-                              context
-                                  .read<DateTimeBloc>()
-                                  .add(ToggleAutoDateTime(value));
-                            })),
-                    SimpleListItems(
-                      title: 'Set Time',
-                      disabled: state.autoDateTime,
-                      onTap: () =>
-                          Navigator.pushNamed(context, AppRoutes.timeSettings),
-                      trailing: Row(
-                        children: [
-                          CustomTrailingText(
-                            title: '$hourMinute $meridiem $currentTimeZoneAbbr',
+                  MechanixSimpleList(
+                      physics: const NeverScrollableScrollPhysics(),
+                      listItems: [
+                        SimpleListItems(
+                            title: 'Auto-time',
+                            trailing: MechanixSwitch(
+                                value: state.autoDateTime,
+                                inactiveText: 'ON',
+                                onChanged: (value) {
+                                  context
+                                      .read<DateTimeBloc>()
+                                      .add(ToggleAutoDateTime(value));
+                                })),
+                        SimpleListItems(
+                          title: 'Set Time',
+                          disabled: state.autoDateTime,
+                          onTap: () => Navigator.pushNamed(
+                              context, AppRoutes.timeSettings),
+                          trailing: Row(
+                            children: [
+                              CustomTrailingText(
+                                title:
+                                    '$hourMinute $meridiem $currentTimeZoneAbbr',
+                              ),
+                              IconWidget(
+                                iconWidth: 10,
+                                iconHeight: 17,
+                                iconPath: Images.rightIconArrow,
+                              )
+                            ],
                           ),
-                          IconWidget(
-                            iconWidth: 10,
-                            iconHeight: 17,
-                            iconPath: Images.rightIconArrow,
-                          )
-                        ],
-                      ),
-                    ),
-                    SimpleListItems(
-                      title: 'Set Date',
-                      disabled: state.autoDateTime,
-                      onTap: () =>
-                          Navigator.pushNamed(context, AppRoutes.dateSettings),
-                      trailing: Row(
-                        children: [
-                          CustomTrailingText(
-                              title:
-                                  '${state.systemDateTime?.day ?? ""} $month ${state.systemDateTime?.year ?? ""}'),
-                          IconWidget(
-                            iconWidth: 10,
-                            iconHeight: 17,
-                            iconPath: Images.rightIconArrow,
-                          )
-                        ],
-                      ),
-                    ),
-                  ])
+                        ),
+                        SimpleListItems(
+                          title: 'Set Date',
+                          disabled: state.autoDateTime,
+                          onTap: () => Navigator.pushNamed(
+                              context, AppRoutes.dateSettings),
+                          trailing: Row(
+                            children: [
+                              CustomTrailingText(
+                                  title:
+                                      '${state.systemDateTime?.day ?? ""} $month ${state.systemDateTime?.year ?? ""}'),
+                              IconWidget(
+                                iconWidth: 10,
+                                iconHeight: 17,
+                                iconPath: Images.rightIconArrow,
+                              )
+                            ],
+                          ),
+                        ),
+                      ])
                 ],
               ).padVertical(8),
             ),

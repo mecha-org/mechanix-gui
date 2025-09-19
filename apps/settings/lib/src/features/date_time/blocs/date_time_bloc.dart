@@ -86,24 +86,24 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
       // logger.i("format ${DateFormat('hh:mm:ss a').format(dateTimeUTC)}");
 
       final currentTimeZone = await object.getProperty(interface, 'Timezone');
-      final listTimezonesMethodResponse =
-          await object.callMethod(interface, 'ListTimezones', []);
-      final listTimezonesDBusValue =
-          listTimezonesMethodResponse.returnValues.first as DBusArray;
-      final listTimezones =
-          listTimezonesDBusValue.children.map((e) => e.asString()).toList();
+      // final listTimezonesMethodResponse =
+      //     await object.callMethod(interface, 'ListTimezones', []);
+      // final listTimezonesDBusValue =
+      //     listTimezonesMethodResponse.returnValues.first as DBusArray;
+      // final listTimezones =
+      //     listTimezonesDBusValue.children.map((e) => e.asString()).toList();
 
       logger.i("NTP Enabled: $ntpEnabled");
       logger.i("Current Time Zone: $currentTimeZone");
 
       final meridiem = DateFormat('a').format(dateTimeUTC); // 'a' gives AM/PM
-      final timezoneOptions = getAllTimezoneAbbreviations(listTimezones);
+      // final timezoneOptions = getAllTimezoneAbbreviations(listTimezones);
 
-      if (ntpEnabled) {
-        final WheelScrollOption<String> ntpTimeZone = timezoneOptions
-            .firstWhere((tz) => tz.label == dateTimeUTC.timeZoneName);
-        add(SetTimeZone(ntpTimeZone.value));
-      }
+      // if (ntpEnabled) {
+      //   final WheelScrollOption<String> ntpTimeZone = timezoneOptions
+      //       .firstWhere((tz) => tz.label == dateTimeUTC.timeZoneName);
+      //   add(SetTimeZone(ntpTimeZone.value));
+      // }
 
       emit(state.copyWith(
         autoDateTime: ntpEnabled,

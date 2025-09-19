@@ -23,55 +23,59 @@ class _IpSettingsState extends State<IpSettings> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MechanixNavigationBar(title: "Network"),
-      body: ContainerWidget(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "IP Settings",
-              style: baseHeaderStyle,
-            ),
-            const SizedBox(height: 20),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: ipModesList.length,
-              itemBuilder: (context, index) {
-                final modeKey = ipModesList.keys.elementAt(index);
-                final modeLabel = ipModesList.values.elementAt(index);
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: ContainerWidget(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "IP Settings",
+                style: baseHeaderStyle,
+              ),
+              const SizedBox(height: 20),
+              ListView.builder(
+                physics: const BouncingScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: ipModesList.length,
+                itemBuilder: (context, index) {
+                  final modeKey = ipModesList.keys.elementAt(index);
+                  final modeLabel = ipModesList.values.elementAt(index);
 
-                return Container(
-                    margin: EdgeInsets.only(bottom: 10),
-                    height: 48,
-                    padding: EdgeInsets.symmetric(horizontal: 10),
-                    alignment: Alignment.center,
-                    decoration: rowBoxDecoration,
-                    child: RadioListTile<IpModes>(
-                      title: Text(
-                        modeLabel,
-                        style: baseHeaderStyle,
-                      ),
-                      controlAffinity: ListTileControlAffinity.trailing,
-                      value: modeKey,
-                      groupValue: selectedMode,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value != null) {
-                            selectedMode = value;
-                          }
-                        });
-                      },
-                      activeColor: const Color(0xFF2D8AFF),
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 10),
-                      dense: true,
-                    ));
-              },
-            ),
-            if (selectedMode == IpModes.static)
-              IpStaticDetails(selectedMode: selectedMode),
-          ],
-        ).padTop(8),
+                  return Container(
+                      margin: EdgeInsets.only(bottom: 10),
+                      height: 48,
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      alignment: Alignment.center,
+                      decoration: rowBoxDecoration,
+                      child: RadioListTile<IpModes>(
+                        title: Text(
+                          modeLabel,
+                          style: baseHeaderStyle,
+                        ),
+                        controlAffinity: ListTileControlAffinity.trailing,
+                        value: modeKey,
+                        groupValue: selectedMode,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value != null) {
+                              selectedMode = value;
+                            }
+                          });
+                        },
+                        activeColor: const Color(0xFF2D8AFF),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 10),
+                        dense: true,
+                      ));
+                },
+              ),
+              if (selectedMode == IpModes.static)
+                IpStaticDetails(selectedMode: selectedMode),
+            ],
+          ).padTop(8),
+        ),
       ),
     );
   }

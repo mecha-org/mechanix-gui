@@ -340,6 +340,7 @@ class WifiRepositoryImpl implements WifiRepository {
     for (var cn in connections) {
       if (!cn.unsaved) {
         var connectionSettings = await cn.getSettings();
+
         final connectionId =
             connectionSettings["connection"]?["id"]?.toNative();
         final String bssid =
@@ -348,8 +349,12 @@ class WifiRepositoryImpl implements WifiRepository {
 
         if (!seenBssids.contains(bssid)) {
           seenBssids.add(bssid); // mark this BSSID as seen
-          AccessPoints? accessPoint = availableAccessPoints?.firstWhereOrNull(
-              (ap) => utf8.decode(ap.nmAccessPoint.ssid) == connectionId);
+          AccessPoints? accessPoint =
+              availableAccessPoints?.firstWhereOrNull((ap) {
+            print('ssid - ${utf8.decode(ap.nmAccessPoint.ssid)})');
+
+            return utf8.decode(ap.nmAccessPoint.ssid) == connectionId;
+          });
 
           SavedNetworks savedNetwork = SavedNetworks(
             ssid: connectionId,
@@ -357,6 +362,7 @@ class WifiRepositoryImpl implements WifiRepository {
             connected: accessPoint?.isActive ?? false,
             accessPoint: accessPoint?.nmAccessPoint,
           );
+
           savedNetworks.add(savedNetwork);
         }
       }

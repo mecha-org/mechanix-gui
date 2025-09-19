@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:mechanix_settings/src/features/display/data/display_repository.dart';
@@ -24,8 +27,13 @@ class DisplayBloc extends Bloc<DisplayEvent, DisplayState> {
     try {
       final defaultSetting = await displayRepository.getDisplaySettings();
 
+      print('defaultSetting - ${defaultSetting.brightness / 254}');
+      log('defaultSetting brightnessValue - ${defaultSetting.brightness / 254}');
+      debugPrint(
+          'defaultSetting brightnessValue - ${defaultSetting.brightness / 254}');
+
       emit(state.copyWith(
-        brightness: (defaultSetting.brightness / 100).toDouble(),
+        brightness: (defaultSetting.brightness / 254).toDouble(),
         isAutoBrightness: defaultSetting.autoBrightness,
         lockScreenTimeout: defaultSetting.lockScreenTimeout.toDouble(),
         screenTimeout: defaultSetting.displayTimeout.toDouble(),
@@ -39,7 +47,7 @@ class DisplayBloc extends Bloc<DisplayEvent, DisplayState> {
       SetBrightnessEvent event, Emitter<DisplayState> emit) async {
     try {
       logger.i('set brightness value ${event.brightness}');
-      await displayRepository.setBrightness((event.brightness * 100).toInt());
+      await displayRepository.setBrightness((event.brightness));
       emit(state.copyWith(brightness: event.brightness));
     } catch (error) {
       logger.e('set brightness value error $error');
@@ -50,6 +58,10 @@ class DisplayBloc extends Bloc<DisplayEvent, DisplayState> {
       SetBrightnessChangeEvent event, Emitter<DisplayState> emit) async {
     try {
       logger.i('set brightness value ${event.brightness}');
+      print('brightness changing - ${event.brightness}');
+      log('brightness changing - ${event.brightness}');
+      debugPrint('brightness changing - ${event.brightness}');
+
       emit(state.copyWith(brightness: event.brightness));
     } catch (error) {
       logger.e('set brightness value error $error');

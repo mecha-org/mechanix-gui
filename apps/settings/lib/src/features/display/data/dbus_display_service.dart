@@ -1,14 +1,23 @@
+import 'dart:developer';
+
 import 'package:dbus/dbus.dart';
+import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/display/models/types.dart';
 
 class DBusDisplayService {
-  static const String _busName = 'org.mechanix.MxConf';
-  static const String _objectPath = '/org/mechanix/MxConf';
+// Object /org/mechanix/services/Display
+// Interface: org.mechanix.services.Display
+// method: SetBrightness
+
+  // static const String _busName = 'org.mechanix.MxConf';
+  static const String _busName = 'org.mechanix.services.Display';
+  // static const String _objectPath = '/org/mechanix/MxConf';
+  static const String _objectPath = '/org/mechanix/services/Display';
   // static const String _interfaceName = 'org.mechanix.MxConf';
   // static const String _propertyName = 'brightness';
-  static const brightnessKey =
-      "org.mechanix.settings.brightness.value"; // org.mechanix.desktop.settings.display.brightness
+  // static const brightnessKey =
+  //     "org.mechanix.settings.brightness.value"; // org.mechanix.desktop.settings.display.brightness
 
   static const displayTimeoutKey =
       "org.mechanix.desktop.settings.display.timeout.value"; // org.mechanix.desktop.settings.display.timeout
@@ -22,7 +31,7 @@ class DBusDisplayService {
   final logger = Logger();
 
   Future<DBusDefaultSettings> getDisplaySettings() async {
-    final client = DBusClient.session();
+    final client = DBusClient.system();
     int? brightnessValue = 40;
     bool? autoBrightnessValue = true;
     int? displayTimeoutValue = 10;
@@ -37,8 +46,9 @@ class DBusDisplayService {
 
       final brightness = await object.callMethod(
         _busName,
-        'GetSetting',
-        [DBusString(brightnessKey)],
+        'GetBrightness',
+        // 'GetSetting',
+        [],
       );
 
       final displayTimeout = await object.callMethod(
@@ -59,17 +69,19 @@ class DBusDisplayService {
         [DBusString(lockScreenTimeoutKey)],
       );
 
-      if (brightness.returnValues.isNotEmpty) {
-        final dict = brightness.returnValues.first;
-        if (dict is DBusDict) {
-          final value = dict.children[DBusString(brightnessKey)];
-          if (value is DBusString) {
-            logger.i('default brightness value ${value.value}');
-            brightnessValue = int.tryParse(value.value);
-            // return int.tryParse(value.value);
-          }
-        }
-      }
+      // if (brightness.returnValues.isNotEmpty) {
+      //   final dict = brightness.returnValues.first;
+      //   if (dict is DBusDict) {
+      //     final value = dict.children[DBusString(brightnessKey)];
+      //     if (value is DBusString) {
+      //       logger.i('default brightness value ${value.value}');
+      //       log('get brightnessValue - ${value.value}');
+      //       debugPrint('get brightnessValue - ${value.value}');
+      //       brightnessValue = int.tryParse(value.value);
+      //       // return int.tryParse(value.value);
+      //     }
+      //   }
+      // }
 
       if (displayTimeout.returnValues.isNotEmpty) {
         final dict = displayTimeout.returnValues.first;
@@ -125,8 +137,8 @@ class DBusDisplayService {
     }
   }
 
-  Future<void> setBrightness(int brightness) async {
-    final client = DBusClient.session();
+  Future<void> setBrightness(double brightness) async {
+    final client = DBusClient.system();
     try {
       final object = DBusRemoteObject(
         client,
@@ -134,13 +146,17 @@ class DBusDisplayService {
         path: DBusObjectPath(_objectPath),
       );
 
-      final result = await object.callMethod(
-        _busName,
-        'SetSetting',
-        [
-          DBusStruct(
-              [DBusString(brightnessKey), DBusString(brightness.toString())])
-        ],
+      final int brightnessValue = convertToRange(brightness);
+      print('brightnessValue - $brightnessValue');
+      log('brightnessValue - $brightnessValue');
+      debugPrint('brightnessValue - $brightnessValue');
+
+      var args = [DBusString(brightnessValue.toString())];
+
+      await object.callMethod(
+        'org.mechanix.services.Display',
+        'SetBrightness',
+        args,
       );
 
       logger.i('Brightness set to $brightness%');
@@ -231,5 +247,14 @@ class DBusDisplayService {
     } finally {
       await client.close();
     }
+  }
+
+  int convertToRange(double input) {
+    return (input * 254).round();
+  }
+
+  double convertToUnitRange(int input) {
+    assert(input >= 0 && input <= 254);
+    return input / 254;
   }
 }

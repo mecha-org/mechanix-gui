@@ -35,27 +35,34 @@ class _BluetoothDeviceDiscoverableState
         return Scaffold(
           appBar: MechanixNavigationBar(title: 'Bluetooth'),
           body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
-              child: MechanixSimpleList(listItems: [
-                SimpleListItems(
-                    title: 'Device discoverable to everyone',
-                    trailing: MechanixSwitch(
-                        allowDrag: false,
-                        value: state.isDiscoveryEnabled,
-                        activeText: 'OFF',
-                        inactiveText: 'ON',
-                        onChanged: (value) {
-                          context
-                              .read<BluetoothBloc>()
-                              .add(DiscoveryEnabled(value));
-                          if (value) {
-                            context.read<BluetoothBloc>().add(StartDiscovery());
-                          } else {
-                            context.read<BluetoothBloc>().add(StopDiscovery());
-                          }
-                          Navigator.pop(context);
-                        }))
-              ]).padTop(8),
+              child: MechanixSimpleList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  listItems: [
+                    SimpleListItems(
+                        title: 'Device discoverable to everyone',
+                        trailing: MechanixSwitch(
+                            allowDrag: false,
+                            value: state.isDiscoveryEnabled,
+                            activeText: 'OFF',
+                            inactiveText: 'ON',
+                            onChanged: (value) {
+                              context
+                                  .read<BluetoothBloc>()
+                                  .add(DiscoveryEnabled(value));
+                              if (value) {
+                                context
+                                    .read<BluetoothBloc>()
+                                    .add(StartDiscovery());
+                              } else {
+                                context
+                                    .read<BluetoothBloc>()
+                                    .add(StopDiscovery());
+                              }
+                              Navigator.pop(context);
+                            }))
+                  ]).padTop(8),
             ),
           ),
         );

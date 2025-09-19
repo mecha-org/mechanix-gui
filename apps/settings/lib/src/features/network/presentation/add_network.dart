@@ -56,40 +56,43 @@ class AddNetwork extends StatelessWidget {
             appBar: MechanixNavigationBar(
               title: "New Wireless",
             ),
-            body: ContainerWidget(
-              child: Form(
-                key: formKey,
-                child: Column(
-                  children: [
-                    MechanixTextInput.textInput(
-                      hintText: 'Name',
-                      isFormField: true,
-                      onChanged: (value) {
-                        context
-                            .read<ConnectNetworkBloc>()
-                            .add(UsernameChanged(value));
-                      },
-                    ).padBottom(8),
-                    MechanixTextInput.password(
-                      hintText: 'Enter Password',
-                      isFormField: true,
-                      onChanged: (value) {
-                        context
-                            .read<ConnectNetworkBloc>()
-                            .add(PasswordChanged(value));
-                      },
-                      onFieldSubmitted: (_) {
-                        if (state.password.isNotEmpty) {
-                          onAddButtonPressed(context, state);
-                          backNavigation(context);
-                        }
-                      },
-                    ),
-                    WirelessProtocols()
-                  ],
+            body: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ContainerWidget(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    children: [
+                      MechanixTextInput.textInput(
+                        hintText: 'Name',
+                        isFormField: true,
+                        onChanged: (value) {
+                          context
+                              .read<ConnectNetworkBloc>()
+                              .add(UsernameChanged(value));
+                        },
+                      ).padBottom(8),
+                      MechanixTextInput.password(
+                        hintText: 'Enter Password',
+                        isFormField: true,
+                        onChanged: (value) {
+                          context
+                              .read<ConnectNetworkBloc>()
+                              .add(PasswordChanged(value));
+                        },
+                        onFieldSubmitted: (_) {
+                          if (state.password.isNotEmpty) {
+                            onAddButtonPressed(context, state);
+                            backNavigation(context);
+                          }
+                        },
+                      ),
+                      WirelessProtocols()
+                    ],
+                  ),
                 ),
-              ),
-            ).padTop(8),
+              ).padTop(8),
+            ),
           );
         },
       ),

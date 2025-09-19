@@ -20,77 +20,87 @@ class SettingMenu extends StatelessWidget {
         titleSpacing: 16,
       ),
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: ContainerWidget(
           child: Column(
             children: [
               // UpdateCard(),
-              MechanixSectionList(title: 'Connectivity', sectionListItems: [
-                SectionListItems(
-                  title: 'Network',
-                  onTap: () => onTap(context, AppRoutes.wireless),
-                  leading: IconWidget(
-                    iconWidth: 22,
-                    iconHeight: 18,
-                    iconPath: Images.wifi,
-                  ),
-                ),
-                SectionListItems(
-                  title: 'Bluetooth',
-                  onTap: () => onTap(context, AppRoutes.bluetooth),
-                  leading: IconWidget(
-                    iconHeight: 20,
-                    iconWidth: 20,
-                    iconPath: Images.bluetooth,
-                  ),
-                ),
-              ]).padVertical(8),
-              MechanixSectionList(title: 'Device', sectionListItems: [
-                SectionListItems(
-                  title: 'Battery',
-                  onTap: () => onTap(context, AppRoutes.battery),
-                  leading: IconWidget(
-                    iconWidth: 23,
-                    iconHeight: 13,
-                    iconPath: Images.battery,
-                  ),
-                ),
-                SectionListItems(
-                  title: 'Date & Time',
-                  onTap: () => onTap(context, AppRoutes.dateTime),
-                  leading: IconWidget(
-                    iconWidth: 20,
-                    iconHeight: 20,
-                    iconPath: Images.dateTime,
-                  ),
-                ),
-                SectionListItems(
-                  title: 'Display',
-                  onTap: () => onTap(context, AppRoutes.display),
-                  leading: IconWidget(
-                    iconWidth: 20,
-                    iconHeight: 20,
-                    iconPath: Images.display,
-                  ),
-                ),
-                SectionListItems(
-                  title: 'Sound & Haptics',
-                  onTap: () => onTap(context, AppRoutes.sound),
-                  leading: IconWidget(
-                    iconWidth: 18,
-                    iconHeight: 20,
-                    iconPath: Images.sound,
-                  ),
-                ),
-              ]),
-              MechanixSectionList(title: 'System', sectionListItems: [
-                SectionListItems(
-                  title: 'About',
-                  onTap: () => onTap(context, AppRoutes.about),
-                  leading: IconWidget(
-                    iconPath: Images.cometIcon,
-                  ),
-                ),
-              ]),
+              MechanixSectionList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  title: 'Connectivity',
+                  sectionListItems: [
+                    SectionListItems(
+                      title: 'Network',
+                      onTap: () => onTap(context, AppRoutes.wireless),
+                      leading: IconWidget(
+                        iconWidth: 22,
+                        iconHeight: 18,
+                        iconPath: Images.wifi,
+                      ),
+                    ),
+                    SectionListItems(
+                      title: 'Bluetooth',
+                      onTap: () => onTap(context, AppRoutes.bluetooth),
+                      leading: IconWidget(
+                        iconHeight: 20,
+                        iconWidth: 20,
+                        iconPath: Images.bluetooth,
+                      ),
+                    ),
+                  ]).padVertical(8),
+              MechanixSectionList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  title: 'Device',
+                  sectionListItems: [
+                    SectionListItems(
+                      title: 'Battery',
+                      onTap: () => onTap(context, AppRoutes.battery),
+                      leading: IconWidget(
+                        iconWidth: 23,
+                        iconHeight: 13,
+                        iconPath: Images.battery,
+                      ),
+                    ),
+                    SectionListItems(
+                      title: 'Date & Time',
+                      onTap: () => onTap(context, AppRoutes.dateTime),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.dateTime,
+                      ),
+                    ),
+                    SectionListItems(
+                      title: 'Display',
+                      onTap: () => onTap(context, AppRoutes.display),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.display,
+                      ),
+                    ),
+                    SectionListItems(
+                      title: 'Sound & Haptics',
+                      onTap: () => onTap(context, AppRoutes.sound),
+                      leading: IconWidget(
+                        iconWidth: 18,
+                        iconHeight: 20,
+                        iconPath: Images.sound,
+                      ),
+                    ),
+                  ]),
+              MechanixSectionList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  title: 'System',
+                  sectionListItems: [
+                    SectionListItems(
+                      title: 'About',
+                      onTap: () => onTap(context, AppRoutes.about),
+                      leading: IconWidget(
+                        iconPath: Images.cometIcon,
+                      ),
+                    ),
+                  ]),
             ],
           ).padTop(8),
         ),
