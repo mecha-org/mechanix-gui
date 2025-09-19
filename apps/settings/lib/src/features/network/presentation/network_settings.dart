@@ -107,16 +107,20 @@ class _NetworkSettingsState extends State<NetworkSettings> {
           appBar: MechanixNavigationBar(
             title: "Network Settings",
           ),
-          body: ContainerWidget(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MechanixSimpleList(
-                  isDividerRequired: true,
-                  listItems: getWireless(context, state.savedNetworks),
-                )
-              ],
-            ).padTop(8),
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ContainerWidget(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MechanixSimpleList(
+                    physics: const BouncingScrollPhysics(),
+                    isDividerRequired: true,
+                    listItems: getWireless(context, state.savedNetworks),
+                  )
+                ],
+              ).padTop(8),
+            ),
           ),
         );
       },

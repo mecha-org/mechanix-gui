@@ -68,23 +68,26 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
             ],
           ),
           body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 children: [
-                  MechanixSimpleList(listItems: [
-                    SimpleListItems(
-                        title: 'Device Name',
-                        trailing: CustomTrailingText(
-                          title: state.selectedDevice?.alias ?? '',
-                        )),
-                    SimpleListItems(
-                        title: 'Device Type',
-                        onTap: () => Navigator.pushNamed(
-                            context, AppRoutes.bluetoothDeviceTypes),
-                        trailing: DeviceType(
-                          deviceType: state.selectedDevice?.icon ?? '',
-                        )),
-                  ]),
+                  MechanixSimpleList(
+                      physics: const NeverScrollableScrollPhysics(),
+                      listItems: [
+                        SimpleListItems(
+                            title: 'Device Name',
+                            trailing: CustomTrailingText(
+                              title: state.selectedDevice?.alias ?? '',
+                            )),
+                        SimpleListItems(
+                            title: 'Device Type',
+                            onTap: () => Navigator.pushNamed(
+                                context, AppRoutes.bluetoothDeviceTypes),
+                            trailing: DeviceType(
+                              deviceType: state.selectedDevice?.icon ?? '',
+                            )),
+                      ]),
                   SizedBox(
                     child: TextButton.icon(
                       onPressed: () => onUnLinkClick(state.selectedDevice),

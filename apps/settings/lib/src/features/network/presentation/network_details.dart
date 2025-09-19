@@ -94,6 +94,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                       ).padRight(16)
                     ]),
           body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 children: [
@@ -122,6 +123,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                   // ),
 
                   MechanixSectionList(
+                    physics: const BouncingScrollPhysics(),
                     title: 'About The Network',
                     theme: MechanixSectionListThemeData(
                         widgetPadding: Spacing.only(top: 8, bottom: 40)),
@@ -145,6 +147,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                       state.selectedAccessPoint!.isActive)
                     MechanixSectionList(
                       title: 'IPV4 Address',
+                      physics: const BouncingScrollPhysics(),
                       sectionListItems: [
                         SectionListItems(
                           defaultTrailingIcon: false,
@@ -178,6 +181,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                       state.selectedAccessPoint!.isActive)
                     MechanixSectionList(
                       title: 'IPV6 Address',
+                      physics: const BouncingScrollPhysics(),
                       sectionListItems: [
                         SectionListItems(
                           title: 'IP Address',

@@ -86,6 +86,13 @@ class WirelessSettingsBloc
               await wifiRepository.availableAccessPoints(savedNetworks);
 
           if (availAccessPoints.available.isNotEmpty) {
+            for (var ap in availAccessPoints.available) {
+              print(
+                  'availAccessPoints bloc - ${utf8.decode(ap.nmAccessPoint.ssid)}');
+            }
+          }
+
+          if (availAccessPoints.available.isNotEmpty) {
             add(UpdateAvailableNetworksEvent(availAccessPoints.available));
           }
 

@@ -20,40 +20,46 @@ class _AboutState extends State<About> {
       builder: (context, state) {
         return Scaffold(
           appBar: MechanixNavigationBar(title: 'About this Comet'),
-          body: ContainerWidget(
-              child: Column(
-            children: [
-              MechanixSimpleList(
-                listItems: [
-                  SimpleListItems(
-                    title: 'Device Name',
-                    trailing: CustomTrailingText(title: state.hostname),
-                  ),
-                ],
-              ),
-              MechanixSimpleList(
-                listItems: [
-                  SimpleListItems(
-                    title: 'Model',
-                    trailing: CustomTrailingText(title: state.hardwareModel),
-                  ),
-                  SimpleListItems(
-                    title: 'Firmware Version',
-                    trailing: CustomTrailingText(title: state.firmwareVersion),
-                  ),
-                  SimpleListItems(
-                    title: 'Kernel Version',
-                    trailing: CustomTrailingText(title: state.kernelRelease),
-                  ),
-                  SimpleListItems(
-                    title: 'OS Name',
-                    trailing:
-                        CustomTrailingText(title: state.operatingSystemName),
-                  ),
-                ],
-              )
-            ],
-          ).padTop(8)),
+          body: SingleChildScrollView(
+            physics: BouncingScrollPhysics(),
+            child: ContainerWidget(
+                child: Column(
+              children: [
+                MechanixSimpleList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  listItems: [
+                    SimpleListItems(
+                      title: 'Device Name',
+                      trailing: CustomTrailingText(title: state.hostname),
+                    ),
+                  ],
+                ),
+                MechanixSimpleList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  listItems: [
+                    SimpleListItems(
+                      title: 'Model',
+                      trailing: CustomTrailingText(title: state.hardwareModel),
+                    ),
+                    SimpleListItems(
+                      title: 'Firmware Version',
+                      trailing:
+                          CustomTrailingText(title: state.firmwareVersion),
+                    ),
+                    SimpleListItems(
+                      title: 'Kernel Version',
+                      trailing: CustomTrailingText(title: state.kernelRelease),
+                    ),
+                    SimpleListItems(
+                      title: 'OS Name',
+                      trailing:
+                          CustomTrailingText(title: state.operatingSystemName),
+                    ),
+                  ],
+                )
+              ],
+            ).padTop(8)),
+          ),
         );
       },
     );
