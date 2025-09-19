@@ -6,6 +6,7 @@ import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbo
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/mechanix.dart';
@@ -331,6 +332,55 @@ Widget buildSearchResultsList(
           ),
         );
       },
+    ),
+  );
+}
+
+Widget buildListViewExtract(
+    List<FileItem> files,
+    BuildContext context,
+    List<FileItem> currentPath,
+    FilesBloc filesBloc,
+    VoidCallback onExtractCompleted) {
+  // Only folders
+  final folders = files.where((file) => file.type == 'dir').toList();
+
+  final sectionItems = folders.map((file) {
+    return SectionListItems(
+      title: file.name,
+      titleTextStyle: const TextStyle(fontSize: 14),
+      leading: Image.asset(file.iconPath,
+          width: 24, height: 24, fit: BoxFit.contain),
+      defaultTrailingIcon: false,
+      onTap: () {
+        final newPath = [...currentPath, file];
+        final pathString = '/${newPath.map((e) => e.name).join('/')}';
+        onItemTap(
+            context, pathString, file.name, filesBloc, onExtractCompleted);
+      },
+    );
+  }).toList();
+
+  return ScrollConfiguration(
+    behavior: ScrollConfiguration.of(context).copyWith(
+      dragDevices: {
+        PointerDeviceKind.touch,
+        PointerDeviceKind.mouse,
+      },
+    ),
+    child: MechanixSectionListTheme(
+      style: MechanixSectionListThemeData(
+        height: 50,
+        dividerPadding: EdgeInsets.zero,
+        widgetPadding: EdgeInsets.zero,
+        backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: MechanixSectionList(
+          sectionListItems: sectionItems,
+        ),
+      ),
     ),
   );
 }

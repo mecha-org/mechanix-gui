@@ -12,6 +12,7 @@ import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/constants.dart';
@@ -967,80 +968,60 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 child: MechanixSectionList(
                   sectionListItems: [
                     SectionListItems(
-                        title: "Home directory",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onTap(context, homeDir, "Home", filesBloc,
-                            () => reload(currentPath, filesBloc)),
-                        leading: IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.home,
-                          iconColor: Colors.blueAccent,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
+                      title: "Home directory",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onTap(context, homeDir, "Home", filesBloc,
+                          () => reload(currentPath, filesBloc)),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.home,
+                        iconColor: Colors.blueAccent,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
                     SectionListItems(
-                        title: "Downloads",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onTap(context, downloadsDir, "Downloads",
-                            filesBloc, () => reload(currentPath, filesBloc)),
-                        leading: IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.downloads,
-                          iconColor: Colors.deepPurpleAccent,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
+                      title: "Downloads",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onTap(context, downloadsDir, "Downloads",
+                          filesBloc, () => reload(currentPath, filesBloc)),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.downloads,
+                        iconColor: Colors.deepPurpleAccent,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
                     SectionListItems(
-                        title: "Documents",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onTap(context, documentsDir, "Documents",
-                            filesBloc, () => reload(currentPath, filesBloc)),
-                        leading: IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.homeDocuments,
-                          iconColor: Colors.orangeAccent,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
+                      title: "Documents",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onTap(context, documentsDir, "Documents",
+                          filesBloc, () => reload(currentPath, filesBloc)),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.homeDocuments,
+                        iconColor: Colors.orangeAccent,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
                     SectionListItems(
-                        title: "Root (/)",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onTap(context, "/", "Root", filesBloc,
-                            () => reload(currentPath, filesBloc)),
-                        leading: IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.hardDrive,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
+                      title: "Root (/)",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onTap(context, "/", "Root", filesBloc,
+                          () => reload(currentPath, filesBloc)),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.hardDrive,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
                   ],
                 ),
               ),
@@ -1207,10 +1188,135 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
   }
 
-  void handleExtract() {
-    BlocProvider.of<FilesBloc>(context)
-        .add(StartExtractMode(selectedPaths.single));
-    clearSelection();
+  void handleExtract(String zipFilePath) {
+    final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
+    final filesBloc = BlocProvider.of<FilesBloc>(context);
+
+    // Start extract mode with the tapped file
+    filesBloc.add(StartExtractMode(zipFilePath));
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[850],
+      isScrollControlled: true,
+      builder: (context) {
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Extract to...',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ).padLeft(18).padBottom(4).padTop(14),
+              MechanixSectionListTheme(
+                style: MechanixSectionListThemeData(
+                  height: 42,
+                  dividerPadding: EdgeInsets.zero,
+                  widgetPadding: EdgeInsets.zero,
+                  backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
+                ),
+                child: MechanixSectionList(
+                  sectionListItems: [
+                    SectionListItems(
+                      title: "Home directory",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onItemTap(
+                        context,
+                        homeDir,
+                        "Home",
+                        filesBloc,
+                        () => reload(currentPath, filesBloc),
+                      ),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.home,
+                        iconColor: Colors.blueAccent,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
+                    SectionListItems(
+                      title: "Downloads",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onItemTap(
+                        context,
+                        downloadsDir,
+                        "Downloads",
+                        filesBloc,
+                        () => reload(currentPath, filesBloc),
+                      ),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.downloads,
+                        iconColor: Colors.deepPurpleAccent,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
+                    SectionListItems(
+                      title: "Documents",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onItemTap(
+                        context,
+                        documentsDir,
+                        "Documents",
+                        filesBloc,
+                        () => reload(currentPath, filesBloc),
+                      ),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.homeDocuments,
+                        iconColor: Colors.orangeAccent,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
+                    SectionListItems(
+                      title: "Root (/)",
+                      titleTextStyle: const TextStyle(fontSize: 14),
+                      onTap: () => onItemTap(
+                        context,
+                        "/",
+                        "Root",
+                        filesBloc,
+                        () => reload(currentPath, filesBloc),
+                      ),
+                      leading: IconWidget(
+                        iconWidth: 20,
+                        iconHeight: 20,
+                        iconPath: Images.hardDrive,
+                      ),
+                      defaultTrailingIcon: false,
+                      trailing: _trailingIcon(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(() {
+      // Only clear selection if needed when bottom sheet closes
+      clearSelection();
+    });
+  }
+
+  Widget _trailingIcon() {
+    return SizedBox(
+      child: Icon(
+        size: 16,
+        Icons.arrow_forward_ios,
+        color: Colors.grey,
+      ).padAll(4),
+    );
   }
 
   void handleProperties() {

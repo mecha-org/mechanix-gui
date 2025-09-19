@@ -428,17 +428,27 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Future<void> _onExtractZipTo(
-      ExtractZipTo event, Emitter<FilesState> emit) async {
+    ExtractZipTo event,
+    Emitter<FilesState> emit,
+  ) async {
     emit(state.copyWith(loading: true));
     try {
       var targetDir = event.targetPath;
-      if (targetDir.isEmpty || targetDir == '') {
+      if (targetDir.isEmpty) {
         targetDir = p.dirname(event.zipFilePath);
       }
+
       await fileRepository.extractZip(event.zipFilePath, targetDir);
+
+      if (!(event.completer?.isCompleted ?? true)) {
+        event.completer?.complete();
+      }
 
       await _loadAndEmitSortedFiles(emit: emit, path: targetDir);
     } catch (e) {
+      if (!(event.completer?.isCompleted ?? true)) {
+        event.completer?.completeError(e);
+      }
       emit(state.copyWith(error: 'Failed to extract ZIP: $e', loading: false));
     }
   }
