@@ -151,3 +151,5 @@ class SearchFilesInDirectory extends FilesEvent {
 
   SearchFilesInDirectory(this.path, this.query);
 }
+
+class ClearSearchResults extends FilesEvent {}

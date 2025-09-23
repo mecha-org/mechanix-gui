@@ -32,7 +32,7 @@ Widget buildListView(
       },
     ),
     child: ListView.builder(
-      // padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.only(bottom: 80),
       itemCount: files.length,
       itemBuilder: (context, index) {
         final file = files[index];
@@ -137,7 +137,7 @@ Widget buildListViewForRecentFiles(
       },
     ),
     child: ListView.builder(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.only(bottom: 80),
       itemCount: files.length,
       itemBuilder: (context, index) {
         final entry = files[index];
@@ -218,6 +218,7 @@ Widget buildListViewMove(
       leading: Image.asset(file.iconPath,
           width: 24, height: 24, fit: BoxFit.contain),
       defaultTrailingIcon: false,
+      trailing: trailingIcon(),
       onTap: () {
         final newPath = [...currentPath, file];
         final pathString = '/${newPath.map((e) => e.name).join('/')}';
@@ -254,6 +255,7 @@ Widget buildSearchResultsList(
   List<FileSystemEntity> results,
   BuildContext context,
 ) {
+  final displayedFiles = getFilesAtPath([], results);
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
@@ -266,9 +268,11 @@ Widget buildSearchResultsList(
       },
     ),
     child: ListView.builder(
+      padding: const EdgeInsets.only(bottom: 80),
       itemCount: results.length,
       itemBuilder: (context, index) {
         final entity = results[index];
+        final file = displayedFiles[index];
         final fullPath = entity.path;
         final name = p.basename(fullPath);
         final isDir = entity is Directory;
@@ -291,19 +295,15 @@ Widget buildSearchResultsList(
                     ),
                   ),
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 60,
+                  height: 60,
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade900,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(
-                    isDir ? Icons.folder : Icons.insert_drive_file,
-                    color:
-                        isDir ? Colors.yellow.shade700 : Colors.grey.shade300,
-                    size: 28,
-                  ),
+                  child: Image.asset(file.iconPath,
+                      width: 24, height: 24, fit: BoxFit.contain),
                 ),
               ],
             ),
@@ -352,6 +352,7 @@ Widget buildListViewExtract(
       leading: Image.asset(file.iconPath,
           width: 24, height: 24, fit: BoxFit.contain),
       defaultTrailingIcon: false,
+      trailing: trailingIcon(),
       onTap: () {
         final newPath = [...currentPath, file];
         final pathString = '/${newPath.map((e) => e.name).join('/')}';
@@ -382,5 +383,15 @@ Widget buildListViewExtract(
         ),
       ),
     ),
+  );
+}
+
+Widget trailingIcon() {
+  return SizedBox(
+    child: Icon(
+      size: 14,
+      Icons.arrow_forward_ios,
+      color: Colors.grey,
+    ).padAll(4),
   );
 }
