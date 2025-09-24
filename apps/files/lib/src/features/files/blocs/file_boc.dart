@@ -55,6 +55,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     on<AddToRecentFiles>(_onAddToRecentFiles);
 
     on<SearchFilesInDirectory>(_onSearchFilesInDirectory);
+    on<ClearSearchResults>((event, emit) {
+      emit(state.copyWith(fileSystemList: [], loading: false));
+    });
   }
 
   Future<void> _onInitializeFiles(
