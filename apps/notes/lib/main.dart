@@ -13,7 +13,7 @@ import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_notes.dart';
-import 'package:media_kit/media_kit.dart';
+// import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:watch_it/watch_it.dart';
@@ -23,7 +23,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeHive();
   Hive.registerAdapter(NoteHiveAdapter());
-  MediaKit.ensureInitialized();
+  // MediaKit.ensureInitialized();
 
   await Hive.openBox<NoteHive>(Constants.tableName);
   runApp(
