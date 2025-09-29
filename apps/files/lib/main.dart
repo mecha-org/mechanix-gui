@@ -10,7 +10,6 @@ import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository_impl.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
 
@@ -20,7 +19,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final configResult = await connectToMxconf(); // Await the Future properly
   AppConfig().loadFromMap(configResult); // Load into singleton instance
-  MediaKit.ensureInitialized();
 
   runApp(
     MultiBlocProvider(

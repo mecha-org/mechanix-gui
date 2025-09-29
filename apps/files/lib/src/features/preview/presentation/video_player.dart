@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:mechanix_files/src/services/media_kit_manager.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 
@@ -23,7 +24,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
   bool _controlsVisible = true;
   Timer? _hideControlsTimer;
 
-  bool _showOptions = false;
+  final bool _showOptions = false;
   double _playbackRate = 1.0;
   ZoomMode _zoomMode = ZoomMode.original;
 
@@ -38,37 +39,37 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
   double _localVolume = 50; // Default volume at 50%
   bool _isPlayerDisposed = false;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    _initializePlayer();
+  }
+
+  Future<void> _initializePlayer() async {
+    await MediaKitManager.init();
     player = Player();
     videoController = VideoController(player);
-    player.open(Media(widget.filePath));
+    await player.open(Media(widget.filePath));
 
-    // Listen to position changes and total duration changes
     _positionSub = player.stream.position.listen((position) {
       if (!mounted) return;
-      setState(() {
-        _currentPosition = position;
-      });
+      setState(() => _currentPosition = position);
     });
 
     _durationSub = player.stream.duration.listen((duration) {
       if (!mounted) return;
-      setState(() {
-        _totalDuration = duration ?? Duration.zero;
-      });
+      setState(() => _totalDuration = duration ?? Duration.zero);
     });
 
     _playingSub = player.stream.playing.listen((playing) {
       if (!mounted) return;
-      setState(() {
-        _isPlaying = playing;
-      });
+      setState(() => _isPlaying = playing);
     });
 
-    _startHideTimer();
+    if (!mounted) return;
+    setState(() => _isInitialized = true);
   }
 
   void _startHideTimer() {
@@ -133,6 +134,12 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       body: Listener(
         behavior: HitTestBehavior.opaque, // ensures all taps are detected
