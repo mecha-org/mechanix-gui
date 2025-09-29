@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:mechanix_files/src/services/media_kit_manager.dart';
 import 'package:media_kit/media_kit.dart';
 
 class AudioPlayerOverlay extends StatefulWidget {
@@ -23,8 +24,12 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
   @override
   void initState() {
     super.initState();
-    player = Player();
+    _initializePlayer();
+  }
 
+  Future<void> _initializePlayer() async {
+    await MediaKitManager.init();
+    player = Player();
     player.open(Media(widget.filePath));
 
     _playingSub = player.stream.playing.listen((playing) {
