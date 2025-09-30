@@ -388,7 +388,7 @@ Widget buildListViewExtract(
 
 Widget trailingIcon() {
   return SizedBox(
-    child: Icon(
+    child: const Icon(
       size: 14,
       Icons.arrow_forward_ios,
       color: Colors.grey,

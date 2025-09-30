@@ -100,7 +100,7 @@ class FileHomePageState extends State<FileHomePage> {
 
           return SingleChildScrollView(
             child: Container(
-              margin: EdgeInsets.all(12),
+              margin: const EdgeInsets.all(12),
               child: Column(
                 children: [
                   MechanixSectionList(
@@ -109,7 +109,7 @@ class FileHomePageState extends State<FileHomePage> {
                         title: "Home directory",
                         titleTextStyle: const TextStyle(),
                         onTap: () => onTap(context, homeDir, "Home"),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 24,
                           iconHeight: 24,
                           iconPath: Images.home,
@@ -119,7 +119,7 @@ class FileHomePageState extends State<FileHomePage> {
                       SectionListItems(
                         title: "Recents",
                         onTap: () => onTap(context, recentDir, "Recents"),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 24,
                           iconHeight: 24,
                           iconPath: Images.recent,
@@ -128,7 +128,7 @@ class FileHomePageState extends State<FileHomePage> {
                       SectionListItems(
                         title: "Downloads",
                         onTap: () => onTap(context, downloadsDir, "Downloads"),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 24,
                           iconHeight: 24,
                           iconPath: Images.downloads,
@@ -138,7 +138,7 @@ class FileHomePageState extends State<FileHomePage> {
                       SectionListItems(
                         title: "Documents",
                         onTap: () => onTap(context, documentsDir, "Documents"),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 24,
                           iconHeight: 24,
                           iconPath: Images.homeDocuments,
@@ -153,7 +153,7 @@ class FileHomePageState extends State<FileHomePage> {
                       SectionListItems(
                         title: "Root (/)",
                         onTap: () => onTap(context, "/", "Root"),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 24,
                           iconHeight: 24,
                           iconPath: Images.hardDrive,

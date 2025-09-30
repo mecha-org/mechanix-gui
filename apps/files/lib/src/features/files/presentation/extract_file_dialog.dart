@@ -188,7 +188,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                           Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(
+                                side: const BorderSide(
                                     color: Colors.white70, width: 0.4),
                                 backgroundColor: Colors.transparent,
                               ),
@@ -252,9 +252,9 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Extract to',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
                 ),
@@ -273,7 +273,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, homeDir, "Home",
                             filesBloc, onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.home,
@@ -281,7 +281,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -292,7 +292,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, downloadsDir,
                             "Downloads", filesBloc, onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.downloads,
@@ -300,7 +300,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -311,7 +311,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, documentsDir,
                             "Documents", filesBloc, onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.homeDocuments,
@@ -319,7 +319,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -330,14 +330,14 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, "/", "Root", filesBloc,
                             onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.hardDrive,
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -386,7 +386,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content:
-            Text("Finished extracting", style: TextStyle(color: Colors.white)),
+            const Text("Finished extracting", style: TextStyle(color: Colors.white)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),

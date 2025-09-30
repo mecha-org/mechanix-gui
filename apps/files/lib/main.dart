@@ -75,7 +75,7 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme.copyWith(
-          pageTransitionsTheme: PageTransitionsTheme(
+          pageTransitionsTheme: const PageTransitionsTheme(
               builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()})),
       themeMode: themeMode,
       home: buildFileExplorerPage(context),

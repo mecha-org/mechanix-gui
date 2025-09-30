@@ -18,7 +18,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   FilesBloc({
     required this.fileRepository,
     required this.recentFilesManager,
-  }) : super(FilesState(
+  }) : super(const FilesState(
             fileSystemList: [],
             loading: false,
             error: null,
@@ -475,7 +475,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     Emitter<FilesState> emit,
   ) async {
     try {
-      final fileSystem = LocalFileSystem();
+      final fileSystem = const LocalFileSystem();
       final recentPaths = await recentFilesManager.getRecentFiles();
       final cleaned = <String>[];
 

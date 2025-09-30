@@ -12,7 +12,7 @@ import 'dart:typed_data';
 import 'dart:convert';
 
 class FileRepositoryImpl implements FileRepository {
-  final FileSystem _fs = LocalFileSystem();
+  final FileSystem _fs = const LocalFileSystem();
   final Logger logger = Logger();
 
   @override

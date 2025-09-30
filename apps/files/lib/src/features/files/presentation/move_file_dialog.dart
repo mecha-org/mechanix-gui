@@ -188,7 +188,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                           Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(
+                                side: const BorderSide(
                                     color: Colors.white70, width: 0.4),
                                 backgroundColor: Colors.transparent,
                               ),
@@ -252,9 +252,9 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Select destination',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
                 ),
@@ -273,7 +273,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onTap(context, homeDir, "Home", filesBloc,
                             onMoveCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.home,
@@ -281,7 +281,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -292,7 +292,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onTap(context, downloadsDir, "Downloads",
                             filesBloc, onMoveCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.downloads,
@@ -300,7 +300,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -311,7 +311,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onTap(context, documentsDir, "Documents",
                             filesBloc, onMoveCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.homeDocuments,
@@ -319,7 +319,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -330,14 +330,14 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onTap(
                             context, "/", "Root", filesBloc, onMoveCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.hardDrive,
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -377,7 +377,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
       SnackBar(
         content: Text(
             "Moved $movedCount item${movedCount > 1 ? 's' : ''} to '$folderName'",
-            style: TextStyle(color: Colors.white)),
+            style: const TextStyle(color: Colors.white)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),

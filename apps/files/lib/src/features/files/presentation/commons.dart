@@ -257,7 +257,7 @@ void handleTap(
 }
 
 bool isZipFileValid(String path) {
-  final FileSystem fileSystem = LocalFileSystem();
+  final FileSystem fileSystem = const LocalFileSystem();
 
   try {
     final bytes = fileSystem.file(path).readAsBytesSync();
