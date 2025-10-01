@@ -77,3 +77,6 @@ const imageFileTypes = [
   '.gif',
   '.bmp'
 ];
+
+const int page = 1;
+const int pageSize = 20;

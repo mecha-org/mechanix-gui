@@ -13,6 +13,7 @@ Widget buildGridView(
   List<FileItem> files,
   BuildContext context,
   List<FileItem> currentPath,
+  ScrollController scrollController,
 ) {
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
@@ -30,6 +31,7 @@ Widget buildGridView(
       },
     ),
     child: GridView.builder(
+      controller: scrollController,
       padding: const EdgeInsets.only(left: 20, top: 20, right: 20, bottom: 80),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,

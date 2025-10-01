@@ -7,6 +7,7 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,10 +80,23 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     //  await _loadAndEmitSortedFiles(emit: emit, path: '/');
   }
 
+  // Future<void> _onLoadFilesAtPath(
+  //     LoadFilesAtPath event, Emitter<FilesState> emit) async {
+  //   emit(state.copyWith(loading: true));
+  //   await _loadAndEmitSortedFiles(emit: emit, path: event.path);
+  // }
+
   Future<void> _onLoadFilesAtPath(
-      LoadFilesAtPath event, Emitter<FilesState> emit) async {
+    LoadFilesAtPath event,
+    Emitter<FilesState> emit,
+  ) async {
     emit(state.copyWith(loading: true));
-    await _loadAndEmitSortedFiles(emit: emit, path: event.path);
+    await _loadAndEmitSortedFiles(
+      emit: emit,
+      path: event.path,
+      page: event.page,
+      pageSize: event.pageSize,
+    );
   }
 
   Future<void> _onCreateFolder(
@@ -303,21 +317,68 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     }
   }
 
+  // Future<void> _loadAndEmitSortedFiles({
+  //   required Emitter<FilesState> emit,
+  //   String path = '/',
+  // }) async {
+  //   try {
+  //     final contents = await fileRepository.getFileSystemList(path: path);
+  //     final visible = state.showHiddenFiles
+  //         ? contents
+  //         : contents.where((e) => !p.basename(e.path).startsWith('.')).toList();
+
+  //     final sorted =
+  //         await fileRepository.sortEntities(visible, state.currentSortBy);
+  //     emit(state.copyWith(fileSystemList: sorted, loading: false));
+  //   } catch (e) {
+  //     logger.e("Error loading path $path: $e");
+  //     emit(state.copyWith(error: e.toString(), loading: false));
+  //   }
+  // }
+
   Future<void> _loadAndEmitSortedFiles({
     required Emitter<FilesState> emit,
     String path = '/',
+    int page = page,
+    int pageSize = pageSize,
   }) async {
     try {
-      final contents = await fileRepository.getFileSystemList(path: path);
+      emit(state.copyWith(loading: true, error: null));
+
+      // Load page from repository (streamed, paginated)
+      final contents = await fileRepository.getPaginatedFileSystemList(
+        path: path,
+        page: page,
+        pageSize: pageSize,
+      );
+
+      // Filter hidden files
       final visible = state.showHiddenFiles
           ? contents
           : contents.where((e) => !p.basename(e.path).startsWith('.')).toList();
 
-      final sorted =
-          await fileRepository.sortEntities(visible, state.currentSortBy);
-      emit(state.copyWith(fileSystemList: sorted, loading: false));
-    } catch (e) {
-      logger.e("Error loading path $path: $e");
+      // Sort visible files
+      final sorted = await fileRepository.sortEntities(
+        visible,
+        state.currentSortBy,
+      );
+
+      // If page == 1 → replace, else append
+      final newList = page == 1 ? sorted : [...state.fileSystemList, ...sorted];
+
+      // Determine if we reached the last page
+      final hasMore = contents.length == pageSize;
+      logger.i("current page: $page");
+      logger.i("has more pages: $hasMore");
+
+      emit(state.copyWith(
+        fileSystemList: newList,
+        loading: false,
+        currentPage: page,
+        hasMorePages: hasMore,
+      ));
+    } catch (e, stackTrace) {
+      logger.e("Error loading path $path: $e", stackTrace: stackTrace);
       emit(state.copyWith(error: e.toString(), loading: false));
     }
   }

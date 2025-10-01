@@ -72,6 +72,41 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   final ValueNotifier<String> searchQuery = ValueNotifier('');
   bool isSearching = false;
 
+  /// For list/grid view
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    final bloc = context.read<FilesBloc>();
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+
+    // Trigger next page when scrolled near bottom and not already loading
+    if (currentScroll >= 0.8 * maxScroll &&
+        !bloc.state.loading &&
+        bloc.state.hasMorePages) {
+      final pathString = '/${widget.path.map((e) => e.name).join('/')}';
+      bloc.add(LoadFilesAtPath(
+        pathString,
+        bloc.state.currentPage + 1,
+        pageSize,
+      ));
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAtRoot = widget.path.isEmpty;
@@ -103,7 +138,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       final fullPath = '/${backPath.map((e) => e.name).join('/')}';
       final filesBloc = BlocProvider.of<FilesBloc>(context);
 
-      filesBloc.add(LoadFilesAtPath(fullPath.isEmpty ? '/' : fullPath));
+      filesBloc.add(
+          LoadFilesAtPath(fullPath.isEmpty ? '/' : fullPath, page, pageSize));
 
       Navigator.pushReplacement(
         context,
@@ -215,8 +251,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   ),
                   title: const Text(
                     'Confirm save as',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   content: Text(
                     '‘$fileName’ already exists, do you want to replace it?',
@@ -294,8 +329,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   ),
                   title: const Text(
                     'Confirm save as',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   content: Text(
                     '‘$fileName’ already exists, do you want to replace it?',
@@ -494,13 +528,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                 ? widget.title == 'recent'
                                     ? buildGridViewForRecentFiles(
                                         context, filteredFilesRecent)
-                                    : buildGridView(
-                                        filteredFiles, context, widget.path)
+                                    : buildGridView(filteredFiles, context,
+                                        widget.path, _scrollController)
                                 : widget.title == 'recent'
                                     ? buildListViewForRecentFiles(
                                         context, filteredFilesRecent)
-                                    : buildListView(
-                                        filteredFiles, context, widget.path);
+                                    : buildListView(filteredFiles, context,
+                                        widget.path, _scrollController);
                           },
                         );
                       },
@@ -1747,7 +1781,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                 const SizedBox(width: 6),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
                                     backgroundColor: Colors.grey[800],
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
@@ -1870,7 +1905,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                 const SizedBox(width: 6),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
                                     backgroundColor: Colors.grey[800],
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
@@ -2040,7 +2076,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void reload(String currentPath, FilesBloc filesBloc) {
-    filesBloc.add(LoadFilesAtPath(currentPath));
+    filesBloc.add(LoadFilesAtPath(currentPath, page, pageSize));
   }
 
   Future<void> copyPath(String path) async {

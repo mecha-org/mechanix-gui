@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:archive/archive.dart';
 import 'dart:typed_data';
@@ -27,6 +28,36 @@ class FileRepositoryImpl implements FileRepository {
 
       final List<FileSystemEntity> contents = dir.listSync();
       return contents;
+    } catch (e, stackTrace) {
+      logger.e("Failed to list file system at $path: $e, $stackTrace");
+      return [];
+    }
+  }
+
+  @override
+  Future<List<FileSystemEntity>> getPaginatedFileSystemList({
+    String path = '/',
+    int page = 1,
+    int pageSize = 50,
+  }) async {
+    try {
+      final Directory dir = _fs.directory(path);
+
+      if (!dir.existsSync()) {
+        logger.w("Directory does not exist: $path");
+        return [];
+      }
+
+      final int start = (page - 1) * pageSize;
+
+      // Use skip/take directly on the stream for pagination
+      final items = await dir
+          .list(recursive: false, followLinks: false)
+          .skip(start)
+          .take(pageSize)
+          .toList();
+
+      return items;
     } catch (e, stackTrace) {
       logger.e("Failed to list file system at $path: $e, $stackTrace");
       return [];

@@ -56,7 +56,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
 
   void _loadFiles() {
     final pathString = '/${currentPath.map((e) => e.name).join('/')}';
-    widget.filesBloc.add(LoadFilesAtPath(pathString));
+    widget.filesBloc.add(LoadFilesAtPath(pathString, page, pageSize));
   }
 
   @override
@@ -385,8 +385,8 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            const Text("Finished extracting", style: TextStyle(color: Colors.white)),
+        content: const Text("Finished extracting",
+            style: TextStyle(color: Colors.white)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),

@@ -19,6 +19,7 @@ Widget buildListView(
   List<FileItem> files,
   BuildContext context,
   List<FileItem> currentPath,
+  ScrollController scrollController,
 ) {
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
@@ -32,6 +33,7 @@ Widget buildListView(
       },
     ),
     child: ListView.builder(
+      controller: scrollController,
       padding: const EdgeInsets.only(bottom: 80),
       itemCount: files.length,
       itemBuilder: (context, index) {

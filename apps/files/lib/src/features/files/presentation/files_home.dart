@@ -83,7 +83,7 @@ class FileHomePageState extends State<FileHomePage> {
                 ),
               );
             } else {
-              filesBloc.add(LoadFilesAtPath(path));
+              filesBloc.add(LoadFilesAtPath(path, page, pageSize));
               Navigator.push(
                 context,
                 MaterialPageRoute(

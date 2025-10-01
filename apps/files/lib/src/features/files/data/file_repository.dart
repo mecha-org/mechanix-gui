@@ -35,4 +35,7 @@ abstract class FileRepository {
   Future<bool> entityExists(String path);
 
   Future<List<FileSystemEntity>> searchFiles(String rootPath, String query);
+
+  Future<List<FileSystemEntity>> getPaginatedFileSystemList(
+      {String path, int page, int pageSize});
 }

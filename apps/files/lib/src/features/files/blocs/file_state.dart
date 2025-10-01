@@ -35,6 +35,9 @@ class FilesState extends Equatable {
   final bool isExtractMode;
   final String zipFilePath;
 
+  final int currentPage;
+  final bool hasMorePages;
+
   const FilesState({
     this.loading = false,
     this.fileSystemList = const [],
@@ -53,6 +56,8 @@ class FilesState extends Equatable {
     this.compressionError,
     this.isExtractMode = false,
     this.zipFilePath = '',
+    this.currentPage = 1,
+    this.hasMorePages = true,
   });
 
   FilesState copyWith({
@@ -74,6 +79,8 @@ class FilesState extends Equatable {
     String? compressionError,
     bool? isExtractMode,
     String? zipFilePath,
+    int? currentPage,
+    bool? hasMorePages,
   }) {
     return FilesState(
       loading: loading ?? this.loading,
@@ -94,6 +101,8 @@ class FilesState extends Equatable {
       conflictingPaths: conflictingPaths ?? this.conflictingPaths,
       conflictDestinationPath:
           conflictDestinationPath ?? this.conflictDestinationPath,
+      currentPage: currentPage ?? this.currentPage,
+      hasMorePages: hasMorePages ?? this.hasMorePages,
     );
   }
 
@@ -115,5 +124,7 @@ class FilesState extends Equatable {
         zipFilePath,
         conflictingPaths,
         conflictDestinationPath,
+        currentPage,
+        hasMorePages,
       ];
 }

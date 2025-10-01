@@ -46,7 +46,7 @@ void _navigateToDirectory(
   final newPath = [...currentPath, directory];
   final pathString = '/${newPath.map((e) => e.name).join('/')}';
   final filesBloc = BlocProvider.of<FilesBloc>(context);
-  filesBloc.add(LoadFilesAtPath(pathString));
+  filesBloc.add(LoadFilesAtPath(pathString, page, pageSize));
 
   Navigator.push(
     context,
@@ -222,7 +222,7 @@ void handleTap(
                 bloc.add(CancelExtractMode());
 
                 // reload after extraction
-                bloc.add(LoadFilesAtPath(currentDir));
+                bloc.add(LoadFilesAtPath(currentDir, page, pageSize));
 
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   SnackBar(

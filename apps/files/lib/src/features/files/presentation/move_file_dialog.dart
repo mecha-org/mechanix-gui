@@ -56,7 +56,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
 
   void _loadFiles() {
     final pathString = '/${currentPath.map((e) => e.name).join('/')}';
-    widget.filesBloc.add(LoadFilesAtPath(pathString));
+    widget.filesBloc.add(LoadFilesAtPath(pathString, page, pageSize));
   }
 
   @override
