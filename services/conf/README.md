@@ -1,6 +1,6 @@
 # 📚 MxConf (Mechanix Configuration Service)
 
-MxConf is a Rust-based configuration system that acts as a database for storing configuration keys and their values.  
+MxConf is a Rust-based configuration service that acts as a database for storing configuration keys and their values.  
 Configurations can be **Inserted, inspected, and modified** using the `mxconf` utility through **D-Bus** and **CLI interfaces**.
 
 ---
