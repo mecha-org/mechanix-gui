@@ -2,6 +2,8 @@
 
 A shell application for interacting with system apps, installed apps, and system monitoring tools, built with MCTK (a GUI library in Rust).
 
+# [![Launcher](https://github.com/user-attachments/assets/5479f1ea-1938-4640-acc1-48ac1f99d5d4)](https://github.com/mecha-org/mechanix-gui)
+
 ## Overview
 
 Mechanix Launcher provides interface for managing your system, offering quick access to essential apps and real-time system information through widgets.
