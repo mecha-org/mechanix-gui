@@ -5,7 +5,7 @@
 
 ## Overview
 
-This service indexes configuration schemas into a Tantivy search index.
+This service indexes configuration schemas into a [Tantivy](https://docs.rs/tantivy/latest/tantivy/) search index.
 Each config file is parsed and indexed with its metadata and nested action sections.
 It maintains data consistency by using checksum validation to avoid unnecessary re-indexing.
 
@@ -58,14 +58,14 @@ MxSearch can index and query files from a given directory.
 MxSearch supports indexing **App Actions** to return actionable results in searches.
 - Applications installed on the system register their **App Actions** to **mxsearch**.
 - This allows mxsearch to return App Actions as part of search results.
-- App Actions are stored as **TOML** files inside the directory:  
-  `/usr/share/mxsearch/actions`
+- App Actions are stored as **TOML** files inside the directory:  `/usr/share/mxsearch/actions`
+- Each TOML file is checksummed.
+- The `%KEYWORD%` placeholder is dynamically replaced by the user’s search query when invoking actions.
 
 
 Each app registers a TOML file named: `org.mechanix.<AppName>.toml`
 
-Example for the Settings app:
-`/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
+Example for the Settings app: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
 
 App Action Toml Format:
 ```toml
@@ -89,15 +89,6 @@ Description = "Search by file name"
 Arg = { path = "%KEYWORD%" }
 ```
 
-
----
-
-### Indexing and Refresh
-
-- Mxsearch indexes the `/usr/share/mxsearch/actions` directory.
-- Each TOML file is checksummed.
-- When a file changes or the service starts, the actions are refreshed.
-- The `%KEYWORD%` placeholder is dynamically replaced by the user’s search query when invoking actions.
 
 ---
 
@@ -182,12 +173,12 @@ searchable_fields = [
 
 ### Build from Source
 
-```
+```bash
 
-https://github.com/mecha-org/mechanix-gui.git -b pre-release
-cd services/search/server
+$ https://github.com/mecha-org/mechanix-gui.git -b pre-release
+$ cd services/search/server
 
-cargo build --release
+$ cargo build --release
 
 ```
 
@@ -195,7 +186,7 @@ Run the server:
 
 ```
 
-cargo run --release
+$ cargo run --release
 
 ```
 
@@ -203,14 +194,14 @@ Enable debug logging:
 
 ```
 
-RUST_LOG=none,mxsearch=debug ../../target/release/mxsearch -s
+$ RUST_LOG=none,mxsearch=debug ../../target/release/mxsearch -s
 
 ```
 
 ## 🚀 Running MxSearch
 
 ```bash
- RUST_LOG=none,mxsearch=debug,apps=debug,files=debug cargo run
+$ RUST_LOG=none,mxsearch=debug,apps=debug,files=debug cargo run
 ```
 
 ---
@@ -223,27 +214,33 @@ MxSearch exposes its operations via **D-Bus**.
 - **Interface:** `org.mechanix.MxSearch`
 ---
 
-## 🚀 Methods
+## ⚡ Methods
 
 ### ListApplications
 List all installed applications
 ```bash
-busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch ListApplications
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch ListApplications
 ```
 
 ### SearchApplications
 
-busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchApplications s "<keyword>"
+```bash 
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchApplications s "<keyword>"
+```
 
 ### SearchFiles
 
-busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchFiles s "<keyword>"
+```bash
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchFiles s "<keyword>"
+```
 
 ### SearchAppActions
 
-busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchAppActions s "<keyword>"
+```bash
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchAppActions s "<keyword>"
+```
 
-## TODOs
+## 📋 TODOs
 
 Apps
 

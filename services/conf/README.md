@@ -1,9 +1,7 @@
+# 📚 MxConf (Mechanix Configuration Service)
 
-
-**# 📚 MXCONF (Mechanix Configuration Service)
-
-MXCONF is a Rust-based configuration system that acts as a database for storing configuration keys and their values.  
-Configurations can be **inspected, modified, or exported** using the `mxconf` utility through **D-Bus** and **CLI interfaces**.
+MxConf is a Rust-based configuration system that acts as a database for storing configuration keys and their values.  
+Configurations can be **Inserted, inspected, and modified** using the `mxconf` utility through **D-Bus** and **CLI interfaces**.
 
 ---
 
@@ -99,27 +97,27 @@ darkMode = { type = "bool", key = "enabled", default = false }
 
 ### Build from Source
 
-```
+```shell
 
-https://github.com/mecha-org/mechanix-gui.git -b pre-release
-cd services/conf
-cargo build --release
+$ https://github.com/mecha-org/mechanix-gui.git -b pre-release
+$ cd services/conf
+$ cargo build --release
 
 ```
 
 Run the server:
 
-```
+```shell
 
-cargo run --release
+$ cargo run --release
 
 ```
 
 Enable debug logging:
 
-```
+```shell
 
-RUST_LOG=none,mxconf=debug ../target/release/mxconf -s
+$ RUST_LOG=none,mxconf=debug ../target/release/mxconf -s
 
 ```
 
@@ -131,9 +129,9 @@ RUST_LOG=none,mxconf=debug ../target/release/mxconf -s
 
 1. Start the server:
 
-```
+```shell
 
-./mxconf -s
+$ ./mxconf -s
 
 ```
 
@@ -145,9 +143,9 @@ The server will automatically:
 
 3. Configurations are stored in:
 
-```
+```shell
 
-~/.config/mxconf/db
+$ ~/.config/mxconf/db
 
 ```
 
@@ -168,32 +166,31 @@ Interact with the running server from the command line:
 
 - **Set** a setting:
 
-```
+```shell
 
-./mxconf set <key> <value>
+$ ./mxconf set <key> <value>
 
 ```
 
 - **Watch** for changes:
 
-```
+```shell
 
-./mxconf watch <key>
-./mxconf watch <key_expr>
+$ ./mxconf watch <key>
+$ ./mxconf watch <key_expr>
 
 ```
 
 - **List available schemas**:
 
-```
+```shell
 
-./mxconf list-schemas
+$ ./mxconf list-schemas
 
 ```
 
 ---
 ### D-Bus Interface
-# 🔌 MXCONF D-Bus API Reference
 
 MXCONF exposes its configuration operations via **D-Bus**.
 
@@ -211,7 +208,7 @@ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf Describ
 
 Example:
 ```shell
-busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf DescribeKey ss "org.mechanix.launcher" "theme"
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf DescribeKey ss "org.mechanix.launcher" "theme"
 ```
 
 ### GetSetting
@@ -223,7 +220,7 @@ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf GetSett
 Example:
 
 ```shell
-busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf GetSetting s "org.mechanix.launcher.theme"
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf GetSetting s "org.mechanix.launcher.theme"
 ```
 
 
@@ -235,7 +232,7 @@ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListKey
 
 Example:
 ```shell
-busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListKeys s "org.mechanix.launcher.theme"
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListKeys s "org.mechanix.launcher.theme"
 ```
 
 ### ListSchemas
@@ -245,7 +242,7 @@ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListSch
 
 Example:
 ```shell
-busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListSchemas
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListSchemas
 ```
 
 ### SetSetting
@@ -256,7 +253,7 @@ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf SetSett
 
 Example:
 ```shell
-busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf SetSetting ss "org.mechanix.launcher.theme" "dark"
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf SetSetting ss "org.mechanix.launcher.theme" "dark"
 ```
 
 > **Note:** The server **must be running** with `-s` for CLI commands to work.**
