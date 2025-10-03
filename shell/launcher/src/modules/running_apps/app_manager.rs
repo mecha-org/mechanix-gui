@@ -19,7 +19,10 @@ use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::{
     },
 };
 
-use crate::{modules::applications::model::DesktopEntriesModel, AppMessage};
+use crate::{
+    modules::{applications::model::DesktopEntriesModel, home::handler::minimize_all},
+    AppMessage,
+};
 
 use super::running_app::{AppDetails, AppInstance};
 
@@ -44,6 +47,7 @@ pub enum AppManagerMessage {
         app_id: String,
         reply_to: oneshot::Sender<Result<bool>>,
     },
+    MinimizeAll,
 }
 
 #[derive(Debug, Clone)]
@@ -146,6 +150,14 @@ impl AppManagerService {
                             let res = self.close_app(&app_id).await;
                             let _ = reply_to.send(res);
                         }
+                        AppManagerMessage::MinimizeAll => {
+                            println!("minimizing all apps");
+                            let _ = minimize_all(self
+                                 .top_level_sender
+                                    .as_ref()
+                                .unwrap().clone()).await;
+
+                        }
                     }
                 }
 
@@ -194,17 +206,20 @@ impl AppManagerService {
     }
 
     pub fn start_app(&self, app_id: &str) -> Result<bool> {
-        let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
-        let app = desktop_entries
-            .iter()
-            .find(|entry| entry.app_id.to_lowercase() == app_id.to_lowercase());
+        let exec = match app_id {
+            "mechanix_notes" => "mechanix_notes -b /usr/share/mechanix/mechanix-notes-beta/ -w 540 -h 620 -k -s 1",
+            "mechanix_settings" => {
+                "mechanix_settings -b /usr/share/mechanix/mechanix-settings-beta/ -w 540 -h 620 -k -s 1"
+            }
+            "mechanix_files" => "mechanix_files -b /usr/share/mechanix/mechanix-files-beta/ -w 540 -h 620 -k -s 1",
+            "mechanix_music" => "mechanix_music -b /usr/share/mechanix/mechanix-music-beta/ -w 540 -h 620 -k -s 1",
+            "alacritty" => "alacritty",
+            "chromium" => "chromium --new-tabs --ozone-platform=wayland  --no-sandbox   --disable-logging   --disable-background-timer-throttling   --disable-backgrounding-occluded-windows   --disable-renderer-backgrounding   --disable-component-update   --disable-sync   --disable-translate   --disable-extensions   --disable-features=TranslateUI,MediaRouter,OptimizationGuideModelDownloading   --enable-low-end-device-mode   --process-per-site   --memory-pressure-off   --start-maximized",
+            "firefox" => "firefox",
+            "hackernews" => "chromium --new-tab \"https://news.ycombinator.com/item?id=45256651\"  --ozone-platform=wayland  --no-sandbox   --disable-logging   --disable-background-timer-throttling   --disable-backgrounding-occluded-windows   --disable-renderer-backgrounding   --disable-component-update   --disable-sync   --disable-translate   --disable-extensions   --disable-features=TranslateUI,MediaRouter,OptimizationGuideModelDownloading   --enable-low-end-device-mode   --process-per-site   --memory-pressure-off   --start-maximized",
+            _ => "",
+        };
 
-        if app.is_none() {
-            return Ok(false);
-        }
-
-        let app = app.unwrap();
-        let exec = app.exec.clone();
         if !exec.is_empty() {
             let mut args: Vec<String> = vec!["-c".to_string()];
             args.push(exec.to_string());

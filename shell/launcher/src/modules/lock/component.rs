@@ -21,7 +21,7 @@ impl Component for Lock {
             .push(node!(
                 Image::new("lock_icon"),
                 lay![
-                    size: [28, 28],
+                    size: [31.5, 31.5],
                 ],
             )),
         )

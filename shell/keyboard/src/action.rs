@@ -66,6 +66,7 @@ pub enum Action {
     },
     /// Erase a position behind the cursor
     Erase,
+    Enter,
     ShowPreferences,
     Minimize,
     Maximize,

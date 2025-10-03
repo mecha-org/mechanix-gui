@@ -1,35 +1,35 @@
 ---
 outlines:
-  default: { width: 39.5, height: 43.7 }
-  altline: { width: 62, height: 43.7 }
-  change-view: { width: 62, height: 43.7 }
-  change-view-2: { width: 62, height: 43.7 }
-  wide: { width: 62, height: 43.7 }
-  spaceline: { width: 176.3, height: 43.7 }
-  special: { width: 44, height: 43.7 }
-  large: { width: 36, height: 43.7 }
+  default: { width: 44, height: 50 }
+  altline: { width: 44, height: 50 }
+  change-view: { width: 44, height: 50 }
+  change-view-2: { width: 44, height: 50 }
+  wide: { width: 88, height: 50 }
+  spaceline: { width: 260, height: 50 }
+  special: { width: 44, height: 50 }
+  large: { width: 44, height: 50 }
 
 views:
   base:
     - "q w e r t y u i o p"
     - "a s d f g h j k l"
     - "Shift_L   z x c v b n m  BackSpace"
-    - "show_numbers ,         space       . preferences Return"
+    - "show_numbers ,         space       . Return"
   upper:
     - "Q W E R T Y U I O P"
     - "A S D F G H J K L"
     - "Shift_L   Z X C V B N M  BackSpace"
-    - "show_numbers ,         space       . preferences Return"
+    - "show_numbers ,         space       . Return"
   numbers:
     - "1 2 3 4 5 6 7 8 9 0"
     - "! @ # $ % ^ & * ( )"
     - "show_symbols   - ' '' : ; , ?  BackSpace"
-    - "show_letters ,         space       . preferences Return"
+    - "show_letters ,         space       . Return"
   symbols:
     - "↑ ↓ ← → e e \\ | { }"
     - "+ ` ~ = / _ < > [ ]"
     - "show_numbers_from_symbols   - ' '' : ; , ?  BackSpace"
-    - "show_letters ,         space       . preferences Return"
+    - "show_letters ,         space       . Return"
 
 buttons:
   Shift_L:
@@ -75,6 +75,6 @@ buttons:
     text: " "
   Return:
     outline: "wide"
-    icon: "key-enter"
-    # label: "Done"
-    keysym: "Return"
+    # icon: "key-enter"
+    label: "Return"
+    action: "enter"

@@ -58,7 +58,7 @@ impl Component for AppList {
             // .style("bar_background_color", Color::TRANSPARENT),
             lay![
                 // padding: [8, 16, 0, 0],
-                size: [440, Auto],
+                size: [500, Auto],
                 axis_alignment: Alignment::Start,
                 direction: Row,
                 wrap: true,
@@ -75,8 +75,11 @@ impl Component for AppList {
             );
         }
 
-        let scrollable =
-            node!(Scrollable::new(size!(440., 440.)), lay![ size: [440] ]).push(apps_list_node);
+        let scrollable = node!(
+            Scrollable::new(size!(500., 580.)),
+            lay![ size: [500,  580] ]
+        )
+        .push(apps_list_node);
 
         Some(scrollable)
     }

@@ -25,6 +25,6 @@ impl Component for IpAddress {
         Some(node!(Text::new(txt!(ip_address))
             .with_class("font-space-mono font-normal")
             .style("color", Color::rgb(201., 201., 201.))
-            .style("size", 15.0)))
+            .style("size", 19.0)))
     }
 }

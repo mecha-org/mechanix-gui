@@ -17,4 +17,5 @@ pub mod running_apps;
 pub mod settings;
 pub mod settings_panel;
 pub mod uptime;
+pub mod weather;
 pub mod wireless;

@@ -19,7 +19,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde_ini = "0.2.0"
 tokio = { version = "1.33", features = ["full"] }
 wayland-protocols-async = { workspace = true }
-desktop_ini_utils = { path = "../commons/desktop_ini_utils"}
+desktop_ini_utils = { path = "../commons/desktop_ini_utils" }
 mctk_core = { workspace = true }
 mctk_smithay = { workspace = true }
 mctk_macros = { workspace = true }
@@ -30,7 +30,7 @@ sysinfo = "0.33.0"
 rand = "0.8.5"
 logind = { workspace = true }
 futures = { workspace = true }
-upower ={ workspace = true }
+upower = { workspace = true }
 chrono = { workspace = true }
 mechanix_system_dbus_client = { workspace = true }
 mechanix_desktop_dbus_client = { workspace = true }

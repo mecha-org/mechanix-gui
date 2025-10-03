@@ -12,7 +12,10 @@ use mctk_core::{
 };
 
 use crate::{
-    gui::{self, get_translations, Message, Swipe, SwipeDirection, SwipeState, BEZIER_POINTS},
+    gui::{
+        self, get_translations, Message, Swipe, SwipeDirection, SwipeState, BEZIER_POINTS,
+        WINDOW_SIZE,
+    },
     modules::installed_apps::{
         app,
         component::{AppList, AppListMessage},
@@ -54,7 +57,7 @@ impl AppDrawer {
             let swipe = Swipe {
                 dy: delta.y as i32,
                 min_dy: 0,
-                max_dy: 480,
+                max_dy: WINDOW_SIZE[1] as i32,
                 threshold_dy: 0,
                 direction: SwipeDirection::Down,
                 state: SwipeState::UserSwiping,
@@ -99,7 +102,7 @@ impl Component for AppDrawer {
                         let swipe = Swipe {
                             dy: 0 as i32,
                             min_dy: 0,
-                            max_dy: 480,
+                            max_dy: WINDOW_SIZE[1] as i32,
                             threshold_dy: 0,
                             direction: SwipeDirection::Down,
                             state: SwipeState::CompletingSwipe,

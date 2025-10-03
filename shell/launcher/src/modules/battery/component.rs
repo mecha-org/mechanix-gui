@@ -35,7 +35,7 @@ impl Component for Battery {
             .push(node!(
                 Image::new(battery_level.to_string()),
                 lay![
-                    size: [28, 28],
+                    size: [31.5, 31.5],
                 ],
             )),
         )

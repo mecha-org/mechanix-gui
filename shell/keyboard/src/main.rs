@@ -65,7 +65,7 @@ pub struct AppParams {
 #[derive(Debug)]
 enum AppMessage {
     TextkeyPressed {
-        keycode: crate::layout::KeyCode,
+        keytext: String,
     },
     SuggestionsChanged {
         suggestions: Vec<String>,
@@ -204,9 +204,9 @@ fn main() -> anyhow::Result<()> {
             calloop::channel::Event::Msg(msg) => {
                 // println!("app event {:?}", msg);
                 match msg {
-                    AppMessage::TextkeyPressed { keycode } => {
-                        println!("AppMessage::TextkeyPressed {:?}", keycode);
-                        KeyboardModel::key_pressed(keycode);
+                    AppMessage::TextkeyPressed { keytext } => {
+                        println!("AppMessage::TextkeyPressed {:?}", keytext);
+                        KeyboardModel::key_pressed(keytext);
 
                         // let virtual_keyboard_msg_tx = virtual_keyboard_msg_tx.clone();
                         // futures::executor::block_on(async move {
@@ -326,6 +326,8 @@ fn load_keymap(layout_path: String) -> (i32, u32) {
             .map_mut(&keymap_file)
             .expect("Could not access data from memory mapped file")
     };
+
+    println!("keymap_file {:?}", src);
     // Write the keymap to it
     data[..src.len()].copy_from_slice(src.as_bytes());
 

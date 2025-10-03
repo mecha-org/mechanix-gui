@@ -43,7 +43,7 @@ impl Component for AppSwitcher {
             node!(
                 Carousel::new(),
                 lay![
-                    size: [Auto, 216]
+                    size: [Auto, 416]
                     direction: Row,
                     cross_alignment: Alignment::Center,
                     // axis_alignment: Alignment::End
@@ -77,8 +77,8 @@ impl Component for AppSwitcher {
                 .push(node!(
                     app,
                     lay![
-                        size: [180, 216],
-                    ],
+                        size: [200, 100]
+                    ]
                 )),
             );
         }
@@ -111,7 +111,7 @@ impl Component for AppSwitcher {
 
         start_node = start_node.push(node!(
             HDivider { size: 1. },
-            lay! [ margin: [0., 20., 0., 20.] ]
+            lay! [ margin: [120., 20., 0., 20.] ]
         ));
 
         start_node = start_node.push(

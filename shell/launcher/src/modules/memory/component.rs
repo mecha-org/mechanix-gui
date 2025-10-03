@@ -10,7 +10,7 @@ use std::hash::Hash;
 
 use crate::utils::fill_grid_with_true;
 
-const MEMORY_GRID_SIZE: (u8, u8) = (7, 10);
+const MEMORY_GRID_SIZE: (u8, u8) = (10, 17);
 
 #[derive(Debug)]
 struct MemoryState {
@@ -74,7 +74,7 @@ impl Component for Memory {
             let mut row = node!(
                 Div::new(),
                 lay![
-                    margin: [0., 0., 4., 0.]
+                    margin: [0., 0., 6., 0.]
                 ]
             )
             .key(i.into());
@@ -85,7 +85,7 @@ impl Component for Memory {
                     node!(
                         MemoryBlock { occupied },
                         lay![
-                            margin: [0., 0., 0., 4.]
+                            margin: [0., 0., 0., 6.]
                         ]
                     )
                     .key(j as u64),
@@ -94,13 +94,7 @@ impl Component for Memory {
             memory_blocks = memory_blocks.push(row);
         }
 
-        Some(
-            node!(Div::new(), lay![direction: Direction::Column])
-                .push(node!(Text::new(txt!("MEMORY"))
-                    .with_class("text-white font-space-mono font-bold")
-                    .style("size", 15.0)))
-                .push(memory_blocks),
-        )
+        Some(node!(Div::new(), lay![]).push(memory_blocks))
     }
 }
 
@@ -118,15 +112,17 @@ impl Component for MemoryBlock {
         let occupied = self.occupied;
 
         let color = if occupied {
-            Color::rgb(0., 85., 255.)
+            Color::rgb(161., 105., 0.)
         } else {
-            Color::rgba(217., 217., 217., 0.21)
+            Color::rgb(54., 54., 54.)
         };
 
         Some(node!(
-            Div::new().bg(color),
+            Div::new()
+                .bg(color)
+                .border(Color::TRANSPARENT, 1., (2., 2., 2., 2.)),
             lay![
-                size: [8, 8]
+                size: [7, 7]
             ]
         ))
     }

@@ -30,13 +30,14 @@ impl Component for Clock {
             Text::new(txt!(time.clone()))
                 .with_class("font-space-mono font-bold")
                 .style("color", Color::rgb(230., 230., 230.))
-                .style("size", 72.0),
+                .style("size", 80.0),
             lay![]
         );
 
         let date_node = node!(
             Text::new(txt!(date.clone()))
-                .with_class("text-white text-sm font-space-mono font-bold"),
+                .with_class("text-white font-space-mono font-bold")
+                .style("size", 18.0),
             lay![
                 size_pct: [100],
             ]

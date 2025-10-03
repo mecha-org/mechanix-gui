@@ -92,11 +92,11 @@ impl HomeButtonHandler {
 
                                         if elapsed >= min_time_long_press && !long_press_sent {
                                             // Long press detected
-                                            let _ = app_channel.send(AppMessage::RunningApps {
-                                                message: crate::RunningAppsMessage::Toggle {
-                                                    value: true,
-                                                },
-                                            });
+                                            // let _ = app_channel.send(AppMessage::RunningApps {
+                                            //     message: crate::RunningAppsMessage::Toggle {
+                                            //         value: true,
+                                            //     },
+                                            // });
                                             let _ = minimize_all(toplevel_msg_tx.clone()).await;
                                             {
                                                 let mut long_press_sent =
@@ -119,10 +119,10 @@ impl HomeButtonHandler {
                                 }
                                 if !long_press_sent {
                                     // Short press detected, minimize all
-                                    let app_channel = self.app_channel.clone();
-                                    let _ = app_channel.send(AppMessage::RunningApps {
-                                        message: crate::RunningAppsMessage::Toggle { value: false },
-                                    });
+                                    // let app_channel = self.app_channel.clone();
+                                    // let _ = app_channel.send(AppMessage::RunningApps {
+                                    //     message: crate::RunningAppsMessage::Toggle { value: false },
+                                    // });
                                     let _ = minimize_all(toplevel_msg_tx.clone()).await;
                                 }
                                 {
@@ -144,7 +144,7 @@ impl HomeButtonHandler {
     }
 }
 
-async fn minimize_all(toplevel_msg_tx: mpsc::Sender<ToplevelMessage>) -> Result<bool> {
+pub async fn minimize_all(toplevel_msg_tx: mpsc::Sender<ToplevelMessage>) -> Result<bool> {
     let (tx, rx) = oneshot::channel();
     let _ = toplevel_msg_tx
         .send(ToplevelMessage::MinimizeAll { reply_to: tx })

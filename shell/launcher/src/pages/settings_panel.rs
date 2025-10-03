@@ -7,7 +7,7 @@ use mctk_core::{component::Component, lay, node, rect, size, size_pct, widgets::
 use mctk_core::{msg, Color};
 use networkmanager::WirelessModel;
 
-use crate::gui;
+use crate::gui::{self, WINDOW_SIZE};
 use crate::modules::settings_panel::brightness::component::Brightness;
 use crate::modules::settings_panel::closer::Closer;
 use crate::modules::settings_panel::rotation::component::RotationStatus;
@@ -43,13 +43,11 @@ impl Component for SettingsPanel {
         let wireless_status = get_forttated_wireless_status(WirelessModel::get());
 
         // println!("view() swipe {:?}", swipe);
-        let width = 480;
-        let height = 480;
 
         let mut p1 = node!(
             Div::new().bg(Color::rgba(0., 0., 0., 0.85)),
             lay![
-                size: [width, height],
+                size: [WINDOW_SIZE[0], WINDOW_SIZE[1]],
                 // padding: [20., 20., 20., 20.],
                 cross_alignment: Alignment::Stretch,
                 direction: Direction::Column
@@ -85,7 +83,8 @@ impl Component for SettingsPanel {
             gui::SettingNames::Wireless
         ))))
         .with_class("btn-xxl border-0")
-        .style("padding", 42.)
+        .style("padding", 52.)
+        .style("size", size!(100, 88))
         .style("active_color", Color::rgb(43., 43., 43.))));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new(format!(
@@ -97,7 +96,8 @@ impl Component for SettingsPanel {
             gui::SettingNames::Bluetooth
         ))))
         .with_class("btn-xxl border-0")
-        .style("padding", 42.)
+        .style("padding", 52.)
+        .style("size", size!(100, 88))
         .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new(rotation_status.to_string())
@@ -106,7 +106,8 @@ impl Component for SettingsPanel {
             //     gui::SettingNames::Rotation
             // ))))
             .with_class("btn-xxl border-0")
-            .style("padding", 42.)
+            .style("padding", 52.)
+            .style("size", size!(100, 88))
             .style("active_color", Color::TRANSPARENT)));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new("terminal_icon")
@@ -115,7 +116,8 @@ impl Component for SettingsPanel {
                 gui::SettingNames::Terminal
             ))))
             .with_class("btn-xxl border-0")
-            .style("padding", 42.)
+            .style("padding", 52.)
+            .style("size", size!(100, 88))
             .style("active_color", Color::rgb(43., 43., 43.)),));
         row_1 = row_1.push(node!(VDivider { size: 1.5 }));
         row_1 = row_1.push(node!(IconButton::new("power_icon")
@@ -124,7 +126,8 @@ impl Component for SettingsPanel {
                 gui::SettingNames::Power
             ))))
             .with_class("btn-xxl border-0")
-            .style("padding", 42.)
+            .style("padding", 52.)
+            .style("size", size!(100, 88))
             .style("active_color", Color::rgb(43., 43., 43.)),));
 
         // println!("swipe - height {:?}", swipe - height);
@@ -141,7 +144,7 @@ impl Component for SettingsPanel {
             lay![
                 size_pct: [100],
                 position_type: Absolute,
-                position: [swipe - height, 0., Auto, Auto]
+                position: [swipe - WINDOW_SIZE[1] as i32,  0., Auto, Auto]
                 z_index_increment: 1000.
             ]
         );

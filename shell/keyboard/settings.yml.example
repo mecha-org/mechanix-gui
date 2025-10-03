@@ -5,7 +5,7 @@ app:
   antialiasing: true # false
   try_opengles_first: true # false
 window:
-  size: [480, 244] # [480, 200]
+  size: [540, 276] # [480, 200]
   position: [0, 0] # [0, 0]
   min_size: [448, 84] # None
   max_size: null # None
@@ -25,8 +25,8 @@ icons:
 layouts:
   default: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
   terminal: /usr/share/mechanix/shell/keyboard/assets/layouts/terminal/us.yaml
-  email: /usr/share/mechanix/shell/keyboard/assets/layouts/email/us.yaml
-  url: /usr/share/mechanix/shell/keyboard/assets/layouts/url/us.yaml
+  email: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
+  url: /usr/share/mechanix/shell/keyboard/assets/layouts/us.yaml
 trie:
   raw_file: /usr/share/mechanix/shell/keyboard/assets/trie/words_raw.tsv
   cached_file: .config/mechanix/shell/keyboard/caches/words_cached.json
