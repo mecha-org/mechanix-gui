@@ -1,6 +1,6 @@
 [general]
 [apps]
-enable_search_apps = false
+enable_search = false
 desktop_apps_dir = "/usr/share/applications"
 index_dir = ".config/index/applications"
 search_limit = 10
@@ -15,11 +15,13 @@ searchable_fields = [
     "checksum"
 ]
 [files]
-enable_search_files = true
+enable_search = true
 files_dir_to_watch = "/home"
 index_dir = ".config/mxsearch/index/files"
 max_depth = 5
 search_limit = 1000
+max_watchers = 1000
+target_memory_usage_in_bytes = 15000000
 read_file_content_upto_in_kb = 100
 searchable_fields = [
     "file_type",
