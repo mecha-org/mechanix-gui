@@ -2,10 +2,12 @@
 
 This repository contains multiple components of Mechanix GUI developed in Rust.
 
-- **apps/** - Applications written using mctk, gui library in Rust (settings, files, camera)
-- **shell/** - Shell applications written using mctk, gui library in Rust (launcher, keyboard)
-- **services/** - Background services written in Rust (desktop, system)
-- **commons/** - DBUS client's and utils written in Rust which are used in both apps and shell
+| Directory   | Description                                                                                 |
+|-------------|---------------------------------------------------------------------------------------------|
+| [apps/](./apps)      | Applications written using **mctk**, GUI library in Rust (e.g., Settings, Files, Camera) |
+| [shell/](./shell)    | Shell applications written using **mctk**, GUI library in Rust (e.g., Launcher, Keyboard) |
+| [services/](./services) | Background services written in Rust (e.g., Desktop, System)                          |
+| [commons/](./commons)   | D-Bus clients and utilities written in Rust, shared between apps and shell             |
 
 ## Building and Running
 
