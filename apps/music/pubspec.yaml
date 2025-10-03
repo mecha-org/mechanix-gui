@@ -90,6 +90,11 @@ flutter:
     - assets/images/prev.png
     - assets/images/next.png
     - assets/images/repeat.png
+    - assets/screenshots/music1.jpeg
+    - assets/screenshots/music2.jpeg
+    - assets/screenshots/music3.jpeg
+    - assets/screenshots/music4.jpeg
+    - assets/screenshots/music5.jpeg
 
   # To add assets to your application, add an assets section, like this:
   # assets:
