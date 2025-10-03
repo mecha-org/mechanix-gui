@@ -194,9 +194,11 @@ impl Component for Keyboard {
                     action::Action::Submit { text, keys } => {
                         println!("text {:?} keys {:?}", text, keys);
                         if let Some(app_channel) = &self.state_ref().app_channel {
-                            let _ = app_channel.send(AppMessage::TextkeyPressed {
-                                keycode: keycodes[0].clone(),
-                            });
+                            if let Some(text) = text {
+                                let _ = app_channel.send(AppMessage::TextkeyPressed {
+                                    keytext: text.clone(),
+                                });
+                            }
                         };
                         let current_view = KeyboardModel::get().current_view.get().clone();
                         if current_view == "upper".to_string() {
@@ -205,6 +207,9 @@ impl Component for Keyboard {
                     }
                     action::Action::Erase => {
                         KeyboardModel::erase();
+                    }
+                    action::Action::Enter => {
+                        KeyboardModel::enter();
                     }
                     action::Action::ShowPreferences => {}
                     action::Action::Minimize => {

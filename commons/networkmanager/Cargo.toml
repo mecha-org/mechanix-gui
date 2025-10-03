@@ -15,7 +15,7 @@ zbus = { version = "4.1.2", features = ["tokio"] }
 serde = { version = "1.0.163", features = ["derive"] }
 uuid = "1.11.0"
 anyhow = "1"
-mctk_core = { git = "https://github.com/mecha-org/mctk.git", rev = "d59490c6391d9e0623b2658d3e95e4b7e030634b" }
-mctk_macros = { git = "https://github.com/mecha-org/mctk.git", rev = "d59490c6391d9e0623b2658d3e95e4b7e030634b" }
+mctk_core = { git = "https://github.com/mecha-org/mctk.git", rev = "c9710ccbeef3d1b6380c1c4bb42a5710927ef14f" }
+mctk_macros = { git = "https://github.com/mecha-org/mctk.git", rev = "c9710ccbeef3d1b6380c1c4bb42a5710927ef14f" }
 futures = "0.3.30"
 lazy_static = "1.5.0"

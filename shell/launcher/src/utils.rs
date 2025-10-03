@@ -378,7 +378,7 @@ pub fn fill_grid_with_true(rows: usize, cols: usize, mut num_true: usize) -> Vec
     let mut positions: Vec<(usize, usize)> = (0..rows)
         .flat_map(|r| (0..cols).map(move |c| (r, c)))
         .collect();
-    positions.shuffle(&mut rng);
+    // positions.shuffle(&mut rng);
 
     for &(r, c) in positions.iter().take(num_true) {
         grid[r][c] = true;

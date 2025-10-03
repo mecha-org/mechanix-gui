@@ -77,4 +77,4 @@ buttons:
     outline: "wide"
     # icon: "key-enter"
     label: "Return"
-    keysym: "Return"
+    action: "enter"

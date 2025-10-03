@@ -107,6 +107,7 @@ pub enum Message {
         count: i32,
     },
     Unlock,
+    MinimizeAll,
     AppsUpdated {
         apps: Vec<AppDetails>,
         app_id: String,
@@ -617,133 +618,29 @@ impl Component for Launcher {
             ]
         );
 
-        if on_top_of_other_apps
-            || !(current_screen == Screens::Home)
-            || show_running_apps
-            || app_opening
-        {
-            start_node = start_node.push(node!(
-                StatusBar {
-                    bluetooth_status,
-                    time_format: clock.time
-                },
-                lay![ size: [Auto, 36] ]
-            ));
-        }
+        start_node = start_node.push(node!(
+            StatusBar {
+                bluetooth_status,
+                time_format: clock.time
+            },
+            lay![ size: [Auto, 36] ]
+        ));
 
-        // start_node = start_node.push(node!(
-        //     AppSwitcher { running_apps },
-        //     lay![size_pct: [100, Auto],]
-        // ));
-
-        if show_running_apps {
-            start_node = start_node.push(node!(
-                AppSwitcher { running_apps },
-                lay![
-                    size_pct: [100],
-                    position_type: Absolute,
-                    position: [36., 0., 0., 0.],
-                ]
-            ));
-        }
-
-        let mut down_swipe = 0;
-        let mut up_swipe = WINDOW_SIZE[1] as i32;
-        if let Some(swipe) = swipe.clone() {
-            if (swipe.direction == SwipeDirection::Down && !swipe.is_closer)
-                || (swipe.direction == SwipeDirection::Up && swipe.is_closer)
-            {
-                down_swipe = swipe.dy;
-            } else if (swipe.direction == SwipeDirection::Up && !swipe.is_closer)
-                || (swipe.direction == SwipeDirection::Down && swipe.is_closer)
-            {
-                up_swipe = swipe.dy;
-            }
-        } else if let Some(swipe) = active_swipe.clone() {
-            if (swipe.direction == SwipeDirection::Down && !swipe.is_closer)
-                || (swipe.direction == SwipeDirection::Up && swipe.is_closer)
-            {
-                down_swipe = swipe.dy;
-            } else if (swipe.direction == SwipeDirection::Up && !swipe.is_closer)
-                || (swipe.direction == SwipeDirection::Down && swipe.is_closer)
-            {
-                up_swipe = swipe.dy;
-            }
-        }
-
-        if down_swipe.abs() > 20 {
-            start_node = start_node.push(node!(
-                SettingsPanel {
-                    swipe: down_swipe,
-                    sound,
-                    brightness,
-                    bluetooth_status,
-                    rotation_status
-                },
-                lay![
-                    size_pct: [100],
-                    position_type: Absolute,
-                    position: [0., 0., 0., 0.],
-                ]
-            ));
-        }
-
-        if (up_swipe.abs()) < 600 {
-            // println!("up_swipe {:?} ", up_swipe);
-            start_node = start_node.push(node!(
-                AppDrawer::new(installed_apps, up_swipe, app_opening),
-                lay![
-                    size_pct: [100],
-                    position_type: Absolute,
-                    position: [0., 0., 0., 0.],
-                ]
-            ));
-        }
-
-        if show_power_options {
-            start_node = start_node.push(node!(
-                PowerOptions {
-                    shutdown_pressed,
-                    restart_pressed
-                },
-                lay![
-                    size_pct: [100],
-                    position_type: Absolute,
-                    position: [0., 0., 0., 0.],
-                ]
-            ));
-        }
-
-        if app_opening {
-            start_node = start_node.push(node!(
-                SplashScreen {
-                    app: self.state_ref().app_opening.clone()
-                },
-                lay![
-                    size_pct: [100],
-                    position_type: Absolute,
-                    position: [36., 0., 0., 0.],
-                ]
-            ));
-        }
-
-        if !on_top_of_other_apps && !show_running_apps && !app_opening {
-            start_node = start_node.push(node!(
-                HomeUi {
-                    settings,
-                    bluetooth_status,
-                    cpu_usage,
-                    uptime,
-                    machine_name,
-                    online,
-                    used_memory,
-                    is_lock_screen: false,
-                    disable_activity: (swipe.is_some() || active_swipe.is_some() || app_opening),
-                    pinned_apps,
-                },
-                lay![size_pct: [100, Auto],]
-            ));
-        }
+        start_node = start_node.push(node!(
+            HomeUi {
+                settings,
+                bluetooth_status,
+                cpu_usage,
+                uptime,
+                machine_name,
+                online,
+                used_memory,
+                is_lock_screen: false,
+                disable_activity: (swipe.is_some() || active_swipe.is_some() || app_opening),
+                pinned_apps,
+            },
+            // lay![size_pct: [100, Auto],]
+        ));
 
         Some(start_node)
     }
@@ -1135,154 +1032,6 @@ impl Component for Launcher {
         self.state_ref().show_running_apps.hash(hasher);
         self.state_ref().app_opening.is_some().hash(hasher);
         // println!("render hash is {:?}", hasher.finish());
-    }
-
-    fn on_drag_start(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragStart>) {
-        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening.is_some();
-
-        if app_opening {
-            println!("not dragging as some app is launching");
-            return;
-        }
-
-        if on_top_of_other_apps {
-            println!("not dragging as other apps are running");
-            return;
-        }
-
-        if self.state_ref().swipe.is_some() {
-            println!("Swipe already exists");
-            return;
-        }
-
-        // println!(
-        //     "Launcher::on_drag_start() {:?}",
-        //     event.physical_mouse_position()
-        // );
-
-        let aabb = event.current_logical_aabb();
-        let pos = event.physical_mouse_position();
-
-        if let Some(edges) = self.is_drag_from_edges(aabb, pos) {
-            event.stop_bubbling();
-            self.handle_on_drag_start(pos, edges, aabb);
-        };
-    }
-
-    fn on_touch_drag_start(
-        &mut self,
-        event: &mut mctk_core::event::Event<mctk_core::event::TouchDragStart>,
-    ) {
-        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening.is_some();
-
-        if app_opening {
-            println!("not dragging as some app is launching");
-            return;
-        }
-
-        if on_top_of_other_apps {
-            println!("not dragging as other apps are running");
-            return;
-        }
-
-        // println!(
-        //     "Launcher::on_touch_drag_start() {:?}",
-        //     event.physical_touch_position()
-        // );
-        if self.state_ref().swipe.is_some() {
-            println!("Swipe already exists");
-            return;
-        }
-
-        let aabb = event.current_logical_aabb();
-        let pos = event.physical_touch_position();
-
-        if let Some(edges) = self.is_drag_from_edges(aabb, pos) {
-            event.stop_bubbling();
-            self.handle_on_drag_start(pos, edges, aabb);
-        };
-    }
-
-    fn on_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::Drag>) {
-        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening.is_some();
-
-        if app_opening {
-            println!("not dragging as some app is launching");
-            return;
-        }
-
-        if on_top_of_other_apps {
-            println!("not dragging as other apps are running");
-            return;
-        }
-        let logical_delta = event.bounded_logical_delta();
-        // println!("Launcher::on_drag() {:?}", logical_delta);
-        if let Some(msg) = self.handle_on_drag(logical_delta) {
-            self.update(msg);
-        }
-    }
-
-    fn on_touch_drag(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::TouchDrag>) {
-        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening.is_some();
-
-        if app_opening {
-            println!("not dragging as some app is launching");
-            return;
-        }
-
-        if on_top_of_other_apps {
-            println!("not dragging as other apps are running");
-            return;
-        }
-
-        let logical_delta = event.bounded_logical_delta();
-        // println!("Launcher::on_touch_drag() {:?}", logical_delta);
-        if let Some(msg) = self.handle_on_drag(logical_delta) {
-            self.update(msg);
-        }
-    }
-
-    fn on_drag_end(&mut self, event: &mut mctk_core::event::Event<mctk_core::event::DragEnd>) {
-        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening.is_some();
-
-        if app_opening {
-            println!("not dragging as some app is launching");
-            return;
-        }
-
-        if on_top_of_other_apps {
-            println!("not dragging as other apps are running");
-            return;
-        }
-        self.handle_on_drag_end();
-    }
-
-    fn on_touch_drag_end(
-        &mut self,
-        event: &mut mctk_core::event::Event<mctk_core::event::TouchDragEnd>,
-    ) {
-        let on_top_of_other_apps = self.state_ref().running_apps_count > 0;
-        let app_opening = self.state_ref().app_opening.is_some();
-
-        if app_opening {
-            println!("not dragging as some app is launching");
-            return;
-        }
-
-        if on_top_of_other_apps {
-            println!("not dragging as other apps are running");
-            return;
-        }
-        // println!(
-        //     "Launcher::on_touch_drag_end() {:?}",
-        //     event.physical_touch_position()
-        // );
-        self.handle_on_drag_end();
     }
 }
 

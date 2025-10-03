@@ -5,6 +5,8 @@ mod home_screen_ui;
 mod lock_gui;
 mod lock_screen_ui;
 mod modules;
+mod navigation_bar;
+mod navigation_bar_ui;
 mod pages;
 mod settings;
 mod shared;
@@ -55,6 +57,8 @@ use mctk_core::{
 use settings::LauncherSettings;
 use theme::LauncherTheme;
 use tracing_subscriber::EnvFilter;
+
+use crate::navigation_bar::launch_navigation_bar;
 
 #[derive(Default, Debug, Clone)]
 pub struct AppParams {
@@ -138,6 +142,7 @@ enum AppMessage {
     AppClose {
         app_id: String,
     },
+    MinimizeAll,
 }
 
 #[derive(Debug, Clone)]
@@ -180,6 +185,10 @@ async fn main() {
 
     let mut assets: HashMap<String, AssetParams> = HashMap::new();
     let mut svgs: HashMap<String, String> = HashMap::new();
+    svgs.insert(
+        "link".to_string(),
+        "/usr/share/mechanix/shell/launcher/assets/icons/link.svg".to_string(),
+    );
 
     let modules = settings.modules.clone();
 
@@ -215,6 +224,67 @@ async fn main() {
     assets.insert("close_icon".to_string(), AssetParams::new(close_icon));
     assets.insert("terminal_icon".to_string(), AssetParams::new(terminal_icon));
 
+    assets.insert(
+        "app_list_bg".to_string(),
+        AssetParams::new(
+            "/usr/share/mechanix/shell/launcher/assets/icons/app_list_bg.png".to_string(),
+        ),
+    );
+
+    assets.insert(
+        "files".to_string(),
+        AssetParams::new("/usr/share/mechanix/shell/launcher/assets/icons/files.png".to_string()),
+    );
+    assets.insert(
+        "music".to_string(),
+        AssetParams::new("/usr/share/mechanix/shell/launcher/assets/icons/music.png".to_string()),
+    );
+    assets.insert(
+        "terminal".to_string(),
+        AssetParams::new(
+            "/usr/share/mechanix/shell/launcher/assets/icons/terminal.png".to_string(),
+        ),
+    );
+    assets.insert(
+        "chromium".to_string(),
+        AssetParams::new(
+            "/usr/share/mechanix/shell/launcher/assets/icons/chromium.png".to_string(),
+        ),
+    );
+    assets.insert(
+        "notes".to_string(),
+        AssetParams::new("/usr/share/mechanix/shell/launcher/assets/icons/notes.png".to_string()),
+    );
+    assets.insert(
+        "settings".to_string(),
+        AssetParams::new(
+            "/usr/share/mechanix/shell/launcher/assets/icons/settings.png".to_string(),
+        ),
+    );
+    assets.insert(
+        "memory_bg".to_string(),
+        AssetParams::new(
+            "/usr/share/mechanix/shell/launcher/assets/icons/memory_bg.png".to_string(),
+        ),
+    );
+    assets.insert(
+        "storage_bg".to_string(),
+        AssetParams::new(
+            "/usr/share/mechanix/shell/launcher/assets/icons/storage_bg.png".to_string(),
+        ),
+    );
+    assets.insert(
+        "firefox".to_string(),
+        AssetParams::new("/usr/share/mechanix/shell/launcher/assets/icons/firefox.png".to_string()),
+    );
+
+    assets.insert(
+        "hacker_news_icon".to_string(),
+        AssetParams::new(
+            "/usr/share/mechanix/shell/launcher/assets/icons/hacker_news_icon.png".to_string(),
+        ),
+    );
+
     let background = modules.background.icon.default;
     if background.len() > 0 {
         assets.insert("background".to_string(), AssetParams::new(background));
@@ -248,6 +318,12 @@ async fn main() {
     let ui_params_1 = ui_params.clone();
     let _ = std::thread::spawn(move || {
         let _ = launch_homescreen(ui_params_1);
+    });
+
+    let ui_params_2 = ui_params.clone();
+
+    let _ = std::thread::spawn(move || {
+        let _ = launch_navigation_bar(ui_params_2);
     });
 
     let session = get_current_session().await.unwrap();
@@ -292,6 +368,11 @@ pub struct InitServicesParamsHome {
     pub sound_msg_rx: Receiver<SoundMessage>,
     pub app_manager_msg_rx: Receiver<AppManagerMessage>,
 }
+pub struct InitServicesParamsNav {
+    pub app_channel: Sender<AppMessage>,
+    pub app_manager_msg_rx: Receiver<AppManagerMessage>,
+}
+
 pub struct InitServicesParamsLock {
     pub settings: LauncherSettings,
     pub app_channel: Sender<AppMessage>,
@@ -373,6 +454,26 @@ fn init_services_lock(init_params: InitServicesParamsLock) -> JoinHandle<()> {
                     bluetooth_f,
                 )
             }))
+            .unwrap();
+    })
+}
+
+fn init_services_nav(init_params: InitServicesParamsNav) -> JoinHandle<()> {
+    let InitServicesParamsNav {
+        app_channel,
+        app_manager_msg_rx,
+    } = init_params;
+    thread::spawn(move || {
+        let runtime = Builder::new_multi_thread()
+            .worker_threads(1)
+            .enable_all()
+            .build()
+            .unwrap();
+
+        let app_manager_f = run_app_manager_handler(app_manager_msg_rx, app_channel.clone());
+
+        runtime
+            .block_on(runtime.spawn(async move { tokio::join!(app_manager_f,) }))
             .unwrap();
     })
 }

@@ -83,6 +83,7 @@ pub fn launch_lockscreen(ui_params: UiParams) -> anyhow::Result<()> {
                 fonts,
                 assets,
                 layer_shell_opts: layer_shell_opts.clone(),
+                input_region: None,
                 svgs,
                 layer_tx: None,
                 layer_rx: None,

@@ -60,7 +60,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
     let mut layer_shell_opts = LayerOptions {
         anchor: wlr_layer::Anchor::TOP | wlr_layer::Anchor::LEFT | wlr_layer::Anchor::RIGHT,
         layer: wlr_layer::Layer::Bottom,
-        keyboard_interactivity: wlr_layer::KeyboardInteractivity::OnDemand,
+        keyboard_interactivity: wlr_layer::KeyboardInteractivity::None,
         namespace: Some(namespace.clone()),
         zone: 36 as i32,
     };
@@ -81,6 +81,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
             fonts,
             assets,
             layer_shell_opts: layer_shell_opts.clone(),
+            input_region: None,
             svgs,
             layer_tx: Some(layer_tx.clone()),
             layer_rx: Some(layer_rx),
@@ -233,6 +234,7 @@ pub fn launch_homescreen(ui_params: UiParams) -> anyhow::Result<()> {
                     let _ = PowerOptionsService::restart();
                 }
                 AppMessage::Unlock => {}
+                AppMessage::MinimizeAll => {}
                 AppMessage::AppOpen { app_id } => {
                     let app_manager_msg_tx2 = app_manager_msg_tx.clone();
                     futures::executor::block_on(async move {

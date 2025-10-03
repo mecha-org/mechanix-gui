@@ -87,6 +87,8 @@ enum Action {
     Minimize,
     #[serde(rename = "maximize")]
     Maximize,
+    #[serde(rename = "enter")]
+    Enter,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -394,6 +396,7 @@ fn create_action(
         SubmitData::Action(Action::Minimize) => crate::action::Action::Minimize,
         SubmitData::Action(Action::Maximize) => crate::action::Action::Maximize,
         SubmitData::Action(Action::Erase) => crate::action::Action::Erase,
+        SubmitData::Action(Action::Enter) => crate::action::Action::Enter,
         SubmitData::Keysym(keysym) => crate::action::Action::Submit {
             text: None,
             keys: vec![crate::action::KeySym(match keysym_valid(keysym.as_str()) {
@@ -611,6 +614,13 @@ pub struct Key {
 /// https://gitlab.freedesktop.org/xorg/xserver/-/issues/260
 type SingleKeyMap = [Option<String>; 256];
 
+/*************  ✨ Windsurf Command ⭐  *************/
+/// Returns a new empty SingleKeyMap.
+///
+/// SingleKeyMap is an array of size 400, where each index is a key code and the value at that index is the occupant of that key code.
+///
+/// The array is initialized with all elements set to None, so the map starts empty.
+/*******  d59639d2-57ff-4784-a58c-704e2449c745  *******/
 fn single_key_map_new() -> SingleKeyMap {
     // Why can't we just initialize arrays without tricks -_- ?
     // Inspired by
