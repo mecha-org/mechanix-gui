@@ -54,4 +54,4 @@ Cargo.lock
 # End of https://www.toptal.com/developers/gitignore/api/linux,rust,visualstudiocode
 
 # mxsearch settings file
-services/search/settings.toml
+services/search/server/settings.toml

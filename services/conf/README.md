@@ -192,7 +192,7 @@ Interact with the running server from the command line:
 ```
 
 ---
-## D-Bus Interface
+### D-Bus Interface
 # 🔌 MXCONF D-Bus API Reference
 
 MXCONF exposes its configuration operations via **D-Bus**.
