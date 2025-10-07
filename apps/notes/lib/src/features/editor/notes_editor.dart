@@ -7,19 +7,20 @@ import 'package:mechanix_notes/src/commons/notes_fab_icon.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/commons/styles/quill_editor_styles.dart';
 import 'package:mechanix_notes/src/features/editor/audio_embed.dart';
-import 'package:mechanix_notes/src/features/editor/menu_options.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
+import 'package:mechanix_notes/src/features/editor/editor_bar.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/additional_toolbar.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/alignment_toolbar.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/text_editor_toolbar.dart';
-import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
-import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
 import "package:path/path.dart" as path;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
+import 'package:tuple/tuple.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
 
@@ -34,30 +35,24 @@ class NotesEditor extends StatefulWidget {
 class _NotesEditorState extends State<NotesEditor> {
   late final QuillController _controller;
   final FocusNode _focusNode = FocusNode();
-  bool toolbarToggle = true;
   final LayerLink linkLayer = LayerLink();
-  final LayerLink optionsLayer = LayerLink();
   final TextEditingController _titleController = TextEditingController();
-  late bool isEditing;
-  bool isUndo = false;
-  bool isRedo = false;
-  late bool isPinned = false;
-  late String tag;
+
   ToolbarEnum? selectedToolbar;
 
   @override
   void initState() {
     super.initState();
 
-    isEditing = widget.note != null;
+    bool isEditing = widget.note != null;
 
     if (isEditing) {
       _titleController.text = widget.note?.title ?? '';
-      isPinned = widget.note!.isPinned;
     }
+    context.read<EditorBloc>().add(
+      PinnedUpdate(isPinned: widget.note?.isPinned ?? false),
+    );
 
-    isPinned = widget.note?.isPinned ?? false;
-    tag = widget.note?.tag ?? 'none';
     final doc =
         isEditing
             ? Document.fromJson(jsonDecode(widget.note!.content))
@@ -89,20 +84,9 @@ class _NotesEditorState extends State<NotesEditor> {
     _controller.addListener(_onControllerChange);
   }
 
-  void _enableToolbar() {
-    setState(() {
-      toolbarToggle = !toolbarToggle;
-      if (!toolbarToggle) {
-        selectedToolbar = null;
-      }
-    });
-  }
-
   void _onControllerChange() {
-    setState(() {
-      isUndo = _controller.hasUndo;
-      isRedo = _controller.hasRedo;
-    });
+    context.read<EditorBloc>().add(UndoUpdate(isUndo: _controller.hasUndo));
+    context.read<EditorBloc>().add(RedoUpdate(isRedo: _controller.hasRedo));
   }
 
   void toolbarSelection(ToolbarEnum value) {
@@ -117,34 +101,6 @@ class _NotesEditorState extends State<NotesEditor> {
     if (_focusNode.hasFocus) {
       _focusNode.requestFocus();
     }
-  }
-
-  void _saveNotes() {
-    final title =
-        _titleController.text.trim().isNotEmpty
-            ? _titleController.text.trim()
-            : "New Note";
-    final content = jsonEncode(_controller.document.toDelta());
-    final plainText = _controller.document.toPlainText();
-    if (plainText.isNotEmpty && plainText != '\n') {
-      if (widget.note != null) {
-        context.read<NotesBloc>().add(
-          UpdateNotes(
-            id: widget.note!.id,
-            content: content,
-            title: title,
-            plainText: plainText,
-            isPinned: isPinned,
-            tag: tag,
-          ),
-        );
-      } else {
-        context.read<NotesBloc>().add(
-          CreateNotes(title, content, plainText, isPinned, tag),
-        );
-      }
-    }
-    Navigator.pop(context);
   }
 
   void _undoCall() {
@@ -176,100 +132,14 @@ class _NotesEditorState extends State<NotesEditor> {
     }
   }
 
-  void togglePinned() {
-    setState(() {
-      isPinned = !isPinned;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MechanixNavigationBar(
-        leadingWidth: 320,
-        leadingWidget: Row(
-          children: [
-            IconButton(
-              icon: Image.asset(NotesIcon.backIcon, height: 20, width: 20),
-              onPressed: _saveNotes,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            ),
-            Expanded(
-              child: TextFormField(
-                autofocus: false,
-                maxLines: 1,
-                controller: _titleController,
-                maxLength: 25,
-                style: TextStyle(color: NotesColors.titleTextColor),
-                decoration: InputDecoration(
-                  counterText: "",
-                  hintText: "New Note",
-                  hintStyle: TextStyle(color: NotesColors.titleTextColor),
-                  border: InputBorder.none,
-                  isCollapsed: true,
-                ),
-              ),
-            ),
-          ],
-        ),
-        actionsIconTheme: IconThemeData(size: 20),
-        actionWidgets: [
-          if (!toolbarToggle)
-            IconButton(
-              onPressed: isUndo ? _undoCall : null,
-              icon: SizedBox(
-                height: 20,
-                width: 20,
-                child: Image.asset(
-                  NotesIcon.undoIcon,
-                  color:
-                      isUndo ? Colors.white : Theme.of(context).disabledColor,
-                ),
-              ),
-            ).padRight(10),
-          if (!toolbarToggle) ...[
-            IconButton(
-              onPressed: isRedo ? _redoCall : null,
-              icon: SizedBox(
-                height: 20,
-                width: 20,
-                child: Image.asset(
-                  NotesIcon.redoIcon,
-                  color:
-                      isRedo ? Colors.white : Theme.of(context).disabledColor,
-                ),
-              ),
-            ).padRight(10),
-          ],
-          IconButton(
-            onPressed: () {
-              _enableToolbar();
-            },
-            icon: SizedBox(
-              height: 20,
-              width: 20,
-              child: Image.asset(
-                toolbarToggle
-                    ? NotesIcon.toolbarEnableIcon
-                    : NotesIcon.toolbarDisableIcon,
-              ),
-            ),
-          ),
-          CompositedTransformTarget(
-            link: optionsLayer,
-            child: IconButton(
-              onPressed: () {
-                _showOptions(context);
-              },
-              icon: SizedBox(
-                height: 20,
-                width: 20,
-                child: Image.asset(NotesIcon.threeDotIcon),
-              ),
-            ),
-          ),
-        ],
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(50),
+        child: EditorBar(controller: _controller, note: widget.note),
       ),
+
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () {
@@ -346,104 +216,99 @@ class _NotesEditorState extends State<NotesEditor> {
                 ),
               ),
 
-            if (toolbarToggle)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 30,
-                child: Center(
-                  child: SizedBox(
-                    width: 380,
-                    height: 52,
-                    child: MechanixFloatingActionMenu(
+            BlocSelector<EditorBloc, EditorBlocState, Tuple3<bool, bool, bool>>(
+              selector:
+                  (state) =>
+                      Tuple3(state.isUndo, state.isRedo, state.toolbarToggle),
+              builder: (context, tuple) {
+                final isUndo = tuple.item1;
+                final isRedo = tuple.item2;
+                final toolbarToggle = tuple.item3;
+                // try to solve this to not get return when toolbarToggle is false i.e without returning Container
+                if (!toolbarToggle) return Container();
+
+                return Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 30,
+                  child: Center(
+                    child: SizedBox(
+                      width: 380,
                       height: 52,
-                      backgroundColor: NotesColors.floatingMenuColor,
-                      items: [
-                        MechanixFabItem(
-                          iconWidget: NotesFabIcon(
-                            iconPath: NotesIcon.undoIcon,
-                            color:
-                                isUndo
-                                    ? Colors.white
-                                    : Theme.of(context).disabledColor,
-                          ),
-                          iconSize: 20,
-                          onTap: isUndo ? _undoCall : null,
-                        ),
-                        MechanixFabItem(
-                          iconWidget: NotesFabIcon(
-                            iconPath: NotesIcon.redoIcon,
-                            color:
-                                isRedo
-                                    ? Colors.white
-                                    : Theme.of(context).disabledColor,
-                          ),
-                          iconSize: 20,
-                          onTap: isRedo ? _redoCall : null,
-                        ),
-                        MechanixFabItem(
-                          iconSize: 20,
-                          iconWidget: NotesFabIcon(
-                            iconPath: NotesIcon.textStyleIcon,
+                      child: MechanixFloatingActionMenu(
+                        height: 52,
+                        backgroundColor: NotesColors.floatingMenuColor,
+                        items: [
+                          MechanixFabItem(
+                            iconWidget: NotesFabIcon(
+                              iconPath: NotesIcon.undoIcon,
+                              color:
+                                  isUndo
+                                      ? Colors.white
+                                      : Theme.of(context).disabledColor,
+                            ),
                             iconSize: 20,
-                            color:
-                                selectedToolbar == ToolbarEnum.text
-                                    ? Theme.of(context).disabledColor
-                                    : Colors.white,
+                            onTap: isUndo ? _undoCall : null,
                           ),
-                          onTap: () => toolbarSelection(ToolbarEnum.text),
-                        ),
-                        MechanixFabItem(
-                          iconSize: 20,
-                          anchorLink: linkLayer,
-                          iconWidget: NotesFabIcon(
-                            iconPath: NotesIcon.menuIcon,
+                          MechanixFabItem(
+                            iconWidget: NotesFabIcon(
+                              iconPath: NotesIcon.redoIcon,
+                              color:
+                                  isRedo
+                                      ? Colors.white
+                                      : Theme.of(context).disabledColor,
+                            ),
                             iconSize: 20,
-                            color:
-                                selectedToolbar == ToolbarEnum.align
-                                    ? Theme.of(context).disabledColor
-                                    : Colors.white,
+                            onTap: isRedo ? _redoCall : null,
                           ),
-                          onTap: () => toolbarSelection(ToolbarEnum.align),
-                        ),
-                        // MechanixFabItem(
-                        //   iconSize: 20,
-                        //   iconWidget: NotesFabIcon(
-                        //     iconPath: NotesIcon.addIcon,
-                        //     iconSize: 20,
-                        //     color:
-                        //         selectedToolbar == ToolbarEnum.add
-                        //             ? Theme.of(context).disabledColor
-                        //             : Colors.white,
-                        //   ),
-                        //   onTap: () => toolbarSelection(ToolbarEnum.add),
-                        // ),
-                      ],
+                          MechanixFabItem(
+                            iconSize: 20,
+                            iconWidget: NotesFabIcon(
+                              iconPath: NotesIcon.textStyleIcon,
+                              iconSize: 20,
+                              color:
+                                  selectedToolbar == ToolbarEnum.text
+                                      ? Theme.of(context).disabledColor
+                                      : Colors.white,
+                            ),
+                            onTap: () => toolbarSelection(ToolbarEnum.text),
+                          ),
+                          MechanixFabItem(
+                            iconSize: 20,
+                            anchorLink: linkLayer,
+                            iconWidget: NotesFabIcon(
+                              iconPath: NotesIcon.menuIcon,
+                              iconSize: 20,
+                              color:
+                                  selectedToolbar == ToolbarEnum.align
+                                      ? Theme.of(context).disabledColor
+                                      : Colors.white,
+                            ),
+                            onTap: () => toolbarSelection(ToolbarEnum.align),
+                          ),
+                          MechanixFabItem(
+                            iconSize: 20,
+                            iconWidget: NotesFabIcon(
+                              iconPath: NotesIcon.addIcon,
+                              iconSize: 20,
+                              color:
+                                  selectedToolbar == ToolbarEnum.add
+                                      ? Theme.of(context).disabledColor
+                                      : Colors.white,
+                            ),
+                            onTap: () => toolbarSelection(ToolbarEnum.add),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
+            ),
           ],
         ),
       ),
     );
-  }
-
-  void _showOptions(BuildContext context) {
-    OverlayEntry? entry;
-
-    entry = OverlayEntry(
-      builder:
-          (_) => MenuOptions(
-            menuLink: optionsLayer,
-            entry: entry,
-            note: widget.note,
-            isPinned: isPinned,
-            togglePinned: togglePinned,
-          ),
-    );
-
-    Overlay.of(context, rootOverlay: true).insert(entry);
   }
 
   @override

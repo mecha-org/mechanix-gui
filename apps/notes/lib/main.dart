@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/features/custom_slider.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
@@ -33,10 +34,15 @@ void main() async {
           create: (_) => NotesRepositoryImpl(),
         ),
       ],
-      child: BlocProvider(
-        create:
-            (context) =>
-                NotesBloc(notesRepository: context.read<NotesRepository>()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create:
+                (context) =>
+                    NotesBloc(notesRepository: context.read<NotesRepository>()),
+          ),
+          BlocProvider(create: (context) => EditorBloc()),
+        ],
         child: NotesApp(),
       ),
     ),
@@ -107,7 +113,9 @@ class MyApp extends StatelessWidget {
 
       home: HomePage(),
       routes: {
-        AppRoutes.createEditNotes: (context) => NotesEditor(),
+        AppRoutes.createEditNotes:
+            (context) =>
+                BlocProvider(create: (_) => EditorBloc(), child: NotesEditor()),
         AppRoutes.searchNotes: (context) => SearchNotes(),
       },
     );

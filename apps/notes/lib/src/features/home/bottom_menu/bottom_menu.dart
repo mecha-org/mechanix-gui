@@ -44,7 +44,6 @@ class _BottomMenuState extends State<BottomMenu> {
       height: 52,
       child: MechanixFloatingActionMenu(
         height: 52,
-
         backgroundColor: const Color(0xFF48494B),
         items: [
           MechanixFabItem(

@@ -41,7 +41,10 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   Future<void> _loadNotes(LoadNotes event, Emitter<NotesState> emit) async {
     try {
       logger.i('get notes requested');
+      final stopwatch = Stopwatch()..start();
       final notesList = await notesRepository.getNotes();
+      stopwatch.stop();
+      logger.i('notes loaded in ${stopwatch.elapsedMilliseconds} ms');
 
       emit(
         state.copyWith(

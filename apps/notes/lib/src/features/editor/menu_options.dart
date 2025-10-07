@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:widgets/mechanix.dart';
@@ -10,17 +13,8 @@ class MenuOptions extends StatelessWidget {
   final LayerLink menuLink;
   final OverlayEntry? entry;
   final NoteHive? note;
-  final bool? isPinned;
-  final VoidCallback? togglePinned;
 
-  const MenuOptions({
-    super.key,
-    required this.menuLink,
-    this.entry,
-    this.note,
-    this.isPinned = false,
-    this.togglePinned,
-  });
+  const MenuOptions({super.key, required this.menuLink, this.entry, this.note});
 
   @override
   Widget build(BuildContext context) {
@@ -32,14 +26,14 @@ class MenuOptions extends StatelessWidget {
       Navigator.pop(context);
     }
 
-    void onPin() {
+    void onPin(bool isPinned) {
       entry!.remove();
       if (note?.id != null) {
+        context.read<EditorBloc>().add(PinnedUpdate(isPinned: !isPinned));
         context.read<NotesBloc>().add(
-          PinnedNotes(isPinned: isPinned!, noteIds: [note!.id]),
+          PinnedNotes(isPinned: !isPinned, noteIds: [note!.id]),
         );
       }
-      togglePinned!();
     }
 
     return Positioned.fill(
@@ -61,23 +55,30 @@ class MenuOptions extends StatelessWidget {
               child: MechanixMenu(
                 backgroundColor: Color.fromRGBO(68, 68, 68, 0.95),
                 items: [
-                  MechanixMenuItem(
-                    label: isPinned! ? "Unpin" : "Pin",
-                    textStyle: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFFF0F0F0),
-                    ),
-                    trailingWidget: SizedBox(
-                      child: Image.asset(
-                        isPinned! ? NotesIcon.unPinnedIcon : NotesIcon.pinIcon,
-                        width: 18,
-                        height: 18,
-                        color: Color(0xFFF0F0F0),
-                      ),
-                    ),
+                  BlocSelector<EditorBloc, EditorBlocState, bool>(
+                    selector: (state) => state.isPinned,
+                    builder: (context, isPinned) {
+                      return MechanixMenuItem(
+                        label: isPinned ? "Unpin" : "Pin",
+                        textStyle: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFFF0F0F0),
+                        ),
+                        trailingWidget: SizedBox(
+                          child: Image.asset(
+                            isPinned
+                                ? NotesIcon.unPinnedIcon
+                                : NotesIcon.pinIcon,
+                            width: 18,
+                            height: 18,
+                            color: Color(0xFFF0F0F0),
+                          ),
+                        ),
 
-                    onTap: () => onPin(),
-                    layout: MenuItemLayout.iconRight,
+                        onTap: () => onPin(isPinned),
+                        layout: MenuItemLayout.iconRight,
+                      );
+                    },
                   ),
 
                   MechanixMenuDivider(thickness: 1, color: Color(0xFF333333)),
