@@ -114,28 +114,36 @@ jobs:
             --base-url "$PULP_API_URL" \
             --overwrite
       # Publish .deb to Pulp
-      - name: Publish to Pulp [${{ matrix.binary }}]
+      - name: Publish to Pulp [${{ matrix.app }}]
         run: |
           set -euo pipefail
-          pkg_name=$(grep '^Package:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_version=$(grep '^Version:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_arch=$(dpkg --print-architecture)
-          DEB_FILE="./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+          
+          # Find the .deb file for this app
+          DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" | head -n1)
+          
+          if [ -z "$DEB_FILE" ]; then
+            echo "[ERROR] Could not find .deb file for ${{ matrix.app }}"
+            exit 1
+          fi
+          
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --signing-service=mecha-pkg-sign \
             --file="$DEB_FILE"
+          
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             | jq -r '.pulp_href')
+          
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-          echo "[INFO] ✅ Package ${{ matrix.binary }} published."
+          
+          echo "[INFO] ✅ Package ${{ matrix.app }} published."
       # Upload full artifacts
       - name: Upload artifact ${{ matrix.name }}
         uses: actions/upload-artifact@v4
