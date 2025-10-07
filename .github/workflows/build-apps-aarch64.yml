@@ -44,7 +44,7 @@ jobs:
             app: files
             folder: files
             binary: mechanix_files
-            
+
           - name: music app
             app: music
             folder: music
@@ -102,7 +102,7 @@ jobs:
         working-directory: apps
         run: |
           nu package-deb.nu "${{ matrix.folder }}" "../build/deb"
-          
+
       # List artifacts
       - name: List artifacts ${{ matrix.name }}
         run: ls -la ./build/deb/
@@ -127,34 +127,27 @@ jobs:
       - name: Publish to Pulp [${{ matrix.app }}]
         run: |
           set -euo pipefail
-          
+
           # Find the .deb file for this app (simple pattern)
           DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" -type f | head -n1)
-          
-          if [ -z "$DEB_FILE" ] || [ ! -f "$DEB_FILE" ]; then
-            echo "[ERROR] Could not find .deb file for mechanix-${{ matrix.app }}"
-            echo "[ERROR] Files in ./build/deb/:"
-            ls -la ./build/deb/
-            exit 1
-          fi
-          
+
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \            
             --file="$DEB_FILE"
-          
+
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --signing-service=mecha-pkg-sign \
             | jq -r '.pulp_href')
-          
+
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-          
+
           echo "[INFO] ✅ Package ${{ matrix.app }} published."
 
       # Upload full artifacts
