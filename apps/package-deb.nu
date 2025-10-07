@@ -32,7 +32,7 @@ def main [
 
     let app_folder = $app.folder
     let binary_name = $app.binary
-    let app_description = $app.description
+    
     let app_maintainer = $app.maintainer
     let dependencies = ($app.dependencies | str join ", ")
 
@@ -50,6 +50,7 @@ def main [
 
     let pubspec = open $pubspec_path
     let app_version = $pubspec.version
+    let app_description = $pubspec.description
 
     print $"[INFO] Version: ($app_version)"
 
