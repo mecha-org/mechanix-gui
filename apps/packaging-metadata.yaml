@@ -1,0 +1,48 @@
+name: packaging-metadata
+version: 1.0.0
+summary: Metadata for Mechanix apps packaging
+description: This package contains metadata for packaging Mechanix applications.
+applications:
+  - name: files
+    folder: files
+    binary: mechanix_files   
+    maintainer: "Yogita Hiray <yogitah@mechasystems.com>"
+    dependencies:
+      # libc6 (>= 2.38), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)
+      - libc6 (>= 2.38)
+      - libgcc-s1 (>= 3.0)
+      - libstdc++6 (>= 13.1)
+      - libflutter-elinux-wayland-dev
+      - libflutter-engine-dev      
+  - name: music
+    folder: music
+    binary: mechanix_music
+    description: "A music player for Mechanix OS."
+    maintainer: "Dhanish Patel <dhanishp@ext.mechasystems.com>" 
+    dependencies:
+    # libc6 (>= 2.38), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)
+      - libc6 (>= 2.38)
+      - libgcc-s1 (>= 3.0)
+      - libstdc++6 (>= 13.1)
+      - libflutter-elinux-wayland-dev
+      - libflutter-engine-dev      
+  - name: notes
+    folder: notes
+    binary: mechanix_notes    
+    maintainer: "Dhanish Patel <dhanishp@mechasystems.com>"
+    dependencies:
+      - libc6 (>= 2.38)
+      - libgcc-s1 (>= 3.0)
+      - libstdc++6 (>= 13.1)
+      - libflutter-elinux-wayland-dev
+      - libflutter-engine-dev
+  - name: settings
+    folder: settings
+    binary: mechanix_settings
+    maintainer: "Yogita Hiray <yogitah@mechasystems.com>"
+    dependencies:
+      - libc6 (>= 2.38)
+      - libgcc-s1 (>= 3.0)
+      - libstdc++6 (>= 13.1)
+      - libflutter-elinux-wayland-dev
+      - libflutter-engine-dev
