@@ -130,25 +130,21 @@ jobs:
 
           # Find the .deb file for this app (simple pattern)
           DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" -type f | head -n1)
-
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \            
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --file="$DEB_FILE"
-
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --signing-service=mecha-pkg-sign \
             | jq -r '.pulp_href')
-
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-
-          echo "[INFO] ✅ Package ${{ matrix.app }} published."
+          echo "[INFO] ✅ Package ${{ matrix.binary }} published."
 
       # Upload full artifacts
       - name: Upload artifact ${{ matrix.name }}
