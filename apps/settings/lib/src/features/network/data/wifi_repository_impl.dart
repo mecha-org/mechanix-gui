@@ -150,7 +150,7 @@ class WifiRepositoryImpl implements WifiRepository {
     };
 
     // Create a new connection
-    logger.i("init connect to network");
+    logger.i("init connect to unknown network");
     var client = NetworkManagerClient();
     await client.connect();
     NetworkManagerDevice device;
@@ -351,7 +351,6 @@ class WifiRepositoryImpl implements WifiRepository {
           seenBssids.add(bssid); // mark this BSSID as seen
           AccessPoints? accessPoint =
               availableAccessPoints?.firstWhereOrNull((ap) {
-            print('ssid - ${utf8.decode(ap.nmAccessPoint.ssid)})');
 
             return utf8.decode(ap.nmAccessPoint.ssid) == connectionId;
           });

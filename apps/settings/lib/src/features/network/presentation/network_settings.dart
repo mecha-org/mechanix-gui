@@ -116,7 +116,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
                   MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
                     isDividerRequired: true,
-                    listItems: getWireless(context, state.savedNetworks),
+                    listItems: getWireless(context, state.allSavedNetworks),
                   )
                 ],
               ).padTop(8),

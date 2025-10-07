@@ -2,13 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
-import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
 import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 
@@ -24,23 +23,46 @@ class ConnectSecureNetwork extends StatelessWidget {
 
     final wifiRepository = context.read<WifiRepository>();
 
-    void backNavigation(BuildContext context) {
-      Navigator.pop(context);
-    }
 
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
-        listenWhen: (context, state) {
-          return state.deviceState == NetworkManagerDeviceState.activated;
+      listener: (context, state) {
+          // Handle error
+          if (state.error != null && state.error!.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Authentication failed: ${state.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            );
+          }
+
+          // Handle success
+          if (state.deviceState == NetworkManagerDeviceState.activated) {
+            // Navigator.pushNamed(context, AppRoutes.wireless);
+            Navigator.pop(context);
+          }
         },
-        listener: (context, state) =>
-            Navigator.pushNamed(context, AppRoutes.wireless),
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
           builder: (context, state) {
             return Scaffold(
               appBar: MechanixNavigationBar(
-                title: "Join ${utf8.decode(accessPoint.ssid)}",
+              title: "Join ${utf8.decode(accessPoint.ssid)}",
+              actionWidgets:  [
+                IconButton(
+                  icon: Image.asset(Images.submit, width: 20, height: 20),
+                  onPressed: state.password.isNotEmpty && state.password.length >= 8
+                      ? () {
+                          context
+                              .read<ConnectNetworkBloc>()
+                              .add(ConnectToNetwork(accessPoint));
+                        }
+                      : null,
+                ),
+              ]
               ),
               body: ContainerWidget(
                 child: Form(
@@ -62,7 +84,6 @@ class ConnectSecureNetwork extends StatelessWidget {
                               },
                               onFieldSubmitted: (_) {
                                 if (state.password.isNotEmpty) {
-                                  print('connection enter pressed');
                                   context
                                       .read<ConnectNetworkBloc>()
                                       .add(ConnectToNetwork(accessPoint));
@@ -78,7 +99,8 @@ class ConnectSecureNetwork extends StatelessWidget {
                           ),
                         ],
                       ),
-                      WirelessProtocols()
+                      // // NOTE: Not in use currently
+                      // WirelessProtocols()
                     ],
                   ).padTop(8),
                 ),

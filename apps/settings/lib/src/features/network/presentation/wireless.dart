@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
@@ -28,7 +29,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
   @override
   void initState() {
     super.initState();
-    context.read<WirelessSettingsBloc>().add(LoadNetworks());
+    context.read<WirelessSettingsBloc>().add(InitializeWifi());
   }
 
   @override
@@ -90,23 +91,58 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                                     ))),
                           )
                       ]),
-                  if (state.wifiOn && !state.loading && state.networks.isEmpty)
-                    // const Center(child: Text("No networks found")),
+
+                  if (state.wifiOn &&
+                      !state.availableSavedNetworksLoading &&
+                      state.availableSavedNetworks.isEmpty)
+                    MechanixSectionList(
+                      physics: const BouncingScrollPhysics(),
+                      title:
+                          'My Networks',
+                      sectionListItems: [
+                        SectionListItems(
+                          title: '',
+                          backgroundColor: Colors.transparent,
+                          defaultTrailingIcon: false,
+                          leading: CustomLoader(),
+                        ),
+                      ],
+                    ),
+                  if (state.wifiOn && state.availableSavedNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
-                        title: 'Available Networks',
-                        sectionListItems: [
-                          SectionListItems(
-                            title: 'No networks found',
-                            backgroundColor: Colors.transparent,
-                            defaultTrailingIcon: false,
-                          ),
-                        ]),
-                  if (state.wifiOn && state.networks.isNotEmpty)
+                        title:
+                            'My Networks',
+                        sectionListItems: getWifiList(
+                            context, state.availableSavedNetworks, false)),
+      
+                  if (state.wifiOn &&
+                      !state.availableOtherNetworksLoading &&
+                      state.availableOtherNetworks.isEmpty)
+                    MechanixSectionList(
+                      physics: const BouncingScrollPhysics(),
+                      title:
+                          'Available Networks',
+                      sectionListItems: [
+                        SectionListItems(
+                          title: '',
+                          backgroundColor: Colors.transparent,
+                          defaultTrailingIcon: false,
+                          leading: CustomLoader(),
+                        ),
+                      ],
+                    ),
+                  // Padding(
+                  //   padding: EdgeInsets.only(right: 25),
+                  //   child: CustomLoader(),
+                  // )
+                  if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
-                        title: 'Available Networks',
-                        sectionListItems: getWifiList(context, state.networks)),
+                        title:
+                            'Available Networks',
+                        sectionListItems: getWifiList(
+                            context, state.availableOtherNetworks, true)),
                   const WirelessAdvanceSettings()
                 ],
               ),
@@ -165,7 +201,7 @@ String getNetworkIcon(String security, int? signalStrength) {
 }
 
 List<SectionListItems> getWifiList(
-    BuildContext context, List<AccessPoints> state) {
+    BuildContext context, List<AccessPoints> state, bool showAddOption) {
   final wifi = state.map((s) {
     return SectionListItems(
       title: utf8.decode(s.nmAccessPoint.ssid),
@@ -187,15 +223,17 @@ List<SectionListItems> getWifiList(
     );
   }).toList();
 
-  wifi.add(
-    SectionListItems(
-      title: 'Add Wireless',
-      defaultTrailingIcon: false,
-      onTap: () =>
-          Navigator.pushNamed(context, AppRoutes.wirelessConnectUnknownNetwork),
-      leading: IconWidget(iconPath: Images.wirelessAdd),
-    ),
-  );
+  if (showAddOption) {
+    wifi.add(
+      SectionListItems(
+        title: 'Add Wireless',
+        defaultTrailingIcon: false,
+        onTap: () => Navigator.pushNamed(
+            context, AppRoutes.wirelessConnectUnknownNetwork),
+        leading: IconWidget(iconPath: Images.wirelessAdd),
+      ),
+    );
+  }
 
   return wifi;
 }
