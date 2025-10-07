@@ -21,6 +21,7 @@ import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
 import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_item_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
+import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
@@ -463,13 +464,28 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     child: ValueListenableBuilder<String>(
                       valueListenable: searchQuery,
                       builder: (context, query, _) {
-                        final filteredFiles = query.isEmpty
-                            ? displayedFiles
-                            : displayedFiles
-                                .where((file) => file.name
-                                    .toLowerCase()
-                                    .contains(query.toLowerCase()))
-                                .toList();
+                        List<FileSystemEntity> filteredFilesRecent = [];
+                        List<FileItem> filteredFiles = [];
+
+                        if (widget.title == 'recent') {
+                          // For recent files
+                          filteredFilesRecent = query.isEmpty
+                              ? fileSystemList
+                              : fileSystemList
+                                  .where((file) => file.basename
+                                      .toLowerCase()
+                                      .contains(query.toLowerCase()))
+                                  .toList();
+                        } else {
+                          // Normal directory
+                          filteredFiles = query.isEmpty
+                              ? displayedFiles
+                              : displayedFiles
+                                  .where((file) => file.name
+                                      .toLowerCase()
+                                      .contains(query.toLowerCase()))
+                                  .toList();
+                        }
 
                         return ValueListenableBuilder<bool>(
                           valueListenable: viewModeNotifier,
@@ -477,12 +493,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             return isGrid
                                 ? widget.title == 'recent'
                                     ? buildGridViewForRecentFiles(
-                                        context, fileSystemList)
+                                        context, filteredFilesRecent)
                                     : buildGridView(
                                         filteredFiles, context, widget.path)
                                 : widget.title == 'recent'
                                     ? buildListViewForRecentFiles(
-                                        context, fileSystemList)
+                                        context, filteredFilesRecent)
                                     : buildListView(
                                         filteredFiles, context, widget.path);
                           },
@@ -505,59 +521,36 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   OverlayEntry? _searchOverlayEntry;
+  late TextEditingController _searchController;
 
   void showSearchBottomSheet(
       BuildContext context, ValueNotifier<String> searchQuery) {
     final overlay = Overlay.of(context);
-    // late OverlayEntry entry;
+    _searchController = TextEditingController(text: searchQuery.value);
 
     _searchOverlayEntry = OverlayEntry(
       builder: (ctx) => Positioned(
         left: 0,
         right: 0,
         bottom: 0,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-            decoration: BoxDecoration(
-              color: const Color(0xFF2C2C2E),
-              borderRadius: BorderRadius.circular(50),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: SizedBox(
+            height: 48,
+            child: MechanixSearchBar(
+              controller: _searchController,
+              autoFocus: true,
+              hintText: "Type here",
+              onChanged: (value) {
+                searchQuery.value = value;
+              },
+              onCloseIconPress: () {
+                // clearSearch();
+                searchQuery.value = "";
+                _searchController.clear();
+              },
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Icon(Icons.search, color: Colors.white70, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    autofocus: true,
-                    onChanged: (value) => searchQuery.value = value,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Type here',
-                      hintStyle: TextStyle(color: Colors.white54),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                          // padding: const EdgeInsets.symmetric(vertical: 0),
-                          )
-                      .copyWith(
-                    splashFactory: NoSplash.splashFactory,
-                  ),
-                  onPressed: () {
-                    clearSearch();
-                  },
-                  child: const Icon(Icons.close, color: Colors.white),
-                ),
-              ],
-            ),
-          ).padBottom(8),
+          ),
         ),
       ),
     );

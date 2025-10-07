@@ -2,6 +2,13 @@
 
 *A simple and fast search engine for your apps and files.*
 
+
+## Overview
+
+This service indexes configuration schemas into a [Tantivy](https://docs.rs/tantivy/latest/tantivy/) search index.
+Each config file is parsed and indexed with its metadata and nested action sections.
+It maintains data consistency by using checksum validation to avoid unnecessary re-indexing.
+
 ## ✨ Features
 
 ### 🖥️ Apps Search
@@ -32,11 +39,6 @@ MxSearch supports searching installed Linux applications using `.desktop` files.
 ### 📂 Files Search
 
 MxSearch can index and query files from a given directory.
-=> Increase the watch file limit
-
-```bash
-sudo sysctl -w fs.inotify.max_user_watches=1048576
-```
 
 - **Crate: `files`**
     - Configure a dir to watch, and index files.
@@ -47,26 +49,52 @@ sudo sysctl -w fs.inotify.max_user_watches=1048576
           "name",
           "content"
           ]
-    - Graceful shutdown support (e.g. optional task cancellation).
     - Load existing entries from the provided directory.
     - We can configure the depth of the directory to be indexed.
     - We can configure the allowed extensions to be indexed.
     - We can configure the max size of the file content to be indexed.
 
 ### ⚙️ App Actions Search
-
-## Overview
-
-This service indexes configuration schemas into a Tantivy search index.
-Each config file is parsed and indexed with its metadata and nested action sections.
-It maintains data consistency by using checksum validation to avoid unnecessary re-indexing.
-
+MxSearch supports indexing **App Actions** to return actionable results in searches.
 - Applications installed on the system register their **App Actions** to **mxsearch**.
 - This allows mxsearch to return App Actions as part of search results.
-- App Actions are stored as **TOML** files inside the directory:  
-  `/usr/share/mxsearch/actions`
+- App Actions are stored as **TOML** files inside the directory:  `/usr/share/mxsearch/actions`
+- Each TOML file is checksummed.
+- The `%KEYWORD%` placeholder is dynamically replaced by the user’s search query when invoking actions.
 
-## Example: Settings App Actions file
+
+Each app registers a TOML file named: `org.mechanix.<AppName>.toml`
+
+Example for the Settings app: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
+
+App Action Toml Format:
+```toml
+Name = "Settings"
+Icon = "settings-icon"
+Exec = "/usr/bin/settings-app"
+
+[EnableWifi]
+Action = "Enable WiFi"
+Description = "Enable wireless network"
+Arg = { path = "network" }
+
+[EnableBluetooth]
+Action = "Enable Bluetooth"
+Description = "Enable bluetooth"
+Arg = { path = "bluetooth" }
+
+[Files]
+Action = "Search Files"
+Description = "Search by file name"
+Arg = { path = "%KEYWORD%" }
+```
+
+
+---
+
+
+
+### Example: Settings App Actions file
 
 ```toml
 name = "Settings"
@@ -89,26 +117,12 @@ File path: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
 
 - `%KEYWORD%` is a reserved placeholder that passes the user's search key to the app action.
 
-## Functionality
 
-- mxsearch indexes the `/usr/share/mxsearch/actions` directory.
-- It uses checksums to detect changes and refresh the index accordingly.
-- Endpoints include:
-    - Search App Actions
 
----
 
-## Workflow
+### 🛠️ Configuration Example (`settings.toml`)
 
-### On Service Start
 
-1. Compute the checksum of the config file.
-2. Search the Tantivy index for documents matching the file path.
-3. Compare stored checksum(s) with the newly computed checksum.
-4. If checksum matches, no action needed (index is current).
-5. If not, parse the config file and re-index all action documents with the updated checksum.
-
-Settings file example:
 
 ```toml
 [general]
@@ -150,37 +164,85 @@ searchable_fields = [
 ]
 ```
 
-## 🛠️ Configuration Example (`config.toml`)
 
-```toml
-[general]
+## ⚙️ Installation
 
-[apps]
-enable_search_apps = true
-apps_dir = "/usr/share/applications"
-index_dir = "<INDEX_DIR>"
-searchable_fields = [
-    "name",
-    "genericname",
-    "comment",
-    "keywords",
-    "categories"
-]
+### Prerequisites
+- Rust (2021 edition or later)
+- Cargo
+
+### Build from Source
+
+```bash
+
+$ https://github.com/mecha-org/mechanix-gui.git -b pre-release
+$ cd services/search/server
+
+$ cargo build --release
+
+```
+
+Run the server:
+
+```
+
+$ cargo run --release
+
+```
+
+Enable debug logging:
+
+```
+
+$ RUST_LOG=none,mxsearch=debug ../../target/release/mxsearch -s
+
 ```
 
 ## 🚀 Running MxSearch
 
 ```bash
- RUST_LOG=none,search=debug,apps=debug,files=debug cargo run
+$ RUST_LOG=none,mxsearch=debug,apps=debug,files=debug cargo run
 ```
 
-## TODOs
+---
+### D-Bus Interface
+
+MxSearch exposes its operations via **D-Bus**.
+
+- **Bus name:** `org.mechanix.MxSearch`
+- **Object path:** `/org/mechanix/MxSearch`
+- **Interface:** `org.mechanix.MxSearch`
+---
+
+## ⚡ Methods
+
+### ListApplications
+List all installed applications
+```bash
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch ListApplications
+```
+
+### SearchApplications
+
+```bash 
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchApplications s "<keyword>"
+```
+
+### SearchFiles
+
+```bash
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchFiles s "<keyword>"
+```
+
+### SearchAppActions
+
+```bash
+$ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchAppActions s "<keyword>"
+```
+
+## 📋 TODOs
 
 Apps
 
 - [ ] Allow index applications from a custom directory ex: snap packages, flatpak packages.
 - [ ] While parsing desktop entry, getting single value from multiple value fields. ex: categories, keywords
-
-Files
-
-- [ ] Watch dir limit reached for /home -> we have to increase the watch limit.

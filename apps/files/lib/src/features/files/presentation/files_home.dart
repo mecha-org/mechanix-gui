@@ -31,14 +31,8 @@ class FileHomePageState extends State<FileHomePage> {
   final homeDir = AppConfig().homeDir;
   final recentDir = AppConfig().recentDir;
 
-  ValueNotifier<String> searchQuery = ValueNotifier('');
-  OverlayEntry? _searchOverlayEntry;
-  bool _isSearching = false;
-
   @override
   void dispose() {
-    searchQuery.dispose();
-    _searchOverlayEntry?.remove();
     super.dispose();
   }
 
@@ -55,11 +49,15 @@ class FileHomePageState extends State<FileHomePage> {
             child: IconButton(
               icon: Image.asset(Images.search, width: 24, height: 24),
               onPressed: () {
-                if (!_isSearching) {
-                  _showSearchOverlay(context);
-                } else {
-                  _clearSearch();
-                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: context.read<FilesBloc>(),
+                      child: const FileSearchPage(),
+                    ),
+                  ),
+                );
               },
             ),
           ),
@@ -170,91 +168,6 @@ class FileHomePageState extends State<FileHomePage> {
         },
       ),
     );
-  }
-
-  void _showSearchOverlay(BuildContext context) {
-    final overlay = Overlay.of(context);
-
-    _searchOverlayEntry = OverlayEntry(
-      builder: (ctx) => Positioned(
-        left: 0,
-        right: 0,
-        bottom: 0,
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey[900],
-              borderRadius: BorderRadius.circular(50),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.search, color: Colors.white70, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    autofocus: true,
-                    onSubmitted: (value) => _performSearch(context, value),
-                    onChanged: (value) => searchQuery.value = value,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Type here',
-                      hintStyle: TextStyle(color: Colors.white54),
-                    ),
-                  ),
-                ),
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                          // padding: const EdgeInsets.symmetric(vertical: 0),
-                          )
-                      .copyWith(
-                    splashFactory: NoSplash.splashFactory,
-                  ),
-                  onPressed: () {
-                    _clearSearch();
-                  },
-                  child: const Icon(Icons.close, color: Colors.white),
-                ),
-              ],
-            ),
-          ).padBottom(8),
-        ),
-      ),
-    );
-
-    overlay.insert(_searchOverlayEntry!);
-    setState(() => _isSearching = true);
-  }
-
-  void _clearSearch() {
-    setState(() {
-      _isSearching = false;
-      searchQuery.value = '';
-      _searchOverlayEntry?.remove();
-      _searchOverlayEntry = null;
-    });
-  }
-
-  void _performSearch(BuildContext context, String query) {
-    if (query.isEmpty) return;
-
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
-    filesBloc.add(SearchFilesInDirectory(homeDir, query));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: filesBloc,
-          child: SearchResultsPage(query: query),
-        ),
-      ),
-    );
-
-    _clearSearch();
   }
 }
 

@@ -1,16 +1,60 @@
-# files
+# 📁 Mechanix Files
 
-A new Flutter project.
+Files App lets you organize and manage your files and folders in your Mecha Comet, made in Flutter. It allows to browse, search, sort, manage documents with user friendly interface. 
 
-## Getting Started
+## 📦 Install Guide
 
-This project is a starting point for a Flutter application.
+### 📝 Pre-requisites:
+- To install flutter, follow this : [https://docs.flutter.dev/install](https://docs.flutter.dev/install)
+- To install flutter-elinux, follow this : [https://github.com/sony/flutter-elinux](https://github.com/sony/flutter-elinux)
 
-A few resources to get you started if this is your first Flutter project:
+### 🚀 Steps to run Settings App:
+1. Clone the repository :
+    ```
+    $ git clone https://github.com/mecha-org/mechanix-gui.git
+    $ cd apps/files
+    ```
+2. Install Flutter dependencies:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+    For flutter-elinux:
+    ```
+    $ flutter-elinux pub get
+    ```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+    For flutter: 
+      ```
+    $ flutter pub get
+    ```
+3. Build and Run:
+
+    For flutter-elinux:
+    ```
+    $ flutter-elinux build
+    $ flutter-elinux run
+    ```
+
+    For flutter: 
+    ```
+    $ flutter build
+    $ flutter run
+    ```
+
+## 🔑 Key Features
+
+- **File Browsing**: Easily browse through files and folders on your device.
+- **Files Organization**: Create, rename, copy, paste and delete, sort files & folders to keep your files organized.
+- **Search**: Quickly search for files by name.
+- **Open Files**: Open images, videos, and other files.
+- **Multiple File Selection**: Select multiple files for bulk actions like copying or deleting.
+- **File/Folder Properties**: View the total storage usage on your device. 
+
+### 🖼️ Screenshots: 
+<img src="./assets/screenshots/files_app_menu.png" alt="File browsing" />
+ 
+<img src="./assets/screenshots/search_operation.png" alt="Searching File" />
+
+<img src="./assets/screenshots/file_operations.png" alt="File Operations" />
+
+<img src="./assets/screenshots/other_options.png" alt="Other Options" /> 
+
+  

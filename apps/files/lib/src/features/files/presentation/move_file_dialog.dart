@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
@@ -14,11 +13,10 @@ import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
 import 'package:widgets/extension.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
+import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
-import 'package:widgets/widgets/textInput/mechanix_text_input.dart';
-import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 
 import 'files.dart';
 
@@ -130,114 +128,49 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                       fontSize: 18,
                     ),
                     actionWidgets: [
-                      // TODO : implement search functionality
-                      // if (!isSearching)
-                      //   IconButton(
-                      //     icon: const Icon(Icons.search, color: Colors.white),
-                      //     onPressed: () {
-                      //       setState(() {
-                      //         isSearching = true;
-                      //         searchFocusNode.requestFocus();
-                      //       });
-                      //     },
-                      //   ),
+                      if (!isSearching)
+                        IconButton(
+                          icon: const Icon(Icons.search, color: Colors.white),
+                          onPressed: () {
+                            setState(() {
+                              isSearching = true;
+                              searchFocusNode.requestFocus();
+                            });
+                          },
+                        ),
                     ],
                   ).padTop(8),
                   Expanded(
-                    child: buildListViewMove(displayedFiles, context,
-                        currentPath, widget.filesBloc, widget.onMoveCompleted),
+                    child: buildListViewMove(
+                      isSearching && searchResults.isNotEmpty
+                          ? searchResults
+                          : displayedFiles,
+                      context,
+                      currentPath,
+                      widget.filesBloc,
+                      widget.onMoveCompleted,
+                    ),
                   ),
                   if (isSearching)
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 12),
-                      child: RawKeyboardListener(
-                        focusNode: searchFocusNode,
-                        onKey: (event) {
-                          if (event is RawKeyDownEvent &&
-                              event.logicalKey == LogicalKeyboardKey.enter) {
-                            _performSearch(); // Call search logic
-                          }
-                        },
-                        child: MechanixTextInputTheme(
-                          style: MechanixTextInputThemeData(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                          child: MechanixTextInput.textInput(
-                            onChanged: (value) {
-                              // Live update logic (optional)
-                            },
-                            inputDecoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 16),
-                              filled: true,
-                              fillColor: const Color(0xFF2C2C2E),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(50),
-                                borderSide: BorderSide.none,
-                              ),
-                              hintText: "Search files",
-                              hintStyle: const TextStyle(color: Colors.white54),
-                              prefixIcon: const Padding(
-                                padding: EdgeInsets.only(left: 12, right: 8),
-                                child:
-                                    Icon(Icons.search, color: Colors.white54),
-                              ),
-                              prefixIconConstraints: const BoxConstraints(
-                                minWidth: 40,
-                                minHeight: 40,
-                              ),
-                              suffixIcon: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  OutlinedButton(
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 14),
-                                      side: BorderSide(
-                                          color: Colors.white70, width: 0.4),
-                                      backgroundColor: Colors.transparent,
-                                    ).copyWith(
-                                      splashFactory: NoSplash
-                                          .splashFactory, // Disable ripple
-                                    ),
-                                    child: const Icon(Icons.close,
-                                        color: Colors.white54),
-                                    onPressed: () {
-                                      searchController.clear();
-                                      Navigator.pop(context, true);
-                                    },
-                                  ),
-                                  Container(
-                                    width: 1,
-                                    height: 28,
-                                    color: Colors.white24,
-                                    margin: const EdgeInsets.symmetric(
-                                        horizontal: 8),
-                                  ),
-                                  ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.grey[800],
-                                          ).copyWith(
-                                            splashFactory: NoSplash
-                                                .splashFactory, // Disable ripple animation
-                                          ),
-                                          onPressed: () {
-                                            // Confirm action
-                                            _performSearch();
-                                            // Navigator.pop(context, true);
-                                          },
-                                          child: Icon(Icons.check,
-                                              color: Colors.white70))
-                                      .padRight(8),
-                                ],
-                              ),
-                              suffixIconConstraints: const BoxConstraints(
-                                minWidth: 80,
-                                minHeight: 40,
-                              ),
-                            ),
-                          ),
+                      child: SizedBox(
+                        height: 48,
+                        child: MechanixSearchBar(
+                          controller: searchController,
+                          autoFocus: true,
+                          hintText: "Type here",
+                          onChanged: (value) {
+                            _performSearch();
+                          },
+                          onCloseIconPress: () {
+                            setState(() {
+                              searchController.clear();
+                              isSearching = false;
+                              searchResults = [];
+                            });
+                          },
                         ),
                       ),
                     )
