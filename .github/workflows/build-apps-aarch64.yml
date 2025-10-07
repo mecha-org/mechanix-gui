@@ -34,20 +34,16 @@ jobs:
             folder: settings
             binary: mechanix_settings
 
-          - name: camera app
-            folder: camera
-            binary: camera
-
           - name: notes app
             folder: notes
             binary: mechanix_notes
 
           - name: files app
             folder: files
-            binary: mechanix_files           
+            binary: mechanix_files
           - name: music app
             folder: music
-            binary: mechanix_music  
+            binary: mechanix_music
 
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
@@ -61,6 +57,15 @@ jobs:
           sudo apt install -y git tar unzip curl clang cmake pkg-config \
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
             libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
+
+       # Install NuShell
+      - name: Install Nushell
+        run: |
+          curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
+          echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+          sudo apt update
+          sudo apt install nushell
+
       # Checkout repository
       - name: Setup | Checkout
         uses: actions/checkout@v4
@@ -84,40 +89,12 @@ jobs:
         run: |
           mkdir -p ./build/${{ matrix.binary }}
           cp -r "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/"* "./build/${{ matrix.binary }}/"
-      # Package Debian
+
+      # Package Debian using Nushell script
       - name: Package Debian ${{ matrix.name }}
+        working-directory: apps
         run: |
-          set -euo pipefail
-          app_folder="apps/${{ matrix.folder }}"
-          pkg_name=$(grep '^Package:' "$app_folder/debian/control" | awk '{print $2}')
-          pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
-          pkg_arch=$(dpkg --print-architecture)
-          mkdir -p package/DEBIAN
-          cp -r "$app_folder/debian/"* package/DEBIAN/
-          mkdir -p package/usr/bin
-          mkdir -p package/usr/share/mechanix/$pkg_name/data
-          mkdir -p package/usr/share/mechanix/$pkg_name/lib
-          mkdir -p package/usr/lib/$pkg_name
-          # Patch Architecture field
-          if grep -q '^Architecture:' package/DEBIAN/control; then
-            sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
-          else
-            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control
-          fi
-          # Copy binary
-          cp "./build/${{ matrix.binary }}/${{ matrix.binary }}" package/usr/bin/${{ matrix.binary }}
-          chmod 755 package/usr/bin/${{ matrix.binary }}
-          # Copy assets
-          if [ -d "./build/${{ matrix.binary }}/data" ]; then
-            cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/mechanix/$pkg_name/data/
-          fi
-          # Copy private libraries
-          if [ -d "./build/${{ matrix.binary }}/lib" ]; then
-            cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/share/mechanix/$pkg_name/lib/
-          fi
-          # Build .deb into ./build/deb/
-          mkdir -p ./build/deb
-          dpkg-deb --build package "./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+          nu package-deb.nu "${{ matrix.folder }}" "../build/deb"
       # List artifacts
       - name: List artifacts ${{ matrix.name }}
         run: ls -la ./build/
@@ -147,6 +124,7 @@ jobs:
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --signing-service=mecha-pkg-sign \
             --file="$DEB_FILE"
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
