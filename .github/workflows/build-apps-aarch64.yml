@@ -58,7 +58,7 @@ jobs:
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
             libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
 
-       # Install NuShell
+        # Install NuShell
       - name: Install Nushell
         run: |
           curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
@@ -117,32 +117,32 @@ jobs:
       - name: Publish to Pulp [${{ matrix.app }}]
         run: |
           set -euo pipefail
-          
+
           # Find the .deb file for this app
           DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" | head -n1)
-          
+
           if [ -z "$DEB_FILE" ]; then
             echo "[ERROR] Could not find .deb file for ${{ matrix.app }}"
             exit 1
           fi
-          
+
           echo "[INFO] Uploading: $DEB_FILE"
           pulp deb content upload \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --signing-service=mecha-pkg-sign \
+            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \     
             --file="$DEB_FILE"
-          
+
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --signing-service=mecha-pkg-sign \
             | jq -r '.pulp_href')
-          
+
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-          
+
           echo "[INFO] ✅ Package ${{ matrix.app }} published."
       # Upload full artifacts
       - name: Upload artifact ${{ matrix.name }}
