@@ -71,6 +71,20 @@ jobs:
           sudo apt update
           sudo apt install nushell
 
+        # Add Comet repository
+      - name: Add Comet repository
+        run: |
+          # Download and add the GPG key
+          curl -fsSL https://pub-a2f44c787cec4290833312e57fd59522.r2.dev/comet.asc | \
+            sudo gpg --dearmor -o /usr/share/keyrings/comet-deb.gpg
+
+          # Add the repository source
+          echo "deb [signed-by=/usr/share/keyrings/comet-deb.gpg] http://pkg.mecha.so/debian pulp upload" | \
+            sudo tee /etc/apt/sources.list.d/comet.list
+
+          # Update package list
+          sudo apt update
+
       # Checkout repository
       - name: Setup | Checkout
         uses: actions/checkout@v4
