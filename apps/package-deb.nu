@@ -3,9 +3,120 @@
 # Debian Packaging Script for Flutter eLinux Apps
 # Usage: nu package-deb.nu <app-name> <output-dir>
 
+# Function to get next Debian revision by querying APT
+def get_next_debian_revision_apt [
+    pkg_name: string,
+    app_version: string,
+    repo_url: string = "http://pkg.mecha.so/debian"
+] {
+    print $"[INFO] Updating APT cache to get latest package information..."
+
+    # Check if sudo command exists
+    let sudo_exists = (which sudo | is-not-empty)
+
+    # Determine if we should use sudo
+    let use_sudo = if $sudo_exists {
+        # Check if we can run sudo without password prompt
+        let can_sudo = (^sudo -n true | complete | get exit_code) == 0
+        $can_sudo
+    } else {
+        false
+    }
+
+    if $use_sudo {
+        print "[INFO] Running: sudo apt update"
+        let update_result = (^sudo apt update | complete)
+
+        if $update_result.exit_code != 0 {
+            print "[WARN] apt update failed, proceeding with cached data"
+            print $"[WARN] ($update_result.stderr)"
+        } else {
+            print "[INFO] APT cache updated successfully"
+        }
+    } else {
+        # Run apt update without sudo
+        if $sudo_exists {
+            print "[INFO] No sudo access, running: apt update"
+        } else {
+            print "[INFO] sudo not available, running: apt update"
+        }
+
+        let update_result = (^apt update | complete)
+
+        if $update_result.exit_code != 0 {
+            print "[WARN] apt update failed, proceeding with cached data"
+            print $"[WARN] ($update_result.stderr)"
+        } else {
+            print "[INFO] APT cache updated successfully"
+        }
+    }
+
+    print $"[INFO] Querying APT for ($pkg_name) version ($app_version) in repo ($repo_url)"
+
+    try {
+        # Get all available versions from APT
+        let madison_output = (^apt-cache madison $pkg_name | complete)
+
+        if $madison_output.exit_code != 0 {
+            print "[INFO] Package not found in APT, starting with revision 1"
+            return 1
+        }
+
+        # Parse apt-cache madison output and filter by repository
+        let versions = ($madison_output.stdout
+            | lines
+            | where { |line| ($line | str trim) != "" }
+            | where { |line| $line | str contains $repo_url }
+            | each { |line|
+                let parts = ($line | split row "|")
+                if ($parts | length) >= 2 {
+                    $parts | get 1 | str trim
+                } else {
+                    null
+                }
+            }
+            | where { |v| $v != null }
+        )
+
+        print $"[DEBUG] Versions found in ($repo_url): ($versions)"
+
+        # Filter for our upstream version with Debian revision
+        let matching_versions = ($versions
+            | where { |v| $v | str starts-with $"($app_version)-" }
+        )
+
+        if ($matching_versions | is-empty) {
+            print $"[INFO] No Debian revisions found for ($app_version), starting with -1"
+            return 1
+        }
+
+        # Extract revision numbers
+        let revisions = ($matching_versions
+            | each { |v|
+                let rev = ($v | str replace $"($app_version)-" "")
+                $rev | into int
+            }
+        )
+
+        let max_revision = ($revisions | math max)
+        let next_revision = $max_revision + 1
+
+        print $"[INFO] Found existing revisions for ($app_version) in ($repo_url): ($revisions | str join ', ')"
+        print $"[INFO] Next revision will be: -($next_revision)"
+
+        return $next_revision
+
+    } catch {
+        print $"[WARN] Error querying APT: ($in)"
+        print "[WARN] Defaulting to revision 1"
+        return 1
+    }
+}
+
 def main [
     app_name: string,         # App name from metadata (e.g., "files", "camera")
-    output_dir: string        # Output directory for .deb file
+    output_dir: string,       # Output directory for .deb file
+    --repo-url: string = "http://pkg.mecha.so/debian"  # Repository URL to query
 ] {
     print $"[INFO] Starting Debian packaging for ($app_name)"
 
@@ -32,7 +143,7 @@ def main [
 
     let app_folder = $app.folder
     let binary_name = $app.binary
-    
+
     let app_maintainer = $app.maintainer
     let dependencies = ($app.dependencies | str join ", ")
 
@@ -52,11 +163,21 @@ def main [
     let app_version = $pubspec.version
     let app_description = $pubspec.description
 
-    print $"[INFO] Version: ($app_version)"
+    print $"[INFO] Upstream Version: ($app_version)"
 
     # Get architecture
     let pkg_arch = (dpkg --print-architecture | str trim)
     print $"[INFO] Architecture: ($pkg_arch)"
+
+    # Package name from metadata
+    let pkg_name = $"mechanix-($app_name)"
+
+    # Get next Debian revision from APT
+    let deb_revision = (get_next_debian_revision_apt $pkg_name $app_version $repo_url)
+    let pkg_version = $"($app_version)-($deb_revision)"
+
+    print $"[INFO] Debian Revision: ($deb_revision)"
+    print $"[INFO] Full Package Version: ($pkg_version)"
 
     # Define build directory
     let build_dir = $"($app_folder)/build/elinux/arm64/release/bundle"
@@ -66,9 +187,6 @@ def main [
         print "[ERROR] Make sure you've run 'flutter-elinux build elinux --release' first"
         exit 1
     }
-
-    # Package name from metadata
-    let pkg_name = $"mechanix-($app_name)"
 
     # Create package directory structure
     let pkg_dir = "package"
@@ -86,7 +204,7 @@ def main [
     print "[INFO] Generating DEBIAN/control file"
 
     let control_content = $"Package: ($pkg_name)
-Version: ($app_version)
+Version: ($pkg_version)
 Section: utils
 Priority: optional
 Architecture: ($pkg_arch)
@@ -145,7 +263,7 @@ Description: ($app_description)
     mkdir $output_dir
 
     # Build .deb package
-    let deb_filename = $"($pkg_name)_($app_version)_($pkg_arch).deb"
+    let deb_filename = $"($pkg_name)_($pkg_version)_($pkg_arch).deb"
     let deb_path = $"($output_dir)/($deb_filename)"
 
     print $"[INFO] Building .deb package: ($deb_path)"
