@@ -1,5 +1,5 @@
 name: mechanix_notes
-description: "A new Flutter project."
+description: "A note-taking app for Mechanix OS."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -120,6 +120,12 @@ flutter:
     - assets/images/pinned_filled_icon.png
     - assets/images/menu_icon.png
     - assets/images/close_icon.png
+    - assets/screenshots/notes1.png
+    - assets/screenshots/notes2.png
+    - assets/screenshots/notes3.png
+    - assets/screenshots/notes4.png
+    - assets/screenshots/notes5.png
+    - assets/screenshots/notes6.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

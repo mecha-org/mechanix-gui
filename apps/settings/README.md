@@ -1,16 +1,61 @@
-# mechanix_settings
+# ⚙️ Mechanix Settings
 
-A new Flutter project.
+Settings App provides access you to various configuration options like Network, Bluetooth, Display, etc for your Mecha Comet, made in Flutter.
 
-## Getting Started
+## 📦 Install Guide
 
-This project is a starting point for a Flutter application.
+### 📝 Pre-requisites:
+- To install flutter, follow this : [https://docs.flutter.dev/install](https://docs.flutter.dev/install)
+- To install flutter-elinux, follow this : [https://github.com/sony/flutter-elinux](https://github.com/sony/flutter-elinux) 
 
-A few resources to get you started if this is your first Flutter project:
+### 🚀 Steps to run Settings App:
+1. Clone the repository :
+    ```
+    $ git clone https://github.com/mecha-org/mechanix-gui.git
+    $ cd apps/settings-app
+    ```
+2. Install Flutter dependencies:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+    For flutter-elinux:
+    ```
+    $ flutter-elinux pub get
+    ```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+    For flutter: 
+      ```
+    $ flutter pub get
+    ```
+3. Build and Run:
+
+    For flutter-elinux:
+    ```
+    $ flutter-elinux build
+    $ flutter-elinux run
+    ```
+
+    For flutter: 
+    ```
+    $ flutter build
+    $ flutter run
+    ```
+4. Build for release
+    ```
+    $ flutter-elinux build elinux --release
+    ```
+## 🔑 Key Features
+
+Centralized Control: Easy access to Network, Bluetooth, Sound, Battery, Sound, etc settings.
+
+1. Network  
+2. Bluetooth
+3. Battery
+4. Date and Time
+5. Display
+6. Sound & Haptics
+7. About
+
+### 🖼️ Screenshots: 
+
+<img src="./assets/screenshots/settings_menu.png" alt="Other Options" /> 
+
+<img src="./assets/screenshots/network_settings.png" alt="Other Options" /> 

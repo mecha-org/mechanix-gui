@@ -1,120 +1,259 @@
-# MXCONF (Mechanix Configuration Service)
+# 📚 MxConf (Mechanix Configuration Service)
 
-A Rust-based configuration server that monitors schema files, validates them, and manages them efficiently in an
-embedded database with D-Bus and CLI interfaces.
+MxConf is a Rust-based configuration service that acts as a database for storing configuration keys and their values.  
+Configurations can be **Inserted, inspected, and modified** using the `mxconf` utility through **D-Bus** and **CLI interfaces**.
 
-## Features
+---
 
-- **File Watching**: Automatically detects new TOML configuration files in the `/usr/share/mxconf/schemas` directory.
-- **D-Bus Server**: Exposes a D-Bus interface for retrieving and managing configurations.
-- **Command-Line Interface**: Provides CLI commands to get, set, watch for configuration changes, and list available
-  schemas.
-- **Lock down specific settings**: Use the lockdown mode in mxconf to prevent users from changing specific settings.
-- **Manage user and system settings**: Use the profile to manage
-- **Schema Validation**: Validates TOML files.
-- **Embedded Database**: Stores validated configurations in a local embedded database
-  using [sled](https://github.com/spacejam/sled).
-- **Namespaced Storage**: Organizes configurations by namespace for efficient retrieval.
-- **Checksum Verification**: Prevents duplicate processing of unchanged files.
-- **Robust Error Handling**: Comprehensive error handling throughout the codebase.
-- **Well-Documented Code**: Clear documentation for all functions and modules.
+## 🛠 Features
 
-## Project Structure
+- **File Watching**: Automatically detects new TOML configuration files in `/usr/share/mxconf/schemas`.
+- **D-Bus Server**: Exposes configuration operations over D-Bus.
+- **Command-Line Interface**: Provides commands to get, set, watch for changes, and list schemas.
+- **Lockdown Mode**: Restrict specific settings from being changed by users.
+- **Profiles**: Manage user-level and system-level defaults and overrides.
+- **Embedded Database**: Stores validated data using [sled](https://github.com/spacejam/sled).
+- **Namespaced Storage**: Configurations are grouped by namespace for efficient access.
+- **Checksum Verification**: Avoids reprocessing unchanged configuration files.
 
-The `/src` folder contains the main logic, organized as follows:
+---
 
-- `main.rs`: Entry point; parses CLI arguments, starts server or CLI mode.
-- `cli_client.rs`: Handles CLI commands, including getting, setting, watching for changes, and listing schemas.
-- `database.rs`: Handles embedded database (sled) operations, including namespaced storage.
-- `server.rs`: Exposes configuration operations over D-Bus.
-- `error.rs`: Defines custom error types for robust error handling.
-- `utils.rs`: Utility functions used across modules.
+## 🧩 Profiles, System Keyfiles, and User Keystore
 
-## Installation
+### Profiles
+- Installed with a default profile:  
+  `/etc/mxconf/profile/default.toml`
+
+Example:
+
+```
+
+[user]
+keystore = "user"       \# User keystore stored in \$HOME/.conf/mxconf/
+
+[system]
+keyfiles = "system"     \# System keyfiles in /etc/mxconf/keyfiles/
+
+```
+
+- The active profile is determined by the `MXCONF_PROFILE` environment variable.
+- If unset, defaults to `default`.
+
+---
+
+### System Keyfiles
+- Location: `/etc/mxconf/keyfiles/<name>`
+- Default: `/etc/mxconf/keyfiles/system`
+
+Applications can install their own system keyfiles using naming convention:
+
+```
+
+XX-org.<namespace>.<app_name>.toml
+
+```
+
+Example: `01-org.mechanix.launcher.toml`
+
+#### Example Content: `00-org.mechanix.keyboard.toml`
+
+```
+
+[general]
+enabled = { value = "true", locked = "true" }
+
+[theme]
+mode = "dark"
+
+```
+
+✅ Both **inline tables** (`{}`) and **direct assignments** (`key = value`) are valid in TOML.
+
+---
+
+## 🔧 Configuration Schema
+
+- One schema per **namespace** (e.g., `org.mechanix.launcher`)
+- Written in **TOML**
+
+### Example Schema: `org.mechanix.launcher`
+
+```
+
+[appearance]
+theme = { type = "string", key = "color", default = "black" }
+borderRadius = { type = "number", key = "radius", default = 8 }
+darkMode = { type = "bool", key = "enabled", default = false }
+
+```
+
+---
+
+## ⚙️ Installation
 
 ### Prerequisites
+- Rust (2021 edition or later)
+- Cargo
 
-- Rust and Cargo (2021 edition or later)
+### Build from Source
 
-### Building from Source
+```shell
 
-1. Clone the repository:
-   ```
-   git clone https://github.com/mecha-org/mxconf.git
-   cd mxconf
-   ```
+$ https://github.com/mecha-org/mechanix-gui.git -b pre-release
+$ cd services/conf
+$ cargo build --release
 
-2. Build the project:
-   ```
-   cargo build --release
-   ```
+```
 
-3. Run the server:
-   ```
-   cargo run --release
-   ```
-   Debug logging:
-   ```
-    RUST_LOG=none,mxconf=debug ./target/release/mxconf -s
-   ```
+Run the server:
 
-## Usage
+```shell
+
+$ cargo run --release
+
+```
+
+Enable debug logging:
+
+```shell
+
+$ RUST_LOG=none,mxconf=debug ../target/release/mxconf -s
+
+```
+
+---
+
+## 🚀 Usage
 
 ### Server Mode
 
 1. Start the server:
-   ```
-   cargo run --release -- -s
-   ```
-   or
-   ```
-   ./mxconf -s
-   ```
 
-2. Place TOML configuration files in the `schemas` directory. The server will automatically:
-    - Detect a new TOML file
-    - Validate them
+```shell
 
-3. The server stores configurations in `~/.config/mxconf/db` using the sled embedded database.
+$ ./mxconf -s
+
+```
+
+2. Place your schema files in `/usr/share/mxconf/schemas`.
+
+The server will automatically:
+- Detect new TOML files
+- Validate them
+
+3. Configurations are stored in:
+
+```shell
+
+$ ~/.config/mxconf/db
+
+```
+
+---
 
 ### CLI Mode
 
-The application also provides a command-line interface for interacting with the configuration server:
+Interact with the running server from the command line:
 
-1. Get a setting value (wildcard supported):
-   ```
-   cargo run --release -- get <key/key_expr>
-   ```
-   or
-   ```
-   ./mxconf get <key>
-   ```
-2. Set a setting value:
-   ```
-   cargo run --release -- set <key> <value>
-   ```
-   or
-   ```
-   ./mxconf set <key> <value>
-   ```
+- **Get** a setting:
 
-3. Watch for changes to a setting:
-   ```
-   cargo run --release -- watch <key>
-   ```
-   or
-   ```
-   ./mxconf watch <key/key_expr>
-   ```
+```
 
-4. List all available schemas:
-   ```
-   cargo run --release -- list-schemas
-   ```
-   or
-   ```
-   ./mxconf list-schemas
-   ```
+./mxconf get <key>
+./mxconf get <key_expr>   \# supports wildcards
 
-> **Note:** The server must be running (using the `-s` option) for the CLI commands to work.
+```
 
+- **Set** a setting:
+
+```shell
+
+$ ./mxconf set <key> <value>
+
+```
+
+- **Watch** for changes:
+
+```shell
+
+$ ./mxconf watch <key>
+$ ./mxconf watch <key_expr>
+
+```
+
+- **List available schemas**:
+
+```shell
+
+$ ./mxconf list-schemas
+
+```
+
+---
+### D-Bus Interface
+
+MXCONF exposes its configuration operations via **D-Bus**.
+
+- **Bus name:** `org.mechanix.MxConf`
+- **Object path:** `/org/mechanix/MxConf`
+- **Interface:** `org.mechanix.MxConf`
+---
+
+## 🚀 Methods
+
+### DescribeKey
+Describe schema and its key’s metadata.
+
+busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf DescribeKey ss "<schema>" "<key>"
+
+Example:
+```shell
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf DescribeKey ss "org.mechanix.launcher" "theme"
+```
+
+### GetSetting
+
+Return the current value for a key.
+
+busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf GetSetting s "<key>"
+
+Example:
+
+```shell
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf GetSetting s "org.mechanix.launcher.theme"
+```
+
+
+### ListKeys
+
+List all keys for a given schema.
+
+busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListKeys s "<schema>"
+
+Example:
+```shell
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListKeys s "org.mechanix.launcher.theme"
+```
+
+### ListSchemas
+List all configuration schemas.
+
+busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListSchemas
+
+Example:
+```shell
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf ListSchemas
+```
+
+### SetSetting
+
+Set the value for a key.
+
+busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf SetSetting ss "<key>" "<value>"
+
+Example:
+```shell
+$ busctl call org.mechanix.MxConf /org/mechanix/MxConf org.mechanix.MxConf SetSetting ss "org.mechanix.launcher.theme" "dark"
+```
+
+> **Note:** The server **must be running** with `-s` for CLI commands to work.**
