@@ -25,7 +25,6 @@ void main() async {
   await initializeHive();
   Hive.registerAdapter(NoteHiveAdapter());
   // MediaKit.ensureInitialized();
-
   await Hive.openBox<NoteHive>(Constants.tableName);
   runApp(
     MultiRepositoryProvider(
@@ -113,9 +112,7 @@ class MyApp extends StatelessWidget {
 
       home: HomePage(),
       routes: {
-        AppRoutes.createEditNotes:
-            (context) =>
-                BlocProvider(create: (_) => EditorBloc(), child: NotesEditor()),
+        AppRoutes.createEditNotes: (context) => NotesEditor(),
         AppRoutes.searchNotes: (context) => SearchNotes(),
       },
     );

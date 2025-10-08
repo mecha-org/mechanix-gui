@@ -29,7 +29,6 @@ class TextEditorToolbar extends StatefulWidget {
 
 class _TextEditorToolbarState extends State<TextEditorToolbar> {
   bool isTextColorSelected = false;
-  String selectedHeader = 't2';
 
   void requestFocus() {
     if (!widget.focusNode.hasFocus) {

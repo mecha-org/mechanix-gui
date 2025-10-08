@@ -11,9 +11,7 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/editor_bar.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar/additional_toolbar.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar/alignment_toolbar.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar/text_editor_toolbar.dart';
+import 'package:mechanix_notes/src/features/editor/toolbar_selection.dart';
 import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
@@ -35,10 +33,6 @@ class NotesEditor extends StatefulWidget {
 class _NotesEditorState extends State<NotesEditor> {
   late final QuillController _controller;
   final FocusNode _focusNode = FocusNode();
-  final LayerLink linkLayer = LayerLink();
-  final TextEditingController _titleController = TextEditingController();
-
-  ToolbarEnum? selectedToolbar;
 
   @override
   void initState() {
@@ -46,11 +40,8 @@ class _NotesEditorState extends State<NotesEditor> {
 
     bool isEditing = widget.note != null;
 
-    if (isEditing) {
-      _titleController.text = widget.note?.title ?? '';
-    }
     context.read<EditorBloc>().add(
-      PinnedUpdate(isPinned: widget.note?.isPinned ?? false),
+      InitializedEditor(isPinned: widget.note?.isPinned ?? false),
     );
 
     final doc =
@@ -90,13 +81,7 @@ class _NotesEditorState extends State<NotesEditor> {
   }
 
   void toolbarSelection(ToolbarEnum value) {
-    setState(() {
-      if (selectedToolbar == value) {
-        selectedToolbar = null;
-      } else {
-        selectedToolbar = value;
-      }
-    });
+    context.read<EditorBloc>().add(SelectToolbar(toolbarEnum: value));
 
     if (_focusNode.hasFocus) {
       _focusNode.requestFocus();
@@ -111,27 +96,6 @@ class _NotesEditorState extends State<NotesEditor> {
     _controller.redo();
   }
 
-  Widget _buildSelectedToolbar() {
-    if (selectedToolbar == null) return SizedBox.shrink();
-
-    switch (selectedToolbar!) {
-      case ToolbarEnum.align:
-        return AlignmentToolbar(controller: _controller, focusNode: _focusNode);
-      case ToolbarEnum.text:
-        return TextEditorToolbar(
-          controller: _controller,
-          focusNode: _focusNode,
-        );
-      case ToolbarEnum.add:
-        return AdditionalToolbar(
-          controller: _controller,
-          focusNode: _focusNode,
-        );
-      default:
-        return SizedBox.shrink();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -143,11 +107,10 @@ class _NotesEditorState extends State<NotesEditor> {
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () {
-          if (selectedToolbar != null) {
-            setState(() {
-              selectedToolbar = null;
-            });
-          }
+          context.read<EditorBloc>().add(
+            SelectToolbar(toolbarEnum: ToolbarEnum.none),
+          );
+
           FocusScope.of(context).unfocus();
         },
         child: Stack(
@@ -163,6 +126,8 @@ class _NotesEditorState extends State<NotesEditor> {
                         controller: _controller,
                         focusNode: _focusNode,
                         config: QuillEditorConfig(
+                          expands: false,
+                          scrollable: true,
                           enableSelectionToolbar: false,
                           onKeyPressed: (event, node) {
                             if (event.logicalKey == LogicalKeyboardKey.escape) {
@@ -203,27 +168,27 @@ class _NotesEditorState extends State<NotesEditor> {
               ),
             ),
 
-            if (selectedToolbar != null)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 90,
-                child: Center(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 16),
-                    child: _buildSelectedToolbar(),
-                  ),
-                ),
-              ),
+            // Toolbar
+            ToolbarSelection(focusNode: _focusNode, controller: _controller),
 
-            BlocSelector<EditorBloc, EditorBlocState, Tuple3<bool, bool, bool>>(
+            BlocSelector<
+              EditorBloc,
+              EditorBlocState,
+              Tuple4<bool, bool, bool, ToolbarEnum>
+            >(
               selector:
-                  (state) =>
-                      Tuple3(state.isUndo, state.isRedo, state.toolbarToggle),
+                  (state) => Tuple4(
+                    state.isUndo,
+                    state.isRedo,
+                    state.toolbarToggle,
+                    state.selectedToolbar,
+                  ),
               builder: (context, tuple) {
                 final isUndo = tuple.item1;
                 final isRedo = tuple.item2;
                 final toolbarToggle = tuple.item3;
+                final selectedToolbar = tuple.item4;
+
                 // try to solve this to not get return when toolbarToggle is false i.e without returning Container
                 if (!toolbarToggle) return Container();
 
@@ -275,7 +240,6 @@ class _NotesEditorState extends State<NotesEditor> {
                           ),
                           MechanixFabItem(
                             iconSize: 20,
-                            anchorLink: linkLayer,
                             iconWidget: NotesFabIcon(
                               iconPath: NotesIcon.menuIcon,
                               iconSize: 20,
@@ -286,18 +250,18 @@ class _NotesEditorState extends State<NotesEditor> {
                             ),
                             onTap: () => toolbarSelection(ToolbarEnum.align),
                           ),
-                          MechanixFabItem(
-                            iconSize: 20,
-                            iconWidget: NotesFabIcon(
-                              iconPath: NotesIcon.addIcon,
-                              iconSize: 20,
-                              color:
-                                  selectedToolbar == ToolbarEnum.add
-                                      ? Theme.of(context).disabledColor
-                                      : Colors.white,
-                            ),
-                            onTap: () => toolbarSelection(ToolbarEnum.add),
-                          ),
+                          // MechanixFabItem(
+                          //   iconSize: 20,
+                          //   iconWidget: NotesFabIcon(
+                          //     iconPath: NotesIcon.addIcon,
+                          //     iconSize: 20,
+                          //     color:
+                          //         selectedToolbar == ToolbarEnum.add
+                          //             ? Theme.of(context).disabledColor
+                          //             : Colors.white,
+                          //   ),
+                          //   onTap: () => toolbarSelection(ToolbarEnum.add),
+                          // ),
                         ],
                       ),
                     ),
@@ -316,7 +280,6 @@ class _NotesEditorState extends State<NotesEditor> {
     _controller.removeListener(_onControllerChange);
     _controller.dispose();
     _focusNode.dispose();
-    _titleController.dispose();
     super.dispose();
   }
 }

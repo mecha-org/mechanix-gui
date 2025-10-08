@@ -28,8 +28,8 @@ class MenuOptions extends StatelessWidget {
 
     void onPin(bool isPinned) {
       entry!.remove();
+      context.read<EditorBloc>().add(PinnedUpdate(isPinned: !isPinned));
       if (note?.id != null) {
-        context.read<EditorBloc>().add(PinnedUpdate(isPinned: !isPinned));
         context.read<NotesBloc>().add(
           PinnedNotes(isPinned: !isPinned, noteIds: [note!.id]),
         );

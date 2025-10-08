@@ -1,25 +1,18 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
-
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
+import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
 
 class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
   final logger = Logger();
-  EditorBloc()
-    : super(
-        EditorBlocState(
-          isEditing: false,
-          linkLayer: LayerLink(),
-          optionsLayer: LayerLink(),
-        ),
-      ) {
+  EditorBloc() : super(EditorBlocState(selectedToolbar: ToolbarEnum.none)) {
     on<InitializedEditor>(_initializeEditor);
     on<ToolbarToggle>(_enableToolbar);
     on<UndoUpdate>(_undoCall);
     on<RedoUpdate>(_redoCall);
     on<PinnedUpdate>(_pinnedCall);
+    on<SelectToolbar>(_selectToolbar);
   }
 
   void _initializeEditor(
@@ -27,13 +20,23 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
     Emitter<EditorBlocState> emit,
   ) async {
     logger.i("Notes Editor Initialized");
+
+    emit(
+      state.copyWith(
+        isPinned: event.isPinned,
+        isRedo: false,
+        isUndo: false,
+        selectedToolbar: ToolbarEnum.none,
+        toolbarToggle: true,
+      ),
+    );
   }
 
   void _enableToolbar(ToolbarToggle event, Emitter<EditorBlocState> emit) {
     emit(
       state.copyWith(
         toolbarToggle: !state.toolbarToggle,
-        selectedToolbar: !state.toolbarToggle ? null : state.selectedToolbar,
+        selectedToolbar: ToolbarEnum.none,
       ),
     );
   }
@@ -51,8 +54,20 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
   }
 
   void _pinnedCall(PinnedUpdate event, Emitter<EditorBlocState> emit) {
+    logger.i('pinned call event: ${event.isPinned} state: ${state.isPinned}');
     if (event.isPinned != state.isPinned) {
       emit(state.copyWith(isPinned: event.isPinned));
     }
+  }
+
+  void _selectToolbar(SelectToolbar event, Emitter<EditorBlocState> emit) {
+    logger.i(
+      'select toolbar event: ${event.toolbarEnum} state: ${state.selectedToolbar}',
+    );
+    if (event.toolbarEnum == state.selectedToolbar) {
+      emit(state.copyWith(selectedToolbar: ToolbarEnum.none));
+      return;
+    }
+    emit(state.copyWith(selectedToolbar: event.toolbarEnum));
   }
 }

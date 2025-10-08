@@ -1,1 +1,1 @@
-enum ToolbarEnum { undo, redo, text, align, add, menu }
+enum ToolbarEnum { text, align, add, none }
