@@ -1,3 +1,4 @@
+import 'package:file/file.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 
 class FileItem {

@@ -71,27 +71,38 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: lightTheme,
-      darkTheme: darkTheme.copyWith(
-          pageTransitionsTheme: const PageTransitionsTheme(
-              builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()})),
-      themeMode: themeMode,
-      home: buildFileExplorerPage(context),
-      routes: {
-        AppRoutes.files: (context) => buildFileExplorerPage(context),
-      },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => FilesBloc(
+              fileRepository: context.read<FileRepository>(),
+              recentFilesManager: context.read<RecentFilesManager>())
+            ..add(InitializeFiles()),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: lightTheme,
+        darkTheme: darkTheme.copyWith(
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+          TargetPlatform.linux: SlideLeftTransitionsBuilder()
+        })),
+        themeMode: themeMode,
+        home: const FileHomePage(),
+        routes: {
+          AppRoutes.files: (context) => const FileHomePage(),
+        },
+      ),
     );
   }
 
-  Widget buildFileExplorerPage(BuildContext context) {
-    return BlocProvider(
-      create: (_) => FilesBloc(
-          fileRepository: context.read<FileRepository>(),
-          recentFilesManager: context.read<RecentFilesManager>())
-        ..add(InitializeFiles()),
-      child: const FileHomePage(),
-    );
-  }
+  // Widget buildFileExplorerPage(BuildContext context) {
+  //   return BlocProvider(
+  //     create: (_) => FilesBloc(
+  //         fileRepository: context.read<FileRepository>(),
+  //         recentFilesManager: context.read<RecentFilesManager>())
+  //       ..add(InitializeFiles()),
+  //     child: const FileHomePage(),
+  //   );
+  // }
 }

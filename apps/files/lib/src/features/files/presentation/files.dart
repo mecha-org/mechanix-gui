@@ -8,6 +8,7 @@ import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_button.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
@@ -29,7 +30,7 @@ import 'view_mode_notifier.dart';
 import 'grid_view.dart';
 import 'list_view.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
-import 'package:file/file.dart';
+// import 'package:file/file.dart';
 import 'package:path/path.dart' as p;
 import 'dart:math' as Math;
 import 'package:widgets/mechanix.dart';
@@ -37,11 +38,15 @@ import 'package:widgets/mechanix.dart';
 class FileExplorerPage extends StatefulWidget {
   final String title;
   final List<FileItem> path;
+  // final FileManagerController controller;
+  final String? startPath;
 
   const FileExplorerPage({
     super.key,
     this.title = "My Files",
     this.path = const [],
+    // required this.controller,
+    this.startPath,
   });
 
   @override
@@ -49,6 +54,7 @@ class FileExplorerPage extends StatefulWidget {
 }
 
 class FileExplorerPageState extends State<FileExplorerPage> {
+  final FileManagerController controller = FileManagerController();
   List<FileItem> displayedFiles = [];
   bool selectionMode = false;
   Set<String> selectedPaths = {};
@@ -74,12 +80,32 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   /// For list/grid view
   final ScrollController _scrollController = ScrollController();
+  String currentPath = '';
 
   @override
   void initState() {
     super.initState();
 
-    _scrollController.addListener(_onScroll);
+    // _scrollController.addListener(_onScroll);
+    // Initialize the scroll listener
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          0.8 * _scrollController.position.maxScrollExtent) {
+        controller.loadNextChunk();
+      }
+    });
+
+    // Default to /home if no startPath is provided
+    final initialPath = widget.startPath ?? homeDir;
+    controller.openDirectory(Directory(initialPath));
+
+    controller.getPathNotifier.addListener(() {
+      final newPath = controller.getPathNotifier.value;
+      debugPrint("Path changed: $newPath");
+      setState(() {
+        currentPath = newPath;
+      });
+    });
   }
 
   void _onScroll() {
@@ -105,12 +131,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+    // controller.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isAtRoot = widget.path.isEmpty;
-    final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
+    final isAtRoot = currentPath == '/' || currentPath.isEmpty;
 
     final isDocumentsDir = currentPath == documentsDir;
     final isDownloadsDir = currentPath == downloadsDir;
@@ -121,52 +147,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         isDocumentsDir ||
         isAtRoot ||
         isRecentDir;
-
+    debugPrint("isHomePageDir: $isHomePageDir");
     final backIndex = widget.path.length - 1;
     final currentTitle = backIndex < -1
         ? "Files"
         : (backIndex == -1 ? "Root" : widget.path[backIndex].name);
 
-    String? backTitle = widget.path.length > 1
-        ? widget.path[widget.path.length - 2].name
-        : null;
-    List<FileItem> backPath = widget.path.length > 1
-        ? widget.path.sublist(0, widget.path.length - 1)
-        : [];
-
     void handleBack() {
-      final fullPath = '/${backPath.map((e) => e.name).join('/')}';
-      final filesBloc = BlocProvider.of<FilesBloc>(context);
-
-      filesBloc.add(
-          LoadFilesAtPath(fullPath.isEmpty ? '/' : fullPath, page, pageSize));
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: filesBloc,
-            child: FileExplorerPage(
-              title: backTitle ?? "Files",
-              path: backPath,
-            ),
-          ),
-        ),
-      );
+      controller.goToParentDirectory();
     }
 
     void homeNavigation() {
-      final filesBloc = BlocProvider.of<FilesBloc>(context);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: filesBloc,
-            child: const FileHomePage(),
-          ),
-        ),
-      );
+      Navigator.pop(context);
     }
 
     return MultiBlocListener(
@@ -215,25 +207,25 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           },
         ),
         // Loading indicator for general loading states
-        BlocListener<FilesBloc, FilesState>(
-          listenWhen: (previous, current) =>
-              previous.loading != current.loading,
-          listener: (context, state) async {
-            if (state.loading && !isLoadingDialogShown) {
-              isLoadingDialogShown = true;
-              await showDialog(
-                context: context,
-                barrierColor: Colors.black.withOpacity(0.2),
-                barrierDismissible: false,
-                builder: (_) => buildLoadingDialog("Loading..."),
-              );
-              isLoadingDialogShown = false;
-            } else if (!state.loading && isLoadingDialogShown) {
-              Navigator.of(context, rootNavigator: true).pop();
-            }
-          },
-        ),
-        // Copy: Show conflict resolution dialog
+        // BlocListener<FilesBloc, FilesState>(
+        //   listenWhen: (previous, current) =>
+        //       previous.loading != current.loading,
+        //   listener: (context, state) async {
+        //     if (state.loading && !isLoadingDialogShown) {
+        //       isLoadingDialogShown = true;
+        //       await showDialog(
+        //         context: context,
+        //         barrierColor: Colors.black.withOpacity(0.2),
+        //         barrierDismissible: false,
+        //         builder: (_) => buildLoadingDialog("Loading..."),
+        //       );
+        //       isLoadingDialogShown = false;
+        //     } else if (!state.loading && isLoadingDialogShown) {
+        //       Navigator.of(context, rootNavigator: true).pop();
+        //     }
+        //   },
+        // ),
+        // // Copy: Show conflict resolution dialog
         BlocListener<FilesBloc, FilesState>(
           listenWhen: (prev, curr) =>
               prev.conflictingPaths != curr.conflictingPaths,
@@ -405,90 +397,105 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           showHiddenFiles = state.showHiddenFiles;
 
           return Scaffold(
-            appBar: MechanixNavigationBar(
-              leadingWidget: IconButton(
-                icon: const Icon(Icons.arrow_back_ios,
-                    size: 20, color: Colors.blue),
-                onPressed: selectionMode
-                    ? clearSelection
-                    : isSearching
-                        ? clearSearch
-                        : (isHomePageDir ? homeNavigation : handleBack),
+            appBar: AppBar(
+              title: ValueListenableBuilder<String>(
+                valueListenable: controller.getPathNotifier,
+                builder: (context, path, _) {
+                  final title = _getCurrentFolderName(path);
+                  return Text(title);
+                },
               ),
-              title: selectionMode
-                  ? "Select"
-                  : isSearching
-                      ? "Search"
-                      : currentTitle,
-              titleStyle: context.textTheme.titleLarge,
-              actionWidgets: selectionMode
-                  ? [
-                      Text(
-                        "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 14),
-                      ).padRight(24),
-                    ]
-                  : isSearching
-                      ? null
-                      : [
-                          // View toggle
-                          ValueListenableBuilder<bool>(
-                            valueListenable: viewModeNotifier,
-                            builder: (context, isList, _) {
-                              return IconButton(
-                                icon: Image.asset(
-                                    isList ? Images.list : Images.grid),
-                                onPressed: () {
-                                  viewModeNotifier.value =
-                                      !viewModeNotifier.value;
-                                },
-                                highlightColor: Colors.transparent,
-                              );
-                            },
-                          ),
-
-                          // Sort options
-                          IconButton(
-                            icon: Image.asset(Images.sortAscending),
-                            onPressed: () async {
-                              showSortMenu(context, state.currentSortBy);
-                            },
-                            highlightColor: Colors
-                                .transparent, // Remove ripple effect on press
-                          ),
-
-                          // Search toggle
-                          IconButton(
-                            icon: const Icon(Icons.search, color: Colors.white),
-                            onPressed: () {
-                              setState(() => isSearching = true);
-                              showSearchBottomSheet(context, searchQuery);
-                            },
-                          ),
-
-                          // More options
-                          Builder(
-                            builder: (context) {
-                              return MechanixBottomSheetTheme(
-                                data: MechanixBottomSheetThemeData(
-                                  backgroundColor: WidgetStateProperty.all(
-                                      Colors.transparent),
-                                  borderRadius: 50,
-                                  shadowColor:
-                                      WidgetStateProperty.all(Colors.black45),
-                                ),
-                                child: IconButton(
-                                  icon: Image.asset(Images.dots),
-                                  onPressed: () =>
-                                      handleSelectionMore(context, state),
-                                  highlightColor: Colors.transparent,
-                                ),
-                              );
-                            },
-                          ),
-                        ],
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.blue),
+                onPressed: () =>
+                    isHomePageDir ? homeNavigation() : handleBack(),
+              ),
             ),
+            // MechanixNavigationBar(
+            //   leadingWidget: IconButton(
+            //     icon: const Icon(Icons.arrow_back_ios,
+            //         size: 20, color: Colors.blue),
+            //     onPressed: selectionMode
+            //         ? clearSelection
+            //         : isSearching
+            //             ? clearSearch
+            //             : (isHomePageDir ? homeNavigation : handleBack),
+            //   ),
+            //   title: selectionMode
+            //       ? "Select"
+            //       : isSearching
+            //           ? "Search"
+            //           : currentTitle,
+            //   titleStyle: context.textTheme.titleLarge,
+            //   actionWidgets: selectionMode
+            //       ? [
+            //           Text(
+            //             "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
+            //             style:
+            //                 const TextStyle(color: Colors.grey, fontSize: 14),
+            //           ).padRight(24),
+            //         ]
+            //       : isSearching
+            //           ? null
+            //           : [
+            //               // View toggle
+            //               ValueListenableBuilder<bool>(
+            //                 valueListenable: viewModeNotifier,
+            //                 builder: (context, isList, _) {
+            //                   return IconButton(
+            //                     icon: Image.asset(
+            //                         isList ? Images.list : Images.grid),
+            //                     onPressed: () {
+            //                       viewModeNotifier.value =
+            //                           !viewModeNotifier.value;
+            //                     },
+            //                     highlightColor: Colors.transparent,
+            //                   );
+            //                 },
+            //               ),
+
+            //               // Sort options
+            //               IconButton(
+            //                 icon: Image.asset(Images.sortAscending),
+            //                 onPressed: () async {
+            //                   showSortMenu(context, state.currentSortBy);
+            //                 },
+            //                 highlightColor: Colors
+            //                     .transparent, // Remove ripple effect on press
+            //               ),
+
+            //               // Search toggle
+            //               IconButton(
+            //                 icon: const Icon(Icons.search, color: Colors.white),
+            //                 onPressed: () {
+            //                   setState(() => isSearching = true);
+            //                   showSearchBottomSheet(context, searchQuery);
+            //                 },
+            //               ),
+
+            //               // More options
+            //               Builder(
+            //                 builder: (context) {
+            //                   return MechanixBottomSheetTheme(
+            //                     data: MechanixBottomSheetThemeData(
+            //                       backgroundColor: WidgetStateProperty.all(
+            //                           Colors.transparent),
+            //                       borderRadius: 50,
+            //                       shadowColor:
+            //                           WidgetStateProperty.all(Colors.black45),
+            //                     ),
+            //                     child: IconButton(
+            //                       icon: Image.asset(Images.dots),
+            //                       onPressed: () =>
+            //                           handleSelectionMore(context, state),
+            //                       highlightColor: Colors.transparent,
+            //                     ),
+            //                   );
+            //                 },
+            //               ),
+            //             ],
+            // ),
+
             body: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -524,17 +531,25 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         return ValueListenableBuilder<bool>(
                           valueListenable: viewModeNotifier,
                           builder: (context, isGrid, _) {
-                            return isGrid
-                                ? widget.title == 'recent'
-                                    ? buildGridViewForRecentFiles(
-                                        context, filteredFilesRecent)
-                                    : buildGridView(filteredFiles, context,
-                                        widget.path, _scrollController)
-                                : widget.title == 'recent'
+                            return
+                                // isGrid
+                                // ? widget.title == 'recent'
+                                //     ? buildGridViewForRecentFiles(
+                                //         context, filteredFilesRecent)
+                                //     :
+                                //     buildGridView(filteredFiles, context,
+                                //         widget.path, _scrollController)
+                                // :
+                                widget.title == 'Recent'
                                     ? buildListViewForRecentFiles(
                                         context, filteredFilesRecent)
-                                    : buildListView(filteredFiles, context,
-                                        widget.path, _scrollController);
+                                    : buildListView(
+                                        filteredFiles,
+                                        context,
+                                        widget.path,
+                                        _scrollController,
+                                        state.fileSystemList,
+                                        controller);
                           },
                         );
                       },
@@ -552,6 +567,25 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         },
       ),
     );
+  }
+
+  /// Helper function to extract the current folder name for the AppBar title
+  String _getCurrentFolderName(String path) {
+    if (path.isEmpty) return 'Home';
+
+    // Use path utilities instead of instantiating Directory (which may be
+    // shadowed by package:file's abstract Directory).
+    String name = p.basename(path);
+
+    // If path ends with a separator, basename can be empty; fall back to parent.
+    if (name.isEmpty) {
+      name = p.basename(p.dirname(path));
+    }
+
+    // Optionally map specific directories to nicer names
+    if (name == 'home') return 'Home';
+
+    return name;
   }
 
   OverlayEntry? _searchOverlayEntry;

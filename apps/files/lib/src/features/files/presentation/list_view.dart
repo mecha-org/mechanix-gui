@@ -1,8 +1,12 @@
+import 'dart:io' as io;
 import 'dart:ui';
 
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
+import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
+import 'package:mechanix_files/src/controllers/file_manager.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
@@ -20,99 +24,124 @@ Widget buildListView(
   BuildContext context,
   List<FileItem> currentPath,
   ScrollController scrollController,
+  List<io.FileSystemEntity> entities,
+  FileManagerController controller,
 ) {
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
 
-  return ScrollConfiguration(
-    behavior: ScrollConfiguration.of(context).copyWith(
-      dragDevices: {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      },
-    ),
-    child: ListView.builder(
-      controller: scrollController,
-      padding: const EdgeInsets.only(bottom: 80),
-      itemCount: files.length,
-      itemBuilder: (context, index) {
-        final file = files[index];
-        final fullPath =
-            '/${[...currentPath.map((e) => e.name), file.name].join('/')}';
-        final isSelected = selectedPaths.contains(fullPath);
+  return FileManager(
+    controller: controller,
+    builder: (context, snapshot) {
+      final List<io.FileSystemEntity> entities = snapshot;
 
-        return GestureDetector(
-          onSecondaryTap: () => state?.toggleSelection(fullPath), // right-click
-          onLongPress: () =>
-              state?.toggleSelection(fullPath), // long press (mobile)
-          child: ListTile(
-            minTileHeight: 65,
-            leading: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isSelectionMode)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: CustomCircleCheckbox(
-                      isChecked: isSelected,
-                      onTap: () => state?.toggleSelection(fullPath),
+      return ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        child: ListView.builder(
+          controller: scrollController,
+          padding: const EdgeInsets.only(bottom: 80),
+          itemCount: entities.length,
+          itemBuilder: (context, index) {
+            final entity = entities[index];
+            final title = FileManager.basename(entity);
+            final modified = entity.statSync().modified;
+            final isSelected = selectedPaths.contains(entity.path);
+
+            return GestureDetector(
+              onSecondaryTap: () =>
+                  state?.toggleSelection(entity.path), // right-click
+              onLongPress: () =>
+                  state?.toggleSelection(entity.path), // long press
+              child: ListTile(
+                minTileHeight: 65,
+                leading: Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (isSelectionMode)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: CustomCircleCheckbox(
+                        isChecked: isSelected,
+                        onTap: () => state?.toggleSelection(entity.path),
+                      ),
+                    ),
+                  Container(
+                    width: 60,
+                    height: 60,
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Image.asset(
+                        entity.iconPath,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                Container(
-                  width: 60,
-                  height: 60,
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                      child: Image.asset(file.iconPath, fit: BoxFit.contain)),
+                ]),
+                title: Text(
+                  title,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
-              ],
-            ),
-            title: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    file.name,
-                    overflow: TextOverflow.ellipsis, // Prevent overflow
-                    maxLines: 1, // Single-line truncation
-                    style: Theme.of(context).textTheme.bodyMedium,
+                trailing: Text(
+                  formatModifiedTime(modified),
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
                   ),
                 ),
-              ],
-            ),
-            trailing: file.modified != null
-                ? Text(
-                    formatModifiedTime(file.modified!),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
-                  )
-                : null,
-            onTap: () {
-              handleTap(
-                context,
-                file,
-                currentPath,
-                fullPath,
-                isSelectionMode,
-                state,
-              );
-            },
-          ),
-        );
-      },
-    ),
+                onTap: () {
+                  if (FileManager.isDirectory(entity)) {
+                    controller.openDirectory(entity);
+                  } else {
+                    handleFileTap(
+                      context,
+                      entity,
+                      entity.path,
+                      isSelectionMode,
+                      state,
+                    );
+                  }
+                },
+              ),
+            );
+          },
+        ),
+      );
+    },
   );
+}
+
+extension on io.FileSystemEntity {
+  String get iconPath {
+    final path = this.path;
+    final ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
+
+    if (ext == 'dir') return Images.unfoldDir;
+    if (ext == 'pdf') return Images.pdfFile;
+    if (ext == 'xlsx' || ext == 'xls') return Images.excelFile;
+    if (ext == 'txt') return Images.textFile;
+    if (imageFileTypes.contains(ext)) return Images.imageFile;
+    if (audioFileTypes.contains(ext)) return Images.audioFile;
+    if (videoFileTypes.contains(ext)) return Images.videoFile;
+    if (ext == 'csv') return Images.csvFile;
+    if (ext == 'zip' || ext == 'rar' || ext == '7z') return Images.archiveFile;
+
+    return Images.file;
+  }
 }
 
 Widget buildListViewForRecentFiles(
   BuildContext context,
-  List<FileSystemEntity> fileSystemList,
+  List<io.FileSystemEntity> fileSystemList,
 ) {
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;

@@ -61,6 +61,7 @@ dependencies:
       path: flutter/widgets
       ref: main
   watch_it: ^1.7.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
