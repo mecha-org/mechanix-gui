@@ -25,12 +25,12 @@ class NetworkSettings extends StatefulWidget {
 }
 
 class _NetworkSettingsState extends State<NetworkSettings> {
-
   @override
   void initState() {
     super.initState();
     context.read<WirelessSettingsBloc>().add(GetSavedNetworksEvent());
   }
+
   void _backNavigation(BuildContext context) {
     Navigator.pop(context);
   }
@@ -110,10 +110,13 @@ class _NetworkSettingsState extends State<NetworkSettings> {
         }
 
         return Scaffold(
-          appBar: MechanixNavigationBar(
-            title: "Network Settings",
-          ),
+          appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: MechanixNavigationBar(
+                title: "Network Settings",
+              ).padHorizontal(12)),
           body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(

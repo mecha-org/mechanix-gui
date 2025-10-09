@@ -11,7 +11,6 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_b
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
-import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -34,12 +33,13 @@ class _NetworkDetailsState extends State<NetworkDetails> {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
       builder: (context, state) {
         return Scaffold(
-          appBar: MechanixNavigationBar(
+          appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child:MechanixNavigationBar(
               title: state.selectedNMAccessPoint != null
                   ? utf8.decode(state.selectedNMAccessPoint!.ssid)
                   : '',
-              actionWidgets: (state.deviceState ==
-                      NetworkManagerDeviceState.activated)
+              actionWidgets: (state.selectedAccessPoint!.isActive)
                   ? [
                       IconButton(
                         onPressed: () => onForgetPressed(
@@ -92,8 +92,9 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                               ?.copyWith(color: Colors.white),
                         ),
                       ).padRight(16)
-                    ]),
+                    ]).padHorizontal(12)),
           body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(

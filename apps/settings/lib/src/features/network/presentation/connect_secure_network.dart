@@ -23,11 +23,10 @@ class ConnectSecureNetwork extends StatelessWidget {
 
     final wifiRepository = context.read<WifiRepository>();
 
-
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
-      listener: (context, state) {
+        listener: (context, state) {
           // Handle error
           if (state.error != null && state.error!.isNotEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -49,21 +48,24 @@ class ConnectSecureNetwork extends StatelessWidget {
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
           builder: (context, state) {
             return Scaffold(
-              appBar: MechanixNavigationBar(
-              title: "Join ${utf8.decode(accessPoint.ssid)}",
-              actionWidgets:  [
-                IconButton(
-                  icon: Image.asset(Images.submit, width: 20, height: 20),
-                  onPressed: state.password.isNotEmpty && state.password.length >= 8
-                      ? () {
-                          context
-                              .read<ConnectNetworkBloc>()
-                              .add(ConnectToNetwork(accessPoint));
-                        }
-                      : null,
-                ),
-              ]
-              ),
+              appBar: PreferredSize(
+                  preferredSize: const Size.fromHeight(52),
+                  child: MechanixNavigationBar(
+                      title: "Join ${utf8.decode(accessPoint.ssid)}",
+                      actionWidgets: [
+                        IconButton(
+                          icon:
+                              Image.asset(Images.submit, width: 20, height: 20),
+                          onPressed: state.password.isNotEmpty &&
+                                  state.password.length >= 8
+                              ? () {
+                                  context
+                                      .read<ConnectNetworkBloc>()
+                                      .add(ConnectToNetwork(accessPoint));
+                                }
+                              : null,
+                        ),
+                      ]).padHorizontal(12)),
               body: ContainerWidget(
                 child: Form(
                   child: Column(
@@ -73,28 +75,32 @@ class ConnectSecureNetwork extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                            child: MechanixTextInput.password(
-                              label: 'Wireless Credentials',
-                              isFormField: true,
-                              hintText: 'Enter Password',
-                              onChanged: (value) {
-                                context
-                                    .read<ConnectNetworkBloc>()
-                                    .add(PasswordChanged(value));
-                              },
-                              onFieldSubmitted: (_) {
-                                if (state.password.isNotEmpty) {
+                            child: Padding(
+                              padding:
+                                  EdgeInsets.all(16.0), // Apply padding here
+                              child: MechanixTextInput.password(
+                                label: 'Wireless Credentials',
+                                isFormField: true,
+                                hintText: 'Enter Password',
+                                onChanged: (value) {
                                   context
                                       .read<ConnectNetworkBloc>()
-                                      .add(ConnectToNetwork(accessPoint));
-                                }
-                              },
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter a password';
-                                }
-                                return null;
-                              },
+                                      .add(PasswordChanged(value));
+                                },
+                                onFieldSubmitted: (_) {
+                                  if (state.password.isNotEmpty) {
+                                    context
+                                        .read<ConnectNetworkBloc>()
+                                        .add(ConnectToNetwork(accessPoint));
+                                  }
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter a password';
+                                  }
+                                  return null;
+                                },
+                              ),
                             ),
                           ),
                         ],

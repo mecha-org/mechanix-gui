@@ -25,14 +25,16 @@ class WirelessSettings extends StatefulWidget {
 }
 
 class _WirelessSettingsState extends State<WirelessSettings> {
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
         builder: (context, state) {
       return Scaffold(
-          appBar: MechanixNavigationBar(title: "Network"),
+          appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: MechanixNavigationBar(title: "Network").padHorizontal(12)),
           body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
@@ -57,7 +59,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                                 .add(ToggleWifi(val)),
                           ),
                         ),
-                        if (state.wifiOn  && state.connectedNetwork != null)
+                        if (state.wifiOn && state.connectedNetwork != null)
                           SimpleListItems(
                             onTap: () =>
                                 onInfoTap(state.connectedNetwork!, context),
@@ -87,18 +89,16 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   if (state.wifiOn && state.availableSavedNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
-                        title:
-                            'My Networks',
+                        title: 'My Networks',
                         sectionListItems: getWifiList(
                             context, state.availableSavedNetworks, false)),
-      
+
                   if (state.wifiOn &&
                       !state.availableOtherNetworksLoading &&
                       state.availableOtherNetworks.isEmpty)
                     MechanixSectionList(
                       physics: const BouncingScrollPhysics(),
-                      title:
-                          'Available Networks',
+                      title: 'Available Networks',
                       sectionListItems: [
                         SectionListItems(
                           title: '',
@@ -115,8 +115,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
-                        title:
-                            'Available Networks',
+                        title: 'Available Networks',
                         sectionListItems: getWifiList(
                             context, state.availableOtherNetworks, true)),
                   const WirelessAdvanceSettings()
