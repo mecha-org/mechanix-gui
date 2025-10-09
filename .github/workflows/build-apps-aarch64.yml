@@ -24,28 +24,55 @@ env:
   MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
 
 jobs:
+  # Detect which apps have changed
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      settings: ${{ steps.filter.outputs.settings }}
+      notes: ${{ steps.filter.outputs.notes }}
+      files: ${{ steps.filter.outputs.files }}
+      music: ${{ steps.filter.outputs.music }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            settings:
+              - 'apps/settings/**'
+            notes:
+              - 'apps/notes/**'
+            files:
+              - 'apps/files/**'
+            music:
+              - 'apps/music/**'
+
   build:
     name: ${{ matrix.name }}
+    needs: detect-changes
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: settings app
+          - name: mechanix-settings
             app: settings
             folder: settings
             binary: mechanix_settings
 
-          - name: notes app
+          - name: mechanix-notes
             app: notes
             folder: notes
             binary: mechanix_notes
 
-          - name: files app
+          - name: mechanix-files
             app: files
             folder: files
             binary: mechanix_files
 
-          - name: music app
+          - name: mechanix-music
             app: music
             folder: music
             binary: mechanix_music
@@ -71,23 +98,20 @@ jobs:
           sudo apt update
           sudo apt install nushell
 
-        # Add Comet repository
+      # Add Comet repository
       - name: Add Comet repository
         run: |
-          # Download and add the GPG key
           curl -fsSL https://pub-a2f44c787cec4290833312e57fd59522.r2.dev/comet.asc | \
             sudo gpg --dearmor -o /usr/share/keyrings/comet-deb.gpg
-
-          # Add the repository source
           echo "deb [signed-by=/usr/share/keyrings/comet-deb.gpg] http://pkg.mecha.so/debian pulp upload" | \
             sudo tee /etc/apt/sources.list.d/comet.list
-
-          # Update package list
           sudo apt update
 
       # Checkout repository
       - name: Setup | Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for git operations
 
       # Install Flutter eLinux
       - name: Install Flutter eLinux
@@ -98,7 +122,7 @@ jobs:
           fi
           echo "PATH=$PATH:/opt/flutter-elinux/bin" >> $GITHUB_ENV
 
-      # Build the app
+      # Build the app (ALWAYS)
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
         run: |
@@ -111,7 +135,7 @@ jobs:
           mkdir -p ./build/${{ matrix.binary }}
           cp -r "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/"* "./build/${{ matrix.binary }}/"
 
-      # Package Debian using Nushell script
+      # Package Debian using Nushell script (ALWAYS)
       - name: Package Debian ${{ matrix.name }}
         working-directory: apps
         run: |
@@ -137,30 +161,44 @@ jobs:
             --base-url "$PULP_API_URL" \
             --overwrite
 
-      # Publish .deb to Pulp
+      # Publish .deb to Pulp (ONLY IF CHANGED or MANUAL TRIGGER)
       - name: Publish to Pulp [${{ matrix.app }}]
+        if: |          
+          (matrix.app == 'settings' && needs.detect-changes.outputs.settings == 'true') ||
+          (matrix.app == 'notes' && needs.detect-changes.outputs.notes == 'true') ||
+          (matrix.app == 'files' && needs.detect-changes.outputs.files == 'true') ||
+          (matrix.app == 'music' && needs.detect-changes.outputs.music == 'true')
         run: |
           set -euo pipefail
 
-          # Find the .deb file for this app (simple pattern)
           DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" -type f | head -n1)
-          echo "[INFO] Uploading: $DEB_FILE"
+          
+          if [ -z "$DEB_FILE" ]; then
+            echo "[ERROR] No .deb file found for mechanix-${{ matrix.app }}"
+            exit 1
+          fi
+          
+          echo "[INFO] 📦 Publishing: $DEB_FILE"
+          
           pulp deb content upload \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --file="$DEB_FILE"
+          
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --signing-service=mecha-pkg-sign \
             | jq -r '.pulp_href')
+          
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-          echo "[INFO] ✅ Package ${{ matrix.binary }} published."
+          
+          echo "[INFO] ✅ Package ${{ matrix.app }} published successfully!"
 
-      # Upload full artifacts
+      # Upload full artifacts (ALWAYS)
       - name: Upload artifact ${{ matrix.name }}
         uses: actions/upload-artifact@v4
         with:
