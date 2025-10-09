@@ -11,7 +11,6 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_e
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
-import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -63,9 +62,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                                 .add(ToggleWifi(val)),
                           ),
                         ),
-                        if (state.wifiOn &&
-                            state.deviceState ==
-                                NetworkManagerDeviceState.activated)
+                        if (state.wifiOn  && state.connectedNetwork != null)
                           SimpleListItems(
                             onTap: () =>
                                 onInfoTap(state.connectedNetwork!, context),
@@ -92,22 +89,6 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                           )
                       ]),
 
-                  if (state.wifiOn &&
-                      !state.availableSavedNetworksLoading &&
-                      state.availableSavedNetworks.isEmpty)
-                    MechanixSectionList(
-                      physics: const BouncingScrollPhysics(),
-                      title:
-                          'My Networks',
-                      sectionListItems: [
-                        SectionListItems(
-                          title: '',
-                          backgroundColor: Colors.transparent,
-                          defaultTrailingIcon: false,
-                          leading: CustomLoader(),
-                        ),
-                      ],
-                    ),
                   if (state.wifiOn && state.availableSavedNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),

@@ -65,13 +65,7 @@ class UpdateAvailableNetworksEvent extends WirelessSettingsEvent {
   List<Object> get props => [accessPoints];
 }
 
-class UpdateSavedNetworksEvent extends WirelessSettingsEvent {
-  final List<SavedNetworks> savedNetworks;
-  UpdateSavedNetworksEvent(this.savedNetworks);
-
-  @override
-  List<Object> get props => [savedNetworks];
-}
+class GetSavedNetworksEvent extends WirelessSettingsEvent {}
 
 class UpdateConnectedNetworkEvent extends WirelessSettingsEvent {
   final AccessPoints accessPoint;

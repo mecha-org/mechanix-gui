@@ -25,26 +25,32 @@ class NetworkSettings extends StatefulWidget {
 }
 
 class _NetworkSettingsState extends State<NetworkSettings> {
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<WirelessSettingsBloc>().add(GetSavedNetworksEvent());
+  }
   void _backNavigation(BuildContext context) {
     Navigator.pop(context);
   }
 
-  void onItemTap(SavedNetworks network) {
-    final item = network.accessPoint;
-    if (item != null) {
-      context.read<WirelessSettingsBloc>().add(SelectNetworkPoint(item));
-    }
-    Navigator.pushNamed(
-      context,
-      AppRoutes.wirelessNetworkDetails,
-    );
+  void onItemTap(SavedWirelessNetwork network) {
+    // final item = network.accessPoint;
+    // if (item != null) {
+    //   context.read<WirelessSettingsBloc>().add(SelectNetworkPoint(item));
+    // }
+    // Navigator.pushNamed(
+    //   context,
+    //   AppRoutes.wirelessNetworkDetails,
+    // );
   }
 
   List<SimpleListItems> getWireless(
-      BuildContext context, List<SavedNetworks> savedNetworks) {
+      BuildContext context, List<SavedWirelessNetwork> savedNetworks) {
     final list = savedNetworks
         .map((d) => SimpleListItems(
-            title: d.ssid,
+            title: d.ssid ?? '',
             trailing: IconButton(
               onPressed: () => onItemTap(d),
               icon: SizedBox(
