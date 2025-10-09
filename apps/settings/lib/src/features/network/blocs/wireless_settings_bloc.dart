@@ -31,7 +31,7 @@ class WirelessSettingsBloc
           availableSavedNetworksLoading: false,
         )) {
     on<InitializeWifi>(_onInitializeWifi);
-    on<ToggleWifi>(_onToggleWifi); 
+    on<ToggleWifi>(_onToggleWifi);
     on<WifiStatusChanged>(_onWifiStatusChanged); // connecting, connected, etc
     on<SelectNetwork>(_setSelectedNetwork);
     on<SelectNetworkPoint>(_setSelectedNetworkPoint);
@@ -40,7 +40,7 @@ class WirelessSettingsBloc
     on<DeleteSavedNetwork>(_deleteSavedNetwork);
 
     on<UpdateAvailableNetworksEvent>(_updateAvailableNetworkList);
-    on<GetSavedNetworksEvent>(_getSavedNetworkList);   
+    on<GetSavedNetworksEvent>(_getSavedNetworkList);
 
     on<UpdateConnectedNetworkEvent>(_updateConnectedNetwork);
     on<DeviceConnectionStateEvent>(_updateDeviceConnectionStateUpdate);
@@ -49,7 +49,6 @@ class WirelessSettingsBloc
 
     // Handle async stream initialization
     _initializeWifiStream(); // for a network connection state
-    _initializeAccessPointStream(); // all networks
   }
 
   Future<void> _initializeWifiStream() async {
@@ -76,6 +75,7 @@ class WirelessSettingsBloc
       logger.e('Error initializing wifi stream $e, $stackTrace');
     }
   }
+
   Future<void> _initializeAccessPointStream() async {
     try {
       final stream = await wifiRepository.streamWirelessDeviceStream();
@@ -98,8 +98,6 @@ class WirelessSettingsBloc
           if (availAccessPoints.active != null) {
             add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
           }
-
-          // If the stream emits a new access point, reload networks
         }
       });
     } catch (e, stackTrace) {
@@ -150,7 +148,7 @@ class WirelessSettingsBloc
     try {
       wifiRepository.setWifiEnabled(event.enabled);
       if (event.enabled) {
-          add(InitializeWifi());
+        add(InitializeWifi());
       }
     } catch (e) {
       logger.e('Error toggling WiFi: $e');
@@ -171,12 +169,13 @@ class WirelessSettingsBloc
       InitializeWifi event, Emitter<WirelessSettingsState> emit) async {
     final enabled = await wifiRepository.isWirelessEnabled();
     emit(state.copyWith(wifiOn: enabled));
+
     if (enabled) {
       _initializeAccessPointStream(); // all networks
       _initWifiStateAndReasonStream();
-    }
-    else {
+    } else {
       // On power off, cancel relevant the streams
+
       await _accessPointSubscription?.cancel();
       _accessPointSubscription = null;
 
@@ -231,10 +230,13 @@ class WirelessSettingsBloc
           .map((n) => utf8.decode(n.nmAccessPoint.ssid))
           .toSet();
 
-      final newNetworks = event.accessPoints.where((network) {
-        final ssid = utf8.decode(network.nmAccessPoint.ssid);
-        return ssid.isNotEmpty && !existingSSIDs.contains(ssid);
-      }).toList();
+      final newNetworks = event.accessPoints
+          .where((network) {
+            final ssid = utf8.decode(network.nmAccessPoint.ssid);
+            return ssid.isNotEmpty && !existingSSIDs.contains(ssid);
+          })
+          .where((network) => !network.isSaved) // Only include unsaved networks
+          .toList();
 
       final newScanSSIDs = event.accessPoints
           .map((network) => utf8.decode(network.nmAccessPoint.ssid))
@@ -257,11 +259,11 @@ class WirelessSettingsBloc
 
         updatedNetworks.removeWhere((network) {
           final networkSsid = utf8.decode(network.nmAccessPoint.ssid);
-          return unavailableSSIDs.contains(networkSsid) && !network.isSaved;
+          return (unavailableSSIDs.contains(networkSsid));
         });
 
         var availableSavedNetworks =
-            event.accessPoints.where((ap) => ap.isSaved).toList();
+            event.accessPoints.where((ap) => (ap.isSaved)).toList();
 
         emit(state.copyWith(
             availableOtherNetworks: updatedNetworks,
@@ -277,16 +279,16 @@ class WirelessSettingsBloc
     }
   }
 
-  Future<void>  _getSavedNetworkList(GetSavedNetworksEvent event,
-      Emitter<WirelessSettingsState> emit) async {
+  Future<void> _getSavedNetworkList(
+      GetSavedNetworksEvent event, Emitter<WirelessSettingsState> emit) async {
     try {
-      final saved =
-          await wifiRepository.getSavedNetworks();
+      final saved = await wifiRepository.getSavedNetworks();
       emit(state.copyWith(allSavedNetworks: saved));
     } catch (e) {
       logger.e('error in get saved networks $e');
     }
   }
+
   Future<void> _updateConnectedNetwork(UpdateConnectedNetworkEvent event,
       Emitter<WirelessSettingsState> emit) async {
     try {

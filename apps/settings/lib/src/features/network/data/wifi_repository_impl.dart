@@ -14,41 +14,49 @@ import '../models/saved_networks.dart';
 import 'wifi_repository.dart';
 
 class WifiRepositoryImpl implements WifiRepository {
-  final NetworkManagerClient _client = NetworkManagerClient();
   bool _connected = false;
   final logger = Logger();
+  static NetworkManagerClient? _client;
 
-  WifiRepositoryImpl() {
-    _init();
-  }
+  // WifiRepositoryImpl() {
+  //   _init();
+  // }
 
-  Future<void> _init() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
+  // Future<void> _init() async {
+  //   if (!_connected) {
+  //     await _client.connect();
+  //     _connected = true;
+  //   }
+  // }
+
+  static Future<NetworkManagerClient> getClient() async {
+    if (_client == null) {
+      _client = NetworkManagerClient();
+      await _client!.connect();
     }
+    return _client!;
   }
 
-  Future<void> _ensureConnected() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
-    }
-  }
+  // Future<void> _ensureConnected() async {
+  //   if (!_connected) {
+  //     await _client.connect();
+  //     _connected = true;
+  //   }
+  // }
 
   @override
   Future<bool> isWirelessEnabled() async {
     log('Fetching WiFi status');
-    var client = NetworkManagerClient();
-    await client.connect();
-    var result = _client.wirelessEnabled;
+    final client = await getClient();
+    var result = client.wirelessEnabled;
     return result;
   }
 
   @override
   Future<bool> setWifiEnabled(bool enable) async {
-    await _ensureConnected();
-    await _client.setWirelessEnabled(enable);
+    // await _ensureConnected();
+    final client = await getClient();
+    await client.setWirelessEnabled(enable);
     return enable;
   }
 
@@ -64,7 +72,7 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedNetworks>? savedNetworks) async {
-    logger.i('Fetching available access points');
+    // logger.i('Fetching available access points');
     var client = NetworkManagerClient();
     await client.connect();
     var devices = client.devices;
@@ -97,6 +105,7 @@ class WifiRepositoryImpl implements WifiRepository {
         seenSsids.add(ssid); // mark this SSID as seen
         var isActive = listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid);
         var isSaved = savedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
+
         if (isActive) {
           connectedAccessPoint = AccessPoints(
             isActive: isActive,
@@ -300,19 +309,11 @@ class WifiRepositoryImpl implements WifiRepository {
       (d) => d.deviceType == NetworkManagerDeviceType.wifi,
     );
 
-    // // var stateAndReason = wifiDevice.stateReason;
-    // wifiDevice.propertiesChanged.listen((event) {
-    //   if (event.contains('StateReason')) {
-    //     logger.i('DEVICE STATE CHANGE: ${wifiDevice.stateReason.state} ||  ${wifiDevice.stateReason.reason}}');
-
-    //   }
-    // });
-
     return StreamAndDevice(wifiDevice.propertiesChanged, wifiDevice);
   }
 
   Future<void> connectedNetwork() async {
-    var client = NetworkManagerClient();
+    final client = await getClient();
     await client.connect();
 
     var primaryConnection = client.primaryConnection;
@@ -394,11 +395,13 @@ class WifiRepositoryImpl implements WifiRepository {
             connectionSettings["802-11-wireless"]?["seen-bssids"]?.toString() ??
                 '';
 
-        final String passphrase =
-            connectionSettings["802-11-wireless-security"]?["psk"]?.toString() ??
-                '';
+        final String passphrase = connectionSettings["802-11-wireless-security"]
+                    ?["psk"]
+                ?.toString() ??
+            '';
 
-        logger.i('connectionId: $connectionId | Security: $securityFlags | Passphrase: $passphrase');
+        logger.i(
+            'connectionId: $connectionId | Security: $securityFlags | Passphrase: $passphrase');
 
         if (!seenBssids.contains(bssid)) {
           seenBssids.add(bssid); // mark this BSSID as seen
@@ -485,13 +488,18 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<Stream<List<String>>> streamWirelessDeviceStream() async {
-    var client = NetworkManagerClient();
-    await client.connect();
-    final NetworkManagerDevice device = client.devices.firstWhere(
-        (d) => d.deviceType == NetworkManagerDeviceType.wifi,
-        orElse: () => throw Exception('No WiFi device found'));
+    try {
+      var client = NetworkManagerClient();
+      await client.connect();
+      final NetworkManagerDevice device = client.devices.firstWhere(
+          (d) => d.deviceType == NetworkManagerDeviceType.wifi,
+          orElse: () => throw Exception('No WiFi device found'));
 
-    return device.wireless!.propertiesChanged;
+      return device.wireless!.propertiesChanged;
+    } catch (e) {
+      logger.e('Error in streamWirelessDeviceStream: $e');
+      return Stream<List<String>>.empty();
+    }
   }
 
   @override
@@ -516,7 +524,8 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<void> close() async {
-    await _client.close();
+    final client = await getClient();
+    await client.close();
   }
 }
 
