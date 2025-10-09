@@ -14,41 +14,49 @@ import '../models/saved_networks.dart';
 import 'wifi_repository.dart';
 
 class WifiRepositoryImpl implements WifiRepository {
-  final NetworkManagerClient _client = NetworkManagerClient();
   bool _connected = false;
   final logger = Logger();
+  static NetworkManagerClient? _client;
 
-  WifiRepositoryImpl() {
-    _init();
-  }
+  // WifiRepositoryImpl() {
+  //   _init();
+  // }
 
-  Future<void> _init() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
+  // Future<void> _init() async {
+  //   if (!_connected) {
+  //     await _client.connect();
+  //     _connected = true;
+  //   }
+  // }
+
+  static Future<NetworkManagerClient> getClient() async {
+    if (_client == null) {
+      _client = NetworkManagerClient();
+      await _client!.connect();
     }
+    return _client!;
   }
 
-  Future<void> _ensureConnected() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
-    }
-  }
+  // Future<void> _ensureConnected() async {
+  //   if (!_connected) {
+  //     await _client.connect();
+  //     _connected = true;
+  //   }
+  // }
 
   @override
   Future<bool> isWirelessEnabled() async {
     log('Fetching WiFi status');
-    var client = NetworkManagerClient();
-    await client.connect();
-    var result = _client.wirelessEnabled;
+    final client = await getClient();
+    var result = client.wirelessEnabled;
     return result;
   }
 
   @override
   Future<bool> setWifiEnabled(bool enable) async {
-    await _ensureConnected();
-    await _client.setWirelessEnabled(enable);
+    // await _ensureConnected();
+    final client = await getClient();
+    await client.setWirelessEnabled(enable);
     return enable;
   }
 
@@ -64,6 +72,7 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedNetworks>? savedNetworks) async {
+    // logger.i('Fetching available access points');
     // logger.i('Fetching available access points');
     var client = NetworkManagerClient();
     await client.connect();
@@ -305,7 +314,7 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   Future<void> connectedNetwork() async {
-    var client = NetworkManagerClient();
+    final client = await getClient();
     await client.connect();
 
     var primaryConnection = client.primaryConnection;
@@ -511,7 +520,8 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<void> close() async {
-    await _client.close();
+    final client = await getClient();
+    await client.close();
   }
 }
 
