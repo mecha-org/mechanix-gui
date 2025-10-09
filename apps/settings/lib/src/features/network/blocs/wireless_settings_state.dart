@@ -10,17 +10,17 @@ class WirelessSettingsState extends Equatable {
   
   final List<AccessPoints> availableOtherNetworks;
   final List<AccessPoints> availableSavedNetworks;
-  final List<SavedNetworks> allSavedNetworks;
+  final List<SavedWirelessNetwork> allSavedNetworks;
 
   final bool availableOtherNetworksLoading;
   final bool availableSavedNetworksLoading;
 
-  final AccessPoints? selectedAccessPoint;    // connected network ? 
+  final AccessPoints? selectedAccessPoint;   
   final NetworkManagerAccessPoint? selectedNMAccessPoint;
 
   final String? wifiState;
   final String? error;
-  final AccessPoints? connectedNetwork;     // connected network ? 
+  final AccessPoints? connectedNetwork;    
   final NetworkManagerDeviceState? deviceState;
 
   const WirelessSettingsState({
@@ -42,7 +42,7 @@ class WirelessSettingsState extends Equatable {
       {bool? wifiOn,
       List<AccessPoints>? availableOtherNetworks,
       List<AccessPoints>? availableSavedNetworks,
-      List<SavedNetworks>? allSavedNetworks,
+      List<SavedWirelessNetwork>? allSavedNetworks,
       bool? availableOtherNetworksLoading,
       bool? availableSavedNetworksLoading,
 

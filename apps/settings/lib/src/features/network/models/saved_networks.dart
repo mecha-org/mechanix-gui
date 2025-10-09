@@ -12,3 +12,12 @@ class SavedNetworks {
       this.accessPoint});
 }
 
+class SavedWirelessNetwork {
+  final String? ssid;            
+  final String? security;        
+
+  SavedWirelessNetwork({
+    this.ssid,
+    this.security,
+  });
+}

@@ -351,7 +351,6 @@ class WifiRepositoryImpl implements WifiRepository {
           seenBssids.add(bssid); // mark this BSSID as seen
           AccessPoints? accessPoint =
               availableAccessPoints?.firstWhereOrNull((ap) {
-
             return utf8.decode(ap.nmAccessPoint.ssid) == connectionId;
           });
 
@@ -362,6 +361,51 @@ class WifiRepositoryImpl implements WifiRepository {
             accessPoint: accessPoint?.nmAccessPoint,
           );
 
+          savedNetworks.add(savedNetwork);
+        }
+      }
+    }
+    return savedNetworks;
+  }
+
+  @override
+  Future<List<SavedWirelessNetwork>> getSavedNetworks() async {
+    logger.i('Fetching saved networks');
+    var client = NetworkManagerClient();
+    await client.connect();
+    final connections = client.settings.connections;
+    final seenBssids = <String>{}; // to track unique SSIDs
+
+    final List<SavedWirelessNetwork> savedNetworks = [];
+
+    for (var cn in connections) {
+      if (!cn.unsaved) {
+        var connectionSettings = await cn.getSettings();
+        final connectionId =
+            connectionSettings["connection"]?["id"]?.toNative();
+
+        final securityFlagValue = connectionSettings["802-11-wireless-security"]
+                ?["key-mgmt"]
+            ?.toString();
+        final securityFlags =
+            (securityFlagValue == "wpa-psk") ? "WPA-PSK" : "Open";
+
+        final String bssid =
+            connectionSettings["802-11-wireless"]?["seen-bssids"]?.toString() ??
+                '';
+
+        final String passphrase =
+            connectionSettings["802-11-wireless-security"]?["psk"]?.toString() ??
+                '';
+
+        logger.i('connectionId: $connectionId | Security: $securityFlags | Passphrase: $passphrase');
+
+        if (!seenBssids.contains(bssid)) {
+          seenBssids.add(bssid); // mark this BSSID as seen
+          SavedWirelessNetwork savedNetwork = SavedWirelessNetwork(
+            ssid: connectionId,
+            security: securityFlags,
+          );
           savedNetworks.add(savedNetwork);
         }
       }
@@ -440,7 +484,7 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   @override
-  Future<Stream<List<String>>> streamAccessPointStream() async {
+  Future<Stream<List<String>>> streamWirelessDeviceStream() async {
     var client = NetworkManagerClient();
     await client.connect();
     final NetworkManagerDevice device = client.devices.firstWhere(
