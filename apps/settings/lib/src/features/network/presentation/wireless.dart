@@ -25,11 +25,6 @@ class WirelessSettings extends StatefulWidget {
 }
 
 class _WirelessSettingsState extends State<WirelessSettings> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<WirelessSettingsBloc>().add(InitializeWifi());
-  }
 
   @override
   Widget build(BuildContext context) {

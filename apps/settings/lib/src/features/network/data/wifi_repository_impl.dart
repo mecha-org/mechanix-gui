@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -16,67 +15,54 @@ import 'wifi_repository.dart';
 class WifiRepositoryImpl implements WifiRepository {
   bool _connected = false;
   final logger = Logger();
-  static NetworkManagerClient? _client;
+  late NetworkManagerClient _client;
 
-  // WifiRepositoryImpl() {
-  //   _init();
-  // }
-
-  // Future<void> _init() async {
-  //   if (!_connected) {
-  //     await _client.connect();
-  //     _connected = true;
-  //   }
-  // }
-
-  static Future<NetworkManagerClient> getClient() async {
-    if (_client == null) {
-      _client = NetworkManagerClient();
-      await _client!.connect();
-    }
-    return _client!;
+  WifiRepositoryImpl() {
+    _client = NetworkManagerClient();
+    _init();
   }
 
-  // Future<void> _ensureConnected() async {
-  //   if (!_connected) {
-  //     await _client.connect();
-  //     _connected = true;
-  //   }
-  // }
+  Future<void> _init() async {
+    try {
+      await _client.connect();
+      _connected = true;
+      logger.i('NetworkManagerClient connected ${_client.wirelessEnabled}');
+    } catch (e) {
+      logger.e('Failed to connect to NetworkManagerClient: $e');
+    }
+  }
 
   @override
   Future<bool> isWirelessEnabled() async {
-    log('Fetching WiFi status');
-    final client = await getClient();
-    var result = client.wirelessEnabled;
-    return result;
+    if (_connected) {
+      logger.i('Wireless Enabled --- check client: ${_client.wirelessEnabled}');
+      return _client.wirelessEnabled;
+    } else {
+      logger.i(
+          'FIRST TIME CLIENT Wireless Enabled --- check client: ${_client.wirelessEnabled}');
+      var client = NetworkManagerClient();
+      await client.connect();
+      _connected = true;
+      return client.wirelessEnabled;
+    }
   }
 
   @override
   Future<bool> setWifiEnabled(bool enable) async {
-    // await _ensureConnected();
-    final client = await getClient();
-    await client.setWirelessEnabled(enable);
+    await _client.setWirelessEnabled(enable);
     return enable;
   }
 
   @override
   Future<Stream<List<String>>> streamWifiEvents() async {
-    logger.i('Subscribing to WiFi events');
-    var client = NetworkManagerClient();
-    await client.connect();
-    logger.i('Subscribing to WiFi events prop ${client.propertiesChanged}');
-    return client.propertiesChanged;
+    logger.i('Subscribing to WiFi events prop ${_client.propertiesChanged}');
+    return _client.propertiesChanged;
   }
 
   @override
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedNetworks>? savedNetworks) async {
-    // logger.i('Fetching available access points');
-    // logger.i('Fetching available access points');
-    var client = NetworkManagerClient();
-    await client.connect();
-    var devices = client.devices;
+    var devices = _client.devices;
     if (devices.isEmpty) {
       logger.w('No devices found');
       return (active: null, available: <AccessPoints>[]);
@@ -161,11 +147,10 @@ class WifiRepositoryImpl implements WifiRepository {
 
     // Create a new connection
     logger.i("init connect to unknown network");
-    var client = NetworkManagerClient();
-    await client.connect();
+
     NetworkManagerDevice device;
     try {
-      device = client.devices
+      device = _client.devices
           .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
     } catch (e) {
       logger.e('No WiFi devices found');
@@ -180,7 +165,7 @@ class WifiRepositoryImpl implements WifiRepository {
       }
       logger.i('password: $password, psk: $psk');
 
-      await client.addAndActivateConnection(
+      await _client.addAndActivateConnection(
         device: device,
         connection: connection,
       );
@@ -194,11 +179,9 @@ class WifiRepositoryImpl implements WifiRepository {
   Future<void> connectToNetwork(
       NetworkManagerAccessPoint accessPoint, String password) async {
     logger.i("init connect to network");
-    var client = NetworkManagerClient();
-    await client.connect();
     NetworkManagerDevice device;
     try {
-      device = client.devices
+      device = _client.devices
           .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
     } catch (e) {
       logger.e('No WiFi devices found');
@@ -213,7 +196,7 @@ class WifiRepositoryImpl implements WifiRepository {
           psk ??= stdin.readLineSync(encoding: utf8);
         }
         logger.i('IF password: $password, psk: $psk');
-        await client.addAndActivateConnection(
+        await _client.addAndActivateConnection(
             device: device,
             accessPoint: accessPoint,
             connection: {
@@ -228,7 +211,7 @@ class WifiRepositoryImpl implements WifiRepository {
           Future.error('IF Failed to connect to network: $e');
         });
       } else {
-        await client
+        await _client
             .addAndActivateConnection(device: device, accessPoint: accessPoint)
             .then((res) {
           logger.i('Connected to network: $res');
@@ -244,11 +227,9 @@ class WifiRepositoryImpl implements WifiRepository {
 
   // disconnect network , keep profile settings
   Future<void> disconnectNetwork(String ssid) async {
-    var client = NetworkManagerClient();
-    await client.connect();
     NetworkManagerDevice device;
     try {
-      device = client.devices
+      device = _client.devices
           .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
     } catch (e) {
       logger.e('No WiFi devices found');
@@ -257,7 +238,7 @@ class WifiRepositoryImpl implements WifiRepository {
 
     var connection = device.activeConnection;
     try {
-      client.deactivateConnection(connection!);
+      _client.deactivateConnection(connection!);
       logger.i('Connection $ssid deactivated successfully');
     } catch (e) {
       logger.e('wifi deactivation failed: $e');
@@ -268,11 +249,9 @@ class WifiRepositoryImpl implements WifiRepository {
   // delete network - remove profile settings
   @override
   Future<void> forgetNetwork(String ssid) async {
-    var client = NetworkManagerClient();
-    await client.connect();
 
     try {
-      var connections = client.settings.connections;
+      var connections = _client.settings.connections;
       for (var connection in connections) {
         var settings = await connection.getSettings();
         var wifiSettings = settings['802-11-wireless'];
@@ -296,17 +275,13 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<NetworkManagerState> getWifiState() async {
-    var client = NetworkManagerClient();
-    await client.connect();
-    return client.state;
+    return _client.state;
   }
 
   @override
   Future<StreamAndDevice> getWifiStateAndReason() async {
-    var client = NetworkManagerClient();
-    await client.connect();
 
-    var wifiDevice = client.devices.firstWhere(
+    var wifiDevice = _client.devices.firstWhere(
       (d) => d.deviceType == NetworkManagerDeviceType.wifi,
     );
 
@@ -314,10 +289,8 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   Future<void> connectedNetwork() async {
-    final client = await getClient();
-    await client.connect();
 
-    var primaryConnection = client.primaryConnection;
+    var primaryConnection = _client.primaryConnection;
     if (primaryConnection != null && primaryConnection.ip4Config != null) {
       var ip4Config = primaryConnection.ip4Config!;
 
@@ -327,17 +300,17 @@ class WifiRepositoryImpl implements WifiRepository {
       print('Gateway: ${ip4Config.gateway}');
     }
 
-    await client.close();
+    await _client.close();
   }
 
   @override
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints>? availableAccessPoints) async {
     logger.i('Loading saved networks');
-    var client = NetworkManagerClient();
-    await client.connect();
+
+
     final List<SavedNetworks> savedNetworks = [];
-    final connections = client.settings.connections;
+    final connections = _client.settings.connections;
     final seenBssids = <String>{}; // to track unique SSIDs
     for (var cn in connections) {
       if (!cn.unsaved) {
@@ -373,9 +346,8 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<List<SavedWirelessNetwork>> getSavedNetworks() async {
     logger.i('Fetching saved networks');
-    var client = NetworkManagerClient();
-    await client.connect();
-    final connections = client.settings.connections;
+
+    final connections = _client.settings.connections;
     final seenBssids = <String>{}; // to track unique SSIDs
 
     final List<SavedWirelessNetwork> savedNetworks = [];
@@ -420,9 +392,8 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<void> deleteSavedNetwork(String ssid) async {
     logger.i('Deleting saved network: $ssid');
-    var client = NetworkManagerClient();
-    await client.connect();
-    final connections = client.settings.connections;
+
+    final connections = _client.settings.connections;
 
     for (var cn in connections) {
       if (!cn.unsaved) {
@@ -453,19 +424,17 @@ class WifiRepositoryImpl implements WifiRepository {
       NetworkManagerAccessPoint accessPoint) async {
     var accessPointSsid = utf8.decode(accessPoint.ssid);
     logger.i("Connecting to saved network: $accessPointSsid");
-    var client = NetworkManagerClient();
-    await client.connect();
 
     // Find the WiFi device
     NetworkManagerDevice device;
     try {
-      device = client.devices
+      device = _client.devices
           .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
     } catch (e) {
       logger.e('No WiFi devices found');
       return;
     }
-    var connection = client.settings.connections;
+    var connection = _client.settings.connections;
     for (var cn in connection) {
       if (!cn.unsaved) {
         var connectionSettings = await cn.getSettings();
@@ -474,7 +443,7 @@ class WifiRepositoryImpl implements WifiRepository {
         if (connectionId == accessPointSsid) {
           try {
             // Activate the saved connection
-            await client.activateConnection(
+            await _client.activateConnection(
                 device: device, connection: cn, accessPoint: accessPoint);
             logger.i('Connection $accessPointSsid activated successfully');
           } catch (e) {
@@ -489,23 +458,19 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<Stream<List<String>>> streamWirelessDeviceStream() async {
-    var client = NetworkManagerClient();
-      await client.connect();
-      final NetworkManagerDevice device = client.devices.firstWhere(
-          (d) => d.deviceType == NetworkManagerDeviceType.wifi,
-          orElse: () => throw Exception('No WiFi device found'));
+    final NetworkManagerDevice device = _client.devices.firstWhere(
+        (d) => d.deviceType == NetworkManagerDeviceType.wifi,
+        orElse: () => throw Exception('No WiFi device found'));
 
-      return device.wireless!.propertiesChanged;
+    return device.wireless!.propertiesChanged;
   }
 
   @override
   Future<NetworkManagerDeviceState?> getNetworkState() async {
-    var client = NetworkManagerClient();
-    await client.connect();
 
-    logger.i('getActivateNetworks state - ${client.activeConnections.length}');
+    logger.i('getActivateNetworks state - ${_client.activeConnections.length}');
 
-    final wifiDevices = client.devices.where(
+    final wifiDevices = _client.devices.where(
       (d) => d.deviceType == NetworkManagerDeviceType.wifi,
     );
     final device = wifiDevices.isNotEmpty ? wifiDevices.first : null;
@@ -520,11 +485,11 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<void> close() async {
-    final client = await getClient();
-    await client.close();
+    await _client.close();
+    _connected = false;
   }
 }
-
+  
 Future<NetworkManagerSettingsConnection?> getAccessPointConnectionSettings(
     NetworkManagerDevice device, NetworkManagerAccessPoint accessPoint) async {
   var ssid = utf8.decode(accessPoint.ssid);

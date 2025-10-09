@@ -56,7 +56,7 @@ class WirelessSettingsBloc
       final stream = await wifiRepository.streamWifiEvents();
       _wifiEventsSubscription = stream.listen((prop) async {
         if (prop.contains("WirelessEnabled")) {
-        logger.i("Network Property Update: $prop");
+        logger.i("WIRELESS PROPERTY CHANGED: $prop");
           add(InitializeWifi());
         }
         if (prop.contains("State")) {
@@ -167,10 +167,12 @@ class WirelessSettingsBloc
 
   Future<void> _onInitializeWifi(
       InitializeWifi event, Emitter<WirelessSettingsState> emit) async {
+        logger.i("Initializing WiFi...");
     final enabled = await wifiRepository.isWirelessEnabled();
     emit(state.copyWith(wifiOn: enabled));
 
     if (enabled) {
+      logger.i("WiFi is enabled, initializing streams...");
       _initializeAccessPointStream(); // all networks
       _initWifiStateAndReasonStream();
     } else {
