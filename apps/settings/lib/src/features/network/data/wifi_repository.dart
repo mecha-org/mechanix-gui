@@ -9,11 +9,12 @@ abstract class WifiRepository {
   Future<StreamAndDevice> getWifiStateAndReason();
   Future<bool> setWifiEnabled(bool enable);
   Future<Stream<List<String>>> streamWifiEvents();
-  Future<Stream<List<String>>> streamAccessPointStream();
+  Future<Stream<List<String>>> streamWirelessDeviceStream();
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedNetworks>? savedNetworks);
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints> availableAccessPoints);
+  Future<List<SavedWirelessNetwork>> getSavedNetworks();
   Future<void> connectToNetwork(
       NetworkManagerAccessPoint accessPoint, String password);
   Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);

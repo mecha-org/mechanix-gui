@@ -25,26 +25,31 @@ class AddNetwork extends StatelessWidget {
     }
 
     void onAddButtonPressed(BuildContext context, ConnectNetworkState state) {
-      context.read<ConnectNetworkBloc>().add(
-            ConnectToUnknownNetwork(
-              state.username,
-              state.password,
-            ),
-          );
+      if (formKey.currentState!.validate()) {
+        context.read<ConnectNetworkBloc>().add(
+              PasswordChanged(passwordController.text),
+            );
+        context.read<ConnectNetworkBloc>().add(
+              ConnectToUnknownNetwork(
+                nameController.text,
+                passwordController.text,
+              ),
+            );
 
-      if (state.error != '') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(
-            'Authentication failed!',
-            style: TextStyle(color: Colors.red),
-          )),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('connecting to network...')),
-        );
-        backNavigation(context);
+        if (state.error != '') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+              'Authentication failed!',
+              style: TextStyle(color: Colors.red),
+            )),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('connecting to network...')),
+          );
+          backNavigation(context);
+        }
       }
     }
 

@@ -7,21 +7,29 @@ import 'package:nm/nm.dart';
 
 class WirelessSettingsState extends Equatable {
   final bool wifiOn;
-  final List<AccessPoints> networks;
-  final List<SavedNetworks> savedNetworks;
-  final AccessPoints? selectedAccessPoint;
+  
+  final List<AccessPoints> availableOtherNetworks;
+  final List<AccessPoints> availableSavedNetworks;
+  final List<SavedWirelessNetwork> allSavedNetworks;
+
+  final bool availableOtherNetworksLoading;
+  final bool availableSavedNetworksLoading;
+
+  final AccessPoints? selectedAccessPoint;   
   final NetworkManagerAccessPoint? selectedNMAccessPoint;
-  final bool loading;
+
   final String? wifiState;
   final String? error;
-  final AccessPoints? connectedNetwork;
+  final AccessPoints? connectedNetwork;    
   final NetworkManagerDeviceState? deviceState;
 
   const WirelessSettingsState({
     required this.wifiOn,
-    required this.networks,
-    required this.savedNetworks,
-    this.loading = false,
+    required this.availableOtherNetworks,
+    required this.availableSavedNetworks,
+    required this.allSavedNetworks,
+    this.availableOtherNetworksLoading = false,
+    this.availableSavedNetworksLoading = false,
     this.error,
     this.selectedAccessPoint,
     this.wifiState,
@@ -32,10 +40,13 @@ class WirelessSettingsState extends Equatable {
 
   WirelessSettingsState copyWith(
       {bool? wifiOn,
-      List<AccessPoints>? networks,
-      List<SavedNetworks>? savedNetworks,
+      List<AccessPoints>? availableOtherNetworks,
+      List<AccessPoints>? availableSavedNetworks,
+      List<SavedWirelessNetwork>? allSavedNetworks,
+      bool? availableOtherNetworksLoading,
+      bool? availableSavedNetworksLoading,
+
       AccessPoints? selectedAccessPoint,
-      bool? loading,
       String? wifiState,
       String? error,
       AccessPoints? connectedNetwork,
@@ -43,9 +54,11 @@ class WirelessSettingsState extends Equatable {
       NetworkManagerAccessPoint? selectedNMAccessPoint}) {
     return WirelessSettingsState(
       wifiOn: wifiOn ?? this.wifiOn,
-      networks: networks ?? this.networks,
-      savedNetworks: savedNetworks ?? this.savedNetworks,
-      loading: loading ?? this.loading,
+      availableOtherNetworks: availableOtherNetworks ?? this.availableOtherNetworks,
+      availableSavedNetworks: availableSavedNetworks ?? this.availableSavedNetworks,
+      allSavedNetworks: allSavedNetworks ?? this.allSavedNetworks,
+      availableOtherNetworksLoading: availableOtherNetworksLoading ?? this.availableOtherNetworksLoading,
+      availableSavedNetworksLoading: availableSavedNetworksLoading ?? this.availableSavedNetworksLoading,
       error: error,
       selectedAccessPoint: selectedAccessPoint ?? this.selectedAccessPoint,
       wifiState: wifiState ?? this.wifiState,
@@ -59,9 +72,11 @@ class WirelessSettingsState extends Equatable {
   @override
   List<Object?> get props => [
         wifiOn,
-        networks,
-        savedNetworks,
-        loading,
+        availableOtherNetworks,
+        availableSavedNetworks,
+        allSavedNetworks,
+        availableOtherNetworksLoading,
+        availableSavedNetworksLoading,
         selectedAccessPoint,
         error,
         wifiState,

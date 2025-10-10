@@ -62,6 +62,7 @@ class Images {
   static const String volumeOff = 'assets/images/volume_off.png';
   static const String searchIcon = 'assets/images/search_icon.png';
   static const String trash = 'assets/images/trash.png';
+  static const String submit = 'assets/images/tick_icon.png';
   static const String addRoundedSquare = 'assets/images/add_rounded_square.png';
   static const String unlinkIcon = 'assets/images/unlink_icon.png';
   static const String wifiHigh = 'assets/images/wifi_high.png';

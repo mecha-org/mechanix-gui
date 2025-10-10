@@ -2,6 +2,7 @@
 
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
 import 'package:nm/nm.dart';
 
 abstract class WirelessSettingsEvent extends Equatable {
@@ -9,9 +10,11 @@ abstract class WirelessSettingsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class InitializeWifi extends WirelessSettingsEvent {}
+
 class LoadNetworks extends WirelessSettingsEvent {}
 
-class LoadSavedNetworks extends WirelessSettingsEvent {}
+// class LoadSavedNetworks extends WirelessSettingsEvent {}
 
 class ForgetNetwork extends WirelessSettingsEvent {
   final String ssid;
@@ -37,8 +40,6 @@ class ToggleWifi extends WirelessSettingsEvent {
   List<Object?> get props => [enabled];
 }
 
-class InitializeWifi extends WirelessSettingsEvent {}
-
 class Error extends WirelessSettingsEvent {
   final String error;
   Error(this.error);
@@ -63,6 +64,8 @@ class UpdateAvailableNetworksEvent extends WirelessSettingsEvent {
   @override
   List<Object> get props => [accessPoints];
 }
+
+class GetSavedNetworksEvent extends WirelessSettingsEvent {}
 
 class UpdateConnectedNetworkEvent extends WirelessSettingsEvent {
   final AccessPoints accessPoint;
