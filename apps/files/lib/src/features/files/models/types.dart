@@ -1,3 +1,5 @@
+import 'dart:io' as io;
+
 import 'package:file/file.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 
@@ -81,3 +83,23 @@ const imageFileTypes = [
 
 const int page = 1;
 const int pageSize = 20;
+
+// FileSystemEntity extension
+extension FileSystemEntityIcon on io.FileSystemEntity {
+  String get iconPath {
+    final path = this.path;
+    final ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
+
+    if (ext == 'dir') return Images.unfoldDir;
+    if (ext == 'pdf') return Images.pdfFile;
+    if (ext == 'xlsx' || ext == 'xls') return Images.excelFile;
+    if (ext == 'txt') return Images.textFile;
+    if (imageFileTypes.contains(ext)) return Images.imageFile;
+    if (audioFileTypes.contains(ext)) return Images.audioFile;
+    if (videoFileTypes.contains(ext)) return Images.videoFile;
+    if (ext == 'csv') return Images.csvFile;
+    if (ext == 'zip' || ext == 'rar' || ext == '7z') return Images.archiveFile;
+
+    return Images.file;
+  }
+}

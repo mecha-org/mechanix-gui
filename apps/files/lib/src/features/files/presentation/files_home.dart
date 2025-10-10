@@ -135,7 +135,7 @@ class FileHomePageState extends State<FileHomePage> {
   }
 
   void onTap(BuildContext context, String path, String title) {
-    if (path == "/recent") {
+    if (path == recentDir) {
       final filesBloc = BlocProvider.of<FilesBloc>(context);
       filesBloc.add(LoadRecentFiles());
 

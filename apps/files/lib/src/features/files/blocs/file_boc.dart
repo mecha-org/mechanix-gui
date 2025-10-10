@@ -103,8 +103,11 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       CreateFolder event, Emitter<FilesState> emit) async {
     try {
       emit(state.copyWith(loading: true));
+      logger.i("Creating folder: ${event.folderName} in ${event.path}");
       await fileRepository.createFolder(event.path, event.folderName);
-      await _loadAndEmitSortedFiles(emit: emit, path: event.path);
+      emit(state.copyWith(loading: false));
+
+      // await _loadAndEmitSortedFiles(emit: emit, path: event.path);
     } catch (e) {
       emit(state.copyWith(error: e.toString(), loading: false));
     }

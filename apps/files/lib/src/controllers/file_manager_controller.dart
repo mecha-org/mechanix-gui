@@ -1,28 +1,35 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/widgets.dart';
+import 'package:logger/web.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 enum SortBy { name, date, type, size }
 
 class FileManagerController {
+  final logger = Logger();
   final ValueNotifier<String> _path = ValueNotifier<String>('');
-  final ValueNotifier<SortBy> _short = ValueNotifier<SortBy>(SortBy.name);
+  final ValueNotifier<SortBy> _sort = ValueNotifier<SortBy>(SortBy.name);
 
-  // Pagination state
   int _currentPage = 1;
-  final int _pageSize = 20;
-  bool _hasMorePages = true;
 
-  Stream<FileSystemEntity>? _entityStream;
-  StreamIterator<FileSystemEntity>? _iterator;
-  List<FileSystemEntity> _currentEntities = [];
   final ValueNotifier<List<FileSystemEntity>> paginatedEntities =
       ValueNotifier<List<FileSystemEntity>>([]);
 
-  _updatePath(String path) {
+  bool _isLoadingChunk = false;
+  bool _hasMorePages = true;
+
+  final List<FileSystemEntity> _currentEntities = [];
+
+  bool _sizeAscending = true; // new flag for size order
+  bool get isSizeAscending => _sizeAscending;
+
+  SortBy get sortedBy => _sort.value;
+
+  void _updatePath(String path) {
     _path.value = path;
-    titleNotifier.value = path.split('/').last;
   }
 
   /// ValueNotifier of the current directory's basename
@@ -42,16 +49,16 @@ class FileManagerController {
   ValueNotifier<String> get getPathNotifier => _path;
 
   /// Get ValueNotifier of SortedBy
-  ValueNotifier<SortBy> get getSortedByNotifier => _short;
+  ValueNotifier<SortBy> get getSortedByNotifier => _sort;
 
   /// The sorting type that is currently in use is returned.
-  SortBy get getSortedBy => _short.value;
+  SortBy get getSortedBy => _sort.value;
 
   /// [setSortedBy] is used to set the sorting type.
   ///
   /// `SortBy{ name, type, date, size }`
   /// ie: `controller.sortBy(SortBy.date)`
-  void sortBy(SortBy sortType) => _short.value = sortType;
+  // void sortBy(SortBy sortType) => _sort.value = sortType;
 
   /// Get current Directory.
   Directory get getCurrentDirectory => Directory(_path.value);
@@ -94,76 +101,146 @@ class FileManagerController {
       openDirectory(Directory(_path.value).parent);
   }
 
-  /// Open directory by providing [Directory].
-  // void openDirectory(FileSystemEntity entity) {
-  //   if (entity is Directory) {
-  //     _updatePath(entity.path);
-  //   } else {
-  //     throw ("FileSystemEntity entity is File. Please provide a Directory(folder) to be opened not File");
-  //   }
-  // }
+  /// Open a directory and initialize pagination
   Future<void> openDirectory(FileSystemEntity entity) async {
-    if (entity is Directory) {
-      _updatePath(entity.path);
-
-      _currentPage = 1;
-      _hasMorePages = true;
-      _currentEntities.clear();
-
-      _entityStream = entity.list(recursive: false);
-      _iterator = StreamIterator(_entityStream!);
-
-      await loadNextChunk(); // load first page
-    } else {
+    if (entity is! Directory) {
       throw ("Please provide a Directory (not a File)");
+    }
+
+    _updatePath(entity.path);
+
+    // Reset state
+    _currentEntities.clear();
+    _hasMorePages = true;
+    _isLoadingChunk = false;
+    _currentPage = 1;
+
+    // Load first chunk
+    await loadNextChunk();
+
+    // If directory is empty, still update the paginatedEntities to empty list
+    if (_currentEntities.isEmpty) {
+      paginatedEntities.value = [];
     }
   }
 
+  /// Load next page of files and emit via StreamController
   Future<void> loadNextChunk() async {
-    if (!_hasMorePages || _iterator == null) return;
+    if (_isLoadingChunk || !_hasMorePages) return;
 
-    final List<FileSystemEntity> chunk = [];
+    _isLoadingChunk = true;
 
-    for (int i = 0; i < _pageSize; i++) {
-      final hasNext = await _iterator!.moveNext();
-      if (!hasNext) {
+    try {
+      final Directory dir = Directory(_path.value);
+      final int start = (_currentPage - 1) * pageSize;
+
+      // Get next page of items
+      final List<FileSystemEntity> chunk = await dir
+          .list(recursive: false, followLinks: false)
+          .skip(start)
+          .take(pageSize)
+          .toList();
+      if (chunk.isEmpty) {
         _hasMorePages = false;
-        break;
+      } else {
+        // Optionally sort chunk
+        _sortEntities(chunk);
+        _currentEntities.addAll(chunk);
+        paginatedEntities.value = List<FileSystemEntity>.from(_currentEntities);
       }
-      chunk.add(_iterator!.current);
+    } catch (e, st) {
+      logger.e('Error loading chunk: $e\n$st');
+    } finally {
+      _isLoadingChunk = false;
+      _currentPage++;
+    }
+  }
+
+  void sortBy(SortBy sortBy, {bool? sizeAscending}) {
+    if (sortBy == SortBy.size) {
+      // Flip direction if tapping size again
+      if (sizeAscending == null && _sort.value == SortBy.size) {
+        _sizeAscending = !_sizeAscending;
+      } else if (sizeAscending != null) {
+        _sizeAscending = sizeAscending;
+      }
     }
 
-    _currentEntities.addAll(_sortEntities(chunk));
-    paginatedEntities.value = List<FileSystemEntity>.from(_currentEntities);
-    _currentPage++;
+    _sort.value = sortBy;
+    debugPrint('Sorting by: $sortBy, ascending: $_sizeAscending');
   }
 
   List<FileSystemEntity> _sortEntities(List<FileSystemEntity> list) {
-    switch (_short.value) {
-      case SortBy.date:
-        list.sort(
-            (a, b) => b.statSync().modified.compareTo(a.statSync().modified));
-        break;
-      case SortBy.size:
-        list.sort((a, b) => b.statSync().size.compareTo(a.statSync().size));
-        break;
-      case SortBy.type:
-        list.sort((a, b) =>
-            a.runtimeType.toString().compareTo(b.runtimeType.toString()));
-        break;
-      case SortBy.name:
-      default:
-        list.sort(
-            (a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()));
-        break;
-    }
+    final Map<String, int> sizeMap = {};
+
+    list.sort((a, b) {
+      final aName = p.basename(a.path).toLowerCase();
+      final bName = p.basename(b.path).toLowerCase();
+
+      switch (_sort.value) {
+        case SortBy.name:
+          if (a is Directory && b is! Directory) return -1;
+          if (b is Directory && a is! Directory) return 1;
+          return aName.compareTo(bName);
+
+        case SortBy.type:
+          if (a is Directory && b is! Directory) return -1;
+          if (b is Directory && a is! Directory) return 1;
+
+          final aType =
+              a is Directory ? 'dir' : p.extension(a.path).toLowerCase();
+          final bType =
+              b is Directory ? 'dir' : p.extension(b.path).toLowerCase();
+          final typeCompare = aType.compareTo(bType);
+          if (typeCompare != 0) return typeCompare;
+
+          return aName.compareTo(bName);
+
+        case SortBy.size:
+          // Directories grouped first
+          if (a is Directory && b is! Directory) return -1;
+          if (b is Directory && a is! Directory) return 1;
+
+          if (a is File && b is File) {
+            sizeMap[a.path] ??= a.lengthSync();
+            sizeMap[b.path] ??= b.lengthSync();
+            return _sizeAscending
+                ? sizeMap[a.path]!.compareTo(sizeMap[b.path]!)
+                : sizeMap[b.path]!.compareTo(sizeMap[a.path]!);
+          }
+
+          return aName.compareTo(bName);
+
+        case SortBy.date:
+          final aTime = a.statSync().modified;
+          final bTime = b.statSync().modified;
+          return bTime.compareTo(aTime);
+
+        default:
+          return 0;
+      }
+    });
+
     return list;
+  }
+
+  /// Reloads the currently open directory (same as reopening it)
+  Future<void> reload() async {
+    final currentPath = getPathNotifier.value;
+
+    if (currentPath.isEmpty) return;
+
+    final dir = Directory(currentPath);
+    if (!dir.existsSync()) return;
+
+    await openDirectory(dir);
   }
 
   /// Dispose FileManagerController
   void dispose() {
     _path.dispose();
+    paginatedEntities.dispose();
     titleNotifier.dispose();
-    _short.dispose();
+    _sort.dispose();
   }
 }

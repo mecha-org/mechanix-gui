@@ -20,21 +20,28 @@ import 'files.dart';
 import 'package:path/path.dart' as p;
 
 Widget buildListView(
-  List<FileItem> files,
   BuildContext context,
-  List<FileItem> currentPath,
   ScrollController scrollController,
-  List<io.FileSystemEntity> entities,
   FileManagerController controller,
 ) {
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
 
-  return FileManager(
-    controller: controller,
-    builder: (context, snapshot) {
-      final List<io.FileSystemEntity> entities = snapshot;
+  return ValueListenableBuilder<List<io.FileSystemEntity>>(
+    valueListenable: controller.paginatedEntities,
+    builder: (context, entities, _) {
+      if (entities.isEmpty) {
+        // Show message if folder is empty
+        return Center(
+          child: Text(
+            "Folder is empty",
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey,
+                ),
+          ),
+        );
+      }
 
       return ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
@@ -101,6 +108,8 @@ Widget buildListView(
                 onTap: () {
                   if (FileManager.isDirectory(entity)) {
                     controller.openDirectory(entity);
+                    // Reset scroll to top
+                    scrollController.jumpTo(0);
                   } else {
                     handleFileTap(
                       context,
@@ -118,25 +127,6 @@ Widget buildListView(
       );
     },
   );
-}
-
-extension on io.FileSystemEntity {
-  String get iconPath {
-    final path = this.path;
-    final ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
-
-    if (ext == 'dir') return Images.unfoldDir;
-    if (ext == 'pdf') return Images.pdfFile;
-    if (ext == 'xlsx' || ext == 'xls') return Images.excelFile;
-    if (ext == 'txt') return Images.textFile;
-    if (imageFileTypes.contains(ext)) return Images.imageFile;
-    if (audioFileTypes.contains(ext)) return Images.audioFile;
-    if (videoFileTypes.contains(ext)) return Images.videoFile;
-    if (ext == 'csv') return Images.csvFile;
-    if (ext == 'zip' || ext == 'rar' || ext == '7z') return Images.archiveFile;
-
-    return Images.file;
-  }
 }
 
 Widget buildListViewForRecentFiles(

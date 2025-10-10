@@ -190,7 +190,6 @@ class FileManager extends StatefulWidget {
   static Future<List<Directory>> getStorageList() async {
     if (Platform.isLinux) {
       final Directory dir = await getApplicationDocumentsDirectory();
-      debugPrint("Application Document Directory: ${dir.path}");
       // Gives the home directory.
       final Directory home = dir.parent;
 
