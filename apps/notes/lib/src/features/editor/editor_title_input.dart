@@ -78,7 +78,7 @@ class _EditorTitleInputState extends State<EditorTitleInput> {
             autofocus: false,
             maxLines: 1,
             controller: _titleController,
-            maxLength: 25,
+            maxLength: 25, // title length limit to 25 character
             style: TextStyle(color: NotesColors.titleTextColor),
             decoration: InputDecoration(
               counterText: "",

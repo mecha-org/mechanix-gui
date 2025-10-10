@@ -12,16 +12,12 @@ import 'package:widgets/mechanix.dart';
 
 class TextEditorToolbar extends StatefulWidget {
   final QuillController controller;
-  final OverlayEntry? entry;
   final FocusNode focusNode;
-  final VoidCallback? onClose;
 
   const TextEditorToolbar({
     super.key,
     required this.controller,
-    this.entry,
     required this.focusNode,
-    this.onClose,
   });
   @override
   State<TextEditorToolbar> createState() => _TextEditorToolbarState();
@@ -128,160 +124,169 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
 
   @override
   Widget build(BuildContext context) {
-    return ToolbarContainer(
-      child: [
-        ToolbarRow(
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, child) {
+        return ToolbarContainer(
           child: [
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.bold.key,
-                ),
-                iconPath: NotesIcon.boldIcon,
-                onPressed: () => toggleList(widget.controller, Attribute.bold),
-              ),
-            ),
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.italic.key,
-                ),
-                iconPath: NotesIcon.italicIcon,
-                onPressed: () {
-                  toggleList(widget.controller, Attribute.italic);
-                },
-              ),
-            ),
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.underline.key,
-                ),
-                iconPath: NotesIcon.textUnderlineIcon,
-                onPressed: () {
-                  toggleList(widget.controller, Attribute.underline);
-                },
-              ),
-            ),
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.strikeThrough.key,
-                ),
-                iconPath: NotesIcon.strikeThroughIcon,
-                onPressed: () {
-                  toggleList(widget.controller, Attribute.strikeThrough);
-                },
-              ),
-            ),
-          ],
-        ),
-        ToolbarRow(
-          isBorder: false,
-          child: [
-            if (!isTextColorSelected) ...[
-              Expanded(
-                child: EditorIconButton(
-                  isSelected:
-                      widget.controller
-                          .getSelectionStyle()
-                          .attributes[Attribute.header.key]
-                          ?.value ==
-                      1,
-                  iconPath: NotesIcon.h1Icon,
-                  onPressed: () => toggleList(widget.controller, Attribute.h1),
-                ),
-              ),
-              Expanded(
-                child: EditorIconButton(
-                  isSelected:
-                      widget.controller
-                          .getSelectionStyle()
-                          .attributes[Attribute.header.key]
-                          ?.value ==
-                      2,
-                  iconPath: NotesIcon.h2Icon,
-                  onPressed: () => toggleList(widget.controller, Attribute.h2),
-                ),
-              ),
-              Expanded(
-                child: EditorIconButton(
-                  isSelected:
-                      widget.controller
-                          .getSelectionStyle()
-                          .attributes[Attribute.size.key]
-                          ?.value ==
-                      '14',
-                  iconPath: NotesIcon.t1Icon,
-                  onPressed: () => textSizeFormat(SizeAttribute('14')),
-                ),
-              ),
-            ],
-            if (isTextColorSelected)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(right: borderSideStyle),
-                  ),
-                  child: getCurrentSelectedFormat(),
-                ),
-              ),
-            if (!isTextColorSelected)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(right: borderSideStyle),
-                  ),
+            ToolbarRow(
+              child: [
+                Expanded(
                   child: EditorIconButton(
-                    isSelected:
-                        widget.controller
-                            .getSelectionStyle()
-                            .attributes[Attribute.size.key]
-                            ?.value ==
-                        '12',
-                    iconPath: NotesIcon.t2Icon,
-                    onPressed: () => textSizeFormat(SizeAttribute('12')),
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.bold.key),
+                    iconPath: NotesIcon.boldIcon,
+                    onPressed:
+                        () => toggleList(widget.controller, Attribute.bold),
                   ),
                 ),
-              ),
-            if (!isTextColorSelected)
-              Expanded(
-                child: EditorIconButton(
-                  isSelected: false,
-                  icon: Container(
-                    height: 28,
-                    width: 28,
-                    decoration: BoxDecoration(
-                      color: getCurrentFontColor(),
-                      borderRadius: CircularRadius.sm,
-                    ),
+                Expanded(
+                  child: EditorIconButton(
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.italic.key),
+                    iconPath: NotesIcon.italicIcon,
+                    onPressed: () {
+                      toggleList(widget.controller, Attribute.italic);
+                    },
                   ),
-                  onPressed:
-                      () => {
-                        setState(() {
-                          isTextColorSelected = !isTextColorSelected;
-                        }),
-                      },
-                  border: Border(left: borderSideStyle),
                 ),
-              ),
-            if (isTextColorSelected) ...[
-              ...colorItems.map(
-                (item) => Expanded(
-                  child: Center(
-                    child: ColorButton(
+                Expanded(
+                  child: EditorIconButton(
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.underline.key),
+                    iconPath: NotesIcon.textUnderlineIcon,
+                    onPressed: () {
+                      toggleList(widget.controller, Attribute.underline);
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: EditorIconButton(
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.strikeThrough.key),
+                    iconPath: NotesIcon.strikeThroughIcon,
+                    onPressed: () {
+                      toggleList(widget.controller, Attribute.strikeThrough);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            ToolbarRow(
+              isBorder: false,
+              child: [
+                if (!isTextColorSelected) ...[
+                  Expanded(
+                    child: EditorIconButton(
                       isSelected:
-                          getCurrentFontColor() == Color(int.parse(item.color)),
-                      color: Color(int.parse(item.color)),
-                      onPressed: () => changeTextColor(item.color),
+                          widget.controller
+                              .getSelectionStyle()
+                              .attributes[Attribute.header.key]
+                              ?.value ==
+                          1,
+                      iconPath: NotesIcon.h1Icon,
+                      onPressed:
+                          () => toggleList(widget.controller, Attribute.h1),
                     ),
                   ),
-                ),
-              ),
-            ],
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected:
+                          widget.controller
+                              .getSelectionStyle()
+                              .attributes[Attribute.header.key]
+                              ?.value ==
+                          2,
+                      iconPath: NotesIcon.h2Icon,
+                      onPressed:
+                          () => toggleList(widget.controller, Attribute.h2),
+                    ),
+                  ),
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected:
+                          widget.controller
+                              .getSelectionStyle()
+                              .attributes[Attribute.size.key]
+                              ?.value ==
+                          '14',
+                      iconPath: NotesIcon.t1Icon,
+                      onPressed: () => textSizeFormat(SizeAttribute('14')),
+                    ),
+                  ),
+                ],
+                if (isTextColorSelected)
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border(right: borderSideStyle),
+                      ),
+                      child: getCurrentSelectedFormat(),
+                    ),
+                  ),
+                if (!isTextColorSelected)
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border(right: borderSideStyle),
+                      ),
+                      child: EditorIconButton(
+                        isSelected:
+                            widget.controller
+                                .getSelectionStyle()
+                                .attributes[Attribute.size.key]
+                                ?.value ==
+                            '12',
+                        iconPath: NotesIcon.t2Icon,
+                        onPressed: () => textSizeFormat(SizeAttribute('12')),
+                      ),
+                    ),
+                  ),
+                if (!isTextColorSelected)
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected: false,
+                      icon: Container(
+                        height: 28,
+                        width: 28,
+                        decoration: BoxDecoration(
+                          color: getCurrentFontColor(),
+                          borderRadius: CircularRadius.sm,
+                        ),
+                      ),
+                      onPressed:
+                          () => {
+                            setState(() {
+                              isTextColorSelected = !isTextColorSelected;
+                            }),
+                          },
+                      border: Border(left: borderSideStyle),
+                    ),
+                  ),
+                if (isTextColorSelected) ...[
+                  ...colorItems.map(
+                    (item) => Expanded(
+                      child: Center(
+                        child: ColorButton(
+                          isSelected:
+                              getCurrentFontColor() ==
+                              Color(int.parse(item.color)),
+                          color: Color(int.parse(item.color)),
+                          onPressed: () => changeTextColor(item.color),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }

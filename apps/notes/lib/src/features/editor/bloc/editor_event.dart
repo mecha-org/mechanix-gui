@@ -33,7 +33,7 @@ class PinnedUpdate extends EditorEvent {
 }
 
 class SelectToolbar extends EditorEvent {
-  final ToolbarEnum toolbarEnum;
+  final ToolbarEnum activeToolbar;
 
-  SelectToolbar({required this.toolbarEnum});
+  SelectToolbar({required this.activeToolbar});
 }
