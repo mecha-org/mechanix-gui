@@ -15,11 +15,14 @@ class SettingMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MechanixNavigationBar(
-        title: "Settings",
-        titleSpacing: 16,
-      ),
+      appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(52),
+          child: MechanixNavigationBar(
+            title: "Settings",
+            titleSpacing: 16,
+          ).padHorizontal(12)),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         physics: const BouncingScrollPhysics(),
         child: ContainerWidget(
           child: Column(

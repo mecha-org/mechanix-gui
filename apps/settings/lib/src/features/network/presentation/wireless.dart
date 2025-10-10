@@ -5,12 +5,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
-import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -26,18 +26,15 @@ class WirelessSettings extends StatefulWidget {
 
 class _WirelessSettingsState extends State<WirelessSettings> {
   @override
-  void initState() {
-    super.initState();
-    context.read<WirelessSettingsBloc>().add(LoadNetworks());
-  }
-
-  @override
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
         builder: (context, state) {
       return Scaffold(
-          appBar: MechanixNavigationBar(title: "Network"),
+          appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: MechanixNavigationBar(title: "Network").padHorizontal(12)),
           body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
@@ -62,9 +59,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                                 .add(ToggleWifi(val)),
                           ),
                         ),
-                        if (state.wifiOn &&
-                            state.deviceState ==
-                                NetworkManagerDeviceState.activated)
+                        if (state.wifiOn && state.connectedNetwork != null)
                           SimpleListItems(
                             onTap: () =>
                                 onInfoTap(state.connectedNetwork!, context),
@@ -90,23 +85,39 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                                     ))),
                           )
                       ]),
-                  if (state.wifiOn && !state.loading && state.networks.isEmpty)
-                    // const Center(child: Text("No networks found")),
+
+                  if (state.wifiOn && state.availableSavedNetworks.isNotEmpty)
+                    MechanixSectionList(
+                        physics: const BouncingScrollPhysics(),
+                        title: 'My Networks',
+                        sectionListItems: getWifiList(
+                            context, state.availableSavedNetworks, false)),
+
+                  if (state.wifiOn &&
+                      !state.availableOtherNetworksLoading &&
+                      state.availableOtherNetworks.isEmpty)
+                    MechanixSectionList(
+                      physics: const BouncingScrollPhysics(),
+                      title: 'Available Networks',
+                      sectionListItems: [
+                        SectionListItems(
+                          title: '',
+                          backgroundColor: Colors.transparent,
+                          defaultTrailingIcon: false,
+                          leading: CustomLoader(),
+                        ),
+                      ],
+                    ),
+                  // Padding(
+                  //   padding: EdgeInsets.only(right: 25),
+                  //   child: CustomLoader(),
+                  // )
+                  if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
                         title: 'Available Networks',
-                        sectionListItems: [
-                          SectionListItems(
-                            title: 'No networks found',
-                            backgroundColor: Colors.transparent,
-                            defaultTrailingIcon: false,
-                          ),
-                        ]),
-                  if (state.wifiOn && state.networks.isNotEmpty)
-                    MechanixSectionList(
-                        physics: const BouncingScrollPhysics(),
-                        title: 'Available Networks',
-                        sectionListItems: getWifiList(context, state.networks)),
+                        sectionListItems: getWifiList(
+                            context, state.availableOtherNetworks, true)),
                   const WirelessAdvanceSettings()
                 ],
               ),
@@ -165,7 +176,7 @@ String getNetworkIcon(String security, int? signalStrength) {
 }
 
 List<SectionListItems> getWifiList(
-    BuildContext context, List<AccessPoints> state) {
+    BuildContext context, List<AccessPoints> state, bool showAddOption) {
   final wifi = state.map((s) {
     return SectionListItems(
       title: utf8.decode(s.nmAccessPoint.ssid),
@@ -187,15 +198,17 @@ List<SectionListItems> getWifiList(
     );
   }).toList();
 
-  wifi.add(
-    SectionListItems(
-      title: 'Add Wireless',
-      defaultTrailingIcon: false,
-      onTap: () =>
-          Navigator.pushNamed(context, AppRoutes.wirelessConnectUnknownNetwork),
-      leading: IconWidget(iconPath: Images.wirelessAdd),
-    ),
-  );
+  if (showAddOption) {
+    wifi.add(
+      SectionListItems(
+        title: 'Add Wireless',
+        defaultTrailingIcon: false,
+        onTap: () => Navigator.pushNamed(
+            context, AppRoutes.wirelessConnectUnknownNetwork),
+        leading: IconWidget(iconPath: Images.wirelessAdd),
+      ),
+    );
+  }
 
   return wifi;
 }
