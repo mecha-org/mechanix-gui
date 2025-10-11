@@ -22,13 +22,9 @@ class ConnectNetworkBloc
 
   Future<void> _getWifiStateAndReasonStream() async {
     try {
-      print('stream started');
       final streamAndDevice = await wifiRepository.getWifiStateAndReason();
 
       streamAndDevice.device.propertiesChanged.listen((event) {
-        print(
-            'streamAndDevice.device.state before ${streamAndDevice.device.state}');
-
         if (event.contains('State')) {
           add(DeviceConnectionStateEvent(streamAndDevice.device.state));
         }

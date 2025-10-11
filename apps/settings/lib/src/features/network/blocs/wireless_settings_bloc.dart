@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
-// import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
 import 'package:nm/nm.dart';
 
 import 'wireless_settings_event.dart';
@@ -17,10 +16,13 @@ class WirelessSettingsBloc
     extends Bloc<WirelessSettingsEvent, WirelessSettingsState> {
   final WifiRepository wifiRepository;
   final logger = Logger();
-  StreamSubscription? _wifiEventsSubscription; // Make nullable
-  StreamSubscription? _accessPointSubscription; // Make nullable
-  StreamSubscription? _savedAccessPointSubscription; // Make nullable
-  StreamSubscription? _wifiStateAndReason; // Make nullable
+  StreamSubscription? _wifiEventsSubscription;
+  StreamSubscription? _accessPointSubscription;
+  StreamSubscription? _savedAccessPointSubscription;
+  StreamSubscription? _wifiStateAndReason;
+
+  StreamSubscription<bool>? _wirelessSub;
+
   WirelessSettingsBloc({required this.wifiRepository})
       : super(WirelessSettingsState(
           wifiOn: false,
@@ -30,8 +32,17 @@ class WirelessSettingsBloc
           availableOtherNetworksLoading: false,
           availableSavedNetworksLoading: false,
         )) {
+    _wirelessSub = wifiRepository.wirelessEnabledStream.listen((enabled) {
+      logger.w('Wireless enabled state changed: $enabled');
+      if (enabled != state.wifiOn) {
+        add(WifiEnabledChanged(enabled));
+      }
+    });
+
+    // Event handlers
     on<InitializeWifi>(_onInitializeWifi);
     on<ToggleWifi>(_onToggleWifi);
+    on<WifiEnabledChanged>(_onWifiEnabledChanged);
     on<WifiStatusChanged>(_onWifiStatusChanged); // connecting, connected, etc
     on<SelectNetwork>(_setSelectedNetwork);
     on<SelectNetworkPoint>(_setSelectedNetworkPoint);
@@ -53,12 +64,9 @@ class WirelessSettingsBloc
 
   Future<void> _initializeWifiStream() async {
     try {
+      logger.i('Initializing WiFi event stream HERE...');
       final stream = await wifiRepository.streamWifiEvents();
       _wifiEventsSubscription = stream.listen((prop) async {
-        if (prop.contains("WirelessEnabled")) {
-        logger.i("WIRELESS PROPERTY CHANGED: $prop");
-          add(InitializeWifi());
-        }
         if (prop.contains("State")) {
           var state = await wifiRepository.getWifiState();
           switch (state) {
@@ -78,9 +86,11 @@ class WirelessSettingsBloc
 
   Future<void> _initializeAccessPointStream() async {
     try {
+      if (!state.wifiOn) return;
+
       final stream = await wifiRepository.streamWirelessDeviceStream();
       _accessPointSubscription = stream.listen((prop) async {
-        logger.i("Access Point Update: $prop");
+        // logger.i("Access Point Update: $prop");
         if (prop.isNotEmpty &&
             (prop.contains("LastScan") ||
                 prop.contains("AccessPoints") ||
@@ -107,6 +117,8 @@ class WirelessSettingsBloc
 
   Future<void> _initWifiStateAndReasonStream() async {
     try {
+      if (!state.wifiOn) return;
+
       final streamAndDevice = await wifiRepository.getWifiStateAndReason();
 
       _wifiStateAndReason =
@@ -138,6 +150,7 @@ class WirelessSettingsBloc
     await _wifiStateAndReason?.cancel();
     _wifiStateAndReason = null;
 
+    _wirelessSub?.cancel();
     wifiRepository.close();
     return super.close();
   }
@@ -146,16 +159,41 @@ class WirelessSettingsBloc
       ToggleWifi event, Emitter<WirelessSettingsState> emit) async {
     logger.i('Toggling WiFi: ${event.enabled}');
     try {
-      wifiRepository.setWifiEnabled(event.enabled);
-      if (event.enabled) {
-        add(InitializeWifi());
-      }
+      await wifiRepository.setWifiEnabled(event.enabled);
     } catch (e) {
       logger.e('Error toggling WiFi: $e');
       emit(state.copyWith(error: e.toString()));
       return;
     }
     logger.i('WiFi toggled successfully: ${event.enabled}');
+  }
+
+  void _onWifiEnabledChanged(
+      WifiEnabledChanged event, Emitter<WirelessSettingsState> emit) {
+    emit(state.copyWith(wifiOn: event.enabled));
+    _handleWifiEnableChange(event.enabled);
+  }
+
+  void _handleWifiEnableChange(bool enabled) {
+    if (enabled) {
+      _initializeAccessPointStream();
+      _initWifiStateAndReasonStream();
+    } else {
+      // On power off, cancel relevant the streams
+      _accessPointSubscription?.cancel();
+      _accessPointSubscription = null;
+
+      _wifiStateAndReason?.cancel();
+      _wifiStateAndReason = null;
+
+      emit(state.copyWith(
+          availableOtherNetworks: [],
+          availableSavedNetworks: [],
+          allSavedNetworks: [],
+          availableOtherNetworksLoading: false,
+          availableSavedNetworksLoading: false,
+          connectedNetwork: null));
+    }
   }
 
   void _onWifiStatusChanged(
@@ -167,31 +205,10 @@ class WirelessSettingsBloc
 
   Future<void> _onInitializeWifi(
       InitializeWifi event, Emitter<WirelessSettingsState> emit) async {
-        logger.i("Initializing WiFi...");
+    logger.i("Initializing WiFi...");
     final enabled = await wifiRepository.isWirelessEnabled();
     emit(state.copyWith(wifiOn: enabled));
-
-    if (enabled) {
-      logger.i("WiFi is enabled, initializing streams...");
-      _initializeAccessPointStream(); // all networks
-      _initWifiStateAndReasonStream();
-    } else {
-      // On power off, cancel relevant the streams
-
-      await _accessPointSubscription?.cancel();
-      _accessPointSubscription = null;
-
-      await _wifiStateAndReason?.cancel();
-      _wifiStateAndReason = null;
-
-      emit(state.copyWith(
-          availableOtherNetworks: [],
-          availableSavedNetworks: [],
-          allSavedNetworks: [],
-          availableOtherNetworksLoading: false,
-          availableSavedNetworksLoading: false,
-          connectedNetwork: null));
-    }
+    _handleWifiEnableChange(enabled);
   }
 
   Future<void> handleError(
@@ -221,6 +238,7 @@ class WirelessSettingsBloc
     await wifiRepository.deleteSavedNetwork(event.ssid);
   }
 
+// OKAY
   Future<void> _updateAvailableNetworkList(UpdateAvailableNetworksEvent event,
       Emitter<WirelessSettingsState> emit) async {
     try {

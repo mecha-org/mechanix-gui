@@ -37,6 +37,8 @@ class _NetworkSettingsState extends State<NetworkSettings> {
 
   void onItemTap(SavedWirelessNetwork network) {
     // final item = network.accessPoint;
+    final item =  network.ssid;
+    print("Selected network: $item");
     // if (item != null) {
     //   context.read<WirelessSettingsBloc>().add(SelectNetworkPoint(item));
     // }

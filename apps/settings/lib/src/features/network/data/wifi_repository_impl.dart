@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -15,10 +16,13 @@ import 'wifi_repository.dart';
 class WifiRepositoryImpl implements WifiRepository {
   bool _connected = false;
   final logger = Logger();
-  late NetworkManagerClient _client;
+  late final NetworkManagerClient _client = NetworkManagerClient();
+
+  @override
+  Stream<bool> get wirelessEnabledStream => _wirelessEnabledController.stream;
+  final _wirelessEnabledController = StreamController<bool>.broadcast();
 
   WifiRepositoryImpl() {
-    _client = NetworkManagerClient();
     _init();
   }
 
@@ -26,6 +30,12 @@ class WifiRepositoryImpl implements WifiRepository {
     try {
       await _client.connect();
       _connected = true;
+
+      _client.propertiesChanged.listen((props) {
+        if (props.contains('WirelessEnabled')) {
+          _wirelessEnabledController.add(_client.wirelessEnabled);
+        }
+      });
       logger.i('NetworkManagerClient connected ${_client.wirelessEnabled}');
     } catch (e) {
       logger.e('Failed to connect to NetworkManagerClient: $e');
@@ -48,9 +58,12 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   @override
-  Future<bool> setWifiEnabled(bool enable) async {
-    await _client.setWirelessEnabled(enable);
-    return enable;
+  Future<void> setWifiEnabled(bool enable) async {
+    try {
+      await _client.setWirelessEnabled(enable);
+    } catch (e) {
+      logger.e('Failed to set Wireless Enabled: $e');
+    }
   }
 
   @override
@@ -249,7 +262,6 @@ class WifiRepositoryImpl implements WifiRepository {
   // delete network - remove profile settings
   @override
   Future<void> forgetNetwork(String ssid) async {
-
     try {
       var connections = _client.settings.connections;
       for (var connection in connections) {
@@ -280,7 +292,6 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<StreamAndDevice> getWifiStateAndReason() async {
-
     var wifiDevice = _client.devices.firstWhere(
       (d) => d.deviceType == NetworkManagerDeviceType.wifi,
     );
@@ -289,7 +300,6 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   Future<void> connectedNetwork() async {
-
     var primaryConnection = _client.primaryConnection;
     if (primaryConnection != null && primaryConnection.ip4Config != null) {
       var ip4Config = primaryConnection.ip4Config!;
@@ -306,8 +316,7 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints>? availableAccessPoints) async {
-    logger.i('Loading saved networks');
-
+    // logger.i('Loading saved networks');
 
     final List<SavedNetworks> savedNetworks = [];
     final connections = _client.settings.connections;
@@ -467,7 +476,6 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<NetworkManagerDeviceState?> getNetworkState() async {
-
     logger.i('getActivateNetworks state - ${_client.activeConnections.length}');
 
     final wifiDevices = _client.devices.where(
@@ -486,10 +494,10 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<void> close() async {
     await _client.close();
+    await _wirelessEnabledController.close();
     _connected = false;
   }
 }
-  
 Future<NetworkManagerSettingsConnection?> getAccessPointConnectionSettings(
     NetworkManagerDevice device, NetworkManagerAccessPoint accessPoint) async {
   var ssid = utf8.decode(accessPoint.ssid);

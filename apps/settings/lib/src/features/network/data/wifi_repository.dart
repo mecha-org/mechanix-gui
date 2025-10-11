@@ -5,20 +5,25 @@ import 'package:nm/nm.dart';
 
 abstract class WifiRepository {
   Future<bool> isWirelessEnabled();
+  Stream<bool> get wirelessEnabledStream;
   Future<NetworkManagerState> getWifiState();
   Future<StreamAndDevice> getWifiStateAndReason();
-  Future<bool> setWifiEnabled(bool enable);
-  Future<Stream<List<String>>> streamWifiEvents();
-  Future<Stream<List<String>>> streamWirelessDeviceStream();
+  Future<void> setWifiEnabled(bool enable);
+  Future<Stream<List<String>>> streamWifiEvents();      // client
+  Future<Stream<List<String>>> streamWirelessDeviceStream();    // device
+
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedNetworks>? savedNetworks);
+
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints> availableAccessPoints);
+
   Future<List<SavedWirelessNetwork>> getSavedNetworks();
+
   Future<void> connectToNetwork(
-      NetworkManagerAccessPoint accessPoint, String password);
-  Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);
-  Future<void> connectToUnknownNetwork(String ssid, String password);
+      NetworkManagerAccessPoint accessPoint, String password);    //  connect to active network
+  Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);  // connect to saved network
+  Future<void> connectToUnknownNetwork(String ssid, String password); // connect to hidden network
   Future<void> forgetNetwork(String ssid);
   Future<void> disconnectFromNetwork(String ssid);
   Future<void> deleteSavedNetwork(String ssid);

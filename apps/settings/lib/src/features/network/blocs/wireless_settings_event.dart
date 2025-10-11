@@ -2,7 +2,6 @@
 
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
-import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
 import 'package:nm/nm.dart';
 
 abstract class WirelessSettingsEvent extends Equatable {
@@ -35,6 +34,14 @@ class DeleteSavedNetwork extends WirelessSettingsEvent {
 class ToggleWifi extends WirelessSettingsEvent {
   final bool enabled;
   ToggleWifi(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class WifiEnabledChanged extends WirelessSettingsEvent {
+  final bool enabled;
+  WifiEnabledChanged(this.enabled);
 
   @override
   List<Object?> get props => [enabled];
