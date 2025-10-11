@@ -24,30 +24,58 @@ env:
   MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
 
 jobs:
+  # Detect which apps have changed
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      settings: ${{ steps.filter.outputs.settings }}
+      notes: ${{ steps.filter.outputs.notes }}
+      files: ${{ steps.filter.outputs.files }}
+      music: ${{ steps.filter.outputs.music }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            settings:
+              - 'apps/settings/**'
+            notes:
+              - 'apps/notes/**'
+            files:
+              - 'apps/files/**'
+            music:
+              - 'apps/music/**'
+
   build:
     name: ${{ matrix.name }}
+    needs: detect-changes
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: settings app
+          - name: mechanix-settings
+            app: settings
             folder: settings
             binary: mechanix_settings
 
-          - name: camera app
-            folder: camera
-            binary: camera
-
-          - name: notes app
+          - name: mechanix-notes
+            app: notes
             folder: notes
             binary: mechanix_notes
 
-          - name: files app
+          - name: mechanix-files
+            app: files
             folder: files
-            binary: mechanix_files           
-          - name: music app
+            binary: mechanix_files
+
+          - name: mechanix-music
+            app: music
             folder: music
-            binary: mechanix_music  
+            binary: mechanix_music
 
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
@@ -61,9 +89,29 @@ jobs:
           sudo apt install -y git tar unzip curl clang cmake pkg-config \
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
             libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
+
+      # Install NuShell
+      - name: Install Nushell
+        run: |
+          curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
+          echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+          sudo apt update
+          sudo apt install nushell
+
+      # Add Comet repository
+      - name: Add Comet repository
+        run: |
+          curl -fsSL https://pub-a2f44c787cec4290833312e57fd59522.r2.dev/comet.asc | \
+            sudo gpg --dearmor -o /usr/share/keyrings/comet-deb.gpg
+          echo "deb [signed-by=/usr/share/keyrings/comet-deb.gpg] http://pkg.mecha.so/debian pulp upload" | \
+            sudo tee /etc/apt/sources.list.d/comet.list
+          sudo apt update
+
       # Checkout repository
       - name: Setup | Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for git operations
 
       # Install Flutter eLinux
       - name: Install Flutter eLinux
@@ -73,60 +121,36 @@ jobs:
             sudo mv flutter-elinux /opt/
           fi
           echo "PATH=$PATH:/opt/flutter-elinux/bin" >> $GITHUB_ENV
-      # Build the app
+
+      # Build the app (ALWAYS)
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
         run: |
           flutter-elinux pub get
           flutter-elinux build elinux --release
+
       # Move entire bundle to ./build/<binary>
       - name: Prepare build folder ${{ matrix.name }}
         run: |
           mkdir -p ./build/${{ matrix.binary }}
           cp -r "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/"* "./build/${{ matrix.binary }}/"
-      # Package Debian
+
+      # Package Debian using Nushell script (ALWAYS)
       - name: Package Debian ${{ matrix.name }}
+        working-directory: apps
         run: |
-          set -euo pipefail
-          app_folder="apps/${{ matrix.folder }}"
-          pkg_name=$(grep '^Package:' "$app_folder/debian/control" | awk '{print $2}')
-          pkg_version=$(grep '^Version:' "$app_folder/debian/control" | awk '{print $2}')
-          pkg_arch=$(dpkg --print-architecture)
-          mkdir -p package/DEBIAN
-          cp -r "$app_folder/debian/"* package/DEBIAN/
-          mkdir -p package/usr/bin
-          mkdir -p package/usr/share/mechanix/$pkg_name/data
-          mkdir -p package/usr/share/mechanix/$pkg_name/lib
-          mkdir -p package/usr/lib/$pkg_name
-          # Patch Architecture field
-          if grep -q '^Architecture:' package/DEBIAN/control; then
-            sed -i "s/^Architecture:.*/Architecture: $pkg_arch/" package/DEBIAN/control
-          else
-            sed -i "/^Description:/i Architecture: $pkg_arch" package/DEBIAN/control
-          fi
-          # Copy binary
-          cp "./build/${{ matrix.binary }}/${{ matrix.binary }}" package/usr/bin/${{ matrix.binary }}
-          chmod 755 package/usr/bin/${{ matrix.binary }}
-          # Copy assets
-          if [ -d "./build/${{ matrix.binary }}/data" ]; then
-            cp -r "./build/${{ matrix.binary }}/data/"* package/usr/share/mechanix/$pkg_name/data/
-          fi
-          # Copy private libraries
-          if [ -d "./build/${{ matrix.binary }}/lib" ]; then
-            cp -r "./build/${{ matrix.binary }}/lib/"* package/usr/share/mechanix/$pkg_name/lib/
-          fi
-          # Build .deb into ./build/deb/
-          mkdir -p ./build/deb
-          dpkg-deb --build package "./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
+          nu package-deb.nu "${{ matrix.folder }}" "../build/deb"
+
       # List artifacts
       - name: List artifacts ${{ matrix.name }}
-        run: ls -la ./build/
+        run: ls -la ./build/deb/
 
       # Setup Pulp CLI
       - name: Setup | Pulp CLI
         run: |
           pipx install --force pulp-cli[pygments]
           pipx inject pulp-cli pulp-cli-deb
+
       - name: Configure Pulp CLI
         run: |
           set -euo pipefail
@@ -136,29 +160,45 @@ jobs:
             --password "$MECHA_PULP_PASSWORD" \
             --base-url "$PULP_API_URL" \
             --overwrite
-      # Publish .deb to Pulp
-      - name: Publish to Pulp [${{ matrix.binary }}]
+
+      # Publish .deb to Pulp (ONLY IF CHANGED or MANUAL TRIGGER)
+      - name: Publish to Pulp [${{ matrix.app }}]
+        if: |          
+          (matrix.app == 'settings' && needs.detect-changes.outputs.settings == 'true') ||
+          (matrix.app == 'notes' && needs.detect-changes.outputs.notes == 'true') ||
+          (matrix.app == 'files' && needs.detect-changes.outputs.files == 'true') ||
+          (matrix.app == 'music' && needs.detect-changes.outputs.music == 'true')
         run: |
           set -euo pipefail
-          pkg_name=$(grep '^Package:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_version=$(grep '^Version:' "apps/${{ matrix.folder }}/debian/control" | awk '{print $2}')
-          pkg_arch=$(dpkg --print-architecture)
-          DEB_FILE="./build/deb/${pkg_name}_${pkg_version}_${pkg_arch}.deb"
-          echo "[INFO] Uploading: $DEB_FILE"
+
+          DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" -type f | head -n1)
+          
+          if [ -z "$DEB_FILE" ]; then
+            echo "[ERROR] No .deb file found for mechanix-${{ matrix.app }}"
+            exit 1
+          fi
+          
+          echo "[INFO] 📦 Publishing: $DEB_FILE"
+          
           pulp deb content upload \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --file="$DEB_FILE"
+          
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+            --signing-service=mecha-pkg-sign \
             | jq -r '.pulp_href')
+          
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-          echo "[INFO] ✅ Package ${{ matrix.binary }} published."
-      # Upload full artifacts
+          
+          echo "[INFO] ✅ Package ${{ matrix.app }} published successfully!"
+
+      # Upload full artifacts (ALWAYS)
       - name: Upload artifact ${{ matrix.name }}
         uses: actions/upload-artifact@v4
         with:
