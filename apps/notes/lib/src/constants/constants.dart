@@ -7,7 +7,8 @@ class Images {
 
 class Constants {
   static const String tableName = "notesTablev3";
-  static const String pathToDb = "/tmp/mechanix_notes";
+  static const String t1Size = '14';
+  static const String t2Size = '12';
 }
 
 class ColorItem {

@@ -76,8 +76,8 @@ class _NotesEditorState extends State<NotesEditor> {
   }
 
   void toolbarSelection(ToolbarEnum value) {
-    if (!_focusNode.hasFocus) {
-      _focusNode.requestFocus();
+    if (_focusNode.hasFocus) {
+      _focusNode.unfocus();
     }
     context.read<EditorBloc>().add(SelectToolbar(activeToolbar: value));
   }
