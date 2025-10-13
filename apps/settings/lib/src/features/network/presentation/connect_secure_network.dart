@@ -38,9 +38,7 @@ class ConnectSecureNetwork extends StatelessWidget {
               ),
             );
           }
-
-          // Handle success
-          if (state.deviceState == NetworkManagerDeviceState.activated) {
+          else if (state.deviceState == NetworkManagerDeviceState.activated) {
             // Navigator.pushNamed(context, AppRoutes.wireless);
             Navigator.pop(context);
           }

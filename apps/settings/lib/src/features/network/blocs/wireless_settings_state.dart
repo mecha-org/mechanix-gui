@@ -51,7 +51,8 @@ class WirelessSettingsState extends Equatable {
       String? error,
       AccessPoints? connectedNetwork,
       NetworkManagerDeviceState? deviceState,
-      NetworkManagerAccessPoint? selectedNMAccessPoint}) {
+      NetworkManagerAccessPoint? selectedNMAccessPoint,
+      }) {
     return WirelessSettingsState(
       wifiOn: wifiOn ?? this.wifiOn,
       availableOtherNetworks: availableOtherNetworks ?? this.availableOtherNetworks,

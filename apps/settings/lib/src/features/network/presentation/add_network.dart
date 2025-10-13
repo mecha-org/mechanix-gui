@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
-import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
 import 'package:widgets/mechanix.dart';
 
 class AddNetwork extends StatelessWidget {
@@ -14,8 +14,8 @@ class AddNetwork extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final passwordController = TextEditingController();
+    // final nameController = TextEditingController();
+    // final passwordController = TextEditingController();
 
     // Get WifiRepository from ancestor provider
     final wifiRepository = context.read<WifiRepository>();
@@ -27,16 +27,19 @@ class AddNetwork extends StatelessWidget {
     void onAddButtonPressed(BuildContext context, ConnectNetworkState state) {
       if (formKey.currentState!.validate()) {
         context.read<ConnectNetworkBloc>().add(
-              PasswordChanged(passwordController.text),
-            );
-        context.read<ConnectNetworkBloc>().add(
               ConnectToUnknownNetwork(
-                nameController.text,
-                passwordController.text,
+                state.username,
+                state.password,
               ),
             );
 
-        if (state.error != '') {
+        if (state.error == null) {
+          // no error
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('connecting to network...')),
+          );
+          backNavigation(context);
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
                 content: Text(
@@ -44,11 +47,6 @@ class AddNetwork extends StatelessWidget {
               style: TextStyle(color: Colors.red),
             )),
           );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('connecting to network...')),
-          );
-          backNavigation(context);
         }
       }
     }
@@ -58,9 +56,21 @@ class AddNetwork extends StatelessWidget {
       child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
         builder: (context, state) {
           return Scaffold(
-            appBar: MechanixNavigationBar(
-              title: "New Wireless",
-            ),
+            appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(52),
+                child: MechanixNavigationBar(
+                    title: "New Wireless",
+                    actionWidgets: [
+                      IconButton(
+                        icon: Image.asset(Images.submit, width: 20, height: 20),
+                        onPressed: state.password.isNotEmpty &&
+                                state.password.length >= 8
+                            ? () {
+                                onAddButtonPressed(context, state);
+                              }
+                            : null,
+                      ),
+                    ]).padHorizontal(12)),
             body: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: ContainerWidget(
@@ -88,11 +98,11 @@ class AddNetwork extends StatelessWidget {
                         onFieldSubmitted: (_) {
                           if (state.password.isNotEmpty) {
                             onAddButtonPressed(context, state);
-                            backNavigation(context);
                           }
                         },
                       ),
-                      WirelessProtocols()
+                      // // NOTE: Not in use currently
+                      // WirelessProtocols()
                     ],
                   ),
                 ),

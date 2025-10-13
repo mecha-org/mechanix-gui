@@ -131,32 +131,33 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<void> connectToUnknownNetwork(String ssid, String password) async {
+    // logger.i('init connect to unknown network ssid: $ssid, password: $password');
     // // Define the connection settings
-    final connection = <String, Map<String, DBusValue>>{
-      'connection': <String, DBusValue>{
-        'id': DBusString(ssid),
-        'type': DBusString('802-11-wireless'),
-        'autoconnect': DBusBoolean(true),
-      },
-      '802-11-wireless': <String, DBusValue>{
-        'ssid': DBusArray(
-          DBusSignature.byte,
-          utf8.encode(ssid).map((b) => DBusByte(b)).toList(),
-        ),
-        'mode': DBusString('infrastructure'),
-        'hidden': DBusBoolean(true),
-      },
-      '802-11-wireless-security': <String, DBusValue>{
-        'key-mgmt': DBusString('wpa-psk'),
-        'psk': DBusString(password),
-      },
-      'ipv4': <String, DBusValue>{
-        'method': DBusString('auto'),
-      },
-      'ipv6': <String, DBusValue>{
-        'method': DBusString('ignore'),
-      },
-    };
+     final connection = <String, Map<String, DBusValue>>{
+    'connection': <String, DBusValue>{
+      'id': DBusString(ssid),
+      'type': DBusString('802-11-wireless'),
+      'autoconnect': DBusBoolean(true),
+    },
+    '802-11-wireless': <String, DBusValue>{
+      'ssid': DBusArray(
+        DBusSignature.byte,
+        utf8.encode(ssid).map((b) => DBusByte(b)).toList(),
+      ),
+      'mode': DBusString('infrastructure'),
+      'hidden': DBusBoolean(true),
+    },
+    '802-11-wireless-security': <String, DBusValue>{
+      'key-mgmt': DBusString('wpa-psk'),
+      'psk': DBusString(password),
+    },
+    'ipv4': <String, DBusValue>{
+      'method': DBusString('auto'),
+    },
+    'ipv6': <String, DBusValue>{
+      'method': DBusString('ignore'),
+    },
+  };
 
     // Create a new connection
     logger.i("init connect to unknown network");
@@ -176,7 +177,7 @@ class WifiRepositoryImpl implements WifiRepository {
       if (password.isEmpty) {
         psk ??= stdin.readLineSync(encoding: utf8);
       }
-      logger.i('password: $password, psk: $psk');
+      logger.i('ssid: $ssid, password: $password, psk: $psk');
 
       await _client.addAndActivateConnection(
         device: device,
@@ -192,6 +193,14 @@ class WifiRepositoryImpl implements WifiRepository {
   Future<void> connectToNetwork(
       NetworkManagerAccessPoint accessPoint, String password) async {
     logger.i("init connect to network");
+
+    // // TEMP CHECK IF ALREADY CONNECTED
+    // final connectedNetwork = await getConnectedNetwork(accessPoint);
+    // if (connectedNetwork != null) {
+    //   logger.i('Already connected to network: ${connectedNetwork.ssid}');
+    //   return;
+    // }
+
     NetworkManagerDevice device;
     try {
       device = _client.devices
@@ -235,6 +244,30 @@ class WifiRepositoryImpl implements WifiRepository {
       }
     } catch (e) {
       logger.e('Failed to connect to network: $e');
+    }
+  }
+
+  Future<NetworkManagerAccessPoint?> getConnectedNetwork(
+      NetworkManagerAccessPoint accessPoint) async {
+    // Retrieve the list of active connections
+    final connections = _client.settings.connections;
+
+    // Check if the network is already connected
+    for (var connection in connections) {
+      var settings = await connection.getSettings();
+      var wifiSettings = settings['802-11-wireless'];
+
+      if (wifiSettings != null && wifiSettings['ssid'] != null) {
+        final ssidArray = wifiSettings['ssid'] as DBusArray;
+        final ssidBytes =
+            ssidArray.children.map((e) => (e as DBusByte).value).toList();
+        final wifiSsid = utf8.decode(ssidBytes);
+        final accessPointSsid = utf8.decode(accessPoint.ssid);
+
+        if (wifiSsid == accessPointSsid) {
+          return accessPoint; // Network is already connected
+        }
+      }
     }
   }
 
@@ -354,48 +387,112 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<List<SavedWirelessNetwork>> getSavedNetworks() async {
-    logger.i('Fetching saved networks');
+    try {
+      logger.i('Fetching saved networks');
 
-    final connections = _client.settings.connections;
-    final seenBssids = <String>{}; // to track unique SSIDs
+      final connections = _client.settings.connections;
 
-    final List<SavedWirelessNetwork> savedNetworks = [];
+      final List<SavedWirelessNetwork> savedNetworks = [];
 
-    for (var cn in connections) {
-      if (!cn.unsaved) {
-        var connectionSettings = await cn.getSettings();
-        final connectionId =
-            connectionSettings["connection"]?["id"]?.toNative();
+      for (var cn in connections) {
+        if (!cn.unsaved) {
+          var connectionSettings = await cn.getSettings();
 
-        final securityFlagValue = connectionSettings["802-11-wireless-security"]
-                ?["key-mgmt"]
-            ?.toString();
-        final securityFlags =
-            (securityFlagValue == "wpa-psk") ? "WPA-PSK" : "Open";
+          final flatSettings = flattenConnectionSettings(connectionSettings);
+          final String bssid = connectionSettings["802-11-wireless"]
+                      ?["seen-bssids"]
+                  ?.toString() ??
+              '';
+          final seenBssids = <String>{};
 
-        final String bssid =
-            connectionSettings["802-11-wireless"]?["seen-bssids"]?.toString() ??
-                '';
-
-        final String passphrase = connectionSettings["802-11-wireless-security"]
-                    ?["psk"]
-                ?.toString() ??
-            '';
-
-        logger.i(
-            'connectionId: $connectionId | Security: $securityFlags | Passphrase: $passphrase');
-
-        if (!seenBssids.contains(bssid)) {
-          seenBssids.add(bssid); // mark this BSSID as seen
-          SavedWirelessNetwork savedNetwork = SavedWirelessNetwork(
-            ssid: connectionId,
-            security: securityFlags,
-          );
-          savedNetworks.add(savedNetwork);
+          if (!seenBssids.contains(bssid)) {
+            seenBssids.add(bssid); // mark this BSSID as seen
+            SavedWirelessNetwork savedNetwork = SavedWirelessNetwork(
+              ssid: flatSettings["connection.id"],
+              macAddress: flatSettings["802-11-wireless.mac-address"],
+              security: flatSettings["802-11-wireless-security.key-mgmt"],
+              ipv4Method: flatSettings["ipv4.method"],
+              autoConnect: flatSettings["connection.autoconnect"],
+            );
+            savedNetworks.add(savedNetwork);
+          }
         }
       }
+      return savedNetworks;
+    } catch (e) {
+      logger.e('Error in getSavedNetworks: $e');
+      return [];
     }
-    return savedNetworks;
+  }
+
+  Map<String, dynamic> flattenConnectionSettings(
+      Map<String, Map<String, DBusValue>> rawSettings) {
+    final flat = <String, dynamic>{};
+
+    rawSettings.forEach((section, entries) {
+      entries.forEach((key, dbusValue) {
+        final nativeValue = dbusValueToDart(dbusValue, keyName: key);
+        flat['$section.$key'] = nativeValue;
+      });
+    });
+
+    return flat;
+  }
+
+  dynamic dbusValueToDart(DBusValue value, {String? keyName}) {
+    // 1️⃣ Primitive numeric/string/bool
+    if (value is DBusString ||
+        value is DBusInt32 ||
+        value is DBusUint32 ||
+        value is DBusInt64 ||
+        value is DBusUint64 ||
+        value is DBusDouble ||
+        value is DBusBoolean) {
+      return value.toNative();
+    }
+
+    // 2️⃣ Byte array case — especially for SSID
+    if (value is DBusArray &&
+        value.signature == DBusSignature('y') && // array of bytes
+        (keyName == 'ssid' ||
+            keyName?.toLowerCase().contains('ssid') == true)) {
+      final bytes =
+          value.children.whereType<DBusByte>().map((b) => b.value).toList();
+      try {
+        return utf8.decode(bytes);
+      } catch (_) {
+        return bytes; // fallback to numeric list if not decodable
+      }
+    }
+
+    // 3️⃣ Generic array
+    if (value is DBusArray) {
+      return value.children.map((v) => dbusValueToDart(v)).toList();
+    }
+
+    // 4️⃣ Dict/map
+    if (value is DBusDict) {
+      return value.children
+          .map((k, v) => MapEntry(dbusValueToDart(k), dbusValueToDart(v)));
+    }
+
+    // 5️⃣ Struct
+    if (value is DBusStruct) {
+      return value.children.map(dbusValueToDart).toList();
+    }
+
+    // 6️⃣ Variant wrapper
+    if (value is DBusVariant) {
+      return dbusValueToDart(value.value, keyName: keyName);
+    }
+
+    // 7️⃣ Single DBusByte
+    if (value is DBusByte) {
+      return value.value;
+    }
+
+    // 8️⃣ Fallback
+    return value.toString();
   }
 
   @override
@@ -498,6 +595,7 @@ class WifiRepositoryImpl implements WifiRepository {
     _connected = false;
   }
 }
+
 Future<NetworkManagerSettingsConnection?> getAccessPointConnectionSettings(
     NetworkManagerDevice device, NetworkManagerAccessPoint accessPoint) async {
   var ssid = utf8.decode(accessPoint.ssid);

@@ -39,7 +39,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
               title: state.selectedNMAccessPoint != null
                   ? utf8.decode(state.selectedNMAccessPoint!.ssid)
                   : '',
-              actionWidgets: (state.selectedAccessPoint!.isActive)
+              actionWidgets: (state.selectedAccessPoint!.isActive || state.selectedAccessPoint!.isSaved)
                   ? [
                       IconButton(
                         onPressed: () => onForgetPressed(
@@ -242,6 +242,7 @@ Future<void> onNetworkTap(
     context
         .read<WirelessSettingsBloc>()
         .add(ConnectSavedNetwork('', selectedAccessPoint.nmAccessPoint));
+    print('Connecting to saved network... Redirect to back');
     Navigator.pop(context);
   } else {
     Navigator.pushNamed(

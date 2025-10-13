@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
@@ -9,6 +11,8 @@ class ConnectNetworkBloc
     extends Bloc<ConnectNetworkEvent, ConnectNetworkState> {
   final logger = Logger();
   final WifiRepository wifiRepository;
+  StreamSubscription? _wifiStateAndReason;
+
   ConnectNetworkBloc({required this.wifiRepository})
       : super(ConnectNetworkState()) {
     on<PasswordChanged>(passwordChanged);
@@ -17,29 +21,30 @@ class ConnectNetworkBloc
     on<ConnectToNetwork>(connectToNetwork);
     on<ConnectToUnknownNetwork>(connectToUnknownNetwork);
     on<DeviceConnectionStateEvent>(_updateDeviceConnectionStateUpdate);
-    _getWifiStateAndReasonStream();
+
+    _initWifiStateAndReasonStream();
   }
 
-  Future<void> _getWifiStateAndReasonStream() async {
+  Future<void> _initWifiStateAndReasonStream() async {
     try {
       final streamAndDevice = await wifiRepository.getWifiStateAndReason();
 
-      streamAndDevice.device.propertiesChanged.listen((event) {
-        if (event.contains('State')) {
-          add(DeviceConnectionStateEvent(streamAndDevice.device.state));
-        }
+      _wifiStateAndReason =
+          streamAndDevice.device.propertiesChanged.listen((event) {
         if (event.contains('StateReason')) {
+          logger.i(
+              "ConnectNetworkBloc STATE REASON: ${streamAndDevice.device.stateReason}");
+
           if (streamAndDevice.device.stateReason.state ==
                   NetworkManagerDeviceState.failed &&
               streamAndDevice.device.stateReason.reason ==
                   NetworkManagerDeviceStateReason.noSecrets) {
-            // logger.w('Authentication required!');
             add(Error("Authentication required!"));
           }
         }
       });
     } catch (e, stackTrace) {
-      // logger.e('Error initializing wifi stream $e, $stackTrace');
+      logger.e('Error initializing wifi stream $e, $stackTrace');
     }
   }
 
@@ -72,9 +77,9 @@ class ConnectNetworkBloc
       await wifiRepository.connectToNetwork(event.accessPoint, state.password);
       emit(state.copyWith(isConnected: false, isConnecting: true));
     } catch (e) {
+      logger.e('Failed to connect to network: $e');
       emit(state.copyWith(
           isConnected: false, isConnecting: false, error: e.toString()));
-      // logger.e('Failed to connect to network: $e');
     }
     emit(state.copyWith(isConnecting: false));
   }
@@ -88,9 +93,9 @@ class ConnectNetworkBloc
       emit(state.copyWith(isConnected: true, isConnecting: false));
       // logger.i('Successfully connected to unknown network');
     } catch (e) {
+      logger.e('Failed to connect to unknown network: $e');
       emit(state.copyWith(
           isConnected: false, isConnecting: false, error: e.toString()));
-      // logger.e('Failed to connect to unknown network: $e');
     }
     emit(state.copyWith(isConnecting: false));
   }
@@ -99,5 +104,12 @@ class ConnectNetworkBloc
       DeviceConnectionStateEvent event,
       Emitter<ConnectNetworkState> emit) async {
     emit(state.copyWith(deviceState: event.deviceSate));
+  }
+
+  @override
+  Future<void> close() async {
+    await _wifiStateAndReason?.cancel();
+    _wifiStateAndReason = null;
+    return super.close();
   }
 }

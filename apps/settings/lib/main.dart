@@ -50,6 +50,7 @@ import 'package:mechanix_settings/src/features/network/presentation/ipsettings/i
 import 'package:mechanix_settings/src/features/network/presentation/ipv4_address.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/saved_network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wifi_security.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless.dart';
 import 'package:mechanix_settings/src/features/settings_menu/presentation/menu.dart';
@@ -220,6 +221,7 @@ class MainApp extends StatelessWidget {
           AppRoutes.ethernetDetails: (context) => EthernetSettings(),
           AppRoutes.dnsDetails: (context) => DnsSettings(),
           AppRoutes.wirelessNetworkSettings: (context) => NetworkSettings(),
+          AppRoutes.wirelessSavedNetworkDetails: (context) => SavedNetworkDetails(),
           AppRoutes.wirelessConnectSecureNetwork: (context) =>
               ConnectSecureNetwork(),
           AppRoutes.wirelessConnectUnknownNetwork: (context) => AddNetwork(),

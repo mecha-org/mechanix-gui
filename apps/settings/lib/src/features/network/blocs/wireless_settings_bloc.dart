@@ -33,7 +33,7 @@ class WirelessSettingsBloc
           availableSavedNetworksLoading: false,
         )) {
     _wirelessSub = wifiRepository.wirelessEnabledStream.listen((enabled) {
-      logger.w('Wireless enabled state changed: $enabled');
+      logger.i('BLOC::Wireless enabled state changed: $enabled');
       if (enabled != state.wifiOn) {
         add(WifiEnabledChanged(enabled));
       }
@@ -46,6 +46,7 @@ class WirelessSettingsBloc
     on<WifiStatusChanged>(_onWifiStatusChanged); // connecting, connected, etc
     on<SelectNetwork>(_setSelectedNetwork);
     on<SelectNetworkPoint>(_setSelectedNetworkPoint);
+    
     on<ConnectSavedNetwork>(_connectSavedNetwork);
     on<ForgetNetwork>(onForgetNetwork);
     on<DeleteSavedNetwork>(_deleteSavedNetwork);
@@ -352,6 +353,7 @@ class WirelessSettingsBloc
       selectedNMAccessPoint: event.selectedAccessPoint,
     ));
   }
+
 }
 
 // Define the custom event for WiFi status change

@@ -2,6 +2,7 @@ class AppRoutes {
   static const wireless = '/wireless';
   static const wirelessNetworkDetails = '/wireless/network_details';
   static const wirelessNetworkSettings = '/wireless/network_settings';
+  static const wirelessSavedNetworkDetails = '/wireless/saved_network_details';
   static const ipSettings = '/wireless/ip';
   static const ethernetDetails = '/wireless/ethernet';
   static const dnsDetails = '/wireless/dns';

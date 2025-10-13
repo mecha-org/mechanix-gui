@@ -31,21 +31,13 @@ class _NetworkSettingsState extends State<NetworkSettings> {
     context.read<WirelessSettingsBloc>().add(GetSavedNetworksEvent());
   }
 
-  void _backNavigation(BuildContext context) {
-    Navigator.pop(context);
-  }
 
   void onItemTap(SavedWirelessNetwork network) {
-    // final item = network.accessPoint;
-    final item =  network.ssid;
-    print("Selected network: $item");
-    // if (item != null) {
-    //   context.read<WirelessSettingsBloc>().add(SelectNetworkPoint(item));
-    // }
-    // Navigator.pushNamed(
-    //   context,
-    //   AppRoutes.wirelessNetworkDetails,
-    // );
+    Navigator.pushNamed(
+      context,
+      AppRoutes.wirelessSavedNetworkDetails,
+      arguments: {'network': network},
+    );
   }
 
   List<SimpleListItems> getWireless(

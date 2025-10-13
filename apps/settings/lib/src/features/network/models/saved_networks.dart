@@ -1,7 +1,7 @@
 import 'package:nm/nm.dart';
 
 class SavedNetworks {
-  String ssid; // status - connected/connecting/disconnected/saved..
+  String ssid; 
   String icon;
   bool connected;
   NetworkManagerAccessPoint? accessPoint;
@@ -15,9 +15,17 @@ class SavedNetworks {
 class SavedWirelessNetwork {
   final String? ssid;            
   final String? security;        
+  final String? macAddress; 
+  final String? ipv4Method;
+  final String? autoConnect;       
+  // final String? type;        // wireless or something else type
 
   SavedWirelessNetwork({
     this.ssid,
     this.security,
+    this.macAddress,
+    this.ipv4Method,
+    this.autoConnect,
+    // this.type,
   });
 }
