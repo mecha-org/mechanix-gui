@@ -105,9 +105,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       emit(state.copyWith(loading: true));
       logger.i("Creating folder: ${event.folderName} in ${event.path}");
       await fileRepository.createFolder(event.path, event.folderName);
+      await event.controller.reload();
       emit(state.copyWith(loading: false));
-
-      // await _loadAndEmitSortedFiles(emit: emit, path: event.path);
     } catch (e) {
       emit(state.copyWith(error: e.toString(), loading: false));
     }
@@ -125,8 +124,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       emit(state.copyWith(loading: true));
       await fileRepository.deleteEntities(event.entitiesPath);
-      final parentPath = p.dirname(event.entitiesPath.first);
-      await _loadAndEmitSortedFiles(emit: emit, path: parentPath);
+      await event.controller.reload();
     } catch (e) {
       emit(state.copyWith(error: 'Failed to delete: $e', loading: false));
     }
@@ -136,8 +134,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       emit(state.copyWith(loading: true));
       await fileRepository.renameEntity(event.oldPath, event.newName);
-      final parentPath = p.dirname(event.oldPath);
-      await _loadAndEmitSortedFiles(emit: emit, path: parentPath);
+      await event.controller!.reload();
+      emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: 'Failed to rename item: $e', loading: false));
     }
@@ -181,7 +179,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             isCopyMode: true));
       } else {
         // No conflicts, all done
-        await _loadAndEmitSortedFiles(emit: emit, path: event.destinationPath);
+        await event.controller!.reload();
         emit(state.copyWith(loading: false));
       }
     } catch (e) {
@@ -214,10 +212,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         logger.i("In elseRemaining conflicts: $remainingConflicts");
 
         // All conflicts resolved
-        await _loadAndEmitSortedFiles(
-          emit: emit,
-          path: event.destinationPath,
-        );
+        await event.controller!.reload();
+
         emit(state.copyWith(
           conflictingPaths: [],
           conflictDestinationPath: '',
@@ -483,9 +479,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         compressionStatus: FileCompressionStatus.success,
         compressedZipPath: event.destinationZipPath,
       ));
-
-      final parentDir = p.dirname(event.destinationZipPath);
-      await _loadAndEmitSortedFiles(emit: emit, path: parentDir);
+      await event.controller?.reload();
     } catch (e) {
       emit(state.copyWith(
         compressionStatus: FileCompressionStatus.failure,

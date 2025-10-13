@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
@@ -26,6 +28,7 @@ class MoveExplorerBottomSheet extends StatefulWidget {
   final FilesBloc filesBloc;
   final FilesBloc filesBlocMainContext;
   final VoidCallback onMoveCompleted;
+  final FileManagerController controller;
 
   const MoveExplorerBottomSheet({
     super.key,
@@ -34,6 +37,7 @@ class MoveExplorerBottomSheet extends StatefulWidget {
     required this.filesBloc,
     required this.filesBlocMainContext,
     required this.onMoveCompleted,
+    required this.controller,
   });
 
   @override
@@ -54,9 +58,14 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
 
   List<FileItem> searchResults = [];
 
-  void _loadFiles() {
+  // void _loadFiles() {
+  //   final pathString = '/${currentPath.map((e) => e.name).join('/')}';
+  //   widget.filesBloc.add(LoadFilesAtPath(pathString, page, pageSize));
+  // }
+
+  Future<void> _loadFiles() async {
     final pathString = '/${currentPath.map((e) => e.name).join('/')}';
-    widget.filesBloc.add(LoadFilesAtPath(pathString, page, pageSize));
+    await widget.controller.openDirectory(Directory(pathString));
   }
 
   @override
@@ -113,7 +122,8 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                       onPressed: () {
                         if (isHomePageDir) {
                           Navigator.pop(context);
-                          moveMainBottomSheet(widget.onMoveCompleted);
+                          moveMainBottomSheet(
+                              widget.onMoveCompleted, widget.controller);
                         } else {
                           setState(() {
                             currentPath.removeLast();
@@ -142,14 +152,14 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                   ).padTop(8),
                   Expanded(
                     child: buildListViewMove(
-                      isSearching && searchResults.isNotEmpty
-                          ? searchResults
-                          : displayedFiles,
-                      context,
-                      currentPath,
-                      widget.filesBloc,
-                      widget.onMoveCompleted,
-                    ),
+                        isSearching && searchResults.isNotEmpty
+                            ? searchResults
+                            : displayedFiles,
+                        context,
+                        currentPath,
+                        widget.filesBloc,
+                        widget.onMoveCompleted,
+                        widget.controller),
                   ),
                   if (isSearching)
                     Padding(
@@ -239,7 +249,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
     });
   }
 
-  void moveMainBottomSheet(onMoveCompleted) {
+  void moveMainBottomSheet(onMoveCompleted, FileManagerController controller) {
     final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
 
     showModalBottomSheet(
@@ -272,7 +282,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         title: "Home directory",
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onTap(context, homeDir, "Home", filesBloc,
-                            onMoveCompleted),
+                            onMoveCompleted, controller),
                         leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
@@ -291,7 +301,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         title: "Downloads",
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onTap(context, downloadsDir, "Downloads",
-                            filesBloc, onMoveCompleted),
+                            filesBloc, onMoveCompleted, controller),
                         leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
@@ -310,7 +320,7 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                         title: "Documents",
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onTap(context, documentsDir, "Documents",
-                            filesBloc, onMoveCompleted),
+                            filesBloc, onMoveCompleted, controller),
                         leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
@@ -328,8 +338,8 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                     SectionListItems(
                         title: "Root (/)",
                         titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onTap(
-                            context, "/", "Root", filesBloc, onMoveCompleted),
+                        onTap: () => onTap(context, "/", "Root", filesBloc,
+                            onMoveCompleted, controller),
                         leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
@@ -391,6 +401,7 @@ void onTap(
   String title,
   FilesBloc filesBlocMain,
   VoidCallback onMoveCompleted,
+  FileManagerController controller,
 ) {
   final localBloc = FilesBloc(
     fileRepository: filesBlocMain.fileRepository,
@@ -421,6 +432,7 @@ void onTap(
         filesBloc: localBloc,
         filesBlocMainContext: filesBlocMain,
         onMoveCompleted: onMoveCompleted,
+        controller: controller,
       ),
     ),
   );

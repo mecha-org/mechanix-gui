@@ -15,7 +15,6 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
-import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/constants.dart';
 import 'package:widgets/widgets/bottomSheetModals/mechanix_bottom_sheet_theme.dart';
@@ -27,12 +26,11 @@ import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
-import '../../../controllers/file_manager.dart';
 import 'view_mode_notifier.dart';
 import 'grid_view.dart';
 import 'list_view.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
-// import 'package:file/file.dart';
+import 'package:file/file.dart' as file_pkg;
 import 'package:path/path.dart' as p;
 import 'dart:math' as Math;
 import 'package:widgets/mechanix.dart';
@@ -44,7 +42,7 @@ class FileExplorerPage extends StatefulWidget {
 
   const FileExplorerPage({
     super.key,
-    this.title = "My Files",
+    this.title = "Files",
     this.path = const [],
     this.startPath,
   });
@@ -88,7 +86,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     _scrollController.addListener(_onScroll);
 
-    // Default to /home if no startPath is provided
+    // Default to home directory if no startPath is provided
     final initialPath = widget.startPath ?? homeDir;
     controller.openDirectory(Directory(initialPath));
 
@@ -119,7 +117,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
-    // controller.dispose();
   }
 
   @override
@@ -252,6 +249,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                               state.conflictDestinationPath,
                                           strategy:
                                               ConflictResolutionStrategy.skip,
+                                          controller: controller,
                                         ),
                                       ),
                                   Navigator.pop(context)
@@ -270,6 +268,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                               state.conflictDestinationPath,
                                           strategy: ConflictResolutionStrategy
                                               .replace,
+                                          controller: controller,
                                         ),
                                       );
                                   Navigator.pop(context);
@@ -365,178 +364,182 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           },
         ),
       ],
-      child: BlocBuilder<FilesBloc, FilesState>(
-        builder: (context, state) {
-          final fileSystemList = state.fileSystemList;
-          displayedFiles = getFilesAtPath(widget.path, fileSystemList);
+      child:
+          // BlocBuilder<FilesBloc, FilesState>(
+          //   builder: (context, state) {
+          //     final fileSystemList = state.fileSystemList;
+          //     displayedFiles = getFilesAtPath(widget.path, fileSystemList);
 
-          isCopyMode = state.isCopyMode;
-          copiedPaths = state.copiedPaths;
+          //     isCopyMode = state.isCopyMode;
+          //     copiedPaths = state.copiedPaths;
 
-          isMoveMode = state.isMoveMode;
-          movedPaths = state.movedPaths;
-          zipFilePath = state.zipFilePath;
-          isExtractMode = state.isExtractMode;
-          showHiddenFiles = state.showHiddenFiles;
+          //     isMoveMode = state.isMoveMode;
+          //     movedPaths = state.movedPaths;
+          //     zipFilePath = state.zipFilePath;
+          //     isExtractMode = state.isExtractMode;
+          //     showHiddenFiles = state.showHiddenFiles;
 
-          return Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios,
-                    size: 20, color: Colors.blue),
-                onPressed: selectionMode
-                    ? clearSelection
-                    : isSearching
-                        ? clearSearch
-                        : (isHomePageDir ? homeNavigation : handleBack),
-                highlightColor:
-                    Colors.transparent, // Remove ripple effect on press
-              ).padLeft(8),
-              title: selectionMode
-                  ? Text("Select", style: context.textTheme.titleLarge)
-                  : isSearching
-                      ? Text("Search", style: context.textTheme.titleLarge)
-                      : ValueListenableBuilder<String>(
-                          valueListenable: controller.getPathNotifier,
-                          builder: (context, path, _) {
-                            final title = widget.title == "Recent"
-                                ? "Recents"
-                                : (path == '/'
-                                    ? "Root"
-                                    : _getCurrentFolderName(path));
-                            return Text(title,
-                                style: context.textTheme.titleLarge);
-                          },
-                        ),
-              actions: selectionMode
-                  ? [
-                      Text(
-                        "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 14),
-                      ).padRight(24),
-                    ]
-                  : isSearching
-                      ? null
-                      : [
-                          // View toggle
-                          ValueListenableBuilder<bool>(
-                            valueListenable: viewModeNotifier,
-                            builder: (context, isList, _) {
-                              return IconButton(
-                                icon: Image.asset(
-                                    isList ? Images.list : Images.grid),
-                                onPressed: () {
-                                  viewModeNotifier.value =
-                                      !viewModeNotifier.value;
-                                },
-                                highlightColor: Colors.transparent,
-                              );
-                            },
-                          ),
-
-                          // Sort options
-                          IconButton(
-                            icon: Image.asset(Images.sortAscending),
-                            onPressed: () async {
-                              showSortMenu(context, state.currentSortBy);
-                            },
-                            highlightColor: Colors
-                                .transparent, // Remove ripple effect on press
-                          ),
-
-                          // Search toggle
-                          IconButton(
-                            icon: const Icon(Icons.search, color: Colors.white),
-                            onPressed: () {
-                              setState(() => isSearching = true);
-                              showSearchBottomSheet(context, searchQuery);
-                            },
-                          ),
-
-                          // More options
-                          Builder(
-                            builder: (context) {
-                              return MechanixBottomSheetTheme(
-                                data: MechanixBottomSheetThemeData(
-                                  backgroundColor: WidgetStateProperty.all(
-                                      Colors.transparent),
-                                  borderRadius: 50,
-                                  shadowColor:
-                                      WidgetStateProperty.all(Colors.black45),
-                                ),
-                                child: IconButton(
-                                  icon: Image.asset(Images.dots),
-                                  onPressed: () =>
-                                      handleSelectionMore(context, state),
-                                  highlightColor: Colors.transparent,
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-            ),
-            body: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 6),
-                Expanded(
-                  child: ContainerWidget(
-                    child: ValueListenableBuilder<String>(
-                      valueListenable: searchQuery,
-                      builder: (context, query, _) {
-                        List<FileSystemEntity> filteredFilesRecent = [];
-                        List<FileItem> filteredFiles = [];
-
-                        if (widget.title == 'Recent') {
-                          // For recent files
-                          filteredFilesRecent = query.isEmpty
-                              ? fileSystemList
-                              : fileSystemList
-                                  .where((file) => file.basename
-                                      .toLowerCase()
-                                      .contains(query.toLowerCase()))
-                                  .toList();
-                        } else {
-                          // Normal directory
-                          filteredFiles = query.isEmpty
-                              ? displayedFiles
-                              : displayedFiles
-                                  .where((file) => file.name
-                                      .toLowerCase()
-                                      .contains(query.toLowerCase()))
-                                  .toList();
-                        }
-
-                        return ValueListenableBuilder<bool>(
-                          valueListenable: viewModeNotifier,
-                          builder: (context, isGrid, _) {
-                            return isGrid
-                                ? widget.title == 'recent'
-                                    ? buildGridViewForRecentFiles(
-                                        context, filteredFilesRecent)
-                                    : buildGridView(
-                                        context, _scrollController, controller)
-                                : widget.title == 'Recent'
-                                    ? buildListViewForRecentFiles(
-                                        context, filteredFilesRecent)
-                                    : buildListView(
-                                        context, _scrollController, controller);
-                          },
-                        );
+          Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon:
+                const Icon(Icons.arrow_back_ios, size: 20, color: Colors.blue),
+            onPressed: selectionMode
+                ? clearSelection
+                : isSearching
+                    ? clearSearch
+                    : (isHomePageDir ? homeNavigation : handleBack),
+            highlightColor: Colors.transparent, // Remove ripple effect on press
+          ).padLeft(8),
+          title: selectionMode
+              ? Text("Select", style: context.textTheme.titleLarge)
+              : isSearching
+                  ? Text("Search", style: context.textTheme.titleLarge)
+                  : ValueListenableBuilder<String>(
+                      valueListenable: controller.getPathNotifier,
+                      builder: (context, path, _) {
+                        final title = widget.title == "Recent"
+                            ? "Recents"
+                            : (path == '/'
+                                ? "Root"
+                                : _getCurrentFolderName(path));
+                        return Text(title, style: context.textTheme.titleLarge);
                       },
                     ),
-                  ),
+          actions: selectionMode
+              ? [
+                  Text(
+                    "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ).padRight(24),
+                ]
+              : isSearching
+                  ? null
+                  : [
+                      // View toggle
+                      ValueListenableBuilder<bool>(
+                        valueListenable: viewModeNotifier,
+                        builder: (context, isList, _) {
+                          return IconButton(
+                            icon:
+                                Image.asset(isList ? Images.list : Images.grid),
+                            onPressed: () {
+                              viewModeNotifier.value = !viewModeNotifier.value;
+                            },
+                            highlightColor: Colors.transparent,
+                          );
+                        },
+                      ),
+
+                      // Sort options
+                      BlocSelector<FilesBloc, FilesState, String>(
+                        selector: (state) => state.currentSortBy,
+                        builder: (context, currentSortBy) {
+                          return IconButton(
+                            icon: Image.asset(Images.sortAscending),
+                            onPressed: () async {
+                              showSortMenu(context, currentSortBy);
+                            },
+                            highlightColor:
+                                Colors.transparent, // no ripple effect
+                          );
+                        },
+                      ),
+
+                      // Search toggle
+                      IconButton(
+                        icon: const Icon(Icons.search, color: Colors.white),
+                        onPressed: () {
+                          setState(() => isSearching = true);
+                          showSearchBottomSheet(context, searchQuery);
+                        },
+                      ),
+
+                      // More options
+                      Builder(
+                        builder: (context) {
+                          return MechanixBottomSheetTheme(
+                            data: MechanixBottomSheetThemeData(
+                              backgroundColor:
+                                  WidgetStateProperty.all(Colors.transparent),
+                              borderRadius: 50,
+                              shadowColor:
+                                  WidgetStateProperty.all(Colors.black45),
+                            ),
+                            child: IconButton(
+                              icon: Image.asset(Images.dots),
+                              onPressed: () => handleSelectionMore(context),
+                              highlightColor: Colors.transparent,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 6),
+            Expanded(
+              child: ContainerWidget(
+                child: ValueListenableBuilder<String>(
+                  valueListenable: searchQuery,
+                  builder: (context, query, _) {
+                    List<FileSystemEntity> filteredFilesRecent = [];
+                    List<FileItem> filteredFiles = [];
+
+                    if (widget.title == 'Recent') {
+                      // Read the current file list from the bloc state synchronously
+                      final fileSystemList = BlocProvider.of<FilesBloc>(context)
+                          .state
+                          .fileSystemList;
+                      filteredFilesRecent = query.isEmpty
+                          ? fileSystemList
+                          : fileSystemList
+                              .where((file) => p
+                                  .basename(file.path)
+                                  .toLowerCase()
+                                  .contains(query.toLowerCase()))
+                              .toList();
+                    } else {
+                      // Normal directory
+                      filteredFiles = query.isEmpty
+                          ? displayedFiles
+                          : displayedFiles
+                              .where((file) => file.name
+                                  .toLowerCase()
+                                  .contains(query.toLowerCase()))
+                              .toList();
+                    }
+
+                    return ValueListenableBuilder<bool>(
+                      valueListenable: viewModeNotifier,
+                      builder: (context, isGrid, _) {
+                        return isGrid
+                            ? widget.title == 'recent'
+                                ? buildGridViewForRecentFiles(
+                                    context, filteredFilesRecent)
+                                : buildGridView(
+                                    context, _scrollController, controller)
+                            : widget.title == 'Recent'
+                                ? buildListViewForRecentFiles(
+                                    context, filteredFilesRecent)
+                                : buildListView(
+                                    context, _scrollController, controller);
+                      },
+                    );
+                  },
                 ),
-              ],
+              ),
             ),
-            backgroundColor: Colors.black,
-            floatingActionButtonLocation:
-                FloatingActionButtonLocation.centerFloat,
-            floatingActionButton:
-                selectionMode ? _buildFloatingActionMenu(context) : null,
-          );
-        },
+          ],
+        ),
+        backgroundColor: Colors.black,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton:
+            selectionMode ? _buildFloatingActionMenu(context) : null,
+        //   );
+        // },
       ),
     );
   }
@@ -1006,12 +1009,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void handleMove() {
-    final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
     List<String> selectedPathsList = selectedPaths.toList();
     final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
 
     // Start move mode
     filesBloc.add(StartMoveMode(selectedPathsList));
+    final controller = FileManagerController();
 
     showModalBottomSheet(
       context: context,
@@ -1042,8 +1045,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     SectionListItems(
                       title: "Home directory",
                       titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(
-                          context, homeDir, "Home", filesBloc, () => reload()),
+                      onTap: () => onTap(context, homeDir, "Home", filesBloc,
+                          () => reload(), controller),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -1057,7 +1060,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       title: "Downloads",
                       titleTextStyle: const TextStyle(fontSize: 14),
                       onTap: () => onTap(context, downloadsDir, "Downloads",
-                          filesBloc, () => reload()),
+                          filesBloc, () => reload(), controller),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -1071,7 +1074,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       title: "Documents",
                       titleTextStyle: const TextStyle(fontSize: 14),
                       onTap: () => onTap(context, documentsDir, "Documents",
-                          filesBloc, () => reload()),
+                          filesBloc, () => reload(), controller),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -1084,8 +1087,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     SectionListItems(
                       title: "Root (/)",
                       titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(
-                          context, "/", "Root", filesBloc, () => reload()),
+                      onTap: () => onTap(context, "/", "Root", filesBloc,
+                          () => reload(), controller),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -1134,9 +1137,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     final destinationDirPath = p.dirname(selectedPaths.first);
     final defaultZipName = "Archive.zip";
-
     String zipName = defaultZipName;
-
     final filesBloc = BlocProvider.of<FilesBloc>(context);
 
     await showModalBottomSheet(
@@ -1144,118 +1145,144 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       backgroundColor: Colors.black,
       isScrollControlled: true,
       builder: (bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: MechanixTextInputTheme(
-              style: MechanixTextInputThemeData(
-                borderRadius: BorderRadius.circular(50),
+        String? errorText;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Compress to...',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                  ).padBottom(12),
-
-                  // Input field
-                  Row(
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: MechanixTextInputTheme(
+                  style: MechanixTextInputThemeData(
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 3,
-                        child: MechanixTextInput<String>.textInput(
-                          hintText: defaultZipName,
-                          initialValue: defaultZipName,
-                          onChanged: (value) => zipName = value,
-                          inputDecoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
-                            filled: true,
-                            fillColor: const Color(0xFF2C2C2E),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Cancel button
-                                OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                  ).copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () =>
-                                      Navigator.pop(bottomSheetContext),
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                  ),
+                      const Text(
+                        'Compress to...',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ).padBottom(12),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: MechanixTextInput<String>.textInput(
+                              hintText: defaultZipName,
+                              initialValue: defaultZipName,
+                              onChanged: (value) {
+                                zipName = value;
+                                setState(() => errorText = null);
+                              },
+                              inputDecoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 16),
+                                filled: true,
+                                fillColor: const Color(0xFF2C2C2E),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                  borderSide: BorderSide.none,
                                 ),
-                                const SizedBox(width: 6),
-                                // OK / Compress button
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    backgroundColor: Colors.grey[800],
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50),
+                                errorText: errorText,
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                      ).copyWith(
+                                        splashFactory: NoSplash.splashFactory,
+                                      ),
+                                      onPressed: () =>
+                                          Navigator.pop(bottomSheetContext),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ).copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () {
-                                    final trimmedName = zipName.trim();
-                                    if (trimmedName.isNotEmpty) {
-                                      final zipPath = p.join(
-                                        destinationDirPath,
-                                        trimmedName.endsWith('.zip')
-                                            ? trimmedName
-                                            : '$trimmedName.zip',
-                                      );
-
-                                      filesBloc.add(
-                                        CompressEntitiesEvent(
-                                          sourcePaths: selectedPaths.toList(),
-                                          destinationZipPath: zipPath,
+                                    const SizedBox(width: 6),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        backgroundColor: Colors.grey[800],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(50),
                                         ),
-                                      );
-                                    }
-                                    Navigator.pop(bottomSheetContext);
-                                    clearSelection();
-                                  },
-                                  child: const Icon(Icons.check),
+                                      ).copyWith(
+                                        splashFactory: NoSplash.splashFactory,
+                                      ),
+                                      onPressed: () async {
+                                        final trimmedName = zipName.trim();
+
+                                        if (trimmedName.isEmpty) {
+                                          setState(() {
+                                            errorText =
+                                                'ZIP file name cannot be empty';
+                                          });
+                                          return;
+                                        }
+
+                                        final zipPath = p.join(
+                                          destinationDirPath,
+                                          trimmedName.endsWith('.zip')
+                                              ? trimmedName
+                                              : '$trimmedName.zip',
+                                        );
+
+                                        // Async existence check
+                                        final fileExists =
+                                            await File(zipPath).exists();
+                                        if (fileExists) {
+                                          setState(() {
+                                            errorText =
+                                                'A ZIP file with that name already exists';
+                                          });
+                                          return;
+                                        }
+
+                                        // Safe to compress
+                                        filesBloc.add(
+                                          CompressEntitiesEvent(
+                                            sourcePaths: selectedPaths.toList(),
+                                            destinationZipPath: zipPath,
+                                            controller: controller,
+                                          ),
+                                        );
+
+                                        Navigator.pop(bottomSheetContext);
+                                        clearSelection();
+                                      },
+                                      child: const Icon(Icons.check),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -1408,12 +1435,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     }
   }
 
-  void handleSelectionMore(BuildContext context, FilesState state) {
-    // final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
+  void handleSelectionMore(BuildContext context) {
     final currentPath = controller.getPathNotifier.value;
     selectedPaths.add(currentPath);
 
     bool actionTaken = false; // Track if any menu item was selected
+    final bloc = BlocProvider.of<FilesBloc>(context);
+    // Read the current bloc state synchronously and perform the paste operation.
+    final state = bloc.state;
 
     showModalBottomSheet(
       context: context,
@@ -1515,14 +1544,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 },
               ),
               const MechanixMenuDivider(),
-              if (isCopyMode || isMoveMode) ...[
+              if (state.isCopyMode || state.isMoveMode) ...[
                 MechanixMenuItem(
                   label: "Paste",
                   layout: MenuItemLayout.iconLeft,
                   leadingWidget: const Icon(Icons.paste, color: Colors.white70),
                   onTap: () {
                     actionTaken = true;
-                    handlePaste(context, state);
+                    handlePaste(context);
                     clearSelection();
                     reload();
                     Navigator.of(context).pop();
@@ -1592,26 +1621,20 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     throw Exception("No terminal found");
   }
 
-  // TODO: Test same location paste
-  void handlePaste(BuildContext context, FilesState state) {
+  void handlePaste(BuildContext context) {
     final targetPath = controller.getPathNotifier.value;
 
     final bloc = BlocProvider.of<FilesBloc>(context);
+    // Read the current bloc state synchronously and perform the paste operation.
+    final state = bloc.state;
 
-    if (isCopyMode) {
+    if (state.isCopyMode) {
       bloc.add(Copy(
         sourcePaths: state.copiedPaths,
         destinationPath: targetPath,
+        controller: controller,
       ));
       bloc.add(CancelCopyMode());
-    }
-
-    if (isMoveMode) {
-      bloc.add(Move(
-        sourcePaths: state.movedPaths,
-        destinationPath: targetPath,
-      ));
-      bloc.add(CancelMoveMode());
     }
   }
 
@@ -1763,240 +1786,294 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     String folderName = ""; // Local variable to track input
     final filesBloc = BlocProvider.of<FilesBloc>(context);
     final hasSelection = selectedPaths.isNotEmpty;
-    final movePaths = selectedPaths;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: MechanixTextInputTheme(
-              style: MechanixTextInputThemeData(
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: MechanixTextInput<String>.textInput(
-                          hintText: "New folder",
-                          onChanged: (value) {
-                            folderName = value; // Update local variable
-                          },
-                          inputDecoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
-                            filled: true,
-                            fillColor: const Color(0xFF2C2C2E),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16))
-                                      .copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(bottomSheetContext).pop();
-                                  },
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    backgroundColor: Colors.grey[800],
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                  ).copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () {
-                                    final trimmedName = folderName.trim();
-                                    if (trimmedName.isNotEmpty) {
-                                      final currentPath =
-                                          controller.getPathNotifier.value;
-                                      // Dispatch CreateFolder event
-                                      filesBloc.add(CreateFolder(
-                                        path: currentPath,
-                                        folderName: trimmedName,
-                                      ));
+        String? errorText;
 
-                                      // If there are selected paths, move them into the new folder
-                                      if (hasSelection) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: MechanixTextInputTheme(
+                  style: MechanixTextInputThemeData(
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: MechanixTextInput<String>.textInput(
+                              hintText: "New folder",
+                              onChanged: (value) {
+                                folderName = value;
+                                setState(() => errorText = null); // clear error
+                              },
+                              inputDecoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 16),
+                                filled: true,
+                                fillColor: const Color(0xFF2C2C2E),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                  borderSide: BorderSide.none,
+                                ),
+                                errorText: errorText, // show error text
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                      ).copyWith(
+                                        splashFactory: NoSplash.splashFactory,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(bottomSheetContext).pop();
+                                      },
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        backgroundColor: Colors.grey[800],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                        ),
+                                      ).copyWith(
+                                        splashFactory: NoSplash.splashFactory,
+                                      ),
+                                      onPressed: () async {
+                                        final trimmedName = folderName.trim();
+
+                                        if (trimmedName.isEmpty) {
+                                          setState(() => errorText =
+                                              'Folder name cannot be empty');
+                                          return;
+                                        }
+
+                                        final currentPath =
+                                            controller.getPathNotifier.value;
                                         final newFolderPath =
                                             '$currentPath/$trimmedName';
 
-                                        filesBloc.add(Move(
-                                          sourcePaths: selectedPaths.toList(),
-                                          destinationPath: newFolderPath,
+                                        // async folder existence check
+                                        final exists =
+                                            await Directory(newFolderPath)
+                                                .exists();
+                                        if (exists) {
+                                          setState(() => errorText =
+                                              'A folder with that name already exists');
+                                          debugPrint(
+                                              "Folder exists: $newFolderPath");
+                                          return;
+                                        }
+
+                                        // safe to create
+                                        filesBloc.add(CreateFolder(
+                                          path: currentPath,
+                                          folderName: trimmedName,
+                                          controller: controller,
                                         ));
-                                        filesBloc.add(CancelMoveMode());
-                                      }
-                                    }
-                                    clearSelection();
-                                    Navigator.of(bottomSheetContext).pop();
-                                  },
-                                  child: const Icon(Icons.check),
+
+                                        // move selected files into the new folder
+                                        if (hasSelection) {
+                                          final newFolderPath =
+                                              '$currentPath/$trimmedName';
+                                          final completer = Completer<void>();
+
+                                          filesBloc.add(Move(
+                                            sourcePaths: selectedPaths.toList(),
+                                            destinationPath: newFolderPath,
+                                            completer: completer,
+                                          ));
+                                          await completer.future;
+                                          filesBloc.add(CancelMoveMode());
+                                          reload();
+                                          clearSelection();
+                                        }
+
+                                        Navigator.of(bottomSheetContext).pop();
+                                      },
+                                      child: const Icon(Icons.check),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
   }
 
   void showCreateFolderDialog() {
-    String folderName = ""; // Local variable to track input
+    String folderName = ""; // Track input
     final filesBloc = BlocProvider.of<FilesBloc>(context);
+    final currentPath = controller.getPathNotifier.value;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: MechanixTextInputTheme(
-              style: MechanixTextInputThemeData(
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: MechanixTextInput<String>.textInput(
-                          hintText: "New folder",
-                          onChanged: (value) {
-                            folderName = value; // Update local variable
-                          },
-                          inputDecoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
-                            filled: true,
-                            fillColor: const Color(0xFF2C2C2E),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16))
-                                      .copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(bottomSheetContext).pop();
-                                  },
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    backgroundColor: Colors.grey[800],
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50),
-                                    ),
-                                  ).copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () {
-                                    final trimmedName = folderName.trim();
-                                    if (trimmedName.isNotEmpty) {
-                                      final currentPath =
-                                          controller.getPathNotifier.value;
+        String? errorText;
 
-                                      filesBloc.add(CreateFolder(
-                                        path: currentPath,
-                                        folderName: trimmedName,
-                                      ));
-                                      reload();
-                                    }
-                                    Navigator.of(bottomSheetContext).pop();
-                                  },
-                                  child: const Icon(Icons.check),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: MechanixTextInputTheme(
+                  style: MechanixTextInputThemeData(
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MechanixTextInput<String>.textInput(
+                        hintText: "New folder",
+                        onChanged: (value) {
+                          folderName = value;
+                          setState(() {
+                            errorText = null; // clear previous error
+                          });
+                        },
+                        inputDecoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 16),
+                          filled: true,
+                          fillColor: const Color(0xFF2C2C2E),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(50),
+                            borderSide: BorderSide.none,
+                          ),
+                          errorText: errorText, // shows validation error
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16))
+                                    .copyWith(
+                                  splashFactory: NoSplash.splashFactory,
                                 ),
-                                const SizedBox(width: 6),
-                              ],
-                            ),
+                                onPressed: () {
+                                  Navigator.of(bottomSheetContext).pop();
+                                },
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  backgroundColor: Colors.grey[800],
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(50),
+                                  ),
+                                ).copyWith(
+                                  splashFactory: NoSplash.splashFactory,
+                                ),
+                                onPressed: () async {
+                                  final trimmedName = folderName.trim();
+
+                                  if (trimmedName.isEmpty) {
+                                    setState(() {
+                                      errorText = 'Folder name cannot be empty';
+                                    });
+                                    return;
+                                  }
+
+                                  final newFolderPath =
+                                      '$currentPath/$trimmedName';
+
+                                  // Async folder existence check
+                                  final exists =
+                                      await Directory(newFolderPath).exists();
+
+                                  if (exists) {
+                                    setState(() {
+                                      errorText =
+                                          'A folder with that name already exists';
+                                    });
+                                    return;
+                                  }
+
+                                  // Folder does not exist, safe to create
+                                  filesBloc.add(CreateFolder(
+                                    path: currentPath,
+                                    folderName: trimmedName,
+                                    controller: controller,
+                                  ));
+
+                                  Navigator.of(bottomSheetContext).pop();
+                                },
+                                child: const Icon(Icons.check),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
                           ),
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
   }
 
   void _showRenameDialog(String oldPath) {
-    String newName = p.basename(oldPath); // Local variable to track input
+    String newName = p.basename(oldPath);
     final filesBloc = BlocProvider.of<FilesBloc>(context);
 
     showModalBottomSheet(
@@ -2004,114 +2081,126 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       backgroundColor: Colors.black,
       isScrollControlled: true,
       builder: (bottomSheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: MechanixTextInputTheme(
-              style: MechanixTextInputThemeData(
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Rename \'${p.basename(oldPath)}\'',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                  ).padBottom(12),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final trimmedName = newName.trim();
+            final isSubmitDisabled =
+                trimmedName.isEmpty || trimmedName == p.basename(oldPath);
 
-                  // Input field
-                  Row(
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: MechanixTextInputTheme(
+                  style: MechanixTextInputThemeData(
+                    borderRadius: BorderRadius.circular(50),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 3,
-                        child: MechanixTextInput<String>.textInput(
-                          hintText: p.basename(oldPath),
-                          initialValue: p.basename(oldPath),
-                          onChanged: (value) {
-                            newName = value;
-                          },
-                          inputDecoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 16),
-                            filled: true,
-                            fillColor: const Color(0xFF2C2C2E),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50),
-                              borderSide: BorderSide.none,
-                            ),
-                            suffixIcon: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                OutlinedButton(
-                                  style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16))
-                                      .copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(bottomSheetContext).pop();
-                                  },
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                  ),
+                      Text(
+                        'Rename \'${p.basename(oldPath)}\'',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ).padBottom(12),
+
+                      // Input field
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: MechanixTextInput<String>.textInput(
+                              // hintText: p.basename(oldPath),
+                              initialValue: p.basename(oldPath),
+                              onChanged: (value) {
+                                setState(() {
+                                  newName = value;
+                                });
+                              },
+                              inputDecoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 16),
+                                filled: true,
+                                fillColor: const Color(0xFF2C2C2E),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(50),
+                                  borderSide: BorderSide.none,
                                 ),
-                                const SizedBox(width: 6),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    backgroundColor: Colors.grey[800],
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(50),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                      ).copyWith(
+                                        splashFactory: NoSplash.splashFactory,
+                                      ),
+                                      onPressed: () =>
+                                          Navigator.of(bottomSheetContext)
+                                              .pop(),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ).copyWith(
-                                    splashFactory: NoSplash
-                                        .splashFactory, // Disable ripple animation
-                                  ),
-                                  onPressed: () {
-                                    final trimmedName = newName.trim();
-                                    if (trimmedName.isNotEmpty &&
-                                        trimmedName != p.basename(oldPath)) {
-                                      filesBloc.add(Rename(
-                                        oldPath: oldPath,
-                                        newName: trimmedName,
-                                      ));
-                                    }
-                                    Navigator.of(bottomSheetContext).pop();
-                                    clearSelection();
-                                  },
-                                  child: const Icon(Icons.check),
+                                    const SizedBox(width: 6),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        backgroundColor: isSubmitDisabled
+                                            ? Colors.grey[700]
+                                            : Colors.grey[800],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(50),
+                                        ),
+                                      ).copyWith(
+                                        splashFactory: NoSplash.splashFactory,
+                                      ),
+                                      onPressed: isSubmitDisabled
+                                          ? null
+                                          : () {
+                                              filesBloc.add(Rename(
+                                                oldPath: oldPath,
+                                                newName: trimmedName,
+                                                controller: controller,
+                                              ));
+                                              Navigator.of(bottomSheetContext)
+                                                  .pop();
+                                              clearSelection();
+                                            },
+                                      child: const Icon(Icons.check),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
+
     clearSelection();
   }
 
@@ -2122,10 +2211,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     filesBloc.add(ToggleHiddenFiles(path: currentPath));
   }
-
-  // void reload(String currentPath, FilesBloc filesBloc) {
-  //   filesBloc.add(LoadFilesAtPath(currentPath, page, pageSize));
-  // }
 
   void reload() {
     controller.reload();
@@ -2203,7 +2288,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     onPressed: () {
                       Navigator.pop(bottomSheetContext);
                       BlocProvider.of<FilesBloc>(context)
-                          .add(DeleteEntities(pathsToDelete));
+                          .add(DeleteEntities(pathsToDelete, controller));
                       reload();
                     },
                   ),

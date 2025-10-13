@@ -228,7 +228,8 @@ Widget buildListViewMove(
     BuildContext context,
     List<FileItem> currentPath,
     FilesBloc filesBloc,
-    VoidCallback onMoveCompleted) {
+    VoidCallback onMoveCompleted,
+    FileManagerController controller) {
   // Only folders
   final folders = files.where((file) => file.type == 'dir').toList();
 
@@ -243,7 +244,8 @@ Widget buildListViewMove(
       onTap: () {
         final newPath = [...currentPath, file];
         final pathString = '/${newPath.map((e) => e.name).join('/')}';
-        onTap(context, pathString, file.name, filesBloc, onMoveCompleted);
+        onTap(context, pathString, file.name, filesBloc, onMoveCompleted,
+            controller);
       },
     );
   }).toList();
