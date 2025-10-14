@@ -25,6 +25,7 @@ class WirelessSettings extends StatefulWidget {
 }
 
 class _WirelessSettingsState extends State<WirelessSettings> {
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(

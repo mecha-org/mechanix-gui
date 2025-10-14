@@ -137,11 +137,6 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                     theme: MechanixSectionListThemeData(
                         widgetPadding: Spacing.only(top: 8, bottom: 40)),
                     sectionListItems: [
-                      // SectionListItems(
-                      //   title: 'Private Wifi Address',
-                      //   trailing:
-                      //       CustomTrailingText(title: 'Fixed').padRight(8),
-                      // ),
                       SectionListItems(
                           defaultTrailingIcon: false,
                           title: 'Private Wifi Address',
@@ -152,8 +147,32 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                   ),
 
                   if (state.selectedAccessPoint != null &&
-                      state.selectedNMAccessPoint != null &&
-                      state.selectedAccessPoint!.isActive)
+                      state.selectedNMAccessPoint != null)
+                    MechanixSectionList(
+                      sectionListItems: [
+                        SectionListItems(
+                          defaultTrailingIcon: false,
+                          title: 'Signal Strength',
+                          trailing: CustomTrailingText(
+                                  title:
+                                      '${state.selectedAccessPoint?.nmAccessPoint.strength} %')
+                              .padRight(8),
+                        ),
+                        SectionListItems(
+                          defaultTrailingIcon: false,
+                          title: 'Supported Frequency',
+                          trailing: CustomTrailingText(
+                                  title:
+                                      '${state.selectedAccessPoint?.nmAccessPoint.frequency} MHz')
+                              .padRight(8),
+                        ),
+                      ],
+                    ),
+
+                  if (state.selectedAccessPoint != null &&
+                          state.selectedNMAccessPoint != null &&
+                          state.selectedAccessPoint!.isActive ||
+                      state.selectedAccessPoint!.isSaved)
                     MechanixSectionList(
                       title: 'IPV4 Address',
                       physics: const BouncingScrollPhysics(),
@@ -206,40 +225,6 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                                   title:
                                       '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip6Config?.routeData.first['dest'] : ''}')
                               .padRight(8),
-                        ),
-                      ],
-                    ),
-
-                  if (state.selectedAccessPoint != null &&
-                      state.selectedNMAccessPoint != null &&
-                      state.selectedAccessPoint!.isSaved)
-                    MechanixSectionList(
-                      title: 'IPV4 Address',
-                      physics: const BouncingScrollPhysics(),
-                      sectionListItems: [
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'IP Address',
-                          trailing: CustomTrailingText(
-                            title:
-                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['address'] : ''}',
-                          ),
-                        ),
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'Subnet Mask',
-                          trailing: CustomTrailingText(
-                            title:
-                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['prefix'] : ''}',
-                          ),
-                        ),
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'Router',
-                          trailing: CustomTrailingText(
-                            title:
-                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.routeData.first['dest'] : ''}',
-                          ),
                         ),
                       ],
                     ),

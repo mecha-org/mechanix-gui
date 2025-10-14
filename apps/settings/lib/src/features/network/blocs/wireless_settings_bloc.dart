@@ -250,7 +250,6 @@ class WirelessSettingsBloc
     await wifiRepository.deleteSavedNetwork(event.ssid);
   }
 
-// OKAY
   Future<void> _updateAvailableNetworkList(UpdateAvailableNetworksEvent event,
       Emitter<WirelessSettingsState> emit) async {
     try {
@@ -262,13 +261,10 @@ class WirelessSettingsBloc
           .map((n) => utf8.decode(n.nmAccessPoint.ssid))
           .toSet();
 
-      final newNetworks = event.accessPoints
-          .where((network) {
-            final ssid = utf8.decode(network.nmAccessPoint.ssid);
-            return ssid.isNotEmpty && !existingSSIDs.contains(ssid);
-          })
-          .where((network) => !network.isSaved) // Only include unsaved networks
-          .toList();
+      final newNetworks = event.accessPoints.where((network) {
+        final ssid = utf8.decode(network.nmAccessPoint.ssid);
+        return ssid.isNotEmpty && !existingSSIDs.contains(ssid);
+      }).toList();
 
       final newScanSSIDs = event.accessPoints
           .map((network) => utf8.decode(network.nmAccessPoint.ssid))
@@ -278,16 +274,19 @@ class WirelessSettingsBloc
       final unavailableSSIDs =
           existingSSIDs.where((ssid) => !newScanSSIDs.contains(ssid)).toList();
 
+      var availableOtherNetworks = [
+        ...state.availableOtherNetworks,
+        ...newNetworks
+      ]
+          .where((network) => !network.isSaved) // Only include unsaved networks
+          .toList();
+
       if (newNetworks.isNotEmpty) {
-        emit(state.copyWith(availableOtherNetworks: [
-          ...state.availableOtherNetworks,
-          ...newNetworks
-        ]));
+        emit(state.copyWith(availableOtherNetworks: availableOtherNetworks));
       }
 
       if (unavailableSSIDs.isNotEmpty) {
-        final updatedNetworks =
-            List<AccessPoints>.from(state.availableOtherNetworks);
+        final updatedNetworks = List<AccessPoints>.from(availableOtherNetworks);
 
         updatedNetworks.removeWhere((network) {
           final networkSsid = utf8.decode(network.nmAccessPoint.ssid);
