@@ -46,7 +46,7 @@ class WirelessSettingsBloc
     on<WifiStatusChanged>(_onWifiStatusChanged); // connecting, connected, etc
     on<SelectNetwork>(_setSelectedNetwork);
     on<SelectNetworkPoint>(_setSelectedNetworkPoint);
-    
+
     on<ConnectSavedNetwork>(_connectSavedNetwork);
     on<ForgetNetwork>(onForgetNetwork);
     on<DeleteSavedNetwork>(_deleteSavedNetwork);
@@ -125,11 +125,19 @@ class WirelessSettingsBloc
       _wifiStateAndReason =
           streamAndDevice.device.propertiesChanged.listen((event) {
         if (event.contains('StateReason')) {
-          if (streamAndDevice.device.stateReason.state ==
+          if ((streamAndDevice.device.stateReason.state ==
+                      NetworkManagerDeviceState.activated ||
+                  streamAndDevice.device.stateReason.state ==
+                      NetworkManagerDeviceState.ipCheck) &&
+              streamAndDevice.device.stateReason.reason ==
+                  NetworkManagerDeviceStateReason.none) {
+            logger.i('Successfully connected to network');
+            return;
+          } else if (streamAndDevice.device.stateReason.state ==
                   NetworkManagerDeviceState.failed &&
               streamAndDevice.device.stateReason.reason ==
                   NetworkManagerDeviceStateReason.noSecrets) {
-            logger.w('Authentication required!');
+            logger.w('WirelessSettingsBloc:: Authentication required!');
             add(Error("Authentication required!"));
           }
         }
@@ -177,10 +185,13 @@ class WirelessSettingsBloc
 
   void _handleWifiEnableChange(bool enabled) {
     if (enabled) {
+      print("_handleWifiEnableChange IF :: $enabled");
       _initializeAccessPointStream();
       _initWifiStateAndReasonStream();
     } else {
       // On power off, cancel relevant the streams
+      print("_handleWifiEnableChange ELSE :: $enabled");
+
       _accessPointSubscription?.cancel();
       _accessPointSubscription = null;
 
@@ -353,7 +364,6 @@ class WirelessSettingsBloc
       selectedNMAccessPoint: event.selectedAccessPoint,
     ));
   }
-
 }
 
 // Define the custom event for WiFi status change

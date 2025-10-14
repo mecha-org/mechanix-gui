@@ -35,64 +35,72 @@ class _NetworkDetailsState extends State<NetworkDetails> {
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
-              child:MechanixNavigationBar(
-              title: state.selectedNMAccessPoint != null
-                  ? utf8.decode(state.selectedNMAccessPoint!.ssid)
-                  : '',
-              actionWidgets: (state.selectedAccessPoint!.isActive || state.selectedAccessPoint!.isSaved)
-                  ? [
-                      IconButton(
-                        onPressed: () => onForgetPressed(
-                            utf8.decode(state.selectedNMAccessPoint!.ssid)),
-                        style: ButtonStyle(
-                          iconColor: WidgetStateProperty.all(Colors.white),
-                          backgroundColor:
-                              WidgetStateProperty.all(Color(0xFFB71C1C)),
-                          shape: WidgetStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
-                          minimumSize: WidgetStateProperty.all(Size(32, 32)),
-                          fixedSize: WidgetStateProperty.all(Size(32, 32)),
-                          padding: WidgetStateProperty.all(EdgeInsets.zero),
-                        ),
-                        icon: Center(
-                          child: CustomIcon(
-                            icon: Image.asset(Images.trash),
-                            width: 15,
-                            height: 17,
-                          ),
-                        ),
-                      ).padRight(16)
-                    ]
-                  : [
-                      TextButton.icon(
-                        onPressed: () =>
-                            onNetworkTap(context, state.selectedAccessPoint),
-                        style: ButtonStyle(
-                          backgroundColor:
-                              WidgetStatePropertyAll<Color>(Color(0xFF044DDF)),
-                          shape: WidgetStatePropertyAll<RoundedRectangleBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: BorderSide(),
-                            ),
-                          ),
-                        ),
-                        icon: IconWidget(
-                          iconColor: Colors.white,
-                          iconPath: Images.addRoundedSquare,
-                          iconHeight: 20,
-                          iconWidth: 20,
-                        ),
-                        label: Text(
-                          "Join Network",
-                          style: context.textTheme.labelMedium
-                              ?.copyWith(color: Colors.white),
-                        ),
-                      ).padRight(16)
-                    ]).padHorizontal(12)),
+              child: MechanixNavigationBar(
+                      title: state.selectedNMAccessPoint != null
+                          ? utf8.decode(state.selectedNMAccessPoint!.ssid)
+                          : '',
+                      actionWidgets: (state.selectedAccessPoint!.isActive ||
+                              state.selectedAccessPoint!.isSaved)
+                          ? [
+                              IconButton(
+                                onPressed: () => onForgetPressed(utf8
+                                    .decode(state.selectedNMAccessPoint!.ssid)),
+                                style: ButtonStyle(
+                                  iconColor:
+                                      WidgetStateProperty.all(Colors.white),
+                                  backgroundColor: WidgetStateProperty.all(
+                                      Color(0xFFB71C1C)),
+                                  shape: WidgetStateProperty.all(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                  ),
+                                  minimumSize:
+                                      WidgetStateProperty.all(Size(32, 32)),
+                                  fixedSize:
+                                      WidgetStateProperty.all(Size(32, 32)),
+                                  padding:
+                                      WidgetStateProperty.all(EdgeInsets.zero),
+                                ),
+                                icon: Center(
+                                  child: CustomIcon(
+                                    icon: Image.asset(Images.trash),
+                                    width: 15,
+                                    height: 17,
+                                  ),
+                                ),
+                              ).padRight(16)
+                            ]
+                          : [
+                              TextButton.icon(
+                                onPressed: () => onNetworkTap(
+                                    context, state.selectedAccessPoint),
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      WidgetStatePropertyAll<Color>(
+                                          Color(0xFF044DDF)),
+                                  shape: WidgetStatePropertyAll<
+                                      RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      side: BorderSide(),
+                                    ),
+                                  ),
+                                ),
+                                icon: IconWidget(
+                                  iconColor: Colors.white,
+                                  iconPath: Images.addRoundedSquare,
+                                  iconHeight: 20,
+                                  iconWidth: 20,
+                                ),
+                                label: Text(
+                                  "Join Network",
+                                  style: context.textTheme.labelMedium
+                                      ?.copyWith(color: Colors.white),
+                                ),
+                              ).padRight(16)
+                            ])
+                  .padHorizontal(12)),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
@@ -198,6 +206,40 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                                   title:
                                       '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip6Config?.routeData.first['dest'] : ''}')
                               .padRight(8),
+                        ),
+                      ],
+                    ),
+
+                  if (state.selectedAccessPoint != null &&
+                      state.selectedNMAccessPoint != null &&
+                      state.selectedAccessPoint!.isSaved)
+                    MechanixSectionList(
+                      title: 'IPV4 Address',
+                      physics: const BouncingScrollPhysics(),
+                      sectionListItems: [
+                        SectionListItems(
+                          defaultTrailingIcon: false,
+                          title: 'IP Address',
+                          trailing: CustomTrailingText(
+                            title:
+                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['address'] : ''}',
+                          ),
+                        ),
+                        SectionListItems(
+                          defaultTrailingIcon: false,
+                          title: 'Subnet Mask',
+                          trailing: CustomTrailingText(
+                            title:
+                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['prefix'] : ''}',
+                          ),
+                        ),
+                        SectionListItems(
+                          defaultTrailingIcon: false,
+                          title: 'Router',
+                          trailing: CustomTrailingText(
+                            title:
+                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.routeData.first['dest'] : ''}',
+                          ),
                         ),
                       ],
                     ),

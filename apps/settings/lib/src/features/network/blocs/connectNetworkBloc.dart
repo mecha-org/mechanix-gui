@@ -33,9 +33,17 @@ class ConnectNetworkBloc
           streamAndDevice.device.propertiesChanged.listen((event) {
         if (event.contains('StateReason')) {
           logger.i(
-              "ConnectNetworkBloc STATE REASON: ${streamAndDevice.device.stateReason}");
+              "ConnectNetworkBloc STATE REASON: ${streamAndDevice.device.stateReason.state} --- ${streamAndDevice.device.stateReason.reason}");
 
-          if (streamAndDevice.device.stateReason.state ==
+          if ((streamAndDevice.device.stateReason.state ==
+                      NetworkManagerDeviceState.activated ||
+                  streamAndDevice.device.stateReason.state ==
+                      NetworkManagerDeviceState.ipCheck) &&
+              streamAndDevice.device.stateReason.reason ==
+                  NetworkManagerDeviceStateReason.none) {
+            logger.i('Successfully connected to network');
+            return;
+          } else if (streamAndDevice.device.stateReason.state ==
                   NetworkManagerDeviceState.failed &&
               streamAndDevice.device.stateReason.reason ==
                   NetworkManagerDeviceStateReason.noSecrets) {

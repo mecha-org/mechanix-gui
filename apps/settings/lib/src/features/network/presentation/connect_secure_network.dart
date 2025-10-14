@@ -23,6 +23,10 @@ class ConnectSecureNetwork extends StatelessWidget {
 
     final wifiRepository = context.read<WifiRepository>();
 
+    void backNavigation(BuildContext context) {
+      Navigator.pop(context);
+    }
+
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
@@ -37,8 +41,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                 ),
               ),
             );
-          }
-          else if (state.deviceState == NetworkManagerDeviceState.activated) {
+          } else if (state.deviceState == NetworkManagerDeviceState.activated) {
             // Navigator.pushNamed(context, AppRoutes.wireless);
             Navigator.pop(context);
           }
@@ -60,6 +63,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                                   context
                                       .read<ConnectNetworkBloc>()
                                       .add(ConnectToNetwork(accessPoint));
+                                  backNavigation(context);
                                 }
                               : null,
                         ),
@@ -90,6 +94,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                                     context
                                         .read<ConnectNetworkBloc>()
                                         .add(ConnectToNetwork(accessPoint));
+                                  backNavigation(context);
                                   }
                                 },
                                 validator: (value) {

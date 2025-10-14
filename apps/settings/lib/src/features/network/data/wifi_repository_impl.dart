@@ -57,6 +57,15 @@ class WifiRepositoryImpl implements WifiRepository {
     }
   }
 
+  Future<NetworkManagerDevice> getWifiDevice() async {
+    final devices = _client.devices;
+    NetworkManagerDevice wifiDevice = devices.firstWhere(
+      (d) => d.deviceType == NetworkManagerDeviceType.wifi,
+      orElse: () => throw Exception("No Wi-Fi device found"),
+    );
+    return wifiDevice;
+  }
+
   @override
   Future<void> setWifiEnabled(bool enable) async {
     try {
@@ -75,101 +84,95 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedNetworks>? savedNetworks) async {
-    var devices = _client.devices;
-    if (devices.isEmpty) {
-      logger.w('No devices found');
-      return (active: null, available: <AccessPoints>[]);
-    }
-    var wifiDevice = devices
-        .where((device) => device.deviceType == NetworkManagerDeviceType.wifi);
-    var device = wifiDevice.isNotEmpty ? wifiDevice.first : null;
+    try {
+      NetworkManagerDevice? wifiDevice = await getWifiDevice();
 
-    if (device == null) {
-      logger.w('No WiFi device found');
-      return (active: null, available: <AccessPoints>[]);
-    }
-    await device.wireless!.requestScan();
-    List<AccessPoints> accessPoints = [];
-    final seenSsids = <String>{}; // to track unique SSIDs
-    var activeAccessPoint = device.wireless?.activeAccessPoint;
-    var nmAccessPoints = device.wireless?.accessPoints;
-    AccessPoints? connectedAccessPoint;
+      if (wifiDevice == null ||
+          wifiDevice.state == NetworkManagerDeviceState.unavailable) {
+        logger.w('No WiFi device found');
+        return (active: null, available: <AccessPoints>[]);
+      }
 
-    var ip4Config = device.ip4Config;
-    var ip6Config = device.ip6Config;
+      await wifiDevice.wireless!.requestScan();
+      List<AccessPoints> accessPoints = [];
+      final seenSsids = <String>{}; // to track unique SSIDs
+      var activeAccessPoint = wifiDevice.wireless?.activeAccessPoint;
+      var nmAccessPoints = wifiDevice.wireless?.accessPoints;
+      AccessPoints? connectedAccessPoint;
 
-    for (var nmAccessPoint in nmAccessPoints!) {
-      final ssid =
-          utf8.decode(nmAccessPoint.ssid); // Convert List<int> to String
-      if (ssid.isNotEmpty && !seenSsids.contains(ssid)) {
-        seenSsids.add(ssid); // mark this SSID as seen
-        var isActive = listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid);
-        var isSaved = savedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
+      var ip4Config = wifiDevice.ip4Config;
+      var ip6Config = wifiDevice.ip6Config;
 
-        if (isActive) {
-          connectedAccessPoint = AccessPoints(
-            isActive: isActive,
-            isSaved: isSaved,
-            nmAccessPoint: nmAccessPoint,
-            ip4Config: ip4Config,
-            ip6Config: ip6Config,
-          );
-        } else {
-          var accessPoint = AccessPoints(
-            nmAccessPoint: nmAccessPoint,
-            isActive: isActive,
-            isSaved: isSaved,
-            ip4Config: ip4Config,
-            ip6Config: ip6Config,
-          );
-          accessPoints.add(accessPoint);
+      for (var nmAccessPoint in nmAccessPoints!) {
+        final ssid =
+            utf8.decode(nmAccessPoint.ssid); // Convert List<int> to String
+        if (ssid.isNotEmpty && !seenSsids.contains(ssid)) {
+          seenSsids.add(ssid); // mark this SSID as seen
+          var isActive =
+              listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid);
+          var isSaved = savedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
+
+          if (isActive) {
+            connectedAccessPoint = AccessPoints(
+              isActive: isActive,
+              isSaved: isSaved,
+              nmAccessPoint: nmAccessPoint,
+              ip4Config: ip4Config,
+              ip6Config: ip6Config,
+            );
+          } else {
+            var accessPoint = AccessPoints(
+              nmAccessPoint: nmAccessPoint,
+              isActive: isActive,
+              isSaved: isSaved,
+              ip4Config: ip4Config,
+              ip6Config: ip6Config,
+            );
+            accessPoints.add(accessPoint);
+          }
         }
       }
+      return (active: connectedAccessPoint, available: accessPoints);
+    } catch (e) {
+      logger.e('Error in availableAccessPoints: $e');
+      return (active: null, available: <AccessPoints>[]);
     }
-    return (active: connectedAccessPoint, available: accessPoints);
   }
 
   @override
   Future<void> connectToUnknownNetwork(String ssid, String password) async {
     // logger.i('init connect to unknown network ssid: $ssid, password: $password');
     // // Define the connection settings
-     final connection = <String, Map<String, DBusValue>>{
-    'connection': <String, DBusValue>{
-      'id': DBusString(ssid),
-      'type': DBusString('802-11-wireless'),
-      'autoconnect': DBusBoolean(true),
-    },
-    '802-11-wireless': <String, DBusValue>{
-      'ssid': DBusArray(
-        DBusSignature.byte,
-        utf8.encode(ssid).map((b) => DBusByte(b)).toList(),
-      ),
-      'mode': DBusString('infrastructure'),
-      'hidden': DBusBoolean(true),
-    },
-    '802-11-wireless-security': <String, DBusValue>{
-      'key-mgmt': DBusString('wpa-psk'),
-      'psk': DBusString(password),
-    },
-    'ipv4': <String, DBusValue>{
-      'method': DBusString('auto'),
-    },
-    'ipv6': <String, DBusValue>{
-      'method': DBusString('ignore'),
-    },
-  };
+    final connection = <String, Map<String, DBusValue>>{
+      'connection': <String, DBusValue>{
+        'id': DBusString(ssid),
+        'type': DBusString('802-11-wireless'),
+        'autoconnect': DBusBoolean(true),
+      },
+      '802-11-wireless': <String, DBusValue>{
+        'ssid': DBusArray(
+          DBusSignature.byte,
+          utf8.encode(ssid).map((b) => DBusByte(b)).toList(),
+        ),
+        'mode': DBusString('infrastructure'),
+        'hidden': DBusBoolean(true),
+      },
+      '802-11-wireless-security': <String, DBusValue>{
+        'key-mgmt': DBusString('wpa-psk'),
+        'psk': DBusString(password),
+      },
+      'ipv4': <String, DBusValue>{
+        'method': DBusString('auto'),
+      },
+      'ipv6': <String, DBusValue>{
+        'method': DBusString('ignore'),
+      },
+    };
 
     // Create a new connection
     logger.i("init connect to unknown network");
 
-    NetworkManagerDevice device;
-    try {
-      device = _client.devices
-          .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
-    } catch (e) {
-      logger.e('No WiFi devices found');
-      return;
-    }
+    NetworkManagerDevice device = await getWifiDevice();
 
     try {
       // Has password
@@ -194,21 +197,7 @@ class WifiRepositoryImpl implements WifiRepository {
       NetworkManagerAccessPoint accessPoint, String password) async {
     logger.i("init connect to network");
 
-    // // TEMP CHECK IF ALREADY CONNECTED
-    // final connectedNetwork = await getConnectedNetwork(accessPoint);
-    // if (connectedNetwork != null) {
-    //   logger.i('Already connected to network: ${connectedNetwork.ssid}');
-    //   return;
-    // }
-
-    NetworkManagerDevice device;
-    try {
-      device = _client.devices
-          .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
-    } catch (e) {
-      logger.e('No WiFi devices found');
-      return;
-    }
+    NetworkManagerDevice device = await getWifiDevice();
     try {
       // Has password
       if (accessPoint.rsnFlags.isNotEmpty) {
@@ -273,14 +262,7 @@ class WifiRepositoryImpl implements WifiRepository {
 
   // disconnect network , keep profile settings
   Future<void> disconnectNetwork(String ssid) async {
-    NetworkManagerDevice device;
-    try {
-      device = _client.devices
-          .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
-    } catch (e) {
-      logger.e('No WiFi devices found');
-      return;
-    }
+    NetworkManagerDevice device = await getWifiDevice();
 
     var connection = device.activeConnection;
     try {
@@ -307,6 +289,7 @@ class WifiRepositoryImpl implements WifiRepository {
               ssidArray.children.map((e) => (e as DBusByte).value).toList();
           final wifiSsid = utf8.decode(ssidBytes);
           if (wifiSsid == ssid) {
+            logger.i('Forgetting network: $wifiSsid');
             await connection.delete();
             return;
           }
@@ -325,10 +308,7 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<StreamAndDevice> getWifiStateAndReason() async {
-    var wifiDevice = _client.devices.firstWhere(
-      (d) => d.deviceType == NetworkManagerDeviceType.wifi,
-    );
-
+    var wifiDevice = await getWifiDevice();
     return StreamAndDevice(wifiDevice.propertiesChanged, wifiDevice);
   }
 
@@ -520,26 +500,13 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   @override
-  Future<void> disconnectFromNetwork(String ssid) {
-    // TODO: implement disconnectFromNetwork
-    throw UnimplementedError();
-  }
-
-  @override
   Future<void> connectToSavedNetwork(
       NetworkManagerAccessPoint accessPoint) async {
     var accessPointSsid = utf8.decode(accessPoint.ssid);
     logger.i("Connecting to saved network: $accessPointSsid");
 
     // Find the WiFi device
-    NetworkManagerDevice device;
-    try {
-      device = _client.devices
-          .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
-    } catch (e) {
-      logger.e('No WiFi devices found');
-      return;
-    }
+    NetworkManagerDevice device = await getWifiDevice();
     var connection = _client.settings.connections;
     for (var cn in connection) {
       if (!cn.unsaved) {
@@ -564,10 +531,7 @@ class WifiRepositoryImpl implements WifiRepository {
 
   @override
   Future<Stream<List<String>>> streamWirelessDeviceStream() async {
-    final NetworkManagerDevice device = _client.devices.firstWhere(
-        (d) => d.deviceType == NetworkManagerDeviceType.wifi,
-        orElse: () => throw Exception('No WiFi device found'));
-
+    final NetworkManagerDevice device = await getWifiDevice();
     return device.wireless!.propertiesChanged;
   }
 

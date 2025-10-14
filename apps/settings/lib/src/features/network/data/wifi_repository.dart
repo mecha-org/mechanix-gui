@@ -21,11 +21,10 @@ abstract class WifiRepository {
   Future<List<SavedWirelessNetwork>> getSavedNetworks();
 
   Future<void> connectToNetwork(
-      NetworkManagerAccessPoint accessPoint, String password);    //  connect to active network
-  Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);  // connect to saved network
-  Future<void> connectToUnknownNetwork(String ssid, String password); // connect to hidden network
+      NetworkManagerAccessPoint accessPoint, String password);    
+  Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);   
+  Future<void> connectToUnknownNetwork(String ssid, String password);  
   Future<void> forgetNetwork(String ssid);
-  Future<void> disconnectFromNetwork(String ssid);
   Future<void> deleteSavedNetwork(String ssid);
   Future<NetworkManagerDeviceState?> getNetworkState();
   Future<void> close();
