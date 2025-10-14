@@ -1,16 +1,18 @@
 import 'dart:async';
+import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
-import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
+import 'package:path/path.dart' as p;
 import 'package:widgets/extension.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
@@ -18,8 +20,6 @@ import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
-
-import 'files.dart';
 
 class ExtractBottomSheet extends StatefulWidget {
   final String path;
@@ -42,7 +42,8 @@ class ExtractBottomSheet extends StatefulWidget {
 }
 
 class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
-  late List<FileItem> currentPath;
+  final FileManagerController controller = FileManagerController();
+  late String currentPath;
   bool isSearching = false;
   final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
@@ -52,47 +53,89 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
   final homeDir = AppConfig().homeDir;
   final recentDir = AppConfig().recentDir;
 
-  List<FileItem> searchResults = [];
-
-  void _loadFiles() {
-    final pathString = '/${currentPath.map((e) => e.name).join('/')}';
-    widget.filesBloc.add(LoadFilesAtPath(pathString, page, pageSize));
+  Future<void> _loadFiles() async {
+    await controller.openDirectory(io.Directory(widget.path));
   }
 
   @override
   void initState() {
     super.initState();
-    currentPath = pathToSegments(widget.path);
+    currentPath = widget.path;
     _loadFiles();
+
+    controller.getPathNotifier.addListener(() {
+      setState(() {
+        currentPath = controller.getPathNotifier.value;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isAtRoot = currentPath.isEmpty;
-    final pathString = '/${currentPath.map((e) => e.name).join('/')}';
+    final isAtRoot = currentPath == '/' || currentPath.isEmpty;
 
-    final isDocumentsDir = pathString == documentsDir;
-    final isDownloadsDir = pathString == downloadsDir;
-    final isHomeDir = pathString == homeDir;
-    final isRecentDir = pathString == recentDir;
+    final isDocumentsDir = currentPath == documentsDir;
+    final isDownloadsDir = currentPath == downloadsDir;
+    final isHomeDir = currentPath == homeDir;
+    final isRecentDir = currentPath == recentDir;
     final isHomePageDir = isHomeDir ||
         isDownloadsDir ||
         isDocumentsDir ||
         isAtRoot ||
         isRecentDir;
 
-    return BlocBuilder<FilesBloc, FilesState>(
-      bloc: widget.filesBloc,
-      builder: (context, state) {
-        final displayedFiles =
-            getFilesAtPath(currentPath, state.fileSystemList);
+    return ValueListenableBuilder<List<io.FileSystemEntity>>(
+      valueListenable: controller.paginatedEntities,
+      builder: (context, entities, _) {
+        final foldersList = entities
+            .where((file) =>
+                file is io.Directory &&
+                !p
+                    .basename(file.path)
+                    .startsWith('.')) // exclude hidden folders
+            .toList();
+
+        if (foldersList.length < pageSize) {
+          controller.loadNextChunk();
+        }
+
+        final itemCount = foldersList.length;
+
+        // Base height logic
+        double minChildSize;
+        double initialChildSize;
+        double maxChildSize = 0.7;
+
+        if (itemCount <= 2) {
+          minChildSize = 0.35;
+          initialChildSize = 0.4;
+        } else if (itemCount <= 5) {
+          minChildSize = 0.4;
+          initialChildSize = 0.5;
+        } else if (itemCount <= 10) {
+          minChildSize = 0.5;
+          initialChildSize = 0.6;
+        } else {
+          minChildSize = 0.6;
+          initialChildSize = 0.7;
+        }
 
         return DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.7,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          builder: (context, scrollController) {
+          initialChildSize: initialChildSize,
+          minChildSize: minChildSize,
+          maxChildSize: maxChildSize,
+          builder: (context, sheetController) {
+            // Scroll controller listener
+            sheetController.addListener(() {
+              final maxScroll = sheetController.position.maxScrollExtent;
+              final currentScroll = sheetController.position.pixels;
+
+              if (currentScroll >= 0.8 * maxScroll) {
+                controller.loadNextChunk();
+              }
+            });
+
             return Container(
               decoration: BoxDecoration(
                 color: Colors.grey[850],
@@ -113,16 +156,15 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                       onPressed: () {
                         if (isHomePageDir) {
                           Navigator.pop(context);
-                          extractMainBottomSheet(widget.onExtractCompleted);
+                          extractMainBottomSheet(
+                              widget.onExtractCompleted, controller);
                         } else {
-                          setState(() {
-                            currentPath.removeLast();
-                          });
-                          _loadFiles();
+                          controller.goToParentDirectory();
                         }
                       },
                     ),
-                    title: currentPath.isEmpty ? "Root" : currentPath.last.name,
+                    title:
+                        isAtRoot ? "Root" : getCurrentFolderName(currentPath),
                     titleStyle: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -142,13 +184,12 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                   ).padTop(8),
                   Expanded(
                     child: buildListViewExtract(
-                      isSearching && searchResults.isNotEmpty
-                          ? searchResults
-                          : displayedFiles,
+                      foldersList,
                       context,
                       currentPath,
                       widget.filesBloc,
                       widget.onExtractCompleted,
+                      sheetController,
                     ),
                   ),
                   if (isSearching)
@@ -161,15 +202,17 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                           controller: searchController,
                           autoFocus: true,
                           hintText: "Type here",
-                          onChanged: (value) {
-                            _performSearch();
+                          onChanged: (query) {
+                            controller.search(query);
                           },
                           onCloseIconPress: () {
                             setState(() {
                               searchController.clear();
                               isSearching = false;
-                              searchResults = [];
                             });
+
+                            // Reload directory content when clearing search
+                            controller.reload();
                           },
                         ),
                       ),
@@ -226,20 +269,21 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
     );
   }
 
-  void _performSearch() {
-    final query = searchController.text.trim();
-    if (query.isEmpty) return;
+  // void _performSearch() {
+  //   final query = searchController.text.trim();
+  //   if (query.isEmpty) return;
 
-    setState(() {
-      searchResults = getFilesAtPath(
-              currentPath, widget.filesBloc.state.fileSystemList)
-          .where(
-              (file) => file.name.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    });
-  }
+  //   setState(() {
+  //     searchResults = getFilesAtPath(
+  //             currentPath, widget.filesBloc.state.fileSystemList)
+  //         .where(
+  //             (file) => file.name.toLowerCase().contains(query.toLowerCase()))
+  //         .toList();
+  //   });
+  // }
 
-  void extractMainBottomSheet(onExtractCompleted) {
+  void extractMainBottomSheet(
+      onExtractCompleted, FileManagerController controller) {
     final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
 
     showModalBottomSheet(
@@ -354,7 +398,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
   }
 
   Future<void> handleExtract(BuildContext context, FilesState state) async {
-    final targetPath = '/${currentPath.map((e) => e.name).join('/')}';
+    final targetPath = currentPath;
     final bloc = BlocProvider.of<FilesBloc>(context);
     final completer = Completer<void>();
 

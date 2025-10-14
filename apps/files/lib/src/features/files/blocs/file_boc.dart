@@ -26,7 +26,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             currentSortBy: '',
             conflictDestinationPath: '')) {
     on<InitializeFiles>(_onInitializeFiles);
-    on<LoadFilesAtPath>(_onLoadFilesAtPath);
     on<CreateFolder>(_onCreateFolder);
     on<DeleteEntities>(_onDeleteEntities);
     on<Rename>(_onRename);
@@ -76,27 +75,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       currentSortBy: savedSort,
       showHiddenFiles: savedHidden,
     ));
-
-    //  await _loadAndEmitSortedFiles(emit: emit, path: '/');
-  }
-
-  // Future<void> _onLoadFilesAtPath(
-  //     LoadFilesAtPath event, Emitter<FilesState> emit) async {
-  //   emit(state.copyWith(loading: true));
-  //   await _loadAndEmitSortedFiles(emit: emit, path: event.path);
-  // }
-
-  Future<void> _onLoadFilesAtPath(
-    LoadFilesAtPath event,
-    Emitter<FilesState> emit,
-  ) async {
-    emit(state.copyWith(loading: true));
-    await _loadAndEmitSortedFiles(
-      emit: emit,
-      path: event.path,
-      page: event.page,
-      pageSize: event.pageSize,
-    );
   }
 
   Future<void> _onCreateFolder(

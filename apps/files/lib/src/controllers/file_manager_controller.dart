@@ -28,6 +28,9 @@ class FileManagerController {
 
   SortBy get sortedBy => _sort.value;
 
+  final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
+  Timer? _debounce;
+
   void _updatePath(String path) {
     _path.value = path;
   }
@@ -114,6 +117,7 @@ class FileManagerController {
     _hasMorePages = true;
     _isLoadingChunk = false;
     _currentPage = 1;
+    _searchQuery.value = '';
 
     // Load first chunk
     await loadNextChunk();
@@ -153,6 +157,7 @@ class FileManagerController {
     } finally {
       _isLoadingChunk = false;
       _currentPage++;
+      _applySearchFilter();
     }
   }
 
@@ -167,6 +172,7 @@ class FileManagerController {
     }
 
     _sort.value = sortBy;
+    _applySearchFilter();
     debugPrint('Sorting by: $sortBy, ascending: $_sizeAscending');
   }
 
@@ -224,6 +230,61 @@ class FileManagerController {
     return list;
   }
 
+  void search(String query, {bool recursive = false}) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      final trimmedQuery = query.trim().toLowerCase();
+      _searchQuery.value = trimmedQuery;
+
+      if (trimmedQuery.isEmpty) {
+        // Reset to normal paginated view
+        paginatedEntities.value = List<FileSystemEntity>.from(_currentEntities);
+        return;
+      }
+
+      // Perform filtering or recursive search
+      if (recursive) {
+        await _searchRecursively(trimmedQuery);
+      } else {
+        _applySearchFilter();
+      }
+    });
+  }
+
+  void _applySearchFilter() {
+    if (_searchQuery.value.isEmpty) {
+      paginatedEntities.value = List<FileSystemEntity>.from(_currentEntities);
+      return;
+    }
+
+    final filtered = _currentEntities.where((entity) {
+      final name = p.basename(entity.path).toLowerCase();
+      return name.contains(_searchQuery.value);
+    }).toList();
+
+    paginatedEntities.value = filtered;
+  }
+
+  Future<void> _searchRecursively(String query) async {
+    final dir = Directory(_path.value);
+    if (!dir.existsSync()) return;
+
+    final List<FileSystemEntity> results = [];
+
+    try {
+      await for (var entity in dir.list(recursive: true, followLinks: false)) {
+        final name = p.basename(entity.path).toLowerCase();
+        if (name.contains(query)) {
+          results.add(entity);
+        }
+      }
+      _sortEntities(results);
+      paginatedEntities.value = results;
+    } catch (e) {
+      logger.e('Recursive search error: $e');
+    }
+  }
+
   /// Reloads the currently open directory (same as reopening it)
   Future<void> reload() async {
     final currentPath = getPathNotifier.value;
@@ -242,5 +303,7 @@ class FileManagerController {
     paginatedEntities.dispose();
     titleNotifier.dispose();
     _sort.dispose();
+    _searchQuery.dispose();
+    _debounce?.cancel();
   }
 }

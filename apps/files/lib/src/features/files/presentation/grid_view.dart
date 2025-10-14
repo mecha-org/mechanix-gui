@@ -80,6 +80,7 @@ Widget buildGridView(
                         fullPath,
                         isSelectionMode,
                         state,
+                        controller,
                       );
                     }
                   },

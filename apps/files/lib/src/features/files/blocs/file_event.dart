@@ -10,19 +10,6 @@ abstract class FilesEvent extends Equatable {
 
 class InitializeFiles extends FilesEvent {}
 
-// class LoadFilesAtPath extends FilesEvent {
-//   final String path;
-//   LoadFilesAtPath(this.path);
-// }
-
-class LoadFilesAtPath extends FilesEvent {
-  final String path;
-  final int page;
-  final int pageSize;
-
-  LoadFilesAtPath(this.path, this.page, this.pageSize);
-}
-
 class CreateFolder extends FilesEvent {
   final String path;
   final String folderName;

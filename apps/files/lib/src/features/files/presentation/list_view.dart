@@ -27,6 +27,7 @@ Widget buildListView(
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
+  final isSearching = state?.isSearching ?? false;
 
   return ValueListenableBuilder<List<io.FileSystemEntity>>(
     valueListenable: controller.paginatedEntities,
@@ -106,6 +107,12 @@ Widget buildListView(
                   ),
                 ),
                 onTap: () {
+                  isSelectionMode
+                      ? state?.clearSelection()
+                      : isSearching
+                          ? state?.clearSearch()
+                          : null;
+
                   if (FileManager.isDirectory(entity)) {
                     controller.openDirectory(entity);
                     // Reset scroll to top
@@ -117,6 +124,7 @@ Widget buildListView(
                       entity.path,
                       isSelectionMode,
                       state,
+                      controller,
                     );
                   }
                 },
@@ -224,28 +232,31 @@ Widget buildListViewForRecentFiles(
 }
 
 Widget buildListViewMove(
-    List<FileItem> files,
-    BuildContext context,
-    List<FileItem> currentPath,
-    FilesBloc filesBloc,
-    VoidCallback onMoveCompleted,
-    FileManagerController controller) {
-  // Only folders
-  final folders = files.where((file) => file.type == 'dir').toList();
-
-  final sectionItems = folders.map((file) {
+  List<io.FileSystemEntity> foldersList,
+  BuildContext context,
+  String currentPath,
+  FilesBloc filesBloc,
+  VoidCallback onMoveCompleted,
+  ScrollController scrollController,
+) {
+  final sectionItems = foldersList.map((file) {
     return SectionListItems(
-      title: file.name,
+      title: getCurrentFolderName(file.path),
       titleTextStyle: const TextStyle(fontSize: 14),
       leading: Image.asset(file.iconPath,
           width: 24, height: 24, fit: BoxFit.contain),
       defaultTrailingIcon: false,
       trailing: trailingIcon(),
       onTap: () {
-        final newPath = [...currentPath, file];
-        final pathString = '/${newPath.map((e) => e.name).join('/')}';
-        onTap(context, pathString, file.name, filesBloc, onMoveCompleted,
-            controller);
+        final newPath = '$currentPath/${getCurrentFolderName(file.path)}';
+        onTap(
+          context,
+          newPath,
+          getCurrentFolderName(file.path),
+          filesBloc,
+          onMoveCompleted,
+        );
+        scrollController.jumpTo(0);
       },
     );
   }).toList();
@@ -265,6 +276,7 @@ Widget buildListViewMove(
         backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
       ),
       child: SingleChildScrollView(
+        controller: scrollController,
         scrollDirection: Axis.vertical,
         child: MechanixSectionList(
           sectionListItems: sectionItems,
@@ -360,27 +372,31 @@ Widget buildSearchResultsList(
 }
 
 Widget buildListViewExtract(
-    List<FileItem> files,
-    BuildContext context,
-    List<FileItem> currentPath,
-    FilesBloc filesBloc,
-    VoidCallback onExtractCompleted) {
-  // Only folders
-  final folders = files.where((file) => file.type == 'dir').toList();
-
-  final sectionItems = folders.map((file) {
+  List<io.FileSystemEntity> foldersList,
+  BuildContext context,
+  String currentPath,
+  FilesBloc filesBloc,
+  VoidCallback onMoveCompleted,
+  ScrollController scrollController,
+) {
+  final sectionItems = foldersList.map((file) {
     return SectionListItems(
-      title: file.name,
+      title: getCurrentFolderName(file.path),
       titleTextStyle: const TextStyle(fontSize: 14),
       leading: Image.asset(file.iconPath,
           width: 24, height: 24, fit: BoxFit.contain),
       defaultTrailingIcon: false,
       trailing: trailingIcon(),
       onTap: () {
-        final newPath = [...currentPath, file];
-        final pathString = '/${newPath.map((e) => e.name).join('/')}';
+        final newPath = '$currentPath/${getCurrentFolderName(file.path)}';
         onItemTap(
-            context, pathString, file.name, filesBloc, onExtractCompleted);
+          context,
+          newPath,
+          getCurrentFolderName(file.path),
+          filesBloc,
+          onMoveCompleted,
+        );
+        scrollController.jumpTo(0);
       },
     );
   }).toList();
@@ -400,6 +416,7 @@ Widget buildListViewExtract(
         backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
       ),
       child: SingleChildScrollView(
+        controller: scrollController,
         scrollDirection: Axis.vertical,
         child: MechanixSectionList(
           sectionListItems: sectionItems,

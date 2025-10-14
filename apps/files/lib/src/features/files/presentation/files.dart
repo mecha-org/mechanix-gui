@@ -96,6 +96,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         currentPath = newPath;
       });
     });
+
+    searchQuery.addListener(() {
+      if (searchQuery.value.isEmpty) {
+        controller.reload(); // Reload when user clears search
+      }
+    });
   }
 
   void _onScroll() {
@@ -114,6 +120,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   @override
   void dispose() {
+    searchQuery.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -364,22 +371,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           },
         ),
       ],
-      child:
-          // BlocBuilder<FilesBloc, FilesState>(
-          //   builder: (context, state) {
-          //     final fileSystemList = state.fileSystemList;
-          //     displayedFiles = getFilesAtPath(widget.path, fileSystemList);
-
-          //     isCopyMode = state.isCopyMode;
-          //     copiedPaths = state.copiedPaths;
-
-          //     isMoveMode = state.isMoveMode;
-          //     movedPaths = state.movedPaths;
-          //     zipFilePath = state.zipFilePath;
-          //     isExtractMode = state.isExtractMode;
-          //     showHiddenFiles = state.showHiddenFiles;
-
-          Scaffold(
+      child: Scaffold(
         appBar: AppBar(
           leading: IconButton(
             icon:
@@ -402,7 +394,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             ? "Recents"
                             : (path == '/'
                                 ? "Root"
-                                : _getCurrentFolderName(path));
+                                : getCurrentFolderName(path));
                         return Text(title, style: context.textTheme.titleLarge);
                       },
                     ),
@@ -544,25 +536,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
   }
 
-  /// Helper function to extract the current folder name for the AppBar title
-  String _getCurrentFolderName(String path) {
-    if (path.isEmpty) return 'Home';
-
-    // Use path utilities instead of instantiating Directory (which may be
-    // shadowed by package:file's abstract Directory).
-    String name = p.basename(path);
-
-    // If path ends with a separator, basename can be empty; fall back to parent.
-    if (name.isEmpty) {
-      name = p.basename(p.dirname(path));
-    }
-
-    // Optionally map specific directories to nicer names
-    if (name == 'home') return 'Home';
-
-    return name;
-  }
-
   OverlayEntry? _searchOverlayEntry;
   late TextEditingController _searchController;
 
@@ -584,13 +557,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               controller: _searchController,
               autoFocus: true,
               hintText: "Type here",
-              onChanged: (value) {
-                searchQuery.value = value;
-              },
+              onChanged: (query) => controller.search(query),
               onCloseIconPress: () {
-                // clearSearch();
-                searchQuery.value = "";
+                searchQuery.value = '';
                 _searchController.clear();
+
+                // Reload directory content when clearing search
+                controller.reload();
               },
             ),
           ),
@@ -610,6 +583,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     // safely remove overlay if still mounted
     _searchOverlayEntry?.remove();
     _searchOverlayEntry = null;
+
+    // Reload directory content when clearing search
+    controller.reload();
   }
 
   SortBy _sortByFromKey(String key) {
@@ -1014,7 +990,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     // Start move mode
     filesBloc.add(StartMoveMode(selectedPathsList));
-    final controller = FileManagerController();
+    // final controller = FileManagerController();
 
     showModalBottomSheet(
       context: context,
@@ -1045,8 +1021,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     SectionListItems(
                       title: "Home directory",
                       titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(context, homeDir, "Home", filesBloc,
-                          () => reload(), controller),
+                      onTap: () => onTap(
+                          context, homeDir, "Home", filesBloc, () => reload()),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -1060,7 +1036,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       title: "Downloads",
                       titleTextStyle: const TextStyle(fontSize: 14),
                       onTap: () => onTap(context, downloadsDir, "Downloads",
-                          filesBloc, () => reload(), controller),
+                          filesBloc, () => reload()),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -1074,7 +1050,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       title: "Documents",
                       titleTextStyle: const TextStyle(fontSize: 14),
                       onTap: () => onTap(context, documentsDir, "Documents",
-                          filesBloc, () => reload(), controller),
+                          filesBloc, () => reload()),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -1087,8 +1063,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     SectionListItems(
                       title: "Root (/)",
                       titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(context, "/", "Root", filesBloc,
-                          () => reload(), controller),
+                      onTap: () => onTap(
+                          context, "/", "Root", filesBloc, () => reload()),
                       leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
@@ -2119,7 +2095,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                           Expanded(
                             flex: 3,
                             child: MechanixTextInput<String>.textInput(
-                              // hintText: p.basename(oldPath),
                               initialValue: p.basename(oldPath),
                               onChanged: (value) {
                                 setState(() {

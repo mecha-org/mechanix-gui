@@ -3,10 +3,10 @@ import 'dart:io' as io;
 
 import 'package:archive/archive.dart';
 import 'package:file/file.dart';
-// import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
@@ -40,31 +40,6 @@ String formatDateTime(DateTime dateTime) {
   return formatter.format(dateTime).toLowerCase();
 }
 
-void _navigateToDirectory(
-  BuildContext context,
-  List<FileItem> currentPath,
-  FileItem directory,
-) {
-  final newPath = [...currentPath, directory];
-  final pathString = '/${newPath.map((e) => e.name).join('/')}';
-  final filesBloc = BlocProvider.of<FilesBloc>(context);
-  filesBloc.add(LoadFilesAtPath(pathString, page, pageSize));
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => BlocProvider.value(
-        value: filesBloc,
-        child: FileExplorerPage(
-          title: directory.name,
-          path: newPath,
-          // homeContext: context,
-        ),
-      ),
-    ),
-  );
-}
-
 void handleTap(
   BuildContext context,
   FileItem file,
@@ -82,11 +57,6 @@ void handleTap(
 
   if (state?.isSearching == true) {
     state?.clearSearch(); // will reset and remove overlay
-  }
-
-  if (file.type == 'dir') {
-    _navigateToDirectory(context, currentPath, file);
-    return;
   }
 
   if (textFileTypes.contains(fileType)) {
@@ -186,57 +156,6 @@ void handleTap(
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              minTileHeight: 20,
-              leading: const Icon(Icons.folder_zip, color: Colors.white70),
-              title: const Text("Extract here",
-                  style: TextStyle(color: Colors.white, fontSize: 14)),
-              onTap: () async {
-                Navigator.pop(ctx);
-
-                // Validate zip file
-                if (!isZipFileValid(fullPath)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "ZIP file is corrupted or invalid",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                  );
-                  return;
-                }
-
-                // Extract in same folder
-                final currentDir =
-                    fullPath.substring(0, fullPath.lastIndexOf('/'));
-                final bloc = context.read<FilesBloc>();
-                final completer = Completer<void>();
-                bloc.add(StartExtractMode(fullPath));
-
-                bloc.add(ExtractZipTo(
-                  fullPath,
-                  currentDir,
-                  completer,
-                ));
-                await completer.future;
-                bloc.add(CancelExtractMode());
-
-                // reload after extraction
-                bloc.add(LoadFilesAtPath(currentDir, page, pageSize));
-
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(
-                    content: const Text("Finished extracting",
-                        style: TextStyle(color: Colors.white)),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: Colors.grey[800],
-                  ),
-                );
-              },
-            ),
-            const Divider(height: 1, color: Colors.white24),
             ListTile(
               minTileHeight: 20,
               leading: const Icon(Icons.drive_file_move, color: Colors.white70),
@@ -264,6 +183,7 @@ void handleFileTap(
   String fullPath,
   bool isSelectionMode,
   FileExplorerPageState? state,
+  FileManagerController controller,
 ) {
   final fileType = p.extension(fullPath).toLowerCase();
 
@@ -411,7 +331,7 @@ void handleFileTap(
                 bloc.add(CancelExtractMode());
 
                 // reload after extraction
-                bloc.add(LoadFilesAtPath(currentDir, page, pageSize));
+                controller.reload();
 
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   SnackBar(
@@ -455,4 +375,23 @@ bool isZipFileValid(String path) {
   } catch (_) {
     return false;
   }
+}
+
+/// Helper function to extract the current folder name
+String getCurrentFolderName(String path) {
+  if (path.isEmpty) return 'Home';
+
+  // Use path utilities instead of instantiating Directory (which may be
+  // shadowed by package:file's abstract Directory).
+  String name = p.basename(path);
+
+  // If path ends with a separator, basename can be empty; fall back to parent.
+  if (name.isEmpty) {
+    name = p.basename(p.dirname(path));
+  }
+
+  // Optionally map specific directories to nicer names
+  if (name == 'home') return 'Home';
+
+  return name;
 }
