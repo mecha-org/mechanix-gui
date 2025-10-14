@@ -14,7 +14,6 @@ import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
 class EditorBottomMenu extends StatelessWidget {
   final QuillController controller;
   final void Function(ToolbarEnum toolbarEnum) onToolbarSelection;
-
   const EditorBottomMenu({
     super.key,
     required this.controller,

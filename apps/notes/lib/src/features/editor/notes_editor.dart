@@ -57,8 +57,20 @@ class _NotesEditorState extends State<NotesEditor> {
 
     if (isEditing) {
       _initializeControllerAsync();
+    } else {
+      _openKeyboardAfterLoad();
     }
+
     _controller.addListener(_onControllerChange);
+  }
+
+  void _openKeyboardAfterLoad() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 300));
+      _focusNode.requestFocus();
+    });
   }
 
   void _initializeControllerAsync() {
@@ -67,7 +79,9 @@ class _NotesEditorState extends State<NotesEditor> {
     final doc = Document.fromJson(jsonDecode(widget.note!.content));
     _controller.document = doc;
 
-    setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   void _onControllerChange() {

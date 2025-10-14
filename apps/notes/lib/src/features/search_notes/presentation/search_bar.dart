@@ -13,26 +13,37 @@ class SearchInputBar extends StatefulWidget {
 
 class _SearchInputBarState extends State<SearchInputBar> {
   final TextEditingController _titleController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _openKeyboardAfterLoad();
+  }
+
+  void _openKeyboardAfterLoad() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 300));
+      _focusNode.requestFocus();
+    });
+  }
 
   void searchNotes() {
-    context.read<NotesBloc>().add(SearchEvent(_titleController.value.text));
+    context.read<NotesBloc>().add(SearchEvent(_titleController.text));
   }
 
   @override
   void dispose() {
     _titleController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  void _handleBackwardPress() {
-    final text = _titleController.text;
-    if (text.isNotEmpty) {
-      _titleController.text = text.substring(0, text.length - 1);
-      _titleController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _titleController.text.length),
-      );
-      searchNotes();
-    }
+  void clearSearch() {
+    _titleController.clear();
+    searchNotes();
   }
 
   @override
@@ -42,11 +53,11 @@ class _SearchInputBarState extends State<SearchInputBar> {
       width: 508,
       child: MechanixSearchBar(
         controller: _titleController,
-        onChanged: (value) => searchNotes(),
-        autoFocus: true,
-        hintText: "Type Here",
-        onBackwardIconPress: _handleBackwardPress,
-        onCloseIconPress: () => _titleController.clear(),
+        focusNode: _focusNode,
+        onChanged: (_) => searchNotes(),
+        autoFocus: false,
+        hintText: "Search notes...",
+        onCloseIconPress: () => clearSearch(),
       ),
     );
   }

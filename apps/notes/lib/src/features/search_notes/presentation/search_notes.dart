@@ -24,7 +24,6 @@ class _SearchNotesState extends State<SearchNotes> {
 
   void onBackClick() {
     Navigator.pop(context);
-
     context.read<NotesBloc>().add(SearchEvent(''));
   }
 
@@ -53,16 +52,27 @@ class _SearchNotesState extends State<SearchNotes> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      NoteList(
-                        selectedNotes: [],
-                        isSelectionMode: false,
-                        groupedNotes: [
-                          GroupedNotes(
-                            label: '',
-                            notes: state.searchedNotes ?? [],
+                      if (state.searchedNotes.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 120),
+                          child: Center(
+                            child: Text(
+                              "No Notes Found",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
+                        )
+                      else
+                        NoteList(
+                          selectedNotes: [],
+                          isSelectionMode: false,
+                          groupedNotes: [
+                            GroupedNotes(label: '', notes: state.searchedNotes),
+                          ],
+                        ),
                       const SizedBox(
                         height: 80,
                       ), // padding so list doesn't hide behind bar

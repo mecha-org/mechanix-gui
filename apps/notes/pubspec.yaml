@@ -45,10 +45,16 @@ dependencies:
   file_picker: ^10.2.0
   widgets:
     git:
-      url: https://github.com/mecha-org/mechanix.dart.git
-      # url: https://github.com/DhanishMecha/mechanix-ui.git
+      # url: https://github.com/mecha-org/mechanix.dart.git
+      url: https://github.com/DhanishMecha/mechanix-ui.git
       path: flutter/widgets
-      ref: main
+      ref: mecha-main
+  # widgets:
+  #   git:
+  #     url: https://github.com/mecha-org/mechanix.dart.git
+  #     # url: https://github.com/DhanishMecha/mechanix-ui.git
+  #     path: flutter/widgets
+  #     ref: main
   # widgets:
   #   path: /home/dhanish/Desktop/mecha/minesh/mechanix-ui/flutter/widgets
   watch_it: ^1.7.0

@@ -10,7 +10,7 @@ class NotesState extends Equatable {
   final bool isSelectionMode;
   final List<String> selectedNoteIds;
   final List<GroupedNotes> groupedNotes;
-  final List<NoteHive>? searchedNotes;
+  final List<NoteHive> searchedNotes;
 
   const NotesState({
     required this.notes,

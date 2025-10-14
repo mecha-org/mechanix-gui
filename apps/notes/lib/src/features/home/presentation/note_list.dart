@@ -105,7 +105,7 @@ class NoteList extends StatelessWidget {
               top: 10,
               bottom: 10,
             ),
-            onLongPress: () => onSelect!(note.id),
+            onLongPress: () => onSelect?.call(note.id),
             onTap:
                 () =>
                     isSelectionMode
