@@ -5,8 +5,7 @@ import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_row_item.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
-import 'package:mechanix_settings/src/commons/styles/color.dart';
+
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
@@ -62,47 +61,10 @@ class _NetworkSettingsState extends State<NetworkSettings> {
   Widget build(BuildContext outerContext) {
     // Rename to outerContext
 
-    return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
+    return BlocSelector<WirelessSettingsBloc, WirelessSettingsState, List<SavedWirelessNetwork>>(
+      selector: (state) => state.allSavedNetworks,
       builder: (context, state) {
-        void showDeleteDialog(String networkName) {
-          showDialog(
-            context: context,
-            builder: (dialogContext) {
-              // This context does NOT have BlocProvider!
-              return AlertDialog(
-                backgroundColor: const Color.fromARGB(255, 54, 54, 54),
-                title: const Text('Delete saved network'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Network name: $networkName',
-                        style: const TextStyle(fontSize: 18)),
-                    Text('Security : None',
-                        style: const TextStyle(fontSize: 18)),
-                  ],
-                ),
-                actions: [
-                  CustomTextButton(
-                    label: 'Cancel',
-                    onPressed: () => Navigator.pop(dialogContext),
-                  ),
-                  CustomTextButton(
-                    label: 'Delete',
-                    onPressed: () {
-                      // Navigator.pop(dialogContext); // pop dialog first
-                      // outerContext
-                      //     .read<WirelessSettingsBloc>()
-                      //     .add(DeleteSavedNetwork(networkName));
-                      // Navigator.pop(context);
-                    },
-                    textColor: dangerColor,
-                  ),
-                ],
-              );
-            },
-          );
-        }
-
+       
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
@@ -119,7 +81,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
                   MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
                     isDividerRequired: true,
-                    listItems: getWireless(context, state.allSavedNetworks),
+                    listItems: getWireless(context, state),
                   )
                 ],
               ).padTop(8),

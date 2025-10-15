@@ -32,18 +32,23 @@ class ConnectSecureNetwork extends StatelessWidget {
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
         listener: (context, state) {
           // Handle error
-          if (state.error != null && state.error!.isNotEmpty) {
+          if (state.deviceState == NetworkManagerDeviceState.ipCheck) {
+            print("state.deviceState ${state.deviceState}");
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Authentication failed: ${state.error}',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
+              const SnackBar(content: Text('connecting to network..')),
             );
           } else if (state.deviceState == NetworkManagerDeviceState.activated) {
-            // Navigator.pushNamed(context, AppRoutes.wireless);
-            Navigator.pop(context);
+            print("connected successfully.");
+            backNavigation(context);
+          } else if (state.error != null && state.error!.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("${state.error}",
+                    style: const TextStyle(color: Colors.white)),
+                duration: const Duration(seconds: 2),
+                backgroundColor: Colors.grey[800],
+              ),
+            );
           }
         },
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
@@ -63,7 +68,6 @@ class ConnectSecureNetwork extends StatelessWidget {
                                   context
                                       .read<ConnectNetworkBloc>()
                                       .add(ConnectToNetwork(accessPoint));
-                                  backNavigation(context);
                                 }
                               : null,
                         ),
@@ -90,11 +94,10 @@ class ConnectSecureNetwork extends StatelessWidget {
                                       .add(PasswordChanged(value));
                                 },
                                 onFieldSubmitted: (_) {
-                                  if (state.password.isNotEmpty) {
+                                  if (state.password.isNotEmpty && state.password.length >= 8) {
                                     context
                                         .read<ConnectNetworkBloc>()
                                         .add(ConnectToNetwork(accessPoint));
-                                  backNavigation(context);
                                   }
                                 },
                                 validator: (value) {

@@ -6,6 +6,8 @@ import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
@@ -25,7 +27,6 @@ class WirelessSettings extends StatefulWidget {
 }
 
 class _WirelessSettingsState extends State<WirelessSettings> {
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
@@ -75,18 +76,42 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                                             ?.nmAccessPoint.strength ??
                                         0,
                                     isActive: true)),
-                            trailing: IconButton(
-                                onPressed: () =>
-                                    onInfoTap(state.connectedNetwork!, context),
-                                icon: SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: IconWidget(
-                                      iconPath: Images.settings,
-                                    ))),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(state.wifiState ?? '',
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 12)),
+                                IconButton(
+                                  onPressed: () => onInfoTap(
+                                      state.connectedNetwork!, context),
+                                  icon: SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: IconWidget(
+                                        iconPath: Images.settings,
+                                      )),
+                                ),
+                              ],
+                            ),
                           )
                       ]),
 
+                  if (state.wifiOn &&
+                      !state.availableSavedNetworksLoading &&
+                      state.availableSavedNetworks.isEmpty)
+                    MechanixSectionList(
+                      physics: const BouncingScrollPhysics(),
+                      title: 'My Networks',
+                      sectionListItems: [
+                        SectionListItems(
+                          title: '',
+                          backgroundColor: Colors.transparent,
+                          defaultTrailingIcon: false,
+                          leading: CustomLoader(),
+                        ),
+                      ],
+                    ),
                   if (state.wifiOn && state.availableSavedNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
@@ -138,7 +163,11 @@ void onNetworkTap(AccessPoints item, BuildContext context) {
     context
         .read<WirelessSettingsBloc>()
         .add(ConnectSavedNetwork('', item.nmAccessPoint));
-  } else if (!item.isActive) {
+  } else if (!item.isSecure && !item.isActive) {
+    context
+        .read<ConnectNetworkBloc>()
+        .add(ConnectToNetwork(item.nmAccessPoint));
+  } else {
     Navigator.pushNamed(
       context,
       AppRoutes.wirelessConnectSecureNetwork,

@@ -21,6 +21,7 @@ class ConnectNetworkBloc
     on<ConnectToNetwork>(connectToNetwork);
     on<ConnectToUnknownNetwork>(connectToUnknownNetwork);
     on<DeviceConnectionStateEvent>(_updateDeviceConnectionStateUpdate);
+    on<Error>(handleError);
 
     _initWifiStateAndReasonStream();
   }
@@ -32,17 +33,17 @@ class ConnectNetworkBloc
       _wifiStateAndReason =
           streamAndDevice.device.propertiesChanged.listen((event) {
         if (event.contains('StateReason')) {
-          logger.i(
-              "ConnectNetworkBloc STATE REASON: ${streamAndDevice.device.stateReason.state} --- ${streamAndDevice.device.stateReason.reason}");
+            if (event.contains("State")) {
+            add(DeviceConnectionStateEvent(streamAndDevice.device.state));
+            return;
 
-          if ((streamAndDevice.device.stateReason.state ==
-                      NetworkManagerDeviceState.activated ||
-                  streamAndDevice.device.stateReason.state ==
-                      NetworkManagerDeviceState.ipCheck) &&
+          } else if (streamAndDevice.device.stateReason.state ==
+                  NetworkManagerDeviceState.activated &&
               streamAndDevice.device.stateReason.reason ==
                   NetworkManagerDeviceStateReason.none) {
-            logger.i('Successfully connected to network');
+            add(DeviceConnectionStateEvent(streamAndDevice.device.state));
             return;
+
           } else if (streamAndDevice.device.stateReason.state ==
                   NetworkManagerDeviceState.failed &&
               streamAndDevice.device.stateReason.reason ==
@@ -99,7 +100,6 @@ class ConnectNetworkBloc
     try {
       await wifiRepository.connectToUnknownNetwork(event.ssid, state.password);
       emit(state.copyWith(isConnected: true, isConnecting: false));
-      // logger.i('Successfully connected to unknown network');
     } catch (e) {
       logger.e('Failed to connect to unknown network: $e');
       emit(state.copyWith(

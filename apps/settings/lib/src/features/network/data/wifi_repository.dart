@@ -25,7 +25,6 @@ abstract class WifiRepository {
   Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);   
   Future<void> connectToUnknownNetwork(String ssid, String password);  
   Future<void> forgetNetwork(String ssid);
-  Future<void> deleteSavedNetwork(String ssid);
   Future<NetworkManagerDeviceState?> getNetworkState();
   Future<void> close();
 }

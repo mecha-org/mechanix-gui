@@ -1,5 +1,3 @@
-// features/network/presentation/bloc/wireless_settings_bloc.dart
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -49,7 +47,6 @@ class WirelessSettingsBloc
 
     on<ConnectSavedNetwork>(_connectSavedNetwork);
     on<ForgetNetwork>(onForgetNetwork);
-    on<DeleteSavedNetwork>(_deleteSavedNetwork);
 
     on<UpdateAvailableNetworksEvent>(_updateAvailableNetworkList);
     on<GetSavedNetworksEvent>(_getSavedNetworkList);
@@ -116,36 +113,6 @@ class WirelessSettingsBloc
     }
   }
 
-  Future<void> _initWifiStateAndReasonStream() async {
-    try {
-      if (!state.wifiOn) return;
-
-      final streamAndDevice = await wifiRepository.getWifiStateAndReason();
-
-      _wifiStateAndReason =
-          streamAndDevice.device.propertiesChanged.listen((event) {
-        if (event.contains('StateReason')) {
-          if ((streamAndDevice.device.stateReason.state ==
-                      NetworkManagerDeviceState.activated ||
-                  streamAndDevice.device.stateReason.state ==
-                      NetworkManagerDeviceState.ipCheck) &&
-              streamAndDevice.device.stateReason.reason ==
-                  NetworkManagerDeviceStateReason.none) {
-            logger.i('Successfully connected to network');
-            return;
-          } else if (streamAndDevice.device.stateReason.state ==
-                  NetworkManagerDeviceState.failed &&
-              streamAndDevice.device.stateReason.reason ==
-                  NetworkManagerDeviceStateReason.noSecrets) {
-            logger.w('WirelessSettingsBloc:: Authentication required!');
-            add(Error("Authentication required!"));
-          }
-        }
-      });
-    } catch (e, stackTrace) {
-      logger.e('Error initializing wifi stream $e, $stackTrace');
-    }
-  }
 
   // Always cancel your subscriptions when Bloc is closed
   @override
@@ -187,7 +154,7 @@ class WirelessSettingsBloc
     if (enabled) {
       print("_handleWifiEnableChange IF :: $enabled");
       _initializeAccessPointStream();
-      _initWifiStateAndReasonStream();
+      // _initWifiStateAndReasonStream();
     } else {
       // On power off, cancel relevant the streams
       print("_handleWifiEnableChange ELSE :: $enabled");
@@ -243,11 +210,6 @@ class WirelessSettingsBloc
       logger.e('Error connecting to saved network: $e');
       emit(state.copyWith(error: e.toString()));
     }
-  }
-
-  Future<void> _deleteSavedNetwork(
-      DeleteSavedNetwork event, Emitter<WirelessSettingsState> emit) async {
-    await wifiRepository.deleteSavedNetwork(event.ssid);
   }
 
   Future<void> _updateAvailableNetworkList(UpdateAvailableNetworksEvent event,

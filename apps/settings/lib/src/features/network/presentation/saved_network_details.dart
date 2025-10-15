@@ -11,6 +11,8 @@ import 'package:mechanix_settings/src/features/network/models/saved_networks.dar
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
+import 'package:mechanix_settings/src/commons/styles/color.dart';
 
 class SavedNetworkDetails extends StatefulWidget {
   const SavedNetworkDetails({super.key});
@@ -37,6 +39,47 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
       builder: (context, state) {
         final ssid = network.ssid;
         final security = network.security;
+
+        // todo : add ?
+         void showDeleteDialog(String networkName) {
+          showDialog(
+            context: context,
+            builder: (dialogContext) {
+              // This context does NOT have BlocProvider!
+              return AlertDialog(
+                backgroundColor: const Color.fromARGB(255, 54, 54, 54),
+                title: const Text('Delete saved network'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Network name: $networkName',
+                        style: const TextStyle(fontSize: 18)),
+                    Text('Security : None',
+                        style: const TextStyle(fontSize: 18)),
+                  ],
+                ),
+                actions: [
+                  CustomTextButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                  CustomTextButton(
+                    label: 'Delete',
+                    onPressed: () {
+                      // Navigator.pop(dialogContext); // pop dialog first
+                      // outerContext
+                      //     .read<WirelessSettingsBloc>()
+                      //     .add(DeleteSavedNetwork(networkName));
+                      // Navigator.pop(context);
+                    },
+                    textColor: dangerColor,
+                  ),
+                ],
+              );
+            },
+          );
+        }
+
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
