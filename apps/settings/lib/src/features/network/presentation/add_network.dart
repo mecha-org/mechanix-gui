@@ -40,7 +40,12 @@ class AddNetwork extends StatelessWidget {
             if (state.deviceState == NetworkManagerDeviceState.ipCheck) {
               print("state.deviceState ${state.deviceState}");
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('connecting to network..')),
+                SnackBar(
+                  content: Text("Connecting to network..",
+                      style: const TextStyle(color: Colors.white)),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: Colors.grey[800],
+                ),
               );
             } else if (state.deviceState ==
                 NetworkManagerDeviceState.activated) {
@@ -50,7 +55,7 @@ class AddNetwork extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text("${state.error}",
-                      style: const TextStyle(color: Colors.white)),
+                      style: const TextStyle(color: Colors.red)),
                   duration: const Duration(seconds: 2),
                   backgroundColor: Colors.grey[800],
                 ),

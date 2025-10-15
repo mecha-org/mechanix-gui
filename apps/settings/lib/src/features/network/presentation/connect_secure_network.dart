@@ -35,7 +35,12 @@ class ConnectSecureNetwork extends StatelessWidget {
           if (state.deviceState == NetworkManagerDeviceState.ipCheck) {
             print("state.deviceState ${state.deviceState}");
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('connecting to network..')),
+              SnackBar(
+                content: Text("Connecting to network..",
+                    style: const TextStyle(color: Colors.white)),
+                duration: const Duration(seconds: 2),
+                backgroundColor: Colors.grey[800],
+              ),
             );
           } else if (state.deviceState == NetworkManagerDeviceState.activated) {
             print("connected successfully.");
@@ -44,7 +49,7 @@ class ConnectSecureNetwork extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text("${state.error}",
-                    style: const TextStyle(color: Colors.white)),
+                    style: const TextStyle(color: Colors.red)),
                 duration: const Duration(seconds: 2),
                 backgroundColor: Colors.grey[800],
               ),
@@ -94,7 +99,8 @@ class ConnectSecureNetwork extends StatelessWidget {
                                       .add(PasswordChanged(value));
                                 },
                                 onFieldSubmitted: (_) {
-                                  if (state.password.isNotEmpty && state.password.length >= 8) {
+                                  if (state.password.isNotEmpty &&
+                                      state.password.length >= 8) {
                                     context
                                         .read<ConnectNetworkBloc>()
                                         .add(ConnectToNetwork(accessPoint));
