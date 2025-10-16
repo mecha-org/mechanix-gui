@@ -2,6 +2,7 @@ import 'dart:io' as io;
 
 import 'package:file/file.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 
 class FileItem {
   final String name;
@@ -101,5 +102,34 @@ extension FileSystemEntityIcon on io.FileSystemEntity {
     if (ext == 'zip' || ext == 'rar' || ext == '7z') return Images.archiveFile;
 
     return Images.file;
+  }
+}
+
+SortBy sortByFromKey(String key) {
+  switch (key) {
+    case 'name':
+      return SortBy.name;
+    case 'type':
+      return SortBy.type;
+    case 'mod_time':
+      return SortBy.date;
+    case 'size_asc':
+    case 'size_desc':
+      return SortBy.size;
+    default:
+      return SortBy.name;
+  }
+}
+
+String keyFromSort(SortBy sortBy, bool ascending) {
+  switch (sortBy) {
+    case SortBy.name:
+      return 'name';
+    case SortBy.type:
+      return 'type';
+    case SortBy.date:
+      return 'mod_time';
+    case SortBy.size:
+      return ascending ? 'size_asc' : 'size_desc';
   }
 }

@@ -269,19 +269,6 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
     );
   }
 
-  // void _performSearch() {
-  //   final query = searchController.text.trim();
-  //   if (query.isEmpty) return;
-
-  //   setState(() {
-  //     searchResults = getFilesAtPath(
-  //             currentPath, widget.filesBloc.state.fileSystemList)
-  //         .where(
-  //             (file) => file.name.toLowerCase().contains(query.toLowerCase()))
-  //         .toList();
-  //   });
-  // }
-
   void extractMainBottomSheet(
       onExtractCompleted, FileManagerController controller) {
     final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
@@ -398,7 +385,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
   }
 
   Future<void> handleExtract(BuildContext context, FilesState state) async {
-    final targetPath = currentPath;
+    String targetPath = currentPath;
     final bloc = BlocProvider.of<FilesBloc>(context);
     final completer = Completer<void>();
 
@@ -416,16 +403,21 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
       return;
     }
 
+    // Create unique destination folder if one already exists
+    final zipName = p.basenameWithoutExtension(state.zipFilePath);
+    final baseExtractPath = p.join(targetPath, zipName);
+    final uniqueExtractPath = await getUniqueExtractPath(baseExtractPath);
+
     bloc.add(ExtractZipTo(
       state.zipFilePath,
-      targetPath,
+      uniqueExtractPath,
       completer,
     ));
+
     await completer.future;
     bloc.add(CancelExtractMode());
 
-    // safe to reload
-    widget.onExtractCompleted();
+    // widget.onExtractCompleted();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -186,91 +186,6 @@ class FileRepositoryImpl implements FileRepository {
   }
 
   @override
-  Future<List<FileSystemEntity>> sortEntities(
-      List<FileSystemEntity> list, String sortBy) async {
-    final sorted = List<FileSystemEntity>.from(list);
-    final Map<String, int> sizeMap = {};
-
-    sorted.sort((a, b) {
-      final aName = p.basename(a.path).toLowerCase();
-      final bName = p.basename(b.path).toLowerCase();
-
-      switch (sortBy) {
-        case 'name':
-          // Group folders first
-          if (a is Directory && b is! Directory) return -1;
-          if (b is Directory && a is! Directory) return 1;
-
-          // If both are the same type, sort by name
-          return aName.compareTo(bName);
-
-        case 'type':
-          if (a is Directory && b is! Directory) return -1;
-          if (b is Directory && a is! Directory) return 1;
-
-          // Same type
-          final aType = a is Directory ? 'dir' : p.extension(a.path);
-          final bType = b is Directory ? 'dir' : p.extension(b.path);
-          final typeCompare = aType.compareTo(bType);
-          if (typeCompare != 0) return typeCompare;
-
-          // Secondary: by name
-          final aName = p.basename(a.path).toLowerCase();
-          final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
-
-        case 'size_asc':
-          // Group folders first
-          if (a is Directory && b is! Directory) return -1;
-          if (b is Directory && a is! Directory) return 1;
-
-          // Only compare files by size
-          if (a is File && b is File) {
-            sizeMap[a.path] ??= a.lengthSync();
-            sizeMap[b.path] ??= b.lengthSync();
-            final aSize = sizeMap[a.path]!;
-            final bSize = sizeMap[b.path]!;
-            return aSize.compareTo(bSize); // ascending
-          }
-
-          // If both are directories, sort alphabetically
-          final aName = p.basename(a.path).toLowerCase();
-          final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
-
-        case 'size_desc':
-          // Group folders last
-          if (a is Directory && b is! Directory) return 1;
-          if (b is Directory && a is! Directory) return -1;
-
-          // Only compare files by size
-          if (a is File && b is File) {
-            sizeMap[a.path] ??= a.lengthSync();
-            sizeMap[b.path] ??= b.lengthSync();
-            final aSize = sizeMap[a.path]!;
-            final bSize = sizeMap[b.path]!;
-            return bSize.compareTo(aSize); // descending
-          }
-
-          // If both are directories, sort alphabetically
-          final aName = p.basename(a.path).toLowerCase();
-          final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
-
-        case 'mod_time':
-          final aTime = a.statSync().modified;
-          final bTime = b.statSync().modified;
-          return bTime.compareTo(aTime);
-
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  }
-
-  @override
   Future<FileStat> getFileDetails(String path) async {
     final entity =
         _fs.file(path).existsSync() ? _fs.file(path) : _fs.directory(path);
@@ -373,6 +288,17 @@ class FileRepositoryImpl implements FileRepository {
     return dirExists;
   }
 
+  /// Recursively searches for files and directories matching a query string,
+  /// starting from a given root path, up to a limited depth.
+  ///
+  /// This method performs a **breadth-first search (BFS)** using a queue to avoid
+  /// deep recursion. It only searches up to [maxDepth] levels below [rootPath].
+  ///
+  /// - [rootPath]: The directory path to start searching from.
+  /// - [query]: The search term (case-insensitive).
+  ///
+  /// Returns a [List] of [FileSystemEntity] objects (files or directories)
+  /// whose names contain the query string.
   @override
   Future<List<FileSystemEntity>> searchFiles(
       String rootPath, String query) async {

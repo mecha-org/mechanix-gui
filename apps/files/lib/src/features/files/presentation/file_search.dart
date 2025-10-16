@@ -1,3 +1,4 @@
+import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
@@ -19,6 +20,7 @@ class FileSearchPage extends StatefulWidget {
 
 class _FileSearchPageState extends State<FileSearchPage> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final String homeDir = AppConfig().homeDir;
   final ValueNotifier<bool> viewModeNotifier = ValueNotifier(false);
 
@@ -26,12 +28,30 @@ class _FileSearchPageState extends State<FileSearchPage> {
   void initState() {
     super.initState();
     clearSearch(context);
+    focusSearchField(); // default 300ms delay
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    viewModeNotifier.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Requests focus on the search field after the page has fully built.
+  /// Optional [delayMillis] can be used to adjust the delay before focusing.
+  void focusSearchField({int delayMillis = 300}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      // Wait for optional delay to ensure page transition is complete
+      await Future.delayed(Duration(milliseconds: delayMillis));
+
+      if (mounted) {
+        FocusScope.of(context).requestFocus(_searchFocusNode);
+      }
+    });
   }
 
   void _performSearch(String query) {
@@ -39,98 +59,121 @@ class _FileSearchPageState extends State<FileSearchPage> {
   }
 
   void clearSearch(BuildContext context) {
-    final filesBloc = context.read<FilesBloc>();
-    filesBloc.add(ClearSearchResults());
+    context.read<FilesBloc>().add(ClearSearchResults());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<FilesBloc, FilesState>(
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: Colors.black,
-          appBar: MechanixNavigationBar(
-            title: "Search",
-            titleStyle: const TextStyle(fontSize: 18),
-            leadingWidget: IconButton(
-              icon: const Icon(Icons.arrow_back_ios,
-                  size: 20, color: Colors.blue),
-              onPressed: () {
-                Navigator.pop(context);
-                // Optionally clear results when exiting
-                clearSearch(context);
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: MechanixNavigationBar(
+        title: "Search",
+        titleStyle: const TextStyle(fontSize: 18),
+        leadingWidget: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.blue),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        actionWidgets: [
+          IconButton(
+            icon: ValueListenableBuilder<bool>(
+              valueListenable: viewModeNotifier,
+              builder: (context, isGrid, _) {
+                return Image.asset(isGrid ? Images.list : Images.grid);
               },
             ),
-            actionWidgets: [
-              IconButton(
-                icon: ValueListenableBuilder<bool>(
-                  valueListenable: viewModeNotifier,
-                  builder: (context, isGrid, _) {
-                    return Image.asset(isGrid ? Images.list : Images.grid);
-                  },
-                ),
-                onPressed: () {
-                  viewModeNotifier.value = !viewModeNotifier.value;
+            onPressed: () {
+              viewModeNotifier.value = !viewModeNotifier.value;
+            },
+          ),
+        ],
+      ),
+      body: BlocListener<FilesBloc, FilesState>(
+        listenWhen: (previous, current) =>
+            previous.error != current.error && current.error != null,
+        listener: (context, state) {
+          if (state.error != null && state.error!.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.error!),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+          }
+        },
+        child: Stack(
+          children: [
+            // BlocSelector for loading state
+            Positioned.fill(
+              child: BlocSelector<FilesBloc, FilesState, bool>(
+                selector: (state) => state.loading,
+                builder: (context, loading) {
+                  if (loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // When not loading, show list selector below
+                  return BlocSelector<FilesBloc, FilesState,
+                      List<FileSystemEntity>>(
+                    selector: (state) => state.fileSystemList,
+                    builder: (context, fileList) {
+                      if (fileList.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            "Find files and folders",
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        );
+                      }
+
+                      return ValueListenableBuilder<bool>(
+                        valueListenable: viewModeNotifier,
+                        builder: (context, isGrid, _) {
+                          return isGrid
+                              ? buildSearchResultsGrid(fileList, context)
+                              : buildSearchResultsList(fileList, context);
+                        },
+                      );
+                    },
+                  );
                 },
               ),
-            ],
-          ),
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: state.loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : state.fileSystemList.isEmpty
-                        ? const Center(
-                            child: Text("Find files and folders",
-                                style: TextStyle(color: Colors.white70)))
-                        : ValueListenableBuilder<bool>(
-                            valueListenable: viewModeNotifier,
-                            builder: (context, isGrid, _) {
-                              return isGrid
-                                  ? buildSearchResultsGrid(
-                                      state.fileSystemList,
-                                      context,
-                                    )
-                                  : buildSearchResultsList(
-                                      state.fileSystemList,
-                                      context,
-                                    );
-                            },
-                          ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  child: SizedBox(
-                    height: 56,
-                    child: MechanixSearchBar(
-                      controller: _searchController,
-                      autoFocus: true,
-                      hintText: "Search files",
-                      onChanged: (text) {
-                        if (text.isEmpty) {
-                          clearSearch(context);
-                        } else {
-                          _performSearch(text);
-                        }
-                      },
-                      onCloseIconPress: () {
-                        _searchController.clear();
+            ),
+
+            // Search bar (independent of bloc rebuilds)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: SizedBox(
+                  height: 56,
+                  child: MechanixSearchBar(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    autoFocus: false,
+                    hintText: "Search files",
+                    onChanged: (text) {
+                      if (text.isEmpty) {
                         clearSearch(context);
-                      },
-                    ),
+                      } else {
+                        _performSearch(text);
+                      }
+                    },
+                    onCloseIconPress: () {
+                      _searchController.clear();
+                      clearSearch(context);
+                    },
                   ),
                 ),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

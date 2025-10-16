@@ -370,6 +370,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             }
           },
         ),
+        // Controller settings sync
+        BlocListener<FilesBloc, FilesState>(
+          listenWhen: (prev, curr) =>
+              prev.showHiddenFiles != curr.showHiddenFiles ||
+              prev.currentSortBy != curr.currentSortBy,
+          listener: (context, state) {
+            controller.syncSettings(
+              showHidden: state.showHiddenFiles,
+              sortMode: state.currentSortBy,
+            );
+          },
+        ),
       ],
       child: Scaffold(
         appBar: AppBar(
@@ -588,50 +600,25 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     controller.reload();
   }
 
-  SortBy _sortByFromKey(String key) {
-    switch (key) {
-      case 'name':
-        return SortBy.name;
-      case 'type':
-        return SortBy.type;
-      case 'mod_time':
-        return SortBy.date;
-      case 'size_asc':
-      case 'size_desc':
-        return SortBy.size;
-      default:
-        return SortBy.name;
-    }
-  }
-
-  String _getSelectedSortKey() {
-    switch (controller.getSortedByNotifier.value) {
-      case SortBy.name:
-        return 'name';
-      case SortBy.type:
-        return 'type';
-      case SortBy.date:
-        return 'mod_time';
-      case SortBy.size:
-        return controller.isSizeAscending ? 'size_asc' : 'size_desc';
-    }
-  }
-
-  Future<void> showSortMenu(BuildContext context, String selected) async {
-    final isSizeSelected = selected.startsWith('size');
-    final isDescending = selected == 'size_desc';
+  /// Shows bottom sheet for selecting sort mode
+  Future<void> showSortMenu(BuildContext context, String currentSortBy) async {
+    final currentSort = sortByFromKey(currentSortBy);
+    final isAscending = controller.isSizeAscending;
+    final selectedKey = keyFromSort(currentSort, isAscending);
+    final isSizeSort = selectedKey.startsWith('size');
+    final isDescending = selectedKey == 'size_desc';
     final newSizeKey = isDescending ? 'size_asc' : 'size_desc';
     final sizeIcon =
         isDescending ? Images.sortDescending : Images.sortAscending;
 
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) {
         return Container(
           decoration: const BoxDecoration(
-            color: Color.fromARGB(255, 70, 69, 69),
+            color: Color(0xFF464545),
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
@@ -639,45 +626,22 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
           width: double.infinity,
           child: MechanixMenu(
-            backgroundColor: const Color.fromARGB(255, 70, 69, 69),
+            backgroundColor: const Color(0xFF464545),
             itemPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             items: [
-              _buildSortMenuItem(
-                context,
-                key: 'none',
-                label: 'None',
-                // isSelected: selected == 'none',
-              ),
+              _buildSortMenuItem(context, key: 'name', label: 'Name'),
               const MechanixMenuDivider(),
-              _buildSortMenuItem(
-                context,
-                key: 'name',
-                label: 'Name',
-                // isSelected: selected == 'name',
-              ),
+              _buildSortMenuItem(context,
+                  key: newSizeKey,
+                  label: 'Size',
+                  trailingIcon: isSizeSort
+                      ? Image.asset(sizeIcon, width: 16, height: 16)
+                      : null),
               const MechanixMenuDivider(),
-              _buildSortMenuItem(
-                context,
-                key: newSizeKey,
-                label: 'Size',
-                // isSelected: isSizeSelected,
-                trailingIcon: Image.asset(sizeIcon, width: 16, height: 16),
-              ),
+              _buildSortMenuItem(context, key: 'type', label: 'Type'),
               const MechanixMenuDivider(),
-              _buildSortMenuItem(
-                context,
-                key: 'type',
-                label: 'Type',
-                // isSelected: selected == 'type',
-              ),
-              const MechanixMenuDivider(),
-              _buildSortMenuItem(
-                context,
-                key: 'mod_time',
-                label: 'File modified',
-                // isSelected: selected == 'mod_time',
-              ),
-              // Add more sort options here if needed
+              _buildSortMenuItem(context,
+                  key: 'mod_time', label: 'File Modified'),
             ],
           ),
         );
@@ -685,14 +649,21 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
   }
 
+  /// Builds a selectable menu item
   MechanixMenuItem _buildSortMenuItem(
     BuildContext context, {
     required String key,
     required String label,
-    // required bool isSelected,
     Widget? trailingIcon,
   }) {
-    final isSelected = _getSelectedSortKey() == key;
+    final selectedKey = keyFromSort(
+      controller.getSortedByNotifier.value,
+      controller.isSizeAscending,
+    );
+
+    // final isSelected = selectedKey == key;
+    final isSelected = selectedKey == key ||
+        (key.startsWith('size') && selectedKey.startsWith('size'));
 
     return MechanixMenuItem(
       label: label,
@@ -704,16 +675,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       ),
       trailingWidget: trailingIcon,
       onTap: () {
+        final sortBy = sortByFromKey(key);
+        handleSortMode(sortBy.name); // To add shared preference
+
         Navigator.of(context).pop();
 
-        final sortBy = _sortByFromKey(key);
         bool? ascending;
-
         if (key == 'size_asc') ascending = true;
         if (key == 'size_desc') ascending = false;
 
         controller.sortBy(sortBy, sizeAscending: ascending);
-        controller.openDirectory(controller.getCurrentDirectory);
+        controller.reload();
       },
     );
   }
@@ -943,16 +915,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void onToggleSelectAll() {
+    final files = controller.paginatedEntities.value; // only current page
+
     setState(() {
-      if (selectedPaths.length == displayedFiles.length) {
+      final allSelected = selectedPaths.length == files.length;
+
+      if (allSelected) {
         selectedPaths.clear();
       } else {
-        selectedPaths = {
-          for (final file in displayedFiles)
-            '/${[...widget.path.map((e) => e.name), file.name].join('/')}'
-        };
+        selectedPaths = {for (final f in files) f.path};
+        selectionMode = true;
       }
-      selectionMode = true;
     });
   }
 
@@ -1092,7 +1065,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void handleCopy() {
-    debugPrint("Handling copy for ${selectedPaths.first} items");
     BlocProvider.of<FilesBloc>(context)
         .add(StartCopyMode(selectedPaths.toList()));
 
@@ -1265,7 +1237,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void handleExtract(String zipFilePath) {
-    final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
     final filesBloc = BlocProvider.of<FilesBloc>(context);
 
     // Start extract mode with the tapped file
@@ -1478,11 +1449,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               ),
               const MechanixMenuDivider(),
               MechanixMenuItem(
-                label:
-                    showHiddenFiles ? "Hide Hidden Files" : "Show Hidden Files",
+                label: controller.showHiddenFiles
+                    ? "Hide Hidden Files"
+                    : "Show Hidden Files",
                 layout: MenuItemLayout.iconLeft,
                 leadingWidget: Image.asset(
-                  showHiddenFiles ? Images.eye : Images.eyeSlash,
+                  controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
                   color: Colors.white70,
                   height: mechanixIconSize,
                 ),
@@ -1614,7 +1586,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     }
   }
 
-  void handleSort(String value) {
+  void handleSortMode(String value) {
     BlocProvider.of<FilesBloc>(context).add(SortFiles(value));
   }
 
@@ -2180,11 +2152,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void _toggleHiddenFiles() {
+    controller.toggleShowHiddenFiles();
     final filesBloc = BlocProvider.of<FilesBloc>(context);
-
-    final currentPath = '/${widget.path.map((e) => e.name).join('/')}';
-
-    filesBloc.add(ToggleHiddenFiles(path: currentPath));
+    filesBloc.add(ToggleHiddenFiles());
   }
 
   void reload() {

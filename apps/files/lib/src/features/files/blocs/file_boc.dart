@@ -246,10 +246,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         ));
       } else {
         event.completer?.complete();
-        final firstSource = event.sourcePaths.first;
-        final sourceParent = p.dirname(firstSource);
-
-        await _loadAndEmitSortedFiles(emit: emit, path: sourceParent);
         emit(state.copyWith(loading: false));
       }
     } catch (e) {
@@ -278,7 +274,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
           loading: false,
         ));
       } else {
-        await _loadAndEmitSortedFiles(emit: emit, path: event.destinationPath);
         emit(state.copyWith(
           conflictingPaths: [],
           conflictDestinationPath: '',
@@ -291,72 +286,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         error: 'Failed to move: $e',
         loading: false,
       ));
-    }
-  }
-
-  // Future<void> _loadAndEmitSortedFiles({
-  //   required Emitter<FilesState> emit,
-  //   String path = '/',
-  // }) async {
-  //   try {
-  //     final contents = await fileRepository.getFileSystemList(path: path);
-  //     final visible = state.showHiddenFiles
-  //         ? contents
-  //         : contents.where((e) => !p.basename(e.path).startsWith('.')).toList();
-
-  //     final sorted =
-  //         await fileRepository.sortEntities(visible, state.currentSortBy);
-  //     emit(state.copyWith(fileSystemList: sorted, loading: false));
-  //   } catch (e) {
-  //     logger.e("Error loading path $path: $e");
-  //     emit(state.copyWith(error: e.toString(), loading: false));
-  //   }
-  // }
-
-  Future<void> _loadAndEmitSortedFiles({
-    required Emitter<FilesState> emit,
-    String path = '/',
-    int page = page,
-    int pageSize = pageSize,
-  }) async {
-    try {
-      emit(state.copyWith(loading: true, error: null));
-
-      // Load page from repository (streamed, paginated)
-      final contents = await fileRepository.getPaginatedFileSystemList(
-        path: path,
-        page: page,
-        pageSize: pageSize,
-      );
-
-      // Filter hidden files
-      final visible = state.showHiddenFiles
-          ? contents
-          : contents.where((e) => !p.basename(e.path).startsWith('.')).toList();
-
-      // Sort visible files
-      final sorted = await fileRepository.sortEntities(
-        visible,
-        state.currentSortBy,
-      );
-
-      // If page == 1 → replace, else append
-      final newList = page == 1 ? sorted : [...state.fileSystemList, ...sorted];
-
-      // Determine if we reached the last page
-      final hasMore = contents.length == pageSize;
-      logger.i("current page: $page");
-      logger.i("has more pages: $hasMore");
-
-      emit(state.copyWith(
-        fileSystemList: newList,
-        loading: false,
-        currentPage: page,
-        hasMorePages: hasMore,
-      ));
-    } catch (e, stackTrace) {
-      logger.e("Error loading path $path: $e", stackTrace: stackTrace);
-      emit(state.copyWith(error: e.toString(), loading: false));
     }
   }
 
@@ -393,16 +322,13 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
-    final sorted =
-        await fileRepository.sortEntities(state.fileSystemList, event.sortBy);
-
+    logger.d("Sort by : ${event.sortBy}");
     final prefs = await SharedPreferences
         .getInstance(); // Get shared preferences instance
     await prefs.setString(
         'sort_mode', event.sortBy); // Save sort mode to shared preferences
 
     emit(state.copyWith(
-      fileSystemList: sorted,
       currentSortBy: event.sortBy,
     ));
   }
@@ -436,7 +362,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('show_hidden_files', newShowHidden);
 
-    await _loadAndEmitSortedFiles(emit: emit, path: event.path);
+    emit(state.copyWith(loading: false));
   }
 
   Future<void> _onCompressEntities(
@@ -482,8 +408,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       if (!(event.completer?.isCompleted ?? true)) {
         event.completer?.complete();
       }
-
-      await _loadAndEmitSortedFiles(emit: emit, path: targetDir);
     } catch (e) {
       if (!(event.completer?.isCompleted ?? true)) {
         event.completer?.completeError(e);

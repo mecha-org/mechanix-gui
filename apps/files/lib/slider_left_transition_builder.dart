@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
+
+final logger = Logger();
 
 class SlideLeftTransitionsBuilder extends PageTransitionsBuilder {
   const SlideLeftTransitionsBuilder();
@@ -19,6 +22,7 @@ class SlideLeftTransitionsBuilder extends PageTransitionsBuilder {
       end: Offset.zero, // slide to normal position
     ).chain(CurveTween(curve: curve));
 
+    logger.i("In slide transition");
     return SlideTransition(
       position: animation.drive(tween),
       child: child,

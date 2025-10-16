@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
+import 'package:mechanix_files/app_route.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -37,6 +38,10 @@ class FileHomePageState extends State<FileHomePage> {
     super.dispose();
   }
 
+  void onSearch() {
+    Navigator.pushNamed(context, AppRoutes.searchFiles);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,15 +55,16 @@ class FileHomePageState extends State<FileHomePage> {
             child: IconButton(
               icon: Image.asset(Images.search, width: 24, height: 24),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<FilesBloc>(),
-                      child: const FileSearchPage(),
-                    ),
-                  ),
-                );
+                // Navigator.push(
+                //   context,
+                //   MaterialPageRoute(
+                //     builder: (_) => BlocProvider.value(
+                //       value: context.read<FilesBloc>(),
+                //       child: const FileSearchPage(),
+                //     ),
+                //   ),
+                // );
+                onSearch();
               },
             ),
           ),

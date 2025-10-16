@@ -9,6 +9,7 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository_impl.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
+import 'package:mechanix_files/src/features/files/presentation/file_search.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
@@ -71,6 +72,8 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("In main build");
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
@@ -85,24 +88,16 @@ class MainApp extends StatelessWidget {
         theme: lightTheme,
         darkTheme: darkTheme.copyWith(
             pageTransitionsTheme: const PageTransitionsTheme(builders: {
-          TargetPlatform.linux: SlideLeftTransitionsBuilder()
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder()
+          // SlideLeftTransitionsBuilder()
         })),
         themeMode: themeMode,
         home: const FileHomePage(),
         routes: {
           AppRoutes.files: (context) => const FileHomePage(),
+          AppRoutes.searchFiles: (context) => const FileSearchPage(),
         },
       ),
     );
   }
-
-  // Widget buildFileExplorerPage(BuildContext context) {
-  //   return BlocProvider(
-  //     create: (_) => FilesBloc(
-  //         fileRepository: context.read<FileRepository>(),
-  //         recentFilesManager: context.read<RecentFilesManager>())
-  //       ..add(InitializeFiles()),
-  //     child: const FileHomePage(),
-  //   );
-  // }
 }

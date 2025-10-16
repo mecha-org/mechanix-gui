@@ -318,13 +318,19 @@ void handleFileTap(
                 // Extract in same folder
                 final currentDir =
                     fullPath.substring(0, fullPath.lastIndexOf('/'));
+                final zipName = p.basenameWithoutExtension(fullPath);
+                final baseExtractPath = p.join(currentDir, zipName);
+
+                // Ensure unique extraction path
+                final uniqueExtractPath =
+                    await getUniqueExtractPath(baseExtractPath);
                 final bloc = context.read<FilesBloc>();
                 final completer = Completer<void>();
                 bloc.add(StartExtractMode(fullPath));
 
                 bloc.add(ExtractZipTo(
                   fullPath,
-                  currentDir,
+                  uniqueExtractPath,
                   completer,
                 ));
                 await completer.future;
@@ -394,4 +400,25 @@ String getCurrentFolderName(String path) {
   if (name == 'home') return 'Home';
 
   return name;
+}
+
+/// Ensures a unique folder name by appending "(1)", "(2)", etc.
+Future<String> getUniqueExtractPath(String basePath) async {
+  final io.Directory dir = io.Directory(basePath);
+
+  if (!await dir.exists()) {
+    return basePath; // safe, doesn't exist yet
+  }
+
+  final parent = p.dirname(basePath);
+  final name = p.basename(basePath);
+  int count = 1;
+
+  while (true) {
+    final newPath = p.join(parent, '$name ($count)');
+    if (!await io.Directory(newPath).exists()) {
+      return newPath;
+    }
+    count++;
+  }
 }

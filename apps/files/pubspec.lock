@@ -953,9 +953,9 @@ packages:
     dependency: "direct main"
     description:
       path: "flutter/widgets"
-      ref: main
-      resolved-ref: "628466ff9299ab711d0b18aef917a3b1cb934edd"
-      url: "https://github.com/mecha-org/mechanix.dart.git"
+      ref: "fix/text-input"
+      resolved-ref: "77b100335daae16ea5b181d55302fd292fff1969"
+      url: "https://github.com/yogitah-mecha/mechanix-ui.git"
     source: git
     version: "0.0.1"
   win32:

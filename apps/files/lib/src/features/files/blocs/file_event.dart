@@ -115,9 +115,7 @@ class FetchFileDetails extends FilesEvent {
 }
 
 class ToggleHiddenFiles extends FilesEvent {
-  final String path;
-
-  ToggleHiddenFiles({required this.path});
+  ToggleHiddenFiles();
 }
 
 class CompressEntitiesEvent extends FilesEvent {

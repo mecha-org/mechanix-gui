@@ -57,9 +57,9 @@ dependencies:
   intl: ^0.20.2
   widgets:
     git:
-      url: https://github.com/mecha-org/mechanix.dart.git
+      url: https://github.com/yogitah-mecha/mechanix-ui.git
       path: flutter/widgets
-      ref: main
+      ref: fix/text-input
   watch_it: ^1.7.0
   path_provider: ^2.1.5
 

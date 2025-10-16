@@ -31,6 +31,8 @@ class FileManagerController {
   final ValueNotifier<String> _searchQuery = ValueNotifier<String>('');
   Timer? _debounce;
 
+  bool showHiddenFiles = false;
+
   void _updatePath(String path) {
     _path.value = path;
   }
@@ -139,26 +141,47 @@ class FileManagerController {
       final int start = (_currentPage - 1) * pageSize;
 
       // Get next page of items
-      final List<FileSystemEntity> chunk = await dir
+      final List<FileSystemEntity> contents = await dir
           .list(recursive: false, followLinks: false)
           .skip(start)
           .take(pageSize)
           .toList();
-      if (chunk.isEmpty) {
-        _hasMorePages = false;
+
+      // Filter hidden files
+      final List<FileSystemEntity> visible = showHiddenFiles
+          ? contents
+          : contents.where((e) => !p.basename(e.path).startsWith('.')).toList();
+
+      // Sort visible files
+      final sorted = _sortEntities(visible);
+
+      // Append or replace current list
+      if (_currentPage == 1) {
+        _currentEntities
+          ..clear()
+          ..addAll(sorted);
       } else {
-        // Optionally sort chunk
-        _sortEntities(chunk);
-        _currentEntities.addAll(chunk);
-        paginatedEntities.value = List<FileSystemEntity>.from(_currentEntities);
+        _currentEntities.addAll(sorted);
       }
+
+      // Update observable list
+      paginatedEntities.value = List<FileSystemEntity>.from(_currentEntities);
+
+      // Detect end of pagination
+      final hasMore = contents.length == pageSize;
+      _hasMorePages = hasMore;
     } catch (e, st) {
-      logger.e('Error loading chunk: $e\n$st');
+      logger.e('Error loading directory ${_path.value}: $e\n$st');
     } finally {
       _isLoadingChunk = false;
       _currentPage++;
-      _applySearchFilter();
+      _applySearchFilter(); // Apply search if active
     }
+  }
+
+  void toggleShowHiddenFiles() {
+    showHiddenFiles = !showHiddenFiles;
+    reload(); // Reapply filtering
   }
 
   void sortBy(SortBy sortBy, {bool? sizeAscending}) {
@@ -173,51 +196,86 @@ class FileManagerController {
 
     _sort.value = sortBy;
     _applySearchFilter();
-    debugPrint('Sorting by: $sortBy, ascending: $_sizeAscending');
   }
 
   List<FileSystemEntity> _sortEntities(List<FileSystemEntity> list) {
     final Map<String, int> sizeMap = {};
-
+    logger.i("Sort by ; ${_sort.value}");
     list.sort((a, b) {
       final aName = p.basename(a.path).toLowerCase();
       final bName = p.basename(b.path).toLowerCase();
 
       switch (_sort.value) {
         case SortBy.name:
+          logger.i("Sort by name");
+          // Group folders first
           if (a is Directory && b is! Directory) return -1;
           if (b is Directory && a is! Directory) return 1;
+
+          // If both are the same type, sort by name
           return aName.compareTo(bName);
 
         case SortBy.type:
+          logger.i("Sort by type");
+
           if (a is Directory && b is! Directory) return -1;
           if (b is Directory && a is! Directory) return 1;
 
-          final aType =
-              a is Directory ? 'dir' : p.extension(a.path).toLowerCase();
-          final bType =
-              b is Directory ? 'dir' : p.extension(b.path).toLowerCase();
+          // Same type
+          final aType = a is Directory ? 'dir' : p.extension(a.path);
+          final bType = b is Directory ? 'dir' : p.extension(b.path);
           final typeCompare = aType.compareTo(bType);
           if (typeCompare != 0) return typeCompare;
 
+          // Secondary: by name
+          final aName = p.basename(a.path).toLowerCase();
+          final bName = p.basename(b.path).toLowerCase();
           return aName.compareTo(bName);
 
         case SortBy.size:
-          // Directories grouped first
-          if (a is Directory && b is! Directory) return -1;
-          if (b is Directory && a is! Directory) return 1;
+          logger.i("Sort by size");
 
-          if (a is File && b is File) {
-            sizeMap[a.path] ??= a.lengthSync();
-            sizeMap[b.path] ??= b.lengthSync();
-            return _sizeAscending
-                ? sizeMap[a.path]!.compareTo(sizeMap[b.path]!)
-                : sizeMap[b.path]!.compareTo(sizeMap[a.path]!);
+          if (_sizeAscending) {
+            // Group folders first
+            if (a is Directory && b is! Directory) return -1;
+            if (b is Directory && a is! Directory) return 1;
+
+            // Only compare files by size
+            if (a is File && b is File) {
+              sizeMap[a.path] ??= a.lengthSync();
+              sizeMap[b.path] ??= b.lengthSync();
+              final aSize = sizeMap[a.path]!;
+              final bSize = sizeMap[b.path]!;
+              return aSize.compareTo(bSize); // ascending
+            }
+
+            // If both are directories, sort alphabetically
+            final aName = p.basename(a.path).toLowerCase();
+            final bName = p.basename(b.path).toLowerCase();
+            return aName.compareTo(bName);
+          } else {
+            // Group folders last
+            if (a is Directory && b is! Directory) return 1;
+            if (b is Directory && a is! Directory) return -1;
+
+            // Only compare files by size
+            if (a is File && b is File) {
+              sizeMap[a.path] ??= a.lengthSync();
+              sizeMap[b.path] ??= b.lengthSync();
+              final aSize = sizeMap[a.path]!;
+              final bSize = sizeMap[b.path]!;
+              return bSize.compareTo(aSize); // descending
+            }
+
+            // If both are directories, sort alphabetically
+            final aName = p.basename(a.path).toLowerCase();
+            final bName = p.basename(b.path).toLowerCase();
+            return aName.compareTo(bName);
           }
 
-          return aName.compareTo(bName);
-
         case SortBy.date:
+          logger.i("Sort by date");
+
           final aTime = a.statSync().modified;
           final bTime = b.statSync().modified;
           return bTime.compareTo(aTime);
@@ -252,17 +310,30 @@ class FileManagerController {
   }
 
   void _applySearchFilter() {
-    if (_searchQuery.value.isEmpty) {
-      paginatedEntities.value = List<FileSystemEntity>.from(_currentEntities);
-      return;
+    // Start with all current entities
+    List<FileSystemEntity> list = List<FileSystemEntity>.from(_currentEntities);
+
+    // Apply hidden file filter
+    if (!showHiddenFiles) {
+      list = list.where((entity) {
+        final name = p.basename(entity.path);
+        return !name.startsWith('.');
+      }).toList();
     }
 
-    final filtered = _currentEntities.where((entity) {
-      final name = p.basename(entity.path).toLowerCase();
-      return name.contains(_searchQuery.value);
-    }).toList();
+    // Apply search filter (if query present)
+    if (_searchQuery.value.isNotEmpty) {
+      final query = _searchQuery.value.toLowerCase();
+      list = list.where((entity) {
+        final name = p.basename(entity.path).toLowerCase();
+        return name.contains(query);
+      }).toList();
+    }
 
-    paginatedEntities.value = filtered;
+    // Apply sorting
+    list = _sortEntities(list);
+
+    paginatedEntities.value = list;
   }
 
   Future<void> _searchRecursively(String query) async {
@@ -305,5 +376,28 @@ class FileManagerController {
     _sort.dispose();
     _searchQuery.dispose();
     _debounce?.cancel();
+  }
+
+  void syncSettings({required bool showHidden, required String sortMode}) {
+    showHiddenFiles = showHidden;
+
+    // Convert string from prefs to SortBy enum
+    switch (sortMode) {
+      case 'date':
+        _sort.value = SortBy.date;
+        break;
+      case 'type':
+        _sort.value = SortBy.type;
+        break;
+      case 'size':
+        _sort.value = SortBy.size;
+        break;
+      case 'name':
+      default:
+        _sort.value = SortBy.name;
+    }
+
+    // Apply immediately to existing files
+    _applySearchFilter();
   }
 }
