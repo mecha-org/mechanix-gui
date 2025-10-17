@@ -6,7 +6,7 @@ import 'package:mechanix_notes/src/commons/notes_fab_icon.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
-import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/widgets/floatingActionButton/mechanix_fab.dart';
 import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';

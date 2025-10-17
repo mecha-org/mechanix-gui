@@ -67,7 +67,7 @@ class _SearchNotesState extends State<SearchNotes> {
                         )
                       else
                         NoteList(
-                          selectedNotes: [],
+                          selectedNotes: const [],
                           isSelectionMode: false,
                           groupedNotes: [
                             GroupedNotes(label: '', notes: state.searchedNotes),
@@ -80,7 +80,7 @@ class _SearchNotesState extends State<SearchNotes> {
                   ),
                 ),
               ),
-              Positioned(
+              const Positioned(
                 left: 0,
                 right: 0,
                 bottom: 30,

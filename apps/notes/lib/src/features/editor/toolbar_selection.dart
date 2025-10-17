@@ -3,7 +3,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/additional_toolbar.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/alignment_toolbar.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/text_editor_toolbar.dart';
-import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 
 class ToolbarSelection extends StatelessWidget {
   final FocusNode focusNode;

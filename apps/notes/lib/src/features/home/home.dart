@@ -109,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     Text(
                       "${state.selectedNoteIds.length} Selected",
-                      style: TextStyle(color: Colors.white, fontSize: 14),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                     ).padRight(10),
                     if (state.selectedNoteIds.length != state.notes.length)
                       IconButton(

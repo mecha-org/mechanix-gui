@@ -123,7 +123,7 @@ class _CreateEditNoteState extends State<CreateEditNote> {
               child: Image.asset(NotesIcon.toolbarDisableIcon),
             ),
           ),
-          IconButton(onPressed: () {}, icon: Icon(Icons.more_vert)),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
         ],
       ),
       body: Padding(

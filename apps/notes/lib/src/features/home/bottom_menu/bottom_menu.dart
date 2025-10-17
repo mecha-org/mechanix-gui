@@ -65,12 +65,12 @@ class _BottomMenuState extends State<BottomMenu> {
           ),
 
           MechanixFabItem(
-            iconWidget: NotesFabIcon(iconPath: NotesIcon.deleteIcon),
+            iconWidget: const NotesFabIcon(iconPath: NotesIcon.deleteIcon),
             onTap: () => onDeleteRemoveSelection(),
           ),
           MechanixFabItem(
             onTap: () => clearSelection(),
-            iconWidget: NotesFabIcon(iconPath: NotesIcon.clearSelectionIcon),
+            iconWidget: const NotesFabIcon(iconPath: NotesIcon.clearSelectionIcon),
           ),
         ],
       ),

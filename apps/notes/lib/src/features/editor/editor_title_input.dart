@@ -79,8 +79,8 @@ class _EditorTitleInputState extends State<EditorTitleInput> {
             maxLines: 1,
             controller: _titleController,
             maxLength: 25, // title length limit to 25 character
-            style: TextStyle(color: NotesColors.titleTextColor),
-            decoration: InputDecoration(
+            style: const TextStyle(color: NotesColors.titleTextColor),
+            decoration: const InputDecoration(
               counterText: "",
               hintText: "New Note",
               hintStyle: TextStyle(color: NotesColors.titleTextColor),

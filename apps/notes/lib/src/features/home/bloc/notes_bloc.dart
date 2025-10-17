@@ -6,9 +6,9 @@ import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
 
 class NotesBloc extends Bloc<NotesEvent, NotesState> {
   final NotesRepository notesRepository;
-
   final logger = Logger();
-  NotesBloc({required this.notesRepository}) : super(NotesState(notes: [])) {
+  NotesBloc({required this.notesRepository})
+    : super(const NotesState(notes: [])) {
     on<CreateNotes>(_createNote);
     on<LoadNotes>(_loadNotes);
     on<UpdateNotes>(_updateNotes);

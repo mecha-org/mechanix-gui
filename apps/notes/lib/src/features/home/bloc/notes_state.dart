@@ -11,7 +11,6 @@ class NotesState extends Equatable {
   final List<String> selectedNoteIds;
   final List<GroupedNotes> groupedNotes;
   final List<NoteHive> searchedNotes;
-
   const NotesState({
     required this.notes,
     this.loading = false,

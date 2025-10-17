@@ -64,9 +64,7 @@ class NotesApp extends StatelessWidget with WatchItMixin {
     );
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
-        ],
-      ),
+      data: MechanixThemeData(mechanixVariant: mechanixVariant),
       builder:
           (context, mechanix, child) => MyApp(
             darkTheme: mechanix.darkTheme,
@@ -103,17 +101,19 @@ class MyApp extends StatelessWidget {
       theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
       darkTheme: darkTheme.copyWith(
         scaffoldBackgroundColor: Colors.black,
-        textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
-        pageTransitionsTheme: PageTransitionsTheme(
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: Colors.white,
+        ),
+        pageTransitionsTheme: const PageTransitionsTheme(
           builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
         ),
       ),
       themeMode: themeMode,
 
-      home: HomePage(),
+      home: const HomePage(),
       routes: {
-        AppRoutes.createEditNotes: (context) => NotesEditor(),
-        AppRoutes.searchNotes: (context) => SearchNotes(),
+        AppRoutes.createEditNotes: (context) => const NotesEditor(),
+        AppRoutes.searchNotes: (context) => const SearchNotes(),
       },
     );
   }

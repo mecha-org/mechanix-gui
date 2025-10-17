@@ -11,7 +11,7 @@ import 'package:mechanix_notes/src/features/editor/editor_icon_button.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/color_button.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_container.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_row.dart';
-import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:widgets/mechanix.dart';
 
 class TextEditorToolbar extends StatefulWidget {
@@ -137,13 +137,13 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
       return EditorIconButton(
         isSelected: true,
         iconPath: NotesIcon.t1Icon,
-        onPressed: () => textSizeFormat(SizeAttribute(Constants.t1Size)),
+        onPressed: () => textSizeFormat(const SizeAttribute(Constants.t1Size)),
       );
     } else {
       return EditorIconButton(
         isSelected: sizeValue == Constants.t2Size,
         iconPath: NotesIcon.t2Icon,
-        onPressed: () => textSizeFormat(SizeAttribute(Constants.t2Size)),
+        onPressed: () => textSizeFormat(const SizeAttribute(Constants.t2Size)),
       );
     }
   }
@@ -239,14 +239,16 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
                           Constants.t1Size,
                       iconPath: NotesIcon.t1Icon,
                       onPressed:
-                          () => textSizeFormat(SizeAttribute(Constants.t1Size)),
+                          () => textSizeFormat(
+                            const SizeAttribute(Constants.t1Size),
+                          ),
                     ),
                   ),
                 ],
                 if (isTextColorSelected)
                   Expanded(
                     child: Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         border: Border(right: borderSideStyle),
                       ),
                       child: getCurrentSelectedFormat(),
@@ -255,7 +257,7 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
                 if (!isTextColorSelected)
                   Expanded(
                     child: Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         border: Border(right: borderSideStyle),
                       ),
                       child: EditorIconButton(
@@ -267,8 +269,9 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
                             Constants.t2Size,
                         iconPath: NotesIcon.t2Icon,
                         onPressed:
-                            () =>
-                                textSizeFormat(SizeAttribute(Constants.t2Size)),
+                            () => textSizeFormat(
+                              const SizeAttribute(Constants.t2Size),
+                            ),
                       ),
                     ),
                   ),
@@ -290,7 +293,7 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
                               isTextColorSelected = !isTextColorSelected;
                             }),
                           },
-                      border: Border(left: borderSideStyle),
+                      border: const Border(left: borderSideStyle),
                     ),
                   ),
                 if (isTextColorSelected) ...[

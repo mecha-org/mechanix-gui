@@ -17,7 +17,7 @@ class ToolbarContainer extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: Color(0xFF2B2B2B),
+        color: const Color(0xFF2B2B2B),
       ),
       width: width,
       height: height,

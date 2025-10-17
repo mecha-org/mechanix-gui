@@ -20,7 +20,7 @@ class NotesRepositoryImpl extends NotesRepository {
   ) async {
     try {
       await ensureHiveConnected();
-      final uuid = Uuid();
+      final uuid = const Uuid();
       final newNote = NoteHive(
         id: uuid.v4(),
         title: title,

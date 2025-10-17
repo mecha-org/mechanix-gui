@@ -8,7 +8,7 @@ import 'package:mechanix_notes/src/features/editor/editor_icon_button.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_container.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_row.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 
 class AlignmentToolbar extends StatefulWidget {
   final QuillController controller;
@@ -130,12 +130,12 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
                     onPressed: () {
                       toggleList(Attribute.unchecked);
                     },
-                    border: Border(right: borderSideStyle),
+                    border: const Border(right: borderSideStyle),
                   ),
                 ),
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(
                         right: borderSideStyle,
                         left: borderSideStyle,
@@ -181,7 +181,7 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
                 ),
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(right: borderSideStyle),
                     ),
                     child: EditorIconButton(
@@ -197,9 +197,9 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
                       Attribute.align,
                       'left',
                     ),
-                    icon: Icon(Icons.format_align_left),
+                    icon: const Icon(Icons.format_align_left),
                     onPressed: () {
-                      toggleList(AlignAttribute('left'));
+                      toggleList(const AlignAttribute('left'));
                     },
                   ),
                 ),
@@ -211,7 +211,7 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
                     ),
                     iconPath: NotesIcon.centerAlignIcon,
                     onPressed: () {
-                      toggleList(AlignAttribute('center'));
+                      toggleList(const AlignAttribute('center'));
                     },
                   ),
                 ),
@@ -221,9 +221,9 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
                       Attribute.align,
                       'right',
                     ),
-                    icon: Icon(Icons.format_align_right),
+                    icon: const Icon(Icons.format_align_right),
                     onPressed: () {
-                      toggleList(AlignAttribute('right'));
+                      toggleList(const AlignAttribute('right'));
                     },
                   ),
                 ),

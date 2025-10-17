@@ -8,8 +8,8 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/content_editor.dart';
 import 'package:mechanix_notes/src/features/editor/editor_bar.dart';
 import 'package:mechanix_notes/src/features/editor/editor_bottom_menu.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar_selection.dart';
-import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -28,7 +28,7 @@ class _NotesEditorState extends State<NotesEditor> {
 
   final QuillController _controller = QuillController(
     document: Document(),
-    selection: TextSelection.collapsed(offset: 0),
+    selection: const TextSelection.collapsed(offset: 0),
     config: QuillControllerConfig(
       requireScriptFontFeatures: false,
       clipboardConfig: QuillClipboardConfig(
@@ -100,7 +100,7 @@ class _NotesEditorState extends State<NotesEditor> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(50),
+        preferredSize: const Size.fromHeight(50),
         child: EditorBar(controller: _controller, note: widget.note),
       ),
       body:
@@ -109,8 +109,8 @@ class _NotesEditorState extends State<NotesEditor> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
                     Text(
                       'Loading Notes...',
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),

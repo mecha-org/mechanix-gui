@@ -40,7 +40,7 @@ class NoteList extends StatelessWidget {
       return SizedBox(
         height: 64,
         child: MechanixPressableList(
-          itemPadding: EdgeInsets.all(10),
+          itemPadding: const EdgeInsets.all(10),
           onTap: () => Navigator.pushNamed(context, AppRoutes.createEditNotes),
           leadingIcon: Image.asset(NotesIcon.addIcon, height: 18, width: 18),
           isSelected: true,
@@ -98,7 +98,7 @@ class NoteList extends StatelessWidget {
           height: 64,
           child: MechanixPressableList(
             leadingIconPadding: EdgeInsets.zero,
-            checkboxSpacing: EdgeInsets.only(right: 16, left: 6),
+            checkboxSpacing: const EdgeInsets.only(right: 16, left: 6),
             itemPadding: const EdgeInsets.only(
               left: 16,
               right: 12,

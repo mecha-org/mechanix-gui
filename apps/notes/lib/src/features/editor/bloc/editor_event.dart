@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 
 abstract class EditorEvent extends Equatable {
   @override

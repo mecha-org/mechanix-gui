@@ -53,14 +53,14 @@ class MenuOptions extends StatelessWidget {
               width: 217,
               height: 90,
               child: MechanixMenu(
-                backgroundColor: Color.fromRGBO(68, 68, 68, 0.95),
+                backgroundColor: const Color.fromRGBO(68, 68, 68, 0.95),
                 items: [
                   BlocSelector<EditorBloc, EditorBlocState, bool>(
                     selector: (state) => state.isPinned,
                     builder: (context, isPinned) {
                       return MechanixMenuItem(
                         label: isPinned ? "Unpin" : "Pin",
-                        textStyle: TextStyle(
+                        textStyle: const TextStyle(
                           fontWeight: FontWeight.w500,
                           color: Color(0xFFF0F0F0),
                         ),
@@ -71,7 +71,7 @@ class MenuOptions extends StatelessWidget {
                                 : NotesIcon.pinIcon,
                             width: 18,
                             height: 18,
-                            color: Color(0xFFF0F0F0),
+                            color: const Color(0xFFF0F0F0),
                           ),
                         ),
 
@@ -81,18 +81,18 @@ class MenuOptions extends StatelessWidget {
                     },
                   ),
 
-                  MechanixMenuDivider(thickness: 1, color: Color(0xFF333333)),
+                  const MechanixMenuDivider(thickness: 1, color: Color(0xFF333333)),
                   MechanixMenuItem(
                     trailingWidget: SizedBox(
                       child: Image.asset(
                         height: 18,
                         NotesIcon.deleteIcon,
                         width: 18,
-                        color: Color(0xFFFF4949),
+                        color: const Color(0xFFFF4949),
                       ),
                     ),
                     label: "Delete",
-                    textStyle: TextStyle(
+                    textStyle: const TextStyle(
                       color: Color(0xFFFF4949),
                       fontWeight: FontWeight.w500,
                     ),

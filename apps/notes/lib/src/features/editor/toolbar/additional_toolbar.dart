@@ -141,7 +141,7 @@ class AdditionalToolbar extends StatelessWidget {
         color: NotesColors.backgroundColor,
       ),
       width: 60,
-      padding: EdgeInsets.all(4),
+      padding: const EdgeInsets.all(4),
       height: 52,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

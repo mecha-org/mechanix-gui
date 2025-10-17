@@ -57,6 +57,10 @@ A powerful and intuitive notes application built with Flutter for Embedded Linux
 - **Quote Blocks**: Highlight important quotes and references
 - **Code Blocks**: Perfect for developers to save code snippets and technical notes
 
+### Note Limits
+
+- **Title Length**: Maximum 25 characters
+
 ## App Screenshots
 
 <img src="./assets/screenshots/notes2.png" alt="App Screenshot" width="540" height="620">

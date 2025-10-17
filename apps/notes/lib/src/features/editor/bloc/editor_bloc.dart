@@ -2,11 +2,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
-import 'package:mechanix_notes/src/features/home/models/toolbar_model.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 
 class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
   final logger = Logger();
-  EditorBloc() : super(EditorBlocState(selectedToolbar: ToolbarEnum.none)) {
+  EditorBloc() : super(const EditorBlocState(selectedToolbar: ToolbarEnum.none)) {
     on<InitializedEditor>(_initializeEditor);
     on<ToolbarToggle>(_enableToolbar);
     on<UndoUpdate>(_undoCall);
