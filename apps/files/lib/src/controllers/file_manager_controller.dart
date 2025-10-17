@@ -200,14 +200,12 @@ class FileManagerController {
 
   List<FileSystemEntity> _sortEntities(List<FileSystemEntity> list) {
     final Map<String, int> sizeMap = {};
-    logger.i("Sort by ; ${_sort.value}");
     list.sort((a, b) {
       final aName = p.basename(a.path).toLowerCase();
       final bName = p.basename(b.path).toLowerCase();
 
       switch (_sort.value) {
         case SortBy.name:
-          logger.i("Sort by name");
           // Group folders first
           if (a is Directory && b is! Directory) return -1;
           if (b is Directory && a is! Directory) return 1;
@@ -216,8 +214,6 @@ class FileManagerController {
           return aName.compareTo(bName);
 
         case SortBy.type:
-          logger.i("Sort by type");
-
           if (a is Directory && b is! Directory) return -1;
           if (b is Directory && a is! Directory) return 1;
 
@@ -233,8 +229,6 @@ class FileManagerController {
           return aName.compareTo(bName);
 
         case SortBy.size:
-          logger.i("Sort by size");
-
           if (_sizeAscending) {
             // Group folders first
             if (a is Directory && b is! Directory) return -1;
@@ -274,8 +268,6 @@ class FileManagerController {
           }
 
         case SortBy.date:
-          logger.i("Sort by date");
-
           final aTime = a.statSync().modified;
           final bTime = b.statSync().modified;
           return bTime.compareTo(aTime);

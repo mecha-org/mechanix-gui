@@ -221,151 +221,91 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 state.conflictingPaths.isNotEmpty &&
                 state.isCopyMode) {
               final fileName = p.basename(state.conflictingPaths.first);
-              showDialog(
+              showModalBottomSheet<ConflictResolutionStrategy>(
                 context: context,
-                builder: (_) => AlertDialog(
-                  backgroundColor: Colors.grey[800],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  title: const Text(
-                    'Confirm save as',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  content: Text(
-                    '‘$fileName’ already exists, do you want to replace it?',
-                  ),
-                  actions: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                useRootNavigator: true,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (sheetContext) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[850],
+                      borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    child: SafeArea(
+                      top: false,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            '‘$fileName’ already exists',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'What would you like to do?',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                          const SizedBox(height: 16),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              CustomButton(
-                                label: "Cancel",
-                                backgroundColor: Colors.grey[700]!,
-                                textColor: Colors.white,
-                                onPressed: () => {
-                                  context.read<FilesBloc>().add(
-                                        ContinueCopyWithConflictResolution(
-                                          sourcePaths: state.conflictingPaths,
-                                          destinationPath:
-                                              state.conflictDestinationPath,
-                                          strategy:
-                                              ConflictResolutionStrategy.skip,
-                                          controller: controller,
-                                        ),
-                                      ),
-                                  Navigator.pop(context)
-                                },
+                              Expanded(
+                                child: MechanixOutlinedButton(
+                                  label: "Cancel",
+                                  textColor: Colors.white,
+                                  borderRadius: 50,
+                                  borderWidth: 0.5,
+                                  onPressed: () {
+                                    context.read<FilesBloc>().add(
+                                          ContinueCopyWithConflictResolution(
+                                            sourcePaths: state.conflictingPaths,
+                                            destinationPath:
+                                                state.conflictDestinationPath,
+                                            strategy:
+                                                ConflictResolutionStrategy.skip,
+                                            controller: controller,
+                                          ),
+                                        );
+                                    Navigator.pop(sheetContext);
+                                  },
+                                ),
                               ),
                               const SizedBox(width: 12),
-                              CustomButton(
-                                label: "Replace and save",
-                                backgroundColor: Colors.blue,
-                                textColor: Colors.white,
-                                onPressed: () {
-                                  context.read<FilesBloc>().add(
-                                        ContinueCopyWithConflictResolution(
-                                          sourcePaths: state.conflictingPaths,
-                                          destinationPath:
-                                              state.conflictDestinationPath,
-                                          strategy: ConflictResolutionStrategy
-                                              .replace,
-                                          controller: controller,
-                                        ),
-                                      );
-                                  Navigator.pop(context);
-                                },
+                              Expanded(
+                                child: MechanixElevatedButton(
+                                  label: "Replace",
+                                  backgroundColor: Colors.blue,
+                                  textColor: Colors.white,
+                                  borderRadius: 50,
+                                  onPressed: () {
+                                    context.read<FilesBloc>().add(
+                                          ContinueCopyWithConflictResolution(
+                                            sourcePaths: state.conflictingPaths,
+                                            destinationPath:
+                                                state.conflictDestinationPath,
+                                            strategy: ConflictResolutionStrategy
+                                                .replace,
+                                            controller: controller,
+                                          ),
+                                        );
+                                    Navigator.pop(sheetContext);
+                                  },
+                                ),
                               ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              );
-            }
-          },
-        ),
-        // Move: Show conflict resolution dialog
-        BlocListener<FilesBloc, FilesState>(
-          listenWhen: (prev, curr) =>
-              prev.conflictingPaths != curr.conflictingPaths,
-          listener: (context, state) {
-            if (!state.loading &&
-                state.conflictingPaths.isNotEmpty &&
-                state.isMoveMode) {
-              final fileName = p.basename(state.conflictingPaths.first);
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  backgroundColor: Colors.grey[800],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  title: const Text(
-                    'Confirm save as',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  content: Text(
-                    '‘$fileName’ already exists, do you want to replace it?',
-                  ),
-                  actions: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              CustomButton(
-                                label: "Cancel",
-                                backgroundColor: Colors.grey[700]!,
-                                textColor: Colors.white,
-                                onPressed: () => {
-                                  context.read<FilesBloc>().add(
-                                        ContinueMoveWithConflictResolution(
-                                          sourcePaths: state.conflictingPaths,
-                                          destinationPath:
-                                              state.conflictDestinationPath,
-                                          strategy:
-                                              ConflictResolutionStrategy.skip,
-                                        ),
-                                      ),
-                                  Navigator.pop(context)
-                                },
-                              ),
-                              const SizedBox(width: 12),
-                              CustomButton(
-                                label: "Replace and save",
-                                backgroundColor: Colors.blue,
-                                textColor: Colors.white,
-                                onPressed: () {
-                                  context.read<FilesBloc>().add(
-                                        ContinueMoveWithConflictResolution(
-                                          sourcePaths: state.conflictingPaths,
-                                          destinationPath:
-                                              state.conflictDestinationPath,
-                                          strategy: ConflictResolutionStrategy
-                                              .replace,
-                                        ),
-                                      );
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ],
-                          )
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             }
           },
