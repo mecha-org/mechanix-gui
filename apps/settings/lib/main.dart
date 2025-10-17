@@ -160,7 +160,7 @@ class MainApp extends StatelessWidget {
         BlocProvider(
           create: (context) => BluetoothBloc(
               bluetoothRepository: context.read<BluetoothRepository>())
-            ..add(InitializeBluetooth()),
+            ..add(InitBluetooth()),
         ),
 
         // Battery Bloc

@@ -40,74 +40,87 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
     return BlocBuilder<BluetoothBloc, BluetoothState>(
       builder: (context, state) {
         return Scaffold(
-          appBar: MechanixNavigationBar(
-            title: state.selectedDevice?.alias ?? '',
-            actionWidgets: [
-              IconButton(
-                onPressed: () => onForgetNetworkClick(state.selectedDevice),
-                style: ButtonStyle(
-                  iconColor: WidgetStateProperty.all(Colors.white),
-                  backgroundColor: WidgetStateProperty.all(Color(0xFFB71C1C)),
-                  shape: WidgetStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(52),
+            child: MechanixNavigationBar(
+              title: state.selectedDevice?.alias ?? state.selectedDevice?.name,
+              actionWidgets: [
+                if(state.selectedDevice != null && (state.selectedDevice!.connected || state.selectedDevice!.paired))
+                IconButton(
+                  onPressed: () => onForgetNetworkClick(state.selectedDevice),
+                  style: ButtonStyle(
+                    iconColor: WidgetStateProperty.all(Colors.white),
+                    backgroundColor: WidgetStateProperty.all(Color(0xFFB71C1C)),
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    minimumSize: WidgetStateProperty.all(Size(32, 32)),
+                    fixedSize: WidgetStateProperty.all(Size(32, 32)),
+                    padding: WidgetStateProperty.all(EdgeInsets.zero),
+                  ),
+                  icon: Center(
+                    child: CustomIcon(
+                      icon: Image.asset(Images.trash),
+                      width: 15,
+                      height: 17,
                     ),
                   ),
-                  minimumSize: WidgetStateProperty.all(Size(32, 32)),
-                  fixedSize: WidgetStateProperty.all(Size(32, 32)),
-                  padding: WidgetStateProperty.all(EdgeInsets.zero),
-                ),
-                icon: Center(
-                  child: CustomIcon(
-                    icon: Image.asset(Images.trash),
-                    width: 15,
-                    height: 17,
-                  ),
-                ),
-              ).padRight(16)
-            ],
+                ).padRight(16)
+              ],
+            ).padHorizontal(12),
           ),
           body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 children: [
                   MechanixSimpleList(
-                      physics: const NeverScrollableScrollPhysics(),
-                      listItems: [
-                        SimpleListItems(
-                            title: 'Device Name',
-                            trailing: CustomTrailingText(
-                              title: state.selectedDevice?.alias ?? '',
-                            )),
-                        SimpleListItems(
-                            title: 'Device Type',
-                            onTap: () => Navigator.pushNamed(
-                                context, AppRoutes.bluetoothDeviceTypes),
-                            trailing: DeviceType(
-                              deviceType: state.selectedDevice?.icon ?? '',
-                            )),
-                      ]),
-                  SizedBox(
-                    child: TextButton.icon(
-                      onPressed: () => onUnLinkClick(state.selectedDevice),
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all<Color>(
-                          context.colorScheme.secondary,
+                    physics: const NeverScrollableScrollPhysics(),
+                    listItems: [
+                      SimpleListItems(
+                        title: 'Device Name',
+                        trailing: CustomTrailingText(
+                          title: state.selectedDevice?.alias ?? '',
                         ),
                       ),
-                      label: Text(
-                        'Unlink Device',
-                        style: TextStyle(color: context.colorScheme.onSurface),
-                      ).padVertical(16),
-                      icon: IconWidget(
-                        iconPath: Images.unlinkIcon,
-                        iconHeight: 16,
-                        iconWidth: 16,
-                        iconColor: Colors.white,
+                      SimpleListItems(
+                        title: 'Device Type',
+                        onTap: () => Navigator.pushNamed(
+                            context, AppRoutes.bluetoothDeviceTypes),
+                        trailing: DeviceType(
+                          deviceType: state.selectedDevice?.icon ?? '',
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (state.selectedDevice != null &&
+                      (state.selectedDevice!.connected ||
+                          state.selectedDevice!.paired))
+                    SizedBox(
+                      child: TextButton.icon(
+                        onPressed: () => onUnLinkClick(state.selectedDevice),
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.all<Color>(
+                            context.colorScheme.secondary,
+                          ),
+                        ),
+                        label: Text(
+                          'Unlink Device',
+                          style:
+                              TextStyle(color: context.colorScheme.onSurface),
+                        ).padVertical(16),
+                        icon: IconWidget(
+                          iconPath: Images.unlinkIcon,
+                          iconHeight: 16,
+                          iconWidth: 16,
+                          iconColor: Colors.white,
+                        ),
                       ),
                     ),
-                  )
+
                 ],
               ).padTop(8),
             ),

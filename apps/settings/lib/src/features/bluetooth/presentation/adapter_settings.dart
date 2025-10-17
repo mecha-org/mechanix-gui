@@ -9,10 +9,6 @@ import 'package:widgets/mechanix.dart';
 class AdapterSettings extends StatelessWidget {
   const AdapterSettings({super.key});
 
-  void _backNavigation(BuildContext context) {
-    Navigator.pop(context);
-  }
-
   Future<void> _navigateAndDisplayValue(BuildContext context) async {
     final result = await Navigator.pushNamed(
       context,
@@ -34,7 +30,7 @@ class AdapterSettings extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<BluetoothBloc, BluetoothState>(
         builder: (context, state) {
-      String deviceName = state.adapterAlias ?? '';
+      String deviceName = state.bluetoothAdapter?.alias ?? '';
 
       return Scaffold(
         appBar: MechanixNavigationBar(title: 'Bluetooth Settings'),

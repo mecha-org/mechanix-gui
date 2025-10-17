@@ -2,6 +2,16 @@ import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 
+class BluetoothAdapter {
+  String name;
+  String? alias;
+  bool powered;
+  bool discovering;
+  bool discoverable;
+
+  BluetoothAdapter({required this.name, this.alias, required this.powered, required this.discovering, required this.discoverable});
+}
+
 class BluetoothListItem {
   String title;
   String? subTitle; // status - connected/connecting/disconnected/saved..
