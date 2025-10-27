@@ -22,6 +22,14 @@ class BluetoothPowerChanged extends BluetoothEvent {
   List<Object?> get props => [enabled];
 }
 
+class DiscoverableChanged extends BluetoothEvent {
+  final bool enabled;
+  DiscoverableChanged(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
 class InitBluetooth extends BluetoothEvent {}
 
 class InitializeBluetooth extends BluetoothEvent {}

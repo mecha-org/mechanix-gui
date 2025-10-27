@@ -4,6 +4,7 @@ import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:nm/nm.dart';
 
 abstract class WifiRepository {
+  Future<void> init(); // connect client
   Future<bool> isWirelessEnabled();
   Stream<bool> get wirelessEnabledStream;
   Future<NetworkManagerState> getWifiState();

@@ -10,6 +10,22 @@ class BluetoothAdapter {
   bool discoverable;
 
   BluetoothAdapter({required this.name, this.alias, required this.powered, required this.discovering, required this.discoverable});
+
+  BluetoothAdapter copyWith({
+    String? name,
+    String? alias,
+    bool? powered,
+    bool? discovering,
+    bool? discoverable,
+  }) {
+    return BluetoothAdapter(
+      name: name ?? this.name,
+      alias: alias ?? this.alias,
+      powered: powered ?? this.powered,
+      discovering: discovering ?? this.discovering,
+      discoverable: discoverable ?? this.discoverable,
+    );
+  }
 }
 
 class BluetoothListItem {

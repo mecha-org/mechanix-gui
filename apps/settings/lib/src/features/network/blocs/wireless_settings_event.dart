@@ -9,6 +9,8 @@ abstract class WirelessSettingsEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class InitWifi extends WirelessSettingsEvent {}
+
 class InitializeWifi extends WirelessSettingsEvent {}
 
 class LoadNetworks extends WirelessSettingsEvent {}

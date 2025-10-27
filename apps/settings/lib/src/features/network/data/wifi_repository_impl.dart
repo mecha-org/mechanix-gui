@@ -16,18 +16,16 @@ import 'wifi_repository.dart';
 class WifiRepositoryImpl implements WifiRepository {
   bool _connected = false;
   final logger = Logger();
-  late final NetworkManagerClient _client = NetworkManagerClient();
+  late NetworkManagerClient _client;
 
   @override
   Stream<bool> get wirelessEnabledStream => _wirelessEnabledController.stream;
   final _wirelessEnabledController = StreamController<bool>.broadcast();
 
-  WifiRepositoryImpl() {
-    _init();
-  }
-
-  Future<void> _init() async {
+  @override
+  Future<void> init() async {
     try {
+      _client = NetworkManagerClient();
       await _client.connect();
       _connected = true;
 
@@ -111,7 +109,8 @@ class WifiRepositoryImpl implements WifiRepository {
           var isActive =
               listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid);
           var isSaved = savedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
-          var isSecure = nmAccessPoint.wpaFlags.isNotEmpty || nmAccessPoint.rsnFlags.isNotEmpty;
+          var isSecure = nmAccessPoint.wpaFlags.isNotEmpty ||
+              nmAccessPoint.rsnFlags.isNotEmpty;
 
           if (isActive) {
             // connected
@@ -122,7 +121,6 @@ class WifiRepositoryImpl implements WifiRepository {
               nmAccessPoint: nmAccessPoint,
               ip4Config: ip4Config,
               ip6Config: ip6Config,
-              
             );
           } else {
             // active + saved

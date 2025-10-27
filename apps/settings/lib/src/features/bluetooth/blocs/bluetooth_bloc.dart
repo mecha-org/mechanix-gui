@@ -23,6 +23,19 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
           loading: false,
           devices: [],
         )) {
+    _adapterPowerSubscription =
+        bluetoothRepository.bluezAdapterPowerStream.listen((isPowered) {
+      if (isPowered != state.isPowered) {
+        add(BluetoothPowerChanged(isPowered));
+      }
+    });
+
+    _adapterDiscoverableSubscription =
+        bluetoothRepository.bluezAdapterDiscoverableStream.listen((prop) {
+      add(DiscoverableChanged(prop));
+    });
+
+    // Event handlers
     on<InitBluetooth>(_onInit);
     on<InitializeBluetooth>(_onInitializeBluetooth);
     on<ToggleBluetooth>(_onToggleBluetooth);
@@ -40,19 +53,11 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     on<SelectDevice>(_setSelectBluetoothDevice);
 
     on<DiscoveryEnabled>(_setDeviceDiscoverable);
+    on<DiscoverableChanged>(_onDiscoverableChanged);
+
     // on<RenameAdapterEvent>(_onRenameAdapter);
     on<BluetoothDevicesAdded>(_addedBluetoothDevices);
     on<BluetoothDevicesRemoved>(_removedBluetoothDevices);
-
-    _adapterPowerSubscription =
-        bluetoothRepository.bluezAdapterPowerStream.listen((prop) {
-      add(BluetoothPowerChanged(prop));
-    });
-
-    _adapterDiscoverableSubscription =
-        bluetoothRepository.bluezAdapterDiscoverableStream.listen((prop) {
-      add(DiscoveryEnabled(prop));
-    });
   }
 
   Future<void> _onInit(
@@ -71,34 +76,29 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       InitializeBluetooth event, Emitter<BluetoothState> emit) async {
     logger.i('BLOC:: Initializing Bluetooth - GET & SET POWER');
     final enabled = await bluetoothRepository.isBluetoothEnabled();
-    emit(state.copyWith(isPowered: enabled));
     if (enabled) {
       add(BluetoothPowerChanged(enabled));
     }
   }
 
-  //  Note: when power is on, we need to get adapter details
-  //  and start discovery, get devices, stop discovery
+  // Note: when power is on, we need to get adapter details
   Future<void> _onBluetoothPowerChanged(
     BluetoothPowerChanged event,
     Emitter<BluetoothState> emit,
   ) async {
+    logger.i('BLOC:: Bluetooth power changed: ${event.enabled}');
     emit(state.copyWith(isPowered: event.enabled));
     if (event.enabled) {
       emit(state.copyWith(loading: true));
-      // add(StartDiscovery());
-      // await Future.delayed(Duration(seconds: 8));
-      // add(StopDiscovery());
-      // _initializeBluetoothStream();
+      add(GetAdapterDetails());
+      add(RefreshDeviceList());
       _deviceAddedStream();
       _deviceRemovedStream();
     } else {
-      
+      print("Bluetooth power OFF");
       emit(state.copyWith(devices: [], loading: false));
       _bluetoothDeviceAddedStream?.cancel();
       _bluetoothDeviceRemovedStream?.cancel();
-      _adapterPowerSubscription?.cancel();
-      _adapterDiscoverableSubscription?.cancel();
     }
   }
 
@@ -122,12 +122,12 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
 
   void _onToggleBluetooth(
       ToggleBluetooth event, Emitter<BluetoothState> emit) async {
-    logger.i('Toggling Bluetooth: ${event.enabled}');
+    logger.i('BLOC:: Toggling Bluetooth: ${event.enabled}');
     try {
       await bluetoothRepository.setPower(event.enabled);
-      logger.i('Bluetooth toggled successfully: ${event.enabled}');
     } catch (e) {
-      logger.e('Error toggling Bluetooth: $e');
+      logger.e('BLOC:: Error toggling Bluetooth: $e');
+      // Error toggling Bluetooth: org.bluez.Error.Failed: Failed
       emit(state.copyWith(error: e.toString()));
       return;
     }
@@ -203,6 +203,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
   //   }
   // }
 
+  /// Refresh device list after discovery
   Future<void> _onGetRefreshDeviceList(
     RefreshDeviceList event,
     Emitter<BluetoothState> emit,
@@ -213,7 +214,6 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     try {
       await bluetoothRepository.startDiscovery();
       await Future.delayed(Duration(seconds: 8));
-
 
       var allDevices = await bluetoothRepository.getDevices();
 
@@ -318,6 +318,18 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     logger.i('BLOC:: SET Device discoverable: ${event.isDiscoverable}');
   }
 
+  Future<void> _onDiscoverableChanged(
+      DiscoverableChanged event, Emitter<BluetoothState> emit) async {
+    logger.i('BLOC:: Device discoverable changed: ${event.enabled}');
+
+    final adapter = state.bluetoothAdapter;
+    if (adapter == null) return;
+
+    emit(state.copyWith(
+      bluetoothAdapter: adapter.copyWith(discoverable: event.enabled),
+    ));
+  }
+
   void _addedBluetoothDevices(
       BluetoothDevicesAdded event, Emitter<BluetoothState> emit) {
     if (event.device.name != '') {
@@ -338,11 +350,16 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
   }
 
   @override
-  Future<void> close() {
-    _bluetoothDeviceAddedStream?.cancel();
-    _bluetoothDeviceRemovedStream?.cancel();
+  Future<void> close() async {
+    print("bluetooth bloc closing...!");
+    await _bluetoothDeviceAddedStream?.cancel();
+    _bluetoothDeviceAddedStream = null;
+    await _bluetoothDeviceRemovedStream?.cancel();
+    _bluetoothDeviceRemovedStream = null;
+
     _adapterPowerSubscription?.cancel();
     _adapterDiscoverableSubscription?.cancel();
+
     bluetoothRepository.close();
     return super.close();
   }

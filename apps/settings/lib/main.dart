@@ -65,6 +65,7 @@ import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/vibration_level.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 void main() async {
@@ -108,6 +109,13 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
 
     return MechanixTheme(
       data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
+        MechanixNavigationBarThemeData(
+            scrolledUnderElevation: 0,
+            titleStyle: TextStyle(fontSize: 24,),
+            titleSpacing: 0,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
         MechanixSwitchThemeData(
           style: MechanixSwitchStyle(
             inactiveThumbColor: Color(0xFF989898),
@@ -153,7 +161,7 @@ class MainApp extends StatelessWidget {
         BlocProvider(
           create: (context) => WirelessSettingsBloc(
               wifiRepository: context.read<WifiRepository>())
-            ..add(InitializeWifi()),
+            ..add(InitWifi()),
         ),
 
         // Bluetooth Bloc
