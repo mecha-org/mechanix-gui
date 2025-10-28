@@ -1,3 +1,4 @@
+import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 
 abstract class NotesRepository {
@@ -21,4 +22,6 @@ abstract class NotesRepository {
 
   Future<void> updateTag(List<String> noteIds, String tag);
   Future<void> pinnedNotes(List<String> noteIds, bool tag);
+  Future<List<NoteMetaData>> searchNotes(String searchQuery);
+  Future<NoteHive?> findById(String noteId);
 }

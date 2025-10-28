@@ -1,35 +1,48 @@
+import 'dart:convert';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:logger/logger.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
+import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
 
 class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
   final logger = Logger();
-  EditorBloc() : super(const EditorBlocState(selectedToolbar: ToolbarEnum.none)) {
-    on<InitializedEditor>(_initializeEditor);
+  final NotesRepository notesRepository;
+
+  EditorBloc({required this.notesRepository})
+    : super(const EditorBlocState(selectedToolbar: ToolbarEnum.none)) {
     on<ToolbarToggle>(_enableToolbar);
     on<UndoUpdate>(_undoCall);
     on<RedoUpdate>(_redoCall);
     on<PinnedUpdate>(_pinnedCall);
     on<SelectToolbar>(_selectToolbar);
+    on<LoadNoteContent>(_onLoadNoteContent);
   }
 
-  void _initializeEditor(
-    InitializedEditor event,
+  Future<void> _onLoadNoteContent(
+    LoadNoteContent event,
     Emitter<EditorBlocState> emit,
   ) async {
-    logger.i("Notes Editor Initialized");
+    try {
+      emit(state.copyWith(isLoading: true));
 
-    emit(
-      state.copyWith(
-        isPinned: event.isPinned,
-        isRedo: false,
-        isUndo: false,
-        selectedToolbar: ToolbarEnum.none,
-        toolbarToggle: true,
-      ),
-    );
+      final note = await notesRepository.findById(event.noteId);
+      if (note == null) return;
+
+      final content = jsonDecode(note.content);
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isPinned: note.isPinned,
+          document: Document.fromJson(content),
+        ),
+      );
+    } catch (e) {
+      emit(state.copyWith(isLoading: false));
+    }
   }
 
   void _enableToolbar(ToolbarToggle event, Emitter<EditorBlocState> emit) {

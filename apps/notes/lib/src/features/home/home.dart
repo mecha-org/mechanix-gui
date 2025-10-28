@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/app_routes.dart';
-import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/bottom_menu/bottom_menu.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:widgets/mechanix.dart';
 import 'presentation/note_list.dart';
 
@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
 
   void selectAll(
     BuildContext context,
-    List<NoteHive> notes,
+    List<NoteMetaData> notes,
     List<String> selectedNoteIds,
   ) {
     final allSelected = selectedNoteIds.length == notes.length;
@@ -150,7 +150,7 @@ class _HomePageState extends State<HomePage> {
                       NoteList(
                         groupedNotes: [
                           if (state.pinnedNotes.isNotEmpty)
-                            GroupedNotes(
+                            GroupedNotesWidget(
                               label: "Pinned Notes",
                               notes: state.pinnedNotes,
                               icon: Image.asset(
@@ -161,7 +161,10 @@ class _HomePageState extends State<HomePage> {
                               ).padRight(10),
                             ),
                           ...state.groupedNotes.map(
-                            (e) => GroupedNotes(label: e.label, notes: e.notes),
+                            (e) => GroupedNotesWidget(
+                              label: e.label,
+                              notes: e.notes,
+                            ),
                           ),
                         ],
                         isSelectionMode: state.isSelectionMode,

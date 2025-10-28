@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 
 class EditorBlocState extends Equatable {
@@ -8,12 +9,16 @@ class EditorBlocState extends Equatable {
   final bool isPinned;
   final bool toolbarToggle;
   final ToolbarEnum selectedToolbar;
+  final Document? document;
+  final bool isLoading;
 
   const EditorBlocState({
     this.isUndo = false,
     this.isRedo = false,
     this.isPinned = false,
     this.toolbarToggle = true,
+    this.document,
+    this.isLoading = false,
     required this.selectedToolbar,
   });
 
@@ -25,6 +30,8 @@ class EditorBlocState extends Equatable {
     LayerLink? linkLayer,
     LayerLink? optionsLayer,
     ToolbarEnum? selectedToolbar,
+    Document? document,
+    bool? isLoading,
   }) {
     return EditorBlocState(
       isUndo: isUndo ?? this.isUndo,
@@ -32,6 +39,8 @@ class EditorBlocState extends Equatable {
       isPinned: isPinned ?? this.isPinned,
       toolbarToggle: toolbarToggle ?? this.toolbarToggle,
       selectedToolbar: selectedToolbar ?? this.selectedToolbar,
+      isLoading: isLoading ?? this.isLoading,
+      document: document,
     );
   }
 
@@ -42,5 +51,7 @@ class EditorBlocState extends Equatable {
     isPinned,
     toolbarToggle,
     selectedToolbar,
+    isLoading,
+    document,
   ];
 }

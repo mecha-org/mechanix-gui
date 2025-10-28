@@ -53,7 +53,7 @@ class _SearchInputBarState extends State<SearchInputBar> {
       width: 508,
       child: MechanixSearchBar(
         controller: _titleController,
-        focusNode: _focusNode,
+        // focusNode: _focusNode,
         onChanged: (_) => searchNotes(),
         autoFocus: false,
         hintText: "Search notes...",

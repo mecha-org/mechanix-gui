@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 
 class NotesBloc extends Bloc<NotesEvent, NotesState> {
   final NotesRepository notesRepository;
@@ -141,20 +142,13 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     emit(state.copyWith(isPinnedSelected: isPinnedSelected));
   }
 
-  void _searchNotes(SearchEvent event, Emitter<NotesState> emit) {
+  void _searchNotes(SearchEvent event, Emitter<NotesState> emit) async {
     logger.i("notes search started ${event.searchQuery}");
 
     final query = event.searchQuery.trim().toLowerCase();
 
     if (query.isNotEmpty) {
-      final searchedNotes =
-          state.notes
-              .where(
-                (note) =>
-                    (note.plainText.toLowerCase().contains(query) ||
-                        note.title.toLowerCase().contains(query)),
-              )
-              .toList();
+      List<NoteMetaData> searchedNotes = await notesRepository.searchNotes(query);
 
       emit(state.copyWith(searchedNotes: searchedNotes));
     } else {

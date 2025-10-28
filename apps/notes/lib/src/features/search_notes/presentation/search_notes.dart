@@ -70,7 +70,7 @@ class _SearchNotesState extends State<SearchNotes> {
                           selectedNotes: const [],
                           isSelectionMode: false,
                           groupedNotes: [
-                            GroupedNotes(label: '', notes: state.searchedNotes),
+                            GroupedNotesWidget(label: '', notes: state.searchedNotes),
                           ],
                         ),
                       const SizedBox(

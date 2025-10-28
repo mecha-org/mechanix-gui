@@ -6,12 +6,6 @@ abstract class EditorEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class InitializedEditor extends EditorEvent {
-  final bool isPinned;
-
-  InitializedEditor({required this.isPinned});
-}
-
 class ToolbarToggle extends EditorEvent {}
 
 class UndoUpdate extends EditorEvent {
@@ -36,4 +30,9 @@ class SelectToolbar extends EditorEvent {
   final ToolbarEnum activeToolbar;
 
   SelectToolbar({required this.activeToolbar});
+}
+
+class LoadNoteContent extends EditorEvent {
+  final String noteId;
+  LoadNoteContent({required this.noteId});
 }

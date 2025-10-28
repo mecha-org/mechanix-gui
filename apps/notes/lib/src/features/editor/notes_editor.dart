@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:io' as io;
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
@@ -10,12 +8,13 @@ import 'package:mechanix_notes/src/features/editor/editor_bar.dart';
 import 'package:mechanix_notes/src/features/editor/editor_bottom_menu.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar_selection.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
 class NotesEditor extends StatefulWidget {
-  final NoteHive? note;
+  final NoteMetaData? note;
   const NotesEditor({super.key, this.note});
 
   @override
@@ -24,7 +23,6 @@ class NotesEditor extends StatefulWidget {
 
 class _NotesEditorState extends State<NotesEditor> {
   final FocusNode _focusNode = FocusNode();
-  bool _isLoading = false;
 
   final QuillController _controller = QuillController(
     document: Document(),
@@ -49,18 +47,13 @@ class _NotesEditorState extends State<NotesEditor> {
   @override
   void initState() {
     super.initState();
-    bool isEditing = widget.note != null;
-
-    context.read<EditorBloc>().add(
-      InitializedEditor(isPinned: widget.note?.isPinned ?? false),
-    );
+    final isEditing = widget.note != null;
 
     if (isEditing) {
-      _initializeControllerAsync();
+      context.read<EditorBloc>().add(LoadNoteContent(noteId: widget.note!.id));
     } else {
       _openKeyboardAfterLoad();
     }
-
     _controller.addListener(_onControllerChange);
   }
 
@@ -71,17 +64,6 @@ class _NotesEditorState extends State<NotesEditor> {
       await Future.delayed(const Duration(milliseconds: 300));
       _focusNode.requestFocus();
     });
-  }
-
-  void _initializeControllerAsync() {
-    setState(() => _isLoading = true);
-
-    final doc = Document.fromJson(jsonDecode(widget.note!.content));
-    _controller.document = doc;
-
-    if (mounted) {
-      setState(() => _isLoading = false);
-    }
   }
 
   void _onControllerChange() {
@@ -103,51 +85,53 @@ class _NotesEditorState extends State<NotesEditor> {
         preferredSize: const Size.fromHeight(50),
         child: EditorBar(controller: _controller, note: widget.note),
       ),
-      body:
-          _isLoading
-              ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Loading Notes...',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
-                  ],
-                ),
-              )
-              : GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () {
-                  toolbarSelection(ToolbarEnum.none);
-                },
-                child: Stack(
-                  children: [
-                    // Main content
-                    ContentEditor(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                    ),
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          toolbarSelection(ToolbarEnum.none);
+        },
+        child: Stack(
+          children: [
+            // Main content
+            BlocBuilder<EditorBloc, EditorBlocState>(
+              buildWhen:
+                  (previous, current) =>
+                      previous.isLoading != current.isLoading,
+              builder: (context, state) {
+                if (state.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-                    // Toolbar
-                    BlocSelector<EditorBloc, EditorBlocState, ToolbarEnum>(
-                      selector: (state) => state.selectedToolbar,
-                      builder:
-                          (context, selectedToolbar) => ToolbarSelection(
-                            selectedToolbar: selectedToolbar,
-                            focusNode: _focusNode,
-                            controller: _controller,
-                          ),
-                    ),
-                    EditorBottomMenu(
-                      controller: _controller,
-                      onToolbarSelection: toolbarSelection,
-                    ),
-                  ],
-                ),
-              ),
+                if (state.document != null &&
+                    _controller.document != state.document) {
+                  // Load document into controller only once
+                  _controller.document = state.document!;
+                }
+
+                return ContentEditor(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                );
+              },
+            ),
+
+            // Toolbar
+            BlocSelector<EditorBloc, EditorBlocState, ToolbarEnum>(
+              selector: (state) => state.selectedToolbar,
+              builder:
+                  (context, selectedToolbar) => ToolbarSelection(
+                    selectedToolbar: selectedToolbar,
+                    focusNode: _focusNode,
+                    controller: _controller,
+                  ),
+            ),
+            EditorBottomMenu(
+              controller: _controller,
+              onToolbarSelection: toolbarSelection,
+            ),
+          ],
+        ),
+      ),
     );
   }
 

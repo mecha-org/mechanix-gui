@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/editor_title_input.dart';
 import 'package:mechanix_notes/src/features/editor/menu_options.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/extensions/edge_insets.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
 
 class EditorBar extends StatefulWidget {
   final QuillController controller;
-  final NoteHive? note;
+  final NoteMetaData? note;
   const EditorBar({super.key, required this.controller, this.note});
 
   @override
@@ -119,17 +119,20 @@ class _EditorBarState extends State<EditorBar> {
   }
 
   void _showOptions(BuildContext context) {
-    OverlayEntry? entry;
+  OverlayEntry? entry;
 
-    entry = OverlayEntry(
-      builder:
-          (_) => MenuOptions(
-            menuLink: optionsLayer,
-            entry: entry,
-            note: widget.note,
-          ),
-    );
+  entry = OverlayEntry(
+    builder: (_) => BlocProvider.value(
+      value: context.read<EditorBloc>(), // 👈 reuses the same instance
+      child: MenuOptions(
+        menuLink: optionsLayer,
+        entry: entry,
+        note: widget.note,
+      ),
+    ),
+  );
 
-    Overlay.of(context, rootOverlay: true).insert(entry);
-  }
+  Overlay.of(context, rootOverlay: true).insert(entry);
+}
+
 }

@@ -1,16 +1,15 @@
 import 'package:equatable/equatable.dart';
-import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 
 class NotesState extends Equatable {
   final bool loading;
   final bool? isPinnedSelected;
-  final List<NoteHive> notes;
-  final List<NoteHive> pinnedNotes;
+  final List<NoteMetaData> notes;
+  final List<NoteMetaData> pinnedNotes;
   final bool isSelectionMode;
   final List<String> selectedNoteIds;
   final List<GroupedNotes> groupedNotes;
-  final List<NoteHive> searchedNotes;
+  final List<NoteMetaData> searchedNotes;
   const NotesState({
     required this.notes,
     this.loading = false,
@@ -24,13 +23,13 @@ class NotesState extends Equatable {
 
   NotesState copyWith({
     bool? loading,
-    List<NoteHive>? notes,
-    List<NoteHive>? pinnedNotes,
+    List<NoteMetaData>? notes,
+    List<NoteMetaData>? pinnedNotes,
     List<GroupedNotes>? groupedNotes,
     bool? isSelectionMode,
     List<String>? selectedNoteIds,
     bool? isPinnedSelected,
-    List<NoteHive>? searchedNotes,
+    List<NoteMetaData>? searchedNotes,
   }) {
     return NotesState(
       loading: loading ?? this.loading,

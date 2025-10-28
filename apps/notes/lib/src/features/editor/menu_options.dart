@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:widgets/mechanix.dart';
 
 class MenuOptions extends StatelessWidget {
   final LayerLink menuLink;
   final OverlayEntry? entry;
-  final NoteHive? note;
+  final NoteMetaData? note;
 
   const MenuOptions({super.key, required this.menuLink, this.entry, this.note});
 

@@ -1,4 +1,3 @@
-import 'package:mechanix_notes/models/note_hive.dart';
 
 class Note {
   final String id;
@@ -30,15 +29,31 @@ class Note {
   }
 }
 class NotesResult {
-  final List<NoteHive> pinnedNotes;
+  final List<NoteMetaData> pinnedNotes;
   final List<GroupedNotes> groupedNotes;
-  final List<NoteHive> notes;
+  final List<NoteMetaData> notes;
 
   NotesResult({required this.pinnedNotes, required this.groupedNotes, required this.notes});
 }
 class GroupedNotes {
   final String label;          // e.g. "This Month", "August 2025"
-  final List<NoteHive> notes;
+  final List<NoteMetaData> notes;
 
   GroupedNotes({required this.label, required this.notes});
+}
+
+class NoteMetaData {
+  final String id;
+  final String title;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final bool isPinned;
+
+  NoteMetaData({
+    required this.id,
+    required this.title,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.isPinned,
+  });
 }

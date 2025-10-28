@@ -3,17 +3,17 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 
 class EditorTitleInput extends StatefulWidget {
   final QuillController controller;
-  final NoteHive? note;
+  final NoteMetaData? note;
 
   const EditorTitleInput({super.key, required this.controller, this.note});
   @override

@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/app_routes.dart';
-import 'package:mechanix_notes/models/note_hive.dart';
 import 'package:mechanix_notes/src/commons/common_helper.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
-import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
-import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:widgets/mechanix.dart';
 
-class GroupedNotes {
+class GroupedNotesWidget {
   final String label;
-  final List<NoteHive> notes;
+  final List<NoteMetaData> notes;
   final Widget? icon;
-  GroupedNotes({required this.label, required this.notes, this.icon});
+  GroupedNotesWidget({required this.label, required this.notes, this.icon});
 }
 
 /// Updated NoteList that accepts grouped notes
@@ -23,7 +21,7 @@ class NoteList extends StatelessWidget {
   final List<String> selectedNotes;
   final void Function(String id)? onSelect;
   final VoidCallback? onDeselect;
-  final List<GroupedNotes> groupedNotes;
+  final List<GroupedNotesWidget> groupedNotes;
 
   const NoteList({
     super.key,
@@ -84,7 +82,7 @@ class NoteList extends StatelessWidget {
     );
   }
 
-  Widget _buildNoteList(List<NoteHive> notes) {
+  Widget _buildNoteList(List<NoteMetaData> notes) {
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
       itemCount: notes.length,
@@ -137,13 +135,11 @@ class NoteList extends StatelessWidget {
   }
 }
 
-void _openNote(BuildContext context, NoteHive note) async {
+void _openNote(BuildContext context, NoteMetaData note) async {
   Navigator.push(
     context,
-    MaterialPageRoute(builder: (_) => NotesEditor(note: note)),
-  ).then((_) {
-    if (context.mounted) {
-      context.read<NotesBloc>().add(LoadNotes());
-    }
-  });
+    MaterialPageRoute(
+      builder: (_) => EditorBlocProvider(child: NotesEditor(note: note)),
+    ),
+  );
 }

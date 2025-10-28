@@ -49,8 +49,19 @@ class NotesRepositoryImpl extends NotesRepository {
         return NotesResult(notes: [], pinnedNotes: [], groupedNotes: []);
       }
 
-      final notes = box.values.toList().cast<NoteHive>();
+      // ✅ Extract only necessary fields into NoteMetaData
+      final notes =
+          box.values.map((note) {
+            return NoteMetaData(
+              id: note.id,
+              title: note.title,
+              createdAt: note.createdAt,
+              updatedAt: note.updatedAt,
+              isPinned: note.isPinned,
+            );
+          }).toList();
 
+      // Sort by updatedAt descending
       notes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
       final now = DateTime.now();
@@ -61,8 +72,8 @@ class NotesRepositoryImpl extends NotesRepository {
       final thisMonthStart = DateTime(now.year, now.month, 1);
       final lastMonthStart = DateTime(now.year, now.month - 1, 1);
 
-      final pinnedNotes = <NoteHive>[];
-      final Map<String, List<NoteHive>> grouped = {};
+      final pinnedNotes = <NoteMetaData>[];
+      final Map<String, List<NoteMetaData>> grouped = {};
 
       const groupOrder = [
         "Today",
@@ -74,9 +85,7 @@ class NotesRepositoryImpl extends NotesRepository {
       ];
 
       for (final note in notes) {
-        if (note.isPinned == true) {
-          pinnedNotes.add(note);
-        }
+        if (note.isPinned) pinnedNotes.add(note);
 
         final dateOnly = DateTime(
           note.updatedAt.year,
@@ -95,7 +104,7 @@ class NotesRepositoryImpl extends NotesRepository {
           note.updatedAt,
         );
 
-        grouped.putIfAbsent(label, () => <NoteHive>[]).add(note);
+        grouped.putIfAbsent(label, () => <NoteMetaData>[]).add(note);
       }
 
       final groupedNotes = <GroupedNotes>[];
@@ -108,9 +117,7 @@ class NotesRepositoryImpl extends NotesRepository {
       }
 
       if (grouped.isNotEmpty) {
-        final remainingEntries = grouped.entries.toList();
-
-        for (final entry in remainingEntries) {
+        for (final entry in grouped.entries) {
           groupedNotes.add(GroupedNotes(label: entry.key, notes: entry.value));
         }
       }
@@ -305,6 +312,76 @@ class NotesRepositoryImpl extends NotesRepository {
 
     if (updates.isNotEmpty) {
       await notesBox.putAll(updates);
+    }
+  }
+
+  @override
+  Future<List<NoteMetaData>> searchNotes(String searchQuery) async {
+    try {
+      await ensureHiveConnected();
+      final box = Hive.box<NoteHive>(Constants.tableName);
+
+      final query = searchQuery.trim().toLowerCase();
+
+      if (query.isEmpty) {
+        logger.i("Empty search query → no results");
+        return [];
+      }
+
+      final searchedNotes =
+          box.values
+              .where(
+                (note) =>
+                    note.title.toLowerCase().contains(query) ||
+                    (note.plainText.toLowerCase().contains(query)),
+              )
+              .map(
+                (note) => NoteMetaData(
+                  id: note.id,
+                  title: note.title,
+                  createdAt: note.createdAt,
+                  updatedAt: note.updatedAt,
+                  isPinned: note.isPinned,
+                ),
+              )
+              .toList();
+
+      searchedNotes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+      logger.i("Found ${searchedNotes.length} notes matching '$query'");
+
+      return searchedNotes;
+    } catch (e) {
+      logger.e("Search failed: $e");
+      return [];
+    }
+  }
+
+  @override
+  Future<NoteHive?> findById(String noteId) async {
+    try {
+      logger.i('searching the selected notes');
+      await ensureHiveConnected();
+
+      final box = Hive.box<NoteHive>(Constants.tableName);
+      final note = box.get(noteId);
+
+      if (note != null) {
+        return NoteHive(
+          id: note.id,
+          content: note.content,
+          plainText: note.plainText,
+          tag: note.tag,
+          title: note.title,
+          createdAt: note.createdAt,
+          updatedAt: note.updatedAt,
+          isPinned: note.isPinned,
+        );
+      }
+      return null;
+    } catch (e) {
+      logger.e("Failed to find note by ID: $e");
+      return null;
     }
   }
 }
