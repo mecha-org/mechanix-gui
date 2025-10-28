@@ -96,6 +96,31 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             ),
                           )
                       ]),
+                    // wired device
+                    if(state.wiredDevice?.enabled != null &&  state.wiredDevice!.enabled)
+     MechanixSectionList(
+                      physics: const BouncingScrollPhysics(),
+                      title: 'Wired',
+                      sectionListItems: [
+                        SectionListItems(
+                          title:  (state.wiredDevice?.enabled ?? false) ? "Connected ${state.wiredDevice?.speed} Mb/s" : "Cable unplugged",
+                          backgroundColor: Colors.transparent,
+                          defaultTrailingIcon: false,
+                          trailing: MechanixSwitch(
+                            activeText: 'OFF',
+                            inactiveText: 'ON',
+                            style: MechanixSwitchStyle(
+                              inactiveThumbColor: Color(0xFF989898),
+                              inactiveTrackColor: Color(0xFF252525),
+                            ),
+                            value: state.wiredDevice?.enabled ?? false,
+                            onChanged: (val) => {
+                              // todo 
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
 
                   if (state.wifiOn &&
                       !state.availableSavedNetworksLoading &&

@@ -13,6 +13,8 @@ abstract class WifiRepository {
   Future<Stream<List<String>>> streamWifiEvents();      // client
   Future<Stream<List<String>>> streamWirelessDeviceStream();    // device
 
+  Future<NetworkManagerDevice> getWiredDevice();
+
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedNetworks>? savedNetworks);
 

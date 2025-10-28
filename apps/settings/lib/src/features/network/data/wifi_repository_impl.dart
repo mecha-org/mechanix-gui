@@ -64,6 +64,18 @@ class WifiRepositoryImpl implements WifiRepository {
     return wifiDevice;
   }
 
+// check: wiredDevice.managed prop - to check if wired network is connected or not
+// check: wiredDevice.setManaged method - to set wired network is enabled true/false
+  @override
+  Future<NetworkManagerDevice> getWiredDevice() async {
+    final devices = _client.devices;
+    NetworkManagerDevice wiredDevice = devices.firstWhere(
+      (d) => d.deviceType == NetworkManagerDeviceType.ethernet,
+      orElse: () => throw Exception("No Wired device found"),
+    );
+    return wiredDevice;
+  }
+
   @override
   Future<void> setWifiEnabled(bool enable) async {
     try {

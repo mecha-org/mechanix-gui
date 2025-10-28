@@ -73,10 +73,25 @@ class WirelessSettingsBloc
   Future<void> _onInitializeWifi(
       InitializeWifi event, Emitter<WirelessSettingsState> emit) async {
     logger.i("BLOC:: Initializing WiFi...");
+    // Get wifi device
     final enabled = await wifiRepository.isWirelessEnabled();
     if (enabled) {
       add(WifiEnabledChanged(enabled));
     }
+
+    /// Get wired device
+    final ethernetDevice = await wifiRepository.getWiredDevice();
+    var wiredDevice = ethernetDevice.wired;
+
+    var ethernetEnabled =
+        ethernetDevice.state == NetworkManagerDeviceState.activated
+            ? true
+            : false;
+    var info = WiredDevice(speed: wiredDevice!.speed, enabled: ethernetEnabled);
+    logger.i(
+        "Ethernetdevice : ${ethernetDevice.state} ---- Wired Device: $wiredDevice");
+
+    emit(state.copyWith(wiredDevice: info));
   }
 
   void _onWifiEnabledChanged(
