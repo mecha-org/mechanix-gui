@@ -9,6 +9,7 @@ class Constants {
   static const String tableName = "notesTablev3";
   static const String t1Size = '14';
   static const String t2Size = '12';
+  static const Duration debounceDuration = Duration(milliseconds: 300);
 }
 
 class ColorItem {

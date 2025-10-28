@@ -35,6 +35,7 @@ class NotesResult {
 
   NotesResult({required this.pinnedNotes, required this.groupedNotes, required this.notes});
 }
+
 class GroupedNotes {
   final String label;          // e.g. "This Month", "August 2025"
   final List<NoteMetaData> notes;

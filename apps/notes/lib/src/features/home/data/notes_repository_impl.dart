@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
+import 'package:mechanix_notes/src/features/editor/models/editor_details_models.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
 import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
@@ -358,7 +359,7 @@ class NotesRepositoryImpl extends NotesRepository {
   }
 
   @override
-  Future<NoteHive?> findById(String noteId) async {
+  Future<EditorPayload?> findById(String noteId) async {
     try {
       logger.i('searching the selected notes');
       await ensureHiveConnected();
@@ -367,14 +368,9 @@ class NotesRepositoryImpl extends NotesRepository {
       final note = box.get(noteId);
 
       if (note != null) {
-        return NoteHive(
+        return EditorPayload(
           id: note.id,
           content: note.content,
-          plainText: note.plainText,
-          tag: note.tag,
-          title: note.title,
-          createdAt: note.createdAt,
-          updatedAt: note.updatedAt,
           isPinned: note.isPinned,
         );
       }
