@@ -134,7 +134,7 @@ class WirelessSettingsBloc
               add(WifiStatusChanged(["Connected"]));
               break; // Prevents fallthrough to the default case
             default:
-              add(WifiStatusChanged(["Connecting..."]));
+              add(WifiStatusChanged(["Connecting.."]));
               break;
           }
         }
@@ -150,12 +150,10 @@ class WirelessSettingsBloc
 
       final stream = await wifiRepository.streamWirelessDeviceStream();
       _accessPointSubscription = stream.listen((prop) async {
-        // logger.i("Access Point Update: $prop");
         if (prop.isNotEmpty &&
             (prop.contains("LastScan") ||
                 prop.contains("AccessPoints") ||
                 prop.contains("ActiveAccessPoint"))) {
-
           final savedNetworks =
               await wifiRepository.savedNetworks(state.availableOtherNetworks);
 
@@ -218,15 +216,27 @@ class WirelessSettingsBloc
     emit(state.copyWith(error: event.error));
   }
 
+  // Refresh saved networks list
+  // after forgetting a network, get updated saved networks
   Future<void> onForgetNetwork(
       ForgetNetwork event, Emitter<WirelessSettingsState> emit) async {
     await wifiRepository.forgetNetwork(event.ssid);
+    add(GetSavedNetworksEvent());
   }
 
   Future<void> _connectSavedNetwork(
       ConnectSavedNetwork event, Emitter<WirelessSettingsState> emit) async {
     try {
       emit(state.copyWith(wifiState: event.state));
+      // remove only requested saved network connection from available saved networks
+      var updatedSavedNetworks =
+          List<AccessPoints>.from(state.availableSavedNetworks.where((network) {
+        final ssid = utf8.decode(network.nmAccessPoint.ssid);
+        final targetSsid = utf8.decode(event.nmAccessPoint.ssid);
+        return ssid != targetSsid;
+      }).toList());
+      emit(state.copyWith(availableSavedNetworks: updatedSavedNetworks));
+
       await wifiRepository.connectToSavedNetwork(event.nmAccessPoint);
       logger.i('Connected to saved network');
     } catch (e) {

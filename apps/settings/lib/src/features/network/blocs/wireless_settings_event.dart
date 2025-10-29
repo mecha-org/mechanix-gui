@@ -28,11 +28,6 @@ class ConnectSavedNetwork extends WirelessSettingsEvent {
   ConnectSavedNetwork(this.state, this.nmAccessPoint);
 }
 
-class DeleteSavedNetwork extends WirelessSettingsEvent {
-  final String ssid;
-  DeleteSavedNetwork(this.ssid);
-}
-
 class ToggleWifi extends WirelessSettingsEvent {
   final bool enabled;
   ToggleWifi(this.enabled);

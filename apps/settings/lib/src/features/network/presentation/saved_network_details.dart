@@ -38,10 +38,12 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
       builder: (context, state) {
         final ssid = network.ssid;
-        final security = network.security;
+        final security = (network.security != '' && network.security != null)
+            ? network.security?.toUpperCase()
+            : 'Open';
 
         // todo : add ?
-         void showDeleteDialog(String networkName) {
+        void showDeleteDialog(String networkName) {
           showDialog(
             context: context,
             builder: (dialogContext) {
@@ -51,10 +53,11 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
                 title: const Text('Delete saved network'),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Network name: $networkName',
                         style: const TextStyle(fontSize: 18)),
-                    Text('Security : None',
+                    Text('Security : $security',
                         style: const TextStyle(fontSize: 18)),
                   ],
                 ),
@@ -66,11 +69,11 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
                   CustomTextButton(
                     label: 'Delete',
                     onPressed: () {
-                      // Navigator.pop(dialogContext); // pop dialog first
-                      // outerContext
-                      //     .read<WirelessSettingsBloc>()
-                      //     .add(DeleteSavedNetwork(networkName));
-                      // Navigator.pop(context);
+                      Navigator.pop(dialogContext); // pop dialog first
+                      context
+                          .read<WirelessSettingsBloc>()
+                          .add(ForgetNetwork(networkName));
+                      Navigator.pop(context);
                     },
                     textColor: dangerColor,
                   ),
@@ -85,7 +88,10 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
               preferredSize: const Size.fromHeight(52),
               child: MechanixNavigationBar(title: ssid ?? '', actionWidgets: [
                 IconButton(
-                  onPressed: () => onForgetPressed(ssid ?? ''),
+                  onPressed: () => {
+                    showDeleteDialog(ssid ?? '')
+                    // onForgetPressed(ssid ?? '')
+                  },
                   style: ButtonStyle(
                     iconColor: WidgetStateProperty.all(Colors.white),
                     backgroundColor: WidgetStateProperty.all(Color(0xFFB71C1C)),

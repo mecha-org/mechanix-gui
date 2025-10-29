@@ -96,14 +96,17 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             ),
                           )
                       ]),
-                    // wired device
-                    if(state.wiredDevice?.enabled != null &&  state.wiredDevice!.enabled)
-     MechanixSectionList(
+                  // wired device
+                  if (state.wiredDevice?.enabled != null &&
+                      state.wiredDevice!.enabled)
+                    MechanixSectionList(
                       physics: const BouncingScrollPhysics(),
                       title: 'Wired',
                       sectionListItems: [
                         SectionListItems(
-                          title:  (state.wiredDevice?.enabled ?? false) ? "Connected ${state.wiredDevice?.speed} Mb/s" : "Cable unplugged",
+                          title: (state.wiredDevice?.enabled ?? false)
+                              ? "Connected ${state.wiredDevice?.speed} Mb/s"
+                              : "Cable unplugged",
                           backgroundColor: Colors.transparent,
                           defaultTrailingIcon: false,
                           trailing: MechanixSwitch(
@@ -166,7 +169,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
-                        title: 'Available Networks',
+                        title: 'Available Networks ${state.availableOtherNetworks.length}',
                         sectionListItems: getWifiList(
                             context, state.availableOtherNetworks, true)),
                   const WirelessAdvanceSettings()

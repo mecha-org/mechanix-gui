@@ -398,7 +398,6 @@ class WifiRepositoryImpl implements WifiRepository {
         if (connectionId == ssid) {
           try {
             await cn.delete();
-            await getSavedNetworks();
             logger.i('Connection $ssid deleted successfully');
           } catch (e) {
             logger.e('Failed to delete saved network: $e');
