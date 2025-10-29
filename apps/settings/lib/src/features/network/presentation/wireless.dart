@@ -169,7 +169,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
-                        title: 'Available Networks ${state.availableOtherNetworks.length}',
+                        title: 'Available Networks',
                         sectionListItems: getWifiList(
                             context, state.availableOtherNetworks, true)),
                   const WirelessAdvanceSettings()

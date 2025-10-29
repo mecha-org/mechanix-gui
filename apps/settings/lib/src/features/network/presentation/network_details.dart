@@ -6,7 +6,9 @@ import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
+import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
@@ -32,6 +34,46 @@ class _NetworkDetailsState extends State<NetworkDetails> {
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
       builder: (context, state) {
+
+ void showDeleteDialog(String networkName) {
+          showDialog(
+            context: context,
+            builder: (dialogContext) {
+              return AlertDialog(
+                backgroundColor: const Color.fromARGB(255, 54, 54, 54),
+                title: const Text('Forget network'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('You might need to enter password to reconnect to this network again.',
+                        style: const TextStyle(fontSize: 18)),
+                   
+                  ],
+                ),
+                actions: [
+                  CustomTextButton(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                  CustomTextButton(
+                    label: 'Forget',
+                    onPressed: () {
+                      Navigator.pop(dialogContext); // pop dialog first
+                      context
+                          .read<WirelessSettingsBloc>()
+                          .add(ForgetNetwork(networkName));
+                      Navigator.pop(context);
+                    },
+                    textColor: dangerColor,
+                  ),
+                ],
+              );
+            },
+          );
+        }
+
+
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
@@ -43,8 +85,9 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                               state.selectedAccessPoint!.isSaved)
                           ? [
                               IconButton(
-                                onPressed: () => onForgetPressed(utf8
-                                    .decode(state.selectedNMAccessPoint!.ssid)),
+                                onPressed: () => {
+                                  showDeleteDialog(utf8.decode(state.selectedNMAccessPoint!.ssid)),
+                                },
                                 style: ButtonStyle(
                                   iconColor:
                                       WidgetStateProperty.all(Colors.white),
