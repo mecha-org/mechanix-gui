@@ -16,7 +16,8 @@ import 'package:path/path.dart' as p;
 import 'package:widgets/extension.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
-import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
+import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -45,7 +46,6 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
   final FileManagerController controller = FileManagerController();
   late String currentPath;
   bool isSearching = false;
-  final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
 
   final downloadsDir = AppConfig().downloadsDir;
@@ -146,7 +146,8 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MechanixNavigationBar(
-                    backgroundColor: Colors.grey[850],
+                    theme: MechanixNavigationBarThemeData(
+                        backgroundColor: Colors.grey[850], titleSpacing: 0),
                     leadingWidget: IconButton(
                       icon: const Icon(
                         Icons.arrow_back_ios,
@@ -165,10 +166,6 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                     ),
                     title:
                         isAtRoot ? "Root" : getCurrentFolderName(currentPath),
-                    titleStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                    ),
                     actionWidgets: [
                       if (!isSearching)
                         IconButton(
@@ -199,21 +196,12 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                       child: SizedBox(
                         height: 48,
                         child: MechanixSearchBar(
-                          controller: searchController,
                           autoFocus: true,
                           hintText: "Type here",
                           onChanged: (query) {
                             controller.search(query);
                           },
-                          onCloseIconPress: () {
-                            setState(() {
-                              searchController.clear();
-                              isSearching = false;
-                            });
-
-                            // Reload directory content when clearing search
-                            controller.reload();
-                          },
+                          showDefaultTrailing: true,
                         ),
                       ),
                     )

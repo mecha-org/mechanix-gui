@@ -133,3 +133,5 @@ String keyFromSort(SortBy sortBy, bool ascending) {
       return ascending ? 'size_asc' : 'size_desc';
   }
 }
+
+const double menuItemHeight = 42.0;

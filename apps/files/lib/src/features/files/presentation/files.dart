@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/commons/customWidgets/custom_button.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
@@ -17,12 +16,12 @@ import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/constants.dart';
-import 'package:widgets/widgets/bottomSheetModals/mechanix_bottom_sheet_theme.dart';
-import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_item_theme.dart';
+import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
-import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
+import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
+import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
@@ -30,7 +29,6 @@ import 'view_mode_notifier.dart';
 import 'grid_view.dart';
 import 'list_view.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
-import 'package:file/file.dart' as file_pkg;
 import 'package:path/path.dart' as p;
 import 'dart:math' as Math;
 import 'package:widgets/mechanix.dart';
@@ -64,9 +62,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   String zipFilePath = '';
   List<String> copiedPaths = [];
   List<String> movedPaths = [];
-  final LayerLink _menuLink = LayerLink();
-  OverlayEntry? _menuEntry;
-  bool _isMenuOpen = false;
 
   final downloadsDir = AppConfig().downloadsDir;
   final documentsDir = AppConfig().documentsDir;
@@ -79,6 +74,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   /// For list/grid view
   final ScrollController _scrollController = ScrollController();
   String currentPath = '';
+
+  final ValueNotifier<bool> allSelectedNotifier = ValueNotifier(false);
 
   @override
   void initState() {
@@ -123,8 +120,28 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     searchQuery.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _fabController.dispose();
     super.dispose();
   }
+
+  final FloatingActionBarController _fabController =
+      FloatingActionBarController();
+
+  void _openFabMenuProgrammatically() {
+    if (!mounted) return;
+    _fabController.open();
+  }
+
+  void _closeFabMenuProgrammatically() {
+    if (!mounted) return;
+    _fabController.close();
+  }
+
+  void _toggleFabMenuProgrammatically() {
+    _fabController.toggle();
+  }
+
+  final ValueNotifier<bool> hasSelectionNotifier = ValueNotifier(false);
 
   @override
   Widget build(BuildContext context) {
@@ -170,8 +187,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               if (state.compressionStatus == FileCompressionStatus.failure) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content:
-                        Text('Compression failed: ${state.compressionError}'),
+                    content: Text(
+                      'Compression failed: ${state.compressionError}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
                 );
               }
@@ -327,7 +346,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         appBar: AppBar(
           leading: IconButton(
             icon:
-                const Icon(Icons.arrow_back_ios, size: 20, color: Colors.blue),
+                const Icon(Icons.arrow_back_ios, size: 16, color: Colors.blue),
             onPressed: selectionMode
                 ? clearSelection
                 : isSearching
@@ -336,9 +355,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             highlightColor: Colors.transparent, // Remove ripple effect on press
           ).padLeft(8),
           title: selectionMode
-              ? Text("Select", style: context.textTheme.titleLarge)
+              ? Text("Select", style: context.textTheme.bodySmall)
               : isSearching
-                  ? Text("Search", style: context.textTheme.titleLarge)
+                  ? Text("Search", style: context.textTheme.bodySmall)
                   : ValueListenableBuilder<String>(
                       valueListenable: controller.getPathNotifier,
                       builder: (context, path, _) {
@@ -347,7 +366,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             : (path == '/'
                                 ? "Root"
                                 : getCurrentFolderName(path));
-                        return Text(title, style: context.textTheme.titleLarge);
+                        return Text(title, style: context.textTheme.bodySmall);
                       },
                     ),
           actions: selectionMode
@@ -365,8 +384,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         valueListenable: viewModeNotifier,
                         builder: (context, isList, _) {
                           return IconButton(
-                            icon:
-                                Image.asset(isList ? Images.list : Images.grid),
+                            icon: Image.asset(
+                              isList ? Images.list : Images.grid,
+                              height: 24,
+                            ),
                             onPressed: () {
                               viewModeNotifier.value = !viewModeNotifier.value;
                             },
@@ -379,20 +400,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       BlocSelector<FilesBloc, FilesState, String>(
                         selector: (state) => state.currentSortBy,
                         builder: (context, currentSortBy) {
-                          return IconButton(
-                            icon: Image.asset(Images.sortAscending),
-                            onPressed: () async {
-                              showSortMenu(context, currentSortBy);
-                            },
-                            highlightColor:
-                                Colors.transparent, // no ripple effect
-                          );
+                          return showSortMenu(context, currentSortBy);
                         },
                       ),
 
                       // Search toggle
                       IconButton(
-                        icon: const Icon(Icons.search, color: Colors.white),
+                        icon: const Icon(Icons.search,
+                            color: Colors.white, size: 22),
                         onPressed: () {
                           setState(() => isSearching = true);
                           showSearchBottomSheet(context, searchQuery);
@@ -400,24 +415,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       ),
 
                       // More options
-                      Builder(
-                        builder: (context) {
-                          return MechanixBottomSheetTheme(
-                            data: MechanixBottomSheetThemeData(
-                              backgroundColor:
-                                  WidgetStateProperty.all(Colors.transparent),
-                              borderRadius: 50,
-                              shadowColor:
-                                  WidgetStateProperty.all(Colors.black45),
-                            ),
-                            child: IconButton(
-                              icon: Image.asset(Images.dots),
-                              onPressed: () => handleSelectionMore(context),
-                              highlightColor: Colors.transparent,
-                            ),
-                          );
-                        },
-                      ),
+                      buildMoreOptionsMenu(context),
                     ],
         ),
         body: Column(
@@ -482,19 +480,15 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton:
             selectionMode ? _buildFloatingActionMenu(context) : null,
-        //   );
-        // },
       ),
     );
   }
 
   OverlayEntry? _searchOverlayEntry;
-  late TextEditingController _searchController;
 
   void showSearchBottomSheet(
       BuildContext context, ValueNotifier<String> searchQuery) {
     final overlay = Overlay.of(context);
-    _searchController = TextEditingController(text: searchQuery.value);
 
     _searchOverlayEntry = OverlayEntry(
       builder: (ctx) => Positioned(
@@ -506,17 +500,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           child: SizedBox(
             height: 48,
             child: MechanixSearchBar(
-              controller: _searchController,
               autoFocus: true,
               hintText: "Type here",
               onChanged: (query) => controller.search(query),
-              onCloseIconPress: () {
-                searchQuery.value = '';
-                _searchController.clear();
-
-                // Reload directory content when clearing search
-                controller.reload();
-              },
             ),
           ),
         ),
@@ -541,7 +527,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   /// Shows bottom sheet for selecting sort mode
-  Future<void> showSortMenu(BuildContext context, String currentSortBy) async {
+  Widget showSortMenu(BuildContext context, String currentSortBy) {
     final currentSort = sortByFromKey(currentSortBy);
     final isAscending = controller.isSizeAscending;
     final selectedKey = keyFromSort(currentSort, isAscending);
@@ -551,46 +537,40 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     final sizeIcon =
         isDescending ? Images.sortDescending : Images.sortAscending;
 
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF464545),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
-            ),
-          ),
-          width: double.infinity,
-          child: MechanixMenu(
-            backgroundColor: const Color(0xFF464545),
-            itemPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            items: [
-              _buildSortMenuItem(context, key: 'name', label: 'Name'),
-              const MechanixMenuDivider(),
-              _buildSortMenuItem(context,
-                  key: newSizeKey,
-                  label: 'Size',
-                  trailingIcon: isSizeSort
-                      ? Image.asset(sizeIcon, width: 16, height: 16)
-                      : null),
-              const MechanixMenuDivider(),
-              _buildSortMenuItem(context, key: 'type', label: 'Type'),
-              const MechanixMenuDivider(),
-              _buildSortMenuItem(context,
-                  key: 'mod_time', label: 'File Modified'),
-            ],
-          ),
-        );
-      },
+    // Calculate offset so menu appears at bottom of screen
+    final screenHeight = MediaQuery.of(context).size.height;
+    final menuHeight = menuItemHeight * 4; // Approximate menu height
+    final offset = Offset(104, screenHeight - menuHeight - 50);
+
+    return MechanixMenu(
+      theme: const MechanixMenuThemeData(
+        constraints: BoxConstraints(maxWidth: double.infinity),
+        itemHeight: menuItemHeight,
+      ),
+      offset: offset,
+      dropdownPosition: DropdownPosition.bottomRight,
+      animationDuration: const Duration(milliseconds: 300),
+      buttonIcon: const IconWidget(
+        iconPath: Images.sortAscending,
+        iconColor: Colors.white,
+      ),
+      items: [
+        _buildSortMenuItem(context, key: 'name', label: 'Name'),
+        _buildSortMenuItem(
+          context,
+          key: newSizeKey,
+          label: 'Size',
+          trailingIcon:
+              isSizeSort ? Image.asset(sizeIcon, width: 16, height: 16) : null,
+        ),
+        _buildSortMenuItem(context, key: 'type', label: 'Type'),
+        _buildSortMenuItem(context, key: 'mod_time', label: 'File Modified'),
+      ],
     );
   }
 
   /// Builds a selectable menu item
-  MechanixMenuItem _buildSortMenuItem(
+  MechanixMenuItemsType _buildSortMenuItem(
     BuildContext context, {
     required String key,
     required String label,
@@ -601,24 +581,22 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       controller.isSizeAscending,
     );
 
-    // final isSelected = selectedKey == key;
     final isSelected = selectedKey == key ||
         (key.startsWith('size') && selectedKey.startsWith('size'));
 
-    return MechanixMenuItem(
-      label: label,
-      layout: MenuItemLayout.bothSides,
-      leadingWidget: Icon(
+    return MechanixMenuItemsType(
+      title: label,
+      leading: Icon(
         isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
         color: isSelected ? Colors.blue : Colors.grey,
         size: 18,
       ),
-      trailingWidget: trailingIcon,
+      trailing: trailingIcon,
       onTap: () {
         final sortBy = sortByFromKey(key);
-        handleSortMode(sortBy.name); // To add shared preference
+        handleSortMode(sortBy.name);
 
-        Navigator.of(context).pop();
+        // Navigator.of(context).pop();
 
         bool? ascending;
         if (key == 'size_asc') ascending = true;
@@ -630,72 +608,134 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
   }
 
-  Widget _buildFloatingActionMenu(BuildContext context) {
-    final allSelected = selectedPaths.length == displayedFiles.length &&
-        displayedFiles.isNotEmpty;
-    final hasSelection = selectedPaths.isNotEmpty;
+  bool get hasSelection => selectedPaths.isNotEmpty;
 
-    return MechanixFloatingActionMenu(
-      height: 48,
-      backgroundColor: Colors.grey[800],
-      items: [
-        MechanixFabItem(
-          iconWidget: Image.asset(Images.listChecks,
-              color: allSelected ? Colors.blue : Colors.white, height: 20),
-          onTap: () {
-            onToggleSelectAll();
+  Widget _buildFloatingActionMenu(BuildContext context) {
+    return MechanixFloatingActionBar(
+      theme: MechanixFloatingActionBarThemeData(
+        width: 500,
+        decoration: BoxDecoration(
+          color: Colors.grey[800],
+          borderRadius: BorderRadius.circular(50),
+        ),
+      ),
+      dropdownPosition: DropdownPosition.topCenter,
+      floatingActionBarController: _fabController,
+      isMenuButtonRequired: false,
+      outsideClickDisabled: true,
+      menus: [
+        // Wrap only reactive buttons in ValueListenableBuilder
+        ValueListenableBuilder<bool>(
+          valueListenable: allSelectedNotifier,
+          builder: (context, allSelected, _) {
+            return IconButton(
+              onPressed: onToggleSelectAll,
+              icon: Image.asset(
+                Images.listChecks,
+                color: allSelected ? Colors.blue : Colors.white,
+                height: 20,
+              ),
+            );
           },
         ),
-        MechanixFabItem(
-          iconWidget: Image.asset(
-            Images.copy,
-            height: 20,
-            color: hasSelection
-                ? Colors.white
-                : Colors.grey, // visually indicate disabled
-          ),
-          onTap: hasSelection
-              ? () {
-                  handleCopy();
-                }
-              : null, // disable if no selection
-        ),
-        MechanixFabItem(
-          iconWidget: Image.asset(
-            Images.delete,
-            height: 20,
-            color: hasSelection
-                ? Colors.white
-                : Colors.grey, // visually indicate disabled
-          ),
-          onTap: hasSelection
-              ? () {
-                  handleDelete();
-                }
-              : null, // disable if no selection
-        ),
-        MechanixFabItem(
-          anchorLink: _menuLink,
-          iconWidget: Image.asset(
-            Images.dots,
-            color: _isMenuOpen ? Colors.grey : Colors.white,
-            height: 20,
-          ),
-          onTap: () {
-            if (_isMenuOpen) {
-              _removeOverlay();
-            } else {
-              _toggleMenuOverlay(context);
-            }
+
+        ValueListenableBuilder<bool>(
+          valueListenable: hasSelectionNotifier,
+          builder: (context, hasSelection, _) {
+            return IconButton(
+              onPressed: hasSelection ? handleCopy : null,
+              icon: const ImageIcon(AssetImage(Images.copy), size: 20),
+              color: hasSelection ? Colors.white : Colors.grey,
+            );
           },
         ),
-        MechanixFabItem(
-          iconWidget: const Icon(
-            Icons.close,
-            color: Colors.white,
-            size: 20,
-          ),
-          onTap: () {
+        ValueListenableBuilder<bool>(
+          valueListenable: hasSelectionNotifier,
+          builder: (context, hasSelection, _) {
+            return IconButton(
+              onPressed: hasSelection ? handleDelete : null,
+              icon: const ImageIcon(AssetImage(Images.delete), size: 20),
+              color: hasSelection ? Colors.white : Colors.grey,
+            );
+          },
+        ),
+
+        // Dropdown menu (some items depend on selection)
+        ValueListenableBuilder<bool>(
+          valueListenable: hasSelectionNotifier,
+          builder: (context, hasSelection, _) {
+            return MechanixMenu(
+              dropdownPosition: DropdownPosition.topCenter,
+              buttonIcon: const IconWidget(
+                iconPath: Images.dots,
+                iconColor: Colors.white,
+              ),
+              items: [
+                MechanixMenuItemsType(
+                  leading: Image.asset(
+                    Images.rename,
+                    color: selectedPaths.length == 1
+                        ? Colors.white70
+                        : Colors.grey,
+                    height: 20,
+                  ),
+                  title: 'Rename',
+                  onTap: selectedPaths.length == 1
+                      ? () {
+                          final selectedPath = selectedPaths.first;
+                          _showRenameDialog(selectedPath);
+                        }
+                      : null,
+                  disabled: selectedPaths.length != 1,
+                ),
+                MechanixMenuItemsType(
+                  leading: Image.asset(
+                    Images.move,
+                    color: hasSelection ? Colors.white70 : Colors.grey,
+                    height: 20,
+                  ),
+                  title: 'Move',
+                  onTap: hasSelection ? handleMove : null,
+                  disabled: !hasSelection,
+                ),
+                MechanixMenuItemsType(
+                  leading: Image.asset(
+                    Images.createFolder,
+                    color: Colors.white70,
+                    height: 20,
+                  ),
+                  title: 'Create folder',
+                  onTap: showCreateFolderDialogFloatingMenu,
+                ),
+                MechanixMenuItemsType(
+                  leading: Image.asset(
+                    Images.compress,
+                    color: hasSelection ? Colors.white70 : Colors.grey,
+                    height: 20,
+                  ),
+                  title: 'Compress',
+                  onTap: hasSelection ? handleCompress : null,
+                  disabled: !hasSelection,
+                ),
+                MechanixMenuItemsType(
+                  leading: Image.asset(
+                    Images.info,
+                    color: selectedPaths.length == 1
+                        ? Colors.white70
+                        : Colors.grey,
+                    height: 20,
+                  ),
+                  title: 'Properties',
+                  onTap: selectedPaths.length == 1 ? handleProperties : null,
+                  disabled: selectedPaths.length != 1,
+                ),
+              ],
+            );
+          },
+        ),
+
+        IconButton(
+          onPressed: () {
             if (mounted) {
               final bloc = BlocProvider.of<FilesBloc>(context);
               if (isCopyMode) {
@@ -708,163 +748,180 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               clearSelection();
             }
           },
+          icon: const Icon(Icons.close, size: 20),
         ),
       ],
-    ).padHorizontal(80);
-  }
-
-  void _toggleMenuOverlay(BuildContext context) {
-    final oneSelected = selectedPaths.length == 1;
-    final hasSelection = selectedPaths.isNotEmpty;
-
-    _menuEntry = OverlayEntry(
-      builder: (_) => Positioned.fill(
-        child: Stack(
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () {
-                _hideMenu();
-              },
-            ),
-            CompositedTransformFollower(
-              link: _menuLink,
-              showWhenUnlinked: false,
-              targetAnchor: Alignment.topRight,
-              followerAnchor: Alignment.bottomRight,
-              offset: const Offset(0, -4),
-              child: Material(
-                color: Colors.transparent,
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    extensions: [
-                      const MechanixMenuThemeData(
-                        backgroundColor:
-                            WidgetStatePropertyAll(Color(0xFF424242)),
-                        borderRadius: 12,
-                        shadowColor: WidgetStatePropertyAll(Colors.black54),
-                      ),
-                      const MechanixMenuItemThemeData(
-                        iconColor: WidgetStatePropertyAll(Colors.white70),
-                        textStyle: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                  child: MechanixMenu(
-                    itemPadding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    items: [
-                      MechanixMenuItem(
-                        leadingWidget: Image.asset(Images.rename,
-                            color: oneSelected ? Colors.white70 : Colors.grey,
-                            height: 20),
-                        label: "Rename",
-                        textStyle: TextStyle(
-                            color: oneSelected ? Colors.white : Colors.grey),
-                        onTap: oneSelected
-                            ? () {
-                                _hideMenu();
-                                final selectedPath = selectedPaths.first;
-                                _showRenameDialog(selectedPath);
-                              }
-                            : null, // Disabled if not exactly one item selected
-                      ),
-                      const MechanixMenuDivider(),
-                      MechanixMenuItem(
-                        leadingWidget: Image.asset(Images.move,
-                            color: hasSelection ? Colors.white70 : Colors.grey,
-                            height: 20),
-                        label: "Move",
-                        textStyle: TextStyle(
-                            color: hasSelection ? Colors.white : Colors.grey),
-                        onTap: hasSelection
-                            ? () {
-                                _hideMenu();
-                                handleMove();
-                              }
-                            : null, // Optional: disable if nothing selected
-                      ),
-                      const MechanixMenuDivider(),
-                      MechanixMenuItem(
-                        leadingWidget: Image.asset(Images.createFolder,
-                            color: Colors.white70, height: 20),
-                        label: "Create folder",
-                        onTap: () {
-                          _hideMenu();
-                          showCreateFolderDialogFloatingMenu();
-                        },
-                      ),
-                      const MechanixMenuDivider(),
-                      MechanixMenuItem(
-                        leadingWidget: Image.asset(Images.compress,
-                            color: hasSelection ? Colors.white70 : Colors.grey,
-                            height: 20),
-                        label: "Compress",
-                        textStyle: TextStyle(
-                            color: hasSelection ? Colors.white : Colors.grey),
-                        onTap: hasSelection
-                            ? () {
-                                _hideMenu();
-                                handleCompress();
-                              }
-                            : null, // Optional: disable if nothing selected
-                      ),
-                      const MechanixMenuDivider(),
-                      MechanixMenuItem(
-                        leadingWidget: Image.asset(Images.info,
-                            color: oneSelected ? Colors.white70 : Colors.grey,
-                            height: 20),
-                        label: "Properties",
-                        textStyle: TextStyle(
-                            color: oneSelected ? Colors.white : Colors.grey),
-                        onTap: oneSelected
-                            ? () {
-                                _hideMenu();
-                                handleProperties();
-                              }
-                            : null, // Disabled if not exactly one item selected
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
-
-    Overlay.of(context, rootOverlay: true).insert(_menuEntry!);
-    setState(() {
-      _isMenuOpen = true;
-    });
   }
 
-  void _hideMenu() {
-    _menuEntry?.remove();
-    _menuEntry = null;
-    setState(() {
-      _isMenuOpen = false;
-    });
-  }
+  Widget buildMoreOptionsMenu(BuildContext context) {
+    final currentPath = controller.getPathNotifier.value;
+    bool actionTaken = false;
+    final state = BlocProvider.of<FilesBloc>(context).state;
+    // Calculate offset so menu appears at bottom of screen
+    final screenHeight = MediaQuery.of(context).size.height;
+    final pasteMenuHeight =
+        state.isCopyMode || state.isMoveMode ? menuItemHeight : 0;
+    final menuHeight =
+        (menuItemHeight * 8) + pasteMenuHeight; // Approximate menu height
+    final offset = Offset(0, screenHeight - menuHeight - 60);
 
-  void _removeOverlay() {
-    setState(() {
-      _isMenuOpen = false;
-    });
+    return MechanixMenu(
+      theme: const MechanixMenuThemeData(
+          constraints: BoxConstraints(maxWidth: double.infinity),
+          itemHeight: menuItemHeight),
+      offset: offset,
+      dropdownPosition: DropdownPosition.bottomRight,
+      animationDuration: const Duration(milliseconds: 300),
+      buttonIcon: const IconWidget(
+        iconPath: Images.dots,
+        iconColor: Colors.white,
+      ),
+      items: [
+        MechanixMenuItemsType(
+          title: "Select",
+          leading: Image.asset(
+            Images.listChecks,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            clearSelection();
+            enableSelect();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "New Folder",
+          leading: Image.asset(
+            Images.createFolder,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            showCreateFolderDialog();
+            clearSelection();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Refresh",
+          leading: Image.asset(
+            Images.refresh,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            reload();
+            clearSelection();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: controller.showHiddenFiles
+              ? "Hide Hidden Files"
+              : "Show Hidden Files",
+          leading: Image.asset(
+            controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            _toggleHiddenFiles();
+            clearSelection();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Copy",
+          leading: Image.asset(
+            Images.copy,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            selectedPaths.add(currentPath);
+            handleCopy();
+            clearSelection();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Copy Path",
+          leading: const Icon(Icons.copy_all,
+              color: Colors.white70, size: mechanixIconSize),
+          onTap: () {
+            actionTaken = true;
+            copyPath(currentPath);
+            clearSelection();
+          },
+        ),
+        if (state.isCopyMode || state.isMoveMode)
+          MechanixMenuItemsType(
+            title: "Paste",
+            leading: const Icon(Icons.paste, color: Colors.white70),
+            onTap: () {
+              actionTaken = true;
+              handlePaste(context);
+              clearSelection();
+              reload();
+            },
+          ),
+        MechanixMenuItemsType(
+          title: "Open in Terminal",
+          leading: Image.asset(
+            Images.terminal,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            openInTerminal(currentPath);
+            clearSelection();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Properties",
+          leading: Image.asset(
+            Images.info,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            _showDetailsDialog(context, currentPath);
+            clearSelection();
+          },
+        ),
+      ],
+    );
   }
 
   void onToggleSelectAll() {
-    final files = controller.paginatedEntities.value; // only current page
+    final files = controller.paginatedEntities.value; // current page
+
+    final allSelectedNow = selectedPaths.length == files.length;
 
     setState(() {
-      final allSelected = selectedPaths.length == files.length;
-
-      if (allSelected) {
+      if (allSelectedNow) {
         selectedPaths.clear();
       } else {
         selectedPaths = {for (final f in files) f.path};
         selectionMode = true;
+      }
+    });
+
+    // Update notifiers after UI state changes
+    hasSelectionNotifier.value = selectedPaths.isNotEmpty;
+    allSelectedNotifier.value = !allSelectedNow; // toggle value
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (selectionMode) {
+        _openFabMenuProgrammatically();
+      } else {
+        _closeFabMenuProgrammatically();
       }
     });
   }
@@ -878,32 +935,59 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       } else {
         selectedPaths.add(path);
       }
-      // Keep selectionMode true as long as user initiated it
+
+      // Keep notifier in sync
+      final newValue = selectedPaths.isNotEmpty;
+      if (hasSelectionNotifier.value != newValue) {
+        hasSelectionNotifier.value = newValue;
+      }
+
+      // Keep selectionMode true once initiated
       selectionMode = true;
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (selectionMode) {
+        _openFabMenuProgrammatically();
+      } else {
+        _closeFabMenuProgrammatically();
+      }
     });
   }
 
   void clearSelection() {
+    if (!mounted) return;
+
     setState(() {
       selectionMode = false;
       selectedPaths.clear();
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _closeFabMenuProgrammatically();
+      }
     });
   }
 
   void enableSelect() {
     setState(() {
       selectionMode = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _openFabMenuProgrammatically(); // Open FAB when selection starts
+      });
       selectedPaths.clear();
     });
   }
 
   void handleMove() {
+    _closeFabMenuProgrammatically();
     List<String> selectedPathsList = selectedPaths.toList();
     final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
-
     // Start move mode
     filesBloc.add(StartMoveMode(selectedPathsList));
-    // final controller = FileManagerController();
 
     showModalBottomSheet(
       context: context,
@@ -1021,6 +1105,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void handleCompress() async {
+    _closeFabMenuProgrammatically();
     if (selectedPaths.isEmpty) return;
 
     final destinationDirPath = p.dirname(selectedPaths.first);
@@ -1320,170 +1405,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         ),
       );
     }
-  }
-
-  void handleSelectionMore(BuildContext context) {
-    final currentPath = controller.getPathNotifier.value;
-    selectedPaths.add(currentPath);
-
-    bool actionTaken = false; // Track if any menu item was selected
-    final bloc = BlocProvider.of<FilesBloc>(context);
-    // Read the current bloc state synchronously and perform the paste operation.
-    final state = bloc.state;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Color.fromARGB(255, 70, 69, 69),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
-            ),
-          ),
-          width: double.infinity,
-          child: MechanixMenu(
-            backgroundColor: const Color.fromARGB(255, 70, 69, 69),
-            itemPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            items: [
-              MechanixMenuItem(
-                label: "Select",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: Image.asset(Images.listChecks,
-                    color: Colors.white70, height: mechanixIconSize),
-                onTap: () {
-                  actionTaken = true;
-                  clearSelection();
-                  enableSelect();
-                  Navigator.of(context).pop();
-                },
-              ),
-              const MechanixMenuDivider(),
-              MechanixMenuItem(
-                label: "New Folder",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: Image.asset(Images.createFolder,
-                    color: Colors.white70, height: mechanixIconSize),
-                onTap: () {
-                  actionTaken = true;
-                  Navigator.of(context).pop();
-                  showCreateFolderDialog();
-                  clearSelection();
-                },
-              ),
-              const MechanixMenuDivider(),
-              MechanixMenuItem(
-                label: "Refresh",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: Image.asset(Images.refresh,
-                    color: Colors.white70, height: mechanixIconSize),
-                onTap: () {
-                  actionTaken = true;
-                  reload();
-                  Navigator.of(context).pop();
-                  clearSelection();
-                },
-              ),
-              const MechanixMenuDivider(),
-              MechanixMenuItem(
-                label: controller.showHiddenFiles
-                    ? "Hide Hidden Files"
-                    : "Show Hidden Files",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: Image.asset(
-                  controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
-                  color: Colors.white70,
-                  height: mechanixIconSize,
-                ),
-                onTap: () {
-                  actionTaken = true;
-                  _toggleHiddenFiles();
-                  Navigator.of(context).pop();
-                  clearSelection();
-                },
-              ),
-              const MechanixMenuDivider(),
-              MechanixMenuItem(
-                label: "Copy",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: Image.asset(Images.copy,
-                    color: Colors.white70, height: mechanixIconSize),
-                onTap: () {
-                  actionTaken = true;
-                  handleCopy();
-                  Navigator.of(context).pop();
-                  clearSelection();
-                },
-              ),
-              const MechanixMenuDivider(),
-              MechanixMenuItem(
-                label: "Copy Path",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: const Icon(Icons.copy_all,
-                    color: Colors.white70, size: mechanixIconSize),
-                onTap: () {
-                  actionTaken = true;
-                  copyPath(currentPath);
-                  Navigator.of(context).pop();
-                  clearSelection();
-                },
-              ),
-              const MechanixMenuDivider(),
-              if (state.isCopyMode || state.isMoveMode) ...[
-                MechanixMenuItem(
-                  label: "Paste",
-                  layout: MenuItemLayout.iconLeft,
-                  leadingWidget: const Icon(Icons.paste, color: Colors.white70),
-                  onTap: () {
-                    actionTaken = true;
-                    handlePaste(context);
-                    clearSelection();
-                    reload();
-                    Navigator.of(context).pop();
-                  },
-                ),
-                const MechanixMenuDivider(),
-              ],
-              MechanixMenuItem(
-                label: "Open in Terminal",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: Image.asset(Images.terminal,
-                    color: Colors.white70, height: mechanixIconSize),
-                onTap: () {
-                  actionTaken = true;
-                  openInTerminal(currentPath);
-                  Navigator.of(context).pop();
-                  clearSelection();
-                },
-              ),
-              const MechanixMenuDivider(),
-              MechanixMenuItem(
-                label: "Properties",
-                layout: MenuItemLayout.iconLeft,
-                leadingWidget: Image.asset(Images.info,
-                    color: Colors.white70, height: mechanixIconSize),
-                onTap: () {
-                  actionTaken = true;
-                  Navigator.of(context).pop();
-                  if (selectedPaths.length == 1) {
-                    _showDetailsDialog(context, selectedPaths.first);
-                  }
-                  clearSelection();
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    ).whenComplete(() {
-      if (!actionTaken) {
-        // Bottom sheet closed without selecting any option
-        clearSelection();
-      }
-    });
+    clearSelection();
   }
 
   /// Opens a terminal window in the given path.
@@ -1671,6 +1593,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void showCreateFolderDialogFloatingMenu() {
+    _closeFabMenuProgrammatically();
     String folderName = ""; // Local variable to track input
     final filesBloc = BlocProvider.of<FilesBloc>(context);
     final hasSelection = selectedPaths.isNotEmpty;
@@ -1775,8 +1698,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                         if (exists) {
                                           setState(() => errorText =
                                               'A folder with that name already exists');
-                                          debugPrint(
-                                              "Folder exists: $newFolderPath");
                                           return;
                                         }
 

@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:mechanix_files/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
 
 /// A StatefulWidget that displays image files with zoom support.
 /// Supports both raster formats (e.g. PNG, JPG) and vector (SVG).
@@ -29,10 +29,8 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: MechanixNavigationBar(
         title: p.basename(widget.imagePath),
-        leftIcon: const Icon(Icons.arrow_back),
-        leftIconOnTap: () => Navigator.pop(context), // Back navigation
       ),
       body: isSvg ? _buildSvgViewer() : _buildRasterViewer(),
     );

@@ -9,7 +9,8 @@ import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/presentation/grid_view.dart';
 import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
+import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
 
 class FileSearchPage extends StatefulWidget {
   const FileSearchPage({super.key});
@@ -19,7 +20,6 @@ class FileSearchPage extends StatefulWidget {
 }
 
 class _FileSearchPageState extends State<FileSearchPage> {
-  final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final String homeDir = AppConfig().homeDir;
   final ValueNotifier<bool> viewModeNotifier = ValueNotifier(false);
@@ -33,7 +33,6 @@ class _FileSearchPageState extends State<FileSearchPage> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     viewModeNotifier.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -67,14 +66,8 @@ class _FileSearchPageState extends State<FileSearchPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: MechanixNavigationBar(
+        theme: const MechanixNavigationBarThemeData(titleSpacing: 0),
         title: "Search",
-        titleStyle: const TextStyle(fontSize: 18),
-        leadingWidget: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20, color: Colors.blue),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
         actionWidgets: [
           IconButton(
             icon: ValueListenableBuilder<bool>(
@@ -152,7 +145,6 @@ class _FileSearchPageState extends State<FileSearchPage> {
                 child: SizedBox(
                   height: 56,
                   child: MechanixSearchBar(
-                    controller: _searchController,
                     focusNode: _searchFocusNode,
                     autoFocus: false,
                     hintText: "Search files",
@@ -163,10 +155,7 @@ class _FileSearchPageState extends State<FileSearchPage> {
                         _performSearch(text);
                       }
                     },
-                    onCloseIconPress: () {
-                      _searchController.clear();
-                      clearSearch(context);
-                    },
+                    showDefaultTrailing: true,
                   ),
                 ),
               ),

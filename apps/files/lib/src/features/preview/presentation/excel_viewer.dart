@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/widgets.dart';
 
 /// A widget that displays an Excel file from the device's local path.
 class ExcelViewer extends StatefulWidget {
@@ -97,9 +98,9 @@ class _ExcelViewerState extends State<ExcelViewer> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(p.basename(widget.filePath)), // Show filename in title
-        actions: [
+      appBar: MechanixNavigationBar(
+        title: p.basename(widget.filePath), // Show filename in title
+        actionWidgets: [
           // Sheet selector dropdown (if not loading and sheets are available)
           if (!_isLoading && sheetNames.isNotEmpty)
             DropdownButton<String>(

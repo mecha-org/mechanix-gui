@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
-import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
 import 'package:mechanix_files/src/controllers/file_manager.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
@@ -14,8 +13,6 @@ import 'package:mechanix_files/src/features/files/presentation/extract_file_dial
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
 
@@ -239,28 +236,6 @@ Widget buildListViewMove(
   VoidCallback onMoveCompleted,
   ScrollController scrollController,
 ) {
-  final sectionItems = foldersList.map((file) {
-    return SectionListItems(
-      title: getCurrentFolderName(file.path),
-      titleTextStyle: const TextStyle(fontSize: 14),
-      leading: Image.asset(file.iconPath,
-          width: 24, height: 24, fit: BoxFit.contain),
-      defaultTrailingIcon: false,
-      trailing: trailingIcon(),
-      onTap: () {
-        final newPath = '$currentPath/${getCurrentFolderName(file.path)}';
-        onTap(
-          context,
-          newPath,
-          getCurrentFolderName(file.path),
-          filesBloc,
-          onMoveCompleted,
-        );
-        scrollController.jumpTo(0);
-      },
-    );
-  }).toList();
-
   return ScrollConfiguration(
     behavior: ScrollConfiguration.of(context).copyWith(
       dragDevices: {
@@ -268,20 +243,41 @@ Widget buildListViewMove(
         PointerDeviceKind.mouse,
       },
     ),
-    child: MechanixSectionListTheme(
-      style: MechanixSectionListThemeData(
-        height: 50,
-        dividerPadding: EdgeInsets.zero,
-        widgetPadding: EdgeInsets.zero,
-        backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
+    child: ListView.separated(
+      controller: scrollController,
+      itemCount: foldersList.length,
+      separatorBuilder: (context, index) => Divider(
+        height: 1,
+        thickness: 1,
+        color: Colors.grey[800],
       ),
-      child: SingleChildScrollView(
-        controller: scrollController,
-        scrollDirection: Axis.vertical,
-        child: MechanixSectionList(
-          sectionListItems: sectionItems,
-        ),
-      ),
+      itemBuilder: (context, index) {
+        final file = foldersList[index];
+        final folderName = getCurrentFolderName(file.path);
+        final newPath = '$currentPath/$folderName';
+
+        return Container(
+          color: Colors.grey[850],
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            leading: Image.asset(
+              file.iconPath,
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+            ),
+            title: Text(
+              folderName,
+              style: const TextStyle(fontSize: 14, color: Colors.white),
+            ),
+            trailing: trailingIcon(),
+            onTap: () {
+              onTap(context, newPath, folderName, filesBloc, onMoveCompleted);
+              scrollController.jumpTo(0);
+            },
+          ),
+        );
+      },
     ),
   );
 }
@@ -379,28 +375,6 @@ Widget buildListViewExtract(
   VoidCallback onMoveCompleted,
   ScrollController scrollController,
 ) {
-  final sectionItems = foldersList.map((file) {
-    return SectionListItems(
-      title: getCurrentFolderName(file.path),
-      titleTextStyle: const TextStyle(fontSize: 14),
-      leading: Image.asset(file.iconPath,
-          width: 24, height: 24, fit: BoxFit.contain),
-      defaultTrailingIcon: false,
-      trailing: trailingIcon(),
-      onTap: () {
-        final newPath = '$currentPath/${getCurrentFolderName(file.path)}';
-        onItemTap(
-          context,
-          newPath,
-          getCurrentFolderName(file.path),
-          filesBloc,
-          onMoveCompleted,
-        );
-        scrollController.jumpTo(0);
-      },
-    );
-  }).toList();
-
   return ScrollConfiguration(
     behavior: ScrollConfiguration.of(context).copyWith(
       dragDevices: {
@@ -408,20 +382,49 @@ Widget buildListViewExtract(
         PointerDeviceKind.mouse,
       },
     ),
-    child: MechanixSectionListTheme(
-      style: MechanixSectionListThemeData(
-        height: 50,
-        dividerPadding: EdgeInsets.zero,
-        widgetPadding: EdgeInsets.zero,
-        backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
+    child: ListView.separated(
+      controller: scrollController,
+      itemCount: foldersList.length,
+      separatorBuilder: (context, index) => Divider(
+        height: 1,
+        thickness: 1,
+        color: Colors.grey[800],
       ),
-      child: SingleChildScrollView(
-        controller: scrollController,
-        scrollDirection: Axis.vertical,
-        child: MechanixSectionList(
-          sectionListItems: sectionItems,
-        ),
-      ),
+      itemBuilder: (context, index) {
+        final file = foldersList[index];
+        final folderName = getCurrentFolderName(file.path);
+        final newPath = '$currentPath/$folderName';
+
+        return Container(
+          color: Colors.grey[850],
+          height: 50,
+          child: ListTile(
+            dense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+            leading: Image.asset(
+              file.iconPath,
+              width: 24,
+              height: 24,
+              fit: BoxFit.contain,
+            ),
+            title: Text(
+              folderName,
+              style: const TextStyle(fontSize: 14, color: Colors.white),
+            ),
+            trailing: trailingIcon(),
+            onTap: () {
+              onItemTap(
+                context,
+                newPath,
+                folderName,
+                filesBloc,
+                onMoveCompleted,
+              );
+              scrollController.jumpTo(0);
+            },
+          ),
+        );
+      },
     ),
   );
 }

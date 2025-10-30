@@ -72,8 +72,6 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("In main build");
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(
