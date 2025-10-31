@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
-import 'package:mechanix_settings/src/commons/left_transitions.dart';
 import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository_impl.dart';
@@ -232,7 +231,7 @@ class MainApp extends StatelessWidget {
           AppRoutes.wirelessSavedNetworkDetails: (context) => SavedNetworkDetails(),
           AppRoutes.wirelessConnectSecureNetwork: (context) =>
               ConnectSecureNetwork(),
-          AppRoutes.wirelessConnectUnknownNetwork: (context) => AddNetwork(),
+          AppRoutes.wirelessConnectHiddenNetwork: (context) => AddNetwork(),
           AppRoutes.configureDNS: (context) => ConfigureDnsWidget(),
           AppRoutes.configureProxy: (context) => ConfigureProxyWidget(),
           AppRoutes.ipv4Address: (context) => Ipv4AddressWidget(),

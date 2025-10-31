@@ -156,8 +156,8 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   @override
-  Future<void> connectToUnknownNetwork(String ssid, String password) async {
-    logger.i('Connecting to unknown network: $ssid');
+  Future<void> connectToHiddenNetwork(String ssid, String password) async {
+    logger.i('Connecting to hidden network: $ssid');
 
     // Check if connection already exists
     final existingConnection =
@@ -198,7 +198,7 @@ class WifiRepositoryImpl implements WifiRepository {
     };
 
     // Create a new connection
-    logger.i("init connect to unknown network");
+    logger.i("init connect to hidden network");
 
     NetworkManagerDevice device = await getWifiDevice();
 

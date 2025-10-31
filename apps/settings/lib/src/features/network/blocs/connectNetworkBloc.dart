@@ -19,7 +19,7 @@ class ConnectNetworkBloc
     on<UsernameChanged>(usernameChanged);
     on<TogglePasswordVisibility>(togglePasswordVisibility);
     on<ConnectToNetwork>(connectToNetwork);
-    on<ConnectToUnknownNetwork>(connectToUnknownNetwork);
+    on<ConnectToHiddenNetwork>(connectToHiddenNetwork);
     on<DeviceConnectionStateEvent>(_updateDeviceConnectionStateUpdate);
     on<Error>(handleError);
 
@@ -83,15 +83,15 @@ class ConnectNetworkBloc
     emit(state.copyWith(isConnecting: false));
   }
 
-  Future<void> connectToUnknownNetwork(
-      ConnectToUnknownNetwork event, Emitter<ConnectNetworkState> emit) async {
+  Future<void> connectToHiddenNetwork(
+      ConnectToHiddenNetwork event, Emitter<ConnectNetworkState> emit) async {
     emit(state.copyWith(isConnecting: true));
-    // logger.i('Connecting to unknown network: ${event.ssid}');
+    // logger.i('Connecting to hidden network: ${event.ssid}');
     try {
-      await wifiRepository.connectToUnknownNetwork(event.ssid, state.password);
+      await wifiRepository.connectToHiddenNetwork(event.ssid, state.password);
       emit(state.copyWith(isConnected: true, isConnecting: false));
     } catch (e) {
-      logger.e('Failed to connect to unknown network: $e');
+      logger.e('Failed to connect to hidden network: $e');
       emit(state.copyWith(
           isConnected: false, isConnecting: false, error: e.toString()));
     }

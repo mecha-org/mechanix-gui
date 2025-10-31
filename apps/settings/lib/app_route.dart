@@ -8,7 +8,7 @@ class AppRoutes {
   static const dnsDetails = '/wireless/dns';
   static const wirelessConnectSecureNetwork =
       '/wireless/connect_secure_network';
-  static const wirelessConnectUnknownNetwork = '/wireless/add_network';
+  static const wirelessConnectHiddenNetwork = '/wireless/add_network';
   static const bluetooth = '/bluetooth';
   static const adapterSettings = '/bluetooth/settings';
   static const adapterRename = '/bluetooth/settings/rename';

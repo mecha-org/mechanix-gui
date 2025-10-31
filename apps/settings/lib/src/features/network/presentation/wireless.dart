@@ -167,8 +167,6 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   //   child: CustomLoader(),
                   // )
                   if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
-                 
-
                   MechanixSectionList(
                     theme: MechanixSectionListThemeData(height: 200),
                     physics: const BouncingScrollPhysics(),
@@ -265,7 +263,7 @@ List<SectionListItems> getWifiList(
         title: 'Add Wireless',
         defaultTrailingIcon: false,
         onTap: () => Navigator.pushNamed(
-            context, AppRoutes.wirelessConnectUnknownNetwork),
+            context, AppRoutes.wirelessConnectHiddenNetwork),
         leading: IconWidget(iconPath: Images.wirelessAdd),
       ),
     );

@@ -24,7 +24,7 @@ class AddNetwork extends StatelessWidget {
     void onAddButtonPressed(BuildContext context, ConnectNetworkState state) {
       if (formKey.currentState!.validate()) {
         context.read<ConnectNetworkBloc>().add(
-              ConnectToUnknownNetwork(
+              ConnectToHiddenNetwork(
                 state.username,
                 state.password,
               ),
