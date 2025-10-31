@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
@@ -13,26 +15,45 @@ class SearchInputBar extends StatefulWidget {
 
 class _SearchInputBarState extends State<SearchInputBar> {
   final TextEditingController _titleController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  Timer? _debounceTimer;
 
-  void searchNotes() {
-    context.read<NotesBloc>().add(SearchEvent(_titleController.value.text));
+  @override
+  void initState() {
+    super.initState();
+    _openKeyboardAfterLoad();
+  }
+
+  void _openKeyboardAfterLoad() {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      await Future.delayed(const Duration(milliseconds: 300));
+      _focusNode.requestFocus();
+    });
+  }
+
+  void _onSearchChanged() {
+    // Cancel any running timer
+    _debounceTimer?.cancel();
+
+    // Start a new timer
+    _debounceTimer = Timer(Constants.debounceDuration, () {
+      context.read<NotesBloc>().add(SearchEvent(_titleController.text));
+    });
+  }
+
+  void clearSearch() {
+    _titleController.clear();
+    _onSearchChanged();
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _titleController.dispose();
+    _focusNode.dispose();
     super.dispose();
-  }
-
-  void _handleBackwardPress() {
-    final text = _titleController.text;
-    if (text.isNotEmpty) {
-      _titleController.text = text.substring(0, text.length - 1);
-      _titleController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _titleController.text.length),
-      );
-      searchNotes();
-    }
   }
 
   @override
@@ -42,11 +63,10 @@ class _SearchInputBarState extends State<SearchInputBar> {
       width: 508,
       child: MechanixSearchBar(
         controller: _titleController,
-        onChanged: (value) => searchNotes(),
-        autoFocus: true,
-        hintText: "Type Here",
-        onBackwardIconPress: _handleBackwardPress,
-        onCloseIconPress: () => _titleController.clear(),
+        onChanged: (_) => _onSearchChanged(),
+        autoFocus: false,
+        hintText: "Search notes...",
+        onCloseIconPress: clearSearch,
       ),
     );
   }

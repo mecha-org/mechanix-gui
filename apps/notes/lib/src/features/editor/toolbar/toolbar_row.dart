@@ -19,7 +19,7 @@ class ToolbarRow extends StatelessWidget {
       height: 52.5,
       decoration:
           isBorder
-              ? BoxDecoration(border: Border(bottom: borderSideStyle))
+              ? const BoxDecoration(border: Border(bottom: borderSideStyle))
               : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

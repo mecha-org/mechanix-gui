@@ -5,7 +5,13 @@ abstract class NotesEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class InitializeNotes extends NotesEvent {}
+
 class LoadNotes extends NotesEvent {}
+
+class LoadNextChunk extends NotesEvent {}
+
+class SelectAllNotes extends NotesEvent {}
 
 class UpdateNotes extends NotesEvent {
   final String id;
@@ -73,7 +79,6 @@ class DeselectNote extends NotesEvent {
 
 class ClearSelection extends NotesEvent {}
 
-class SelectAllNotes extends NotesEvent {}
 
 class CheckPinnedStatus extends NotesEvent {}
 

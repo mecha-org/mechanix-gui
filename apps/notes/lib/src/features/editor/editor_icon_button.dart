@@ -43,7 +43,7 @@ class EditorIconButton extends StatelessWidget {
           style: ButtonStyle(
             // fixedSize: WidgetStateProperty<Size>.resolveWith( Size),
             fixedSize: WidgetStateProperty.resolveWith<Size?>(
-              (states) => Size(20, 20),
+              (states) => const Size(20, 20),
             ),
           ),
 

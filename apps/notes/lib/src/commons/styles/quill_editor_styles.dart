@@ -16,7 +16,7 @@ final quillEditorStyle = DefaultStyles(
   //   null,
   // ),
   
-  paragraph: DefaultTextBlockStyle(
+  paragraph: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 16,
       color: NotesColors.editorTextColor,
@@ -30,7 +30,7 @@ final quillEditorStyle = DefaultStyles(
   ),
 
   // Heading 1 - Word-like style
-  h1: DefaultTextBlockStyle(
+  h1: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 24,
       fontWeight: FontWeight.bold,
@@ -45,7 +45,7 @@ final quillEditorStyle = DefaultStyles(
   ),
 
   // Heading 2 - Word-like style
-  h2: DefaultTextBlockStyle(
+  h2: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 20,
       fontWeight: FontWeight.bold,
@@ -60,7 +60,7 @@ final quillEditorStyle = DefaultStyles(
   ),
 
   // Heading 3 - Word-like style
-  h3: DefaultTextBlockStyle(
+  h3: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w600,
@@ -75,7 +75,7 @@ final quillEditorStyle = DefaultStyles(
   ),
 
   // Lists - Word-like formatting
-  placeHolder: DefaultTextBlockStyle(
+  placeHolder: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w400,
@@ -89,7 +89,7 @@ final quillEditorStyle = DefaultStyles(
     null,
   ),
   // Quote block - Word-like style
-  quote: DefaultTextBlockStyle(
+  quote: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 16,
       color: NotesColors.editorTextColor, // Slightly dimmed for quotes
@@ -105,7 +105,7 @@ final quillEditorStyle = DefaultStyles(
   ),
 
   // Code block - Word-like style
-  code: DefaultTextBlockStyle(
+  code: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 14,
       color: NotesColors.editorTextColor,
@@ -165,7 +165,7 @@ final quillEditorStyle = DefaultStyles(
   ),
 
   // Text alignment styles
-  align: DefaultTextBlockStyle(
+  align: const DefaultTextBlockStyle(
     TextStyle(fontSize: 16, color: NotesColors.editorTextColor, height: 1.2),
     HorizontalSpacing(12, 12),
     VerticalSpacing(6, 6),
@@ -177,20 +177,20 @@ final quillEditorStyle = DefaultStyles(
   // bold: TextStyle(fontWeight: FontWeight.bold, color: NotesColors.editorTextColor),
 
   // italic: TextStyle(fontStyle: FontStyle.italic, color: NotesColors.editorTextColor),
-  underline: TextStyle(
+  underline: const TextStyle(
     decoration: TextDecoration.underline,
     decorationColor: NotesColors.editorTextColor,
     color: NotesColors.editorTextColor,
   ),
 
-  strikeThrough: TextStyle(
+  strikeThrough: const TextStyle(
     decoration: TextDecoration.lineThrough,
     decorationColor: NotesColors.editorTextColor,
     color: NotesColors.editorTextColor,
   ),
 
   // Link style
-  link: TextStyle(
+  link: const TextStyle(
     color: Color(0xFF4A9EFF),
     decoration: TextDecoration.underline,
     decorationColor: Color(0xFF4A9EFF),
@@ -199,7 +199,7 @@ final quillEditorStyle = DefaultStyles(
   // Color and size variations
   color: NotesColors.editorTextColor, // Default text color
   // Indent styles for nested content
-  indent: DefaultTextBlockStyle(
+  indent: const DefaultTextBlockStyle(
     TextStyle(fontSize: 16, color: NotesColors.editorTextColor, height: 1.2),
     HorizontalSpacing(36, 12), // Increased left margin for indent
     VerticalSpacing(6, 6),

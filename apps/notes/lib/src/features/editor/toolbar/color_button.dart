@@ -18,7 +18,7 @@ class ColorButton extends StatelessWidget {
       isSelected: isSelected,
       onPressed: onPressed,
       icon: Container(
-        margin: EdgeInsets.all(4),
+        margin: const EdgeInsets.all(4),
         width: 28,
         height: 28,
         decoration: BoxDecoration(
