@@ -12,9 +12,6 @@ class DeviceTypes extends StatefulWidget {
 }
 
 class _DeviceTypesState extends State<DeviceTypes> {
-  void _backNavigation(BuildContext context) {
-    Navigator.pop(context);
-  }
 
   String selectValue = '';
 
@@ -27,8 +24,11 @@ class _DeviceTypesState extends State<DeviceTypes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MechanixNavigationBar(title: 'Device types'),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(52),
+        child: MechanixNavigationBar(title: 'Device types').padHorizontal(12),),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(12),
         child: ContainerWidget(
             child: MechanixSelect(
                     options: bluetoothDeviceOptions,

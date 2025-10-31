@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
-import 'package:mechanix_settings/src/commons/left_transitions.dart';
 import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository_impl.dart';
@@ -50,6 +49,7 @@ import 'package:mechanix_settings/src/features/network/presentation/ipsettings/i
 import 'package:mechanix_settings/src/features/network/presentation/ipv4_address.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_settings.dart';
+import 'package:mechanix_settings/src/features/network/presentation/saved_network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wifi_security.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless.dart';
 import 'package:mechanix_settings/src/features/settings_menu/presentation/menu.dart';
@@ -64,6 +64,7 @@ import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/vibration_level.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 void main() async {
@@ -107,6 +108,13 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
 
     return MechanixTheme(
       data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
+        MechanixNavigationBarThemeData(
+            scrolledUnderElevation: 0,
+            titleStyle: TextStyle(fontSize: 24,),
+            titleSpacing: 0,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
         MechanixSwitchThemeData(
           style: MechanixSwitchStyle(
             inactiveThumbColor: Color(0xFF989898),
@@ -152,14 +160,14 @@ class MainApp extends StatelessWidget {
         BlocProvider(
           create: (context) => WirelessSettingsBloc(
               wifiRepository: context.read<WifiRepository>())
-            ..add(InitializeWifi()),
+            ..add(InitWifi()),
         ),
 
         // Bluetooth Bloc
         BlocProvider(
           create: (context) => BluetoothBloc(
               bluetoothRepository: context.read<BluetoothRepository>())
-            ..add(InitializeBluetooth()),
+            ..add(InitBluetooth()),
         ),
 
         // Battery Bloc
@@ -200,8 +208,8 @@ class MainApp extends StatelessWidget {
         theme: lightTheme,
         darkTheme: darkTheme.copyWith(
           scaffoldBackgroundColor: Colors.black,
-          pageTransitionsTheme: PageTransitionsTheme(
-            builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
           ),
         ),
         themeMode: themeMode,
@@ -220,9 +228,10 @@ class MainApp extends StatelessWidget {
           AppRoutes.ethernetDetails: (context) => EthernetSettings(),
           AppRoutes.dnsDetails: (context) => DnsSettings(),
           AppRoutes.wirelessNetworkSettings: (context) => NetworkSettings(),
+          AppRoutes.wirelessSavedNetworkDetails: (context) => SavedNetworkDetails(),
           AppRoutes.wirelessConnectSecureNetwork: (context) =>
               ConnectSecureNetwork(),
-          AppRoutes.wirelessConnectUnknownNetwork: (context) => AddNetwork(),
+          AppRoutes.wirelessConnectHiddenNetwork: (context) => AddNetwork(),
           AppRoutes.configureDNS: (context) => ConfigureDnsWidget(),
           AppRoutes.configureProxy: (context) => ConfigureProxyWidget(),
           AppRoutes.ipv4Address: (context) => Ipv4AddressWidget(),

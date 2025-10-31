@@ -1,5 +1,6 @@
 import 'package:bluez/bluez.dart';
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 
 class BluetoothState extends Equatable {
   final bool isPowered;
@@ -9,8 +10,7 @@ class BluetoothState extends Equatable {
   final String? deviceState;
   final String? error;
   final bool isDiscoveryEnabled;
-
-  final String? adapterAlias;
+  final BluetoothAdapter? bluetoothAdapter;
 
   const BluetoothState({
     required this.isPowered,
@@ -19,39 +19,41 @@ class BluetoothState extends Equatable {
     this.selectedDevice,
     this.deviceState,
     this.error,
-    this.adapterAlias,
+    this.bluetoothAdapter,
     this.isDiscoveryEnabled = false,
   });
 
-  BluetoothState copyWith(
-      {bool? isPowered,
-      bool? loading,
-      String? error,
-      List<BlueZDevice>? devices,
-      String? deviceState,
-      BlueZDevice? selectedDevice,
-      String? adapterAlias,
-      bool? isDiscoveryEnabled}) {
+  BluetoothState copyWith({
+    bool? isPowered,
+    bool? loading,
+    String? error,
+    List<BlueZDevice>? devices,
+    String? deviceState,
+    BlueZDevice? selectedDevice,
+    BluetoothAdapter? bluetoothAdapter,
+    bool? isDiscoveryEnabled,
+  }) {
     return BluetoothState(
-        isPowered: isPowered ?? this.isPowered,
-        loading: loading ?? this.loading,
-        devices: devices ?? this.devices,
-        error: error,
-        deviceState: deviceState ?? this.deviceState,
-        selectedDevice: selectedDevice ?? this.selectedDevice,
-        adapterAlias: adapterAlias ?? this.adapterAlias,
-        isDiscoveryEnabled: isDiscoveryEnabled ?? this.isDiscoveryEnabled);
+      isPowered: isPowered ?? this.isPowered,
+      loading: loading ?? this.loading,
+      devices: devices ?? this.devices,
+      error: error,
+      deviceState: deviceState ?? this.deviceState,
+      selectedDevice: selectedDevice ?? this.selectedDevice,
+      bluetoothAdapter: bluetoothAdapter ?? this.bluetoothAdapter,
+      isDiscoveryEnabled: isDiscoveryEnabled ?? this.isDiscoveryEnabled,
+    );
   }
 
   @override
   List<Object?> get props => [
-        isPowered,
-        loading,
-        error,
-        selectedDevice,
-        deviceState,
-        adapterAlias,
-        devices,
-        isDiscoveryEnabled
-      ];
+    isPowered,
+    loading,
+    error,
+    selectedDevice,
+    deviceState,
+    bluetoothAdapter,
+    devices,
+    isDiscoveryEnabled,
+  ];
 }

@@ -14,15 +14,33 @@ class ToggleBluetooth extends BluetoothEvent {
   List<Object?> get props => [enabled];
 }
 
+class BluetoothPowerChanged extends BluetoothEvent {
+  final bool enabled;
+  BluetoothPowerChanged(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class DiscoverableChanged extends BluetoothEvent {
+  final bool enabled;
+  DiscoverableChanged(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+class InitBluetooth extends BluetoothEvent {}
+
 class InitializeBluetooth extends BluetoothEvent {}
+
+class GetAdapterDetails extends BluetoothEvent {}
 
 class StartDiscovery extends BluetoothEvent {}
 
 class StopDiscovery extends BluetoothEvent {}
 
 class RefreshDeviceList extends BluetoothEvent {}
-
-class GetAdapterAlias extends BluetoothEvent {}
 
 class RenameAdapterEvent extends BluetoothEvent {
   final String newName;
@@ -77,5 +95,3 @@ class BluetoothDevicesRemoved extends BluetoothEvent {
   @override
   List<Object?> get props => [device];
 }
-
-class CheckDeviceDiscoverable extends BluetoothEvent {}

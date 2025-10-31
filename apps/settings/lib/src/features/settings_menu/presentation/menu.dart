@@ -19,7 +19,6 @@ class SettingMenu extends StatelessWidget {
           preferredSize: const Size.fromHeight(52),
           child: MechanixNavigationBar(
             title: "Settings",
-            titleSpacing: 16,
           ).padHorizontal(12)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

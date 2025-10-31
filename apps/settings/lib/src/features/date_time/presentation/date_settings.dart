@@ -117,7 +117,7 @@ class _DateSettingsState extends State<DateSettings> {
                         selectionHeight: 56,
                         value: state.selectedWeekDay,
                         options: shortWeekdays,
-                        scrollEnabled: false,
+                        // scrollEnabled: false,
                         theme: MechanixWheelScrollThemeData(
                             selectionColor: Colors.transparent),
                         onSelectedItemChanged: (value) {
