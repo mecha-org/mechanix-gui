@@ -53,8 +53,6 @@ class WirelessSettingsBloc
     on<GetSavedNetworksEvent>(_getSavedNetworkList);
 
     on<UpdateConnectedNetworkEvent>(_updateConnectedNetwork);
-    on<DeviceConnectionStateEvent>(_updateDeviceConnectionStateUpdate);
-
     on<Error>(handleError);
   }
 
@@ -88,8 +86,6 @@ class WirelessSettingsBloc
             ? true
             : false;
     var info = WiredDevice(speed: wiredDevice!.speed, enabled: ethernetEnabled);
-    logger.i(
-        "Ethernetdevice : ${ethernetDevice.state} ---- Wired Device: $wiredDevice");
 
     emit(state.copyWith(wiredDevice: info));
   }
@@ -130,11 +126,17 @@ class WirelessSettingsBloc
         if (prop.contains("State")) {
           var state = await wifiRepository.getWifiState();
           switch (state) {
+            case NetworkManagerState.connecting:
+              add(WifiStatusChanged(["Connecting..."]));
+              break;
             case NetworkManagerState.connectedGlobal:
               add(WifiStatusChanged(["Connected"]));
               break; // Prevents fallthrough to the default case
+            case NetworkManagerState.disconnecting:
+              add(WifiStatusChanged(["Disconnecting..."]));
+              break;
             default:
-              add(WifiStatusChanged(["Connecting.."]));
+              add(WifiStatusChanged([""]));
               break;
           }
         }
@@ -220,23 +222,19 @@ class WirelessSettingsBloc
   // after forgetting a network, get updated saved networks
   Future<void> onForgetNetwork(
       ForgetNetwork event, Emitter<WirelessSettingsState> emit) async {
-    await wifiRepository.forgetNetwork(event.ssid);
-    add(GetSavedNetworksEvent());
+    try {
+      await wifiRepository.forgetNetwork(event.ssid);
+      add(GetSavedNetworksEvent());
+    } catch (e) {
+      logger.e('Error in forgetting network: $e');
+      emit(state.copyWith(error: e.toString()));
+    }
   }
 
   Future<void> _connectSavedNetwork(
       ConnectSavedNetwork event, Emitter<WirelessSettingsState> emit) async {
     try {
-      emit(state.copyWith(wifiState: event.state));
-      // remove only requested saved network connection from available saved networks
-      var updatedSavedNetworks =
-          List<AccessPoints>.from(state.availableSavedNetworks.where((network) {
-        final ssid = utf8.decode(network.nmAccessPoint.ssid);
-        final targetSsid = utf8.decode(event.nmAccessPoint.ssid);
-        return ssid != targetSsid;
-      }).toList());
-      emit(state.copyWith(availableSavedNetworks: updatedSavedNetworks));
-
+    // TODO: handle active connection
       await wifiRepository.connectToSavedNetwork(event.nmAccessPoint);
       logger.i('Connected to saved network');
     } catch (e) {
@@ -337,12 +335,6 @@ class WirelessSettingsBloc
     } catch (e) {
       logger.e('error in update connected network $e');
     }
-  }
-
-  Future<void> _updateDeviceConnectionStateUpdate(
-      DeviceConnectionStateEvent event,
-      Emitter<WirelessSettingsState> emit) async {
-    emit(state.copyWith(deviceState: event.deviceState));
   }
 
   void _setSelectedNetwork(

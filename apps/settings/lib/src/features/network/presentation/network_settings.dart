@@ -80,7 +80,6 @@ class _NetworkSettingsState extends State<NetworkSettings> {
                 children: [
                   MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
-                    isDividerRequired: true,
                     listItems: getWireless(context, state),
                   )
                 ],

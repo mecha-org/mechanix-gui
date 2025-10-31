@@ -32,23 +32,13 @@ class ConnectNetworkBloc
 
       _wifiStateAndReason =
           streamAndDevice.device.propertiesChanged.listen((event) {
-        if (event.contains('StateReason')) {
-            if (event.contains("State")) {
-            add(DeviceConnectionStateEvent(streamAndDevice.device.state));
-            return;
-
-          } else if (streamAndDevice.device.stateReason.state ==
-                  NetworkManagerDeviceState.activated &&
+        if (event.contains('StateReason') || event.contains("State")) {
+          add(DeviceConnectionStateEvent(streamAndDevice.device.state));
+          if (streamAndDevice.device.stateReason.state ==
+                  NetworkManagerDeviceState.needAuth &&
               streamAndDevice.device.stateReason.reason ==
-                  NetworkManagerDeviceStateReason.none) {
-            add(DeviceConnectionStateEvent(streamAndDevice.device.state));
-            return;
-
-          } else if (streamAndDevice.device.stateReason.state ==
-                  NetworkManagerDeviceState.failed &&
-              streamAndDevice.device.stateReason.reason ==
-                  NetworkManagerDeviceStateReason.noSecrets) {
-            add(Error("Authentication required!"));
+                  NetworkManagerDeviceStateReason.supplicantDisconnect) {
+            add(Error("Authentication failed!"));
           }
         }
       });

@@ -34,8 +34,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
       builder: (context, state) {
-
- void showDeleteDialog(String networkName) {
+        void showDeleteDialog(String networkName) {
           showDialog(
             context: context,
             builder: (dialogContext) {
@@ -46,9 +45,9 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('You might need to enter password to reconnect to this network again.',
+                    Text(
+                        'You might need to enter password to reconnect to this network again.',
                         style: const TextStyle(fontSize: 18)),
-                   
                   ],
                 ),
                 actions: [
@@ -73,7 +72,6 @@ class _NetworkDetailsState extends State<NetworkDetails> {
           );
         }
 
-
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
@@ -86,7 +84,8 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                           ? [
                               IconButton(
                                 onPressed: () => {
-                                  showDeleteDialog(utf8.decode(state.selectedNMAccessPoint!.ssid)),
+                                  showDeleteDialog(utf8.decode(
+                                      state.selectedNMAccessPoint!.ssid)),
                                 },
                                 style: ButtonStyle(
                                   iconColor:

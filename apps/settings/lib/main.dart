@@ -209,8 +209,8 @@ class MainApp extends StatelessWidget {
         theme: lightTheme,
         darkTheme: darkTheme.copyWith(
           scaffoldBackgroundColor: Colors.black,
-          pageTransitionsTheme: PageTransitionsTheme(
-            builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
           ),
         ),
         themeMode: themeMode,

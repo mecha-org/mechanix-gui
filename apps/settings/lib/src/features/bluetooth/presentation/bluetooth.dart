@@ -57,7 +57,6 @@ class _BluetoothState extends State<Bluetooth> {
               children: [
                 MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
-                    isDividerRequired: true,
                     listItems: [
                       SimpleListItems(
                         title: state.bluetoothAdapter?.alias ?? 'Bluetooth',

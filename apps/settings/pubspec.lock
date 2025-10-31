@@ -21,10 +21,10 @@ packages:
     dependency: transitive
     description:
       name: bloc
-      sha256: "52c10575f4445c61dd9e0cafcc6356fdd827c4c64dd7945ef3c4105f6b6ac189"
+      sha256: a2cebb899f91d36eeeaa55c7b20b5915db5a9df1b8fd4a3c9c825e22e474537d
       url: "https://pub.dev"
     source: hosted
-    version: "9.0.0"
+    version: "9.1.0"
   bluez:
     dependency: "direct main"
     description:
@@ -223,10 +223,10 @@ packages:
     dependency: "direct main"
     description:
       name: logger
-      sha256: "55d6c23a6c15db14920e037fe7e0dc32e7cdaf3b64b4b25df2d541b5b6b81c0c"
+      sha256: a7967e31b703831a893bbc3c3dd11db08126fe5f369b5c648a36f821979f5be3
       url: "https://pub.dev"
     source: hosted
-    version: "2.6.1"
+    version: "2.6.2"
   matcher:
     dependency: transitive
     description:
@@ -421,7 +421,7 @@ packages:
     description:
       path: "flutter/widgets"
       ref: main
-      resolved-ref: "1d8c031ae470d966a97b92468e08e15066eae18d"
+      resolved-ref: "21d6d4427c7c8bcedf5dba974973d4ea54b64dbe"
       url: "https://github.com/mecha-org/mechanix.dart.git"
     source: git
     version: "0.0.1"

@@ -23,33 +23,45 @@ class ConnectSecureNetwork extends StatelessWidget {
 
     final wifiRepository = context.read<WifiRepository>();
 
-    void backNavigation(BuildContext context) {
-      Navigator.pop(context);
-    }
-
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
+        listenWhen: (previous, current) {
+          return previous.deviceState != current.deviceState ||
+                 previous.error != current.error;
+        },
         listener: (context, state) {
-          // Handle error
-          if (state.deviceState == NetworkManagerDeviceState.ipCheck) {
-            print("state.deviceState ${state.deviceState}");
+          ScaffoldMessenger.of(context).clearSnackBars();
+
+          final bool hasError = 
+              state.deviceState == NetworkManagerDeviceState.needAuth ||
+              (state.error != null && state.error!.isNotEmpty);
+
+          if (hasError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Connecting to network..",
-                    style: const TextStyle(color: Colors.white)),
+                content: Text(
+                  state.error ?? "Connection failed",
+                  style: const TextStyle(color: Colors.red),
+                ),
                 duration: const Duration(seconds: 2),
                 backgroundColor: Colors.grey[800],
               ),
             );
-          } else if (state.deviceState == NetworkManagerDeviceState.activated) {
-            print("connected successfully.");
-            backNavigation(context);
-          } else if (state.error != null && state.error!.isNotEmpty) {
+            return;
+          }
+
+          final bool isAuthenticating = 
+              state.deviceState == NetworkManagerDeviceState.ipCheck ||
+              state.deviceState == NetworkManagerDeviceState.config;
+
+          if (isAuthenticating) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("${state.error}",
-                    style: const TextStyle(color: Colors.red)),
+                content: const Text(
+                  "Authenticating...",
+                  style: TextStyle(color: Colors.white),
+                ),
                 duration: const Duration(seconds: 2),
                 backgroundColor: Colors.grey[800],
               ),
@@ -65,8 +77,11 @@ class ConnectSecureNetwork extends StatelessWidget {
                       title: "Join ${utf8.decode(accessPoint.ssid)}",
                       actionWidgets: [
                         IconButton(
-                          icon:
-                              Image.asset(Images.submit, width: 20, height: 20),
+                          icon: Image.asset(
+                            Images.submit,
+                            width: 20,
+                            height: 20,
+                          ),
                           onPressed: state.password.isNotEmpty &&
                                   state.password.length >= 8
                               ? () {
@@ -87,8 +102,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Padding(
-                              padding:
-                                  EdgeInsets.all(16.0), // Apply padding here
+                              padding: const EdgeInsets.all(16.0),
                               child: MechanixTextInput.password(
                                 label: 'Wireless Credentials',
                                 isFormField: true,
@@ -117,7 +131,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // // NOTE: Not in use currently
+                       // // NOTE: Not in use currently
                       // WirelessProtocols()
                     ],
                   ).padTop(8),

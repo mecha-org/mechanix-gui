@@ -3,7 +3,6 @@ import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
 class SettingMenu extends StatelessWidget {
@@ -20,9 +19,6 @@ class SettingMenu extends StatelessWidget {
           preferredSize: const Size.fromHeight(52),
           child: MechanixNavigationBar(
             title: "Settings",
-            theme: MechanixNavigationBarThemeData(
-              titleSpacing: 16,
-            ),
           ).padHorizontal(12)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

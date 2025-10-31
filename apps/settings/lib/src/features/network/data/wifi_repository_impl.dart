@@ -161,7 +161,7 @@ class WifiRepositoryImpl implements WifiRepository {
 
     // Check if connection already exists
     final existingConnection =
-        await _findExistingConnection(accessPoint: null, ssid: ssid);
+        await _findAndRemoveExistingConnection(accessPoint: null, ssid: ssid);
     if (existingConnection != null) {
       logger.i('Found existing connection for hidden network, removing it');
       await existingConnection.delete();
@@ -235,7 +235,7 @@ class WifiRepositoryImpl implements WifiRepository {
     try {
       // Check if connection already exists to avoid duplicates, if exist remove it
       final existingConnection =
-          await _findExistingConnection(accessPoint: accessPoint, ssid: null);
+          await _findAndRemoveExistingConnection(accessPoint: accessPoint, ssid: null);
 
       if (existingConnection != null) {
         logger.i('Found existing connection, activating it');
@@ -260,7 +260,7 @@ class WifiRepositoryImpl implements WifiRepository {
   Future<void> _connectSecureNetwork(NetworkManagerDevice wifiDevice,
       NetworkManagerAccessPoint accessPoint, String password) async {
     String? psk;
-    logger.i('Connecting to secure network: $accessPoint');
+    logger.i('Connecting to secure network: $accessPoint with $password');
 
     if (password.isEmpty) {
       psk = await getSavedWifiPsk(wifiDevice, accessPoint);
@@ -312,7 +312,7 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   /// Find existing connection for this access point to avoid duplicates
-  Future<NetworkManagerSettingsConnection?> _findExistingConnection(
+  Future<NetworkManagerSettingsConnection?> _findAndRemoveExistingConnection(
       {NetworkManagerAccessPoint? accessPoint, String? ssid}) async {
     try {
       final connections = _client.settings.connections;
@@ -344,31 +344,6 @@ class WifiRepositoryImpl implements WifiRepository {
     return null;
   }
 
-  Future<NetworkManagerAccessPoint?> getConnectedNetwork(
-      NetworkManagerAccessPoint accessPoint) async {
-    // Retrieve the list of active connections
-    final connections = _client.settings.connections;
-
-    // Check if the network is already connected
-    for (var connection in connections) {
-      var settings = await connection.getSettings();
-      var wifiSettings = settings['802-11-wireless'];
-
-      if (wifiSettings != null && wifiSettings['ssid'] != null) {
-        final ssidArray = wifiSettings['ssid'] as DBusArray;
-        final ssidBytes =
-            ssidArray.children.map((e) => (e as DBusByte).value).toList();
-        final wifiSsid = utf8.decode(ssidBytes);
-        final accessPointSsid = utf8.decode(accessPoint.ssid);
-
-        if (wifiSsid == accessPointSsid) {
-          return accessPoint; // Network is already connected
-        }
-      }
-    }
-  }
-
-  // disconnect network , keep profile settings
   Future<void> disconnectNetwork(String ssid) async {
     NetworkManagerDevice device = await getWifiDevice();
 
@@ -436,7 +411,6 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints>? availableAccessPoints) async {
-    // logger.i('Loading saved networks');
 
     final List<SavedNetworks> savedNetworks = [];
     final connections = _client.settings.connections;

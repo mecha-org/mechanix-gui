@@ -78,11 +78,3 @@ class UpdateConnectedNetworkEvent extends WirelessSettingsEvent {
   @override
   List<Object> get props => [accessPoint];
 }
-
-class DeviceConnectionStateEvent extends WirelessSettingsEvent {
-  final NetworkManagerDeviceState deviceState;
-  DeviceConnectionStateEvent(this.deviceState);
-
-  @override
-  List<Object> get props => [deviceState];
-}

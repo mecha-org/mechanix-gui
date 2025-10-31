@@ -15,6 +15,7 @@ import 'package:mechanix_settings/src/features/network/models/access_points.dart
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
@@ -44,7 +45,6 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                 children: [
                   MechanixSimpleList(
                       physics: const BouncingScrollPhysics(),
-                      isDividerRequired: true,
                       listItems: [
                         SimpleListItems(
                           title: 'Wireless',
@@ -104,7 +104,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                       title: 'Wired',
                       sectionListItems: [
                         SectionListItems(
-                          title: (state.wiredDevice?.enabled ?? false)
+                          title: state.wiredDevice!.enabled
                               ? "Connected ${state.wiredDevice?.speed} Mb/s"
                               : "Cable unplugged",
                           backgroundColor: Colors.transparent,
@@ -118,7 +118,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             ),
                             value: state.wiredDevice?.enabled ?? false,
                             onChanged: (val) => {
-                              // todo 
+                              // todo
                             },
                           ),
                         ),
@@ -167,11 +167,14 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   //   child: CustomLoader(),
                   // )
                   if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
-                    MechanixSectionList(
-                        physics: const BouncingScrollPhysics(),
-                        title: 'Available Networks',
-                        sectionListItems: getWifiList(
-                            context, state.availableOtherNetworks, true)),
+                 
+
+                  MechanixSectionList(
+                    theme: MechanixSectionListThemeData(height: 200),
+                    physics: const BouncingScrollPhysics(),
+                    title: 'Available Networks',
+                    sectionListItems: getWifiList(
+                        context, state.availableOtherNetworks, true)),
                   const WirelessAdvanceSettings()
                 ],
               ),
@@ -234,19 +237,19 @@ String getNetworkIcon(String security, int? signalStrength) {
 }
 
 List<SectionListItems> getWifiList(
-    BuildContext context, List<AccessPoints> state, bool showAddOption) {
-  final wifi = state.map((s) {
+    BuildContext context, List<AccessPoints> accessPoints, bool showAddOption) {
+  final wifi = accessPoints.map((ap) {
     return SectionListItems(
-      title: utf8.decode(s.nmAccessPoint.ssid),
-      onTap: () => onNetworkTap(s, context),
+      title: utf8.decode(ap.nmAccessPoint.ssid),
+      onTap: () => onNetworkTap(ap, context),
       leading: SizedBox(
         height: 24,
         width: 24,
-        child: getWirelessStrengthIcon(strength: s.nmAccessPoint.strength),
+        child: getWirelessStrengthIcon(strength: ap.nmAccessPoint.strength),
       ),
       defaultTrailingIcon: false,
       trailing: IconButton(
-        onPressed: () => onInfoTap(s, context),
+        onPressed: () => onInfoTap(ap, context),
         icon: SizedBox(
           height: 24,
           width: 24,
