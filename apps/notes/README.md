@@ -10,7 +10,7 @@ A powerful and intuitive notes application built with Flutter for Embedded Linux
 - To install flutter, follow this : [https://docs.flutter.dev/install](https://docs.flutter.dev/install)
 - To install flutter-elinux, follow this : [https://github.com/sony/flutter-elinux](https://github.com/sony/flutter-elinux)
 
-### Steps to run Settings App:
+### Steps to run Notes App:
 1. Clone the repository :
     ```bash
     $ git clone https://github.com/mecha-org/mechanix-gui.git
