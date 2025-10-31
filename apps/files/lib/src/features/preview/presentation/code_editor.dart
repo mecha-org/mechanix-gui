@@ -17,6 +17,7 @@ import 'package:highlight/languages/xml.dart';
 import 'package:highlight/languages/rust.dart';
 import 'package:highlight/languages/javascript.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
 
 class CodeEditorPage extends StatefulWidget {
   final String filePath;
@@ -124,7 +125,12 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Saved successfully')),
+      SnackBar(
+        content: const Text("Saved successfully",
+            style: TextStyle(color: Colors.white)),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.grey[800],
+      ),
     );
   }
 
@@ -137,9 +143,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     }
 
     return Scaffold(
-        appBar: AppBar(
-          title: Text(p.basename(widget.filePath)),
-          actions: [
+        appBar: MechanixNavigationBar(
+          title: p.basename(widget.filePath),
+          actionWidgets: [
             if (_isEditing) ...[
               IconButton(icon: const Icon(Icons.save), onPressed: _save),
               IconButton(

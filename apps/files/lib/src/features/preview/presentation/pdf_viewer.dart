@@ -130,14 +130,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                                   hintText: "Password here",
                                   hintStyle:
                                       const TextStyle(color: Colors.white54),
-                                  prefixIcon: const Padding(
-                                    padding:
-                                        EdgeInsets.only(left: 12, right: 8),
-                                    child: Icon(
-                                      Icons.lock,
-                                      color: Colors.white54,
-                                    ),
-                                  ),
+                                  prefixIcon: const Icon(Icons.lock_outline,
+                                      color: Colors.white54),
                                   prefixIconConstraints: const BoxConstraints(
                                     minWidth: 40,
                                     minHeight: 40,
@@ -259,8 +253,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   /// Normal app bar with file name and search icon
   PreferredSizeWidget _buildNormalAppBar() {
     return CustomAppBar(
-      title: p.basename(widget.filePath),
-      leftIcon: const Icon(Icons.arrow_back),
+      titleWidget:
+          Text(p.basename(widget.filePath), style: context.textTheme.bodySmall),
+      leftIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
       leftIconOnTap: () => Navigator.pop(context),
       rightIcon1: const Icon(Icons.search),
       rightIcon1OnTap: () {
@@ -314,7 +309,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             ),
         ],
       ),
-      leftIcon: const Icon(Icons.arrow_back),
+      leftIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
       leftIconOnTap: () {
         setState(() {
           isSearching = false;

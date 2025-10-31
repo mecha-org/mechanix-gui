@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io' as io;
 
 import 'package:archive/archive.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
@@ -38,31 +40,6 @@ String formatDateTime(DateTime dateTime) {
   return formatter.format(dateTime).toLowerCase();
 }
 
-void _navigateToDirectory(
-  BuildContext context,
-  List<FileItem> currentPath,
-  FileItem directory,
-) {
-  final newPath = [...currentPath, directory];
-  final pathString = '/${newPath.map((e) => e.name).join('/')}';
-  final filesBloc = BlocProvider.of<FilesBloc>(context);
-  filesBloc.add(LoadFilesAtPath(pathString));
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => BlocProvider.value(
-        value: filesBloc,
-        child: FileExplorerPage(
-          title: directory.name,
-          path: newPath,
-          // homeContext: context,
-        ),
-      ),
-    ),
-  );
-}
-
 void handleTap(
   BuildContext context,
   FileItem file,
@@ -82,9 +59,141 @@ void handleTap(
     state?.clearSearch(); // will reset and remove overlay
   }
 
-  if (file.type == 'dir') {
-    _navigateToDirectory(context, currentPath, file);
+  if (textFileTypes.contains(fileType)) {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CodeEditorPage(filePath: fullPath),
+      ),
+    );
     return;
+  }
+
+  if (audioFileTypes.contains(fileType)) {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AudioPlayerOverlay(filePath: fullPath),
+    );
+    return;
+  }
+
+  if (videoFileTypes.contains(fileType)) {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => VideoPlayer(filePath: fullPath),
+      ),
+    );
+    return;
+  }
+
+  if (fileType == '.pdf') {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfViewerPage(filePath: fullPath),
+      ),
+    );
+    return;
+  }
+
+  if (fileType == '.xlsx') {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ExcelViewer(filePath: fullPath),
+      ),
+    );
+    return;
+  }
+
+  if (fileType == '.csv') {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CsvViewer(filePath: fullPath),
+      ),
+    );
+    return;
+  }
+
+  if (imageFileTypes.contains(fileType)) {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ImageViewerPage(imagePath: fullPath),
+      ),
+    );
+    return;
+  }
+
+  if (fileType == '.zip') {
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+    final state = context.findAncestorStateOfType<FileExplorerPageState>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[850],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              minTileHeight: 20,
+              leading: const Icon(Icons.drive_file_move, color: Colors.white70),
+              title: const Text("Extract to...",
+                  style: TextStyle(color: Colors.white, fontSize: 14)),
+              onTap: () {
+                Navigator.pop(ctx);
+
+                // Handle extraction
+                state?.handleExtract(fullPath);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    return;
+  }
+}
+
+void handleFileTap(
+  BuildContext context,
+  io.FileSystemEntity file,
+  String fullPath,
+  bool isSelectionMode,
+  FileExplorerPageState? state,
+  FileManagerController controller,
+) {
+  final fileType = p.extension(fullPath).toLowerCase();
+
+  if (isSelectionMode) {
+    state?.toggleSelection(fullPath);
+    return;
+  }
+
+  if (state?.isSearching == true) {
+    state?.clearSearch(); // will reset and remove overlay
   }
 
   if (textFileTypes.contains(fileType)) {
@@ -209,20 +318,26 @@ void handleTap(
                 // Extract in same folder
                 final currentDir =
                     fullPath.substring(0, fullPath.lastIndexOf('/'));
+                final zipName = p.basenameWithoutExtension(fullPath);
+                final baseExtractPath = p.join(currentDir, zipName);
+
+                // Ensure unique extraction path
+                final uniqueExtractPath =
+                    await getUniqueExtractPath(baseExtractPath);
                 final bloc = context.read<FilesBloc>();
                 final completer = Completer<void>();
                 bloc.add(StartExtractMode(fullPath));
 
                 bloc.add(ExtractZipTo(
                   fullPath,
-                  currentDir,
+                  uniqueExtractPath,
                   completer,
                 ));
                 await completer.future;
                 bloc.add(CancelExtractMode());
 
                 // reload after extraction
-                bloc.add(LoadFilesAtPath(currentDir));
+                controller.reload();
 
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   SnackBar(
@@ -257,7 +372,7 @@ void handleTap(
 }
 
 bool isZipFileValid(String path) {
-  final FileSystem fileSystem = LocalFileSystem();
+  final FileSystem fileSystem = const LocalFileSystem();
 
   try {
     final bytes = fileSystem.file(path).readAsBytesSync();
@@ -265,5 +380,45 @@ bool isZipFileValid(String path) {
     return archive.isNotEmpty;
   } catch (_) {
     return false;
+  }
+}
+
+/// Helper function to extract the current folder name
+String getCurrentFolderName(String path) {
+  if (path.isEmpty) return 'Home';
+
+  // Use path utilities instead of instantiating Directory (which may be
+  // shadowed by package:file's abstract Directory).
+  String name = p.basename(path);
+
+  // If path ends with a separator, basename can be empty; fall back to parent.
+  if (name.isEmpty) {
+    name = p.basename(p.dirname(path));
+  }
+
+  // Optionally map specific directories to nicer names
+  if (name == 'home') return 'Home';
+
+  return name;
+}
+
+/// Ensures a unique folder name by appending "(1)", "(2)", etc.
+Future<String> getUniqueExtractPath(String basePath) async {
+  final io.Directory dir = io.Directory(basePath);
+
+  if (!await dir.exists()) {
+    return basePath; // safe, doesn't exist yet
+  }
+
+  final parent = p.dirname(basePath);
+  final name = p.basename(basePath);
+  int count = 1;
+
+  while (true) {
+    final newPath = p.join(parent, '$name ($count)');
+    if (!await io.Directory(newPath).exists()) {
+      return newPath;
+    }
+    count++;
   }
 }

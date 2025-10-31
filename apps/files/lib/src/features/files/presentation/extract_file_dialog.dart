@@ -1,25 +1,26 @@
 import 'dart:async';
+import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
-import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
+import 'package:path/path.dart' as p;
 import 'package:widgets/extension.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
-import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
+import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
-
-import 'files.dart';
 
 class ExtractBottomSheet extends StatefulWidget {
   final String path;
@@ -42,9 +43,9 @@ class ExtractBottomSheet extends StatefulWidget {
 }
 
 class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
-  late List<FileItem> currentPath;
+  final FileManagerController controller = FileManagerController();
+  late String currentPath;
   bool isSearching = false;
-  final TextEditingController searchController = TextEditingController();
   final FocusNode searchFocusNode = FocusNode();
 
   final downloadsDir = AppConfig().downloadsDir;
@@ -52,47 +53,89 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
   final homeDir = AppConfig().homeDir;
   final recentDir = AppConfig().recentDir;
 
-  List<FileItem> searchResults = [];
-
-  void _loadFiles() {
-    final pathString = '/${currentPath.map((e) => e.name).join('/')}';
-    widget.filesBloc.add(LoadFilesAtPath(pathString));
+  Future<void> _loadFiles() async {
+    await controller.openDirectory(io.Directory(widget.path));
   }
 
   @override
   void initState() {
     super.initState();
-    currentPath = pathToSegments(widget.path);
+    currentPath = widget.path;
     _loadFiles();
+
+    controller.getPathNotifier.addListener(() {
+      setState(() {
+        currentPath = controller.getPathNotifier.value;
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isAtRoot = currentPath.isEmpty;
-    final pathString = '/${currentPath.map((e) => e.name).join('/')}';
+    final isAtRoot = currentPath == '/' || currentPath.isEmpty;
 
-    final isDocumentsDir = pathString == documentsDir;
-    final isDownloadsDir = pathString == downloadsDir;
-    final isHomeDir = pathString == homeDir;
-    final isRecentDir = pathString == recentDir;
+    final isDocumentsDir = currentPath == documentsDir;
+    final isDownloadsDir = currentPath == downloadsDir;
+    final isHomeDir = currentPath == homeDir;
+    final isRecentDir = currentPath == recentDir;
     final isHomePageDir = isHomeDir ||
         isDownloadsDir ||
         isDocumentsDir ||
         isAtRoot ||
         isRecentDir;
 
-    return BlocBuilder<FilesBloc, FilesState>(
-      bloc: widget.filesBloc,
-      builder: (context, state) {
-        final displayedFiles =
-            getFilesAtPath(currentPath, state.fileSystemList);
+    return ValueListenableBuilder<List<io.FileSystemEntity>>(
+      valueListenable: controller.paginatedEntities,
+      builder: (context, entities, _) {
+        final foldersList = entities
+            .where((file) =>
+                file is io.Directory &&
+                !p
+                    .basename(file.path)
+                    .startsWith('.')) // exclude hidden folders
+            .toList();
+
+        if (foldersList.length < pageSize) {
+          controller.loadNextChunk();
+        }
+
+        final itemCount = foldersList.length;
+
+        // Base height logic
+        double minChildSize;
+        double initialChildSize;
+        double maxChildSize = 0.7;
+
+        if (itemCount <= 2) {
+          minChildSize = 0.35;
+          initialChildSize = 0.4;
+        } else if (itemCount <= 5) {
+          minChildSize = 0.4;
+          initialChildSize = 0.5;
+        } else if (itemCount <= 10) {
+          minChildSize = 0.5;
+          initialChildSize = 0.6;
+        } else {
+          minChildSize = 0.6;
+          initialChildSize = 0.7;
+        }
 
         return DraggableScrollableSheet(
           expand: false,
-          initialChildSize: 0.7,
-          minChildSize: 0.4,
-          maxChildSize: 0.9,
-          builder: (context, scrollController) {
+          initialChildSize: initialChildSize,
+          minChildSize: minChildSize,
+          maxChildSize: maxChildSize,
+          builder: (context, sheetController) {
+            // Scroll controller listener
+            sheetController.addListener(() {
+              final maxScroll = sheetController.position.maxScrollExtent;
+              final currentScroll = sheetController.position.pixels;
+
+              if (currentScroll >= 0.8 * maxScroll) {
+                controller.loadNextChunk();
+              }
+            });
+
             return Container(
               decoration: BoxDecoration(
                 color: Colors.grey[850],
@@ -103,7 +146,8 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   MechanixNavigationBar(
-                    backgroundColor: Colors.grey[850],
+                    theme: MechanixNavigationBarThemeData(
+                        backgroundColor: Colors.grey[850], titleSpacing: 0),
                     leadingWidget: IconButton(
                       icon: const Icon(
                         Icons.arrow_back_ios,
@@ -113,20 +157,15 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                       onPressed: () {
                         if (isHomePageDir) {
                           Navigator.pop(context);
-                          extractMainBottomSheet(widget.onExtractCompleted);
+                          extractMainBottomSheet(
+                              widget.onExtractCompleted, controller);
                         } else {
-                          setState(() {
-                            currentPath.removeLast();
-                          });
-                          _loadFiles();
+                          controller.goToParentDirectory();
                         }
                       },
                     ),
-                    title: currentPath.isEmpty ? "Root" : currentPath.last.name,
-                    titleStyle: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                    ),
+                    title:
+                        isAtRoot ? "Root" : getCurrentFolderName(currentPath),
                     actionWidgets: [
                       if (!isSearching)
                         IconButton(
@@ -142,13 +181,12 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                   ).padTop(8),
                   Expanded(
                     child: buildListViewExtract(
-                      isSearching && searchResults.isNotEmpty
-                          ? searchResults
-                          : displayedFiles,
+                      foldersList,
                       context,
                       currentPath,
                       widget.filesBloc,
                       widget.onExtractCompleted,
+                      sheetController,
                     ),
                   ),
                   if (isSearching)
@@ -158,19 +196,12 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                       child: SizedBox(
                         height: 48,
                         child: MechanixSearchBar(
-                          controller: searchController,
                           autoFocus: true,
                           hintText: "Type here",
-                          onChanged: (value) {
-                            _performSearch();
+                          onChanged: (query) {
+                            controller.search(query);
                           },
-                          onCloseIconPress: () {
-                            setState(() {
-                              searchController.clear();
-                              isSearching = false;
-                              searchResults = [];
-                            });
-                          },
+                          showDefaultTrailing: true,
                         ),
                       ),
                     )
@@ -188,7 +219,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                           Expanded(
                             child: OutlinedButton(
                               style: OutlinedButton.styleFrom(
-                                side: BorderSide(
+                                side: const BorderSide(
                                     color: Colors.white70, width: 0.4),
                                 backgroundColor: Colors.transparent,
                               ),
@@ -226,20 +257,8 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
     );
   }
 
-  void _performSearch() {
-    final query = searchController.text.trim();
-    if (query.isEmpty) return;
-
-    setState(() {
-      searchResults = getFilesAtPath(
-              currentPath, widget.filesBloc.state.fileSystemList)
-          .where(
-              (file) => file.name.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-    });
-  }
-
-  void extractMainBottomSheet(onExtractCompleted) {
+  void extractMainBottomSheet(
+      onExtractCompleted, FileManagerController controller) {
     final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
 
     showModalBottomSheet(
@@ -252,9 +271,9 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Extract to',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
                 ),
@@ -273,7 +292,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, homeDir, "Home",
                             filesBloc, onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.home,
@@ -281,7 +300,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -292,7 +311,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, downloadsDir,
                             "Downloads", filesBloc, onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.downloads,
@@ -300,7 +319,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -311,7 +330,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, documentsDir,
                             "Documents", filesBloc, onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.homeDocuments,
@@ -319,7 +338,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -330,14 +349,14 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                         titleTextStyle: const TextStyle(fontSize: 14),
                         onTap: () => onItemTap(context, "/", "Root", filesBloc,
                             onExtractCompleted),
-                        leading: IconWidget(
+                        leading: const IconWidget(
                           iconWidth: 20,
                           iconHeight: 20,
                           iconPath: Images.hardDrive,
                         ),
                         defaultTrailingIcon: false,
                         trailing: SizedBox(
-                          child: Icon(
+                          child: const Icon(
                             size: 16,
                             Icons.arrow_forward_ios,
                             color: Colors.grey,
@@ -354,7 +373,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
   }
 
   Future<void> handleExtract(BuildContext context, FilesState state) async {
-    final targetPath = '/${currentPath.map((e) => e.name).join('/')}';
+    String targetPath = currentPath;
     final bloc = BlocProvider.of<FilesBloc>(context);
     final completer = Completer<void>();
 
@@ -372,21 +391,26 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
       return;
     }
 
+    // Create unique destination folder if one already exists
+    final zipName = p.basenameWithoutExtension(state.zipFilePath);
+    final baseExtractPath = p.join(targetPath, zipName);
+    final uniqueExtractPath = await getUniqueExtractPath(baseExtractPath);
+
     bloc.add(ExtractZipTo(
       state.zipFilePath,
-      targetPath,
+      uniqueExtractPath,
       completer,
     ));
+
     await completer.future;
     bloc.add(CancelExtractMode());
 
-    // safe to reload
-    widget.onExtractCompleted();
+    // widget.onExtractCompleted();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:
-            Text("Finished extracting", style: TextStyle(color: Colors.white)),
+        content: const Text("Finished extracting",
+            style: TextStyle(color: Colors.white)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),

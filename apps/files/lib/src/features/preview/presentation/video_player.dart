@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/services/media_kit_manager.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:widgets/mechanix.dart';
 
 enum ZoomMode { stretch, original }
 
@@ -161,15 +162,15 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      icon: const Icon(Icons.arrow_back_ios,
+                          color: Colors.blue, size: 16),
                       onPressed: _backNavigation,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         widget.filePath.split('/').last,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 14),
+                        style: context.textTheme.bodySmall,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

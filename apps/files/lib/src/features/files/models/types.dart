@@ -1,4 +1,8 @@
+import 'dart:io' as io;
+
+import 'package:file/file.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 
 class FileItem {
   final String name;
@@ -77,3 +81,57 @@ const imageFileTypes = [
   '.gif',
   '.bmp'
 ];
+
+const int page = 1;
+const int pageSize = 20;
+
+// FileSystemEntity extension
+extension FileSystemEntityIcon on io.FileSystemEntity {
+  String get iconPath {
+    final path = this.path;
+    final ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
+
+    if (ext == 'dir') return Images.unfoldDir;
+    if (ext == 'pdf') return Images.pdfFile;
+    if (ext == 'xlsx' || ext == 'xls') return Images.excelFile;
+    if (ext == 'txt') return Images.textFile;
+    if (imageFileTypes.contains(ext)) return Images.imageFile;
+    if (audioFileTypes.contains(ext)) return Images.audioFile;
+    if (videoFileTypes.contains(ext)) return Images.videoFile;
+    if (ext == 'csv') return Images.csvFile;
+    if (ext == 'zip' || ext == 'rar' || ext == '7z') return Images.archiveFile;
+
+    return Images.file;
+  }
+}
+
+SortBy sortByFromKey(String key) {
+  switch (key) {
+    case 'name':
+      return SortBy.name;
+    case 'type':
+      return SortBy.type;
+    case 'mod_time':
+      return SortBy.date;
+    case 'size_asc':
+    case 'size_desc':
+      return SortBy.size;
+    default:
+      return SortBy.name;
+  }
+}
+
+String keyFromSort(SortBy sortBy, bool ascending) {
+  switch (sortBy) {
+    case SortBy.name:
+      return 'name';
+    case SortBy.type:
+      return 'type';
+    case SortBy.date:
+      return 'mod_time';
+    case SortBy.size:
+      return ascending ? 'size_asc' : 'size_desc';
+  }
+}
+
+const double menuItemHeight = 42.0;

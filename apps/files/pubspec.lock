@@ -505,7 +505,7 @@ packages:
     source: hosted
     version: "1.1.0"
   path_provider:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: "50c5dd5b6e1aaf6fb3a78b33f6aa3afca52bf903a8a5298f53101fdaee55bbcd"
@@ -953,9 +953,9 @@ packages:
     dependency: "direct main"
     description:
       path: "flutter/widgets"
-      ref: main
-      resolved-ref: "1d8c031ae470d966a97b92468e08e15066eae18d"
-      url: "https://github.com/mecha-org/mechanix.dart.git"
+      ref: refactor
+      resolved-ref: "114b9e6e831e7660c5a5b900e2391f08d7e3f918"
+      url: "https://github.com/ojas-mecha/mechanix-ui.git"
     source: git
     version: "0.0.1"
   win32:

@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:csv/csv.dart';
-import 'package:mechanix_files/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/mechanix.dart';
 
 /// A StatefulWidget to view and edit CSV files.
 /// Supports row-wise deletion, addition, and inline editing.
@@ -49,7 +49,11 @@ class _CsvViewerState extends State<CsvViewer> {
     final csvContent = const ListToCsvConverter().convert(filteredTable);
     File(widget.filePath).writeAsStringSync(csvContent);
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("CSV saved")),
+      SnackBar(
+        content: const Text("CSV saved", style: TextStyle(color: Colors.white)),
+        duration: const Duration(seconds: 2),
+        backgroundColor: Colors.grey[800],
+      ),
     );
   }
 
@@ -74,26 +78,65 @@ class _CsvViewerState extends State<CsvViewer> {
   }
 
   /// Shows a confirmation dialog before deleting a row
-  void _confirmDeleteRow(int rowIndex) async {
-    final confirm = await showDialog<bool>(
+  void _confirmDeleteRow(int rowIndex) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Deletion'),
-        content: const Text('Are you sure you want to delete this row?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[850],
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Delete Row",
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Are you sure you want to delete this row?",
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: MechanixOutlinedButton(
+                    label: "Cancel",
+                    textColor: Colors.white,
+                    borderRadius: 50,
+                    borderWidth: 0.5,
+                    onPressed: () => Navigator.pop(bottomSheetContext),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: MechanixElevatedButton(
+                    label: "Delete",
+                    backgroundColor: Colors.red,
+                    textColor: Colors.white,
+                    borderRadius: 50,
+                    onPressed: () {
+                      Navigator.pop(bottomSheetContext);
+                      _deleteRow(rowIndex);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
-    if (confirm == true) {
-      _deleteRow(rowIndex);
-    }
   }
 
   /// Updates the value of a cell at [rowIndex], [columnIndex] and saves the change
@@ -117,14 +160,18 @@ class _CsvViewerState extends State<CsvViewer> {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: MechanixNavigationBar(
         title: p.basename(widget.filePath), // Show file name
-        leftIcon: const Icon(Icons.arrow_back),
-        leftIconOnTap: () => Navigator.pop(context), // Back navigation
-        rightIcon1: const Icon(Icons.add),
-        rightIcon1OnTap: _addRow, // Add new row
-        rightIcon2: const Icon(Icons.save),
-        rightIcon2OnTap: _saveCsv, // Save file manually
+        actionWidgets: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _addRow, // Add new row
+          ),
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _saveCsv, // Save file manually
+          ),
+        ],
       ),
       body: ContainerWidget(
         child: InteractiveViewer(

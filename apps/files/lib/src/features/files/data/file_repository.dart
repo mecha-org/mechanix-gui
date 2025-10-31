@@ -22,9 +22,6 @@ abstract class FileRepository {
     ConflictResolutionStrategy strategy = ConflictResolutionStrategy.replace,
   });
 
-  Future<List<FileSystemEntity>> sortEntities(
-      List<FileSystemEntity> list, String sortBy);
-
   Future<FileStat> getFileDetails(String path);
 
   Future<void> compressEntities(
@@ -35,4 +32,7 @@ abstract class FileRepository {
   Future<bool> entityExists(String path);
 
   Future<List<FileSystemEntity>> searchFiles(String rootPath, String query);
+
+  Future<List<FileSystemEntity>> getPaginatedFileSystemList(
+      {String path, int page, int pageSize});
 }

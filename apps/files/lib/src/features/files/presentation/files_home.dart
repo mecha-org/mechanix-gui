@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
+import 'package:mechanix_files/app_route.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
-import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
-import 'package:mechanix_files/src/features/files/presentation/file_search.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -36,6 +35,10 @@ class FileHomePageState extends State<FileHomePage> {
     super.dispose();
   }
 
+  void onSearch() {
+    Navigator.pushNamed(context, AppRoutes.searchFiles);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,125 +52,110 @@ class FileHomePageState extends State<FileHomePage> {
             child: IconButton(
               icon: Image.asset(Images.search, width: 24, height: 24),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<FilesBloc>(),
-                      child: const FileSearchPage(),
-                    ),
-                  ),
-                );
+                onSearch();
               },
             ),
           ),
         ],
       ),
-      body: BlocBuilder<FilesBloc, FilesState>(
-        builder: (context, state) {
-          void onTap(BuildContext context, String path, String title) {
-            final filesBloc = BlocProvider.of<FilesBloc>(context);
-
-            if (path == "/recent") {
-              filesBloc.add(LoadRecentFiles());
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: filesBloc,
-                    child: FileExplorerPage(
-                      title: 'recent',
-                      path: pathToSegments(path),
+      body: SingleChildScrollView(
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              MechanixSectionList(
+                sectionListItems: [
+                  SectionListItems(
+                    title: "Home directory",
+                    titleTextStyle: const TextStyle(),
+                    onTap: () => onTap(context, homeDir, "Home"),
+                    leading: const IconWidget(
+                      iconWidth: 24,
+                      iconHeight: 24,
+                      iconPath: Images.home,
+                      iconColor: Colors.blueAccent,
                     ),
                   ),
-                ),
-              );
-            } else {
-              filesBloc.add(LoadFilesAtPath(path));
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider.value(
-                    value: filesBloc,
-                    child: FileExplorerPage(
-                      path: pathToSegments(path),
+                  SectionListItems(
+                    title: "Recents",
+                    onTap: () => onTap(context, recentDir, "Recents"),
+                    leading: const IconWidget(
+                      iconWidth: 24,
+                      iconHeight: 24,
+                      iconPath: Images.recent,
                     ),
                   ),
-                ),
-              );
-            }
-          }
-
-          return SingleChildScrollView(
-            child: Container(
-              margin: EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  MechanixSectionList(
-                    sectionListItems: [
-                      SectionListItems(
-                        title: "Home directory",
-                        titleTextStyle: const TextStyle(),
-                        onTap: () => onTap(context, homeDir, "Home"),
-                        leading: IconWidget(
-                          iconWidth: 24,
-                          iconHeight: 24,
-                          iconPath: Images.home,
-                          iconColor: Colors.blueAccent,
-                        ),
-                      ),
-                      SectionListItems(
-                        title: "Recents",
-                        onTap: () => onTap(context, recentDir, "Recents"),
-                        leading: IconWidget(
-                          iconWidth: 24,
-                          iconHeight: 24,
-                          iconPath: Images.recent,
-                        ),
-                      ),
-                      SectionListItems(
-                        title: "Downloads",
-                        onTap: () => onTap(context, downloadsDir, "Downloads"),
-                        leading: IconWidget(
-                          iconWidth: 24,
-                          iconHeight: 24,
-                          iconPath: Images.downloads,
-                          iconColor: Colors.deepPurpleAccent,
-                        ),
-                      ),
-                      SectionListItems(
-                        title: "Documents",
-                        onTap: () => onTap(context, documentsDir, "Documents"),
-                        leading: IconWidget(
-                          iconWidth: 24,
-                          iconHeight: 24,
-                          iconPath: Images.homeDocuments,
-                          iconColor: Colors.orangeAccent,
-                        ),
-                      ),
-                    ],
+                  SectionListItems(
+                    title: "Downloads",
+                    onTap: () => onTap(context, downloadsDir, "Downloads"),
+                    leading: const IconWidget(
+                      iconWidth: 24,
+                      iconHeight: 24,
+                      iconPath: Images.downloads,
+                      iconColor: Colors.deepPurpleAccent,
+                    ),
                   ),
-                  MechanixSectionList(
-                    title: 'Hard drive',
-                    sectionListItems: [
-                      SectionListItems(
-                        title: "Root (/)",
-                        onTap: () => onTap(context, "/", "Root"),
-                        leading: IconWidget(
-                          iconWidth: 24,
-                          iconHeight: 24,
-                          iconPath: Images.hardDrive,
-                        ),
-                      ),
-                    ],
+                  SectionListItems(
+                    title: "Documents",
+                    onTap: () => onTap(context, documentsDir, "Documents"),
+                    leading: const IconWidget(
+                      iconWidth: 24,
+                      iconHeight: 24,
+                      iconPath: Images.homeDocuments,
+                      iconColor: Colors.orangeAccent,
+                    ),
                   ),
                 ],
               ),
-            ),
-          );
-        },
+              MechanixSectionList(
+                title: 'Hard drive',
+                sectionListItems: [
+                  SectionListItems(
+                    title: "Root (/)",
+                    onTap: () => onTap(context, "/", "Root"),
+                    leading: const IconWidget(
+                      iconWidth: 24,
+                      iconHeight: 24,
+                      iconPath: Images.hardDrive,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  void onTap(BuildContext context, String path, String title) {
+    if (path == recentDir) {
+      final filesBloc = BlocProvider.of<FilesBloc>(context);
+      filesBloc.add(LoadRecentFiles());
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: filesBloc,
+            child: FileExplorerPage(
+              title: 'Recent',
+              path: pathToSegments(path),
+            ),
+          ),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => FileExplorerPage(
+            startPath: path,
+          ),
+          //   ),
+        ),
+      );
+    }
   }
 }
 

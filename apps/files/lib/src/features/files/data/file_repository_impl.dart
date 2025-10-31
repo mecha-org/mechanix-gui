@@ -6,13 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:archive/archive.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 
 class FileRepositoryImpl implements FileRepository {
-  final FileSystem _fs = LocalFileSystem();
+  final FileSystem _fs = const LocalFileSystem();
   final Logger logger = Logger();
 
   @override
@@ -27,6 +28,36 @@ class FileRepositoryImpl implements FileRepository {
 
       final List<FileSystemEntity> contents = dir.listSync();
       return contents;
+    } catch (e, stackTrace) {
+      logger.e("Failed to list file system at $path: $e, $stackTrace");
+      return [];
+    }
+  }
+
+  @override
+  Future<List<FileSystemEntity>> getPaginatedFileSystemList({
+    String path = '/',
+    int page = 1,
+    int pageSize = 50,
+  }) async {
+    try {
+      final Directory dir = _fs.directory(path);
+
+      if (!dir.existsSync()) {
+        logger.w("Directory does not exist: $path");
+        return [];
+      }
+
+      final int start = (page - 1) * pageSize;
+
+      // Use skip/take directly on the stream for pagination
+      final items = await dir
+          .list(recursive: false, followLinks: false)
+          .skip(start)
+          .take(pageSize)
+          .toList();
+
+      return items;
     } catch (e, stackTrace) {
       logger.e("Failed to list file system at $path: $e, $stackTrace");
       return [];
@@ -155,91 +186,6 @@ class FileRepositoryImpl implements FileRepository {
   }
 
   @override
-  Future<List<FileSystemEntity>> sortEntities(
-      List<FileSystemEntity> list, String sortBy) async {
-    final sorted = List<FileSystemEntity>.from(list);
-    final Map<String, int> sizeMap = {};
-
-    sorted.sort((a, b) {
-      final aName = p.basename(a.path).toLowerCase();
-      final bName = p.basename(b.path).toLowerCase();
-
-      switch (sortBy) {
-        case 'name':
-          // Group folders first
-          if (a is Directory && b is! Directory) return -1;
-          if (b is Directory && a is! Directory) return 1;
-
-          // If both are the same type, sort by name
-          return aName.compareTo(bName);
-
-        case 'type':
-          if (a is Directory && b is! Directory) return -1;
-          if (b is Directory && a is! Directory) return 1;
-
-          // Same type
-          final aType = a is Directory ? 'dir' : p.extension(a.path);
-          final bType = b is Directory ? 'dir' : p.extension(b.path);
-          final typeCompare = aType.compareTo(bType);
-          if (typeCompare != 0) return typeCompare;
-
-          // Secondary: by name
-          final aName = p.basename(a.path).toLowerCase();
-          final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
-
-        case 'size_asc':
-          // Group folders first
-          if (a is Directory && b is! Directory) return -1;
-          if (b is Directory && a is! Directory) return 1;
-
-          // Only compare files by size
-          if (a is File && b is File) {
-            sizeMap[a.path] ??= a.lengthSync();
-            sizeMap[b.path] ??= b.lengthSync();
-            final aSize = sizeMap[a.path]!;
-            final bSize = sizeMap[b.path]!;
-            return aSize.compareTo(bSize); // ascending
-          }
-
-          // If both are directories, sort alphabetically
-          final aName = p.basename(a.path).toLowerCase();
-          final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
-
-        case 'size_desc':
-          // Group folders last
-          if (a is Directory && b is! Directory) return 1;
-          if (b is Directory && a is! Directory) return -1;
-
-          // Only compare files by size
-          if (a is File && b is File) {
-            sizeMap[a.path] ??= a.lengthSync();
-            sizeMap[b.path] ??= b.lengthSync();
-            final aSize = sizeMap[a.path]!;
-            final bSize = sizeMap[b.path]!;
-            return bSize.compareTo(aSize); // descending
-          }
-
-          // If both are directories, sort alphabetically
-          final aName = p.basename(a.path).toLowerCase();
-          final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
-
-        case 'mod_time':
-          final aTime = a.statSync().modified;
-          final bTime = b.statSync().modified;
-          return bTime.compareTo(aTime);
-
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  }
-
-  @override
   Future<FileStat> getFileDetails(String path) async {
     final entity =
         _fs.file(path).existsSync() ? _fs.file(path) : _fs.directory(path);
@@ -342,6 +288,17 @@ class FileRepositoryImpl implements FileRepository {
     return dirExists;
   }
 
+  /// Recursively searches for files and directories matching a query string,
+  /// starting from a given root path, up to a limited depth.
+  ///
+  /// This method performs a **breadth-first search (BFS)** using a queue to avoid
+  /// deep recursion. It only searches up to [maxDepth] levels below [rootPath].
+  ///
+  /// - [rootPath]: The directory path to start searching from.
+  /// - [query]: The search term (case-insensitive).
+  ///
+  /// Returns a [List] of [FileSystemEntity] objects (files or directories)
+  /// whose names contain the query string.
   @override
   Future<List<FileSystemEntity>> searchFiles(
       String rootPath, String query) async {

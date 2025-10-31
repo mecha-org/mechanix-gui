@@ -8,7 +8,7 @@ Files App lets you organize and manage your files and folders in your Mecha Come
 - To install flutter, follow this : [https://docs.flutter.dev/install](https://docs.flutter.dev/install)
 - To install flutter-elinux, follow this : [https://github.com/sony/flutter-elinux](https://github.com/sony/flutter-elinux)
 
-### 🚀 Steps to run Settings App:
+### 🚀 Steps to run Files App:
 1. Clone the repository :
     ```
     $ git clone https://github.com/mecha-org/mechanix-gui.git

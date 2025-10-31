@@ -7,6 +7,7 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,14 +19,13 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   FilesBloc({
     required this.fileRepository,
     required this.recentFilesManager,
-  }) : super(FilesState(
+  }) : super(const FilesState(
             fileSystemList: [],
             loading: false,
             error: null,
             currentSortBy: '',
             conflictDestinationPath: '')) {
     on<InitializeFiles>(_onInitializeFiles);
-    on<LoadFilesAtPath>(_onLoadFilesAtPath);
     on<CreateFolder>(_onCreateFolder);
     on<DeleteEntities>(_onDeleteEntities);
     on<Rename>(_onRename);
@@ -75,22 +75,16 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       currentSortBy: savedSort,
       showHiddenFiles: savedHidden,
     ));
-
-    //  await _loadAndEmitSortedFiles(emit: emit, path: '/');
-  }
-
-  Future<void> _onLoadFilesAtPath(
-      LoadFilesAtPath event, Emitter<FilesState> emit) async {
-    emit(state.copyWith(loading: true));
-    await _loadAndEmitSortedFiles(emit: emit, path: event.path);
   }
 
   Future<void> _onCreateFolder(
       CreateFolder event, Emitter<FilesState> emit) async {
     try {
       emit(state.copyWith(loading: true));
+      logger.i("Creating folder: ${event.folderName} in ${event.path}");
       await fileRepository.createFolder(event.path, event.folderName);
-      await _loadAndEmitSortedFiles(emit: emit, path: event.path);
+      await event.controller.reload();
+      emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: e.toString(), loading: false));
     }
@@ -108,8 +102,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       emit(state.copyWith(loading: true));
       await fileRepository.deleteEntities(event.entitiesPath);
-      final parentPath = p.dirname(event.entitiesPath.first);
-      await _loadAndEmitSortedFiles(emit: emit, path: parentPath);
+      await event.controller.reload();
     } catch (e) {
       emit(state.copyWith(error: 'Failed to delete: $e', loading: false));
     }
@@ -119,8 +112,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       emit(state.copyWith(loading: true));
       await fileRepository.renameEntity(event.oldPath, event.newName);
-      final parentPath = p.dirname(event.oldPath);
-      await _loadAndEmitSortedFiles(emit: emit, path: parentPath);
+      await event.controller!.reload();
+      emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: 'Failed to rename item: $e', loading: false));
     }
@@ -164,7 +157,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             isCopyMode: true));
       } else {
         // No conflicts, all done
-        await _loadAndEmitSortedFiles(emit: emit, path: event.destinationPath);
+        await event.controller!.reload();
         emit(state.copyWith(loading: false));
       }
     } catch (e) {
@@ -197,10 +190,8 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         logger.i("In elseRemaining conflicts: $remainingConflicts");
 
         // All conflicts resolved
-        await _loadAndEmitSortedFiles(
-          emit: emit,
-          path: event.destinationPath,
-        );
+        await event.controller!.reload();
+
         emit(state.copyWith(
           conflictingPaths: [],
           conflictDestinationPath: '',
@@ -255,10 +246,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         ));
       } else {
         event.completer?.complete();
-        final firstSource = event.sourcePaths.first;
-        final sourceParent = p.dirname(firstSource);
-
-        await _loadAndEmitSortedFiles(emit: emit, path: sourceParent);
         emit(state.copyWith(loading: false));
       }
     } catch (e) {
@@ -287,7 +274,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
           loading: false,
         ));
       } else {
-        await _loadAndEmitSortedFiles(emit: emit, path: event.destinationPath);
         emit(state.copyWith(
           conflictingPaths: [],
           conflictDestinationPath: '',
@@ -300,25 +286,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         error: 'Failed to move: $e',
         loading: false,
       ));
-    }
-  }
-
-  Future<void> _loadAndEmitSortedFiles({
-    required Emitter<FilesState> emit,
-    String path = '/',
-  }) async {
-    try {
-      final contents = await fileRepository.getFileSystemList(path: path);
-      final visible = state.showHiddenFiles
-          ? contents
-          : contents.where((e) => !p.basename(e.path).startsWith('.')).toList();
-
-      final sorted =
-          await fileRepository.sortEntities(visible, state.currentSortBy);
-      emit(state.copyWith(fileSystemList: sorted, loading: false));
-    } catch (e) {
-      logger.e("Error loading path $path: $e");
-      emit(state.copyWith(error: e.toString(), loading: false));
     }
   }
 
@@ -355,16 +322,13 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
-    final sorted =
-        await fileRepository.sortEntities(state.fileSystemList, event.sortBy);
-
+    logger.d("Sort by : ${event.sortBy}");
     final prefs = await SharedPreferences
         .getInstance(); // Get shared preferences instance
     await prefs.setString(
         'sort_mode', event.sortBy); // Save sort mode to shared preferences
 
     emit(state.copyWith(
-      fileSystemList: sorted,
       currentSortBy: event.sortBy,
     ));
   }
@@ -398,7 +362,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('show_hidden_files', newShowHidden);
 
-    await _loadAndEmitSortedFiles(emit: emit, path: event.path);
+    emit(state.copyWith(loading: false));
   }
 
   Future<void> _onCompressEntities(
@@ -419,9 +383,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         compressionStatus: FileCompressionStatus.success,
         compressedZipPath: event.destinationZipPath,
       ));
-
-      final parentDir = p.dirname(event.destinationZipPath);
-      await _loadAndEmitSortedFiles(emit: emit, path: parentDir);
+      await event.controller?.reload();
     } catch (e) {
       emit(state.copyWith(
         compressionStatus: FileCompressionStatus.failure,
@@ -446,8 +408,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       if (!(event.completer?.isCompleted ?? true)) {
         event.completer?.complete();
       }
-
-      await _loadAndEmitSortedFiles(emit: emit, path: targetDir);
     } catch (e) {
       if (!(event.completer?.isCompleted ?? true)) {
         event.completer?.completeError(e);
@@ -475,7 +435,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     Emitter<FilesState> emit,
   ) async {
     try {
-      final fileSystem = LocalFileSystem();
+      final fileSystem = const LocalFileSystem();
       final recentPaths = await recentFilesManager.getRecentFiles();
       final cleaned = <String>[];
 

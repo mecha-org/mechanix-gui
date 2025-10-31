@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 
 abstract class FilesEvent extends Equatable {
   @override
@@ -9,36 +10,40 @@ abstract class FilesEvent extends Equatable {
 
 class InitializeFiles extends FilesEvent {}
 
-class LoadFilesAtPath extends FilesEvent {
-  final String path;
-  LoadFilesAtPath(this.path);
-}
-
 class CreateFolder extends FilesEvent {
   final String path;
   final String folderName;
+  final FileManagerController controller;
 
-  CreateFolder({required this.path, required this.folderName});
+  CreateFolder(
+      {required this.path, required this.folderName, required this.controller});
 }
 
 class DeleteEntities extends FilesEvent {
   final List<String> entitiesPath;
+  final FileManagerController controller;
 
-  DeleteEntities(this.entitiesPath);
+  DeleteEntities(this.entitiesPath, this.controller);
 }
 
 class Rename extends FilesEvent {
   final String oldPath;
   final String newName;
+  final FileManagerController controller;
 
-  Rename({required this.oldPath, required this.newName});
+  Rename(
+      {required this.oldPath, required this.newName, required this.controller});
 }
 
 class Copy extends FilesEvent {
   final List<String> sourcePaths;
   final String destinationPath;
+  final FileManagerController? controller;
 
-  Copy({required this.sourcePaths, required this.destinationPath});
+  Copy(
+      {required this.sourcePaths,
+      required this.destinationPath,
+      required this.controller});
 }
 
 enum ConflictResolutionStrategy {
@@ -50,11 +55,13 @@ class ContinueCopyWithConflictResolution extends FilesEvent {
   final List<String> sourcePaths;
   final String destinationPath;
   final ConflictResolutionStrategy strategy;
+  final FileManagerController? controller;
 
   ContinueCopyWithConflictResolution({
     required this.sourcePaths,
     required this.destinationPath,
     required this.strategy,
+    required this.controller,
   });
 }
 
@@ -108,18 +115,18 @@ class FetchFileDetails extends FilesEvent {
 }
 
 class ToggleHiddenFiles extends FilesEvent {
-  final String path;
-
-  ToggleHiddenFiles({required this.path});
+  ToggleHiddenFiles();
 }
 
 class CompressEntitiesEvent extends FilesEvent {
   final List<String> sourcePaths;
   final String destinationZipPath;
+  final FileManagerController? controller;
 
   CompressEntitiesEvent({
     required this.sourcePaths,
     required this.destinationZipPath,
+    required this.controller,
   });
 }
 
