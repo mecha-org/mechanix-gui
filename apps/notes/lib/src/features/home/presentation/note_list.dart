@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/src/commons/common_helper.dart';
@@ -8,29 +10,46 @@ import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:widgets/mechanix.dart';
 
-class GroupedNotesWidget {
-  final String label;
-  final List<NoteMetaData> notes;
-  final Widget? icon;
-  GroupedNotesWidget({required this.label, required this.notes, this.icon});
+// Model for flattened list items
+abstract class _ListItem {}
+
+class _HeaderItem extends _ListItem {
+  final String title;
+  _HeaderItem(this.title);
 }
 
-/// Updated NoteList that accepts grouped notes
+class _NoteItem extends _ListItem {
+  final NoteMetaData note;
+  _NoteItem(this.note);
+}
+
 class NoteList extends StatelessWidget {
   final bool isSelectionMode;
   final List<String> selectedNotes;
   final void Function(String id)? onSelect;
-  final VoidCallback? onDeselect;
-  final List<GroupedNotesWidget> groupedNotes;
+  final List<GroupedNotes> groupedNotes;
+  final ScrollController? controller;
 
   const NoteList({
     super.key,
     required this.isSelectionMode,
     required this.selectedNotes,
     this.onSelect,
-    this.onDeselect,
     required this.groupedNotes,
+    this.controller,
   });
+
+  // Flatten groups for ListView
+  List<_ListItem> _buildListItems() {
+    final items = <_ListItem>[];
+    for (final group in groupedNotes) {
+      items.add(_HeaderItem(group.label));
+      for (final note in group.notes) {
+        items.add(_NoteItem(note));
+      }
+    }
+    return items;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,85 +70,94 @@ class NoteList extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children:
-          groupedNotes.map((group) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final items = _buildListItems();
+
+    return ListView.builder(
+      controller: controller,
+      physics: const BouncingScrollPhysics(),
+      prototypeItem: const SizedBox(height: 64),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        if (item is _HeaderItem) {
+          // Section Header
+          return Container(
+            height: 40,
+            color: Colors.black.withOpacity(0.05),
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    if (group.icon != null) group.icon!,
-                    if (group.label.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text(
-                          group.label,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: NotesColors.secondaryTextColor,
-                          ),
-                        ),
+                if (item.title == 'Pinned Notes')
+                  Image.asset(
+                    NotesIcon.pinnedFilledIcon,
+                    color: NotesColors.secondaryTextColor,
+                    height: 18,
+                    width: 18,
+                  ),
+                if (item.title.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      item.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: NotesColors.secondaryTextColor,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        } else if (item is _NoteItem) {
+          final note = item.note;
+          final isSelected = selectedNotes.contains(note.id);
+
+          // Updated prototype item for note row
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: SizedBox(
+              height: 64,
+              child: MechanixPressableList(
+                leadingIconPadding: EdgeInsets.zero,
+                checkboxSpacing: const EdgeInsets.only(right: 16, left: 6),
+                itemPadding: const EdgeInsets.only(
+                  left: 16,
+                  right: 12,
+                  top: 10,
+                  bottom: 10,
+                ),
+                onLongPress: () => onSelect?.call(note.id),
+                onTap:
+                    () =>
+                        isSelectionMode
+                            ? onSelect?.call(note.id)
+                            : _openNote(context, note),
+                title: note.title,
+                titleTextStyle: const TextStyle(
+                  fontSize: 16,
+                  color: NotesColors.titleTextColor,
+                ),
+                selectionMode: isSelectionMode,
+                isSelected: isSelected,
+                trailingWidget: Row(
+                  children: [
+                    Text(
+                      CommonHelper.formatDateTime(note.updatedAt),
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: NotesColors.secondaryTextColor,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
-                _buildNoteList(group.notes),
-                const SizedBox(height: 20),
-              ],
-            );
-          }).toList(),
-    );
-  }
-
-  Widget _buildNoteList(List<NoteMetaData> notes) {
-    return ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: notes.length,
-      shrinkWrap: true,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (context, index) {
-        final note = notes[index];
-        final isSelected = selectedNotes.contains(note.id);
-
-        return SizedBox(
-          height: 64,
-          child: MechanixPressableList(
-            leadingIconPadding: EdgeInsets.zero,
-            checkboxSpacing: const EdgeInsets.only(right: 16, left: 6),
-            itemPadding: const EdgeInsets.only(
-              left: 16,
-              right: 12,
-              top: 10,
-              bottom: 10,
+              ),
             ),
-            onLongPress: () => onSelect?.call(note.id),
-            onTap:
-                () =>
-                    isSelectionMode
-                        ? onSelect!(note.id)
-                        : {_openNote(context, note)},
-            title: note.title,
-            titleTextStyle: const TextStyle(
-              fontSize: 16,
-              color: NotesColors.titleTextColor,
-            ),
-            selectionMode: isSelectionMode,
-            isSelected: isSelected,
-            trailingWidget: Row(
-              children: [
-                Text(
-                  overflow: TextOverflow.ellipsis,
-                  CommonHelper.formatDateTime(note.updatedAt),
-                  style: const TextStyle(
-                    color: NotesColors.secondaryTextColor,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+          );
+        }
+        return const SizedBox.shrink();
       },
     );
   }

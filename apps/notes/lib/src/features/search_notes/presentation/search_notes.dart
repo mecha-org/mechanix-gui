@@ -4,6 +4,7 @@ import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/home/presentation/note_list.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_bar.dart';
 import 'package:widgets/mechanix.dart';
@@ -70,7 +71,7 @@ class _SearchNotesState extends State<SearchNotes> {
                           selectedNotes: const [],
                           isSelectionMode: false,
                           groupedNotes: [
-                            GroupedNotesWidget(label: '', notes: state.searchedNotes),
+                            GroupedNotes(label: '', notes: state.searchedNotes),
                           ],
                         ),
                       const SizedBox(

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
-import 'package:mechanix_notes/src/features/custom_slider.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
@@ -98,13 +97,14 @@ class MyApp extends StatelessWidget {
       ],
       title: 'Notes',
       theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
+
       darkTheme: darkTheme.copyWith(
         scaffoldBackgroundColor: Colors.black,
         textSelectionTheme: const TextSelectionThemeData(
           cursorColor: Colors.white,
         ),
         pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
+          builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
         ),
       ),
       themeMode: themeMode,
