@@ -40,6 +40,25 @@ String formatDateTime(DateTime dateTime) {
   return formatter.format(dateTime).toLowerCase();
 }
 
+void _navigateToDirectory(
+  BuildContext context,
+  List<FileItem> currentPath,
+  FileItem directory,
+) {
+  final newPath = [...currentPath, directory];
+  final pathString = '/${newPath.map((e) => e.name).join('/')}';
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => FileExplorerPage(
+        title: directory.name,
+        startPath: pathString,
+      ),
+    ),
+  );
+}
+
 void handleTap(
   BuildContext context,
   FileItem file,
@@ -57,6 +76,11 @@ void handleTap(
 
   if (state?.isSearching == true) {
     state?.clearSearch(); // will reset and remove overlay
+  }
+
+  if (file.type == 'dir') {
+    _navigateToDirectory(context, currentPath, file);
+    return;
   }
 
   if (textFileTypes.contains(fileType)) {

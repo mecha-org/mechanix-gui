@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/app_route.dart';
 import 'package:mechanix_files/load_settings.dart';
-import 'package:mechanix_files/slider_left_transition_builder.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
@@ -87,7 +86,6 @@ class MainApp extends StatelessWidget {
         darkTheme: darkTheme.copyWith(
             pageTransitionsTheme: const PageTransitionsTheme(builders: {
           TargetPlatform.linux: CupertinoPageTransitionsBuilder()
-          // SlideLeftTransitionsBuilder()
         })),
         themeMode: themeMode,
         home: const FileHomePage(),

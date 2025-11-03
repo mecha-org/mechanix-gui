@@ -21,6 +21,7 @@ import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -194,6 +195,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   ),
                 );
               }
+
+              if (state.compressionStatus == FileCompressionStatus.success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Compression complete',
+                        style: TextStyle(color: Colors.white)),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: Colors.grey[800],
+                  ),
+                );
+              }
             }
           },
         ),
@@ -343,18 +355,11 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         ),
       ],
       child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon:
-                const Icon(Icons.arrow_back_ios, size: 16, color: Colors.blue),
-            onPressed: selectionMode
-                ? clearSelection
-                : isSearching
-                    ? clearSearch
-                    : (isHomePageDir ? homeNavigation : handleBack),
-            highlightColor: Colors.transparent, // Remove ripple effect on press
-          ).padLeft(8),
-          title: selectionMode
+        appBar: MechanixNavigationBar(
+          theme: const MechanixNavigationBarThemeData(
+            titleSpacing: 0,
+          ),
+          titleWidget: selectionMode
               ? Text("Select", style: context.textTheme.bodySmall)
               : isSearching
                   ? Text("Search", style: context.textTheme.bodySmall)
@@ -369,7 +374,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         return Text(title, style: context.textTheme.bodySmall);
                       },
                     ),
-          actions: selectionMode
+          leadingWidget: IconButton(
+            icon:
+                const Icon(Icons.arrow_back_ios, size: 16, color: Colors.blue),
+            onPressed: selectionMode
+                ? clearSelection
+                : isSearching
+                    ? clearSearch
+                    : (isHomePageDir ? homeNavigation : handleBack),
+            highlightColor: Colors.transparent,
+          ).padLeft(8),
+          actionWidgets: selectionMode
               ? [
                   Text(
                     "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
@@ -476,7 +491,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             ),
           ],
         ),
-        backgroundColor: Colors.black,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton:
             selectionMode ? _buildFloatingActionMenu(context) : null,
@@ -540,7 +554,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     // Calculate offset so menu appears at bottom of screen
     final screenHeight = MediaQuery.of(context).size.height;
     final menuHeight = menuItemHeight * 4; // Approximate menu height
-    final offset = Offset(104, screenHeight - menuHeight - 50);
+    final offset = Offset(80, screenHeight - menuHeight - 48);
 
     return MechanixMenu(
       theme: const MechanixMenuThemeData(
@@ -764,7 +778,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         state.isCopyMode || state.isMoveMode ? menuItemHeight : 0;
     final menuHeight =
         (menuItemHeight * 8) + pasteMenuHeight; // Approximate menu height
-    final offset = Offset(0, screenHeight - menuHeight - 60);
+    final offset = Offset(0, screenHeight - menuHeight - 54);
 
     return MechanixMenu(
       theme: const MechanixMenuThemeData(

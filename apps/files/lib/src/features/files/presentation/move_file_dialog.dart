@@ -72,6 +72,29 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
         currentPath = controller.getPathNotifier.value;
       });
     });
+
+    focusSearchField(); // default 300ms delay
+  }
+
+  @override
+  void dispose() {
+    searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  /// Requests focus on the search field after the page has fully built.
+  /// Optional [delayMillis] can be used to adjust the delay before focusing.
+  void focusSearchField({int delayMillis = 300}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      // Wait for optional delay to ensure page transition is complete
+      await Future.delayed(Duration(milliseconds: delayMillis));
+
+      if (mounted) {
+        FocusScope.of(context).requestFocus(searchFocusNode);
+      }
+    });
   }
 
   @override
@@ -176,7 +199,6 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                           onPressed: () {
                             setState(() {
                               isSearching = true;
-                              searchFocusNode.requestFocus();
                             });
                           },
                         ),
@@ -199,12 +221,18 @@ class _MoveExplorerBottomSheetState extends State<MoveExplorerBottomSheet> {
                       child: SizedBox(
                         height: 48,
                         child: MechanixSearchBar(
-                          autoFocus: true,
+                          focusNode: searchFocusNode,
+                          autoFocus: false,
                           hintText: "Type here",
                           onChanged: (query) {
                             controller.search(query);
                           },
                           showDefaultTrailing: true,
+                          onCloseIconPress: () {
+                            setState(() {
+                              isSearching = false;
+                            });
+                          },
                         ),
                       ),
                     )
