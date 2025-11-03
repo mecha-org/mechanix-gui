@@ -4,6 +4,7 @@ import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/home/presentation/note_list.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_bar.dart';
 import 'package:widgets/mechanix.dart';
@@ -24,7 +25,6 @@ class _SearchNotesState extends State<SearchNotes> {
 
   void onBackClick() {
     Navigator.pop(context);
-
     context.read<NotesBloc>().add(SearchEvent(''));
   }
 
@@ -53,16 +53,27 @@ class _SearchNotesState extends State<SearchNotes> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      NoteList(
-                        selectedNotes: [],
-                        isSelectionMode: false,
-                        groupedNotes: [
-                          GroupedNotes(
-                            label: '',
-                            notes: state.searchedNotes ?? [],
+                      if (state.searchedNotes.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 120),
+                          child: Center(
+                            child: Text(
+                              "No Notes Found",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
+                        )
+                      else
+                        NoteList(
+                          selectedNotes: const [],
+                          isSelectionMode: false,
+                          groupedNotes: [
+                            GroupedNotes(label: '', notes: state.searchedNotes),
+                          ],
+                        ),
                       const SizedBox(
                         height: 80,
                       ), // padding so list doesn't hide behind bar
@@ -70,7 +81,7 @@ class _SearchNotesState extends State<SearchNotes> {
                   ),
                 ),
               ),
-              Positioned(
+              const Positioned(
                 left: 0,
                 right: 0,
                 bottom: 30,

@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/commons/styles/styles.dart';
 import 'package:mechanix_notes/src/constants/constants.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/editor_icon_button.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/color_button.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_container.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_row.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:widgets/mechanix.dart';
 
 class TextEditorToolbar extends StatefulWidget {
   final QuillController controller;
-  final OverlayEntry? entry;
   final FocusNode focusNode;
-  final VoidCallback? onClose;
 
   const TextEditorToolbar({
     super.key,
     required this.controller,
-    this.entry,
     required this.focusNode,
-    this.onClose,
   });
   @override
   State<TextEditorToolbar> createState() => _TextEditorToolbarState();
@@ -29,7 +29,26 @@ class TextEditorToolbar extends StatefulWidget {
 
 class _TextEditorToolbarState extends State<TextEditorToolbar> {
   bool isTextColorSelected = false;
-  String selectedHeader = 't2';
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(focusListener);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(focusListener);
+    super.dispose();
+  }
+
+  void focusListener() {
+    if (widget.focusNode.hasFocus) {
+      context.read<EditorBloc>().add(
+        SelectToolbar(activeToolbar: ToolbarEnum.none),
+      );
+    }
+  }
 
   void requestFocus() {
     if (!widget.focusNode.hasFocus) {
@@ -37,18 +56,20 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
     }
   }
 
-  void toggleList(QuillController controller, Attribute attribute) {
+  void toggleList(Attribute attribute) {
     requestFocus();
-    final attrs = controller.getSelectionStyle().attributes;
+    final attrs = widget.controller.getSelectionStyle().attributes;
     final currentAttr = attrs[attribute.key];
 
     if (currentAttr != null && currentAttr.value == attribute.value) {
-      controller.formatSelection(Attribute.clone(attribute, null));
+      widget.controller.formatSelection(Attribute.clone(attribute, null));
     } else {
       if (attribute.key == Attribute.header.key) {
-        controller.formatSelection(Attribute.clone(Attribute.size, null));
+        widget.controller.formatSelection(
+          Attribute.clone(Attribute.size, null),
+        );
       }
-      controller.formatSelection(attribute);
+      widget.controller.formatSelection(attribute);
     }
   }
 
@@ -104,185 +125,197 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
       return EditorIconButton(
         isSelected: true,
         iconPath: NotesIcon.h1Icon,
-        onPressed: () => toggleList(widget.controller, Attribute.h1),
+        onPressed: () => toggleList(Attribute.h1),
       );
     } else if (headerValue == 2) {
       return EditorIconButton(
         isSelected: true,
         iconPath: NotesIcon.h2Icon,
-        onPressed: () => toggleList(widget.controller, Attribute.h2),
+        onPressed: () => toggleList(Attribute.h2),
       );
-    } else if (sizeValue == '14') {
+    } else if (sizeValue == Constants.t1Size) {
       return EditorIconButton(
         isSelected: true,
         iconPath: NotesIcon.t1Icon,
-        onPressed: () => textSizeFormat(SizeAttribute('14')),
+        onPressed: () => textSizeFormat(const SizeAttribute(Constants.t1Size)),
       );
     } else {
       return EditorIconButton(
-        isSelected: sizeValue == '12',
+        isSelected: sizeValue == Constants.t2Size,
         iconPath: NotesIcon.t2Icon,
-        onPressed: () => textSizeFormat(SizeAttribute('12')),
+        onPressed: () => textSizeFormat(const SizeAttribute(Constants.t2Size)),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ToolbarContainer(
-      child: [
-        ToolbarRow(
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, child) {
+        return ToolbarContainer(
           child: [
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.bold.key,
-                ),
-                iconPath: NotesIcon.boldIcon,
-                onPressed: () => toggleList(widget.controller, Attribute.bold),
-              ),
-            ),
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.italic.key,
-                ),
-                iconPath: NotesIcon.italicIcon,
-                onPressed: () {
-                  toggleList(widget.controller, Attribute.italic);
-                },
-              ),
-            ),
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.underline.key,
-                ),
-                iconPath: NotesIcon.textUnderlineIcon,
-                onPressed: () {
-                  toggleList(widget.controller, Attribute.underline);
-                },
-              ),
-            ),
-            Expanded(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.strikeThrough.key,
-                ),
-                iconPath: NotesIcon.strikeThroughIcon,
-                onPressed: () {
-                  toggleList(widget.controller, Attribute.strikeThrough);
-                },
-              ),
-            ),
-          ],
-        ),
-        ToolbarRow(
-          isBorder: false,
-          child: [
-            if (!isTextColorSelected) ...[
-              Expanded(
-                child: EditorIconButton(
-                  isSelected:
-                      widget.controller
-                          .getSelectionStyle()
-                          .attributes[Attribute.header.key]
-                          ?.value ==
-                      1,
-                  iconPath: NotesIcon.h1Icon,
-                  onPressed: () => toggleList(widget.controller, Attribute.h1),
-                ),
-              ),
-              Expanded(
-                child: EditorIconButton(
-                  isSelected:
-                      widget.controller
-                          .getSelectionStyle()
-                          .attributes[Attribute.header.key]
-                          ?.value ==
-                      2,
-                  iconPath: NotesIcon.h2Icon,
-                  onPressed: () => toggleList(widget.controller, Attribute.h2),
-                ),
-              ),
-              Expanded(
-                child: EditorIconButton(
-                  isSelected:
-                      widget.controller
-                          .getSelectionStyle()
-                          .attributes[Attribute.size.key]
-                          ?.value ==
-                      '14',
-                  iconPath: NotesIcon.t1Icon,
-                  onPressed: () => textSizeFormat(SizeAttribute('14')),
-                ),
-              ),
-            ],
-            if (isTextColorSelected)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(right: borderSideStyle),
-                  ),
-                  child: getCurrentSelectedFormat(),
-                ),
-              ),
-            if (!isTextColorSelected)
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: Border(right: borderSideStyle),
-                  ),
+            ToolbarRow(
+              child: [
+                Expanded(
                   child: EditorIconButton(
-                    isSelected:
-                        widget.controller
-                            .getSelectionStyle()
-                            .attributes[Attribute.size.key]
-                            ?.value ==
-                        '12',
-                    iconPath: NotesIcon.t2Icon,
-                    onPressed: () => textSizeFormat(SizeAttribute('12')),
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.bold.key),
+                    iconPath: NotesIcon.boldIcon,
+                    onPressed: () => toggleList(Attribute.bold),
                   ),
                 ),
-              ),
-            if (!isTextColorSelected)
-              Expanded(
-                child: EditorIconButton(
-                  isSelected: false,
-                  icon: Container(
-                    height: 28,
-                    width: 28,
-                    decoration: BoxDecoration(
-                      color: getCurrentFontColor(),
-                      borderRadius: CircularRadius.sm,
-                    ),
+                Expanded(
+                  child: EditorIconButton(
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.italic.key),
+                    iconPath: NotesIcon.italicIcon,
+                    onPressed: () {
+                      toggleList(Attribute.italic);
+                    },
                   ),
-                  onPressed:
-                      () => {
-                        setState(() {
-                          isTextColorSelected = !isTextColorSelected;
-                        }),
-                      },
-                  border: Border(left: borderSideStyle),
                 ),
-              ),
-            if (isTextColorSelected) ...[
-              ...colorItems.map(
-                (item) => Expanded(
-                  child: Center(
-                    child: ColorButton(
+                Expanded(
+                  child: EditorIconButton(
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.underline.key),
+                    iconPath: NotesIcon.textUnderlineIcon,
+                    onPressed: () {
+                      toggleList(Attribute.underline);
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: EditorIconButton(
+                    isSelected: widget.controller
+                        .getSelectionStyle()
+                        .containsKey(Attribute.strikeThrough.key),
+                    iconPath: NotesIcon.strikeThroughIcon,
+                    onPressed: () {
+                      toggleList(Attribute.strikeThrough);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            ToolbarRow(
+              isBorder: false,
+              child: [
+                if (!isTextColorSelected) ...[
+                  Expanded(
+                    child: EditorIconButton(
                       isSelected:
-                          getCurrentFontColor() == Color(int.parse(item.color)),
-                      color: Color(int.parse(item.color)),
-                      onPressed: () => changeTextColor(item.color),
+                          widget.controller
+                              .getSelectionStyle()
+                              .attributes[Attribute.header.key]
+                              ?.value ==
+                          1,
+                      iconPath: NotesIcon.h1Icon,
+                      onPressed: () => toggleList(Attribute.h1),
                     ),
                   ),
-                ),
-              ),
-            ],
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected:
+                          widget.controller
+                              .getSelectionStyle()
+                              .attributes[Attribute.header.key]
+                              ?.value ==
+                          2,
+                      iconPath: NotesIcon.h2Icon,
+                      onPressed: () => toggleList(Attribute.h2),
+                    ),
+                  ),
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected:
+                          widget.controller
+                              .getSelectionStyle()
+                              .attributes[Attribute.size.key]
+                              ?.value ==
+                          Constants.t1Size,
+                      iconPath: NotesIcon.t1Icon,
+                      onPressed:
+                          () => textSizeFormat(
+                            const SizeAttribute(Constants.t1Size),
+                          ),
+                    ),
+                  ),
+                ],
+                if (isTextColorSelected)
+                  Expanded(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        border: Border(right: borderSideStyle),
+                      ),
+                      child: getCurrentSelectedFormat(),
+                    ),
+                  ),
+                if (!isTextColorSelected)
+                  Expanded(
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        border: Border(right: borderSideStyle),
+                      ),
+                      child: EditorIconButton(
+                        isSelected:
+                            widget.controller
+                                .getSelectionStyle()
+                                .attributes[Attribute.size.key]
+                                ?.value ==
+                            Constants.t2Size,
+                        iconPath: NotesIcon.t2Icon,
+                        onPressed:
+                            () => textSizeFormat(
+                              const SizeAttribute(Constants.t2Size),
+                            ),
+                      ),
+                    ),
+                  ),
+                if (!isTextColorSelected)
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected: false,
+                      icon: Container(
+                        height: 28,
+                        width: 28,
+                        decoration: BoxDecoration(
+                          color: getCurrentFontColor(),
+                          borderRadius: CircularRadius.sm,
+                        ),
+                      ),
+                      onPressed:
+                          () => {
+                            setState(() {
+                              isTextColorSelected = !isTextColorSelected;
+                            }),
+                          },
+                      border: const Border(left: borderSideStyle),
+                    ),
+                  ),
+                if (isTextColorSelected) ...[
+                  ...colorItems.map(
+                    (item) => Expanded(
+                      child: Center(
+                        child: ColorButton(
+                          isSelected:
+                              getCurrentFontColor() ==
+                              Color(int.parse(item.color)),
+                          color: Color(int.parse(item.color)),
+                          onPressed: () => changeTextColor(item.color),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }

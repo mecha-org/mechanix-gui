@@ -56,9 +56,13 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
               iconPath: Images.audioHeadset,
               isActive: device.connected && device.paired,
             ),
-            trailing: IconButton(
-                onPressed: () => onSettingsTap(device),
-                icon: IconWidget(iconPath: Images.settings))))
+            trailing: device.connected
+                ? IconButton(
+                    onPressed: () => onSettingsTap(device),
+                    icon: IconWidget(iconPath: Images.settings),
+                  )
+                : null,
+          ))
         .toList();
 
     return devicesList;

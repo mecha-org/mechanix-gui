@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
-import 'package:mechanix_notes/src/features/custom_slider.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
@@ -24,7 +24,6 @@ void main() async {
   await initializeHive();
   Hive.registerAdapter(NoteHiveAdapter());
   // MediaKit.ensureInitialized();
-
   await Hive.openBox<NoteHive>(Constants.tableName);
   runApp(
     MultiRepositoryProvider(
@@ -33,10 +32,14 @@ void main() async {
           create: (_) => NotesRepositoryImpl(),
         ),
       ],
-      child: BlocProvider(
-        create:
-            (context) =>
-                NotesBloc(notesRepository: context.read<NotesRepository>()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create:
+                (context) =>
+                    NotesBloc(notesRepository: context.read<NotesRepository>()),
+          ),
+        ],
         child: NotesApp(),
       ),
     ),
@@ -59,9 +62,7 @@ class NotesApp extends StatelessWidget with WatchItMixin {
     );
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
-        ],
-      ),
+      data: MechanixThemeData(mechanixVariant: mechanixVariant),
       builder:
           (context, mechanix, child) => MyApp(
             darkTheme: mechanix.darkTheme,
@@ -96,19 +97,23 @@ class MyApp extends StatelessWidget {
       ],
       title: 'Notes',
       theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
+
       darkTheme: darkTheme.copyWith(
         scaffoldBackgroundColor: Colors.black,
-        textSelectionTheme: TextSelectionThemeData(cursorColor: Colors.white),
-        pageTransitionsTheme: PageTransitionsTheme(
-          builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: Colors.white,
+        ),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
         ),
       ),
       themeMode: themeMode,
 
-      home: HomePage(),
+      home: const HomePage(),
       routes: {
-        AppRoutes.createEditNotes: (context) => NotesEditor(),
-        AppRoutes.searchNotes: (context) => SearchNotes(),
+        AppRoutes.createEditNotes:
+            (context) => const EditorBlocProvider(child: NotesEditor()),
+        AppRoutes.searchNotes: (context) => const SearchNotes(),
       },
     );
   }

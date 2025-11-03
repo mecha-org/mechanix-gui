@@ -6,6 +6,8 @@ import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
@@ -13,6 +15,7 @@ import 'package:mechanix_settings/src/features/network/models/access_points.dart
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
@@ -42,7 +45,6 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                 children: [
                   MechanixSimpleList(
                       physics: const BouncingScrollPhysics(),
-                      isDividerRequired: true,
                       listItems: [
                         SimpleListItems(
                           title: 'Wireless',
@@ -74,18 +76,70 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                                             ?.nmAccessPoint.strength ??
                                         0,
                                     isActive: true)),
-                            trailing: IconButton(
-                                onPressed: () =>
-                                    onInfoTap(state.connectedNetwork!, context),
-                                icon: SizedBox(
-                                    height: 24,
-                                    width: 24,
-                                    child: IconWidget(
-                                      iconPath: Images.settings,
-                                    ))),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(state.wifiState ?? '',
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 12)),
+                                IconButton(
+                                  onPressed: () => onInfoTap(
+                                      state.connectedNetwork!, context),
+                                  icon: SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: IconWidget(
+                                        iconPath: Images.settings,
+                                      )),
+                                ),
+                              ],
+                            ),
                           )
                       ]),
+                  // wired device
+                  if (state.wiredDevice?.enabled != null &&
+                      state.wiredDevice!.enabled)
+                    MechanixSectionList(
+                      physics: const BouncingScrollPhysics(),
+                      title: 'Wired',
+                      sectionListItems: [
+                        SectionListItems(
+                          title: state.wiredDevice!.enabled
+                              ? "Connected ${state.wiredDevice?.speed} Mb/s"
+                              : "Cable unplugged",
+                          backgroundColor: Colors.transparent,
+                          defaultTrailingIcon: false,
+                          trailing: MechanixSwitch(
+                            activeText: 'OFF',
+                            inactiveText: 'ON',
+                            style: MechanixSwitchStyle(
+                              inactiveThumbColor: Color(0xFF989898),
+                              inactiveTrackColor: Color(0xFF252525),
+                            ),
+                            value: state.wiredDevice?.enabled ?? false,
+                            onChanged: (val) => {
+                              // todo
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
 
+                  if (state.wifiOn &&
+                      !state.availableSavedNetworksLoading &&
+                      state.availableSavedNetworks.isEmpty)
+                    MechanixSectionList(
+                      physics: const BouncingScrollPhysics(),
+                      title: 'My Networks',
+                      sectionListItems: [
+                        SectionListItems(
+                          title: '',
+                          backgroundColor: Colors.transparent,
+                          defaultTrailingIcon: false,
+                          leading: CustomLoader(),
+                        ),
+                      ],
+                    ),
                   if (state.wifiOn && state.availableSavedNetworks.isNotEmpty)
                     MechanixSectionList(
                         physics: const BouncingScrollPhysics(),
@@ -113,11 +167,12 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   //   child: CustomLoader(),
                   // )
                   if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
-                    MechanixSectionList(
-                        physics: const BouncingScrollPhysics(),
-                        title: 'Available Networks',
-                        sectionListItems: getWifiList(
-                            context, state.availableOtherNetworks, true)),
+                  MechanixSectionList(
+                    theme: MechanixSectionListThemeData(height: 200),
+                    physics: const BouncingScrollPhysics(),
+                    title: 'Available Networks',
+                    sectionListItems: getWifiList(
+                        context, state.availableOtherNetworks, true)),
                   const WirelessAdvanceSettings()
                 ],
               ),
@@ -137,7 +192,11 @@ void onNetworkTap(AccessPoints item, BuildContext context) {
     context
         .read<WirelessSettingsBloc>()
         .add(ConnectSavedNetwork('', item.nmAccessPoint));
-  } else if (!item.isActive) {
+  } else if (!item.isSecure && !item.isActive) {
+    context
+        .read<ConnectNetworkBloc>()
+        .add(ConnectToNetwork(item.nmAccessPoint));
+  } else {
     Navigator.pushNamed(
       context,
       AppRoutes.wirelessConnectSecureNetwork,
@@ -176,19 +235,19 @@ String getNetworkIcon(String security, int? signalStrength) {
 }
 
 List<SectionListItems> getWifiList(
-    BuildContext context, List<AccessPoints> state, bool showAddOption) {
-  final wifi = state.map((s) {
+    BuildContext context, List<AccessPoints> accessPoints, bool showAddOption) {
+  final wifi = accessPoints.map((ap) {
     return SectionListItems(
-      title: utf8.decode(s.nmAccessPoint.ssid),
-      onTap: () => onNetworkTap(s, context),
+      title: utf8.decode(ap.nmAccessPoint.ssid),
+      onTap: () => onNetworkTap(ap, context),
       leading: SizedBox(
         height: 24,
         width: 24,
-        child: getWirelessStrengthIcon(strength: s.nmAccessPoint.strength),
+        child: getWirelessStrengthIcon(strength: ap.nmAccessPoint.strength),
       ),
       defaultTrailingIcon: false,
       trailing: IconButton(
-        onPressed: () => onInfoTap(s, context),
+        onPressed: () => onInfoTap(ap, context),
         icon: SizedBox(
           height: 24,
           width: 24,
@@ -204,7 +263,7 @@ List<SectionListItems> getWifiList(
         title: 'Add Wireless',
         defaultTrailingIcon: false,
         onTap: () => Navigator.pushNamed(
-            context, AppRoutes.wirelessConnectUnknownNetwork),
+            context, AppRoutes.wirelessConnectHiddenNetwork),
         leading: IconWidget(iconPath: Images.wirelessAdd),
       ),
     );

@@ -23,10 +23,10 @@ class ConnectToNetwork extends ConnectNetworkEvent {
   ConnectToNetwork(this.accessPoint);
 }
 
-class ConnectToUnknownNetwork extends ConnectNetworkEvent {
+class ConnectToHiddenNetwork extends ConnectNetworkEvent {
   final String ssid;
   final String password;
-  ConnectToUnknownNetwork(this.ssid, this.password);
+  ConnectToHiddenNetwork(this.ssid, this.password);
 }
 
 class Error extends ConnectNetworkEvent {

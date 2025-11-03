@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/styles/text.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
-import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:widgets/mechanix.dart';
 
@@ -14,24 +13,22 @@ class RenameAdapter extends StatelessWidget {
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormState>();
 
-    void backNavigation(BuildContext context) {
-      Navigator.pop(context);
-    }
+  
 
-    void saveInfo(BuildContext context, String newName) async {
-      print("1. navigating back with new name: $newName");
+    // void saveInfo(BuildContext context, String newName) async {
+    //   print("1. navigating back with new name: $newName");
 
-      if (formKey.currentState!.validate()) {
-        context.read<BluetoothBloc>().add(RenameAdapterEvent(newName));
-        print("2. navigating back with new name: $newName");
-        Navigator.pop(context, newName);
-      }
-    }
+    //   if (formKey.currentState!.validate()) {
+    //     context.read<BluetoothBloc>().add(RenameAdapterEvent(newName));
+    //     print("2. navigating back with new name: $newName");
+    //     Navigator.pop(context, newName);
+    //   }
+    // }
 
     return BlocBuilder<BluetoothBloc, BluetoothState>(
       builder: (context, state) {
         final nameController = TextEditingController();
-        nameController.text = state.adapterAlias ?? '';
+        nameController.text = state.bluetoothAdapter?.alias ?? '';
 
         return Scaffold(
           appBar: MechanixNavigationBar(title: "Rename Device"),

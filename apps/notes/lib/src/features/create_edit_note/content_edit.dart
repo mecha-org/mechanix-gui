@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
@@ -154,7 +153,7 @@ class _ContentEditState extends State<ContentEdit> {
                 enableInteractiveSelection: true,
                 embedBuilders: [
                   ...FlutterQuillEmbeds.editorBuilders(
-                    imageEmbedConfig: QuillEditorImageEmbedConfig(
+                    imageEmbedConfig: const QuillEditorImageEmbedConfig(
                       // imageProviderBuilder: (context, imageUrl) {
                       //   print("image content $imageUrl");
                       //   if (imageUrl.startsWith('assets/')) {

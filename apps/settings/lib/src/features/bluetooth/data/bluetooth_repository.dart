@@ -1,11 +1,14 @@
 import 'package:bluez/bluez.dart';
 
 abstract class BluetoothRepository {
+  Future<void> init(); // connect BlueZ client
+  Stream<bool> get bluezAdapterPowerStream;
+  Stream<bool> get bluezAdapterDiscoverableStream;
+
   Future<bool> isBluetoothEnabled();
   Future<bool> setPower(bool enable);
 
-  Future<String> getAdapterName();
-  Future<String> getAdapterAlias();
+  Future<BlueZAdapter> getBluezAdapter();  
   Future<String> setAdapterAlias(String alias);
 
   Future<void> startDiscovery();
@@ -16,9 +19,10 @@ abstract class BluetoothRepository {
   Future<void> disconnect(String address);
   Future<void> remove(String address);
 
-  Future<Stream<List<String>>> streamBluetoothEvents();
   Future<Stream<BlueZDevice>> onDeviceAdded();
   Future<Stream<BlueZDevice>> onDeviceRemoved();
-  Future<bool> isDeviceDiscoverable();
   Future<void> setDiscoverable(bool value);
+
+  Future<void> close();
+
 }

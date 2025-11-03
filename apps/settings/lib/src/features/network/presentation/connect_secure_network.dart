@@ -26,23 +26,46 @@ class ConnectSecureNetwork extends StatelessWidget {
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
+        listenWhen: (previous, current) {
+          return previous.deviceState != current.deviceState ||
+                 previous.error != current.error;
+        },
         listener: (context, state) {
-          // Handle error
-          if (state.error != null && state.error!.isNotEmpty) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+
+          final bool hasError = 
+              state.deviceState == NetworkManagerDeviceState.needAuth ||
+              (state.error != null && state.error!.isNotEmpty);
+
+          if (hasError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Authentication failed: ${state.error}',
+                  state.error ?? "Connection failed",
                   style: const TextStyle(color: Colors.red),
                 ),
+                duration: const Duration(seconds: 2),
+                backgroundColor: Colors.grey[800],
               ),
             );
+            return;
           }
 
-          // Handle success
-          if (state.deviceState == NetworkManagerDeviceState.activated) {
-            // Navigator.pushNamed(context, AppRoutes.wireless);
-            Navigator.pop(context);
+          final bool isAuthenticating = 
+              state.deviceState == NetworkManagerDeviceState.ipCheck ||
+              state.deviceState == NetworkManagerDeviceState.config;
+
+          if (isAuthenticating) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  "Authenticating...",
+                  style: TextStyle(color: Colors.white),
+                ),
+                duration: const Duration(seconds: 2),
+                backgroundColor: Colors.grey[800],
+              ),
+            );
           }
         },
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
@@ -54,8 +77,11 @@ class ConnectSecureNetwork extends StatelessWidget {
                       title: "Join ${utf8.decode(accessPoint.ssid)}",
                       actionWidgets: [
                         IconButton(
-                          icon:
-                              Image.asset(Images.submit, width: 20, height: 20),
+                          icon: Image.asset(
+                            Images.submit,
+                            width: 20,
+                            height: 20,
+                          ),
                           onPressed: state.password.isNotEmpty &&
                                   state.password.length >= 8
                               ? () {
@@ -76,8 +102,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Padding(
-                              padding:
-                                  EdgeInsets.all(16.0), // Apply padding here
+                              padding: const EdgeInsets.all(16.0),
                               child: MechanixTextInput.password(
                                 label: 'Wireless Credentials',
                                 isFormField: true,
@@ -88,7 +113,8 @@ class ConnectSecureNetwork extends StatelessWidget {
                                       .add(PasswordChanged(value));
                                 },
                                 onFieldSubmitted: (_) {
-                                  if (state.password.isNotEmpty) {
+                                  if (state.password.isNotEmpty &&
+                                      state.password.length >= 8) {
                                     context
                                         .read<ConnectNetworkBloc>()
                                         .add(ConnectToNetwork(accessPoint));
@@ -105,7 +131,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // // NOTE: Not in use currently
+                       // // NOTE: Not in use currently
                       // WirelessProtocols()
                     ],
                   ).padTop(8),

@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 class CommonHelper {
   static String formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
-    final yesterday = now.subtract(Duration(days: 1));
+    final yesterday = now.subtract(const Duration(days: 1));
 
     final isToday =
         now.year == dateTime.year &&

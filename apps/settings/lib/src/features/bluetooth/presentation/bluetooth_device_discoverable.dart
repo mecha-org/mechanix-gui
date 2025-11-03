@@ -18,23 +18,27 @@ class BluetoothDeviceDiscoverable extends StatefulWidget {
 
 class _BluetoothDeviceDiscoverableState
     extends State<BluetoothDeviceDiscoverable> {
-  void _backNavigation(BuildContext context) {
-    Navigator.pop(context);
-  }
 
-  @override
-  void initState() {
-    super.initState();
-    // context.read<BluetoothBloc>().add(DiscoveryEnabled());
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  // }
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BluetoothBloc, BluetoothState>(
       builder: (context, state) {
+        print("state.bluetoothAdapter?.discoverable ${state.bluetoothAdapter?.discoverable}");
         return Scaffold(
-          appBar: MechanixNavigationBar(title: 'Bluetooth'),
+          appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(52),
+              child: MechanixNavigationBar(
+                      title: (state.bluetoothAdapter?.alias != null && state.bluetoothAdapter?.alias != '')
+                          ? '${state.bluetoothAdapter?.alias}'
+                          : 'Bluetooth')
+                  .padHorizontal(12)),
           body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: MechanixSimpleList(
@@ -44,23 +48,14 @@ class _BluetoothDeviceDiscoverableState
                         title: 'Device discoverable to everyone',
                         trailing: MechanixSwitch(
                             allowDrag: false,
-                            value: state.isDiscoveryEnabled,
+                            value: state.bluetoothAdapter?.discoverable ?? false,
                             activeText: 'OFF',
                             inactiveText: 'ON',
                             onChanged: (value) {
                               context
                                   .read<BluetoothBloc>()
                                   .add(DiscoveryEnabled(value));
-                              if (value) {
-                                context
-                                    .read<BluetoothBloc>()
-                                    .add(StartDiscovery());
-                              } else {
-                                context
-                                    .read<BluetoothBloc>()
-                                    .add(StopDiscovery());
-                              }
-                              Navigator.pop(context);
+                           
                             }))
                   ]).padTop(8),
             ),

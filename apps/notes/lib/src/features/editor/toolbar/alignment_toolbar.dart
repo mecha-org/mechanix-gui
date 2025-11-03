@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/commons/styles/styles.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
+import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/editor_icon_button.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_container.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_row.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 
-class AlignmentToolbar extends StatelessWidget {
+class AlignmentToolbar extends StatefulWidget {
   final QuillController controller;
   final OverlayEntry? entry;
   final FocusNode focusNode;
@@ -21,47 +25,74 @@ class AlignmentToolbar extends StatelessWidget {
   });
 
   @override
+  State<AlignmentToolbar> createState() => _AlignmentToolbarState();
+}
+
+class _AlignmentToolbarState extends State<AlignmentToolbar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(focusListener);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(focusListener);
+    super.dispose();
+  }
+
+  void focusListener() {
+    if (widget.focusNode.hasFocus) {
+      context.read<EditorBloc>().add(
+        SelectToolbar(activeToolbar: ToolbarEnum.none),
+      );
+    }
+  }
+
+  void removeFocus() {
+    if (widget.focusNode.hasFocus) {
+      widget.focusNode.unfocus();
+    }
+  }
+
+  void toggleList(Attribute attribute) {
+    removeFocus();
+    final selection = widget.controller.selection;
+    final attrs = widget.controller.getSelectionStyle().attributes;
+    final currentAttr = attrs[attribute.key];
+    if (currentAttr != null && currentAttr.value == attribute.value) {
+      widget.controller.formatSelection(Attribute.clone(attribute, null));
+    } else {
+      widget.controller.formatSelection(attribute);
+    }
+    widget.controller.updateSelection(selection, ChangeSource.local);
+  }
+
+  void toggleIndent({bool increase = true}) {
+    removeFocus();
+    widget.controller.indentSelection(increase);
+  }
+
+  bool isSelectionStyleApplied(
+    Attribute attribute,
+    String value, {
+    bool isValue = true,
+  }) {
+    return isValue
+        ? widget.controller
+                .getSelectionStyle()
+                .attributes[attribute.key]
+                ?.value ==
+            value
+        : widget.controller.getSelectionStyle().attributes.containsKey(
+          attribute.key,
+        );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    void requestFocus() {
-      if (!focusNode.hasFocus) {
-        focusNode.requestFocus();
-      }
-    }
-
-    void toggleList(Attribute attribute) {
-      requestFocus();
-      final selection = controller.selection;
-      final attrs = controller.getSelectionStyle().attributes;
-      final currentAttr = attrs[attribute.key];
-
-      if (currentAttr != null && currentAttr.value == attribute.value) {
-        controller.formatSelection(Attribute.clone(attribute, null));
-      } else {
-        controller.formatSelection(attribute);
-      }
-      controller.updateSelection(selection, ChangeSource.local);
-    }
-
-    void toggleIndent({bool increase = true}) {
-      requestFocus();
-      controller.indentSelection(increase);
-    }
-
-    bool isSelectionStyleApplied(
-      Attribute attribute,
-      String value, {
-      bool isValue = true,
-    }) {
-      return isValue
-          ? controller.getSelectionStyle().attributes[attribute.key]?.value ==
-              value
-          : controller.getSelectionStyle().attributes.containsKey(
-            attribute.key,
-          );
-    }
-
     return ListenableBuilder(
-      listenable: controller,
+      listenable: widget.controller,
       builder: (context, child) {
         return ToolbarContainer(
           child: [
@@ -99,12 +130,12 @@ class AlignmentToolbar extends StatelessWidget {
                     onPressed: () {
                       toggleList(Attribute.unchecked);
                     },
-                    border: Border(right: borderSideStyle),
+                    border: const Border(right: borderSideStyle),
                   ),
                 ),
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(
                         right: borderSideStyle,
                         left: borderSideStyle,
@@ -150,7 +181,7 @@ class AlignmentToolbar extends StatelessWidget {
                 ),
                 Expanded(
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       border: Border(right: borderSideStyle),
                     ),
                     child: EditorIconButton(
@@ -166,9 +197,9 @@ class AlignmentToolbar extends StatelessWidget {
                       Attribute.align,
                       'left',
                     ),
-                    icon: Icon(Icons.format_align_left),
+                    icon: const Icon(Icons.format_align_left),
                     onPressed: () {
-                      toggleList(AlignAttribute('left'));
+                      toggleList(const AlignAttribute('left'));
                     },
                   ),
                 ),
@@ -180,7 +211,7 @@ class AlignmentToolbar extends StatelessWidget {
                     ),
                     iconPath: NotesIcon.centerAlignIcon,
                     onPressed: () {
-                      toggleList(AlignAttribute('center'));
+                      toggleList(const AlignAttribute('center'));
                     },
                   ),
                 ),
@@ -190,9 +221,9 @@ class AlignmentToolbar extends StatelessWidget {
                       Attribute.align,
                       'right',
                     ),
-                    icon: Icon(Icons.format_align_right),
+                    icon: const Icon(Icons.format_align_right),
                     onPressed: () {
-                      toggleList(AlignAttribute('right'));
+                      toggleList(const AlignAttribute('right'));
                     },
                   ),
                 ),
