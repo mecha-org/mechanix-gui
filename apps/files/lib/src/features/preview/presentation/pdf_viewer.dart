@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mechanix_files/src/commons/customWidgets/custom_app_bar.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 
 /// A StatefulWidget to view PDF files with search and password protection support.
@@ -225,7 +225,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               firstAttemptByEmptyPassword: true,
               params: PdfViewerParams(
                 enableTextSelection: true,
-                backgroundColor: Colors.black,
                 maxScale: 4.0,
                 minScale: 1.0,
 
@@ -252,18 +251,28 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   /// Normal app bar with file name and search icon
   PreferredSizeWidget _buildNormalAppBar() {
-    return CustomAppBar(
-      titleWidget:
-          Text(p.basename(widget.filePath), style: context.textTheme.bodySmall),
-      leftIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
-      leftIconOnTap: () => Navigator.pop(context),
-      rightIcon1: const Icon(Icons.search),
-      rightIcon1OnTap: () {
-        setState(() {
-          isSearching = true;
-          searchController.clear();
-        });
-      },
+    return MechanixNavigationBar(
+      theme: const MechanixNavigationBarThemeData(titleSpacing: 0),
+      leadingWidget: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
+        onPressed: () => Navigator.pop(context),
+        highlightColor: Colors.transparent,
+      ),
+      titleWidget: Text(
+        p.basename(widget.filePath),
+        style: context.textTheme.bodySmall,
+      ),
+      actionWidgets: [
+        IconButton(
+          icon: const Icon(Icons.search, color: Colors.white),
+          onPressed: () {
+            setState(() {
+              isSearching = true;
+              searchController.clear();
+            });
+          },
+        ),
+      ],
     );
   }
 
@@ -273,7 +282,20 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         ? '${currentMatchIndex! + 1} of ${matches.length}'
         : '';
 
-    return CustomAppBar(
+    return MechanixNavigationBar(
+      theme: const MechanixNavigationBarThemeData(titleSpacing: 0),
+      leadingWidget: IconButton(
+        icon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
+        onPressed: () {
+          setState(() {
+            isSearching = false;
+            searchController.clear();
+            _searcher.startTextSearch('',
+                caseInsensitive: true); // clear matches
+          });
+        },
+        highlightColor: Colors.transparent,
+      ),
       titleWidget: Row(
         children: [
           // Search input field
@@ -288,7 +310,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 border: InputBorder.none,
               ),
               onChanged: (value) {
-                // Start live search
                 _searcher.startTextSearch(
                   value,
                   caseInsensitive: true,
@@ -309,18 +330,16 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             ),
         ],
       ),
-      leftIcon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
-      leftIconOnTap: () {
-        setState(() {
-          isSearching = false;
-          searchController.clear();
-          _searcher.startTextSearch('', caseInsensitive: true); // clear matches
-        });
-      },
-      rightIcon1: const Icon(Icons.navigate_before),
-      rightIcon1OnTap: _prev,
-      rightIcon2: const Icon(Icons.navigate_next),
-      rightIcon2OnTap: _next,
+      actionWidgets: [
+        IconButton(
+          icon: const Icon(Icons.navigate_before, color: Colors.white),
+          onPressed: _prev,
+        ),
+        IconButton(
+          icon: const Icon(Icons.navigate_next, color: Colors.white),
+          onPressed: _next,
+        ),
+      ],
     );
   }
 }

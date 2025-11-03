@@ -46,7 +46,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
   final FileManagerController controller = FileManagerController();
   late String currentPath;
   bool isSearching = false;
-  final FocusNode searchFocusNode = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode();
 
   final downloadsDir = AppConfig().downloadsDir;
   final documentsDir = AppConfig().documentsDir;
@@ -67,6 +67,27 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
       setState(() {
         currentPath = controller.getPathNotifier.value;
       });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  /// Requests focus on the search field after the page has fully built.
+  /// Optional [delayMillis] can be used to adjust the delay before focusing.
+  void focusSearchField({int delayMillis = 300}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      // Wait for optional delay to ensure page transition is complete
+      await Future.delayed(Duration(milliseconds: delayMillis));
+
+      if (mounted) {
+        FocusScope.of(context).requestFocus(_searchFocusNode);
+      }
     });
   }
 
@@ -173,7 +194,7 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                           onPressed: () {
                             setState(() {
                               isSearching = true;
-                              searchFocusNode.requestFocus();
+                              // _searchFocusNode.requestFocus();
                             });
                           },
                         ),
@@ -196,12 +217,18 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
                       child: SizedBox(
                         height: 48,
                         child: MechanixSearchBar(
-                          autoFocus: true,
+                          focusNode: _searchFocusNode,
+                          autoFocus: false,
                           hintText: "Type here",
                           onChanged: (query) {
                             controller.search(query);
                           },
                           showDefaultTrailing: true,
+                          onCloseIconPress: () {
+                            setState(() {
+                              isSearching = false;
+                            });
+                          },
                         ),
                       ),
                     )
