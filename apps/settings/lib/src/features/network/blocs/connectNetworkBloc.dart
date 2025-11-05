@@ -14,7 +14,7 @@ class ConnectNetworkBloc
   StreamSubscription? _wifiStateAndReason;
 
   ConnectNetworkBloc({required this.wifiRepository})
-      : super(ConnectNetworkState()) {
+      : super(const ConnectNetworkState()) {
     on<PasswordChanged>(passwordChanged);
     on<UsernameChanged>(usernameChanged);
     on<TogglePasswordVisibility>(togglePasswordVisibility);

@@ -15,7 +15,11 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.d
 import 'package:mechanix_settings/src/commons/styles/color.dart';
 
 class SavedNetworkDetails extends StatefulWidget {
-  const SavedNetworkDetails({super.key});
+  const SavedNetworkDetails({
+    this.network,
+    super.key});
+    final SavedWirelessNetwork? network;
+    
 
   @override
   State<SavedNetworkDetails> createState() => _SavedNetworkDetailsState();
@@ -30,19 +34,14 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
 
   @override
   Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    final SavedWirelessNetwork network =
-        args['network'] as SavedWirelessNetwork;
-
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
       builder: (context, state) {
+        final network = widget.network!;
         final ssid = network.ssid;
         final security = (network.security != '' && network.security != null)
             ? network.security?.toUpperCase()
             : 'Open';
 
-        // todo : add ?
         void showDeleteDialog(String networkName) {
           showDialog(
             context: context,
@@ -94,14 +93,14 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
                   },
                   style: ButtonStyle(
                     iconColor: WidgetStateProperty.all(Colors.white),
-                    backgroundColor: WidgetStateProperty.all(Color(0xFFB71C1C)),
+                    backgroundColor: WidgetStateProperty.all(const Color(0xFFB71C1C)),
                     shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
-                    minimumSize: WidgetStateProperty.all(Size(32, 32)),
-                    fixedSize: WidgetStateProperty.all(Size(32, 32)),
+                    minimumSize: WidgetStateProperty.all(const Size(32, 32)),
+                    fixedSize: WidgetStateProperty.all(const Size(32, 32)),
                     padding: WidgetStateProperty.all(EdgeInsets.zero),
                   ),
                   icon: Center(

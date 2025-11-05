@@ -1,5 +1,7 @@
-import 'package:flutter/widgets.dart';
-import 'package:mechanix_settings/app_route.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
+import 'package:mechanix_settings/src/features/network/presentation/network_settings.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 
@@ -27,7 +29,7 @@ class WirelessAdvanceSettings extends StatelessWidget {
         MechanixSectionList(title: 'Advanced Settings', sectionListItems: [
           SectionListItems(
             title: 'Manage Wireless',
-            onTap: () => onTap(context, AppRoutes.wirelessNetworkSettings),
+            onTap: () => onTap(context),
           )
         ]),
         // CustomLabelValue(
@@ -65,6 +67,16 @@ class WirelessAdvanceSettings extends StatelessWidget {
   }
 }
 
-void onTap(BuildContext context, String route) {
-  Navigator.pushNamed(context, route);
+void onTap(BuildContext context) {
+  final bloc = context.read<WirelessSettingsBloc>();
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => BlocProvider.value(
+        value: bloc,
+        child: const NetworkSettings(),
+      ),
+    ),
+  );
 }

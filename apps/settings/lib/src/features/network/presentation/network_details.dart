@@ -2,17 +2,18 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/commons/styles/color.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
@@ -311,13 +312,19 @@ Future<void> onNetworkTap(
     context
         .read<WirelessSettingsBloc>()
         .add(ConnectSavedNetwork('', selectedAccessPoint.nmAccessPoint));
-    print('Connecting to saved network... Redirect to back');
     Navigator.pop(context);
   } else {
-    Navigator.pushNamed(
+    final bloc = context.read<ConnectNetworkBloc>();
+
+    Navigator.push(
       context,
-      AppRoutes.wirelessConnectSecureNetwork,
-      arguments: {'accessPoint': selectedAccessPoint?.nmAccessPoint},
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: ConnectSecureNetwork(
+              accessPoint: selectedAccessPoint?.nmAccessPoint),
+        ),
+      ),
     );
   }
 }

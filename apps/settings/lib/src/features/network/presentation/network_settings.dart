@@ -11,6 +11,7 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_b
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
+import 'package:mechanix_settings/src/features/network/presentation/saved_network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless.dart';
 import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
@@ -30,12 +31,17 @@ class _NetworkSettingsState extends State<NetworkSettings> {
     context.read<WirelessSettingsBloc>().add(GetSavedNetworksEvent());
   }
 
-
   void onItemTap(SavedWirelessNetwork network) {
-    Navigator.pushNamed(
+    final bloc = context.read<WirelessSettingsBloc>();
+
+    Navigator.push(
       context,
-      AppRoutes.wirelessSavedNetworkDetails,
-      arguments: {'network': network},
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc, 
+          child: SavedNetworkDetails(network: network),
+        ),
+      ),
     );
   }
 
@@ -61,10 +67,10 @@ class _NetworkSettingsState extends State<NetworkSettings> {
   Widget build(BuildContext outerContext) {
     // Rename to outerContext
 
-    return BlocSelector<WirelessSettingsBloc, WirelessSettingsState, List<SavedWirelessNetwork>>(
+    return BlocSelector<WirelessSettingsBloc, WirelessSettingsState,
+        List<SavedWirelessNetwork>>(
       selector: (state) => state.allSavedNetworks,
       builder: (context, state) {
-       
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
