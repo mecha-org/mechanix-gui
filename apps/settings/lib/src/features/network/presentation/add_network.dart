@@ -17,9 +17,9 @@ class AddNetwork extends StatelessWidget {
     final formKey = GlobalKey<FormState>();
     final wifiRepository = context.read<WifiRepository>();
 
-    void backNavigation(BuildContext context) {
-      Navigator.pop(context);
-    }
+    // void backNavigation(BuildContext context) {
+    //   Navigator.pop(context);
+    // }
 
     void onAddButtonPressed(BuildContext context, ConnectNetworkState state) {
       if (formKey.currentState!.validate()) {
@@ -70,6 +70,8 @@ class AddNetwork extends StatelessWidget {
                 ),
               );
             } else {
+              // // TODO: check connected network is same as active connection added,
+              // // then navigate to previous screen
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text(
@@ -80,7 +82,7 @@ class AddNetwork extends StatelessWidget {
                   backgroundColor: Colors.grey[800],
                 ),
               );
-              backNavigation(context);
+              // backNavigation(context);
             }
           },
           child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(

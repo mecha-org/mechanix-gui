@@ -23,16 +23,16 @@ class ConnectSecureNetwork extends StatelessWidget {
 
     final wifiRepository = context.read<WifiRepository>();
 
-   void backNavigation(BuildContext context) {
-      Navigator.pop(context);
-    }
+    // void backNavigation(BuildContext context) {
+    //   Navigator.pop(context);
+    // }
 
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
         listenWhen: (previous, current) {
           return previous.deviceState != current.deviceState ||
-                 previous.error != current.error;
+              previous.error != current.error;
         },
         listener: (context, state) {
           ScaffoldMessenger.of(context).clearSnackBars();
@@ -69,6 +69,8 @@ class ConnectSecureNetwork extends StatelessWidget {
               ),
             );
           } else {
+            // // TODO: check connected network is same as active connection added, 
+            // // then navigate to previous screen
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
@@ -79,7 +81,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                 backgroundColor: Colors.grey[800],
               ),
             );
-            backNavigation(context);
+            // backNavigation(context);
           }
         },
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
@@ -145,7 +147,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                           ),
                         ],
                       ),
-                       // // NOTE: Not in use currently
+                      // // NOTE: Not in use currently
                       // WirelessProtocols()
                     ],
                   ).padTop(8),
