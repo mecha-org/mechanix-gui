@@ -12,6 +12,8 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_b
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
+import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
@@ -35,7 +37,8 @@ class _WirelessSettingsState extends State<WirelessSettings> {
       return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
-              child: const MechanixNavigationBar(title: "Network").padHorizontal(12)),
+              child: const MechanixNavigationBar(title: "Network")
+                  .padHorizontal(12)),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
@@ -202,42 +205,36 @@ void onNetworkTap(AccessPoints item, BuildContext context) {
         .read<ConnectNetworkBloc>()
         .add(ConnectToNetwork(item.nmAccessPoint));
   } else {
-    Navigator.pushNamed(
+    final bloc = context.read<ConnectNetworkBloc>();
+
+    Navigator.push(
       context,
-      AppRoutes.wirelessConnectSecureNetwork,
-      arguments: {'accessPoint': item.nmAccessPoint},
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: ConnectSecureNetwork(accessPoint: item.nmAccessPoint),
+        ),
+      ),
     );
   }
 }
 
 void onInfoTap(AccessPoints item, BuildContext context) {
-  context.read<WirelessSettingsBloc>().add(SelectNetwork(item));
-  context
-      .read<WirelessSettingsBloc>()
-      .add(SelectNetworkPoint(item.nmAccessPoint));
-  Navigator.pushNamed(
+  final bloc = context.read<WirelessSettingsBloc>();
+
+  bloc.add(SelectNetwork(item));
+  bloc.add(SelectNetworkPoint(item.nmAccessPoint));
+
+  Navigator.push(
     context,
-    AppRoutes.wirelessNetworkDetails,
+    MaterialPageRoute(
+      builder: (context) => BlocProvider.value(
+        value: bloc, // reuse the existing bloc
+        child: const NetworkDetails(),
+      ),
+    ),
   );
 }
-
-// TODO: add this for router based bloc initialisation
-// void onInfoTap(AccessPoints item, BuildContext context) {
-//   final bloc = context.read<WirelessSettingsBloc>();
-
-//   bloc.add(SelectNetwork(item));
-//   bloc.add(SelectNetworkPoint(item.nmAccessPoint));
-
-//   Navigator.push(
-//     context,
-//     MaterialPageRoute(
-//       builder: (context) => BlocProvider.value(
-//         value: bloc, // reuse the existing bloc
-//         child: const NetworkDetails(),
-//       ),
-//     ),
-//   );
-// }
 
 String getNetworkIcon(String security, int? signalStrength) {
   // Set base icon based on WPA

@@ -12,15 +12,14 @@ import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 
 class ConnectSecureNetwork extends StatelessWidget {
-  const ConnectSecureNetwork({super.key});
+  const ConnectSecureNetwork({
+    this.accessPoint,
+    super.key});
+
+  final NetworkManagerAccessPoint? accessPoint;
 
   @override
   Widget build(BuildContext context) {
-    final args =
-        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-    final NetworkManagerAccessPoint accessPoint =
-        args['accessPoint'] as NetworkManagerAccessPoint;
-
     final wifiRepository = context.read<WifiRepository>();
 
     // void backNavigation(BuildContext context) {
@@ -90,7 +89,7 @@ class ConnectSecureNetwork extends StatelessWidget {
               appBar: PreferredSize(
                   preferredSize: const Size.fromHeight(52),
                   child: MechanixNavigationBar(
-                      title: "Join ${utf8.decode(accessPoint.ssid)}",
+                      title: "Join ${utf8.decode(accessPoint!.ssid)}",
                       actionWidgets: [
                         IconButton(
                           icon: Image.asset(
@@ -103,7 +102,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                               ? () {
                                   context
                                       .read<ConnectNetworkBloc>()
-                                      .add(ConnectToNetwork(accessPoint));
+                                      .add(ConnectToNetwork(accessPoint!));
                                 }
                               : null,
                         ),
@@ -133,7 +132,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                                       state.password.length >= 8) {
                                     context
                                         .read<ConnectNetworkBloc>()
-                                        .add(ConnectToNetwork(accessPoint));
+                                        .add(ConnectToNetwork(accessPoint!));
                                   }
                                 },
                                 validator: (value) {

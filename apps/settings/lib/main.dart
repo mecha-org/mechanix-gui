@@ -107,23 +107,25 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
         watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: const [
-        MechanixNavigationBarThemeData(
-          scrolledUnderElevation: 0,
-          titleStyle: TextStyle(
-            fontSize: 24,
-          ),
-          titleSpacing: 0,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        MechanixSwitchThemeData(
-          style: MechanixSwitchStyle(
-            inactiveThumbColor: Color(0xFF989898),
-            inactiveTrackColor: Color(0xFF252525),
-          ),
-        ),
-      ]),
+      data: MechanixThemeData(
+          mechanixVariant: mechanixVariant,
+          extensions: const [
+            MechanixNavigationBarThemeData(
+              scrolledUnderElevation: 0,
+              titleStyle: TextStyle(
+                fontSize: 24,
+              ),
+              titleSpacing: 0,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            ),
+            MechanixSwitchThemeData(
+              style: MechanixSwitchStyle(
+                inactiveThumbColor: Color(0xFF989898),
+                inactiveTrackColor: Color(0xFF252525),
+              ),
+            ),
+          ]),
       builder: (context, mechanix, child) => MainApp(
         darkTheme: mechanix.darkTheme,
         lightTheme: mechanix.lightTheme,
@@ -156,13 +158,6 @@ class MainApp extends StatelessWidget {
                 ..add(InitializeSound())
                 ..add(GetOutputDeviceList())
                 ..add(GetInputDeviceList()),
-        ),
-
-        // Wireless Bloc
-        BlocProvider(
-          create: (context) => WirelessSettingsBloc(
-              wifiRepository: context.read<WifiRepository>())
-            ..add(InitWifi()),
         ),
 
         // Bluetooth Bloc
@@ -206,7 +201,7 @@ class MainApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: SettingMenu(),
+        home: const SettingMenu(),
         theme: lightTheme,
         darkTheme: darkTheme.copyWith(
           scaffoldBackgroundColor: Colors.black,
@@ -224,28 +219,41 @@ class MainApp extends StatelessWidget {
           AppRoutes.notificationSound: (context) => const NotificationSound(),
 
           // Wireless Routes
-          AppRoutes.wireless: (context) => const WirelessSettings(),
-          AppRoutes.wirelessNetworkDetails: (context) => const NetworkDetails(),
-          // TODO: for route level bloc 
-          // AppRoutes.wireless: (context) => BlocProvider(
-          //       create: (context) => WirelessSettingsBloc(
-          //         wifiRepository: context.read<WifiRepository>(),
-          //       )..add(InitWifi()),
-          //       child: const WirelessSettings(),
-          //     ),
-          // AppRoutes.wirelessNetworkDetails: (context) => BlocProvider.value(  // make common widget 
-          //       value: context.read<WirelessSettingsBloc>(),
-          //       child: const NetworkDetails(),
-          //     ),
+          AppRoutes.wireless: (context) => BlocProvider(
+                create: (context) => WirelessSettingsBloc(
+                  wifiRepository: context.read<WifiRepository>(),
+                )..add(InitWifi()),
+                lazy: false,
+                child: const WirelessSettings(),
+              ),
+          AppRoutes.wirelessNetworkDetails: (context) => BlocProvider.value(
+                // make common widget
+                value: context.read<WirelessSettingsBloc>(),
+                child: const NetworkDetails(),
+              ),
           AppRoutes.ipSettings: (context) => const IpSettings(),
           AppRoutes.ethernetDetails: (context) => const EthernetSettings(),
           AppRoutes.dnsDetails: (context) => const DnsSettings(),
-          AppRoutes.wirelessNetworkSettings: (context) => const NetworkSettings(),
+          AppRoutes.wirelessNetworkSettings: (context) => BlocProvider.value(
+                value: context.read<WirelessSettingsBloc>(),
+                child: const NetworkSettings(),
+              ),
           AppRoutes.wirelessSavedNetworkDetails: (context) =>
-              const SavedNetworkDetails(),
+              BlocProvider.value(
+                value: context.read<WirelessSettingsBloc>(),
+                child: const SavedNetworkDetails(network: null),
+              ),
           AppRoutes.wirelessConnectSecureNetwork: (context) =>
-              const ConnectSecureNetwork(),
-          AppRoutes.wirelessConnectHiddenNetwork: (context) => const AddNetwork(),
+              // const ConnectSecureNetwork(),
+              BlocProvider.value(
+                value: context.read<WirelessSettingsBloc>(),
+                child: const ConnectSecureNetwork(),
+              ),
+          AppRoutes.wirelessConnectHiddenNetwork: (context) =>
+              BlocProvider.value(
+                value: context.read<WirelessSettingsBloc>(),
+                child: const AddNetwork(),
+              ),
           AppRoutes.configureDNS: (context) => const ConfigureDnsWidget(),
           AppRoutes.configureProxy: (context) => const ConfigureProxyWidget(),
           AppRoutes.ipv4Address: (context) => const Ipv4AddressWidget(),
@@ -253,7 +261,8 @@ class MainApp extends StatelessWidget {
 
           // Bluetooth Routes
           AppRoutes.bluetooth: (context) => const Bluetooth(),
-          AppRoutes.bluetoothDeviceInfo: (context) => const BluetoothDeviceInfo(),
+          AppRoutes.bluetoothDeviceInfo: (context) =>
+              const BluetoothDeviceInfo(),
           AppRoutes.adapterSettings: (context) => const AdapterSettings(),
           AppRoutes.adapterRename: (context) => const RenameAdapter(),
           AppRoutes.bluetoothDiscoverable: (context) =>
@@ -268,7 +277,8 @@ class MainApp extends StatelessWidget {
           AppRoutes.display: (context) => const DisplayPage(),
           AppRoutes.appearance: (context) => const Appearance(),
           AppRoutes.applyWallpaper: (context) => const ApplyWallpaper(),
-          AppRoutes.displayScreenOffTime: (context) => const ScreenOffTimeSettings(),
+          AppRoutes.displayScreenOffTime: (context) =>
+              const ScreenOffTimeSettings(),
           AppRoutes.lockScreenTimeout: (context) => const LockScreenTimeout(),
 
           // Other Routes
