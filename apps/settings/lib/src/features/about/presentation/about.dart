@@ -19,9 +19,9 @@ class _AboutState extends State<About> {
     return BlocBuilder<AboutBloc, AboutState>(
       builder: (context, state) {
         return Scaffold(
-          appBar: MechanixNavigationBar(title: 'About this Comet'),
+          appBar: const MechanixNavigationBar(title: 'About this Comet'),
           body: SingleChildScrollView(
-            physics: BouncingScrollPhysics(),
+            physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
                 child: Column(
               children: [

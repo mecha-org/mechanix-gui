@@ -39,7 +39,7 @@ class BluetoothListRow extends StatelessWidget {
                     title,
                     style: isAvailable
                         ? baseHeaderStyle
-                        : baseHeaderStyle.copyWith(color: Color(0xFF898A8D)),
+                        : baseHeaderStyle.copyWith(color: const Color(0xFF898A8D)),
                   ),
                 ),
                 Row(

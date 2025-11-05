@@ -22,14 +22,14 @@ class _IpSettingsState extends State<IpSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MechanixNavigationBar(title: "Network"),
+      appBar: const MechanixNavigationBar(title: "Network"),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: ContainerWidget(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 "IP Settings",
                 style: baseHeaderStyle,
               ),
@@ -43,9 +43,9 @@ class _IpSettingsState extends State<IpSettings> {
                   final modeLabel = ipModesList.values.elementAt(index);
 
                   return Container(
-                      margin: EdgeInsets.only(bottom: 10),
+                      margin: const EdgeInsets.only(bottom: 10),
                       height: 48,
-                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       alignment: Alignment.center,
                       decoration: rowBoxDecoration,
                       child: RadioListTile<IpModes>(

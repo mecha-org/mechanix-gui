@@ -17,7 +17,7 @@ class SettingMenu extends StatelessWidget {
     return Scaffold(
       appBar: PreferredSize(
           preferredSize: const Size.fromHeight(52),
-          child: MechanixNavigationBar(
+          child: const MechanixNavigationBar(
             title: "Settings",
           ).padHorizontal(12)),
       body: SingleChildScrollView(
@@ -34,7 +34,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems(
                       title: 'Network',
                       onTap: () => onTap(context, AppRoutes.wireless),
-                      leading: IconWidget(
+                      leading: const IconWidget(
                         iconWidth: 22,
                         iconHeight: 18,
                         iconPath: Images.wifi,
@@ -43,7 +43,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems(
                       title: 'Bluetooth',
                       onTap: () => onTap(context, AppRoutes.bluetooth),
-                      leading: IconWidget(
+                      leading: const IconWidget(
                         iconHeight: 20,
                         iconWidth: 20,
                         iconPath: Images.bluetooth,
@@ -57,7 +57,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems(
                       title: 'Battery',
                       onTap: () => onTap(context, AppRoutes.battery),
-                      leading: IconWidget(
+                      leading: const IconWidget(
                         iconWidth: 23,
                         iconHeight: 13,
                         iconPath: Images.battery,
@@ -66,7 +66,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems(
                       title: 'Date & Time',
                       onTap: () => onTap(context, AppRoutes.dateTime),
-                      leading: IconWidget(
+                      leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
                         iconPath: Images.dateTime,
@@ -75,7 +75,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems(
                       title: 'Display',
                       onTap: () => onTap(context, AppRoutes.display),
-                      leading: IconWidget(
+                      leading: const IconWidget(
                         iconWidth: 20,
                         iconHeight: 20,
                         iconPath: Images.display,
@@ -84,7 +84,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems(
                       title: 'Sound & Haptics',
                       onTap: () => onTap(context, AppRoutes.sound),
-                      leading: IconWidget(
+                      leading: const IconWidget(
                         iconWidth: 18,
                         iconHeight: 20,
                         iconPath: Images.sound,
@@ -98,7 +98,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems(
                       title: 'About',
                       onTap: () => onTap(context, AppRoutes.about),
-                      leading: IconWidget(
+                      leading: const IconWidget(
                         iconPath: Images.cometIcon,
                       ),
                     ),

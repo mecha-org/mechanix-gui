@@ -29,7 +29,7 @@ class _Ipv4AddressWidgetState extends State<Ipv4AddressWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MechanixNavigationBar(
+      appBar: const MechanixNavigationBar(
         title: "Configure DNS",
       ),
       body: ContainerWidget(
@@ -45,13 +45,13 @@ class _Ipv4AddressWidgetState extends State<Ipv4AddressWidget> {
               if (selectedDNS == 'STATIC')
                 MechanixSectionList(title: 'Static', sectionListItems: [
                   SectionListItems(
-                      title: 'IP Settings', trailing: Text('255.255.255.25')),
+                      title: 'IP Settings', trailing: const Text('255.255.255.25')),
                   SectionListItems(
                       title: 'Gateway',
                       trailing: Row(
                         children: [
-                          Text('None').padRight(8),
-                          IconWidget(
+                          const Text('None').padRight(8),
+                          const IconWidget(
                             iconWidth: 9,
                             iconHeight: 18,
                             iconPath: Images.rightIconArrow,

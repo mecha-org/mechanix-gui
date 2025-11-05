@@ -26,7 +26,7 @@ class _DeviceTypesState extends State<DeviceTypes> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(52),
-        child: MechanixNavigationBar(title: 'Device types').padHorizontal(12),),
+        child: const MechanixNavigationBar(title: 'Device types').padHorizontal(12),),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
         child: ContainerWidget(

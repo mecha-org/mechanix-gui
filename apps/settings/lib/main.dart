@@ -107,14 +107,16 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
         watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
+      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: const [
         MechanixNavigationBarThemeData(
-            scrolledUnderElevation: 0,
-            titleStyle: TextStyle(fontSize: 24,),
-            titleSpacing: 0,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
+          scrolledUnderElevation: 0,
+          titleStyle: TextStyle(
+            fontSize: 24,
           ),
+          titleSpacing: 0,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
         MechanixSwitchThemeData(
           style: MechanixSwitchStyle(
             inactiveThumbColor: Color(0xFF989898),
@@ -215,53 +217,65 @@ class MainApp extends StatelessWidget {
         themeMode: themeMode,
         routes: {
           // Sound Routes
-          AppRoutes.sound: (context) => Sound(),
-          AppRoutes.vibrationLevel: (context) => VibrationLevel(),
-          AppRoutes.soundOutputDevices: (context) => OutputDevices(),
-          AppRoutes.soundInputDevices: (context) => InputDevices(),
-          AppRoutes.notificationSound: (context) => NotificationSound(),
+          AppRoutes.sound: (context) => const Sound(),
+          AppRoutes.vibrationLevel: (context) => const VibrationLevel(),
+          AppRoutes.soundOutputDevices: (context) => const OutputDevices(),
+          AppRoutes.soundInputDevices: (context) => const InputDevices(),
+          AppRoutes.notificationSound: (context) => const NotificationSound(),
 
           // Wireless Routes
-          AppRoutes.wireless: (context) => WirelessSettings(),
-          AppRoutes.wirelessNetworkDetails: (context) => NetworkDetails(),
-          AppRoutes.ipSettings: (context) => IpSettings(),
-          AppRoutes.ethernetDetails: (context) => EthernetSettings(),
-          AppRoutes.dnsDetails: (context) => DnsSettings(),
-          AppRoutes.wirelessNetworkSettings: (context) => NetworkSettings(),
-          AppRoutes.wirelessSavedNetworkDetails: (context) => SavedNetworkDetails(),
+          AppRoutes.wireless: (context) => const WirelessSettings(),
+          AppRoutes.wirelessNetworkDetails: (context) => const NetworkDetails(),
+          // TODO: for route level bloc 
+          // AppRoutes.wireless: (context) => BlocProvider(
+          //       create: (context) => WirelessSettingsBloc(
+          //         wifiRepository: context.read<WifiRepository>(),
+          //       )..add(InitWifi()),
+          //       child: const WirelessSettings(),
+          //     ),
+          // AppRoutes.wirelessNetworkDetails: (context) => BlocProvider.value(  // make common widget 
+          //       value: context.read<WirelessSettingsBloc>(),
+          //       child: const NetworkDetails(),
+          //     ),
+          AppRoutes.ipSettings: (context) => const IpSettings(),
+          AppRoutes.ethernetDetails: (context) => const EthernetSettings(),
+          AppRoutes.dnsDetails: (context) => const DnsSettings(),
+          AppRoutes.wirelessNetworkSettings: (context) => const NetworkSettings(),
+          AppRoutes.wirelessSavedNetworkDetails: (context) =>
+              const SavedNetworkDetails(),
           AppRoutes.wirelessConnectSecureNetwork: (context) =>
-              ConnectSecureNetwork(),
-          AppRoutes.wirelessConnectHiddenNetwork: (context) => AddNetwork(),
-          AppRoutes.configureDNS: (context) => ConfigureDnsWidget(),
-          AppRoutes.configureProxy: (context) => ConfigureProxyWidget(),
-          AppRoutes.ipv4Address: (context) => Ipv4AddressWidget(),
-          AppRoutes.security: (context) => WifiSecurityWidget(),
+              const ConnectSecureNetwork(),
+          AppRoutes.wirelessConnectHiddenNetwork: (context) => const AddNetwork(),
+          AppRoutes.configureDNS: (context) => const ConfigureDnsWidget(),
+          AppRoutes.configureProxy: (context) => const ConfigureProxyWidget(),
+          AppRoutes.ipv4Address: (context) => const Ipv4AddressWidget(),
+          AppRoutes.security: (context) => const WifiSecurityWidget(),
 
           // Bluetooth Routes
-          AppRoutes.bluetooth: (context) => Bluetooth(),
-          AppRoutes.bluetoothDeviceInfo: (context) => BluetoothDeviceInfo(),
-          AppRoutes.adapterSettings: (context) => AdapterSettings(),
-          AppRoutes.adapterRename: (context) => RenameAdapter(),
+          AppRoutes.bluetooth: (context) => const Bluetooth(),
+          AppRoutes.bluetoothDeviceInfo: (context) => const BluetoothDeviceInfo(),
+          AppRoutes.adapterSettings: (context) => const AdapterSettings(),
+          AppRoutes.adapterRename: (context) => const RenameAdapter(),
           AppRoutes.bluetoothDiscoverable: (context) =>
-              BluetoothDeviceDiscoverable(),
-          AppRoutes.bluetoothDeviceTypes: (context) => DeviceTypes(),
+              const BluetoothDeviceDiscoverable(),
+          AppRoutes.bluetoothDeviceTypes: (context) => const DeviceTypes(),
 
           // Battery Routes
-          AppRoutes.battery: (context) => Battery(),
-          AppRoutes.batteryPerformance: (context) => BatteryPerformance(),
+          AppRoutes.battery: (context) => const Battery(),
+          AppRoutes.batteryPerformance: (context) => const BatteryPerformance(),
 
           // Display Routes
-          AppRoutes.display: (context) => DisplayPage(),
-          AppRoutes.appearance: (context) => Appearance(),
-          AppRoutes.applyWallpaper: (context) => ApplyWallpaper(),
-          AppRoutes.displayScreenOffTime: (context) => ScreenOffTimeSettings(),
-          AppRoutes.lockScreenTimeout: (context) => LockScreenTimeout(),
+          AppRoutes.display: (context) => const DisplayPage(),
+          AppRoutes.appearance: (context) => const Appearance(),
+          AppRoutes.applyWallpaper: (context) => const ApplyWallpaper(),
+          AppRoutes.displayScreenOffTime: (context) => const ScreenOffTimeSettings(),
+          AppRoutes.lockScreenTimeout: (context) => const LockScreenTimeout(),
 
           // Other Routes
-          AppRoutes.about: (context) => About(),
-          AppRoutes.dateTime: (context) => DateTimeSettings(),
-          AppRoutes.timeSettings: (context) => TimeSettings(),
-          AppRoutes.dateSettings: (context) => DateSettings(),
+          AppRoutes.about: (context) => const About(),
+          AppRoutes.dateTime: (context) => const DateTimeSettings(),
+          AppRoutes.timeSettings: (context) => const TimeSettings(),
+          AppRoutes.dateSettings: (context) => const DateSettings(),
         },
       ),
     );

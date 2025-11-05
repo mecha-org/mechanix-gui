@@ -46,7 +46,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
             title: d.ssid ?? '',
             trailing: IconButton(
               onPressed: () => onItemTap(d),
-              icon: SizedBox(
+              icon: const SizedBox(
                 height: 24,
                 width: 24,
                 child: IconWidget(iconPath: Images.settings),
@@ -68,7 +68,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
-              child: MechanixNavigationBar(
+              child: const MechanixNavigationBar(
                 title: "Network Settings",
               ).padHorizontal(12)),
           body: SingleChildScrollView(

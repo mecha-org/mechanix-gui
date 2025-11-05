@@ -63,11 +63,11 @@ class DeviceType extends StatelessWidget {
       case 'phone':
         return Row(
           children: [
-            IconWidget(iconPath: Images.mobile).padRight(8),
-            CustomTrailingText(
+            const IconWidget(iconPath: Images.mobile).padRight(8),
+            const CustomTrailingText(
               title: 'Mobile',
             ).padRight(8),
-            IconWidget(
+            const IconWidget(
               iconWidth: 10,
               iconHeight: 17,
               iconPath: Images.rightIconArrow,
@@ -78,11 +78,11 @@ class DeviceType extends StatelessWidget {
       case 'computer':
         return Row(
           children: [
-            IconWidget(iconPath: Images.tv).padRight(8),
-            CustomTrailingText(
+            const IconWidget(iconPath: Images.tv).padRight(8),
+            const CustomTrailingText(
               title: 'TV',
             ).padRight(8),
-            IconWidget(
+            const IconWidget(
               iconWidth: 10,
               iconHeight: 17,
               iconPath: Images.rightIconArrow,
@@ -93,11 +93,11 @@ class DeviceType extends StatelessWidget {
       case 'multimedia-player':
         return Row(
           children: [
-            IconWidget(iconPath: Images.speaker).padRight(8),
-            CustomTrailingText(
+            const IconWidget(iconPath: Images.speaker).padRight(8),
+            const CustomTrailingText(
               title: 'Car',
             ).padRight(8),
-            IconWidget(
+            const IconWidget(
               iconWidth: 10,
               iconHeight: 17,
               iconPath: Images.rightIconArrow,
@@ -105,6 +105,8 @@ class DeviceType extends StatelessWidget {
           ],
         );
 
+
+      // TODO: add more device types like mouse , keyboard
       default:
         return Row(
           children: [

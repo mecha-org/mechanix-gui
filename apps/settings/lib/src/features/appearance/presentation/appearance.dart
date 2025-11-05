@@ -28,7 +28,7 @@ class _AppearanceState extends State<Appearance> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MechanixNavigationBar(
+      appBar: const MechanixNavigationBar(
         title: 'Appearance',
       ),
       body: ContainerWidget(

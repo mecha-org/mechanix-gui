@@ -27,7 +27,7 @@ class _ConfigureProxyWidgetState extends State<ConfigureProxyWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MechanixNavigationBar(title: "Configure DNS"),
+      appBar: const MechanixNavigationBar(title: "Configure DNS"),
       body: ContainerWidget(
         child: SingleChildScrollView(
           child: Column(

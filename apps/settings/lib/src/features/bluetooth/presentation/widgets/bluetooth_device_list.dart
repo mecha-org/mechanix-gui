@@ -59,7 +59,7 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
             trailing: device.connected
                 ? IconButton(
                     onPressed: () => onSettingsTap(device),
-                    icon: IconWidget(iconPath: Images.settings),
+                    icon: const IconWidget(iconPath: Images.settings),
                   )
                 : null,
           ))

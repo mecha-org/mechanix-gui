@@ -33,13 +33,13 @@ class AdapterSettings extends StatelessWidget {
       String deviceName = state.bluetoothAdapter?.alias ?? '';
 
       return Scaffold(
-        appBar: MechanixNavigationBar(title: 'Bluetooth Settings'),
+        appBar: const MechanixNavigationBar(title: 'Bluetooth Settings'),
         body: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: ContainerWidget(
             child: ListTile(
-              title: Text('Device name',
-                  style: const TextStyle(color: Colors.white, fontSize: 24)),
+              title: const Text('Device name',
+                  style: TextStyle(color: Colors.white, fontSize: 24)),
               trailing: Text(
                 deviceName,
                 style: const TextStyle(

@@ -25,7 +25,7 @@ class BatteryPerformanceState extends State<BatteryPerformance> {
   Widget build(BuildContext context) {
     return BlocBuilder<BatteryBloc, BatteryState>(builder: (context, state) {
       return Scaffold(
-        appBar: MechanixNavigationBar(title: 'Performance Mode'),
+        appBar: const MechanixNavigationBar(title: 'Performance Mode'),
         body: ContainerWidget(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

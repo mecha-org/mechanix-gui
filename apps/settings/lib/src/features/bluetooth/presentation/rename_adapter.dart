@@ -31,7 +31,7 @@ class RenameAdapter extends StatelessWidget {
         nameController.text = state.bluetoothAdapter?.alias ?? '';
 
         return Scaffold(
-          appBar: MechanixNavigationBar(title: "Rename Device"),
+          appBar: const MechanixNavigationBar(title: "Rename Device"),
           body: ContainerWidget(
             child: Form(
               key: formKey,

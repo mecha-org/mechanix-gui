@@ -18,10 +18,10 @@ class WirelessProtocols extends StatelessWidget {
           title: 'Security',
           trailing: Row(
             children: [
-              CustomTrailingText(
+              const CustomTrailingText(
                 title: 'WPA2/WPA3',
               ).padRight(8),
-              IconWidget(
+              const IconWidget(
                 iconWidth: 9,
                 iconHeight: 18,
                 iconPath: Images.rightIconArrow,

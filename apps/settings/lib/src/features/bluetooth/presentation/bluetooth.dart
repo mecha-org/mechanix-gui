@@ -63,7 +63,7 @@ class _BluetoothState extends State<Bluetooth> {
                         trailing: MechanixSwitch(
                           activeText: 'OFF',
                           inactiveText: 'ON',
-                          style: MechanixSwitchStyle(
+                          style: const MechanixSwitchStyle(
                             inactiveThumbColor: Color(0xFF989898),
                             inactiveTrackColor: Color(0xFF252525),
                           ),

@@ -35,7 +35,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
       return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
-              child: MechanixNavigationBar(title: "Network").padHorizontal(12)),
+              child: const MechanixNavigationBar(title: "Network").padHorizontal(12)),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
@@ -51,7 +51,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                           trailing: MechanixSwitch(
                             activeText: 'OFF',
                             inactiveText: 'ON',
-                            style: MechanixSwitchStyle(
+                            style: const MechanixSwitchStyle(
                               inactiveThumbColor: Color(0xFF989898),
                               inactiveTrackColor: Color(0xFF252525),
                             ),
@@ -80,12 +80,12 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(state.wifiState ?? '',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         color: Colors.white, fontSize: 12)),
                                 IconButton(
                                   onPressed: () => onInfoTap(
                                       state.connectedNetwork!, context),
-                                  icon: SizedBox(
+                                  icon: const SizedBox(
                                       height: 24,
                                       width: 24,
                                       child: IconWidget(
@@ -112,7 +112,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                           trailing: MechanixSwitch(
                             activeText: 'OFF',
                             inactiveText: 'ON',
-                            style: MechanixSwitchStyle(
+                            style: const MechanixSwitchStyle(
                               inactiveThumbColor: Color(0xFF989898),
                               inactiveTrackColor: Color(0xFF252525),
                             ),
@@ -136,7 +136,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                           title: '',
                           backgroundColor: Colors.transparent,
                           defaultTrailingIcon: false,
-                          leading: CustomLoader(),
+                          leading: const CustomLoader(),
                         ),
                       ],
                     ),
@@ -167,12 +167,17 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   //   child: CustomLoader(),
                   // )
                   if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
-                  MechanixSectionList(
-                    theme: MechanixSectionListThemeData(height: 200),
-                    physics: const BouncingScrollPhysics(),
-                    title: 'Available Networks',
-                    sectionListItems: getWifiList(
-                        context, state.availableOtherNetworks, true)),
+                    MechanixSectionList.lazy(
+                        physics: const BouncingScrollPhysics(),
+                        title: 'Available Networks',
+                        listBoxConstraints:
+                            const BoxConstraints(maxHeight: 280),
+                        theme: const MechanixSectionListThemeData(
+                          widgetPadding: EdgeInsets.zero,
+                        ),
+                        sectionListItems: getWifiList(
+                            context, state.availableOtherNetworks, true)),
+                  const SizedBox(height: 16),
                   const WirelessAdvanceSettings()
                 ],
               ),
@@ -216,6 +221,24 @@ void onInfoTap(AccessPoints item, BuildContext context) {
   );
 }
 
+// TODO: add this for router based bloc initialisation
+// void onInfoTap(AccessPoints item, BuildContext context) {
+//   final bloc = context.read<WirelessSettingsBloc>();
+
+//   bloc.add(SelectNetwork(item));
+//   bloc.add(SelectNetworkPoint(item.nmAccessPoint));
+
+//   Navigator.push(
+//     context,
+//     MaterialPageRoute(
+//       builder: (context) => BlocProvider.value(
+//         value: bloc, // reuse the existing bloc
+//         child: const NetworkDetails(),
+//       ),
+//     ),
+//   );
+// }
+
 String getNetworkIcon(String security, int? signalStrength) {
   // Set base icon based on WPA
   String icon = security.contains('WPA')
@@ -248,7 +271,7 @@ List<SectionListItems> getWifiList(
       defaultTrailingIcon: false,
       trailing: IconButton(
         onPressed: () => onInfoTap(ap, context),
-        icon: SizedBox(
+        icon: const SizedBox(
           height: 24,
           width: 24,
           child: IconWidget(iconPath: Images.settings),
@@ -264,7 +287,7 @@ List<SectionListItems> getWifiList(
         defaultTrailingIcon: false,
         onTap: () => Navigator.pushNamed(
             context, AppRoutes.wirelessConnectHiddenNetwork),
-        leading: IconWidget(iconPath: Images.wirelessAdd),
+        leading: const IconWidget(iconPath: Images.wirelessAdd),
       ),
     );
   }

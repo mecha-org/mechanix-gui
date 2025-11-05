@@ -15,12 +15,12 @@ class DnsSettings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: MechanixNavigationBar(title: "Network"),
+        appBar: const MechanixNavigationBar(title: "Network"),
         body: ContainerWidget(
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "DNS",
               style: baseHeaderStyle,
             ),
@@ -29,7 +29,7 @@ class DnsSettings extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  const Text(
                     "AE:16:AF:80:CF:2F",
                     style: secondaryHeaderStyle,
                   ),
@@ -46,7 +46,7 @@ class DnsSettings extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
+                  const Text(
                     "AE:16:AF:80:CF:2F",
                     style: secondaryHeaderStyle,
                   ),
