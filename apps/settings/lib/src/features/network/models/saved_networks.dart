@@ -17,7 +17,7 @@ class SavedWirelessNetwork {
   final String? security;        
   final String? macAddress; 
   final String? ipv4Method;
-  final String? autoConnect;       
+  final bool? autoConnect;       
   // final String? type;        // wireless or something else type
 
   SavedWirelessNetwork({
