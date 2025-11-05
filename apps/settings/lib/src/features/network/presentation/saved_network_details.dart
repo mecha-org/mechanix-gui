@@ -119,7 +119,7 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
             child: ContainerWidget(
               child: Column(
                 children: [
-                  Row(
+                  const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [],

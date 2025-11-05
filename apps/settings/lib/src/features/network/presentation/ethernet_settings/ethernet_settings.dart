@@ -23,7 +23,7 @@ class _EthernetSettingsState extends State<EthernetSettings> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: MechanixNavigationBar(title: "Network"),
+        appBar: const MechanixNavigationBar(title: "Network"),
         body: ContainerWidget(
             child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,7 +40,7 @@ class _EthernetSettingsState extends State<EthernetSettings> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    const Text(
                       "None",
                       style: secondaryHeaderStyle,
                     ),

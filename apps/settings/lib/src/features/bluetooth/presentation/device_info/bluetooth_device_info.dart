@@ -50,14 +50,14 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                   onPressed: () => onForgetNetworkClick(state.selectedDevice),
                   style: ButtonStyle(
                     iconColor: WidgetStateProperty.all(Colors.white),
-                    backgroundColor: WidgetStateProperty.all(Color(0xFFB71C1C)),
+                    backgroundColor: WidgetStateProperty.all(const Color(0xFFB71C1C)),
                     shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
-                    minimumSize: WidgetStateProperty.all(Size(32, 32)),
-                    fixedSize: WidgetStateProperty.all(Size(32, 32)),
+                    minimumSize: WidgetStateProperty.all(const Size(32, 32)),
+                    fixedSize: WidgetStateProperty.all(const Size(32, 32)),
                     padding: WidgetStateProperty.all(EdgeInsets.zero),
                   ),
                   icon: Center(
@@ -112,7 +112,7 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                           style:
                               TextStyle(color: context.colorScheme.onSurface),
                         ).padVertical(16),
-                        icon: IconWidget(
+                        icon: const IconWidget(
                           iconPath: Images.unlinkIcon,
                           iconHeight: 16,
                           iconWidth: 16,

@@ -22,7 +22,7 @@ class WirelessSettingsBloc
   StreamSubscription<bool>? _wirelessSub;
 
   WirelessSettingsBloc({required this.wifiRepository})
-      : super(WirelessSettingsState(
+      : super(const WirelessSettingsState(
           wifiOn: false,
           availableOtherNetworks: [],
           availableSavedNetworks: [],
@@ -179,6 +179,7 @@ class WirelessSettingsBloc
   // Always cancel your subscriptions when Bloc is closed
   @override
   Future<void> close() async {
+    logger.i('Closing WirelessSettingsBloc and cancelling subscriptions...');
     await _wifiEventsSubscription?.cancel();
     _wifiEventsSubscription = null;
     await _accessPointSubscription?.cancel();
@@ -195,6 +196,7 @@ class WirelessSettingsBloc
 
   void _onToggleWifi(
       ToggleWifi event, Emitter<WirelessSettingsState> emit) async {
+    print('Toggling WiFi: ${event.enabled}');
     logger.i('Toggling WiFi: ${event.enabled}');
     try {
       await wifiRepository.setWifiEnabled(event.enabled);

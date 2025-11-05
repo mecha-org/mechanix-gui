@@ -23,19 +23,27 @@ class ConnectSecureNetwork extends StatelessWidget {
 
     final wifiRepository = context.read<WifiRepository>();
 
+    // void backNavigation(BuildContext context) {
+    //   Navigator.pop(context);
+    // }
+
     return BlocProvider(
       create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
       child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
         listenWhen: (previous, current) {
           return previous.deviceState != current.deviceState ||
-                 previous.error != current.error;
+              previous.error != current.error;
         },
         listener: (context, state) {
           ScaffoldMessenger.of(context).clearSnackBars();
 
-          final bool hasError = 
+          final bool hasError =
               state.deviceState == NetworkManagerDeviceState.needAuth ||
-              (state.error != null && state.error!.isNotEmpty);
+                  (state.error != null && state.error!.isNotEmpty);
+
+          final bool isAuthenticating =
+              state.deviceState == NetworkManagerDeviceState.ipCheck ||
+                  state.deviceState == NetworkManagerDeviceState.config;
 
           if (hasError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -49,13 +57,7 @@ class ConnectSecureNetwork extends StatelessWidget {
               ),
             );
             return;
-          }
-
-          final bool isAuthenticating = 
-              state.deviceState == NetworkManagerDeviceState.ipCheck ||
-              state.deviceState == NetworkManagerDeviceState.config;
-
-          if (isAuthenticating) {
+          } else if (isAuthenticating) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text(
@@ -66,6 +68,20 @@ class ConnectSecureNetwork extends StatelessWidget {
                 backgroundColor: Colors.grey[800],
               ),
             );
+          } else {
+            // // TODO: check connected network is same as active connection added, 
+            // // then navigate to previous screen
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  "Connected",
+                  style: TextStyle(color: Colors.white),
+                ),
+                duration: const Duration(seconds: 2),
+                backgroundColor: Colors.grey[800],
+              ),
+            );
+            // backNavigation(context);
           }
         },
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
@@ -131,7 +147,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                           ),
                         ],
                       ),
-                       // // NOTE: Not in use currently
+                      // // NOTE: Not in use currently
                       // WirelessProtocols()
                     ],
                   ).padTop(8),

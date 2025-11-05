@@ -17,7 +17,7 @@ class BluetoothSearchNewDevice extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
+        const SizedBox(
           height: 20,
         ),
         Flex(
@@ -35,9 +35,9 @@ class BluetoothSearchNewDevice extends StatelessWidget {
                     style: buttonStyle,
                     child: Text("Find new devices",
                         style:
-                            baseHeaderStyle.copyWith(color: Color(0xFFF0F0F0))),
+                            baseHeaderStyle.copyWith(color: const Color(0xFFF0F0F0))),
                   )
-                : Padding(
+                : const Padding(
                     padding: EdgeInsets.only(right: 25),
                     child: CustomLoader(),
                   )

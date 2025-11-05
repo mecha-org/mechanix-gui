@@ -23,7 +23,7 @@ class _ApplyWallpaperState extends State<ApplyWallpaper> {
     final imagePath = args['imagePath'] as String;
 
     return Scaffold(
-      appBar: MechanixNavigationBar(
+      appBar: const MechanixNavigationBar(
         title: 'Apply Wallpaper',
       ),
       body: ContainerWidget(

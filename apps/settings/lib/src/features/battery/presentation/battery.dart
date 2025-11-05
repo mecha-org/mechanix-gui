@@ -39,7 +39,7 @@ class BatteryScreenState extends State<Battery> {
         ].join(' ');
 
         return Scaffold(
-          appBar: MechanixNavigationBar(
+          appBar: const MechanixNavigationBar(
             title: "Battery",
           ),
           body: SingleChildScrollView(

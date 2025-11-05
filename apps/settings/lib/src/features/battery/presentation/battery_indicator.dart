@@ -25,7 +25,7 @@ class BatteryIndicator extends StatelessWidget {
     if (state.batteryPercentage > 20) {
       return getModeDetails(state.performanceMode ?? '').color;
     }
-    return Color(0xFFB90C2C);
+    return const Color(0xFFB90C2C);
   }
 
   @override
@@ -55,7 +55,7 @@ class BatteryIndicator extends StatelessWidget {
                       child: Stack(
                         children: [
                           AnimatedContainer(
-                            duration: Duration(milliseconds: 700),
+                            duration: const Duration(milliseconds: 700),
                             width:
                                 batteryWidth * (state.batteryPercentage / 100),
                             height: height,
@@ -64,7 +64,7 @@ class BatteryIndicator extends StatelessWidget {
                             ),
                           ),
                           // Percentage text
-                          Center(
+                          const Center(
                             child: IconWidget(
                                 boxWidth: 24,
                                 boxHeight: 28,

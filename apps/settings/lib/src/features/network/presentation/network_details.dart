@@ -41,13 +41,13 @@ class _NetworkDetailsState extends State<NetworkDetails> {
               return AlertDialog(
                 backgroundColor: const Color.fromARGB(255, 54, 54, 54),
                 title: const Text('Forget network'),
-                content: Column(
+                content: const Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                         'You might need to enter password to reconnect to this network again.',
-                        style: const TextStyle(fontSize: 18)),
+                        style: TextStyle(fontSize: 18)),
                   ],
                 ),
                 actions: [
@@ -119,17 +119,17 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                                     context, state.selectedAccessPoint),
                                 style: ButtonStyle(
                                   backgroundColor:
-                                      WidgetStatePropertyAll<Color>(
+                                      const WidgetStatePropertyAll<Color>(
                                           Color(0xFF044DDF)),
                                   shape: WidgetStatePropertyAll<
                                       RoundedRectangleBorder>(
                                     RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
-                                      side: BorderSide(),
+                                      side: const BorderSide(),
                                     ),
                                   ),
                                 ),
-                                icon: IconWidget(
+                                icon: const IconWidget(
                                   iconColor: Colors.white,
                                   iconPath: Images.addRoundedSquare,
                                   iconHeight: 20,
@@ -149,7 +149,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
             child: ContainerWidget(
               child: Column(
                 children: [
-                  Row(
+                  const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [],

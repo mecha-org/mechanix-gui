@@ -34,6 +34,12 @@ class WifiRepositoryImpl implements WifiRepository {
           _wirelessEnabledController.add(_client.wirelessEnabled);
         }
       });
+      // _client.activeConnectionAdded.listen((connection) {
+      //   logger.w('Active connection added: ${connection.id}');
+      // });
+      // _client.activeConnectionRemoved.listen((connection) {
+      //   logger.w('Active connection removed: ${connection.id}');
+      // });
       logger.i('NetworkManagerClient connected ${_client.wirelessEnabled}');
     } catch (e) {
       logger.e('Failed to connect to NetworkManagerClient: $e');
