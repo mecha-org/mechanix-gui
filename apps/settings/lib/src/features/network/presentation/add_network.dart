@@ -36,30 +36,51 @@ class AddNetwork extends StatelessWidget {
         create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
         child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
           listener: (context, state) {
-            // Handle error
-            if (state.deviceState == NetworkManagerDeviceState.ipCheck) {
-              print("state.deviceState ${state.deviceState}");
+            ScaffoldMessenger.of(context).clearSnackBars();
+
+            final bool hasError =
+                state.deviceState == NetworkManagerDeviceState.needAuth ||
+                    (state.error != null && state.error!.isNotEmpty);
+
+            final bool isAuthenticating =
+                state.deviceState == NetworkManagerDeviceState.ipCheck ||
+                    state.deviceState == NetworkManagerDeviceState.config;
+
+            if (hasError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text("Connecting to network..",
-                      style: const TextStyle(color: Colors.white)),
+                  content: Text(
+                    state.error ?? "Connection failed",
+                    style: const TextStyle(color: Colors.red),
+                  ),
                   duration: const Duration(seconds: 2),
                   backgroundColor: Colors.grey[800],
                 ),
               );
-            } else if (state.deviceState ==
-                NetworkManagerDeviceState.activated) {
-              print("connected successfully.");
+              return;
+            } else if (isAuthenticating) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    "Authenticating...",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: Colors.grey[800],
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                    "Connected",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  duration: const Duration(seconds: 2),
+                  backgroundColor: Colors.grey[800],
+                ),
+              );
               backNavigation(context);
-            } else if (state.error != null && state.error!.isNotEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("${state.error}",
-                      style: const TextStyle(color: Colors.red)),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor: Colors.grey[800],
-                ),
-              );
             }
           },
           child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
