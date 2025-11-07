@@ -1,14 +1,14 @@
 use gpui::*;
 
-pub struct AppDrawer {}
+pub struct StatusBar {}
 
-impl AppDrawer {
+impl StatusBar {
     pub fn new() -> Self {
         Self {}
     }
 }
 
-impl Render for AppDrawer {
+impl Render for StatusBar {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .bg(gpui::black())
@@ -18,6 +18,6 @@ impl Render for AppDrawer {
             .w_full()
             .h_full()
             .text_color(gpui::white())
-            .child("AppDrawer")
+            .child("StatusBar")
     }
 }

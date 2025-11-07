@@ -1,6 +1,6 @@
 
 [package]
-name = "status_bar"
+name = "commons"
 edition = "2024"
 version.workspace = true
 authors.workspace = true
@@ -14,4 +14,3 @@ keywords.workspace = true
 gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
-commons = { path = "../commons" }
