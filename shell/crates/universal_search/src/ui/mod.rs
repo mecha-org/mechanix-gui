@@ -1,48 +1,23 @@
-mod frequently_used_apps;
-mod navigation_bar;
-mod search_input;
-mod search_items;
-mod search_results;
+use gpui::*;
 
-pub use crate::ui::{
-    frequently_used_apps::*, navigation_bar::*, search_input::*, search_items::*, search_results::*,
-};
-use crate::{
-    icons::UniversalSearchIcons,
-    types::{DesktopApp, SearchResult},
-};
+pub struct UniversalSearch {}
 
-use bevy::prelude::*;
-use types::prelude::*;
+impl UniversalSearch {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
 
-#[derive(Component)]
-pub struct ParentContainer;
-
-#[derive(Component)]
-pub struct Container;
-
-pub fn ui(
-    mut commands: &Commands,
-    asset_server: &AssetServer,
-    apps: Vec<DesktopApp>,
-    searches: Vec<SearchResult>,
-    results: Vec<SearchResult>,
-    results_for: String,
-    browser_apps: Vec<DesktopApp>,
-    font_assets: &FontAssets,
-    icons: &UniversalSearchIcons,
-) -> impl Bundle {
-    (
-        Node {
-            width: Val::Percent(100.),
-            height: Val::Percent(100.),
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::FlexEnd,
-            align_items: AlignItems::FlexStart,
-            ..Default::default()
-        },
-        Container,
-        children![bar(icons.left_nav_bar.clone())],
-        // children![bar()],
-    )
+impl Render for UniversalSearch {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .bg(gpui::black())
+            .flex()
+            .items_center()
+            .justify_center()
+            .w_full()
+            .h_full()
+            .text_color(gpui::white())
+            .child("UniversalSearch")
+    }
 }

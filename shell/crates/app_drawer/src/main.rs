@@ -1,25 +1,21 @@
-use app_drawer::AppDrawerPlugin;
-use bevy::{asset::AssetMetaCheck, prelude::*, window::ExitCondition, winit::WinitPlugin};
-use bevy_wayland::prelude::*;
+use app_drawer::prelude::*;
+use commons::prelude::*;
+use gpui::*;
 
 fn main() {
-    App::new()
-        .add_plugins((
-            DefaultPlugins
-                .build()
-                .disable::<WinitPlugin>()
-                .set(WindowPlugin {
-                    primary_window: None,
-                    exit_condition: ExitCondition::DontExit,
-                    ..Default::default()
-                })
-                .set(AssetPlugin {
-                    meta_check: AssetMetaCheck::Never,
-                    unapproved_path_mode: bevy::asset::UnapprovedPathMode::Allow,
-                    ..Default::default()
-                }),
-            WaylandPlugin,
-            AppDrawerPlugin,
-        ))
-        .run();
+    let application = gpui::Application::new().with_assets(Assets {});
+    application.run(|cx| {
+        let window_bounds =
+            WindowBounds::Windowed(Bounds::centered(None, size(px(540.0), px(620.0)), cx));
+
+        cx.open_window(
+            WindowOptions {
+                window_bounds: Some(window_bounds),
+                ..Default::default()
+            },
+            |_window, cx| cx.new(|_cx| AppDrawer::new()),
+        )
+        .unwrap();
+        cx.activate(true);
+    });
 }
