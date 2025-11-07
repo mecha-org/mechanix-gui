@@ -1,0 +1,20 @@
+
+[package]
+name = "launcher"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+gpui = { workspace = true }
+rust-embed = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+commons = { path = "../commons" }
+status_bar = { path = "../status_bar" }
+settings_drawer = { path = "../settings_drawer" }
