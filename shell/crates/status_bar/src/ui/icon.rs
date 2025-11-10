@@ -1,4 +1,5 @@
 use gpui::{prelude::FluentBuilder, *};
+pub const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 
 #[derive(IntoElement, Clone)]
 pub enum IconName {
@@ -34,43 +35,42 @@ pub enum IconName {
     Battery90Charging,
     Battery100Charging,
 }
-
 impl IconName {
-    pub fn resolve(self) -> SharedString {
-        match self {
-            Self::WirelessOn => "icons/status_bar/wireless_on.svg",
-            Self::WirelessOff => "icons/status_bar/wireless_off.svg",
-            Self::WireleessWarning => "icons/status_bar/wireless_warning.svg",
-            Self::WirelessHigh => "icons/status_bar/wireless_high.svg",
-            Self::WirelessMedium => "icons/status_bar/wireless_medium.svg",
-            Self::WirelessLow => "icons/status_bar/wireless_low.svg",
-            Self::BluetoothOn => "icons/status_bar/bluetooth_on.svg",
-            Self::BluetoothOff => "icons/status_bar/bluetooth_off.svg",
-            Self::BluetoothConnected => "icons/status_bar/bluetooth_connected.svg",
-            Self::BluetoothWarning => "icons/status_bar/bluetooth_warning.svg",
-            Self::Battery10 => "icons/status_bar/battery_10.svg",
-            Self::Battery20 => "icons/status_bar/battery_20.svg",
-            Self::Battery30 => "icons/status_bar/battery_30.svg",
-            Self::Battery40 => "icons/status_bar/battery_40.svg",
-            Self::Battery50 => "icons/status_bar/battery_50.svg",
-            Self::Battery60 => "icons/status_bar/battery_60.svg",
-            Self::Battery70 => "icons/status_bar/battery_70.svg",
-            Self::Battery80 => "icons/status_bar/battery_80.svg",
-            Self::Battery90 => "icons/status_bar/battery_90.svg",
-            Self::Battery100 => "icons/status_bar/battery_100.svg",
-            Self::BatteryEmpty => "icons/status_bar/battery_empty.svg",
-            Self::Battery10Charging => "icons/status_bar/battery_10_charging.svg",
-            Self::Battery20Charging => "icons/status_bar/battery_20_charging.svg",
-            Self::Battery30Charging => "icons/status_bar/battery_30_charging.svg",
-            Self::Battery40Charging => "icons/status_bar/battery_40_charging.svg",
-            Self::Battery50Charging => "icons/status_bar/battery_50_charging.svg",
-            Self::Battery60Charging => "icons/status_bar/battery_60_charging.svg",
-            Self::Battery70Charging => "icons/status_bar/battery_70_charging.svg",
-            Self::Battery80Charging => "icons/status_bar/battery_80_charging.svg",
-            Self::Battery90Charging => "icons/status_bar/battery_90_charging.svg",
-            Self::Battery100Charging => "icons/status_bar/battery_100_charging.svg",
-        }
-        .into()
+    pub fn resolve(&self) -> SharedString {
+        let icon_path = match self {
+            IconName::WirelessOn => "wireless-on.svg",
+            IconName::WirelessOff => "wireless-off.svg",
+            IconName::WireleessWarning => "wireless-warning.svg",
+            IconName::WirelessHigh => "wireless-high.svg",
+            IconName::WirelessMedium => "wireless-medium.svg",
+            IconName::WirelessLow => "wireless-low.svg",
+            IconName::BluetoothOn => "bluetooth-on.svg",
+            IconName::BluetoothOff => "bluetooth-off.svg",
+            IconName::BluetoothConnected => "bluetooth-connected.svg",
+            IconName::BluetoothWarning => "bluetooth-warning.svg",
+            IconName::Battery10 => "battery-10.svg",
+            IconName::Battery20 => "battery-20.svg",
+            IconName::Battery30 => "battery-30.svg",
+            IconName::Battery40 => "battery-40.svg",
+            IconName::Battery50 => "battery-50.svg",
+            IconName::Battery60 => "battery-60.svg",
+            IconName::Battery70 => "battery-70.svg",
+            IconName::Battery80 => "battery-80.svg",
+            IconName::Battery90 => "battery-90.svg",
+            IconName::Battery100 => "battery-100.svg",
+            IconName::BatteryEmpty => "battery-empty.svg",
+            IconName::Battery10Charging => "battery-10-charging.svg",
+            IconName::Battery20Charging => "battery-20-charging.svg",
+            IconName::Battery30Charging => "battery-30-charging.svg",
+            IconName::Battery40Charging => "battery-40-charging.svg",
+            IconName::Battery50Charging => "battery-50-charging.svg",
+            IconName::Battery60Charging => "battery-60-charging.svg",
+            IconName::Battery70Charging => "battery-70-charging.svg",
+            IconName::Battery80Charging => "battery-80-charging.svg",
+            IconName::Battery90Charging => "battery-90-charging.svg",
+            IconName::Battery100Charging => "battery-100-charging.svg",
+        };
+        format!("{}{}", STATUS_BAR_ICONS_DIR, icon_path).into()
     }
 }
 
@@ -132,7 +132,6 @@ impl RenderOnce for Icon {
             .w(px(40.))
             .h(px(40.))
             .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
-            // .when_some(self.size, |this, size| this.size(size))
             .when_some(self.text_color, |this, text_color| {
                 this.text_color(text_color)
             })
