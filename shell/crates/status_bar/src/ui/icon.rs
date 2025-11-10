@@ -4,7 +4,7 @@ use gpui::{prelude::FluentBuilder, *};
 pub enum IconName {
     WirelessOn,
     WirelessOff,
-    WireleessFix,
+    WireleessWarning,
     WirelessHigh,
     WirelessMedium,
     WirelessLow,
@@ -40,7 +40,7 @@ impl IconName {
         match self {
             Self::WirelessOn => "icons/status_bar/wireless_on.svg",
             Self::WirelessOff => "icons/status_bar/wireless_off.svg",
-            Self::WireleessFix => "icons/status_bar/wireless_fix.svg",
+            Self::WireleessWarning => "icons/status_bar/wireless_warning.svg",
             Self::WirelessHigh => "icons/status_bar/wireless_high.svg",
             Self::WirelessMedium => "icons/status_bar/wireless_medium.svg",
             Self::WirelessLow => "icons/status_bar/wireless_low.svg",
