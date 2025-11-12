@@ -2,11 +2,11 @@ use std::ops::Range;
 
 use gpui::{
     App, Application, Bounds, ClipboardItem, Context, CursorStyle, ElementId, ElementInputHandler,
-    Entity, EntityInputHandler, FocusHandle, Focusable, GlobalElementId, KeyBinding, Keystroke,
-    LayoutId, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad, Pixels, Point,
-    ShapedLine, SharedString, Style, TextRun, UTF16Selection, UnderlineStyle, Window, WindowBounds,
-    WindowOptions, actions, black, div, fill, hsla, opaque_grey, point, prelude::*, px, relative,
-    rgb, rgba, size, white, yellow,
+    Entity, EntityInputHandler, FocusHandle, Focusable, FontWeight, GlobalElementId, KeyBinding,
+    Keystroke, LayoutId, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad,
+    Pixels, Point, ShapedLine, SharedString, Style, TextRun, TextStyle, UTF16Selection,
+    UnderlineStyle, Window, WindowBounds, WindowOptions, actions, black, div, fill, hsla,
+    opaque_grey, point, prelude::*, px, relative, rgb, rgba, size, white, yellow,
 };
 use unicode_segmentation::*;
 
@@ -30,7 +30,7 @@ actions!(
     ]
 );
 
-struct TextInput {
+pub struct TextInput {
     focus_handle: FocusHandle,
     content: SharedString,
     placeholder: SharedString,
@@ -43,6 +43,20 @@ struct TextInput {
 }
 
 impl TextInput {
+    pub fn new(cx: &mut Context<Self>) -> Self {
+        Self {
+            focus_handle: cx.focus_handle(),
+            content: "".into(),
+            placeholder: "Type here...".into(),
+            selected_range: 0..0,
+            selection_reversed: false,
+            marked_range: None,
+            last_layout: None,
+            last_bounds: None,
+            is_selecting: false,
+        }
+    }
+
     fn left(&mut self, _: &Left, _: &mut Window, cx: &mut Context<Self>) {
         if self.selected_range.is_empty() {
             self.move_to(self.previous_boundary(self.cursor_offset()), cx);
@@ -180,7 +194,16 @@ impl TextInput {
             return self.content.len();
         }
 
-        line.index_for_x(position.x - bounds.left()).unwrap_or(0)
+        let x_position = position.x - bounds.left();
+
+        // Handle the case where index_for_x returns None (position outside text bounds)
+        line.index_for_x(x_position).unwrap_or_else(|| {
+            if x_position < 0.0.into() {
+                0
+            } else {
+                self.content.len()
+            }
+        })
     }
 
     fn select_to(&mut self, offset: usize, cx: &mut Context<Self>) {
@@ -382,7 +405,7 @@ impl EntityInputHandler for TextInput {
         let last_layout = self.last_layout.as_ref()?;
 
         assert_eq!(last_layout.text, self.content);
-        let utf8_index = last_layout.index_for_x(point.x - line_point.x)?; // Use ? here
+        let utf8_index = last_layout.index_for_x(point.x - line_point.x)?;
         Some(self.offset_to_utf16(utf8_index))
     }
 }
@@ -498,9 +521,9 @@ impl Element for TextElement {
                 Some(fill(
                     Bounds::new(
                         point(bounds.left() + cursor_pos, bounds.top()),
-                        size(px(2.), bounds.bottom() - bounds.top()),
+                        size(px(2.), px(20.)),
                     ),
-                    gpui::blue(),
+                    rgb(0xF4F4F4),
                 )),
             )
         } else {
@@ -594,7 +617,8 @@ impl Render for TextInput {
             .bg(gpui::blue())
             .text_color(gpui::black())
             .h(px(20.))
-            .w_full()
+            // .w_full()
+            .w(px(400.))
             .bg(white())
             .child(
                 div()
@@ -611,20 +635,4 @@ impl Focusable for TextInput {
     fn focus_handle(&self, _: &App) -> FocusHandle {
         self.focus_handle.clone()
     }
-}
-
-// Public factory function for other modules to create a TextInput entity.
-// Note: named `make_text_input` to avoid collision with `actions!(text_input, ...)`.
-pub fn make_text_input<T>(cx: &mut Context<T>) -> impl IntoElement {
-    cx.new(|cx| TextInput {
-        focus_handle: cx.focus_handle(),
-        content: "".into(),
-        placeholder: "Type here".into(),
-        selected_range: 0..0,
-        selection_reversed: false,
-        marked_range: None,
-        last_layout: None,
-        last_bounds: None,
-        is_selecting: false,
-    })
 }
