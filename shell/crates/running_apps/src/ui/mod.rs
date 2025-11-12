@@ -2,6 +2,17 @@
 use gpui::prelude::*;
 use gpui::*;
 
+// Layout constants
+const CARD_WIDTH: f32 = 250.0;
+const CARD_HEIGHT: f32 = 290.0;
+const CARD_GAP: f32 = 8.0;
+const CONTAINER_WIDTH: f32 = 540.0;
+const PADDING: f32 = 0.0;
+
+// Drag thresholds
+const DRAG_DETECTION_THRESHOLD: f32 = 5.0;
+const VERTICAL_DISMISS_THRESHOLD: f32 = -100.0;
+
 /// Running apps UI for a 540x620 embedded screen.
 /// Optimized to avoid per-frame Vec clones and reduce allocations.
 pub struct RunningApps {
@@ -38,8 +49,12 @@ impl RunningApps {
         apps.push(AppCard { id: 3, offset_y: px(0.0), card_color: rgb(0x654f60) });
         apps.push(AppCard { id: 4, offset_y: px(0.0), card_color: rgb(0x9024d1) });
 
+        // Calculate initial scroll offset to center the last app
+        let last_index = if apps.is_empty() { 0 } else { apps.len() - 1 };
+        let initial_scroll_offset = Self::calculate_center_offset_for_index_static(last_index);
+
         Self {
-            scroll_offset: px(0.0),
+            scroll_offset: initial_scroll_offset,
             is_dragging: false,
             drag_start_x: px(0.0),
             drag_start_y: px(0.0),
@@ -50,19 +65,17 @@ impl RunningApps {
         }
     }
 
-    /// Calculate the scroll offset needed to center a card at the given index
-    fn calculate_center_offset_for_index(&self, index: usize) -> Pixels {
-        const CARD_W: f32 = 250.0;
-        const GAP: f32 = 8.0;
-        const CONTAINER_W: f32 = 540.0;
-
-        // Position of the card (left edge)
-        let card_position = (index as f32) * (CARD_W + GAP);
-
-        // Offset needed to center this card
-        let center_point = (CONTAINER_W - CARD_W) / 2.0;
+    /// Static version of calculate_center_offset_for_index for use in new()
+    fn calculate_center_offset_for_index_static(index: usize) -> Pixels {
+        let card_position = (index as f32) * (CARD_WIDTH + CARD_GAP);
+        let center_point = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
 
         px(center_point - card_position)
+    }
+
+    /// Calculate the scroll offset needed to center a card at the given index
+    fn calculate_center_offset_for_index(&self, index: usize) -> Pixels {
+        Self::calculate_center_offset_for_index_static(index)
     }
 
     /// Find and snap to the nearest card based on current scroll position
@@ -71,18 +84,13 @@ impl RunningApps {
             return;
         }
 
-        const CARD_W: f32 = 250.0;
-        const GAP: f32 = 8.0;
-        const CONTAINER_W: f32 = 540.0;
-
-        let center_point = (CONTAINER_W - CARD_W) / 2.0;
-        let card_step = CARD_W + GAP;
+        let center_point = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
+        let card_step = CARD_WIDTH + CARD_GAP;
 
         // Convert scroll offset into f32
-        let scroll_distance = self.scroll_offset.to_f64() as f32; // Assuming px(f32) type structure
+        let scroll_distance = self.scroll_offset.to_f64() as f32;
 
         // Determine which card is closest to center
-        // If scroll_offset is 0, first card should be centered.
         let nearest_index = ((-scroll_distance + center_point) / card_step).round() as isize;
 
         // Clamp the index
@@ -129,12 +137,12 @@ impl RunningApps {
         let delta_x = event.position.x - self.drag_start_x;
         let delta_y = event.position.y - self.drag_start_y;
 
-        // Lazily decide direction once movement > 5px
+        // Lazily decide direction once movement > threshold
         if self.drag_direction.is_none() {
             let abs_delta_x = if delta_x >= px(0.0) { delta_x } else { px(0.0) - delta_x };
             let abs_delta_y = if delta_y >= px(0.0) { delta_y } else { px(0.0) - delta_y };
 
-            if abs_delta_x > px(5.0) || abs_delta_y > px(5.0) {
+            if abs_delta_x > px(DRAG_DETECTION_THRESHOLD) || abs_delta_y > px(DRAG_DETECTION_THRESHOLD) {
                 self.drag_direction = if abs_delta_x > abs_delta_y {
                     Some(DragDirection::Horizontal)
                 } else {
@@ -148,18 +156,13 @@ impl RunningApps {
                 // Horizontal scrolling (swipe) - free scroll during drag
                 self.scroll_offset = self.drag_start_offset + delta_x;
 
-                // Compute bounds such that first/last card can be centered.
-                const CARD_W: f32 = 250.0;
-                const GAP: f32 = 8.0;
-                const PADDING: f32 = 0.0;
-                const CONTAINER_W: f32 = 540.0;
-
-                let center_offset = (CONTAINER_W - CARD_W) / 2.0;
+                // Compute bounds such that first/last card can be centered
+                let center_offset = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
                 let max_scroll = px(center_offset - PADDING);
 
                 // last card position (x) = (n-1) * (card_width + gap) + padding
                 let last_index = if self.apps.is_empty() { 0 } else { self.apps.len() - 1 };
-                let last_pos = (last_index as f32) * (CARD_W + GAP) + PADDING;
+                let last_pos = (last_index as f32) * (CARD_WIDTH + CARD_GAP) + PADDING;
                 let min_scroll = px(center_offset - last_pos);
 
                 // clamp
@@ -211,22 +214,16 @@ impl RunningApps {
                 if let Some(card_id) = self.dragging_card {
                     if let Some(pos) = self.apps.iter().position(|a| a.id == card_id) {
                         let offset_y = self.apps[pos].offset_y;
-                        let threshold = px(-100.0);
 
-                        if offset_y < threshold {
+                        if offset_y < px(VERTICAL_DISMISS_THRESHOLD) {
                             // remove the app
                             self.apps.retain(|a| a.id != card_id);
 
                             // Recalculate bounds and clamp scroll_offset if needed
                             if !self.apps.is_empty() {
-                                const CARD_W: f32 = 250.0;
-                                const GAP: f32 = 8.0;
-                                const PADDING: f32 = 0.0;
-                                const CONTAINER_W: f32 = 540.0;
-
-                                let center_offset = (CONTAINER_W - CARD_W) / 2.0;
+                                let center_offset = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
                                 let last_index = self.apps.len() - 1;
-                                let last_pos = (last_index as f32) * (CARD_W + GAP) + PADDING;
+                                let last_pos = (last_index as f32) * (CARD_WIDTH + CARD_GAP) + PADDING;
                                 let min_scroll = px(center_offset - last_pos);
 
                                 if self.scroll_offset < min_scroll {
@@ -280,13 +277,6 @@ impl Render for RunningApps {
             .on_mouse_up(MouseButton::Left, cx.listener(Self::handle_mouse_up))
             .when(has_apps, |this| {
                 this.child(
-                    // div()
-                    //     .flex()
-                    //     .items_center()
-                    //     .justify_center()
-                    //     .w_full()
-                    //     .h_full()
-                    //     .child(
                     // viewport container
                     div()
                         .flex()
@@ -298,7 +288,7 @@ impl Render for RunningApps {
                         .child({
                             // container that holds the cards in a horizontal row
                             // Avoid cloning the apps vec; index directly.
-                            let mut container = div().flex().flex_row().gap(px(8.0));
+                            let mut container = div().flex().flex_row().gap(px(CARD_GAP));
 
                             // Apply relative offset only when not centering
                             if !should_center {
@@ -316,9 +306,8 @@ impl Render for RunningApps {
                                 container = container.child(
                                     div()
                                         .flex()
-                                        // .flex_shrink_0()
-                                        .w(px(250.0))
-                                        .h(px(290.0))
+                                        .w(px(CARD_WIDTH))
+                                        .h(px(CARD_HEIGHT))
                                         .bg(card_color)
                                         .rounded(px(16.0))
                                         .relative()
@@ -341,7 +330,6 @@ impl Render for RunningApps {
                             container
                         })
                 )
-                // )
             })
             .when(!has_apps, |this| {
                 this.child(
@@ -384,7 +372,6 @@ impl Render for RunningApps {
                                     view.handle_clean_up(cx);
                                 })
                             )
-                            // .child(div().text_size(px(16.0)).child("🚀"))
                             .child(
                                 div()
                                     .text_color(rgb(0x888888))
