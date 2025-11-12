@@ -27,9 +27,9 @@ impl StatusBar {
     pub fn new() -> Self {
         Self {
             current_time_date: get_current_datetime(),
-            wireless_default_icon: IconName::WirelessOn,
+            wireless_default_icon: IconName::WirelessHigh,
             bluetooth_default_icon: IconName::BluetoothOn,
-            battery_default_icon: IconName::Battery30Charging,
+            battery_default_icon: IconName::Battery100,
         }
     }
 }
