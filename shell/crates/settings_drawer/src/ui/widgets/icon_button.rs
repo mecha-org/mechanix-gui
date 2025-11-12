@@ -3,12 +3,10 @@ use std::rc::Rc;
 use crate::ui::icon::Icon;
 use gpui::{prelude::FluentBuilder, *};
 
-use std::sync::LazyLock;
-
-pub static ICON_COLOR: LazyLock<Rgba> = LazyLock::new(|| rgb(0x4D4D4D)); // default - gray | passed-white or active - blue
-pub static ACTIVE_ICON_COLOR: LazyLock<Rgba> = LazyLock::new(|| rgb(0x4892F1));
-pub static ACTIVE_BG_COLOR: LazyLock<Rgba> = LazyLock::new(|| rgb(0x202020));
-pub static PRESSED_BG_COLOR: LazyLock<Rgba> = LazyLock::new(|| rgb(0x363636)); // default - light gray | passed - yellow - xDB9200
+const ICON_COLOR: u32 = 0x4D4D4D;               // default - gray | custom can be - white or active - blue
+const ACTIVE_ICON_COLOR: u32 = 0x4892F1;
+const ACTIVE_BG_COLOR: u32 = 0x202020;
+const PRESSED_BG_COLOR: u32 = 0x363636;         // default - light gray | custom can be - yellow - xDB9200
 
 #[derive(IntoElement)]
 pub struct IconButton {
@@ -108,37 +106,29 @@ impl RenderOnce for IconButton {
             // .opacity(0.2)
             .items_center()
             .justify_center()
-            .when(self.pressed, |this| this.bg(PRESSED_BG_COLOR.to_owned())) // BG - light gray - pressed
+            .when(self.pressed, |this| this.bg(rgb(PRESSED_BG_COLOR)))
             .when(!self.pressed && self.active, |this| {
                 if let Some(active_bg_color) = self.active_bg_color {
                     this.bg(active_bg_color)
                 } else {
-                    this.bg(ACTIVE_BG_COLOR.to_owned())
+                    this.bg(rgb(ACTIVE_BG_COLOR))
                 }
-               
-            }) // BG - dark gray - active
+            })
             .when_some(self.on_click, |this, on_click| {
                 this.on_click(move |event, window, cx| (on_click)(event, window, cx))
             })
-            // .when_some(self.icon, |this, icon| {
-            //     if let Some(icon_color) = self.icon_color {
-            //         this.child(icon.text_color(icon_color))       // passing gray for default
-            //     } else {
-            //         this.child(icon.text_color(rgb(0x4892F1)))   // blue - icon color
-            //     }
-            // })
             .when_some(self.icon, |this, icon| {
                 let color: Hsla = if self.active {
                     if let Some(active_icon_color) = self.active_icon_color {
                         active_icon_color
                     } else {
-                        ACTIVE_ICON_COLOR.to_owned().into()
+                        rgb(ACTIVE_ICON_COLOR).into()
                     }
                 } else {
                     if let Some(icon_color) = self.icon_color {
                         icon_color
                     } else {
-                        ICON_COLOR.to_owned().into()
+                        rgb(ICON_COLOR).into()
                     }
                 };
                 this.child(icon.text_color(color))

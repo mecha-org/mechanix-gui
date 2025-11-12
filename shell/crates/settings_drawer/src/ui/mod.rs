@@ -129,7 +129,6 @@ impl Render for SettingsDrawer {
                             .icon(IconName::Settings)
                             .icon_color(rgb(0xF4F4F4))
                             .size((px(24.), px(24.)))
-                            // .bg_color(rgb(0x101010))
                             .border(px(0.))
                             .on_click(cx.listener(|_, _, _, _| {
                                 println!("settings clicked");
@@ -157,7 +156,6 @@ impl Render for SettingsDrawer {
                             .icon(IconName::Power)
                             .icon_color(rgb(0xF4F4F4))
                             .size((px(24.), px(24.)))
-                            // .bg_color(rgb(0x101010))
                             .border(px(0.))
                             .on_click(cx.listener(|_, _, _, _| {
                                 println!("power clicked");
@@ -178,7 +176,6 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_rotation")
                             .icon(rotation_icon)
                             .active(self.rotation_on)
-                            // .icon_color(rotation_icon_color)
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
@@ -211,7 +208,6 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_screen_mirroring")
                             .icon(screen_mirroring_icon)
                             .active(self.screen_mirrorring)
-                            // .icon_color(screen_mirroring_icon_color)
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
@@ -326,7 +322,6 @@ impl Render for SettingsDrawer {
                                             .icon(IconName::BrightnessHigh)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
-                                            // .bg_color(rgb(0x202020))
                                             .border(px(0.))
                                             .on_click(cx.listener(|_, _, _, _| {
                                                 println!("brightness clicked");
@@ -369,7 +364,6 @@ impl Render for SettingsDrawer {
                                             .icon(IconName::VolumeMedium)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
-                                            // .bg_color(rgb(0x202020))
                                             .border(px(0.))
                                             .on_click(cx.listener(|_, _, _, _| {
                                                 println!("volume clicked");
@@ -390,7 +384,7 @@ impl Render for SettingsDrawer {
                     .child(
                         IconButton::new("id_wireless")
                             .icon(self.wireless_details.icon.clone())
-                            .icon_color(rgb(0x4D4D4D))
+                            .icon_color(rgb(0x4D4D4D))  // changes as per wireless state
                             .size((px(104.), px(104.)))
                             .active(self.wireless_details.enalble)
                             .label("Office wifi 1")
