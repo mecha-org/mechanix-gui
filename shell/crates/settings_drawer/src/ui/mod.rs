@@ -380,7 +380,6 @@ impl Render for SettingsDrawer {
                     .gap_5()
                     .h(px(104.))
                     .rounded(px(4.))
-                    .bg(rgb(0x181818))
                     .child(
                         IconButton::new("id_wireless")
                             .icon(self.wireless_details.icon.clone())

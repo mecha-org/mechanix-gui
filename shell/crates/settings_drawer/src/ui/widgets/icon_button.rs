@@ -7,6 +7,8 @@ const ICON_COLOR: u32 = 0x4D4D4D;               // default - gray | custom can b
 const ACTIVE_ICON_COLOR: u32 = 0x4892F1;
 const ACTIVE_BG_COLOR: u32 = 0x202020;
 const PRESSED_BG_COLOR: u32 = 0x363636;         // default - light gray | custom can be - yellow - xDB9200
+const BG_COLOR: u32 = 0x181818;
+const BORDER_COLOR : u32 = 0x202020;
 
 #[derive(IntoElement)]
 pub struct IconButton {
@@ -101,11 +103,12 @@ impl RenderOnce for IconButton {
             .h(px(84.0))
             .rounded(px(8.0))
             .border(px(1.))
-            .border_color(rgb(0x4D4D4D))
+            .border_color(rgb(BORDER_COLOR))
             .active(|this| this.opacity(0.85))
             // .opacity(0.2)
             .items_center()
             .justify_center()
+            .when(!self.pressed && !self.active, |this| this.bg(rgb(BG_COLOR)))
             .when(self.pressed, |this| this.bg(rgb(PRESSED_BG_COLOR)))
             .when(!self.pressed && self.active, |this| {
                 if let Some(active_bg_color) = self.active_bg_color {
