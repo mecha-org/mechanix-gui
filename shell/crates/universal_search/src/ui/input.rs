@@ -115,7 +115,6 @@ impl TextInput {
         cx: &mut Context<Self>,
     ) {
         self.is_selecting = true;
-
         if event.modifiers.shift {
             self.select_to(self.index_for_mouse_position(event.position), cx);
         } else {
@@ -469,7 +468,7 @@ impl Element for TextElement {
         let style = window.text_style();
 
         let (display_text, text_color) = if content.is_empty() {
-            (input.placeholder.clone(), hsla(0., 0., 0., 0.2))
+            (input.placeholder.clone(), hsla(0., 0., 0.65, 1.))
         } else {
             (content, style.color)
         };
@@ -515,6 +514,9 @@ impl Element for TextElement {
             .shape_line(display_text, font_size, &runs, None);
 
         let cursor_pos = line.x_for_index(cursor);
+
+        // CURSOR HEIGHT, WIDTH AND COLOR
+
         let (selection, cursor) = if selected_range.is_empty() {
             (
                 None,
@@ -539,7 +541,7 @@ impl Element for TextElement {
                             bounds.bottom(),
                         ),
                     ),
-                    rgba(0x3311ff30),
+                    gpui::blue(), //  rgba(0x3311ff30),
                 )),
                 None,
             )
@@ -587,9 +589,11 @@ impl Element for TextElement {
     }
 }
 
+// INPUT BOX CHANGES
 impl Render for TextInput {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
+            .overflow_x_hidden()
             .flex()
             .key_context("TextInput")
             .track_focus(&self.focus_handle(cx))
@@ -611,21 +615,18 @@ impl Render for TextInput {
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
-            .bg(rgb(0xeeeeee))
-            .line_height(px(30.))
-            .text_size(px(24.))
-            .bg(gpui::blue())
-            .text_color(gpui::black())
-            .h(px(20.))
-            // .w_full()
             .w(px(400.))
-            .bg(white())
+            .justify_center()
+            .items_center()
+            .h(px(20.))
+            .line_height(px(18.))
+            .text_size(px(16.))
+            .text_color(rgb(0xF4F4F4))
             .child(
                 div()
-                    .h(px(30. + 4. * 2.))
+                    .h(px(20.))
                     .w_full()
-                    .p(px(4.))
-                    .bg(white())
+                    .pt(px(3.))
                     .child(TextElement { input: cx.entity() }),
             )
     }
