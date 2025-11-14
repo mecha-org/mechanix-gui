@@ -1,7 +1,7 @@
 use gpui::{prelude::FluentBuilder, *};
 pub const UNIVERSAL_SEARCH_ICONS_DIR: &str = "icons/universal-search/";
 
-#[derive(IntoElement, Clone)]
+#[derive(IntoElement, Clone, PartialEq, Debug)]
 pub enum IconName {
     Ardour,
     ArrowUpRight,
@@ -13,6 +13,7 @@ pub enum IconName {
     FolderSmall,
     XIcon,
 }
+
 impl IconName {
     pub fn resolve(&self) -> SharedString {
         let icon_path = match self {
@@ -38,7 +39,6 @@ impl RenderOnce for IconName {
 
 #[derive(IntoElement)]
 pub struct Icon {
-    main: Svg,
     path: SharedString,
     size: Option<(Pixels, Pixels)>,
     text_color: Option<Hsla>,
@@ -47,7 +47,6 @@ pub struct Icon {
 impl Default for Icon {
     fn default() -> Self {
         Self {
-            main: svg(),
             path: "".into(),
             size: None,
             text_color: None,
@@ -56,7 +55,7 @@ impl Default for Icon {
 }
 
 impl Icon {
-    pub fn new(name: IconName) -> Self {
+    pub fn build(name: IconName) -> Self {
         Self::default().path(name.resolve())
     }
 
@@ -65,32 +64,36 @@ impl Icon {
         self
     }
 
-    fn build(name: IconName) -> Self {
-        Self::default().path(name.resolve())
+    pub fn text_color(mut self, text_color: impl Into<Hsla>) -> Self {
+        self.text_color = Some(text_color.into());
+        self
     }
-
     pub fn size(mut self, size: impl Into<(Pixels, Pixels)>) -> Self {
         let (width, height) = size.into();
         self.size = Some((width, height));
         self
     }
-
-    pub fn text_color(mut self, text_color: impl Into<Hsla>) -> Self {
-        self.text_color = Some(text_color.into());
-        self
-    }
 }
 
 impl RenderOnce for Icon {
-    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-        self.main
-            .path(self.path)
-            .w(px(40.))
-            .h(px(40.))
-            .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
-            .when_some(self.text_color, |this, text_color| {
-                this.text_color(text_color)
-            })
+    fn render(self, _window: &mut Window, _cx: &mut App) -> impl gpui::IntoElement {
+        let is_svg = self.path.ends_with(".svg");
+        if is_svg {
+            // SVG icon case
+            let base = svg().path(self.path.clone()).w(px(40.0)).h(px(40.0));
+
+            // Apply color if available
+            let rendered = base
+                .when_some(self.text_color, |this, color| this.text_color(color))
+                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1));
+
+            rendered.into_any_element()
+        } else {
+            // PNG / JPEG icon case
+            img(self.path.clone())
+                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
+                .into_any_element()
+        }
     }
 }
 

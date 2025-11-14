@@ -1,35 +1,17 @@
 mod icon;
 pub mod input;
+pub mod models;
 
 use crate::ui::icon::Icon;
 use gpui::*;
 use icon::IconName;
 use input::TextInput;
+use models::UniversalSearch;
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 56.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
-
-pub struct UniversalSearch {
-    scroll_offset: Pixels,
-    is_dragging: bool,
-    drag_start_x: Pixels,
-    drag_start_y: Pixels,
-    last_scroll_offset: Pixels,
-    app_count: usize,
-    file_count: usize,
-    pub ardour_icon: IconName,
-    pub arrow_up_right_icon: IconName,
-    pub chromium_icon: IconName,
-    pub firefox_icon: IconName,
-    pub github_icon: IconName,
-    pub folder_medium_icon: IconName,
-    pub search_icon: IconName,
-    pub folder_small_icon: IconName,
-    pub x_icon: IconName,
-    pub text_input: Entity<TextInput>,
-}
 
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
@@ -56,7 +38,7 @@ impl UniversalSearch {
 
     fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
         // Fixed container height - adjust this value as needed
-        let container_height = px(620. - SEARCH_BAR_HEIGHT); // You can change this to whatever height you want
+        let container_height = px(620.0 - SEARCH_BAR_HEIGHT); // You can change this to whatever height you want
 
         // Max scroll: when content is at the top (no empty space)
         let max_scroll = px(0.0);
@@ -75,14 +57,14 @@ impl UniversalSearch {
     fn estimate_content_height(&self) -> Pixels {
         // Calculate icon grid height
         let columns = 6;
-        let icon_rows = (self.app_count as f32 / columns as f32).ceil() as f32;
+        let icon_rows = ((self.app_count as f32) / (columns as f32)).ceil() as f32;
         let icon_section_height = px(76.0) * icon_rows + px(16.0); // 76px per row + margin
 
         // Calculate file list height (56px per row + 1px divider)
-        let file_section_height = px(57.0) * self.file_count as f32;
+        let file_section_height = px(57.0) * (self.file_count as f32);
 
         // Total content height with padding
-        icon_section_height + file_section_height + px(16.)
+        icon_section_height + file_section_height + px(16.0)
     }
 
     fn on_mouse_down(
@@ -111,12 +93,7 @@ impl UniversalSearch {
             let new_scroll_offset = self.last_scroll_offset + delta_y;
 
             // Apply bounds based on current content
-            let content_height = self.estimate_content_height(
-
-                /* you'll need to pass icon and file counts here */
-                // 8,  // example icon count
-                // 50, // example file count
-            );
+            let content_height = self.estimate_content_height();
             let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
 
             self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
@@ -286,9 +263,9 @@ impl Render for UniversalSearch {
                                         .items_center()
                                         .justify_center()
                                         .child(
-                                            Icon::new(arrow_up_right_icon.clone())
-                                                .size((px(16.0), px(16.0)))
-                                                .text_color(rgb(0xe9e9e9))
+                                            Icon::from(arrow_up_right_icon.clone())
+                                                .size((px(11.0), px(11.0)))
+                                                .text_color(rgb(0xa6a6a6))
                                         )
                                 )
                         )
@@ -308,15 +285,13 @@ impl Render for UniversalSearch {
             file_children.push(divider());
         }
 
-        // Calculate dynamic grid layout
-        // let total_icons: u16 = icons.len().try_into().unwrap();
         let max_columns: usize = 6;
         let columns: u16 = self.app_count.min(max_columns).try_into().unwrap();
         let rows: u16 = (((self.app_count as f32) / (columns as f32)).ceil() as u32)
             .try_into()
             .unwrap();
 
-        let grid_size = gpui::size(px(508.0), px(APP_SECTION_HEIGHT * rows as f32 + 16.));
+        let grid_size = gpui::size(px(508.0), px(APP_SECTION_HEIGHT * (rows as f32) + 16.0));
 
         div()
             .h_full()
@@ -333,7 +308,7 @@ impl Render for UniversalSearch {
                     .flex()
                     .flex_col()
                     .relative()
-                    .h(px(620. - SEARCH_BAR_HEIGHT))
+                    .h(px(620.0 - SEARCH_BAR_HEIGHT))
                     .overflow_hidden()
                     .on_mouse_down(
                         MouseButton::Left,
@@ -384,7 +359,7 @@ impl Render for UniversalSearch {
                 div()
                     .h(px(SEARCH_BAR_HEIGHT))
                     .w_full()
-                    .bottom(px(0.))
+                    .bottom(px(0.0))
                     .child(
                         div().size_full().flex().flex_row().items_center().child(
                             div()
@@ -414,7 +389,7 @@ impl Render for UniversalSearch {
                                                     .rounded(px(8.0))
                                                     .child(
                                                         div().w(px(17.0)).h(px(17.0)).child(
-                                                            Icon::new(search_icon.clone())
+                                                            Icon::from(search_icon.clone())
                                                                 .size((px(17.0), px(17.0)))
                                                                 .text_color(rgb(0x808080)),
                                                         ),
@@ -436,6 +411,21 @@ impl Render for UniversalSearch {
                                         .items_center()
                                         .justify_center()
                                         .border_1()
+                                        .id("button")
+                                        .on_click(cx.listener(
+                                            |this: &mut UniversalSearch, _event, _window, cx| {
+                                                this.text_input.update(cx, |input, cx| {
+                                                    input.content = "".into();
+                                                    input.selected_range = 0..0;
+                                                    input.selection_reversed = false;
+                                                    input.marked_range = None;
+                                                    input.last_layout = None;
+                                                    input.last_bounds = None;
+                                                    input.is_selecting = false;
+                                                    cx.notify();
+                                                });
+                                            },
+                                        ))
                                         .border_color(rgb(0x808080))
                                         .child(
                                             div()
@@ -451,7 +441,7 @@ impl Render for UniversalSearch {
                                                         .items_center()
                                                         .justify_center()
                                                         .child(
-                                                            Icon::new(x_icon.clone())
+                                                            Icon::from(x_icon.clone())
                                                                 .size((px(15.0), px(15.0)))
                                                                 .text_color(rgb(0xe9e9e9)),
                                                         ),
