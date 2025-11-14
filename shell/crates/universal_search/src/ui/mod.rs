@@ -5,13 +5,33 @@ pub mod models;
 use crate::ui::icon::Icon;
 use gpui::*;
 use icon::IconName;
-use input::TextInput;
+use models::DragInfo;
+use models::TextInput;
 use models::UniversalSearch;
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 56.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
+
+impl DragInfo {
+    fn new() -> Self {
+        Self {
+            position: Point::default(),
+        }
+    }
+
+    fn position(mut self, pos: Point<Pixels>) -> Self {
+        self.position = pos;
+        self
+    }
+}
+
+impl Render for DragInfo {
+    fn render(&mut self, _: &mut Window, _: &mut Context<'_, Self>) -> impl IntoElement {
+        Empty
+    }
+}
 
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
@@ -20,7 +40,6 @@ impl UniversalSearch {
             file_count: 0,
             scroll_offset: px(0.0),
             is_dragging: false,
-            drag_start_x: px(0.0),
             drag_start_y: px(0.0),
             last_scroll_offset: px(0.0),
             ardour_icon: IconName::Ardour,
@@ -67,27 +86,48 @@ impl UniversalSearch {
         icon_section_height + file_section_height + px(16.0)
     }
 
-    fn on_mouse_down(
+    // fn on_mouse_down(
+    //     &mut self,
+    //     event: &MouseDownEvent,
+    //     _window: &mut Window,
+    //     cx: &mut Context<Self>,
+    // ) {
+    //     self.drag_start_y = event.position.y;
+    //     self.last_scroll_offset = self.scroll_offset;
+    //     self.is_dragging = true;
+    //     cx.stop_propagation();
+    // }
+
+    // fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
+    //     self.is_dragging = false;
+    //     self.last_scroll_offset = self.scroll_offset;
+    // }
+
+    // fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
+    //     if self.is_dragging {
+    //         let delta_y = event.position.y - self.drag_start_y;
+
+    //         // Calculate new scroll offset
+    //         let new_scroll_offset = self.last_scroll_offset + delta_y;
+
+    //         // Apply bounds based on current content
+    //         let content_height = self.estimate_content_height();
+    //         let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+
+    //         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
+
+    //         cx.notify();
+    //     }
+    // }
+
+    fn on_drag_move(
         &mut self,
-        event: &MouseDownEvent,
-        _window: &mut Window,
+        event: &DragMoveEvent<DragInfo>,
+        _: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.drag_start_x = event.position.x;
-        self.drag_start_y = event.position.y;
-        self.last_scroll_offset = self.scroll_offset;
-        self.is_dragging = true;
-        cx.stop_propagation();
-    }
-
-    fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
-        self.is_dragging = false;
-        self.last_scroll_offset = self.scroll_offset;
-    }
-
-    fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
         if self.is_dragging {
-            let delta_y = event.position.y - self.drag_start_y;
+            let delta_y = event.event.position.y - self.drag_start_y;
 
             // Calculate new scroll offset
             let new_scroll_offset = self.last_scroll_offset + delta_y;
@@ -100,6 +140,11 @@ impl UniversalSearch {
 
             cx.notify();
         }
+    }
+
+    fn on_drop(&mut self, _: &DragMoveEvent<DragInfo>, _: &mut Window, _cx: &mut Context<Self>) {
+        self.is_dragging = false;
+        self.last_scroll_offset = self.scroll_offset;
     }
 }
 
@@ -195,6 +240,7 @@ impl Render for UniversalSearch {
                 .flex()
                 .justify_center()
                 .items_center()
+                .id("button")
                 .child(div().child(image.h(px(41.74)).w(px(41.74))))
         };
 
@@ -293,6 +339,8 @@ impl Render for UniversalSearch {
 
         let grid_size = gpui::size(px(508.0), px(APP_SECTION_HEIGHT * (rows as f32) + 16.0));
 
+        let entity = cx.entity();
+
         div()
             .h_full()
             .w_full()
@@ -300,8 +348,10 @@ impl Render for UniversalSearch {
             .px(px(16.0))
             .flex()
             .flex_col()
-            .on_mouse_up(MouseButton::Left, cx.listener(UniversalSearch::on_mouse_up))
-            .on_mouse_move(cx.listener(UniversalSearch::on_mouse_move))
+            // .on_mouse_up(MouseButton::Left, cx.listener(UniversalSearch::on_mouse_up))
+            .on_drop(cx.listener(UniversalSearch::on_drop))
+            // .on_mouse_move(cx.listener(UniversalSearch::on_mouse_move))
+            .on_drag_move(cx.listener(UniversalSearch::on_drag_move))
             .child(
                 div()
                     .id("drag")
@@ -310,10 +360,22 @@ impl Render for UniversalSearch {
                     .relative()
                     .h(px(620.0 - SEARCH_BAR_HEIGHT))
                     .overflow_hidden()
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(UniversalSearch::on_mouse_down),
-                    )
+                    .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
+                        entity.update(cx, |this, cx| {
+                            this.drag_start_y = position.y;
+                            this.last_scroll_offset = this.scroll_offset;
+                            this.is_dragging = true;
+                            cx.stop_propagation();
+                            cx.notify();
+                        });
+
+                        let data = DragInfo::new().position(position);
+                        cx.new(|_| data)
+                    })
+                    // .on_mouse_down(
+                    //     MouseButton::Left,
+                    //     cx.listener(UniversalSearch::on_mouse_down),
+                    // )
                     .child(
                         div().absolute().top(self.scroll_offset).w_full().child(
                             div()

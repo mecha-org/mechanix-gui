@@ -1,11 +1,12 @@
 use std::ops::Range;
 
+use crate::ui::models::TextInput;
 use gpui::{
     App, Bounds, ClipboardItem, Context, CursorStyle, ElementId, ElementInputHandler, Entity,
     EntityInputHandler, FocusHandle, Focusable, GlobalElementId, LayoutId, MouseButton,
-    MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad, Pixels, Point, ShapedLine,
-    SharedString, Style, TextRun, UTF16Selection, UnderlineStyle, Window, actions, div, fill, hsla,
-    point, prelude::*, px, relative, rgb, size,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad, Pixels, Point, ShapedLine, Style,
+    TextRun, UTF16Selection, UnderlineStyle, Window, actions, div, fill, hsla, point, prelude::*,
+    px, relative, rgb, size,
 };
 use unicode_segmentation::*;
 
@@ -29,18 +30,6 @@ actions!(
         Quit,
     ]
 );
-
-pub struct TextInput {
-    pub focus_handle: FocusHandle,
-    pub content: SharedString,
-    pub placeholder: SharedString,
-    pub selected_range: Range<usize>,
-    pub selection_reversed: bool,
-    pub marked_range: Option<Range<usize>>,
-    pub last_layout: Option<ShapedLine>,
-    pub last_bounds: Option<Bounds<Pixels>>,
-    pub is_selecting: bool,
-}
 
 impl TextInput {
     pub fn new(cx: &mut Context<Self>) -> Self {
