@@ -2,94 +2,50 @@ use std::time::Duration;
 mod icon;
 use gpui::prelude::*;
 use gpui::*;
+pub mod models;
+pub mod constants;
+pub use constants::*;
+pub use models::{ RunningApps, AppCard, DragDirection };
 
 use crate::ui::icon::{ Icon, IconName };
 
-// Layout constants
-const CARD_WIDTH: f32 = 250.0;
-const CARD_HEIGHT: f32 = 290.0;
-const CARD_GAP: f32 = 8.0;
-const CONTAINER_WIDTH: f32 = 540.0;
-const PADDING: f32 = 0.0;
-
-// Drag thresholds
-const DRAG_DETECTION_THRESHOLD: f32 = 5.0;
-const VERTICAL_DISMISS_THRESHOLD: f32 = -100.0;
-
-pub struct RunningApps {
-    scroll_offset: Pixels,
-    is_dragging: bool,
-    drag_start_x: Pixels,
-    target_scroll_offset: Pixels,
-    drag_start_y: Pixels,
-    drag_start_offset: Pixels,
-    apps: Vec<AppCard>,
-    dragging_card: Option<usize>, // stores app.id of the card being dragged
-    drag_direction: Option<DragDirection>,
-    is_animating: bool,
-    is_removing: bool, // Flag to indicate a card is being removed with animation
-    removing_card_id: Option<usize>, // ID of the card being removed
-}
-
-#[derive(Clone, Copy, PartialEq)]
-enum DragDirection {
-    Horizontal,
-    Vertical,
-}
-
-#[derive(Clone)]
-struct AppCard {
-    id: usize,
-    offset_y: Pixels, // used for vertical drag animation
-    target_offset_y: Pixels, // Target for vertical animation
-    icon_color: Rgba,
-    app_name: String,
-    app_icon_path: String,
-}
-
 impl RunningApps {
     pub fn new() -> Self {
-        // Pre-allocate capacity if you expect more apps in future
         let mut apps = Vec::with_capacity(8);
         apps.push(AppCard {
             id: 0,
             offset_y: px(0.0),
             target_offset_y: px(0.0),
-            icon_color: rgb(0x5a7c91),
-            app_name: "Notes".to_string(),
-            app_icon_path: IconName::Files.resolve().to_string(),
+            app_name: "Firefox".to_string(),
+            app_icon_path: IconName::Firefox,
         });
         apps.push(AppCard {
             id: 1,
             offset_y: px(0.0),
             target_offset_y: px(0.0),
-            icon_color: rgb(0x6a491c),
-            app_name: "Files".to_string(),
-            app_icon_path: IconName::Files.resolve().to_string(),
+            app_name: "Chromium".to_string(),
+            app_icon_path: IconName::Chromium,
         });
         apps.push(AppCard {
             id: 2,
             offset_y: px(0.0),
             target_offset_y: px(0.0),
-            icon_color: rgb(0x9bcd9b),
-            app_name: "Settings".to_string(),
-            app_icon_path: IconName::Files.resolve().to_string(),
+            app_name: "Kitty".to_string(),
+            app_icon_path: IconName::Kitty,
         });
         apps.push(AppCard {
             id: 3,
             offset_y: px(0.0),
             target_offset_y: px(0.0),
-            icon_color: rgb(0x654f60),
-            app_name: "Music".to_string(),
-            app_icon_path: IconName::Files.resolve().to_string(),
+            app_name: "Mecha".to_string(),
+            app_icon_path: IconName::Mecha,
         });
         apps.push(AppCard {
             id: 4,
             offset_y: px(0.0),
             target_offset_y: px(0.0),
-            icon_color: rgb(0x9024d1),
-            app_name: "Camera".to_string(),
-            app_icon_path: IconName::Files.resolve().to_string(),
+            app_name: "Files".to_string(),
+            app_icon_path: IconName::Files,
         });
 
         let last_index = if apps.is_empty() { 0 } else { apps.len() - 1 };
@@ -108,40 +64,50 @@ impl RunningApps {
             is_animating: false,
             is_removing: false,
             removing_card_id: None,
+            current_center_index: last_index,
+            is_cleaning_up: false,
         }
     }
 
-    /// Static version of calculate_center_offset_for_index for use in new()
     fn calculate_center_offset_for_index_static(index: usize) -> Pixels {
         let card_position = (index as f32) * (CARD_WIDTH + CARD_GAP);
         let center_point = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
-
         px(center_point - card_position)
     }
 
-    /// Calculate the scroll offset needed to center a card at the given index
     fn calculate_center_offset_for_index(&self, index: usize) -> Pixels {
         Self::calculate_center_offset_for_index_static(index)
     }
 
-    /// Find and snap to the nearest card based on current scroll position
-    fn snap_to_nearest_card(&mut self) {
+    fn snap_to_nearest_card_with_threshold(&mut self) {
         if self.apps.is_empty() {
             return;
         }
 
-        let center_point = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
+        // Calculate drag distance from start
+        let drag_delta = self.scroll_offset - self.drag_start_offset;
+        let drag_distance = drag_delta.to_f64() as f32;
+
+        // Calculate threshold: 20% of card width + gap
         let card_step = CARD_WIDTH + CARD_GAP;
+        let switch_threshold = card_step * HORIZONTAL_SWITCH_THRESHOLD;
 
-        // Convert scroll offset into f32
-        let scroll_distance = self.scroll_offset.to_f64() as f32;
+        let mut target_index = self.current_center_index;
 
-        // Determine which card is closest to center
-        let nearest_index = ((-scroll_distance + center_point) / card_step).round() as isize;
+        if drag_distance > switch_threshold {
+            // Dragged right (showing previous card) - move to left
+            if target_index > 0 {
+                target_index -= 1;
+            }
+        } else if drag_distance < -switch_threshold {
+            // Dragged left (showing next card) - move to right
+            if target_index < self.apps.len() - 1 {
+                target_index += 1;
+            }
+        }
+        // else: stay on current card (didn't drag enough)
 
-        // Clamp the index
-        let target_index = nearest_index.clamp(0, (self.apps.len() - 1) as isize) as usize;
-        // Snap to calculated card
+        self.current_center_index = target_index;
         self.target_scroll_offset = self.calculate_center_offset_for_index(target_index);
         self.is_animating = true;
         self.is_dragging = false;
@@ -159,7 +125,6 @@ impl RunningApps {
             self.scroll_offset = self.target_scroll_offset;
             self.is_animating = false;
         } else {
-            // Smooth lerp with 20% interpolation factor
             let lerp_factor = 0.2;
             self.scroll_offset = self.scroll_offset + diff * lerp_factor;
             cx.spawn(async move |this, cx| {
@@ -184,30 +149,43 @@ impl RunningApps {
             if diff.abs() < threshold {
                 // Animation complete - remove the card
                 app.offset_y = app.target_offset_y;
+
+                // Find which index was removed
+                let removed_index = self.apps.iter().position(|a| a.id == card_id);
+
                 self.apps.retain(|a| a.id != card_id);
                 self.is_removing = false;
                 self.removing_card_id = None;
 
-                // Recalculate bounds and clamp scroll_offset if needed
-                if !self.apps.is_empty() {
-                    // let center_offset = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
-                    let last_index = self.apps.len() - 1;
-                    let min_scroll = Self::calculate_center_offset_for_index_static(last_index);
-
-                    // let last_pos = (last_index as f32) * (CARD_WIDTH + CARD_GAP) + PADDING;
-                    // let min_scroll = px(center_offset - last_pos);
-
-                    if self.scroll_offset < min_scroll {
-                        self.scroll_offset = min_scroll;
-                        self.target_scroll_offset = min_scroll;
+                // Adjust current_center_index after removal
+                if let Some(removed_idx) = removed_index {
+                    // If we removed a card to the left of center, adjust index
+                    if removed_idx < self.current_center_index {
+                        self.current_center_index = self.current_center_index.saturating_sub(1);
+                    } else if
+                        // If we removed the centered card or one to the right, keep same index
+                        // (the next card will slide into that position)
+                        self.current_center_index >= self.apps.len() &&
+                        !self.apps.is_empty()
+                    {
+                        self.current_center_index = self.apps.len() - 1;
                     }
+                }
+
+                // After removing, smoothly animate scroll position
+                if !self.apps.is_empty() {
+                    self.target_scroll_offset = self.calculate_center_offset_for_index(
+                        self.current_center_index
+                    );
+                    self.is_animating = true;
+                    self.animate_scroll(cx);
                 } else {
                     self.scroll_offset = px(0.0);
                     self.target_scroll_offset = px(0.0);
+                    self.current_center_index = 0;
                 }
                 cx.notify();
             } else {
-                // Continue animation with smooth lerp
                 let lerp_factor = 0.2;
                 app.offset_y = app.offset_y + diff * lerp_factor;
 
@@ -222,15 +200,61 @@ impl RunningApps {
         }
     }
 
+    fn animate_clean_up(&mut self, cx: &mut Context<Self>) {
+        if !self.is_cleaning_up {
+            return;
+        }
+
+        // Check if all cards have reached their target
+        let all_done = self.apps.iter().all(|app| {
+            let diff = app.target_offset_y - app.offset_y;
+            diff.abs() < px(1.0)
+        });
+
+        if all_done {
+            // All animations complete - clear all cards
+            self.apps.clear();
+            self.scroll_offset = px(0.0);
+            self.target_scroll_offset = px(0.0);
+            self.is_cleaning_up = false;
+            self.current_center_index = 0;
+            cx.notify();
+        } else {
+            // Continue animating all cards upward
+            let lerp_factor = 0.2;
+            for app in self.apps.iter_mut() {
+                let diff = app.target_offset_y - app.offset_y;
+                app.offset_y = app.offset_y + diff * lerp_factor;
+            }
+
+            cx.spawn(async move |this, cx| {
+                cx.background_executor().timer(Duration::from_millis(16)).await;
+                let _ = this.update(cx, |this, cx| {
+                    this.animate_clean_up(cx);
+                    cx.notify();
+                });
+            }).detach();
+        }
+    }
+
     fn handle_clean_up(&mut self, cx: &mut Context<Self>) {
-        // UI-only: clear the list of apps (no backend action).
-        self.apps.clear();
-        self.scroll_offset = px(0.0);
-        self.target_scroll_offset = px(0.0);
+        if self.apps.is_empty() {
+            return;
+        }
+
+        // Set all cards to animate upward with staggered delays
+        for (i, app) in self.apps.iter_mut().enumerate() {
+            // Stagger the animation by adding delay based on index
+            let delay_offset = (i as f32) * 30.0; // 30px stagger between cards
+            app.target_offset_y = px(VERTICAL_TARGET_THRESHOLD - delay_offset);
+        }
+
+        self.is_cleaning_up = true;
         self.is_animating = false;
         self.is_removing = false;
-        self.removing_card_id = None;
-        cx.notify();
+
+        // Start the animation
+        self.animate_clean_up(cx);
     }
 
     fn handle_card_mouse_down(
@@ -247,7 +271,6 @@ impl RunningApps {
         self.drag_start_y = event.position.y;
         self.drag_start_offset = self.scroll_offset;
         self.drag_direction = None;
-        // stop propagation so parent doesn't treat this as viewport drag
         cx.stop_propagation();
     }
 
@@ -264,7 +287,6 @@ impl RunningApps {
         let delta_x = event.position.x - self.drag_start_x;
         let delta_y = event.position.y - self.drag_start_y;
 
-        // Lazily decide direction once movement > threshold
         if self.drag_direction.is_none() {
             let abs_delta_x = delta_x.abs();
             let abs_delta_y = delta_y.abs();
@@ -293,15 +315,11 @@ impl RunningApps {
                 // last card position (x) = (n-1) * (card_width + gap) + padding
                 let last_index = if self.apps.is_empty() { 0 } else { self.apps.len() - 1 };
                 let min_scroll = Self::calculate_center_offset_for_index_static(last_index);
-                // let last_pos = (last_index as f32) * (CARD_WIDTH + CARD_GAP) + PADDING;
-                // let min_scroll = px(center_offset - last_pos);
 
                 self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
                 cx.notify();
             }
             Some(DragDirection::Vertical) => {
-                // Vertical drag applied to the currently dragging card
-                // Only allow upward dragging (negative delta_y)
                 if let Some(card_id) = self.dragging_card {
                     if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
                         app.offset_y = if delta_y <= px(0.0) { delta_y } else { px(0.0) };
@@ -323,28 +341,22 @@ impl RunningApps {
             return;
         }
 
-        // Handle based on drag direction
         match self.drag_direction {
             Some(DragDirection::Vertical) => {
-                // Vertical drag - check threshold and remove
                 if let Some(card_id) = self.dragging_card {
                     if let Some(pos) = self.apps.iter().position(|a| a.id == card_id) {
                         let offset_y = self.apps[pos].offset_y;
 
                         if offset_y < px(VERTICAL_DISMISS_THRESHOLD) {
-                            // Start removal animation
                             if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-                                // Set target to animate card off screen (beyond top)
-                                app.target_offset_y = px(-400.0);
+                                app.target_offset_y = px(VERTICAL_TARGET_THRESHOLD);
                                 self.is_removing = true;
                                 self.removing_card_id = Some(card_id);
                                 self.animate_card_removal(card_id, cx);
                             }
                         } else {
-                            // Snap back to original position with animation
                             if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
                                 app.target_offset_y = px(0.0);
-                                // Animate snap back
                                 let card_id_copy = card_id;
                                 cx.spawn(async move |this, cx| {
                                     let _ = this.update(cx, |this, cx| {
@@ -358,7 +370,7 @@ impl RunningApps {
             }
             Some(DragDirection::Horizontal) => {
                 // Horizontal drag - snap to nearest card
-                self.snap_to_nearest_card();
+                self.snap_to_nearest_card_with_threshold();
                 self.animate_scroll(cx);
             }
             None => {}
@@ -407,47 +419,58 @@ impl Render for RunningApps {
             .items_center()
             .justify_center()
             .bg(rgb(0x000000))
-            .on_mouse_move(cx.listener(Self::handle_mouse_move))
-            .on_mouse_up(MouseButton::Left, cx.listener(Self::handle_mouse_up))
 
             .when(has_apps, |this| {
                 this.child(
                     div()
+                        .id("running_apps")
                         .flex()
                         .w_full()
+                        .on_mouse_move(cx.listener(Self::handle_mouse_move))
+                        .on_mouse_up(MouseButton::Left, cx.listener(Self::handle_mouse_up))
+
                         .h_full()
                         .overflow_x_hidden()
                         .items_center()
                         .when(should_center, |d| d.justify_center())
                         .child({
-                            // container that holds the cards in a horizontal row
-                            // Avoid cloning the apps vec; index directly.
                             let mut container = div().flex().flex_row().gap(px(CARD_GAP));
 
-                            // Apply relative offset only when not centering
                             if !should_center {
                                 container = container.relative().left(self.scroll_offset);
                             }
 
-                            // Iterate by index to avoid cloning
                             for i in 0..self.apps.len() {
                                 let app_id = self.apps[i].id;
                                 let offset_y = self.apps[i].offset_y;
                                 let app_icon_path = self.apps[i].app_icon_path.clone();
                                 let app_name = self.apps[i].app_name.clone();
-                                let icon_color = self.apps[i].icon_color;
 
-                                // Each card has its own on_mouse_down that references app_id
                                 container = container.child(
                                     div()
+                                        .id("asd")
+                                        .relative()
                                         .flex()
                                         .w(px(CARD_WIDTH))
                                         .h(px(CARD_HEIGHT))
+                                        .justify_center()
+                                        .items_center()
                                         .child(
-                                            Icon::from(IconName::BgApp).size((
-                                                px(CARD_WIDTH),
-                                                px(CARD_HEIGHT),
-                                            ))
+                                            div()
+                                                .absolute()
+                                                .left_0()
+                                                .top_0()
+                                                .child(
+                                                    Icon::from(IconName::BgApp).size((
+                                                        px(CARD_WIDTH),
+                                                        px(CARD_HEIGHT),
+                                                    ))
+                                                )
+                                        )
+                                        .child(
+                                            Icon::from(app_icon_path.clone())
+                                                .size((px(40.0), px(40.0)))
+                                                .text_color(rgb(0xf4f4f4))
                                         )
                                         .rounded(px(16.0))
                                         .relative()
@@ -485,11 +508,16 @@ impl Render for RunningApps {
                                                                 .rounded(px(3.2))
                                                                 .w(px(16.0))
                                                                 .h(px(16.0))
-                                                                .bg(icon_color)
                                                                 .flex()
                                                                 .justify_center()
                                                                 .items_center()
-                                                                .child(img(app_icon_path))
+                                                                .child(
+                                                                    Icon::from(
+                                                                        app_icon_path.clone()
+                                                                    )
+                                                                        .size((px(16.0), px(16.0)))
+                                                                        .text_color(rgb(0xf4f4f4))
+                                                                )
                                                         )
                                                         .child(
                                                             div()

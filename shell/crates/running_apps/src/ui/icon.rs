@@ -1,89 +1,3 @@
-// use gpui::{ prelude::FluentBuilder, * };
-
-// #[derive(IntoElement, Clone)]
-// pub enum IconName {
-//     CleanUp,
-//     Files,
-//     BgApp,
-// }
-// impl IconName {
-//     pub fn resolve(&self) -> SharedString {
-//         let icon_path = match self {
-//             IconName::CleanUp => "cleanup.svg",
-//             IconName::Files => "files.png",
-//             IconName::BgApp => "bg-app.png",
-//         };
-//         format!("{}{}", RUNNING_APPS_DIR, icon_path).into()
-//     }
-// }
-
-// impl RenderOnce for IconName {
-//     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-//         Icon::build(self)
-//     }
-// }
-
-// #[derive(IntoElement)]
-// pub struct Icon {
-//     main: Svg,
-//     path: SharedString,
-//     size: Option<(Pixels, Pixels)>,
-//     text_color: Option<Hsla>,
-// }
-
-// impl Default for Icon {
-//     fn default() -> Self {
-//         Self {
-//             main: svg(),
-//             path: "".into(),
-//             size: None,
-//             text_color: None,
-//         }
-//     }
-// }
-
-// impl Icon {
-//     pub fn new(name: IconName) -> Self {
-//         Self::default().path(name.resolve())
-//     }
-
-//     pub fn path(mut self, path: impl Into<SharedString>) -> Self {
-//         self.path = path.into();
-//         self
-//     }
-
-//     fn build(name: IconName) -> Self {
-//         Self::default().path(name.resolve())
-//     }
-
-//     pub fn size(mut self, size: impl Into<(Pixels, Pixels)>) -> Self {
-//         let (width, height) = size.into();
-//         self.size = Some((width, height));
-//         self
-//     }
-
-//     pub fn text_color(mut self, text_color: impl Into<Hsla>) -> Self {
-//         self.text_color = Some(text_color.into());
-//         self
-//     }
-// }
-
-// impl RenderOnce for Icon {
-//     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-//         self.main
-//             .path(self.path)
-//             .w(px(40.0))
-//             .h(px(40.0))
-//             .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
-//             .when_some(self.text_color, |this, text_color| { this.text_color(text_color) })
-//     }
-// }
-
-// impl From<IconName> for Icon {
-//     fn from(name: IconName) -> Self {
-//         Self::build(name)
-//     }
-// }
 use gpui::{ prelude::FluentBuilder, * };
 pub const RUNNING_APPS_DIR: &str = "icons/running_apps/";
 
@@ -92,6 +6,10 @@ pub enum IconName {
     CleanUp,
     Files,
     BgApp,
+    Firefox,
+    Chromium,
+    Kitty,
+    Mecha,
 }
 impl IconName {
     pub fn resolve(&self) -> SharedString {
@@ -99,6 +17,10 @@ impl IconName {
             IconName::CleanUp => "cleanup.svg",
             IconName::Files => "files.png",
             IconName::BgApp => "bg-app.png",
+            IconName::Firefox => "firefox.png",
+            IconName::Chromium => "chromium.png",
+            IconName::Kitty => "kitty.png",
+            IconName::Mecha => "mecha.png",
         };
         format!("{}{}", RUNNING_APPS_DIR, icon_path).into()
     }
