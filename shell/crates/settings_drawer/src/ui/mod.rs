@@ -45,10 +45,6 @@ pub struct SettingsDrawer {
     pub open_terminal: bool,
     pub cell_signal: bool,
 
-    pub brightness_value: f32,
-    pub height: f32,
-    pub width: f32,
-
     pub brightness_slider_state: Entity<SliderState>,
     pub brightness_slider_value: f32,
 
@@ -63,8 +59,8 @@ impl SettingsDrawer {
         let b_subscription =
             cx.subscribe(&brightness_slider, |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = event;
-                this.brightness_value = *value;
-                println!("brightness value: {:?}", this.brightness_value);
+                this.brightness_slider_value = *value;
+                println!("brightness value: {:?}", this.brightness_slider_value);
                 cx.notify();
             });
 
@@ -106,9 +102,6 @@ impl SettingsDrawer {
             },
             open_terminal: false,
             cell_signal: false,
-            brightness_value: 50.,
-            height: 56.,
-            width: 172.,
             brightness_slider_state: brightness_slider,
             brightness_slider_value: 0.0,
             volume_slider_state: volume_slider,
