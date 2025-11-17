@@ -20,6 +20,7 @@ pub struct IconButton {
     on_click: Option<Rc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
     size: Option<(Pixels, Pixels)>,
     icon_color: Option<Hsla>,
+    bg_color: Option<Hsla>,
     active_icon_color: Option<Hsla>,
     active_bg_color: Option<Hsla>,
     border: Option<Pixels>,
@@ -37,6 +38,7 @@ impl IconButton {
             on_click: None,
             size: None,
             icon_color: None,
+            bg_color: None,
             active_icon_color: None,
             active_bg_color: None,
             border: None,
@@ -65,6 +67,11 @@ impl IconButton {
 
     pub fn icon_color(mut self, icon_color: impl Into<Hsla>) -> Self {
         self.icon_color = Some(icon_color.into());
+        self
+    }
+
+    pub fn bg_color(mut self, bg_color: impl Into<Hsla>) -> Self {
+        self.bg_color = Some(bg_color.into());
         self
     }
 
@@ -108,7 +115,13 @@ impl RenderOnce for IconButton {
             // .opacity(0.2)
             .items_center()
             .justify_center()
-            .when(!self.pressed && !self.active, |this| this.bg(rgb(BG_COLOR)))
+            .when(!self.pressed && !self.active, |this| this.bg(
+                if let Some(bg_color) = self.bg_color {
+                    bg_color
+                } else {
+                    rgb(BG_COLOR).into()
+                },
+            ))
             .when(self.pressed, |this| this.bg(rgb(PRESSED_BG_COLOR)))
             .when(!self.pressed && self.active, |this| {
                 if let Some(active_bg_color) = self.active_bg_color {
