@@ -157,7 +157,8 @@ impl Render for UniversalSearch {
 
         self.app_count = apps.len();
 
-        let files = sample_files();
+        let search_text = self.text_input.read(cx).content.clone();
+        let files = sample_files(search_text.to_string());
 
         self.file_count = files.len();
 
@@ -234,7 +235,7 @@ impl Render for UniversalSearch {
                                                             .text_color(rgb(0xFFCC23))
                                                     }
                                                     FileType::File => {
-                                                        Icon::from(folder_small_icon.clone())
+                                                        Icon::from(search.icon_path.clone())
                                                             .size((px(21.82), px(21.82)))
                                                             .text_color(rgb(0xFFCC23))
                                                     }

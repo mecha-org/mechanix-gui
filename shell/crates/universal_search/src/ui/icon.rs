@@ -14,6 +14,10 @@ pub enum IconName {
     XIcon,
     File,
     ArrowCounterClockWise,
+    Json,
+    Rust,
+    TypeScript,
+    Markdown,
 }
 
 impl IconName {
@@ -30,6 +34,10 @@ impl IconName {
             IconName::XIcon => "x_icon.svg",
             IconName::File => "file_icon.png",
             IconName::ArrowCounterClockWise => "arrow_counter_clock_wise.svg",
+            IconName::Json => "json.png",
+            IconName::Rust => "rust.png",
+            IconName::TypeScript => "typescript.png",
+            IconName::Markdown => "markdown.png",
         };
         format!("{}{}", UNIVERSAL_SEARCH_ICONS_DIR, icon_path).into()
     }

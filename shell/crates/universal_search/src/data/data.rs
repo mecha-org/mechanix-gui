@@ -1,8 +1,8 @@
 use crate::ui::icon::IconName;
 use crate::ui::models::{FileType, RecentApps, SearchResults};
 
-pub fn sample_files() -> Vec<SearchResults> {
-    vec![
+pub fn sample_files(search: String) -> Vec<SearchResults> {
+    let search_results = vec![
         SearchResults {
             name: "src".into(),
             file_type: FileType::Directory,
@@ -46,24 +46,29 @@ pub fn sample_files() -> Vec<SearchResults> {
         SearchResults {
             name: "main.rs".into(),
             file_type: FileType::File,
-            icon_path: IconName::File,
+            icon_path: IconName::Rust,
         },
         SearchResults {
             name: "lib.json".into(),
             file_type: FileType::File,
-            icon_path: IconName::File,
+            icon_path: IconName::Json,
         },
         SearchResults {
             name: "mod.ts".into(),
             file_type: FileType::File,
-            icon_path: IconName::File,
+            icon_path: IconName::TypeScript,
         },
         SearchResults {
             name: "test.md".into(),
             file_type: FileType::File,
-            icon_path: IconName::File,
+            icon_path: IconName::Markdown,
         },
-    ]
+    ];
+
+    search_results
+        .into_iter()
+        .filter(|item| item.name.to_lowercase().contains(&search.to_lowercase()))
+        .collect()
 }
 
 pub fn sample_recent_apps() -> Vec<RecentApps> {
