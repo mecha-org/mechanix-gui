@@ -158,7 +158,7 @@ impl Render for UniversalSearch {
         self.app_count = apps.len();
 
         let search_text = self.text_input.read(cx).content.clone();
-        let files = sample_files(search_text.to_string());
+        let files = sample_search_results(search_text.to_string());
 
         self.file_count = files.len();
 

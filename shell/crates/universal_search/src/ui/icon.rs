@@ -23,21 +23,21 @@ pub enum IconName {
 impl IconName {
     pub fn resolve(&self) -> SharedString {
         let icon_path = match self {
-            IconName::Ardour => "ardour_icon.png",
-            IconName::ArrowUpRight => "arrow_up_right_icon.svg",
-            IconName::Firefox => "firefox_icon.png",
-            IconName::Chromium => "chromium_icon.png",
-            IconName::Github => "github_icon.png",
-            IconName::FolderMedium => "folder_medium_icon.svg",
-            IconName::Search => "search_icon.svg",
-            IconName::FolderSmall => "folder_small_icon.svg",
-            IconName::XIcon => "x_icon.svg",
-            IconName::File => "file_icon.png",
-            IconName::ArrowCounterClockWise => "arrow_counter_clock_wise.svg",
-            IconName::Json => "json.png",
-            IconName::Rust => "rust.png",
-            IconName::TypeScript => "typescript.png",
-            IconName::Markdown => "markdown.png",
+            IconName::Ardour => "ardour-icon.png",
+            IconName::ArrowUpRight => "arrow-up-right-icon.svg",
+            IconName::Firefox => "firefox-icon.png",
+            IconName::Chromium => "chromium-icon.png",
+            IconName::Github => "github-icon.png",
+            IconName::FolderMedium => "folder-medium-icon.svg",
+            IconName::Search => "search-icon.svg",
+            IconName::FolderSmall => "folder-small-icon.svg",
+            IconName::XIcon => "x-icon.svg",
+            IconName::File => "file-icon.png",
+            IconName::ArrowCounterClockWise => "arrow-counter-clock-wise.svg",
+            IconName::Json => "json-icon.png",
+            IconName::Rust => "rust-icon.png",
+            IconName::TypeScript => "typescript-icon.png",
+            IconName::Markdown => "markdown-icon.png",
         };
         format!("{}{}", UNIVERSAL_SEARCH_ICONS_DIR, icon_path).into()
     }

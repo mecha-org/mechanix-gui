@@ -1,7 +1,7 @@
 use crate::ui::icon::IconName;
 use crate::ui::models::{FileType, RecentApps, SearchResults};
 
-pub fn sample_files(search: String) -> Vec<SearchResults> {
+pub fn sample_search_results(search: String) -> Vec<SearchResults> {
     let search_results = vec![
         SearchResults {
             name: "src".into(),
