@@ -1,4 +1,5 @@
 use commons::prelude::*;
+use gpui::prelude::*;
 use gpui::*;
 use running_apps::prelude::*;
 
