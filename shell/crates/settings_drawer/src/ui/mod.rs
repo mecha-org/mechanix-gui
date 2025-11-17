@@ -37,8 +37,6 @@ pub struct SettingsDrawer {
     pub power_mode: PowerMode,
     pub mincrophone_recoding: bool,
     pub screen_recording: bool,
-    pub calc_active: bool,
-    pub camera_active: bool,
 
     pub wireless_details: WirelessDetails,
     pub bluetooth_details: BluetoothDetails,
@@ -88,8 +86,6 @@ impl SettingsDrawer {
             power_mode: PowerMode::Low,
             mincrophone_recoding: false,
             screen_recording: false,
-            calc_active: true,
-            camera_active: false,
             wireless_details: WirelessDetails {
                 enalble: true,
                 icon: IconName::WirelessHigh,
@@ -215,6 +211,8 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_rotation")
                             .icon(rotation_icon)
                             .active(self.rotation_on)
+                            .active_icon_color(rgb(0x4892F1))
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
@@ -247,6 +245,8 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_screen_mirroring")
                             .icon(screen_mirroring_icon)
                             .active(self.screen_mirrorring)
+                            .active_icon_color(rgb(0x4892F1))
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
@@ -269,6 +269,7 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_microphone")
                             .icon(IconName::MicroPhoneOff)
                             .active(self.mincrophone_recoding)
+                            .active_bg_color(rgb(0x202020))
                             .active_icon_color(rgb(0xFF6560))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -284,6 +285,7 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_screen_recording")
                             .icon(IconName::ScreenRecordingOff)
                             .active(self.screen_recording)
+                            .active_bg_color(rgb(0x202020))
                             .active_icon_color(rgb(0xFF6560))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -299,15 +301,12 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_calc")
                             .icon(IconName::Calculator)
                             .icon_color(rgb(0xF4F4F4))
-                            .active(self.calc_active)
-                            .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     println!("calc clicked");
-                                    this.calc_active = !this.calc_active;
                                     cx.notify();
                                 },
                             )),
@@ -316,7 +315,6 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_camera")
                             .icon(IconName::Camera)
                             .icon_color(rgb(0xF4F4F4))
-                            .active(self.camera_active)
                             .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -324,7 +322,6 @@ impl Render for SettingsDrawer {
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     println!("camera clicked");
-                                    this.camera_active = !this.camera_active;
                                     cx.notify();
                                 },
                             )),
@@ -444,6 +441,7 @@ impl Render for SettingsDrawer {
                             .icon_color(rgb(0x4D4D4D)) // changes as per wireless state
                             .size((px(104.), px(104.)))
                             .active(self.wireless_details.enalble)
+                            .active_bg_color(rgb(0x202020))
                             .label("Office wifi 1")
                             .on_click(cx.listener(|_, _, _, _| {
                                 println!("wireless clicked");
@@ -455,6 +453,7 @@ impl Render for SettingsDrawer {
                             .size((px(104.), px(104.)))
                             .label("OFF")
                             .active(self.bluetooth_details.enalble)
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(|_, _, _, _| {
                                 println!("bluetooth clicked");
                             })),
@@ -465,7 +464,6 @@ impl Render for SettingsDrawer {
                             .size((px(104.), px(104.)))
                             .label("Terminal")
                             .icon_color(rgb(0xF4F4F4))
-                            .active(self.open_terminal)
                             .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -473,7 +471,6 @@ impl Render for SettingsDrawer {
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     println!("terminal clicked");
-                                    this.open_terminal = !this.open_terminal;
                                     cx.notify();
                                 },
                             )),
@@ -485,6 +482,7 @@ impl Render for SettingsDrawer {
                             .label("No SIM")
                             .active(self.cell_signal)
                             .active_icon_color(rgb(0xF4F4F4))
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
