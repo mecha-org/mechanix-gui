@@ -1,7 +1,7 @@
-mod ui;
 mod models;
+mod ui;
 pub mod prelude {
-    pub use crate::ui::AppDrawer;
     pub use crate::models::*;
+    pub use crate::ui::AppDrawer;
     pub use crate::ui::icon::*;
 }

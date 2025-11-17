@@ -2,45 +2,27 @@ use gpui::{prelude::FluentBuilder, *};
 
 #[derive(IntoElement, Clone, PartialEq, Debug)]
 pub enum IconName {
-    RotationOn,
-    RotationOff,
-    Airplane,
-    ScreenMirroringOn,
-    ScreenMirroringOff,
-    Battery40,
-    MicroPhoneOff,
-    MicroPhoneOn,
-    ScreenRecordingOff,
-    ScreenRecordingOn,
-    Calculator,
-    Camera,
     Telegram,
     Mecha,
     Chromium,
     Files,
-    Firefox
+    Firefox,
+    Category,
+    Search,
+    Close,
 }
 
 impl IconName {
     pub fn resolve(self) -> SharedString {
         match self {
-            Self::RotationOn => "icons/rotation-on.svg",
-            Self::RotationOff => "icons/rotation-off.svg",
-            Self::Airplane => "icons/airplane.svg",
-            Self::ScreenMirroringOn => "icons/screen-mirroring-on.svg",
-            Self::ScreenMirroringOff => "icons/screen-mirroring-off.svg",
-            Self::Battery40 => "icons/battery-40.svg",
-            Self::MicroPhoneOff => "icons/microphone-off.svg",
-            Self::MicroPhoneOn => "icons/microphone-on.svg",
-            Self::ScreenRecordingOff => "icons/screen-recording-off.svg",
-            Self::ScreenRecordingOn => "icons/screen-recording-on.svg",
-            Self::Calculator => "icons/calculator.svg",
-            Self::Camera => "icons/camera.svg",
-            Self::Telegram => "icons/telegram.png",
-            Self::Mecha => "icons/mecha.png",
-            Self::Chromium => "icons/chromium.png",
-            Self::Files => "icons/files.png",
-            Self::Firefox => "icons/firefox.png",
+            Self::Telegram => "icons/app_drawer/telegram.png",
+            Self::Mecha => "icons/app_drawer/mecha.png",
+            Self::Chromium => "icons/app_drawer/chromium.png",
+            Self::Files => "icons/app_drawer/files.png",
+            Self::Firefox => "icons/app_drawer/firefox.png",
+            Self::Category => "icons/app_drawer/category.png",
+            Self::Search => "icons/app_drawer/search_icon.png",
+            Self::Close => "icons/app_drawer/x_icon.png",
         }
         .into()
     }
@@ -91,10 +73,7 @@ impl RenderOnce for Icon {
 
         if is_svg {
             // SVG icon case
-            let base = svg()
-                .path(self.path.clone())
-                .w(px(40.))
-                .h(px(40.));
+            let base = svg().path(self.path.clone()).w(px(40.)).h(px(40.));
 
             // Apply color if available
             let rendered = base.when_some(self.text_color, |this, color| this.text_color(color));
@@ -103,8 +82,8 @@ impl RenderOnce for Icon {
         } else {
             // PNG / JPEG icon case
             img(self.path.clone())
-                .w(px(40.))
-                .h(px(40.))
+                .w(px(58.))
+                .h(px(58.))
                 .into_any_element()
         }
     }

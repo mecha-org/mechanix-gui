@@ -1,10 +1,10 @@
-use gpui::prelude::*;
-use gpui::Global;
 use crate::prelude::IconName;
+use gpui::Global;
+use gpui::prelude::*;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct AppInfo {
-    pub id: String,
+    pub id: usize,
     pub name: String,
     pub category: String,
     pub icon_path: IconName,

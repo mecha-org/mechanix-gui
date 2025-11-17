@@ -50,9 +50,9 @@ impl RenderOnce for IconButton {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
         self.main
             .flex()
-            .w(px(84.0))
-            .h(px(84.0))
-            .rounded(px(8.0))
+            .w(px(80.0))
+            .h(px(80.0))
+            .rounded(px(12.0))
             .border(px(1.))
             .active(|this| this.opacity(0.85))
             .bg(rgb(0x282828))
@@ -65,7 +65,7 @@ impl RenderOnce for IconButton {
             })
             .when_some(self.icon, |this, icon| {
                 if let Some(icon_color) = self.icon_color {
-                    this.child(icon.text_color(icon_color))                
+                    this.child(icon.text_color(icon_color))
                 } else {
                     this.child(icon.text_color(rgb(0x4892F1)))
                 }
