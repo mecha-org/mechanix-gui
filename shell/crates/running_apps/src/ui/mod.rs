@@ -100,10 +100,6 @@ impl RunningApps {
         px(center_point - card_position)
     }
 
-    fn calculate_center_offset_for_index(&self, index: usize) -> Pixels {
-        Self::calculate_center_offset_for_index_static(index)
-    }
-
     fn snap_to_nearest_card_with_threshold(&mut self) {
         if self.apps.is_empty() {
             return;
@@ -132,7 +128,7 @@ impl RunningApps {
         // else: stay on current card (didn't drag enough)
 
         self.current_center_index = target_index;
-        self.target_scroll_offset = self.calculate_center_offset_for_index(target_index);
+        self.target_scroll_offset = Self::calculate_center_offset_for_index_static(target_index);
         self.is_animating = true;
         self.is_dragging = false;
     }
@@ -198,7 +194,7 @@ impl RunningApps {
 
                 // After removing, smoothly animate scroll position
                 if !self.apps.is_empty() {
-                    self.target_scroll_offset = self.calculate_center_offset_for_index(
+                    self.target_scroll_offset = Self::calculate_center_offset_for_index_static(
                         self.current_center_index
                     );
                     self.is_animating = true;

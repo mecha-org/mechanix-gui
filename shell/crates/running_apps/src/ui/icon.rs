@@ -1,5 +1,5 @@
 use gpui::{ prelude::FluentBuilder, * };
-pub const RUNNING_APPS_DIR: &str = "icons/running_apps/";
+pub const RUNNING_APPS_DIR: &str = "icons/running-apps/";
 
 #[derive(IntoElement, Clone, PartialEq, Debug)]
 pub enum IconName {
