@@ -1,11 +1,14 @@
-mod icon;
+pub mod icon;
 pub mod input;
 pub mod models;
 
+use crate::data::data::*;
 use crate::ui::icon::Icon;
+use crate::ui::models::FileType;
 use gpui::*;
 use icon::IconName;
 use models::DragInfo;
+use models::SearchResults;
 use models::TextInput;
 use models::UniversalSearch;
 
@@ -150,70 +153,12 @@ impl UniversalSearch {
 
 impl Render for UniversalSearch {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let apps = vec![
-            "icons/universal-search/chromium_icon.png",
-            "icons/universal-search/kitty_icon.png",
-            "icons/universal-search/firefox_icon.png",
-            "icons/universal-search/github_icon.png",
-            "icons/universal-search/folder_medium_icon.svg",
-            "icons/universal-search/ardour_icon.png",
-            "icons/universal-search/kitty_icon.png",
-            "icons/universal-search/firefox_icon.png",
-            "icons/universal-search/github_icon.png",
-        ];
+        let apps = sample_recent_apps();
+
         self.app_count = apps.len();
 
-        let files = vec![
-            "src",
-            "assets",
-            "components",
-            "utils",
-            "images",
-            "fonts",
-            "docs",
-            "config",
-            "scripts",
-            "themes",
-            "build",
-            "dist",
-            "public",
-            "partials",
-            "styles",
-            "models",
-            "controllers",
-            "views",
-            "hooks",
-            "data",
-            "main.rs",
-            "lib.rs",
-            "mod.rs",
-            "index.html",
-            "style.css",
-            "app.js",
-            "config.json",
-            "settings.toml",
-            "logo.svg",
-            "icon.png",
-            "banner.jpg",
-            "avatar.png",
-            "readme.md",
-            "license.md",
-            "changelog.md",
-            "theme.css",
-            "package.json",
-            "yarn.lock",
-            "Makefile",
-            "Dockerfile",
-            "build.sh",
-            "run.sh",
-            "deploy.sh",
-            "test.rs",
-            "errors.log",
-            "output.bin",
-            "schema.sql",
-            "notes.txt",
-            "todo.md",
-        ];
+        let files = sample_files();
+
         self.file_count = files.len();
 
         // Calculate content height
@@ -223,12 +168,13 @@ impl Render for UniversalSearch {
         // Update scroll bounds
         self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
 
+        let folder_small_icon = self.folder_small_icon.clone();
         let arrow_up_right_icon = self.arrow_up_right_icon.clone();
         let search_icon = self.search_icon.clone();
         let x_icon = self.x_icon.clone();
         let text_input = self.text_input.clone();
 
-        let app = |image: Img| {
+        let app = |icon: Icon| {
             let size = gpui::size(px(60.0), px(60.0));
 
             div()
@@ -241,81 +187,90 @@ impl Render for UniversalSearch {
                 .justify_center()
                 .items_center()
                 .id("button")
-                .child(div().child(image.h(px(41.74)).w(px(41.74))))
+                .child(icon)
         };
 
-        let row = |name: String| {
-            div()
-                .h(px(FILE_SECTION_HEIGHT))
-                .w_full()
-                .child(
+        let row = move |search: &SearchResults| {
+            // Add `move` and take reference
+            // let folder_small_icon_clone = folder_small_icon.clone(); // Clone the icon
+            // let arrow_up_right_icon_clone = arrow_up_right_icon.clone(); // Clone this too
+
+            div().h(px(FILE_SECTION_HEIGHT)).w_full().child(
+                div().size_full().flex().flex_row().items_center().child(
                     div()
                         .size_full()
+                        .text_color(rgb(0xe9e9e9))
                         .flex()
                         .flex_row()
+                        .justify_between()
                         .items_center()
                         .child(
-                            div()
-                                .size_full()
-                                .text_color(rgb(0xe9e9e9))
-                                .flex()
-                                .flex_row()
-                                .justify_between()
-                                .items_center()
-                                .child(
-                                    div()
-                                        .flex()
-                                        .flex_row()
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .flex_row()
-                                                .items_center()
-                                                .child(
-                                                    div()
-                                                        .mr(px(8.0))
-                                                        .bg(rgb(0x202020))
-                                                        .w(px(36.0))
-                                                        .h(px(36.0))
-                                                        .flex()
-                                                        .justify_center()
-                                                        .items_center()
-                                                        .rounded(px(8.0))
-                                                        .child(
-                                                            div()
-                                                                .w(px(21.82))
-                                                                .h(px(21.82))
-                                                                .child(
-                                                                    img(
-                                                                        "icons/universal-search/folder_small_icon.svg"
-                                                                    ).h(px(21.0))
-                                                                )
-                                                        )
-                                                )
-                                                .child(
-                                                    div()
-                                                        .font_weight(FontWeight(500.0))
-                                                        .text_size(px(16.0))
-                                                        .text_color(rgb(0xe9e9e9))
-                                                        .child(name)
-                                                )
-                                        )
-                                )
-                                .child(
-                                    div()
-                                        .h(px(18.0))
-                                        .w(px(18.0))
-                                        .flex()
-                                        .items_center()
-                                        .justify_center()
-                                        .child(
-                                            Icon::from(arrow_up_right_icon.clone())
-                                                .size((px(11.0), px(11.0)))
-                                                .text_color(rgb(0xa6a6a6))
-                                        )
-                                )
+                            div().flex().flex_row().child(
+                                div()
+                                    .flex()
+                                    .flex_row()
+                                    .items_center()
+                                    .child(
+                                        div()
+                                            .mr(px(8.0))
+                                            .bg(rgb(0x202020))
+                                            .w(px(36.0))
+                                            .h(px(36.0))
+                                            .flex()
+                                            .justify_center()
+                                            .items_center()
+                                            .rounded(px(8.0))
+                                            .child(
+                                                div().w(px(21.82)).h(px(21.82)).child(match search
+                                                    .file_type
+                                                {
+                                                    FileType::App => {
+                                                        Icon::from(search.icon_path.clone())
+                                                            .size((px(21.82), px(21.82)))
+                                                    }
+                                                    FileType::Directory => {
+                                                        Icon::from(folder_small_icon.clone())
+                                                            .size((px(21.82), px(21.82)))
+                                                            .text_color(rgb(0xFFCC23))
+                                                    }
+                                                    FileType::File => {
+                                                        Icon::from(folder_small_icon.clone())
+                                                            .size((px(21.82), px(21.82)))
+                                                            .text_color(rgb(0xFFCC23))
+                                                    }
+                                                }),
+                                            ),
+                                    )
+                                    .child(
+                                        div()
+                                            .font_weight(FontWeight(500.0))
+                                            .text_size(px(16.0))
+                                            .text_color(rgb(0xe9e9e9))
+                                            .child(search.name.to_string()),
+                                    ),
+                            ),
                         )
-                )
+                        .child(
+                            div()
+                                .h(px(18.0))
+                                .w(px(18.0))
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .child(match search.file_type {
+                                    FileType::App => Icon::from(IconName::ArrowCounterClockWise)
+                                        .size((px(21.82), px(21.82)))
+                                        .text_color(rgb(0xa6a6a6)),
+                                    FileType::Directory => Icon::from(arrow_up_right_icon.clone())
+                                        .size((px(11.0), px(11.0)))
+                                        .text_color(rgb(0xa6a6a6)),
+                                    FileType::File => Icon::from(arrow_up_right_icon.clone())
+                                        .size((px(11.0), px(11.0)))
+                                        .text_color(rgb(0xa6a6a6)),
+                                }),
+                        ),
+                ),
+            )
         };
 
         let divider = || {
@@ -326,9 +281,20 @@ impl Render for UniversalSearch {
         };
 
         let mut file_children = Vec::new();
-        for path in files.iter() {
-            file_children.push(row(path.to_string()));
+        for file in files.iter() {
+            file_children.push(row(file));
             file_children.push(divider());
+        }
+
+        let mut app_children = Vec::new();
+        for item in apps.iter() {
+            app_children.push(
+                app(Icon::from(item.icon_path.clone())
+                    .size((px(41.74), px(41.74)))
+                    .text_color(rgb(0xa6a6a6)))
+                .row_span(1)
+                .col_span(1),
+            )
         }
 
         let max_columns: usize = 6;
@@ -398,18 +364,14 @@ impl Render for UniversalSearch {
                                                 .h(grid_size.height)
                                                 .content_center()
                                                 .items_center()
-                                                .justify_center()
+                                                .px(px(9.))
                                                 .child(
                                                     div()
                                                         .gap(px(26.0))
                                                         .grid()
                                                         .grid_cols(columns)
                                                         .grid_rows(rows)
-                                                        .children(apps.iter().map(|icon_path| {
-                                                            app(img(*icon_path))
-                                                                .row_span(1)
-                                                                .col_span(1)
-                                                        })),
+                                                        .children(app_children),
                                                 ),
                                         ),
                                 )

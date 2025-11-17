@@ -38,3 +38,20 @@ pub struct TextInput {
     pub last_bounds: Option<Bounds<Pixels>>,
     pub is_selecting: bool,
 }
+
+pub struct SearchResults {
+    pub name: String,
+    pub icon_path: IconName,
+    pub file_type: FileType,
+}
+
+pub struct RecentApps {
+    pub name: String,
+    pub icon_path: IconName,
+}
+
+pub enum FileType {
+    App,
+    File,
+    Directory,
+}

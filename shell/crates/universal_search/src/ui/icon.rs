@@ -12,20 +12,24 @@ pub enum IconName {
     Search,
     FolderSmall,
     XIcon,
+    File,
+    ArrowCounterClockWise,
 }
 
 impl IconName {
     pub fn resolve(&self) -> SharedString {
         let icon_path = match self {
-            IconName::Ardour => "ardour_icon.svg",
+            IconName::Ardour => "ardour_icon.png",
             IconName::ArrowUpRight => "arrow_up_right_icon.svg",
-            IconName::Firefox => "firefox_icon.svg",
-            IconName::Chromium => "chromium_icon.svg",
-            IconName::Github => "github_icon.svg",
+            IconName::Firefox => "firefox_icon.png",
+            IconName::Chromium => "chromium_icon.png",
+            IconName::Github => "github_icon.png",
             IconName::FolderMedium => "folder_medium_icon.svg",
             IconName::Search => "search_icon.svg",
             IconName::FolderSmall => "folder_small_icon.svg",
             IconName::XIcon => "x_icon.svg",
+            IconName::File => "file_icon.png",
+            IconName::ArrowCounterClockWise => "arrow_counter_clock_wise.svg",
         };
         format!("{}{}", UNIVERSAL_SEARCH_ICONS_DIR, icon_path).into()
     }
