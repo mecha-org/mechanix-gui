@@ -9,6 +9,33 @@ pub use models::{ RunningApps, AppCard, DragDirection };
 
 use crate::ui::icon::{ Icon, IconName };
 
+// Drag data structure
+#[derive(Clone, Copy)]
+struct CardDragData {
+    start_position: Point<Pixels>,
+    card_id: usize,
+}
+
+impl CardDragData {
+    fn new(card_id: usize) -> Self {
+        Self {
+            start_position: Point::default(),
+            card_id,
+        }
+    }
+    fn position(mut self, pos: Point<Pixels>) -> Self {
+        self.start_position = pos;
+        self
+    }
+}
+
+impl Render for CardDragData {
+    fn render(&mut self, _: &mut Window, _: &mut Context<'_, Self>) -> impl IntoElement {
+        // Empty render - we don't show a drag preview
+        div()
+    }
+}
+
 impl RunningApps {
     pub fn new() -> Self {
         let mut apps = Vec::with_capacity(8);
@@ -87,7 +114,7 @@ impl RunningApps {
         // Calculate drag distance from start
         let drag_delta = self.scroll_offset - self.drag_start_offset;
         let drag_distance = drag_delta.to_f64() as f32;
-
+        println!("drag_distance: {}, drag delta: {}", drag_distance, drag_delta);
         // Calculate threshold: 20% of card width + gap
         let card_step = CARD_WIDTH + CARD_GAP;
         let switch_threshold = card_step * HORIZONTAL_SWITCH_THRESHOLD;
@@ -264,6 +291,7 @@ impl RunningApps {
         _window: &mut Window,
         cx: &mut Context<Self>
     ) {
+        println!("mouse down event positiion {:?} ", event.position.x);
         self.is_dragging = true;
         self.is_animating = false;
         self.dragging_card = Some(app_id);
@@ -276,7 +304,7 @@ impl RunningApps {
 
     fn handle_mouse_move(
         &mut self,
-        event: &MouseMoveEvent,
+        event: &DragMoveEvent<CardDragData>,
         _window: &mut Window,
         cx: &mut Context<Self>
     ) {
@@ -284,9 +312,10 @@ impl RunningApps {
             return;
         }
 
-        let delta_x = event.position.x - self.drag_start_x;
-        let delta_y = event.position.y - self.drag_start_y;
-
+        // Use the stored start position from drag data
+        let delta_x = event.event.position.x - self.drag_start_x;
+        let delta_y = event.event.position.y - self.drag_start_y;
+        println!("delta_x: {}, delta_y: {}", delta_x, delta_y);
         if self.drag_direction.is_none() {
             let abs_delta_x = delta_x.abs();
             let abs_delta_y = delta_y.abs();
@@ -327,16 +356,16 @@ impl RunningApps {
                     }
                 }
             }
-            None => {}
+            None => {
+                // No direction determined yet - we're in the "dead zone"
+                // Don't do anything until direction is clear
+                println!("Still in dead zone, waiting for clear direction");
+            }
         }
     }
 
-    fn handle_mouse_up(
-        &mut self,
-        _event: &MouseUpEvent,
-        _window: &mut Window,
-        cx: &mut Context<Self>
-    ) {
+    fn handle_mouse_up(&mut self,info:&CardDragData, _window: &mut Window, cx: &mut Context<Self>) {
+        println!("mouse up");
         if !self.is_dragging {
             return;
         }
@@ -369,6 +398,7 @@ impl RunningApps {
                 }
             }
             Some(DragDirection::Horizontal) => {
+                println!("checking snap to nearest card");
                 // Horizontal drag - snap to nearest card
                 self.snap_to_nearest_card_with_threshold();
                 self.animate_scroll(cx);
@@ -419,18 +449,28 @@ impl Render for RunningApps {
             .items_center()
             .justify_center()
             .bg(rgb(0x000000))
-
             .when(has_apps, |this| {
                 this.child(
                     div()
                         .id("running_apps")
                         .flex()
                         .w_full()
-                        .on_mouse_move(cx.listener(Self::handle_mouse_move))
-                        .on_mouse_up(MouseButton::Left, cx.listener(Self::handle_mouse_up))
-
                         .h_full()
                         .overflow_x_hidden()
+                        // .on_drop(
+                        //     cx.listener(|this, info: &CardDragData, _, _| {
+                        //         println!("Dropping card");
+                        //         RunningApps::handle_mouse_up(&mut self, this, info);
+                        //     })
+                        // )
+                        .on_drop(cx.listener(RunningApps::handle_mouse_up))
+                        // .on_drop(
+                        //     cx.listener(|this, info: &CardDragData, b, c| {
+                        //         println!("Dropping card");
+                        //         Self::handle_mouse_up(&mut self, b, c);
+                        //     })
+                        // )
+
                         .items_center()
                         .when(should_center, |d| d.justify_center())
                         .child({
@@ -445,16 +485,18 @@ impl Render for RunningApps {
                                 let offset_y = self.apps[i].offset_y;
                                 let app_icon_path = self.apps[i].app_icon_path.clone();
                                 let app_name = self.apps[i].app_name.clone();
+                                let entity = cx.entity();
 
                                 container = container.child(
                                     div()
-                                        .id("asd")
+                                        .id("card")
                                         .relative()
                                         .flex()
                                         .w(px(CARD_WIDTH))
                                         .h(px(CARD_HEIGHT))
                                         .justify_center()
                                         .items_center()
+
                                         .child(
                                             div()
                                                 .absolute()
@@ -476,6 +518,28 @@ impl Render for RunningApps {
                                         .relative()
                                         .top(offset_y)
                                         .cursor_pointer()
+                                        .on_drag_move(cx.listener(Self::handle_mouse_move))
+
+                                        .on_drag(
+                                            CardDragData::new(1),
+                                            move |drag_data: &CardDragData, pos, _, cx| {
+                                                // println!("mouse down event positiion {:?} ", pos);
+                                                // entity.update(cx, |this, cx| {
+                                                //     this.is_dragging = true;
+                                                //     this.is_animating = false;
+                                                //     this.dragging_card = Some(app_id);
+                                                //     this.drag_start_x = pos.x;
+                                                //     this.drag_start_y = pos.y;
+                                                //     this.drag_start_offset = this.scroll_offset;
+                                                //     this.drag_direction = None;
+                                                //     cx.stop_propagation();
+                                                //     cx.notify();
+                                                // });
+
+                                                let data = CardDragData::new(1).position(pos);
+                                                cx.new(|_| data)
+                                            }
+                                        )
                                         .on_mouse_down(
                                             MouseButton::Left,
                                             cx.listener(move |view, event, window, cx| {
@@ -502,7 +566,6 @@ impl Render for RunningApps {
                                                         .gap_2()
                                                         .h(px(16.0))
                                                         .w(px(106.0))
-
                                                         .child(
                                                             div()
                                                                 .rounded(px(3.2))
@@ -591,7 +654,6 @@ impl Render for RunningApps {
                                         }
                                     )
                             )
-
                             .child(
                                 div()
                                     .text_color(
