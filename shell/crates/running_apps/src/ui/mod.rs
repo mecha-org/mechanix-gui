@@ -13,14 +13,12 @@ use crate::ui::icon::{ Icon, IconName };
 #[derive(Clone, Copy)]
 struct CardDragData {
     start_position: Point<Pixels>,
-    card_id: usize,
 }
 
 impl CardDragData {
-    fn new(card_id: usize) -> Self {
+    fn new() -> Self {
         Self {
             start_position: Point::default(),
-            card_id,
         }
     }
     fn position(mut self, pos: Point<Pixels>) -> Self {
@@ -32,7 +30,7 @@ impl CardDragData {
 impl Render for CardDragData {
     fn render(&mut self, _: &mut Window, _: &mut Context<'_, Self>) -> impl IntoElement {
         // Empty render - we don't show a drag preview
-        div()
+        Empty
     }
 }
 
@@ -114,7 +112,6 @@ impl RunningApps {
         // Calculate drag distance from start
         let drag_delta = self.scroll_offset - self.drag_start_offset;
         let drag_distance = drag_delta.to_f64() as f32;
-        println!("drag_distance: {}, drag delta: {}", drag_distance, drag_delta);
         // Calculate threshold: 20% of card width + gap
         let card_step = CARD_WIDTH + CARD_GAP;
         let switch_threshold = card_step * HORIZONTAL_SWITCH_THRESHOLD;
@@ -291,7 +288,6 @@ impl RunningApps {
         _window: &mut Window,
         cx: &mut Context<Self>
     ) {
-        println!("mouse down event positiion {:?} ", event.position.x);
         self.is_dragging = true;
         self.is_animating = false;
         self.dragging_card = Some(app_id);
@@ -315,7 +311,6 @@ impl RunningApps {
         // Use the stored start position from drag data
         let delta_x = event.event.position.x - self.drag_start_x;
         let delta_y = event.event.position.y - self.drag_start_y;
-        println!("delta_x: {}, delta_y: {}", delta_x, delta_y);
         if self.drag_direction.is_none() {
             let abs_delta_x = delta_x.abs();
             let abs_delta_y = delta_y.abs();
@@ -356,16 +351,12 @@ impl RunningApps {
                     }
                 }
             }
-            None => {
-                // No direction determined yet - we're in the "dead zone"
-                // Don't do anything until direction is clear
-                println!("Still in dead zone, waiting for clear direction");
-            }
+            // No direction determined yet
+            None => {}
         }
     }
 
-    fn handle_mouse_up(&mut self,info:&CardDragData, _window: &mut Window, cx: &mut Context<Self>) {
-        println!("mouse up");
+    fn handle_mouse_up(&mut self, _: &CardDragData, _window: &mut Window, cx: &mut Context<Self>) {
         if !self.is_dragging {
             return;
         }
@@ -398,7 +389,6 @@ impl RunningApps {
                 }
             }
             Some(DragDirection::Horizontal) => {
-                println!("checking snap to nearest card");
                 // Horizontal drag - snap to nearest card
                 self.snap_to_nearest_card_with_threshold();
                 self.animate_scroll(cx);
@@ -457,20 +447,7 @@ impl Render for RunningApps {
                         .w_full()
                         .h_full()
                         .overflow_x_hidden()
-                        // .on_drop(
-                        //     cx.listener(|this, info: &CardDragData, _, _| {
-                        //         println!("Dropping card");
-                        //         RunningApps::handle_mouse_up(&mut self, this, info);
-                        //     })
-                        // )
                         .on_drop(cx.listener(RunningApps::handle_mouse_up))
-                        // .on_drop(
-                        //     cx.listener(|this, info: &CardDragData, b, c| {
-                        //         println!("Dropping card");
-                        //         Self::handle_mouse_up(&mut self, b, c);
-                        //     })
-                        // )
-
                         .items_center()
                         .when(should_center, |d| d.justify_center())
                         .child({
@@ -485,7 +462,6 @@ impl Render for RunningApps {
                                 let offset_y = self.apps[i].offset_y;
                                 let app_icon_path = self.apps[i].app_icon_path.clone();
                                 let app_name = self.apps[i].app_name.clone();
-                                let entity = cx.entity();
 
                                 container = container.child(
                                     div()
@@ -521,22 +497,9 @@ impl Render for RunningApps {
                                         .on_drag_move(cx.listener(Self::handle_mouse_move))
 
                                         .on_drag(
-                                            CardDragData::new(1),
-                                            move |drag_data: &CardDragData, pos, _, cx| {
-                                                // println!("mouse down event positiion {:?} ", pos);
-                                                // entity.update(cx, |this, cx| {
-                                                //     this.is_dragging = true;
-                                                //     this.is_animating = false;
-                                                //     this.dragging_card = Some(app_id);
-                                                //     this.drag_start_x = pos.x;
-                                                //     this.drag_start_y = pos.y;
-                                                //     this.drag_start_offset = this.scroll_offset;
-                                                //     this.drag_direction = None;
-                                                //     cx.stop_propagation();
-                                                //     cx.notify();
-                                                // });
-
-                                                let data = CardDragData::new(1).position(pos);
+                                            CardDragData::new(),
+                                            move |_: &CardDragData, pos, _, cx| {
+                                                let data = CardDragData::new().position(pos);
                                                 cx.new(|_| data)
                                             }
                                         )
