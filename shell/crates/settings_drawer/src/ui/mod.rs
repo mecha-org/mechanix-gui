@@ -1,6 +1,9 @@
 mod icon;
 mod widgets;
-use crate::ui::icon::Icon;
+use crate::ui::{
+    icon::Icon,
+    widgets::{Slider, SliderEvent, SliderState},
+};
 use gpui::*;
 use icon::IconName;
 use widgets::IconButton;
@@ -41,10 +44,44 @@ pub struct SettingsDrawer {
     pub bluetooth_details: BluetoothDetails,
     pub open_terminal: bool,
     pub cell_signal: bool,
+
+    pub brightness_value: f32,
+    pub height: f32,
+    pub width: f32,
+
+    pub brightness_slider_state: Entity<SliderState>,
+    pub brightness_slider_value: f32,
+
+    pub volume_slider_state: Entity<SliderState>,
+    pub volume_slider_value: f32,
+    _subscriptions: Vec<Subscription>,
 }
 
 impl SettingsDrawer {
-    pub fn new() -> Self {
+    pub fn new(cx: &mut Context<Self>) -> Self {
+        let brightness_slider = cx.new(|_| SliderState::new());
+        let b_subscription =
+            cx.subscribe(&brightness_slider, |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = event;
+                this.brightness_value = *value;
+                println!("brightness value: {:?}", this.brightness_value);
+                cx.notify();
+            });
+
+        let volume_slider = cx.new(|_| {
+            SliderState::new()
+                .default_value(20.)
+                .pattern(widgets::SliderPattern::Bars)
+        });
+        let c_subscription = cx.subscribe(&volume_slider, |this, _, event: &SliderEvent, cx| {
+            let SliderEvent::Change(value) = event;
+            this.volume_slider_value = *value;
+            println!("volume value: {:?}", this.volume_slider_value);
+            cx.notify();
+        });
+
+        let mut _subscriptions = vec![b_subscription, c_subscription];
+
         Self {
             settings_active: false,
             battery_percent: 32,
@@ -69,6 +106,14 @@ impl SettingsDrawer {
             },
             open_terminal: false,
             cell_signal: false,
+            brightness_value: 50.,
+            height: 56.,
+            width: 172.,
+            brightness_slider_state: brightness_slider,
+            brightness_slider_value: 0.0,
+            volume_slider_state: volume_slider,
+            volume_slider_value: 0.0,
+            _subscriptions,
         }
     }
 }
@@ -168,6 +213,7 @@ impl Render for SettingsDrawer {
                     .grid_rows(2)
                     .grid_cols(4)
                     .h(px(236.))
+                    .w(px(476.))
                     .bg(rgb(0x181818))
                     .p_6()
                     .gap_5()
@@ -296,32 +342,32 @@ impl Render for SettingsDrawer {
                     .grid()
                     .grid_cols(4)
                     .gap_4()
-                    .h(px(104.))
-                    .rounded(px(12.))
+                    .h(px(72.0))
                     .child(
                         div()
                             .flex()
                             .items_center()
-                            .justify_center()
                             .w_full()
                             .h_full()
                             .text_color(rgb(0xF4F4F4))
                             .text_lg()
                             .col_span(2)
                             .bg(rgb(0x202020))
-                            .rounded(px(12.))
+                            .rounded(px(8.))
                             .child(
                                 div()
                                     .flex()
                                     .flex_row()
                                     .w_full()
                                     .items_center()
-                                    .p_2()
+                                    .justify_around()
+                                    .px_2()
                                     .child(
                                         IconButton::new("id_brightness")
                                             .icon(IconName::BrightnessHigh)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
+                                            .bg_color(rgb(0x202020))
                                             .border(px(0.))
                                             .on_click(cx.listener(|_, _, _, _| {
                                                 println!("brightness clicked");
@@ -333,10 +379,14 @@ impl Render for SettingsDrawer {
                                             .justify_center()
                                             .items_center()
                                             .w(px(172.0))
-                                            .h(px(72.0))
-                                            .bg(rgb(0x202020))
-                                            .rounded(px(12.))
-                                            .child("sliderrrrr--------rrrrr"),
+                                            .child(
+                                                Slider::new(
+                                                    "brightness-slider",
+                                                    &self.brightness_slider_state,
+                                                )
+                                                .width(172.0)
+                                                .height(56.0),
+                                            ),
                                     ),
                             ),
                     )
@@ -351,25 +401,40 @@ impl Render for SettingsDrawer {
                             .text_lg()
                             .col_span(2)
                             .bg(rgb(0x202020))
-                            .rounded(px(12.))
+                            .rounded(px(8.))
                             .child(
                                 div()
                                     .flex()
                                     .flex_row()
                                     .w_full()
                                     .items_center()
-                                    .p_2()
+                                    .justify_around()
+                                    .pl_2()
                                     .child(
                                         IconButton::new("id_volume")
                                             .icon(IconName::VolumeMedium)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
+                                            .bg_color(rgb(0x202020))
                                             .border(px(0.))
                                             .on_click(cx.listener(|_, _, _, _| {
                                                 println!("volume clicked");
                                             })),
                                     )
-                                    .child("sliderrrrr--------rrrrr"),
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .justify_center()
+                                            .items_end()
+                                            .w(px(172.0))
+                                            .child(
+                                                Slider::new(
+                                                    "volume-slider",
+                                                    &self.volume_slider_state,
+                                                )
+                                                .width(172.0),
+                                            ),
+                                    ),
                             ),
                     ),
             )
@@ -383,7 +448,7 @@ impl Render for SettingsDrawer {
                     .child(
                         IconButton::new("id_wireless")
                             .icon(self.wireless_details.icon.clone())
-                            .icon_color(rgb(0x4D4D4D))  // changes as per wireless state
+                            .icon_color(rgb(0x4D4D4D)) // changes as per wireless state
                             .size((px(104.), px(104.)))
                             .active(self.wireless_details.enalble)
                             .label("Office wifi 1")
