@@ -1,4 +1,5 @@
 use crate::models::AppInfo;
+use crate::prelude::IconName;
 use crate::ui::widgets::IconButton;
 use gpui::{prelude::FluentBuilder, *};
 
@@ -8,102 +9,91 @@ pub struct SubWindow {
 }
 
 impl Render for SubWindow {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
-            .flex()
-            .flex_col()
-            .bg(rgb(0x181818))
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|_this, _ev, window, _cx| {
-                    window.remove_window(); // close when clicking outside
-                }),
-            )
-            // .size_full()
-            .h(px(620.))
-            .w(px(540.))
-            .gap_2()
-            .rounded(px(12.))
-            // main grid of apps
+            .id("overlay_root")
+            .size_full()
+            .absolute()
             .child(
+                // semi-transparent dim background
                 div()
-                    .grid()
-                    .grid_cols(4)
-                    .gap(px(14.))
+                    .id("overlay_dim")
+                    .absolute()
+                    .size_full()
+                    .bg(rgb(0x000000))
+                    .opacity(0.6)
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|_, _, window, _| window.remove_window()),
+                    ),
+            )
+            .child(
+                // popup (not transparent)
+                div()
+                    .id("popup_panel")
+                    .absolute()
+                    .top(px(40.))
+                    .left(px(20.))
+                    .right(px(20.))
                     .bg(rgb(0x181818))
-                    .p(px(20.))
                     .rounded(px(12.))
-                    //  .on_mouse_down(
-                    //     MouseButton::Left,
-                    //     cx.listener(|_this, _ev, _window, cx| {
-                    //         cx.stop_propagation(); // <-- prevent close on inside click
-                    //     }),
-                    
-                    // )
-                    .children(self.apps.clone().into_iter().map(|app| {
-                        let app_name = app.name.clone();
-                        let app_icon = app.icon_path.clone();
-                        let app_id = app.id.clone();
+                    .p(px(20.))
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|_, _, _, cx| cx.stop_propagation()), // Prevent closing
+                    )
+                    .child(div().grid().grid_cols(4).gap(px(14.)).children(
+                        self.apps.clone().into_iter().map(|app| {
+                            let name = app.name.clone();
+                            let icon = app.icon_path.clone();
+                            let app_name = app.name.clone();
 
+                            div()
+                                .flex()
+                                .flex_col()
+                                .items_center()
+                                .child(
+                                    IconButton::new(("popup_app", app.id.clone()))
+                                        .icon(icon)
+                                        .on_click(cx.listener(move |_, _, _, _| {
+                                            println!("Launching app: {}", app_name);
+                                        })),
+                                )
+                                .child(div().mt(px(4.)).text_color(rgb(0xffffff)).child(name))
+                        }),
+                    ))
+                    .child(
                         div()
-                            .flex()
+                            .relative()
                             .flex_col()
-                            .items_center()
+                            .bottom(px(-94.))
                             .child(
-                                IconButton::new(("popup_app", app_id))
-                                    .icon(app_icon)
-                                    .on_click(cx.listener(move |_, _, _, _| {})),
+                                img(IconName::Category.resolve())
+                                    .top(px(-66.))
+                                    .right(px(32.))
+                                    .w(px(524.))
+                                    .h(px(42.)),
                             )
                             .child(
                                 div()
-                                    .mt(px(6.0))
-                                    .font_weight(FontWeight(400.0))
-                                    .text_size(px(16.0))
-                                    .text_color(rgb(0xffffff))
-                                    .child(app_name),
-                            )
-                    })),
-            )
-            .child(
-                div()
-                    .relative()
-                    .flex_col()
-                    .bottom(px(-54.))
-                    .child(
-                        img("icons/app_drawer/category.png")
-                            .top(px(-66.))
-                            .left(px(-10.))
-                            .w(px(528.))
-                            .h(px(38.)),
-                    )
-                    .child(
-                        div()
-                            .absolute()
-                            .top(px(-50.0))
-                            .left(px(12.0))
-                            .w(px(100.0))
-                            .h(px(16.0))
-                            .justify_start()
-                            .child(
-                                div().flex().child(
-                                    div()
-                                        .font_weight(FontWeight(400.0))
-                                        .text_size(px(16.0))
-                                        .text_color(rgb(0xffffff))
-                                        .child(self.category.clone()),
-                                ),
+                                    .absolute()
+                                    .top(px(-50.0))
+                                    // .left(px(12.0))
+                                    .w(px(100.0))
+                                    .h(px(16.0))
+                                    .justify_start()
+                                    .child(
+                                        div().flex().child(
+                                            div()
+                                                .font_weight(FontWeight(400.0))
+                                                .text_size(px(16.0))
+                                                .text_color(rgb(0xffffff))
+                                                .child(self.category.clone()),
+                                        ),
+                                    ),
                             ),
                     ),
             )
-            // .child(
-            //     div()
-            //         .flex()
-            //         .justify_center()
-            //         .p_8()
-            //         .child(button("Close", |window, _| {
-            //             window.remove_window();
-            //         })),
-            // )
     }
 }
 

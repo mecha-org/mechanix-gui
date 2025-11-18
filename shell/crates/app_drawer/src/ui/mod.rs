@@ -78,7 +78,6 @@ impl AppDrawer {
         let padding = px(40.0); // top/bottom padding
 
         let rows = ((apps_len as f32) / 4.0).ceil();
-        println!("Calculated rows for popup: {}", rows);
 
         // let popup_height = header_height + grid_row_height * rows + padding;
         let popup_height = grid_row_height * rows + padding;
@@ -134,159 +133,142 @@ impl Render for AppDrawer {
                     .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
                     .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
                     .on_mouse_move(cx.listener(Self::on_mouse_move))
-                    .children(grouped.into_iter().map(|(category, apps)| {
-                        let total = apps.len();
-                        let show_popup = total > 4;
-                        let shown_apps = if show_popup {
-                            apps.iter().take(4).cloned().collect::<Vec<_>>()
-                        } else {
-                            apps.clone()
-                        };
+                    .children(
+                        grouped
+                            .into_iter()
+                            .enumerate()
+                            .map(|(idx, (category, apps))| {
+                                let total = apps.len();
+                                let show_popup = total > 4;
+                                let shown_apps = if show_popup {
+                                    apps.iter().take(4).cloned().collect::<Vec<_>>()
+                                } else {
+                                    apps.clone()
+                                };
 
-                        let popup_apps = apps.clone();
-                        let popup_apps_for_header = popup_apps.clone();
-                        let cat_for_button = category.clone();
-                        let cat_for_button_cloned = cat_for_button.clone(); // FIX
-
-                        div()
-                            .pt(px(-38.))
-                            .child(
-                                div()
-                                    .grid()
-                                    .grid_cols(4)
-                                    .gap(px(24.))
-                                    .bg(rgb(0x181818))
-                                    .p(px(20.))
-                                    .rounded(px(12.))
-                                    .w(px(508.))
-                                    .h(px(142.))
-                                    .justify_center()
-                                    .top(self.scroll_offset)
-                                    .children(shown_apps.into_iter().map(|app| {
-                                        let app_name = app.name.clone();
-                                        let app_icon = app.icon_path.clone();
-                                        let app_id = app.id.clone();
-
-                                        IconButton::new(("app", app_id)).icon(app_icon).on_click(
-                                            cx.listener(move |_, _, _, _| {
-                                                println!("Launching app: {}", app_name);
-                                            }),
-                                        )
-                                    }))
-                                    .when(show_popup, |grid| {
-                                        grid.child(
-                                            div()
-                                                .col_span(4)
-                                                .flex()
-                                                .justify_center()
-                                                .pt(px(8.))
-                                                .child(button("Show more", move |window, cx| {
-                                                    let popup_apps = popup_apps.clone();
-                                                    let cat = cat_for_button_cloned.clone();
-
-                                                    let (popup_w, popup_h) =
-                                                        AppDrawer::calculate_popup_size(
-                                                            popup_apps.len(),
-                                                        );
-
-                                                    let popup_size = size(popup_w, popup_h);
-
-                                                    let popup_origin = point(
-                                                        window_bounds.origin.x
-                                                            + (window_bounds.size.width
-                                                                - popup_size.width)
-                                                                / 2.0,
-                                                        window_bounds.origin.y + px(20.0), // top position
-                                                    );
-
-                                                    let popup_bounds = Bounds {
-                                                        origin: popup_origin,
-                                                        size: popup_size,
-                                                    };
-
-                                                    cx.open_window(
-                                                        WindowOptions {
-                                                            window_bounds: Some(
-                                                                WindowBounds::Windowed(
-                                                                    popup_bounds,
-                                                                ),
-                                                            ),
-                                                            kind: WindowKind::PopUp,
-                                                            show: true,
-                                                            is_movable: true,
-                                                            ..Default::default()
-                                                        },
-                                                        move |_, cx| {
-                                                            cx.new(|_| SubWindow {
-                                                                apps: popup_apps.clone(),
-                                                                category: cat.clone(),
-                                                            })
-                                                        },
-                                                    )
-                                                    .unwrap();
-                                                })),
-                                        )
-                                    }),
-                            )
-                            .child({
-                                let popup_data = popup_apps_for_header.clone();
-                                let popup_data_cloned = popup_data.clone();
-                                let cat_for_popup = category.clone();
-                                let cat_for_popup_cloned = cat_for_popup.clone();
-                                let cat_for_header = category.clone();
+                                let popup_apps = apps.clone();
+                                let popup_apps_for_header = popup_apps.clone();
+                                let cat_for_button = category.clone();
+                                let cat_for_button_cloned = cat_for_button.clone();
 
                                 div()
-                                    .id("category-header")
-                                    .relative()
-                                    .flex_col()
-                                    .top(self.scroll_offset)
-                                    .on_click(cx.listener(move |_, _event, _window, cx| {
-                                        let popup_data2 = popup_data_cloned.clone();
-                                        let cat = cat_for_popup_cloned.clone();
-
-                                        cx.open_window(
-                                            WindowOptions {
-                                                window_bounds: Some(window_bounds_popup),
-                                                kind: WindowKind::PopUp,
-                                                ..Default::default()
-                                            },
-                                            move |_, cx| {
-                                                cx.new(|_| SubWindow {
-                                                    apps: popup_data2,
-                                                    category: cat,
-                                                })
-                                            },
-                                        )
-                                        .unwrap();
-                                    }))
-                                    .child(
-                                        img("icons/app_drawer/category.png")
-                                            .top(px(-46.))
-                                            .left(px(-10.))
-                                            .w(px(528.))
-                                            .h(px(38.))
-                                            .bottom(px(-50.)),
-                                    )
+                                    .pt(px(-38.))
                                     .child(
                                         div()
-                                            .absolute()
-                                            .top(px(-24.0))
-                                            .left(px(12.0))
-                                            .w(px(100.0))
-                                            .h(px(16.0))
-                                            .justify_start()
-                                            .child(
-                                                div().flex().child(
-                                                    div()
-                                                        .font_weight(FontWeight(400.0))
-                                                        .text_size(px(16.0))
-                                                        .text_color(rgb(0x888888))
-                                                        .child(cat_for_header.clone()),
-                                                ),
-                                            ),
+                                            .grid()
+                                            .grid_cols(4)
+                                            .gap(px(24.))
+                                            .bg(rgb(0x181818))
+                                            .p(px(20.))
+                                            .rounded(px(12.))
+                                            .w(px(508.))
+                                            .h(px(142.))
+                                            .justify_center()
+                                            .top(self.scroll_offset)
+                                            .children(shown_apps.into_iter().map(|app| {
+                                                let app_name = app.name.clone();
+                                                let app_icon = app.icon_path.clone();
+                                                let app_id = app.id.clone();
+
+                                                IconButton::new(("app", app_id))
+                                                    .icon(app_icon)
+                                                    .on_click(cx.listener(move |_, _, _, _| {
+                                                        println!("Launching app: {}", app_name);
+                                                    }))
+                                            })),
                                     )
-                            })
-                    })),
+                                    .child({
+                                        let popup_data = popup_apps_for_header.clone();
+                                        let popup_data_cloned = popup_data.clone();
+                                        let cat_for_popup = category.clone();
+                                        let cat_for_popup_cloned = cat_for_popup.clone();
+                                        let cat_for_header = category.clone();
+
+                                        div()
+                                            .relative()
+                                            .flex_col()
+                                            .top(self.scroll_offset)
+                                            .child(
+                                                img(IconName::Category.resolve())
+                                                    .id(idx)
+                                                    .top(px(-46.))
+                                                    .left(px(-10.))
+                                                    .w(px(528.))
+                                                    .h(px(38.))
+                                                    .bottom(px(-50.))
+                                                    .when(show_popup, |img| {
+                                                        img.on_click(cx.listener(
+                                                            move |_, _event, _window, cx| {
+                                                                let popup_apps = popup_apps.clone();
+                                                                let cat =
+                                                                    cat_for_button_cloned.clone();
+
+                                                                let (popup_w, popup_h) =
+                                                                    AppDrawer::calculate_popup_size(
+                                                                        popup_apps.len(),
+                                                                    );
+
+                                                                let popup_size =
+                                                                    size(popup_w, popup_h);
+
+                                                                let popup_origin = point(
+                                                                    window_bounds.origin.x,
+                                                                    window_bounds.origin.y, // top position
+                                                                );
+
+                                                                let popup_bounds = Bounds {
+                                                                    origin: popup_origin,
+                                                                    size: window_bounds.size,
+                                                                };
+
+                                                                let main_size = window_bounds.size;
+
+                                                                cx.open_window(
+                                                                    WindowOptions {
+                                                                        window_bounds: Some(
+                                                                            WindowBounds::Windowed(
+                                                                                popup_bounds,
+                                                                            ),
+                                                                        ),
+                                                                        kind: WindowKind::PopUp,
+                                                                        show: true,
+                                                                        is_movable: false,
+                                                                        ..Default::default()
+                                                                    },
+                                                                    move |_, cx| {
+                                                                        cx.new(|_| SubWindow {
+                                                                            apps: popup_apps
+                                                                                .clone(),
+                                                                            category: cat.clone(),
+                                                                        })
+                                                                    },
+                                                                )
+                                                                .unwrap();
+                                                            },
+                                                        ))
+                                                    }),
+                                            )
+                                            .child(
+                                                div()
+                                                    .absolute()
+                                                    .top(px(-28.0))
+                                                    .left(px(12.0))
+                                                    .w(px(100.0))
+                                                    .h(px(16.0))
+                                                    .justify_start()
+                                                    .child(
+                                                        div().flex().child(
+                                                            div()
+                                                                .font_weight(FontWeight(400.0))
+                                                                .text_size(px(16.0))
+                                                                .text_color(rgb(0x888888))
+                                                                .child(cat_for_header.clone()),
+                                                        ),
+                                                    ),
+                                            )
+                                    })
+                            }),
+                    ),
             )
             .child(
                 div()

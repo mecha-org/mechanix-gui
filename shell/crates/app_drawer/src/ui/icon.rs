@@ -1,5 +1,7 @@
 use gpui::{prelude::FluentBuilder, *};
 
+pub const APP_DRAWER_ICONS_DIR: &str = "icons/app-drawer/";
+
 #[derive(IntoElement, Clone, PartialEq, Debug)]
 pub enum IconName {
     Telegram,
@@ -14,17 +16,17 @@ pub enum IconName {
 
 impl IconName {
     pub fn resolve(self) -> SharedString {
-        match self {
-            Self::Telegram => "icons/app_drawer/telegram.png",
-            Self::Mecha => "icons/app_drawer/mecha.png",
-            Self::Chromium => "icons/app_drawer/chromium.png",
-            Self::Files => "icons/app_drawer/files.png",
-            Self::Firefox => "icons/app_drawer/firefox.png",
-            Self::Category => "icons/app_drawer/category.png",
-            Self::Search => "icons/app_drawer/search_icon.png",
-            Self::Close => "icons/app_drawer/x_icon.png",
-        }
-        .into()
+        let icon_path = match self {
+            Self::Telegram => "telegram.png",
+            Self::Mecha => "mecha.png",
+            Self::Chromium => "chromium.png",
+            Self::Files => "files.png",
+            Self::Firefox => "firefox.png",
+            Self::Category => "category.png",
+            Self::Search => "search.png",
+            Self::Close => "x.png",
+        };
+        format!("{}{}", APP_DRAWER_ICONS_DIR, icon_path).into()
     }
 }
 
