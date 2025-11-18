@@ -3,10 +3,10 @@ use std::rc::Rc;
 use crate::ui::icon::Icon;
 use gpui::{prelude::FluentBuilder, *};
 
-const ICON_COLOR: u32 = 0x4D4D4D;               // default - gray | custom can be - white or active - blue
-const ACTIVE_ICON_COLOR: u32 = 0x4892F1;
-const ACTIVE_BG_COLOR: u32 = 0x202020;
-const PRESSED_BG_COLOR: u32 = 0x363636;         // default - light gray | custom can be - yellow - xDB9200
+const ICON_COLOR: u32 = 0x4D4D4D; // default - gray | custom can be - white or active - blue
+const ACTIVE_ICON_COLOR: u32 = 0xF4F4F4; // default - white | custom can be - blue
+const BG_COLOR: u32 = 0x181818;
+const BORDER_COLOR: u32 = 0x202020;
 
 #[derive(IntoElement)]
 pub struct IconButton {
@@ -18,6 +18,7 @@ pub struct IconButton {
     on_click: Option<Rc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
     size: Option<(Pixels, Pixels)>,
     icon_color: Option<Hsla>,
+    bg_color: Option<Hsla>,
     active_icon_color: Option<Hsla>,
     active_bg_color: Option<Hsla>,
     border: Option<Pixels>,
@@ -35,6 +36,7 @@ impl IconButton {
             on_click: None,
             size: None,
             icon_color: None,
+            bg_color: None,
             active_icon_color: None,
             active_bg_color: None,
             border: None,
@@ -63,6 +65,11 @@ impl IconButton {
 
     pub fn icon_color(mut self, icon_color: impl Into<Hsla>) -> Self {
         self.icon_color = Some(icon_color.into());
+        self
+    }
+
+    pub fn bg_color(mut self, bg_color: impl Into<Hsla>) -> Self {
+        self.bg_color = Some(bg_color.into());
         self
     }
 
@@ -101,17 +108,22 @@ impl RenderOnce for IconButton {
             .h(px(84.0))
             .rounded(px(8.0))
             .border(px(1.))
-            .border_color(rgb(0x4D4D4D))
-            .active(|this| this.opacity(0.85))
-            // .opacity(0.2)
+            .border_color(rgb(BORDER_COLOR))
+            .active(|this| this.bg(rgb(0x363636))) // GPUI's active state
             .items_center()
             .justify_center()
-            .when(self.pressed, |this| this.bg(rgb(PRESSED_BG_COLOR)))
+            .when(!self.pressed && !self.active, |this| {
+                this.bg(if let Some(bg_color) = self.bg_color {
+                    bg_color
+                } else {
+                    rgb(BG_COLOR).into()
+                })
+            })
             .when(!self.pressed && self.active, |this| {
                 if let Some(active_bg_color) = self.active_bg_color {
                     this.bg(active_bg_color)
                 } else {
-                    this.bg(rgb(ACTIVE_BG_COLOR))
+                    this
                 }
             })
             .when_some(self.on_click, |this, on_click| {

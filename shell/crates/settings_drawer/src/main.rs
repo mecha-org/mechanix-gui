@@ -13,7 +13,7 @@ fn main() {
                 window_bounds: Some(window_bounds),
                 ..Default::default()
             },
-            |_window, cx| cx.new(|_cx| SettingsDrawer::new()),
+            |_window, cx| cx.new(|cx| SettingsDrawer::new(cx)),
         )
         .unwrap();
         cx.activate(true);
