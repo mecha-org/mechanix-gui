@@ -33,7 +33,6 @@ jobs:
           - name: Launcher
             package: launcher
 
-
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
     continue-on-error: false
@@ -78,9 +77,9 @@ jobs:
             libpulse-dev \
             libasound2-dev \
             libxkbfile-dev \
-            libxkbcommon-x11-dev \            
+            libxkbcommon-x11-dev \        
             wayland-protocols \
-            libxkbcommon-tools \
+            libxkbcommon-tools
 
       # Pulp CLI setup
       - name: Setup | Pulp CLI
@@ -131,7 +130,7 @@ jobs:
           fakeroot dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
           fakeroot dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"  
 
-          echo "[INFO] ✅ Repacked: $DEB_FILE"   
+          echo "[INFO] ✅ Repacked: $DEB_FILE"
 
       - name: Prepare artifacts [${{ matrix.package }}]
         run: |
@@ -150,28 +149,28 @@ jobs:
           set -euo pipefail
 
           DEB_FILE=$(find ./build/deb -name "${{ matrix.package }}*.deb" -type f | head -n1)
-          
+
           if [ -z "$DEB_FILE" ]; then
             echo "[ERROR] No .deb file found for ${{ matrix.package }}"
             exit 1
           fi
-          
+
           echo "[INFO] 📦 Publishing: $DEB_FILE"
-          
+
           pulp deb content upload \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --file="$DEB_FILE"
-          
+
           echo "[INFO] Creating publication..."
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --signing-service=mecha-pkg-sign \
             | jq -r '.pulp_href')
-          
+
           echo "[INFO] Updating distribution..."
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-          
+
           echo "[INFO] ✅ Package ${{ matrix.package }} published successfully!"
