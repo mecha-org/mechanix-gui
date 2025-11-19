@@ -38,5 +38,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 futures = "0.3.31"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { version = "0.2.2", default-features = false, features = ["x11"] }
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "110d772a56a6e13f8696fc544f9075c656754013", features = [
+    "wayland",
+] }
 rust-embed = "8.8.0"

@@ -1,0 +1,14 @@
+
+[package]
+name = "types"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+gpui = { workspace = true }

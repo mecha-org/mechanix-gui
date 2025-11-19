@@ -16,6 +16,8 @@ const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 56.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
+const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+const APP_SIZE: (f32, f32) = (540., 620.);
 
 impl DragInfo {
     fn new() -> Self {
@@ -55,6 +57,7 @@ impl UniversalSearch {
             folder_small_icon: IconName::FolderSmall,
             x_icon: IconName::XIcon,
             text_input: cx.new(|cx| TextInput::new(cx)),
+            position: APP_SIZE.1 - NAVBAR_SIZE.1,
         }
     }
 
@@ -153,6 +156,50 @@ impl UniversalSearch {
 
 impl Render for UniversalSearch {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        div().w_full().h_full().child(
+            div()
+                .w_full()
+                .h_full()
+                .absolute()
+                .top(px(self.position))
+                .child(
+                    div()
+                        .w_full()
+                        .flex()
+                        .flex_row()
+                        .justify_start()
+                        .h(px(NAVBAR_SIZE.1))
+                        .child(
+                            img(IconName::Navbar.resolve())
+                                .id("universal-search-navbar")
+                                .on_click(cx.listener(|this, _, window, cx| {
+                                    let is_open = this.position == 0.;
+                                    let mut regions = Vec::new();
+                                    if is_open {
+                                        this.position = APP_SIZE.1 - NAVBAR_SIZE.1;
+                                        regions.push(Bounds {
+                                            origin: point(px(0.), px(APP_SIZE.1 - NAVBAR_SIZE.1)),
+                                            size: size(px(NAVBAR_SIZE.0), px(APP_SIZE.1)),
+                                        });
+                                    } else {
+                                        this.position = 0.;
+                                        regions.push(Bounds {
+                                            origin: point(px(0.), px(0.)),
+                                            size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                                        });
+                                    }
+                                    window.set_input_regions(Some(regions));
+                                    cx.notify();
+                                })),
+                        ),
+                )
+                .child(self.universal_search_items(cx)),
+        )
+    }
+}
+
+impl UniversalSearch {
+    fn universal_search_items(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let apps = sample_recent_apps();
 
         self.app_count = apps.len();
