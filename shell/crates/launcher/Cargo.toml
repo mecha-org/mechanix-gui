@@ -31,7 +31,6 @@ section = "utility"
 priority = "optional"
 assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
-       # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
         "../../../target/release/launcher",
         "usr/bin/",
