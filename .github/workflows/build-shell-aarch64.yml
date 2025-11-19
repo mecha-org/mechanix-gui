@@ -1,4 +1,4 @@
-name: Shell - Build aarch64
+name: Shell Crates - Build, Package, and Publish for aarch64
 
 on:
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Launcher
+          - name: Launcher Crate Build
             package: launcher
 
     runs-on: ubicloud-standard-2-arm
@@ -117,13 +117,13 @@ jobs:
             --base-url "$PULP_API_URL" \
             --overwrite
 
-      - name: Build [${{ matrix.package }}]
+      - name: Build ${{ matrix.package }}
         run: |
           cargo --config net.git-fetch-with-cli=true fetch
           cargo build --release --package ${{ matrix.package }}
           ls -la target/release
 
-      - name: Package deb [${{ matrix.package }}]
+      - name: Package deb ${{ matrix.package }}
         run: |
           sudo apt install -y fakeroot
           fakeroot cargo deb --no-build --package ${{ matrix.package }}
@@ -144,7 +144,7 @@ jobs:
 
           echo "[INFO] ✅ Repacked: $DEB_FILE"
 
-      - name: Prepare artifacts [${{ matrix.package }}]
+      - name: Prepare artifacts ${{ matrix.package }}
         run: |
           mkdir -p build
           cp target/release/${{ matrix.package }} ./build || true
@@ -156,11 +156,11 @@ jobs:
           name: ${{ matrix.package }}-artifacts
           path: ./build/*
 
-      - name: Publish to Pulp [${{ matrix.package }}]
+      - name: Publish to Pulp ${{ matrix.package }}
         run: |
           set -euo pipefail
 
-          DEB_FILE=$(find ./build/deb -name "${{ matrix.package }}*.deb" -type f | head -n1)
+          DEB_FILE=$(find ./build -name "${{ matrix.package }}*.deb" -type f | head -n1)
 
           if [ -z "$DEB_FILE" ]; then
             echo "[ERROR] No .deb file found for ${{ matrix.package }}"
