@@ -28,12 +28,12 @@ This repository contains multiple components of Mechanix GUI developed in Rust a
 #### For running from root directory
 
 ```
-$ export BEVY_ASSET_ROOT="." && cargo run -p mechanix-launcher
+$ cargo run -p mechanix-launcher
 ```
 
 #### For running inside shell/crates/{package}
 ```
-$ export BEVY_ASSET_ROOT="../../../" && cargo run
+$ cargo run
 ```
 
 
