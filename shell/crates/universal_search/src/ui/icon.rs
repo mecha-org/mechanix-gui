@@ -18,6 +18,7 @@ pub enum IconName {
     Rust,
     TypeScript,
     Markdown,
+    Navbar,
 }
 
 impl IconName {
@@ -38,6 +39,7 @@ impl IconName {
             IconName::Rust => "rust-icon.png",
             IconName::TypeScript => "typescript-icon.png",
             IconName::Markdown => "markdown-icon.png",
+            IconName::Navbar => "navbar.png",
         };
         format!("{}{}", UNIVERSAL_SEARCH_ICONS_DIR, icon_path).into()
     }

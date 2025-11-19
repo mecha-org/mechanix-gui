@@ -8,6 +8,9 @@ use gpui::*;
 use icon::IconName;
 use widgets::IconButton;
 
+const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+const APP_SIZE: (f32, f32) = (540., 620.);
+
 pub enum PowerMode {
     High,
     Balanced,
@@ -49,6 +52,8 @@ pub struct SettingsDrawer {
     pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
     _subscriptions: Vec<Subscription>,
+
+    position: f32,
 }
 
 impl SettingsDrawer {
@@ -103,12 +108,60 @@ impl SettingsDrawer {
             volume_slider_state: volume_slider,
             volume_slider_value: 0.0,
             _subscriptions,
+            position: APP_SIZE.1 - NAVBAR_SIZE.1,
         }
     }
 }
 
 impl Render for SettingsDrawer {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        div().w_full().h_full().child(
+            div()
+                .w_full()
+                .h_full()
+                .absolute()
+                .top(px(self.position))
+                .child(
+                    div()
+                        .w_full()
+                        .flex()
+                        .flex_row()
+                        .justify_end()
+                        .h(px(NAVBAR_SIZE.1))
+                        .child(
+                            img(IconName::Navbar.resolve())
+                                .id("settings-drawer-navbar")
+                                .on_click(cx.listener(|this, _, window, cx| {
+                                    let is_open = this.position == 0.;
+                                    let mut regions = Vec::new();
+                                    if is_open {
+                                        this.position = APP_SIZE.1 - NAVBAR_SIZE.1;
+                                        regions.push(Bounds {
+                                            origin: point(
+                                                px(APP_SIZE.0 - NAVBAR_SIZE.0),
+                                                px(APP_SIZE.1 - NAVBAR_SIZE.1),
+                                            ),
+                                            size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                                        });
+                                    } else {
+                                        this.position = 0.;
+                                        regions.push(Bounds {
+                                            origin: point(px(0.), px(0.)),
+                                            size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                                        });
+                                    }
+                                    window.set_input_regions(Some(regions));
+                                    cx.notify();
+                                })),
+                        ),
+                )
+                .child(self.drawer_items(cx)),
+        )
+    }
+}
+
+impl SettingsDrawer {
+    fn drawer_items(&mut self, cx: &mut Context<SettingsDrawer>) -> impl IntoElement {
         let rotation_icon = if self.rotation_on {
             IconName::RotationOn
         } else {

@@ -1,5 +1,5 @@
-use gpui::*;
 use crate::ui::icon::IconName;
+use gpui::*;
 pub struct RunningApps {
     pub scroll_offset: Pixels,
     pub is_dragging: bool,
@@ -15,6 +15,7 @@ pub struct RunningApps {
     pub removing_card_id: Option<usize>,
     pub current_center_index: usize,
     pub is_cleaning_up: bool, // Flag for clean up animation
+    pub position: f32,
 }
 
 #[derive(Clone, Copy, PartialEq)]

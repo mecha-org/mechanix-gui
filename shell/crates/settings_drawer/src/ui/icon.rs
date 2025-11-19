@@ -40,16 +40,17 @@ pub enum IconName {
     Terminal,
     CellSignalNone,
     CellSignalHigh,
+    Navbar,
 }
 
 impl IconName {
     pub fn resolve(self) -> SharedString {
         let icon_path = match self {
             IconName::Settings => "settings.svg",
-            IconName::Battery => "battery-medium.svg",  // this will be from status-bar icons
+            IconName::Battery => "battery-medium.svg", // this will be from status-bar icons
             IconName::Power => "power.svg",
             IconName::PowerModeHigh => "power-mode-high.svg",
-            IconName::PowerModeBalanced => "power-mode-balanced.svg",  
+            IconName::PowerModeBalanced => "power-mode-balanced.svg",
             IconName::PowerModeLow => "power-mode-low.svg",
             IconName::RotationOn => "rotation-on.svg",
             IconName::RotationOff => "rotation-off.svg",
@@ -82,6 +83,7 @@ impl IconName {
             IconName::Terminal => "terminal.svg",
             IconName::CellSignalNone => "cell-signal-none.svg",
             IconName::CellSignalHigh => "cell-signal-high.svg",
+            IconName::Navbar => "navbar.png",
         };
 
         format!("{}{icon_path}", SETTINGS_DRAWER_ICONS_DIR).into()
