@@ -97,6 +97,13 @@ impl Widget {
         self.target_y = cursor_y - widget_height / 2.0;
     }
 
+    pub fn is_animating(&self) -> bool {
+        let dx = self.target_x - self.current_x;
+        let dy = self.target_y - self.current_y;
+        let distance = (dx * dx + dy * dy).sqrt();
+        distance >= 1.0
+    }
+
     pub fn update_position(&mut self, delta_time: f32) -> bool {
         let dx = self.target_x - self.current_x;
         let dy = self.target_y - self.current_y;
@@ -233,6 +240,177 @@ impl Page {
 
         self.widgets[idx1].position = pos2;
         self.widgets[idx2].position = pos1;
+
+        Ok(())
+    }
+
+    pub fn find_overlapping_widgets(
+        &self,
+        position: GridPosition,
+        size: WidgetSize,
+        exclude_id: Option<usize>,
+    ) -> Vec<usize> {
+        let mut overlapping = Vec::new();
+
+        let occupied_cells: Vec<(usize, usize)> = (position.row..position.row + size.rows)
+            .flat_map(|row| (position.col..position.col + size.cols).map(move |col| (col, row)))
+            .collect();
+
+        for widget in &self.widgets {
+            if let Some(exclude) = exclude_id {
+                if widget.id == exclude {
+                    continue;
+                }
+            }
+
+            for (col, row) in &occupied_cells {
+                if widget.occupies(*col, *row) {
+                    overlapping.push(widget.id);
+                    break;
+                }
+            }
+        }
+
+        overlapping
+    }
+
+    pub fn can_place_widget_at(
+        &self,
+        widget_size: WidgetSize,
+        position: GridPosition,
+        exclude_ids: &[usize],
+    ) -> bool {
+        if position.col + widget_size.cols > self.grid_cols {
+            return false;
+        }
+        if position.row + widget_size.rows > self.grid_rows {
+            return false;
+        }
+
+        let occupied_cells: Vec<(usize, usize)> = (position.row..position.row + widget_size.rows)
+            .flat_map(|row| {
+                (position.col..position.col + widget_size.cols).map(move |col| (col, row))
+            })
+            .collect();
+
+        for widget in &self.widgets {
+            if exclude_ids.contains(&widget.id) {
+                continue;
+            }
+
+            for (col, row) in &occupied_cells {
+                if widget.occupies(*col, *row) {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+
+    pub fn find_closest_available_position(
+        &self,
+        widget_size: WidgetSize,
+        preferred_position: GridPosition,
+        exclude_ids: &[usize],
+    ) -> Option<GridPosition> {
+        let mut best_position: Option<GridPosition> = None;
+        let mut best_distance = f32::MAX;
+
+        for row in 0..self.grid_rows {
+            for col in 0..self.grid_cols {
+                let test_position = GridPosition::new(col, row);
+
+                if self.can_place_widget_at(widget_size, test_position, exclude_ids) {
+                    let distance = (((col as i32 - preferred_position.col as i32).pow(2)
+                        + (row as i32 - preferred_position.row as i32).pow(2))
+                        as f32)
+                        .sqrt();
+
+                    if distance < best_distance {
+                        best_distance = distance;
+                        best_position = Some(test_position);
+                    }
+                }
+            }
+        }
+
+        best_position
+    }
+
+    pub fn try_rearrange_on_drop(
+        &mut self,
+        widget_id: usize,
+        new_position: GridPosition,
+    ) -> Result<(), String> {
+        let widget_idx = self
+            .widgets
+            .iter()
+            .position(|w| w.id == widget_id)
+            .ok_or_else(|| "Widget not found".to_string())?;
+
+        let widget = &self.widgets[widget_idx];
+        let original_position = widget.position;
+        let widget_size = widget.size;
+
+        if new_position.col + widget_size.cols > self.grid_cols {
+            return Err("New position exceeds grid width".to_string());
+        }
+        if new_position.row + widget_size.rows > self.grid_rows {
+            return Err("New position exceeds grid height".to_string());
+        }
+
+        if new_position == original_position {
+            return Ok(());
+        }
+
+        let backup_positions: Vec<(usize, GridPosition)> =
+            self.widgets.iter().map(|w| (w.id, w.position)).collect();
+
+        let overlapping_ids =
+            self.find_overlapping_widgets(new_position, widget_size, Some(widget_id));
+
+        let mut displaced_widgets: Vec<(usize, GridPosition, WidgetSize)> = Vec::new();
+        for &id in &overlapping_ids {
+            if let Some(widget) = self.widgets.iter().find(|w| w.id == id) {
+                displaced_widgets.push((id, widget.position, widget.size));
+            }
+        }
+
+        displaced_widgets.sort_by(|a, b| {
+            let dist_a = ((a.1.col as f32).powi(2) + (a.1.row as f32).powi(2)).sqrt();
+            let dist_b = ((b.1.col as f32).powi(2) + (b.1.row as f32).powi(2)).sqrt();
+            dist_a.partial_cmp(&dist_b).unwrap()
+        });
+
+        let widget_idx = self.widgets.iter().position(|w| w.id == widget_id).unwrap();
+        self.widgets[widget_idx].position = new_position;
+
+        let mut exclude_ids: Vec<usize> = overlapping_ids.clone();
+
+        let mut new_positions: Vec<(usize, GridPosition)> = Vec::new();
+
+        for (displaced_id, original_pos, size) in displaced_widgets {
+            match self.find_closest_available_position(size, original_pos, &exclude_ids) {
+                Some(new_pos) => {
+                    new_positions.push((displaced_id, new_pos));
+
+                    if let Some(widget) = self.widgets.iter_mut().find(|w| w.id == displaced_id) {
+                        widget.position = new_pos;
+                    }
+
+                    exclude_ids.retain(|&id| id != displaced_id);
+                }
+                None => {
+                    for (id, pos) in backup_positions {
+                        if let Some(widget) = self.widgets.iter_mut().find(|w| w.id == id) {
+                            widget.position = pos;
+                        }
+                    }
+                    return Err("Cannot find positions for all widgets".to_string());
+                }
+            }
+        }
 
         Ok(())
     }
@@ -376,9 +554,20 @@ impl HomescreenState {
     }
 
     pub fn end_widget_drag(&mut self) {
-        if let (Some(widget_id), Some(original_page)) =
-            (self.dragging_widget, self.dragging_widget_original_page)
-        {
+        println!("End widget drag");
+        self.dragging_widget = None;
+        self.dragging_widget_original_page = None;
+        self.edge_hold_start_time = None;
+        self.last_page_switch_time = None;
+    }
+
+    pub fn return_widget_to_original_page(
+        &mut self,
+        widget_id: usize,
+        page_width: f32,
+        page_gap: f32,
+    ) -> bool {
+        if let Some(original_page) = self.dragging_widget_original_page {
             let mut found_page = None;
             for (page_idx, page) in self.pages.iter().enumerate() {
                 if page.widgets.iter().any(|w| w.id == widget_id) {
@@ -389,15 +578,18 @@ impl HomescreenState {
 
             if let Some(current_page) = found_page {
                 if current_page != original_page {
-                    self.move_widget_to_page(widget_id, current_page, original_page);
+                    self.move_widget_to_page_with_offset(
+                        widget_id,
+                        current_page,
+                        original_page,
+                        page_width,
+                        page_gap,
+                    );
+                    return true;
                 }
             }
         }
-
-        self.dragging_widget = None;
-        self.dragging_widget_original_page = None;
-        self.edge_hold_start_time = None;
-        self.last_page_switch_time = None;
+        false
     }
 
     pub fn start_drag(&mut self, x: gpui::Pixels) {
@@ -447,27 +639,16 @@ impl HomescreenState {
         self.drag_offset_x = 0.0;
     }
 
-    pub fn update_animation(&mut self) -> bool {
+    pub fn update_animation(&mut self, delta_time: f32) -> bool {
         if !self.is_animating {
             return false;
         }
-
-        let now = std::time::Instant::now();
-
-        let delta_time = if let Some(last_time) = self.last_update_time {
-            now.duration_since(last_time).as_secs_f32()
-        } else {
-            0.016
-        };
-
-        self.last_update_time = Some(now);
 
         let distance = self.target_offset - self.current_offset;
 
         if distance.abs() < 1.0 {
             self.current_offset = self.target_offset;
             self.is_animating = false;
-            self.last_update_time = None;
             return false;
         }
 
@@ -477,7 +658,6 @@ impl HomescreenState {
         if step.abs() > distance.abs() {
             self.current_offset = self.target_offset;
             self.is_animating = false;
-            self.last_update_time = None;
             return false;
         }
 
@@ -580,6 +760,38 @@ impl HomescreenState {
                 None => return,
             }
         };
+
+        self.pages[to_page].widgets.push(widget);
+    }
+
+    pub fn move_widget_to_page_with_offset(
+        &mut self,
+        widget_id: usize,
+        from_page: usize,
+        to_page: usize,
+        page_width: f32,
+        page_gap: f32,
+    ) {
+        if from_page >= self.pages.len() || to_page >= self.pages.len() || from_page == to_page {
+            return;
+        }
+
+        let mut widget = {
+            let from_page_widgets = &mut self.pages[from_page].widgets;
+            let widget_index = from_page_widgets.iter().position(|w| w.id == widget_id);
+
+            match widget_index {
+                Some(idx) => from_page_widgets.remove(idx),
+                None => return,
+            }
+        };
+
+        let from_offset = from_page as f32 * (page_width + page_gap);
+        let to_offset = to_page as f32 * (page_width + page_gap);
+        let position_adjustment = from_offset - to_offset;
+
+        widget.current_x += position_adjustment;
+        widget.target_x += position_adjustment;
 
         self.pages[to_page].widgets.push(widget);
     }

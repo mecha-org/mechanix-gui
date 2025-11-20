@@ -2,7 +2,6 @@ use crate::models::Widget;
 use gpui::prelude::*;
 use gpui::*;
 
-
 #[derive(IntoElement)]
 pub struct WidgetView {
     widget: Widget,
@@ -47,12 +46,10 @@ impl RenderOnce for WidgetView {
 
         let base_color = self.widget.background_color;
         let bg_color = if self.is_selected {
-            
             let mut color = base_color;
             color.l = (color.l + 0.1).min(1.0);
             color
         } else if self.is_hovered {
-            
             let mut color = base_color;
             color.l = (color.l + 0.05).min(1.0);
             color
@@ -61,11 +58,11 @@ impl RenderOnce for WidgetView {
         };
 
         let border_color = if self.is_selected {
-            rgb(0xFFFFFF) 
+            rgb(0xFFFFFF)
         } else if self.is_hovered {
-            rgb(0xCCCCCC) 
+            rgb(0xCCCCCC)
         } else {
-            rgba(0x00000000) 
+            rgba(0x00000000)
         };
 
         div()
@@ -79,7 +76,6 @@ impl RenderOnce for WidgetView {
             .rounded(px(16.0))
             .border_2()
             .border_color(border_color)
-            .shadow_lg()
             .cursor_pointer()
             .child(
                 div()
@@ -88,7 +84,6 @@ impl RenderOnce for WidgetView {
                     .items_center()
                     .gap_2()
                     .child(
-                        
                         div()
                             .w(px(48.0))
                             .h(px(48.0))
@@ -105,7 +100,6 @@ impl RenderOnce for WidgetView {
                             ),
                     )
                     .child(
-                        
                         div()
                             .text_size(px(14.0))
                             .text_color(rgb(0xFFFFFF))

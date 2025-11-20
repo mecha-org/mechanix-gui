@@ -29,14 +29,6 @@ impl Homescreen {
 
         let demo_widgets = vec![
             Widget::new(
-                1,
-                "Music",
-                "🎵",
-                WidgetSize::new(2, 2),
-                GridPosition::new(0, 0),
-            )
-            .with_color(rgb(0xFF6B9D).into()),
-            Widget::new(
                 2,
                 "Photos",
                 "📷",
@@ -53,22 +45,6 @@ impl Homescreen {
             )
             .with_color(rgb(0xE74C3C).into()),
             Widget::new(
-                4,
-                "Weather",
-                "🌤️",
-                WidgetSize::new(2, 1),
-                GridPosition::new(2, 1),
-            )
-            .with_color(rgb(0x3498DB).into()),
-            Widget::new(
-                5,
-                "Messages",
-                "💬",
-                WidgetSize::new(1, 1),
-                GridPosition::new(0, 2),
-            )
-            .with_color(rgb(0x2ECC71).into()),
-            Widget::new(
                 6,
                 "Notes",
                 "📝",
@@ -76,14 +52,6 @@ impl Homescreen {
                 GridPosition::new(1, 2),
             )
             .with_color(rgb(0xF39C12).into()),
-            Widget::new(
-                7,
-                "Clock",
-                "🕐",
-                WidgetSize::new(1, 1),
-                GridPosition::new(2, 2),
-            )
-            .with_color(rgb(0x9B59B6).into()),
             Widget::new(
                 8,
                 "Settings",
@@ -93,14 +61,6 @@ impl Homescreen {
             )
             .with_color(rgb(0x34495E).into()),
             Widget::new(
-                9,
-                "Maps",
-                "🗺️",
-                WidgetSize::new(1, 1),
-                GridPosition::new(0, 3),
-            )
-            .with_color(rgb(0x16A085).into()),
-            Widget::new(
                 10,
                 "Browser",
                 "🌐",
@@ -108,14 +68,6 @@ impl Homescreen {
                 GridPosition::new(2, 3),
             )
             .with_color(rgb(0xE67E22).into()),
-            Widget::new(
-                11,
-                "Games",
-                "🎮",
-                WidgetSize::new(1, 1),
-                GridPosition::new(3, 3),
-            )
-            .with_color(rgb(0xC0392B).into()),
         ];
 
         for widget in demo_widgets {
@@ -128,14 +80,6 @@ impl Homescreen {
         let mut page2 = Page::new(1, GRID_COLS, GRID_ROWS);
         let page2_widgets = vec![
             Widget::new(
-                12,
-                "Twitter",
-                "🐦",
-                WidgetSize::new(1, 1),
-                GridPosition::new(0, 0),
-            )
-            .with_color(rgb(0x1DA1F2).into()),
-            Widget::new(
                 13,
                 "Instagram",
                 "📸",
@@ -143,14 +87,6 @@ impl Homescreen {
                 GridPosition::new(1, 0),
             )
             .with_color(rgb(0xE4405F).into()),
-            Widget::new(
-                14,
-                "WhatsApp",
-                "💬",
-                WidgetSize::new(2, 1),
-                GridPosition::new(2, 0),
-            )
-            .with_color(rgb(0x25D366).into()),
             Widget::new(
                 15,
                 "Email",
@@ -160,14 +96,6 @@ impl Homescreen {
             )
             .with_color(rgb(0xD44638).into()),
             Widget::new(
-                16,
-                "Slack",
-                "💼",
-                WidgetSize::new(1, 1),
-                GridPosition::new(2, 1),
-            )
-            .with_color(rgb(0x4A154B).into()),
-            Widget::new(
                 17,
                 "Discord",
                 "🎮",
@@ -176,22 +104,6 @@ impl Homescreen {
             )
             .with_color(rgb(0x5865F2).into()),
             Widget::new(
-                18,
-                "Telegram",
-                "✈️",
-                WidgetSize::new(1, 1),
-                GridPosition::new(2, 2),
-            )
-            .with_color(rgb(0x0088CC).into()),
-            Widget::new(
-                19,
-                "Signal",
-                "🔒",
-                WidgetSize::new(1, 1),
-                GridPosition::new(3, 2),
-            )
-            .with_color(rgb(0x3A76F0).into()),
-            Widget::new(
                 20,
                 "Phone",
                 "📞",
@@ -199,22 +111,6 @@ impl Homescreen {
                 GridPosition::new(0, 3),
             )
             .with_color(rgb(0x34C759).into()),
-            Widget::new(
-                21,
-                "Contacts",
-                "👥",
-                WidgetSize::new(1, 1),
-                GridPosition::new(2, 3),
-            )
-            .with_color(rgb(0xFF9500).into()),
-            Widget::new(
-                22,
-                "FaceTime",
-                "📹",
-                WidgetSize::new(1, 1),
-                GridPosition::new(3, 3),
-            )
-            .with_color(rgb(0x00D856).into()),
         ];
         for widget in page2_widgets {
             if let Err(e) = page2.add_widget(widget) {
@@ -226,38 +122,6 @@ impl Homescreen {
         let mut page3 = Page::new(2, GRID_COLS, GRID_ROWS);
         let page3_widgets = vec![
             Widget::new(
-                23,
-                "Netflix",
-                "🎬",
-                WidgetSize::new(2, 2),
-                GridPosition::new(0, 0),
-            )
-            .with_color(rgb(0xE50914).into()),
-            Widget::new(
-                24,
-                "Spotify",
-                "🎵",
-                WidgetSize::new(1, 1),
-                GridPosition::new(2, 0),
-            )
-            .with_color(rgb(0x1DB954).into()),
-            Widget::new(
-                25,
-                "YouTube",
-                "📺",
-                WidgetSize::new(1, 1),
-                GridPosition::new(3, 0),
-            )
-            .with_color(rgb(0xFF0000).into()),
-            Widget::new(
-                26,
-                "Twitch",
-                "🎮",
-                WidgetSize::new(2, 1),
-                GridPosition::new(2, 1),
-            )
-            .with_color(rgb(0x9146FF).into()),
-            Widget::new(
                 27,
                 "Apple TV",
                 "📺",
@@ -266,14 +130,6 @@ impl Homescreen {
             )
             .with_color(rgb(0x000000).into()),
             Widget::new(
-                28,
-                "Disney+",
-                "🏰",
-                WidgetSize::new(1, 2),
-                GridPosition::new(1, 2),
-            )
-            .with_color(rgb(0x113CCF).into()),
-            Widget::new(
                 29,
                 "Podcasts",
                 "🎙️",
@@ -281,38 +137,6 @@ impl Homescreen {
                 GridPosition::new(2, 2),
             )
             .with_color(rgb(0x8032DC).into()),
-            Widget::new(
-                30,
-                "Books",
-                "📚",
-                WidgetSize::new(1, 1),
-                GridPosition::new(3, 2),
-            )
-            .with_color(rgb(0xFF9500).into()),
-            Widget::new(
-                31,
-                "Camera",
-                "📷",
-                WidgetSize::new(1, 1),
-                GridPosition::new(0, 3),
-            )
-            .with_color(rgb(0x8E8E93).into()),
-            Widget::new(
-                32,
-                "Photos",
-                "🖼️",
-                WidgetSize::new(1, 1),
-                GridPosition::new(2, 3),
-            )
-            .with_color(rgb(0xFF3B30).into()),
-            Widget::new(
-                33,
-                "Gallery",
-                "🎨",
-                WidgetSize::new(1, 1),
-                GridPosition::new(3, 3),
-            )
-            .with_color(rgb(0x5856D6).into()),
         ];
         for widget in page3_widgets {
             if let Err(e) = page3.add_widget(widget) {
@@ -392,11 +216,14 @@ impl Homescreen {
             .collect();
 
         let mut dragged_widget_data: Option<(Widget, usize)> = None;
-        if let Some(dragged_id) = dragging_widget_id {
-            for (page_idx, widgets) in &pages_data {
-                if let Some(widget) = widgets.iter().find(|w| w.id == dragged_id) {
+        let mut animating_widgets: Vec<(Widget, usize)> = Vec::new();
+
+        for (page_idx, widgets) in &pages_data {
+            for widget in widgets {
+                if Some(widget.id) == dragging_widget_id {
                     dragged_widget_data = Some((widget.clone(), *page_idx));
-                    break;
+                } else if widget.is_animating() {
+                    animating_widgets.push((widget.clone(), *page_idx));
                 }
             }
         }
@@ -415,7 +242,7 @@ impl Homescreen {
                     .children(widgets.into_iter().filter_map(|widget| {
                         let widget_id = widget.id;
 
-                        if Some(widget_id) == dragging_widget_id {
+                        if Some(widget_id) == dragging_widget_id || widget.is_animating() {
                             return None;
                         }
 
@@ -448,6 +275,38 @@ impl Homescreen {
                                 ),
                         )
                     }))
+            }))
+            .children(animating_widgets.into_iter().map(|(widget, page_idx)| {
+                let widget_id = widget.id;
+                let is_hovered = hovered_id == Some(widget_id);
+                let is_selected = selected_id == Some(widget_id);
+
+                let page_gap_f32: f32 = page_gap.into();
+                let grid_width_f32: f32 = grid_width.into();
+                let page_offset = page_idx as f32 * (grid_width_f32 + page_gap_f32);
+
+                let left = px(widget.current_x + page_offset);
+                let top = px(widget.current_y);
+
+                div()
+                    .id(("widget_animating", widget_id))
+                    .absolute()
+                    .left(left)
+                    .top(top)
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(move |homescreen, event: &MouseDownEvent, _window, cx| {
+                            let x: f32 = event.position.x.into();
+                            let y: f32 = event.position.y.into();
+                            homescreen.state.start_hold(x, y, Some(widget_id));
+                            cx.notify();
+                        }),
+                    )
+                    .child(
+                        WidgetView::new(widget, cell_size, gap)
+                            .hovered(is_hovered)
+                            .selected(is_selected),
+                    )
             }))
             .when_some(dragged_widget_data, |parent_div, (widget, page_idx)| {
                 let widget_id = widget.id;
@@ -511,10 +370,6 @@ impl Render for Homescreen {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let padding = self.calculate_grid_padding();
 
-        if self.state.update_animation() {
-            cx.notify();
-        }
-
         let now = std::time::Instant::now();
         let delta_time = if let Some(last_time) = self.state.last_update_time {
             now.duration_since(last_time).as_secs_f32()
@@ -523,17 +378,22 @@ impl Render for Homescreen {
         };
         self.state.last_update_time = Some(now);
 
-        let mut needs_update = false;
+        let page_animating = self.state.update_animation(delta_time);
+
+        let mut any_widget_animating = false;
         for page in &mut self.state.pages {
             for widget in &mut page.widgets {
                 if widget.update_position(delta_time) {
-                    needs_update = true;
+                    any_widget_animating = true;
                 }
             }
         }
 
-        if needs_update {
-            cx.notify();
+        if self.state.dragging_widget.is_none() {
+            cx.refresh_windows();
+            if any_widget_animating || page_animating || self.state.is_animating {
+                cx.refresh_windows();
+            }
         }
 
         let visual_offset = self.state.get_visual_offset();
@@ -598,23 +458,71 @@ impl Render for Homescreen {
             )
             .on_mouse_up(
                 MouseButton::Left,
-                cx.listener(|homescreen, _event: &MouseUpEvent, _window, cx| {
+                cx.listener(|homescreen, event: &MouseUpEvent, _window, cx| {
                     if homescreen.state.dragging_widget.is_some() {
                         let dragging_widget_id = homescreen.state.dragging_widget.unwrap();
-
-                        homescreen.state.end_widget_drag();
 
                         let cell_size_f32: f32 = homescreen.calculate_cell_size().into();
                         let gap_f32: f32 = homescreen.calculate_gap().into();
 
-                        for page in &mut homescreen.state.pages {
-                            if let Some(widget) =
-                                page.widgets.iter_mut().find(|w| w.id == dragging_widget_id)
-                            {
-                                widget.calculate_target_position(cell_size_f32, gap_f32);
+                        let mut current_page_idx = None;
+                        for (page_idx, page) in homescreen.state.pages.iter().enumerate() {
+                            if page.widgets.iter().any(|w| w.id == dragging_widget_id) {
+                                current_page_idx = Some(page_idx);
                                 break;
                             }
                         }
+
+                        if let Some(page_idx) = current_page_idx {
+                            let mouse_x: f32 = event.position.x.into();
+                            let mouse_y: f32 = event.position.y.into();
+
+                            let widget = homescreen.state.pages[page_idx]
+                                .widgets
+                                .iter()
+                                .find(|w| w.id == dragging_widget_id)
+                                .unwrap();
+
+                            let col =
+                                (widget.current_x / (cell_size_f32 + gap_f32)).round() as usize;
+                            let row =
+                                (widget.current_y / (cell_size_f32 + gap_f32)).round() as usize;
+                            let drop_position = GridPosition::new(col, row);
+
+                            let rearrange_result = homescreen.state.pages[page_idx]
+                                .try_rearrange_on_drop(dragging_widget_id, drop_position);
+
+                            match rearrange_result {
+                                Ok(_) => {
+                                    for widget in &mut homescreen.state.pages[page_idx].widgets {
+                                        widget.calculate_target_position(cell_size_f32, gap_f32);
+                                    }
+                                }
+                                Err(_e) => {
+                                    let grid_width_f32: f32 =
+                                        homescreen.calculate_grid_width().into();
+                                    homescreen.state.return_widget_to_original_page(
+                                        dragging_widget_id,
+                                        grid_width_f32,
+                                        40.0,
+                                    );
+
+                                    for page in &mut homescreen.state.pages {
+                                        if let Some(widget) = page
+                                            .widgets
+                                            .iter_mut()
+                                            .find(|w| w.id == dragging_widget_id)
+                                        {
+                                            widget
+                                                .calculate_target_position(cell_size_f32, gap_f32);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        homescreen.state.end_widget_drag();
                     } else {
                         let grid_width_f32: f32 = homescreen.calculate_grid_width().into();
                         homescreen.state.end_drag(grid_width_f32, 40.0);
