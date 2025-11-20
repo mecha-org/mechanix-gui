@@ -1,12 +1,16 @@
 use commons::prelude::*;
 use gpui::{layer_shell::*, *};
 use homescreen::prelude::*;
+use homescreen::ui::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
     application.run(|cx| {
-        let window_bounds =
-            WindowBounds::Windowed(Bounds::centered(None, size(px(540.0), px(540.0)), cx));
+        let window_bounds = WindowBounds::Windowed(Bounds::centered(
+            None,
+            size(px(WINDOW_WIDTH), px(WINDOW_HEIGHT)),
+            cx,
+        ));
 
         cx.open_window(
             WindowOptions {
@@ -23,7 +27,7 @@ fn main() {
                 }),
                 ..Default::default()
             },
-            |_window, cx| cx.new(|_cx| Homescreen::new()),
+            |_window, cx| cx.new(|cx| Homescreen::new(cx)),
         )
         .unwrap();
         cx.activate(true);
