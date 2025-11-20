@@ -16,3 +16,7 @@ rust-embed = { workspace = true }
 anyhow = { workspace = true }
 commons = { path = "../commons" }
 chrono = { version = "0.4", features = ["clock"] }
+networkmanager = { workspace = true }
+bluez = { workspace = true }
+upower = { workspace = true }
+futures = "0.3.31"

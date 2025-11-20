@@ -40,3 +40,6 @@ thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
 gpui = { version = "0.2.2", default-features = false, features = ["x11"] }
 rust-embed = "8.8.0"
+networkmanager = { path = "dbus/freedesktop/networkmanager" }
+bluez = { path = "dbus/freedesktop/bluez" }
+upower = { path = "dbus/freedesktop/upower" }
