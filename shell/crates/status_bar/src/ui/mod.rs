@@ -23,7 +23,7 @@ pub struct StatusBar {
 
 impl StatusBar {
     pub fn new() -> Self {
-        let format = DateTimeFormat::ShortDateTimeSec; // get from mxconf ?
+        let format = DateTimeFormat::Time12Only; // get from mxconf ?
         Self {
             current_time_date: get_current_datetime(format),
             datetime_format: format,
