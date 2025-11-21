@@ -37,7 +37,7 @@ impl StatusBar {
 impl Render for StatusBar {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         div()
-            .bg(gpui::black())
+            .bg(gpui::transparent_white())
             .flex()
             .items_center()
             .justify_between()

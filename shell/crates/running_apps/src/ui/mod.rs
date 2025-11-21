@@ -2,12 +2,88 @@ use std::time::Duration;
 mod icon;
 use gpui::prelude::*;
 use gpui::*;
-pub mod models;
 pub mod constants;
+pub mod models;
 pub use constants::*;
-pub use models::{ RunningApps, AppCard, DragDirection };
+pub use models::{AppCard, DragDirection, RunningApps};
 
-use crate::ui::icon::{ Icon, IconName };
+use crate::ui::icon::{Icon, IconName};
+
+const NAVBAR_SIZE: (f32, f32) = (120., 29.);
+const APP_SIZE: (f32, f32) = (540., 620.);
+
+impl Render for RunningApps {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let bar_fixed_pos = APP_SIZE.1 - NAVBAR_SIZE.1;
+        let current_bar_y = bar_fixed_pos + self.bar_drag_offset;
+
+        div()
+            .w_full()
+            .h_full()
+            .when(self.show_apps, |this| {
+                this.child(
+                    div()
+                        .w_full()
+                        .h_full()
+                        .absolute()
+                        .top(px(self.position))
+                        .child(self.running_apps(cx)),
+                )
+            })
+            .on_mouse_move(
+                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                    if let Some(start_y) = this.bar_drag_start_y {
+                        let current_y = event.position.y.to_f64() as f32;
+                        let offset = current_y - start_y;
+                        this.bar_drag_offset = offset.min(0.);
+                        cx.notify();
+                    }
+                }),
+            )
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(move |this, _, window, cx| {
+                    if this.bar_drag_start_y.is_some() {
+                        if this.bar_drag_offset < -80. {
+                            //long swipe
+                            //Show running apps
+                            this.update_input_regions(window, !this.show_apps);
+                            this.show_apps = !this.show_apps;
+                        } else {
+                            //short swipe
+                            //Mimize all apps
+                        }
+                        this.bar_drag_start_y = None;
+                        this.snap_bar_to(0., cx);
+                        cx.notify();
+                    }
+                }),
+            )
+            .child(
+                div()
+                    .id("running-apps-navbar")
+                    .w_full()
+                    .flex()
+                    .flex_row()
+                    .justify_center()
+                    .items_center()
+                    .absolute()
+                    .top(px(current_bar_y))
+                    .h(px(NAVBAR_SIZE.1))
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                            cx.stop_propagation();
+                            this.bar_drag_start_y = Some(event.position.y.to_f64() as f32);
+                            cx.notify();
+                        }),
+                    )
+                    .child(
+                        div().bg(rgb(0x4D4D4D)).w(px(NAVBAR_SIZE.0)).h(px(4.)), // img(IconName::Navbar.resolve()).id("running-apps-navbar")
+                    ),
+            )
+    }
+}
 
 // Drag data structure
 #[derive(Clone, Copy)]
@@ -91,6 +167,10 @@ impl RunningApps {
             removing_card_id: None,
             current_center_index: last_index,
             is_cleaning_up: false,
+            position: 0.,
+            bar_drag_offset: 0.,
+            bar_drag_start_y: None,
+            show_apps: false,
         }
     }
 
@@ -148,12 +228,15 @@ impl RunningApps {
             let lerp_factor = 0.2;
             self.scroll_offset = self.scroll_offset + diff * lerp_factor;
             cx.spawn(async move |this, cx| {
-                cx.background_executor().timer(Duration::from_millis(16)).await;
+                cx.background_executor()
+                    .timer(Duration::from_millis(16))
+                    .await;
                 let _ = this.update(cx, |this, cx| {
                     this.animate_scroll(cx);
                     cx.notify();
                 });
-            }).detach();
+            })
+            .detach();
         }
     }
 
@@ -183,10 +266,9 @@ impl RunningApps {
                     if removed_idx < self.current_center_index {
                         self.current_center_index = self.current_center_index.saturating_sub(1);
                     } else if
-                        // If we removed the centered card or one to the right, keep same index
-                        // (the next card will slide into that position)
-                        self.current_center_index >= self.apps.len() &&
-                        !self.apps.is_empty()
+                    // If we removed the centered card or one to the right, keep same index
+                    // (the next card will slide into that position)
+                    self.current_center_index >= self.apps.len() && !self.apps.is_empty()
                     {
                         self.current_center_index = self.apps.len() - 1;
                     }
@@ -194,9 +276,8 @@ impl RunningApps {
 
                 // After removing, smoothly animate scroll position
                 if !self.apps.is_empty() {
-                    self.target_scroll_offset = Self::calculate_center_offset_for_index_static(
-                        self.current_center_index
-                    );
+                    self.target_scroll_offset =
+                        Self::calculate_center_offset_for_index_static(self.current_center_index);
                     self.is_animating = true;
                     self.animate_scroll(cx);
                 } else {
@@ -210,12 +291,15 @@ impl RunningApps {
                 app.offset_y = app.offset_y + diff * lerp_factor;
 
                 cx.spawn(async move |this, cx| {
-                    cx.background_executor().timer(Duration::from_millis(16)).await;
+                    cx.background_executor()
+                        .timer(Duration::from_millis(16))
+                        .await;
                     let _ = this.update(cx, |this, cx| {
                         this.animate_card_removal(card_id, cx);
                         cx.notify();
                     });
-                }).detach();
+                })
+                .detach();
             }
         }
     }
@@ -248,12 +332,15 @@ impl RunningApps {
             }
 
             cx.spawn(async move |this, cx| {
-                cx.background_executor().timer(Duration::from_millis(16)).await;
+                cx.background_executor()
+                    .timer(Duration::from_millis(16))
+                    .await;
                 let _ = this.update(cx, |this, cx| {
                     this.animate_clean_up(cx);
                     cx.notify();
                 });
-            }).detach();
+            })
+            .detach();
         }
     }
 
@@ -282,7 +369,7 @@ impl RunningApps {
         app_id: usize,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        cx: &mut Context<Self>,
     ) {
         self.is_dragging = true;
         self.is_animating = false;
@@ -298,7 +385,7 @@ impl RunningApps {
         &mut self,
         event: &DragMoveEvent<CardDragData>,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        cx: &mut Context<Self>,
     ) {
         if !self.is_dragging {
             return;
@@ -311,9 +398,8 @@ impl RunningApps {
             let abs_delta_x = delta_x.abs();
             let abs_delta_y = delta_y.abs();
 
-            if
-                abs_delta_x > px(DRAG_DETECTION_THRESHOLD) ||
-                abs_delta_y > px(DRAG_DETECTION_THRESHOLD)
+            if abs_delta_x > px(DRAG_DETECTION_THRESHOLD)
+                || abs_delta_y > px(DRAG_DETECTION_THRESHOLD)
             {
                 self.drag_direction = if abs_delta_x > abs_delta_y {
                     Some(DragDirection::Horizontal)
@@ -333,7 +419,11 @@ impl RunningApps {
                 let max_scroll = px(center_offset - PADDING);
 
                 // last card position (x) = (n-1) * (card_width + gap) + padding
-                let last_index = if self.apps.is_empty() { 0 } else { self.apps.len() - 1 };
+                let last_index = if self.apps.is_empty() {
+                    0
+                } else {
+                    self.apps.len() - 1
+                };
                 let min_scroll = Self::calculate_center_offset_for_index_static(last_index);
 
                 self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
@@ -378,7 +468,8 @@ impl RunningApps {
                                     let _ = this.update(cx, |this, cx| {
                                         this.animate_snap_back(card_id_copy, cx);
                                     });
-                                }).detach();
+                                })
+                                .detach();
                             }
                         }
                     }
@@ -411,19 +502,126 @@ impl RunningApps {
                 app.offset_y = app.offset_y + diff * lerp_factor;
 
                 cx.spawn(async move |this, cx| {
-                    cx.background_executor().timer(Duration::from_millis(16)).await;
+                    cx.background_executor()
+                        .timer(Duration::from_millis(16))
+                        .await;
                     let _ = this.update(cx, |this, cx| {
                         this.animate_snap_back(card_id, cx);
                         cx.notify();
                     });
-                }).detach();
+                })
+                .detach();
             }
         }
     }
 }
 
-impl Render for RunningApps {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+impl RunningApps {
+    fn closed_pos() -> f32 {
+        APP_SIZE.1 - NAVBAR_SIZE.1
+    }
+
+    fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.position;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
+        cx.spawn(
+            async move |this: WeakEntity<RunningApps>, cx: &mut AsyncApp| {
+                loop {
+                    let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+
+                    // Check if animation is done
+                    if elapsed >= duration_ms {
+                        this.update(cx, |this, cx| {
+                            this.position = target;
+                            cx.notify();
+                        })
+                        .ok();
+                        break;
+                    }
+
+                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let ease = 1.0 - (1.0 - t).powi(3);
+                    let current = start + (change * ease);
+
+                    this.update(cx, |this, cx| {
+                        this.position = current;
+                        cx.notify();
+                    })
+                    .ok();
+
+                    cx.background_executor()
+                        .timer(std::time::Duration::from_millis(16))
+                        .await;
+                }
+            },
+        )
+        .detach();
+    }
+
+    fn snap_bar_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.bar_drag_offset;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
+        cx.spawn(
+            async move |this: WeakEntity<RunningApps>, cx: &mut AsyncApp| {
+                loop {
+                    let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+
+                    // Check if animation is done
+                    if elapsed >= duration_ms {
+                        this.update(cx, |this, cx| {
+                            this.bar_drag_offset = target;
+                            cx.notify();
+                        })
+                        .ok();
+                        break;
+                    }
+
+                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let ease = 1.0 - (1.0 - t).powi(3);
+                    let current = start + (change * ease);
+
+                    this.update(cx, |this, cx| {
+                        this.bar_drag_offset = current;
+                        cx.notify();
+                    })
+                    .ok();
+
+                    cx.background_executor()
+                        .timer(std::time::Duration::from_millis(16))
+                        .await;
+                }
+            },
+        )
+        .detach();
+    }
+
+    fn update_input_regions(&self, window: &mut Window, open: bool) {
+        let mut regions = Vec::new();
+
+        if open {
+            regions.push(Bounds {
+                origin: point(px(0.), px(0.)),
+                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+            });
+        } else {
+            regions.push(Bounds {
+                origin: point(
+                    px((APP_SIZE.0 - NAVBAR_SIZE.0) / 2.),
+                    px(APP_SIZE.1 - NAVBAR_SIZE.1),
+                ),
+                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+            });
+        }
+        window.set_input_regions(Some(regions));
+    }
+
+    fn running_apps(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let has_apps = !self.apps.is_empty();
         let should_center = self.apps.len() == 1;
 
@@ -468,47 +666,36 @@ impl Render for RunningApps {
                                         .h(px(CARD_HEIGHT))
                                         .justify_center()
                                         .items_center()
-
                                         .child(
-                                            div()
-                                                .absolute()
-                                                .left_0()
-                                                .top_0()
-                                                .child(
-                                                    Icon::from(IconName::BgApp).size((
-                                                        px(CARD_WIDTH),
-                                                        px(CARD_HEIGHT),
-                                                    ))
-                                                )
+                                            div().absolute().left_0().top_0().child(
+                                                Icon::from(IconName::BgApp)
+                                                    .size((px(CARD_WIDTH), px(CARD_HEIGHT))),
+                                            ),
                                         )
                                         .child(
                                             Icon::from(app_icon_path.clone())
                                                 .size((px(40.0), px(40.0)))
-                                                .text_color(rgb(0xf4f4f4))
+                                                .text_color(rgb(0xf4f4f4)),
                                         )
                                         .rounded(px(16.0))
                                         .relative()
                                         .top(offset_y)
                                         .cursor_pointer()
                                         .on_drag_move(cx.listener(Self::handle_mouse_move))
-
                                         .on_drag(
                                             CardDragData::new(),
                                             move |_: &CardDragData, pos, _, cx| {
                                                 let data = CardDragData::new().position(pos);
                                                 cx.new(|_| data)
-                                            }
+                                            },
                                         )
                                         .on_mouse_down(
                                             MouseButton::Left,
                                             cx.listener(move |view, event, window, cx| {
                                                 view.handle_card_mouse_down(
-                                                    app_id,
-                                                    event,
-                                                    window,
-                                                    cx
+                                                    app_id, event, window, cx,
                                                 );
-                                            })
+                                            }),
                                         )
                                         .child(
                                             div()
@@ -535,109 +722,97 @@ impl Render for RunningApps {
                                                                 .items_center()
                                                                 .child(
                                                                     Icon::from(
-                                                                        app_icon_path.clone()
+                                                                        app_icon_path.clone(),
                                                                     )
-                                                                        .size((px(16.0), px(16.0)))
-                                                                        .text_color(rgb(0xf4f4f4))
-                                                                )
+                                                                    .size((px(16.0), px(16.0)))
+                                                                    .text_color(rgb(0xf4f4f4)),
+                                                                ),
                                                         )
                                                         .child(
                                                             div()
                                                                 .font_weight(FontWeight(400.0))
                                                                 .text_size(px(16.0))
                                                                 .text_color(rgb(0xf4f4f4))
-                                                                .child(app_name)
-                                                        )
-                                                )
-                                        )
+                                                                .child(app_name),
+                                                        ),
+                                                ),
+                                        ),
                                 );
                             }
 
                             container
-                        })
+                        }),
                 )
             })
             .when(!has_apps, |this| {
                 this.child(
-                    div()
-                        .flex()
-                        .flex_col()
-                        .items_center()
-                        .gap_16()
-                        .child(
-                            div()
-                                .text_color(rgb(0x666666))
-                                .text_size(px(16.0))
-                                .line_height(px(24.0))
-                                .text_center()
-                                .font_weight(FontWeight(400.0))
-                                .max_w(px(300.0))
-                                .child("There are no apps or droids")
-                                .child(div().child("you are looking for_"))
-                        )
+                    div().flex().flex_col().items_center().gap_16().child(
+                        div()
+                            .text_color(rgb(0x666666))
+                            .text_size(px(16.0))
+                            .line_height(px(24.0))
+                            .text_center()
+                            .font_weight(FontWeight(400.0))
+                            .max_w(px(300.0))
+                            .child("There are no apps or droids")
+                            .child(div().child("you are looking for_")),
+                    ),
                 )
             })
             // fixed positioned footer button
-            .child(
-                div()
-                    .absolute()
-                    .bottom_16()
-                    .child({
-                        let is_enabled = !self.apps.is_empty();
-                        let mut btn = div()
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .gap_2()
-                            .w(px(109.0))
-                            .h(px(36.0))
-                            .px(px(8.0))
-                            .py(px(12.0))
-                            .rounded(px(8.0))
-                            .bg(if is_enabled { rgb(0x363636) } else { rgb(0x202020) })
-                            .cursor(
-                                if is_enabled {
-                                    CursorStyle::PointingHand
-                                } else {
-                                    CursorStyle::default()
-                                }
-                            )
-                            .child(
-                                Icon::from(IconName::CleanUp)
-                                    .size((px(20.0), px(20.0)))
-                                    .text_color(
-                                        if is_enabled {
-                                            rgb(0xf4f4f4)
-                                        } else {
-                                            rgb(0x4d4d4d)
-                                        }
-                                    )
-                            )
-                            .child(
-                                div()
-                                    .text_color(
-                                        if is_enabled {
-                                            rgb(0xf4f4f4)
-                                        } else {
-                                            rgb(0x4d4d4d)
-                                        }
-                                    )
-                                    .opacity(if is_enabled { 1.0 } else { 0.4 })
-                                    .text_size(px(16.0))
-                                    .child("Clean up")
-                            );
-
-                        if is_enabled {
-                            btn = btn.on_mouse_down(
-                                MouseButton::Left,
-                                cx.listener(|view, _event, _window, cx| {
-                                    view.handle_clean_up(cx);
-                                })
-                            );
-                        }
-
-                        btn
+            .child(div().absolute().bottom_16().child({
+                let is_enabled = !self.apps.is_empty();
+                let mut btn = div()
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .gap_2()
+                    .w(px(109.0))
+                    .h(px(36.0))
+                    .px(px(8.0))
+                    .py(px(12.0))
+                    .rounded(px(8.0))
+                    .bg(if is_enabled {
+                        rgb(0x363636)
+                    } else {
+                        rgb(0x202020)
                     })
-            )
+                    .cursor(if is_enabled {
+                        CursorStyle::PointingHand
+                    } else {
+                        CursorStyle::default()
+                    })
+                    .child(
+                        Icon::from(IconName::CleanUp)
+                            .size((px(20.0), px(20.0)))
+                            .text_color(if is_enabled {
+                                rgb(0xf4f4f4)
+                            } else {
+                                rgb(0x4d4d4d)
+                            }),
+                    )
+                    .child(
+                        div()
+                            .text_color(if is_enabled {
+                                rgb(0xf4f4f4)
+                            } else {
+                                rgb(0x4d4d4d)
+                            })
+                            .opacity(if is_enabled { 1.0 } else { 0.4 })
+                            .text_size(px(16.0))
+                            .child("Clean up"),
+                    );
+
+                if is_enabled {
+                    btn = btn.on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|view, _event, _window, cx| {
+                            view.handle_clean_up(cx);
+                        }),
+                    );
+                }
+
+                btn
+            }))
     }
 }

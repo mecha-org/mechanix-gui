@@ -1,4 +1,4 @@
-use gpui::{ prelude::FluentBuilder, * };
+use gpui::{prelude::FluentBuilder, *};
 pub const RUNNING_APPS_DIR: &str = "icons/running-apps/";
 
 #[derive(IntoElement, Clone, PartialEq, Debug)]
@@ -10,6 +10,7 @@ pub enum IconName {
     Chromium,
     Kitty,
     Mecha,
+    Navbar,
 }
 impl IconName {
     pub fn resolve(&self) -> SharedString {
@@ -21,6 +22,7 @@ impl IconName {
             IconName::Chromium => "chromium.png",
             IconName::Kitty => "kitty.png",
             IconName::Mecha => "mecha.png",
+            IconName::Navbar => "navbar.png",
         };
         format!("{}{}", RUNNING_APPS_DIR, icon_path).into()
     }

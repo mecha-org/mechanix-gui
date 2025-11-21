@@ -16,6 +16,8 @@ const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 56.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
+const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+const APP_SIZE: (f32, f32) = (540., 620.);
 
 impl DragInfo {
     fn new() -> Self {
@@ -55,6 +57,9 @@ impl UniversalSearch {
             folder_small_icon: IconName::FolderSmall,
             x_icon: IconName::XIcon,
             text_input: cx.new(|cx| TextInput::new(cx)),
+            position: Self::closed_pos(),
+            drag_offset: None,
+            drag_start_pos: 0.0,
         }
     }
 
@@ -153,6 +158,150 @@ impl UniversalSearch {
 
 impl Render for UniversalSearch {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let open_y = 0.;
+        let closed_y = Self::closed_pos();
+
+        let threshold_px = 40.;
+
+        div()
+            .w_full()
+            .h_full()
+            .on_mouse_move(
+                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                    if let Some(offset) = this.drag_offset {
+                        let new_y = event.position.y.to_f64() as f32 - offset;
+                        this.position = new_y.clamp(open_y, closed_y);
+                        cx.notify();
+                    }
+                }),
+            )
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(move |this, _, window, cx| {
+                    if this.drag_offset.is_some() {
+                        this.drag_offset = None;
+
+                        let target;
+                        let started_closed = this.drag_start_pos > (closed_y / 2.0);
+
+                        if started_closed {
+                            if this.position < (closed_y - threshold_px) {
+                                target = open_y;
+                                this.update_input_regions(window, false);
+                            } else {
+                                target = closed_y;
+                                this.update_input_regions(window, true);
+                            }
+                        } else {
+                            if this.position > (open_y + threshold_px) {
+                                target = closed_y;
+                                this.update_input_regions(window, true);
+                            } else {
+                                target = open_y;
+                                this.update_input_regions(window, false);
+                            }
+                        }
+                        this.snap_to(target, cx);
+                        cx.notify();
+                    }
+                }),
+            )
+            .child(
+                div()
+                    .w_full()
+                    .h_full()
+                    .absolute()
+                    .top(px(self.position))
+                    .child(
+                        div()
+                            .w_full()
+                            .flex()
+                            .flex_row()
+                            .justify_start()
+                            .h(px(NAVBAR_SIZE.1))
+                            .child(
+                                img(IconName::Navbar.resolve())
+                                    .id("universal-search-navbar")
+                                    .on_mouse_down(
+                                        MouseButton::Left,
+                                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                                            cx.stop_propagation();
+                                            this.drag_start_pos = this.position;
+                                            this.drag_offset = Some(
+                                                event.position.y.to_f64() as f32 - this.position,
+                                            );
+                                            cx.notify();
+                                        }),
+                                    ),
+                            ),
+                    )
+                    .child(self.universal_search_items(cx)),
+            )
+    }
+}
+
+impl UniversalSearch {
+    fn closed_pos() -> f32 {
+        APP_SIZE.1 - NAVBAR_SIZE.1
+    }
+
+    fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.position;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
+        cx.spawn(
+            async move |this: WeakEntity<UniversalSearch>, mut cx: &mut AsyncApp| {
+                loop {
+                    let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+
+                    // Check if animation is done
+                    if elapsed >= duration_ms {
+                        this.update(cx, |this, cx| {
+                            this.position = target;
+                            cx.notify();
+                        })
+                        .ok();
+                        break;
+                    }
+
+                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let ease = 1.0 - (1.0 - t).powi(3);
+                    let current = start + (change * ease);
+
+                    this.update(cx, |this, cx| {
+                        this.position = current;
+                        cx.notify();
+                    })
+                    .ok();
+
+                    cx.background_executor()
+                        .timer(std::time::Duration::from_millis(16))
+                        .await;
+                }
+            },
+        )
+        .detach();
+    }
+    fn update_input_regions(&self, window: &mut Window, open: bool) {
+        let mut regions = Vec::new();
+
+        if open {
+            regions.push(Bounds {
+                origin: point(px(0.), px(APP_SIZE.1 - NAVBAR_SIZE.1)),
+                size: size(px(NAVBAR_SIZE.0), px(APP_SIZE.1)),
+            });
+        } else {
+            regions.push(Bounds {
+                origin: point(px(0.), px(0.)),
+                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+            });
+        }
+        window.set_input_regions(Some(regions));
+    }
+
+    fn universal_search_items(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let apps = sample_recent_apps();
 
         self.app_count = apps.len();
