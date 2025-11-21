@@ -18,6 +18,10 @@ pub struct RunningApps {
     pub removing_card_id: Option<usize>,
     pub current_center_index: usize,
     pub is_cleaning_up: bool, // Flag for clean up animation
+    pub position: f32,
+    pub bar_drag_offset: f32,
+    pub bar_drag_start_y: Option<f32>,
+    pub show_apps: bool,
     pub message_tx: mpsc::Sender<AppManagerMessage>,
 }
 #[derive(Debug)]

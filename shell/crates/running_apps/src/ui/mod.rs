@@ -22,6 +22,82 @@ pub use app_manager::AppManagerService;
 use tokio::sync::mpsc;
 use crate::ui::icon::{ Icon, IconName };
 
+const NAVBAR_SIZE: (f32, f32) = (120.0, 29.0);
+const APP_SIZE: (f32, f32) = (540.0, 620.0);
+
+impl Render for RunningApps {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let bar_fixed_pos = APP_SIZE.1 - NAVBAR_SIZE.1;
+        let current_bar_y = bar_fixed_pos + self.bar_drag_offset;
+
+        div()
+            .w_full()
+            .h_full()
+            .when(self.show_apps, |this| {
+                this.child(
+                    div()
+                        .w_full()
+                        .h_full()
+                        .absolute()
+                        .top(px(self.position))
+                        .child(self.running_apps(cx))
+                )
+            })
+            .on_mouse_move(
+                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                    if let Some(start_y) = this.bar_drag_start_y {
+                        let current_y = event.position.y.to_f64() as f32;
+                        let offset = current_y - start_y;
+                        this.bar_drag_offset = offset.min(0.0);
+                        cx.notify();
+                    }
+                })
+            )
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(move |this, _, window, cx| {
+                    if this.bar_drag_start_y.is_some() {
+                        if this.bar_drag_offset < -80.0 {
+                            //long swipe
+                            //Show running apps
+                            this.update_input_regions(window, !this.show_apps);
+                            this.show_apps = !this.show_apps;
+                        } else {
+                            //short swipe
+                            //Mimize all apps
+                        }
+                        this.bar_drag_start_y = None;
+                        this.snap_bar_to(0.0, cx);
+                        cx.notify();
+                    }
+                })
+            )
+            .child(
+                div()
+                    .id("running-apps-navbar")
+                    .w_full()
+                    .flex()
+                    .flex_row()
+                    .justify_center()
+                    .items_center()
+                    .absolute()
+                    .top(px(current_bar_y))
+                    .h(px(NAVBAR_SIZE.1))
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                            cx.stop_propagation();
+                            this.bar_drag_start_y = Some(event.position.y.to_f64() as f32);
+                            cx.notify();
+                        })
+                    )
+                    .child(
+                        div().bg(rgb(0x4d4d4d)).w(px(NAVBAR_SIZE.0)).h(px(4.0)) // img(IconName::Navbar.resolve()).id("running-apps-navbar")
+                    )
+            )
+    }
+}
+
 // Drag data structure
 #[derive(Clone, Copy)]
 struct CardDragData {
@@ -68,6 +144,10 @@ impl RunningApps {
             current_center_index: last_index,
             is_cleaning_up: false,
             message_tx: message_tx,
+            position: 0.0,
+            bar_drag_offset: 0.0,
+            bar_drag_start_y: None,
+            show_apps: false,
         }
     }
 
@@ -671,8 +751,98 @@ impl RunningApps {
     }
 }
 
-impl Render for RunningApps {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+impl RunningApps {
+    fn closed_pos() -> f32 {
+        APP_SIZE.1 - NAVBAR_SIZE.1
+    }
+
+    fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.position;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
+        cx.spawn(async move |this: WeakEntity<RunningApps>, cx: &mut AsyncApp| {
+            loop {
+                let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+
+                // Check if animation is done
+                if elapsed >= duration_ms {
+                    this.update(cx, |this, cx| {
+                        this.position = target;
+                        cx.notify();
+                    }).ok();
+                    break;
+                }
+
+                let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                let ease = 1.0 - (1.0 - t).powi(3);
+                let current = start + change * ease;
+
+                this.update(cx, |this, cx| {
+                    this.position = current;
+                    cx.notify();
+                }).ok();
+
+                cx.background_executor().timer(std::time::Duration::from_millis(16)).await;
+            }
+        }).detach();
+    }
+
+    fn snap_bar_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.bar_drag_offset;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
+        cx.spawn(async move |this: WeakEntity<RunningApps>, cx: &mut AsyncApp| {
+            loop {
+                let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+
+                // Check if animation is done
+                if elapsed >= duration_ms {
+                    this.update(cx, |this, cx| {
+                        this.bar_drag_offset = target;
+                        cx.notify();
+                    }).ok();
+                    break;
+                }
+
+                let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                let ease = 1.0 - (1.0 - t).powi(3);
+                let current = start + change * ease;
+
+                this.update(cx, |this, cx| {
+                    this.bar_drag_offset = current;
+                    cx.notify();
+                }).ok();
+
+                cx.background_executor().timer(std::time::Duration::from_millis(16)).await;
+            }
+        }).detach();
+    }
+
+    fn update_input_regions(&self, window: &mut Window, open: bool) {
+        let mut regions = Vec::new();
+
+        if open {
+            regions.push(Bounds {
+                origin: point(px(0.0), px(0.0)),
+                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+            });
+        } else {
+            regions.push(Bounds {
+                origin: point(
+                    px((APP_SIZE.0 - NAVBAR_SIZE.0) / 2.0),
+                    px(APP_SIZE.1 - NAVBAR_SIZE.1)
+                ),
+                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+            });
+        }
+        window.set_input_regions(Some(regions));
+    }
+
+    fn running_apps(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let has_apps = !self.apps.is_empty();
         let should_center = self.apps.len() == 1;
 
