@@ -1,14 +1,14 @@
 use commons::prelude::*;
 use gpui::{layer_shell::*, *};
 use homescreen::prelude::*;
-use homescreen::ui::{WINDOW_HEIGHT, WINDOW_WIDTH};
 
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
     application.run(|cx| {
+        let config = HomescreenConfig::default();
         let window_bounds = WindowBounds::Windowed(Bounds::centered(
             None,
-            size(px(WINDOW_WIDTH), px(WINDOW_HEIGHT)),
+            size(px(config.window.width), px(config.window.height)),
             cx,
         ));
 

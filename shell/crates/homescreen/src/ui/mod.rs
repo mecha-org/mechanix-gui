@@ -1,3 +1,4 @@
+use crate::config::HomescreenConfig;
 use crate::models::{GridPosition, HomescreenState, Page, Widget, WidgetSize};
 use gpui::prelude::FluentBuilder;
 use gpui::*;
@@ -5,27 +6,19 @@ use gpui::*;
 pub mod widgets;
 pub use widgets::*;
 
-pub const WINDOW_WIDTH: f32 = 540.0;
-pub const WINDOW_HEIGHT: f32 = 540.0;
-
-const GRID_COLS: usize = 4;
-const GRID_ROWS: usize = 4;
-
-const GRID_PADDING_PERCENT: f32 = 0.05;
-const GAP_PERCENT: f32 = 0.01;
-const EDGE_TRIGGER_THRESHOLD: f32 = 50.0;
-
 pub struct Homescreen {
     state: HomescreenState,
     window_size: Size<Pixels>,
+    config: HomescreenConfig,
 }
 
 impl Homescreen {
     pub fn new(_cx: &mut Context<Self>) -> Self {
-        let window_size = size(px(WINDOW_WIDTH), px(WINDOW_HEIGHT));
-        let mut state = HomescreenState::new();
+        let config = HomescreenConfig::default();
+        let window_size = size(px(config.window.width), px(config.window.height));
+        let mut state = HomescreenState::new(&config);
 
-        let mut page = Page::new(0, GRID_COLS, GRID_ROWS);
+        let mut page = Page::new(0, config.grid.cols, config.grid.rows);
 
         let demo_widgets = vec![
             Widget::new(
@@ -34,6 +27,7 @@ impl Homescreen {
                 "📷",
                 WidgetSize::new(1, 1),
                 GridPosition::new(2, 0),
+                &config,
             )
             .with_color(rgb(0x4A90E2).into()),
             Widget::new(
@@ -42,6 +36,7 @@ impl Homescreen {
                 "📅",
                 WidgetSize::new(1, 1),
                 GridPosition::new(3, 0),
+                &config,
             )
             .with_color(rgb(0xE74C3C).into()),
             Widget::new(
@@ -50,6 +45,7 @@ impl Homescreen {
                 "📝",
                 WidgetSize::new(1, 2),
                 GridPosition::new(1, 2),
+                &config,
             )
             .with_color(rgb(0xF39C12).into()),
             Widget::new(
@@ -58,6 +54,7 @@ impl Homescreen {
                 "⚙️",
                 WidgetSize::new(1, 1),
                 GridPosition::new(3, 2),
+                &config,
             )
             .with_color(rgb(0x34495E).into()),
             Widget::new(
@@ -66,6 +63,7 @@ impl Homescreen {
                 "🌐",
                 WidgetSize::new(1, 1),
                 GridPosition::new(2, 3),
+                &config,
             )
             .with_color(rgb(0xE67E22).into()),
         ];
@@ -77,7 +75,7 @@ impl Homescreen {
         }
         state.add_page(page);
 
-        let mut page2 = Page::new(1, GRID_COLS, GRID_ROWS);
+        let mut page2 = Page::new(1, config.grid.cols, config.grid.rows);
         let page2_widgets = vec![
             Widget::new(
                 13,
@@ -85,6 +83,7 @@ impl Homescreen {
                 "📸",
                 WidgetSize::new(1, 1),
                 GridPosition::new(1, 0),
+                &config,
             )
             .with_color(rgb(0xE4405F).into()),
             Widget::new(
@@ -93,6 +92,7 @@ impl Homescreen {
                 "📧",
                 WidgetSize::new(2, 2),
                 GridPosition::new(0, 1),
+                &config,
             )
             .with_color(rgb(0xD44638).into()),
             Widget::new(
@@ -101,6 +101,7 @@ impl Homescreen {
                 "🎮",
                 WidgetSize::new(1, 1),
                 GridPosition::new(3, 1),
+                &config,
             )
             .with_color(rgb(0x5865F2).into()),
             Widget::new(
@@ -109,6 +110,7 @@ impl Homescreen {
                 "📞",
                 WidgetSize::new(2, 1),
                 GridPosition::new(0, 3),
+                &config,
             )
             .with_color(rgb(0x34C759).into()),
         ];
@@ -119,7 +121,7 @@ impl Homescreen {
         }
         state.add_page(page2);
 
-        let mut page3 = Page::new(2, GRID_COLS, GRID_ROWS);
+        let mut page3 = Page::new(2, config.grid.cols, config.grid.rows);
         let page3_widgets = vec![
             Widget::new(
                 27,
@@ -127,6 +129,7 @@ impl Homescreen {
                 "📺",
                 WidgetSize::new(1, 1),
                 GridPosition::new(0, 2),
+                &config,
             )
             .with_color(rgb(0x000000).into()),
             Widget::new(
@@ -135,6 +138,7 @@ impl Homescreen {
                 "🎙️",
                 WidgetSize::new(1, 1),
                 GridPosition::new(2, 2),
+                &config,
             )
             .with_color(rgb(0x8032DC).into()),
         ];
@@ -145,15 +149,19 @@ impl Homescreen {
         }
         state.add_page(page3);
 
-        Self { state, window_size }
+        Self {
+            state,
+            window_size,
+            config,
+        }
     }
 
     fn calculate_grid_padding(&self) -> Pixels {
-        self.window_size.width * GRID_PADDING_PERCENT
+        self.window_size.width * self.config.grid.padding_percent
     }
 
     fn calculate_gap(&self) -> Pixels {
-        self.window_size.width * GAP_PERCENT
+        self.window_size.width * self.config.grid.gap_percent
     }
 
     fn calculate_cell_size(&self) -> Pixels {
@@ -161,20 +169,20 @@ impl Homescreen {
         let gap = self.calculate_gap();
 
         let available_width =
-            self.window_size.width - (padding * 2.0) - (gap * (GRID_COLS - 1) as f32);
-        available_width / GRID_COLS as f32
+            self.window_size.width - (padding * 2.0) - (gap * (self.config.grid.cols - 1) as f32);
+        available_width / self.config.grid.cols as f32
     }
 
     fn calculate_grid_width(&self) -> Pixels {
         let cell_size = self.calculate_cell_size();
         let gap = self.calculate_gap();
-        cell_size * GRID_COLS as f32 + gap * (GRID_COLS - 1) as f32
+        cell_size * self.config.grid.cols as f32 + gap * (self.config.grid.cols - 1) as f32
     }
 
     fn calculate_grid_height(&self) -> Pixels {
         let cell_size = self.calculate_cell_size();
         let gap = self.calculate_gap();
-        cell_size * GRID_ROWS as f32 + gap * (GRID_ROWS - 1) as f32
+        cell_size * self.config.grid.rows as f32 + gap * (self.config.grid.rows - 1) as f32
     }
 
     fn calculate_page_offset_x(&self) -> f32 {
@@ -184,7 +192,7 @@ impl Homescreen {
     }
 
     fn render_all_pages(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
-        let page_gap = px(40.0);
+        let page_gap = px(self.config.visual.page_gap);
         let cell_size = self.calculate_cell_size();
         let gap = self.calculate_gap();
         let grid_width = self.calculate_grid_width();
@@ -222,7 +230,7 @@ impl Homescreen {
             for widget in widgets {
                 if Some(widget.id) == dragging_widget_id {
                     dragged_widget_data = Some((widget.clone(), *page_idx));
-                } else if widget.is_animating() {
+                } else if widget.is_animating(&self.config) {
                     animating_widgets.push((widget.clone(), *page_idx));
                 }
             }
@@ -242,7 +250,9 @@ impl Homescreen {
                     .children(widgets.into_iter().filter_map(|widget| {
                         let widget_id = widget.id;
 
-                        if Some(widget_id) == dragging_widget_id || widget.is_animating() {
+                        if Some(widget_id) == dragging_widget_id
+                            || widget.is_animating(&self.config)
+                        {
                             return None;
                         }
 
@@ -351,16 +361,16 @@ impl Homescreen {
         div()
             .flex()
             .flex_row()
-            .gap_2()
+            .gap(px(self.config.visual.indicator_dot_gap))
             .children((0..total_pages).map(|i| {
                 div()
-                    .w(px(8.0))
-                    .h(px(8.0))
-                    .rounded(px(4.0))
+                    .w(px(self.config.visual.indicator_dot_size))
+                    .h(px(self.config.visual.indicator_dot_size))
+                    .rounded(px(self.config.visual.indicator_dot_size / 2.0))
                     .bg(if i == current {
-                        rgb(0xFFFFFF)
+                        rgb(self.config.visual.indicator_active_color)
                     } else {
-                        rgba(0xFFFFFF66)
+                        rgba(self.config.visual.indicator_inactive_color)
                     })
             }))
     }
@@ -372,18 +382,19 @@ impl Render for Homescreen {
 
         let now = std::time::Instant::now();
         let delta_time = if let Some(last_time) = self.state.last_update_time {
-            now.duration_since(last_time).as_secs_f32()
+            let dt = now.duration_since(last_time).as_secs_f32();
+            dt.min(self.config.animation.max_delta_time)
         } else {
             0.016
         };
         self.state.last_update_time = Some(now);
 
-        let page_animating = self.state.update_animation(delta_time);
+        let page_animating = self.state.update_animation(delta_time, &self.config);
 
         let mut any_widget_animating = false;
         for page in &mut self.state.pages {
             for widget in &mut page.widgets {
-                if widget.update_position(delta_time) {
+                if widget.update_position(delta_time, &self.config) {
                     any_widget_animating = true;
                 }
             }
@@ -404,7 +415,7 @@ impl Render for Homescreen {
             .flex_col()
             .w_full()
             .h_full()
-            .bg(rgb(0x1a1a1a))
+            .bg(rgb(self.config.visual.background_color))
             .items_center()
             .justify_center()
             .gap(padding)
@@ -420,7 +431,7 @@ impl Render for Homescreen {
                     let x: f32 = event.position.x.into();
                     let y: f32 = event.position.y.into();
 
-                    if homescreen.state.check_hold(x, y) {
+                    if homescreen.state.check_hold(x, y, &homescreen.config) {
                         cx.notify();
                     }
 
@@ -442,9 +453,9 @@ impl Render for Homescreen {
                         if homescreen.state.check_edge_trigger(
                             x,
                             window_width,
-                            EDGE_TRIGGER_THRESHOLD,
                             grid_width,
-                            40.0,
+                            homescreen.config.visual.page_gap,
+                            &homescreen.config,
                         ) {
                             cx.notify();
                         }
@@ -458,7 +469,7 @@ impl Render for Homescreen {
             )
             .on_mouse_up(
                 MouseButton::Left,
-                cx.listener(|homescreen, event: &MouseUpEvent, _window, cx| {
+                cx.listener(|homescreen, _event: &MouseUpEvent, _window, cx| {
                     if homescreen.state.dragging_widget.is_some() {
                         let dragging_widget_id = homescreen.state.dragging_widget.unwrap();
 
@@ -474,9 +485,6 @@ impl Render for Homescreen {
                         }
 
                         if let Some(page_idx) = current_page_idx {
-                            let mouse_x: f32 = event.position.x.into();
-                            let mouse_y: f32 = event.position.y.into();
-
                             let widget = homescreen.state.pages[page_idx]
                                 .widgets
                                 .iter()
@@ -504,7 +512,7 @@ impl Render for Homescreen {
                                     homescreen.state.return_widget_to_original_page(
                                         dragging_widget_id,
                                         grid_width_f32,
-                                        40.0,
+                                        homescreen.config.visual.page_gap,
                                     );
 
                                     for page in &mut homescreen.state.pages {
@@ -525,7 +533,11 @@ impl Render for Homescreen {
                         homescreen.state.end_widget_drag();
                     } else {
                         let grid_width_f32: f32 = homescreen.calculate_grid_width().into();
-                        homescreen.state.end_drag(grid_width_f32, 40.0);
+                        homescreen.state.end_drag(
+                            grid_width_f32,
+                            homescreen.config.visual.page_gap,
+                            &homescreen.config,
+                        );
                     }
                     homescreen.state.cancel_hold();
                     cx.notify();
@@ -543,10 +555,10 @@ impl Render for Homescreen {
             .child(
                 div()
                     .absolute()
-                    .bottom(px(20.0))
-                    .left(px(20.0))
-                    .text_size(px(12.0))
-                    .text_color(rgba(0xFFFFFF88))
+                    .bottom(px(self.config.visual.debug_info_offset))
+                    .left(px(self.config.visual.debug_info_offset))
+                    .text_size(px(self.config.visual.debug_info_text_size))
+                    .text_color(rgba(self.config.visual.debug_info_text_color))
                     .child(format!(
                         "Hovered: {:?} | Selected: {:?} | Page: {}/{}",
                         self.state.hovered_widget,

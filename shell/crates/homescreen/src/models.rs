@@ -1,3 +1,4 @@
+use crate::config::HomescreenConfig;
 use gpui::*;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -47,6 +48,7 @@ impl Widget {
         icon_name: impl Into<String>,
         size: WidgetSize,
         position: GridPosition,
+        config: &HomescreenConfig,
     ) -> Self {
         Self {
             id,
@@ -54,12 +56,12 @@ impl Widget {
             icon_name: icon_name.into(),
             size,
             position,
-            background_color: rgb(0xFF69B4).into(),
+            background_color: rgb(config.visual.default_widget_color).into(),
             current_x: 0.0,
             current_y: 0.0,
             target_x: 0.0,
             target_y: 0.0,
-            animation_speed: 5000.0,
+            animation_speed: config.animation.widget_speed,
         }
     }
 
@@ -97,19 +99,19 @@ impl Widget {
         self.target_y = cursor_y - widget_height / 2.0;
     }
 
-    pub fn is_animating(&self) -> bool {
+    pub fn is_animating(&self, config: &HomescreenConfig) -> bool {
         let dx = self.target_x - self.current_x;
         let dy = self.target_y - self.current_y;
         let distance = (dx * dx + dy * dy).sqrt();
-        distance >= 1.0
+        distance >= config.animation.completion_threshold
     }
 
-    pub fn update_position(&mut self, delta_time: f32) -> bool {
+    pub fn update_position(&mut self, delta_time: f32, config: &HomescreenConfig) -> bool {
         let dx = self.target_x - self.current_x;
         let dy = self.target_y - self.current_y;
         let distance = (dx * dx + dy * dy).sqrt();
 
-        if distance < 1.0 {
+        if distance < config.animation.completion_threshold {
             self.current_x = self.target_x;
             self.current_y = self.target_y;
             return false;
@@ -447,7 +449,7 @@ pub struct HomescreenState {
 }
 
 impl HomescreenState {
-    pub fn new() -> Self {
+    pub fn new(config: &HomescreenConfig) -> Self {
         Self {
             pages: Vec::new(),
             current_page: 0,
@@ -457,11 +459,11 @@ impl HomescreenState {
             is_dragging_page: false,
             drag_start_x: 0.0,
             drag_offset_x: 0.0,
-            drag_threshold: 10.0,
+            drag_threshold: config.interaction.drag_threshold,
             is_animating: false,
             current_offset: 0.0,
             target_offset: 0.0,
-            animation_velocity: 2000.0,
+            animation_velocity: config.animation.page_velocity,
             last_update_time: None,
             dragging_widget: None,
             dragging_widget_original_page: None,
@@ -517,20 +519,25 @@ impl HomescreenState {
         self.hold_widget = widget_id;
     }
 
-    pub fn check_hold(&mut self, current_x: f32, current_y: f32) -> bool {
+    pub fn check_hold(
+        &mut self,
+        current_x: f32,
+        current_y: f32,
+        config: &HomescreenConfig,
+    ) -> bool {
         if let (Some(start_time), Some(widget_id)) = (self.hold_start_time, self.hold_widget) {
             let dx = current_x - self.hold_start_x;
             let dy = current_y - self.hold_start_y;
             let distance = (dx * dx + dy * dy).sqrt();
 
-            if distance > 10.0 {
+            if distance > config.interaction.hold_movement_threshold {
                 self.hold_start_time = None;
                 self.hold_widget = None;
                 return false;
             }
 
             let elapsed = start_time.elapsed().as_secs_f32();
-            if elapsed >= 1.0 {
+            if elapsed >= config.interaction.hold_duration {
                 self.dragging_widget = Some(widget_id);
 
                 for (page_idx, page) in self.pages.iter().enumerate() {
@@ -616,13 +623,13 @@ impl HomescreenState {
         }
     }
 
-    pub fn end_drag(&mut self, window_width: f32, page_gap: f32) {
+    pub fn end_drag(&mut self, window_width: f32, page_gap: f32, config: &HomescreenConfig) {
         if !self.is_dragging_page {
             return;
         }
 
         let drag_distance = self.drag_offset_x;
-        let threshold = window_width * 0.25;
+        let threshold = window_width * config.interaction.page_swipe_threshold;
 
         if drag_distance < -threshold && self.current_page < self.pages.len() - 1 {
             self.current_page += 1;
@@ -639,14 +646,14 @@ impl HomescreenState {
         self.drag_offset_x = 0.0;
     }
 
-    pub fn update_animation(&mut self, delta_time: f32) -> bool {
+    pub fn update_animation(&mut self, delta_time: f32, config: &HomescreenConfig) -> bool {
         if !self.is_animating {
             return false;
         }
 
         let distance = self.target_offset - self.current_offset;
 
-        if distance.abs() < 1.0 {
+        if distance.abs() < config.animation.completion_threshold {
             self.current_offset = self.target_offset;
             self.is_animating = false;
             return false;
@@ -679,9 +686,9 @@ impl HomescreenState {
         &mut self,
         cursor_x: f32,
         window_width: f32,
-        edge_threshold: f32,
         page_width: f32,
         page_gap: f32,
+        config: &HomescreenConfig,
     ) -> bool {
         let dragging_widget_id = match self.dragging_widget {
             Some(id) => id,
@@ -692,6 +699,7 @@ impl HomescreenState {
         };
 
         let now = std::time::Instant::now();
+        let edge_threshold = config.interaction.edge_trigger_threshold;
         let is_at_edge = (cursor_x < edge_threshold && self.current_page > 0)
             || (cursor_x > window_width - edge_threshold
                 && self.current_page < self.pages.len() - 1);
@@ -709,13 +717,13 @@ impl HomescreenState {
         let hold_duration = now
             .duration_since(self.edge_hold_start_time.unwrap())
             .as_millis();
-        if hold_duration < 500 {
+        if hold_duration < config.interaction.edge_hold_duration as u128 {
             return false;
         }
 
         if let Some(last_switch) = self.last_page_switch_time {
             let since_last_switch = now.duration_since(last_switch).as_millis();
-            if since_last_switch < 500 {
+            if since_last_switch < config.interaction.page_switch_cooldown as u128 {
                 return false;
             }
         }
@@ -799,6 +807,6 @@ impl HomescreenState {
 
 impl Default for HomescreenState {
     fn default() -> Self {
-        Self::new()
+        Self::new(&HomescreenConfig::default())
     }
 }
