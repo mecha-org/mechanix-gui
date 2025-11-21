@@ -55,8 +55,3 @@ Cargo.lock
 
 # mxsearch settings file
 services/search/server/settings.toml
-
-# Cross compile files
-Cross.toml
-Dockerfile.aarch64
-libimpeller.so
