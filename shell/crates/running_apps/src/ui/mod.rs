@@ -2,8 +2,8 @@ use std::{ time::Duration };
 mod icon;
 use gpui::prelude::*;
 use gpui::*;
-pub mod models;
 pub mod constants;
+pub mod models;
 pub use constants::*;
 pub use models::{
     RunningApps,
@@ -537,7 +537,7 @@ impl RunningApps {
         app_id: usize,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        cx: &mut Context<Self>,
     ) {
         self.is_dragging = true;
         self.is_animating = false;
@@ -554,9 +554,8 @@ impl RunningApps {
             let abs_delta_x = delta_x.abs();
             let abs_delta_y = delta_y.abs();
 
-            if
-                abs_delta_x > px(DRAG_DETECTION_THRESHOLD) ||
-                abs_delta_y > px(DRAG_DETECTION_THRESHOLD)
+            if abs_delta_x > px(DRAG_DETECTION_THRESHOLD)
+                || abs_delta_y > px(DRAG_DETECTION_THRESHOLD)
             {
                 self.drag_direction = if abs_delta_x > abs_delta_y {
                     Some(DragDirection::Horizontal)
@@ -895,16 +894,10 @@ impl RunningApps {
                                         .justify_center()
                                         .items_center()
                                         .child(
-                                            div()
-                                                .absolute()
-                                                .left_0()
-                                                .top_0()
-                                                .child(
-                                                    Icon::from(IconName::BgApp).size((
-                                                        px(CARD_WIDTH),
-                                                        px(CARD_HEIGHT),
-                                                    ))
-                                                )
+                                            div().absolute().left_0().top_0().child(
+                                                Icon::from(IconName::BgApp)
+                                                    .size((px(CARD_WIDTH), px(CARD_HEIGHT))),
+                                            ),
                                         )
                                         .relative()
                                         .when_some(app_icon_path.clone(), |d, s| {
@@ -921,7 +914,7 @@ impl RunningApps {
                                             move |_: &CardDragData, pos, _, cx| {
                                                 let data = CardDragData::new().position(pos);
                                                 cx.new(|_| data)
-                                            }
+                                            },
                                         )
                                         .on_mouse_down(
                                             MouseButton::Left,
@@ -985,90 +978,78 @@ impl RunningApps {
                             }
 
                             container
-                        })
+                        }),
                 )
             })
             .when(!has_apps, |this| {
                 this.child(
-                    div()
-                        .flex()
-                        .flex_col()
-                        .items_center()
-                        .gap_16()
-                        .child(
-                            div()
-                                .text_color(rgb(0x666666))
-                                .text_size(px(16.0))
-                                .line_height(px(24.0))
-                                .text_center()
-                                .font_weight(FontWeight(400.0))
-                                .max_w(px(300.0))
-                                .child("There are no apps or droids")
-                                .child(div().child("you are looking for_"))
-                        )
+                    div().flex().flex_col().items_center().gap_16().child(
+                        div()
+                            .text_color(rgb(0x666666))
+                            .text_size(px(16.0))
+                            .line_height(px(24.0))
+                            .text_center()
+                            .font_weight(FontWeight(400.0))
+                            .max_w(px(300.0))
+                            .child("There are no apps or droids")
+                            .child(div().child("you are looking for_")),
+                    ),
                 )
             })
             // fixed positioned footer button
-            .child(
-                div()
-                    .absolute()
-                    .bottom_16()
-                    .child({
-                        let is_enabled = !self.apps.is_empty();
-                        let mut btn = div()
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .gap_2()
-                            .w(px(109.0))
-                            .h(px(36.0))
-                            .px(px(8.0))
-                            .py(px(12.0))
-                            .rounded(px(8.0))
-                            .bg(if is_enabled { rgb(0x363636) } else { rgb(0x202020) })
-                            .cursor(
-                                if is_enabled {
-                                    CursorStyle::PointingHand
-                                } else {
-                                    CursorStyle::default()
-                                }
-                            )
-                            .child(
-                                Icon::from(IconName::CleanUp)
-                                    .size((px(20.0), px(20.0)))
-                                    .text_color(
-                                        if is_enabled {
-                                            rgb(0xf4f4f4)
-                                        } else {
-                                            rgb(0x4d4d4d)
-                                        }
-                                    )
-                            )
-                            .child(
-                                div()
-                                    .text_color(
-                                        if is_enabled {
-                                            rgb(0xf4f4f4)
-                                        } else {
-                                            rgb(0x4d4d4d)
-                                        }
-                                    )
-                                    .opacity(if is_enabled { 1.0 } else { 0.4 })
-                                    .text_size(px(16.0))
-                                    .child("Clean up")
-                            );
-
-                        if is_enabled {
-                            btn = btn.on_mouse_down(
-                                MouseButton::Left,
-                                cx.listener(|view, _event, _window, cx| {
-                                    view.handle_clean_up(cx);
-                                })
-                            );
-                        }
-
-                        btn
+            .child(div().absolute().bottom_16().child({
+                let is_enabled = !self.apps.is_empty();
+                let mut btn = div()
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .gap_2()
+                    .w(px(109.0))
+                    .h(px(36.0))
+                    .px(px(8.0))
+                    .py(px(12.0))
+                    .rounded(px(8.0))
+                    .bg(if is_enabled {
+                        rgb(0x363636)
+                    } else {
+                        rgb(0x202020)
                     })
-            )
+                    .cursor(if is_enabled {
+                        CursorStyle::PointingHand
+                    } else {
+                        CursorStyle::default()
+                    })
+                    .child(
+                        Icon::from(IconName::CleanUp)
+                            .size((px(20.0), px(20.0)))
+                            .text_color(if is_enabled {
+                                rgb(0xf4f4f4)
+                            } else {
+                                rgb(0x4d4d4d)
+                            }),
+                    )
+                    .child(
+                        div()
+                            .text_color(if is_enabled {
+                                rgb(0xf4f4f4)
+                            } else {
+                                rgb(0x4d4d4d)
+                            })
+                            .opacity(if is_enabled { 1.0 } else { 0.4 })
+                            .text_size(px(16.0))
+                            .child("Clean up"),
+                    );
+
+                if is_enabled {
+                    btn = btn.on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|view, _event, _window, cx| {
+                            view.handle_clean_up(cx);
+                        }),
+                    );
+                }
+
+                btn
+            }))
     }
 }

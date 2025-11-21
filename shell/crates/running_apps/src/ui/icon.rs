@@ -6,11 +6,7 @@ pub const RUNNING_APPS_DIR: &str = "icons/running-apps/";
 pub enum IconName {
     CleanUp,
     BgApp,
-    Firefox,
-    Chromium,
-    Kitty,
-    Mecha,
-    Navbar,
+    Navbar
 }
 
 impl IconName {
@@ -18,10 +14,6 @@ impl IconName {
         let icon_path = match self {
             IconName::CleanUp => "cleanup.svg",
             IconName::BgApp => "bg-app.png",
-            IconName::Firefox => "firefox.png",
-            IconName::Chromium => "chromium.png",
-            IconName::Kitty => "kitty.png",
-            IconName::Mecha => "mecha.png",
             IconName::Navbar => "navbar.png",
         };
         format!("{}{}", RUNNING_APPS_DIR, icon_path).into()
