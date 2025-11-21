@@ -80,6 +80,29 @@ impl Render for RunningApps {
                     )
                     .child(
                         div().bg(rgb(0x4D4D4D)).w(px(NAVBAR_SIZE.0)).h(px(4.)), // img(IconName::Navbar.resolve()).id("running-apps-navbar")
+
+                                                                                // .on_click(cx.listener(|this, _, window, cx| {
+                                                                                //     let is_open = this.position == 0.;
+                                                                                //     let mut regions = Vec::new();
+                                                                                //     if is_open {
+                                                                                //         this.position = Self::closed_pos();
+                                                                                //         regions.push(Bounds {
+                                                                                //             origin: point(
+                                                                                //                 px(APP_SIZE.0 - NAVBAR_SIZE.0),
+                                                                                //                 px(Self::closed_pos()),
+                                                                                //             ),
+                                                                                //             size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                                                                                //         });
+                                                                                //     } else {
+                                                                                //         this.position = 0.;
+                                                                                //         regions.push(Bounds {
+                                                                                //             origin: point(px(0.), px(0.)),
+                                                                                //             size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                                                                                //         });
+                                                                                //     }
+                                                                                //     window.set_input_regions(Some(regions));
+                                                                                //     cx.notify();
+                                                                                // })),
                     ),
             )
     }
