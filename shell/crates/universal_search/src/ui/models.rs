@@ -22,6 +22,8 @@ pub struct UniversalSearch {
     pub x_icon: IconName,
     pub text_input: Entity<TextInput>,
     pub position: f32,
+    pub drag_offset: Option<f32>,
+    pub drag_start_pos: f32,
 }
 
 pub struct DragInfo {
