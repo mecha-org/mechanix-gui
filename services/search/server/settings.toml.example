@@ -1,9 +1,25 @@
+# Global settings (currently unused by code but reserved for future use).
 [general]
+# log_level = "info"
+
+# Application search (.desktop files)
 [apps]
+# Enable the AppSearchService
 enable_search = false
+
+# Directory containing .desktop files (single path supported by current code)
 desktop_apps_dir = "/usr/share/applications"
-index_dir = ".config/index/applications"
+
+# Keep index dirs consistent across services
+index_dir = ".config/mxsearch/index/apps"
+
+# How many results to return for app queries
 search_limit = 10
+
+# Tantivy writer heap (bytes). 50 MB is a good default for small-to-medium sets.
+target_memory_usage_in_bytes = 50_000_000
+
+# Only include fields that exist and are indexed in the schema
 searchable_fields = [
     "type",
     "name",
@@ -11,32 +27,89 @@ searchable_fields = [
     "comment",
     "keywords",
     "categories",
-    "path",
-    "checksum"
+    "path"
 ]
+
+# File search
 [files]
-enable_search = true
-files_dir_to_watch = "/home"
+# Enable the FileSearchService
+enable_search = false
+
+# Be careful watching "/home" recursively; consider narrowing later
+files_dir_to_watch = "/home/minesh/Documents"
+
 index_dir = ".config/mxsearch/index/files"
+
+# Limit recursion depth and watcher count for safety
 max_depth = 5
-search_limit = 1000
-max_watchers = 1000
-target_memory_usage_in_bytes = 15000000
+max_watchers = 5
+
+# Tune Tantivy writer heap (bytes)
+target_memory_usage_in_bytes = 50_000_000
+
+# Cap content reads to avoid huge files; adjust to your needs
 read_file_content_upto_in_kb = 100
+
+# Reasonable cap for returned file results
+search_limit = 10
+
+# Fields to search (must be indexed by the file schema)
 searchable_fields = [
     "file_type",
     "name",
     "content"
 ]
-allowed_extensions = ["txt", "yaml", "rtf", "xml", "toml"]
+
+# Restrict to common text formats (extend as needed)
+content_index_extensions = [
+    "json",
+    "txt",
+    "md",
+    "yaml",
+    "yml",
+    "xml",
+    "toml",
+    "ini",
+    "csv"
+]
+
+# App actions search
 [app_actions]
-enable_search = true
+# Enable the AppActionsService
+enable_search = false
+
 index_dir = ".config/mxsearch/index/app_actions"
 schema_dir = "/usr/share/mxsearch/actions"
+
+# Reasonable default per domain
 search_limit = 15
+
 searchable_fields = [
     "action",
     "name",
     "description"
 ]
 
+# External (notes, music, etc.)
+[external]
+# Enable the ExternalService (ingestion/search for external items)
+enable_search = true
+
+index_dir = ".config/mxsearch/index/external"
+app_dir = "/usr/share/applications"
+
+# Tune Tantivy writer heap (bytes)
+target_memory_usage_in_bytes = 50_000_000
+
+# External results are often short; start modest and adjust later
+search_limit = 25
+
+# Search across multiple indexed fields for better recall
+searchable_fields = [
+    "uri",
+    "title",
+    "subtitle",
+    "keywords",
+    "description",
+    "content",
+]

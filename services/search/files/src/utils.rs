@@ -21,11 +21,7 @@ pub struct FileMetadata {
 /// # Errors
 ///
 /// Returns an `std::io::Error` if the file cannot be read.
-pub fn get_file_metadata(
-    path: &Path,
-    buffer_size_kb: usize,
-    allowed_extensions_to_index_content: &HashSet<String>,
-) -> Result<FileMetadata, std::io::Error> {
+pub fn get_file_metadata(path: &Path) -> Result<FileMetadata, std::io::Error> {
     let mut file_info = FileMetadata::default();
     if let Some(ext) = path.extension() {
         if path.is_file() {
@@ -53,20 +49,20 @@ pub fn get_file_metadata(
             }
         }
     }
-
-    // Read file content if it's an allowed file type
-    if allowed_extensions_to_index_content.contains(&file_info.file_type) {
-        // Open and read the file up to 100KB
-        let mut file = File::open(path)?;
-        let mut buffer = vec![0u8; buffer_size_kb * 1024]; // 100KB buffer
-
-        // Read up to 100KB
-        let bytes_read = file.read(&mut buffer)?;
-
-        // Optionally, trim unused buffer
-        buffer.truncate(bytes_read);
-        file_info.content = String::from_utf8_lossy(&buffer).to_string();
-    }
-
     Ok(file_info)
+}
+
+pub fn read_file_content(path: &Path, buffer_size_kb: usize) -> Result<String, std::io::Error> {
+    // Read file content if it's an allowed file type
+
+    // Open and read the file up to 100KB
+    let mut file = File::open(path)?;
+    let mut buffer = vec![0u8; buffer_size_kb * 1024]; // 100KB buffer
+
+    // Read up to 100KB
+    let bytes_read = file.read(&mut buffer)?;
+
+    // Optionally, trim unused buffer
+    buffer.truncate(bytes_read);
+    Ok(String::from_utf8_lossy(&buffer).to_string())
 }
