@@ -1,9 +1,15 @@
 mod icon;
 mod widgets;
-use crate::ui::icon::Icon;
+use crate::ui::{
+    icon::Icon,
+    widgets::{Slider, SliderEvent, SliderState},
+};
 use gpui::*;
 use icon::IconName;
 use widgets::IconButton;
+
+const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+const APP_SIZE: (f32, f32) = (540., 620.);
 
 pub enum PowerMode {
     High,
@@ -34,17 +40,49 @@ pub struct SettingsDrawer {
     pub power_mode: PowerMode,
     pub mincrophone_recoding: bool,
     pub screen_recording: bool,
-    pub calc_active: bool,
-    pub camera_active: bool,
 
     pub wireless_details: WirelessDetails,
     pub bluetooth_details: BluetoothDetails,
     pub open_terminal: bool,
     pub cell_signal: bool,
+
+    pub brightness_slider_state: Entity<SliderState>,
+    pub brightness_slider_value: f32,
+
+    pub volume_slider_state: Entity<SliderState>,
+    pub volume_slider_value: f32,
+    _subscriptions: Vec<Subscription>,
+
+    position: f32,
+    drag_offset: Option<f32>,
+    drag_start_pos: f32,
 }
 
 impl SettingsDrawer {
-    pub fn new() -> Self {
+    pub fn new(cx: &mut Context<Self>) -> Self {
+        let brightness_slider = cx.new(|_| SliderState::new());
+        let b_subscription =
+            cx.subscribe(&brightness_slider, |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = event;
+                this.brightness_slider_value = *value;
+                println!("brightness value: {:?}", this.brightness_slider_value);
+                cx.notify();
+            });
+
+        let volume_slider = cx.new(|_| {
+            SliderState::new()
+                .default_value(20.)
+                .pattern(widgets::SliderPattern::Bars)
+        });
+        let c_subscription = cx.subscribe(&volume_slider, |this, _, event: &SliderEvent, cx| {
+            let SliderEvent::Change(value) = event;
+            this.volume_slider_value = *value;
+            println!("volume value: {:?}", this.volume_slider_value);
+            cx.notify();
+        });
+
+        let mut _subscriptions = vec![b_subscription, c_subscription];
+
         Self {
             settings_active: false,
             battery_percent: 32,
@@ -55,8 +93,6 @@ impl SettingsDrawer {
             power_mode: PowerMode::Low,
             mincrophone_recoding: false,
             screen_recording: false,
-            calc_active: true,
-            camera_active: false,
             wireless_details: WirelessDetails {
                 enalble: true,
                 icon: IconName::WirelessHigh,
@@ -69,12 +105,165 @@ impl SettingsDrawer {
             },
             open_terminal: false,
             cell_signal: false,
+            brightness_slider_state: brightness_slider,
+            brightness_slider_value: 0.0,
+            volume_slider_state: volume_slider,
+            volume_slider_value: 0.0,
+            _subscriptions,
+
+            position: Self::closed_pos(),
+            drag_offset: None,
+            drag_start_pos: 0.0,
         }
     }
 }
 
 impl Render for SettingsDrawer {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let open_y = 0.;
+        let closed_y = Self::closed_pos();
+
+        let threshold_px = 40.;
+
+        div()
+            .w_full()
+            .h_full()
+            .on_mouse_move(
+                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                    if let Some(offset) = this.drag_offset {
+                        let new_y = event.position.y.to_f64() as f32 - offset;
+                        this.position = new_y.clamp(open_y, closed_y);
+                        cx.notify();
+                    }
+                }),
+            )
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(move |this, _, window, cx| {
+                    if this.drag_offset.is_some() {
+                        this.drag_offset = None;
+
+                        let target;
+                        let started_closed = this.drag_start_pos > (closed_y / 2.0);
+
+                        if started_closed {
+                            if this.position < (closed_y - threshold_px) {
+                                target = open_y;
+                                this.update_input_regions(window, false);
+                            } else {
+                                target = closed_y;
+                                this.update_input_regions(window, true);
+                            }
+                        } else {
+                            if this.position > (open_y + threshold_px) {
+                                target = closed_y;
+                                this.update_input_regions(window, true);
+                            } else {
+                                target = open_y;
+                                this.update_input_regions(window, false);
+                            }
+                        }
+                        this.snap_to(target, cx);
+                        cx.notify();
+                    }
+                }),
+            )
+            .child(
+                div()
+                    .w_full()
+                    .h_full()
+                    .absolute()
+                    .top(px(self.position))
+                    .child(
+                        div()
+                            .w_full()
+                            .flex()
+                            .flex_row()
+                            .justify_end()
+                            .h(px(NAVBAR_SIZE.1))
+                            .child(
+                                img(IconName::Navbar.resolve())
+                                    .id("settings-drawer-navbar")
+                                    .on_mouse_down(
+                                        MouseButton::Left,
+                                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                                            cx.stop_propagation();
+                                            this.drag_start_pos = this.position;
+                                            this.drag_offset = Some(
+                                                event.position.y.to_f64() as f32 - this.position,
+                                            );
+                                            cx.notify();
+                                        }),
+                                    ),
+                            ),
+                    )
+                    .child(self.drawer_items(cx)),
+            )
+    }
+}
+
+impl SettingsDrawer {
+    fn closed_pos() -> f32 {
+        APP_SIZE.1 - NAVBAR_SIZE.1
+    }
+
+    fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.position;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
+        cx.spawn(
+            async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
+                loop {
+                    let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+
+                    // Check if animation is done
+                    if elapsed >= duration_ms {
+                        this.update(cx, |this, cx| {
+                            this.position = target;
+                            cx.notify();
+                        })
+                        .ok();
+                        break;
+                    }
+
+                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let ease = 1.0 - (1.0 - t).powi(3);
+                    let current = start + (change * ease);
+
+                    this.update(cx, |this, cx| {
+                        this.position = current;
+                        cx.notify();
+                    })
+                    .ok();
+
+                    cx.background_executor()
+                        .timer(std::time::Duration::from_millis(16))
+                        .await;
+                }
+            },
+        )
+        .detach();
+    }
+    fn update_input_regions(&self, window: &mut Window, open: bool) {
+        let mut regions = Vec::new();
+
+        if open {
+            regions.push(Bounds {
+                origin: point(px(APP_SIZE.0 - NAVBAR_SIZE.0), px(Self::closed_pos())),
+                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+            });
+        } else {
+            regions.push(Bounds {
+                origin: point(px(0.), px(0.)),
+                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+            });
+        }
+        window.set_input_regions(Some(regions));
+    }
+
+    fn drawer_items(&mut self, cx: &mut Context<SettingsDrawer>) -> impl IntoElement {
         let rotation_icon = if self.rotation_on {
             IconName::RotationOn
         } else {
@@ -168,6 +357,7 @@ impl Render for SettingsDrawer {
                     .grid_rows(2)
                     .grid_cols(4)
                     .h(px(236.))
+                    .w(px(476.))
                     .bg(rgb(0x181818))
                     .p_6()
                     .gap_5()
@@ -176,6 +366,8 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_rotation")
                             .icon(rotation_icon)
                             .active(self.rotation_on)
+                            .active_icon_color(rgb(0x4892F1))
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
@@ -208,6 +400,8 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_screen_mirroring")
                             .icon(screen_mirroring_icon)
                             .active(self.screen_mirrorring)
+                            .active_icon_color(rgb(0x4892F1))
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
@@ -230,6 +424,7 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_microphone")
                             .icon(IconName::MicroPhoneOff)
                             .active(self.mincrophone_recoding)
+                            .active_bg_color(rgb(0x202020))
                             .active_icon_color(rgb(0xFF6560))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -245,6 +440,7 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_screen_recording")
                             .icon(IconName::ScreenRecordingOff)
                             .active(self.screen_recording)
+                            .active_bg_color(rgb(0x202020))
                             .active_icon_color(rgb(0xFF6560))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -260,15 +456,12 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_calc")
                             .icon(IconName::Calculator)
                             .icon_color(rgb(0xF4F4F4))
-                            .active(self.calc_active)
-                            .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     println!("calc clicked");
-                                    this.calc_active = !this.calc_active;
                                     cx.notify();
                                 },
                             )),
@@ -277,7 +470,6 @@ impl Render for SettingsDrawer {
                         IconButton::new("id_camera")
                             .icon(IconName::Camera)
                             .icon_color(rgb(0xF4F4F4))
-                            .active(self.camera_active)
                             .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -285,7 +477,6 @@ impl Render for SettingsDrawer {
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     println!("camera clicked");
-                                    this.camera_active = !this.camera_active;
                                     cx.notify();
                                 },
                             )),
@@ -296,32 +487,32 @@ impl Render for SettingsDrawer {
                     .grid()
                     .grid_cols(4)
                     .gap_4()
-                    .h(px(104.))
-                    .rounded(px(12.))
+                    .h(px(72.0))
                     .child(
                         div()
                             .flex()
                             .items_center()
-                            .justify_center()
                             .w_full()
                             .h_full()
                             .text_color(rgb(0xF4F4F4))
                             .text_lg()
                             .col_span(2)
                             .bg(rgb(0x202020))
-                            .rounded(px(12.))
+                            .rounded(px(8.))
                             .child(
                                 div()
                                     .flex()
                                     .flex_row()
                                     .w_full()
                                     .items_center()
-                                    .p_2()
+                                    .justify_around()
+                                    .px_2()
                                     .child(
                                         IconButton::new("id_brightness")
                                             .icon(IconName::BrightnessHigh)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
+                                            .bg_color(rgb(0x202020))
                                             .border(px(0.))
                                             .on_click(cx.listener(|_, _, _, _| {
                                                 println!("brightness clicked");
@@ -333,10 +524,14 @@ impl Render for SettingsDrawer {
                                             .justify_center()
                                             .items_center()
                                             .w(px(172.0))
-                                            .h(px(72.0))
-                                            .bg(rgb(0x202020))
-                                            .rounded(px(12.))
-                                            .child("sliderrrrr--------rrrrr"),
+                                            .child(
+                                                Slider::new(
+                                                    "brightness-slider",
+                                                    &self.brightness_slider_state,
+                                                )
+                                                .width(172.0)
+                                                .height(56.0),
+                                            ),
                                     ),
                             ),
                     )
@@ -351,25 +546,40 @@ impl Render for SettingsDrawer {
                             .text_lg()
                             .col_span(2)
                             .bg(rgb(0x202020))
-                            .rounded(px(12.))
+                            .rounded(px(8.))
                             .child(
                                 div()
                                     .flex()
                                     .flex_row()
                                     .w_full()
                                     .items_center()
-                                    .p_2()
+                                    .justify_around()
+                                    .pl_2()
                                     .child(
                                         IconButton::new("id_volume")
                                             .icon(IconName::VolumeMedium)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
+                                            .bg_color(rgb(0x202020))
                                             .border(px(0.))
                                             .on_click(cx.listener(|_, _, _, _| {
                                                 println!("volume clicked");
                                             })),
                                     )
-                                    .child("sliderrrrr--------rrrrr"),
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .justify_center()
+                                            .items_end()
+                                            .w(px(172.0))
+                                            .child(
+                                                Slider::new(
+                                                    "volume-slider",
+                                                    &self.volume_slider_state,
+                                                )
+                                                .width(172.0),
+                                            ),
+                                    ),
                             ),
                     ),
             )
@@ -380,13 +590,13 @@ impl Render for SettingsDrawer {
                     .gap_5()
                     .h(px(104.))
                     .rounded(px(4.))
-                    .bg(rgb(0x181818))
                     .child(
                         IconButton::new("id_wireless")
                             .icon(self.wireless_details.icon.clone())
-                            .icon_color(rgb(0x4D4D4D))  // changes as per wireless state
+                            .icon_color(rgb(0x4D4D4D)) // changes as per wireless state
                             .size((px(104.), px(104.)))
                             .active(self.wireless_details.enalble)
+                            .active_bg_color(rgb(0x202020))
                             .label("Office wifi 1")
                             .on_click(cx.listener(|_, _, _, _| {
                                 println!("wireless clicked");
@@ -398,6 +608,7 @@ impl Render for SettingsDrawer {
                             .size((px(104.), px(104.)))
                             .label("OFF")
                             .active(self.bluetooth_details.enalble)
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(|_, _, _, _| {
                                 println!("bluetooth clicked");
                             })),
@@ -408,7 +619,6 @@ impl Render for SettingsDrawer {
                             .size((px(104.), px(104.)))
                             .label("Terminal")
                             .icon_color(rgb(0xF4F4F4))
-                            .active(self.open_terminal)
                             .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
@@ -416,7 +626,6 @@ impl Render for SettingsDrawer {
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     println!("terminal clicked");
-                                    this.open_terminal = !this.open_terminal;
                                     cx.notify();
                                 },
                             )),
@@ -428,6 +637,7 @@ impl Render for SettingsDrawer {
                             .label("No SIM")
                             .active(self.cell_signal)
                             .active_icon_color(rgb(0xF4F4F4))
+                            .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
