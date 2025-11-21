@@ -11,12 +11,12 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-gpui = { workspace = true }
-rust-embed = { workspace = true }
-anyhow = { workspace = true }
-commons = { path = "../commons" }
-chrono = { version = "0.4", features = ["clock"] }
 networkmanager = { workspace = true }
 bluez = { workspace = true }
 upower = { workspace = true }
+commons = { path = "../commons" }
+gpui = { workspace = true }
+rust-embed = { workspace = true }
+anyhow = { workspace = true }
+chrono = { version = "0.4", features = ["clock"] }
 futures = "0.3.31"

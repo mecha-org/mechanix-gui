@@ -3,16 +3,14 @@ use gpui::*;
 pub mod icon;
 pub use icon::{Icon, IconName};
 use upower::interfaces::device::BatteryState;
-pub use crate::types::DateTimeFormat;
 
-pub fn get_current_datetime(format: DateTimeFormat) -> String {
+pub fn get_current_datetime() -> String {
     let now = Local::now();
-    format.format_datetime(&now)
+    format!("{}", now.format("%H:%M"))
 }
 
 pub struct StatusBar {
     pub current_time_date: String,
-    pub datetime_format: DateTimeFormat,
     pub wireless_enabled: bool,
     pub wireless_strength: u8,
     pub bluetooth_enabled: bool,
@@ -23,10 +21,8 @@ pub struct StatusBar {
 
 impl StatusBar {
     pub fn new() -> Self {
-        let format = DateTimeFormat::Time12Only; // get from mxconf ?
         Self {
-            current_time_date: get_current_datetime(format),
-            datetime_format: format,
+            current_time_date: get_current_datetime(),
             wireless_enabled: false,
             wireless_strength: 0,
             bluetooth_enabled: false,
@@ -36,21 +32,14 @@ impl StatusBar {
         }
     }
 
-    pub fn set_datetime_format(&mut self, format: DateTimeFormat, cx: &mut Context<Self>) {
-        self.datetime_format = format;
-        self.current_time_date = get_current_datetime(format);
-        cx.notify();
-    }
-
     pub fn update_time(&mut self, cx: &mut Context<Self>) {
-        self.current_time_date = get_current_datetime(self.datetime_format);
+        self.current_time_date = get_current_datetime();
         cx.notify();
     }
 }
 
 impl Render for StatusBar {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-
         let wireless_icon = match self.wireless_enabled {
             true => match self.wireless_strength {
                 0..=20 => IconName::WirelessLow,

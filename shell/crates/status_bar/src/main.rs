@@ -45,7 +45,6 @@ fn main() {
                 cx.new(|cx| {
                     cx.spawn(async move |app, cx| {
                         while let Some(event) = app_channel_rx.next().await {
-                            println!(" IN UI AppChannel event: {:?}", event);
                             match event {
                                 AppEvents::WirelessStatusChanged { enabled } => {
                                     let _ = app.update(cx, |this: &mut StatusBar, cx| {
