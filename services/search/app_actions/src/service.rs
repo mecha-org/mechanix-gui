@@ -6,10 +6,12 @@ use serde::Deserialize;
 use std::fs::read_dir;
 use std::{
     collections::HashMap,
+    fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::Duration,
 };
+use tantivy::directory::MmapDirectory;
 use tantivy::query::TermQuery;
 use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
 use tantivy::{
@@ -219,13 +221,11 @@ impl AppActionsService {
             dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Failed to get home directory"))?;
         let schema = Self::create_schema();
         let index_path = home_dir.join(&config.index_dir);
-
-        // Create the index if it doesn't exist
-        let index = if index_path.join("meta.json").exists() {
-            Index::open_in_dir(&index_path)?
-        } else {
-            Index::create_in_dir(&index_path, schema.clone())?
-        };
+        if !index_path.exists() {
+            fs::create_dir_all(&index_path)?;
+        }
+        let mmap_dir = MmapDirectory::open(index_path)?;
+        let index = Index::open_or_create(mmap_dir, schema.clone())?;
 
         // TODO: We can configure this to be more fine-grained
         let writer = Arc::new(Mutex::new(index.writer(50_000_000)?));
