@@ -14,14 +14,12 @@ keywords.workspace = true
 gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
+serde = { workspace = true }
 commons = { path = "../commons" }
-serde = { version = "1.0.163", features = ["derive"] }
-xdg = "2.4.1"
+tokio = { workspace = true }
+futures = { workspace = true }
+notify = { workspace = true }
 wayland-protocols-async = { git = "https://github.com/mecha-org/wayland-protocols-async.git", rev = "0c2c8f6ab9d944e24fdff89f08fd8fe6a67eb6d3" }
-tokio = { version = "1.33", features = ["full"] }
-tracing = "0.1"
 indexmap = "2.1.0"
-futures = "0.3.30"
 lazy_static = "1.5.0"
-notify = "7.0.0"
-async-channel = "2.5.0"
+xdg = "2.4.1"
