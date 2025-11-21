@@ -92,7 +92,7 @@ impl Render for StatusBar {
         };
 
         div()
-            .bg(gpui::black())
+            .bg(gpui::transparent_white())
             .flex()
             .items_center()
             .justify_between()

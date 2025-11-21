@@ -15,3 +15,4 @@ gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
 commons = { path = "../commons" }
+unicode-segmentation = "1.12.0"

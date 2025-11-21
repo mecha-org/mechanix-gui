@@ -18,3 +18,47 @@ futures = { workspace = true }
 commons = { path = "../commons" }
 status_bar = { path = "../status_bar" }
 settings_drawer = { path = "../settings_drawer" }
+universal_search = { path = "../universal_search" }
+running_apps = { path = "../running_apps" }
+types = { path = "../types" }
+
+[package.metadata.deb]
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+extended-description = """\
+Launcher application."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../../target/release/launcher",
+        "usr/bin/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/app-drawer/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/app-drawer/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/running-apps/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/running-apps/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/settings-drawer/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/icons/settings-drawer/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/status-bar/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/icons/status-bar/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/universal-search/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/universal-search/",
+        "755",
+    ],
+]
