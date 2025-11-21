@@ -96,7 +96,7 @@ impl RenderOnce for WidgetView {
                                 div()
                                     .text_size(px(24.0))
                                     .text_color(rgb(0xFFFFFF))
-                                    .child(self.widget.icon_name.clone()),
+                                    .child(self.widget.icon_name.to_string()),
                             ),
                     )
                     .child(
@@ -104,7 +104,7 @@ impl RenderOnce for WidgetView {
                             .text_size(px(14.0))
                             .text_color(rgb(0xFFFFFF))
                             .font_weight(FontWeight::MEDIUM)
-                            .child(self.widget.name.clone()),
+                            .child(self.widget.name.to_string()),
                     ),
             )
     }

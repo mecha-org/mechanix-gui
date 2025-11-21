@@ -1,5 +1,7 @@
 use crate::config::HomescreenConfig;
 use gpui::*;
+use std::collections::HashMap;
+use std::rc::Rc;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct WidgetSize {
@@ -28,8 +30,8 @@ impl GridPosition {
 #[derive(Clone, Debug)]
 pub struct Widget {
     pub id: usize,
-    pub name: String,
-    pub icon_name: String,
+    pub name: Rc<str>,
+    pub icon_name: Rc<str>,
     pub size: WidgetSize,
     pub position: GridPosition,
     pub background_color: Hsla,
@@ -52,8 +54,8 @@ impl Widget {
     ) -> Self {
         Self {
             id,
-            name: name.into(),
-            icon_name: icon_name.into(),
+            name: Rc::from(name.into()),
+            icon_name: Rc::from(icon_name.into()),
             size,
             position,
             background_color: rgb(config.visual.default_widget_color).into(),
@@ -103,7 +105,8 @@ impl Widget {
         let dx = self.target_x - self.current_x;
         let dy = self.target_y - self.current_y;
         let distance = (dx * dx + dy * dy).sqrt();
-        distance >= config.animation.completion_threshold
+        let is_animating = distance >= config.animation.completion_threshold;
+        is_animating
     }
 
     pub fn update_position(&mut self, delta_time: f32, config: &HomescreenConfig) -> bool {
@@ -118,15 +121,19 @@ impl Widget {
         }
 
         let step = self.animation_speed * delta_time;
+
         if step >= distance {
             self.current_x = self.target_x;
             self.current_y = self.target_y;
             return false;
         }
 
-        let ratio = step / distance;
-        self.current_x += dx * ratio;
-        self.current_y += dy * ratio;
+        let direction_x = dx / distance;
+        let direction_y = dy / distance;
+
+        self.current_x += direction_x * step;
+        self.current_y += direction_y * step;
+
         true
     }
 }
@@ -344,6 +351,8 @@ impl Page {
         &mut self,
         widget_id: usize,
         new_position: GridPosition,
+        cell_size: f32,
+        gap: f32,
     ) -> Result<(), String> {
         let widget_idx = self
             .widgets
@@ -446,6 +455,8 @@ pub struct HomescreenState {
 
     pub edge_hold_start_time: Option<std::time::Instant>,
     pub last_page_switch_time: Option<std::time::Instant>,
+
+    widget_to_page: HashMap<usize, usize>,
 }
 
 impl HomescreenState {
@@ -473,10 +484,15 @@ impl HomescreenState {
             hold_widget: None,
             edge_hold_start_time: None,
             last_page_switch_time: None,
+            widget_to_page: HashMap::new(),
         }
     }
 
     pub fn add_page(&mut self, page: Page) {
+        let page_idx = self.pages.len();
+        for widget in &page.widgets {
+            self.widget_to_page.insert(widget.id, page_idx);
+        }
         self.pages.push(page);
     }
 
@@ -540,12 +556,7 @@ impl HomescreenState {
             if elapsed >= config.interaction.hold_duration {
                 self.dragging_widget = Some(widget_id);
 
-                for (page_idx, page) in self.pages.iter().enumerate() {
-                    if page.widgets.iter().any(|w| w.id == widget_id) {
-                        self.dragging_widget_original_page = Some(page_idx);
-                        break;
-                    }
-                }
+                self.dragging_widget_original_page = self.widget_to_page.get(&widget_id).copied();
 
                 self.hold_start_time = None;
                 self.hold_widget = None;
@@ -561,7 +572,6 @@ impl HomescreenState {
     }
 
     pub fn end_widget_drag(&mut self) {
-        println!("End widget drag");
         self.dragging_widget = None;
         self.dragging_widget_original_page = None;
         self.edge_hold_start_time = None;
@@ -769,6 +779,8 @@ impl HomescreenState {
             }
         };
 
+        self.widget_to_page.insert(widget_id, to_page);
+
         self.pages[to_page].widgets.push(widget);
     }
 
@@ -800,6 +812,8 @@ impl HomescreenState {
 
         widget.current_x += position_adjustment;
         widget.target_x += position_adjustment;
+
+        self.widget_to_page.insert(widget_id, to_page);
 
         self.pages[to_page].widgets.push(widget);
     }

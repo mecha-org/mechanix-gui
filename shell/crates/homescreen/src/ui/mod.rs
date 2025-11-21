@@ -205,8 +205,12 @@ impl Homescreen {
 
         for page in &mut self.state.pages {
             for widget in &mut page.widgets {
-                widget.calculate_target_position(cell_size_f32, gap_f32);
-                if widget.current_x == 0.0 && widget.current_y == 0.0 {
+                if widget.current_x == 0.0
+                    && widget.current_y == 0.0
+                    && widget.target_x == 0.0
+                    && widget.target_y == 0.0
+                {
+                    widget.calculate_target_position(cell_size_f32, gap_f32);
                     widget.current_x = widget.target_x;
                     widget.current_y = widget.target_y;
                 }
@@ -215,23 +219,15 @@ impl Homescreen {
 
         let dragging_widget_id = self.state.dragging_widget;
 
-        let pages_data: Vec<(usize, Vec<_>)> = self
-            .state
-            .pages
-            .iter()
-            .enumerate()
-            .map(|(idx, page)| (idx, page.widgets.clone()))
-            .collect();
-
         let mut dragged_widget_data: Option<(Widget, usize)> = None;
-        let mut animating_widgets: Vec<(Widget, usize)> = Vec::new();
+        let mut animating_widget_ids: Vec<(usize, usize)> = Vec::new(); // (widget_id, page_idx)
 
-        for (page_idx, widgets) in &pages_data {
-            for widget in widgets {
+        for (page_idx, page) in self.state.pages.iter().enumerate() {
+            for widget in &page.widgets {
                 if Some(widget.id) == dragging_widget_id {
-                    dragged_widget_data = Some((widget.clone(), *page_idx));
+                    dragged_widget_data = Some((widget.clone(), page_idx));
                 } else if widget.is_animating(&self.config) {
-                    animating_widgets.push((widget.clone(), *page_idx));
+                    animating_widget_ids.push((widget.id, page_idx));
                 }
             }
         }
@@ -240,28 +236,33 @@ impl Homescreen {
             .flex()
             .flex_row()
             .gap(page_gap)
-            .children(pages_data.into_iter().map(|(page_index, widgets)| {
-                div()
-                    .id(("page", page_index))
-                    .relative()
-                    .w(grid_width)
-                    .h(grid_height)
-                    .flex_shrink_0()
-                    .children(widgets.into_iter().filter_map(|widget| {
-                        let widget_id = widget.id;
+            .children(
+                self.state
+                    .pages
+                    .iter()
+                    .enumerate()
+                    .map(|(page_index, page)| {
+                        div()
+                            .id(("page", page_index))
+                            .relative()
+                            .w(grid_width)
+                            .h(grid_height)
+                            .flex_shrink_0()
+                            .children(page.widgets.iter().filter_map(|widget| {
+                                let widget_id = widget.id;
 
-                        if Some(widget_id) == dragging_widget_id
-                            || widget.is_animating(&self.config)
-                        {
-                            return None;
-                        }
+                                if Some(widget_id) == dragging_widget_id
+                                    || animating_widget_ids.iter().any(|(id, _)| *id == widget_id)
+                                {
+                                    return None;
+                                }
 
-                        let is_hovered = hovered_id == Some(widget_id);
-                        let is_selected = selected_id == Some(widget_id);
-                        let left = px(widget.current_x);
-                        let top = px(widget.current_y);
+                                let is_hovered = hovered_id == Some(widget_id);
+                                let is_selected = selected_id == Some(widget_id);
+                                let left = px(widget.current_x);
+                                let top = px(widget.current_y);
 
-                        Some(
+                                Some(
                             div()
                                 .id(("widget", widget_id))
                                 .absolute()
@@ -279,45 +280,61 @@ impl Homescreen {
                                     ),
                                 )
                                 .child(
-                                    WidgetView::new(widget, cell_size, gap)
+                                    WidgetView::new(widget.clone(), cell_size, gap)
                                         .hovered(is_hovered)
                                         .selected(is_selected),
                                 ),
                         )
-                    }))
-            }))
-            .children(animating_widgets.into_iter().map(|(widget, page_idx)| {
-                let widget_id = widget.id;
-                let is_hovered = hovered_id == Some(widget_id);
-                let is_selected = selected_id == Some(widget_id);
+                            }))
+                    }),
+            )
+            .children(
+                animating_widget_ids
+                    .into_iter()
+                    .filter_map(|(widget_id, page_idx)| {
+                        let widget = self
+                            .state
+                            .pages
+                            .get(page_idx)?
+                            .widgets
+                            .iter()
+                            .find(|w| w.id == widget_id)?;
 
-                let page_gap_f32: f32 = page_gap.into();
-                let grid_width_f32: f32 = grid_width.into();
-                let page_offset = page_idx as f32 * (grid_width_f32 + page_gap_f32);
+                        let is_hovered = hovered_id == Some(widget_id);
+                        let is_selected = selected_id == Some(widget_id);
 
-                let left = px(widget.current_x + page_offset);
-                let top = px(widget.current_y);
+                        let page_gap_f32: f32 = page_gap.into();
+                        let grid_width_f32: f32 = grid_width.into();
+                        let page_offset = page_idx as f32 * (grid_width_f32 + page_gap_f32);
 
-                div()
-                    .id(("widget_animating", widget_id))
-                    .absolute()
-                    .left(left)
-                    .top(top)
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(move |homescreen, event: &MouseDownEvent, _window, cx| {
-                            let x: f32 = event.position.x.into();
-                            let y: f32 = event.position.y.into();
-                            homescreen.state.start_hold(x, y, Some(widget_id));
-                            cx.notify();
-                        }),
-                    )
-                    .child(
-                        WidgetView::new(widget, cell_size, gap)
-                            .hovered(is_hovered)
-                            .selected(is_selected),
-                    )
-            }))
+                        let left = px(widget.current_x + page_offset);
+                        let top = px(widget.current_y);
+
+                        Some(
+                            div()
+                                .id(("widget_animating", widget_id))
+                                .absolute()
+                                .left(left)
+                                .top(top)
+                                .on_mouse_down(
+                                    MouseButton::Left,
+                                    cx.listener(
+                                        move |homescreen, event: &MouseDownEvent, _window, cx| {
+                                            let x: f32 = event.position.x.into();
+                                            let y: f32 = event.position.y.into();
+                                            homescreen.state.start_hold(x, y, Some(widget_id));
+                                            cx.notify();
+                                        },
+                                    ),
+                                )
+                                .child(
+                                    WidgetView::new(widget.clone(), cell_size, gap)
+                                        .hovered(is_hovered)
+                                        .selected(is_selected),
+                                ),
+                        )
+                    }),
+            )
             .when_some(dragged_widget_data, |parent_div, (widget, page_idx)| {
                 let widget_id = widget.id;
                 let is_hovered = hovered_id == Some(widget_id);
@@ -498,7 +515,12 @@ impl Render for Homescreen {
                             let drop_position = GridPosition::new(col, row);
 
                             let rearrange_result = homescreen.state.pages[page_idx]
-                                .try_rearrange_on_drop(dragging_widget_id, drop_position);
+                                .try_rearrange_on_drop(
+                                    dragging_widget_id,
+                                    drop_position,
+                                    cell_size_f32,
+                                    gap_f32,
+                                );
 
                             match rearrange_result {
                                 Ok(_) => {
