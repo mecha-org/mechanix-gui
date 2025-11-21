@@ -4,8 +4,13 @@ use log::{debug, error, info, warn};
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::{HashSet, VecDeque};
 use std::path::Path;
-use std::{collections::HashMap, fs, path::PathBuf, time::Duration};
-use tantivy::directory::MmapDirectory;
+use std::{
+    collections::HashMap,
+    fs,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use tantivy::query::TermQuery;
 use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
 use tantivy::{
@@ -30,21 +35,14 @@ pub struct FileInfo {
 }
 /// Public entry point for the app search service.
 
-pub enum IndexCmd {
-    FsEvent(Event),
-    Shutdown,
-}
 #[derive()]
 pub struct FileSearchService {
     config: FilesConfig,
     schema: Schema,
     index: Index,
-    index_reader: IndexReader,
-    index_writer: Option<IndexWriter>,
+    writer: Arc<Mutex<IndexWriter>>,
     index_worker_handle: Option<JoinHandle<()>>,
-    watcher_handles: HashMap<PathBuf, JoinHandle<()>>,
-    dynamic_handle: Option<JoinHandle<()>>,
-    cmd_tx: Option<Sender<IndexCmd>>,
+    watcher_handler: Option<JoinHandle<()>>,
 }
 
 pub enum FileIndexState {
@@ -101,8 +99,20 @@ impl FileSearchService {
                     return Ok(FileIndexState::NotIndexed);
                 }
             };
+            debug!(
+                "last_modified field value: {:?}",
+                last_modified_field_value.as_str()
+            );
+            debug!(
+                "file metadata last_modified: {}",
+                file_metadata.last_modified
+            );
             if let Some(last_modified_field_value) = last_modified_field_value.as_str() {
                 return if last_modified_field_value == file_metadata.last_modified {
+                    debug!(
+                        "Entry already exists and last_modified is same for path: {}",
+                        file_path.display()
+                    );
                     Ok(FileIndexState::IndexedAndUpToDate)
                 } else {
                     debug!(
@@ -121,27 +131,24 @@ impl FileSearchService {
             dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Failed to get home directory"))?;
         let schema = Self::create_schema();
         let index_path = home_dir.join(&config.index_dir);
-        if !index_path.exists() {
-            fs::create_dir_all(&index_path)?;
-        }
-        let mmap_dir = MmapDirectory::open(index_path)?;
-        let index = Index::open_or_create(mmap_dir, schema.clone())?;
-        let index_reader = index
-            .reader_builder()
-            .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
-            .try_into()?;
 
-        let index_writer = index.writer(config.target_memory_usage_in_bytes)?;
+        // Create the index if it doesn't exist
+        let index = if index_path.join("meta.json").exists() {
+            Index::open_in_dir(&index_path)?
+        } else {
+            Index::create_in_dir(&index_path, schema.clone())?
+        };
+        let writer = Arc::new(Mutex::new(
+            index.writer(config.target_memory_usage_in_bytes)?,
+        ));
+        let watcher_handles: HashMap<PathBuf, JoinHandle<()>> = HashMap::new();
         Ok(Self {
             config: config.clone(),
             schema,
             index,
-            index_reader,
-            index_writer: Some(index_writer),
+            writer,
             index_worker_handle: None,
-            watcher_handles: HashMap::new(),
-            dynamic_handle: None,
-            cmd_tx: None,
+            watcher_handler: None,
         })
     }
 
@@ -161,9 +168,9 @@ impl FileSearchService {
     fn index_existing_files(
         path: &str,
         depth_level: usize,
-        content_index_extensions_to_index_content: &HashSet<String>,
+        allowed_extensions_to_index_content: &HashSet<String>,
         index_reader: &IndexReader,
-        index_writer: &mut IndexWriter,
+        index_writer: &Arc<Mutex<IndexWriter>>,
         schema: &Schema,
         buffer_size_kb: usize,
     ) {
@@ -206,7 +213,11 @@ impl FileSearchService {
 
         // Now process the collected files
         for file_path in files_to_index {
-            let mut file_metadata: FileMetadata = match utils::get_file_metadata(&file_path) {
+            let file_metadata: FileMetadata = match utils::get_file_metadata(
+                &file_path,
+                buffer_size_kb,
+                allowed_extensions_to_index_content,
+            ) {
                 Ok(info) => info,
                 Err(e) => {
                     error!("Failed to get file info for {}: {}", file_path.display(), e);
@@ -231,95 +242,93 @@ impl FileSearchService {
                     continue;
                 }
                 FileIndexState::IndexedAndStale => {
-                    let field = match schema.get_field("path") {
-                        Ok(field) => field,
-                        Err(err) => {
-                            error!("Failed to get field - path: {}", err);
-                            continue;
+                    if let Ok(writer) = index_writer.lock() {
+                        let field = match schema.get_field("path") {
+                            Ok(field) => field,
+                            Err(err) => {
+                                error!("Failed to get field - path: {}", err);
+                                continue;
+                            }
+                        };
+                        let term =
+                            Term::from_field_text(field, &file_path.to_string_lossy().to_string());
+                        let doc =
+                            extract_doc_given_file_path(&index_reader, &term).unwrap_or_else(|e| {
+                                error!("Failed to extract doc: {}", e);
+                                None
+                            });
+                        if let Some(_doc) = doc {
+                            let _result = writer.delete_term(term);
+                            info!("Removed indexed file entry: {:?}", file_path.file_name());
                         }
-                    };
-                    let term =
-                        Term::from_field_text(field, &file_path.to_string_lossy().to_string());
-                    let doc =
-                        extract_doc_given_file_path(&index_reader, &term).unwrap_or_else(|e| {
-                            error!("Failed to extract doc: {}", e);
-                            None
-                        });
-                    if let Some(_doc) = doc {
-                        let _result = index_writer.delete_term(term);
-                        info!("Removed indexed file entry: {:?}", file_path.file_name());
-                    }
-                    // Read and index file content if it allowed to index content
-                    if content_index_extensions_to_index_content.contains(&file_metadata.file_type)
-                    {
-                        let file_content = utils::read_file_content(&file_path, buffer_size_kb);
-                        if let Ok(content) = file_content {
-                            file_metadata.content = content;
+                        let doc = feed_doc(&schema, &file_metadata);
+                        match writer.add_document(doc) {
+                            Ok(_) => info!("Indexed new file: {}", file_metadata.name),
+                            Err(e) => error!("Failed to index new file: {}", e),
                         }
-                    }
-                    let doc = feed_doc(&schema, &file_metadata);
-                    match index_writer.add_document(doc) {
-                        Ok(_) => info!("Indexed new file: {}", file_metadata.name),
-                        Err(e) => error!("Failed to index new file: {}", e),
                     }
                 }
                 FileIndexState::NotIndexed => {
                     let doc = feed_doc(&schema, &file_metadata);
-                    match index_writer.add_document(doc) {
-                        Ok(_) => info!("Indexed new file: {}", file_metadata.name),
-                        Err(e) => error!("Failed to index new file: {}", e),
+                    if let Ok(writer) = index_writer.lock() {
+                        match writer.add_document(doc) {
+                            Ok(_) => info!("Indexed new file: {}", file_metadata.name),
+                            Err(e) => error!("Failed to index new file: {}", e),
+                        }
                     }
                 }
             }
         }
-        if let Err(e) = index_writer.commit() {
-            error!("Failed to commit index: {:?}", e);
-        } else {
-            debug!("Committed indexed files data to disk.");
-        }
+        if let Ok(mut writer) = index_writer.lock() {
+            if let Err(e) = writer.commit() {
+                error!("Failed to commit index: {:?}", e);
+            } else {
+                debug!("Committed indexed files data to disk.");
+            }
+        };
     }
 
     /// Spawns a file watcher in a blocking task.
-    fn spawn_file_watcher_async(dir: PathBuf, tx: mpsc::Sender<IndexCmd>) -> JoinHandle<()> {
-        tokio::spawn(async move {
-            let mut watcher = match RecommendedWatcher::new(
-                move |res: Result<Event, notify::Error>| {
-                    if let Ok(event) = res {
+    fn spawn_file_watcher(dir: PathBuf, tx: Sender<Event>) -> JoinHandle<()> {
+        tokio::task::spawn_blocking(move || {
+            let mut watcher = RecommendedWatcher::new(
+                move |res: Result<Event, notify::Error>| match res {
+                    Ok(event) => {
                         if matches!(
-                event.kind,
-                EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_)
-            ) {
-                            let _ = tx.blocking_send(IndexCmd::FsEvent(event));
+                            event.kind,
+                            EventKind::Create(_) | EventKind::Modify(_) | EventKind::Remove(_)
+                        ) {
+                            let _ = tx.blocking_send(event);
                         }
-                    } else if let Err(err) = res {
+                    }
+                    Err(err) => {
                         error!("Watch error: {:?}", err);
                     }
                 },
-                notify::Config::default(),
-            ) {
-                Ok(w) => w,
-                Err(e) => {
-                    error!("Failed to create watcher for {}: {}", dir.display(), e);
-                    return;
-                }
-            };
+                Config::default(),
+            );
 
-            if let Err(e) = watcher.watch(&dir, RecursiveMode::NonRecursive) {
-                error!("Failed to watch {}: {}", dir.display(), e);
-            } else {
-                debug!("Now watching: {}", dir.display());
+            match watcher {
+                Ok(ref mut w) => {
+                    if let Err(e) = w.watch(&dir, RecursiveMode::NonRecursive) {
+                        error!("Failed to watch {}: {}", dir.display(), e);
+                    } else {
+                        debug!("Now watching: {}", dir.display());
+                    }
+                }
+                Err(e) => error!("Failed to create watcher for {}: {}", dir.display(), e),
             }
 
-            // Keep the watcher alive until the task is aborted
-            futures::future::pending::<()>().await;
+            std::thread::park(); // Keeps the watcher thread alive
         })
     }
 
     fn init_bfs_watchers(
-        &mut self,
+        &self,
         root_path: &PathBuf,
-        event_tx: &mpsc::Sender<IndexCmd>,
+        event_tx: &mpsc::Sender<Event>,
         total_watchers: &mut usize,
+        watcher_handles: &mut HashMap<PathBuf, JoinHandle<()>>,
     ) {
         let max_depth = self.config.max_depth;
         let max_watchers = self.config.max_watchers;
@@ -334,8 +343,8 @@ impl FileSearchService {
             }
 
             if Self::is_valid_dir(&dir) {
-                let handle = Self::spawn_file_watcher_async(dir.clone(), event_tx.clone());
-                self.watcher_handles.insert(dir.clone(), handle);
+                let handle = Self::spawn_file_watcher(dir.clone(), event_tx.clone());
+                watcher_handles.insert(dir.clone(), handle);
                 *total_watchers += 1;
             }
 
@@ -364,10 +373,11 @@ impl FileSearchService {
                 .map_or(false, |n| n.to_string_lossy().starts_with('.'))
     }
 
-    pub fn run(&mut self) -> anyhow::Result<()> {
+    pub async fn run(&mut self) -> anyhow::Result<()> {
         info!("Starting FileSearchService watcher...");
 
-        // Simplified: remove unused local copies of config fields
+        let allowed_extensions: HashSet<String> = self.config.allowed_extensions.clone();
+        let buffer_size_kb = self.config.read_file_content_upto_in_kb;
         let watch_path: PathBuf = self.config.files_dir_to_watch.clone().into();
 
         debug!("Watching path: {}", watch_path.display());
@@ -375,22 +385,85 @@ impl FileSearchService {
             anyhow::bail!("Watch path does not exist: {}", watch_path.display());
         }
 
-        Self::index_existing_files(
-            &watch_path.to_str().unwrap(),
-            self.config.max_depth,
-            &self.config.content_index_extensions,
-            &self.index_reader,
-            self.index_writer.as_mut().unwrap(),
-            &self.schema,
-            self.config.read_file_content_upto_in_kb,
-        );
-        // Event channel to communicate file system events to the indexer
-        let (cmd_tx, mut cmd_rx) = mpsc::channel::<IndexCmd>(256);
-        self.cmd_tx = Some(cmd_tx.clone());
+        // Event channels
+        let (event_tx, mut event_rx) = mpsc::channel::<Event>(100);
+        let (watcher_request_tx, mut watcher_request_rx) =
+            mpsc::channel::<(PathBuf, EventKind)>(100);
 
+        // -------------------------------
         // Static BFS Watcher Initialization
+        // -------------------------------
         let mut total_watchers = 0usize;
-        self.init_bfs_watchers(&watch_path, &cmd_tx, &mut total_watchers);
+        let mut watcher_handles: HashMap<PathBuf, JoinHandle<()>> = HashMap::new();
+        self.init_bfs_watchers(
+            &watch_path,
+            &event_tx,
+            &mut total_watchers,
+            &mut watcher_handles,
+        );
+        // -------------------------------
+        // Dynamic Watcher Manager
+        // -------------------------------
+        let dynamic_tx = event_tx.clone();
+        let dynamic_max_watchers = self.config.max_watchers;
+        let dynamic_total_watchers = Arc::new(Mutex::new(total_watchers));
+        let watcher_handles_arc = Arc::new(Mutex::new(watcher_handles));
+
+        let _dynamic_handle = {
+            let total_watchers = Arc::clone(&dynamic_total_watchers);
+            let watcher_handles = Arc::clone(&watcher_handles_arc);
+
+            tokio::spawn(async move {
+                info!("Dynamic watcher task started...");
+
+                while let Some((dir, event_kind)) = watcher_request_rx.recv().await {
+                    debug!(
+                        "New Request, path: {}, event: {:?}",
+                        dir.display(),
+                        event_kind
+                    );
+
+                    let mut count = total_watchers.lock().unwrap();
+                    if *count >= dynamic_max_watchers {
+                        warn!("Max watchers reached. Skipping {}", dir.display());
+                        continue;
+                    }
+
+                    match event_kind {
+                        EventKind::Create(_) => {
+                            let handle = Self::spawn_file_watcher(dir.clone(), dynamic_tx.clone());
+                            if let Ok(mut handles) = watcher_handles.lock() {
+                                handles.insert(dir, handle);
+                                *count += 1;
+                            }
+                            info!("Added watcher. Total: {}", *count);
+                        }
+                        EventKind::Remove(_) => {
+                            if let Ok(mut handles) = watcher_handles.lock() {
+                                if let Some(handle) = handles.remove(&dir) {
+                                    handle.abort();
+                                    *count -= 1;
+                                    info!("Removed watcher. Total: {}", *count);
+                                }
+                            }
+                        }
+                        EventKind::Any
+                        | EventKind::Access(_)
+                        | EventKind::Modify(_)
+                        | EventKind::Other => {
+                            // No action needed for these event types
+                        }
+                    }
+                }
+            })
+        };
+
+        // -------------------------------
+        // Hold watchers alive
+        // -------------------------------
+        self.watcher_handler = Some(tokio::spawn(async {
+            futures::future::pending::<()>().await
+        }));
 
         // -------------------------------
         // Event Debouncing & Indexing
@@ -400,66 +473,27 @@ impl FileSearchService {
             error!("Failed to get index reader: {}", err);
             err
         })?;
-        let writer = self.index_writer.take().expect("writer missing");
+        let writer = Arc::clone(&self.writer);
 
         self.index_worker_handle = Some(tokio::spawn(async move {
-            let mut writer = writer;
-            let debounce = Duration::from_millis(400);
+            let debounce_duration = Duration::from_secs(2);
             let mut pending_events = Vec::new();
-            let mut next_flush: Option<time::Instant> = None;
 
             loop {
                 tokio::select! {
-                    maybe_cmd = cmd_rx.recv() => {
-                        match maybe_cmd {
-                            Some(IndexCmd::FsEvent(event)) => {
-                                pending_events.push(event);
-                                if next_flush.is_none() {
-                                    next_flush = Some(time::Instant::now() + debounce);
-                                }
-                            }
-                            Some(IndexCmd::Shutdown) => {
-                            // Final flush before exiting
-                            if !pending_events.is_empty() {
-                                Self::process_pending_events(
-                                    &mut pending_events,
-                                    &schema,
-                                    &reader,
-                                    &mut writer
-                                );
-                            }
-                            info!("Indexer received shutdown. Exiting cleanly.");
-                            break; // Exit the task
-                            }
-                            None => {
-                                // Sender dropped unexpectedly; try to flush and exit.
-                                if !pending_events.is_empty() {
-                                    Self::process_pending_events(
-                                        &mut pending_events,
-                                        &schema,
-                                        &reader,
-                                        &mut writer
-                                    );
-                                }
-                                warn!("Indexer channel closed. Exiting.");
-                                break;
-                            }
-                        }
+                    Some(event) = event_rx.recv() => {
+                        pending_events.push(event);
                     }
-                    _ = async {
-                        if let Some(deadline) = next_flush { time::sleep_until(deadline).await }
-                    }, if next_flush.is_some() => {
-                        if !pending_events.is_empty() {
-                            if !pending_events.is_empty() {
-                                Self::process_pending_events(
-                                    &mut pending_events,
-                                    &schema,
-                                    &reader,
-                                    &mut writer
-                                );
-                            }
-                        }
-                        next_flush = None;
+                    _ = time::sleep(debounce_duration), if !pending_events.is_empty() => {
+                        Self::process_pending_events(
+                            &mut pending_events,
+                            &schema,
+                            &reader,
+                            &writer,
+                            &allowed_extensions,
+                            buffer_size_kb,
+                            &watcher_request_tx
+                        ).await;
                     }
                 }
             }
@@ -468,11 +502,14 @@ impl FileSearchService {
         Ok(())
     }
 
-    fn process_pending_events(
+    async fn process_pending_events(
         pending: &mut Vec<Event>,
         schema: &Schema,
         reader: &IndexReader,
-        writer: &mut IndexWriter,
+        writer: &Arc<Mutex<IndexWriter>>,
+        allowed_exts: &HashSet<String>,
+        buffer_kb: usize,
+        watcher_request_tx: &mpsc::Sender<(PathBuf, EventKind)>,
     ) {
         let mut unique_paths: HashMap<PathBuf, EventKind> = HashMap::new();
 
@@ -480,8 +517,12 @@ impl FileSearchService {
             if event.kind.is_create() || event.kind.is_modify() || event.kind.is_remove() {
                 for path in &event.paths {
                     let kind = event.kind.clone();
-                    // Skip directories; we only index files and no longer dynamically manage watchers
-                    if path.is_dir() { continue; }
+                    if path.is_dir() && (kind.is_create() || kind.is_remove()) {
+                        if let Err(e) = watcher_request_tx.send((path.clone(), kind)).await {
+                            error!("Failed to send new dir to watcher queue: {}", e);
+                        }
+                        continue;
+                    }
 
                     if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
                         if !file_name.starts_with('.') {
@@ -495,31 +536,42 @@ impl FileSearchService {
         for (path, kind) in unique_paths {
             match kind {
                 EventKind::Create(_) | EventKind::Modify(_) => {
-                    if let Err(e) = Self::index_or_update_file(schema, reader, writer, &path) {
+                    if let Err(e) = Self::index_or_update_file(
+                        schema,
+                        reader,
+                        writer,
+                        &path,
+                        buffer_kb,
+                        allowed_exts,
+                    ) {
                         error!("Failed to index/update {}: {}", path.display(), e);
                     }
                 }
                 EventKind::Remove(_) => {
-                    Self::remove_file_from_index(schema, writer, &path);
+                    Self::remove_file_from_index(schema, reader, writer, &path);
                 }
                 _ => {}
             }
         }
 
-        if let Err(e) = writer.commit() {
-            error!("Commit failed: {:?}", e);
-        } else {
-            info!("Index committed to disk.");
+        if let Ok(mut w) = writer.lock() {
+            if let Err(e) = w.commit() {
+                error!("Commit failed: {:?}", e);
+            } else {
+                info!("Index committed to disk.");
+            }
         }
     }
 
     fn index_or_update_file(
         schema: &Schema,
         reader: &IndexReader,
-        writer: &mut IndexWriter,
+        writer: &Arc<Mutex<IndexWriter>>,
         path: &PathBuf,
+        buffer_kb: usize,
+        allowed_exts: &HashSet<String>,
     ) -> anyhow::Result<()> {
-        let metadata = utils::get_file_metadata(path)?;
+        let metadata = utils::get_file_metadata(path, buffer_kb, allowed_exts)?;
         let state = Self::get_index_state(schema, &metadata, path, reader)?;
 
         if matches!(state, FileIndexState::IndexedAndUpToDate) {
@@ -527,21 +579,32 @@ impl FileSearchService {
         }
 
         if matches!(state, FileIndexState::IndexedAndStale) {
-            Self::remove_file_from_index(schema, writer, path);
+            Self::remove_file_from_index(schema, reader, writer, path);
         }
 
         let doc = feed_doc(schema, &metadata);
-        writer.add_document(doc)?;
+        if let Ok(mut w) = writer.lock() {
+            w.add_document(doc)?;
+        }
 
         info!("Indexed file: {}", metadata.name);
         Ok(())
     }
 
-    fn remove_file_from_index(schema: &Schema, writer: &mut IndexWriter, path: &Path) {
+    fn remove_file_from_index(
+        schema: &Schema,
+        reader: &IndexReader,
+        writer: &Arc<Mutex<IndexWriter>>,
+        path: &Path,
+    ) {
         if let Ok(field) = schema.get_field("path") {
             let term = Term::from_field_text(field, &path.to_string_lossy());
-            let _ = writer.delete_term(term);
-            info!("Removed from index: {}", path.display());
+            if let Ok(Some(_)) = extract_doc_given_file_path(reader, &term) {
+                if let Ok(mut w) = writer.lock() {
+                    let _ = w.delete_term(term);
+                    info!("Removed from index: {}", path.display());
+                }
+            }
         }
     }
 
@@ -586,28 +649,32 @@ impl FileSearchService {
     }
 
     /// Graceful shutdown (optional: cancels task)
-    pub async fn shutdown(&mut self) -> anyhow::Result<()> {
+    pub async fn shutdown(&self) -> anyhow::Result<()> {
         info!("Shutting down FileSearchService...");
 
-        // Tell the indexer to flush and exit
-        if let Some(tx) = self.cmd_tx.take() {
-            let _ = tx.send(IndexCmd::Shutdown).await;
-        }
+        // 1. Stop watcher tasks: The watcher threads are parked indefinitely, so you need a way to unblock them.
+        //    For the watchers started with spawn_blocking and parked threads, you might have to implement them differently.
+        //    Ideally, you should add a shutdown channel and replace parking with a loop that listens for shutdown.
+        //    For now, if parked threads can't be unparked here, consider storing JoinHandles and just aborting them:
 
-        // Wait for indexer to finish committing
-        if let Some(handle) = self.index_worker_handle.take() {
-            match handle.await {
-                Ok(()) => debug!("Indexer task exited cleanly"),
-                Err(e) => warn!("Indexer task join error: {:?}", e),
-            }
-        }
-
-        // Stop dynamic manager
-        if let Some(h) = self.dynamic_handle.take() { h.abort(); }
-
-        // Stop all directory watchers
-        for (_dir, handle) in self.watcher_handles.drain() {
+        if let Some(handle) = &self.watcher_handler {
             handle.abort();
+            info!("Watcher tasks aborted");
+        }
+
+        // 2. Stop index worker task cleanly
+        if let Some(handle) = &self.index_worker_handle {
+            handle.abort();
+            info!("Index worker task aborted");
+        }
+
+        // 3. Commit any pending writes
+        if let Ok(mut writer) = self.writer.lock() {
+            if let Err(e) = writer.commit() {
+                error!("Failed to commit index on shutdown: {}", e);
+            } else {
+                info!("Committed index on shutdown");
+            }
         }
 
         Ok(())

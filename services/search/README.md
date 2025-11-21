@@ -2,6 +2,7 @@
 
 *A simple and fast search engine for your apps and files.*
 
+
 ## Overview
 
 This service indexes configuration schemas into a [Tantivy](https://docs.rs/tantivy/latest/tantivy/) search index.
@@ -54,20 +55,19 @@ MxSearch can index and query files from a given directory.
     - We can configure the max size of the file content to be indexed.
 
 ### ⚙️ App Actions Search
-
 MxSearch supports indexing **App Actions** to return actionable results in searches.
-
 - Applications installed on the system register their **App Actions** to **mxsearch**.
 - This allows mxsearch to return App Actions as part of search results.
 - App Actions are stored as **TOML** files inside the directory:  `/usr/share/mxsearch/actions`
 - Each TOML file is checksummed.
 - The `%KEYWORD%` placeholder is dynamically replaced by the user’s search query when invoking actions.
-  Each app registers a TOML file named: `org.mechanix.<AppName>.toml`
+
+
+Each app registers a TOML file named: `org.mechanix.<AppName>.toml`
 
 Example for the Settings app: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
 
 App Action Toml Format:
-
 ```toml
 Name = "Settings"
 Icon = "settings-icon"
@@ -89,9 +89,12 @@ Description = "Search by file name"
 Arg = { path = "%KEYWORD%" }
 ```
 
+
 ---
 
-#### Example: Settings App Actions file
+
+
+### Example: Settings App Actions file
 
 ```toml
 name = "Settings"
@@ -114,60 +117,12 @@ File path: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
 
 - `%KEYWORD%` is a reserved placeholder that passes the user's search key to the app action.
 
-### ⚙️ External Search Service
 
-With the external search service, Ingestion/Search your own content to make it searchable.
-Exposed method via D-Bus:
 
-1. `SearchExternal`
-2. `UpsertMetadata`
-3. `DeleteMetadataByIds`
-
-Service watching to the `.desktop` files directory. So if any app is removed, then the metadata will be removed from the
-index. `source_entry_path` Is linked to the `.desktop` file path.
-
-Configuration:
-
-````toml
-# External (notes, music, etc.)
-[external]
-# Enable the ExternalService (ingestion/search for external items)
-enable_search = true
-
-index_dir = ".config/mxsearch/index/external"
-app_dir = "/usr/share/applications"
-
-# Tune Tantivy writer heap (bytes)
-target_memory_usage_in_bytes = 50_000_000
-
-# External results are often short; start modest and adjust later
-search_limit = 25
-
-# Search across multiple indexed fields for better recall
-searchable_fields = [
-    "uri",
-    "title",
-    "subtitle",
-    "keywords",
-    "description",
-    "content",
-]
-
-````
-
-Upsert Metadata:
-
-```shell
-([{'unique_id': <'test123'>, 'source': <'notes'>, 'uri': <'file:///usr/bin/gedit'>, 'title': <'how to win'>, 'subtitle': <'win over obstacles'>, 'description': <'this is my first note'>, 'keywords': <['kw1', 'kw2']>, 'icon': <'...'>, 'thumbnail': <'...'>, 'last_modified': <uint64 1763720442>, 'source_entry_path': <'/usr/share/applications/Alacritty.desktop'>, 'content': <'this is something very interesting book i am read'>, 'file_path': <'...'>}],)
-```
-
-Delete Metadata:
-
-```shell
-([<'test123'>, <'test124'>],)
-```
 
 ### 🛠️ Configuration Example (`settings.toml`)
+
+
 
 ```toml
 [general]
@@ -209,10 +164,10 @@ searchable_fields = [
 ]
 ```
 
+
 ## ⚙️ Installation
 
 ### Prerequisites
-
 - Rust (2021 edition or later)
 - Cargo
 
@@ -250,7 +205,6 @@ $ RUST_LOG=none,mxsearch=debug,apps=debug,files=debug cargo run
 ```
 
 ---
-
 ### D-Bus Interface
 
 MxSearch exposes its operations via **D-Bus**.
@@ -258,15 +212,12 @@ MxSearch exposes its operations via **D-Bus**.
 - **Bus name:** `org.mechanix.MxSearch`
 - **Object path:** `/org/mechanix/MxSearch`
 - **Interface:** `org.mechanix.MxSearch`
-
 ---
 
 ## ⚡ Methods
 
 ### ListApplications
-
 List all installed applications
-
 ```bash
 $ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch ListApplications
 ```
@@ -287,12 +238,6 @@ $ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch
 
 ```bash
 $ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchAppActions s "<keyword>"
-```
-
-### SearchExternal
-
-```bash
-$ busctl --user call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchExternal s "<keyword>"
 ```
 
 ## 📋 TODOs

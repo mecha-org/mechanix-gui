@@ -1,8 +1,7 @@
 use crate::SearchConfig;
 use anyhow::Result;
 use app_actions::service::AppActions;
-use apps::AppInfo;
-use external::service::{ExternalSearchResult, UpsertMetadata};
+use apps::{AppInfo, AppSearchService};
 use files::FileInfo;
 use log::{debug, error, info, warn};
 use std::sync::Arc;
@@ -22,10 +21,9 @@ pub const SERVED_AT: &str = "/org/mechanix/MxSearch";
 #[derive()]
 pub struct ServerInterface {
     pub(crate) config: SearchConfig,
-    pub app_search_service: Option<apps::AppSearchService>,
-    pub file_search_service: Option<files::FileSearchService>,
-    pub app_actions_service: Option<app_actions::AppActionsService>,
-    pub external_search_service: Option<external::service::ExternalService>,
+    pub app_search_service: AppSearchService,
+    pub file_search_service: files::FileSearchService,
+    pub app_actions_service: app_actions::AppActionsService,
 }
 
 #[interface(name = "org.mechanix.MxSearch")]
@@ -45,23 +43,25 @@ impl ServerInterface {
     /// * `Ok(())` if the signal was emitted successfully
     /// * `Err(...)` if there was an error during emission
 
-    pub async fn search_applications(&self, search: &str) -> zbus::fdo::Result<Vec<apps::AppInfo>> {
+    pub async fn search_applications(&self, search: &str) -> zbus::fdo::Result<Vec<AppInfo>> {
         info!("Search Apps: {}", search);
-
-        if let Some(app_search_service) = &self.app_search_service {
-            // At some point later: perform a search
-            let results = match app_search_service.search(search, self.config.apps.search_limit) {
-                Ok(results) => results,
-                Err(err) => {
-                    error!("Error searching apps: {}", err);
-                    return Err(ZbusError::Failed("Error searching apps".to_string()));
-                }
-            };
-            debug!("result: {:?}", results);
-            Ok(results)
-        } else {
-            Err(ZbusError::Failed("Search Apps is disabled".to_string()))
+        if !self.config.apps.enable_search {
+            warn!("Search Apps is disabled");
+            return Err(ZbusError::Failed("Search Apps is disabled".to_string()));
         }
+        // At some point later: perform a search
+        let results = match self
+            .app_search_service
+            .search(search, self.config.apps.search_limit)
+        {
+            Ok(results) => results,
+            Err(err) => {
+                error!("Error searching apps: {}", err);
+                return Err(ZbusError::Failed("Error searching apps".to_string()));
+            }
+        };
+        debug!("result: {:?}", results);
+        Ok(results)
     }
 
     /// Lists available applications.
@@ -78,22 +78,24 @@ impl ServerInterface {
     ///
     /// A vector of `AppInfo` representing the available applications if successful.
     pub async fn list_applications(&self) -> zbus::fdo::Result<Vec<AppInfo>> {
-        info!("List applications init");
-        if let Some(app_search_service) = &self.app_search_service {
-            // At some point later: perform a search
-            let results = match app_search_service.list_applications(self.config.apps.search_limit)
-            {
-                Ok(results) => results,
-                Err(err) => {
-                    error!("Error searching apps: {}", err);
-                    return Err(ZbusError::Failed("Error searching apps".to_string()));
-                }
-            };
-            debug!("result: {:?}", results);
-            Ok(results)
-        } else {
-            Err(ZbusError::Failed("Search Apps is disabled".to_string()))
+        info!("List applications");
+        if !self.config.apps.enable_search {
+            warn!("Search Apps is disabled");
+            return Err(ZbusError::Failed("Search Apps is disabled".to_string()));
         }
+        // At some point later: perform a search
+        let results = match self
+            .app_search_service
+            .list_applications(self.config.apps.search_limit)
+        {
+            Ok(results) => results,
+            Err(err) => {
+                error!("Error searching apps: {}", err);
+                return Err(ZbusError::Failed("Error searching apps".to_string()));
+            }
+        };
+        debug!("result: {:?}", results);
+        Ok(results)
     }
 
     /// Searches for files matching the given search string.
@@ -111,20 +113,23 @@ impl ServerInterface {
     /// A vector of `FileInfo` representing the matching files if successful.
     pub async fn search_files(&self, search: &str) -> zbus::fdo::Result<Vec<FileInfo>> {
         info!("Search files: {}", search);
-        if let Some(file_search_service) = &self.file_search_service {
-            // At some point later: perform a search
-            let results = match file_search_service.search(search, self.config.files.search_limit) {
-                Ok(results) => results,
-                Err(err) => {
-                    error!("Error searching files: {}", err);
-                    return Err(ZbusError::Failed("Error searching files".to_string()));
-                }
-            };
-            debug!("result: {:?}", results);
-            Ok(results)
-        } else {
-            Err(ZbusError::Failed("Search Files is disabled".to_string()))
+        if !self.config.files.enable_search {
+            warn!("Search Files option is disabled");
+            return Err(ZbusError::Failed("Search Files option is disabled".to_string()));
         }
+        // At some point later: perform a search
+        let results = match self
+            .file_search_service
+            .search(search, self.config.files.search_limit)
+        {
+            Ok(results) => results,
+            Err(err) => {
+                error!("Error searching files: {}", err);
+                return Err(ZbusError::Failed("Error searching files".to_string()));
+            }
+        };
+        debug!("result: {:?}", results);
+        Ok(results)
     }
 
     /// Searches for app actions matching the given search string.
@@ -146,103 +151,24 @@ impl ServerInterface {
     /// A vector of `AppActions` representing the matching app actions if successful.
     pub async fn search_app_actions(&self, search: &str) -> zbus::fdo::Result<Vec<AppActions>> {
         info!("Search app actions: {}", search);
-        if let Some(app_actions_service) = &self.app_actions_service {
-            // At some point later: perform a search
-            let results = match app_actions_service.search(search, self.config.apps.search_limit) {
-                Ok(results) => results,
-                Err(err) => {
-                    error!("Error searching app actions: {}", err);
-                    return Err(ZbusError::Failed("Error searching app actions".to_string()));
-                }
-            };
-            debug!("result: {:?}", results);
-            Ok(results)
-        } else {
-            Err(ZbusError::Failed(
-                "Search App Actions is disabled".to_string(),
-            ))
+        if !self.config.app_actions.enable_search {
+            warn!("Search App Action is disabled");
+            return Err(ZbusError::Failed(
+                "Search App Action is disabled".to_string(),
+            ));
         }
-    }
-
-    pub async fn search_external(
-        &self,
-        search: &str,
-    ) -> zbus::fdo::Result<Vec<ExternalSearchResult>> {
-        info!("Search external: {}", search);
-        if let Some(service) = &self.external_search_service {
-            // At some point later: perform a search
-            let results = match service.search(search, self.config.apps.search_limit) {
-                Ok(results) => results,
-                Err(err) => {
-                    error!("Error searching app actions: {}", err);
-                    return Err(ZbusError::Failed("Error searching app actions".to_string()));
-                }
-            };
-            Ok(results)
-        } else {
-            Err(ZbusError::Failed(
-                "Search App Actions is disabled".to_string(),
-            ))
-        }
-    }
-
-    pub async fn upsert_metadata(
-        &mut self,
-        metadata: Vec<UpsertMetadata>,
-    ) -> zbus::fdo::Result<bool> {
-        info!("upsert metadata: {:?}", metadata);
-        if let Some(service) = self.external_search_service.as_mut() {
-            // At some point later: perform a search
-            let results = match service.upsert_metadata(metadata).await {
-                Ok(results) => results,
-                Err(err) => {
-                    error!("Error searching app actions: {}", err);
-                    return Err(ZbusError::Failed("Error searching app actions".to_string()));
-                }
-            };
-            debug!("result: {:?}", results);
-            Ok(results)
-        } else {
-            Err(ZbusError::Failed(
-                "External search service is disabled, enable it from settings.toml".to_string(),
-            ))
-        }
-    }
-
-    pub async fn delete_metadata_by_ids(
-        &mut self,
-        ids: Vec<String>,
-    ) -> zbus::fdo::Result<bool> {
-        if let Some(service) = self.external_search_service.as_mut() {
-            // At some point later: perform a search
-            let results = match service.delete_by_ids(ids).await {
-                Ok(results) => results,
-                Err(err) => {
-                    error!("Error deleting external metadata by ids: {}", err);
-                    return Err(ZbusError::Failed("Error deleting external metadata".to_string()));
-                }
-            };
-            Ok(results)
-        } else {
-            Err(ZbusError::Failed(
-                "External search service is disabled, enable it from settings.toml".to_string(),
-            ))
-        }
-    }
-
-    pub async fn shutdown_all(&mut self) -> zbus::fdo::Result<()> {
-        if let Some(svc) = &mut self.file_search_service {
-            let _ = svc.shutdown().await;
-        }
-        if let Some(svc) = &mut self.app_search_service {
-            let _ = svc.shutdown().await;
-        }
-        if let Some(svc) = &mut self.app_actions_service {
-            let _ = svc.shutdown().await;
-        }
-        if let Some(svc) = &mut self.external_search_service {
-            let _ = svc.shutdown().await;
-        }
-        Ok(())
+        // At some point later: perform a search
+        let results = match self
+            .app_actions_service
+            .search(search, self.config.apps.search_limit)
+        {
+            Ok(results) => results,
+            Err(err) => {
+                error!("Error searching app actions: {}", err);
+                return Err(ZbusError::Failed("Error searching app actions".to_string()));
+            }
+        };
+        debug!("result: {:?}", results);
+        Ok(results)
     }
 }
