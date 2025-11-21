@@ -1,12 +1,25 @@
-use std::time::Duration;
+use std::{ time::Duration };
 mod icon;
 use gpui::prelude::*;
 use gpui::*;
 pub mod models;
 pub mod constants;
 pub use constants::*;
-pub use models::{ RunningApps, AppCard, DragDirection };
+pub use models::{
+    RunningApps,
+    AppCard,
+    DragDirection,
+    AppDetails,
+    AppInstance,
+    AppMessage,
+    AppManagerMessage,
+};
+pub mod desktop_entries;
+pub mod desktop_models;
 
+pub mod app_manager;
+pub use app_manager::AppManagerService;
+use tokio::sync::mpsc;
 use crate::ui::icon::{ Icon, IconName };
 
 // Drag data structure
@@ -29,50 +42,13 @@ impl CardDragData {
 
 impl Render for CardDragData {
     fn render(&mut self, _: &mut Window, _: &mut Context<'_, Self>) -> impl IntoElement {
-        // Empty render - we don't show a drag preview
         Empty
     }
 }
 
 impl RunningApps {
-    pub fn new() -> Self {
-        let mut apps = Vec::with_capacity(8);
-        apps.push(AppCard {
-            id: 0,
-            offset_y: px(0.0),
-            target_offset_y: px(0.0),
-            app_name: "Firefox".to_string(),
-            app_icon_path: IconName::Firefox,
-        });
-        apps.push(AppCard {
-            id: 1,
-            offset_y: px(0.0),
-            target_offset_y: px(0.0),
-            app_name: "Chromium".to_string(),
-            app_icon_path: IconName::Chromium,
-        });
-        apps.push(AppCard {
-            id: 2,
-            offset_y: px(0.0),
-            target_offset_y: px(0.0),
-            app_name: "Kitty".to_string(),
-            app_icon_path: IconName::Kitty,
-        });
-        apps.push(AppCard {
-            id: 3,
-            offset_y: px(0.0),
-            target_offset_y: px(0.0),
-            app_name: "Mecha".to_string(),
-            app_icon_path: IconName::Mecha,
-        });
-        apps.push(AppCard {
-            id: 4,
-            offset_y: px(0.0),
-            target_offset_y: px(0.0),
-            app_name: "Files".to_string(),
-            app_icon_path: IconName::Files,
-        });
-
+    pub fn new(message_tx: mpsc::Sender<AppManagerMessage>) -> Self {
+        let apps = Vec::new();
         let last_index = if apps.is_empty() { 0 } else { apps.len() - 1 };
         let initial_scroll_offset = Self::calculate_center_offset_for_index_static(last_index);
 
@@ -91,6 +67,7 @@ impl RunningApps {
             removing_card_id: None,
             current_center_index: last_index,
             is_cleaning_up: false,
+            message_tx: message_tx,
         }
     }
 
@@ -98,6 +75,10 @@ impl RunningApps {
         let card_position = (index as f32) * (CARD_WIDTH + CARD_GAP);
         let center_point = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
         px(center_point - card_position)
+    }
+
+    pub fn calculate_center_offset(&self, index: usize) -> Pixels {
+        Self::calculate_center_offset_for_index_static(index)
     }
 
     fn snap_to_nearest_card_with_threshold(&mut self) {
@@ -135,26 +116,42 @@ impl RunningApps {
 
     fn animate_scroll(&mut self, cx: &mut Context<Self>) {
         if !self.is_animating || self.is_dragging {
+            // already running → don’t start a new loop
             return;
         }
+        // self.is_animating = true;
 
-        let diff = self.target_scroll_offset - self.scroll_offset;
-        let threshold = px(0.5);
-
-        if diff.abs() < threshold {
-            self.scroll_offset = self.target_scroll_offset;
-            self.is_animating = false;
-        } else {
-            let lerp_factor = 0.2;
-            self.scroll_offset = self.scroll_offset + diff * lerp_factor;
-            cx.spawn(async move |this, cx| {
+        // Start animation loop
+        cx.spawn(async move |this, cx| {
+            loop {
                 cx.background_executor().timer(Duration::from_millis(16)).await;
+
+                let mut should_stop = false;
+
                 let _ = this.update(cx, |this, cx| {
-                    this.animate_scroll(cx);
+                    // compute diff
+                    let diff = this.target_scroll_offset - this.scroll_offset;
+                    let threshold = px(0.5);
+
+                    if diff.abs() < threshold {
+                        // snap & stop
+                        this.scroll_offset = this.target_scroll_offset;
+                        should_stop = true;
+                        this.is_animating = false;
+                    } else {
+                        // smooth lerp
+                        let lerp_factor = 0.2;
+                        this.scroll_offset = this.scroll_offset + diff * lerp_factor;
+                    }
+
                     cx.notify();
                 });
-            }).detach();
-        }
+
+                if should_stop {
+                    break;
+                }
+            }
+        }).detach();
     }
 
     fn animate_card_removal(&mut self, card_id: usize, cx: &mut Context<Self>) {
@@ -162,98 +159,276 @@ impl RunningApps {
             return;
         }
 
-        if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-            let diff: Pixels = app.target_offset_y - app.offset_y;
-            let threshold = px(0.5);
+        let app_id_to_close = self.find_app_id(card_id);
+        let message_tx = self.message_tx.clone();
 
-            if diff.abs() < threshold {
-                // Animation complete - remove the card
-                app.offset_y = app.target_offset_y;
+        cx.spawn(async move |this, mut cx| {
+            Self::run_removal_animation_loop(
+                this,
+                &mut cx,
+                card_id,
+                app_id_to_close,
+                message_tx
+            ).await;
+        }).detach();
+    }
 
-                // Find which index was removed
-                let removed_index = self.apps.iter().position(|a| a.id == card_id);
+    fn find_app_id(&self, card_id: usize) -> Option<String> {
+        self.apps
+            .iter()
+            .find(|a| a.id == card_id)
+            .map(|app| app.app_id.clone())
+    }
 
-                self.apps.retain(|a| a.id != card_id);
-                self.is_removing = false;
-                self.removing_card_id = None;
+    async fn run_removal_animation_loop(
+        this: WeakEntity<Self>,
+        cx: &mut AsyncApp,
+        card_id: usize,
+        app_id_to_close: Option<String>,
+        message_tx: mpsc::Sender<AppManagerMessage>
+    ) {
+        loop {
+            cx.background_executor().timer(Duration::from_millis(16)).await;
 
-                // Adjust current_center_index after removal
-                if let Some(removed_idx) = removed_index {
-                    // If we removed a card to the left of center, adjust index
-                    if removed_idx < self.current_center_index {
-                        self.current_center_index = self.current_center_index.saturating_sub(1);
-                    } else if
-                        // If we removed the centered card or one to the right, keep same index
-                        // (the next card will slide into that position)
-                        self.current_center_index >= self.apps.len() &&
-                        !self.apps.is_empty()
-                    {
-                        self.current_center_index = self.apps.len() - 1;
-                    }
-                }
+            let should_stop = this
+                .update(cx, |view, cx| {
+                    view.process_animation_frame(card_id, &app_id_to_close, &message_tx, cx)
+                })
+                .unwrap_or(true);
 
-                // After removing, smoothly animate scroll position
-                if !self.apps.is_empty() {
-                    self.target_scroll_offset = Self::calculate_center_offset_for_index_static(
-                        self.current_center_index
-                    );
-                    self.is_animating = true;
-                    self.animate_scroll(cx);
-                } else {
-                    self.scroll_offset = px(0.0);
-                    self.target_scroll_offset = px(0.0);
-                    self.current_center_index = 0;
-                }
-                cx.notify();
-            } else {
-                let lerp_factor = 0.2;
-                app.offset_y = app.offset_y + diff * lerp_factor;
-
-                cx.spawn(async move |this, cx| {
-                    cx.background_executor().timer(Duration::from_millis(16)).await;
-                    let _ = this.update(cx, |this, cx| {
-                        this.animate_card_removal(card_id, cx);
-                        cx.notify();
-                    });
-                }).detach();
+            if should_stop {
+                break;
             }
         }
     }
 
-    fn animate_clean_up(&mut self, cx: &mut Context<Self>) {
-        if !self.is_cleaning_up {
+    fn process_animation_frame(
+        &mut self,
+        card_id: usize,
+        app_id_to_close: &Option<String>,
+        message_tx: &mpsc::Sender<AppManagerMessage>,
+        cx: &mut Context<Self>
+    ) -> bool {
+        let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) else {
+            return true; // Card already gone
+        };
+
+        let diff = app.target_offset_y - app.offset_y;
+        let threshold = px(0.5);
+        if diff.abs() < threshold {
+            self.finalize_card_removal(card_id, app_id_to_close, message_tx, cx);
+            true
+        } else {
+            app.offset_y = app.offset_y + diff * 0.2;
+            cx.notify();
+            false
+        }
+    }
+
+    fn finalize_card_removal(
+        &mut self,
+        card_id: usize,
+        app_id_to_close: &Option<String>,
+        message_tx: &mpsc::Sender<AppManagerMessage>,
+        cx: &mut Context<Self>
+    ) {
+        // Snap to final position
+        if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
+            app.offset_y = app.target_offset_y;
+        }
+
+        // Send close message before removal
+        if let Some(app_id) = app_id_to_close {
+            Self::send_close_app_message(app_id.clone(), message_tx.clone(), cx);
+        }
+
+        let removed_index = self.apps.iter().position(|a| a.id == card_id);
+        self.remove_card_and_update_state(card_id, removed_index, cx);
+    }
+
+    fn send_close_app_message(
+        app_id: String,
+        tx: mpsc::Sender<AppManagerMessage>,
+        cx: &mut Context<Self>
+    ) {
+        cx.background_executor()
+            .spawn(async move {
+                Self::execute_close_app(app_id, tx).await;
+            })
+            .detach();
+    }
+
+    async fn execute_close_app(app_id: String, tx: mpsc::Sender<AppManagerMessage>) {
+        let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+
+        let send_result = tx.send(AppManagerMessage::CloseApp {
+            app_id: app_id.clone(),
+            reply_to: reply_tx,
+        }).await;
+
+        if let Err(e) = send_result {
+            eprintln!("Failed to send CloseApp message: {}", e);
             return;
         }
 
-        // Check if all cards have reached their target
-        let all_done = self.apps.iter().all(|app| {
-            let diff = app.target_offset_y - app.offset_y;
-            diff.abs() < px(1.0)
-        });
+        match reply_rx.await {
+            Ok(Ok(success)) => {
+                println!("✅ App {} closed successfully: {}", app_id, success);
+            }
+            Ok(Err(e)) => {
+                eprintln!("❌ Error closing app {}: {}", app_id, e);
+            }
+            Err(e) => {
+                eprintln!("❌ Reply channel error: {}", e);
+            }
+        }
+    }
 
-        if all_done {
-            // All animations complete - clear all cards
-            self.apps.clear();
+    fn remove_card_and_update_state(
+        &mut self,
+        card_id: usize,
+        removed_index: Option<usize>,
+        cx: &mut Context<Self>
+    ) {
+        self.apps.retain(|a| a.id != card_id);
+        self.is_removing = false;
+        self.removing_card_id = None;
+
+        self.adjust_center_index_after_removal(removed_index);
+        self.recenter_scroll_after_removal(cx);
+
+        cx.notify();
+    }
+
+    fn adjust_center_index_after_removal(&mut self, removed_index: Option<usize>) {
+        let Some(idx) = removed_index else {
+            return;
+        };
+
+        if idx < self.current_center_index {
+            self.current_center_index = self.current_center_index.saturating_sub(1);
+        } else if self.current_center_index >= self.apps.len() && !self.apps.is_empty() {
+            self.current_center_index = self.apps.len() - 1;
+        }
+    }
+
+    fn recenter_scroll_after_removal(&mut self, cx: &mut Context<Self>) {
+        if self.apps.is_empty() {
             self.scroll_offset = px(0.0);
             self.target_scroll_offset = px(0.0);
-            self.is_cleaning_up = false;
             self.current_center_index = 0;
-            cx.notify();
-        } else {
-            // Continue animating all cards upward
-            let lerp_factor = 0.2;
-            for app in self.apps.iter_mut() {
-                let diff = app.target_offset_y - app.offset_y;
-                app.offset_y = app.offset_y + diff * lerp_factor;
-            }
+            return;
+        }
 
-            cx.spawn(async move |this, cx| {
+        self.target_scroll_offset = Self::calculate_center_offset_for_index_static(
+            self.current_center_index
+        );
+        self.is_animating = true;
+        self.animate_scroll(cx);
+    }
+
+    fn animate_clean_up(&mut self, cx: &mut Context<Self>) {
+        if !self.should_start_animation() {
+            return;
+        }
+
+        self.is_animating = true;
+
+        self.send_close_all_apps(cx);
+        self.start_cleanup_animation_loop(cx);
+    }
+
+    fn should_start_animation(&self) -> bool {
+        if !self.is_cleaning_up || self.is_animating {
+            return false;
+        }
+
+        true
+    }
+
+    fn send_close_all_apps(&self, cx: &mut Context<Self>) {
+        if let tx = self.message_tx.clone() {
+            cx.background_executor()
+                .spawn(async move {
+                    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+
+                    if
+                        let Err(e) = tx.send(AppManagerMessage::CloseAllApps {
+                            reply_to: reply_tx,
+                        }).await
+                    {
+                        eprintln!("❌ Failed to send CloseAllApps message: {}", e);
+                        return;
+                    }
+
+                    match reply_rx.await {
+                        Ok(Ok(success)) => println!("✅ All apps closed successfully: {}", success),
+                        Ok(Err(e)) => eprintln!("❌ Error closing all apps: {}", e),
+                        Err(e) => eprintln!("❌ Reply channel error: {}", e),
+                    }
+                })
+                .detach();
+        }
+    }
+
+    fn start_cleanup_animation_loop(&mut self, cx: &mut Context<Self>) {
+        cx.spawn(async move |this, cx| {
+            loop {
                 cx.background_executor().timer(Duration::from_millis(16)).await;
+
+                let mut stop = false;
+
                 let _ = this.update(cx, |this, cx| {
-                    this.animate_clean_up(cx);
-                    cx.notify();
+                    stop = this.step_cleanup_animation(cx);
                 });
-            }).detach();
+
+                if stop {
+                    break;
+                }
+            }
+        }).detach();
+    }
+
+    fn step_cleanup_animation(&mut self, cx: &mut Context<Self>) -> bool {
+        if !self.is_cleaning_up {
+            self.is_animating = false;
+            return true; // stop
+        }
+
+        if self.all_cards_reached_target() {
+            self.finish_cleanup(cx);
+            return true; // stop
+        }
+
+        self.animate_card_positions();
+        cx.notify();
+
+        false // continue
+    }
+
+    fn all_cards_reached_target(&self) -> bool {
+        self.apps.iter().all(|app| {
+            let diff = app.target_offset_y - app.offset_y;
+            diff.abs() < px(1.0)
+        })
+    }
+
+    fn finish_cleanup(&mut self, cx: &mut Context<Self>) {
+        self.apps.clear();
+        self.scroll_offset = px(0.0);
+        self.target_scroll_offset = px(0.0);
+        self.current_center_index = 0;
+        self.is_cleaning_up = false;
+        self.is_animating = false;
+
+        cx.notify();
+    }
+    fn animate_card_positions(&mut self) {
+        let lerp_factor = 0.2;
+
+        for app in self.apps.iter_mut() {
+            let diff = app.target_offset_y - app.offset_y;
+            app.offset_y += diff * lerp_factor;
         }
     }
 
@@ -294,19 +469,7 @@ impl RunningApps {
         cx.stop_propagation();
     }
 
-    fn handle_mouse_move(
-        &mut self,
-        event: &DragMoveEvent<CardDragData>,
-        _window: &mut Window,
-        cx: &mut Context<Self>
-    ) {
-        if !self.is_dragging {
-            return;
-        }
-
-        // Use the stored start position from drag data
-        let delta_x = event.event.position.x - self.drag_start_x;
-        let delta_y = event.event.position.y - self.drag_start_y;
+    fn determine_drag_direction(&mut self, delta_x: Pixels, delta_y: Pixels) {
         if self.drag_direction.is_none() {
             let abs_delta_x = delta_x.abs();
             let abs_delta_y = delta_y.abs();
@@ -322,37 +485,82 @@ impl RunningApps {
                 };
             }
         }
+    }
 
-        match self.drag_direction {
-            Some(DragDirection::Horizontal) => {
-                // Horizontal scrolling (swipe) - free scroll during drag
-                self.scroll_offset = self.drag_start_offset + delta_x;
+    fn handle_horizontal_drag(&mut self, delta_x: Pixels, cx: &mut Context<Self>) {
+        // Horizontal scrolling (swipe) - free scroll during drag
+        self.scroll_offset = self.drag_start_offset + delta_x;
 
-                // Compute bounds such that first/last card can be centered
-                let center_offset = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
-                let max_scroll = px(center_offset - PADDING);
+        // Compute bounds such that first/last card can be centered
+        let center_offset = (CONTAINER_WIDTH - CARD_WIDTH) / 2.0;
+        let max_scroll = px(center_offset - PADDING);
 
-                // last card position (x) = (n-1) * (card_width + gap) + padding
-                let last_index = if self.apps.is_empty() { 0 } else { self.apps.len() - 1 };
-                let min_scroll = Self::calculate_center_offset_for_index_static(last_index);
+        // last card position (x) = (n-1) * (card_width + gap) + padding
+        let last_index = if self.apps.is_empty() { 0 } else { self.apps.len() - 1 };
+        let min_scroll = Self::calculate_center_offset_for_index_static(last_index);
 
-                self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
+        self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
+        cx.notify();
+    }
+
+    fn handle_vertical_drag(&mut self, delta_y: Pixels, cx: &mut Context<Self>) {
+        if let Some(card_id) = self.dragging_card {
+            if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
+                app.offset_y = if delta_y <= px(0.0) { delta_y } else { px(0.0) };
                 cx.notify();
             }
-            Some(DragDirection::Vertical) => {
-                if let Some(card_id) = self.dragging_card {
-                    if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-                        app.offset_y = if delta_y <= px(0.0) { delta_y } else { px(0.0) };
-                        cx.notify();
-                    }
-                }
-            }
+        }
+    }
+
+    fn handle_drag_move(
+        &mut self,
+        event: &DragMoveEvent<CardDragData>,
+        _window: &mut Window,
+        cx: &mut Context<Self>
+    ) {
+        if !self.is_dragging {
+            return;
+        }
+
+        // Use the stored start position from drag data
+        let delta_x = event.event.position.x - self.drag_start_x;
+        let delta_y = event.event.position.y - self.drag_start_y;
+        self.determine_drag_direction(delta_x, delta_y);
+
+        match self.drag_direction {
+            Some(DragDirection::Horizontal) => self.handle_horizontal_drag(delta_x, cx),
+            Some(DragDirection::Vertical) => self.handle_vertical_drag(delta_y, cx),
             // No direction determined yet
             None => {}
         }
     }
 
-    fn handle_mouse_up(&mut self, _: &CardDragData, _window: &mut Window, cx: &mut Context<Self>) {
+    fn handle_vertical_drop(&mut self, card_id: usize, cx: &mut Context<Self>) {
+        if let Some(pos) = self.apps.iter().position(|a| a.id == card_id) {
+            let offset_y = self.apps[pos].offset_y;
+
+            if offset_y < px(VERTICAL_DISMISS_THRESHOLD) {
+                if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
+                    app.target_offset_y = px(VERTICAL_TARGET_THRESHOLD);
+                    self.is_removing = true;
+                    self.removing_card_id = Some(card_id);
+                    self.animate_card_removal(card_id, cx);
+                }
+            } else {
+                if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
+                    app.target_offset_y = px(0.0);
+                    let card_id_copy = card_id;
+                    cx.spawn(async move |this, cx| {
+                        let _ = this.update(cx, |this, cx| {
+                            this.animate_snap_back(card_id_copy, cx);
+                        });
+                    }).detach();
+                }
+            }
+        }
+    }
+
+    fn handle_on_drop(&mut self, _: &CardDragData, _window: &mut Window, cx: &mut Context<Self>) {
         if !self.is_dragging {
             return;
         }
@@ -360,28 +568,7 @@ impl RunningApps {
         match self.drag_direction {
             Some(DragDirection::Vertical) => {
                 if let Some(card_id) = self.dragging_card {
-                    if let Some(pos) = self.apps.iter().position(|a| a.id == card_id) {
-                        let offset_y = self.apps[pos].offset_y;
-
-                        if offset_y < px(VERTICAL_DISMISS_THRESHOLD) {
-                            if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-                                app.target_offset_y = px(VERTICAL_TARGET_THRESHOLD);
-                                self.is_removing = true;
-                                self.removing_card_id = Some(card_id);
-                                self.animate_card_removal(card_id, cx);
-                            }
-                        } else {
-                            if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-                                app.target_offset_y = px(0.0);
-                                let card_id_copy = card_id;
-                                cx.spawn(async move |this, cx| {
-                                    let _ = this.update(cx, |this, cx| {
-                                        this.animate_snap_back(card_id_copy, cx);
-                                    });
-                                }).detach();
-                            }
-                        }
-                    }
+                    self.handle_vertical_drop(card_id, cx);
                 }
             }
             Some(DragDirection::Horizontal) => {
@@ -398,27 +585,89 @@ impl RunningApps {
         cx.notify();
     }
 
-    fn animate_snap_back(&mut self, card_id: usize, cx: &mut Context<Self>) {
-        if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-            let diff = app.target_offset_y - app.offset_y;
-            let threshold = px(0.5);
+    fn on_app_click(&mut self, app_id: String, cx: &mut Context<Self>) {
+        println!("RunningApps::on_app_click() - app_id: {}", app_id);
+        if let ref tx = self.message_tx {
+            let tx_clone = tx.clone();
+            let app_id_clone = app_id.clone();
 
-            if diff.abs() < threshold {
-                app.offset_y = px(0.0);
-                app.target_offset_y = px(0.0);
-            } else {
-                let lerp_factor = 0.25;
-                app.offset_y = app.offset_y + diff * lerp_factor;
+            cx.background_executor()
+                .spawn(async move {
+                    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
 
-                cx.spawn(async move |this, cx| {
-                    cx.background_executor().timer(Duration::from_millis(16)).await;
-                    let _ = this.update(cx, |this, cx| {
-                        this.animate_snap_back(card_id, cx);
-                        cx.notify();
-                    });
-                }).detach();
-            }
+                    if
+                        let Err(e) = tx_clone.send(AppManagerMessage::LaunchApp {
+                            app_id: app_id_clone,
+                            reply_to: reply_tx,
+                        }).await
+                    {
+                        eprintln!("❌ Failed to send ActivateAppInstance message: {}", e);
+                    } else {
+                        match reply_rx.await {
+                            Ok(Ok(success)) => {
+                                println!("✅ App activated successfully: {}", success);
+                            }
+                            Ok(Err(e)) => {
+                                eprintln!("❌ Error activating app: {}", e);
+                            }
+                            Err(e) => {
+                                eprintln!("❌ Reply channel error: {}", e);
+                            }
+                        }
+                    }
+                })
+                .detach();
         }
+        cx.stop_propagation();
+    }
+
+    fn animate_snap_back(&mut self, card_id: usize, cx: &mut Context<Self>) {
+        if self.is_animating {
+            return;
+        }
+
+        self.is_animating = true;
+
+        cx.spawn(async move |this, cx| {
+            loop {
+                cx.background_executor().timer(Duration::from_millis(16)).await;
+
+                let mut should_stop = false;
+
+                let _ = this.update(cx, |this, cx| {
+                    // Find card again each frame
+                    let Some(app) = this.apps.iter_mut().find(|a| a.id == card_id) else {
+                        // Card deleted mid-animation → stop
+                        this.is_animating = false;
+                        should_stop = true;
+                        return;
+                    };
+
+                    let diff = app.target_offset_y - app.offset_y;
+                    let threshold = px(0.5);
+
+                    if diff.abs() < threshold {
+                        // Snap and stop
+                        app.offset_y = app.target_offset_y;
+                        this.is_animating = false;
+                        should_stop = true;
+
+                        cx.notify();
+                        return;
+                    }
+
+                    // Lerp movement
+                    let lerp_factor = 0.25;
+                    app.offset_y = app.offset_y + diff * lerp_factor;
+
+                    cx.notify();
+                });
+
+                if should_stop {
+                    break;
+                }
+            }
+        }).detach();
     }
 }
 
@@ -443,7 +692,7 @@ impl Render for RunningApps {
                         .w_full()
                         .h_full()
                         .overflow_x_hidden()
-                        .on_drop(cx.listener(RunningApps::handle_mouse_up))
+                        .on_drop(cx.listener(RunningApps::handle_on_drop))
                         .items_center()
                         .when(should_center, |d| d.justify_center())
                         .child({
@@ -454,21 +703,27 @@ impl Render for RunningApps {
                             }
 
                             for i in 0..self.apps.len() {
-                                let app_id = self.apps[i].id;
+                                let id = self.apps[i].id;
+                                let app_id = self.apps[i].app_id.clone();
                                 let offset_y = self.apps[i].offset_y;
                                 let app_icon_path = self.apps[i].app_icon_path.clone();
-                                let app_name = self.apps[i].app_name.clone();
-
+                                let app_name: Option<String> = self.apps[i].app_name.clone();
+                                let card_id: SharedString = format!("card-{}", app_id).into();
                                 container = container.child(
                                     div()
-                                        .id("card")
+                                        .id(card_id)
+
+                                        .on_click(
+                                            cx.listener(move |view, _, _, cx| {
+                                                view.on_app_click(app_id.clone(), cx);
+                                            })
+                                        )
                                         .relative()
                                         .flex()
                                         .w(px(CARD_WIDTH))
                                         .h(px(CARD_HEIGHT))
                                         .justify_center()
                                         .items_center()
-
                                         .child(
                                             div()
                                                 .absolute()
@@ -481,17 +736,16 @@ impl Render for RunningApps {
                                                     ))
                                                 )
                                         )
-                                        .child(
-                                            Icon::from(app_icon_path.clone())
-                                                .size((px(40.0), px(40.0)))
-                                                .text_color(rgb(0xf4f4f4))
-                                        )
-                                        .rounded(px(16.0))
                                         .relative()
+                                        .when_some(app_icon_path.clone(), |d, s| {
+                                            let image_path = std::path::PathBuf::from(s);
+                                            d.child(img(image_path).w(px(40.0)).h(px(40.0)))
+                                        })
+
+                                        .rounded(px(16.0))
                                         .top(offset_y)
                                         .cursor_pointer()
-                                        .on_drag_move(cx.listener(Self::handle_mouse_move))
-
+                                        .on_drag_move(cx.listener(Self::handle_drag_move))
                                         .on_drag(
                                             CardDragData::new(),
                                             move |_: &CardDragData, pos, _, cx| {
@@ -502,16 +756,12 @@ impl Render for RunningApps {
                                         .on_mouse_down(
                                             MouseButton::Left,
                                             cx.listener(move |view, event, window, cx| {
-                                                view.handle_card_mouse_down(
-                                                    app_id,
-                                                    event,
-                                                    window,
-                                                    cx
-                                                );
+                                                view.handle_card_mouse_down(id, event, window, cx);
                                             })
                                         )
                                         .child(
                                             div()
+                                                .flex()
                                                 .absolute()
                                                 .top(px(8.0))
                                                 .left(px(8.0))
@@ -533,12 +783,20 @@ impl Render for RunningApps {
                                                                 .flex()
                                                                 .justify_center()
                                                                 .items_center()
-                                                                .child(
-                                                                    Icon::from(
-                                                                        app_icon_path.clone()
-                                                                    )
-                                                                        .size((px(16.0), px(16.0)))
-                                                                        .text_color(rgb(0xf4f4f4))
+                                                                .when_some(
+                                                                    app_icon_path.clone(),
+                                                                    |d, s| {
+                                                                        let image_path =
+                                                                            std::path::PathBuf
+                                                                                ::from(s)
+                                                                                .clone();
+
+                                                                        d.child(
+                                                                            img(image_path)
+                                                                                .w(px(16.0))
+                                                                                .h(px(16.0))
+                                                                        )
+                                                                    }
                                                                 )
                                                         )
                                                         .child(
@@ -546,7 +804,10 @@ impl Render for RunningApps {
                                                                 .font_weight(FontWeight(400.0))
                                                                 .text_size(px(16.0))
                                                                 .text_color(rgb(0xf4f4f4))
-                                                                .child(app_name)
+                                                                .when_some(
+                                                                    app_name.clone(),
+                                                                    |d, s| { d.child(s) }
+                                                                )
                                                         )
                                                 )
                                         )
