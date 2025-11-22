@@ -1,7 +1,8 @@
 use commons::prelude::*;
 use gpui::prelude::*;
 use gpui::*;
-use running_apps::prelude::*;
+use running_apps::models::models::{AppCard, AppMessage, RunningApps};
+use running_apps::prelude::app_manager::AppManagerService;
 use tokio::sync::mpsc;
 
 fn main() {

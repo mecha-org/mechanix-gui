@@ -1,7 +1,7 @@
 use anyhow::{ bail, Result };
-use crate::ui::{ AppDetails, AppInstance, AppMessage, desktop_entries::*, AppManagerMessage };
-
-use crate::{ ui::desktop_models::DesktopEntriesModel };
+use crate::models::models::{ AppDetails, AppInstance, AppMessage };
+use crate::{ models::models::AppManagerMessage, prelude::desktop_models::DesktopEntriesModel };
+use crate::services::desktop_entries::DesktopEntry;
 
 use indexmap::IndexMap;
 

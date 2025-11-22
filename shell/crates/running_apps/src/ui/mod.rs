@@ -2,23 +2,8 @@ use std::{ time::Duration };
 mod icon;
 use gpui::prelude::*;
 use gpui::*;
-pub mod constants;
-pub mod models;
-pub use constants::*;
-pub use models::{
-    RunningApps,
-    AppCard,
-    DragDirection,
-    AppDetails,
-    AppInstance,
-    AppMessage,
-    AppManagerMessage,
-};
-pub mod desktop_entries;
-pub mod desktop_models;
-
-pub mod app_manager;
-pub use app_manager::AppManagerService;
+use crate::prelude::constants::*;
+use crate::prelude::models::*;
 use tokio::sync::mpsc;
 use crate::ui::icon::{ Icon, IconName };
 
@@ -26,6 +11,7 @@ const NAVBAR_SIZE: (f32, f32) = (120.0, 29.0);
 const APP_SIZE: (f32, f32) = (540.0, 620.0);
 
 impl Render for RunningApps {
+
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let bar_fixed_pos = APP_SIZE.1 - NAVBAR_SIZE.1;
         let current_bar_y = bar_fixed_pos + self.bar_drag_offset;

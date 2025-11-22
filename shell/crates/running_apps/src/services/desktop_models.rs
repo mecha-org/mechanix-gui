@@ -1,4 +1,4 @@
-use crate::ui::desktop_entries;
+use crate::prelude::desktop_entries;
 
 use super::desktop_entries::DesktopEntry;
 use lazy_static::lazy_static;
