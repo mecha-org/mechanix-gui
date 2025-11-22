@@ -26,7 +26,7 @@ const NAVBAR_SIZE: (f32, f32) = (120.0, 29.0);
 const APP_SIZE: (f32, f32) = (540.0, 620.0);
 
 impl Render for RunningApps {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let bar_fixed_pos = APP_SIZE.1 - NAVBAR_SIZE.1;
         let current_bar_y = bar_fixed_pos + self.bar_drag_offset;
 
@@ -44,7 +44,7 @@ impl Render for RunningApps {
                 )
             })
             .on_mouse_move(
-                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                     if let Some(start_y) = this.bar_drag_start_y {
                         let current_y = event.position.y.to_f64() as f32;
                         let offset = current_y - start_y;
@@ -85,7 +85,7 @@ impl Render for RunningApps {
                     .h(px(NAVBAR_SIZE.1))
                     .on_mouse_down(
                         MouseButton::Left,
-                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                        cx.listener(|this, event: &MouseDownEvent, _, cx| {
                             cx.stop_propagation();
                             this.bar_drag_start_y = Some(event.position.y.to_f64() as f32);
                             cx.notify();
@@ -143,7 +143,7 @@ impl RunningApps {
             removing_card_id: None,
             current_center_index: last_index,
             is_cleaning_up: false,
-            message_tx: message_tx,
+            message_tx,
             position: 0.0,
             bar_drag_offset: 0.0,
             bar_drag_start_y: None,
@@ -177,9 +177,7 @@ impl RunningApps {
 
         if drag_distance > switch_threshold {
             // Dragged right (showing previous card) - move to left
-            if target_index > 0 {
-                target_index -= 1;
-            }
+            target_index = target_index.saturating_sub(1);
         } else if drag_distance < -switch_threshold {
             // Dragged left (showing next card) - move to right
             if target_index < self.apps.len() - 1 {
@@ -221,7 +219,7 @@ impl RunningApps {
                     } else {
                         // smooth lerp
                         let lerp_factor = 0.2;
-                        this.scroll_offset = this.scroll_offset + diff * lerp_factor;
+                        this.scroll_offset += diff * lerp_factor;
                     }
 
                     cx.notify();
@@ -242,14 +240,8 @@ impl RunningApps {
         let app_id_to_close = self.find_app_id(card_id);
         let message_tx = self.message_tx.clone();
 
-        cx.spawn(async move |this, mut cx| {
-            Self::run_removal_animation_loop(
-                this,
-                &mut cx,
-                card_id,
-                app_id_to_close,
-                message_tx
-            ).await;
+        cx.spawn(async move |this, cx| {
+            Self::run_removal_animation_loop(this, cx, card_id, app_id_to_close, message_tx).await;
         }).detach();
     }
 
@@ -299,7 +291,7 @@ impl RunningApps {
             self.finalize_card_removal(card_id, app_id_to_close, message_tx, cx);
             true
         } else {
-            app.offset_y = app.offset_y + diff * 0.2;
+            app.offset_y += diff * 0.2;
             cx.notify();
             false
         }
@@ -427,28 +419,27 @@ impl RunningApps {
     }
 
     fn send_close_all_apps(&self, cx: &mut Context<Self>) {
-        if let tx = self.message_tx.clone() {
-            cx.background_executor()
-                .spawn(async move {
-                    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+        let tx = self.message_tx.clone();
+        cx.background_executor()
+            .spawn(async move {
+                let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
 
-                    if
-                        let Err(e) = tx.send(AppManagerMessage::CloseAllApps {
-                            reply_to: reply_tx,
-                        }).await
-                    {
-                        eprintln!("❌ Failed to send CloseAllApps message: {}", e);
-                        return;
-                    }
+                if
+                    let Err(e) = tx.send(AppManagerMessage::CloseAllApps {
+                        reply_to: reply_tx,
+                    }).await
+                {
+                    eprintln!("❌ Failed to send CloseAllApps message: {}", e);
+                    return;
+                }
 
-                    match reply_rx.await {
-                        Ok(Ok(success)) => println!("✅ All apps closed successfully: {}", success),
-                        Ok(Err(e)) => eprintln!("❌ Error closing all apps: {}", e),
-                        Err(e) => eprintln!("❌ Reply channel error: {}", e),
-                    }
-                })
-                .detach();
-        }
+                match reply_rx.await {
+                    Ok(Ok(success)) => println!("✅ All apps closed successfully: {}", success),
+                    Ok(Err(e)) => eprintln!("❌ Error closing all apps: {}", e),
+                    Err(e) => eprintln!("❌ Reply channel error: {}", e),
+                }
+            })
+            .detach();
     }
 
     fn start_cleanup_animation_loop(&mut self, cx: &mut Context<Self>) {
@@ -537,7 +528,7 @@ impl RunningApps {
         app_id: usize,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>,
+        cx: &mut Context<Self>
     ) {
         self.is_dragging = true;
         self.is_animating = false;
@@ -554,8 +545,9 @@ impl RunningApps {
             let abs_delta_x = delta_x.abs();
             let abs_delta_y = delta_y.abs();
 
-            if abs_delta_x > px(DRAG_DETECTION_THRESHOLD)
-                || abs_delta_y > px(DRAG_DETECTION_THRESHOLD)
+            if
+                abs_delta_x > px(DRAG_DETECTION_THRESHOLD) ||
+                abs_delta_y > px(DRAG_DETECTION_THRESHOLD)
             {
                 self.drag_direction = if abs_delta_x > abs_delta_y {
                     Some(DragDirection::Horizontal)
@@ -583,11 +575,12 @@ impl RunningApps {
     }
 
     fn handle_vertical_drag(&mut self, delta_y: Pixels, cx: &mut Context<Self>) {
-        if let Some(card_id) = self.dragging_card {
-            if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-                app.offset_y = if delta_y <= px(0.0) { delta_y } else { px(0.0) };
-                cx.notify();
-            }
+        if
+            let Some(card_id) = self.dragging_card &&
+            let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id)
+        {
+            app.offset_y = if delta_y <= px(0.0) { delta_y } else { px(0.0) };
+            cx.notify();
         }
     }
 
@@ -625,16 +618,14 @@ impl RunningApps {
                     self.removing_card_id = Some(card_id);
                     self.animate_card_removal(card_id, cx);
                 }
-            } else {
-                if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
-                    app.target_offset_y = px(0.0);
-                    let card_id_copy = card_id;
-                    cx.spawn(async move |this, cx| {
-                        let _ = this.update(cx, |this, cx| {
-                            this.animate_snap_back(card_id_copy, cx);
-                        });
-                    }).detach();
-                }
+            } else if let Some(app) = self.apps.iter_mut().find(|a| a.id == card_id) {
+                app.target_offset_y = px(0.0);
+                let card_id_copy = card_id;
+                cx.spawn(async move |this, cx| {
+                    let _ = this.update(cx, |this, cx| {
+                        this.animate_snap_back(card_id_copy, cx);
+                    });
+                }).detach();
             }
         }
     }
@@ -666,37 +657,37 @@ impl RunningApps {
 
     fn on_app_click(&mut self, app_id: String, cx: &mut Context<Self>) {
         println!("RunningApps::on_app_click() - app_id: {}", app_id);
-        if let ref tx = self.message_tx {
-            let tx_clone = tx.clone();
-            let app_id_clone = app_id.clone();
 
-            cx.background_executor()
-                .spawn(async move {
-                    let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+        let tx_clone = self.message_tx.clone();
+        let app_id_clone = app_id.clone();
 
-                    if
-                        let Err(e) = tx_clone.send(AppManagerMessage::LaunchApp {
-                            app_id: app_id_clone,
-                            reply_to: reply_tx,
-                        }).await
-                    {
-                        eprintln!("❌ Failed to send ActivateAppInstance message: {}", e);
-                    } else {
-                        match reply_rx.await {
-                            Ok(Ok(success)) => {
-                                println!("✅ App activated successfully: {}", success);
-                            }
-                            Ok(Err(e)) => {
-                                eprintln!("❌ Error activating app: {}", e);
-                            }
-                            Err(e) => {
-                                eprintln!("❌ Reply channel error: {}", e);
-                            }
+        cx.background_executor()
+            .spawn(async move {
+                let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
+
+                if
+                    let Err(e) = tx_clone.send(AppManagerMessage::LaunchApp {
+                        app_id: app_id_clone,
+                        reply_to: reply_tx,
+                    }).await
+                {
+                    eprintln!("❌ Failed to send ActivateAppInstance message: {}", e);
+                } else {
+                    match reply_rx.await {
+                        Ok(Ok(success)) => {
+                            println!("✅ App activated successfully: {}", success);
+                        }
+                        Ok(Err(e)) => {
+                            eprintln!("❌ Error activating app: {}", e);
+                        }
+                        Err(e) => {
+                            eprintln!("❌ Reply channel error: {}", e);
                         }
                     }
-                })
-                .detach();
-        }
+                }
+            })
+            .detach();
+
         cx.stop_propagation();
     }
 
@@ -737,7 +728,7 @@ impl RunningApps {
 
                     // Lerp movement
                     let lerp_factor = 0.25;
-                    app.offset_y = app.offset_y + diff * lerp_factor;
+                    app.offset_y += diff * lerp_factor;
 
                     cx.notify();
                 });
@@ -751,42 +742,42 @@ impl RunningApps {
 }
 
 impl RunningApps {
-    fn closed_pos() -> f32 {
-        APP_SIZE.1 - NAVBAR_SIZE.1
-    }
+    // fn closed_pos() -> f32 {
+    //     APP_SIZE.1 - NAVBAR_SIZE.1
+    // }
 
-    fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
-        let start = self.position;
-        let change = target - start;
-        let duration_ms = 250.0; // Animation speed
-        let start_time = std::time::Instant::now();
+    // fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+    //     let start = self.position;
+    //     let change = target - start;
+    //     let duration_ms = 250.0; // Animation speed
+    //     let start_time = std::time::Instant::now();
 
-        cx.spawn(async move |this: WeakEntity<RunningApps>, cx: &mut AsyncApp| {
-            loop {
-                let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+    //     cx.spawn(async move |this: WeakEntity<RunningApps>, cx: &mut AsyncApp| {
+    //         loop {
+    //             let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
 
-                // Check if animation is done
-                if elapsed >= duration_ms {
-                    this.update(cx, |this, cx| {
-                        this.position = target;
-                        cx.notify();
-                    }).ok();
-                    break;
-                }
+    //             // Check if animation is done
+    //             if elapsed >= duration_ms {
+    //                 this.update(cx, |this, cx| {
+    //                     this.position = target;
+    //                     cx.notify();
+    //                 }).ok();
+    //                 break;
+    //             }
 
-                let t = (elapsed / duration_ms).clamp(0.0, 1.0);
-                let ease = 1.0 - (1.0 - t).powi(3);
-                let current = start + change * ease;
+    //             let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+    //             let ease = 1.0 - (1.0 - t).powi(3);
+    //             let current = start + change * ease;
 
-                this.update(cx, |this, cx| {
-                    this.position = current;
-                    cx.notify();
-                }).ok();
+    //             this.update(cx, |this, cx| {
+    //                 this.position = current;
+    //                 cx.notify();
+    //             }).ok();
 
-                cx.background_executor().timer(std::time::Duration::from_millis(16)).await;
-            }
-        }).detach();
-    }
+    //             cx.background_executor().timer(std::time::Duration::from_millis(16)).await;
+    //         }
+    //     }).detach();
+    // }
 
     fn snap_bar_to(&mut self, target: f32, cx: &mut Context<Self>) {
         let start = self.bar_drag_offset;
@@ -894,10 +885,16 @@ impl RunningApps {
                                         .justify_center()
                                         .items_center()
                                         .child(
-                                            div().absolute().left_0().top_0().child(
-                                                Icon::from(IconName::BgApp)
-                                                    .size((px(CARD_WIDTH), px(CARD_HEIGHT))),
-                                            ),
+                                            div()
+                                                .absolute()
+                                                .left_0()
+                                                .top_0()
+                                                .child(
+                                                    Icon::from(IconName::BgApp).size((
+                                                        px(CARD_WIDTH),
+                                                        px(CARD_HEIGHT),
+                                                    ))
+                                                )
                                         )
                                         .relative()
                                         .when_some(app_icon_path.clone(), |d, s| {
@@ -914,7 +911,7 @@ impl RunningApps {
                                             move |_: &CardDragData, pos, _, cx| {
                                                 let data = CardDragData::new().position(pos);
                                                 cx.new(|_| data)
-                                            },
+                                            }
                                         )
                                         .on_mouse_down(
                                             MouseButton::Left,
@@ -978,78 +975,90 @@ impl RunningApps {
                             }
 
                             container
-                        }),
+                        })
                 )
             })
             .when(!has_apps, |this| {
                 this.child(
-                    div().flex().flex_col().items_center().gap_16().child(
-                        div()
-                            .text_color(rgb(0x666666))
-                            .text_size(px(16.0))
-                            .line_height(px(24.0))
-                            .text_center()
-                            .font_weight(FontWeight(400.0))
-                            .max_w(px(300.0))
-                            .child("There are no apps or droids")
-                            .child(div().child("you are looking for_")),
-                    ),
+                    div()
+                        .flex()
+                        .flex_col()
+                        .items_center()
+                        .gap_16()
+                        .child(
+                            div()
+                                .text_color(rgb(0x666666))
+                                .text_size(px(16.0))
+                                .line_height(px(24.0))
+                                .text_center()
+                                .font_weight(FontWeight(400.0))
+                                .max_w(px(300.0))
+                                .child("There are no apps or droids")
+                                .child(div().child("you are looking for_"))
+                        )
                 )
             })
             // fixed positioned footer button
-            .child(div().absolute().bottom_16().child({
-                let is_enabled = !self.apps.is_empty();
-                let mut btn = div()
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .gap_2()
-                    .w(px(109.0))
-                    .h(px(36.0))
-                    .px(px(8.0))
-                    .py(px(12.0))
-                    .rounded(px(8.0))
-                    .bg(if is_enabled {
-                        rgb(0x363636)
-                    } else {
-                        rgb(0x202020)
-                    })
-                    .cursor(if is_enabled {
-                        CursorStyle::PointingHand
-                    } else {
-                        CursorStyle::default()
-                    })
-                    .child(
-                        Icon::from(IconName::CleanUp)
-                            .size((px(20.0), px(20.0)))
-                            .text_color(if is_enabled {
-                                rgb(0xf4f4f4)
-                            } else {
-                                rgb(0x4d4d4d)
-                            }),
-                    )
-                    .child(
-                        div()
-                            .text_color(if is_enabled {
-                                rgb(0xf4f4f4)
-                            } else {
-                                rgb(0x4d4d4d)
-                            })
-                            .opacity(if is_enabled { 1.0 } else { 0.4 })
-                            .text_size(px(16.0))
-                            .child("Clean up"),
-                    );
+            .child(
+                div()
+                    .absolute()
+                    .bottom_16()
+                    .child({
+                        let is_enabled = !self.apps.is_empty();
+                        let mut btn = div()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .gap_2()
+                            .w(px(109.0))
+                            .h(px(36.0))
+                            .px(px(8.0))
+                            .py(px(12.0))
+                            .rounded(px(8.0))
+                            .bg(if is_enabled { rgb(0x363636) } else { rgb(0x202020) })
+                            .cursor(
+                                if is_enabled {
+                                    CursorStyle::PointingHand
+                                } else {
+                                    CursorStyle::default()
+                                }
+                            )
+                            .child(
+                                Icon::from(IconName::CleanUp)
+                                    .size((px(20.0), px(20.0)))
+                                    .text_color(
+                                        if is_enabled {
+                                            rgb(0xf4f4f4)
+                                        } else {
+                                            rgb(0x4d4d4d)
+                                        }
+                                    )
+                            )
+                            .child(
+                                div()
+                                    .text_color(
+                                        if is_enabled {
+                                            rgb(0xf4f4f4)
+                                        } else {
+                                            rgb(0x4d4d4d)
+                                        }
+                                    )
+                                    .opacity(if is_enabled { 1.0 } else { 0.4 })
+                                    .text_size(px(16.0))
+                                    .child("Clean up")
+                            );
 
-                if is_enabled {
-                    btn = btn.on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(|view, _event, _window, cx| {
-                            view.handle_clean_up(cx);
-                        }),
-                    );
-                }
+                        if is_enabled {
+                            btn = btn.on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(|view, _event, _window, cx| {
+                                    view.handle_clean_up(cx);
+                                })
+                            );
+                        }
 
-                btn
-            }))
+                        btn
+                    })
+            )
     }
 }

@@ -1,18 +1,11 @@
 use anyhow::{ bail, Result };
-// use desktop_entries::{DesktopEntries, DesktopEntry};
-
-// use command::spawn_command;
-
-// pub use desktop_entries::{ DesktopEntry, DesktopEntries };
 use crate::ui::{ AppDetails, AppInstance, AppMessage, desktop_entries::*, AppManagerMessage };
 
 use crate::{ ui::desktop_models::DesktopEntriesModel };
 
 use indexmap::IndexMap;
- 
 
 use tokio::{ select, sync::{ mpsc, oneshot } };
-// use tracing::{ debug, error, info };
 use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::{
     errors::{ ToplevelHandlerError, ToplevelHandlerErrorCodes },
     handler::{
@@ -25,11 +18,9 @@ use wayland_protocols_async::zwlr_foreign_toplevel_management_v1::{
     },
 };
 
- 
-
 #[derive(Debug, Clone)]
 pub struct AppInstanceState {
-    app_id: String,
+    // app_id: String,
     title: String,
     state: Option<Vec<ToplevelWState>>,
 }
@@ -69,7 +60,7 @@ impl AppManagerService {
         // start the toplevel handler
         std::thread::spawn(move || {
             let runtime = tokio::runtime::Runtime::new().expect("Unable to create a runtime");
-            let _ = runtime.block_on(toplevel_handler.run(toplevel_msg_rx));
+            runtime.block_on(toplevel_handler.run(toplevel_msg_rx));
         });
 
         let (tx, rx) = oneshot::channel();
@@ -84,7 +75,7 @@ impl AppManagerService {
             let tl_meta = rx.await.unwrap();
 
             if let Some(ToplevelMeta { app_id, title, state }) = tl_meta {
-                let _ = &self.add_app(app_id, tl, title, state);
+                let _ = &self.add_app(app_id.to_lowercase(), tl, title, state);
             }
         }
 
@@ -243,13 +234,13 @@ impl AppManagerService {
     pub async fn close_app_instance(&self, key: ToplevelKey) -> Result<bool> {
         let (tx, rx) = oneshot::channel();
         let _ = self.top_level_sender.as_ref().unwrap().send(ToplevelMessage::Close {
-            key: key,
+            key,
             reply_to: tx,
         }).await;
 
         let reply = match rx.await {
             Ok(v) => v,
-            Err(e) =>
+            Err(_) =>
                 Err(
                     ToplevelHandlerError::new(
                         ToplevelHandlerErrorCodes::UnknownError,
@@ -259,7 +250,7 @@ impl AppManagerService {
         };
         let is_closed = match reply {
             Ok(v) => v,
-            Err(e) => {
+            Err(_) => {
                 // error!("error while closing app instance {}", e);
                 false
             }
@@ -269,12 +260,12 @@ impl AppManagerService {
     }
 
     pub async fn close_all_apps(&self) -> Result<bool> {
-        for (app_id, instances) in self.apps.iter() {
+        for (_, instances) in self.apps.iter() {
             for (&instance, _) in instances.iter() {
                 let res = self.close_app_instance(instance).await;
                 match res {
-                    Ok(is_closed) => {}
-                    Err(e) => {
+                    Ok(_) => {}
+                    Err(_) => {
                         // error!("error while closing instance of {}", app_id);
                     }
                 }
@@ -287,13 +278,13 @@ impl AppManagerService {
     pub async fn activate_app_instance(&self, key: ToplevelKey) -> Result<bool> {
         let (tx, rx) = oneshot::channel();
         let _ = self.top_level_sender.as_ref().unwrap().send(ToplevelMessage::Activate {
-            key: key,
+            key,
             reply_to: tx,
         }).await;
 
         let reply = match rx.await {
             Ok(v) => v,
-            Err(e) =>
+            Err(_) =>
                 Err(
                     ToplevelHandlerError::new(
                         ToplevelHandlerErrorCodes::UnknownError,
@@ -303,7 +294,7 @@ impl AppManagerService {
         };
         let is_activated = match reply {
             Ok(v) => v,
-            Err(e) => {
+            Err(_) => {
                 // error!("error while activating app instance {}", e);
                 false
             }
@@ -339,12 +330,7 @@ impl AppManagerService {
         &self,
         app_id: &str
     ) -> Option<IndexMap<ToplevelKey, AppInstanceState>> {
-        let instances = match self.apps.get_key_value(app_id) {
-            Some((_, v)) => Some(v.clone()),
-            None => None,
-        };
-
-        instances
+        self.apps.get_key_value(app_id).map(|(_, v)| v.clone())
     }
 
     pub fn add_app(
@@ -354,8 +340,7 @@ impl AppManagerService {
         title: String,
         state: Option<Vec<ToplevelWState>>
     ) -> Result<bool> {
-        println!("add_app {}", title);
-        if !(app_id.len() > 0) {
+        if !!app_id.is_empty() {
             return Ok(false);
         }
 
@@ -366,7 +351,7 @@ impl AppManagerService {
             None => IndexMap::new(),
         };
         instances.insert(new_instance, AppInstanceState {
-            app_id: app_id.clone(),
+            // app_id: app_id.clone(),
             title,
             state,
         });
@@ -383,7 +368,7 @@ impl AppManagerService {
 
         let reply = match rx.await {
             Ok(v) => v,
-            Err(e) =>
+            Err(_) =>
                 Err(
                     ToplevelHandlerError::new(
                         ToplevelHandlerErrorCodes::UnknownError,
@@ -393,7 +378,7 @@ impl AppManagerService {
         };
         let is_set_app_fullscreen = match reply {
             Ok(v) => v,
-            Err(e) => {
+            Err(_) => {
                 // error!("error while setting app fullscreen {}", e);
                 false
             }
@@ -414,10 +399,8 @@ impl AppManagerService {
         let mut active_apps_count = 0;
         for (_, tl_key_map) in self.apps.clone() {
             for (_, app) in tl_key_map {
-                if let Some(state) = app.state {
-                    if !state.contains(&ToplevelWState::Minimized) {
-                        active_apps_count += 1;
-                    }
+                if let Some(state) = app.state && !state.contains(&ToplevelWState::Minimized) {
+                    active_apps_count += 1;
                 };
             }
         }
@@ -430,17 +413,14 @@ impl AppManagerService {
             .into_iter()
             .find(|(_, value)| value.contains_key(&instance_to_remove));
 
-        match app_op {
-            Some((app_id, mut instances)) => {
-                instances.remove_entry(&instance_to_remove);
+        if let Some((app_id, mut instances)) = app_op {
+            instances.swap_remove(&instance_to_remove);
 
-                if instances.is_empty() {
-                    self.apps.remove_entry(&app_id);
-                } else {
-                    self.apps.insert(app_id, instances);
-                }
+            if instances.is_empty() {
+                self.apps.swap_remove(&app_id);
+            } else {
+                self.apps.insert(app_id, instances);
             }
-            None => (),
         }
 
         Ok(true)
@@ -463,24 +443,22 @@ fn format_apps_from_map_to_vec(
         if let Some(entry) = find_desktop_entry(&app_id, &desktop_entries) {
             name = Some(entry.name);
             icon = entry.icon_name;
-            if let Some(icon_path) = entry.icon_path {
-                if let Some(ext) = icon_path.extension() {
-                    if ext == "png" {
-                        path = Some(icon_path.clone().into_os_string().into_string().unwrap());
-                        // icon_type = Some(IconType::Png);
-                    } else if ext == "svg" {
-                        path = Some(icon_path.clone().into_os_string().into_string().unwrap());
-                        // icon_type = Some(IconType::Svg);
-                    }
-                };
-            }
+            if let Some(icon_path) = entry.icon_path && let Some(ext) = icon_path.extension() {
+                if ext == "png" {
+                    path = Some(icon_path.clone().into_os_string().into_string().unwrap());
+                    // icon_type = Some(IconType::Png);
+                } else if ext == "svg" {
+                    path = Some(icon_path.clone().into_os_string().into_string().unwrap());
+                    // icon_type = Some(IconType::Svg);
+                }
+            };
         }
 
         let mut app_instances_vec: Vec<AppInstance> = Vec::new();
         app_instances.into_iter().for_each(|(instance_key, instance_state)| {
             let app_instance: AppInstance = AppInstance {
                 title: Some(instance_state.title.clone()),
-                instance_key: instance_key,
+                instance_key,
                 icon: icon.clone(),
             };
             app_instances_vec.push(app_instance);
@@ -488,14 +466,14 @@ fn format_apps_from_map_to_vec(
 
         let app_details = AppDetails {
             app_id,
-            name: name,
+            name,
             title: None,
-            icon: icon,
+            icon,
             // icon_type: icon_type,
             icon_path: path,
             instances: app_instances_vec,
         };
-        println!("app_details: {:#?}", app_details);
+        // println!("app_details: {:#?}", app_details);
         apps_vec.push(app_details);
     }
 
@@ -506,13 +484,12 @@ fn find_desktop_entry(
     app_id: &String,
     desktop_entries: &Vec<DesktopEntry>
 ) -> Option<DesktopEntry> {
-    let entry = desktop_entries
+    desktop_entries
         .clone()
         .into_iter()
         .find(|entry| {
             app_id.to_lowercase() == entry.app_id.to_lowercase() ||
                 Some(app_id.clone()) == entry.icon_name ||
                 entry.exec.clone().to_lowercase().contains(&app_id.to_lowercase())
-        });
-    entry
+        })
 }

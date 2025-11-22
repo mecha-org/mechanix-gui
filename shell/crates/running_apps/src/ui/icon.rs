@@ -6,7 +6,6 @@ pub const RUNNING_APPS_DIR: &str = "icons/running-apps/";
 pub enum IconName {
     CleanUp,
     BgApp,
-    Navbar
 }
 
 impl IconName {
@@ -14,7 +13,6 @@ impl IconName {
         let icon_path = match self {
             IconName::CleanUp => "cleanup.svg",
             IconName::BgApp => "bg-app.png",
-            IconName::Navbar => "navbar.png",
         };
         format!("{}{}", RUNNING_APPS_DIR, icon_path).into()
     }
@@ -27,21 +25,13 @@ impl RenderOnce for IconName {
 }
 
 #[derive(IntoElement, Clone)]
+#[derive(Default)]
 pub struct Icon {
     path: Option<SharedString>,
     size: Option<(Pixels, Pixels)>,
     text_color: Option<Hsla>,
 }
 
-impl Default for Icon {
-    fn default() -> Self {
-        Self {
-            path: None,
-            size: None,
-            text_color: None,
-        }
-    }
-}
 
 impl Icon {
     // Build from IconName

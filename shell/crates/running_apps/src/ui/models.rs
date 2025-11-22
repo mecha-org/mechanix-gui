@@ -17,7 +17,7 @@ pub struct RunningApps {
     pub is_removing: bool,
     pub removing_card_id: Option<usize>,
     pub current_center_index: usize,
-    pub is_cleaning_up: bool, // Flag for clean up animation
+    pub is_cleaning_up: bool,
     pub position: f32,
     pub bar_drag_offset: f32,
     pub bar_drag_start_y: Option<f32>,

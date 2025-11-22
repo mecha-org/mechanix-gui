@@ -1,15 +1,11 @@
-//! Enumerate installed applications.
-
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
-use core::arch::aarch64::*;
-use core::cmp::{self, Ordering};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
+use core::cmp::{ self, Ordering };
+use serde::{ Deserialize, Serialize };
+use std::collections::{ HashMap, HashSet };
+use std::path::{ Path, PathBuf };
 
 use std::str::FromStr;
-use std::{fs, io, };
-use xdg::{BaseDirectories, BaseDirectoriesError};
+use std::{ fs };
+use xdg::{ BaseDirectories };
 
 #[derive(Debug)]
 pub struct DesktopEntries;
@@ -20,7 +16,7 @@ impl DesktopEntries {
         path: &Path,
         content: &str,
         custom_loader: &IconLoader,
-        default_loader: &IconLoader,
+        default_loader: &IconLoader
     ) -> Result<DesktopEntry, Error> {
         let lines = content
             .lines()
@@ -33,12 +29,18 @@ impl DesktopEntries {
         for line in lines {
             let (key, value) = match line.split_once('=') {
                 Some((key, value)) => (key.trim_end(), value.trim_start()),
-                None => continue,
+                None => {
+                    continue;
+                }
             };
 
             match key {
-                "Name" => name = Some(value.to_owned()),
-                "Icon" => icon_name = Some(value.to_owned()),
+                "Name" => {
+                    name = Some(value.to_owned());
+                }
+                "Icon" => {
+                    icon_name = Some(value.to_owned());
+                }
                 "Exec" => {
                     let filtered = value
                         .split(' ')
@@ -83,19 +85,6 @@ impl DesktopEntries {
         })
     }
 
-    /// Load a `.desktop` file from a specific path.
-    pub fn from_path(path: &Path) -> Result<DesktopEntry, Error> {
-        // Get all directories containing icons for icon loading.
-        let base_dirs = BaseDirectories::new()?;
-        let dirs = base_dirs.get_data_dirs();
-        let custom_loader = IconLoader::new(&dirs, "Papirus-PNG");
-        let default_loader = IconLoader::new(&dirs, "hicolor");
-
-        // Read the file content and parse it.
-        let content = fs::read_to_string(path).map_err(|err| Error::InvalidData)?;
-        Self::parse_desktop_file(path, &content, &custom_loader, &default_loader)
-    }
-
     /// Get all `.desktop` files from a directory.
     fn get_desktop_files_from_dirs(dirs: &[PathBuf]) -> Vec<PathBuf> {
         dirs.iter()
@@ -104,9 +93,7 @@ impl DesktopEntries {
             .flat_map(|dir| {
                 dir.filter_map(|entry| entry.ok())
                     .filter(|entry| {
-                        entry
-                            .file_type()
-                            .map_or(false, |ft| ft.is_file() || ft.is_symlink())
+                        entry.file_type().map_or(false, |ft| ft.is_file() || ft.is_symlink())
                     })
                     .filter(|entry| entry.file_name().to_string_lossy().ends_with(".desktop"))
                     .map(|entry| entry.path())
@@ -117,7 +104,8 @@ impl DesktopEntries {
     /// Get all installed applications.
     pub fn all() -> Result<Vec<DesktopEntry>, Error> {
         // Get all directories containing desktop files.
-        let base_dirs = BaseDirectories::new()?;
+        let base_dirs = BaseDirectories::new().map_err(|_| Error::InvalidData)?;
+
         let user_dir = base_dirs.get_data_home();
         let mut dirs = base_dirs.get_data_dirs();
         dirs.push(user_dir);
@@ -141,7 +129,9 @@ impl DesktopEntries {
                             desktop_entries.push(entry);
                         }
                     }
-                    Err(_) => continue,
+                    Err(_) => {
+                        continue;
+                    }
                 }
             }
         }
@@ -150,14 +140,6 @@ impl DesktopEntries {
         desktop_entries.sort_unstable_by(|first, second| first.name.cmp(&second.name));
 
         Ok(desktop_entries)
-    }
-
-    pub fn get_dirs() -> Result<Vec<PathBuf>, Error> {
-        let base_dirs = BaseDirectories::new()?;
-        let user_dir = base_dirs.get_data_home();
-        let mut dirs = base_dirs.get_data_dirs();
-        dirs.push(user_dir);
-        Ok(dirs)
     }
 }
 
@@ -169,13 +151,6 @@ pub struct DesktopEntry {
     pub icon_path: Option<PathBuf>,
     pub name: String,
     pub exec: String,
-}
-
-/// Rendered icon.
-#[derive(Debug, Clone)]
-pub struct Icon {
-    pub data: Vec<u8>,
-    pub width: usize,
 }
 
 /// Expected type of an image.
@@ -252,7 +227,9 @@ impl IconLoader {
                 // Get last path segment from directory.
                 let dir_name = match dir_entry.file_name().into_string() {
                     Ok(dir_name) => dir_name,
-                    Err(_) => continue,
+                    Err(_) => {
+                        continue;
+                    }
                 };
 
                 // Handle standardized icon theme directory layout.
@@ -263,7 +240,9 @@ impl IconLoader {
                 } else if let Some((width, height)) = dir_name.split_once('x') {
                     match (u32::from_str(width), u32::from_str(height)) {
                         (Ok(width), Ok(height)) if width == height => ImageType::SizedBitmap(width),
-                        _ => continue,
+                        _ => {
+                            continue;
+                        }
                     }
                 } else {
                     continue;
@@ -277,7 +256,9 @@ impl IconLoader {
                     // Get last path segment from file.
                     let file_name = match file.file_name().into_string() {
                         Ok(file_name) => file_name,
-                        Err(_) => continue,
+                        Err(_) => {
+                            continue;
+                        }
                     };
 
                     // Strip extension.
@@ -285,18 +266,19 @@ impl IconLoader {
                         (Some((name, _)), ImageType::Symbolic) => {
                             match name.strip_prefix("-symbolic") {
                                 Some(name) => name,
-                                None => continue,
+                                None => {
+                                    continue;
+                                }
                             }
                         }
                         (Some((name, _)), _) => name,
-                        (None, _) => continue,
+                        (None, _) => {
+                            continue;
+                        }
                     };
 
                     // Add icon to our icon loader.
-                    icons
-                        .entry(name.to_owned())
-                        .or_default()
-                        .insert(image_type, file.path());
+                    icons.entry(name.to_owned()).or_default().insert(image_type, file.path());
                 }
 
                 // Get the directory storing the icons themselves.
@@ -307,7 +289,9 @@ impl IconLoader {
                     // Get last path segment from file.
                     let file_name = match file.file_name().into_string() {
                         Ok(file_name) => file_name,
-                        Err(_) => continue,
+                        Err(_) => {
+                            continue;
+                        }
                     };
 
                     // Strip extension.
@@ -315,32 +299,31 @@ impl IconLoader {
                         (Some((name, _)), ImageType::Symbolic) => {
                             match name.strip_prefix("-symbolic") {
                                 Some(name) => name,
-                                None => continue,
+                                None => {
+                                    continue;
+                                }
                             }
                         }
                         (Some((name, _)), _) => name,
-                        (None, _) => continue,
+                        (None, _) => {
+                            continue;
+                        }
                     };
 
                     // Add icon to our icon loader.
-                    icons
-                        .entry(name.to_owned())
-                        .or_default()
-                        .insert(image_type, file.path());
+                    icons.entry(name.to_owned()).or_default().insert(image_type, file.path());
                 }
             }
         }
 
         // This path is hardcoded in the specification.
-        for file in fs::read_dir("/usr/share/pixmaps")
-            .into_iter()
-            .flatten()
-            .flatten()
-        {
+        for file in fs::read_dir("/usr/share/pixmaps").into_iter().flatten().flatten() {
             // Get last path segment from file.
             let file_name = match file.file_name().into_string() {
                 Ok(file_name) => file_name,
-                Err(_) => continue,
+                Err(_) => {
+                    continue;
+                }
             };
 
             // Determine image type based on extension.
@@ -348,14 +331,13 @@ impl IconLoader {
                 Some((name, "svg")) => (name, ImageType::Scalable),
                 // We don’t have any information about the size of the icon here.
                 Some((name, "png")) => (name, ImageType::Bitmap),
-                _ => continue,
+                _ => {
+                    continue;
+                }
             };
 
             // Add icon to our icon loader.
-            icons
-                .entry(name.to_owned())
-                .or_default()
-                .insert(image_type, file.path());
+            icons.entry(name.to_owned()).or_default().insert(image_type, file.path());
         }
 
         Self { icons }
@@ -397,20 +379,6 @@ impl IconLoader {
 /// Icon loading error.
 #[derive(Debug)]
 pub enum Error {
-    BaseDirectories(BaseDirectoriesError),
-    Io(io::Error),
     NotFound,
     InvalidData,
-}
-
-impl From<BaseDirectoriesError> for Error {
-    fn from(error: BaseDirectoriesError) -> Self {
-        Self::BaseDirectories(error)
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(error: io::Error) -> Self {
-        Self::Io(error)
-    }
 }
