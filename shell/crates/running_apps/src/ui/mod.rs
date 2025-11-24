@@ -2,6 +2,7 @@ mod icon;
 use gpui::prelude::*;
 mod components;
 use gpui::*;
+use crate::prelude::app_manager::AppManagerMessage;
 use crate::prelude::constants::*;
 use crate::prelude::models::*;
 use tokio::sync::mpsc;

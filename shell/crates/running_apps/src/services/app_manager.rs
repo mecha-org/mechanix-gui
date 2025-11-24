@@ -1,6 +1,5 @@
 use anyhow::{ bail, Result };
-use crate::models::models::{ AppDetails, AppInstance, AppMessage };
-use crate::{ models::models::AppManagerMessage, prelude::desktop_models::DesktopEntriesModel };
+use crate::prelude::desktop_entries::DesktopEntries;
 use crate::services::desktop_entries::DesktopEntry;
 
 use indexmap::IndexMap;
@@ -24,11 +23,62 @@ pub struct AppInstanceState {
     title: String,
     state: Option<Vec<ToplevelWState>>,
 }
+#[derive(Debug, Clone)]
+pub struct AppInstance {
+    pub title: Option<String>,
+    pub instance_key: ToplevelKey,
+    pub icon: Option<String>,
+}
 
 #[derive(Debug, Clone)]
 pub struct AppManagerService {
     pub apps: IndexMap<String, IndexMap<ToplevelKey, AppInstanceState>>,
     pub top_level_sender: Option<mpsc::Sender<ToplevelMessage>>,
+}
+#[derive(Debug, Clone)]
+pub struct AppDetails {
+    pub app_id: String,
+    pub name: Option<String>,
+    pub title: Option<String>,
+    pub icon: Option<String>,
+    pub icon_path: Option<String>,
+    pub instances: Vec<AppInstance>,
+}
+
+#[derive(Debug)]
+pub enum AppManagerMessage {
+    CloseAppInstance {
+        instance: ToplevelKey,
+        reply_to: oneshot::Sender<Result<bool>>,
+    },
+    ActivateAppInstance {
+        instance: ToplevelKey,
+        reply_to: oneshot::Sender<Result<bool>>,
+    },
+    CloseAllApps {
+        reply_to: oneshot::Sender<Result<bool>>,
+    },
+    LaunchApp {
+        app_id: String,
+        reply_to: oneshot::Sender<Result<bool>>,
+    },
+    CloseApp {
+        app_id: String,
+        reply_to: oneshot::Sender<Result<bool>>,
+    },
+    MinimizeAll,
+}
+
+#[derive(Debug)]
+pub enum AppMessage {
+    AppsUpdated {
+        apps: Vec<AppDetails>,
+        app_id: String,
+        active_apps_count: i32,
+    },
+    AppClose {
+        app_id: String,
+    },
 }
 
 impl AppManagerService {
@@ -140,7 +190,7 @@ impl AppManagerService {
                             state,
                         } => {
                             let _ = &self.add_app(app_id.clone().to_lowercase(), key, title, state);
-                            let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+                            let desktop_entries = DesktopEntries::all().unwrap_or_default().to_vec();                            
                             let formatted_apps = format_apps_from_map_to_vec(self.apps.clone(), desktop_entries.clone());
                             let active_apps_count = self.get_active_apps_count();
 
@@ -153,7 +203,7 @@ impl AppManagerService {
                         ToplevelEvent::Closed { key } => {
                             let _ = &self.remove_app_instance(key);
                             let active_apps_count = self.get_active_apps_count();
-                            let desktop_entries = DesktopEntriesModel::get().entries.get().to_vec();
+                            let desktop_entries = DesktopEntries::all().unwrap_or_default().to_vec();                            
                             let _ = app_switcher_sender.send(AppMessage::AppsUpdated { app_id: "".to_string(), apps: format_apps_from_map_to_vec(self.apps.clone(), desktop_entries.clone()), active_apps_count }).await;
                         }
                         _ => {}

@@ -3,7 +3,7 @@ use std::time::Duration;
 use gpui::prelude::*;
 use gpui::*;
 use crate::config::constants::VERTICAL_TARGET_THRESHOLD;
-use crate::models::models::AppManagerMessage;
+use crate::prelude::app_manager::AppManagerMessage;
 use crate::ui::RunningApps;
 use crate::ui::icon::{ Icon, IconName };
 

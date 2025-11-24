@@ -4,7 +4,8 @@ use gpui::prelude::*;
 use gpui::*;
 use tokio::sync::mpsc;
 use crate::config::constants::*;
-use crate::models::models::{ AppManagerMessage, DragDirection };
+use crate::models::models::{ DragDirection };
+use crate::prelude::app_manager::AppManagerMessage;
 use crate::ui::{ CardDragData, RunningApps };
 
 impl RunningApps {
