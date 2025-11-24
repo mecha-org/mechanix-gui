@@ -1,6 +1,10 @@
 use commons::prelude::*;
+use futures::StreamExt;
+use futures::channel::mpsc;
 use gpui::*;
 use settings_drawer::prelude::*;
+use settings_drawer::services::*;
+
 
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
@@ -13,7 +17,77 @@ fn main() {
                 window_bounds: Some(window_bounds),
                 ..Default::default()
             },
-            |_window, cx| cx.new(|cx| SettingsDrawer::new(cx)),
+            |_window, cx| {
+                let (app_channel_tx, mut app_channel_rx) = mpsc::channel::<AppEvents>(120);
+                let (nm_tx, nm_rx) = mpsc::channel::<NmEvents>(128);
+                let (bt_tx, bt_rx) = mpsc::channel::<BtEvents>(128);
+                let executor = cx.background_executor();
+
+                executor
+                    .spawn(sync_network_status(app_channel_tx.clone()))
+                    .detach();
+                executor
+                    .spawn(sync_network_strength(app_channel_tx.clone()))
+                    .detach();
+                executor
+                    .spawn(sync_connected_network(app_channel_tx.clone()))
+                    .detach();
+                 executor
+                    .spawn(handle_wireless_toggle(nm_rx))
+                    .detach();
+
+                executor
+                    .spawn(sync_bluetooth_status(app_channel_tx.clone()))
+                    .detach();
+                executor
+                    .spawn(sync_bluetooth_connected_status(app_channel_tx.clone()))
+                    .detach();
+                   executor
+                    .spawn(handle_bluetooth_toggle(bt_rx))
+                    .detach();
+
+                cx.new(|cx| {
+                    cx.spawn(async move |app, cx| {
+                        while let Some(event) = app_channel_rx.next().await {
+                            match event {
+                                AppEvents::WirelessStatusChanged { enabled } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.wireless_details.enabled = enabled;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::WirelessStrength { strength } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.wireless_details.strength = strength;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::ConnectedNetwork { network } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.wireless_details.connected_network = network;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::BluetoothEnabled { enabled } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.bluetooth_details.enabled = enabled;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::BluetoothDevices { count } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.bluetooth_details.devices = count;
+                                        cx.notify();
+                                    });
+                                }
+                            }
+                        }
+                    })
+                    .detach();
+
+                    SettingsDrawer::new(cx, nm_tx.clone(), bt_tx.clone())
+                })
+            },
         )
         .unwrap();
         cx.activate(true);
