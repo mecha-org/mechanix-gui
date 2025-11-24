@@ -4,7 +4,7 @@ import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 abstract class NotesRepository {
   Future<List<NoteMetaData>> getAllNotes();
 
-  Future<void> createNote(
+  Future<NoteMetaData> createNote(
     String title,
     String content,
     String plainText,

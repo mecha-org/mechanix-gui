@@ -12,6 +12,7 @@ import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar.dart';
 
 class NotesEditor extends StatefulWidget {
   final NoteMetaData? note;
@@ -23,7 +24,7 @@ class NotesEditor extends StatefulWidget {
 
 class _NotesEditorState extends State<NotesEditor> {
   final FocusNode _focusNode = FocusNode();
-
+  final FloatingActionBarController floatingBar = FloatingActionBarController();
   final QuillController _controller = QuillController(
     document: Document(),
     selection: const TextSelection.collapsed(offset: 0),
@@ -83,7 +84,11 @@ class _NotesEditorState extends State<NotesEditor> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
-        child: EditorBar(controller: _controller, note: widget.note),
+        child: EditorBar(
+          controller: _controller,
+          note: widget.note,
+          floatingBar: floatingBar,
+        ),
       ),
       body: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -125,9 +130,23 @@ class _NotesEditorState extends State<NotesEditor> {
                     controller: _controller,
                   ),
             ),
-            EditorBottomMenu(
-              controller: _controller,
-              onToolbarSelection: toolbarSelection,
+
+            BlocListener<EditorBloc, EditorBlocState>(
+              listenWhen:
+                  (previous, current) =>
+                      previous.toolbarToggle != current.toolbarToggle,
+              listener: (context, state) {
+                if (state.toolbarToggle) {
+                  floatingBar.open();
+                } else {
+                  floatingBar.close();
+                }
+              },
+              child: EditorBottomMenu(
+                barController: floatingBar,
+                controller: _controller,
+                onToolbarSelection: toolbarSelection,
+              ),
             ),
           ],
         ),
@@ -137,6 +156,7 @@ class _NotesEditorState extends State<NotesEditor> {
 
   @override
   void dispose() {
+    floatingBar.dispose();
     _controller.removeListener(_onControllerChange);
     _controller.dispose();
     _focusNode.dispose();

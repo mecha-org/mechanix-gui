@@ -79,11 +79,19 @@ class DeselectNote extends NotesEvent {
 
 class ClearSelection extends NotesEvent {}
 
-
 class CheckPinnedStatus extends NotesEvent {}
 
 class SearchEvent extends NotesEvent {
   final String searchQuery;
 
   SearchEvent(this.searchQuery);
+}
+
+class LoadNextSearchChunk extends NotesEvent {
+  LoadNextSearchChunk();
+}
+
+// Clear search and reset to normal view
+class ClearSearch extends NotesEvent {
+  ClearSearch();
 }

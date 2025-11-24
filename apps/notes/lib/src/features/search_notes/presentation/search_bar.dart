@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
-import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
+import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
 
 class SearchInputBar extends StatefulWidget {
   const SearchInputBar({super.key});
@@ -14,7 +14,6 @@ class SearchInputBar extends StatefulWidget {
 }
 
 class _SearchInputBarState extends State<SearchInputBar> {
-  final TextEditingController _titleController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   Timer? _debounceTimer;
 
@@ -33,25 +32,24 @@ class _SearchInputBarState extends State<SearchInputBar> {
     });
   }
 
-  void _onSearchChanged() {
+  void _onSearchChanged(String val) {
     // Cancel any running timer
     _debounceTimer?.cancel();
 
     // Start a new timer
     _debounceTimer = Timer(Constants.debounceDuration, () {
-      context.read<NotesBloc>().add(SearchEvent(_titleController.text));
+      context.read<NotesBloc>().add(SearchEvent(val));
     });
   }
 
   void clearSearch() {
-    _titleController.clear();
-    _onSearchChanged();
+    _onSearchChanged('');
   }
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    _titleController.dispose();
+    // _titleController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
@@ -62,8 +60,8 @@ class _SearchInputBarState extends State<SearchInputBar> {
       height: 56,
       width: 508,
       child: MechanixSearchBar(
-        controller: _titleController,
-        onChanged: (_) => _onSearchChanged(),
+        focusNode: _focusNode,
+        onChanged: (val) => _onSearchChanged(val),
         autoFocus: false,
         hintText: "Search notes...",
         onCloseIconPress: clearSearch,

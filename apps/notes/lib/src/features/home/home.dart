@@ -126,9 +126,9 @@ class _HomePageState extends State<HomePage> {
                 return MechanixNavigationBar(
                   automaticallyImplyLeading: false,
                   title: "Notes",
-                  titleSpacing: 20,
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
+                  // titleSpacing: 20,
+                  // elevation: 0,
+                  // backgroundColor: Colors.transparent,
                   actionWidgets: [
                     if (state.isSelectionMode &&
                         selectedNoteIds.isNotEmpty) ...[
@@ -158,10 +158,6 @@ class _HomePageState extends State<HomePage> {
                         icon: Image.asset(NotesIcon.searchIcon),
                       ).padRight(10),
                   ],
-                  titleStyle: const TextStyle(
-                    fontSize: 24,
-                    color: NotesColors.headerColor,
-                  ),
                 );
               },
             ),
@@ -184,8 +180,7 @@ class _HomePageState extends State<HomePage> {
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           height: 64,
-                          child: MechanixPressableList(
-                            itemPadding: const EdgeInsets.all(10),
+                          child: MechanixSelectableList(
                             onTap:
                                 () => Navigator.pushNamed(
                                   context,
@@ -198,80 +193,22 @@ class _HomePageState extends State<HomePage> {
                             ),
                             isSelected: true,
                             title: "Add a new Note",
-                            titleTextStyle: const TextStyle(
-                              color: NotesColors.secondaryTextColor,
-                              fontSize: 16,
-                            ),
                           ),
                         );
                       }
                       //     if (!isLoading) {
                       return Positioned.fill(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: NoteList(
-                            controller: _scrollController,
-                            isSelectionMode: state.isSelectionMode,
-                            selectedNotes: selectedNoteIds,
-                            onSelect:
-                                (id) => onSelect(context, id, selectedNoteIds),
-                            groupedNotes: data.item2,
-                          ),
+                        child: NoteList(
+                          controller: _scrollController,
+                          isSelectionMode: state.isSelectionMode,
+                          selectedNotes: selectedNoteIds,
+                          onSelect:
+                              (id) => onSelect(context, id, selectedNoteIds),
+                          groupedNotes: data.item2,
                         ),
                       );
                     },
                   ),
-
-                  // ValueListenableBuilder<bool>(
-                  //   valueListenable: notesController.isLoading,
-                  //   builder: (context, isLoading, _) {
-                  //     if (!isLoading) {
-                  //       return ValueListenableBuilder<List<GroupedNotes>>(
-                  //         valueListenable: notesController.groupedNotes,
-                  //         builder: (context, groupedNotes, _) {
-                  //           return Positioned.fill(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(16),
-                  //               child: NoteList(
-                  //                 controller: _scrollController,
-                  //                 isSelectionMode: state.isSelectionMode,
-                  //                 selectedNotes: selectedNoteIds,
-                  //                 onSelect:
-                  //                     (id) => onSelect(
-                  //                       context,
-                  //                       id,
-                  //                       selectedNoteIds,
-                  //                     ),
-                  //                 groupedNotes: groupedNotes,
-                  //               ),
-                  //             ),
-                  //           );
-                  //         },
-                  //       );
-                  //     }
-                  //     return Positioned.fill(
-                  //       child: Center(
-                  //         child: Container(
-                  //           padding: const EdgeInsets.all(12),
-                  //           decoration: BoxDecoration(
-                  //             color: Colors.black54,
-                  //             borderRadius: BorderRadius.circular(8),
-                  //           ),
-                  //           child: const SizedBox(
-                  //             height: 20,
-                  //             width: 20,
-                  //             child: CircularProgressIndicator(
-                  //               strokeWidth: 2,
-                  //               valueColor: AlwaysStoppedAnimation<Color>(
-                  //                 Colors.white,
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     );
-                  //   },
-                  // ),
 
                   // Floating bottom menu
                   if (state.isSelectionMode)

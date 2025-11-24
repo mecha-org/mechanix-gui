@@ -10,12 +10,20 @@ import 'package:mechanix_notes/src/features/editor/menu_options.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/extensions/edge_insets.dart';
+import 'package:widgets/widgets.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 
 class EditorBar extends StatefulWidget {
   final QuillController controller;
   final NoteMetaData? note;
-  const EditorBar({super.key, required this.controller, this.note});
+  final FloatingActionBarController floatingBar;
+  const EditorBar({
+    super.key,
+    required this.controller,
+    this.note,
+    required this.floatingBar,
+  });
 
   @override
   State<EditorBar> createState() => _EditorBarState();
@@ -38,12 +46,16 @@ class _EditorBarState extends State<EditorBar> {
   @override
   Widget build(BuildContext context) {
     return MechanixNavigationBar(
-      leadingWidth: 320,
+      automaticallyImplyLeading: false,
       leadingWidget: EditorTitleInput(
+        floatingBar: widget.floatingBar,
         controller: widget.controller,
         note: widget.note,
       ),
-      actionsIconTheme: const IconThemeData(size: 20),
+      theme: const MechanixNavigationBarThemeData(
+        leadingWidth: 320,
+        actionsIconTheme: IconThemeData(size: 20),
+      ),
 
       actionWidgets: [
         BlocSelector<EditorBloc, EditorBlocState, Tuple3<bool, bool, bool>>(
@@ -99,16 +111,12 @@ class _EditorBarState extends State<EditorBar> {
                     ),
                   ),
                 ),
-                CompositedTransformTarget(
-                  link: optionsLayer,
-                  child: IconButton(
-                    onPressed: () => _showOptions(context),
-                    icon: SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: Image.asset(NotesIcon.threeDotIcon),
-                    ),
-                  ),
+
+                BlocSelector<EditorBloc, EditorBlocState, bool>(
+                  selector: (state) => state.isPinned,
+                  builder: (context, isPinned) {
+                    return MenuOptions(isPinned: isPinned);
+                  },
                 ),
               ],
             );
@@ -117,22 +125,4 @@ class _EditorBarState extends State<EditorBar> {
       ],
     );
   }
-
-  void _showOptions(BuildContext context) {
-  OverlayEntry? entry;
-
-  entry = OverlayEntry(
-    builder: (_) => BlocProvider.value(
-      value: context.read<EditorBloc>(), // 👈 reuses the same instance
-      child: MenuOptions(
-        menuLink: optionsLayer,
-        entry: entry,
-        note: widget.note,
-      ),
-    ),
-  );
-
-  Overlay.of(context, rootOverlay: true).insert(entry);
-}
-
 }

@@ -3,13 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
+import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository_impl.dart';
 import 'package:mechanix_notes/src/features/home/home.dart';
-import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_notes.dart';
@@ -17,6 +17,8 @@ import 'package:mechanix_notes/src/features/search_notes/presentation/search_not
 import 'package:path_provider/path_provider.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:watch_it/watch_it.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
+import 'package:widgets/widgets/pressable_list/mechanix_pressable_list_theme.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
@@ -24,7 +26,6 @@ void main() async {
   await initializeHive();
   Hive.registerAdapter(NoteHiveAdapter());
   // MediaKit.ensureInitialized();
-  await Hive.openBox<NoteHive>(Constants.tableName);
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -62,7 +63,34 @@ class NotesApp extends StatelessWidget with WatchItMixin {
     );
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant),
+      data: MechanixThemeData(
+        mechanixVariant: mechanixVariant,
+        extensions: const [
+          MechanixSelectableListThemeData(
+            backgroundColor: NotesColors.backgroundColor,
+            checkboxSpacing: EdgeInsets.only(right: 16, left: 6),
+            leadingIconPadding: EdgeInsets.zero,
+            itemPadding: EdgeInsets.only(
+              left: 16,
+              right: 12,
+              top: 10,
+              bottom: 10,
+            ),
+            titleTextStyle: TextStyle(
+              fontSize: 16,
+              color: NotesColors.titleTextColor,
+            ),
+          ),
+          MechanixNavigationBarThemeData(
+            scrolledUnderElevation: 0,
+            titleStyle: TextStyle(fontSize: 24, color: NotesColors.headerColor),
+
+            titleSpacing: 16,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+        ],
+      ),
       builder:
           (context, mechanix, child) => MyApp(
             darkTheme: mechanix.darkTheme,
@@ -103,6 +131,7 @@ class MyApp extends StatelessWidget {
         textSelectionTheme: const TextSelectionThemeData(
           cursorColor: Colors.white,
         ),
+        // this is temporary fix
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
         ),

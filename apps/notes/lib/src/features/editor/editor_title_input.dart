@@ -10,12 +10,19 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar.dart';
 
 class EditorTitleInput extends StatefulWidget {
   final QuillController controller;
   final NoteMetaData? note;
+  final FloatingActionBarController floatingBar;
 
-  const EditorTitleInput({super.key, required this.controller, this.note});
+  const EditorTitleInput({
+    super.key,
+    required this.controller,
+    this.note,
+    required this.floatingBar,
+  });
   @override
   State<EditorTitleInput> createState() => _EditorTitleInputState();
 }
@@ -36,7 +43,7 @@ class _EditorTitleInputState extends State<EditorTitleInput> {
         _titleController.text.trim().isNotEmpty
             ? _titleController.text.trim()
             : "New Note";
-    final content = jsonEncode(widget.controller.document.toDelta());
+    final content = jsonEncode(widget.controller.document.toDelta().toJson());
     final plainText = widget.controller.document.toPlainText();
     if (plainText.isNotEmpty && plainText != '\n') {
       if (widget.note != null) {
@@ -56,6 +63,7 @@ class _EditorTitleInputState extends State<EditorTitleInput> {
         );
       }
     }
+    widget.floatingBar.close();
     Navigator.pop(context);
   }
 
@@ -67,9 +75,8 @@ class _EditorTitleInputState extends State<EditorTitleInput> {
           selector: (state) => state.isPinned,
           builder: (context, isPinned) {
             return IconButton(
-              icon: Image.asset(NotesIcon.backIcon, height: 20, width: 20),
+              icon: Image.asset(NotesIcon.backIcon, height: 16, width: 8),
               onPressed: () => _saveNotes(isPinned),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             );
           },
         ),

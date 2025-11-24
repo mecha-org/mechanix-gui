@@ -16,7 +16,7 @@ class EditorBlocState extends Equatable {
     this.isUndo = false,
     this.isRedo = false,
     this.isPinned = false,
-    this.toolbarToggle = true,
+    this.toolbarToggle = false,
     this.document,
     this.isLoading = false,
     required this.selectedToolbar,

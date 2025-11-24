@@ -17,7 +17,7 @@ class NotesRepositoryImpl extends NotesRepository {
   final logger = Logger();
 
   @override
-  Future<void> createNote(
+  Future<NoteMetaData> createNote(
     String title,
     content,
     plainText,
@@ -26,6 +26,7 @@ class NotesRepositoryImpl extends NotesRepository {
   ) async {
     try {
       await ensureHiveConnected();
+      
       final uuid = const Uuid();
       final newNote = NoteHive(
         id: uuid.v4(),
@@ -38,7 +39,13 @@ class NotesRepositoryImpl extends NotesRepository {
         tag: tag,
       );
       await Hive.box<NoteHive>(Constants.tableName).put(newNote.id, newNote);
-      logger.i("Note created successfully");
+      return NoteMetaData(
+        id: newNote.id,
+        title: newNote.title,
+        createdAt: newNote.createdAt,
+        updatedAt: newNote.updatedAt,
+        isPinned: newNote.isPinned,
+      );
     } catch (e) {
       logger.e("Failed to create note: $e");
       rethrow;

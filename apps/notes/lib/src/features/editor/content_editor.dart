@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
@@ -23,21 +22,27 @@ class ContentEditor extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
-              child: QuillEditor.basic(
+              child: QuillEditor(
+                scrollController: ScrollController(),
                 controller: controller,
                 focusNode: focusNode,
                 config: QuillEditorConfig(
                   expands: false,
                   scrollable: true,
                   enableSelectionToolbar: false,
-                  onKeyPressed: (event, node) {
-                    if (event.logicalKey == LogicalKeyboardKey.escape) {
-                      FocusScope.of(context).unfocus();
-                      return KeyEventResult.ignored;
-                    } else {
-                      return KeyEventResult.ignored;
-                    }
-                  },
+                  spaceShortcutEvents: [
+                    formatHyphenToBulletList,
+                    formatHeaderToHeaderStyle,
+                    formatHeader2ToHeaderStyle,
+                    formatHeader3ToHeaderStyle,
+                    formatOrderedNumberToList,
+                  ],
+                  characterShortcutEvents: [
+                    formatStrikeToStrikethrough,
+                    formatDoubleUnderscoresToBold,
+                    formatAsterisksToItalic,
+                    formatDoubleAsterisksToBold,
+                  ],
                   customStyles: quillEditorStyle,
                   enableScribble: false,
                   autoFocus: false,

@@ -11,15 +11,20 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   final logger = Logger();
   static const int pageSize = 20;
 
+  // Main list pagination
   bool _hasMorePages = true;
   bool _isLoadingChunk = false;
-
-  // Data sources
   List<NoteMetaData> _allNotes = [];
   List<NoteMetaData> _allPinnedNotes = [];
-
   int _loadedPinnedCount = 0;
   int _unpinnedNoteIndex = 0;
+
+  // Search pagination state
+  bool _hasMoreSearchResults = true;
+  bool _isLoadingSearchChunk = false;
+  String _currentSearchQuery = '';
+  int _searchLoadedCount = 0;
+  List<NoteMetaData> _allSearchResults = []; // Cache all search results
 
   NotesBloc({required this.notesRepository}) : super(const NotesState()) {
     on<CreateNotes>(_createNote);
@@ -33,6 +38,8 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     on<SelectAllNotes>(_onSelectAllNotes);
     on<CheckPinnedStatus>(_checkPinnedStatus);
     on<SearchEvent>(_searchNotes);
+    on<LoadNextSearchChunk>(_onLoadNextSearchChunk);
+    on<ClearSearch>(_onClearSearch);
     on<InitializeNotes>(_onInitializeNotes);
     on<LoadNotes>(_onLoadNotes);
     on<LoadNextChunk>(_onLoadNextChunk);
@@ -46,13 +53,29 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     _unpinnedNoteIndex = 0;
   }
 
+  // Reset search pagination state
+  void _resetSearchPagination() {
+    _hasMoreSearchResults = true;
+    _isLoadingSearchChunk = false;
+    _searchLoadedCount = 0;
+    _currentSearchQuery = '';
+    _allSearchResults = [];
+  }
+
   // Called initially when app or page loads
+  void initialise() {
+    _resetPagination();
+    _resetSearchPagination();
+    add(LoadNotes());
+  }
+
   Future<void> _onInitializeNotes(
     InitializeNotes event,
     Emitter<NotesState> emit,
   ) async {
     logger.i('Initializing notes BLoC');
     _resetPagination();
+    _resetSearchPagination();
     add(LoadNotes());
   }
 
@@ -147,7 +170,138 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     }
   }
 
-  // Build initial chunk (20 items)
+  // ============ SEARCH PAGINATION METHODS ============
+
+  Future<void> _searchNotes(SearchEvent event, Emitter<NotesState> emit) async {
+    logger.i("Search started: ${event.searchQuery}");
+
+    final query = event.searchQuery.trim().toLowerCase();
+
+    // If query is empty, clear search
+    if (query.isEmpty) {
+      _resetSearchPagination();
+      emit(
+        state.copyWith(
+          searchedNotes: [],
+          hasMoreSearchResults: false,
+          isSearchMode: false,
+          isSearchLoading: false,
+        ),
+      );
+      return;
+    }
+
+    // If it's a new search query, reset pagination and fetch results
+    final isNewQuery = query != _currentSearchQuery;
+    if (isNewQuery) {
+      _resetSearchPagination();
+      _currentSearchQuery = query;
+    }
+
+    try {
+      emit(state.copyWith(isSearchLoading: true, isSearchMode: true));
+
+      // Fetch all search results from repository (only on new query)
+      if (isNewQuery) {
+        _allSearchResults = await notesRepository.searchNotes(query);
+      }
+
+      // Load first page
+      _searchLoadedCount = 0;
+      final firstPage = _getSearchChunk(pageSize);
+
+      emit(
+        state.copyWith(
+          searchedNotes: firstPage,
+          isSearchLoading: false,
+          hasMoreSearchResults: _searchLoadedCount < _allSearchResults.length,
+          isSearchMode: true,
+        ),
+      );
+    } catch (e) {
+      logger.e('Search failed: $e');
+      emit(
+        state.copyWith(
+          isSearchLoading: false,
+          searchedNotes: [],
+          hasMoreSearchResults: false,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onLoadNextSearchChunk(
+    LoadNextSearchChunk event,
+    Emitter<NotesState> emit,
+  ) async {
+    // Prevent multiple simultaneous loads
+    if (_isLoadingSearchChunk || !_hasMoreSearchResults) return;
+
+    // Ensure we have an active search query
+    if (_currentSearchQuery.isEmpty || _allSearchResults.isEmpty) return;
+
+    _isLoadingSearchChunk = true;
+    emit(state.copyWith(isSearchLoadingMore: true));
+
+    try {
+      // Simulate slight delay for smoother UX (optional)
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Get next chunk of search results
+      final nextChunk = _getSearchChunk(pageSize);
+
+      // Append new results to existing ones
+      final updatedSearchResults = [...state.searchedNotes, ...nextChunk];
+
+      emit(
+        state.copyWith(
+          searchedNotes: updatedSearchResults,
+          isSearchLoadingMore: false,
+          hasMoreSearchResults: _searchLoadedCount < _allSearchResults.length,
+        ),
+      );
+    } catch (e) {
+      logger.e('Error loading search chunk: $e');
+      emit(state.copyWith(isSearchLoadingMore: false));
+    } finally {
+      _isLoadingSearchChunk = false;
+    }
+  }
+
+  // Helper: Get next chunk of search results
+  List<NoteMetaData> _getSearchChunk(int count) {
+    if (_searchLoadedCount >= _allSearchResults.length) {
+      _hasMoreSearchResults = false;
+      return [];
+    }
+
+    final endIndex = (_searchLoadedCount + count).clamp(
+      0,
+      _allSearchResults.length,
+    );
+
+    final chunk = _allSearchResults.sublist(_searchLoadedCount, endIndex);
+    _searchLoadedCount = endIndex;
+    _hasMoreSearchResults = _searchLoadedCount < _allSearchResults.length;
+
+    return chunk;
+  }
+
+  void _onClearSearch(ClearSearch event, Emitter<NotesState> emit) {
+    _resetSearchPagination();
+    emit(
+      state.copyWith(
+        searchedNotes: [],
+        hasMoreSearchResults: false,
+        isSearchMode: false,
+        isSearchLoading: false,
+        isSearchLoadingMore: false,
+      ),
+    );
+  }
+
+  // ============ EXISTING METHODS (unchanged) ============
+
   List<GroupedNotes> _loadFirstChunk() {
     final List<GroupedNotes> initialGroups = [];
     int notesLoaded = 0;
@@ -209,7 +363,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     return false;
   }
 
-  // Label note based on date
   String _getTimeLabelForNote(NoteMetaData note) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -251,14 +404,80 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
 
   Future<void> _createNote(CreateNotes event, Emitter<NotesState> emit) async {
     try {
-      await notesRepository.createNote(
+      final NoteMetaData note = await notesRepository.createNote(
         event.title,
         event.content,
         event.plainText,
         event.isPinned,
         event.tag,
       );
-      add(LoadNotes());
+
+      // Add to _allNotes
+      _allNotes.insert(0, note);
+
+      final updatedGroups = List<GroupedNotes>.from(state.groupedNotes);
+
+      if (note.isPinned) {
+        // Add to _allPinnedNotes
+        _allPinnedNotes.insert(0, note);
+
+        // Add to Pinned Notes group at the top
+        final pinnedGroupIndex = updatedGroups.indexWhere(
+          (g) => g.label == "Pinned Notes",
+        );
+
+        if (pinnedGroupIndex != -1) {
+          final existingPinned = updatedGroups[pinnedGroupIndex].notes;
+          updatedGroups[pinnedGroupIndex] = GroupedNotes(
+            label: "Pinned Notes",
+            notes: [note, ...existingPinned],
+          );
+        } else {
+          updatedGroups.insert(
+            0,
+            GroupedNotes(label: "Pinned Notes", notes: [note]),
+          );
+        }
+
+        // Increment loaded pinned count
+        _loadedPinnedCount++;
+      } else {
+        // Add to time-based group
+        final groupLabel = _getTimeLabelForNote(note);
+
+        final existingIndex = updatedGroups.indexWhere(
+          (g) => g.label == groupLabel,
+        );
+
+        if (existingIndex != -1) {
+          final updatedNotes = [note, ...updatedGroups[existingIndex].notes];
+          updatedGroups[existingIndex] = GroupedNotes(
+            label: groupLabel,
+            notes: updatedNotes,
+          );
+        } else {
+          // Find correct position to insert new group
+          final pinnedGroupExists = updatedGroups.any(
+            (g) => g.label == "Pinned Notes",
+          );
+          final insertIndex = pinnedGroupExists ? 1 : 0;
+
+          updatedGroups.insert(
+            insertIndex,
+            GroupedNotes(label: groupLabel, notes: [note]),
+          );
+        }
+
+        // Increment unpinned index
+        _unpinnedNoteIndex++;
+      }
+
+      emit(state.copyWith(groupedNotes: updatedGroups));
+
+      // If in search mode, refresh search results
+      if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
+        add(SearchEvent(_currentSearchQuery));
+      }
     } catch (e) {
       logger.e('Note create failed: $e');
     }
@@ -275,26 +494,55 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         event.tag,
       );
       add(LoadNotes());
+
+      // If in search mode, refresh search results
+      if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
+        add(SearchEvent(_currentSearchQuery));
+      }
     } catch (e) {
-      logger.e('Note update failed: $e');
+      print('Note update failed: $e');
     }
   }
 
   Future<void> _deleteNotes(DeleteNotes event, Emitter<NotesState> emit) async {
     try {
       await notesRepository.deleteNote(event.deleteIds);
-      
-      // Local update: Remove deleted notes from groups
       _updateGroupsAfterDelete(event.deleteIds, emit);
-      
-      add(SearchEvent(''));
+
+      // If in search mode, also update search results locally
+      if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
+        final deletedSet = event.deleteIds.toSet();
+
+        // Remove from cached search results
+        _allSearchResults.removeWhere((note) => deletedSet.contains(note.id));
+
+        // Remove from displayed search results
+        final updatedSearchResults =
+            state.searchedNotes
+                .where((note) => !deletedSet.contains(note.id))
+                .toList();
+
+        // Adjust loaded count
+        _searchLoadedCount = updatedSearchResults.length;
+        _hasMoreSearchResults = _searchLoadedCount < _allSearchResults.length;
+
+        emit(
+          state.copyWith(
+            searchedNotes: updatedSearchResults,
+            hasMoreSearchResults: _hasMoreSearchResults,
+          ),
+        );
+      }
     } catch (e) {
       logger.e('Note delete failed: $e');
     }
   }
 
   // Helper: Update groups locally after deletion
-  void _updateGroupsAfterDelete(List<String> deletedIds, Emitter<NotesState> emit) {
+  void _updateGroupsAfterDelete(
+    List<String> deletedIds,
+    Emitter<NotesState> emit,
+  ) {
     final deletedSet = deletedIds.toSet();
     final updatedGroups = <GroupedNotes>[];
 
@@ -319,106 +567,48 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     }
 
     // Adjust loaded counts
-    _loadedPinnedCount = (_loadedPinnedCount - deletedFromPinned).clamp(0, _allPinnedNotes.length);
-    _unpinnedNoteIndex = (_unpinnedNoteIndex - deletedFromUnpinned).clamp(0, _allNotes.length);
+    _loadedPinnedCount = (_loadedPinnedCount - deletedFromPinned).clamp(
+      0,
+      _allPinnedNotes.length,
+    );
+    _unpinnedNoteIndex = (_unpinnedNoteIndex - deletedFromUnpinned).clamp(
+      0,
+      _allNotes.length,
+    );
 
     // Remove deleted notes from each group
     for (final group in state.groupedNotes) {
-      final filteredNotes = group.notes
-          .where((note) => !deletedSet.contains(note.id))
-          .toList();
+      final filteredNotes =
+          group.notes.where((note) => !deletedSet.contains(note.id)).toList();
 
       // Only keep groups that still have notes
       if (filteredNotes.isNotEmpty) {
-        updatedGroups.add(GroupedNotes(
-          label: group.label,
-          notes: filteredNotes,
-        ));
+        updatedGroups.add(
+          GroupedNotes(label: group.label, notes: filteredNotes),
+        );
       }
     }
 
     // Recalculate if there are more pages
     _hasMorePages = _hasMoreNotesToLoad();
 
-    emit(state.copyWith(
-      groupedNotes: updatedGroups,
-      hasMorePages: _hasMorePages,
-    ));
+    emit(
+      state.copyWith(groupedNotes: updatedGroups, hasMorePages: _hasMorePages),
+    );
   }
 
   Future<void> _updateTag(UpdateTag event, Emitter<NotesState> emit) async {
     try {
       await notesRepository.updateTag(event.noteIds, event.tag);
-      
-      // Local update: Update tag in groups
-      // _updateGroupsAfterTagChange(event.noteIds, event.tag, emit);
+
+      // If in search mode, refresh search results
+      if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
+        add(SearchEvent(_currentSearchQuery));
+      }
     } catch (e) {
       logger.e('Tag update failed: $e');
     }
   }
-
-  // Helper: Update tags locally
-  // void _updateGroupsAfterTagChange(
-  //   List<String> noteIds,
-  //   String tag,
-  //   Emitter<NotesState> emit,
-  // ) {
-  //   final noteIdSet = noteIds.toSet();
-  //   final updatedGroups = <GroupedNotes>[];
-
-  //   // Update _allNotes
-  //   for (var i = 0; i < _allNotes.length; i++) {
-  //     if (noteIdSet.contains(_allNotes[i].id)) {
-  //       final note = _allNotes[i];
-  //       _allNotes[i] = NoteMetaData(
-  //         id: note.id,
-  //         title: note.title,
-  //         isPinned: note.isPinned,
-  //         createdAt: note.createdAt,
-  //         updatedAt: note.updatedAt,
-  //       );
-  //     }
-  //   }
-
-  //   // Update _allPinnedNotes
-  //   for (var i = 0; i < _allPinnedNotes.length; i++) {
-  //     if (noteIdSet.contains(_allPinnedNotes[i].id)) {
-  //       final note = _allPinnedNotes[i];
-  //       _allPinnedNotes[i] = NoteMetaData(
-  //         id: note.id,
-  //         title: note.title,
-          
-  //         isPinned: note.isPinned,
-  //         createdAt: note.createdAt,
-  //         updatedAt: note.updatedAt,
-  //       );
-  //     }
-  //   }
-
-  //   // Update groups
-  //   for (final group in state.groupedNotes) {
-  //     final updatedNotes = group.notes.map((note) {
-  //       if (noteIdSet.contains(note.id)) {
-  //         return NoteMetaData(
-  //           id: note.id,
-  //           title: note.title,
-          
-  //           isPinned: note.isPinned,
-  //           createdAt: note.createdAt,
-  //           updatedAt: note.updatedAt,
-  //         );
-  //       }
-  //       return note;
-  //     }).toList();
-
-  //     updatedGroups.add(GroupedNotes(
-  //       label: group.label,
-  //       notes: updatedNotes,
-  //     ));
-  //   }
-
-  //   emit(state.copyWith(groupedNotes: updatedGroups));
-  // }
 
   Future<void> _updatePinnedNotes(
     PinnedNotes event,
@@ -426,11 +616,13 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   ) async {
     try {
       await notesRepository.pinnedNotes(event.noteIds, event.isPinned);
-      
-      // Local update: Move notes between pinned/unpinned groups
       _updateGroupsAfterPinChange(event.noteIds, event.isPinned, emit);
-      
       add(ClearSelection());
+
+      // If in search mode, refresh search results
+      if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
+        add(SearchEvent(_currentSearchQuery));
+      }
     } catch (e) {
       logger.e('Pinned notes update failed: $e');
     }
@@ -467,16 +659,21 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     // Update _allPinnedNotes and track changes
     if (isPinned) {
       // Add to pinned
-      final newPinned = _allNotes.where((n) => noteIdSet.contains(n.id)).toList();
+      final newPinned =
+          _allNotes.where((n) => noteIdSet.contains(n.id)).toList();
       _allPinnedNotes.addAll(newPinned);
     } else {
       // Remove from pinned
-      final removedCount = _allPinnedNotes.where((n) => noteIdSet.contains(n.id)).length;
+      final removedCount =
+          _allPinnedNotes.where((n) => noteIdSet.contains(n.id)).length;
       _allPinnedNotes.removeWhere((n) => noteIdSet.contains(n.id));
-      
+
       // If we removed pinned notes that were already loaded, adjust the counter
       if (removedCount > 0) {
-        _loadedPinnedCount = (_loadedPinnedCount - removedCount).clamp(0, _allPinnedNotes.length);
+        _loadedPinnedCount = (_loadedPinnedCount - removedCount).clamp(
+          0,
+          _allPinnedNotes.length,
+        );
       }
     }
 
@@ -484,74 +681,75 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     for (final group in state.groupedNotes) {
       if (isPinned) {
         // When pinning: Keep notes in their original location AND add to pinned section
-        final updatedNotes = group.notes.map((note) {
-          if (noteIdSet.contains(note.id)) {
-            // Track where notes are coming from
-            if (group.label == "Pinned Notes") {
-              movedFromPinnedSection++;
-            } else {
-              movedFromUnpinnedSection++;
-              // Collect notes to add to pinned section
-              notesToAddToPinned.add(NoteMetaData(
-                id: note.id,
-                title: note.title,
-                isPinned: true,
-                createdAt: note.createdAt,
-                updatedAt: note.updatedAt,
-              ));
-            }
-            
-            // Update the note in its current location with isPinned = true
-            return NoteMetaData(
-              id: note.id,
-              title: note.title,
-              isPinned: true,
-              createdAt: note.createdAt,
-              updatedAt: note.updatedAt,
-            );
-          }
-          return note;
-        }).toList();
+        final updatedNotes =
+            group.notes.map((note) {
+              if (noteIdSet.contains(note.id)) {
+                // Track where notes are coming from
+                if (group.label == "Pinned Notes") {
+                  movedFromPinnedSection++;
+                } else {
+                  movedFromUnpinnedSection++;
+                  // Collect notes to add to pinned section
+                  notesToAddToPinned.add(
+                    NoteMetaData(
+                      id: note.id,
+                      title: note.title,
+                      isPinned: true,
+                      createdAt: note.createdAt,
+                      updatedAt: note.updatedAt,
+                    ),
+                  );
+                }
 
-        updatedGroups.add(GroupedNotes(
-          label: group.label,
-          notes: updatedNotes,
-        ));
+                // Update the note in its current location with isPinned = true
+                return NoteMetaData(
+                  id: note.id,
+                  title: note.title,
+                  isPinned: true,
+                  createdAt: note.createdAt,
+                  updatedAt: note.updatedAt,
+                );
+              }
+              return note;
+            }).toList();
+
+        updatedGroups.add(
+          GroupedNotes(label: group.label, notes: updatedNotes),
+        );
       } else {
         // When unpinning: Remove from pinned section, keep in time-based sections
         if (group.label == "Pinned Notes") {
           // Remove unpinned notes from Pinned Notes section
-          final remainingPinned = group.notes
-              .where((note) => !noteIdSet.contains(note.id))
-              .toList();
-          
+          final remainingPinned =
+              group.notes
+                  .where((note) => !noteIdSet.contains(note.id))
+                  .toList();
+
           if (remainingPinned.isNotEmpty) {
-            updatedGroups.add(GroupedNotes(
-              label: group.label,
-              notes: remainingPinned,
-            ));
+            updatedGroups.add(
+              GroupedNotes(label: group.label, notes: remainingPinned),
+            );
           }
-          
+
           movedFromPinnedSection += group.notes.length - remainingPinned.length;
         } else {
-          // Update isPinned status in time-based groups
-          final updatedNotes = group.notes.map((note) {
-            if (noteIdSet.contains(note.id)) {
-              return NoteMetaData(
-                id: note.id,
-                title: note.title,
-                isPinned: false,
-                createdAt: note.createdAt,
-                updatedAt: note.updatedAt,
-              );
-            }
-            return note;
-          }).toList();
+          final updatedNotes =
+              group.notes.map((note) {
+                if (noteIdSet.contains(note.id)) {
+                  return NoteMetaData(
+                    id: note.id,
+                    title: note.title,
+                    isPinned: false,
+                    createdAt: note.createdAt,
+                    updatedAt: note.updatedAt,
+                  );
+                }
+                return note;
+              }).toList();
 
-          updatedGroups.add(GroupedNotes(
-            label: group.label,
-            notes: updatedNotes,
-          ));
+          updatedGroups.add(
+            GroupedNotes(label: group.label, notes: updatedNotes),
+          );
         }
       }
     }
@@ -586,10 +784,9 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     // Recalculate if there are more pages
     _hasMorePages = _hasMoreNotesToLoad();
 
-    emit(state.copyWith(
-      groupedNotes: updatedGroups,
-      hasMorePages: _hasMorePages,
-    ));
+    emit(
+      state.copyWith(groupedNotes: updatedGroups, hasMorePages: _hasMorePages),
+    );
   }
 
   void _onSelectNote(SelectNote event, Emitter<NotesState> emit) {
@@ -614,8 +811,13 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   void _onSelectAllNotes(SelectAllNotes event, Emitter<NotesState> emit) {
     final noteIds = <String>{};
 
-    for (final group in state.groupedNotes) {
-      noteIds.addAll(group.notes.map((e) => e.id));
+    // Select from appropriate source based on mode
+    if (state.isSearchMode) {
+      noteIds.addAll(state.searchedNotes.map((e) => e.id));
+    } else {
+      for (final group in state.groupedNotes) {
+        noteIds.addAll(group.notes.map((e) => e.id));
+      }
     }
 
     emit(
@@ -634,17 +836,5 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     );
 
     emit(state.copyWith(isPinnedSelected: isPinnedSelected));
-  }
-
-  Future<void> _searchNotes(SearchEvent event, Emitter<NotesState> emit) async {
-    logger.i("Search started: ${event.searchQuery}");
-
-    final query = event.searchQuery.trim().toLowerCase();
-    if (query.isNotEmpty) {
-      final searchedNotes = await notesRepository.searchNotes(query);
-      emit(state.copyWith(searchedNotes: searchedNotes));
-    } else {
-      emit(state.copyWith(searchedNotes: []));
-    }
   }
 }

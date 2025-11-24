@@ -8,16 +8,19 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:tuple/tuple.dart';
-import 'package:widgets/widgets/floatingActionButton/mechanix_fab.dart';
-import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
+import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 
 class EditorBottomMenu extends StatelessWidget {
   final QuillController controller;
+  final FloatingActionBarController barController;
   final void Function(ToolbarEnum toolbarEnum) onToolbarSelection;
   const EditorBottomMenu({
     super.key,
     required this.controller,
     required this.onToolbarSelection,
+    required this.barController,
   });
   void _undoCall() {
     controller.undo();
@@ -44,84 +47,70 @@ class EditorBottomMenu extends StatelessWidget {
       builder: (context, tuple) {
         final isUndo = tuple.item1;
         final isRedo = tuple.item2;
-        final toolbarToggle = tuple.item3;
         final selectedToolbar = tuple.item4;
-
-        if (!toolbarToggle) return Container();
 
         return Positioned(
           left: 0,
           right: 0,
           bottom: 30,
-          child: Center(
-            child: SizedBox(
-              width: 380,
+          child: MechanixFloatingActionBar(
+            dropdownPosition: DropdownPosition.topCenter,
+            isMenuButtonRequired: false,
+            outsideClickDisabled: true,
+            floatingActionBarController: barController,
+            animationDuration: const Duration(milliseconds: 0),
+            theme: MechanixFloatingActionBarThemeData(
               height: 52,
-              child: MechanixFloatingActionMenu(
-                height: 52,
-                backgroundColor: NotesColors.floatingMenuColor,
-                items: [
-                  MechanixFabItem(
-                    iconWidget: NotesFabIcon(
-                      iconPath: NotesIcon.undoIcon,
-                      color:
-                          isUndo
-                              ? Colors.white
-                              : Theme.of(context).disabledColor,
-                    ),
-                    iconSize: 20,
-                    onTap: isUndo ? _undoCall : null,
-                  ),
-                  MechanixFabItem(
-                    iconWidget: NotesFabIcon(
-                      iconPath: NotesIcon.redoIcon,
-                      color:
-                          isRedo
-                              ? Colors.white
-                              : Theme.of(context).disabledColor,
-                    ),
-                    iconSize: 20,
-                    onTap: isRedo ? _redoCall : null,
-                  ),
-                  MechanixFabItem(
-                    iconSize: 20,
-                    iconWidget: NotesFabIcon(
-                      iconPath: NotesIcon.textStyleIcon,
-                      iconSize: 20,
-                      color:
-                          selectedToolbar == ToolbarEnum.text
-                              ? Theme.of(context).disabledColor
-                              : Colors.white,
-                    ),
-                    onTap: () => onToolbarSelection(ToolbarEnum.text),
-                  ),
-                  MechanixFabItem(
-                    iconSize: 20,
-                    iconWidget: NotesFabIcon(
-                      iconPath: NotesIcon.menuIcon,
-                      iconSize: 20,
-                      color:
-                          selectedToolbar == ToolbarEnum.align
-                              ? Theme.of(context).disabledColor
-                              : Colors.white,
-                    ),
-                    onTap: () => onToolbarSelection(ToolbarEnum.align),
-                  ),
-                  // MechanixFabItem(
-                  //   iconSize: 20,
-                  //   iconWidget: NotesFabIcon(
-                  //     iconPath: NotesIcon.addIcon,
-                  //     iconSize: 20,
-                  //     color:
-                  //         selectedToolbar == ToolbarEnum.add
-                  //             ? Theme.of(context).disabledColor
-                  //             : Colors.white,
-                  //   ),
-                  //   onTap: () => toolbarSelection(ToolbarEnum.add),
-                  // ),
-                ],
+              width: 350,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                color: NotesColors.floatingToolbarcolor,
               ),
             ),
+            menus: [
+              IconButton(
+                icon: NotesFabIcon(
+                  iconPath: NotesIcon.undoIcon,
+                  color:
+                      isUndo ? Colors.white : Theme.of(context).disabledColor,
+                ),
+                iconSize: 20,
+                onPressed: isUndo ? _undoCall : null,
+              ),
+              IconButton(
+                icon: NotesFabIcon(
+                  iconPath: NotesIcon.redoIcon,
+                  color:
+                      isRedo ? Colors.white : Theme.of(context).disabledColor,
+                ),
+                iconSize: 20,
+                onPressed: isRedo ? _redoCall : null,
+              ),
+              IconButton(
+                iconSize: 20,
+                icon: NotesFabIcon(
+                  iconPath: NotesIcon.textStyleIcon,
+                  iconSize: 20,
+                  color:
+                      selectedToolbar == ToolbarEnum.text
+                          ? Theme.of(context).disabledColor
+                          : Colors.white,
+                ),
+                onPressed: () => onToolbarSelection(ToolbarEnum.text),
+              ),
+              IconButton(
+                iconSize: 20,
+                icon: NotesFabIcon(
+                  iconPath: NotesIcon.menuIcon,
+                  iconSize: 20,
+                  color:
+                      selectedToolbar == ToolbarEnum.align
+                          ? Theme.of(context).disabledColor
+                          : Colors.white,
+                ),
+                onPressed: () => onToolbarSelection(ToolbarEnum.align),
+              ),
+            ],
           ),
         );
       },
