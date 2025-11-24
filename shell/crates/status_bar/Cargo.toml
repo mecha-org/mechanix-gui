@@ -11,8 +11,12 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
+networkmanager = { workspace = true }
+bluez = { workspace = true }
+upower = { workspace = true }
+commons = { path = "../commons" }
 gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
-commons = { path = "../commons" }
 chrono = { version = "0.4", features = ["clock"] }
+futures = "0.3.31"
