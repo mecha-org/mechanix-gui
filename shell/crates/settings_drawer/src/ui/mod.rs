@@ -12,6 +12,7 @@ use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
 use pulseaudio::service::DeviceInfo;
+use upower::interfaces::device::BatteryState;
 
 const NAVBAR_SIZE: (f32, f32) = (180., 29.);
 const APP_SIZE: (f32, f32) = (540., 620.);
@@ -35,7 +36,11 @@ pub struct BluetoothDetails {
 
 pub struct SettingsDrawer {
     pub settings_active: bool,
+
+    pub battery_state: BatteryState,
+    pub battery_level: u8,
     pub battery_percent: u8,
+
     pub open_power_options: bool,
 
     pub rotation_on: bool,
@@ -97,7 +102,9 @@ impl SettingsDrawer {
 
         Self {
             settings_active: false,
-            battery_percent: 32,
+            battery_state: BatteryState::Unknown,
+            battery_level: 0,
+            battery_percent: 0,
             open_power_options: false,
             rotation_on: false,
             airplane_mode: false,
@@ -279,6 +286,38 @@ impl SettingsDrawer {
     }
 
     fn drawer_items(&mut self, cx: &mut Context<SettingsDrawer>) -> impl IntoElement {
+        let battery_icon = match self.battery_state {
+            BatteryState::Charging => match self.battery_level {
+                0..=10 => IconName::Battery10Charging,
+                11..=20 => IconName::Battery20Charging,
+                21..=30 => IconName::Battery30Charging,
+                31..=40 => IconName::Battery40Charging,
+                41..=50 => IconName::Battery50Charging,
+                51..=60 => IconName::Battery60Charging,
+                61..=70 => IconName::Battery70Charging,
+                71..=80 => IconName::Battery80Charging,
+                81..=90 => IconName::Battery90Charging,
+                91..=100 => IconName::Battery100Charging,
+                _ => IconName::BatteryEmpty,
+            },
+            BatteryState::Discharging => match self.battery_level {
+                0..=10 => IconName::Battery10,
+                11..=20 => IconName::Battery20,
+                21..=30 => IconName::Battery30,
+                31..=40 => IconName::Battery40,
+                41..=50 => IconName::Battery50,
+                51..=60 => IconName::Battery60,
+                61..=70 => IconName::Battery70,
+                71..=80 => IconName::Battery80,
+                81..=90 => IconName::Battery90,
+                91..=100 => IconName::Battery100,
+                _ => IconName::BatteryEmpty,
+            },
+            BatteryState::FullCharged => IconName::Battery100,
+            BatteryState::Empty => IconName::BatteryEmpty,
+            _ => IconName::BatteryEmpty,
+        };
+
         let wireless_icon = match self.wireless_details.enabled {
             true => match self.wireless_details.strength {
                 0..=20 => IconName::WirelessLow,
@@ -383,12 +422,12 @@ impl SettingsDrawer {
                             .items_center()
                             .child(
                                 div()
-                                    .text_lg()
+                                    .text_base()
                                     .text_color(rgb(0xE9E9E9))
                                     .child(format!("{}% ", self.battery_percent)),
                             )
                             .child(
-                                Icon::new(IconName::Battery)
+                                Icon::new(battery_icon)
                                     .size((px(20.), px(20.)))
                                     .text_color(rgb(0xE9E9E9)),
                             ),

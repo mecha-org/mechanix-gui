@@ -23,6 +23,16 @@ fn main() {
                 let executor = cx.background_executor();
 
                 executor
+                    .spawn(sync_battery_state(app_channel_tx.clone()))
+                    .detach();
+                executor
+                    .spawn(sync_battery_level(app_channel_tx.clone()))
+                    .detach();
+                executor
+                    .spawn(sync_battery_percentage(app_channel_tx.clone()))
+                    .detach();
+
+                executor
                     .spawn(sync_network_status(app_channel_tx.clone()))
                     .detach();
                 executor
@@ -40,19 +50,36 @@ fn main() {
                 executor
                     .spawn(sync_bluetooth_status(app_channel_tx.clone()))
                     .detach();
-                executor.spawn(stream_bluetooth_device_status(app_channel_tx.clone())).detach();
+                executor
+                    .spawn(stream_bluetooth_device_status(app_channel_tx.clone()))
+                    .detach();
                 executor
                     .spawn(sync_bluetooth_connected_status(app_channel_tx.clone()))
                     .detach();
-                // executor
-                //     .spawn(get_sound_device(app_channel_tx.clone()))
-                //     .detach();
                 executor.spawn(handle_bluetooth_toggle(bt_rx)).detach();
 
                 cx.new(|cx| {
                     cx.spawn(async move |app, cx| {
                         while let Some(event) = app_channel_rx.next().await {
                             match event {
+                                AppEvents::BatteryStateChanged { state } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.battery_state = state;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::BatteryLevelChanged { level } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.battery_level = level;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::BatteryPercentageChanged { value } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.battery_percent = value;
+                                        cx.notify();
+                                    });
+                                }
                                 AppEvents::WirelessStatusChanged { enabled } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
                                         this.wireless_details.enabled = enabled;
