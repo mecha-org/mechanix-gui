@@ -5,7 +5,6 @@ use gpui::*;
 use settings_drawer::prelude::*;
 use settings_drawer::services::*;
 
-
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
     application.run(|cx| {
@@ -30,21 +29,25 @@ fn main() {
                     .spawn(sync_network_strength(app_channel_tx.clone()))
                     .detach();
                 executor
+                    .spawn(stream_network_device_events(app_channel_tx.clone()))
+                    .detach();
+
+                executor
                     .spawn(sync_connected_network(app_channel_tx.clone()))
                     .detach();
-                 executor
-                    .spawn(handle_wireless_toggle(nm_rx))
-                    .detach();
+                executor.spawn(handle_wireless_toggle(nm_rx)).detach();
 
                 executor
                     .spawn(sync_bluetooth_status(app_channel_tx.clone()))
                     .detach();
+                executor.spawn(stream_bluetooth_device_status(app_channel_tx.clone())).detach();
                 executor
                     .spawn(sync_bluetooth_connected_status(app_channel_tx.clone()))
                     .detach();
-                   executor
-                    .spawn(handle_bluetooth_toggle(bt_rx))
-                    .detach();
+                // executor
+                //     .spawn(get_sound_device(app_channel_tx.clone()))
+                //     .detach();
+                executor.spawn(handle_bluetooth_toggle(bt_rx)).detach();
 
                 cx.new(|cx| {
                     cx.spawn(async move |app, cx| {
@@ -77,6 +80,12 @@ fn main() {
                                 AppEvents::BluetoothDevices { count } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
                                         this.bluetooth_details.devices = count;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::OutputSoundDevice { device_info } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.sound_device = Some(device_info);
                                         cx.notify();
                                     });
                                 }

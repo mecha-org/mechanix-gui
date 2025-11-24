@@ -5,12 +5,13 @@ use crate::{
     events::BtEvents,
     ui::{
         icon::{Icon, IconName},
-        widgets::{Slider, SliderEvent, SliderState, IconButton},
+        widgets::{IconButton, Slider, SliderEvent, SliderState},
     },
 };
 use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
+use pulseaudio::service::DeviceInfo;
 
 pub enum PowerMode {
     High,
@@ -44,6 +45,7 @@ pub struct SettingsDrawer {
 
     pub wireless_details: WirelessDetails,
     pub bluetooth_details: BluetoothDetails,
+    pub sound_device: Option<DeviceInfo>,
     pub open_terminal: bool,
     pub cell_signal: bool,
 
@@ -107,6 +109,7 @@ impl SettingsDrawer {
                 devices: 0,
                 connected_device: None,
             },
+            sound_device: None,
             open_terminal: false,
             cell_signal: false,
             brightness_slider_state: brightness_slider,
@@ -138,8 +141,8 @@ impl Render for SettingsDrawer {
                 .connected_network
                 .clone()
                 .map(|s| s.ssid)
-                .unwrap_or_else(|| "".to_string()),
-            false => " ".to_string(),
+                .unwrap_or_else(|| "Wi-Fi".to_string()),
+            false => "Wi-Fi".to_string(),
         };
 
         let bluetooth_icon = match self.bluetooth_details.enabled {
@@ -150,10 +153,15 @@ impl Render for SettingsDrawer {
             false => IconName::BluetoothOff,
         };
         let bluetooth_label = match self.bluetooth_details.enabled {
-            true => format!("{} Devices", self.bluetooth_details.devices),
-            false => " ".to_string(),
+            true => {
+                if self.bluetooth_details.devices == 0 {
+                    "Bluetooth".to_string()
+                } else {
+                    format!("{} Devices", self.bluetooth_details.devices)
+                }
+            }
+            false => "Bluetooth".to_string(),
         };
-        
 
         let rotation_icon = if self.rotation_on {
             IconName::RotationOn
@@ -517,7 +525,7 @@ impl Render for SettingsDrawer {
                             .active(self.bluetooth_details.enabled)
                             .active_icon_color(rgb(0x4892F1))
                             .active_bg_color(rgb(0x202020))
-                             .on_click(cx.listener(
+                            .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
