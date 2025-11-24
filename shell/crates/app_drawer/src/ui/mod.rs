@@ -1,40 +1,97 @@
 use gpui::prelude::*;
 use gpui::*;
 use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 
-use crate::models::{AppDrawerState, AppInfo};
+use crate::models::AppDrawerState;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
-use crate::ui::widgets::{IconButton, SubWindow, button};
+use crate::ui::utils::prelude::{DesktopApp, DesktopApps};
+use crate::ui::widgets::{IconButton, SubWindow};
 use input::TextInput;
 
 pub mod icon;
 pub mod input;
+pub mod utils;
 mod widgets;
 
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
+const SEARCH_BAR_WIDTH: f32 = 508.0;
+
+const GRID_ROW_HEIGHT: f32 = 142.0;
+const GRID_ROW_WIDTH: f32 = 508.0;
+
+const SECTION_SPACING: f32 = 32.0;
+const APP_SIZE: (f32, f32) = (540., 620.);
 
 pub struct AppDrawer {
     pub state: AppDrawerState,
+    pub grouped: HashMap<String, Vec<DesktopApp>>,
     scroll_offset: Pixels,
     last_scroll_offset: Pixels,
     drag_start_y: Pixels,
     is_dragging: bool,
     content_height: Pixels,
     pub text_input: Entity<TextInput>,
+    show_popup: bool,
+    popup_category: String,
 }
 
 impl AppDrawer {
     pub fn new(state: AppDrawerState, cx: &mut Context<Self>) -> Self {
+        let grouped = state.apps.clone().get_apps_by_categories();
+
         Self {
             state,
+            grouped,
             scroll_offset: px(0.),
             last_scroll_offset: px(0.),
             drag_start_y: px(0.),
             is_dragging: false,
             content_height: px(0.),
             text_input: cx.new(|cx| TextInput::new(cx)),
+            show_popup: false,
+            popup_category: "".to_string(),
         }
+    }
+
+    fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
+        // Fixed container height - adjust this value as needed
+        let container_height = px(APP_SIZE.1 - SEARCH_BAR_HEIGHT); // You can change this to whatever height you want
+
+        // Max scroll: when content is at the top (no empty space)
+        let max_scroll = px(0.0);
+
+        // Min scroll: when bottom of content reaches container bottom
+        let min_scroll = container_height - content_height;
+
+        // If content is smaller than container, don't allow scrolling
+        if content_height <= container_height {
+            (px(0.0), px(0.0))
+        } else {
+            (min_scroll, max_scroll)
+        }
+    }
+
+    fn estimate_content_height(&self) -> Pixels {
+        // Count total apps per category
+        let grouped: HashMap<String, Vec<DesktopApp>> =
+            self.state.apps.clone().get_apps_by_categories();
+
+        let mut total = px(0.0);
+
+        for (_, apps) in grouped.iter() {
+            let rows = ((apps.len() as f32) / 4.0).ceil() as usize;
+
+            // Add height for this category
+            total += px(GRID_ROW_HEIGHT) * rows + px(SECTION_SPACING);
+        }
+
+        // Adjust for search bar since drawer height = 620px - SEARCH_BAR_HEIGHT
+        total - px(SEARCH_BAR_HEIGHT)
     }
 
     fn on_mouse_down(
@@ -51,70 +108,36 @@ impl AppDrawer {
 
     fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
         self.is_dragging = false;
+        self.last_scroll_offset = self.scroll_offset;
     }
 
     fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
         if self.is_dragging {
-            let delta = event.position.y - self.drag_start_y;
+            let delta_y = event.position.y - self.drag_start_y;
 
-            let new_offset = self.last_scroll_offset + delta;
+            // Calculate new scroll offset
+            let new_scroll_offset = self.last_scroll_offset + delta_y;
 
-            // Scroll bounds
-            let container_h = px(620.);
+            // Apply bounds based on current content
+            let content_height = self.estimate_content_height();
+            let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
 
-            // prevent min > max
-            let min_scroll = (container_h - self.content_height).min(px(0.));
-            let max_scroll = px(0.);
-
-            self.scroll_offset = new_offset.clamp(min_scroll, max_scroll);
+            self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
 
             cx.notify();
         }
-    }
-
-    fn calculate_popup_size(apps_len: usize) -> (Pixels, Pixels) {
-        let grid_row_height = px(142.0); // your grid height
-        let header_height = px(46.0); // your category header image height
-        let padding = px(40.0); // top/bottom padding
-
-        let rows = ((apps_len as f32) / 4.0).ceil();
-
-        // let popup_height = header_height + grid_row_height * rows + padding;
-        let popup_height = grid_row_height * rows + padding;
-
-        let popup_width = px(508.0); // same as grid width
-
-        (popup_width, popup_height)
     }
 }
 
 impl Render for AppDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let window_bounds_popup =
-            WindowBounds::Windowed(Bounds::centered(None, size(px(420.0), px(420.0)), cx));
         let window_bounds = window.bounds();
 
         // Group apps by category
-        let mut grouped: BTreeMap<String, Vec<AppInfo>> = BTreeMap::new();
-        for app in self.state.apps.clone() {
-            grouped.entry(app.category.clone()).or_default().push(app);
-        }
+        let apps = self.state.apps.clone();
+        let grouped = &self.grouped;
 
-        // Estimate your actual content height
-        let mut total_height = px(0.0);
-        let grid_row_h = px(142.0); // height of one grid box
-        let spacing_between_sections = px(32.0); // spacing between sections
-
-        for (_, apps) in grouped.iter() {
-            // one row per 4 apps
-            let rows = ((apps.len() as f32) / 4.0).ceil() as usize;
-            let section_height = grid_row_h * rows;
-
-            total_height += section_height + spacing_between_sections;
-        }
-
-        self.content_height = total_height - SEARCH_BAR_HEIGHT.into();
-
+        // Search
         let text_input = self.text_input.clone();
         text_input.update(cx, |input, _| {
             input.placeholder = "Search here".into();
@@ -146,10 +169,7 @@ impl Render for AppDrawer {
                                     apps.clone()
                                 };
 
-                                let popup_apps = apps.clone();
-                                let popup_apps_for_header = popup_apps.clone();
-                                let cat_for_button = category.clone();
-                                let cat_for_button_cloned = cat_for_button.clone();
+                                let category_for_popup = category.clone();
 
                                 div()
                                     .pt(px(-38.))
@@ -161,28 +181,29 @@ impl Render for AppDrawer {
                                             .bg(rgb(0x181818))
                                             .p(px(20.))
                                             .rounded(px(12.))
-                                            .w(px(508.))
-                                            .h(px(142.))
+                                            .w(px(GRID_ROW_WIDTH))
+                                            .h(px(GRID_ROW_HEIGHT))
                                             .justify_center()
                                             .top(self.scroll_offset)
                                             .children(shown_apps.into_iter().map(|app| {
                                                 let app_name = app.name.clone();
                                                 let app_icon = app.icon_path.clone();
-                                                let app_id = app.id.clone();
+                                                let app_id = app.app_id.clone();
+                                                let id = hash_id(&app_id);
 
-                                                IconButton::new(("app", app_id))
-                                                    .icon(app_icon)
-                                                    .on_click(cx.listener(move |_, _, _, _| {
-                                                        println!("Launching app: {}", app_name);
-                                                    }))
+                                                let icon =
+                                                    DesktopApp::resolved_icon(&app.icon_path);
+                                                IconButton::new(id + idx).icon(icon).on_click(
+                                                    cx.listener(move |_, _, _, _| {
+                                                        let _ = DesktopApps::run_app_exec(
+                                                            app.exec.as_str(),
+                                                        );
+                                                    }),
+                                                )
                                             })),
                                     )
                                     .child({
-                                        let popup_data = popup_apps_for_header.clone();
-                                        let popup_data_cloned = popup_data.clone();
-                                        let cat_for_popup = category.clone();
-                                        let cat_for_popup_cloned = cat_for_popup.clone();
-                                        let cat_for_header = category.clone();
+                                        let category_for_header = category.clone();
 
                                         div()
                                             .relative()
@@ -196,32 +217,33 @@ impl Render for AppDrawer {
                                                     .w(px(528.))
                                                     .h(px(38.))
                                                     .bottom(px(-50.))
-                                                    .when(show_popup, |img| {
+                                                    // .when(show_popup, |img| {
+                                                    //     img.on_click(cx.listener(
+                                                    //         move |this, _event, _window, cx| {
+                                                    //             this.show_popup = true;
+                                                    //             this.popup_category =
+                                                    //                 category_for_popup.clone();
+
+                                                    //             // request re-render
+                                                    //             cx.notify();
+                                                    //         },
+                                                    //     ))
+                                                    // }),
+
+                                                .when(show_popup, |img| {
                                                         img.on_click(cx.listener(
                                                             move |_, _event, _window, cx| {
-                                                                let popup_apps = popup_apps.clone();
-                                                                let cat =
-                                                                    cat_for_button_cloned.clone();
-
-                                                                let (popup_w, popup_h) =
-                                                                    AppDrawer::calculate_popup_size(
-                                                                        popup_apps.len(),
-                                                                    );
-
-                                                                let popup_size =
-                                                                    size(popup_w, popup_h);
-
+                                                                let popup_category =
+                                                                    category_for_popup.clone();
                                                                 let popup_origin = point(
                                                                     window_bounds.origin.x,
-                                                                    window_bounds.origin.y, // top position
+                                                                    window_bounds.origin.y,
                                                                 );
 
                                                                 let popup_bounds = Bounds {
                                                                     origin: popup_origin,
                                                                     size: window_bounds.size,
                                                                 };
-
-                                                                let main_size = window_bounds.size;
 
                                                                 cx.open_window(
                                                                     WindowOptions {
@@ -230,16 +252,18 @@ impl Render for AppDrawer {
                                                                                 popup_bounds,
                                                                             ),
                                                                         ),
+                                                                        window_background: WindowBackgroundAppearance::Transparent,
                                                                         kind: WindowKind::PopUp,
                                                                         show: true,
                                                                         is_movable: false,
                                                                         ..Default::default()
                                                                     },
                                                                     move |_, cx| {
-                                                                        cx.new(|_| SubWindow {
-                                                                            apps: popup_apps
-                                                                                .clone(),
-                                                                            category: cat.clone(),
+                                                                        cx.new(|_| {
+                                                                            SubWindow::scan(
+                                                                                popup_category
+                                                                                    .clone(),
+                                                                            )
                                                                         })
                                                                     },
                                                                 )
@@ -262,7 +286,9 @@ impl Render for AppDrawer {
                                                                 .font_weight(FontWeight(400.0))
                                                                 .text_size(px(16.0))
                                                                 .text_color(rgb(0x888888))
-                                                                .child(cat_for_header.clone()),
+                                                                .child(category_for_header.clone())
+                                                                .text_ellipsis()
+                                                                .w(px(120.)),
                                                         ),
                                                     ),
                                             )
@@ -270,6 +296,22 @@ impl Render for AppDrawer {
                             }),
                     ),
             )
+            // .child(if self.show_popup {
+            //     div()
+            //         .absolute()
+            //         .top(px(0.))
+            //         .left(px(0.))
+            //         .w(px(APP_SIZE.0))
+            //         .h(px(APP_SIZE.1))
+            //         // Stop all mouse events from reaching AppDrawer
+            //         .on_mouse_down(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
+            //         .on_mouse_up(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
+            //         .on_mouse_move(|_, _event, cx| cx.stop_propagation())
+            //         .child(cx.new(|_| SubWindow::scan(self.popup_category.clone())))
+            //         .into_any()
+            // } else {
+            //     Empty.into_any()
+            // })
             .child(
                 div()
                     .h(px(SEARCH_BAR_HEIGHT))
@@ -277,7 +319,7 @@ impl Render for AppDrawer {
                     .bottom(px(6.))
                     .left(px(6.))
                     .right(px(6.))
-                    .w(px(508.))
+                    .w(px(SEARCH_BAR_WIDTH))
                     .child(
                         div().size_full().flex().flex_row().items_center().child(
                             div()
@@ -351,16 +393,11 @@ impl Render for AppDrawer {
                         ),
                     ),
             )
-        // .child(
-        //     div()
-        //         .flex()
-        //         .absolute()
-        //         .bottom(px(19.))
-        //         .left(px(210.))
-        //         .w(px(120.))
-        //         .h(px(4.))
-        //         .rounded(px(4.))
-        //         .bg(rgb(0x797979)),
-        // )
     }
+}
+
+fn hash_id(s: &str) -> usize {
+    let mut h = DefaultHasher::new();
+    s.hash(&mut h);
+    h.finish() as usize
 }
