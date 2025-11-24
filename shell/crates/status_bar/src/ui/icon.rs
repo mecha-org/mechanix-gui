@@ -1,7 +1,7 @@
 use gpui::{prelude::FluentBuilder, *};
 pub const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 
-#[derive(IntoElement, Clone)]
+#[derive(IntoElement, Clone, Debug)]
 pub enum IconName {
     WirelessOn,
     WirelessOff,

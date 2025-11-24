@@ -43,5 +43,8 @@ gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "7a0d37756b35e60
     "linux-impeller",
 ] }
 rust-embed = "8.8.0"
+networkmanager = { path = "dbus/freedesktop/networkmanager" }
+bluez = { path = "dbus/freedesktop/bluez" }
+upower = { path = "dbus/freedesktop/upower" }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = [ "env-filter" ] }
