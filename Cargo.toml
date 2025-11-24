@@ -46,3 +46,4 @@ rust-embed = "8.8.0"
 networkmanager = { path = "dbus/freedesktop/networkmanager" }
 bluez = { path = "dbus/freedesktop/bluez" }
 upower = { path = "dbus/freedesktop/upower" }
+pulseaudio = { path = "dbus/freedesktop/pulseaudio" }
