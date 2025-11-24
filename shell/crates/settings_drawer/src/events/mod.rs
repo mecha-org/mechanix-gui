@@ -1,8 +1,18 @@
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
 use pulseaudio::service::DeviceInfo;
+use upower::interfaces::device::BatteryState;
 
 #[derive(Debug)]
 pub enum AppEvents {
+    BatteryStateChanged {
+        state: BatteryState,
+    },
+    BatteryLevelChanged {
+        level: u8,
+    },
+    BatteryPercentageChanged {
+        value: u8,
+    },
     WirelessStatusChanged {
         enabled: bool,
     },
