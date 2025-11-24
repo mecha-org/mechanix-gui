@@ -12,7 +12,7 @@ pub enum ServerError {
     FailedStartFileSearchService(anyhow::Error),
     #[error("Failed to start app actions service: {0}")]
     FailedStartAppActionsService(anyhow::Error),
-    #[error("Failed to start external search service: {0}")]
+    #[error("Failed to start sources search service: {0}")]
     FailedStartExternalSearchService(anyhow::Error),
     #[error("Failed to start dbus server: {0}")]
     FailedStartDBusServer(zbus::Error),

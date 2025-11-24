@@ -1,6 +1,6 @@
 use crate::indexer::Indexer;
 use crate::utils::MetadataFields;
-use crate::ExternalServiceConfig;
+use crate::SourceSearchServiceConfig;
 use log::{debug, error, info, warn};
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::fs;
@@ -24,7 +24,7 @@ pub(crate) enum IndexCmd {
 
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Clone)]
 #[zvariant(signature = "dict")]
-pub struct ExternalSearchResult {
+pub struct SourceSearchResult {
     pub source: String,
     pub uri: String,
     pub title: String,
@@ -55,7 +55,7 @@ pub struct UpsertMetadata {
     pub source_entry_path: String,
 }
 
-impl Default for ExternalSearchResult {
+impl Default for SourceSearchResult {
     fn default() -> Self {
         Self {
             source: "".to_string(),
@@ -114,8 +114,8 @@ impl Debouncer {
     }
 }
 
-pub struct ExternalService {
-    config: ExternalServiceConfig,
+pub struct SourceSearchService {
+    config: SourceSearchServiceConfig,
     schema: Schema,
     pub fields: MetadataFields,
     index: Index,
@@ -126,9 +126,9 @@ pub struct ExternalService {
     cmd_tx: Option<mpsc::Sender<IndexCmd>>,
 }
 
-impl ExternalService {
-    pub fn new(config: &ExternalServiceConfig) -> anyhow::Result<Self> {
-        info!("Creating an external search service...");
+impl SourceSearchService {
+    pub fn new(config: &SourceSearchServiceConfig) -> anyhow::Result<Self> {
+        info!("Creating an sources search service...");
         let bundle = Self::build_schema()?;
         let schema = bundle.schema.clone();
         let fields = bundle.fields;
@@ -151,7 +151,7 @@ impl ExternalService {
             .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
             .try_into()?;
         let index_writer = index.writer(config.target_memory_usage_in_bytes)?;
-        Ok(ExternalService {
+        Ok(SourceSearchService {
             config: config.clone(),
             schema,
             index,
@@ -165,14 +165,14 @@ impl ExternalService {
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
-        info!("init external search service runner!");
+        info!("init sources search service runner!");
         let (cmd_tx, cmd_rx) = mpsc::channel::<IndexCmd>(256);
         self.cmd_tx = Some(cmd_tx.clone());
         let index_writer = self.index_writer.take().unwrap();
         let fields = self.fields.clone(); // if you implement Clone; else clone handles individually
         let indexer = Indexer::new(index_writer, fields);
         let indexer_handle = tokio::spawn(indexer.run(cmd_rx));
-        self.indexer_handle = Some(indexer_handle); // add field to ExternalService
+        self.indexer_handle = Some(indexer_handle); // add field to SourceService
 
         self.watcher_handler = Some(tokio::spawn({
             let cmd_tx = cmd_tx.clone();
@@ -250,8 +250,8 @@ impl ExternalService {
         &self,
         search_term: &str,
         limit: usize,
-    ) -> tantivy::Result<Vec<ExternalSearchResult>> {
-        info!(target: "search", "Listing external search results...");
+    ) -> tantivy::Result<Vec<SourceSearchResult>> {
+        info!(target: "search", "Listing sources search results...");
         let searcher = self.index_reader.searcher();
 
         // Look up the field to search in.
@@ -277,7 +277,7 @@ impl ExternalService {
 
         for (score, doc_addr) in top_docs {
             let doc: TantivyDocument = searcher.doc(doc_addr)?;
-            let mut app = ExternalSearchResult::default();
+            let mut app = SourceSearchResult::default();
             app = self.map_doc(&doc);
             app.score = score;
             results.push(app);

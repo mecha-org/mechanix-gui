@@ -1,5 +1,6 @@
 [package]
-name = "external"
+name = "sources"
+description = "Searches across user-defined/external sources"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

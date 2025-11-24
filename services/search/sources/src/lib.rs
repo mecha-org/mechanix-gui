@@ -5,7 +5,7 @@ pub mod utils;
 mod indexer;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct ExternalServiceConfig {
+pub struct SourceSearchServiceConfig {
     pub enable_search: bool,
     pub index_dir: String,
     pub app_dir: String,

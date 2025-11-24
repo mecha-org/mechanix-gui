@@ -2,7 +2,7 @@ use crate::SearchConfig;
 use anyhow::Result;
 use app_actions::service::AppActions;
 use apps::AppInfo;
-use external::service::{ExternalSearchResult, UpsertMetadata};
+use sources::service::{SourceSearchResult, UpsertMetadata};
 use files::FileInfo;
 use log::{debug, error, info, warn};
 use std::sync::Arc;
@@ -25,7 +25,7 @@ pub struct ServerInterface {
     pub app_search_service: Option<apps::AppSearchService>,
     pub file_search_service: Option<files::FileSearchService>,
     pub app_actions_service: Option<app_actions::AppActionsService>,
-    pub external_search_service: Option<external::service::ExternalService>,
+    pub external_search_service: Option<sources::service::SourceSearchService>,
 }
 
 #[interface(name = "org.mechanix.MxSearch")]
@@ -167,8 +167,8 @@ impl ServerInterface {
     pub async fn search_external(
         &self,
         search: &str,
-    ) -> zbus::fdo::Result<Vec<ExternalSearchResult>> {
-        info!("Search external: {}", search);
+    ) -> zbus::fdo::Result<Vec<SourceSearchResult>> {
+        info!("Search sources: {}", search);
         if let Some(service) = &self.external_search_service {
             // At some point later: perform a search
             let results = match service.search(search, self.config.apps.search_limit) {
@@ -218,8 +218,8 @@ impl ServerInterface {
             let results = match service.delete_by_ids(ids).await {
                 Ok(results) => results,
                 Err(err) => {
-                    error!("Error deleting external metadata by ids: {}", err);
-                    return Err(ZbusError::Failed("Error deleting external metadata".to_string()));
+                    error!("Error deleting sources metadata by ids: {}", err);
+                    return Err(ZbusError::Failed("Error deleting sources metadata".to_string()));
                 }
             };
             Ok(results)

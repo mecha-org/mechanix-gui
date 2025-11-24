@@ -7,8 +7,8 @@ use crate::server::{SERVED_AT, ServerInterface};
 use anyhow::{Context, Result};
 use app_actions::{AppActionsConfig, AppActionsService};
 use apps::{AppSearchService, Apps as AppSearchConfig};
-use external::ExternalServiceConfig;
-use external::service::ExternalService;
+use sources::SourceSearchServiceConfig;
+use sources::service::SourceSearchService;
 use files::{FileSearchService, FilesConfig as FileSearchConfig};
 use log::{debug, error, info};
 use serde::Deserialize;
@@ -28,7 +28,7 @@ pub struct SearchConfig {
     pub apps: AppSearchConfig,
     pub files: FileSearchConfig,
     pub app_actions: AppActionsConfig,
-    pub external: ExternalServiceConfig,
+    pub source: SourceSearchServiceConfig,
 }
 fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
     info!("Loading config from {}", path.as_ref().display());
@@ -103,12 +103,12 @@ async fn main() -> Result<(), ServerError> {
         file_search_service_opt = Some(file_search_service);
     }
 
-    let mut external_search_service_opt: Option<ExternalService> = None;
-    if config.external.enable_search {
-        let mut external_search_service = match ExternalService::new(&config.external) {
+    let mut external_search_service_opt: Option<SourceSearchService> = None;
+    if config.source.enable_search {
+        let mut external_search_service = match SourceSearchService::new(&config.source) {
             Ok(s) => s,
             Err(e) => {
-                error!("Failed to create external search service: {}", e);
+                error!("Failed to create sources search service: {}", e);
                 return Err(ServerError::FailedStartExternalSearchService(e));
             }
         };

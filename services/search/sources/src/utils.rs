@@ -1,4 +1,4 @@
-use crate::service::{ExternalSearchResult, ExternalService, UpsertMetadata};
+use crate::service::{SourceSearchResult, SourceSearchService, UpsertMetadata};
 use log::{error, info};
 use tantivy::schema::document::CompactDocValue;
 use tantivy::schema::{Field, Schema, Value, STORED, STRING, TEXT};
@@ -24,7 +24,7 @@ pub struct SchemaBundle {
     pub schema: Schema,
     pub fields: MetadataFields,
 }
-impl ExternalService {
+impl SourceSearchService {
 
     //TODO: Unused code, need to refactor so that we can use same in indexer.rs
 
@@ -99,9 +99,9 @@ impl ExternalService {
     }
 
     // Map a tantivy document into our result struct using pre-resolved fields.
-    pub(crate) fn map_doc(&self, doc: &TantivyDocument) -> ExternalSearchResult {
+    pub(crate) fn map_doc(&self, doc: &TantivyDocument) -> SourceSearchResult {
         let f = &self.fields;
-        ExternalSearchResult {
+        SourceSearchResult {
             source: get_text(doc, f.source).unwrap_or_default(),
             uri: get_text(doc, f.uri).unwrap_or_default(),
             title: get_text(doc, f.title).unwrap_or_default(),
