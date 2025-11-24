@@ -93,8 +93,8 @@ impl DesktopApps {
         map
     }
 
-    pub fn get_apps_by_categories(&self) -> BTreeMap<String, Vec<DesktopApp>> {
-        let mut map: BTreeMap<String, Vec<DesktopApp>> = BTreeMap::new();
+    pub fn get_apps_by_categories(&self) -> HashMap<String, Vec<DesktopApp>> {
+        let mut map: HashMap<String, Vec<DesktopApp>> = HashMap::new();
 
         for app in &self.apps {
             // If an app has NO categories, put it in "Uncategorized"

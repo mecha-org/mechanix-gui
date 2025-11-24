@@ -19,16 +19,25 @@ pub mod utils;
 mod widgets;
 
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
+const SEARCH_BAR_WIDTH: f32 = 508.0;
+
+const GRID_ROW_HEIGHT: f32 = 142.0;
+const GRID_ROW_WIDTH: f32 = 508.0;
+
+const SECTION_SPACING: f32 = 32.0;
+const APP_SIZE: (f32, f32) = (540., 620.);
 
 pub struct AppDrawer {
     pub state: AppDrawerState,
-    pub grouped: BTreeMap<String, Vec<DesktopApp>>,
+    pub grouped: HashMap<String, Vec<DesktopApp>>,
     scroll_offset: Pixels,
     last_scroll_offset: Pixels,
     drag_start_y: Pixels,
     is_dragging: bool,
     content_height: Pixels,
     pub text_input: Entity<TextInput>,
+    show_popup: bool,
+    popup_category: String,
 }
 
 impl AppDrawer {
@@ -44,12 +53,14 @@ impl AppDrawer {
             is_dragging: false,
             content_height: px(0.),
             text_input: cx.new(|cx| TextInput::new(cx)),
+            show_popup: false,
+            popup_category: "".to_string(),
         }
     }
 
     fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
         // Fixed container height - adjust this value as needed
-        let container_height = px(620.0 - SEARCH_BAR_HEIGHT); // You can change this to whatever height you want
+        let container_height = px(APP_SIZE.1 - SEARCH_BAR_HEIGHT); // You can change this to whatever height you want
 
         // Max scroll: when content is at the top (no empty space)
         let max_scroll = px(0.0);
@@ -66,11 +77,8 @@ impl AppDrawer {
     }
 
     fn estimate_content_height(&self) -> Pixels {
-        let grid_row_height = px(142.0); // height of a grid row (4 apps)
-        let section_spacing = px(32.0); // padding between category sections
-
         // Count total apps per category
-        let grouped: BTreeMap<String, Vec<DesktopApp>> =
+        let grouped: HashMap<String, Vec<DesktopApp>> =
             self.state.apps.clone().get_apps_by_categories();
 
         let mut total = px(0.0);
@@ -79,7 +87,7 @@ impl AppDrawer {
             let rows = ((apps.len() as f32) / 4.0).ceil() as usize;
 
             // Add height for this category
-            total += grid_row_height * rows + section_spacing;
+            total += px(GRID_ROW_HEIGHT) * rows + px(SECTION_SPACING);
         }
 
         // Adjust for search bar since drawer height = 620px - SEARCH_BAR_HEIGHT
@@ -173,8 +181,8 @@ impl Render for AppDrawer {
                                             .bg(rgb(0x181818))
                                             .p(px(20.))
                                             .rounded(px(12.))
-                                            .w(px(508.))
-                                            .h(px(142.))
+                                            .w(px(GRID_ROW_WIDTH))
+                                            .h(px(GRID_ROW_HEIGHT))
                                             .justify_center()
                                             .top(self.scroll_offset)
                                             .children(shown_apps.into_iter().map(|app| {
@@ -209,7 +217,20 @@ impl Render for AppDrawer {
                                                     .w(px(528.))
                                                     .h(px(38.))
                                                     .bottom(px(-50.))
-                                                    .when(show_popup, |img| {
+                                                    // .when(show_popup, |img| {
+                                                    //     img.on_click(cx.listener(
+                                                    //         move |this, _event, _window, cx| {
+                                                    //             this.show_popup = true;
+                                                    //             this.popup_category =
+                                                    //                 category_for_popup.clone();
+
+                                                    //             // request re-render
+                                                    //             cx.notify();
+                                                    //         },
+                                                    //     ))
+                                                    // }),
+
+                                                .when(show_popup, |img| {
                                                         img.on_click(cx.listener(
                                                             move |_, _event, _window, cx| {
                                                                 let popup_category =
@@ -224,8 +245,6 @@ impl Render for AppDrawer {
                                                                     size: window_bounds.size,
                                                                 };
 
-                                                                let main_size = window_bounds.size;
-
                                                                 cx.open_window(
                                                                     WindowOptions {
                                                                         window_bounds: Some(
@@ -233,6 +252,7 @@ impl Render for AppDrawer {
                                                                                 popup_bounds,
                                                                             ),
                                                                         ),
+                                                                        window_background: WindowBackgroundAppearance::Transparent,
                                                                         kind: WindowKind::PopUp,
                                                                         show: true,
                                                                         is_movable: false,
@@ -276,6 +296,22 @@ impl Render for AppDrawer {
                             }),
                     ),
             )
+            // .child(if self.show_popup {
+            //     div()
+            //         .absolute()
+            //         .top(px(0.))
+            //         .left(px(0.))
+            //         .w(px(APP_SIZE.0))
+            //         .h(px(APP_SIZE.1))
+            //         // Stop all mouse events from reaching AppDrawer
+            //         .on_mouse_down(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
+            //         .on_mouse_up(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
+            //         .on_mouse_move(|_, _event, cx| cx.stop_propagation())
+            //         .child(cx.new(|_| SubWindow::scan(self.popup_category.clone())))
+            //         .into_any()
+            // } else {
+            //     Empty.into_any()
+            // })
             .child(
                 div()
                     .h(px(SEARCH_BAR_HEIGHT))
@@ -283,7 +319,7 @@ impl Render for AppDrawer {
                     .bottom(px(6.))
                     .left(px(6.))
                     .right(px(6.))
-                    .w(px(508.))
+                    .w(px(SEARCH_BAR_WIDTH))
                     .child(
                         div().size_full().flex().flex_row().items_center().child(
                             div()
