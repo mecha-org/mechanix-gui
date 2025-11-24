@@ -5,13 +5,16 @@ use crate::{
     events::BtEvents,
     ui::{
         icon::{Icon, IconName},
-        widgets::{Slider, SliderEvent, SliderState, IconButton},
+        widgets::{IconButton, Slider, SliderEvent, SliderState},
     },
 };
 use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
+use pulseaudio::service::DeviceInfo;
 
+const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+const APP_SIZE: (f32, f32) = (540., 620.);
 pub enum PowerMode {
     High,
     Balanced,
@@ -44,6 +47,7 @@ pub struct SettingsDrawer {
 
     pub wireless_details: WirelessDetails,
     pub bluetooth_details: BluetoothDetails,
+    pub sound_device: Option<DeviceInfo>,
     pub open_terminal: bool,
     pub cell_signal: bool,
 
@@ -56,6 +60,10 @@ pub struct SettingsDrawer {
     pub nm_tx: mpsc::Sender<NmEvents>,
     pub bt_tx: mpsc::Sender<BtEvents>,
     _subscriptions: Vec<Subscription>,
+
+    position: f32,
+    drag_offset: Option<f32>,
+    drag_start_pos: f32,
 }
 
 impl SettingsDrawer {
@@ -107,6 +115,7 @@ impl SettingsDrawer {
                 devices: 0,
                 connected_device: None,
             },
+            sound_device: None,
             open_terminal: false,
             cell_signal: false,
             brightness_slider_state: brightness_slider,
@@ -116,12 +125,160 @@ impl SettingsDrawer {
             nm_tx,
             bt_tx,
             _subscriptions,
+
+            position: Self::closed_pos(),
+            drag_offset: None,
+            drag_start_pos: 0.0,
         }
     }
 }
 
 impl Render for SettingsDrawer {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let open_y = 0.;
+        let closed_y = Self::closed_pos();
+
+        let threshold_px = 40.;
+
+        div()
+            .w_full()
+            .h_full()
+            .on_mouse_move(
+                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                    if let Some(offset) = this.drag_offset {
+                        let new_y = event.position.y.to_f64() as f32 - offset;
+                        this.position = new_y.clamp(open_y, closed_y);
+                        cx.notify();
+                    }
+                }),
+            )
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(move |this, _, window, cx| {
+                    if this.drag_offset.is_some() {
+                        this.drag_offset = None;
+
+                        let target;
+                        let started_closed = this.drag_start_pos > (closed_y / 2.0);
+
+                        if started_closed {
+                            if this.position < (closed_y - threshold_px) {
+                                target = open_y;
+                                this.update_input_regions(window, false);
+                            } else {
+                                target = closed_y;
+                                this.update_input_regions(window, true);
+                            }
+                        } else {
+                            if this.position > (open_y + threshold_px) {
+                                target = closed_y;
+                                this.update_input_regions(window, true);
+                            } else {
+                                target = open_y;
+                                this.update_input_regions(window, false);
+                            }
+                        }
+                        this.snap_to(target, cx);
+                        cx.notify();
+                    }
+                }),
+            )
+            .child(
+                div()
+                    .w_full()
+                    .h_full()
+                    .absolute()
+                    .top(px(self.position))
+                    .child(
+                        div()
+                            .w_full()
+                            .flex()
+                            .flex_row()
+                            .justify_end()
+                            .h(px(NAVBAR_SIZE.1))
+                            .child(
+                                img(IconName::Navbar.resolve())
+                                    .id("settings-drawer-navbar")
+                                    .on_mouse_down(
+                                        MouseButton::Left,
+                                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                                            cx.stop_propagation();
+                                            this.drag_start_pos = this.position;
+                                            this.drag_offset = Some(
+                                                event.position.y.to_f64() as f32 - this.position,
+                                            );
+                                            cx.notify();
+                                        }),
+                                    ),
+                            ),
+                    )
+                    .child(self.drawer_items(cx)),
+            )
+    }
+}
+
+impl SettingsDrawer {
+    fn closed_pos() -> f32 {
+        APP_SIZE.1 - NAVBAR_SIZE.1
+    }
+
+    fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.position;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
+        cx.spawn(
+            async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
+                loop {
+                    let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
+
+                    // Check if animation is done
+                    if elapsed >= duration_ms {
+                        this.update(cx, |this, cx| {
+                            this.position = target;
+                            cx.notify();
+                        })
+                        .ok();
+                        break;
+                    }
+
+                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let ease = 1.0 - (1.0 - t).powi(3);
+                    let current = start + (change * ease);
+
+                    this.update(cx, |this, cx| {
+                        this.position = current;
+                        cx.notify();
+                    })
+                    .ok();
+
+                    cx.background_executor()
+                        .timer(std::time::Duration::from_millis(16))
+                        .await;
+                }
+            },
+        )
+        .detach();
+    }
+    fn update_input_regions(&self, window: &mut Window, open: bool) {
+        let mut regions = Vec::new();
+
+        if open {
+            regions.push(Bounds {
+                origin: point(px(APP_SIZE.0 - NAVBAR_SIZE.0), px(Self::closed_pos())),
+                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+            });
+        } else {
+            regions.push(Bounds {
+                origin: point(px(0.), px(0.)),
+                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+            });
+        }
+        window.set_input_regions(Some(regions));
+    }
+
+    fn drawer_items(&mut self, cx: &mut Context<SettingsDrawer>) -> impl IntoElement {
         let wireless_icon = match self.wireless_details.enabled {
             true => match self.wireless_details.strength {
                 0..=20 => IconName::WirelessLow,
@@ -138,8 +295,8 @@ impl Render for SettingsDrawer {
                 .connected_network
                 .clone()
                 .map(|s| s.ssid)
-                .unwrap_or_else(|| "".to_string()),
-            false => " ".to_string(),
+                .unwrap_or_else(|| "Wi-Fi".to_string()),
+            false => "Wi-Fi".to_string(),
         };
 
         let bluetooth_icon = match self.bluetooth_details.enabled {
@@ -150,10 +307,15 @@ impl Render for SettingsDrawer {
             false => IconName::BluetoothOff,
         };
         let bluetooth_label = match self.bluetooth_details.enabled {
-            true => format!("{} Devices", self.bluetooth_details.devices),
-            false => " ".to_string(),
+            true => {
+                if self.bluetooth_details.devices == 0 {
+                    "Bluetooth".to_string()
+                } else {
+                    format!("{} Devices", self.bluetooth_details.devices)
+                }
+            }
+            false => "Bluetooth".to_string(),
         };
-        
 
         let rotation_icon = if self.rotation_on {
             IconName::RotationOn
@@ -517,7 +679,7 @@ impl Render for SettingsDrawer {
                             .active(self.bluetooth_details.enabled)
                             .active_icon_color(rgb(0x4892F1))
                             .active_bg_color(rgb(0x202020))
-                             .on_click(cx.listener(
+                            .on_click(cx.listener(
                                 |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,

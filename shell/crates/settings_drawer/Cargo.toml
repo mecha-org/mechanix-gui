@@ -13,6 +13,7 @@ keywords.workspace = true
 [dependencies]
 networkmanager = { workspace = true }
 bluez = { workspace = true }
+pulseaudio = { workspace = true }
 commons = { path = "../commons" }
 gpui = { workspace = true }
 rust-embed = { workspace = true }

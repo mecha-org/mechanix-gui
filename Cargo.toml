@@ -46,3 +46,6 @@ rust-embed = "8.8.0"
 networkmanager = { path = "dbus/freedesktop/networkmanager" }
 bluez = { path = "dbus/freedesktop/bluez" }
 upower = { path = "dbus/freedesktop/upower" }
+pulseaudio = { path = "dbus/freedesktop/pulseaudio" }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = [ "env-filter" ] }
