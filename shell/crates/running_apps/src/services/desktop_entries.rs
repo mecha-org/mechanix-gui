@@ -215,10 +215,6 @@ impl IconLoader {
 
         // Iterate on all XDG_DATA_DIRS to look for icons.
         for data_dir in data_dirs {
-            // Get icon directory location in the default theme.
-            //
-            // NOTE: In the future, we might want to parse the index.theme of the theme we
-            // want to load, to handle the proper inheritance hierarchy.
             let mut icons_dir = data_dir.to_owned();
             icons_dir.push("icons");
             icons_dir.push(theme_name);
@@ -232,7 +228,6 @@ impl IconLoader {
                     }
                 };
 
-                // Handle standardized icon theme directory layout.
                 let image_type = if dir_name == "scalable" {
                     ImageType::Scalable
                 } else if dir_name == "symbolic" {

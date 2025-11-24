@@ -1,6 +1,6 @@
 use crate::events::{AppEvents, NmEvents};
 use futures::{SinkExt, StreamExt, channel::mpsc, select};
-use networkmanager::service::NetworkManagerService;
+use networkmanager::{interfaces::wireless::NMState, service::NetworkManagerService};
 
 pub async fn sync_network_status(mut tx: mpsc::Sender<AppEvents>) {
     let network_manager = match NetworkManagerService::new().await {
@@ -17,6 +17,25 @@ pub async fn sync_network_status(mut tx: mpsc::Sender<AppEvents>) {
                 enabled: is_wireless_enabled,
             })
             .await;
+    }
+}
+
+pub async fn stream_network_device_events(tx: mpsc::Sender<AppEvents>) {
+    let network_manager = match NetworkManagerService::new().await {
+        Ok(nm) => nm,
+        Err(e) => {
+            eprintln!("Failed to create NetworkManagerService: {}", e);
+            return;
+        }
+    };
+    let wireless_status_receiver = network_manager.stream_device_events().await;
+    while let Ok(nm_state) = wireless_status_receiver.recv() {
+        match nm_state {
+            NMState::ConnectedGlobal => {
+                let _ = sync_connected_network(tx.clone()).await;
+            }
+            _ => {}
+        }
     }
 }
 
@@ -62,7 +81,7 @@ pub async fn sync_connected_network(mut tx: mpsc::Sender<AppEvents>) {
 }
 
 pub async fn handle_wireless_toggle(mut nm_rx: mpsc::Receiver<NmEvents>) {
-     let network_manager = match NetworkManagerService::new().await {
+    let network_manager = match NetworkManagerService::new().await {
         Ok(nm) => nm,
         Err(e) => {
             eprintln!("Failed to create NetworkManagerService: {}", e);

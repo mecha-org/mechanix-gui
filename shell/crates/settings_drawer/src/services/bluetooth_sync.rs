@@ -18,6 +18,22 @@ pub async fn sync_bluetooth_status(mut tx: mpsc::Sender<AppEvents>) {
     }
 }
 
+pub async fn stream_bluetooth_device_status(tx: mpsc::Sender<AppEvents>) {
+    let bluetooth_manager = match BluetoothService::new().await {
+        Ok(bluetooth_manager) => bluetooth_manager,
+        Err(e) => {
+            eprintln!("Failed to create BluetoothService: {}", e);
+            return;
+        }
+    };
+
+    let status_receiver = bluetooth_manager.stream_bluetooth_device_status().await;
+
+    while let Ok(_) = status_receiver.recv() {
+        sync_bluetooth_connected_status(tx.clone()).await;
+    }
+}
+
 pub async fn sync_bluetooth_connected_status(mut tx: mpsc::Sender<AppEvents>) {
     let bluetooth_manager = match BluetoothService::new().await {
         Ok(bluetooth_manager) => bluetooth_manager,
