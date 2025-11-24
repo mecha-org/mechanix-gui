@@ -3,6 +3,7 @@ use std::time::Duration;
 use gpui::prelude::*;
 use gpui::*;
 use tokio::sync::mpsc;
+use tracing::info;
 use crate::config::constants::*;
 use crate::models::models::{ DragDirection };
 use crate::prelude::app_manager::AppManagerMessage;
@@ -98,21 +99,12 @@ impl RunningApps {
             reply_to: reply_tx,
         }).await;
 
-        if let Err(e) = send_result {
-            eprintln!("Failed to send CloseApp message: {}", e);
+        if let Err(_) = send_result {
             return;
         }
 
-        match reply_rx.await {
-            Ok(Ok(success)) => {
-                println!("✅ App {} closed successfully: {}", app_id, success);
-            }
-            Ok(Err(e)) => {
-                eprintln!("❌ Error closing app {}: {}", app_id, e);
-            }
-            Err(e) => {
-                eprintln!("❌ Reply channel error: {}", e);
-            }
+        if let Ok(Ok(success)) = reply_rx.await {
+            info!("✅ App {} closed successfully: {}", app_id, success);
         }
     }
     fn send_close_app_message(

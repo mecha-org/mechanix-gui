@@ -4,8 +4,15 @@ use gpui::*;
 use running_apps::models::models::{ AppCard, RunningApps };
 use running_apps::prelude::app_manager::{ AppManagerService, AppMessage };
 use tokio::sync::mpsc;
+use tracing::{ error, info };
+use tracing_subscriber::EnvFilter;
 
 fn main() {
+    tracing_subscriber
+        ::fmt()
+        .with_env_filter(EnvFilter::from_default_env()) // reads RUST_LOG
+        .init();
+
     let application = gpui::Application::new().with_assets(Assets {});
     application.run(|cx| {
         let window_bounds = WindowBounds::Windowed(
@@ -40,7 +47,7 @@ fn main() {
             .detach();
 
         cx.spawn(async move |cx| {
-            println!("📬 Message receiver task started");
+            info!("📬 Message receiver task started");
             let rhandle = running_apps_handle;
 
             loop {
@@ -103,12 +110,11 @@ fn main() {
                         }
                     }
                     None => {
-                        println!("❌ app_channel closed, exiting loop");
+                        error!("❌ app_channel closed, exiting loop");
                         break;
                     }
                 }
             }
-            println!("📬 Message receiver loop ended");
         }).detach();
 
         cx.activate(true);

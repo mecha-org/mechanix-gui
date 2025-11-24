@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use gpui::prelude::*;
 use gpui::*;
+use tracing::info;
 use crate::config::constants::VERTICAL_TARGET_THRESHOLD;
 use crate::prelude::app_manager::AppManagerMessage;
 use crate::ui::RunningApps;
@@ -93,18 +94,15 @@ impl RunningApps {
                 let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
 
                 if
-                    let Err(e) = tx.send(AppManagerMessage::CloseAllApps {
+                    let Err(_) = tx.send(AppManagerMessage::CloseAllApps {
                         reply_to: reply_tx,
                     }).await
                 {
-                    eprintln!("❌ Failed to send CloseAllApps message: {}", e);
                     return;
                 }
 
-                match reply_rx.await {
-                    Ok(Ok(success)) => println!("✅ All apps closed successfully: {}", success),
-                    Ok(Err(e)) => eprintln!("❌ Error closing all apps: {}", e),
-                    Err(e) => eprintln!("❌ Reply channel error: {}", e),
+                if let Ok(Ok(success)) = reply_rx.await {
+                    info!("✅ All apps closed successfully: {}", success);
                 }
             })
             .detach();

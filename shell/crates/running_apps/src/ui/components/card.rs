@@ -1,15 +1,14 @@
 use gpui::prelude::*;
 use gpui::*;
+use tracing::info;
 use crate::config::constants::*;
-use crate::models::models::{  DragDirection };
+use crate::models::models::{ DragDirection };
 use crate::prelude::app_manager::AppManagerMessage;
 use crate::ui::{ CardDragData, RunningApps };
 use crate::ui::icon::{ Icon, IconName };
 
 impl RunningApps {
     fn on_app_click(&mut self, app_id: String, cx: &mut Context<Self>) {
-        println!("RunningApps::on_app_click() - app_id: {}", app_id);
-
         let tx_clone = self.message_tx.clone();
         let app_id_clone = app_id.clone();
 
@@ -18,23 +17,14 @@ impl RunningApps {
                 let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
 
                 if
-                    let Err(e) = tx_clone.send(AppManagerMessage::LaunchApp {
+                    let Err(_) = tx_clone.send(AppManagerMessage::LaunchApp {
                         app_id: app_id_clone,
                         reply_to: reply_tx,
                     }).await
                 {
-                    eprintln!("❌ Failed to send ActivateAppInstance message: {}", e);
                 } else {
-                    match reply_rx.await {
-                        Ok(Ok(success)) => {
-                            println!("✅ App activated successfully: {}", success);
-                        }
-                        Ok(Err(e)) => {
-                            eprintln!("❌ Error activating app: {}", e);
-                        }
-                        Err(e) => {
-                            eprintln!("❌ Reply channel error: {}", e);
-                        }
+                    if let Ok(Ok(success)) = reply_rx.await {
+                        info!("✅ App activated successfully:: {}", success);
                     }
                 }
             })

@@ -160,7 +160,6 @@ impl AppManagerService {
                             let _ = reply_to.send(res);
                         }
                         AppManagerMessage::MinimizeAll => {
-                            println!("minimizing all apps");
                             // let _ = minimize_all(self
                             //      .top_level_sender
                             //         .as_ref()
@@ -219,7 +218,6 @@ impl AppManagerService {
         let mut is_app_launched = false;
 
         if self.is_app_already_running(app_id) {
-            println!("activating old instance {:?}", app_id);
             is_app_launched = match self.activate_app(app_id).await {
                 Ok(v) => v,
                 Err(e) => bail!(e),
@@ -444,8 +442,6 @@ fn format_apps_from_map_to_vec(
     desktop_entries: Vec<DesktopEntry>
 ) -> Vec<AppDetails> {
     let mut apps_vec: Vec<AppDetails> = Vec::new();
-
-    println!("apps len {}", apps.len());
 
     for (app_id, app_instances) in apps {
         let mut name: Option<String> = None;
