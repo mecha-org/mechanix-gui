@@ -163,52 +163,14 @@ impl AppManagerService {
         }
     }
 
-    pub fn start_app(&self, app_id: &str) -> Result<bool> {
-        let exec = match app_id {
-            "mechanix_notes" =>
-                "mechanix_notes -b /usr/share/mechanix/mechanix-notes-beta/ -w 540 -h 620 -k -s 1",
-            "mechanix_settings" => {
-                "mechanix_settings -b /usr/share/mechanix/mechanix-settings-beta/ -w 540 -h 620 -k -s 1"
-            }
-            "mechanix_files" =>
-                "mechanix_files -b /usr/share/mechanix/mechanix-files-beta/ -w 540 -h 620 -k -s 1",
-            "mechanix_music" =>
-                "mechanix_music -b /usr/share/mechanix/mechanix-music-beta/ -w 540 -h 620 -k -s 1",
-            "alacritty" => "alacritty",
-            "chromium" =>
-                "chromium --new-tabs --ozone-platform=wayland  --no-sandbox   --disable-logging   --disable-background-timer-throttling   --disable-backgrounding-occluded-windows   --disable-renderer-backgrounding   --disable-component-update   --disable-sync   --disable-translate   --disable-extensions   --disable-features=TranslateUI,MediaRouter,OptimizationGuideModelDownloading   --enable-low-end-device-mode   --process-per-site   --memory-pressure-off   --start-maximized",
-            "firefox" => "firefox",
-            "hackernews" =>
-                "chromium --new-tab \"https://news.ycombinator.com/item?id=45256651\"  --ozone-platform=wayland  --no-sandbox   --disable-logging   --disable-background-timer-throttling   --disable-backgrounding-occluded-windows   --disable-renderer-backgrounding   --disable-component-update   --disable-sync   --disable-translate   --disable-extensions   --disable-features=TranslateUI,MediaRouter,OptimizationGuideModelDownloading   --enable-low-end-device-mode   --process-per-site   --memory-pressure-off   --start-maximized",
-            _ => "",
-        };
-
-        if !exec.is_empty() {
-            let mut args: Vec<String> = vec!["-c".to_string()];
-            args.push(exec.to_string());
-            // let res = spawn_command("sh".to_string(), args);
-            // if let Err(why) = res {
-            //     println!("AppManagerService::start_app() error {:?}", why);
-            // }
-        }
-
-        Ok(true)
-    }
-
     pub async fn launch_app(&self, app_id: &str) -> Result<bool> {
         //check if app is already open, then launch that
         //else spawn app
-        let is_app_launched;
+        let mut is_app_launched = false;
 
         if self.is_app_already_running(app_id) {
             println!("activating old instance {:?}", app_id);
             is_app_launched = match self.activate_app(app_id).await {
-                Ok(v) => v,
-                Err(e) => bail!(e),
-            };
-        } else {
-            println!("launching new instance {:?}", app_id);
-            is_app_launched = match self.start_app(app_id) {
                 Ok(v) => v,
                 Err(e) => bail!(e),
             };

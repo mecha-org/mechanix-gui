@@ -1,7 +1,7 @@
 use commons::prelude::*;
 use gpui::prelude::*;
 use gpui::*;
-use running_apps::models::models::{AppCard, AppMessage, RunningApps};
+use running_apps::models::models::{ AppCard, AppMessage, RunningApps };
 use running_apps::prelude::app_manager::AppManagerService;
 use tokio::sync::mpsc;
 
@@ -71,32 +71,33 @@ fn main() {
 
                             let _ = rhandle.update(
                                 cx,
-                                |a: &mut RunningApps, _, c: &mut Context<'_, RunningApps>| {
-                                    let old_apps_count = a.apps.len();
+                                |this: &mut RunningApps, _, cx: &mut Context<'_, RunningApps>| {
+                                    let old_apps_count = this.apps.len();
 
-                                    a.apps = latest_apps;
+                                    this.apps = latest_apps;
 
                                     // Only recalculate scroll if the number of apps changed
                                     if old_apps_count != new_apps_count {
-                                        let last_index = if a.apps.is_empty() {
+                                        let last_index = if this.apps.is_empty() {
                                             0
                                         } else {
-                                            a.apps.len() - 1
+                                            this.apps.len() - 1
                                         };
-                                        let initial_offset = a.calculate_center_offset(last_index);
+                                        let initial_offset =
+                                            this.calculate_center_offset(last_index);
 
-                                        a.scroll_offset = initial_offset;
-                                        a.target_scroll_offset = initial_offset;
-                                        a.current_center_index = last_index;
+                                        this.scroll_offset = initial_offset;
+                                        this.target_scroll_offset = initial_offset;
+                                        this.current_center_index = last_index;
 
                                         // Reset animation/drag states
-                                        a.is_animating = false;
-                                        a.is_dragging = false;
+                                        this.is_animating = false;
+                                        this.is_dragging = false;
                                     }
                                     // If count is the same, preserve current scroll position
                                     // (scroll_offset, target_scroll_offset, current_center_index remain unchanged)
 
-                                    c.notify();
+                                    cx.notify();
                                 }
                             );
                         }
