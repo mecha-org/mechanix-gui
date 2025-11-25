@@ -1,8 +1,7 @@
 /// Configuration for the homescreen application
 ///
 /// This struct centralizes all constants and configuration values used throughout
-/// the homescreen. It addresses issues #3 and #9 from IMPROVEMENTS.md by replacing
-/// hardcoded magic numbers with a structured configuration.
+/// the homescreen. 
 #[derive(Clone, Debug)]
 pub struct HomescreenConfig {
     /// Window configuration
