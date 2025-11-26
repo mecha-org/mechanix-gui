@@ -7,8 +7,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tantivy::collector::TopDocs;
 use tantivy::directory::MmapDirectory;
-use tantivy::query::QueryParser;
-use tantivy::schema::{Field, Schema};
+use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, QueryParser};
+use tantivy::schema::{Field, FieldType, Schema};
 use tantivy::{doc, Document, Index, IndexReader, IndexWriter, TantivyDocument, Term};
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
@@ -252,7 +252,6 @@ impl SourceSearchService {
         limit: usize,
     ) -> tantivy::Result<Vec<SourceSearchResult>> {
         info!(target: "search", "Listing sources search results...");
-        let searcher = self.index_reader.searcher();
 
         // Look up the field to search in.
         let fields_to_lookup: Vec<Field> = self
@@ -268,9 +267,26 @@ impl SourceSearchService {
             })
             .collect();
 
-        let query_parser = QueryParser::for_index(&self.index, fields_to_lookup);
-        let query = query_parser.parse_query(search_term)?;
+        let searcher = self.index_reader.searcher();
+        let query_parser = QueryParser::for_index(&self.index, fields_to_lookup.clone());
+        let parsed = query_parser.parse_query(search_term)?;
+        // start with parsed query
+        let mut subqueries: Vec<(Occur, Box<dyn Query>)> = vec![(Occur::Should, parsed)];
 
+        // add fuzzy queries for every searchable field
+        for field in &fields_to_lookup {
+            //NOTE: Must check the field type: FuzzyTermQuery only works on STRING fields
+            let field_entry = self.schema.get_field_entry(*field);
+            if let FieldType::Str(_) = field_entry.field_type() {
+                let term = Term::from_field_text(*field, &search_term);
+                subqueries.push((
+                    Occur::Should,
+                    Box::new(FuzzyTermQuery::new_prefix(term, 2, true)),
+                ));
+            }
+        }
+
+        let query = BooleanQuery::new(subqueries);
         let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
         let mut results = Vec::new();

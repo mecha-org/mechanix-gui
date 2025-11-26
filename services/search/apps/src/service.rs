@@ -11,8 +11,8 @@ use std::{
 use crate::utils::{get_last_modified_timestamp, parse_desktop_entry, DesktopEntry};
 use crate::Apps;
 use tantivy::directory::MmapDirectory;
-use tantivy::query::TermQuery;
-use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
+use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, TermQuery};
+use tantivy::schema::{Field, FieldType, IndexRecordOption, Value, STRING};
 use tantivy::{
     collector::TopDocs, doc, query::QueryParser, schema::{Schema, STORED, TEXT}, Document, Index,
     IndexReader,
@@ -387,8 +387,25 @@ impl AppSearchService {
             .collect();
 
         let searcher = self.reader.searcher();
-        let query_parser = QueryParser::for_index(&self.index, fields);
-        let query = query_parser.parse_query(query_str)?;
+        let query_parser = QueryParser::for_index(&self.index, fields.clone());
+        let parsed = query_parser.parse_query(query_str)?;
+
+        // start with parsed query
+        let mut subqueries: Vec<(Occur, Box<dyn Query>)> = vec![(Occur::Should, parsed)];
+        // add fuzzy queries for every searchable field
+        for field in &fields {
+            //NOTE: Must check the field type: FuzzyTermQuery only works on STRING fields
+            let field_entry = self.schema.get_field_entry(*field);
+            if let FieldType::Str(_) = field_entry.field_type() {
+                let term = Term::from_field_text(*field, &query_str);
+                subqueries.push((
+                    Occur::Should,
+                    Box::new(FuzzyTermQuery::new_prefix(term, 2, true)),
+                ));
+            }
+        }
+        
+        let query = BooleanQuery::new(subqueries);
 
         let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
