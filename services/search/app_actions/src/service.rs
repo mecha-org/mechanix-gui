@@ -6,12 +6,14 @@ use serde::Deserialize;
 use std::fs::read_dir;
 use std::{
     collections::HashMap,
+    fs,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::Duration,
 };
-use tantivy::query::TermQuery;
-use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
+use tantivy::directory::MmapDirectory;
+use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, TermQuery};
+use tantivy::schema::{Field, FieldType, IndexRecordOption, Value, STRING};
 use tantivy::{
     collector::TopDocs, doc, query::QueryParser, schema::{Schema, STORED, TEXT}, Document, Index, IndexReader,
     IndexWriter,
@@ -219,13 +221,11 @@ impl AppActionsService {
             dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Failed to get home directory"))?;
         let schema = Self::create_schema();
         let index_path = home_dir.join(&config.index_dir);
-
-        // Create the index if it doesn't exist
-        let index = if index_path.join("meta.json").exists() {
-            Index::open_in_dir(&index_path)?
-        } else {
-            Index::create_in_dir(&index_path, schema.clone())?
-        };
+        if !index_path.exists() {
+            fs::create_dir_all(&index_path)?;
+        }
+        let mmap_dir = MmapDirectory::open(index_path)?;
+        let index = Index::open_or_create(mmap_dir, schema.clone())?;
 
         // TODO: We can configure this to be more fine-grained
         let writer = Arc::new(Mutex::new(index.writer(50_000_000)?));
@@ -493,13 +493,27 @@ impl AppActionsService {
             .try_into()?;
 
         let searcher = reader.searcher();
-        let query_parser = QueryParser::for_index(&self.index, fields);
-        let query = query_parser.parse_query(query_str)?;
+        let query_parser = QueryParser::for_index(&self.index, fields.clone());
+        let parsed = query_parser.parse_query(query_str)?;
+        // start with parsed query
+        let mut subqueries: Vec<(Occur, Box<dyn Query>)> = vec![(Occur::Should, parsed)];
 
+        // add fuzzy queries for every searchable field
+        for field in &fields {
+            //NOTE: Must check the field type: FuzzyTermQuery only works on STRING fields
+            let field_entry = self.schema.get_field_entry(*field);
+            if let FieldType::Str(_) = field_entry.field_type() {
+                let term = Term::from_field_text(*field, &query_str);
+                subqueries.push((
+                    Occur::Should,
+                    Box::new(FuzzyTermQuery::new_prefix(term, 2, true)),
+                ));
+            }
+        }
+        let query = BooleanQuery::new(subqueries);
         let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
         let mut results = Vec::new();
-
         for (score, doc_addr) in top_docs {
             let doc: TantivyDocument = searcher.doc(doc_addr)?;
 
