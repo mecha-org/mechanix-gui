@@ -72,11 +72,7 @@ fn main() {
                                 }
                                 AppEvents::BatteryStateChanged { state } => {
                                     let _ = app.update(cx, |this: &mut StatusBar, cx| {
-                                        this.battery_state = match state {
-                                            BatteryState::Charging => BatteryState::Charging,
-                                            BatteryState::Discharging => BatteryState::Discharging,
-                                            _ => BatteryState::Unknown,
-                                        };
+                                        this.battery_state = state;
                                         cx.notify();
                                     });
                                 }
