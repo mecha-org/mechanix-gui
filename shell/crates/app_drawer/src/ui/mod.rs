@@ -26,6 +26,11 @@ const GRID_ROW_WIDTH: f32 = 508.0;
 
 const SECTION_SPACING: f32 = 32.0;
 const APP_SIZE: (f32, f32) = (540., 620.);
+const APP_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
+const APP_SECTION_DIVIDER_WIDTH: f32 = 508.0;
+
+const APP_SECTION_HEIGHT: f32 = 76.0;
+const APP_ROW_HEIGHT: f32 = 56.0;
 
 pub struct AppDrawer {
     pub state: AppDrawerState,
@@ -38,11 +43,15 @@ pub struct AppDrawer {
     pub text_input: Entity<TextInput>,
     show_popup: bool,
     popup_category: String,
+    filtered: Vec<DesktopApp>,
+    is_searching: bool,
+    last_search_query: String,
 }
 
 impl AppDrawer {
     pub fn new(state: AppDrawerState, cx: &mut Context<Self>) -> Self {
         let grouped = state.apps.clone().get_apps_by_categories();
+        let filteredApps = state.apps.apps.clone();
 
         Self {
             state,
@@ -55,6 +64,9 @@ impl AppDrawer {
             text_input: cx.new(|cx| TextInput::new(cx)),
             show_popup: false,
             popup_category: "".to_string(),
+            filtered: filteredApps.clone(),
+            is_searching: false,
+            last_search_query: "".to_string(),
         }
     }
 
@@ -77,21 +89,29 @@ impl AppDrawer {
     }
 
     fn estimate_content_height(&self) -> Pixels {
-        // Count total apps per category
-        let grouped: HashMap<String, Vec<DesktopApp>> =
-            self.state.apps.clone().get_apps_by_categories();
+        if self.is_searching {
+            let apps_section_height =
+                px(APP_ROW_HEIGHT + APP_SECTION_DIVIDER_HEIGHT) * (self.filtered.len() as f32);
 
-        let mut total = px(0.0);
+            // Total content height with padding
+            apps_section_height + px(16.0)
+        } else {
+            // Count total apps per category
+            let grouped: HashMap<String, Vec<DesktopApp>> =
+                self.state.apps.clone().get_apps_by_categories();
 
-        for (_, apps) in grouped.iter() {
-            let rows = ((apps.len() as f32) / 4.0).ceil() as usize;
+            let mut total = px(0.0);
 
-            // Add height for this category
-            total += px(GRID_ROW_HEIGHT) * rows + px(SECTION_SPACING);
+            for (_, apps) in grouped.iter() {
+                let rows = ((apps.len() as f32) / 4.0).ceil() as usize;
+
+                // Add height for this category
+                total += px(GRID_ROW_HEIGHT) * rows + px(SECTION_SPACING);
+            }
+
+            // Adjust for search bar since drawer height = 620px - SEARCH_BAR_HEIGHT
+            total - px(SEARCH_BAR_HEIGHT)
         }
-
-        // Adjust for search bar since drawer height = 620px - SEARCH_BAR_HEIGHT
-        total - px(SEARCH_BAR_HEIGHT)
     }
 
     fn on_mouse_down(
@@ -127,6 +147,36 @@ impl AppDrawer {
             cx.notify();
         }
     }
+
+    fn filter(&mut self, cx: &mut Context<Self>) {
+        let query = self.text_input.read(cx).content.clone();
+
+        // Reset scroll when the text actually changes
+        if query != self.last_search_query {
+            self.scroll_offset = px(0.);
+            self.last_scroll_offset = px(0.);
+            self.drag_start_y = px(0.);
+            self.is_dragging = false;
+
+            self.last_search_query = query.to_string();
+        }
+
+        let query_lower = query.to_lowercase();
+
+        self.filtered = if query_lower.is_empty() {
+            self.state.apps.clone().apps
+        } else {
+            self.state
+                .apps
+                .apps
+                .iter()
+                .filter(|a| a.name.to_lowercase().contains(&query_lower))
+                .cloned()
+                .collect()
+        };
+
+        cx.notify();
+    }
 }
 
 impl Render for AppDrawer {
@@ -134,21 +184,114 @@ impl Render for AppDrawer {
         let window_bounds = window.bounds();
 
         // Group apps by category
-        let apps = self.state.apps.clone();
-        let grouped = &self.grouped;
+        let apps = self.filtered.clone();
 
         // Search
+        let mut search_apps_children = Vec::new();
+
         let text_input = self.text_input.clone();
         text_input.update(cx, |input, _| {
             input.placeholder = "Search here".into();
         });
 
-        div()
-            .bg(rgb(0x101010))
-            .size_full()
-            .child(
+        let is_active = text_input.read(cx).focus_handle.is_focused(window);
+
+        if is_active && !self.is_searching {
+            self.scroll_offset = px(0.);
+            self.last_scroll_offset = px(0.);
+            self.drag_start_y = px(0.);
+        }
+
+        if is_active {
+            self.is_searching = true;
+            Self::filter(self, cx);
+
+            let row = |searched_app: &DesktopApp, cx: &mut Context<Self>| {
+                let exec = searched_app.exec.clone();
+                let app_id = searched_app.app_id.clone();
+                let id = hash_id(&app_id);
+
                 div()
-                    .bg(rgb(0x101010))
+                    .id(id)
+                    .h(px(APP_ROW_HEIGHT))
+                    .w_full()
+                    .child(
+                        div().size_full().flex().flex_row().items_center().child(
+                            div()
+                                .size_full()
+                                .text_color(rgb(0xe9e9e9))
+                                .flex()
+                                .flex_row()
+                                .justify_between()
+                                .items_center()
+                                .child(
+                                    div().flex().flex_row().child(
+                                        div()
+                                            .flex()
+                                            .flex_row()
+                                            .items_center()
+                                            .child(
+                                                div()
+                                                    .mr(px(8.0))
+                                                    .bg(rgb(0x202020))
+                                                    .w(px(36.0))
+                                                    .h(px(36.0))
+                                                    .flex()
+                                                    .justify_center()
+                                                    .items_center()
+                                                    .rounded(px(6.0))
+                                                    .child({
+                                                        let icon = DesktopApp::resolved_icon(
+                                                            &searched_app.icon_path,
+                                                        );
+
+                                                        IconButton::new(id)
+                                                            .icon(icon)
+                                                            .width(px(30.))
+                                                            .height(px(30.))
+                                                    }),
+                                            )
+                                            .child(
+                                                div()
+                                                    .font_weight(FontWeight(500.0))
+                                                    .text_size(px(16.0))
+                                                    .text_color(rgb(0xe9e9e9))
+                                                    .child(searched_app.name.to_string()),
+                                            ),
+                                    ),
+                                ),
+                        ),
+                    )
+                    .on_click(cx.listener(move |_, _, _, _| {
+                        let _ = DesktopApps::run_app_exec(exec.as_str());
+                    }))
+            };
+
+            let divider = || {
+                div()
+                    .w(px(APP_SECTION_DIVIDER_WIDTH))
+                    .h(px(APP_SECTION_DIVIDER_HEIGHT))
+                    .bg(rgb(0x202020))
+                    .id("divider")
+            };
+
+            let searched_apps = self.filtered.clone();
+
+            for searched_app in searched_apps.iter() {
+                search_apps_children.push(row(searched_app, cx));
+                search_apps_children.push(divider());
+            }
+        }
+
+        let grouped = &self.grouped;
+
+        div()
+            .bg(rgb(0x000000))
+            .size_full()
+            // normal mode (categories grid)
+            .when(!self.is_searching, |main_page_div| {
+                    main_page_div
+                    .bg(rgb(0x000000))
                     .pt_16()
                     .pl_4()
                     .pr_4()
@@ -294,7 +437,29 @@ impl Render for AppDrawer {
                                             )
                                     })
                             }),
-                    ),
+                    )
+            })
+                // searching mode (search results list)
+            .when(self.is_searching, |search_div| {
+                         search_div
+                        .absolute()
+                        .top(px(0.))
+                        .left(px(0.))
+                        .w(px(APP_SIZE.0))
+                        .h(px(APP_SIZE.1))
+                        .bg(rgb(0x000000))
+                        .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
+                        .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                        .on_mouse_move(cx.listener(Self::on_mouse_move))
+                        .child(
+                            div()
+                                .absolute()
+                                .top(px(10.) + self.scroll_offset)
+                                .pl_4()
+                                .pr_4()
+                                .children(search_apps_children),
+                        )
+                }
             )
             // .child(if self.show_popup {
             //     div()
@@ -317,9 +482,11 @@ impl Render for AppDrawer {
                     .h(px(SEARCH_BAR_HEIGHT))
                     .absolute()
                     .bottom(px(6.))
-                    .left(px(6.))
-                    .right(px(6.))
+                    .when(self.is_searching, |d| d.ml(px(16.0)))
                     .w(px(SEARCH_BAR_WIDTH))
+                    .on_mouse_down(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
+                    .on_mouse_up(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
+                    .on_mouse_move(|_, _event, cx| cx.stop_propagation())
                     .child(
                         div().size_full().flex().flex_row().items_center().child(
                             div()
@@ -373,6 +540,32 @@ impl Render for AppDrawer {
                                         .justify_center()
                                         .border_1()
                                         .border_color(rgb(0x808080))
+                                        .id("close-button")
+                                        .on_click(cx.listener(
+                                                            |this: &mut AppDrawer, _event, _window, cx| {
+
+                                                                this.text_input.update(cx, |input, cx| {
+                                                                    input.content = "".into();
+                                                                    input.selected_range = 0..0;
+                                                                    input.selection_reversed = false;
+                                                                    input.marked_range = None;
+                                                                    input.last_layout = None;
+                                                                    input.last_bounds = None;
+                                                                    input.is_selecting = false;
+                                                                    cx.notify();
+                                                                });
+                                                                // Remove focus
+                                                                this.text_input.read(cx).blur(_window);
+
+                                                                // Stop searching
+                                                                this.is_searching = false;
+
+                                                                this.scroll_offset = px(0.);
+                                                                this.last_scroll_offset = px(0.);
+                                                                this.drag_start_y = px(0.);
+                                                                this.is_dragging = false;
+                                                            },
+                                                        ))
                                         .child(
                                             div()
                                                 .size_full()
@@ -386,12 +579,13 @@ impl Render for AppDrawer {
                                                         .flex()
                                                         .items_center()
                                                         .justify_center()
-                                                        .child(Icon::build(IconName::Close)),
+                                                        .child(Icon::build(IconName::Close))
+                                                        .id("button")
                                                 ),
                                         ),
                                 ),
                         ),
-                    ),
+                    )
             )
     }
 }
