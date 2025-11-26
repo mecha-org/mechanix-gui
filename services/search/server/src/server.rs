@@ -2,9 +2,9 @@ use crate::SearchConfig;
 use anyhow::Result;
 use app_actions::service::AppActions;
 use apps::AppInfo;
-use sources::service::{SourceSearchResult, UpsertMetadata};
-use files::FileInfo;
+use files::SearchResult;
 use log::{debug, error, info, warn};
+use sources::service::{SourceSearchResult, UpsertMetadata};
 use std::sync::Arc;
 use zbus::{fdo::Error as ZbusError, interface, SignalContext};
 
@@ -109,7 +109,7 @@ impl ServerInterface {
     /// # Returns
     ///
     /// A vector of `FileInfo` representing the matching files if successful.
-    pub async fn search_files(&self, search: &str) -> zbus::fdo::Result<Vec<FileInfo>> {
+    pub async fn search_files(&self, search: &str) -> zbus::fdo::Result<Vec<SearchResult>> {
         info!("Search files: {}", search);
         if let Some(file_search_service) = &self.file_search_service {
             // At some point later: perform a search
@@ -209,17 +209,16 @@ impl ServerInterface {
         }
     }
 
-    pub async fn delete_metadata_by_ids(
-        &mut self,
-        ids: Vec<String>,
-    ) -> zbus::fdo::Result<bool> {
+    pub async fn delete_metadata_by_ids(&mut self, ids: Vec<String>) -> zbus::fdo::Result<bool> {
         if let Some(service) = self.external_search_service.as_mut() {
             // At some point later: perform a search
             let results = match service.delete_by_ids(ids).await {
                 Ok(results) => results,
                 Err(err) => {
                     error!("Error deleting sources metadata by ids: {}", err);
-                    return Err(ZbusError::Failed("Error deleting sources metadata".to_string()));
+                    return Err(ZbusError::Failed(
+                        "Error deleting sources metadata".to_string(),
+                    ));
                 }
             };
             Ok(results)

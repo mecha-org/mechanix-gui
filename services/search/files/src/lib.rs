@@ -6,7 +6,7 @@ mod service;
 mod utils;
 
 pub use crate::service::FileSearchService;
-pub use service::FileInfo;
+pub use service::SearchResult;
 #[derive(Debug, Deserialize, Clone)]
 pub struct FilesConfig {
     pub enable_search: bool,

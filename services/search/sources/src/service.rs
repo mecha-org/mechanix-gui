@@ -290,7 +290,6 @@ impl SourceSearchService {
         let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
         let mut results = Vec::new();
-
         for (score, doc_addr) in top_docs {
             let doc: TantivyDocument = searcher.doc(doc_addr)?;
             let mut app = SourceSearchResult::default();

@@ -1,4 +1,4 @@
-use crate::utils::FileMetadata;
+use crate::utils::{FileMetadata, SchemaFields};
 use crate::{utils, FilesConfig};
 use log::{debug, error, info, warn};
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
@@ -22,7 +22,7 @@ use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
 
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Default, Clone)]
 #[zvariant(signature = "dict")]
-pub struct FileInfo {
+pub struct SearchResult {
     pub file_type: String,
     pub name: String,
     pub path: String,
@@ -38,6 +38,7 @@ pub enum IndexCmd {
 pub struct FileSearchService {
     config: FilesConfig,
     schema: Schema,
+    pub schema_fields: SchemaFields,
     index: Index,
     index_reader: IndexReader,
     index_writer: Option<IndexWriter>,
@@ -54,17 +55,6 @@ pub enum FileIndexState {
 }
 
 impl FileSearchService {
-    /// Create the Tantivy schema for `.desktop` fields
-    fn create_schema() -> Schema {
-        let mut schema_builder = tantivy::schema::Schema::builder();
-        schema_builder.add_text_field("file_type", STRING | STORED);
-        schema_builder.add_text_field("name", STRING | STORED);
-        schema_builder.add_text_field("content", TEXT);
-        schema_builder.add_text_field("path", STRING | STORED);
-        schema_builder.add_text_field("last_modified", STRING | STORED);
-        schema_builder.build()
-    }
-
     /// Returns the state of the given file in the index.
     ///
     /// Returns `IndexedAndUpToDate` if the file is already indexed and the last modified timestamp
@@ -119,7 +109,9 @@ impl FileSearchService {
     pub fn new(config: &FilesConfig) -> anyhow::Result<Self> {
         let home_dir =
             dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Failed to get home directory"))?;
-        let schema = Self::create_schema();
+        let bundle = Self::build_schema()?;
+        let schema = bundle.schema.clone();
+        let schema_fields = bundle.fields;
         let index_path = home_dir.join(&config.index_dir);
         if !index_path.exists() {
             fs::create_dir_all(&index_path)?;
@@ -135,6 +127,7 @@ impl FileSearchService {
         Ok(Self {
             config: config.clone(),
             schema,
+            schema_fields,
             index,
             index_reader,
             index_writer: Some(index_writer),
@@ -299,7 +292,7 @@ impl FileSearchService {
             ) {
                 Ok(w) => w,
                 Err(e) => {
-                    error!("Failed to create watcher for {}: {}", dir.display(), e);
+                    warn!("Failed to create watcher for {}: {}", dir.display(), e);
                     return;
                 }
             };
@@ -548,21 +541,14 @@ impl FileSearchService {
     }
 
     /// Search indexed file using a free-form query.
-    pub fn search(&self, query_str: &str, limit: usize) -> tantivy::Result<Vec<FileInfo>> {
+    pub fn search(&self, query_str: &str, limit: usize) -> tantivy::Result<Vec<SearchResult>> {
         let fields: Vec<Field> = get_searchable_fields(&self.config, &self.schema);
-
-        let reader = self
-            .index
-            .reader_builder()
-            .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
-            .try_into()?;
-
-        let searcher = reader.searcher();
+        let searcher = self.index_reader.searcher();
         let query_parser = QueryParser::for_index(&self.index, fields.clone());
         let parsed = query_parser.parse_query(query_str)?;
         // start with parsed query
         let mut subqueries: Vec<(Occur, Box<dyn Query>)> = vec![(Occur::Should, parsed)];
-        
+
         // add fuzzy queries for every searchable field
         for field in &fields {
             //NOTE: Must check the field type: FuzzyTermQuery only works on STRING fields
@@ -583,22 +569,10 @@ impl FileSearchService {
 
         for (score, doc_addr) in top_docs {
             let doc: TantivyDocument = searcher.doc(doc_addr)?;
-
-            let mut file_info = FileInfo::default();
-            for (field, value) in doc.get_sorted_field_values() {
-                let field_name = self.schema.get_field_name(field).to_string();
-                // Join all values into a single string (semicolon-separated)
-                let joined_values = value
-                    .iter()
-                    .filter_map(|val| val.as_str())
-                    .collect::<Vec<_>>()
-                    .join(";");
-
-                set_file_field(&mut file_info, &field_name, joined_values);
-                file_info.score = score;
-            }
-
-            results.push(file_info);
+            let mut file_search_result = SearchResult::default();
+            file_search_result = self.map_doc(&doc);
+            file_search_result.score = score;
+            results.push(file_search_result);
         }
 
         Ok(results)
@@ -703,13 +677,4 @@ fn get_searchable_fields(config: &FilesConfig, schema: &Schema) -> Vec<Field> {
             }
         })
         .collect()
-}
-
-fn set_file_field(file: &mut FileInfo, field_name: &str, joined_values: String) {
-    match field_name {
-        "file_type" => file.file_type = joined_values,
-        "name" => file.name = joined_values,
-        "path" => file.path = joined_values,
-        _ => {}
-    }
 }
