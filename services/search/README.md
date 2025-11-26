@@ -131,9 +131,9 @@ The Sources Search Service lets you ingest and search your own items (notes, mus
 - Interface: `org.mechanix.MxSearch`
 
 Methods you can call from clients:
-- `SearchExternal(search: &str) -> Vec<ExternalSearchResult>`
-- `UpsertMetadata(metadata: Vec<UpsertMetadata>) -> bool`
-- `DeleteMetadataByIds(ids: Vec<String>) -> bool`
+- `SearchSources(search: &str) -> Vec<SourcesSearchResult>`
+- `UpsertSources(metadata: Vec<UpsertMetadata>) -> bool`
+- `DeleteSourcesByIds(ids: Vec<String>) -> bool`
 
 #### Data model
 - Upserting requires a list of `UpsertMetadata` objects:
@@ -219,14 +219,14 @@ let ok: bool = proxy.call("UpsertMetadata", &(items)).await?;
 - Search:
 ```rust
 let results: Vec<ExternalSearchResult> = proxy
-    .call("SearchExternal", &("how to"))
+    .call("SearchSources", &("how to"))
     .await?;
 ```
 
 - Delete by IDs:
 ```rust
 let ok: bool = proxy
-    .call("DeleteMetadataByIds", &(vec!["note-123".to_string()]))
+    .call("DeleteSourcesByIds", &(vec!["note-123".to_string()]))
     .await?;
 ```
 
@@ -242,13 +242,13 @@ let ok: bool = proxy
 
 
 
-Upsert Metadata:
+Upsert Sources:
 
 ```shell
 ([{'unique_id': <'test123'>, 'source': <'notes'>, 'uri': <'file:///usr/bin/gedit'>, 'title': <'how to win'>, 'subtitle': <'win over obstacles'>, 'description': <'this is my first note'>, 'keywords': <['kw1', 'kw2']>, 'icon': <'...'>, 'thumbnail': <'...'>, 'last_modified': <uint64 1763720442>, 'source_entry_path': <'/usr/share/applications/Alacritty.desktop'>, 'content': <'this is something very interesting book i am read'>, 'file_path': <'...'>}],)
 ```
 
-Delete Metadata:
+Delete Sources:
 
 ```shell
 ([<'test123'>, <'test124'>],)

@@ -123,7 +123,7 @@ impl ServerInterface {
             debug!("result: {:?}", results);
             Ok(results)
         } else {
-            Err(ZbusError::Failed("Search Files is disabled".to_string()))
+            Err(ZbusError::Failed("Search Files service is disabled".to_string()))
         }
     }
 
@@ -159,12 +159,12 @@ impl ServerInterface {
             Ok(results)
         } else {
             Err(ZbusError::Failed(
-                "Search App Actions is disabled".to_string(),
+                "Search App Actions service is disabled".to_string(),
             ))
         }
     }
 
-    pub async fn search_external(
+    pub async fn search_sources(
         &self,
         search: &str,
     ) -> zbus::fdo::Result<Vec<SourceSearchResult>> {
@@ -181,12 +181,12 @@ impl ServerInterface {
             Ok(results)
         } else {
             Err(ZbusError::Failed(
-                "Search App Actions is disabled".to_string(),
+                "Search Sources service is disabled, enable it from settings.toml".to_string(),
             ))
         }
     }
 
-    pub async fn upsert_metadata(
+    pub async fn upsert_sources(
         &mut self,
         metadata: Vec<UpsertMetadata>,
     ) -> zbus::fdo::Result<bool> {
@@ -204,12 +204,12 @@ impl ServerInterface {
             Ok(results)
         } else {
             Err(ZbusError::Failed(
-                "External search service is disabled, enable it from settings.toml".to_string(),
+                "Search Sources service is disabled, enable it from settings.toml".to_string(),
             ))
         }
     }
 
-    pub async fn delete_metadata_by_ids(&mut self, ids: Vec<String>) -> zbus::fdo::Result<bool> {
+    pub async fn delete_sources_by_ids(&mut self, ids: Vec<String>) -> zbus::fdo::Result<bool> {
         if let Some(service) = self.external_search_service.as_mut() {
             // At some point later: perform a search
             let results = match service.delete_by_ids(ids).await {
@@ -224,7 +224,7 @@ impl ServerInterface {
             Ok(results)
         } else {
             Err(ZbusError::Failed(
-                "External search service is disabled, enable it from settings.toml".to_string(),
+                "Search Sources service is disabled, enable it from settings.toml".to_string(),
             ))
         }
     }
