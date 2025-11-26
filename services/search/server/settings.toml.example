@@ -21,28 +21,28 @@ target_memory_usage_in_bytes = 50_000_000
 
 # Only include fields that exist and are indexed in the schema
 searchable_fields = [
-    "type",
+#    "type",
     "name",
-    "generic_name",
-    "comment",
-    "keywords",
-    "categories",
-    "path"
+#    "generic_name",
+#    "comment",
+#    "keywords",
+#    "categories",
+#    "path"
 ]
 
 # File search
 [files]
 # Enable the FileSearchService
-enable_search = false
+enable_search = true
 
 # Be careful watching "/home" recursively; consider narrowing later
-files_dir_to_watch = "/home/minesh/Documents"
+files_dir_to_watch = "/home/minesh/Downloads"
 
 index_dir = ".config/mxsearch/index/files"
 
 # Limit recursion depth and watcher count for safety
 max_depth = 5
-max_watchers = 5
+max_watchers = 100
 
 # Tune Tantivy writer heap (bytes)
 target_memory_usage_in_bytes = 50_000_000
@@ -91,9 +91,9 @@ searchable_fields = [
 ]
 
 # External (notes, music, etc.)
-[external]
-# Enable the ExternalService (ingestion/search for external items)
-enable_search = true
+[sources]
+# Enable the ExternalService (ingestion/search for sources items)
+enable_search = false
 
 index_dir = ".config/mxsearch/index/external"
 app_dir = "/usr/share/applications"

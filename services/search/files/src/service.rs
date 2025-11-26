@@ -624,7 +624,7 @@ fn extract_doc_given_file_path(
     // The second argument is here to tell we don't care about decoding positions,
     // or term frequencies.
     let term_query = TermQuery::new(file_path.clone(), IndexRecordOption::Basic);
-    let top_docs = searcher.search(&term_query, &TopDocs::with_limit(200))?;
+    let top_docs = searcher.search(&term_query, &TopDocs::with_limit(1))?;
 
     if let Some((_score, doc_address)) = top_docs.first() {
         let doc = searcher.doc(*doc_address)?;

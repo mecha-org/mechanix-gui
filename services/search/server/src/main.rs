@@ -28,7 +28,7 @@ pub struct SearchConfig {
     pub apps: AppSearchConfig,
     pub files: FileSearchConfig,
     pub app_actions: AppActionsConfig,
-    pub source: SourceSearchServiceConfig,
+    pub sources: SourceSearchServiceConfig,
 }
 fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
     info!("Loading config from {}", path.as_ref().display());
@@ -104,8 +104,8 @@ async fn main() -> Result<(), ServerError> {
     }
 
     let mut external_search_service_opt: Option<SourceSearchService> = None;
-    if config.source.enable_search {
-        let mut external_search_service = match SourceSearchService::new(&config.source) {
+    if config.sources.enable_search {
+        let mut external_search_service = match SourceSearchService::new(&config.sources) {
             Ok(s) => s,
             Err(e) => {
                 error!("Failed to create sources search service: {}", e);
