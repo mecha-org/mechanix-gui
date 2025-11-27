@@ -58,17 +58,14 @@ fn main() {
                 executor.spawn(handle_bluetooth_toggle(bt_rx)).detach();
 
                 executor
-                    .spawn(sound_device_events(app_channel_tx.clone()))
-                    .detach();
-                executor
-                    .spawn(handle_volume_change(volume_rx, app_channel_tx.clone()))
+                    .spawn(audio_event_handler(app_channel_tx.clone(), volume_rx))
                     .detach();
 
                 executor
-                    .spawn(get_brightness_value(app_channel_tx.clone()))
-                    .detach();
-                executor
-                    .spawn(handle_brightness_change(app_channel_tx.clone(), brightness_rx))
+                    .spawn(brightness_event_handler(
+                        app_channel_tx.clone(),
+                        brightness_rx,
+                    ))
                     .detach();
 
                 cx.new(|cx| {
@@ -126,12 +123,32 @@ fn main() {
                                 AppEvents::OutputSoundDevice { device_info } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
                                         this.sound_device = Some(device_info);
+                                        this.volume_slider_value = this
+                                            .sound_device
+                                            .as_ref()
+                                            .map(|d| d.volume)
+                                            .unwrap_or(0.0)
+                                            as f32;
+                                        this.volume_mute = this
+                                            .sound_device
+                                            .as_ref()
+                                            .map(|d| d.mute)
+                                            .unwrap_or(false);
+
+                                        this.volume_slider_state.update(cx, |state, cx| {
+                                            state.value = this
+                                                .volume_slider_value
+                                                .clamp(state.min, state.max);
+                                        });
                                         cx.notify();
                                     });
                                 }
                                 AppEvents::Brightness { value } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.brightness_dbus_value = value;
+                                        this.brightness_slider_value = value;
+                                        this.brightness_slider_state.update(cx, |state, cx| {
+                                            state.value = value.clamp(state.min, state.max);
+                                        });
                                         cx.notify();
                                     });
                                 }
@@ -140,7 +157,13 @@ fn main() {
                     })
                     .detach();
 
-                    SettingsDrawer::new(cx, nm_tx.clone(), bt_tx.clone(), volume_tx.clone(), brightness_tx.clone())
+                    SettingsDrawer::new(
+                        cx,
+                        nm_tx.clone(),
+                        bt_tx.clone(),
+                        volume_tx.clone(),
+                        brightness_tx.clone(),
+                    )
                 })
             },
         )

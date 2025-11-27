@@ -13,5 +13,5 @@ pub use network_sync::{
     sync_network_strength,
 };
 pub use battery_sync::{sync_battery_level, sync_battery_state, sync_battery_percentage};
-pub use sound_sync::{sound_device_events, handle_volume_change};
-pub use brightness_sync::{get_brightness_value, handle_brightness_change};
+pub use sound_sync::audio_event_handler;
+pub use brightness_sync::brightness_event_handler;

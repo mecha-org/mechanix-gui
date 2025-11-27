@@ -56,14 +56,11 @@ pub struct SettingsDrawer {
     pub open_terminal: bool,
     pub cell_signal: bool,
 
-    pub brightness_dbus_value: f32,
     pub brightness_slider_state: Entity<SliderState>,
     pub brightness_slider_value: f32,
-    pub brightness_slider_changing: bool,
-
     pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
-    pub volume_slider_changing: bool,
+    pub volume_mute: bool,
 
     pub nm_tx: mpsc::Sender<NmEvents>,
     pub bt_tx: mpsc::Sender<BtEvents>,
@@ -88,7 +85,6 @@ impl SettingsDrawer {
             move |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = event;
                 this.brightness_slider_value = *value;
-                this.brightness_slider_changing = true;
 
                 let mut brightness_tx = brightness_tx.clone();
                 let brightness_value = *value;
@@ -116,10 +112,7 @@ impl SettingsDrawer {
             cx.subscribe(&volume_slider, move |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = event;
                 this.volume_slider_value = *value;
-                this.volume_slider_changing = true;
-                println!("volume value changed to: {:?}", this.volume_slider_value);
 
-                // Clone the necessary data for the async task.
                 let sink_name_value = this
                     .sound_device
                     .as_ref()
@@ -144,22 +137,12 @@ impl SettingsDrawer {
                 let _ = cx
                     .foreground_executor()
                     .spawn(async move {
-                        println!(
-                            "---Preparing to send volume change: sink_name = {}, volume = {}",
-                            sink_name, volume
-                        );
                         let _ = volume_tx
                             .send(VolumeEvents::VolumeChanged {
                                 name: sink_name,
                                 value: volume,
                             })
                             .await;
-
-                        //  cx.background_executor()
-                        // .timer(std::time::Duration::from_millis(300))
-                        // .await;
-
-                        // this.volume_slider_changing = false;
                     })
                     .detach();
 
@@ -193,14 +176,12 @@ impl SettingsDrawer {
             sound_device: None,
             open_terminal: false,
             cell_signal: false,
-            brightness_dbus_value: 0.0,
             brightness_slider_state: brightness_slider,
             brightness_slider_value: 0.0,
-            brightness_slider_changing: false,
 
             volume_slider_state: volume_slider,
             volume_slider_value: 0.0,
-            volume_slider_changing: false,
+            volume_mute: false,
             nm_tx,
             bt_tx,
             _subscriptions,
@@ -394,41 +375,27 @@ impl SettingsDrawer {
             _ => IconName::BatteryEmpty,
         };
 
-        let device_volume = self.sound_device.as_ref().map(|d| d.volume).unwrap_or(0.) as f32;
-
-        let volume_toset = if self.volume_slider_changing {
-            self.volume_slider_value
+        // TODO: get mute prop from service
+        let volume_icon = if self.volume_mute {
+            IconName::VolumeOff
         } else {
-            device_volume
+            if self.volume_slider_value >= 0.0 && self.volume_slider_value <= 33.0 {
+                IconName::VolumeLow
+            } else if self.volume_slider_value > 33.0 && self.volume_slider_value <= 66.0 {
+                IconName::VolumeMedium
+            } else {
+                IconName::VolumeHigh
+            }
         };
 
-        if self.volume_slider_value != device_volume {
-            let device_volume_for_update = volume_toset;
-            self.volume_slider_state.update(cx, |state, cx| {
-                state.value = device_volume_for_update.clamp(state.min, state.max);
-            });
-            self.volume_slider_value = device_volume;
-            self.volume_slider_changing = false;
-            cx.notify();
-        }
-
-        let brightnes_dbus_value = self.brightness_dbus_value as f32;
-
-        let brightness_toset = if self.brightness_slider_changing {
-            self.brightness_slider_value
-        } else {
-            brightnes_dbus_value
-        };
-
-        if self.brightness_slider_value != brightnes_dbus_value {
-            let brightness_for_update = brightness_toset;
-            self.brightness_slider_state.update(cx, |state, cx| {
-                state.value = brightness_for_update.clamp(state.min, state.max);
-            });
-            self.brightness_slider_value = brightnes_dbus_value;
-            self.brightness_slider_changing = false;
-            cx.notify();
-        }
+        let brightness_icon =
+            if self.brightness_slider_value >= 0.0 && self.brightness_slider_value <= 33.0 {
+                IconName::BrightnessLow
+            } else if self.brightness_slider_value > 33.0 && self.brightness_slider_value <= 66.0 {
+                IconName::BrightnessMedium
+            } else {
+                IconName::BrightnessHigh
+            };
 
         let wireless_icon = match self.wireless_details.enabled {
             true => match self.wireless_details.strength {
@@ -713,7 +680,7 @@ impl SettingsDrawer {
                                     .px_2()
                                     .child(
                                         IconButton::new("id_brightness")
-                                            .icon(IconName::BrightnessHigh)
+                                            .icon(brightness_icon)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
                                             .bg_color(rgb(0x202020))
@@ -761,7 +728,7 @@ impl SettingsDrawer {
                                     .pl_2()
                                     .child(
                                         IconButton::new("id_volume")
-                                            .icon(IconName::VolumeMedium)
+                                            .icon(volume_icon)
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
                                             .bg_color(rgb(0x202020))

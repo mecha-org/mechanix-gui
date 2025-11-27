@@ -2,31 +2,26 @@ use crate::events::{AppEvents, BrightnessEvents};
 use futures::{SinkExt, StreamExt, channel::mpsc};
 use system_dbus::display_client;
 
-pub async fn get_brightness_value(mut tx: mpsc::Sender<AppEvents>) {
-    match display_client::get_brightness().await {
-        Ok(value) => {
-            let value = u8_to_percent(value, 254);
-            let _ = tx.send(AppEvents::Brightness { value }).await;
-        }
-        Err(e) => {
-            eprintln!("Error getting setting: {:?}", e);
-        }
-    }
-}
-
-pub async fn handle_brightness_change(
-    tx: mpsc::Sender<AppEvents>,
+pub async fn brightness_event_handler(
+    mut tx: mpsc::Sender<AppEvents>,
     mut brightness_rx: mpsc::Receiver<BrightnessEvents>,
 ) {
-    println!("Starting to handle brightness change events...");
+    if let Ok(value) = display_client::get_brightness().await {
+        let value = u8_to_percent(value, 254);
+        let _ = tx.send(AppEvents::Brightness { value }).await;
+    }
 
     while let Some(event) = brightness_rx.next().await {
         match event {
             BrightnessEvents::BrightnessChanged { value } => {
+                let value = if value < 10.0 { 10.0 } else { value };
                 let value = percent_to_u8(value, 254);
                 match display_client::set_brightness(value).await {
                     Ok(_) => {
-                        get_brightness_value(tx.clone()).await;
+                        if let Ok(value) = display_client::get_brightness().await {
+                            let value = u8_to_percent(value, 254);
+                            let _ = tx.send(AppEvents::Brightness { value }).await;
+                        }
                     }
                     Err(e) => {
                         eprintln!("Error setting brightness: {:?}", e);
