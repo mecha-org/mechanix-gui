@@ -1,12 +1,11 @@
 use std::ops::Range;
 
 use gpui::{
-    App, Application, Bounds, ClipboardItem, Context, CursorStyle, ElementId, ElementInputHandler,
-    Entity, EntityInputHandler, FocusHandle, Focusable, FontWeight, GlobalElementId, KeyBinding,
-    Keystroke, LayoutId, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad,
-    Pixels, Point, ShapedLine, SharedString, Style, TextRun, TextStyle, UTF16Selection,
-    UnderlineStyle, Window, WindowBounds, WindowOptions, actions, black, div, fill, hsla,
-    opaque_grey, point, prelude::*, px, relative, rgb, rgba, size, white, yellow,
+    App, Bounds, ClipboardItem, Context, CursorStyle, ElementId, ElementInputHandler, Entity,
+    EntityInputHandler, FocusHandle, Focusable, GlobalElementId, LayoutId, MouseButton,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad, Pixels, Point, ShapedLine,
+    SharedString, Style, TextRun, UTF16Selection, UnderlineStyle, Window, actions, div, fill, hsla,
+    point, prelude::*, px, relative, rgb, size,
 };
 use unicode_segmentation::*;
 
@@ -26,20 +25,21 @@ actions!(
         Paste,
         Cut,
         Copy,
+        Reset,
         Quit,
     ]
 );
 
 pub struct TextInput {
-    focus_handle: FocusHandle,
-    content: SharedString,
+    pub focus_handle: FocusHandle,
+    pub content: SharedString,
     pub placeholder: SharedString,
-    selected_range: Range<usize>,
-    selection_reversed: bool,
-    marked_range: Option<Range<usize>>,
-    last_layout: Option<ShapedLine>,
-    last_bounds: Option<Bounds<Pixels>>,
-    is_selecting: bool,
+    pub selected_range: Range<usize>,
+    pub selection_reversed: bool,
+    pub marked_range: Option<Range<usize>>,
+    pub last_layout: Option<ShapedLine>,
+    pub last_bounds: Option<Bounds<Pixels>>,
+    pub is_selecting: bool,
 }
 
 impl TextInput {
@@ -106,6 +106,17 @@ impl TextInput {
             self.select_to(self.next_boundary(self.cursor_offset()), cx)
         }
         self.replace_text_in_range(None, "", window, cx)
+    }
+
+    fn reset(&mut self, _: &Reset, _: &mut Window, cx: &mut Context<Self>) {
+        self.content = "".into();
+        self.selected_range = 0..0;
+        self.selection_reversed = false;
+        self.marked_range = None;
+        self.last_layout = None;
+        self.last_bounds = None;
+        self.is_selecting = false;
+        cx.notify();
     }
 
     fn on_mouse_down(
@@ -271,14 +282,8 @@ impl TextInput {
             .unwrap_or(self.content.len())
     }
 
-    fn reset(&mut self) {
-        self.content = "".into();
-        self.selected_range = 0..0;
-        self.selection_reversed = false;
-        self.marked_range = None;
-        self.last_layout = None;
-        self.last_bounds = None;
-        self.is_selecting = false;
+    pub fn blur(&self, window: &mut Window) {
+        window.blur();
     }
 }
 
@@ -611,6 +616,7 @@ impl Render for TextInput {
             .on_action(cx.listener(Self::paste))
             .on_action(cx.listener(Self::cut))
             .on_action(cx.listener(Self::copy))
+            .on_action(cx.listener(Self::reset)) // Add reset action handler
             .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))

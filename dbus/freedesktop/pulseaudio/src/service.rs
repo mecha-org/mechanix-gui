@@ -7,17 +7,19 @@ use libpulse_binding::context::Context;
 use libpulse_binding::error::PAErr;
 use libpulse_binding::mainloop::standard::{IterateResult, Mainloop};
 use libpulse_binding::proplist::Proplist;
-use libpulse_binding::volume::ChannelVolumes;
+use libpulse_binding::volume::Volume;
 use log::{error, info};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::thread;
+use tokio::sync::{mpsc, oneshot};
 
 const APPLICATION_NAME: &str = "pulseaudio";
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct DeviceInfo {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub volume: ChannelVolumes,
+    pub volume: f64,
     pub mute: bool,
     pub index: u32,
 }
@@ -27,7 +29,7 @@ impl<'a> From<&SinkInfo<'a>> for DeviceInfo {
         Self {
             name: info.name.clone().map(|x| x.into_owned()),
             description: info.description.clone().map(|x| x.into_owned()),
-            volume: info.volume,
+            volume: volume_to_percentage(info.volume.max()),
             mute: info.mute,
             index: info.index,
         }
@@ -39,7 +41,7 @@ impl<'a> From<&SourceInfo<'a>> for DeviceInfo {
         Self {
             name: info.name.clone().map(|x| x.into_owned()),
             description: info.description.clone().map(|x| x.into_owned()),
-            volume: info.volume,
+            volume: volume_to_percentage(info.volume.max()),
             mute: info.mute,
             index: info.index,
         }
@@ -89,29 +91,44 @@ impl<'a> From<&'a pulse::context::introspect::ServerInfo<'a>> for ServerInfo {
 #[derive(Debug)]
 pub enum Message {
     /// Get a list of output devices
-    GetSinks,
-    /// Response containing list of output devices or error
-    SetSink(Result<Vec<DeviceInfo>, PulseAudioError>),
+    GetSinks {
+        reply: oneshot::Sender<Result<Vec<DeviceInfo>, PulseServerError>>,
+    },
 
     /// Get a list of input devices
-    GetSources,
-    /// Response containing list of input devices or error
-    SetSource(Result<Vec<DeviceInfo>, PulseAudioError>),
+    GetSources {
+        reply: oneshot::Sender<Result<Vec<DeviceInfo>, PulseServerError>>,
+    },
 
     /// Get the default output device
-    GetDefaultSink,
+    GetDefaultSink {
+        reply: oneshot::Sender<Result<DeviceInfo, PulseServerError>>,
+    },
+
+    /// Get the default input device
+    GetDefaultSource {
+        reply: oneshot::Sender<Result<DeviceInfo, PulseServerError>>,
+    },
+
     /// Response containing default output device or error
     SetDefaultSink(Result<DeviceInfo, PulseAudioError>),
 
-    /// Get the default input device
-    GetDefaultSource,
     /// Response containing default input device or error
     SetDefaultSource(Result<DeviceInfo, PulseAudioError>),
 
-    /// Set volume for a specific output device by name
-    SetSinkVolumeByName(String, ChannelVolumes),
-    /// Set volume for a specific input device by name
-    SetSourceVolumeByName(String, ChannelVolumes),
+    // Volume control
+    SetSinkVolumeByName {
+        name: String,
+        volume: f32,
+        reply: oneshot::Sender<Result<(), PulseServerError>>,
+    },
+    SetSourceVolumeByName {
+        name: String,
+        volume: f32,
+        reply: oneshot::Sender<Result<(), PulseServerError>>,
+    },
+
+    Shutdown,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -125,24 +142,152 @@ pub enum PulseInitError {
     InitFailed(String),
 }
 
+pub struct PulseHandle {
+    tx: mpsc::Sender<Message>,
+}
+
+impl PulseHandle {
+    pub async fn get_sinks(&self) -> Result<Vec<DeviceInfo>, PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::GetSinks { reply })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+
+    pub async fn get_sources(&self) -> Result<Vec<DeviceInfo>, PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::GetSources { reply })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+
+    pub async fn get_default_sink(&self) -> Result<DeviceInfo, PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::GetDefaultSink { reply })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+    pub async fn get_default_source(&self) -> Result<DeviceInfo, PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::GetDefaultSource { reply })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+    pub async fn set_sink_volume_by_name(
+        &self,
+        name: &str,
+        volume: &f32,
+    ) -> Result<(), PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::SetSinkVolumeByName {
+                name: name.to_string(),
+                volume: *volume,
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+    pub async fn set_source_volume_by_name(
+        &self,
+        name: &str,
+        volume: &f32,
+    ) -> Result<(), PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::SetSourceVolumeByName {
+                name: name.to_string(),
+                volume: *volume,
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+    pub async fn shutdown(&self) {
+        // Best-effort shutdown signal; ignore error if worker already gone
+        let _ = self.tx.send(Message::Shutdown).await;
+    }
+}
+
+pub fn spawn_pulse_worker() -> Result<PulseHandle, PulseInitError> {
+    let (tx, mut rx) = mpsc::channel::<Message>(64);
+
+    thread::spawn(move || {
+        let server = match PulseServer::connect().and_then(|s| s.init()) {
+            Ok(s) => s,
+            Err(e) => {
+                log::error!("pulse connect/init failed: {e:?}");
+                return;
+            }
+        };
+        let mut server = server;
+        while let Some(cmd) = rx.blocking_recv() {
+            match cmd {
+                Message::GetSinks { reply } => {
+                    let _ = reply.send(server.get_sinks());
+                }
+                Message::GetSources { reply } => {
+                    let _ = reply.send(server.get_sources());
+                }
+                Message::GetDefaultSink { reply } => {
+                    let _ = reply.send(server.get_default_sink());
+                }
+                Message::GetDefaultSource { reply } => {
+                    let _ = reply.send(server.get_default_source());
+                }
+                Message::SetSinkVolumeByName {
+                    name,
+                    volume,
+                    reply,
+                } => {
+                    server.set_sink_volume_by_name(&name, &volume);
+                    let _ = reply.send(Ok(()));
+                }
+                Message::SetSourceVolumeByName {
+                    name,
+                    volume,
+                    reply,
+                } => {
+                    server.set_source_volume_by_name(&name, &volume);
+                    let _ = reply.send(Ok(()));
+                }
+                Message::Shutdown => {
+                    if let Err(e) = server.shutdown() {
+                        log::warn!("PulseServer shutdown error: {e:?}");
+                    }
+                    break;
+                }
+                Message::SetDefaultSink(_) => {}
+                Message::SetDefaultSource(_) => {}
+            }
+        }
+    });
+
+    Ok(PulseHandle { tx })
+}
 pub struct PulseAudioService {
-    pub server: PulseServer,
+    pub handle: PulseHandle,
 }
 impl PulseAudioService {
     pub fn new() -> Result<Self, PulseInitError> {
-        // let pulse_handle = PulseHandle::new();
-        // Ok(Self { pulse_handle })
-        let server = match PulseServer::connect().and_then(|s| s.init()) {
-            Ok(server) => {
-                info!("connected to pulse server");
-                server
-            }
-            Err(err) => {
-                error!("failed to connect/init server: {:?}", err);
-                return Err(PulseInitError::InitFailed(err.to_string()));
-            }
-        };
-        Ok(Self { server })
+        let handle = spawn_pulse_worker()?;
+        Ok(Self { handle })
     }
 }
 
@@ -370,25 +515,40 @@ impl PulseServer {
     }
 
     pub fn set_sink_volume_by_name(&mut self, name: &str, volume_to_set: &f32) {
-        if volume_to_set <= &0f32 {
-            let op = self.introspector.set_source_mute_by_name(name, true, None);
-            self.wait_for_result(op).ok();
-        } else {
-            // Clone the volume_to_set value to avoid reference lifetime issues
-            let volume_value = *volume_to_set; // Dereference to get the value
-            let op = self
-                .introspector
-                .get_sink_info_by_name(name, move |sink_info_res| {
-                    if let ListResult::Item(device) = sink_info_res {
-                        let mut current_volume = device.volume;
-                        let mut avg = current_volume.avg();
-                        avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
-                        for i in 1..=current_volume.len() {
-                            current_volume.set(i, avg);
-                        }
-                    }
-                });
-            self.wait_for_result(op).ok();
+        if *volume_to_set <= 0.0 {
+            // Mute the SINK (was calling source mute by mistake)
+            let op = self.introspector.set_sink_mute_by_name(name, true, None);
+            let _ = self.wait_for_result(op);
+            return;
+        }
+        let target = Rc::new(RefCell::new(None::<(u32, pulse::volume::ChannelVolumes)>));
+        let target_ref = target.clone();
+
+        let volume_value = *volume_to_set; //
+        println!("volume_value: {}", volume_value);
+        // Fetch current sink info and prepare the new per-channel volumes
+        let op = self.introspector.get_sink_info_by_name(name, move |res| {
+            if let ListResult::Item(device) = res {
+                let mut current_volume = device.volume;
+                let mut avg = current_volume.avg();
+                avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
+                for i in 1..=current_volume.len() {
+                    current_volume.set(i, avg);
+                }
+                target_ref
+                    .borrow_mut()
+                    .replace((device.index, current_volume));
+            }
+        });
+        let _ = self.wait_for_result(op);
+        // Apply the volume and unmute the sink
+        let target = target.borrow_mut().take();
+        if let Some((idx, v)) = target {
+            let op_set = self.introspector.set_sink_volume_by_index(idx, &v, None);
+            let _ = self.wait_for_result(op_set);
+            // Ensure it’s unmuted when setting a positive volume
+            let op_unmute = self.introspector.set_sink_mute_by_index(idx, false, None);
+            let _ = self.wait_for_result(op_unmute);
         }
     }
 
@@ -406,28 +566,40 @@ impl PulseServer {
     /// Both operations are performed independently and their results are ignored.
     /// If either operation fails, no error will be propagated.
     pub fn set_source_volume_by_name(&mut self, name: &str, volume_to_set: &f32) {
-        if volume_to_set <= &0f32 {
-            let op = self
-                .introspector
-                .set_source_mute_by_name(name, true, None);
+        info!("set_source_volume_by_name: {} {}", name, volume_to_set);
+        if *volume_to_set <= 0.0 {
+            // Mute the SINK (was calling source mute by mistake)
+            let op = self.introspector.set_source_mute_by_name(name, true, None);
             let _ = self.wait_for_result(op);
-        } else {
-            // Clone the volume_to_set value to avoid reference lifetime issues
-            let volume_value = *volume_to_set; // Dereference to get the value
-            let op = self
-                .introspector
-                .get_source_info_by_name(name, move |source_info| {
-                    if let ListResult::Item(device) = source_info {
-                        let mut current_volume = device.volume;
-                        let mut avg = current_volume.avg();
-                        avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
-                        for i in 1..=current_volume.len() {
-                            current_volume.set(i, avg);
-                        }
-                    }
-                });
-            self.wait_for_result(op).ok();
+            return;
         }
+        let target = Rc::new(RefCell::new(None::<(u32, pulse::volume::ChannelVolumes)>));
+        let target_ref = target.clone();
+        let volume_value = *volume_to_set; //
+        let op = self.introspector.get_source_info_by_name(name, move |res| {
+            if let ListResult::Item(device) = res {
+                let mut current_volume = device.volume;
+                let mut avg = current_volume.avg();
+                avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
+                for i in 1..=current_volume.len() {
+                    current_volume.set(i, avg);
+                }
+                target_ref
+                    .borrow_mut()
+                    .replace((device.index, current_volume));
+            }
+        });
+        let _ = self.wait_for_result(op);
+        // Apply the volume and unmute the sink
+        let target = target.borrow_mut().take();
+        if let Some((idx, v)) = target {
+            let op_set = self.introspector.set_source_volume_by_index(idx, &v, None);
+            let _ = self.wait_for_result(op_set);
+            // Ensure it’s unmuted when setting a positive volume
+            let op_unmute = self.introspector.set_source_mute_by_index(idx, false, None);
+            let _ = self.wait_for_result(op_unmute);
+        }
+        info!("set_source_volume_by_name: done");
     }
 
     // after building an operation such as get_devices() we need to keep polling
@@ -460,4 +632,41 @@ impl PulseServer {
             }
         }
     }
+
+    pub fn shutdown(&mut self) -> Result<(), PulseServerError> {
+        // Ask PulseAudio to disconnect
+        self.context.borrow_mut().disconnect();
+        // Drive the mainloop until the context reports Terminated
+        loop {
+            match self.mainloop.borrow_mut().iterate(false) {
+                IterateResult::Success(_) => {}
+                IterateResult::Err(e) => {
+                    return Err(PulseServerError::IterateErr(IterateResult::Err(e)))
+                }
+                IterateResult::Quit(e) => {
+                    return Err(PulseServerError::IterateErr(IterateResult::Quit(e)))
+                }
+            }
+            match self.context.borrow().get_state() {
+                pulse::context::State::Terminated => break,
+                pulse::context::State::Failed => {
+                    return Err(PulseServerError::ContextErr(pulse::context::State::Failed))
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Convert a [`Volume`] to a percentage as `f64`.
+pub fn volume_to_percentage(volume: Volume) -> f64 {
+    let range = Volume::NORMAL.0 as f64 - Volume::MUTED.0 as f64;
+    (volume.0 as f64 - Volume::MUTED.0 as f64) * 100.0 / range
+}
+
+/// Convert a percentage to a [`Volume`].
+pub fn percentage_to_volume(factor: f64) -> Volume {
+    let range = Volume::NORMAL.0 as f64 - Volume::MUTED.0 as f64;
+    Volume((Volume::MUTED.0 as f64 + factor * range / 100.0) as u32)
 }

@@ -1,30 +1,23 @@
 use gpui::{prelude::FluentBuilder, *};
+use std::path::PathBuf;
 
 pub const APP_DRAWER_ICONS_DIR: &str = "icons/app-drawer/";
 
 #[derive(IntoElement, Clone, PartialEq, Debug)]
 pub enum IconName {
-    Telegram,
-    Mecha,
-    Chromium,
-    Files,
-    Firefox,
     Category,
     Search,
     Close,
+    DefaultApp,
 }
 
 impl IconName {
     pub fn resolve(self) -> SharedString {
         let icon_path = match self {
-            Self::Telegram => "telegram.png",
-            Self::Mecha => "mecha.png",
-            Self::Chromium => "chromium.png",
-            Self::Files => "files.png",
-            Self::Firefox => "firefox.png",
             Self::Category => "category.png",
             Self::Search => "search.png",
             Self::Close => "x.png",
+            Self::DefaultApp => "default-app.png",
         };
         format!("{}{}", APP_DRAWER_ICONS_DIR, icon_path).into()
     }
@@ -36,7 +29,7 @@ impl RenderOnce for IconName {
     }
 }
 
-#[derive(IntoElement)]
+#[derive(IntoElement, Debug)]
 pub struct Icon {
     path: SharedString,
     size: Option<(Pixels, Pixels)>,
@@ -71,18 +64,10 @@ impl Icon {
 
 impl RenderOnce for Icon {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl gpui::IntoElement {
-        let is_svg = self.path.ends_with(".svg");
-
-        if is_svg {
-            // SVG icon case
-            let base = svg().path(self.path.clone()).w(px(40.)).h(px(40.));
-
-            // Apply color if available
-            let rendered = base.when_some(self.text_color, |this, color| this.text_color(color));
-
-            rendered.into_any_element()
+        if self.path.starts_with("/") {
+            let image_path: PathBuf = self.path.as_str().into();
+            img(image_path).w(px(58.)).h(px(58.)).into_any_element()
         } else {
-            // PNG / JPEG icon case
             img(self.path.clone())
                 .w(px(58.))
                 .h(px(58.))

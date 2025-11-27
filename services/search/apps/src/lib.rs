@@ -26,5 +26,6 @@ pub struct Apps {
     pub index_dir: String,
     pub desktop_apps_dir: String,
     pub search_limit: usize,
+    pub target_memory_usage_in_bytes: usize,
     searchable_fields: Vec<String>,
 }
