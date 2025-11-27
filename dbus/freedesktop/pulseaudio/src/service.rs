@@ -515,25 +515,40 @@ impl PulseServer {
     }
 
     pub fn set_sink_volume_by_name(&mut self, name: &str, volume_to_set: &f32) {
-        if volume_to_set <= &0f32 {
-            let op = self.introspector.set_source_mute_by_name(name, true, None);
-            self.wait_for_result(op).ok();
-        } else {
-            // Clone the volume_to_set value to avoid reference lifetime issues
-            let volume_value = *volume_to_set; // Dereference to get the value
-            let op = self
-                .introspector
-                .get_sink_info_by_name(name, move |sink_info_res| {
-                    if let ListResult::Item(device) = sink_info_res {
-                        let mut current_volume = device.volume;
-                        let mut avg = current_volume.avg();
-                        avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
-                        for i in 1..=current_volume.len() {
-                            current_volume.set(i, avg);
-                        }
-                    }
-                });
-            self.wait_for_result(op).ok();
+        if *volume_to_set <= 0.0 {
+            // Mute the SINK (was calling source mute by mistake)
+            let op = self.introspector.set_sink_mute_by_name(name, true, None);
+            let _ = self.wait_for_result(op);
+            return;
+        }
+        let target = Rc::new(RefCell::new(None::<(u32, pulse::volume::ChannelVolumes)>));
+        let target_ref = target.clone();
+
+        let volume_value = *volume_to_set; //
+        println!("volume_value: {}", volume_value);
+        // Fetch current sink info and prepare the new per-channel volumes
+        let op = self.introspector.get_sink_info_by_name(name, move |res| {
+            if let ListResult::Item(device) = res {
+                let mut current_volume = device.volume;
+                let mut avg = current_volume.avg();
+                avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
+                for i in 1..=current_volume.len() {
+                    current_volume.set(i, avg);
+                }
+                target_ref
+                    .borrow_mut()
+                    .replace((device.index, current_volume));
+            }
+        });
+        let _ = self.wait_for_result(op);
+        // Apply the volume and unmute the sink
+        let target = target.borrow_mut().take();
+        if let Some((idx, v)) = target {
+            let op_set = self.introspector.set_sink_volume_by_index(idx, &v, None);
+            let _ = self.wait_for_result(op_set);
+            // Ensure it’s unmuted when setting a positive volume
+            let op_unmute = self.introspector.set_sink_mute_by_index(idx, false, None);
+            let _ = self.wait_for_result(op_unmute);
         }
     }
 
@@ -551,26 +566,40 @@ impl PulseServer {
     /// Both operations are performed independently and their results are ignored.
     /// If either operation fails, no error will be propagated.
     pub fn set_source_volume_by_name(&mut self, name: &str, volume_to_set: &f32) {
-        if volume_to_set <= &0f32 {
+        info!("set_source_volume_by_name: {} {}", name, volume_to_set);
+        if *volume_to_set <= 0.0 {
+            // Mute the SINK (was calling source mute by mistake)
             let op = self.introspector.set_source_mute_by_name(name, true, None);
             let _ = self.wait_for_result(op);
-        } else {
-            // Clone the volume_to_set value to avoid reference lifetime issues
-            let volume_value = *volume_to_set; // Dereference to get the value
-            let op = self
-                .introspector
-                .get_source_info_by_name(name, move |source_info| {
-                    if let ListResult::Item(device) = source_info {
-                        let mut current_volume = device.volume;
-                        let mut avg = current_volume.avg();
-                        avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
-                        for i in 1..=current_volume.len() {
-                            current_volume.set(i, avg);
-                        }
-                    }
-                });
-            self.wait_for_result(op).ok();
+            return;
         }
+        let target = Rc::new(RefCell::new(None::<(u32, pulse::volume::ChannelVolumes)>));
+        let target_ref = target.clone();
+        let volume_value = *volume_to_set; //
+        let op = self.introspector.get_source_info_by_name(name, move |res| {
+            if let ListResult::Item(device) = res {
+                let mut current_volume = device.volume;
+                let mut avg = current_volume.avg();
+                avg.0 = ((volume_value * 0.01) * 65536.0) as u32;
+                for i in 1..=current_volume.len() {
+                    current_volume.set(i, avg);
+                }
+                target_ref
+                    .borrow_mut()
+                    .replace((device.index, current_volume));
+            }
+        });
+        let _ = self.wait_for_result(op);
+        // Apply the volume and unmute the sink
+        let target = target.borrow_mut().take();
+        if let Some((idx, v)) = target {
+            let op_set = self.introspector.set_source_volume_by_index(idx, &v, None);
+            let _ = self.wait_for_result(op_set);
+            // Ensure it’s unmuted when setting a positive volume
+            let op_unmute = self.introspector.set_source_mute_by_index(idx, false, None);
+            let _ = self.wait_for_result(op_unmute);
+        }
+        info!("set_source_volume_by_name: done");
     }
 
     // after building an operation such as get_devices() we need to keep polling

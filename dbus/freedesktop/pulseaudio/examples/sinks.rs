@@ -8,7 +8,7 @@ async fn main() -> anyhow::Result<()> {
     let sinks = service.handle.get_sinks().await?;
     println!("{:#?}", sinks);
 
-    service.handle.shutdown();
+    service.handle.shutdown().await;
 
     Ok(())
 }
