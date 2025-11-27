@@ -1,74 +1,14 @@
 use app_drawer::prelude::*;
+use app_drawer::ui::utils::prelude::DesktopApps;
 use commons::prelude::*;
 use gpui::*;
 
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
+    let desktop_apps = DesktopApps::scan();
 
-    // Initialize the AppDrawerState
     let state = AppDrawerState {
-        apps: vec![
-            AppInfo {
-                id: 1,
-                name: "Files".into(),
-                category: "Recently used".into(),
-                icon_path: IconName::Files,
-            },
-            AppInfo {
-                id: 2,
-                name: "Telegram".into(),
-                category: "Recently used".into(),
-                icon_path: IconName::Telegram,
-            },
-            AppInfo {
-                id: 3,
-                name: "Chromium".into(),
-                category: "Productivity".into(),
-                icon_path: IconName::Chromium,
-            },
-            AppInfo {
-                id: 4,
-                name: "Firefox".into(),
-                category: "Productivity".into(),
-                icon_path: IconName::Firefox,
-            },
-            AppInfo {
-                id: 5,
-                name: "Mecha".into(),
-                category: "Settings".into(),
-                icon_path: IconName::Mecha,
-            },
-            AppInfo {
-                id: 6,
-                name: "Firefox".into(),
-                category: "Entertainment".into(),
-                icon_path: IconName::Firefox,
-            },
-            AppInfo {
-                id: 7,
-                name: "Mecha".into(),
-                category: "Photography".into(),
-                icon_path: IconName::Mecha,
-            },
-            AppInfo {
-                id: 8,
-                name: "Chromium".into(),
-                category: "Recently used".into(),
-                icon_path: IconName::Chromium,
-            },
-            AppInfo {
-                id: 9,
-                name: "Firefox".into(),
-                category: "Recently used".into(),
-                icon_path: IconName::Firefox,
-            },
-            AppInfo {
-                id: 10,
-                name: "Mecha".into(),
-                category: "Recently used".into(),
-                icon_path: IconName::Mecha,
-            },
-        ],
+        apps: desktop_apps,
         ..Default::default()
     };
 

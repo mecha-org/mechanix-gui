@@ -38,8 +38,14 @@ serde = { version = "1.0.219", features = ["derive"] }
 futures = "0.3.31"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "7a0d37756b35e60e18b8e720b67f6b3ef464e17d", features = [
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "0b9026321c4f86334cbbf16d18bc323f22bef9ac", features = [
     "wayland",
     "linux-impeller",
 ] }
 rust-embed = "8.8.0"
+networkmanager = { path = "dbus/freedesktop/networkmanager" }
+bluez = { path = "dbus/freedesktop/bluez" }
+upower = { path = "dbus/freedesktop/upower" }
+pulseaudio = { path = "dbus/freedesktop/pulseaudio" }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = [ "env-filter" ] }

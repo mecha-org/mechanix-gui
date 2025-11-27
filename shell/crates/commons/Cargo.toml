@@ -14,3 +14,12 @@ keywords.workspace = true
 gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
+rand = "0.8"
+
+[[example]]
+name = "wing"
+path = "examples/wing.rs"
+
+[[example]]
+name = "animated_wing"
+path = "examples/animated_wing.rs"

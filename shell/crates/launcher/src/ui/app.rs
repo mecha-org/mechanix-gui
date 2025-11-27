@@ -44,10 +44,9 @@ pub fn run() {
         })
         .detach();
 
-        let window_bounds = WindowBounds::Windowed(Bounds::centered(
-            None,
-            size(px(window_size.0), px(36.0)),
-            cx,
+        let window_bounds = WindowBounds::Windowed(Bounds::new(
+            point(px(0.), px(0.)),
+            size(px(window_size.0), px(36.)),
         ));
 
         cx.open_window(
@@ -57,7 +56,7 @@ pub fn run() {
                 kind: WindowKind::LayerShell(LayerShellOptions {
                     namespace: "mechanix.statusbar".to_string(),
                     layer: Layer::Top,
-                    anchor: Anchor::LEFT | Anchor::TOP,
+                    anchor: Anchor::TOP,
                     keyboard_interactivity: KeyboardInteractivity::None,
                     margin: None,
                     exclusive_zone: Some(px(36.)),
@@ -76,16 +75,23 @@ pub fn run() {
 
         const NAVBAR_SIZE: (f32, f32) = (180., 29.);
 
-        let window_bounds = WindowBounds::Windowed(Bounds::centered(
-            None,
+        let window_bounds = WindowBounds::Windowed(Bounds::new(
+            point(px(0.), px(0.)),
             size(px(window_size.0), px(window_size.1)),
-            cx,
         ));
 
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(window_bounds),
                 window_background: WindowBackgroundAppearance::Transparent,
+                kind: WindowKind::LayerShell(LayerShellOptions {
+                    namespace: "mechanix.settings.drawer".to_string(),
+                    layer: Layer::Top,
+                    anchor: Anchor::BOTTOM,
+                    keyboard_interactivity: KeyboardInteractivity::None,
+                    exclusive_zone: Some(px(-1.)),
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             |window, cx| {
@@ -104,16 +110,23 @@ pub fn run() {
         )
         .unwrap();
 
-        let window_bounds = WindowBounds::Windowed(Bounds::centered(
-            None,
+        let window_bounds = WindowBounds::Windowed(Bounds::new(
+            point(px(0.), px(0.)),
             size(px(window_size.0), px(window_size.1)),
-            cx,
         ));
 
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(window_bounds),
                 window_background: WindowBackgroundAppearance::Transparent,
+                kind: WindowKind::LayerShell(LayerShellOptions {
+                    namespace: "mechanix.universal.search".to_string(),
+                    layer: Layer::Top,
+                    anchor: Anchor::BOTTOM,
+                    keyboard_interactivity: KeyboardInteractivity::OnDemand,
+                    exclusive_zone: Some(px(-1.)),
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             |window, cx| {
@@ -129,10 +142,9 @@ pub fn run() {
         )
         .unwrap();
 
-        let window_bounds = WindowBounds::Windowed(Bounds::centered(
-            None,
+        let window_bounds = WindowBounds::Windowed(Bounds::new(
+            point(px(0.), px(0.)),
             size(px(window_size.0), px(window_size.1)),
-            cx,
         ));
 
         const RUNNING_APPS_NAVBAR_SIZE: (f32, f32) = (180., 29.);
@@ -141,6 +153,14 @@ pub fn run() {
             WindowOptions {
                 window_bounds: Some(window_bounds),
                 window_background: WindowBackgroundAppearance::Transparent,
+                kind: WindowKind::LayerShell(LayerShellOptions {
+                    namespace: "mechanix.running.apps".to_string(),
+                    layer: Layer::Top,
+                    anchor: Anchor::BOTTOM,
+                    keyboard_interactivity: KeyboardInteractivity::None,
+                    exclusive_zone: Some(px(-1.)),
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             |window, cx| {
@@ -163,5 +183,6 @@ pub fn run() {
         .unwrap();
 
         cx.activate(true);
+        cx.refresh_windows();
     });
 }

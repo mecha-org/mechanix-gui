@@ -12,6 +12,8 @@ pub struct IconButton {
     active: bool,
     on_click: Option<Rc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
     icon_color: Option<Hsla>,
+    width: Option<Pixels>,
+    height: Option<Pixels>,
 }
 
 impl IconButton {
@@ -24,6 +26,8 @@ impl IconButton {
             active: false,
             on_click: None,
             icon_color: None,
+            width: None,
+            height: None,
         }
     }
 
@@ -44,14 +48,32 @@ impl IconButton {
         self.icon_color = Some(icon_color.into());
         self
     }
+
+    pub fn width(mut self, w: Pixels) -> Self {
+        self.width = Some(w);
+        self
+    }
+
+    pub fn height(mut self, h: Pixels) -> Self {
+        self.height = Some(h);
+        self
+    }
+
+    pub fn size(mut self, s: Pixels) -> Self {
+        self.width = Some(s);
+        self.height = Some(s);
+        self
+    }
 }
 
 impl RenderOnce for IconButton {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
         self.main
             .flex()
-            .w(px(80.0))
-            .h(px(80.0))
+            .when_some(self.width, |this, w| this.w(w))
+            .when_none(&self.width, |this| this.w(px(80.0)))
+            .when_some(self.height, |this, h| this.h(h))
+            .when_none(&self.height, |this| this.h(px(80.0)))
             .rounded(px(12.0))
             .border(px(1.))
             .active(|this| this.opacity(0.85))

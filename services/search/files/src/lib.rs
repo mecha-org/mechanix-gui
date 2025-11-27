@@ -6,7 +6,7 @@ mod service;
 mod utils;
 
 pub use crate::service::FileSearchService;
-pub use service::FileInfo;
+pub use service::SearchResult;
 #[derive(Debug, Deserialize, Clone)]
 pub struct FilesConfig {
     pub enable_search: bool,
@@ -18,5 +18,5 @@ pub struct FilesConfig {
     pub target_memory_usage_in_bytes: usize,
     pub read_file_content_upto_in_kb: usize,
     pub searchable_fields: Vec<String>,
-    pub allowed_extensions: HashSet<String>,
+    pub content_index_extensions: HashSet<String>,
 }

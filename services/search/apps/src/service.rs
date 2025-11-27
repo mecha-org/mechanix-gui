@@ -3,15 +3,16 @@ use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::fs::read_dir;
 use std::{
     collections::HashMap,
+    fs,
     path::{Path, PathBuf},
-    sync::{Arc, Mutex},
     time::Duration,
 };
 
 use crate::utils::{get_last_modified_timestamp, parse_desktop_entry, DesktopEntry};
 use crate::Apps;
-use tantivy::query::TermQuery;
-use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
+use tantivy::directory::MmapDirectory;
+use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, TermQuery};
+use tantivy::schema::{Field, FieldType, IndexRecordOption, Value, STRING};
 use tantivy::{
     collector::TopDocs, doc, query::QueryParser, schema::{Schema, STORED, TEXT}, Document, Index,
     IndexReader,
@@ -21,6 +22,17 @@ use tantivy::{
 };
 use tokio::{sync::mpsc, task::JoinHandle, time};
 use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum FileAction {
+    Upsert,
+    Remove,
+}
+
+pub enum IndexCmd {
+    FsEvent(Event),
+    Shutdown,
+}
 
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Default, Clone)]
 #[zvariant(signature = "dict")]
@@ -43,16 +55,49 @@ pub struct AppSearchService {
     config: Apps,
     schema: Schema,
     index: Index,
-    writer: Arc<Mutex<IndexWriter>>,
+    reader: IndexReader,
+    writer: Option<IndexWriter>,
     index_worker_handle: Option<JoinHandle<()>>,
     watcher_handler: Option<JoinHandle<()>>,
+    cmd_tx: Option<mpsc::Sender<IndexCmd>>,
 }
 
 impl AppSearchService {
+    /// Create a new service instance.
+    pub fn new(config: &Apps) -> anyhow::Result<Self> {
+        let home_dir =
+            dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Failed to get home directory"))?;
+        let schema = create_schema();
+        let index_path = home_dir.join(&config.index_dir);
+        if !index_path.exists() {
+            fs::create_dir_all(&index_path)?;
+        }
+        let mmap_dir = MmapDirectory::open(index_path)?;
+        let index = Index::open_or_create(mmap_dir, schema.clone())?;
+        let reader = index
+            .reader_builder()
+            .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
+            .try_into()?;
+        let writer = index.writer(config.target_memory_usage_in_bytes)?;
+        Ok(Self {
+            config: config.clone(),
+            schema,
+            index,
+            reader,
+            writer: Some(writer),
+            index_worker_handle: None,
+            watcher_handler: None,
+            cmd_tx: None,
+        })
+    }
+
+    pub fn control_tx(&self) -> Option<mpsc::Sender<IndexCmd>> {
+        self.cmd_tx.clone()
+    }
     fn load_existing_desktop_entries(
         desktop_app_dir: &str,
         index_reader: &IndexReader,
-        index_writer: &Arc<Mutex<IndexWriter>>,
+        writer: &mut IndexWriter,
         schema: &Schema,
     ) {
         info!("Loading existing desktop entries");
@@ -106,20 +151,18 @@ impl AppSearchService {
                 if last_modified != last_modified_indexed_value_str {
                     // If last_modifieds don't match, then delete the entry
                     warn!("Last modified mismatch for entry: {}", path.display());
-                    if let Ok(writer) = index_writer.lock() {
-                        let term = Term::from_field_text(
-                            schema.get_field("path").unwrap(),
-                            &path.to_string_lossy().to_string(),
-                        );
-                        let doc =
-                            extract_doc_given_app_path(&index_reader, &term).unwrap_or_else(|e| {
-                                error!("Failed to extract doc: {}", e);
-                                None
-                            });
-                        if let Some(_doc) = doc {
-                            let _result = writer.delete_term(term);
-                            info!("Removed indexed app entry: {}", path.display());
-                        }
+                    let term = Term::from_field_text(
+                        schema.get_field("path").unwrap(),
+                        &path.to_string_lossy().to_string(),
+                    );
+                    let doc =
+                        extract_doc_given_app_path(&index_reader, &term).unwrap_or_else(|e| {
+                            error!("Failed to extract doc: {}", e);
+                            None
+                        });
+                    if let Some(_doc) = doc {
+                        let _result = writer.delete_term(term);
+                        info!("Removed indexed app entry: {}", path.display());
                     }
                 } else {
                     debug!("Last modified match for entry: {}", path.display());
@@ -139,63 +182,18 @@ impl AppSearchService {
             );
 
             let doc = feed_doc(&schema, &desktop_entry, last_modified, &path);
-            if let Ok(writer) = index_writer.lock() {
-                match writer.add_document(doc) {
-                    Ok(_) => (),
-                    Err(e) => error!("Failed to index app entry: {}", e),
-                }
+            match writer.add_document(doc) {
+                Ok(_) => (),
+                Err(e) => error!("Failed to index app entry: {}", e),
             }
         }
-        if let Ok(mut writer) = index_writer.lock() {
-            if let Err(e) = writer.commit() {
-                error!("Failed to commit index: {:?}", e);
-            } else {
-                debug!("Committed indexed app data to disk.");
-            }
-        };
-        info!("Finished loading existing entries");
-    }
-    /// Create the Tantivy schema for `.desktop` fields
-    fn create_schema() -> Schema {
-        let mut schema_builder = tantivy::schema::Schema::builder();
-        schema_builder.add_text_field("type", STRING | STORED);
-        schema_builder.add_text_field("name", STRING | STORED);
-        schema_builder.add_text_field("exec", STORED);
-        schema_builder.add_text_field("comment", TEXT);
-        schema_builder.add_text_field("generic_name", STRING | STORED);
-        schema_builder.add_text_field("categories", STRING | STORED);
-        schema_builder.add_text_field("keywords", TEXT | STORED);
-        schema_builder.add_text_field("icon", STORED);
-        schema_builder.add_text_field("last_modified", STORED);
-        schema_builder.add_text_field("path", STRING);
 
-        schema_builder.build()
-    }
-
-    /// Create a new service instance.
-    pub fn new(config: &Apps) -> anyhow::Result<Self> {
-        let home_dir =
-            dirs::home_dir().ok_or_else(|| anyhow::anyhow!("Failed to get home directory"))?;
-        let schema = Self::create_schema();
-        let index_path = home_dir.join(&config.index_dir);
-
-        // Create the index if it doesn't exist
-        let index = if index_path.join("meta.json").exists() {
-            Index::open_in_dir(&index_path)?
+        if let Err(e) = writer.commit() {
+            error!("Failed to commit index: {:?}", e);
         } else {
-            Index::create_in_dir(&index_path, schema.clone())?
-        };
-
-        // TODO: We can configure this to be more fine-grained
-        let writer = Arc::new(Mutex::new(index.writer(50_000_000)?));
-        Ok(Self {
-            config: config.clone(),
-            schema,
-            index,
-            writer,
-            index_worker_handle: None,
-            watcher_handler: None,
-        })
+            debug!("Committed indexed app data to disk.");
+        }
+        info!("Finished loading existing entries");
     }
 
     pub async fn run(&mut self) -> anyhow::Result<()> {
@@ -206,7 +204,7 @@ impl AppSearchService {
         Self::load_existing_desktop_entries(
             &self.config.desktop_apps_dir,
             &index_reader,
-            &self.writer.clone(),
+            self.writer.as_mut().expect("index writer missing"),
             &schema,
         );
         let watch_path: PathBuf = self.config.desktop_apps_dir.clone().into();
@@ -214,16 +212,18 @@ impl AppSearchService {
             anyhow::bail!("Watch path does not exist: {}", watch_path.display());
         }
 
-        let (event_tx, mut event_rx) = mpsc::channel::<Event>(100);
-        let tx_clone = event_tx.clone();
+        let (cmd_tx, mut cmd_rx) = mpsc::channel::<IndexCmd>(256);
+        self.cmd_tx = Some(cmd_tx.clone());
+        let tx_clone = cmd_tx.clone();
 
         // ========= Spawn async task that holds the watcher =========
         let watch_path_clone = watch_path.clone();
+        debug!("Watching path for application: {:?}", watch_path_clone);
         self.watcher_handler = Some(tokio::spawn(async move {
             let mut watcher = RecommendedWatcher::new(
                 move |res| {
                     if let Ok(event) = res {
-                        let _ = tx_clone.blocking_send(event);
+                        let _ = tx_clone.blocking_send(IndexCmd::FsEvent(event));
                     } else if let Err(err) = res {
                         error!("Watch error: {:?}", err);
                     }
@@ -238,84 +238,54 @@ impl AppSearchService {
                 info!("Watching path: {:?}", watch_path_clone);
             }
 
-            // Keep the watcher alive in background (task won't exit unless manually dropped)
+            // Keep the watcher alive indefinitely
             futures::future::pending::<()>().await;
         }));
 
         // ========= Event Debouncing & Indexing =========
-        let writer = Arc::clone(&self.writer);
-        let schema = self.schema.clone();
-        let reader = match self.index.reader() {
-            Ok(reader) => reader,
-            Err(err) => {
-                error!("Failed to get index reader: {}", err);
-                return Ok(());
-            }
-        };
-        self.index_worker_handle = Some(tokio::spawn(async move {
-            let debounce_duration = Duration::from_secs(2);
-            let mut pending = Vec::new();
+        let writer = self.writer.take().expect("writer missing");
 
+        let schema = self.schema.clone();
+        let reader = self.reader.clone();
+
+        self.index_worker_handle = Some(tokio::spawn(async move {
+            let mut writer = writer;
+            let mut pending = Vec::new();
+            let debounce = Duration::from_millis(400);
+            let mut next_flush: Option<time::Instant> = None;
             loop {
                 tokio::select! {
-                    Some(event) = event_rx.recv() => {
-                        pending.push(event);
+                    maybe_cmd = cmd_rx.recv() => {
+                        match maybe_cmd {
+                            Some(IndexCmd::FsEvent(event)) => {
+                                pending.push(event);
+                                if next_flush.is_none() {
+                                    next_flush = Some(time::Instant::now() + debounce);
+                                }
+                            }
+                            Some(IndexCmd::Shutdown) => {
+                            // Final flush before exiting
+                            if !pending.is_empty() {
+                                Self::process_batch(&mut pending, &mut writer, &schema);
+                            }
+                            info!("Indexer received shutdown. Exiting cleanly.");
+                            break; // Exit the task
+                            }
+                            None => {
+                                // Sender dropped unexpectedly; try to flush and exit.
+                                if !pending.is_empty() {
+                                    Self::process_batch(&mut pending, &mut writer, &schema);
+                                }
+                                warn!("Indexer channel closed. Exiting.");
+                                break;
+                            }
+                        }
                     }
-                    _ = time::sleep(debounce_duration), if !pending.is_empty() => {
-                        let mut unique_paths = HashMap::new();
-
-                        for event in pending.drain(..) {
-                            if let Some(path) = event.paths.get(0) {
-                                if path.extension().and_then(|s| s.to_str()) == Some("desktop") &&
-                                   (event.kind.is_create() || event.kind.is_modify()) || event.kind.is_remove() {
-                                    debug!("File created or modified: {}", path.display());
-                                    unique_paths.insert(path.clone(), event.kind.clone());
-                                }
-                            }
-                        }
-
-                        for (path, kind) in unique_paths {
-                            if kind.is_create() || kind.is_modify() {
-                                if let Some(desktop_entry) = parse_desktop_entry(&path) {
-                                info!("Indexing changed desktop entry: {}", desktop_entry.name);
-                                    let last_modified = match get_last_modified_timestamp(&path) {
-                                        Ok(c) => c,
-                                        Err(e) => {
-                                            warn!("Failed to generate last_modified for {}: {}", path.display(), e);
-                                            String::new()
-                                        }
-                                    };
-                                    debug!("Last modified while storing: {}",last_modified );
-                                let doc = feed_doc(&schema, &desktop_entry, last_modified, &path);
-                                if let Ok(writer) = writer.lock() {
-                                    match writer.add_document(doc) {
-                                        Ok(_) => info!("Indexed desktop entry: {}", desktop_entry.name),
-                                        Err(e) => error!("Failed to index app entry: {}", e),
-                                        }
-                                    }
-                                }
-                            } else if kind.is_remove() {
-                                info!("Removing indexed app entry: {:?}", path.file_name());
-                                if let Ok(writer) = writer.lock() {
-                                    let term = Term::from_field_text(schema.get_field("path").unwrap(), &path.to_string_lossy().to_string());
-                                   let doc= extract_doc_given_app_path(&reader, &term).unwrap_or_else(|e| {
-                                            error!("Failed to extract doc: {}", e);
-                                            None
-                                        });
-                                    if let Some(_doc) = doc {
-                                        let _result =writer.delete_term(term);
-                                        info!("Removed indexed app entry: {:?}", path.file_name());
-                                    }
-                                }
-                            }
-                        }
-                        if let Ok(mut writer) = writer.lock() {
-                            if let Err(e) = writer.commit() {
-                                error!("Failed to commit index: {:?}", e);
-                            } else {
-                                info!("Committed indexed app data to disk.");
-                            }
-                        }
+                    _ = async {
+                        if let Some(deadline) = next_flush { time::sleep_until(deadline).await }
+                    }, if next_flush.is_some() => {
+                        if !pending.is_empty() { Self::process_batch(&mut pending, &mut writer, &schema); }
+                        next_flush = None;
                     }
                 }
             }
@@ -323,6 +293,80 @@ impl AppSearchService {
         Ok(())
     }
 
+    fn process_batch(pending: &mut Vec<Event>, writer: &mut IndexWriter, schema: &Schema) {
+        let mut actions: HashMap<PathBuf, FileAction> = HashMap::new();
+
+        for event in pending.drain(..) {
+            for path in event.paths {
+                // iterate all
+                let is_desktop = path
+                    .extension()
+                    .and_then(|s| s.to_str())
+                    .map(|e| e.eq_ignore_ascii_case("desktop"))
+                    .unwrap_or(false);
+                if !is_desktop {
+                    continue;
+                }
+
+                let next = if event.kind.is_remove() {
+                    FileAction::Remove
+                } else if event.kind.is_create() || event.kind.is_modify() {
+                    FileAction::Upsert
+                } else {
+                    continue;
+                };
+
+                actions
+                    .entry(path)
+                    .and_modify(|cur| {
+                        if next == FileAction::Remove {
+                            *cur = FileAction::Remove;
+                        }
+                    })
+                    .or_insert(next);
+            }
+        }
+
+        for (path, kind) in actions {
+            if kind == FileAction::Upsert {
+                if let Some(desktop_entry) = parse_desktop_entry(&path) {
+                    info!("Indexing changed desktop entry: {}", desktop_entry.name);
+                    let last_modified = match get_last_modified_timestamp(&path) {
+                        Ok(c) => c,
+                        Err(e) => {
+                            warn!(
+                                "Failed to generate last_modified for {}: {}",
+                                path.display(),
+                                e
+                            );
+                            String::new()
+                        }
+                    };
+                    debug!("Last modified while storing: {}", last_modified);
+                    let doc = feed_doc(&schema, &desktop_entry, last_modified, &path);
+                    // if let Ok(writer) = writer.lock() {
+                    match writer.add_document(doc) {
+                        Ok(_) => info!("Indexed desktop entry: {}", desktop_entry.name),
+                        Err(e) => error!("Failed to index app entry: {}", e),
+                    }
+                    // }
+                }
+            } else if kind == FileAction::Remove {
+                info!("Removing indexed app entry: {:?}", path.file_name());
+                let term = Term::from_field_text(
+                    schema.get_field("path").unwrap(),
+                    &path.to_string_lossy().to_string(),
+                );
+                let _result = writer.delete_term(term);
+                info!("Removed indexed app entry: {:?}", path.file_name());
+            }
+        }
+        if let Err(e) = writer.commit() {
+            error!("Failed to commit index: {:?}", e);
+        } else {
+            info!("Committed indexed app data to disk.");
+        }
+    }
     /// Search indexed applications using a free-form query.
     pub fn search(&self, query_str: &str, limit: usize) -> tantivy::Result<Vec<AppInfo>> {
         info!("Search Apps: {}", query_str);
@@ -342,15 +386,26 @@ impl AppSearchService {
             })
             .collect();
 
-        let reader = self
-            .index
-            .reader_builder()
-            .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
-            .try_into()?;
+        let searcher = self.reader.searcher();
+        let query_parser = QueryParser::for_index(&self.index, fields.clone());
+        let parsed = query_parser.parse_query(query_str)?;
 
-        let searcher = reader.searcher();
-        let query_parser = QueryParser::for_index(&self.index, fields);
-        let query = query_parser.parse_query(query_str)?;
+        // start with parsed query
+        let mut subqueries: Vec<(Occur, Box<dyn Query>)> = vec![(Occur::Should, parsed)];
+        // add fuzzy queries for every searchable field
+        for field in &fields {
+            //NOTE: Must check the field type: FuzzyTermQuery only works on STRING fields
+            let field_entry = self.schema.get_field_entry(*field);
+            if let FieldType::Str(_) = field_entry.field_type() {
+                let term = Term::from_field_text(*field, &query_str);
+                subqueries.push((
+                    Occur::Should,
+                    Box::new(FuzzyTermQuery::new_prefix(term, 2, true)),
+                ));
+            }
+        }
+        
+        let query = BooleanQuery::new(subqueries);
 
         let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
 
@@ -390,13 +445,7 @@ impl AppSearchService {
             }
         };
 
-        let reader = self
-            .index
-            .reader_builder()
-            .reload_policy(tantivy::ReloadPolicy::OnCommitWithDelay)
-            .try_into()?;
-
-        let searcher = reader.searcher();
+        let searcher = self.reader.searcher();
         let query_parser = QueryParser::for_index(&self.index, vec![field_to_lookup]);
         let query = query_parser.parse_query(search_term)?;
 
@@ -427,15 +476,24 @@ impl AppSearchService {
     }
 
     /// Graceful shutdown (optional: cancels task)
-    pub async fn shutdown(&self) -> anyhow::Result<()> {
-        if let Some(handle) = &self.index_worker_handle {
-            debug!("Aborting indexer task");
-            handle.abort(); // Stop background debounce task
+    pub async fn shutdown(&mut self) -> anyhow::Result<()> {
+        // Signal the indexer to flush pending work and exit
+        if let Some(tx) = self.cmd_tx.take() {
+            let _ = tx.send(IndexCmd::Shutdown).await; // ignore error if task already exited
         }
 
-        if let Some(handle) = &self.watcher_handler {
+        // Await the indexer task to allow a clean final commit
+        if let Some(handle) = self.index_worker_handle.take() {
+            match handle.await {
+                Ok(()) => debug!("Indexer task exited cleanly"),
+                Err(e) => warn!("Indexer task join error: {:?}", e),
+            }
+        }
+
+        // Stop the watcher task (it is a source-only task)
+        if let Some(handle) = self.watcher_handler.take() {
             debug!("Aborting watcher task");
-            handle.abort(); // Stop background task
+            handle.abort();
         }
         Ok(())
     }
@@ -520,7 +578,7 @@ fn extract_doc_given_app_path(
     // The second argument is here to tell we don't care about decoding positions,
     // or term frequencies.
     let term_query = TermQuery::new(app_path.clone(), IndexRecordOption::Basic);
-    let top_docs = searcher.search(&term_query, &TopDocs::with_limit(200))?;
+    let top_docs = searcher.search(&term_query, &TopDocs::with_limit(1))?;
 
     if let Some((_score, doc_address)) = top_docs.first() {
         let doc = searcher.doc(*doc_address)?;
@@ -529,4 +587,21 @@ fn extract_doc_given_app_path(
         // no doc matching this ID.
         Ok(None)
     }
+}
+
+/// Create the Tantivy schema for `.desktop` fields
+fn create_schema() -> Schema {
+    let mut schema_builder = tantivy::schema::Schema::builder();
+    schema_builder.add_text_field("type", STRING | STORED);
+    schema_builder.add_text_field("name", STRING | STORED);
+    schema_builder.add_text_field("exec", STORED);
+    schema_builder.add_text_field("comment", TEXT);
+    schema_builder.add_text_field("generic_name", STRING | STORED);
+    schema_builder.add_text_field("categories", STRING | STORED);
+    schema_builder.add_text_field("keywords", TEXT);
+    schema_builder.add_text_field("icon", STORED);
+    schema_builder.add_text_field("last_modified", STORED);
+    schema_builder.add_text_field("path", STRING);
+
+    schema_builder.build()
 }
