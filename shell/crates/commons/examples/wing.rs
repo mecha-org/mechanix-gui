@@ -37,7 +37,7 @@ impl Render for WingExample {
                             .child("Hover and click on the wings to see interactions"),
                     ),
             )
-            // Row 1: Wings with upper wing only
+            // Row 1: Single wing (upper or lower only)
             .child(
                 div()
                     .flex()
@@ -47,7 +47,7 @@ impl Render for WingExample {
                         div()
                             .text_sm()
                             .text_color(rgb(0xaaaaaa))
-                            .child("Upper Wing Only - Various Configurations"),
+                            .child("Single Wing - Upper or Lower Only"),
                     )
                     .child(
                         div()
@@ -68,7 +68,7 @@ impl Render for WingExample {
                                     }))
                                     .child({
                                         let mut w = wing();
-                                        w.upper_wing_size(size(px(20.0), px(10.0)));
+                                        w.upper_wing_size(size(px(25.0), px(12.0)));
                                         w.w(px(80.0))
                                             .h(px(60.0))
                                             .bg(rgb(0x10b981))
@@ -93,15 +93,15 @@ impl Render for WingExample {
                                     }))
                                     .child({
                                         let mut w = wing();
-                                        w.upper_wing_size(size(px(30.0), px(15.0)));
+                                        w.lower_wing_size(size(px(25.0), px(12.0)));
                                         w.w(px(80.0))
                                             .h(px(60.0))
-                                            .bg(rgb(0x10b981))
+                                            .bg(rgb(0xf59e0b))
                                             .when(clicked_wing == Some(4), |wing| {
                                                 wing.border_2().border_color(rgb(0xffffff))
                                             })
                                             .when(hovered_wing == Some(4), |wing| {
-                                                wing.bg(rgb(0x34d399))
+                                                wing.bg(rgb(0xfbbf24))
                                             })
                                     }),
                             )
@@ -132,102 +132,7 @@ impl Render for WingExample {
                             ),
                     ),
             )
-            // Row 2: Wings with lower wing only
-            .child(
-                div()
-                    .flex()
-                    .flex_col()
-                    .gap_4()
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(rgb(0xaaaaaa))
-                            .child("Lower Wing Only - Various Configurations"),
-                    )
-                    .child(
-                        div()
-                            .flex()
-                            .flex_row()
-                            .gap_8()
-                            .items_center()
-                            .child(
-                                div()
-                                    .id("wing-6")
-                                    .on_mouse_move(cx.listener(
-                                        |this, _event: &MouseMoveEvent, _, _cx| {
-                                            this.hovered_wing = Some(6);
-                                        },
-                                    ))
-                                    .on_click(cx.listener(|this, _event: &ClickEvent, _, _cx| {
-                                        this.clicked_wing = Some(6);
-                                    }))
-                                    .child({
-                                        let mut w = wing();
-                                        w.lower_wing_size(size(px(20.0), px(10.0)));
-                                        w.w(px(80.0))
-                                            .h(px(60.0))
-                                            .bg(rgb(0xf59e0b))
-                                            .when(clicked_wing == Some(6), |wing| {
-                                                wing.border_2().border_color(rgb(0xffffff))
-                                            })
-                                            .when(hovered_wing == Some(6), |wing| {
-                                                wing.bg(rgb(0xfbbf24))
-                                            })
-                                    }),
-                            )
-                            .child(
-                                div()
-                                    .id("wing-7")
-                                    .on_mouse_move(cx.listener(
-                                        |this, _event: &MouseMoveEvent, _, _cx| {
-                                            this.hovered_wing = Some(7);
-                                        },
-                                    ))
-                                    .on_click(cx.listener(|this, _event: &ClickEvent, _, _cx| {
-                                        this.clicked_wing = Some(7);
-                                    }))
-                                    .child({
-                                        let mut w = wing();
-                                        w.lower_wing_size(size(px(30.0), px(15.0)));
-                                        w.w(px(80.0))
-                                            .h(px(60.0))
-                                            .bg(rgb(0xf59e0b))
-                                            .when(clicked_wing == Some(7), |wing| {
-                                                wing.border_2().border_color(rgb(0xffffff))
-                                            })
-                                            .when(hovered_wing == Some(7), |wing| {
-                                                wing.bg(rgb(0xfbbf24))
-                                            })
-                                    }),
-                            )
-                            .child(
-                                div()
-                                    .id("wing-8")
-                                    .on_mouse_move(cx.listener(
-                                        |this, _event: &MouseMoveEvent, _, _cx| {
-                                            this.hovered_wing = Some(8);
-                                        },
-                                    ))
-                                    .on_click(cx.listener(|this, _event: &ClickEvent, _, _cx| {
-                                        this.clicked_wing = Some(8);
-                                    }))
-                                    .child({
-                                        let mut w = wing();
-                                        w.lower_wing_size(size(px(40.0), px(20.0)));
-                                        w.w(px(80.0))
-                                            .h(px(60.0))
-                                            .bg(rgb(0xf59e0b))
-                                            .when(clicked_wing == Some(8), |wing| {
-                                                wing.border_2().border_color(rgb(0xffffff))
-                                            })
-                                            .when(hovered_wing == Some(8), |wing| {
-                                                wing.bg(rgb(0xfbbf24))
-                                            })
-                                    }),
-                            ),
-                    ),
-            )
-            // Row 3: Wings with both upper and lower wings
+            // Row 2: Wings with both upper and lower wings
             .child(
                 div()
                     .flex()
@@ -397,7 +302,7 @@ impl Render for WingExample {
                             ),
                     ),
             )
-            // Row 5: Wings with borders - demonstrating border_width() method
+            // Row 5: Wings with borders and border radius combined
             .child(
                 div()
                     .flex()
@@ -407,7 +312,7 @@ impl Render for WingExample {
                         div()
                             .text_sm()
                             .text_color(rgb(0xaaaaaa))
-                            .child("Wings with Borders - Different Border Widths"),
+                            .child("Wings with Borders and Border Radius - Combined Features"),
                     )
                     .child(
                         div()
@@ -431,6 +336,7 @@ impl Render for WingExample {
                                         w.upper_wing_size(size(px(25.0), px(12.0)));
                                         w.lower_wing_size(size(px(25.0), px(12.0)));
                                         w.border_width(px(2.0));
+                                        w.border_radius(px(3.0));
                                         w.w(px(80.0))
                                             .h(px(60.0))
                                             .bg(rgb(0x06b6d4))
@@ -458,7 +364,8 @@ impl Render for WingExample {
                                         let mut w = wing();
                                         w.upper_wing_size(size(px(30.0), px(15.0)));
                                         w.lower_wing_size(size(px(30.0), px(15.0)));
-                                        w.border_width(px(4.0));
+                                        w.border_width(px(3.0));
+                                        w.border_radius(px(6.0));
                                         w.w(px(80.0))
                                             .h(px(60.0))
                                             .bg(rgb(0x06b6d4))
@@ -486,7 +393,8 @@ impl Render for WingExample {
                                         let mut w = wing();
                                         w.upper_wing_size(size(px(35.0), px(18.0)));
                                         w.lower_wing_size(size(px(35.0), px(18.0)));
-                                        w.border_width(px(6.0));
+                                        w.border_width(px(4.0));
+                                        w.border_radius(px(10.0));
                                         w.w(px(80.0))
                                             .h(px(60.0))
                                             .bg(rgb(0x06b6d4))
@@ -523,4 +431,6 @@ fn main() {
         cx.activate(true);
     });
 }
+
+
 

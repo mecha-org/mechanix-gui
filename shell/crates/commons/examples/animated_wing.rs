@@ -19,6 +19,7 @@ struct WingState {
     lower_wing_width: f32,
     lower_wing_height: f32,
     border_width: f32,
+    border_radius: f32,
 }
 
 impl WingState {
@@ -42,6 +43,9 @@ impl WingState {
         // Generate random border width
         let border_width = rng.gen_range(1.0..8.0);
         
+        // Generate random border radius
+        let border_radius = rng.gen_range(0.0..15.0);
+        
         Self {
             width,
             height,
@@ -50,6 +54,7 @@ impl WingState {
             lower_wing_width,
             lower_wing_height,
             border_width,
+            border_radius,
         }
     }
 
@@ -66,6 +71,7 @@ impl WingState {
             lower_wing_height: self.lower_wing_height
                 + (other.lower_wing_height - self.lower_wing_height) * t,
             border_width: self.border_width + (other.border_width - self.border_width) * t,
+            border_radius: self.border_radius + (other.border_radius - self.border_radius) * t,
         }
     }
 }
@@ -141,6 +147,7 @@ impl Render for AnimatedWingExample {
                                                 px(state.lower_wing_height),
                                             ));
                                             w.border_width(px(state.border_width));
+                                            w.border_radius(px(state.border_radius));
 
                                             element.child(
                                                 w.w(px(state.width))
@@ -202,6 +209,15 @@ impl Render for AnimatedWingExample {
                                 "Border Width: {:.1}px",
                                 target.border_width
                             )),
+                    )
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(rgb(0x888888))
+                            .child(format!(
+                                "Border Radius: {:.1}px",
+                                target.border_radius
+                            )),
                     ),
             )
     }
@@ -228,3 +244,8 @@ fn main() {
         cx.activate(true);
     });
 }
+
+
+
+
+
