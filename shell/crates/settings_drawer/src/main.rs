@@ -1,6 +1,7 @@
 use commons::prelude::*;
 use futures::StreamExt;
 use futures::channel::mpsc;
+
 use gpui::*;
 use settings_drawer::prelude::*;
 use settings_drawer::services::*;
@@ -20,6 +21,8 @@ fn main() {
                 let (app_channel_tx, mut app_channel_rx) = mpsc::channel::<AppEvents>(120);
                 let (nm_tx, nm_rx) = mpsc::channel::<NmEvents>(128);
                 let (bt_tx, bt_rx) = mpsc::channel::<BtEvents>(128);
+                let (volume_tx, volume_rx) = mpsc::channel::<VolumeEvents>(128);
+                let (brightness_tx, brightness_rx) = mpsc::channel::<BrightnessEvents>(128);
                 let executor = cx.background_executor();
 
                 executor
@@ -41,10 +44,6 @@ fn main() {
                 executor
                     .spawn(stream_network_device_events(app_channel_tx.clone()))
                     .detach();
-
-                executor
-                    .spawn(sync_connected_network(app_channel_tx.clone()))
-                    .detach();
                 executor.spawn(handle_wireless_toggle(nm_rx)).detach();
 
                 executor
@@ -57,6 +56,20 @@ fn main() {
                     .spawn(sync_bluetooth_connected_status(app_channel_tx.clone()))
                     .detach();
                 executor.spawn(handle_bluetooth_toggle(bt_rx)).detach();
+
+                executor
+                    .spawn(sound_device_events(app_channel_tx.clone()))
+                    .detach();
+                executor
+                    .spawn(handle_volume_change(volume_rx, app_channel_tx.clone()))
+                    .detach();
+
+                executor
+                    .spawn(get_brightness_value(app_channel_tx.clone()))
+                    .detach();
+                executor
+                    .spawn(handle_brightness_change(app_channel_tx.clone(), brightness_rx))
+                    .detach();
 
                 cx.new(|cx| {
                     cx.spawn(async move |app, cx| {
@@ -116,12 +129,18 @@ fn main() {
                                         cx.notify();
                                     });
                                 }
+                                AppEvents::Brightness { value } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.brightness_dbus_value = value;
+                                        cx.notify();
+                                    });
+                                }
                             }
                         }
                     })
                     .detach();
 
-                    SettingsDrawer::new(cx, nm_tx.clone(), bt_tx.clone())
+                    SettingsDrawer::new(cx, nm_tx.clone(), bt_tx.clone(), volume_tx.clone(), brightness_tx.clone())
                 })
             },
         )

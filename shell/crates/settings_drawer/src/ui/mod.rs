@@ -1,6 +1,6 @@
 mod icon;
 mod widgets;
-use crate::events::NmEvents;
+use crate::events::{BrightnessEvents, NmEvents, VolumeEvents};
 use crate::{
     events::BtEvents,
     ui::{
@@ -56,11 +56,14 @@ pub struct SettingsDrawer {
     pub open_terminal: bool,
     pub cell_signal: bool,
 
+    pub brightness_dbus_value: f32,
     pub brightness_slider_state: Entity<SliderState>,
     pub brightness_slider_value: f32,
+    pub brightness_slider_changing: bool,
 
     pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
+    pub volume_slider_changing: bool,
 
     pub nm_tx: mpsc::Sender<NmEvents>,
     pub bt_tx: mpsc::Sender<BtEvents>,
@@ -76,27 +79,92 @@ impl SettingsDrawer {
         cx: &mut Context<Self>,
         nm_tx: mpsc::Sender<NmEvents>,
         bt_tx: mpsc::Sender<BtEvents>,
+        volume_tx: mpsc::Sender<VolumeEvents>,
+        brightness_tx: mpsc::Sender<BrightnessEvents>,
     ) -> Self {
         let brightness_slider = cx.new(|_| SliderState::new());
-        let b_subscription =
-            cx.subscribe(&brightness_slider, |this, _, event: &SliderEvent, cx| {
+        let b_subscription = cx.subscribe(
+            &brightness_slider,
+            move |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = event;
                 this.brightness_slider_value = *value;
-                println!("brightness value: {:?}", this.brightness_slider_value);
+                this.brightness_slider_changing = true;
+
+                let mut brightness_tx = brightness_tx.clone();
+                let brightness_value = *value;
+                cx.background_executor()
+                    .spawn(async move {
+                        let _ = brightness_tx
+                            .send(BrightnessEvents::BrightnessChanged {
+                                value: brightness_value,
+                            })
+                            .await;
+                    })
+                    .detach();
+
                 cx.notify();
-            });
+            },
+        );
 
         let volume_slider = cx.new(|_| {
             SliderState::new()
-                .default_value(20.)
+                .default_value(0.)
                 .pattern(widgets::SliderPattern::Bars)
         });
-        let c_subscription = cx.subscribe(&volume_slider, |this, _, event: &SliderEvent, cx| {
-            let SliderEvent::Change(value) = event;
-            this.volume_slider_value = *value;
-            println!("volume value: {:?}", this.volume_slider_value);
-            cx.notify();
-        });
+
+        let c_subscription =
+            cx.subscribe(&volume_slider, move |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = event;
+                this.volume_slider_value = *value;
+                this.volume_slider_changing = true;
+                println!("volume value changed to: {:?}", this.volume_slider_value);
+
+                // Clone the necessary data for the async task.
+                let sink_name_value = this
+                    .sound_device
+                    .as_ref()
+                    .map(|d| d.name.clone())
+                    .unwrap_or_else(|| Some("default".to_string()));
+                let sink_name = sink_name_value.unwrap_or_else(|| "default".to_string());
+
+                println!(
+                    "sink volume: {:?}",
+                    this.sound_device.as_ref().map(|d| d.volume)
+                );
+                let volume = *value;
+                let mut volume_tx = volume_tx.clone();
+
+                let _ = cx
+                    .background_executor()
+                    .spawn(async move {
+                        println!("TESTING ASYNC VOLUME CHANGE PREP");
+                    })
+                    .detach();
+
+                let _ = cx
+                    .foreground_executor()
+                    .spawn(async move {
+                        println!(
+                            "---Preparing to send volume change: sink_name = {}, volume = {}",
+                            sink_name, volume
+                        );
+                        let _ = volume_tx
+                            .send(VolumeEvents::VolumeChanged {
+                                name: sink_name,
+                                value: volume,
+                            })
+                            .await;
+
+                        //  cx.background_executor()
+                        // .timer(std::time::Duration::from_millis(300))
+                        // .await;
+
+                        // this.volume_slider_changing = false;
+                    })
+                    .detach();
+
+                cx.notify();
+            });
 
         let mut _subscriptions = vec![b_subscription, c_subscription];
 
@@ -125,10 +193,14 @@ impl SettingsDrawer {
             sound_device: None,
             open_terminal: false,
             cell_signal: false,
+            brightness_dbus_value: 0.0,
             brightness_slider_state: brightness_slider,
             brightness_slider_value: 0.0,
+            brightness_slider_changing: false,
+
             volume_slider_state: volume_slider,
             volume_slider_value: 0.0,
+            volume_slider_changing: false,
             nm_tx,
             bt_tx,
             _subscriptions,
@@ -219,7 +291,7 @@ impl Render for SettingsDrawer {
                                     ),
                             ),
                     )
-                    .child(self.drawer_items(cx)),
+                    .child(self.drawer_items(window, cx)),
             )
     }
 }
@@ -285,7 +357,11 @@ impl SettingsDrawer {
         window.set_input_regions(Some(regions));
     }
 
-    fn drawer_items(&mut self, cx: &mut Context<SettingsDrawer>) -> impl IntoElement {
+    fn drawer_items(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<SettingsDrawer>,
+    ) -> impl IntoElement {
         let battery_icon = match self.battery_state {
             BatteryState::Charging => match self.battery_level {
                 0..=10 => IconName::Battery10Charging,
@@ -317,6 +393,42 @@ impl SettingsDrawer {
             BatteryState::Empty => IconName::BatteryEmpty,
             _ => IconName::BatteryEmpty,
         };
+
+        let device_volume = self.sound_device.as_ref().map(|d| d.volume).unwrap_or(0.) as f32;
+
+        let volume_toset = if self.volume_slider_changing {
+            self.volume_slider_value
+        } else {
+            device_volume
+        };
+
+        if self.volume_slider_value != device_volume {
+            let device_volume_for_update = volume_toset;
+            self.volume_slider_state.update(cx, |state, cx| {
+                state.value = device_volume_for_update.clamp(state.min, state.max);
+            });
+            self.volume_slider_value = device_volume;
+            self.volume_slider_changing = false;
+            cx.notify();
+        }
+
+        let brightnes_dbus_value = self.brightness_dbus_value as f32;
+
+        let brightness_toset = if self.brightness_slider_changing {
+            self.brightness_slider_value
+        } else {
+            brightnes_dbus_value
+        };
+
+        if self.brightness_slider_value != brightnes_dbus_value {
+            let brightness_for_update = brightness_toset;
+            self.brightness_slider_state.update(cx, |state, cx| {
+                state.value = brightness_for_update.clamp(state.min, state.max);
+            });
+            self.brightness_slider_value = brightnes_dbus_value;
+            self.brightness_slider_changing = false;
+            cx.notify();
+        }
 
         let wireless_icon = match self.wireless_details.enabled {
             true => match self.wireless_details.strength {
