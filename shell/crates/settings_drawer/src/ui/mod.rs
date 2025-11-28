@@ -119,23 +119,11 @@ impl SettingsDrawer {
                     .map(|d| d.name.clone())
                     .unwrap_or_else(|| Some("default".to_string()));
                 let sink_name = sink_name_value.unwrap_or_else(|| "default".to_string());
-
-                println!(
-                    "sink volume: {:?}",
-                    this.sound_device.as_ref().map(|d| d.volume)
-                );
                 let volume = *value;
                 let mut volume_tx = volume_tx.clone();
 
                 let _ = cx
                     .background_executor()
-                    .spawn(async move {
-                        println!("TESTING ASYNC VOLUME CHANGE PREP");
-                    })
-                    .detach();
-
-                let _ = cx
-                    .foreground_executor()
                     .spawn(async move {
                         let _ = volume_tx
                             .send(VolumeEvents::VolumeChanged {

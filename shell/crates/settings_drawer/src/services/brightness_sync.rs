@@ -2,12 +2,14 @@ use crate::events::{AppEvents, BrightnessEvents};
 use futures::{SinkExt, StreamExt, channel::mpsc};
 use system_dbus::display_client;
 
+const MAX_DEVICE_BRIGHTNESS: u32 = 254;
+
 pub async fn brightness_event_handler(
     mut tx: mpsc::Sender<AppEvents>,
     mut brightness_rx: mpsc::Receiver<BrightnessEvents>,
 ) {
     if let Ok(value) = display_client::get_brightness().await {
-        let value = u8_to_percent(value, 254);
+        let value = u8_to_percent(value, MAX_DEVICE_BRIGHTNESS);
         let _ = tx.send(AppEvents::Brightness { value }).await;
     }
 
@@ -15,11 +17,11 @@ pub async fn brightness_event_handler(
         match event {
             BrightnessEvents::BrightnessChanged { value } => {
                 let value = if value < 10.0 { 10.0 } else { value };
-                let value = percent_to_u8(value, 254);
+                let value = percent_to_u8(value, MAX_DEVICE_BRIGHTNESS);
                 match display_client::set_brightness(value).await {
                     Ok(_) => {
                         if let Ok(value) = display_client::get_brightness().await {
-                            let value = u8_to_percent(value, 254);
+                            let value = u8_to_percent(value, MAX_DEVICE_BRIGHTNESS);
                             let _ = tx.send(AppEvents::Brightness { value }).await;
                         }
                     }
