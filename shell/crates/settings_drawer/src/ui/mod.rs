@@ -716,8 +716,9 @@ impl SettingsDrawer {
                                             .icon_color(rgb(0xF4F4F4))
                                             .size((px(36.), px(36.)))
                                             .bg_color(rgb(0x202020))
+                                            .active_bg_color(rgb(0x202020))
                                             .border(px(0.))
-                                             .on_click(cx.listener(
+                                            .on_click(cx.listener(
                                         |this: &mut SettingsDrawer,
                                         _event: &ClickEvent,
                                         _window: &mut Window,
