@@ -111,10 +111,16 @@ pub enum Message {
     },
 
     /// Response containing default output device or error
-    SetDefaultSink(Result<DeviceInfo, PulseAudioError>),
+    SetDefaultSink {
+        name: String,
+        reply: oneshot::Sender<Result<bool, PulseAudioError>>,
+    },
 
     /// Response containing default input device or error
-    SetDefaultSource(Result<DeviceInfo, PulseAudioError>),
+    SetDefaultSource {
+        name: String,
+        reply: oneshot::Sender<Result<bool, PulseAudioError>>,
+    },
 
     // Volume control
     SetSinkVolumeByName {
@@ -125,6 +131,22 @@ pub enum Message {
     SetSourceVolumeByName {
         name: String,
         volume: f32,
+        reply: oneshot::Sender<Result<(), PulseServerError>>,
+    },
+    MuteSinkByName {
+        name: String,
+        reply: oneshot::Sender<Result<(), PulseServerError>>,
+    },
+    MuteSourceByName {
+        name: String,
+        reply: oneshot::Sender<Result<(), PulseServerError>>,
+    },
+    UnMuteSinkByName {
+        name: String,
+        reply: oneshot::Sender<Result<(), PulseServerError>>,
+    },
+    UnMuteSourceByName {
+        name: String,
         reply: oneshot::Sender<Result<(), PulseServerError>>,
     },
 
@@ -219,6 +241,81 @@ impl PulseHandle {
         rx.await
             .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
     }
+
+    pub async fn set_default_source_by_name(&self, name: &str) -> Result<bool, PulseAudioError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::SetDefaultSource {
+                name: name.to_string(),
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+    pub async fn set_default_sink_by_name(&self, name: &str) -> Result<bool, PulseAudioError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::SetDefaultSink {
+                name: name.to_string(),
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+    pub async fn set_sink_mute_by_name(&self, name: &str) -> Result<(), PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::MuteSinkByName {
+                name: name.to_string(),
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+
+    pub async fn set_sink_unmute_by_name(&self, name: &str) -> Result<(), PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::UnMuteSinkByName {
+                name: name.to_string(),
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+    pub async fn mute_source_by_name(&self, name: &str) -> Result<(), PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::MuteSourceByName {
+                name: name.to_string(),
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
+
+    pub async fn set_source_unmute_by_name(&self, name: &str) -> Result<(), PulseServerError> {
+        let (reply, rx) = oneshot::channel();
+        self.tx
+            .send(Message::UnMuteSourceByName {
+                name: name.to_string(),
+                reply,
+            })
+            .await
+            .map_err(|_| PulseServerError::Misc("worker gone".into()))?;
+        rx.await
+            .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
+    }
     pub async fn shutdown(&self) {
         // Best-effort shutdown signal; ignore error if worker already gone
         let _ = self.tx.send(Message::Shutdown).await;
@@ -267,14 +364,36 @@ pub fn spawn_pulse_worker() -> Result<PulseHandle, PulseInitError> {
                     server.set_source_volume_by_name(&name, &volume);
                     let _ = reply.send(Ok(()));
                 }
+                Message::MuteSinkByName { name, reply } => {
+                    server.mute_sink_by_name(&name);
+                    let _ = reply.send(Ok(()));
+                }
+                Message::MuteSourceByName { name, reply } => {
+                    server.mute_source_by_name(&name);
+                    let _ = reply.send(Ok(()));
+                }
                 Message::Shutdown => {
                     if let Err(e) = server.shutdown() {
                         log::warn!("PulseServer shutdown error: {e:?}");
                     }
                     break;
                 }
-                Message::SetDefaultSink(_) => {}
-                Message::SetDefaultSource(_) => {}
+                Message::SetDefaultSink { name, reply } => {
+                    let _ = server.set_default_sink(&name);
+                    let _ = reply.send(Ok(true));
+                }
+                Message::SetDefaultSource { name, reply} => {
+                    let _ = server.set_default_source(&name);
+                    let _ = reply.send(Ok(true));
+                }
+                Message::UnMuteSinkByName { name, reply } => {
+                    server.unmute_sink_by_name(&name);
+                    let _ = reply.send(Ok(()));
+                }
+                Message::UnMuteSourceByName { name, reply } => {
+                    server.unmute_source_by_name(&name);
+                    let _ = reply.send(Ok(()));
+                }
             }
         }
     });
@@ -600,6 +719,40 @@ impl PulseServer {
             let _ = self.wait_for_result(op_unmute);
         }
         info!("set_source_volume_by_name: done");
+    }
+    pub fn mute_sink_by_name(&mut self, name: &str) {
+        let op = self.introspector.set_sink_mute_by_name(name, true, None);
+        let _ = self.wait_for_result(op);
+    }
+    pub fn unmute_sink_by_name(&mut self, name: &str) {
+        let op = self.introspector.set_sink_mute_by_name(name, false, None);
+        let _ = self.wait_for_result(op);
+    }
+    pub fn mute_source_by_name(&mut self, name: &str) {
+        info!("mute_source_by_name: {}", name);
+        let op = self.introspector.set_source_mute_by_name(name, true, None);
+        let _ = self.wait_for_result(op);
+        info!("mute_source_by_name: done");
+    }
+    pub fn unmute_source_by_name(&mut self, name: &str) {
+        let op = self.introspector.set_source_mute_by_name(name, false, None);
+        let _ = self.wait_for_result(op);
+    }
+
+    pub fn set_default_sink(&mut self, name: &str) {
+        let result = self.context.borrow_mut().set_default_sink(name, move |x| {
+            info!("set_default_sink: {:?}", x);
+        });
+        let _ = self.wait_for_result(result);
+    }
+    pub fn set_default_source(&mut self, source_name: &str) {
+        let result = self
+            .context
+            .borrow_mut()
+            .set_default_source(source_name, move |x| {
+                info!("set_default_source: {:?}", x);
+            });
+         let _ = self.wait_for_result(result);
     }
 
     // after building an operation such as get_devices() we need to keep polling
