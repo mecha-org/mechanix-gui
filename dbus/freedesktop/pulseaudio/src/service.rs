@@ -133,19 +133,19 @@ pub enum Message {
         volume: f32,
         reply: oneshot::Sender<Result<(), PulseServerError>>,
     },
-    MuteSinkByName {
+    SetSinkMuteByName {
         name: String,
         reply: oneshot::Sender<Result<(), PulseServerError>>,
     },
-    MuteSourceByName {
+    SetSourceMuteByName {
         name: String,
         reply: oneshot::Sender<Result<(), PulseServerError>>,
     },
-    UnMuteSinkByName {
+    SetSinkUnmuteByName {
         name: String,
         reply: oneshot::Sender<Result<(), PulseServerError>>,
     },
-    UnMuteSourceByName {
+    SetSourceUnmuteByName {
         name: String,
         reply: oneshot::Sender<Result<(), PulseServerError>>,
     },
@@ -269,7 +269,7 @@ impl PulseHandle {
     pub async fn set_sink_mute_by_name(&self, name: &str) -> Result<(), PulseServerError> {
         let (reply, rx) = oneshot::channel();
         self.tx
-            .send(Message::MuteSinkByName {
+            .send(Message::SetSinkMuteByName {
                 name: name.to_string(),
                 reply,
             })
@@ -282,7 +282,7 @@ impl PulseHandle {
     pub async fn set_sink_unmute_by_name(&self, name: &str) -> Result<(), PulseServerError> {
         let (reply, rx) = oneshot::channel();
         self.tx
-            .send(Message::UnMuteSinkByName {
+            .send(Message::SetSinkUnmuteByName {
                 name: name.to_string(),
                 reply,
             })
@@ -291,10 +291,10 @@ impl PulseHandle {
         rx.await
             .map_err(|_| PulseServerError::Misc("worker dropped reply".into()))?
     }
-    pub async fn mute_source_by_name(&self, name: &str) -> Result<(), PulseServerError> {
+    pub async fn set_source_mute_by_name(&self, name: &str) -> Result<(), PulseServerError> {
         let (reply, rx) = oneshot::channel();
         self.tx
-            .send(Message::MuteSourceByName {
+            .send(Message::SetSourceMuteByName {
                 name: name.to_string(),
                 reply,
             })
@@ -307,7 +307,7 @@ impl PulseHandle {
     pub async fn set_source_unmute_by_name(&self, name: &str) -> Result<(), PulseServerError> {
         let (reply, rx) = oneshot::channel();
         self.tx
-            .send(Message::UnMuteSourceByName {
+            .send(Message::SetSourceUnmuteByName {
                 name: name.to_string(),
                 reply,
             })
@@ -364,11 +364,11 @@ pub fn spawn_pulse_worker() -> Result<PulseHandle, PulseInitError> {
                     server.set_source_volume_by_name(&name, &volume);
                     let _ = reply.send(Ok(()));
                 }
-                Message::MuteSinkByName { name, reply } => {
+                Message::SetSinkMuteByName { name, reply } => {
                     server.mute_sink_by_name(&name);
                     let _ = reply.send(Ok(()));
                 }
-                Message::MuteSourceByName { name, reply } => {
+                Message::SetSourceMuteByName { name, reply } => {
                     server.mute_source_by_name(&name);
                     let _ = reply.send(Ok(()));
                 }
@@ -382,15 +382,15 @@ pub fn spawn_pulse_worker() -> Result<PulseHandle, PulseInitError> {
                     let _ = server.set_default_sink(&name);
                     let _ = reply.send(Ok(true));
                 }
-                Message::SetDefaultSource { name, reply} => {
+                Message::SetDefaultSource { name, reply } => {
                     let _ = server.set_default_source(&name);
                     let _ = reply.send(Ok(true));
                 }
-                Message::UnMuteSinkByName { name, reply } => {
+                Message::SetSinkUnmuteByName { name, reply } => {
                     server.unmute_sink_by_name(&name);
                     let _ = reply.send(Ok(()));
                 }
-                Message::UnMuteSourceByName { name, reply } => {
+                Message::SetSourceUnmuteByName { name, reply } => {
                     server.unmute_source_by_name(&name);
                     let _ = reply.send(Ok(()));
                 }
@@ -752,7 +752,7 @@ impl PulseServer {
             .set_default_source(source_name, move |x| {
                 info!("set_default_source: {:?}", x);
             });
-         let _ = self.wait_for_result(result);
+        let _ = self.wait_for_result(result);
     }
 
     // after building an operation such as get_devices() we need to keep polling
