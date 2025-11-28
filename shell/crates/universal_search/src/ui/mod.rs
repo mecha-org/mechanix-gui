@@ -78,17 +78,16 @@ impl UniversalSearch {
             chromium_icon: IconName::Chromium,
             firefox_icon: IconName::Firefox,
             github_icon: IconName::Github,
-            folder_medium_icon: IconName::FolderMedium,
+            folder_icon: IconName::DefaultFolder,
             search_icon: IconName::Search,
-            folder_small_icon: IconName::FolderSmall,
             x_icon: IconName::XIcon,
             text_input,
             position: Self::closed_pos(),
             drag_offset: None,
             drag_start_pos: 0.0,
             search_service: None,
-            file_search_results: Vec::new(), // Make sure this field exists
-            app_search_results: Vec::new(),  // Make sure this field exists
+            file_search_results: Vec::new(),
+            app_search_results: Vec::new(),
         }
     }
 

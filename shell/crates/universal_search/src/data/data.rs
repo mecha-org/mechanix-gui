@@ -34,7 +34,7 @@ pub fn sample_recent_apps() -> Vec<RecentApps> {
         },
         RecentApps {
             name: "File Manager".into(),
-            icon_path: IconName::File,
+            icon_path: IconName::DefaultFile,
         },
         RecentApps {
             name: "Ardour".into(),
