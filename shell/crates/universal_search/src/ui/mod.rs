@@ -239,7 +239,7 @@ impl UniversalSearch {
                 .path(path.to_string_lossy().to_string())
                 .size((px(21.82), px(21.82)))
                 .text_color(rgb(0xFFCC23)),
-            None => Icon::from(IconName::File).size((px(21.82), px(21.82))),
+            None => Icon::from(IconName::DefaultApp).size((px(21.82), px(21.82))),
         }
     }
 }
