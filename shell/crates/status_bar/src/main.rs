@@ -4,7 +4,6 @@ use gpui::*;
 use status_bar::prelude::*;
 use status_bar::services::*;
 use std::time::Duration;
-use upower::interfaces::device::BatteryState;
 
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
@@ -22,12 +21,8 @@ fn main() {
                 let executor = cx.background_executor();
 
                 executor
-                    .spawn(sync_network_status(app_channel_tx.clone()))
+                    .spawn(network_worker(app_channel_tx.clone()))
                     .detach();
-                executor
-                    .spawn(sync_network_strength(app_channel_tx.clone()))
-                    .detach();
-
                 executor
                     .spawn(sync_bluetooth_status(app_channel_tx.clone()))
                     .detach();
