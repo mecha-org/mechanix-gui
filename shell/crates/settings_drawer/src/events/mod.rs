@@ -33,7 +33,7 @@ pub enum AppEvents {
     },
     Brightness {
         value: f32,
-    }
+    },
 }
 
 #[derive(Debug)]
@@ -49,6 +49,8 @@ pub enum BtEvents {
 #[derive(Debug)]
 pub enum VolumeEvents {
     VolumeChanged { name: String, value: f32 },
+    MuteSink { name: String },
+    UnmuteSink { name: String },
 }
 
 #[derive(Debug)]

@@ -2,7 +2,7 @@ use commons::prelude::*;
 use futures::{StreamExt, channel::mpsc};
 
 use gpui::*;
-use settings_drawer::prelude::{*};
+use settings_drawer::prelude::*;
 use settings_drawer::services::*;
 
 fn main() {
@@ -113,19 +113,10 @@ fn main() {
                                 }
                                 AppEvents::OutputSoundDevice { device_info } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.sound_device = Some(device_info);
-                                        this.volume_slider_value = this
-                                            .sound_device
-                                            .as_ref()
-                                            .map(|d| d.volume)
-                                            .unwrap_or(0.0)
-                                            as f32;
-                                        this.volume_mute = this
-                                            .sound_device
-                                            .as_ref()
-                                            .map(|d| d.mute)
-                                            .unwrap_or(false);
-
+                                        let device_info = Some(device_info).clone().unwrap();
+                                        this.volume_mute = device_info.mute;
+                                        this.volume_slider_value = if this.volume_mute { 0.0 } else { device_info.volume as f32 };
+                                        this.volume_device_name = device_info.name.unwrap_or_else(|| "default".to_string());
                                         this.volume_slider_state.update(cx, |state, cx| {
                                             state.value = this
                                                 .volume_slider_value

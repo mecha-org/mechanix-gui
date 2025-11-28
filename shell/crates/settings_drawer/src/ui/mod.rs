@@ -11,7 +11,6 @@ use crate::{
 use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
-use pulseaudio::service::DeviceInfo;
 use upower::interfaces::device::BatteryState;
 
 const NAVBAR_SIZE: (f32, f32) = (180., 29.);
@@ -52,7 +51,6 @@ pub struct SettingsDrawer {
 
     pub wireless_details: WirelessDetails,
     pub bluetooth_details: BluetoothDetails,
-    pub sound_device: Option<DeviceInfo>,
     pub open_terminal: bool,
     pub cell_signal: bool,
 
@@ -60,10 +58,12 @@ pub struct SettingsDrawer {
     pub brightness_slider_value: f32,
     pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
+    pub volume_device_name: String,
     pub volume_mute: bool,
 
     pub nm_tx: mpsc::Sender<NmEvents>,
     pub bt_tx: mpsc::Sender<BtEvents>,
+    pub volume_tx: mpsc::Sender<VolumeEvents>,
     _subscriptions: Vec<Subscription>,
 
     position: f32,
@@ -79,6 +79,7 @@ impl SettingsDrawer {
         volume_tx: mpsc::Sender<VolumeEvents>,
         brightness_tx: mpsc::Sender<BrightnessEvents>,
     ) -> Self {
+        let volume_tx_for_slider = volume_tx.clone();
         let brightness_slider = cx.new(|_| SliderState::new());
         let b_subscription = cx.subscribe(
             &brightness_slider,
@@ -113,19 +114,14 @@ impl SettingsDrawer {
                 let SliderEvent::Change(value) = event;
                 this.volume_slider_value = *value;
 
-                let sink_name_value = this
-                    .sound_device
-                    .as_ref()
-                    .map(|d| d.name.clone())
-                    .unwrap_or_else(|| Some("default".to_string()));
-                let sink_name = sink_name_value.unwrap_or_else(|| "default".to_string());
+                let sink_name = this.volume_device_name.clone();
                 let volume = *value;
-                let mut volume_tx = volume_tx.clone();
+                let mut volume_tx_1 = volume_tx_for_slider.clone();
 
                 let _ = cx
                     .background_executor()
                     .spawn(async move {
-                        let _ = volume_tx
+                        let _ = volume_tx_1
                             .send(VolumeEvents::VolumeChanged {
                                 name: sink_name,
                                 value: volume,
@@ -161,7 +157,7 @@ impl SettingsDrawer {
                 devices: 0,
                 connected_device: None,
             },
-            sound_device: None,
+            volume_device_name: "".to_string(),
             open_terminal: false,
             cell_signal: false,
             brightness_slider_state: brightness_slider,
@@ -172,6 +168,7 @@ impl SettingsDrawer {
             volume_mute: false,
             nm_tx,
             bt_tx,
+            volume_tx,
             _subscriptions,
 
             position: Self::closed_pos(),
@@ -363,7 +360,6 @@ impl SettingsDrawer {
             _ => IconName::BatteryEmpty,
         };
 
-        // TODO: get mute prop from service
         let volume_icon = if self.volume_mute {
             IconName::VolumeOff
         } else {
@@ -721,9 +717,36 @@ impl SettingsDrawer {
                                             .size((px(36.), px(36.)))
                                             .bg_color(rgb(0x202020))
                                             .border(px(0.))
-                                            .on_click(cx.listener(|_, _, _, _| {
-                                                println!("volume clicked");
-                                            })),
+                                             .on_click(cx.listener(
+                                        |this: &mut SettingsDrawer,
+                                        _event: &ClickEvent,
+                                        _window: &mut Window,
+                                        cx: &mut Context<Self>| {
+                                            let mut volume_tx = this.volume_tx.clone();
+                                            this.volume_mute = !this.volume_mute;
+                                            let is_mute = this.volume_mute;
+                                            let sink_name = this.volume_device_name.clone();
+
+                                            if is_mute {
+                                                cx.background_executor()
+                                                .spawn(async move {
+                                                    let _ = volume_tx
+                                                        .send(VolumeEvents::MuteSink { name: sink_name })
+                                                        .await;
+                                                })
+                                                .detach();
+                                            } else {
+                                                cx.background_executor()
+                                                .spawn(async move {
+                                                    let _ = volume_tx
+                                                        .send(VolumeEvents::UnmuteSink { name: sink_name })
+                                                        .await;
+                                                })
+                                                .detach();
+                                            }
+                                        
+                                        },
+                                    )),
                                     )
                                     .child(
                                         div()

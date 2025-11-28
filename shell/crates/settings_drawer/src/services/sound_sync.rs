@@ -14,28 +14,52 @@ pub async fn audio_event_handler(
         }
     };
 
-    if let Ok(device_info) = pulse_service.handle.get_default_sink().await {
-        let _ = tx.send(AppEvents::OutputSoundDevice { device_info }).await;
-    }
+    update_device_info(&mut tx, &pulse_service).await;
 
     loop {
         select! {
             event = volume_rx.next() => {
-                if let Some(VolumeEvents::VolumeChanged { name, value }) = event {
-                    match pulse_service.handle.set_sink_volume_by_name(&name, &value).await {
-                        Ok(_) => {
-                            if let Ok(updated_info) = pulse_service.handle.get_default_sink().await {
-                                tx.send(AppEvents::OutputSoundDevice {
-                                    device_info: updated_info,
-                                }).await.ok();
+                match event {
+                    Some(VolumeEvents::VolumeChanged { name, value }) => {
+                        match pulse_service.handle.set_sink_volume_by_name(&name, &value).await {
+                            Ok(_) => {
+                                update_device_info(&mut tx, &pulse_service).await;
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to set volume: {}", e);
                             }
                         }
-                        Err(e) => {
-                            eprintln!("Failed to set volume: {}", e);
+                    }
+                    Some(VolumeEvents::MuteSink { name }) => {
+                        match pulse_service.handle.set_sink_mute_by_name(&name).await {
+                            Ok(_) => {
+                                update_device_info(&mut tx, &pulse_service).await;
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to set mute: {}", e);
+                            }
                         }
                     }
+                    Some(VolumeEvents::UnmuteSink { name }) => {
+                        match pulse_service.handle.set_sink_unmute_by_name(&name).await {
+                            Ok(_) => {
+                                update_device_info(&mut tx, &pulse_service).await;
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to unset mute: {}", e);
+                            }
+                        }
+                    }
+                    None => break,
                 }
+               
             }
         }
+    }
+}
+
+async fn update_device_info(tx: &mut mpsc::Sender<AppEvents>, pulse_service: &PulseAudioService) {
+    if let Ok(device_info) = pulse_service.handle.get_default_sink().await {
+        let _ = tx.send(AppEvents::OutputSoundDevice { device_info }).await;
     }
 }
