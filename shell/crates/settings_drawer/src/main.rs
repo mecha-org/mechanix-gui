@@ -1,9 +1,8 @@
 use commons::prelude::*;
-use futures::StreamExt;
-use futures::channel::mpsc;
+use futures::{StreamExt, channel::mpsc};
 
 use gpui::*;
-use settings_drawer::prelude::*;
+use settings_drawer::prelude::{*};
 use settings_drawer::services::*;
 
 fn main() {
@@ -24,6 +23,9 @@ fn main() {
                 let (volume_tx, volume_rx) = mpsc::channel::<VolumeEvents>(128);
                 let (brightness_tx, brightness_rx) = mpsc::channel::<BrightnessEvents>(128);
                 let executor = cx.background_executor();
+                executor
+                    .spawn(network_worker(app_channel_tx.clone(), nm_rx))
+                    .detach();
 
                 executor
                     .spawn(sync_battery_state(app_channel_tx.clone()))
@@ -34,17 +36,6 @@ fn main() {
                 executor
                     .spawn(sync_battery_percentage(app_channel_tx.clone()))
                     .detach();
-
-                executor
-                    .spawn(sync_network_status(app_channel_tx.clone()))
-                    .detach();
-                executor
-                    .spawn(sync_network_strength(app_channel_tx.clone()))
-                    .detach();
-                executor
-                    .spawn(stream_network_device_events(app_channel_tx.clone()))
-                    .detach();
-                executor.spawn(handle_wireless_toggle(nm_rx)).detach();
 
                 executor
                     .spawn(sync_bluetooth_status(app_channel_tx.clone()))
