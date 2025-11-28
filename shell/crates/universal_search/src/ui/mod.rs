@@ -2,15 +2,19 @@ pub mod icon;
 pub mod input;
 pub mod models;
 
+use std::path::PathBuf;
+
 use crate::data::data::*;
 use crate::ui::icon::Icon;
 use crate::ui::models::FileType;
+use freedesktop_icons::lookup;
 use gpui::*;
 use icon::IconName;
 use models::DragInfo;
 use models::SearchResults;
 use models::TextInput;
 use models::UniversalSearch;
+use mxsearch::service::MxSearchService;
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 56.0;
@@ -40,6 +44,28 @@ impl Render for DragInfo {
 
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
+        let entity = cx.entity();
+
+        cx.spawn(async move |this, cx| {
+            if let Ok(service) = MxSearchService::new().await {
+                this.update(cx, |this, cx| {
+                    this.search_service = Some(service);
+                    cx.notify();
+                })
+                .ok();
+            }
+        })
+        .detach();
+
+        let text_input = cx.new(|cx| {
+            TextInput::new(cx).on_change(move |input, cx| {
+                let query = input.content.to_string();
+                entity.update(cx, |this, cx| {
+                    this.perform_search(query, cx);
+                });
+            })
+        });
+
         Self {
             app_count: 0,
             file_count: 0,
@@ -56,11 +82,63 @@ impl UniversalSearch {
             search_icon: IconName::Search,
             folder_small_icon: IconName::FolderSmall,
             x_icon: IconName::XIcon,
-            text_input: cx.new(|cx| TextInput::new(cx)),
+            text_input,
             position: Self::closed_pos(),
             drag_offset: None,
             drag_start_pos: 0.0,
+            search_service: None,
+            file_search_results: Vec::new(), // Make sure this field exists
+            app_search_results: Vec::new(),  // Make sure this field exists
         }
+    }
+
+    pub fn perform_search(&mut self, query: String, cx: &mut Context<Self>) {
+        // If query is empty, clear results
+        if query.is_empty() {
+            self.file_search_results.clear();
+            self.file_count = 0;
+            cx.notify();
+            return;
+        }
+
+        let Some(search_service) = self.search_service.clone() else {
+            eprintln!("Search service not initialized yet");
+            return;
+        };
+
+        let entity = cx.entity();
+
+        cx.new(|cx| {
+            cx.spawn(async move |_, cx| {
+                match search_service.search_files(&query).await {
+                    Ok(results) => {
+                        entity
+                            .update(cx, |this, cx| {
+                                this.file_search_results = results;
+                                cx.notify();
+                            })
+                            .ok();
+                    }
+                    Err(e) => {
+                        eprintln!("Search error: {:?}", e);
+                    }
+                };
+                match search_service.search_applications(&query).await {
+                    Ok(results) => {
+                        entity
+                            .update(cx, |this, cx| {
+                                this.app_search_results = results;
+                                cx.notify();
+                            })
+                            .ok();
+                    }
+                    Err(e) => {
+                        eprintln!("Search error: {:?}", e);
+                    }
+                }
+            })
+            .detach();
+        });
     }
 
     fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
@@ -154,6 +232,16 @@ impl UniversalSearch {
         self.is_dragging = false;
         self.last_scroll_offset = self.scroll_offset;
     }
+
+    fn resolved_icon(app_icon: &Option<PathBuf>) -> Icon {
+        match app_icon {
+            Some(path) => Icon::default()
+                .path(path.to_string_lossy().to_string())
+                .size((px(21.82), px(21.82)))
+                .text_color(rgb(0xFFCC23)),
+            None => Icon::from(IconName::File).size((px(21.82), px(21.82))),
+        }
+    }
 }
 
 impl Render for UniversalSearch {
@@ -167,7 +255,7 @@ impl Render for UniversalSearch {
             .w_full()
             .h_full()
             .on_mouse_move(
-                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                cx.listener(move |this, event: &MouseMoveEvent, _window, cx| {
                     if let Some(offset) = this.drag_offset {
                         let new_y = event.position.y.to_f64() as f32 - offset;
                         this.position = new_y.clamp(open_y, closed_y);
@@ -224,7 +312,7 @@ impl Render for UniversalSearch {
                                     .id("universal-search-navbar")
                                     .on_mouse_down(
                                         MouseButton::Left,
-                                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                                        cx.listener(|this, event: &MouseDownEvent, _window, cx| {
                                             cx.stop_propagation();
                                             this.drag_start_pos = this.position;
                                             this.drag_offset = Some(
@@ -252,7 +340,7 @@ impl UniversalSearch {
         let start_time = std::time::Instant::now();
 
         cx.spawn(
-            async move |this: WeakEntity<UniversalSearch>, mut cx: &mut AsyncApp| {
+            async move |this: WeakEntity<UniversalSearch>, cx: &mut AsyncApp| {
                 loop {
                     let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
 
@@ -306,10 +394,27 @@ impl UniversalSearch {
 
         self.app_count = apps.len();
 
-        let search_text = self.text_input.read(cx).content.clone();
-        let files = sample_search_results(search_text.to_string());
+        let all_results: Vec<SearchResults> = if self.file_search_results.is_empty() {
+            Vec::new()
+        } else {
+            self.file_search_results
+                .iter()
+                .map(|result| SearchResults {
+                    name: result.name.clone(),
+                    file_type: FileType::File,
+                    path: String::new(),
+                    extension: result.file_type.clone(),
+                })
+                .chain(self.app_search_results.iter().map(|result| SearchResults {
+                    name: result.name.clone(),
+                    file_type: FileType::App,
+                    path: result.icon.clone(),
+                    extension: String::new(),
+                }))
+                .collect()
+        };
 
-        self.file_count = files.len();
+        self.file_count = all_results.len();
 
         // Calculate content height
         let content_height = self.estimate_content_height();
@@ -318,7 +423,6 @@ impl UniversalSearch {
         // Update scroll bounds
         self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
 
-        let folder_small_icon = self.folder_small_icon.clone();
         let arrow_up_right_icon = self.arrow_up_right_icon.clone();
         let search_icon = self.search_icon.clone();
         let x_icon = self.x_icon.clone();
@@ -375,19 +479,16 @@ impl UniversalSearch {
                                                     .file_type
                                                 {
                                                     FileType::App => {
-                                                        Icon::from(search.icon_path.clone())
-                                                            .size((px(21.82), px(21.82)))
+                                                        let ab: Option<PathBuf> =
+                                                            lookup(&search.path).find();
+                                                        UniversalSearch::resolved_icon(&ab)
                                                     }
-                                                    FileType::Directory => {
-                                                        Icon::from(folder_small_icon.clone())
-                                                            .size((px(21.82), px(21.82)))
-                                                            .text_color(rgb(0xFFCC23))
-                                                    }
-                                                    FileType::File => {
-                                                        Icon::from(search.icon_path.clone())
-                                                            .size((px(21.82), px(21.82)))
-                                                            .text_color(rgb(0xFFCC23))
-                                                    }
+                                                    FileType::File => Icon::from(
+                                                        get_file_extension_icon(&search.extension),
+                                                    )
+                                                    .size((px(21.82), px(21.82)))
+                                                    // .text_color(rgb(0xD2D2D2)),
+                                                    .text_color(rgb(0xe9e9e9)),
                                                 }),
                                             ),
                                     )
@@ -411,9 +512,6 @@ impl UniversalSearch {
                                     FileType::App => Icon::from(IconName::ArrowCounterClockWise)
                                         .size((px(21.82), px(21.82)))
                                         .text_color(rgb(0xa6a6a6)),
-                                    FileType::Directory => Icon::from(arrow_up_right_icon.clone())
-                                        .size((px(11.0), px(11.0)))
-                                        .text_color(rgb(0xa6a6a6)),
                                     FileType::File => Icon::from(arrow_up_right_icon.clone())
                                         .size((px(11.0), px(11.0)))
                                         .text_color(rgb(0xa6a6a6)),
@@ -431,7 +529,7 @@ impl UniversalSearch {
         };
 
         let mut file_children = Vec::new();
-        for file in files.iter() {
+        for file in all_results.iter() {
             file_children.push(row(file));
             file_children.push(divider());
         }
@@ -474,7 +572,7 @@ impl UniversalSearch {
                     .flex()
                     .flex_col()
                     .relative()
-                    .h(px(620.0 - SEARCH_BAR_HEIGHT))
+                    .h(px(620.0 - SEARCH_BAR_HEIGHT - NAVBAR_SIZE.1))
                     .overflow_hidden()
                     .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
                         entity.update(cx, |this, cx| {

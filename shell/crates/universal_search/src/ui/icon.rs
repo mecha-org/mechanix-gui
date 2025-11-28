@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use gpui::{prelude::FluentBuilder, *};
 pub const UNIVERSAL_SEARCH_ICONS_DIR: &str = "icons/universal-search/";
 
@@ -19,6 +21,18 @@ pub enum IconName {
     TypeScript,
     Markdown,
     Navbar,
+    AudioFile,
+    CodeFile,
+    CsvFile,
+    DefaultFile,
+    DefaultApp,
+    DocFile,
+    ImageFile,
+    LockedFile,
+    PdfFile,
+    VideoFile,
+    XlsFile,
+    ZipFile,
 }
 
 impl IconName {
@@ -40,6 +54,18 @@ impl IconName {
             IconName::TypeScript => "typescript-icon.png",
             IconName::Markdown => "markdown-icon.png",
             IconName::Navbar => "navbar.png",
+            IconName::AudioFile => "audio-file-icon.svg",
+            IconName::CodeFile => "code-file-icon.svg",
+            IconName::CsvFile => "csv-file-icon.svg",
+            IconName::DefaultFile => "default-file-icon.svg",
+            IconName::DefaultApp => "default-app-icon.svg",
+            IconName::DocFile => "doc-file-icon.svg",
+            IconName::ImageFile => "image-file-icon.svg",
+            IconName::LockedFile => "locked-file-icon.svg",
+            IconName::PdfFile => "pdf-file-icon.svg",
+            IconName::VideoFile => "video-file-icon.svg",
+            IconName::XlsFile => "xls-file-icon.svg",
+            IconName::ZipFile => "zip-file-icon.svg",
         };
         format!("{}{}", UNIVERSAL_SEARCH_ICONS_DIR, icon_path).into()
     }
@@ -51,7 +77,7 @@ impl RenderOnce for IconName {
     }
 }
 
-#[derive(IntoElement)]
+#[derive(IntoElement, Debug)]
 pub struct Icon {
     path: SharedString,
     size: Option<(Pixels, Pixels)>,
@@ -92,22 +118,31 @@ impl Icon {
 impl RenderOnce for Icon {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl gpui::IntoElement {
         let is_svg = self.path.ends_with(".svg");
+        let is_absolute = self.path.starts_with("/");
+
+        // SVG HANDLING (tint only for relative assets)
         if is_svg {
-            // SVG icon case
-            let base = svg().path(self.path.clone()).w(px(40.0)).h(px(40.0));
+            if !is_absolute {
+                // Relative SVG → render with optional color
+                let svg_el = svg().path(self.path.clone()).w(px(40.)).h(px(40.));
 
-            // Apply color if available
-            let rendered = base
-                .when_some(self.text_color, |this, color| this.text_color(color))
-                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1));
+                let tinted = svg_el
+                    .when_some(self.text_color, |this, color| this.text_color(color))
+                    .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1));
 
-            rendered.into_any_element()
-        } else {
-            // PNG / JPEG icon case
-            img(self.path.clone())
-                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
-                .into_any_element()
+                return tinted.into_any_element();
+            }
         }
+
+        if is_absolute {
+            return img(PathBuf::from(self.path.as_str()))
+                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
+                .into_any_element();
+        }
+
+        img(self.path.clone())
+            .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
+            .into_any_element()
     }
 }
 

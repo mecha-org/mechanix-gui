@@ -1,8 +1,9 @@
 use std::ops::Range;
 
-use gpui::{Bounds, Entity, FocusHandle, Pixels, Point, ShapedLine, SharedString};
+use gpui::{Bounds, Context, Entity, FocusHandle, Pixels, Point, ShapedLine, SharedString};
 
 use crate::ui::icon::IconName;
+use mxsearch::{AppInfo, service::MxSearchService}; // Import your service
 
 pub struct UniversalSearch {
     pub scroll_offset: Pixels,
@@ -24,6 +25,9 @@ pub struct UniversalSearch {
     pub position: f32,
     pub drag_offset: Option<f32>,
     pub drag_start_pos: f32,
+    pub search_service: Option<MxSearchService>,
+    pub file_search_results: Vec<mxsearch::SearchResult>,
+    pub app_search_results: Vec<AppInfo>,
 }
 
 pub struct DragInfo {
@@ -40,12 +44,14 @@ pub struct TextInput {
     pub last_layout: Option<ShapedLine>,
     pub last_bounds: Option<Bounds<Pixels>>,
     pub is_selecting: bool,
+    pub on_change: Option<Box<dyn Fn(&mut Self, &mut Context<Self>)>>,
 }
 
 pub struct SearchResults {
     pub name: String,
-    pub icon_path: IconName,
+    pub path: String,
     pub file_type: FileType,
+    pub extension: String,
 }
 
 pub struct RecentApps {
@@ -56,5 +62,4 @@ pub struct RecentApps {
 pub enum FileType {
     App,
     File,
-    Directory,
 }

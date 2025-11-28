@@ -1,74 +1,21 @@
 use crate::ui::icon::IconName;
-use crate::ui::models::{FileType, RecentApps, SearchResults};
+use crate::ui::models::RecentApps;
 
-pub fn sample_search_results(search: String) -> Vec<SearchResults> {
-    let search_results = vec![
-        SearchResults {
-            name: "src".into(),
-            file_type: FileType::Directory,
-            icon_path: IconName::FolderSmall,
-        },
-        SearchResults {
-            name: "assets".into(),
-            file_type: FileType::Directory,
-            icon_path: IconName::FolderSmall,
-        },
-        SearchResults {
-            name: "components".into(),
-            file_type: FileType::Directory,
-            icon_path: IconName::FolderSmall,
-        },
-        SearchResults {
-            name: "utils".into(),
-            file_type: FileType::Directory,
-            icon_path: IconName::FolderSmall,
-        },
-        SearchResults {
-            name: "chromium".into(),
-            file_type: FileType::App,
-            icon_path: IconName::Chromium,
-        },
-        SearchResults {
-            name: "kitty".into(),
-            file_type: FileType::App,
-            icon_path: IconName::File,
-        },
-        SearchResults {
-            name: "firefox".into(),
-            file_type: FileType::App,
-            icon_path: IconName::Firefox,
-        },
-        SearchResults {
-            name: "github".into(),
-            file_type: FileType::App,
-            icon_path: IconName::Github,
-        },
-        SearchResults {
-            name: "main.rs".into(),
-            file_type: FileType::File,
-            icon_path: IconName::Rust,
-        },
-        SearchResults {
-            name: "lib.json".into(),
-            file_type: FileType::File,
-            icon_path: IconName::Json,
-        },
-        SearchResults {
-            name: "mod.ts".into(),
-            file_type: FileType::File,
-            icon_path: IconName::TypeScript,
-        },
-        SearchResults {
-            name: "test.md".into(),
-            file_type: FileType::File,
-            icon_path: IconName::Markdown,
-        },
-    ];
-
-    search_results
-        .into_iter()
-        .filter(|item| item.name.to_lowercase().contains(&search.to_lowercase()))
-        .collect()
+pub fn get_file_extension_icon(file_type: &str) -> IconName {
+    match file_type.to_lowercase().as_str() {
+        "pdf" => IconName::PdfFile,
+        "zip" | "rar" | "7z" | "tar" | "gz" => IconName::ZipFile,
+        "html" | "htm" | "xml" | "xhtml" => IconName::CodeFile,
+        "doc" | "docx" | "odt" => IconName::DocFile,
+        "xls" | "xlsx" | "ods" => IconName::XlsFile,
+        "png" | "jpg" | "jpeg" | "gif" | "bmp" | "svg" | "webp" => IconName::ImageFile,
+        "mp4" | "avi" | "mov" | "mkv" | "webm" => IconName::VideoFile,
+        "mp3" | "wav" | "flac" | "aac" | "ogg" => IconName::AudioFile,
+        "py" | "rs" | "cpp" | "cc" | "cxx" | "c" | "java" | "php" | "css" | "json" | "csv"
+        | "txt" | "md" | "rtf" | "js" | "jsx" | "ts" | "tsx" => IconName::CodeFile,
+        "exe" | "app" | "deb" | "rpm" => IconName::DefaultApp,
+        _ => IconName::DefaultFile,
+    }
 }
 
 pub fn sample_recent_apps() -> Vec<RecentApps> {
