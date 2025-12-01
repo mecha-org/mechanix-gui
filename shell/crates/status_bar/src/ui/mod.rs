@@ -16,7 +16,7 @@ pub struct StatusBar {
     pub bluetooth_enabled: bool,
     pub bluetooth_connected: bool,
     pub battery_state: BatteryState,
-    pub battery_level: u8,
+    pub battery_percent: u8,
 }
 
 impl StatusBar {
@@ -28,7 +28,7 @@ impl StatusBar {
             bluetooth_enabled: false,
             bluetooth_connected: false,
             battery_state: BatteryState::Unknown,
-            battery_level: 0,
+            battery_percent: 0,
         }
     }
 
@@ -40,13 +40,14 @@ impl StatusBar {
 
 impl Render for StatusBar {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+
         let wireless_icon = match self.wireless_enabled {
             true => match self.wireless_strength {
-                0..=20 => IconName::WirelessLow,
-                21..=50 => IconName::WirelessMedium,
-                51..=75 => IconName::WirelessMedium,
-                76..=100 => IconName::WirelessHigh,
-                _ => IconName::WirelessOn,
+                0 => IconName::WirelessOn,
+                1..=30 => IconName::WirelessLow,
+                31..=60 => IconName::WirelessMedium,
+                61..=100 => IconName::WirelessHigh,
+                _ => IconName::WirelessWarning,
             },
             false => IconName::WirelessOff,
         };
@@ -60,7 +61,7 @@ impl Render for StatusBar {
         };
 
         let battery_icon = match self.battery_state {
-            BatteryState::Charging => match self.battery_level {
+            BatteryState::Charging => match self.battery_percent {
                 0..=10 => IconName::Battery10Charging,
                 11..=20 => IconName::Battery20Charging,
                 21..=30 => IconName::Battery30Charging,
@@ -73,7 +74,7 @@ impl Render for StatusBar {
                 91..=100 => IconName::Battery100Charging,
                 _ => IconName::BatteryEmpty,
             },
-            BatteryState::Discharging => match self.battery_level {
+            BatteryState::Discharging => match self.battery_percent {
                 0..=10 => IconName::Battery10,
                 11..=20 => IconName::Battery20,
                 21..=30 => IconName::Battery30,
