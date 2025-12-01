@@ -28,12 +28,9 @@ impl Render for WingBoundsDemo {
                             .text_color(rgb(0xffffff))
                             .child("Wing Bounds Control Demo"),
                     )
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(rgb(0x888888))
-                            .child("Hover over the wings to see how bounds inclusion affects hit detection"),
-                    ),
+                    .child(div().text_sm().text_color(rgb(0x888888)).child(
+                        "Hover over the wings to see how bounds inclusion affects hit detection",
+                    )),
             )
             .child(
                 div()
@@ -291,12 +288,9 @@ impl Render for WingBoundsDemo {
                             .text_color(rgb(0xaaaaaa))
                             .child("How to test:"),
                     )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(rgb(0x666666))
-                            .child("• Column 1: Try hovering over any part of the wings - they all respond"),
-                    )
+                    .child(div().text_xs().text_color(rgb(0x666666)).child(
+                        "• Column 1: Try hovering over any part of the wings - they all respond",
+                    ))
                     .child(
                         div()
                             .text_xs()
@@ -309,13 +303,9 @@ impl Render for WingBoundsDemo {
                             .text_color(rgb(0x666666))
                             .child("• Column 3: The lower wing extensions don't respond to hover"),
                     )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(rgb(0x888888))
-                            .mt_2()
-                            .child("Notice how the wings still render identically but behave differently!"),
-                    ),
+                    .child(div().text_xs().text_color(rgb(0x888888)).mt_2().child(
+                        "Notice how the wings still render identically but behave differently!",
+                    )),
             )
     }
 }
@@ -328,11 +318,7 @@ fn main() {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 ..Default::default()
             },
-            |_, cx| {
-                cx.new(|_| WingBoundsDemo {
-                    hovered_wing: None,
-                })
-            },
+            |_, cx| cx.new(|_| WingBoundsDemo { hovered_wing: None }),
         )
         .unwrap();
         cx.activate(true);
