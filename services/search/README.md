@@ -2,7 +2,6 @@
 
 *A simple and fast search engine for your apps and files.*
 
-
 ## Overview
 
 This service indexes configuration schemas into a [Tantivy](https://docs.rs/tantivy/latest/tantivy/) search index.
@@ -55,19 +54,20 @@ MxSearch can index and query files from a given directory.
     - We can configure the max size of the file content to be indexed.
 
 ### ⚙️ App Actions Search
+
 MxSearch supports indexing **App Actions** to return actionable results in searches.
+
 - Applications installed on the system register their **App Actions** to **mxsearch**.
 - This allows mxsearch to return App Actions as part of search results.
 - App Actions are stored as **TOML** files inside the directory:  `/usr/share/mxsearch/actions`
 - Each TOML file is checksummed.
 - The `%KEYWORD%` placeholder is dynamically replaced by the user’s search query when invoking actions.
-
-
-Each app registers a TOML file named: `org.mechanix.<AppName>.toml`
+  Each app registers a TOML file named: `org.mechanix.<AppName>.toml`
 
 Example for the Settings app: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
 
 App Action Toml Format:
+
 ```toml
 Name = "Settings"
 Icon = "settings-icon"
@@ -89,12 +89,9 @@ Description = "Search by file name"
 Arg = { path = "%KEYWORD%" }
 ```
 
-
 ---
 
-
-
-### Example: Settings App Actions file
+#### Example: Settings App Actions file
 
 ```toml
 name = "Settings"
@@ -117,12 +114,147 @@ File path: `/usr/share/mxsearch/actions/org.mechanix.Settings.toml`
 
 - `%KEYWORD%` is a reserved placeholder that passes the user's search key to the app action.
 
+### ⚙️ Sources Search Service
+
+#### What it is
+The Sources Search Service lets you ingest and search your own items (notes, music, web links, etc.) alongside system results. It maintains a Tantivy index, exposes a D‑Bus API for upserts/deletes/queries, and automatically removes indexed items when their associated application entry is uninstalled.
+
+#### Key features
+- Single-writer Indexer actor for safe, fast writes (batched and periodically committed).
+- Async ingestion via D‑Bus: upsert and delete by `unique_id`.
+- File-system watcher on `.desktop` entries: when a desktop file is removed, corresponding items are deleted from the index using `source_entry_path`.
+- Query across multiple fields with configurable `searchable_fields` and `search_limit`.
+
+#### D‑Bus interface
+- Bus name: `org.mechanix.MxSearch`
+- Object path: `/org/mechanix/MxSearch`
+- Interface: `org.mechanix.MxSearch`
+
+Methods you can call from clients:
+- `SearchSources(search: &str) -> Vec<SourcesSearchResult>`
+- `UpsertSources(metadata: Vec<UpsertMetadata>) -> bool`
+- `DeleteSourcesByIds(ids: Vec<String>) -> bool`
+
+#### Data model
+- Upserting requires a list of `UpsertMetadata` objects:
+    - `source: String` — logical source, e.g., `notes`, `music`.
+    - `unique_id: String` — your stable identifier for the item.
+    - `uri: String` — e.g., `file:///...` or an HTTP URL.
+    - `title: String`
+    - `subtitle: String`
+    - `description: String`
+    - `keywords: Vec<String>`
+    - `icon: String` — optional icon name or URI.
+    - `thumbnail: String` — optional thumbnail URI/path.
+    - `last_modified: u64` — unix timestamp (e.g., seconds or millis; consistent across your system).
+    - `content: Option<String>` — full-text (optional, can be large).
+    - `source_entry_path: String` — the backing `.desktop` file path this item is associated with. If that file is removed, the item will be auto-removed from the index.
+
+- Search returns a list of `SourcesSearchResult`:
+    - `source, uri, title, icon, thumbnail, last_modified, content, unique_id, score`
+
+Note: Fields that are returned depend on what is marked `STORED` in the schema.
+
+#### Configuration (settings.toml)
+```toml
+# External (notes, music, etc.)
+[sources]
+# Enable the ExternalService (ingestion/search for sources items)
+enable_search = true
+
+# Index location (relative to $HOME)
+index_dir = ".config/mxsearch/index/external"
+
+# Directory of desktop entries to watch; recursive
+app_dir = "/usr/share/applications"
+
+# Tantivy writer heap (bytes)
+target_memory_usage_in_bytes = 50_000_000
+
+# Search behavior
+search_limit = 25
+searchable_fields = [
+  "uri", "title", "subtitle", "keywords", "description", "content"
+]
+```
+
+#### How it works (internals at a glance)
+- On startup, the service builds the index schema and spawns a dedicated `Indexer` task that owns the Tantivy `IndexWriter`.
+- The server keeps an `IndexReader` for queries and a channel to the Indexer for write commands:
+    - `Upsert(Vec<UpsertMetadata>)`
+    - `RemoveByUniqueIds(Vec<String>, need_commit: bool)`
+    - `RemoveByPath(String)` — used by the watcher when a desktop file is removed.
+    - `Flush`, `Shutdown`
+- The Indexer batches operations and commits periodically (and on demand) so new data becomes searchable shortly after ingestion.
+- A file watcher observes the configured `app_dir` recursively; on remove events it sends `RemoveByPath(source_entry_path)` to delete matching indexed documents.
+
+#### Quick start (client perspective)
+- Upsert some items via D‑Bus (pseudo-Rust with `zbus`):
+```rust
+let proxy = zbus::ProxyBuilder::new(&conn)
+    .destination("org.mechanix.MxSearch")?
+    .interface("org.mechanix.MxSearch")?
+    .path("/org/mechanix/MxSearch")?
+    .build()
+    .await?;
+
+let items = vec![UpsertMetadata {
+    source: "notes".into(),
+    unique_id: "note-123".into(),
+    uri: "file:///home/user/notes/123.md".into(),
+    title: "How to win".into(),
+    subtitle: "Win over obstacles".into(),
+    description: "My first note".into(),
+    keywords: vec!["howto".into(), "motivation".into()],
+    icon: "text-x-markdown".into(),
+    thumbnail: "".into(),
+    last_modified: 1_763_720_442,
+    content: Some("This is something very interesting".into()),
+    source_entry_path: "/usr/share/applications/Alacritty.desktop".into(),
+}];
+
+let ok: bool = proxy.call("UpsertMetadata", &(items)).await?;
+```
+
+- Search:
+```rust
+let results: Vec<ExternalSearchResult> = proxy
+    .call("SearchSources", &("how to"))
+    .await?;
+```
+
+- Delete by IDs:
+```rust
+let ok: bool = proxy
+    .call("DeleteSourcesByIds", &(vec!["note-123".to_string()]))
+    .await?;
+```
+
+#### Operational notes
+- Commit latency: the Indexer commits periodically; results may appear with a small delay. You can add a `Flush` command if you require immediate visibility after critical upserts.
+- Watcher deletes: For automatic deletion to work, keep `source_entry_path` consistent with the actual `.desktop` file used by your item’s source application.
+- Sorting: If you need ordering by recency, ensure `last_modified` is indexed as a fast field and sort at query time (future enhancement).
+
+#### Troubleshooting
+- “No results returned”: Verify `enable_search = true`, the index directory is writable, and fields you expect to read are marked `STORED` in the schema.
+- “Deletes by path didn’t work”: Ensure the removed file path matches the stored `source_entry_path` exactly (case/normalization). The service watches `app_dir` recursively.
+- “Data not visible immediately”: Allow for the commit interval, or add a `Flush` command in your client workflow.
 
 
+
+Upsert Sources:
+
+```shell
+([{'unique_id': <'test123'>, 'source': <'notes'>, 'uri': <'file:///usr/bin/gedit'>, 'title': <'how to win'>, 'subtitle': <'win over obstacles'>, 'description': <'this is my first note'>, 'keywords': <['kw1', 'kw2']>, 'icon': <'...'>, 'thumbnail': <'...'>, 'last_modified': <uint64 1763720442>, 'source_entry_path': <'/usr/share/applications/Alacritty.desktop'>, 'content': <'this is something very interesting book i am read'>, 'file_path': <'...'>}],)
+```
+
+Delete Sources:
+
+```shell
+([<'test123'>, <'test124'>],)
+```
 
 ### 🛠️ Configuration Example (`settings.toml`)
-
-
 
 ```toml
 [general]
@@ -164,10 +296,10 @@ searchable_fields = [
 ]
 ```
 
-
 ## ⚙️ Installation
 
 ### Prerequisites
+
 - Rust (2021 edition or later)
 - Cargo
 
@@ -205,6 +337,7 @@ $ RUST_LOG=none,mxsearch=debug,apps=debug,files=debug cargo run
 ```
 
 ---
+
 ### D-Bus Interface
 
 MxSearch exposes its operations via **D-Bus**.
@@ -212,12 +345,15 @@ MxSearch exposes its operations via **D-Bus**.
 - **Bus name:** `org.mechanix.MxSearch`
 - **Object path:** `/org/mechanix/MxSearch`
 - **Interface:** `org.mechanix.MxSearch`
+
 ---
 
 ## ⚡ Methods
 
 ### ListApplications
+
 List all installed applications
+
 ```bash
 $ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch ListApplications
 ```
@@ -238,6 +374,12 @@ $ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch
 
 ```bash
 $ busctl call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchAppActions s "<keyword>"
+```
+
+### SearchExternal
+
+```bash
+$ busctl --user call org.mechanix.MxSearch /org/mechanix/MxSearch org.mechanix.MxSearch SearchExternal s "<keyword>"
 ```
 
 ## 📋 TODOs

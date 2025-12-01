@@ -1,7 +1,7 @@
 use crate::error::ServiceError;
 use app_actions::AppActions;
 use apps::AppInfo;
-use files::FileInfo;
+use files::SearchResult;
 use log::{debug, info};
 use zbus::{dbus_proxy, Connection};
 
@@ -18,7 +18,7 @@ pub struct MxSearchService {
 pub trait MxSearch {
     async fn search_applications(&self, search: &str) -> zbus::fdo::Result<Vec<AppInfo>>;
     async fn list_applications(&self) -> zbus::fdo::Result<Vec<AppInfo>>;
-    async fn search_files(&self, search: &str) -> zbus::fdo::Result<Vec<FileInfo>>;
+    async fn search_files(&self, search: &str) -> zbus::fdo::Result<Vec<SearchResult>>;
     async fn search_app_actions(&self, search: &str) -> zbus::fdo::Result<Vec<AppActions>>;
 }
 
@@ -52,7 +52,7 @@ impl MxSearchService {
         Ok(applications)
     }
 
-    pub async fn search_files(&self, search: &str) -> Result<Vec<FileInfo>, anyhow::Error> {
+    pub async fn search_files(&self, search: &str) -> Result<Vec<SearchResult>, anyhow::Error> {
         debug!("Connecting to D-Bus session for search_files");
         let files = self.proxy.search_files(search).await?;
         Ok(files)
