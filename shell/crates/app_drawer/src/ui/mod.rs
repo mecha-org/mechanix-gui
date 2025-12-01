@@ -10,7 +10,7 @@ use crate::models::AppDrawerState;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
 use crate::ui::utils::prelude::{DesktopApp, DesktopApps};
-use crate::ui::widgets::{IconButton, SubWindow};
+use crate::ui::widgets::{IconButton, SubWindow, TextButton};
 use input::TextInput;
 
 pub mod icon;
@@ -32,6 +32,20 @@ const APP_SECTION_DIVIDER_WIDTH: f32 = 508.0;
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const APP_ROW_HEIGHT: f32 = 56.0;
 
+pub enum BottomSheetKind {
+    MainOptions,
+    ConfirmDelete,
+    Properties,
+}
+
+fn divider() -> Stateful<Div> {
+    div()
+        .w(px(APP_SECTION_DIVIDER_WIDTH))
+        .h(px(APP_SECTION_DIVIDER_HEIGHT))
+        .bg(rgb(0x404040))
+        .id("divider")
+}
+
 pub struct AppDrawer {
     pub state: AppDrawerState,
     pub grouped: HashMap<String, Vec<DesktopApp>>,
@@ -46,6 +60,9 @@ pub struct AppDrawer {
     filtered: Vec<DesktopApp>,
     is_searching: bool,
     last_search_query: String,
+    pub show_bottom_sheet: bool,
+    pub sheet_kind: BottomSheetKind,
+    pub sheet_app: Option<DesktopApp>,
 }
 
 impl AppDrawer {
@@ -67,6 +84,9 @@ impl AppDrawer {
             filtered: filteredApps.clone(),
             is_searching: false,
             last_search_query: "".to_string(),
+            show_bottom_sheet: false,
+            sheet_kind: BottomSheetKind::MainOptions,
+            sheet_app: None,
         }
     }
 
@@ -177,6 +197,276 @@ impl AppDrawer {
 
         cx.notify();
     }
+
+    fn render_main_sheet(&self, cx: &mut gpui::Context<AppDrawer>) -> AnyElement {
+        let app = match &self.sheet_app {
+            Some(a) => a,
+            None => return Empty.into_any(),
+        };
+        let icon = DesktopApp::resolved_icon(&app.icon_path);       
+
+        div()
+            .flex_col()
+            .gap(px(16.))
+            .children([
+                // Row: Icon + App Name
+                div()
+                    .id("app-name")
+                    .flex()
+                    .flex_row()
+                    .items_center()
+                    .gap(px(12.))
+                    .items_center()
+                    .pt(px(8.))
+                    .pb(px(8.))
+                    .child(
+                        IconButton::new("app-icon")
+                            .icon(icon)
+                            .width(px(48.))
+                            .height(px(48.)),
+                    )
+                    .child(
+                        div()
+                            .text_size(px(20.))
+                            .text_color(rgb(0xFFFFFF))
+                            .font_weight(FontWeight::BOLD)
+                            .child(app.name.clone()),
+                    ),
+                // More rows (e.g., search, delete, etc.)
+                divider(),
+                self.sheet_row(
+                    "Search a file",
+                    IconName::Search,
+                    gpui::white(),
+                    cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                    }),
+                ),
+                divider(),
+                self.sheet_row(
+                    "Properties",
+                    IconName::Info,
+                    gpui::white(),
+                    cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                       this.sheet_kind = BottomSheetKind::Properties;
+                        cx.notify();
+                    }),
+                ),
+                divider(),
+                self.sheet_row(
+                    "Delete app",
+                    IconName::Delete,
+                    gpui::red(),
+                    cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                        this.sheet_kind = BottomSheetKind::ConfirmDelete;
+                        cx.notify();
+                    }),
+                ),
+                div().id("button").mt(px(18.)).mb(px(-10.)).child(
+                    TextButton::new("close-btn", "Close")
+                        .width(px(508.))
+                        .height(px(40.))
+                        .rounded(px(18.))
+                        .bg_color(rgb(0x424242))
+                        .text_color(rgb(0xFFFFFF))
+                        .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                            this.show_bottom_sheet = false;
+                            cx.notify();
+                        })),
+                ),
+            ])
+            .into_any()
+    }
+
+    fn sheet_row(
+        &self,
+        label: &str,
+        icon: IconName,
+        text_color: Hsla,
+        on_click: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Stateful<Div> {
+        let row_label: SharedString = label.to_string().into();
+        let id: SharedString = label.to_string().into();
+
+        div()
+            .id(id)
+            .flex()
+            .flex_row()
+            .gap(px(12.))
+            .items_center()
+            .pt(px(8.))
+            .pb(px(8.))
+            .on_click(on_click)
+            .child(
+                div()
+                    .w(px(20.0))
+                    .h(px(20.0))
+                    .items_center()
+                    .justify_center()
+                    .mr(px(8.0))
+                    .ml(px(16.0))
+                    .flex()
+                    .child(Icon::build(icon).text_color(text_color)),
+            )
+            .child(
+                div()
+                    .text_size(px(16.))
+                    .text_color(text_color)
+                    .font_weight(FontWeight::BOLD)
+                    .child(row_label),
+            )
+    }
+
+    fn render_delete_sheet(&self, cx: &mut Context<AppDrawer>) -> AnyElement {
+        let app = match &self.sheet_app {
+            Some(a) => a,
+            None => return Empty.into_any(),
+        };
+
+        div()
+            .flex_col()
+            .gap(px(16.))
+            .children([
+                // Title
+                div()
+                    .text_size(px(20.))
+                    .text_color(rgb(0xFFFFFF))
+                    .font_weight(FontWeight::BOLD)
+                    .child(format!("Delete ‘{}’", app.name)),
+                // Subtitle
+                div()
+                    .mt(px(10.))
+                    .text_size(px(16.))
+                    .text_color(rgb(0xC0C0C0))
+                    .child("This action will delete the app permanently"),
+                // Buttons row
+                div().flex().flex_row().gap(px(12.)).mt(px(18.)).mb(px(-10.)).children([
+                    // Cancel
+                    TextButton::new("cancel-delete", "Cancel")
+                        .width(px(246.))
+                        .height(px(40.))
+                        .rounded(px(18.))
+                        .bg_color(rgb(0x505050))
+                        .text_color(gpui::white())
+                        .text_size(px(16.))
+                        .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                            this.sheet_kind = BottomSheetKind::MainOptions;
+                            cx.notify();
+                        })),
+                    // DELETE
+                    TextButton::new("confirm-delete", "Delete app")
+                        .width(px(246.))
+                        .height(px(40.))
+                        .rounded(px(18.))
+                        .text_size(px(16.))
+                        .bg_color(rgb(0xC92A2A)) // Red
+                        .text_color(gpui::white())
+                        .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                            // if let Some(app) = &this.sheet_app {
+                            //     this.remove_app(&app.name);
+                            // }
+                            this.show_bottom_sheet = false;
+                            cx.notify();
+                        })),
+                ]),
+            ])
+            .into_any()
+    }
+
+    fn render_properties_sheet(&self, cx: &mut Context<AppDrawer>) -> AnyElement {
+        let app = match &self.sheet_app {
+            Some(a) => a,
+            None => return Empty.into_any(),
+        };
+        let icon = DesktopApp::resolved_icon(&app.icon_path);
+
+        div()
+            .flex_col()
+            .gap(px(16.))
+            .children([
+                 div()
+                    .id("app-name")
+                    .flex()
+                    .flex_row()
+                    .items_center()
+                    .gap(px(12.))
+                    .items_center()
+                    .pt(px(8.))
+                    .pb(px(8.))
+                    .child(
+                        IconButton::new("app-icon")
+                            .icon(icon)
+                            .width(px(48.))
+                            .height(px(48.)),
+                    )
+                    .child(
+                        div()
+                            .text_size(px(20.))
+                            .text_color(rgb(0xFFFFFF))
+                            .font_weight(FontWeight::BOLD)
+                            .child(app.name.clone()),
+                ),
+                divider(),
+                self.properties_row(
+                    "Version",
+                    "1.0.1",
+                    gpui::white(),
+                ),
+                divider(),
+                 self.properties_row(
+                    "Size",
+                    "200 MB",
+                    gpui::white(),
+                ),
+                div().id("button").mt(px(18.)).mb(px(-10.)).child(
+                    TextButton::new("close-btn", "Close")
+                        .width(px(508.))
+                        .height(px(40.))
+                        .rounded(px(18.))
+                        .bg_color(rgb(0x424242))
+                        .text_color(rgb(0xFFFFFF))
+                        .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                            this.show_bottom_sheet = false;
+                            cx.notify();
+                        })),
+                ),
+            ])
+            .into_any()
+    }
+
+    fn properties_row(
+        &self,
+        label: &str,
+        value: &str,
+        text_color: Hsla,
+    ) -> Stateful<Div> {
+        let row_label: SharedString = label.to_string().into();
+        let id: SharedString = label.to_string().into();
+
+        div()
+            .id(id)
+            .flex()
+            .flex_row()
+            .items_center()
+            .justify_between()
+            .pt(px(8.))
+            .pb(px(8.))
+            .pl(px(16.))
+            .pr(px(16.))
+            .child(
+                div()
+                    .text_size(px(16.))
+                    .text_color(text_color)
+                    .font_weight(FontWeight::BOLD)
+                    .child(row_label),
+            )
+            .child(
+                div()
+                    .text_size(px(14.))
+                    .text_color(text_color)
+                    .font_weight(FontWeight::MEDIUM)
+                    .child(value.to_string()),
+            )
+    }
 }
 
 impl Render for AppDrawer {
@@ -265,15 +555,7 @@ impl Render for AppDrawer {
                     .on_click(cx.listener(move |_, _, _, _| {
                         let _ = DesktopApps::run_app_exec(exec.as_str());
                     }))
-            };
-
-            let divider = || {
-                div()
-                    .w(px(APP_SECTION_DIVIDER_WIDTH))
-                    .h(px(APP_SECTION_DIVIDER_HEIGHT))
-                    .bg(rgb(0x202020))
-                    .id("divider")
-            };
+            };           
 
             let searched_apps = self.filtered.clone();
 
@@ -336,13 +618,22 @@ impl Render for AppDrawer {
 
                                                 let icon =
                                                     DesktopApp::resolved_icon(&app.icon_path);
-                                                IconButton::new(id + idx).icon(icon).on_click(
-                                                    cx.listener(move |_, _, _, _| {
-                                                        let _ = DesktopApps::run_app_exec(
-                                                            app.exec.as_str(),
-                                                        );
-                                                    }),
-                                                )
+                                                // IconButton::new(id + idx).icon(icon).on_click(
+                                                //     cx.listener(move |_, _, _, _| {
+                                                //         let _ = DesktopApps::run_app_exec(
+                                                //             app.exec.as_str(),
+                                                //         );
+                                                //     }),
+                                                // )
+                                                IconButton::new(id + idx)
+                                                    .icon(icon)
+                                                    .on_click(cx.listener(move |this: &mut AppDrawer, _event, _window, cx| {
+                                                        this.show_bottom_sheet = true;
+                                                        this.sheet_app = Some(app.clone());
+                                                        this.sheet_kind = BottomSheetKind::MainOptions;
+                                                        cx.notify();
+                                                    }))
+
                                             })),
                                     )
                                     .child({
@@ -439,7 +730,7 @@ impl Render for AppDrawer {
                             }),
                     )
             })
-                // searching mode (search results list)
+            // searching mode (search results list)
             .when(self.is_searching, |search_div| {
                          search_div
                         .absolute()
@@ -461,24 +752,56 @@ impl Render for AppDrawer {
                         )
                 }
             )
-            // .child(if self.show_popup {
-            //     div()
-            //         .absolute()
-            //         .top(px(0.))
-            //         .left(px(0.))
-            //         .w(px(APP_SIZE.0))
-            //         .h(px(APP_SIZE.1))
-            //         // Stop all mouse events from reaching AppDrawer
-            //         .on_mouse_down(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
-            //         .on_mouse_up(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
-            //         .on_mouse_move(|_, _event, cx| cx.stop_propagation())
-            //         .child(cx.new(|_| SubWindow::scan(self.popup_category.clone())))
-            //         .into_any()
-            // } else {
-            //     Empty.into_any()
-            // })
-            .child(
-                div()
+            .when(self.show_bottom_sheet, |menu_div| {
+                menu_div
+                    // Dim background (click to dismiss)
+                    .child(
+                        div()
+                            .id("bottom-sheet-bg")
+                            .absolute()
+                            .top(px(0.))
+                            .left(px(0.))
+                            .w(px(APP_SIZE.0))
+                            .h(px(APP_SIZE.1))
+                            .bg(rgb(0x000000))
+                            .opacity(0.6)
+                            .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                                this.show_bottom_sheet = false;
+                                cx.notify();
+                            }))
+                            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                    )
+                    // Bottom sheet panel (should NOT dismiss)
+                    .child(
+                        div()
+                            .id("bottom-sheet-panel")
+                            .absolute()
+                            .bottom(px(0.))
+                            .left(px(0.))
+                            .w(px(APP_SIZE.0))
+                            .bg(rgb(0x2E2E2E))
+                            .rounded_t(px(24.))
+                            .pt(px(20.))
+                            .pb(px(28.))
+                            .pl(px(20.))
+                            .pr(px(20.))
+
+                            // Prevents click from reaching background
+                            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                            .on_click(|_, _, cx| cx.stop_propagation())
+                            .child(match self.sheet_kind {
+                                BottomSheetKind::MainOptions => self.render_main_sheet(cx),
+                                BottomSheetKind::ConfirmDelete => self.render_delete_sheet(cx),
+                                BottomSheetKind::Properties => self.render_properties_sheet(cx),
+
+                            })
+                    )
+            })
+            .when(!self.show_bottom_sheet, |search_bar_div| {
+                search_bar_div.child(
+                    div()
                     .h(px(SEARCH_BAR_HEIGHT))
                     .absolute()
                     .bottom(px(6.))
@@ -520,7 +843,7 @@ impl Render for AppDrawer {
                                                             .mr(px(8.0))
                                                             .ml(px(16.0))
                                                             .flex()
-                                                            .child(Icon::build(IconName::Search)),
+                                                            .child(Icon::build(IconName::Search).text_color(rgb(0x808080))),
                                                     ),
                                             )
                                             .child(
@@ -539,7 +862,7 @@ impl Render for AppDrawer {
                                         .items_center()
                                         .justify_center()
                                         .border_1()
-                                        .border_color(rgb(0x808080))
+                                        .border_color(rgb(0x606060))
                                         .id("close-button")
                                         .on_click(cx.listener(
                                                             |this: &mut AppDrawer, _event, _window, cx| {
@@ -586,7 +909,8 @@ impl Render for AppDrawer {
                                 ),
                         ),
                     )
-            )
+                )
+            })
     }
 }
 
