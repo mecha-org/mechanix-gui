@@ -22,7 +22,7 @@ pub enum PowerMode {
 }
 
 pub struct WirelessDetails {
-    pub enabled: bool,
+    pub enabled: bool,      
     pub strength: u8,
     pub connected_network: Option<WirelessNetworkInfo>,
 }
@@ -37,7 +37,6 @@ pub struct SettingsDrawer {
     pub settings_active: bool,
 
     pub battery_state: BatteryState,
-    pub battery_level: u8,
     pub battery_percent: u8,
 
     pub open_power_options: bool,
@@ -138,7 +137,6 @@ impl SettingsDrawer {
         Self {
             settings_active: false,
             battery_state: BatteryState::Unknown,
-            battery_level: 0,
             battery_percent: 0,
             open_power_options: false,
             rotation_on: false,
@@ -329,7 +327,7 @@ impl SettingsDrawer {
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
         let battery_icon = match self.battery_state {
-            BatteryState::Charging => match self.battery_level {
+            BatteryState::Charging => match self.battery_percent {
                 0..=10 => IconName::Battery10Charging,
                 11..=20 => IconName::Battery20Charging,
                 21..=30 => IconName::Battery30Charging,
@@ -342,7 +340,7 @@ impl SettingsDrawer {
                 91..=100 => IconName::Battery100Charging,
                 _ => IconName::BatteryEmpty,
             },
-            BatteryState::Discharging => match self.battery_level {
+            BatteryState::Discharging => match self.battery_percent {
                 0..=10 => IconName::Battery10,
                 11..=20 => IconName::Battery20,
                 21..=30 => IconName::Battery30,
@@ -381,24 +379,34 @@ impl SettingsDrawer {
                 IconName::BrightnessHigh
             };
 
-        let wireless_icon = match self.wireless_details.enabled {
-            true => match self.wireless_details.strength {
-                0..=20 => IconName::WirelessLow,
-                21..=50 => IconName::WirelessMedium,
-                51..=75 => IconName::WirelessMedium,
-                76..=100 => IconName::WirelessHigh,
-                _ => IconName::WirelessOn,
-            },
-            false => IconName::WirelessOff,
-        };
-        let network_label = match self.wireless_details.enabled.clone() {
-            true => self
+        let mut wireless_icon = IconName::WirelessOff;
+        let mut network_label = "Wi-Fi".to_string();
+        let wireless_connected_network =  self
                 .wireless_details
                 .connected_network
-                .clone()
+                .clone();
+        let _ =  match self.wireless_details.enabled &&  wireless_connected_network.is_some(){
+            true => {
+                network_label = wireless_connected_network.clone()
                 .map(|s| s.ssid)
-                .unwrap_or_else(|| "Wi-Fi".to_string()),
-            false => "Wi-Fi".to_string(),
+                .unwrap_or_else(|| "Wi-Fi".to_string());
+
+                         wireless_icon = if network_label == "Wi-Fi" {IconName::WirelessOn} 
+                         else {
+
+                            let signal_strength = wireless_connected_network.clone().map(|info| info.signal_strength).unwrap_or_else(|| 0);
+
+                            match signal_strength {
+                                0 => IconName::WirelessOn,
+                                1..=30 => IconName::WirelessLow,
+                                31..=60 => IconName::WirelessMedium,
+                                61..=85 => IconName::WirelessHigh,
+                                86..=100 => IconName::WirelessFull,
+                                _ => IconName::WirelessWarning,
+                            }
+                         }
+            } ,
+            _ => {}
         };
 
         let bluetooth_icon = match self.bluetooth_details.enabled {

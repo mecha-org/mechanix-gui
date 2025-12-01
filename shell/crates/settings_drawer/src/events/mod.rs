@@ -7,17 +7,11 @@ pub enum AppEvents {
     BatteryStateChanged {
         state: BatteryState,
     },
-    BatteryLevelChanged {
-        level: u8,
-    },
     BatteryPercentageChanged {
         value: u8,
     },
     WirelessStatusChanged {
         enabled: bool,
-    },
-    WirelessStrength {
-        strength: u8,
     },
     ConnectedNetwork {
         network: Option<WirelessNetworkInfo>,

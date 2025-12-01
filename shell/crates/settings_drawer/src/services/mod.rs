@@ -1,15 +1,9 @@
 pub mod bluetooth_sync;
-pub mod battery_sync;
 pub mod brightness_sync;
 pub mod network_sync;
 pub mod sound_sync;
 
-pub use bluetooth_sync::{
-    handle_bluetooth_toggle, stream_bluetooth_device_status, sync_bluetooth_connected_status,
-    sync_bluetooth_status,
-};
-pub use network_sync::{
-     network_worker};
-pub use battery_sync::{sync_battery_level, sync_battery_percentage, sync_battery_state};
-pub use brightness_sync::brightness_event_handler;
-pub use sound_sync::audio_event_handler;
+pub use bluetooth_sync::sync_bluetooth_connected_status;
+pub use brightness_sync::{MAX_DEVICE_BRIGHTNESS, DEFAULT_MIN_BRIGHTNESS, percent_to_u8, u8_to_percent};
+pub use network_sync::sync_connected_network;
+pub use sound_sync::update_device_info;
