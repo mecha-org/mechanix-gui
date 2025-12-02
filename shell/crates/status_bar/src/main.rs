@@ -1,7 +1,7 @@
 use commons::prelude::*;
 use futures::{SinkExt, StreamExt, channel::mpsc, select};
 use gpui::*;
-use networkmanager::service::NetworkManagerService;
+use networkmanager::{interfaces::wireless::NMState, service::NetworkManagerService};
 use bluez::service::BluetoothService;
 use status_bar::{prelude::*, services::*};
 use upower::service::UPowerService;
@@ -32,11 +32,11 @@ fn main() {
                         let mut battery_percentage_stream = battery_manager.stream_device_percentage().await;
 
                         let mut enable_state_stream = network_manager.stream_wireless_enabled_status().await;
+                        let mut device_state_stream = network_manager.stream_device_events().await;
                         let mut strength_stream = network_manager.stream_active_network_strength().await;
 
                         let mut bluetooth_status_stream = bluetooth_manager.stream_bluetooth_enabled_status().await;
                         let mut bluetooth_device_stream = bluetooth_manager.stream_bluetooth_device_status().await;
-                     
                   
                         loop{
                             select!{
@@ -58,15 +58,24 @@ fn main() {
                                 // network events
                                 enable_state = enable_state_stream.next() => {
                                     if let Some(is_enabled) = enable_state {
-                                        println!("from nm stream : {:?}", is_enabled);
                                         let _ = app_channel_tx.send(AppEvents::WirelessStatusChanged { enabled: is_enabled }).await;
                                     }
                                 },
 
-                                strength_stream = strength_stream.next() => {
-                                    if let Some(strength) = strength_stream {
-                                        println!("strength: {:?}", strength);
-                                        let _ = app_channel_tx.send(AppEvents::WirelessStrength { strength }).await;
+                                device_state = device_state_stream.next() => {
+                                    if let Some(nm_state) = device_state {
+                                    match nm_state {
+                                            NMState::ConnectedLocal => {
+                                                 let _ = app_channel_tx.send(AppEvents::WirelessStrength { strength: 0 }).await;
+                                            }
+                                            NMState::ConnectedGlobal => {
+                                                if let Some(strength) = strength_stream.next().await {
+                                                    println!("strength: {:?}", strength);
+                                                    let _ = app_channel_tx.send(AppEvents::WirelessStrength { strength }).await;
+                                                }
+                                            }
+                                            _ => {}
+                                        }
                                     }
                                 }
                                 
