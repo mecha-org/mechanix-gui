@@ -66,7 +66,7 @@ Widget buildGridView(
 
             return LayoutBuilder(
               builder: (context, constraints) {
-                final size = constraints.maxWidth;
+                final size = constraints.maxWidth * 0.8;
 
                 return GestureDetector(
                   onTap: () async {
@@ -184,7 +184,7 @@ Widget buildGridViewForRecentFiles(
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final size = constraints.maxWidth;
+            final size = constraints.maxWidth * 0.8;
 
             return GestureDetector(
               onTap: () {
@@ -287,7 +287,7 @@ Widget buildSearchResultsGrid(
 
         return LayoutBuilder(
           builder: (context, constraints) {
-            final size = constraints.maxWidth;
+            final size = constraints.maxWidth * 0.8;
 
             return GestureDetector(
               onTap: () {

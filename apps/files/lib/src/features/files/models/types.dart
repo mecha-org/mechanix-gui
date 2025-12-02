@@ -30,6 +30,7 @@ extension FileItemIcon on FileItem {
     if (videoFileTypes.contains(type)) return Images.videoFile;
     if (type == '.csv') return Images.csvFile;
     if (type == '.zip') return Images.archiveFile;
+    if (textFileTypes.contains(type)) return Images.codeFile;
 
     return Images.file;
   }
@@ -89,17 +90,21 @@ const int pageSize = 20;
 extension FileSystemEntityIcon on io.FileSystemEntity {
   String get iconPath {
     final path = this.path;
-    final ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
+    var ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
+    ext = ".$ext";
 
-    if (ext == 'dir') return Images.unfoldDir;
-    if (ext == 'pdf') return Images.pdfFile;
-    if (ext == 'xlsx' || ext == 'xls') return Images.excelFile;
-    if (ext == 'txt') return Images.textFile;
+    if (ext == '.dir') return Images.unfoldDir;
+    if (ext == '.pdf') return Images.pdfFile;
+    if (ext == '.xlsx' || ext == '.xls') return Images.excelFile;
+    if (ext == '.txt') return Images.textFile;
     if (imageFileTypes.contains(ext)) return Images.imageFile;
     if (audioFileTypes.contains(ext)) return Images.audioFile;
     if (videoFileTypes.contains(ext)) return Images.videoFile;
-    if (ext == 'csv') return Images.csvFile;
-    if (ext == 'zip' || ext == 'rar' || ext == '7z') return Images.archiveFile;
+    if (ext == '.csv') return Images.csvFile;
+    if (ext == '.zip' || ext == '.rar' || ext == '.7z') {
+      return Images.archiveFile;
+    }
+    if (textFileTypes.contains(ext)) return Images.codeFile;
 
     return Images.file;
   }

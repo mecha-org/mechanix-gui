@@ -75,17 +75,15 @@ Widget buildListView(
                       ),
                     ),
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 40,
+                    height: 40,
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
                     child: Center(
                       child: Image.asset(
                         entity.iconPath,
                         fit: BoxFit.contain,
+                        width: 28,
+                        height: 28,
                       ),
                     ),
                   ),
@@ -188,15 +186,16 @@ Widget buildListViewForRecentFiles(
                     ),
                   ),
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 40,
+                  height: 40,
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                   child: Center(
-                    child: Image.asset(file.iconPath, fit: BoxFit.contain),
+                    child: Image.asset(
+                      file.iconPath,
+                      fit: BoxFit.contain,
+                      width: 28,
+                      height: 28,
+                    ),
                   ),
                 ),
               ],
@@ -326,15 +325,15 @@ Widget buildSearchResultsList(
                     ),
                   ),
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 40,
+                  height: 40,
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
-                    borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    file.iconPath,
+                    fit: BoxFit.contain,
+                    width: 28,
+                    height: 28,
                   ),
-                  child: Image.asset(file.iconPath,
-                      width: 24, height: 24, fit: BoxFit.contain),
                 ),
               ],
             ),

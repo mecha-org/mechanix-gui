@@ -43,4 +43,5 @@ class Images {
   static const String downloads = 'assets/images/downloads.png';
   static const String terminal = 'assets/images/terminal.png';
   static const String refresh = 'assets/images/refresh.png';
+  static const String codeFile = 'assets/images/code.png';
 }

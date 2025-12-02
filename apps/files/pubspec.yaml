@@ -128,6 +128,7 @@ flutter:
     - assets/images/downloads.png
     - assets/images/refresh.png
     - assets/images/terminal.png
+    - assets/images/code.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

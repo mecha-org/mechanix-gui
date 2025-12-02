@@ -66,59 +66,35 @@ class FileHomePageState extends State<FileHomePage> {
               MechanixSectionList(
                 sectionListItems: [
                   SectionListItems(
-                    title: "Home directory",
-                    titleTextStyle: const TextStyle(),
-                    onTap: () => onTap(context, homeDir, "Home"),
-                    leading: const IconWidget(
-                      iconWidth: 24,
-                      iconHeight: 24,
-                      iconPath: Images.home,
-                      iconColor: Colors.blueAccent,
-                    ),
-                  ),
+                      title: "Home directory",
+                      titleTextStyle: const TextStyle(),
+                      onTap: () => onTap(context, homeDir, "Home"),
+                      leading: Image.asset(Images.home, height: 20, width: 20)),
                   SectionListItems(
-                    title: "Recents",
-                    onTap: () => onTap(context, recentDir, "Recents"),
-                    leading: const IconWidget(
-                      iconWidth: 24,
-                      iconHeight: 24,
-                      iconPath: Images.recent,
-                    ),
-                  ),
+                      title: "Recents",
+                      onTap: () => onTap(context, recentDir, "Recents"),
+                      leading:
+                          Image.asset(Images.recent, height: 24, width: 24)),
                   SectionListItems(
-                    title: "Downloads",
-                    onTap: () => onTap(context, downloadsDir, "Downloads"),
-                    leading: const IconWidget(
-                      iconWidth: 24,
-                      iconHeight: 24,
-                      iconPath: Images.downloads,
-                      iconColor: Colors.deepPurpleAccent,
-                    ),
-                  ),
+                      title: "Downloads",
+                      onTap: () => onTap(context, downloadsDir, "Downloads"),
+                      leading:
+                          Image.asset(Images.downloads, height: 24, width: 24)),
                   SectionListItems(
-                    title: "Documents",
-                    onTap: () => onTap(context, documentsDir, "Documents"),
-                    leading: const IconWidget(
-                      iconWidth: 24,
-                      iconHeight: 24,
-                      iconPath: Images.homeDocuments,
-                      iconColor: Colors.orangeAccent,
-                    ),
-                  ),
+                      title: "Documents",
+                      onTap: () => onTap(context, documentsDir, "Documents"),
+                      leading: Image.asset(Images.homeDocuments,
+                          height: 24, width: 24)),
                 ],
               ),
               MechanixSectionList(
                 title: 'Hard drive',
                 sectionListItems: [
                   SectionListItems(
-                    title: "Root (/)",
-                    onTap: () => onTap(context, "/", "Root"),
-                    leading: const IconWidget(
-                      iconWidth: 24,
-                      iconHeight: 24,
-                      iconPath: Images.hardDrive,
-                    ),
-                  ),
+                      title: "Root (/)",
+                      onTap: () => onTap(context, "/", "Root"),
+                      leading:
+                          Image.asset(Images.hardDrive, height: 24, width: 24)),
                 ],
               ),
             ],
