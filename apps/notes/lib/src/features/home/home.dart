@@ -11,6 +11,7 @@ import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/home/presentation/note_list.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,14 +32,6 @@ class _HomePageState extends State<HomePage> {
     _scrollController.addListener(_onScroll);
   }
 
-  void onSelect(BuildContext context, String id, List<String> selectedNoteIds) {
-    if (selectedNoteIds.contains(id)) {
-      context.read<NotesBloc>().add(DeselectNote(id));
-    } else {
-      context.read<NotesBloc>().add(SelectNote(id));
-    }
-  }
-
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final position = _scrollController.position;
@@ -46,186 +39,98 @@ class _HomePageState extends State<HomePage> {
 
     final maxScroll = position.maxScrollExtent;
     final currentScroll = position.pixels;
-
     // Trigger near bottom
     if (currentScroll >= 0.8 * maxScroll) {
       context.read<NotesBloc>().add(LoadNextChunk());
-      // notesController.loadNextChunk();
     }
-  }
-
-  void onDeselect(BuildContext context) {
-    context.read<NotesBloc>().add(ClearSelection());
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    // notesController.dispose();
     super.dispose();
-  }
-
-  void selectAll() {
-    context.read<NotesBloc>().add(SelectAllNotes());
-  }
-
-  void onDeleteRemoveSelection(
-    BuildContext context,
-    List<String> selectedNoteIds,
-  ) {
-    context.read<NotesBloc>().add(
-      DeleteNotes(deleteIds: selectedNoteIds.toList()),
-    );
-    context.read<NotesBloc>().add(ClearSelection());
-  }
-
-  void onSearch() {
-    Navigator.pushNamed(context, AppRoutes.searchNotes);
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NotesBloc, NotesState>(
-      buildWhen:
-          (previous, current) =>
-              previous.isSelectionMode != current.isSelectionMode,
-      builder: (context, state) {
+    return BlocSelector<NotesBloc, NotesState, bool>(
+      selector: (state) => state.isSelectionMode,
+      builder: (context, isSelectionMode) {
         return Scaffold(
-          floatingActionButton:
-              !state.isSelectionMode
-                  ? Padding(
-                    padding: const EdgeInsets.only(bottom: 36, right: 20),
-                    child: SizedBox(
-                      height: 64,
-                      width: 64,
-                      child: FloatingActionButton(
-                        onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.createEditNotes,
-                          );
-                        },
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(36),
-                        ),
-                        backgroundColor: NotesColors.floatingButtonColor,
-                        child: SizedBox(
-                          height: 28,
-                          width: 28,
-                          child: Image.asset(NotesIcon.addIcon),
-                        ),
-                      ),
-                    ),
-                  )
+          bottomSheet:
+              isSelectionMode
+                  ? BottomMenu(isSelectionMode: isSelectionMode)
                   : null,
           appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(50),
+            preferredSize: const Size.fromHeight(48),
             child: BlocSelector<NotesBloc, NotesState, List<String>>(
               selector: (state) => state.selectedNoteIds,
               builder: (context, selectedNoteIds) {
                 return MechanixNavigationBar(
+                  height: 48,
                   automaticallyImplyLeading: false,
-                  title: "Notes",
-                  // titleSpacing: 20,
-                  // elevation: 0,
-                  // backgroundColor: Colors.transparent,
-                  actionWidgets: [
-                    if (state.isSelectionMode &&
-                        selectedNoteIds.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          Text(
-                            "${selectedNoteIds.length} Selected",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
+                  theme: MechanixNavigationBarThemeData(
+                    titleStyle:
+                        isSelectionMode
+                            ? const TextStyle(
+                              color: NotesColors.tooltipColor,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            )
+                            : const TextStyle(
+                              fontSize: 28,
+                              color: NotesColors.secondaryTextColor,
+                              fontWeight: FontWeight.w600,
+                              height: 1.3,
                             ),
-                          ).padRight(10),
-                          // if (selectedNoteIds.length != groupedNotes.length)
-                          IconButton(
-                            onPressed: selectAll,
-                            icon: SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: Image.asset(NotesIcon.selectAllIcon),
-                            ),
-                          ),
-                        ],
-                      ).padRight(10),
-                    ] else
-                      IconButton(
-                        onPressed: onSearch,
-                        icon: Image.asset(NotesIcon.searchIcon),
-                      ).padRight(10),
-                  ],
+                  ),
+
+                  title:
+                      isSelectionMode
+                          ? "${selectedNoteIds.length} Selected"
+                          : "Notes",
                 );
               },
             ),
           ),
 
-          body: BlocSelector<NotesBloc, NotesState, List<String>>(
-            selector: (state) => state.selectedNoteIds,
-            builder: (context, selectedNoteIds) {
-              return Stack(
-                children: [
-                  BlocSelector<
-                    NotesBloc,
-                    NotesState,
-                    Tuple2<bool, List<GroupedNotes>>
-                  >(
-                    selector:
-                        (state) => Tuple2(state.isLoading, state.groupedNotes),
-                    builder: (context, data) {
-                      if (data.item2.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          height: 64,
-                          child: MechanixSelectableList(
-                            onTap:
-                                () => Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.createEditNotes,
-                                ),
-                            leadingIcon: Image.asset(
-                              NotesIcon.addIcon,
-                              height: 18,
-                              width: 18,
+          body: Stack(
+            children: [
+              BlocSelector<
+                NotesBloc,
+                NotesState,
+                Tuple2<bool, List<GroupedNotes>>
+              >(
+                selector:
+                    (state) => Tuple2(state.isLoading, state.groupedNotes),
+                builder: (context, data) {
+                  if (data.item2.isEmpty) {
+                    return SizedBox(
+                      height: 64,
+                      child: MechanixSelectableList(
+                        onTap:
+                            () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.createEditNotes,
                             ),
-                            isSelected: true,
-                            title: "Add a new Note",
-                          ),
-                        );
-                      }
-                      //     if (!isLoading) {
-                      return Positioned.fill(
-                        child: NoteList(
-                          controller: _scrollController,
-                          isSelectionMode: state.isSelectionMode,
-                          selectedNotes: selectedNoteIds,
-                          onSelect:
-                              (id) => onSelect(context, id, selectedNoteIds),
-                          groupedNotes: data.item2,
+                        leadingIcon: Image.asset(
+                          NotesIcon.addIcon,
+                          height: 18,
+                          width: 18,
                         ),
-                      );
-                    },
-                  ),
-
-                  // Floating bottom menu
-                  if (state.isSelectionMode)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 30,
-                      child: Center(
-                        child: BottomMenu(
-                          selectedNotes: selectedNoteIds,
-                          isSelectionMode: state.isSelectionMode,
-                        ),
+                        isSelected: true,
+                        title: "Add a new Note",
                       ),
-                    ),
-                ],
-              );
-            },
+                    );
+                  }
+                  return NoteList(
+                    controller: _scrollController,
+                    isSelectionMode: isSelectionMode,
+                    groupedNotes: data.item2,
+                  );
+                },
+              ),
+            ],
           ),
         );
       },

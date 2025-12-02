@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart';
 import 'package:mechanix_notes/src/commons/styles/quill_editor_styles.dart';
-import 'package:mechanix_notes/src/features/editor/audio_embed.dart';
 
 class ContentEditor extends StatelessWidget {
   final QuillController controller;
@@ -64,7 +63,6 @@ class ContentEditor extends StatelessWidget {
                         },
                       ),
                     ),
-                    AudioEmbedBuilder(),
                   ],
                 ),
               ),

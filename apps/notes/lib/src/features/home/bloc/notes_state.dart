@@ -7,21 +7,17 @@ class NotesState extends Equatable {
   final bool isLoadingMore;
   final bool hasMorePages;
   final List<GroupedNotes> groupedNotes;
-  
+  final bool isDragging;
   // Search state
   final bool isSearchMode;
   final bool isSearchLoading;
   final bool isSearchLoadingMore;
   final bool hasMoreSearchResults;
   final List<NoteMetaData> searchedNotes;
-  
+
   // Selection state
   final bool isSelectionMode;
   final List<String> selectedNoteIds;
-  final bool? isPinnedSelected;
-  
-  // Other state
-  final List<NoteMetaData> pinnedNotes;
 
   const NotesState({
     // Main list
@@ -29,27 +25,26 @@ class NotesState extends Equatable {
     this.isLoadingMore = false,
     this.hasMorePages = true,
     this.groupedNotes = const [],
-    
+    this.isDragging = false,
     // Search
     this.isSearchMode = false,
     this.isSearchLoading = false,
     this.isSearchLoadingMore = false,
     this.hasMoreSearchResults = false,
     this.searchedNotes = const [],
-    
+
     // Selection
     this.isSelectionMode = false,
     this.selectedNoteIds = const [],
-    this.isPinnedSelected = false,
-    
+
     // Other
-    this.pinnedNotes = const [],
   });
 
   NotesState copyWith({
     bool? isLoading,
     bool? isLoadingMore,
     bool? hasMorePages,
+    bool? isDragging,
     List<GroupedNotes>? groupedNotes,
     bool? isSearchMode,
     bool? isSearchLoading,
@@ -58,13 +53,12 @@ class NotesState extends Equatable {
     List<NoteMetaData>? searchedNotes,
     bool? isSelectionMode,
     List<String>? selectedNoteIds,
-    bool? isPinnedSelected,
-    List<NoteMetaData>? pinnedNotes,
   }) {
     return NotesState(
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMorePages: hasMorePages ?? this.hasMorePages,
+      isDragging: isDragging ?? this.isDragging,
       groupedNotes: groupedNotes ?? this.groupedNotes,
       isSearchMode: isSearchMode ?? this.isSearchMode,
       isSearchLoading: isSearchLoading ?? this.isSearchLoading,
@@ -73,8 +67,6 @@ class NotesState extends Equatable {
       searchedNotes: searchedNotes ?? this.searchedNotes,
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedNoteIds: selectedNoteIds ?? this.selectedNoteIds,
-      isPinnedSelected: isPinnedSelected ?? this.isPinnedSelected,
-      pinnedNotes: pinnedNotes ?? this.pinnedNotes,
     );
   }
 
@@ -83,6 +75,7 @@ class NotesState extends Equatable {
     isLoading,
     isLoadingMore,
     hasMorePages,
+    isDragging,
     groupedNotes,
     isSearchMode,
     isSearchLoading,
@@ -91,7 +84,5 @@ class NotesState extends Equatable {
     searchedNotes,
     isSelectionMode,
     selectedNoteIds,
-    isPinnedSelected,
-    pinnedNotes,
   ];
 }

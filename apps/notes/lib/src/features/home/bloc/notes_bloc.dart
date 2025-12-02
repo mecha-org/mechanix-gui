@@ -15,42 +15,38 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   bool _hasMorePages = true;
   bool _isLoadingChunk = false;
   List<NoteMetaData> _allNotes = [];
-  List<NoteMetaData> _allPinnedNotes = [];
-  int _loadedPinnedCount = 0;
-  int _unpinnedNoteIndex = 0;
+  int _noteIndex = 0;
 
   // Search pagination state
   bool _hasMoreSearchResults = true;
   bool _isLoadingSearchChunk = false;
   String _currentSearchQuery = '';
   int _searchLoadedCount = 0;
-  List<NoteMetaData> _allSearchResults = []; // Cache all search results
+  List<NoteMetaData> _allSearchResults = [];
 
   NotesBloc({required this.notesRepository}) : super(const NotesState()) {
     on<CreateNotes>(_createNote);
     on<UpdateNotes>(_updateNotes);
     on<DeleteNotes>(_deleteNotes);
     on<UpdateTag>(_updateTag);
-    on<PinnedNotes>(_updatePinnedNotes);
     on<SelectNote>(_onSelectNote);
     on<DeselectNote>(_onDeselectNote);
     on<ClearSelection>(_onClearSelection);
     on<SelectAllNotes>(_onSelectAllNotes);
-    on<CheckPinnedStatus>(_checkPinnedStatus);
     on<SearchEvent>(_searchNotes);
     on<LoadNextSearchChunk>(_onLoadNextSearchChunk);
     on<ClearSearch>(_onClearSearch);
     on<InitializeNotes>(_onInitializeNotes);
     on<LoadNotes>(_onLoadNotes);
     on<LoadNextChunk>(_onLoadNextChunk);
+    on<DragUpdate>(_dragUpdate);
   }
 
   // Reset all pagination state
   void _resetPagination() {
     _hasMorePages = true;
     _isLoadingChunk = false;
-    _loadedPinnedCount = 0;
-    _unpinnedNoteIndex = 0;
+    _noteIndex = 0;
   }
 
   // Reset search pagination state
@@ -87,7 +83,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       final notesList = await notesRepository.getAllNotes();
 
       _allNotes = notesList;
-      _allPinnedNotes = _allNotes.where((n) => n.isPinned).toList();
 
       _resetPagination();
       final initialGroups = _loadFirstChunk();
@@ -117,41 +112,9 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
 
     try {
       final currentGroups = List<GroupedNotes>.from(state.groupedNotes);
-      int notesLoaded = 0;
 
-      // Load remaining pinned notes first
-      if (_loadedPinnedCount < _allPinnedNotes.length) {
-        final remainingPinned = _allPinnedNotes.length - _loadedPinnedCount;
-        final toLoad = remainingPinned > pageSize ? pageSize : remainingPinned;
-
-        final nextPinnedChunk =
-            _allPinnedNotes.skip(_loadedPinnedCount).take(toLoad).toList();
-
-        final pinnedGroupIndex = currentGroups.indexWhere(
-          (g) => g.label == "Pinned Notes",
-        );
-
-        if (pinnedGroupIndex != -1) {
-          final existingPinned = currentGroups[pinnedGroupIndex].notes;
-          currentGroups[pinnedGroupIndex] = GroupedNotes(
-            label: "Pinned Notes",
-            notes: [...existingPinned, ...nextPinnedChunk],
-          );
-        } else {
-          currentGroups.add(
-            GroupedNotes(label: "Pinned Notes", notes: nextPinnedChunk),
-          );
-        }
-
-        _loadedPinnedCount += toLoad;
-        notesLoaded = toLoad;
-      }
-
-      // Load unpinned (time-based) notes
-      if (notesLoaded < pageSize) {
-        final remainingSlots = pageSize - notesLoaded;
-        _loadTimeBasedNotes(currentGroups, remainingSlots);
-      }
+      // Load time-based notes
+      _loadTimeBasedNotes(currentGroups, pageSize);
 
       _hasMorePages = _hasMoreNotesToLoad();
 
@@ -300,29 +263,12 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     );
   }
 
-  // ============ EXISTING METHODS (unchanged) ============
+  // ============ EXISTING METHODS ============
 
   List<GroupedNotes> _loadFirstChunk() {
     final List<GroupedNotes> initialGroups = [];
-    int notesLoaded = 0;
 
-    if (_allPinnedNotes.isNotEmpty) {
-      final pinnedToLoad =
-          _allPinnedNotes.length > pageSize ? pageSize : _allPinnedNotes.length;
-
-      final pinnedChunk = _allPinnedNotes.take(pinnedToLoad).toList();
-      _loadedPinnedCount = pinnedChunk.length;
-      notesLoaded = pinnedChunk.length;
-
-      initialGroups.add(
-        GroupedNotes(label: "Pinned Notes", notes: pinnedChunk),
-      );
-    }
-
-    if (notesLoaded < pageSize) {
-      final remainingSlots = pageSize - notesLoaded;
-      _loadTimeBasedNotes(initialGroups, remainingSlots);
-    }
+    _loadTimeBasedNotes(initialGroups, pageSize);
     _hasMorePages = _hasMoreNotesToLoad();
 
     return initialGroups;
@@ -332,9 +278,9 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   void _loadTimeBasedNotes(List<GroupedNotes> currentGroups, int count) {
     int loaded = 0;
 
-    while (loaded < count && _unpinnedNoteIndex < _allNotes.length) {
-      final note = _allNotes[_unpinnedNoteIndex];
-      _unpinnedNoteIndex++;
+    while (loaded < count && _noteIndex < _allNotes.length) {
+      final note = _allNotes[_noteIndex];
+      _noteIndex++;
 
       final groupLabel = _getTimeLabelForNote(note);
 
@@ -347,9 +293,16 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         currentGroups[existingIndex] = GroupedNotes(
           label: groupLabel,
           notes: updatedNotes,
+          height: updatedNotes.map((a) => a.height).reduce((a, b) => a + b),
         );
       } else {
-        currentGroups.add(GroupedNotes(label: groupLabel, notes: [note]));
+        currentGroups.add(
+          GroupedNotes(
+            label: groupLabel,
+            notes: [note],
+            height: [note].map((a) => a.height).reduce((a, b) => a + b),
+          ),
+        );
       }
 
       loaded++;
@@ -358,8 +311,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
 
   // Check if there are more notes to load
   bool _hasMoreNotesToLoad() {
-    if (_loadedPinnedCount < _allPinnedNotes.length) return true;
-    if (_unpinnedNoteIndex < _allNotes.length) return true;
+    if (_noteIndex < _allNotes.length) return true;
     return false;
   }
 
@@ -377,7 +329,9 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       note.updatedAt.month,
       note.updatedAt.day,
     );
-
+    if (now.difference(note.updatedAt).inHours < 3) {
+      return "Recent";
+    }
     if (dateOnly == today) return "Today";
     if (dateOnly == yesterday) return "Yesterday";
     if (dateOnly.isAfter(thisWeekStart.subtract(const Duration(days: 1))) &&
@@ -417,60 +371,33 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
 
       final updatedGroups = List<GroupedNotes>.from(state.groupedNotes);
 
-      if (note.isPinned) {
-        // Add to _allPinnedNotes
-        _allPinnedNotes.insert(0, note);
+      // Add to time-based group
+      final groupLabel = _getTimeLabelForNote(note);
 
-        // Add to Pinned Notes group at the top
-        final pinnedGroupIndex = updatedGroups.indexWhere(
-          (g) => g.label == "Pinned Notes",
+      final existingIndex = updatedGroups.indexWhere(
+        (g) => g.label == groupLabel,
+      );
+
+      if (existingIndex != -1) {
+        final updatedNotes = [note, ...updatedGroups[existingIndex].notes];
+        updatedGroups[existingIndex] = GroupedNotes(
+          label: groupLabel,
+          notes: updatedNotes,
+          height: updatedNotes.map((a) => a.height).reduce((a, b) => a + b),
         );
-
-        if (pinnedGroupIndex != -1) {
-          final existingPinned = updatedGroups[pinnedGroupIndex].notes;
-          updatedGroups[pinnedGroupIndex] = GroupedNotes(
-            label: "Pinned Notes",
-            notes: [note, ...existingPinned],
-          );
-        } else {
-          updatedGroups.insert(
-            0,
-            GroupedNotes(label: "Pinned Notes", notes: [note]),
-          );
-        }
-
-        // Increment loaded pinned count
-        _loadedPinnedCount++;
       } else {
-        // Add to time-based group
-        final groupLabel = _getTimeLabelForNote(note);
-
-        final existingIndex = updatedGroups.indexWhere(
-          (g) => g.label == groupLabel,
-        );
-
-        if (existingIndex != -1) {
-          final updatedNotes = [note, ...updatedGroups[existingIndex].notes];
-          updatedGroups[existingIndex] = GroupedNotes(
+        updatedGroups.insert(
+          0,
+          GroupedNotes(
             label: groupLabel,
-            notes: updatedNotes,
-          );
-        } else {
-          // Find correct position to insert new group
-          final pinnedGroupExists = updatedGroups.any(
-            (g) => g.label == "Pinned Notes",
-          );
-          final insertIndex = pinnedGroupExists ? 1 : 0;
-
-          updatedGroups.insert(
-            insertIndex,
-            GroupedNotes(label: groupLabel, notes: [note]),
-          );
-        }
-
-        // Increment unpinned index
-        _unpinnedNoteIndex++;
+            notes: [note],
+            height: [note].map((a) => a.height).reduce((a, b) => a + b),
+          ),
+        );
       }
+
+      // Increment note index
+      _noteIndex++;
 
       emit(state.copyWith(groupedNotes: updatedGroups));
 
@@ -500,18 +427,21 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         add(SearchEvent(_currentSearchQuery));
       }
     } catch (e) {
-      print('Note update failed: $e');
+      logger.e("$e");
     }
   }
 
   Future<void> _deleteNotes(DeleteNotes event, Emitter<NotesState> emit) async {
     try {
-      await notesRepository.deleteNote(event.deleteIds);
-      _updateGroupsAfterDelete(event.deleteIds, emit);
+      final List<String> ids =
+          event.deleteIds.isNotEmpty ? event.deleteIds : state.selectedNoteIds;
+
+      await notesRepository.deleteNote(ids);
+      _updateGroupsAfterDelete(ids, emit);
 
       // If in search mode, also update search results locally
       if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
-        final deletedSet = event.deleteIds.toSet();
+        final deletedSet = ids.toSet();
 
         // Remove from cached search results
         _allSearchResults.removeWhere((note) => deletedSet.contains(note.id));
@@ -546,35 +476,22 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     final deletedSet = deletedIds.toSet();
     final updatedGroups = <GroupedNotes>[];
 
-    // Update _allNotes and _allPinnedNotes
+    // Update _allNotes
     _allNotes.removeWhere((note) => deletedSet.contains(note.id));
-    _allPinnedNotes.removeWhere((note) => deletedSet.contains(note.id));
 
     // Adjust pagination counters for deleted notes
-    int deletedFromPinned = 0;
-    int deletedFromUnpinned = 0;
+    int deletedFromLoaded = 0;
 
     for (final group in state.groupedNotes) {
       for (final note in group.notes) {
         if (deletedSet.contains(note.id)) {
-          if (group.label == "Pinned Notes") {
-            deletedFromPinned++;
-          } else {
-            deletedFromUnpinned++;
-          }
+          deletedFromLoaded++;
         }
       }
     }
 
-    // Adjust loaded counts
-    _loadedPinnedCount = (_loadedPinnedCount - deletedFromPinned).clamp(
-      0,
-      _allPinnedNotes.length,
-    );
-    _unpinnedNoteIndex = (_unpinnedNoteIndex - deletedFromUnpinned).clamp(
-      0,
-      _allNotes.length,
-    );
+    // Adjust loaded count
+    _noteIndex = (_noteIndex - deletedFromLoaded).clamp(0, _allNotes.length);
 
     // Remove deleted notes from each group
     for (final group in state.groupedNotes) {
@@ -584,7 +501,11 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       // Only keep groups that still have notes
       if (filteredNotes.isNotEmpty) {
         updatedGroups.add(
-          GroupedNotes(label: group.label, notes: filteredNotes),
+          GroupedNotes(
+            label: group.label,
+            notes: filteredNotes,
+            height: filteredNotes.map((a) => a.height).reduce((a, b) => a + b),
+          ),
         );
       }
     }
@@ -610,190 +531,22 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     }
   }
 
-  Future<void> _updatePinnedNotes(
-    PinnedNotes event,
-    Emitter<NotesState> emit,
-  ) async {
-    try {
-      await notesRepository.pinnedNotes(event.noteIds, event.isPinned);
-      _updateGroupsAfterPinChange(event.noteIds, event.isPinned, emit);
-      add(ClearSelection());
-
-      // If in search mode, refresh search results
-      if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
-        add(SearchEvent(_currentSearchQuery));
-      }
-    } catch (e) {
-      logger.e('Pinned notes update failed: $e');
-    }
-  }
-
-  // Helper: Update groups locally after pin/unpin
-  void _updateGroupsAfterPinChange(
-    List<String> noteIds,
-    bool isPinned,
-    Emitter<NotesState> emit,
-  ) {
-    final noteIdSet = noteIds.toSet();
-    final updatedGroups = <GroupedNotes>[];
-    final notesToAddToPinned = <NoteMetaData>[];
-
-    // Track notes being moved from loaded sections
-    int movedFromPinnedSection = 0;
-    int movedFromUnpinnedSection = 0;
-
-    // Update _allNotes
-    for (var i = 0; i < _allNotes.length; i++) {
-      if (noteIdSet.contains(_allNotes[i].id)) {
-        final note = _allNotes[i];
-        _allNotes[i] = NoteMetaData(
-          id: note.id,
-          title: note.title,
-          isPinned: isPinned,
-          createdAt: note.createdAt,
-          updatedAt: note.updatedAt,
-        );
-      }
-    }
-
-    // Update _allPinnedNotes and track changes
-    if (isPinned) {
-      // Add to pinned
-      final newPinned =
-          _allNotes.where((n) => noteIdSet.contains(n.id)).toList();
-      _allPinnedNotes.addAll(newPinned);
-    } else {
-      // Remove from pinned
-      final removedCount =
-          _allPinnedNotes.where((n) => noteIdSet.contains(n.id)).length;
-      _allPinnedNotes.removeWhere((n) => noteIdSet.contains(n.id));
-
-      // If we removed pinned notes that were already loaded, adjust the counter
-      if (removedCount > 0) {
-        _loadedPinnedCount = (_loadedPinnedCount - removedCount).clamp(
-          0,
-          _allPinnedNotes.length,
-        );
-      }
-    }
-
-    // Process groups
-    for (final group in state.groupedNotes) {
-      if (isPinned) {
-        // When pinning: Keep notes in their original location AND add to pinned section
-        final updatedNotes =
-            group.notes.map((note) {
-              if (noteIdSet.contains(note.id)) {
-                // Track where notes are coming from
-                if (group.label == "Pinned Notes") {
-                  movedFromPinnedSection++;
-                } else {
-                  movedFromUnpinnedSection++;
-                  // Collect notes to add to pinned section
-                  notesToAddToPinned.add(
-                    NoteMetaData(
-                      id: note.id,
-                      title: note.title,
-                      isPinned: true,
-                      createdAt: note.createdAt,
-                      updatedAt: note.updatedAt,
-                    ),
-                  );
-                }
-
-                // Update the note in its current location with isPinned = true
-                return NoteMetaData(
-                  id: note.id,
-                  title: note.title,
-                  isPinned: true,
-                  createdAt: note.createdAt,
-                  updatedAt: note.updatedAt,
-                );
-              }
-              return note;
-            }).toList();
-
-        updatedGroups.add(
-          GroupedNotes(label: group.label, notes: updatedNotes),
-        );
-      } else {
-        // When unpinning: Remove from pinned section, keep in time-based sections
-        if (group.label == "Pinned Notes") {
-          // Remove unpinned notes from Pinned Notes section
-          final remainingPinned =
-              group.notes
-                  .where((note) => !noteIdSet.contains(note.id))
-                  .toList();
-
-          if (remainingPinned.isNotEmpty) {
-            updatedGroups.add(
-              GroupedNotes(label: group.label, notes: remainingPinned),
-            );
-          }
-
-          movedFromPinnedSection += group.notes.length - remainingPinned.length;
-        } else {
-          final updatedNotes =
-              group.notes.map((note) {
-                if (noteIdSet.contains(note.id)) {
-                  return NoteMetaData(
-                    id: note.id,
-                    title: note.title,
-                    isPinned: false,
-                    createdAt: note.createdAt,
-                    updatedAt: note.updatedAt,
-                  );
-                }
-                return note;
-              }).toList();
-
-          updatedGroups.add(
-            GroupedNotes(label: group.label, notes: updatedNotes),
-          );
-        }
-      }
-    }
-
-    // Adjust pagination counters
-    if (isPinned) {
-      // Notes moved to pinned section
-      _loadedPinnedCount += movedFromUnpinnedSection;
-      // Don't adjust _unpinnedNoteIndex since notes stay in their time-based location
-    }
-
-    // Add newly pinned notes to the Pinned Notes section
-    if (isPinned && notesToAddToPinned.isNotEmpty) {
-      final pinnedGroupIndex = updatedGroups.indexWhere(
-        (g) => g.label == "Pinned Notes",
-      );
-
-      if (pinnedGroupIndex != -1) {
-        final existingPinned = updatedGroups[pinnedGroupIndex].notes;
-        updatedGroups[pinnedGroupIndex] = GroupedNotes(
-          label: "Pinned Notes",
-          notes: [...notesToAddToPinned, ...existingPinned],
-        );
-      } else {
-        updatedGroups.insert(
-          0,
-          GroupedNotes(label: "Pinned Notes", notes: notesToAddToPinned),
-        );
-      }
-    }
-
-    // Recalculate if there are more pages
-    _hasMorePages = _hasMoreNotesToLoad();
-
-    emit(
-      state.copyWith(groupedNotes: updatedGroups, hasMorePages: _hasMorePages),
-    );
-  }
-
   void _onSelectNote(SelectNote event, Emitter<NotesState> emit) {
-    final newSelected = List<String>.from(state.selectedNoteIds)
-      ..add(event.noteId);
-    emit(state.copyWith(selectedNoteIds: newSelected, isSelectionMode: true));
-    add(CheckPinnedStatus());
+    final newSelected = List<String>.from(state.selectedNoteIds);
+
+    if (state.selectedNoteIds.contains(event.noteId)) {
+      newSelected.remove(event.noteId);
+
+      emit(
+        state.copyWith(
+          selectedNoteIds: newSelected,
+          isSelectionMode: newSelected.isNotEmpty,
+        ),
+      );
+    } else {
+      newSelected.add(event.noteId);
+      emit(state.copyWith(selectedNoteIds: newSelected, isSelectionMode: true));
+    }
   }
 
   void _onDeselectNote(DeselectNote event, Emitter<NotesState> emit) {
@@ -801,7 +554,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       ..remove(event.noteId);
     final mode = newSelected.isNotEmpty;
     emit(state.copyWith(selectedNoteIds: newSelected, isSelectionMode: mode));
-    add(CheckPinnedStatus());
   }
 
   void _onClearSelection(ClearSelection event, Emitter<NotesState> emit) {
@@ -823,18 +575,9 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     emit(
       state.copyWith(selectedNoteIds: noteIds.toList(), isSelectionMode: true),
     );
-    add(CheckPinnedStatus());
   }
 
-  void _checkPinnedStatus(CheckPinnedStatus event, Emitter<NotesState> emit) {
-    // Extract pinned note IDs for quick lookup
-    final pinnedNoteIds = _allPinnedNotes.map((n) => n.id).toSet();
-
-    // Check if all selected notes are pinned
-    final isPinnedSelected = state.selectedNoteIds.every(
-      (id) => pinnedNoteIds.contains(id),
-    );
-
-    emit(state.copyWith(isPinnedSelected: isPinnedSelected));
+  void _dragUpdate(DragUpdate event, Emitter<NotesState> emit) {
+    emit(state.copyWith(isDragging: event.isDragging));
   }
 }

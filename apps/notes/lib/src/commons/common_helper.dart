@@ -3,6 +3,19 @@ import 'package:intl/intl.dart';
 class CommonHelper {
   static String formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
+    final diff = now.difference(dateTime);
+
+    if (diff.inHours < 3) {
+      if (diff.inMinutes < 1) {
+        return "Just now";
+      } else if (diff.inMinutes < 60) {
+        return "${diff.inMinutes} minutes ago";
+      } else {
+        final hours = diff.inHours;
+        return "$hours hour${hours > 1 ? 's' : ''} ago";
+      }
+    }
+
     final yesterday = now.subtract(const Duration(days: 1));
 
     final isToday =
@@ -22,7 +35,7 @@ class CommonHelper {
     } else if (isYesterday) {
       return "Yesterday, $time";
     } else {
-      final date = DateFormat('MMMM d, yyyy').format(dateTime);
+      final date = DateFormat('MM d, yyyy').format(dateTime);
       return "$date, $time";
     }
   }

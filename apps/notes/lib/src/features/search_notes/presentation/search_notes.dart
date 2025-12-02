@@ -55,8 +55,8 @@ class _SearchNotesState extends State<SearchNotes> {
   Widget build(BuildContext context) {
     return BlocBuilder<NotesBloc, NotesState>(
       builder: (context, state) {
-        return Scaffold(
-          appBar: const MechanixNavigationBar(
+        return const Scaffold(
+          appBar: MechanixNavigationBar(
             title: "Search Notes",
             theme: MechanixNavigationBarThemeData(
               titleSpacing: 2,
@@ -68,31 +68,30 @@ class _SearchNotesState extends State<SearchNotes> {
           ),
           body: Stack(
             children: [
-              Positioned.fill(
-                child:
-                    state.searchedNotes.isEmpty
-                        ? const Padding(
-                          padding: EdgeInsets.only(top: 120),
-                          child: Center(
-                            child: Text(
-                              "No Notes Found",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        )
-                        : NoteList(
-                          controller: _scrollController,
-                          selectedNotes: const [],
-                          isSelectionMode: false,
-                          groupedNotes: [
-                            GroupedNotes(label: '', notes: state.searchedNotes),
-                          ],
-                        ),
-              ),
-
+              // Positioned.fill(
+              //   child:
+              //       state.searchedNotes.isEmpty
+              //           ? const Padding(
+              //             padding: EdgeInsets.only(top: 120),
+              //             child: Center(
+              //               child: Text(
+              //                 "No Notes Found",
+              //                 style: TextStyle(
+              //                   fontSize: 16,
+              //                   color: Colors.grey,
+              //                 ),
+              //               ),
+              //             ),
+              //           )
+              //           : NoteList(
+              //             controller: _scrollController,
+              //             selectedNotes: const [],
+              //             isSelectionMode: false,
+              //             groupedNotes: [
+              //               GroupedNotes(label: '', notes: state.searchedNotes),
+              //             ],
+              //           ),
+              // ),
               const Positioned(
                 left: 0,
                 right: 0,

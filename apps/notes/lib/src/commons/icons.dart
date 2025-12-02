@@ -38,4 +38,5 @@ class NotesIcon {
   static const pinnedFilledIcon = 'assets/images/pinned_filled_icon.png';
   static const menuIcon = 'assets/images/menu_icon.png';
   static const closeIcon = 'assets/images/close_icon.png';
+  static const shareIcon = 'assets/images/share_icon.png';
 }

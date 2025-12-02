@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar/additional_toolbar.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/alignment_toolbar.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/text_editor_toolbar.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
@@ -23,8 +22,6 @@ class ToolbarSelection extends StatelessWidget {
         return AlignmentToolbar(controller: controller, focusNode: focusNode);
       case ToolbarEnum.text:
         return TextEditorToolbar(controller: controller, focusNode: focusNode);
-      case ToolbarEnum.add:
-        return AdditionalToolbar(controller: controller, focusNode: focusNode);
       case ToolbarEnum.none:
         return const SizedBox.shrink();
     }

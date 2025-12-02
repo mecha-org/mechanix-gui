@@ -95,3 +95,8 @@ class LoadNextSearchChunk extends NotesEvent {
 class ClearSearch extends NotesEvent {
   ClearSearch();
 }
+
+class DragUpdate extends NotesEvent {
+  final bool isDragging;
+  DragUpdate(this.isDragging);
+}

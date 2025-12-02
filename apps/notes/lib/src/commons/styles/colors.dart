@@ -1,9 +1,16 @@
 import 'dart:ui';
 
 class NotesColors {
+  static const Color labelColor = Color(0xFF8F8F8F);
+  static const Color titleTextColor = Color(0xFFD2D2D2);
+  static const Color cardColor = Color(0xFF151515);
+  static const Color codeBlockColor = Color(0xFF222222);
+  static const Color secondaryCardColor = Color(0xFF6D2EFF);
+  static const Color secondaryButtonColor = Color(0xFF464646);
+  static const Color secondaryTextColor = Color(0xFF9488FF);
+  static const Color tooltipColor = Color(0xFFD2D2D2);
+
   static const Color editorTextColor = Color(0xFFD9D9D9);
-  static const Color titleTextColor = Color(0xFFFAFBFC);
-  static const Color secondaryTextColor = Color(0xFF898A8D);
   static const Color floatingButtonColor = Color(0xFF005AD0);
   static const Color headerColor = Color(0xFFF0F0F0);
   static const Color backgroundColor = Color(0xFF2B2B2B);

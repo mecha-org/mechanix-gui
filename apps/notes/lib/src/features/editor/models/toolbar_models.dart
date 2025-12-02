@@ -1,7 +1,7 @@
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 
-enum ToolbarEnum { text, align, add, none }
+enum ToolbarEnum { text, align,  none }
 
 class ToolbarItem {
   final Attribute attribute;

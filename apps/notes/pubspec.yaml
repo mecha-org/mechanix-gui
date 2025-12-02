@@ -92,6 +92,7 @@ flutter:
     - assets/images/bookmark_icon.png
     - assets/images/search_icon.png
     - assets/images/delete_icon.png
+    - assets/images/share_icon.png
     - assets/images/select_all.png
     - assets/images/undo_icon.png
     - assets/images/redo_icon.png

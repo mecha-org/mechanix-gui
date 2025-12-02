@@ -1,177 +1,177 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/app_routes.dart';
-import 'package:mechanix_notes/src/commons/common_helper.dart';
-import 'package:mechanix_notes/src/commons/icons.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
-import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
-import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
+import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
+import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
-import 'package:widgets/mechanix.dart';
+import 'package:mechanix_notes/src/features/home/presentation/home_floating_button.dart';
+import 'package:mechanix_notes/src/features/home/presentation/note_card.dart';
+import 'package:mechanix_notes/src/features/home/presentation/notes_group.dart';
+import 'package:mechanix_notes/src/features/home/widgets/label_scroll_bar.dart';
+import 'package:mechanix_notes/src/features/home/widgets/sliver_grid.dart';
 
-class NoteList extends StatelessWidget {
+class NoteList extends StatefulWidget {
   final bool isSelectionMode;
-  final List<String> selectedNotes;
-  final void Function(String id)? onSelect;
   final List<GroupedNotes> groupedNotes;
-  final ScrollController? controller;
+  final ScrollController controller;
 
   const NoteList({
     super.key,
     required this.isSelectionMode,
-    required this.selectedNotes,
-    this.onSelect,
     required this.groupedNotes,
-    this.controller,
+    required this.controller,
   });
 
   @override
+  State<NoteList> createState() => _NoteListState();
+}
+
+class _NoteListState extends State<NoteList> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    widget.controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (groupedNotes.isEmpty) {
-      return SizedBox(
-        height: 64,
-        child: MechanixSelectableList(
-          // itemPadding: const EdgeInsets.all(10),
-          onTap: () => Navigator.pushNamed(context, AppRoutes.createEditNotes),
-          leadingIcon: Image.asset(NotesIcon.addIcon, height: 18, width: 18),
-          isSelected: true,
-          title: "Add a new Note",
-          // titleTextStyle: const TextStyle(
-          //   color: NotesColors.secondaryTextColor,
-          //   fontSize: 16,
-          // ),
+    if (widget.groupedNotes.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.note_add, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRoutes.createEditNotes);
+              },
+              child: const Text(
+                "Add a new Note",
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    return ScrollConfiguration(
-      behavior: const ScrollBehavior().copyWith(
-        overscroll: false,
-        dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
-      ),
-      child: CustomScrollView(
-        controller: controller,
-        slivers:
-            groupedNotes.map((group) {
-              return SliverMainAxisGroup(
-                slivers: [
-                  // Section Header
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _GroupHeaderDelegate(group.label),
-                  ),
+    return Stack(
+      children: [
+        ScrollConfiguration(
+          behavior: const ScrollBehavior().copyWith(
+            overscroll: false,
+            scrollbars: false,
+            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+          ),
+          child: CustomScrollView(
+            controller: widget.controller,
+            physics: const AlwaysScrollableScrollPhysics(),
+            cacheExtent: 800,
+            slivers: [
+              for (final group in widget.groupedNotes)
+                ..._buildGroupSection(group),
+            ],
+          ),
+        ),
+        BlocSelector<NotesBloc, NotesState, bool>(
+          selector: (state) => state.isSelectionMode,
+          builder:
+              (context, value) =>
+                  !value
+                      ? const Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: HomeFloatingButton(),
+                      )
+                      : const SizedBox.shrink(),
+        ),
 
-                  // Lazy-built list of notes for this group
-                  SliverPrototypeExtentList(
-                    prototypeItem: const SizedBox(height: 64),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final note = group.notes[index];
-                        final isSelected = selectedNotes.contains(note.id);
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: SizedBox(
-                            height: 64,
-                            child: MechanixSelectableList(
-                              onLongPress: () => onSelect?.call(note.id),
-                              onTap:
-                                  () =>
-                                      isSelectionMode
-                                          ? onSelect?.call(note.id)
-                                          : _openNote(context, note),
-                              title: note.title,
-                              selectionMode: isSelectionMode,
-                              isSelected: isSelected,
-                              trailingWidget: Row(
-                                children: [
-                                  Text(
-                                    CommonHelper.formatDateTime(note.updatedAt),
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: NotesColors.secondaryTextColor,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+        BlocSelector<NotesBloc, NotesState, bool>(
+          selector: (state) => state.isDragging,
+          builder:
+              (context, value) => Positioned.fill(
+                child:
+                    value
+                        ? IgnorePointer(
+                          ignoring: true, // don't block taps
+                          child: Container(
+                            color: Colors.black.withValues(alpha: 0.5),
                           ),
-                        );
-                      },
-                      childCount: group.notes.length,
-                      addAutomaticKeepAlives: false,
-                      addRepaintBoundaries: true,
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                ],
-              );
-            }).toList(),
-      ),
-    ).padAll(16);
-  }
-}
-
-class _GroupHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final String title;
-
-  _GroupHeaderDelegate(this.title);
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return Container(
-      color: Colors.black.withOpacity(0.05),
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        children: [
-          if (title == 'Pinned Notes')
-            Image.asset(
-              NotesIcon.pinnedFilledIcon,
-              color: NotesColors.secondaryTextColor,
-              height: 18,
-              width: 18,
-            ),
-          if (title.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: NotesColors.secondaryTextColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                        )
+                        : const SizedBox.shrink(),
               ),
-            ),
-        ],
-      ),
+        ),
+
+        // Custom scrollbar with section indicators
+        Positioned(
+          right: -15,
+          top: 0,
+          bottom: 0,
+          child: BlocSelector<NotesBloc, NotesState, bool>(
+            selector: (state) => state.isDragging,
+            builder:
+                (context, isDragging) => LabelScrollBar(
+                  isDragging: isDragging,
+                  scrollController: widget.controller,
+                  groupedNotes: widget.groupedNotes,
+                ),
+          ),
+        ),
+      ],
     );
   }
 
-  @override
-  double get maxExtent => 40;
+  List<Widget> _buildGroupSection(GroupedNotes group) {
+    if (group.notes.isEmpty) return [];
 
-  @override
-  double get minExtent => 40;
+    final itemHeights = group.notes.map((note) => note.height).toList();
 
-  @override
-  bool shouldRebuild(_GroupHeaderDelegate oldDelegate) =>
-      oldDelegate.title != title;
-}
+    return [
+      SliverPersistentHeader(
+        pinned: false,
+        delegate: GroupHeaderName(group.label),
+      ),
 
-void _openNote(BuildContext context, NoteMetaData note) async {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => EditorBlocProvider(child: NotesEditor(note: note)),
-    ),
-  );
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        sliver: SliverGrid(
+          gridDelegate: SliverStaggeredGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            itemHeights: itemHeights,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              if (index >= group.notes.length) return const SizedBox.shrink();
+
+              final note = group.notes[index];
+
+              return BlocSelector<NotesBloc, NotesState, bool>(
+                selector: (state) => state.selectedNoteIds.contains(note.id),
+                builder: (context, isSelected) {
+                  return NoteCard(
+                    key: ValueKey(note.id),
+                    note: note,
+                    isSelected: isSelected,
+                    isSelectionMode: widget.isSelectionMode,
+                  );
+                },
+              );
+            },
+            childCount: group.notes.length,
+            addAutomaticKeepAlives: false,
+            addRepaintBoundaries: false,
+          ),
+        ),
+      ),
+    ];
+  }
 }
