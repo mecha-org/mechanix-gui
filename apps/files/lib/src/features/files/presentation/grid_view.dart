@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
+import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
@@ -69,46 +70,56 @@ Widget buildGridView(
                 final size = constraints.maxWidth * 0.8;
 
                 return GestureDetector(
-                  onTap: () async {
-                    if (FileManager.isDirectory(entity)) {
-                      await controller.openDirectory(entity);
-                      scrollController.jumpTo(0); // reset scroll to top
-                    } else {
-                      handleFileTap(
-                        context,
-                        entity,
-                        fullPath,
-                        isSelectionMode,
-                        state,
-                        controller,
-                      );
-                    }
-                  },
-                  onLongPress: () => state?.toggleSelection(fullPath),
-                  onSecondaryTap: () => state?.toggleSelection(fullPath),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: size,
-                        height: size,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade900,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Stack(
+                    onTap: () async {
+                      if (FileManager.isDirectory(entity)) {
+                        await controller.openDirectory(entity);
+                        scrollController.jumpTo(0); // reset scroll to top
+                      } else {
+                        handleFileTap(
+                          context,
+                          entity,
+                          fullPath,
+                          isSelectionMode,
+                          state,
+                          controller,
+                        );
+                      }
+                    },
+                    onLongPress: () => state?.toggleSelection(fullPath),
+                    onSecondaryTap: () => state?.toggleSelection(fullPath),
+                    child: Column(
+                      children: [
+                        Stack(
+                          clipBehavior: Clip.none,
                           children: [
-                            Center(
-                              child: Image.asset(
-                                entity.iconPath,
-                                width: size * 0.5,
-                                height: size * 0.5,
-                                fit: BoxFit.contain,
+                            Container(
+                              width: size,
+                              height: size,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade900,
+                                borderRadius: BorderRadius.circular(14),
+                                border: isSelected
+                                    ? Border.all(
+                                        color: Theme.of(context)
+                                            .extension<FilesTheme>()!
+                                            .primaryColor,
+                                        width: 1,
+                                      )
+                                    : null,
+                              ),
+                              child: Center(
+                                child: Image.asset(
+                                  entity.iconPath,
+                                  width: size * 0.5,
+                                  height: size * 0.5,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                             if (isSelectionMode)
                               Positioned(
-                                left: 0,
-                                bottom: 0,
+                                left: -8,
+                                bottom: -8,
                                 child: CustomCircleCheckbox(
                                   isChecked: isSelected,
                                   onTap: () => state?.toggleSelection(fullPath),
@@ -116,21 +127,21 @@ Widget buildGridView(
                               ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Flexible(
-                        child: Text(
-                          title,
-                          style: const TextStyle(
-                              fontSize: 13, color: Colors.white),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        const SizedBox(height: 4),
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
+                      ],
+                    ));
               },
             );
           },

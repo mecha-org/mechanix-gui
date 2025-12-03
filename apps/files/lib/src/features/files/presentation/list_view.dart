@@ -59,70 +59,73 @@ Widget buildListView(
             final isSelected = selectedPaths.contains(entity.path);
 
             return GestureDetector(
-              onSecondaryTap: () =>
-                  state?.toggleSelection(entity.path), // right-click
-              onLongPress: () =>
-                  state?.toggleSelection(entity.path), // long press
-              child: ListTile(
-                minTileHeight: 65,
-                leading: Row(mainAxisSize: MainAxisSize.min, children: [
-                  if (isSelectionMode)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: CustomCircleCheckbox(
-                        isChecked: isSelected,
-                        onTap: () => state?.toggleSelection(entity.path),
+              onSecondaryTap: () => state?.toggleSelection(entity.path),
+              onLongPress: () => state?.toggleSelection(entity.path),
+              child: Container(
+                color: isSelected ? Colors.grey[900] : Colors.transparent,
+                child: ListTile(
+                  minTileHeight: 65,
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isSelectionMode)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: CustomCircleCheckbox(
+                            isChecked: isSelected,
+                            onTap: () => state?.toggleSelection(entity.path),
+                          ),
+                        ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        padding: const EdgeInsets.all(6),
+                        child: Center(
+                          child: Image.asset(
+                            entity.iconPath,
+                            fit: BoxFit.contain,
+                            width: 28,
+                            height: 28,
+                          ),
+                        ),
                       ),
-                    ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    padding: const EdgeInsets.all(6),
-                    child: Center(
-                      child: Image.asset(
-                        entity.iconPath,
-                        fit: BoxFit.contain,
-                        width: 28,
-                        height: 28,
-                      ),
+                    ],
+                  ),
+                  title: Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  trailing: Text(
+                    formatModifiedTime(modified),
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
                     ),
                   ),
-                ]),
-                title: Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                trailing: Text(
-                  formatModifiedTime(modified),
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
-                ),
-                onTap: () {
-                  isSelectionMode
-                      ? state?.clearSelection()
-                      : isSearching
-                          ? state?.clearSearch()
-                          : null;
+                  onTap: () {
+                    isSelectionMode
+                        ? state?.clearSelection()
+                        : isSearching
+                            ? state?.clearSearch()
+                            : null;
 
-                  if (FileManager.isDirectory(entity)) {
-                    controller.openDirectory(entity);
-                    // Reset scroll to top
-                    scrollController.jumpTo(0);
-                  } else {
-                    handleFileTap(
-                      context,
-                      entity,
-                      entity.path,
-                      isSelectionMode,
-                      state,
-                      controller,
-                    );
-                  }
-                },
+                    if (FileManager.isDirectory(entity)) {
+                      controller.openDirectory(entity);
+                      scrollController.jumpTo(0);
+                    } else {
+                      handleFileTap(
+                        context,
+                        entity,
+                        entity.path,
+                        isSelectionMode,
+                        state,
+                        controller,
+                      );
+                    }
+                  },
+                ),
               ),
             );
           },

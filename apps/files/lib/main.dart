@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/app_route.dart';
 import 'package:mechanix_files/load_settings.dart';
+import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
@@ -47,6 +48,9 @@ class MechanixFilesApp extends StatelessWidget with WatchItMixin {
     return MechanixTheme(
       data: MechanixThemeData(
         mechanixVariant: mechanixVariant,
+        extensions: const [
+          FilesTheme(),
+        ],
       ),
       builder: (context, mechanix, child) => MainApp(
         darkTheme: mechanix.darkTheme,
