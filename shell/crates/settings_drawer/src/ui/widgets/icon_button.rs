@@ -5,6 +5,7 @@ use gpui::{prelude::FluentBuilder, *};
 
 const ICON_COLOR: u32 = 0x4D4D4D; // default - gray | custom can be - white or active - blue
 const ACTIVE_ICON_COLOR: u32 = 0xF4F4F4; // default - white | custom can be - blue
+const ACTIVE_BG_COLOR: u32 = 0x363636;
 const BG_COLOR: u32 = 0x181818;
 const BORDER_COLOR: u32 = 0x202020;
 
@@ -109,7 +110,13 @@ impl RenderOnce for IconButton {
             .rounded(px(8.0))
             .border(px(1.))
             .border_color(rgb(BORDER_COLOR))
-            .active(|this| this.bg(rgb(0x363636))) // GPUI's active state
+            .active(|this| this.bg(
+                if let Some(active_bg_color) = self.active_bg_color {
+                    active_bg_color
+                } else {
+                    rgb(ACTIVE_BG_COLOR).into()
+                }
+            )) // GPUI's active state
             .items_center()
             .justify_center()
             .when(!self.pressed && !self.active, |this| {

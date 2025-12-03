@@ -68,7 +68,7 @@ impl IconName {
         let icon_path = match self {
             IconName::Settings => "settings.svg",
             // IconName::Battery => "battery-medium.svg", // this will be from status-bar icons
-               IconName::Battery10 => "battery-10.svg",
+            IconName::Battery10 => "battery-10.svg",
             IconName::Battery20 => "battery-20.svg",
             IconName::Battery30 => "battery-30.svg",
             IconName::Battery40 => "battery-40.svg",
