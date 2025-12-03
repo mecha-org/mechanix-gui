@@ -24,7 +24,7 @@ pub const SERVED_AT: &str = "/org/mechanix/MxConf";
 #[derive(Clone)]
 pub struct ConfigServerInterface {
     /// The database instance for storing and retrieving settings
-    pub db: Arc<Mutex<database::Database>>,
+    pub db: Option<database::Database>,
 
     /// The D-Bus connection
     pub conn: Connection,
@@ -209,9 +209,7 @@ impl ConfigServerInterface {
             .map_err(|e| ZbusError::Failed(format!("Failed to read schema file: {}", e)))?;
         let schema_as_toml = toml::from_str(&schema)
             .map_err(|e| ZbusError::Failed(format!("Invalid TOML: {}", e)))?;
-
-        let db = &self.db.lock().unwrap();
-
+        let db = self.db.as_ref().unwrap();
         let settings: HashMap<String, String> = if key.contains('*') {
             debug!("Wildcard Schema Name: {}", schema_name);
             db.scan_with_prefix(&schema_name, key.split('*').next().unwrap_or_default())
@@ -269,7 +267,7 @@ impl ConfigServerInterface {
     /// - The schema file contains invalid TOML
     /// - The value fails validation against the schema
     /// - There was a database error
-    pub async fn set_setting(&self, key: &str, value: &str) -> Result<String, ZbusError> {
+    pub async fn set_setting(&mut self, key: &str, value: &str) -> Result<String, ZbusError> {
         info!("Set Setting: Received key: {}, value: {}", key, value);
         let schema_name = extract_schema_name(key);
         debug!("Schema Name: {}", schema_name);
@@ -294,7 +292,7 @@ impl ConfigServerInterface {
             }
         }
         let insert_result = {
-            let mut db = self.db.lock().unwrap();
+            let mut db = self.db.take().unwrap();
             db.insert_settings(&schema_name, key, value.as_bytes())
         };
         match insert_result {

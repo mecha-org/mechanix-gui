@@ -8,6 +8,7 @@ mod validator;
 use crate::cli::{
     describe_key, get_setting_table, list_keys, list_schemas, set_setting_table, watch_setting,
 };
+use crate::database::DbCmd;
 use crate::error::ServerError;
 use crate::server::{ConfigServerInterface, SERVED_AT};
 use crate::validator::validate_schema;
@@ -15,11 +16,13 @@ use anyhow::{Context, Result};
 use clap::{CommandFactory, Parser, Subcommand};
 use dirs::home_dir;
 use log::{debug, error, info, trace, warn};
+use mxconf::database::start_db_actor;
 use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
+use tokio::sync::oneshot;
 use zbus::ConnectionBuilder;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -94,7 +97,7 @@ const DB_PATH: &str = ".config/mxconf";
 ///
 /// * `Ok(())` if the file was processed successfully
 /// * `Err(...)` if there was an error during processing
-fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> {
+async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result<()> {
     info!("Processing TOML file: {}", path.display());
     let application_schema_str = utils::read_application_schema(&path.display().to_string())?;
 
@@ -112,8 +115,14 @@ fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> 
     let schema_checksum = validator::generate_checksum(&schema_file_name, &schema_toml)
         .context("Unable to generate checksum")?;
 
+    let (rsp_tx, rsp_rx) = oneshot::channel();
     // Check if file already exists with same checksum
-    if let Some(existing_checksum) = db.get_checksum(CHECKSUM_TREE_NAME, schema_file_name)? {
+    db_tx.send(DbCmd::GET_CHECKSUM {
+        checksum_identifier: CHECKSUM_TREE_NAME.to_string(),
+        key: schema_file_name.to_string(),
+        rsp: rsp_tx,
+    })?;
+    if let Some(existing_checksum) = rsp_rx.await? {
         if schema_checksum == existing_checksum {
             info!("TOML file already exists with same checksum");
             return Ok(());
@@ -143,37 +152,6 @@ fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> 
     println!("Checksum inserted into database");
     Ok(())
 }
-
-/// Handle a file system event
-///
-/// # Arguments
-///
-/// * `event` - The file system event to handle
-/// * `db` - The database instance to store validated files
-///
-/// # Returns
-///
-/// * `Ok(())` if the event was handled successfully
-/// * `Err(...)` if there was an error during handling
-fn handle_event(event: Event, db: &mut database::Database) -> Result<()> {
-    debug!("Received event: {:?}", event.kind);
-    // Only process file creation events
-    if event.kind.is_create() || event.kind.is_modify() {
-        debug!("Event received: {:?}", event.kind);
-        // Process each path in the event
-        for path in &event.paths {
-            // Only process TOML files
-            if path.extension() == Some("toml".as_ref()) {
-                if let Err(err) = process_toml_file(path, db) {
-                    error!("Failed to process TOML file: {}", err);
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
 
 /// Load the profile, which contains user and system settings
 mod profile {
@@ -300,8 +278,13 @@ async fn start_server() -> Result<(), ServerError> {
         schema_dir.display()
     );
     // Initialize database
-    let db = Arc::new(Mutex::new(database::Database::new(db_path)));
+    // let db = Arc::new(Mutex::new(database::Database::new(db_path)));
+    let db = database::Database::new(db_path);
 
+    let db_tx = start_db_actor(db); // No Arc returned, just a Sender (Clone)
+
+    // Pass `db_tx.clone()` to wherever you need DB access
+    let watcher_tx = db_tx.clone();
     // Build the connection first
     let conn = match ConnectionBuilder::session() {
         Ok(builder) => match builder.name(CONNECTION_BUS_NAME) {
@@ -318,7 +301,7 @@ async fn start_server() -> Result<(), ServerError> {
 
     // Now build the server struct with the connection
     let config_server = ConfigServerInterface {
-        db: Arc::clone(&db),
+        db: Some(db),
         conn: conn.clone(),
         key_file_dir,
         schema_dir,
@@ -360,19 +343,19 @@ async fn start_server() -> Result<(), ServerError> {
         "Watching schemas directory: {}",
         schema_dir_to_watch.display()
     );
+
     // Process events as they come in
     while let Ok(event_result) = rx.recv() {
         match event_result {
             Ok(event) => {
-                let mut db_guard = match db.lock() {
-                    Ok(guard) => guard,
-                    Err(e) => {
-                        error!("Failed to lock database: {}", e);
-                        continue;
+                // Process each path in the event
+                for path in &event.paths {
+                    // Only process TOML files
+                    if path.extension() == Some("toml".as_ref()) {
+                        if let Err(err) = process_toml_file(path, db_tx) {
+                            error!("Failed to process TOML file: {}", err);
+                        }
                     }
-                };
-                if let Err(err) = handle_event(event, &mut db_guard) {
-                    error!("Error handling event: {}", err);
                 }
             }
             Err(err) => error!("Error receiving event: {}", err),

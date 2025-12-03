@@ -4,6 +4,8 @@ use sled::{Tree};
 use sled::{Config, Db};
 use std::path::PathBuf;
 use log::{info, debug, warn};
+use tokio::sync::{mpsc, oneshot};
+use crate::database;
 
 /// Database struct for storing and retrieving configuration data.
 ///
@@ -229,4 +231,37 @@ impl Database {
             Ok(None)
         }
     }
+}
+// 1) Define your DB commands
+pub enum DbCmd {
+    GET_CHECKSUM {
+        checksum_identifier: String,
+        key: String,
+        rsp: oneshot::Sender<Option<u32>>,
+    }
+    // Add more commands as needed
+}
+
+// 2) Start the DB actor on a blocking thread
+pub fn start_db_actor(mut db: database::Database) -> mpsc::Sender<DbCmd> {
+    let (tx, mut rx) = mpsc::channel::<DbCmd>(128);
+    std::thread::spawn(move || {
+        // This thread owns `db`
+        let rt = tokio::runtime::Runtime::new().expect("rt");
+        rt.block_on(async move {
+            while let Some(cmd) = rx.recv().await {
+                match cmd {
+                    DbCmd::ProcessToml { path, rsp } => {
+                        let res = (|| {
+                            // Your existing logic that needs &mut Database
+                            // e.g. process_toml_file(&path, &mut db)
+                            super::process_toml_file(&path, &mut db)
+                        })();
+                        let _ = rsp.send(res);
+                    }
+                }
+            }
+        });
+    });
+    tx
 }
