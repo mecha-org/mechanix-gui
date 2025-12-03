@@ -39,4 +39,7 @@ class NotesIcon {
   static const menuIcon = 'assets/images/menu_icon.png';
   static const closeIcon = 'assets/images/close_icon.png';
   static const shareIcon = 'assets/images/share_icon.png';
+  static const highlightIcon = 'assets/images/highlight_icon.png';
+  static const inlineCodeIcon = 'assets/images/inline_code_icon.png';
+  static const normalTextIcon = 'assets/images/normal_text.png';
 }

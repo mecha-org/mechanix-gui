@@ -4,14 +4,15 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/content_editor.dart';
-import 'package:mechanix_notes/src/features/editor/editor_bar.dart';
-import 'package:mechanix_notes/src/features/editor/editor_bottom_menu.dart';
+import 'package:mechanix_notes/src/features/editor/editor_bottom_bar.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar_selection.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:widgets/extensions/edge_insets.dart';
+import 'package:widgets/widgets.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar.dart';
 
 class NotesEditor extends StatefulWidget {
@@ -24,6 +25,7 @@ class NotesEditor extends StatefulWidget {
 
 class _NotesEditorState extends State<NotesEditor> {
   final FocusNode _focusNode = FocusNode();
+  bool _isFormatting = false;
   final FloatingActionBarController floatingBar = FloatingActionBarController();
   final QuillController _controller = QuillController(
     document: Document(),
@@ -68,6 +70,36 @@ class _NotesEditorState extends State<NotesEditor> {
   }
 
   void _onControllerChange() {
+    if (_isFormatting) return;
+
+    final sel = _controller.selection;
+    if (!sel.isCollapsed) return;
+
+    final pos = sel.baseOffset;
+    if (pos < 0) return;
+
+    final plain = _controller.document.toPlainText();
+    final firstNewLineIndex = plain.indexOf('\n');
+
+    if (firstNewLineIndex == -1) return;
+
+    if (pos == firstNewLineIndex + 1 && !_isFormatting) {
+      // ← SET THE FLAG BEFORE FORMATTING
+      setState(() {
+        _isFormatting = true;
+      });
+
+      try {
+        _controller.formatText(0, firstNewLineIndex, Attribute.h1);
+        // _controller.formatText(0, firstNewLineIndex);
+      } finally {
+        // ← ALWAYS RESET THE FLAG
+        setState(() {
+          _isFormatting = false;
+        });
+      }
+    }
+
     context.read<EditorBloc>().add(UndoUpdate(isUndo: _controller.hasUndo));
     context.read<EditorBloc>().add(RedoUpdate(isRedo: _controller.hasRedo));
   }
@@ -82,75 +114,65 @@ class _NotesEditorState extends State<NotesEditor> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: EditorBar(
-          controller: _controller,
-          note: widget.note,
-          floatingBar: floatingBar,
-        ),
+      bottomNavigationBar: EditorBottomBar(
+        controller: _controller,
+        focusNode: _focusNode,
+        note: widget.note,
       ),
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-          toolbarSelection(ToolbarEnum.none);
-        },
-        child: Stack(
-          children: [
-            // Main content
-            BlocBuilder<EditorBloc, EditorBlocState>(
-              buildWhen:
-                  (previous, current) =>
-                      previous.isLoading != current.isLoading,
-              builder: (context, state) {
-                if (state.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      body: Column(
+        children: [
+          // Main content
+          BlocBuilder<EditorBloc, EditorBlocState>(
+            buildWhen:
+                (previous, current) => previous.isLoading != current.isLoading,
+            builder: (context, state) {
+              if (state.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (state.document != null &&
-                    _controller.document != state.document) {
-                  // Load document into controller only once
-                  _controller.document = state.document!;
-                }
+              if (state.document != null &&
+                  _controller.document != state.document) {
+                // Load document into controller only once
+                _controller.document = state.document!;
+              }
 
-                return ContentEditor(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                );
-              },
-            ),
-
-            // Toolbar
-            BlocSelector<EditorBloc, EditorBlocState, ToolbarEnum>(
-              selector: (state) => state.selectedToolbar,
-              builder:
-                  (context, selectedToolbar) => ToolbarSelection(
-                    selectedToolbar: selectedToolbar,
-                    focusNode: _focusNode,
-                    controller: _controller,
-                  ),
-            ),
-
-            BlocListener<EditorBloc, EditorBlocState>(
-              listenWhen:
-                  (previous, current) =>
-                      previous.toolbarToggle != current.toolbarToggle,
-              listener: (context, state) {
-                if (state.toolbarToggle) {
-                  floatingBar.open();
-                } else {
-                  floatingBar.close();
-                }
-              },
-              child: EditorBottomMenu(
-                barController: floatingBar,
+              return ContentEditor(
                 controller: _controller,
-                onToolbarSelection: toolbarSelection,
-              ),
-            ),
-          ],
-        ),
-      ),
+                focusNode: _focusNode,
+              );
+            },
+          ),
+
+          // Toolbar
+          BlocSelector<EditorBloc, EditorBlocState, ToolbarEnum>(
+            selector: (state) => state.selectedToolbar,
+            builder:
+                (context, selectedToolbar) => ToolbarSelection(
+                  selectedToolbar: selectedToolbar,
+                  focusNode: _focusNode,
+                  controller: _controller,
+                ),
+          ),
+
+          // BlocListener<EditorBloc, EditorBlocState>(
+          //   listenWhen:
+          //       (previous, current) =>
+          //           previous.toolbarToggle != current.toolbarToggle,
+          //   listener: (context, state) {
+          //     if (state.toolbarToggle) {
+          //       floatingBar.open();
+          //     } else {
+          //       floatingBar.close();
+          //     }
+          //   },
+          //   child: EditorBottomMenu(
+          //     barController: floatingBar,
+          //     controller: _controller,
+          //     onToolbarSelection: toolbarSelection,
+          //   ),
+          // ),
+        ],
+      ).padSymmetric(vertical: 15, horizontal: 24),
     );
   }
 

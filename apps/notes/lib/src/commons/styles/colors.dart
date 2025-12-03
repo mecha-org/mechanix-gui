@@ -9,8 +9,10 @@ class NotesColors {
   static const Color secondaryButtonColor = Color(0xFF464646);
   static const Color secondaryTextColor = Color(0xFF9488FF);
   static const Color tooltipColor = Color(0xFFD2D2D2);
+  static const String highlightColor = "#2C1266";
+  static const Color editorTextColor = Color(0xFFA4A4A4);
+  static const Color codeBlockTextColor = Color(0xFFE9E9E9);
 
-  static const Color editorTextColor = Color(0xFFD9D9D9);
   static const Color floatingButtonColor = Color(0xFF005AD0);
   static const Color headerColor = Color(0xFFF0F0F0);
   static const Color backgroundColor = Color(0xFF2B2B2B);

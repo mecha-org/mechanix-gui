@@ -57,7 +57,7 @@ class _HomePageState extends State<HomePage> {
       selector: (state) => state.isSelectionMode,
       builder: (context, isSelectionMode) {
         return Scaffold(
-          bottomSheet:
+          bottomNavigationBar:
               isSelectionMode
                   ? BottomMenu(isSelectionMode: isSelectionMode)
                   : null,

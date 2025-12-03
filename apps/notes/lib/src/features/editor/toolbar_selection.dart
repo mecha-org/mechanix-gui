@@ -29,15 +29,10 @@ class ToolbarSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 90,
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          child: selectToolbar(),
-        ),
+    return SizedBox(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: selectToolbar(),
       ),
     );
   }

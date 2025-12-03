@@ -127,6 +127,9 @@ flutter:
     - assets/images/pinned_filled_icon.png
     - assets/images/menu_icon.png
     - assets/images/close_icon.png
+    - assets/images/highlight_icon.png
+    - assets/images/inline_code_icon.png
+    - assets/images/normal_text.png
     - assets/screenshots/notes1.png
     - assets/screenshots/notes2.png
     - assets/screenshots/notes3.png

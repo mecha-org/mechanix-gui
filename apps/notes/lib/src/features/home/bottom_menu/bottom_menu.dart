@@ -1,112 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
-import 'package:mechanix_notes/src/commons/notes_fab_icon.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
-import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
-import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
-import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets.dart';
+import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
 
 class BottomMenu extends StatefulWidget {
   final bool isSelectionMode;
-  final List<String> selectedNotes;
 
-  const BottomMenu({
-    super.key,
-    required this.isSelectionMode,
-    required this.selectedNotes,
-  });
+  const BottomMenu({super.key, required this.isSelectionMode});
 
   @override
   State<BottomMenu> createState() => _BottomMenuState();
 }
 
 class _BottomMenuState extends State<BottomMenu> {
-  final FloatingActionBarController fabController =
-      FloatingActionBarController();
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        fabController.open();
-      }
-    });
   }
 
   void onDeleteRemoveSelection() {
-    fabController.close();
-    context.read<NotesBloc>().add(DeleteNotes(deleteIds: widget.selectedNotes));
+    context.read<NotesBloc>().add(DeleteNotes(deleteIds: const []));
     clearSelection();
   }
 
   void clearSelection() {
-    fabController.close();
     context.read<NotesBloc>().add(ClearSelection());
   }
 
   @override
   void dispose() {
-    fabController.dispose();
     super.dispose();
+  }
+
+  void selectAll() {
+    context.read<NotesBloc>().add(SelectAllNotes());
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<NotesBloc, NotesState, bool?>(
-      selector: (state) => state.isPinnedSelected,
-      builder: (context, isPinnedSelected) {
-        return SizedBox(
-          width: 278,
-          height: 52,
-          child: MechanixFloatingActionBar(
-            isMenuButtonRequired: false,
-            outsideClickDisabled: true,
-            theme: MechanixFloatingActionBarThemeData(
-              height: 52,
-              width: 278,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                color: NotesColors.floatingMenuColor,
-              ),
-            ),
-            floatingActionBarController: fabController,
-            dropdownPosition: DropdownPosition.center,
-            menus: [
-              IconButton(
-                onPressed: () {
-                  context.read<NotesBloc>().add(
-                    PinnedNotes(
-                      noteIds: widget.selectedNotes,
-                      isPinned: !isPinnedSelected,
-                    ),
-                  );
-                },
-                icon: NotesFabIcon(
-                  iconPath:
-                      isPinnedSelected!
-                          ? NotesIcon.unPinnedIcon
-                          : NotesIcon.pinIcon,
-                ),
-              ),
+    return MechanixBottomBar(
+      leadingWidget: [
+        BottomBarButton(
+          onPressed: clearSelection,
+          iconPath: NotesIcon.backIcon,
+        ),
+      ],
+      centerWidget: [
+        BottomBarButton(
+          onPressed: selectAll,
+          iconPath: NotesIcon.selectAllIcon,
+        ),
 
-              IconButton(
-                onPressed: () => onDeleteRemoveSelection(),
-                icon: const NotesFabIcon(iconPath: NotesIcon.deleteIcon),
-              ),
-              IconButton(
-                onPressed: () => clearSelection(),
-                icon: const NotesFabIcon(
-                  iconPath: NotesIcon.clearSelectionIcon,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+        BottomBarButton(onPressed: () => {}, iconPath: NotesIcon.shareIcon),
+
+        BottomBarButton(
+          onPressed: onDeleteRemoveSelection,
+          iconPath: NotesIcon.deleteIcon,
+        ),
+      ],
+      anchorWidget: [
+        BottomBarButton(
+          onPressed: onDeleteRemoveSelection,
+          iconPath: NotesIcon.deleteIcon,
+        ),
+      ],
     );
   }
 }

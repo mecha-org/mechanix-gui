@@ -94,142 +94,66 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, child) {
-        return ToolbarContainer(
-          child: [
-            ToolbarRow(
-              child: [
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: isSelectionStyleApplied(
-                      Attribute.list,
-                      'ordered',
-                    ),
-                    iconPath: NotesIcon.numberIcon,
-                    onPressed: () => toggleList(Attribute.ol),
-                  ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: isSelectionStyleApplied(
-                      Attribute.list,
-                      'bullet',
-                    ),
-                    iconPath: NotesIcon.bulletIcon,
-                    onPressed: () {
-                      toggleList(Attribute.ul);
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: isSelectionStyleApplied(
-                      Attribute.list,
-                      'unchecked',
-                    ),
-                    iconPath: NotesIcon.checkboxListIcon,
-                    onPressed: () {
-                      toggleList(Attribute.unchecked);
-                    },
-                    border: const Border(right: borderSideStyle),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        right: borderSideStyle,
-                        left: borderSideStyle,
-                      ),
-                    ),
+        return Center(
+          child: ToolbarContainer(
+            width: 540,
+            height: 44,
+            child: [
+              ToolbarRow(
+                child: [
+                  Expanded(
                     child: EditorIconButton(
                       isSelected: isSelectionStyleApplied(
-                        Attribute.blockQuote,
-                        '',
-                        isValue: false,
+                        Attribute.list,
+                        'bullet',
                       ),
-                      iconPath: NotesIcon.quoteIcon,
+                      iconPath: NotesIcon.bulletIcon,
                       onPressed: () {
-                        toggleList(Attribute.blockQuote);
+                        toggleList(Attribute.ul);
                       },
                     ),
                   ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: isSelectionStyleApplied(
-                      Attribute.codeBlock,
-                      '',
-                      isValue: false,
-                    ),
-                    iconPath: NotesIcon.codeBlockIcon,
-                    onPressed: () {
-                      toggleList(Attribute.codeBlock);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            ToolbarRow(
-              isBorder: false,
-              child: [
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: false,
-                    iconPath: NotesIcon.indentIncreaseIcon,
-                    onPressed: () => toggleIndent(),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      border: Border(right: borderSideStyle),
-                    ),
+                  Expanded(
                     child: EditorIconButton(
-                      isSelected: false,
-                      iconPath: NotesIcon.indentDecreaseIcon,
-                      onPressed: () => toggleIndent(increase: false),
+                      isSelected: isSelectionStyleApplied(
+                        Attribute.list,
+                        'ordered',
+                      ),
+                      iconPath: NotesIcon.numberIcon,
+                      onPressed: () => toggleList(Attribute.ol),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: isSelectionStyleApplied(
-                      Attribute.align,
-                      'left',
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected: isSelectionStyleApplied(
+                        Attribute.list,
+                        'unchecked',
+                      ),
+                      iconPath: NotesIcon.checkboxListIcon,
+                      onPressed: () {
+                        toggleList(Attribute.unchecked);
+                      },
+                      border: const Border(right: borderSideStyle),
                     ),
-                    icon: const Icon(Icons.format_align_left),
-                    onPressed: () {
-                      toggleList(const AlignAttribute('left'));
-                    },
                   ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: isSelectionStyleApplied(
-                      Attribute.align,
-                      'center',
+
+                  Expanded(
+                    child: EditorIconButton(
+                      isSelected: isSelectionStyleApplied(
+                        Attribute.codeBlock,
+                        '',
+                        isValue: false,
+                      ),
+                      iconPath: NotesIcon.codeBlockIcon,
+                      onPressed: () {
+                        toggleList(Attribute.codeBlock);
+                      },
                     ),
-                    iconPath: NotesIcon.centerAlignIcon,
-                    onPressed: () {
-                      toggleList(const AlignAttribute('center'));
-                    },
                   ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: isSelectionStyleApplied(
-                      Attribute.align,
-                      'right',
-                    ),
-                    icon: const Icon(Icons.format_align_right),
-                    onPressed: () {
-                      toggleList(const AlignAttribute('right'));
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         );
       },
     );

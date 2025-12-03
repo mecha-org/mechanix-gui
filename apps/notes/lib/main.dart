@@ -128,8 +128,9 @@ class MyApp extends StatelessWidget {
 
       darkTheme: darkTheme.copyWith(
         scaffoldBackgroundColor: Colors.black,
-        textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: Colors.white,
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: NotesColors.secondaryCardColor,
+          selectionColor: NotesColors.secondaryCardColor.withValues(alpha: 0.4),
         ),
         // this is temporary fix
         pageTransitionsTheme: const PageTransitionsTheme(
