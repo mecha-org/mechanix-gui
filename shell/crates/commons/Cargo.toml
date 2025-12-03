@@ -23,3 +23,7 @@ path = "examples/wing.rs"
 [[example]]
 name = "animated_wing"
 path = "examples/animated_wing.rs"
+
+[[example]]
+name = "wing_with_children"
+path = "examples/wing_with_children.rs"

@@ -27,25 +27,25 @@ impl WingState {
         let mut rng = rand::thread_rng();
         let width = rng.gen_range(60.0..150.0);
         let height = rng.gen_range(50.0..120.0);
-        
+
         // Generate upper wing dimensions
         let upper_wing_height = rng.gen_range(8.0..40.0);
         // Clamp upper wing width to: width - upper_wing_height
         let max_upper_wing_width = f32::max(width - upper_wing_height, 0.0);
         let upper_wing_width = f32::min(rng.gen_range(10.0..50.0), max_upper_wing_width);
-        
+
         // Generate lower wing dimensions
         let lower_wing_height = rng.gen_range(8.0..40.0);
         // Clamp lower wing width to: width - lower_wing_height
         let max_lower_wing_width = f32::max(width - lower_wing_height, 0.0);
         let lower_wing_width = f32::min(rng.gen_range(10.0..50.0), max_lower_wing_width);
-        
+
         // Generate random border width
         let border_width = rng.gen_range(1.0..8.0);
-        
+
         // Generate random border radius
         let border_radius = rng.gen_range(0.0..15.0);
-        
+
         Self {
             width,
             height,
@@ -107,58 +107,51 @@ impl Render for AnimatedWingExample {
                     ),
             )
             .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .flex_1()
-                    .child(
-                        div()
-                            .id("animated-wing-container")
-                            .on_click(cx.listener(|this, _event: &ClickEvent, _, cx| {
-                                // Set current state to the previous target
-                                this.current_wing_state = this.target_wing_state;
-                                // Generate new random target state
-                                this.target_wing_state = WingState::random();
-                                // Increment animation key to restart animation
-                                this.animation_key += 1;
-                                cx.notify();
-                            }))
-                            .cursor_pointer()
-                            .child({
-                                let animation_key = self.animation_key;
-                                
-                                div()
-                                    .with_animation(
-                                        ElementId::Integer(animation_key),
-                                        Animation::new(Duration::from_millis(600))
-                                            .with_easing(ease_in_out),
-                                        move |element, delta| {
-                                            // Interpolate between current and target state
-                                            let state = current.lerp(&target, delta);
+                div().flex().items_center().justify_center().flex_1().child(
+                    div()
+                        .id("animated-wing-container")
+                        .on_click(cx.listener(|this, _event: &ClickEvent, _, cx| {
+                            // Set current state to the previous target
+                            this.current_wing_state = this.target_wing_state;
+                            // Generate new random target state
+                            this.target_wing_state = WingState::random();
+                            // Increment animation key to restart animation
+                            this.animation_key += 1;
+                            cx.notify();
+                        }))
+                        .cursor_pointer()
+                        .child({
+                            let animation_key = self.animation_key;
 
-                                            let mut w = wing();
-                                            w.upper_wing_size(size(
-                                                px(state.upper_wing_width),
-                                                px(state.upper_wing_height),
-                                            ));
-                                            w.lower_wing_size(size(
-                                                px(state.lower_wing_width),
-                                                px(state.lower_wing_height),
-                                            ));
-                                            w.border_width(px(state.border_width));
-                                            w.border_radius(px(state.border_radius));
+                            div().with_animation(
+                                ElementId::Integer(animation_key),
+                                Animation::new(Duration::from_millis(600)).with_easing(ease_in_out),
+                                move |element, delta| {
+                                    // Interpolate between current and target state
+                                    let state = current.lerp(&target, delta);
 
-                                            element.child(
-                                                w.w(px(state.width))
-                                                    .h(px(state.height))
-                                                    .bg(rgb(0x3b82f6))
-                                                    .border_color(rgb(0xffffff)),
-                                            )
-                                        },
+                                    let mut w = wing();
+                                    w.upper_wing_size(size(
+                                        px(state.upper_wing_width),
+                                        px(state.upper_wing_height),
+                                    ));
+                                    w.lower_wing_size(size(
+                                        px(state.lower_wing_width),
+                                        px(state.lower_wing_height),
+                                    ));
+                                    w.border_width(px(state.border_width));
+                                    w.border_radius(px(state.border_radius));
+
+                                    element.child(
+                                        w.w(px(state.width))
+                                            .h(px(state.height))
+                                            .bg(rgb(0x3b82f6))
+                                            .border_color(rgb(0xffffff)),
                                     )
-                            }),
-                    ),
+                                },
+                            )
+                        }),
+                ),
             )
             .child(
                 div()
@@ -174,50 +167,29 @@ impl Render for AnimatedWingExample {
                             .text_color(rgb(0xaaaaaa))
                             .child("Current Animation State:"),
                     )
+                    .child(div().text_xs().text_color(rgb(0x888888)).child(format!(
+                        "Size: {:.1}px × {:.1}px",
+                        target.width, target.height
+                    )))
+                    .child(div().text_xs().text_color(rgb(0x888888)).child(format!(
+                        "Upper Wing: {:.1}px × {:.1}px",
+                        target.upper_wing_width, target.upper_wing_height
+                    )))
+                    .child(div().text_xs().text_color(rgb(0x888888)).child(format!(
+                        "Lower Wing: {:.1}px × {:.1}px",
+                        target.lower_wing_width, target.lower_wing_height
+                    )))
                     .child(
                         div()
                             .text_xs()
                             .text_color(rgb(0x888888))
-                            .child(format!(
-                                "Size: {:.1}px × {:.1}px",
-                                target.width, target.height
-                            )),
+                            .child(format!("Border Width: {:.1}px", target.border_width)),
                     )
                     .child(
                         div()
                             .text_xs()
                             .text_color(rgb(0x888888))
-                            .child(format!(
-                                "Upper Wing: {:.1}px × {:.1}px",
-                                target.upper_wing_width, target.upper_wing_height
-                            )),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(rgb(0x888888))
-                            .child(format!(
-                                "Lower Wing: {:.1}px × {:.1}px",
-                                target.lower_wing_width, target.lower_wing_height
-                            )),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(rgb(0x888888))
-                            .child(format!(
-                                "Border Width: {:.1}px",
-                                target.border_width
-                            )),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(rgb(0x888888))
-                            .child(format!(
-                                "Border Radius: {:.1}px",
-                                target.border_radius
-                            )),
+                            .child(format!("Border Radius: {:.1}px", target.border_radius)),
                     ),
             )
     }
@@ -244,8 +216,3 @@ fn main() {
         cx.activate(true);
     });
 }
-
-
-
-
-

@@ -1,6 +1,6 @@
 use gpui::{
-    Bounds, GlobalElementId, Hitbox, InspectorElementId, Interactivity, Pixels, Point, Size,
-    StyleRefinement, Window, polygon, prelude::*, px, rgba,
+    AnyElement, Bounds, GlobalElementId, Hitbox, InspectorElementId, Interactivity, LayoutId,
+    Pixels, Point, Size, StyleRefinement, Window, polygon, prelude::*, px, rgba,
 };
 
 fn generate_fillet_arc(
@@ -12,43 +12,43 @@ fn generate_fillet_arc(
 ) -> Vec<Point<Pixels>> {
     let v1 = Point::new(prev.x - current.x, prev.y - current.y);
     let v2 = Point::new(next.x - current.x, next.y - current.y);
-    
+
     let v1_x = v1.x.to_f64() as f32;
     let v1_y = v1.y.to_f64() as f32;
     let v2_x = v2.x.to_f64() as f32;
     let v2_y = v2.y.to_f64() as f32;
-    
+
     let len1 = (v1_x * v1_x + v1_y * v1_y).sqrt();
     let len2 = (v2_x * v2_x + v2_y * v2_y).sqrt();
-    
+
     if len1 < 0.001 || len2 < 0.001 {
         return vec![current];
     }
-    
+
     let n1_x = v1_x / len1;
     let n1_y = v1_y / len1;
     let n2_x = v2_x / len2;
     let n2_y = v2_y / len2;
-    
+
     let dot = n1_x * n2_x + n1_y * n2_y;
     let angle = dot.clamp(-1.0, 1.0).acos();
-    
-    if angle < 0.01 || angle > std::f32::consts::PI - 0.01 {
+
+    if !(0.01..=std::f32::consts::PI - 0.01).contains(&angle) {
         return vec![current];
     }
-    
+
     let half_angle = angle / 2.0;
     let radius_f32 = radius.to_f64() as f32;
     let offset_distance = radius_f32 / half_angle.tan();
-    
+
     // Clamp offset_distance to not exceed half the length of either edge
     // This prevents the fillet from extending beyond available space
     let max_offset = (len1.min(len2) * 0.5).min(offset_distance);
     let offset_distance = max_offset;
-    
+
     // Recalculate the effective radius based on the clamped offset
     let effective_radius = offset_distance * half_angle.tan();
-    
+
     let start_point = Point::new(
         current.x + px(n1_x * offset_distance),
         current.y + px(n1_y * offset_distance),
@@ -57,29 +57,33 @@ fn generate_fillet_arc(
         current.x + px(n2_x * offset_distance),
         current.y + px(n2_y * offset_distance),
     );
-    
+
     let bisector_x = n1_x + n2_x;
     let bisector_y = n1_y + n2_y;
     let bisector_len = (bisector_x * bisector_x + bisector_y * bisector_y).sqrt();
-    
+
     if bisector_len < 0.001 {
         return vec![current];
     }
-    
+
     let bisector_norm_x = bisector_x / bisector_len;
     let bisector_norm_y = bisector_y / bisector_len;
-    
+
     let center_distance = effective_radius / half_angle.sin();
     let center = Point::new(
         current.x + px(bisector_norm_x * center_distance),
         current.y + px(bisector_norm_y * center_distance),
     );
-    
+
     let mut arc_points = Vec::new();
-    
-    let start_angle = (start_point.y - center.y).to_f64().atan2((start_point.x - center.x).to_f64()) as f32;
-    let end_angle = (end_point.y - center.y).to_f64().atan2((end_point.x - center.x).to_f64()) as f32;
-    
+
+    let start_angle = (start_point.y - center.y)
+        .to_f64()
+        .atan2((start_point.x - center.x).to_f64()) as f32;
+    let end_angle = (end_point.y - center.y)
+        .to_f64()
+        .atan2((end_point.x - center.x).to_f64()) as f32;
+
     // Determine sweep direction
     let mut angle_diff = end_angle - start_angle;
     if angle_diff > std::f32::consts::PI {
@@ -87,18 +91,18 @@ fn generate_fillet_arc(
     } else if angle_diff < -std::f32::consts::PI {
         angle_diff += 2.0 * std::f32::consts::PI;
     }
-    
+
     for i in 0..=resolution {
         let t = i as f32 / resolution as f32;
         let current_angle = start_angle + angle_diff * t;
-        
+
         let point = Point::new(
             center.x + px(effective_radius * current_angle.cos()),
             center.y + px(effective_radius * current_angle.sin()),
         );
         arc_points.push(point);
     }
-    
+
     arc_points
 }
 
@@ -110,20 +114,20 @@ fn apply_fillet_to_polygon(
     if points.len() < 3 {
         return points.to_vec();
     }
-    
+
     let mut filleted_points = Vec::new();
     let n = points.len();
-    
+
     for i in 0..n {
         let prev = points[(i + n - 1) % n];
         let current = points[i];
         let next = points[(i + 1) % n];
-        
+
         // Apply fillet arc to both convex and concave corners
         let arc = generate_fillet_arc(prev, current, next, radius, resolution);
         filleted_points.extend(arc);
     }
-    
+
     filleted_points
 }
 
@@ -134,6 +138,9 @@ pub struct Wing {
     border_resolution: u32,
     upper_wing_size: Size<Pixels>,
     lower_wing_size: Size<Pixels>,
+    include_upper_wing_in_bounds: bool,
+    include_lower_wing_in_bounds: bool,
+    children: Vec<AnyElement>,
 }
 
 pub fn wing() -> Wing {
@@ -144,6 +151,9 @@ pub fn wing() -> Wing {
         border_resolution: 8,
         upper_wing_size: Size::new(px(0.0), px(0.0)),
         lower_wing_size: Size::new(px(0.0), px(0.0)),
+        include_upper_wing_in_bounds: true,
+        include_lower_wing_in_bounds: true,
+        children: Vec::new(),
     }
 }
 
@@ -167,10 +177,18 @@ impl Wing {
     pub fn lower_wing_size(&mut self, size: impl Into<Size<Pixels>>) {
         self.lower_wing_size = size.into();
     }
+
+    pub fn include_upper_wing_in_bounds(&mut self, include: bool) {
+        self.include_upper_wing_in_bounds = include;
+    }
+
+    pub fn include_lower_wing_in_bounds(&mut self, include: bool) {
+        self.include_lower_wing_in_bounds = include;
+    }
 }
 
 impl Element for Wing {
-    type RequestLayoutState = ();
+    type RequestLayoutState = Vec<LayoutId>;
     type PrepaintState = Option<Hitbox>;
 
     fn id(&self) -> Option<gpui::ElementId> {
@@ -188,14 +206,20 @@ impl Element for Wing {
         window: &mut gpui::Window,
         cx: &mut gpui::App,
     ) -> (gpui::LayoutId, Self::RequestLayoutState) {
+        // Request layout for all children first
+        let mut child_layout_ids = Vec::new();
+        for child in &mut self.children {
+            child_layout_ids.push(child.request_layout(window, cx));
+        }
+
         let layout_id = self.interactivity.request_layout(
             global_id,
             inspector_id,
             window,
             cx,
-            |style, window, cx| window.request_layout(style, None, cx),
+            |style, window, cx| window.request_layout(style, child_layout_ids.iter().copied(), cx),
         );
-        (layout_id, ())
+        (layout_id, child_layout_ids)
     }
 
     fn prepaint(
@@ -203,10 +227,15 @@ impl Element for Wing {
         global_id: Option<&GlobalElementId>,
         inspector_id: Option<&InspectorElementId>,
         bounds: Bounds<Pixels>,
-        _request_layout: &mut Self::RequestLayoutState,
+        request_layout: &mut Self::RequestLayoutState,
         window: &mut Window,
         cx: &mut gpui::App,
     ) -> Option<Hitbox> {
+        // Prepaint all children
+        for child in &mut self.children {
+            child.prepaint(window, cx);
+        }
+
         self.interactivity.prepaint(
             global_id,
             inspector_id,
@@ -226,7 +255,7 @@ impl Element for Wing {
         _request_layout: &mut Self::RequestLayoutState,
         _hitbox: &mut Self::PrepaintState,
         window: &mut gpui::Window,
-        _cx: &mut gpui::App,
+        cx: &mut gpui::App,
     ) {
         // self.interactivity.paint(
         //     global_id,
@@ -247,34 +276,48 @@ impl Element for Wing {
         let lower_wing_height = self.lower_wing_size.height;
 
         let upper_corners = if upper_wing_height > px(0.1) && upper_wing_width > px(0.1) {
-            vec![
-                bounds.origin
-                    + Point::new(
-                         px(0.0),
-                        -upper_wing_height,
-                    ),
-                bounds.origin + Point::new(upper_wing_width, -upper_wing_height),
-                bounds.origin + Point::new(upper_wing_width + upper_wing_height, px(0.0)),
-                bounds.origin + Point::new(width, px(0.0)),
-            ]
+            if self.include_upper_wing_in_bounds {
+                vec![
+                    bounds.origin + Point::new(px(0.0), px(0.0)),
+                    bounds.origin + Point::new(upper_wing_width, px(0.0)),
+                    bounds.origin
+                        + Point::new(upper_wing_width + upper_wing_height, upper_wing_height),
+                    bounds.origin + Point::new(width, upper_wing_height),
+                ]
+            } else {
+                vec![
+                    bounds.origin + Point::new(px(0.0), -upper_wing_height),
+                    bounds.origin + Point::new(upper_wing_width, -upper_wing_height),
+                    bounds.origin + Point::new(upper_wing_width + upper_wing_height, px(0.0)),
+                    bounds.origin + Point::new(width, px(0.0)),
+                ]
+            }
         } else {
-            vec![
-                bounds.origin,
-                bounds.origin + Point::new(width, px(0.0)),
-            ]
+            vec![bounds.origin, bounds.origin + Point::new(width, px(0.0))]
         };
 
         let lower_corners = if lower_wing_height > px(0.1) && lower_wing_width > px(0.1) {
-            vec![
-                bounds.origin + Point::new(width, height),
-                bounds.origin + Point::new(width - lower_wing_width, height),
-                bounds.origin
-                    + Point::new(
-                        width - lower_wing_width - lower_wing_height,
-                        height - lower_wing_height,
-                    ),
-                bounds.origin + Point::new(px(0.0), height - lower_wing_height),
-            ]
+            if self.include_lower_wing_in_bounds {
+                vec![
+                    bounds.origin + Point::new(width, height),
+                    bounds.origin + Point::new(width - lower_wing_width, height),
+                    bounds.origin
+                        + Point::new(
+                            width - lower_wing_width - lower_wing_height,
+                            height - lower_wing_height,
+                        ),
+                    bounds.origin + Point::new(px(0.0), height - lower_wing_height),
+                ]
+            } else {
+                vec![
+                    bounds.origin + Point::new(width, height + lower_wing_height),
+                    bounds.origin
+                        + Point::new(width - lower_wing_width, height + lower_wing_height),
+                    bounds.origin
+                        + Point::new(width - lower_wing_width - lower_wing_height, height),
+                    bounds.origin + Point::new(px(0.0), height),
+                ]
+            }
         } else {
             vec![
                 bounds.origin + Point::new(width, height),
@@ -306,13 +349,18 @@ impl Element for Wing {
         let polygon = polygon(filleted_points, background);
 
         let border_color = if let Some(color) = self.interactivity.base_style.border_color {
-                color
+            color
         } else {
             rgba(0).into()
         };
         let polygon = polygon.border_color(border_color);
         let polygon = polygon.border_width(self.border_width);
         window.paint_polygon(polygon);
+
+        // Paint all children
+        for child in &mut self.children {
+            child.paint(window, cx);
+        }
     }
 }
 
@@ -336,8 +384,8 @@ impl InteractiveElement for Wing {
     }
 }
 
-
-
-
-
-
+impl ParentElement for Wing {
+    fn extend(&mut self, elements: impl IntoIterator<Item = AnyElement>) {
+        self.children.extend(elements);
+    }
+}

@@ -9,8 +9,8 @@ struct WingExample {
 
 impl Render for WingExample {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let clicked_wing = self.clicked_wing;
         let hovered_wing = self.hovered_wing;
+        let clicked_wing = self.clicked_wing;
 
         div()
             .flex()
@@ -431,6 +431,3 @@ fn main() {
         cx.activate(true);
     });
 }
-
-
-
