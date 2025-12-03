@@ -1,15 +1,14 @@
 use gpui::prelude::*;
 use gpui::*;
-use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::path::PathBuf;
 
 use crate::models::AppDrawerState;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
 use crate::ui::utils::prelude::{DesktopApp, DesktopApps};
+use crate::ui::widgets::BottomSheetKind;
 use crate::ui::widgets::{IconButton, SubWindow};
 use input::TextInput;
 
@@ -29,8 +28,15 @@ const APP_SIZE: (f32, f32) = (540., 620.);
 const APP_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const APP_SECTION_DIVIDER_WIDTH: f32 = 508.0;
 
-const APP_SECTION_HEIGHT: f32 = 76.0;
 const APP_ROW_HEIGHT: f32 = 56.0;
+
+fn divider() -> Stateful<Div> {
+    div()
+        .w(px(APP_SECTION_DIVIDER_WIDTH))
+        .h(px(APP_SECTION_DIVIDER_HEIGHT))
+        .bg(rgb(0x404040))
+        .id("divider")
+}
 
 pub struct AppDrawer {
     pub state: AppDrawerState,
@@ -39,19 +45,19 @@ pub struct AppDrawer {
     last_scroll_offset: Pixels,
     drag_start_y: Pixels,
     is_dragging: bool,
-    content_height: Pixels,
     pub text_input: Entity<TextInput>,
-    show_popup: bool,
-    popup_category: String,
     filtered: Vec<DesktopApp>,
     is_searching: bool,
     last_search_query: String,
+    pub show_bottom_sheet: bool,
+    pub sheet_kind: BottomSheetKind,
+    pub sheet_app: Option<DesktopApp>,
 }
 
 impl AppDrawer {
     pub fn new(state: AppDrawerState, cx: &mut Context<Self>) -> Self {
         let grouped = state.apps.clone().get_apps_by_categories();
-        let filteredApps = state.apps.apps.clone();
+        let filtered_apps = state.apps.apps.clone();
 
         Self {
             state,
@@ -60,13 +66,13 @@ impl AppDrawer {
             last_scroll_offset: px(0.),
             drag_start_y: px(0.),
             is_dragging: false,
-            content_height: px(0.),
             text_input: cx.new(|cx| TextInput::new(cx)),
-            show_popup: false,
-            popup_category: "".to_string(),
-            filtered: filteredApps.clone(),
+            filtered: filtered_apps.clone(),
             is_searching: false,
             last_search_query: "".to_string(),
+            show_bottom_sheet: false,
+            sheet_kind: BottomSheetKind::MainOptions,
+            sheet_app: None,
         }
     }
 
@@ -177,14 +183,87 @@ impl AppDrawer {
 
         cx.notify();
     }
+
+    fn search_row(&mut self, cx: &mut Context<Self>) -> Vec<Stateful<Div>> {
+        let mut search_apps_children = Vec::new();
+
+        self.is_searching = true;
+        Self::filter(self, cx);
+
+        let row = |searched_app: &DesktopApp, cx: &mut Context<Self>| {
+            let exec = searched_app.exec.clone();
+            let app_id = searched_app.app_id.clone();
+            let id = hash_id(&app_id);
+
+            div()
+                .id(id)
+                .h(px(APP_ROW_HEIGHT))
+                .w_full()
+                .child(
+                    div().size_full().flex().flex_row().items_center().child(
+                        div()
+                            .size_full()
+                            .text_color(rgb(0xe9e9e9))
+                            .flex()
+                            .flex_row()
+                            .justify_between()
+                            .items_center()
+                            .child(
+                                div().flex().flex_row().child(
+                                    div()
+                                        .flex()
+                                        .flex_row()
+                                        .items_center()
+                                        .child(
+                                            div()
+                                                .mr(px(8.0))
+                                                .bg(rgb(0x202020))
+                                                .w(px(36.0))
+                                                .h(px(36.0))
+                                                .flex()
+                                                .justify_center()
+                                                .items_center()
+                                                .rounded(px(6.0))
+                                                .child({
+                                                    let icon = DesktopApp::resolved_icon(
+                                                        &searched_app.icon_path,
+                                                    );
+
+                                                    IconButton::new(id)
+                                                        .icon(icon)
+                                                        .width(px(30.))
+                                                        .height(px(30.))
+                                                }),
+                                        )
+                                        .child(
+                                            div()
+                                                .font_weight(FontWeight(500.0))
+                                                .text_size(px(16.0))
+                                                .text_color(rgb(0xe9e9e9))
+                                                .child(searched_app.name.to_string()),
+                                        ),
+                                ),
+                            ),
+                    ),
+                )
+                .on_click(cx.listener(move |_, _, _, _| {
+                    let _ = DesktopApps::run_app_exec(exec.as_str());
+                }))
+        };
+
+        let searched_apps = self.filtered.clone();
+
+        for searched_app in searched_apps.iter() {
+            search_apps_children.push(row(searched_app, cx));
+            search_apps_children.push(divider());
+        }
+        search_apps_children
+    }
 }
 
 impl Render for AppDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let window_bounds = window.bounds();
-
-        // Group apps by category
-        let apps = self.filtered.clone();
 
         // Search
         let mut search_apps_children = Vec::new();
@@ -203,86 +282,10 @@ impl Render for AppDrawer {
         }
 
         if is_active {
-            self.is_searching = true;
-            Self::filter(self, cx);
-
-            let row = |searched_app: &DesktopApp, cx: &mut Context<Self>| {
-                let exec = searched_app.exec.clone();
-                let app_id = searched_app.app_id.clone();
-                let id = hash_id(&app_id);
-
-                div()
-                    .id(id)
-                    .h(px(APP_ROW_HEIGHT))
-                    .w_full()
-                    .child(
-                        div().size_full().flex().flex_row().items_center().child(
-                            div()
-                                .size_full()
-                                .text_color(rgb(0xe9e9e9))
-                                .flex()
-                                .flex_row()
-                                .justify_between()
-                                .items_center()
-                                .child(
-                                    div().flex().flex_row().child(
-                                        div()
-                                            .flex()
-                                            .flex_row()
-                                            .items_center()
-                                            .child(
-                                                div()
-                                                    .mr(px(8.0))
-                                                    .bg(rgb(0x202020))
-                                                    .w(px(36.0))
-                                                    .h(px(36.0))
-                                                    .flex()
-                                                    .justify_center()
-                                                    .items_center()
-                                                    .rounded(px(6.0))
-                                                    .child({
-                                                        let icon = DesktopApp::resolved_icon(
-                                                            &searched_app.icon_path,
-                                                        );
-
-                                                        IconButton::new(id)
-                                                            .icon(icon)
-                                                            .width(px(30.))
-                                                            .height(px(30.))
-                                                    }),
-                                            )
-                                            .child(
-                                                div()
-                                                    .font_weight(FontWeight(500.0))
-                                                    .text_size(px(16.0))
-                                                    .text_color(rgb(0xe9e9e9))
-                                                    .child(searched_app.name.to_string()),
-                                            ),
-                                    ),
-                                ),
-                        ),
-                    )
-                    .on_click(cx.listener(move |_, _, _, _| {
-                        let _ = DesktopApps::run_app_exec(exec.as_str());
-                    }))
-            };
-
-            let divider = || {
-                div()
-                    .w(px(APP_SECTION_DIVIDER_WIDTH))
-                    .h(px(APP_SECTION_DIVIDER_HEIGHT))
-                    .bg(rgb(0x202020))
-                    .id("divider")
-            };
-
-            let searched_apps = self.filtered.clone();
-
-            for searched_app in searched_apps.iter() {
-                search_apps_children.push(row(searched_app, cx));
-                search_apps_children.push(divider());
-            }
+            search_apps_children = Self::search_row(self, cx);
         }
 
+        // Group apps by category
         let grouped = &self.grouped;
 
         div()
@@ -329,20 +332,27 @@ impl Render for AppDrawer {
                                             .justify_center()
                                             .top(self.scroll_offset)
                                             .children(shown_apps.into_iter().map(|app| {
-                                                let app_name = app.name.clone();
-                                                let app_icon = app.icon_path.clone();
                                                 let app_id = app.app_id.clone();
                                                 let id = hash_id(&app_id);
 
                                                 let icon =
                                                     DesktopApp::resolved_icon(&app.icon_path);
-                                                IconButton::new(id + idx).icon(icon).on_click(
-                                                    cx.listener(move |_, _, _, _| {
-                                                        let _ = DesktopApps::run_app_exec(
-                                                            app.exec.as_str(),
-                                                        );
-                                                    }),
-                                                )
+                                                // IconButton::new(id + idx).icon(icon).on_click(
+                                                //     cx.listener(move |_, _, _, _| {
+                                                //         let _ = DesktopApps::run_app_exec(
+                                                //             app.exec.as_str(),
+                                                //         );
+                                                //     }),
+                                                // )
+                                                IconButton::new(id + idx)
+                                                    .icon(icon)
+                                                    .on_click(cx.listener(move |this: &mut AppDrawer, _event, _window, cx| {
+                                                        this.show_bottom_sheet = true;
+                                                        this.sheet_app = Some(app.clone());
+                                                        this.sheet_kind = BottomSheetKind::MainOptions;
+                                                        cx.notify();
+                                                    }))
+
                                             })),
                                     )
                                     .child({
@@ -439,7 +449,7 @@ impl Render for AppDrawer {
                             }),
                     )
             })
-                // searching mode (search results list)
+            // searching mode (search results list)
             .when(self.is_searching, |search_div| {
                          search_div
                         .absolute()
@@ -461,24 +471,56 @@ impl Render for AppDrawer {
                         )
                 }
             )
-            // .child(if self.show_popup {
-            //     div()
-            //         .absolute()
-            //         .top(px(0.))
-            //         .left(px(0.))
-            //         .w(px(APP_SIZE.0))
-            //         .h(px(APP_SIZE.1))
-            //         // Stop all mouse events from reaching AppDrawer
-            //         .on_mouse_down(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
-            //         .on_mouse_up(MouseButton::Left, |_, _event, cx| cx.stop_propagation())
-            //         .on_mouse_move(|_, _event, cx| cx.stop_propagation())
-            //         .child(cx.new(|_| SubWindow::scan(self.popup_category.clone())))
-            //         .into_any()
-            // } else {
-            //     Empty.into_any()
-            // })
-            .child(
-                div()
+            .when(self.show_bottom_sheet, |menu_div| {
+                menu_div
+                    // Dim background (click to dismiss)
+                    .child(
+                        div()
+                            .id("bottom-sheet-bg")
+                            .absolute()
+                            .top(px(0.))
+                            .left(px(0.))
+                            .w(px(APP_SIZE.0))
+                            .h(px(APP_SIZE.1))
+                            .bg(rgb(0x000000))
+                            .opacity(0.6)
+                            .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                                this.show_bottom_sheet = false;
+                                cx.notify();
+                            }))
+                            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                    )
+                    // Bottom sheet panel (should NOT dismiss)
+                    .child(
+                        div()
+                            .id("bottom-sheet-panel")
+                            .absolute()
+                            .bottom(px(0.))
+                            .left(px(0.))
+                            .w(px(APP_SIZE.0))
+                            .bg(rgb(0x2E2E2E))
+                            .rounded_t(px(24.))
+                            .pt(px(20.))
+                            .pb(px(28.))
+                            .pl(px(20.))
+                            .pr(px(20.))
+
+                            // Prevents click from reaching background
+                            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                            .on_click(|_, _, cx| cx.stop_propagation())
+                            .child(match self.sheet_kind {
+                                BottomSheetKind::MainOptions => self.render_main_sheet(cx),
+                                BottomSheetKind::ConfirmDelete => self.render_delete_sheet(cx),
+                                BottomSheetKind::Properties => self.render_properties_sheet(cx),
+                                BottomSheetKind::None => Empty.into_any(),
+                            })
+                    )
+            })
+            .when(!self.show_bottom_sheet, |search_bar_div| {
+                search_bar_div.child(
+                    div()
                     .h(px(SEARCH_BAR_HEIGHT))
                     .absolute()
                     .bottom(px(6.))
@@ -520,7 +562,7 @@ impl Render for AppDrawer {
                                                             .mr(px(8.0))
                                                             .ml(px(16.0))
                                                             .flex()
-                                                            .child(Icon::build(IconName::Search)),
+                                                            .child(Icon::build(IconName::Search).text_color(rgb(0x808080))),
                                                     ),
                                             )
                                             .child(
@@ -539,7 +581,7 @@ impl Render for AppDrawer {
                                         .items_center()
                                         .justify_center()
                                         .border_1()
-                                        .border_color(rgb(0x808080))
+                                        .border_color(rgb(0x606060))
                                         .id("close-button")
                                         .on_click(cx.listener(
                                                             |this: &mut AppDrawer, _event, _window, cx| {
@@ -586,7 +628,8 @@ impl Render for AppDrawer {
                                 ),
                         ),
                     )
-            )
+                )
+            })
     }
 }
 

@@ -14,7 +14,6 @@ pub struct SubWindow {
     last_scroll_offset: Pixels,
     drag_start_y: Pixels,
     is_dragging: bool,
-    content_height: Pixels,
 }
 
 impl SubWindow {
@@ -29,7 +28,6 @@ impl SubWindow {
             last_scroll_offset: px(0.),
             drag_start_y: px(0.),
             is_dragging: false,
-            content_height: px(0.),
         }
     }
 
@@ -81,7 +79,6 @@ impl SubWindow {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
 
-            let content_height = self.content_height;
             let window_height = window.bounds().size.height;
 
             let content_height = self.estimate_content_height();
@@ -97,7 +94,7 @@ impl SubWindow {
 }
 
 impl Render for SubWindow {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
             .id("overlay_root")
             .size_full()
@@ -132,8 +129,6 @@ impl Render for SubWindow {
                     .child(div().grid().grid_cols(4).gap(px(14.)).children(
                         self.apps.clone().into_iter().enumerate().map(|(idx, app)| {
                             let name = app.name.clone();
-                            let icon_path = app.icon_path.clone();
-                            let app_name = app.name.clone();
                             let icon = DesktopApp::resolved_icon(&app.icon_path);
 
                             div()

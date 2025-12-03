@@ -1,9 +1,8 @@
-
 [package]
-name = "commons"
-edition = "2024"
+name = "homescreen"
 version.workspace = true
 authors.workspace = true
+edition.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
@@ -14,16 +13,4 @@ keywords.workspace = true
 gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
-rand = "0.8"
-
-[[example]]
-name = "wing"
-path = "examples/wing.rs"
-
-[[example]]
-name = "animated_wing"
-path = "examples/animated_wing.rs"
-
-[[example]]
-name = "wing_with_children"
-path = "examples/wing_with_children.rs"
+commons = { path = "../commons" }

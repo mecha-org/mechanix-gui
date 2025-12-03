@@ -9,15 +9,19 @@ pub enum IconName {
     Search,
     Close,
     DefaultApp,
+    Delete,
+    Info,
 }
 
 impl IconName {
     pub fn resolve(self) -> SharedString {
         let icon_path = match self {
             Self::Category => "category.png",
-            Self::Search => "search.png",
+            Self::Search => "search.svg",
             Self::Close => "x.png",
             Self::DefaultApp => "default-app.png",
+            Self::Delete => "delete.svg",
+            Self::Info => "info.png",
         };
         format!("{}{}", APP_DRAWER_ICONS_DIR, icon_path).into()
     }
@@ -64,15 +68,33 @@ impl Icon {
 
 impl RenderOnce for Icon {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl gpui::IntoElement {
-        if self.path.starts_with("/") {
-            let image_path: PathBuf = self.path.as_str().into();
-            img(image_path).w(px(58.)).h(px(58.)).into_any_element()
-        } else {
-            img(self.path.clone())
+        let is_svg = self.path.ends_with(".svg");
+        let is_absolute = self.path.starts_with("/");
+
+        // SVG HANDLING (tint only for relative assets)
+        if is_svg {
+            if !is_absolute {
+                // Relative SVG → render with optional color
+                let svg_el = svg().path(self.path.clone()).w(px(40.)).h(px(40.));
+
+                let tinted =
+                    svg_el.when_some(self.text_color, |this, color| this.text_color(color));
+
+                return tinted.into_any_element();
+            }
+        }
+
+        if is_absolute {
+            return img(PathBuf::from(self.path.as_str()))
                 .w(px(58.))
                 .h(px(58.))
-                .into_any_element()
+                .into_any_element();
         }
+
+        img(self.path.clone())
+            .w(px(58.))
+            .h(px(58.))
+            .into_any_element()
     }
 }
 

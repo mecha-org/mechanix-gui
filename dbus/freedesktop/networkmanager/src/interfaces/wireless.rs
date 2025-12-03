@@ -85,6 +85,8 @@ pub struct RawAccessPointInfo {
     pub strength: u8,
     /// Time (in seconds) since the access point was last seen.
     pub last_seen: i64,
+    /// Whether the network is saved or not.
+    pub is_known: bool
 }
 
 bitflags::bitflags! {
@@ -124,8 +126,8 @@ pub struct WirelessNetworkInfo {
     pub security: String,
     /// Hardware (MAC) address of the access point.
     pub hw_address: String,
-
     pub is_active: bool,
+    pub is_known: bool,
     // Additional fields can be added as needed.
 }
 
