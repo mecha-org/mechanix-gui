@@ -86,7 +86,7 @@ pub struct RawAccessPointInfo {
     /// Time (in seconds) since the access point was last seen.
     pub last_seen: i64,
     /// Whether the network is saved or not.
-    pub is_known_network: bool
+    pub is_known: bool
 }
 
 bitflags::bitflags! {

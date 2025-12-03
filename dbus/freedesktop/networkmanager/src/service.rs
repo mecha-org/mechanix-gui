@@ -94,7 +94,7 @@ impl NetworkManagerService {
                     security,
                     hw_address: raw_ap.hw_address,
                     is_active: raw_ap.is_active,
-                    is_known: raw_ap.is_known_network,
+                    is_known: raw_ap.is_known,
                 })
             })
             .collect()
