@@ -5,6 +5,7 @@ class CommonHelper {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
 
+    // Recents < 3 hours
     if (diff.inHours < 3) {
       if (diff.inMinutes < 1) {
         return "Just now";
@@ -35,7 +36,7 @@ class CommonHelper {
     } else if (isYesterday) {
       return "Yesterday, $time";
     } else {
-      final date = DateFormat('MM d, yyyy').format(dateTime);
+      final date = DateFormat('MMM d, yyyy').format(dateTime);
       return "$date, $time";
     }
   }

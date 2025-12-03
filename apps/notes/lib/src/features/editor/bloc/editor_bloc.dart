@@ -31,6 +31,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
 
       final note = await notesRepository.findById(event.noteId);
       if (note == null) return;
+      // to simulate a loading state for smoother UI
       await Future.delayed(const Duration(seconds: 0));
       final content = jsonDecode(note.content);
       emit(

@@ -42,11 +42,13 @@ class NotesRepositoryImpl extends NotesRepository {
         preview,
       );
 
+      final previewString = jsonEncode(preview.map((e) => e.toJson()).toList());
+
       final newNote = NoteHive(
         id: uuid.v4(),
         title: title,
         content: content, // full quill json
-        preview: jsonEncode(preview.map((e) => e.toJson()).toList()),
+        preview: previewString,
         height: calculatedHeight,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -277,6 +279,9 @@ class NotesRepositoryImpl extends NotesRepository {
 
       if (key != null) {
         final note = notesBox.get(key);
+        final previewString = jsonEncode(
+          preview.map((e) => e.toJson()).toList(),
+        );
 
         if (note != null) {
           final updatedNote = NoteHive(
@@ -284,7 +289,7 @@ class NotesRepositoryImpl extends NotesRepository {
             title: title,
             content: content,
             createdAt: note.createdAt,
-            preview: jsonEncode(preview.map((e) => e.toJson()).toList()),
+            preview: previewString,
             updatedAt: DateTime.now(),
             plainText: plainText,
             height: calculatedHeight,

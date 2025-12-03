@@ -36,8 +36,6 @@ class NotesState extends Equatable {
     // Selection
     this.isSelectionMode = false,
     this.selectedNoteIds = const [],
-
-    // Other
   });
 
   NotesState copyWith({
