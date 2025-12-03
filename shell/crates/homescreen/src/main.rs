@@ -27,7 +27,7 @@ fn main() {
                 }),
                 ..Default::default()
             },
-            |_window, cx| cx.new(|_cx| Homescreen::new(config)),
+            |_window, cx| cx.new(|cx| Homescreen::new(cx, config)),
         )
         .unwrap();
         cx.activate(true);
