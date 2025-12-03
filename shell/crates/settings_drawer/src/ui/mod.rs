@@ -1,6 +1,8 @@
-mod icon;
+pub mod icon;  // check
 mod widgets;
+mod modals;
 use crate::events::{BrightnessEvents, NmEvents, VolumeEvents};
+use crate::ui::modals::{SubWindow, WirelessWindow, modal, wireless_modal};
 use crate::{
     events::BtEvents,
     ui::{
@@ -25,6 +27,7 @@ pub struct WirelessDetails {
     pub enabled: bool,      
     pub strength: u8,
     pub connected_network: Option<WirelessNetworkInfo>,
+    pub networks: Option<Vec<WirelessNetworkInfo>>,
 }
 
 pub struct BluetoothDetails {
@@ -59,6 +62,9 @@ pub struct SettingsDrawer {
     pub volume_slider_value: f32,
     pub volume_device_name: String,
     pub volume_mute: bool,
+
+    pub show_wireless_modal : bool,
+    pub show_bluetooth_modal : bool,
 
     pub nm_tx: mpsc::Sender<NmEvents>,
     pub bt_tx: mpsc::Sender<BtEvents>,
@@ -149,6 +155,7 @@ impl SettingsDrawer {
                 enabled: true,
                 strength: 0,
                 connected_network: None,
+                networks: None,
             },
             bluetooth_details: BluetoothDetails {
                 enabled: false,
@@ -168,6 +175,9 @@ impl SettingsDrawer {
             bt_tx,
             volume_tx,
             _subscriptions,
+
+            show_wireless_modal : false,
+            show_bluetooth_modal : false,
 
             position: Self::closed_pos(),
             drag_offset: None,
@@ -326,6 +336,13 @@ impl SettingsDrawer {
         window: &mut Window,
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
+
+        // let window_bounds =
+        // WindowBounds::Windowed(Bounds::centered(None, size(px(476.0), px(184.0)), cx));
+
+        let window_bounds = window.bounds();
+
+
         let battery_icon = match self.battery_state {
             BatteryState::Charging => match self.battery_percent {
                 0..=10 => IconName::Battery10Charging,
@@ -469,6 +486,7 @@ impl SettingsDrawer {
                     .justify_end()
                     .child(img("icons/settings-drawer/right_nav_bar.png")),
             )
+            // .child()
             .child(
                 div()
                     .flex()
@@ -509,9 +527,30 @@ impl SettingsDrawer {
                             .icon_color(rgb(0xF4F4F4))
                             .size((px(24.), px(24.)))
                             .border(px(0.))
-                            .on_click(cx.listener(|_, _, _, _| {
-                                println!("power clicked");
-                            })),
+                            .on_click(cx.listener(
+                                move |this: &mut SettingsDrawer,
+                                 _event: &ClickEvent,
+                                 _window: &mut Window,
+                                 cx: &mut Context<Self>| {
+                                    println!("power clicked");
+                                     
+                                    //     cx.open_window(
+                                    //     WindowOptions {
+                                    //         titlebar: None,
+                                    //         kind: WindowKind::PopUp,
+                                    //         window_bounds: Some(window_bounds),
+                                    //         ..Default::default()
+                                    //     },
+                                    //     |_, cx| {
+                                    //         cx.new(|_| SubWindow {
+                                    //             custom_titlebar: true,
+                                    //         })
+                                    //     },
+                                    // )
+                                    // .unwrap();
+
+                                },
+                            )),
                     ),
             )
             .child(
@@ -790,22 +829,66 @@ impl SettingsDrawer {
                             .active_icon_color(rgb(0x4892F1))
                             .active_bg_color(rgb(0x202020))
                             .label(network_label)
-                            .on_click(cx.listener(
-                                |this: &mut SettingsDrawer,
+                            // .on_click(cx.listener(
+                            //     |this: &mut SettingsDrawer,
+                            //      _event: &ClickEvent,
+                            //      _window: &mut Window,
+                            //      cx: &mut Context<Self>| {
+                            //         let mut nm_tx = this.nm_tx.clone();
+                            //         let is_enable = this.wireless_details.enabled;
+                            //         cx.background_executor()
+                            //             .spawn(async move {
+                            //                 let _ = nm_tx
+                            //                     .send(NmEvents::WirelessToggle {
+                            //                         enabled: !is_enable,
+                            //                     })
+                            //                     .await;
+                            //             })
+                            //             .detach();
+                            //     },
+                            // )),
+                            .on_click(cx.listener(  // TEMP; TODO: long tress open modal
+                                move |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
-                                    let mut nm_tx = this.nm_tx.clone();
-                                    let is_enable = this.wireless_details.enabled;
-                                    cx.background_executor()
-                                        .spawn(async move {
-                                            let _ = nm_tx
-                                                .send(NmEvents::WirelessToggle {
-                                                    enabled: !is_enable,
-                                                })
-                                                .await;
-                                        })
-                                        .detach();
+                                    println!("wireless clicked");
+
+                                     let popup_origin = point(
+                                            window_bounds.origin.x,
+                                            window_bounds.origin.y,
+                                        );
+
+                                        let popup_bounds = Bounds {
+                                            origin: popup_origin,
+                                            // size: window_bounds.size,
+                                            size: size(px(476.0), px(400.0)),
+                                        };
+                                     
+                                        cx.open_window(
+                                        WindowOptions {
+                                            titlebar: None,
+                                            kind: WindowKind::PopUp,
+                                            is_movable: false,
+                                            window_bounds:Some(
+                                                    WindowBounds::Windowed(
+                                                        popup_bounds,
+                                                    ),
+                                                ),
+                                            ..Default::default()
+                                        },
+                                        |_, cx| {
+                                            // cx.new(|_| WirelessWindow {
+                                            //     title: "Wi-Fi".to_string(),
+                                            //     network_list: this.wireless_details.networks.clone().unwrap(),
+                                            // })
+                                            cx.new(|_| 
+                                                WirelessWindow::new("Wi-Fi".to_string(), this.wireless_details.networks.clone().unwrap()) 
+                                        )
+                                        },
+                                    )
+                                    .unwrap();
+
                                 },
                             )),
                     )

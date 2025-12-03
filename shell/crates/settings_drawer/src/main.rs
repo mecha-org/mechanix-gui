@@ -40,6 +40,7 @@ fn main() {
 
                         let mut enable_state_stream = network_manager.stream_wireless_enabled_status().await;
                         let mut device_state_stream = network_manager.stream_device_events().await;
+                        let mut active_aceess_point_stream = network_manager.stream_access_point_events().await;
 
                         let mut bluetooth_status_stream = bluetooth_manager.stream_bluetooth_enabled_status().await;
                         let mut bluetooth_device_stream = bluetooth_manager.stream_bluetooth_device_status().await;
@@ -56,6 +57,10 @@ fn main() {
                         };
                         let brightness_percent = if brightness_value > 0 {u8_to_percent(brightness_value, MAX_DEVICE_BRIGHTNESS) } else {0.0};
                         let _ = app_channel_tx.send(AppEvents::Brightness { value: brightness_percent }).await;
+
+
+                        let list_networks = network_manager.list_networks().await.unwrap();
+                        let _ = app_channel_tx.send(AppEvents::ListWirelessNetworks { list: list_networks } ).await;
 
                         loop {
                             select! {
@@ -95,6 +100,12 @@ fn main() {
                                             _ => {}
                                         }
                                     }
+                                }
+
+                                active_ap_event = active_aceess_point_stream.next() => {
+                                   if let Some(event) = active_ap_event {
+                                    //    println!("AP event: {:?}", event);
+                                   }
                                 }
 
                                 // bluetooth events
@@ -210,6 +221,12 @@ fn main() {
                                         cx.notify();
                                     });
                                 } 
+                                AppEvents::ListWirelessNetworks { list } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        this.wireless_details.networks = Some(list);
+                                        cx.notify();
+                                    });
+                                }
                                 AppEvents::ConnectedNetwork { network } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
                                         this.wireless_details.connected_network = network;

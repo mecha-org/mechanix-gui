@@ -16,6 +16,9 @@ pub enum AppEvents {
     ConnectedNetwork {
         network: Option<WirelessNetworkInfo>,
     },
+    ListWirelessNetworks {
+        list: Vec<WirelessNetworkInfo>,
+    },
     BluetoothEnabled {
         enabled: bool,
     },
