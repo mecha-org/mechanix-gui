@@ -94,12 +94,13 @@ impl NetworkManagerService {
                     security,
                     hw_address: raw_ap.hw_address,
                     is_active: raw_ap.is_active,
+                    is_known: raw_ap.is_known_network,
                 })
             })
             .collect()
     }
 
-        /// List current available saved networks
+    /// List current available saved networks
     pub async fn known_networks(&self) -> Result<Vec<WirelessNetworkInfo>, NetworkManagerError> {
         let known_networks_response = self
             .proxy
