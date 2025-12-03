@@ -43,6 +43,25 @@ impl TextInput {
             last_layout: None,
             last_bounds: None,
             is_selecting: false,
+            on_change: None,
+        }
+    }
+
+    // Add setter method
+    pub fn on_change(mut self, callback: impl Fn(&mut Self, &mut Context<Self>) + 'static) -> Self {
+        self.on_change = Some(Box::new(callback));
+        self
+    }
+
+    fn handle_text_change(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
+        // Notify any subscribers that the text has changed
+        cx.notify();
+
+        // Take the callback out of self temporarily to avoid borrowing issues
+        if let Some(callback) = self.on_change.take() {
+            callback(self, cx);
+            // Put it back
+            self.on_change = Some(callback);
         }
     }
 
@@ -97,7 +116,7 @@ impl TextInput {
         self.replace_text_in_range(None, "", window, cx)
     }
 
-    fn reset(&mut self, _: &Reset, _: &mut Window, cx: &mut Context<Self>) {
+    fn reset(&mut self, _: &Reset, window: &mut Window, cx: &mut Context<Self>) {
         self.content = "".into();
         self.selected_range = 0..0;
         self.selection_reversed = false;
@@ -105,7 +124,7 @@ impl TextInput {
         self.last_layout = None;
         self.last_bounds = None;
         self.is_selecting = false;
-        cx.notify();
+        self.handle_text_change(window, cx);
     }
 
     fn on_mouse_down(
@@ -317,7 +336,7 @@ impl EntityInputHandler for TextInput {
         &mut self,
         range_utf16: Option<Range<usize>>,
         new_text: &str,
-        _: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let range = range_utf16
@@ -331,7 +350,9 @@ impl EntityInputHandler for TextInput {
                 .into();
         self.selected_range = range.start + new_text.len()..range.start + new_text.len();
         self.marked_range.take();
-        cx.notify();
+
+        // Call the change handler
+        self.handle_text_change(window, cx);
     }
 
     fn replace_and_mark_text_in_range(
@@ -339,7 +360,7 @@ impl EntityInputHandler for TextInput {
         range_utf16: Option<Range<usize>>,
         new_text: &str,
         new_selected_range_utf16: Option<Range<usize>>,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let range = range_utf16
@@ -362,7 +383,8 @@ impl EntityInputHandler for TextInput {
             .map(|new_range| new_range.start + range.start..new_range.end + range.end)
             .unwrap_or_else(|| range.start + new_text.len()..range.start + new_text.len());
 
-        cx.notify();
+        // Call the change handler
+        self.handle_text_change(window, cx);
     }
 
     fn bounds_for_range(
