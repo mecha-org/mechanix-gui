@@ -8,7 +8,7 @@ use crate::interfaces::wireless::{
 use crate::proxies::NetworkManagerProxy;
 use anyhow::Result;
 use futures::executor::ThreadPool;
-use futures::{FutureExt, StreamExt};
+use futures::{FutureExt, SinkExt, StreamExt};
 use log::{debug, error, info};
 use std::sync::{mpsc, LazyLock};
 use zbus::Connection;
@@ -54,6 +54,7 @@ impl NetworkManagerService {
     ///
     /// Returns an error if the underlying NetworkManager operation fails.
     pub async fn toggle_wireless(&self, enabled: bool) -> Result<(), NetworkManagerError> {
+        println!("service-action:: toggling wireless: {}", enabled);
         self.proxy
             .toggle_wireless(enabled)
             .await
@@ -209,19 +210,26 @@ impl NetworkManagerService {
             .map_err(NetworkManagerError::from)
     }
 
-    pub async fn stream_device_events(&self) -> mpsc::Receiver<NMState> {
+    pub async fn stream_device_events(&self) -> futures::channel::mpsc::Receiver<NMState> {
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = futures::channel::mpsc::channel(250);
 
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_device_events().await {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
-                            if let Err(e) = sender.send(NMState::from(state)) {
-                                error!("failed to send device event to receiver: {}", e);
-                                continue;
-                            }
+                            match sender.send(NMState::from(state)).await {
+                                Ok(r) => { r },
+                                Err(e) => {
+                                    error!("failed to send device event to receiver: {}", e);
+                                    continue;
+                                }
+                            };
+                            // if let Err(e) = sender.send(NMState::from(state)) {
+                            //     error!("failed to send device event to receiver: {}", e);
+                            //     continue;
+                            // }
                         }
                     }
                 }
@@ -318,19 +326,26 @@ impl NetworkManagerService {
         });
         receiver
     }
-    pub async fn stream_wireless_enabled_status(&self) -> mpsc::Receiver<bool> {
+    pub async fn stream_wireless_enabled_status(&self) -> futures::channel::mpsc::Receiver<bool> {
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = futures::channel::mpsc::channel(250);
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_wireless_enabled_status().await {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
                             info!("state updated: {}", state);
-                            if let Err(e) = sender.send(state) {
-                                error!("failed to send device event to receiver: {}", e);
-                                continue;
-                            }
+                            match sender.send(state).await {
+                                Ok(r) => { r },
+                                Err(e) => {
+                                    error!("failed to send device event to receiver: {}", e);
+                                    continue;
+                                }
+                            };
+                            // if let Err(e) = sender.send(state) {
+                            //     error!("failed to send device event to receiver: {}", e);
+                            //     continue;
+                            // }
                         }
                     }
                 }
@@ -341,22 +356,28 @@ impl NetworkManagerService {
         });
         receiver
     }
-    pub async fn stream_active_network_strength(&self) -> mpsc::Receiver<u8> {
+    pub async fn stream_active_network_strength(&self) -> futures::channel::mpsc::Receiver<u8> {
         println!("service-action:: streaming active network strength");
         info!("service-action:: streaming active network strength");
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
-
+        let (mut sender, receiver) = futures::channel::mpsc::channel(250);
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_wireless_network_strength().await {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
                             info!("network strength updated: {}", state);
-                            if let Err(e) = sender.send(state) {
-                                error!("failed to send strength event to receiver: {}", e);
-                                continue;
+                            match sender.send(state).await {
+                                Ok(r) => { r },
+                                Err(e) => {
+                                    error!("failed to send strength event to receiver: {}", e);
+                                    continue;
+                                }
                             }
+                            // if let Err(e) = sender.send(state) {
+                            //     error!("failed to send strength event to receiver: {}", e);
+                            //     continue;
+                            // }
                         }
                     }
                 }

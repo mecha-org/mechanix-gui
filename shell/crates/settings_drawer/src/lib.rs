@@ -4,5 +4,5 @@ pub mod services;
 
 pub mod prelude {
     pub use crate::ui::{SettingsDrawer};
-    pub use crate::events::{AppEvents, NmEvents, BtEvents};
+    pub use crate::events::{AppEvents, NmEvents, BtEvents, VolumeEvents, BrightnessEvents};
 }
