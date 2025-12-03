@@ -18,7 +18,7 @@ fn main() {
                 window_background: WindowBackgroundAppearance::Transparent,
                 kind: WindowKind::LayerShell(LayerShellOptions {
                     namespace: "mechanix.homescreen".to_string(),
-                    layer: Layer::Bottom,
+                    layer: Layer::Top,
                     anchor: Anchor::LEFT | Anchor::TOP | Anchor::RIGHT | Anchor::BOTTOM,
                     keyboard_interactivity: KeyboardInteractivity::None,
                     margin: None,
@@ -27,7 +27,7 @@ fn main() {
                 }),
                 ..Default::default()
             },
-            |_window, cx| cx.new(|cx| Homescreen::new(cx)),
+            |_window, cx| cx.new(|_cx| Homescreen::new(config)),
         )
         .unwrap();
         cx.activate(true);
