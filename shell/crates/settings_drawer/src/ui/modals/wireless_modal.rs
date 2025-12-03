@@ -1,7 +1,9 @@
+use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
 
 use crate::{
+    events::NmEvents,
     get_wireless_strength_icon,
     ui::{
         icon::{Icon, IconName},
@@ -12,6 +14,7 @@ use crate::{
 pub struct WirelessWindow {
     pub title: String,
     pub network_list: Vec<WirelessNetworkInfo>,
+    pub nm_tx: mpsc::Sender<NmEvents>,
 
     // Scrolling state
     scroll_offset: Pixels,
@@ -21,10 +24,15 @@ pub struct WirelessWindow {
 }
 
 impl WirelessWindow {
-    pub fn new(title: String, network_list: Vec<WirelessNetworkInfo>) -> Self {
+    pub fn new(
+        title: String,
+        network_list: Vec<WirelessNetworkInfo>,
+        nm_tx: mpsc::Sender<NmEvents>,
+    ) -> Self {
         Self {
             title,
             network_list,
+            nm_tx,
             scroll_offset: px(0.),
             last_scroll_offset: px(0.),
             drag_start_y: px(0.),
@@ -149,13 +157,15 @@ impl Render for WirelessWindow {
                             .gap_2()
                             .top(self.scroll_offset)
                             .relative()
-                            .children(self.network_list.iter().map(|network| {
-                                let ssid = network.ssid.clone();
-                                let is_active = network.is_active;
+                            .children(self.network_list.iter().enumerate().map(
+                                |(idx, network)| {
+                                    let ssid = network.ssid.clone();
+                                    let is_active = network.is_active;
+                                    let is_known = network.is_known.clone();
+                                    let nm_tx = self.nm_tx.clone();
 
-                                let mut network_div =
-                                    div()
-                                        .id("network-row")
+                                    let mut network_div = div()
+                                        .id(("network_item", idx))
                                         .flex()
                                         .items_center()
                                         .justify_between()
@@ -171,6 +181,7 @@ impl Render for WirelessWindow {
                                                     div().pr_2().child(
                                                         Icon::new(get_wireless_strength_icon(
                                                             network.signal_strength,
+                                                            network.security.clone(),
                                                         ))
                                                         .size((px(28.), px(28.)))
                                                         .text_color(rgb(0xE9E9E9)),
@@ -182,16 +193,45 @@ impl Render for WirelessWindow {
                                             if network.is_active { "Connected" } else { "" },
                                         ));
 
-                                // Conditionally add click handler
-                                if !is_active {
-                                    network_div = network_div
-                                        .on_click(ctx.listener(move |_, _, _, _| {
-                                            println!("connecting to... {:?}", ssid);
-                                        }));
-                                }
+                                    if !is_active && !is_known {
+                                        // proceed to open settings with params
+                                        network_div = network_div.on_click(ctx.listener(
+                                            move |_, _, _, _| {
+                                                println!(
+                                                    "open settings for new network {:?} - {:?}",
+                                                    ssid, is_known
+                                                );
+                                            },
+                                        ));
+                                    } else if !is_active && is_known {
+                                        // proceed to connect
+                                        let ssid_clone = ssid.clone();
+                                        let nm_tx_clone = nm_tx.clone();
 
-                                network_div
-                            })),
+                                        network_div =
+                                            network_div
+                                            .on_click(ctx.listener(
+                                move |_,
+                                 _event: &ClickEvent,
+                                 _window: &mut Window,
+                                 cx: &mut Context<Self>| {
+                                    let ssid = ssid_clone.clone();
+                                    let mut nm_tx = nm_tx_clone.clone();
+                                    
+                                    cx.background_executor()
+                                        .spawn(async move {
+                                            let _ = nm_tx
+                                                .send(NmEvents::ConnectKnownNetwork { name: ssid })
+                                                .await;
+                                        })
+                                        .detach();
+                                },
+                            ))
+                                    }
+
+                                    network_div
+                                },
+                            )),
                     ),
             )
     }

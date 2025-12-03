@@ -1,6 +1,7 @@
 use gpui::*;
 use commons::prelude::*;
 use futures::{SinkExt, StreamExt, channel::mpsc, select};
+use networkmanager::interfaces::wireless::EventType;
 use pulseaudio::service::PulseAudioService;
 use system_dbus::display_client;
 use upower::service::UPowerService;
@@ -78,13 +79,17 @@ fn main() {
                                     }
                                 }
 
-                                // network events
                                 event = nm_rx.next() => {
-                                    if let Some(NmEvents::WirelessToggle { enabled }) = event {
-                                        let _ = network_manager.toggle_wireless(enabled).await;
+                                    if let Some(event) = event  {
+                                        match event {
+                                            NmEvents::WirelessToggle{enabled}=>{let _=network_manager.toggle_wireless(enabled).await;}
+                                            NmEvents::ConnectKnownNetwork { name } => {
+                                                let _ = network_manager.connect_to_saved_network(&name.clone()).await;
+                                            },
+                                        }
                                     }
-                                },
-
+                                }
+                             
                                 enable_state = enable_state_stream.next() => {
                                     if let Some(is_enabled) = enable_state {
                                         let _ = app_channel_tx.send(AppEvents::WirelessStatusChanged { enabled: is_enabled }).await;
@@ -104,7 +109,12 @@ fn main() {
 
                                 active_ap_event = active_aceess_point_stream.next() => {
                                    if let Some(event) = active_ap_event {
-                                    //    println!("AP event: {:?}", event);
+                                       match event {
+                                            Ok(ap_event) => {
+                                                let _ = app_channel_tx.send(AppEvents::AccessPointEvent { event: ap_event }).await;
+                                            }
+                                            Err(e) => eprintln!("Error getting wifi state: {e}"),
+                                        }
                                    }
                                 }
 
@@ -223,7 +233,28 @@ fn main() {
                                 } 
                                 AppEvents::ListWirelessNetworks { list } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.wireless_details.networks = Some(list);
+                                        // sort the list where is_active and is_known are first
+                                        let mut sorted_list = list;
+                                        sorted_list.sort_by_key(|n|(
+                                            !n.is_active,
+                                            !n.is_known
+                                        ));
+                                          this.wireless_details.networks = Some(sorted_list);
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::AccessPointEvent { event } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        let access_point_info = event.raw_access_point_info.unwrap();
+                                        match event.event_type {
+                                            EventType::Added => {
+                                                // update list - add access point
+                                                    },
+                                            EventType::Removed => {
+                                                // update list - remove access point
+                                                
+                                            }
+                                        }
                                         cx.notify();
                                     });
                                 }

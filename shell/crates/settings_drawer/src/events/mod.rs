@@ -1,4 +1,4 @@
-use networkmanager::interfaces::wireless::WirelessNetworkInfo;
+use networkmanager::interfaces::wireless::{AccessPointEvent, WirelessNetworkInfo};
 use pulseaudio::service::DeviceInfo;
 use upower::interfaces::device::BatteryState;
 
@@ -19,6 +19,9 @@ pub enum AppEvents {
     ListWirelessNetworks {
         list: Vec<WirelessNetworkInfo>,
     },
+    AccessPointEvent {
+        event: AccessPointEvent,
+    }, 
     BluetoothEnabled {
         enabled: bool,
     },
@@ -36,6 +39,7 @@ pub enum AppEvents {
 #[derive(Debug)]
 pub enum NmEvents {
     WirelessToggle { enabled: bool },
+    ConnectKnownNetwork { name: String },
 }
 
 #[derive(Debug)]

@@ -883,7 +883,7 @@ impl SettingsDrawer {
                                             //     network_list: this.wireless_details.networks.clone().unwrap(),
                                             // })
                                             cx.new(|_| 
-                                                WirelessWindow::new("Wi-Fi".to_string(), this.wireless_details.networks.clone().unwrap()) 
+                                                WirelessWindow::new("Wi-Fi".to_string(), this.wireless_details.networks.clone().unwrap(), this.nm_tx.clone()) 
                                         )
                                         },
                                     )

@@ -10,7 +10,7 @@ pub mod prelude {
 use crate::ui::icon::IconName;
 
 
-pub fn get_wireless_strength_icon(signal_strength: u8) -> IconName {
+pub fn get_wireless_strength_icon(signal_strength: u8, security: String) -> IconName {
     match signal_strength {
         0 => IconName::WirelessOn,
         1..=30 => IconName::WirelessLow,
