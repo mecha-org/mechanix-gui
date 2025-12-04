@@ -77,7 +77,7 @@ enum Commands {
     /// The schema and key to describe
     Describe { schema: String, key: String },
 }
-const CHECKSUM_TREE_NAME: &str = "schema_checksum";
+const LAST_MODIFIED_TREE_NAME: &str = "schema_last_modified";
 const CONNECTION_BUS_NAME: &str = "org.mechanix.MxConf";
 const SCHEMA_DIR: &str = "/usr/share/mxconf/schemas";
 const DEFAULT_PROFILE_PATH: &str = "/etc/mxconf/profile/default.toml";
@@ -107,29 +107,30 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
         .context("Failed to convert filename to string")?;
 
     validator::validate_schema_name(schema_file_name)?;
+    let last_modified = utils::get_last_modified_timestamp(path)?;
     let schema_toml: toml::Value = application_schema_str
         .parse()
         .context("Unable to parse TOML")?;
-    let schema_checksum = validator::generate_checksum(&schema_file_name, &schema_toml)
-        .context("Unable to generate checksum")?;
 
     let (rsp_tx, rsp_rx) = oneshot::channel();
-    // Check if file already exists with same checksum
-    if let Err(er) = db_tx.send(DbCmd::GetChecksum {
-        checksum_identifier: CHECKSUM_TREE_NAME.to_string(),
+    // Check if a file already exists with the same last_modified timestamp
+    if let Err(er) = db_tx.send(DbCmd::GetLastModified {
+        identifier: LAST_MODIFIED_TREE_NAME.to_string(),
         key: schema_file_name.to_string(),
         rsp: rsp_tx,
     }).await {
-        error!("Failed to get checksum: {}", er);
-        return Err(anyhow::anyhow!("Failed to get checksum"));
+        error!("Failed to get last_modified: {}", er);
+        return Err(anyhow::anyhow!("Failed to get last_modified"));
     }
-    if let Some(existing_checksum) = rsp_rx.await? {
-        if schema_checksum == existing_checksum {
-            info!("TOML file already exists with same checksum");
+    if let Some(existing_last_modified) = rsp_rx.await? {
+        info!("Found existing last_modified: {}", existing_last_modified);
+        if last_modified == existing_last_modified {
+            info!("TOML file already exists and processed successfully. Skipping.");
             return Ok(());
         }
     }
 
+    info!("TOML file does not exist or has changed. Processing...");
     // Validate the application schema file
     match validate_schema(&schema_toml).map_err(|err| anyhow::anyhow!("Validation error: {}", err))
     {
@@ -139,14 +140,13 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
         Err(e) => return Err(e),
     };
 
-    //TODO: insert checksum into database
-    if let Err(er) = db_tx.send(DbCmd::InsertChecksum {
-        checksum_identifier: CHECKSUM_TREE_NAME.to_string(),
+    if let Err(er) = db_tx.send(DbCmd::InsertLastModified {
+        identifier: LAST_MODIFIED_TREE_NAME.to_string(),
         key: schema_file_name.to_string(),
-        value: schema_checksum,
+        value: last_modified,
     }).await {
-        error!("Failed to insert checksum: {}", er);
-        return Err(anyhow::anyhow!("Failed to insert checksum"));
+        error!("Failed to insert last_modified: {}", er);
+        return Err(anyhow::anyhow!("Failed to insert last_modified"));
     }
     println!("toml file processed successfully!");
     Ok(())

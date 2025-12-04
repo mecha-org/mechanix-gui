@@ -8,15 +8,15 @@ use tokio::sync::{mpsc, oneshot};
 
 
 pub enum DbCmd {
-    GetChecksum {
-        checksum_identifier: String,
+    GetLastModified {
+        identifier: String,
         key: String,
-        rsp: oneshot::Sender<Option<u32>>,
+        rsp: oneshot::Sender<Option<String>>,
     },
-    InsertChecksum {
-        checksum_identifier: String,
+    InsertLastModified {
+        identifier: String,
         key: String,
-        value: u32,
+        value: String,
     },
     Get {
         identifier: String,
@@ -31,33 +31,33 @@ pub enum DbCmd {
     },
 }
 
-pub fn start_db_actor(mut db: Database) -> mpsc::Sender<DbCmd> {
+pub fn start_db_actor(db: Database) -> mpsc::Sender<DbCmd> {
     let (tx, mut rx) = mpsc::channel::<DbCmd>(128);
     tokio::spawn(async move {
         let mut db = db; // owned by this task
         while let Some(cmd) = rx.recv().await {
                 match cmd {
-                    DbCmd::GetChecksum {
-                        checksum_identifier,
+                    DbCmd::GetLastModified {
+                        identifier,
                         key,
                         rsp,
-                    } => match db.get_checksum(&checksum_identifier, &key) {
-                        Ok(checksum) => {
-                            let _ = rsp.send(checksum);
+                    } => match db.get_last_modified(&identifier, &key) {
+                        Ok(last_modified) => {
+                            let _ = rsp.send(last_modified);
                         }
                         Err(e) => {
-                            error!("Failed to get checksum: {}", e);
+                            error!("Failed to get last_modified: {}", e);
                             let _ = rsp.send(None);
                         }
                     },
-                    DbCmd::InsertChecksum {
-                        checksum_identifier,
+                    DbCmd::InsertLastModified {
+                        identifier,
                         key,
                         value,
-                    } => match db.insert_checksum(&checksum_identifier, &key, &value) {
+                    } => match db.insert_last_modified(&identifier, &key, &value) {
                         Ok(()) => {}
                         Err(e) => {
-                            error!("Failed to insert checksum: {}", e);
+                            error!("Failed to insert last_modified: {}", e);
                         }
                     },
                     DbCmd::Get {
@@ -91,9 +91,9 @@ pub fn start_db_actor(mut db: Database) -> mpsc::Sender<DbCmd> {
 /// Database struct for storing and retrieving configuration data.
 ///
 /// This struct provides an interface to the underlying sled database,
-/// which is used to store configuration settings and schema checksums.
+/// which is used to store configuration settings and schema last_modifieds.
 /// The database is organized into trees, where each tree corresponds
-/// to a schema or a collection of checksums.
+/// to a schema or a collection of last_modifieds.
 #[derive(Debug, Clone)]
 pub struct Database {
     /// The underlying sled database instance
@@ -152,43 +152,42 @@ impl Database {
         Ok(tree)
     }
 
-    /// Insert a checksum into the database.
+    /// Insert a last_modified into the database.
     ///
-    /// This function stores a checksum value for a schema in the specified checksum tree.
-    /// Checksums are used to detect changes in schema files.
+    /// This function stores a last_modified value for a schema in the specified last_modified tree.
+    /// last_modifieds are used to detect changes in schema files.
     ///
     /// # Arguments
     ///
-    /// * `checksum_identifier` - The identifier for the checksum tree
+    /// * `last_modified_identifier` - The identifier for the last_modified tree
     /// * `schema_name` - The name of the schema
-    /// * `checksum_value` - The checksum value to store
+    /// * `last_modified_value` - The last_modified value to store
     ///
     /// # Returns
     ///
     /// * `Ok(())` if the insertion was successful
     /// * `Err(...)` if there was an error during insertion
-    pub fn insert_checksum(
+    pub fn insert_last_modified(
         &mut self,
-        checksum_identifier: &str,
+        identifier: &str,
         schema_name: &str,
-        checksum_value: &u32,
+        last_modified: &str,
     ) -> Result<()> {
         info!(
-            "Inserting checksum for schema: {} value: {}",
-            schema_name, checksum_value
+            "Inserting last_modified for schema: {} value: {}",
+            schema_name, last_modified
         );
-        let checksum_tree = self.get_tree(checksum_identifier)?;
-        debug!("Checksum tree opened: {}", checksum_identifier);
-        let checksum = checksum_value.to_le_bytes();
-        checksum_tree
-            .insert(schema_name, checksum.as_ref())
+        let last_modified_tree = self.get_tree(identifier)?;
+        // let last_modified_bytes = last_modified.bytes();
+        last_modified_tree
+            .insert(schema_name, last_modified)
             .with_context(|| {
                 format!(
-                    "Failed to insert checksum with schema_name: {}",
+                    "Failed to insert last_modified with schema_name: {}",
                     schema_name
                 )
             })?;
-        debug!("Checksum inserted for schema: {}", schema_name);
+        debug!("last_modified inserted for schema: {}", schema_name);
         Ok(())
     }
 
@@ -298,47 +297,38 @@ impl Database {
 
         Ok(results)
     }
-    /// Retrieve a checksum from the database.
+    /// Retrieve a last_modified from the database.
     ///
-    /// This function retrieves a checksum from the specified checksum tree using the given key.
-    /// Checksums are stored as 4-byte little-endian u32 values.
-    /// If the key doesn't exist or the value is not a valid 4-byte checksum, it returns None.
+    /// This function retrieves a last_modified from the specified last_modified tree using the given key.
+    /// last_modifieds are stored as 4-byte little-endian u32 values.
+    /// If the key doesn't exist or the value is not a valid 4-byte last_modified, it returns None.
     ///
     /// # Arguments
     ///
-    /// * `checksum_identifier` - The identifier of the checksum tree
-    /// * `key` - The key of the checksum to retrieve
+    /// * `last_modified_identifier` - The identifier of the last_modified tree
+    /// * `key` - The key of the last_modified to retrieve
     ///
     /// # Returns
     ///
-    /// * `Ok(None)` if the key is not present or the value is not a valid checksum
-    /// * `Ok(Some(checksum))` if the key is present and the value is a valid checksum
+    /// * `Ok(None)` if the key is not present or the value is not a valid last_modified
+    /// * `Ok(Some(last_modified))` if the key is present and the value is a valid last_modified
     /// * `Err(...)` if there was an error during retrieval
-    pub fn get_checksum(&self, checksum_identifier: &str, key: &str) -> Result<Option<u32>> {
+    pub fn get_last_modified(&self, identifier: &str, key: &str) -> Result<Option<String>> {
         debug!(
-            "Getting checksum for key: {} from tree: {}",
-            key, checksum_identifier
+            "Getting last_modified for key: {} from tree: {}",
+            key, identifier
         );
-        let checksum_tree = self.get_tree(checksum_identifier)?;
-        let value_opt = checksum_tree
+        let tree = self.get_tree(identifier)?;
+        let value_opt = tree
             .get(key)
-            .with_context(|| format!("Failed to get checksum with key: {}", key))?;
+            .with_context(|| format!("Failed to get last_modified with key: {}", key))?;
         if let Some(value) = value_opt {
-            debug!("Checksum value found for key: {}: {:?}", key, value);
-            if value.len() == 4 {
-                let bytes: [u8; 4] = value
-                    .as_ref()
-                    .try_into()
-                    .with_context(|| "Failed to convert checksum bytes")?;
-                Ok(Some(u32::from_le_bytes(bytes)))
-            } else {
-                warn!("Invalid checksum length for key {}: {}", key, value.len());
-                Ok(None)
-            }
+            debug!("last_modified value found for key: {}: {:?}", key, value);
+            Ok(Some(String::from_utf8_lossy(&value).to_string()))
         } else {
             warn!(
-                "No checksum found for key: {} in tree: {}",
-                key, checksum_identifier
+                "No last_modified found for key: {} in tree: {}",
+                key, identifier
             );
             Ok(None)
         }
