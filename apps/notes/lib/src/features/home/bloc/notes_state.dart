@@ -13,7 +13,7 @@ class NotesState extends Equatable {
   final bool isSearchLoading;
   final bool isSearchLoadingMore;
   final bool hasMoreSearchResults;
-  final List<NoteMetaData> searchedNotes;
+  final List<SearchMetaData> searchedNotes;
 
   // Selection state
   final bool isSelectionMode;
@@ -48,7 +48,7 @@ class NotesState extends Equatable {
     bool? isSearchLoading,
     bool? isSearchLoadingMore,
     bool? hasMoreSearchResults,
-    List<NoteMetaData>? searchedNotes,
+    List<SearchMetaData>? searchedNotes,
     bool? isSelectionMode,
     List<String>? selectedNoteIds,
   }) {

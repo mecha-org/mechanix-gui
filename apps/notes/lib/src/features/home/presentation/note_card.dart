@@ -33,7 +33,7 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
     if (widget.isSelectionMode) {
       context.read<NotesBloc>().add(SelectNote(widget.note.id));
     } else {
-      _openNote(context, widget.note);
+      _openNote(context, widget.note.id);
     }
   }
 
@@ -148,11 +148,11 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
   }
 }
 
-void _openNote(BuildContext context, NoteMetaData note) {
+void _openNote(BuildContext context, String noteId) {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => EditorBlocProvider(child: NotesEditor(note: note)),
+      builder: (_) => EditorBlocProvider(child: NotesEditor(noteId:noteId)),
     ),
   );
 }

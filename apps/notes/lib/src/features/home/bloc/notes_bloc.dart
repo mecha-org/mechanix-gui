@@ -22,7 +22,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   bool _isLoadingSearchChunk = false;
   String _currentSearchQuery = '';
   int _searchLoadedCount = 0;
-  List<NoteMetaData> _allSearchResults = [];
+  List<SearchMetaData> _allSearchResults = [];
 
   NotesBloc({required this.notesRepository}) : super(const NotesState()) {
     on<CreateNotes>(_createNote);
@@ -232,7 +232,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
   }
 
   // Helper: Get next chunk of search results
-  List<NoteMetaData> _getSearchChunk(int count) {
+  List<SearchMetaData> _getSearchChunk(int count) {
     if (_searchLoadedCount >= _allSearchResults.length) {
       _hasMoreSearchResults = false;
       return [];

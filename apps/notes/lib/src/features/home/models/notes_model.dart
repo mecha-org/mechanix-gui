@@ -55,6 +55,22 @@ class NoteMetaData {
   });
 }
 
+class SearchMetaData {
+  final String id;
+  final String text;
+  final DateTime updatedAt;
+  final bool isTitle;
+  final int availableCount;
+
+  SearchMetaData({
+    required this.id,
+    required this.text,
+    required this.updatedAt,
+    required this.isTitle,
+    required this.availableCount,
+  });
+}
+
 class NoteLine {
   final String type;
   final List<NoteSpan> spans;

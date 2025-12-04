@@ -84,8 +84,17 @@ class NotesRepositoryImpl extends NotesRepository {
       List<NoteSpan> spans = [];
       Map<String, dynamic>? pendingLineAttr;
       String? previousLineType; // Track previous line type for grouping
+      bool isFirstLine = true; // Track if we're on the first line (title)
 
       void flushLine() {
+        // Skip the first line (title)
+        if (isFirstLine) {
+          isFirstLine = false;
+          spans.clear();
+          pendingLineAttr = null;
+          return;
+        }
+
         // Stop processing if we've reached maxLines
         if (lines.length >= maxLines) return;
 
@@ -133,8 +142,8 @@ class NotesRepositoryImpl extends NotesRepository {
       }
 
       for (final rawOp in ops) {
-        // Stop early if we've reached maxLines
-        if (lines.length >= maxLines) break;
+        // Stop early if we've reached maxLines (but keep processing first line)
+        if (!isFirstLine && lines.length >= maxLines) break;
 
         // Force op → Map<String, dynamic>
         final op = Map<String, dynamic>.from(rawOp);
@@ -159,7 +168,7 @@ class NotesRepositoryImpl extends NotesRepository {
           final parts = insert.split("\n");
 
           for (int i = 0; i < parts.length; i++) {
-            if (lines.length >= maxLines) break;
+            if (!isFirstLine && lines.length >= maxLines) break;
 
             if (parts[i].isNotEmpty) {
               spans.add(
@@ -199,7 +208,7 @@ class NotesRepositoryImpl extends NotesRepository {
       }
 
       // Flush last line if needed (and if we haven't reached maxLines)
-      if (spans.isNotEmpty && lines.length < maxLines) {
+      if (spans.isNotEmpty && !isFirstLine && lines.length < maxLines) {
         flushLine();
       }
 
@@ -422,7 +431,7 @@ class NotesRepositoryImpl extends NotesRepository {
   }
 
   @override
-  Future<List<NoteMetaData>> searchNotes(String searchQuery) async {
+  Future<List<SearchMetaData>> searchNotes(String searchQuery) async {
     try {
       await ensureHiveConnected();
       final box = Hive.box<NoteHive>(Constants.tableName);
@@ -434,36 +443,154 @@ class NotesRepositoryImpl extends NotesRepository {
         return [];
       }
 
-      final searchedNotes =
-          box.values
-              .where(
-                (note) =>
-                    note.title.toLowerCase().contains(query) ||
-                    note.plainText.toLowerCase().contains(query),
-              )
-              .map((note) {
-                final List data = jsonDecode(note.preview);
-                return NoteMetaData(
-                  id: note.id,
-                  height: note.height,
-                  title: note.title,
-                  createdAt: note.createdAt,
-                  updatedAt: note.updatedAt,
-                  isPinned: note.isPinned,
-                  preview: data.map((e) => NoteLine.fromJson(e)).toList(),
-                );
-              })
-              .toList();
-      print("searchedNotes: $searchedNotes");
-      searchedNotes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      final List<SearchMetaData> searchResults = [];
 
-      logger.i("Found ${searchedNotes.length} notes matching '$query'");
+      for (final note in box.values) {
+        final plainTextLower = note.plainText.toLowerCase();
 
-      return searchedNotes;
+        // Split plainText into lines
+        final lines = note.plainText.split('\n');
+        final firstLine = lines.isNotEmpty ? lines.first.trim() : '';
+        final hasTitle = firstLine.isNotEmpty;
+
+        // Separate title and content
+        String titleText = '';
+        String contentText = '';
+        String titleLower = '';
+        String contentLower = '';
+        if (hasTitle) {
+          titleText = firstLine;
+          titleLower = firstLine.toLowerCase();
+          // Content is everything after the first line
+          contentText =
+              lines.length > 1 ? lines.sublist(1).join('\n').trim() : '';
+          contentLower = contentText.toLowerCase();
+        } else {
+          // No title, everything is content
+          contentText = note.plainText;
+          contentLower = plainTextLower;
+        }
+
+        // Count occurrences in title and content
+        final titleMatches =
+            hasTitle ? _countOccurrences(titleLower, query) : 0;
+        final contentMatches = _countOccurrences(contentLower, query);
+        final totalCount = titleMatches + contentMatches;
+
+        // Skip if no matches found
+        if (totalCount == 0) continue;
+
+        // If matches found in title
+        if (titleMatches > 0) {
+          final text = _extractMatchingText(titleText, titleLower, query);
+          searchResults.add(
+            SearchMetaData(
+              id: note.id,
+              text: text,
+              updatedAt: note.updatedAt,
+              isTitle: true,
+              availableCount: totalCount,
+            ),
+          );
+        }
+
+        // If matches found in content (and not already added as title-only result)
+        if (contentMatches > 0 && titleMatches == 0) {
+          final text = _extractMatchingText(contentText, contentLower, query);
+
+          searchResults.add(
+            SearchMetaData(
+              id: note.id,
+              text: text,
+              updatedAt: note.updatedAt,
+              isTitle: false,
+              availableCount: totalCount,
+            ),
+          );
+        }
+      }
+
+      searchResults.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+      logger.i(
+        "Found ${searchResults.length} search results matching '$query'",
+      );
+
+      return searchResults;
     } catch (e) {
       logger.e("Search failed: $e");
       return [];
     }
+  }
+
+  // Helper method to count occurrences of a substring
+  int _countOccurrences(String text, String query) {
+    if (query.isEmpty || text.isEmpty) return 0;
+
+    int count = 0;
+    int index = 0;
+    final queryLength = query.length;
+
+    while ((index = text.indexOf(query, index)) != -1) {
+      count++;
+      index += queryLength;
+    }
+
+    return count;
+  }
+
+  // Helper method to extract matching text with context
+  String _extractMatchingText(
+    String originalText,
+    String lowerText,
+    String query,
+  ) {
+    if (originalText.isEmpty || query.isEmpty) return originalText;
+
+    const int leftWords = 2; // Words to show on left each side
+    const int rightWords = 3; // Words to show on right each side
+    const String ellipsis = "...";
+
+    // Find first occurrence
+    final matchIndex = lowerText.indexOf(query);
+    if (matchIndex == -1) return originalText;
+
+    // Split into words and clean
+    final words =
+        originalText
+            .split(RegExp(r'\s+'))
+            .where((word) => word.isNotEmpty)
+            .toList();
+
+    if (words.isEmpty) return originalText;
+
+    // Find which word contains the match
+    int matchWordIndex = -1;
+    int currentPos = 0;
+
+    for (int i = 0; i < words.length; i++) {
+      final wordEnd = currentPos + words[i].length;
+      if (matchIndex >= currentPos && matchIndex < wordEnd) {
+        matchWordIndex = i;
+        break;
+      }
+      currentPos = wordEnd + 1; // +1 for space
+    }
+
+    if (matchWordIndex == -1) return originalText.trim();
+
+    // Extract words around match
+    int start = (matchWordIndex - leftWords).clamp(0, words.length);
+    int end = (matchWordIndex + rightWords + 1).clamp(0, words.length);
+
+    final extractedWords = words.sublist(start, end);
+    String result = extractedWords.join(' ');
+
+    // Add ellipsis
+    if (start > 0) result = ellipsis + result;
+    if (end < words.length) result = result + ellipsis;
+
+    return result;
   }
 
   @override

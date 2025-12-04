@@ -7,7 +7,9 @@ import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
 
 class SearchInputBar extends StatefulWidget {
-  const SearchInputBar({super.key});
+  final ValueChanged<String> onChanged;
+
+  const SearchInputBar({super.key, required this.onChanged});
 
   @override
   State<SearchInputBar> createState() => _SearchInputBarState();
@@ -39,6 +41,7 @@ class _SearchInputBarState extends State<SearchInputBar> {
     // Start a new timer
     _debounceTimer = Timer(Constants.debounceDuration, () {
       context.read<NotesBloc>().add(SearchEvent(val));
+      widget.onChanged(val);
     });
   }
 

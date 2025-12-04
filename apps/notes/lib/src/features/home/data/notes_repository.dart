@@ -26,7 +26,7 @@ abstract class NotesRepository {
 
   Future<void> pinnedNotes(List<String> noteIds, bool isPinned);
 
-  Future<List<NoteMetaData>> searchNotes(String searchQuery);
+  Future<List<SearchMetaData>> searchNotes(String searchQuery);
 
   Future<EditorPayload?> findById(String noteId);
 }
