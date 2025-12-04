@@ -7,9 +7,9 @@ use crate::interfaces::wireless::{
 };
 use crate::proxies::NetworkManagerProxy;
 use anyhow::Result;
+use futures::channel::mpsc;
 use futures::executor::ThreadPool;
 use futures::{FutureExt, StreamExt};
-use futures::channel::mpsc;
 use log::{debug, error, info};
 use std::sync::LazyLock;
 use zbus::Connection;
@@ -92,6 +92,7 @@ impl NetworkManagerService {
                 };
 
                 Ok(WirelessNetworkInfo {
+                    access_point_object_path: raw_ap.object_path,
                     ssid: raw_ap.ssid,
                     signal_strength,
                     security,
@@ -263,8 +264,8 @@ impl NetworkManagerService {
                                     continue; // Skip this item
                                 }
                             };
-                            let access_point_path = args.access_point.to_string();
-                            info!("access point added: {}", access_point_path);
+                            let access_point_object_path = args.access_point.to_string();
+                            info!("access point added: {}", access_point_object_path);
 
                             let raw_access_point_info = match proxy.get_access_point_info(&args.access_point).await {
                                 Ok(info) => info,
@@ -280,9 +281,10 @@ impl NetworkManagerService {
                             .then(|| "Protected".to_string()).unwrap_or("Open".to_string());
 
                             let access_point_event_info = AccessPointEvent {
-                                access_point_path,
+                                object_path: access_point_object_path.clone(),
                                 event_type: EventType::Added,
                                 wireless_network_info: Some(WirelessNetworkInfo {
+                                    access_point_object_path,
                                     ssid: raw_access_point_info.ssid,
                                     signal_strength: raw_access_point_info.strength,
                                     security: protected_or_open,
@@ -310,11 +312,11 @@ impl NetworkManagerService {
                                     continue; // Skip this item
                                 }
                             };
-                            let access_point_path = args.access_point.to_string();
-                            debug!("access point removed: {}", access_point_path);
+                            let object_path = args.access_point.to_string();
+                            debug!("access point removed: {}", object_path);
 
                             let access_point_event_info = AccessPointEvent {
-                                access_point_path,
+                                object_path,
                                 event_type: EventType::Removed,
                                 wireless_network_info: None,
                                 ..Default::default()

@@ -451,6 +451,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
 
         let mut seen_ssids: Vec<String> = vec![];
         for access_point in access_points {
+            let object_path = access_point.to_string();
             // Create a proxy for the access point.
             let access_point_proxy =
                 match access_point::AccessPointProxy::new(&self.0.connection(), access_point).await
@@ -498,6 +499,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
             // Build the access point info struct.
             let raw_access_point_info = RawAccessPointInfo {
                 ssid: ssid.clone(),
+                object_path,
                 flags,
                 frequency,
                 bandwidth,
