@@ -109,6 +109,7 @@ fn main() {
 
                                 active_ap_event = active_aceess_point_stream.next() => {
                                    if let Some(event) = active_ap_event {
+                                    // println!("event: {:?}", event);
                                        match event {
                                             Ok(ap_event) => {
                                                 let _ = app_channel_tx.send(AppEvents::AccessPointEvent { event: ap_event }).await;
@@ -239,20 +240,47 @@ fn main() {
                                             !n.is_active,
                                             !n.is_known
                                         ));
+                                          sorted_list.retain(|n| !n.ssid.is_empty());
                                           this.wireless_details.networks = Some(sorted_list);
                                         cx.notify();
                                     });
                                 }
                                 AppEvents::AccessPointEvent { event } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        let access_point_info = event.raw_access_point_info.unwrap();
+                                        let event_network_info = event.wireless_network_info;
+
                                         match event.event_type {
                                             EventType::Added => {
-                                                // update list - add access point
-                                                    },
+                                                // // update list - add access point
+                                                    if let Some(event_network_info) = event_network_info {
+                                                        match &this.wireless_details.networks {
+                                                            Some(networks) => {
+                                                                let mut networks = networks.clone();
+                                                                networks.push(event_network_info);
+                                                                
+                                                                this.wireless_details.networks = Some(networks);
+                                                            }
+                                                            None => {
+                                                                this.wireless_details.networks = Some(vec![event_network_info]);
+                                                            }
+                                                        }
+                                                    }
+                                                },
                                             EventType::Removed => {
-                                                // update list - remove access point
-                                                
+                                                //  // // update list - remove access point
+                                                //     if let Some(event_network_info) = event_network_info {
+                                                //         match &this.wireless_details.networks {
+                                                //             Some(networks) => {
+                                                //                 let mut networks = networks.clone();
+                                                //                 networks.retain(|n| n.ssid != event_network_info.ssid);
+
+                                                //                 this.wireless_details.networks = Some(networks);
+                                                //             }
+                                                //             None => {
+                                                //                 this.wireless_details.networks = Some(vec![event_network_info]);
+                                                //             }
+                                                //         }
+                                                //     }
                                             }
                                         }
                                         cx.notify();

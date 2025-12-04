@@ -163,6 +163,11 @@ impl Render for WirelessWindow {
                                     let is_active = network.is_active;
                                     let is_known = network.is_known.clone();
                                     let nm_tx = self.nm_tx.clone();
+                                    let icon_color = if network.is_active {
+                                        rgb(0xC67600)
+                                    } else {
+                                        rgb(0xD2D2D2)
+                                    };                                    
 
                                     let mut network_div = div()
                                         .id(("network_item", idx))
@@ -180,11 +185,12 @@ impl Render for WirelessWindow {
                                                 .child(
                                                     div().pr_2().child(
                                                         Icon::new(get_wireless_strength_icon(
+                                                            network.is_active,
                                                             network.signal_strength,
                                                             network.security.clone(),
                                                         ))
                                                         .size((px(28.), px(28.)))
-                                                        .text_color(rgb(0xE9E9E9)),
+                                                        .text_color(icon_color),
                                                     ),
                                                 )
                                                 .child(network.ssid.clone()),
@@ -213,7 +219,7 @@ impl Render for WirelessWindow {
                                             .on_click(ctx.listener(
                                 move |_,
                                  _event: &ClickEvent,
-                                 _window: &mut Window,
+                                 window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     let ssid = ssid_clone.clone();
                                     let mut nm_tx = nm_tx_clone.clone();
@@ -223,6 +229,7 @@ impl Render for WirelessWindow {
                                             let _ = nm_tx
                                                 .send(NmEvents::ConnectKnownNetwork { name: ssid })
                                                 .await;
+
                                         })
                                         .detach();
                                 },

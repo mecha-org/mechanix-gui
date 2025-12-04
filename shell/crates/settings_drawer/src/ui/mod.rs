@@ -2,6 +2,7 @@ pub mod icon;  // check
 mod widgets;
 mod modals;
 use crate::events::{BrightnessEvents, NmEvents, VolumeEvents};
+use crate::get_wireless_strength_icon;
 use crate::ui::modals::{SubWindow, WirelessWindow, modal, wireless_modal};
 use crate::{
     events::BtEvents,
@@ -402,25 +403,19 @@ impl SettingsDrawer {
                 .wireless_details
                 .connected_network
                 .clone();
-        let _ =  match self.wireless_details.enabled &&  wireless_connected_network.is_some(){
+            let wireless_enable = self.wireless_details.enabled;
+            let security = wireless_connected_network.clone().map(|info| info.security).unwrap_or_else(|| "Open".to_string());
+        let _ =  match wireless_enable.clone() &&  wireless_connected_network.is_some(){
             true => {
                 network_label = wireless_connected_network.clone()
                 .map(|s| s.ssid)
                 .unwrap_or_else(|| "Wi-Fi".to_string());
 
-                         wireless_icon = if network_label == "Wi-Fi" {IconName::WirelessOn} 
+                         wireless_icon = if network_label == "Wi-Fi" {IconName::ConnectedWifiOn} 
                          else {
 
                             let signal_strength = wireless_connected_network.clone().map(|info| info.signal_strength).unwrap_or_else(|| 0);
-
-                            match signal_strength {
-                                0 => IconName::WirelessOn,
-                                1..=30 => IconName::WirelessLow,
-                                31..=60 => IconName::WirelessMedium,
-                                61..=85 => IconName::WirelessHigh,
-                                86..=100 => IconName::WirelessFull,
-                                _ => IconName::WirelessWarning,
-                            }
+                            get_wireless_strength_icon(wireless_enable, signal_strength, security)
                          }
             } ,
             _ => {}
@@ -826,7 +821,7 @@ impl SettingsDrawer {
                             .icon_color(rgb(0x4D4D4D)) // changes as per wireless state
                             .size((px(104.), px(104.)))
                             .active(self.wireless_details.enabled)
-                            .active_icon_color(rgb(0x4892F1))
+                            .active_icon_color(rgb(0xC67600))
                             .active_bg_color(rgb(0x202020))
                             .label(network_label)
                             // .on_click(cx.listener(
