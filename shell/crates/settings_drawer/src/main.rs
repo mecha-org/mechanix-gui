@@ -109,7 +109,6 @@ fn main() {
 
                                 active_ap_event = active_aceess_point_stream.next() => {
                                    if let Some(event) = active_ap_event {
-                                    // println!("event: {:?}", event);
                                        match event {
                                             Ok(ap_event) => {
                                                 let _ = app_channel_tx.send(AppEvents::AccessPointEvent { event: ap_event }).await;
@@ -251,36 +250,24 @@ fn main() {
 
                                         match event.event_type {
                                             EventType::Added => {
-                                                // // update list - add access point
-                                                    if let Some(event_network_info) = event_network_info {
-                                                        match &this.wireless_details.networks {
-                                                            Some(networks) => {
-                                                                let mut networks = networks.clone();
-                                                                networks.push(event_network_info);
-                                                                
-                                                                this.wireless_details.networks = Some(networks);
-                                                            }
-                                                            None => {
-                                                                this.wireless_details.networks = Some(vec![event_network_info]);
-                                                            }
-                                                        }
+                                                if let Some(event_network_info) = event_network_info {
+                                                    if event_network_info.ssid.is_empty() {
+                                                        return;
                                                     }
+                                                    if let Some(networks) = &this.wireless_details.networks {
+                                                        let mut networks = networks.clone();
+                                                        networks.push(event_network_info);
+                                                        this.wireless_details.networks = Some(networks);
+                                                    }
+                                                }
                                                 },
                                             EventType::Removed => {
-                                                //  // // update list - remove access point
-                                                //     if let Some(event_network_info) = event_network_info {
-                                                //         match &this.wireless_details.networks {
-                                                //             Some(networks) => {
-                                                //                 let mut networks = networks.clone();
-                                                //                 networks.retain(|n| n.ssid != event_network_info.ssid);
-
-                                                //                 this.wireless_details.networks = Some(networks);
-                                                //             }
-                                                //             None => {
-                                                //                 this.wireless_details.networks = Some(vec![event_network_info]);
-                                                //             }
-                                                //         }
-                                                //     }
+                                                let access_point_object_path = event.object_path;
+                                                if let Some(networks) = &this.wireless_details.networks {
+                                                let mut networks = networks.clone();
+                                                networks.retain(|n| n.access_point_object_path != access_point_object_path);
+                                                this.wireless_details.networks = Some(networks);
+                                                }
                                             }
                                         }
                                         cx.notify();

@@ -404,7 +404,6 @@ impl SettingsDrawer {
                 .connected_network
                 .clone();
             let wireless_enable = self.wireless_details.enabled;
-            let security = wireless_connected_network.clone().map(|info| info.security).unwrap_or_else(|| "Open".to_string());
         let _ =  match wireless_enable.clone() &&  wireless_connected_network.is_some(){
             true => {
                 network_label = wireless_connected_network.clone()
@@ -415,7 +414,7 @@ impl SettingsDrawer {
                          else {
 
                             let signal_strength = wireless_connected_network.clone().map(|info| info.signal_strength).unwrap_or_else(|| 0);
-                            get_wireless_strength_icon(wireless_enable, signal_strength, security)
+                            get_wireless_strength_icon(wireless_enable, signal_strength, "Open".to_string())  // intentionally open as no lock to show in view
                          }
             } ,
             _ => {}

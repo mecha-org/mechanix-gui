@@ -161,7 +161,7 @@ impl Render for WirelessWindow {
                                 |(idx, network)| {
                                     let ssid = network.ssid.clone();
                                     let is_active = network.is_active;
-                                    let is_known = network.is_known.clone();
+                                    let is_known = network.is_known;
                                     let nm_tx = self.nm_tx.clone();
                                     let icon_color = if network.is_active {
                                         rgb(0xC67600)
@@ -204,7 +204,7 @@ impl Render for WirelessWindow {
                                         network_div = network_div.on_click(ctx.listener(
                                             move |_, _, _, _| {
                                                 println!(
-                                                    "open settings for new network {:?} - {:?}",
+                                                    "TODO: open settings for new network {:?} - {:?}",
                                                     ssid, is_known
                                                 );
                                             },
@@ -217,23 +217,24 @@ impl Render for WirelessWindow {
                                         network_div =
                                             network_div
                                             .on_click(ctx.listener(
-                                move |_,
-                                 _event: &ClickEvent,
-                                 window: &mut Window,
-                                 cx: &mut Context<Self>| {
-                                    let ssid = ssid_clone.clone();
-                                    let mut nm_tx = nm_tx_clone.clone();
-                                    
-                                    cx.background_executor()
-                                        .spawn(async move {
-                                            let _ = nm_tx
-                                                .send(NmEvents::ConnectKnownNetwork { name: ssid })
-                                                .await;
+                                            move |_,
+                                            _event: &ClickEvent,
+                                            window: &mut Window,
+                                            cx: &mut Context<Self>| {
+                                                let ssid = ssid_clone.clone();
+                                                let mut nm_tx = nm_tx_clone.clone();
+                                                
+                                                cx.background_executor()
+                                                    .spawn(async move {
+                                                        let _ = nm_tx
+                                                            .send(NmEvents::ConnectKnownNetwork { name: ssid })
+                                                            .await;
 
-                                        })
-                                        .detach();
-                                },
-                            ))
+                                                    })
+                                                    .detach();
+                                                window.remove_window();
+                                            },
+                                        ))
                                     }
 
                                     network_div
