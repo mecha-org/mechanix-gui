@@ -152,7 +152,7 @@ pub enum EventType {
 pub struct AccessPointEvent {
     pub event_type: EventType,
     pub access_point_path: String,
-    pub raw_access_point_info: Option<RawAccessPointInfo>,
+    pub wireless_network_info: Option<WirelessNetworkInfo>,
 }
 
 #[derive(Debug, Clone, Default)]

@@ -504,7 +504,7 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
                 hw_address,
                 strength: signal_strength,
                 is_active: active_ssid_vec == ssid_vec,
-                is_known_network: is_this_known_network,
+                is_known: is_this_known_network,
                 ..Default::default()
             };
             networks.push(raw_access_point_info);

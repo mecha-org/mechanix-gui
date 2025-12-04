@@ -7,17 +7,11 @@ pub enum AppEvents {
     BatteryStateChanged {
         state: BatteryState,
     },
-    BatteryLevelChanged {
-        level: u8,
-    },
     BatteryPercentageChanged {
         value: u8,
     },
     WirelessStatusChanged {
         enabled: bool,
-    },
-    WirelessStrength {
-        strength: u8,
     },
     ConnectedNetwork {
         network: Option<WirelessNetworkInfo>,
@@ -31,6 +25,9 @@ pub enum AppEvents {
     OutputSoundDevice {
         device_info: DeviceInfo,
     },
+    Brightness {
+        value: f32,
+    },
 }
 
 #[derive(Debug)]
@@ -41,4 +38,16 @@ pub enum NmEvents {
 #[derive(Debug)]
 pub enum BtEvents {
     BluetoothToggle { enabled: bool },
+}
+
+#[derive(Debug)]
+pub enum VolumeEvents {
+    VolumeChanged { name: String, value: f32 },
+    MuteSink { name: String },
+    UnmuteSink { name: String },
+}
+
+#[derive(Debug)]
+pub enum BrightnessEvents {
+    BrightnessChanged { value: f32 },
 }

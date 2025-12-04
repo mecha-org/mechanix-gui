@@ -5,7 +5,7 @@ pub const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 pub enum IconName {
     WirelessOn,
     WirelessOff,
-    WireleessWarning,
+    WirelessWarning,
     WirelessHigh,
     WirelessMedium,
     WirelessLow,
@@ -40,7 +40,7 @@ impl IconName {
         let icon_path = match self {
             IconName::WirelessOn => "wireless-on.svg",
             IconName::WirelessOff => "wireless-off.svg",
-            IconName::WireleessWarning => "wireless-warning.svg",
+            IconName::WirelessWarning => "wireless-warning.svg",
             IconName::WirelessHigh => "wireless-high.svg",
             IconName::WirelessMedium => "wireless-medium.svg",
             IconName::WirelessLow => "wireless-low.svg",

@@ -29,6 +29,7 @@ keywords = ["linux", "shell", "mobile", "gui", "ui"]
 
 [workspace.dependencies]
 mxconf_dbus = { path = "dbus/mechanix/mxconf" }
+system_dbus = { path = "dbus/mechanix/system" }
 notify = { version = "8.2.0" }
 tokio = { version = "1.46.1", features = ["full"] }
 log = { version = "0.4.27" }

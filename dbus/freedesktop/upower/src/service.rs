@@ -9,7 +9,7 @@ use crate::interfaces::UPowerInterface;
 use crate::proxies::DeviceProxy;
 use anyhow::Result;
 use futures::executor::ThreadPool;
-use futures::StreamExt;
+use futures::{SinkExt, StreamExt};
 use log::{error, info};
 use std::sync::{mpsc, LazyLock};
 use zbus::Connection;
@@ -130,20 +130,28 @@ impl UPowerService {
             Err(e) => Err(e.into()),
         }
     }
-    pub async fn stream_device_state(&self) -> mpsc::Receiver<BatteryState> {
+    pub async fn stream_device_state(&self) -> futures::channel::mpsc::Receiver<BatteryState> {
         info!("service-action:: stream device state");
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = futures::channel::mpsc::channel(250);
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_device_state().await {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
                             let state = BatteryState::from(state);
-                            if let Err(e) = sender.send(state) {
-                                error!("failed to send battery state: {}", e);
-                                continue;
-                            }
+                            match sender.send(state).await {
+                                Ok(_) => {}
+                                Err(e) => {
+                                    error!("failed to send battery state: {}", e);
+                                    continue;
+                                }
+                            };
+                            // let state = BatteryState::from(state);
+                            // if let Err(e) = sender.send(state) {
+                            //     error!("failed to send battery state: {}", e);
+                            //     continue;
+                            // }
                         }
                     }
                 }
@@ -154,19 +162,26 @@ impl UPowerService {
         });
         receiver
     }
-    pub async fn stream_device_percentage(&self) -> mpsc::Receiver<f64> {
+    pub async fn stream_device_percentage(&self) -> futures::channel::mpsc::Receiver<f64> {
         info!("service-action:: stream device percentage");
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = futures::channel::mpsc::channel(250);
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_device_percentage().await {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
-                            if let Err(e) = sender.send(state) {
-                                error!("failed to send device percentage: {}", e);
-                                continue;
-                            }
+                            match sender.send(state).await {
+                                Ok(_) => {}
+                                Err(e) => {
+                                    error!("failed to send device percentage: {}", e);
+                                    continue;
+                                }
+                            };
+                            // if let Err(e) = sender.send(state) {
+                            //     error!("failed to send device percentage: {}", e);
+                            //     continue;
+                            // }
                         }
                     }
                 }
@@ -177,10 +192,10 @@ impl UPowerService {
         });
         receiver
     }
-    pub async fn stream_battery_level(&self) -> mpsc::Receiver<BatteryLevel> {
+    pub async fn stream_battery_level(&self) -> futures::channel::mpsc::Receiver<BatteryLevel> {
         info!("service-action:: stream battery level");
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = futures::channel::mpsc::channel(250);
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_battery_level().await {
                 Ok(mut stream) => {
@@ -188,10 +203,17 @@ impl UPowerService {
                         if let Ok(state) = event.get().await {
                             info!("battery level is updated: {:}", state);
                             let state = BatteryLevel::from(state);
-                            if let Err(e) = sender.send(state) {
-                                error!("failed to send battery level: {}", e);
-                                continue;
-                            }
+                            match sender.send(state).await {
+                                Ok(_) => {}
+                                Err(e) => {
+                                    error!("failed to send battery level: {}", e);
+                                    continue;
+                                }
+                            };
+                            // if let Err(e) = sender.send(state) {
+                            //     error!("failed to send battery level: {}", e);
+                            //     continue;
+                            // }
                         }
                     }
                 }
