@@ -105,11 +105,15 @@ Widget buildListView(
                     ),
                   ),
                   onTap: () {
-                    isSelectionMode
-                        ? state?.clearSelection()
-                        : isSearching
-                            ? state?.clearSearch()
-                            : null;
+                    if (isSelectionMode) {
+                      // Select / unselect item instead of opening
+                      state?.toggleSelection(entity.path);
+                      return;
+                    }
+
+                    if (isSearching) {
+                      state?.clearSearch();
+                    }
 
                     if (FileManager.isDirectory(entity)) {
                       controller.openDirectory(entity);

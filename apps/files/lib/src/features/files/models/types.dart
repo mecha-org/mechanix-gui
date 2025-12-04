@@ -117,7 +117,9 @@ SortBy sortByFromKey(String key) {
     case 'type':
       return SortBy.type;
     case 'mod_time':
-      return SortBy.date;
+      return SortBy.modTime;
+    case 'accessed_time':
+      return SortBy.accessedTime;
     case 'size_asc':
     case 'size_desc':
       return SortBy.size;
@@ -132,8 +134,10 @@ String keyFromSort(SortBy sortBy, bool ascending) {
       return 'name';
     case SortBy.type:
       return 'type';
-    case SortBy.date:
+    case SortBy.modTime:
       return 'mod_time';
+    case SortBy.accessedTime:
+      return 'accessed_time';
     case SortBy.size:
       return ascending ? 'size_asc' : 'size_desc';
   }

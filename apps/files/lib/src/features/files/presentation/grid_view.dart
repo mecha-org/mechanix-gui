@@ -71,9 +71,15 @@ Widget buildGridView(
 
                 return GestureDetector(
                     onTap: () async {
+                      if (isSelectionMode) {
+                        // Select / unselect instead of opening
+                        state?.toggleSelection(fullPath);
+                        return;
+                      }
+
                       if (FileManager.isDirectory(entity)) {
                         await controller.openDirectory(entity);
-                        scrollController.jumpTo(0); // reset scroll to top
+                        scrollController.jumpTo(0);
                       } else {
                         handleFileTap(
                           context,

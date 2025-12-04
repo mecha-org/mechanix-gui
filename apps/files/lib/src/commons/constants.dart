@@ -44,4 +44,7 @@ class Images {
   static const String terminal = 'assets/images/terminal.png';
   static const String refresh = 'assets/images/refresh.png';
   static const String codeFile = 'assets/images/code.png';
+  static const String checkCircle = 'assets/images/check_circle.png';
+  static const String share = 'assets/images/share.png';
+  static const String duplicate = 'assets/images/duplicate.png';
 }

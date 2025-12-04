@@ -45,18 +45,18 @@ class FileHomePageState extends State<FileHomePage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text("Files"),
-        actionsPadding: const EdgeInsets.only(right: 0),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: Image.asset(Images.search, width: 24, height: 24),
-              onPressed: () {
-                onSearch();
-              },
-            ),
-          ),
-        ],
+        // actionsPadding: const EdgeInsets.only(right: 0),
+        // actions: [
+        //   Padding(
+        //     padding: const EdgeInsets.only(right: 8.0),
+        //     child: IconButton(
+        //       icon: Image.asset(Images.search, width: 24, height: 24),
+        //       onPressed: () {
+        //         onSearch();
+        //       },
+        //     ),
+        //   ),
+        // ],
       ),
       body: SingleChildScrollView(
         child: Container(

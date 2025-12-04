@@ -6,7 +6,7 @@ import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-enum SortBy { name, date, type, size }
+enum SortBy { name, modTime, accessedTime, type, size }
 
 class FileManagerController {
   final logger = Logger();
@@ -267,9 +267,14 @@ class FileManagerController {
             return aName.compareTo(bName);
           }
 
-        case SortBy.date:
+        case SortBy.modTime:
           final aTime = a.statSync().modified;
           final bTime = b.statSync().modified;
+          return bTime.compareTo(aTime);
+
+        case SortBy.accessedTime:
+          final aTime = a.statSync().accessed;
+          final bTime = b.statSync().accessed;
           return bTime.compareTo(aTime);
 
         default:
@@ -375,8 +380,11 @@ class FileManagerController {
 
     // Convert string from prefs to SortBy enum
     switch (sortMode) {
-      case 'date':
-        _sort.value = SortBy.date;
+      case 'modTime':
+        _sort.value = SortBy.modTime;
+        break;
+      case 'accessedTime':
+        _sort.value = SortBy.accessedTime;
         break;
       case 'type':
         _sort.value = SortBy.type;
