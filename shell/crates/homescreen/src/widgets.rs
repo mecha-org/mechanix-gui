@@ -13,6 +13,7 @@ pub(crate) struct WidgetData {
     page_number: usize,
     pub(crate) grid_bounds: GridBounds,
     is_being_dragged: bool,
+    dragged_page: Option<usize>,
     bounds: Bounds<Pixels>,
 }
 
@@ -28,6 +29,7 @@ impl WidgetData {
             page_number,
             grid_bounds,
             is_being_dragged: false,
+            dragged_page: None,
             bounds,
         }
     }
@@ -38,10 +40,12 @@ impl WidgetData {
 
     pub fn start_drag(&mut self) {
         self.is_being_dragged = true;
+        self.dragged_page = Some(self.page_number);
     }
 
     pub fn end_drag(&mut self) {
         self.is_being_dragged = false;
+        self.dragged_page = Some(self.page_number)
     }
 
     // Getter for widget (no setter - immutable after construction)
@@ -60,6 +64,15 @@ impl WidgetData {
 
     pub fn set_page_number(&mut self, page_number: usize) {
         self.page_number = page_number;
+    }
+
+    // Getter and setter for dragged_page
+    pub fn dragged_page(&self) -> Option<usize> {
+        self.dragged_page
+    }
+
+    pub fn set_dragged_page(&mut self, dragged_page: Option<usize>) {
+        self.dragged_page = dragged_page;
     }
 
     // Getter and setter for bounds

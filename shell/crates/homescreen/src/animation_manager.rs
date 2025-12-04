@@ -47,11 +47,25 @@ impl AnimationManager {
         // Animate widgets to their intended positions
         let widget_snap_velocity = state.config.animation.widget_snap_velocity;
         let dragging_widget_id = state.dragging_widget;
+        let screen_width = state.config.window.width;
 
         for (widget_id, widget_data) in state.widgets.iter_mut() {
             // Skip widgets that are being dragged
             if Some(*widget_id) == dragging_widget_id {
                 continue;
+            }
+
+            // If widget has a dragged_page, adjust bounds and clear it
+            if let Some(dragged_page) = widget_data.dragged_page() {
+                let target_page = widget_data.page_number();
+                if dragged_page != target_page {
+                    // Calculate the page offset
+                    let page_offset = (dragged_page as f32 - target_page as f32) * screen_width;
+                    let mut adjusted_bounds = widget_data.bounds();
+                    adjusted_bounds.origin.x += px(page_offset);
+                    widget_data.widget_mut().set_bounds(adjusted_bounds);
+                }
+                widget_data.set_dragged_page(None);
             }
 
             let current_bounds = widget_data.widget().get_bounds();
@@ -64,12 +78,11 @@ impl AnimationManager {
 
             // If we're close enough, snap to target
             if distance < 0.5 {
-                if distance > 0.01 {
-                    widget_data.widget_mut().set_bounds(target_bounds);
-                }
+                widget_data.widget_mut().set_bounds(target_bounds);
                 continue;
             }
 
+            println!("{}", distance);
             // Animate towards target
             needs_animation = true;
             let step = widget_snap_velocity * delta_time;

@@ -11,6 +11,8 @@ impl HomescreenUi {
             .bg(rgb(0x1a1a1a))
             .text_color(rgb(0xe0e0e0));
 
+        let mut dragged_widgets = Vec::new();
+
         for (page_number, widgets) in state.pages.iter().enumerate() {
             let page_location = (page_number as f32 - state.active_page as f32)
                 * state.config.window.width
@@ -26,7 +28,7 @@ impl HomescreenUi {
                 if !widget_data.is_being_dragged() {
                     page = page.child(WidgetWrapper::render(widget_data));
                 } else {
-                    element = element.child(WidgetWrapper::render(widget_data));
+                    dragged_widgets.push(widget_data);
                 }
             }
             element = element.child(
@@ -38,6 +40,11 @@ impl HomescreenUi {
                     .left(px(page_location))
                     .child(page),
             );
+        }
+
+        // Render dragged widgets last so they appear on top
+        for widget_data in dragged_widgets {
+            element = element.child(WidgetWrapper::render(widget_data));
         }
 
         element

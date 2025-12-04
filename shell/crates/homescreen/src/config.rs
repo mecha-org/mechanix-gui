@@ -82,6 +82,8 @@ pub struct DragConfig {
     pub drag_initiation_threshold: f32,
     pub page_switch_threshold: f32,
     pub widget_drag_time_threshold: std::time::Duration,
+    pub edge_hover_threshold: f32,
+    pub edge_hover_wait_interval: std::time::Duration,
 }
 
 impl Default for DragConfig {
@@ -90,6 +92,8 @@ impl Default for DragConfig {
             drag_initiation_threshold: 5.0,
             page_switch_threshold: 50.0,
             widget_drag_time_threshold: std::time::Duration::from_millis(200),
+            edge_hover_threshold: 50.0,
+            edge_hover_wait_interval: std::time::Duration::from_millis(500),
         }
     }
 }

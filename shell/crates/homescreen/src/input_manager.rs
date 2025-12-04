@@ -10,6 +10,8 @@ pub struct InputManagerState {
     pub(crate) drag_start_position: Option<Point<Pixels>>,
     pub(crate) mouse_press_time: Option<Instant>,
     pub(crate) widget_under_cursor: Option<WidgetId>,
+    pub(crate) edge_hover_start_time: Option<Instant>,
+    pub(crate) edge_hover_target_page: Option<usize>,
 }
 
 impl InputManagerState {
@@ -20,6 +22,8 @@ impl InputManagerState {
             drag_start_position: None,
             mouse_press_time: None,
             widget_under_cursor: None,
+            edge_hover_start_time: None,
+            edge_hover_target_page: None,
         }
     }
 }
@@ -82,6 +86,54 @@ impl InputManager {
             let mut bounds = dragging_widget.bounds();
             bounds.origin = position;
             dragging_widget.widget_mut().set_bounds(bounds);
+
+            // Edge hover detection for page switching
+            let widget_bounds = bounds;
+            let screen_width = state.config.window.width;
+            let edge_threshold = state.config.drag.edge_hover_threshold;
+
+            // Check if widget is near the left or right edge
+            let widget_center_x: f32 = widget_bounds.origin.x.into();
+            let widget_center_x =
+                widget_center_x + Into::<f32>::into(widget_bounds.size.width) / 2.0;
+
+            let near_left_edge = widget_center_x < edge_threshold && state.active_page > 0;
+            let near_right_edge = widget_center_x > (screen_width - edge_threshold)
+                && state.active_page < state.pages.len() - 1;
+
+            if near_left_edge || near_right_edge {
+                let target_page = if near_left_edge {
+                    state.active_page - 1
+                } else {
+                    state.active_page + 1
+                };
+
+                // Check if we're hovering on a different edge than before
+                if state.input_manager_state.edge_hover_target_page != Some(target_page) {
+                    // Reset timer for new edge
+                    state.input_manager_state.edge_hover_start_time = Some(Instant::now());
+                    state.input_manager_state.edge_hover_target_page = Some(target_page);
+                } else if let Some(hover_start) = state.input_manager_state.edge_hover_start_time {
+                    // Check if we've been hovering long enough
+                    if hover_start.elapsed() >= state.config.drag.edge_hover_wait_interval {
+                        state.set_active_page(target_page);
+                        // Update the dragged widget's page
+                        if let Some(widget_id) = state.dragging_widget {
+                            if let Some(widget_data) = state.widgets.get_mut(&widget_id) {
+                                widget_data.set_dragged_page(Some(target_page));
+                            }
+                        }
+                        // Reset the timer so we don't keep switching
+                        state.input_manager_state.edge_hover_start_time = None;
+                        state.input_manager_state.edge_hover_target_page = None;
+                    }
+                }
+            } else {
+                // Not near any edge, reset edge hover state
+                state.input_manager_state.edge_hover_start_time = None;
+                state.input_manager_state.edge_hover_target_page = None;
+            }
+
             return true;
         }
 
@@ -92,7 +144,7 @@ impl InputManager {
                 state.is_page_dragging = true;
                 state.input_manager_state.drag_start_position = Some(press_position);
             } else {
-                return false;
+                return true;
             }
         }
 
@@ -146,6 +198,8 @@ impl InputManager {
         state.input_manager_state.drag_start_position = None;
         state.input_manager_state.mouse_press_time = None;
         state.input_manager_state.widget_under_cursor = None;
+        state.input_manager_state.edge_hover_start_time = None;
+        state.input_manager_state.edge_hover_target_page = None;
         state.is_page_dragging = false;
     }
 }
