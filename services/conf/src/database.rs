@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 use anyhow::{Context, Result};
-use sled::{Tree};
+use log::{debug, error, info, warn};
+use sled::Tree;
 use sled::{Config, Db};
+use std::collections::HashMap;
 use std::path::PathBuf;
-use log::{info, debug, warn};
 use tokio::sync::{mpsc, oneshot};
-use crate::database;
 
 /// Database struct for storing and retrieving configuration data.
 ///
@@ -40,13 +39,11 @@ impl Database {
         info!("Opening database at path: {}", db_path.display());
         // Ensure parent directories exist
         if let Some(parent) = db_path.parent() {
-            std::fs::create_dir_all(parent)
-                .expect("Failed to create database directory");
+            std::fs::create_dir_all(parent).expect("Failed to create database directory");
         }
 
         let config = Config::new().path(&db_path);
-        let db = config.open()
-            .expect("Failed to open database");
+        let db = config.open().expect("Failed to open database");
 
         Self { db }
     }
@@ -66,7 +63,9 @@ impl Database {
     /// * `Err(...)` if there was an error during retrieval
     fn get_tree(&self, identifier: &str) -> Result<Tree> {
         debug!("Opening tree: {}", identifier);
-        let tree = self.db.open_tree(identifier)
+        let tree = self
+            .db
+            .open_tree(identifier)
             .with_context(|| format!("Failed to open tree: {}", identifier))?;
         Ok(tree)
     }
@@ -78,8 +77,8 @@ impl Database {
     ///
     /// # Arguments
     ///
-    /// * `schema_name` - The name of the schema
     /// * `checksum_identifier` - The identifier for the checksum tree
+    /// * `schema_name` - The name of the schema
     /// * `checksum_value` - The checksum value to store
     ///
     /// # Returns
@@ -88,16 +87,25 @@ impl Database {
     /// * `Err(...)` if there was an error during insertion
     pub fn insert_checksum(
         &mut self,
-        schema_name: &str,
         checksum_identifier: &str,
-        checksum_value: &u32
+        schema_name: &str,
+        checksum_value: &u32,
     ) -> Result<()> {
-        info!("Inserting checksum for schema: {} value: {}", schema_name, checksum_value);
+        info!(
+            "Inserting checksum for schema: {} value: {}",
+            schema_name, checksum_value
+        );
         let checksum_tree = self.get_tree(checksum_identifier)?;
         debug!("Checksum tree opened: {}", checksum_identifier);
         let checksum = checksum_value.to_le_bytes();
-        checksum_tree.insert(schema_name, checksum.as_ref())
-            .with_context(|| format!("Failed to insert checksum with schema_name: {}", schema_name))?;
+        checksum_tree
+            .insert(schema_name, checksum.as_ref())
+            .with_context(|| {
+                format!(
+                    "Failed to insert checksum with schema_name: {}",
+                    schema_name
+                )
+            })?;
         debug!("Checksum inserted for schema: {}", schema_name);
         Ok(())
     }
@@ -123,7 +131,10 @@ impl Database {
         key: &str,
         value: &[u8],
     ) -> Result<()> {
-        info!("Inserting setting: {} in schema: {}", key, schema_identifier);
+        info!(
+            "Inserting setting: {} in schema: {}",
+            key, schema_identifier
+        );
         let tree = self.get_tree(schema_identifier)?;
         debug!("Tree opened for schema: {}", schema_identifier);
         tree.insert(key, value)
@@ -149,15 +160,23 @@ impl Database {
     pub fn get(&self, identifier: &str, key: &str) -> Result<HashMap<String, String>> {
         debug!("Getting value for key: {} from tree: {}", key, identifier);
         let tree = self.get_tree(identifier)?;
-        let value_opt = tree.get(key)
-            .with_context(|| format!("Failed to get value with key: {}", key))?;
 
-        let mut results = HashMap::new();
-        if let Some(value) = value_opt {
-            let value_str = String::from_utf8_lossy(&value).to_string();
-            results.insert(key.to_string(), value_str);
-        }
-        Ok(results)
+        let settings = if let Some(prefix) = key.split('*').next().filter(|p| !p.is_empty()) {
+            // Wildcard / prefix case
+            self.scan_with_prefix(identifier, prefix)?
+        } else {
+            // Exact key case
+            let mut results = HashMap::new();
+            if let Some(value) = tree
+                .get(key)
+                .with_context(|| format!("Failed to get value with key: {}", key))?
+            {
+                results.insert(key.to_string(), String::from_utf8_lossy(&value).to_string());
+            }
+            results
+        };
+
+        Ok(settings)
     }
 
     /// Perform a prefix scan on a tree.
@@ -174,7 +193,7 @@ impl Database {
     ///
     /// * `Ok(HashMap<String, String>)` - A map of all key-value pairs in the tree that match the prefix
     /// * `Err(...)` - If there was an error during the scan
-    pub fn scan_with_prefix(&self, identifier: &str, key: &str) -> Result<HashMap<String, String>> {
+    fn scan_with_prefix(&self, identifier: &str, key: &str) -> Result<HashMap<String, String>> {
         debug!("Prefix scan for key: {} in tree: {}", key, identifier);
         let tree = self.get_tree(identifier)?;
 
@@ -189,7 +208,11 @@ impl Database {
             let value_str = String::from_utf8_lossy(&v).to_string();
             results.insert(key_str, value_str);
         }
-        debug!("Found {} matching entries for prefix {}", results.len(), prefix);
+        debug!(
+            "Found {} matching entries for prefix {}",
+            results.len(),
+            prefix
+        );
 
         Ok(results)
     }
@@ -210,9 +233,13 @@ impl Database {
     /// * `Ok(Some(checksum))` if the key is present and the value is a valid checksum
     /// * `Err(...)` if there was an error during retrieval
     pub fn get_checksum(&self, checksum_identifier: &str, key: &str) -> Result<Option<u32>> {
-        debug!("Getting checksum for key: {} from tree: {}", key, checksum_identifier);
+        debug!(
+            "Getting checksum for key: {} from tree: {}",
+            key, checksum_identifier
+        );
         let checksum_tree = self.get_tree(checksum_identifier)?;
-        let value_opt = checksum_tree.get(key)
+        let value_opt = checksum_tree
+            .get(key)
             .with_context(|| format!("Failed to get checksum with key: {}", key))?;
         if let Some(value) = value_opt {
             debug!("Checksum value found for key: {}: {:?}", key, value);
@@ -227,23 +254,41 @@ impl Database {
                 Ok(None)
             }
         } else {
-            warn!("No checksum found for key: {} in tree: {}", key, checksum_identifier);
+            warn!(
+                "No checksum found for key: {} in tree: {}",
+                key, checksum_identifier
+            );
             Ok(None)
         }
     }
 }
 // 1) Define your DB commands
 pub enum DbCmd {
-    GET_CHECKSUM {
+    GetChecksum {
         checksum_identifier: String,
         key: String,
         rsp: oneshot::Sender<Option<u32>>,
-    }
-    // Add more commands as needed
+    },
+    InsertChecksum {
+        checksum_identifier: String,
+        key: String,
+        value: u32,
+    },
+    Get {
+        identifier: String,
+        key: String,
+        rsp: oneshot::Sender<HashMap<String, String>>,
+    },
+    Set {
+        identifier: String,
+        key: String,
+        value: Vec<u8>,
+        rsp: oneshot::Sender<Result<()>>,
+    },
 }
 
 // 2) Start the DB actor on a blocking thread
-pub fn start_db_actor(mut db: database::Database) -> mpsc::Sender<DbCmd> {
+pub fn start_db_actor(mut db: Database) -> mpsc::Sender<DbCmd> {
     let (tx, mut rx) = mpsc::channel::<DbCmd>(128);
     std::thread::spawn(move || {
         // This thread owns `db`
@@ -251,13 +296,51 @@ pub fn start_db_actor(mut db: database::Database) -> mpsc::Sender<DbCmd> {
         rt.block_on(async move {
             while let Some(cmd) = rx.recv().await {
                 match cmd {
-                    DbCmd::ProcessToml { path, rsp } => {
-                        let res = (|| {
-                            // Your existing logic that needs &mut Database
-                            // e.g. process_toml_file(&path, &mut db)
-                            super::process_toml_file(&path, &mut db)
-                        })();
-                        let _ = rsp.send(res);
+                    DbCmd::GetChecksum {
+                        checksum_identifier,
+                        key,
+                        rsp,
+                    } => match db.get_checksum(&checksum_identifier, &key) {
+                        Ok(checksum) => {
+                            let _ = rsp.send(checksum);
+                        }
+                        Err(e) => {
+                            error!("Failed to get checksum: {}", e);
+                            let _ = rsp.send(None);
+                        }
+                    },
+                    DbCmd::InsertChecksum {
+                        checksum_identifier,
+                        key,
+                        value,
+                    } => match db.insert_checksum(&checksum_identifier, &key, &value) {
+                        Ok(()) => {}
+                        Err(e) => {
+                            error!("Failed to insert checksum: {}", e);
+                        }
+                    },
+                    DbCmd::Get {
+                        identifier,
+                        key,
+                        rsp,
+                    } => match db.get(&identifier, &key) {
+                        Ok(settings) => {
+                            let _ = rsp.send(settings);
+                        }
+                        Err(e) => {
+                            error!("Failed to get settings: {}", e);
+                            let _ = rsp.send(HashMap::new());
+                        }
+                    },
+                    DbCmd::Set {
+                        identifier,
+                        key,
+                        value,
+                        rsp,
+                    } => {
+                       if let Err(err) = rsp.send(db.insert_settings(&identifier, &key, &value)) {
+                           error!("Failed to send an insert result on channel: {:?}", err);
+                       }
                     }
                 }
             }

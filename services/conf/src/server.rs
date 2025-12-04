@@ -1,4 +1,4 @@
-use crate::database;
+use crate::database::DbCmd;
 use crate::validator::{validate_setting, validate_value};
 use anyhow::Result;
 use log::{debug, error, info, trace, warn};
@@ -6,7 +6,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use tokio::sync::{mpsc, oneshot};
 use toml::Value;
 use zbus::{dbus_interface, fdo::Error as ZbusError, Connection, SignalContext};
 
@@ -23,8 +23,8 @@ pub const SERVED_AT: &str = "/org/mechanix/MxConf";
 /// The interface is served at the path defined by the SERVED_AT constant.
 #[derive(Clone)]
 pub struct ConfigServerInterface {
-    /// The database instance for storing and retrieving settings
-    pub db: Option<database::Database>,
+    /// The database command sender
+    pub db_tx: mpsc::Sender<DbCmd>,
 
     /// The D-Bus connection
     pub conn: Connection,
@@ -78,7 +78,10 @@ impl ConfigServerInterface {
     /// ["org.mechanix.app1", "org.mechanix.app2"]
     /// ```
     pub async fn list_schemas(&self) -> Result<String, ZbusError> {
-        info!("Listing all schemas in directory: {}", self.schema_dir.display());
+        info!(
+            "Listing all schemas in directory: {}",
+            self.schema_dir.display()
+        );
         let mut keys = Vec::new();
         if let Ok(entries) = fs::read_dir(&self.schema_dir) {
             for entry in entries.flatten() {
@@ -95,7 +98,10 @@ impl ConfigServerInterface {
                 }
             }
         } else {
-            warn!("Could not read schema directory: {}", self.schema_dir.display());
+            warn!(
+                "Could not read schema directory: {}",
+                self.schema_dir.display()
+            );
         }
         let json = serde_json::to_string(&keys)
             .map_err(|e| ZbusError::Failed(format!("JSON error: {}", e)))?;
@@ -209,16 +215,19 @@ impl ConfigServerInterface {
             .map_err(|e| ZbusError::Failed(format!("Failed to read schema file: {}", e)))?;
         let schema_as_toml = toml::from_str(&schema)
             .map_err(|e| ZbusError::Failed(format!("Invalid TOML: {}", e)))?;
-        let db = self.db.as_ref().unwrap();
-        let settings: HashMap<String, String> = if key.contains('*') {
-            debug!("Wildcard Schema Name: {}", schema_name);
-            db.scan_with_prefix(&schema_name, key.split('*').next().unwrap_or_default())
-                .map_err(|e| ZbusError::Failed(format!("Database error: {}", e)))?
-        } else {
-            debug!("Schema Name: {}", schema_name);
-            db.get(&schema_name, key)
-                .map_err(|e| ZbusError::Failed(format!("Database error: {}", e)))?
-        };
+        let db_tx = self.db_tx.clone();
+        let (rsp, rx) = oneshot::channel();
+        db_tx
+            .send(DbCmd::Get {
+                identifier: schema_name,
+                key: key.to_string(),
+                rsp,
+            })
+            .await
+            .map_err(|e| ZbusError::Failed(format!("Failed to send DB command: {}", e)))?;
+        let settings = rx
+            .await
+            .map_err(|e| ZbusError::Failed(format!("Failed to receive DB response: {}", e)))?;
 
         let mut results = HashMap::new();
 
@@ -240,7 +249,6 @@ impl ConfigServerInterface {
 
         Ok(results)
     }
-
 
     /// Set a setting value in the database.
     ///
@@ -291,10 +299,21 @@ impl ConfigServerInterface {
                 return Err(ZbusError::Failed(format!("Validation error: {}", e)));
             }
         }
-        let insert_result = {
-            let mut db = self.db.take().unwrap();
-            db.insert_settings(&schema_name, key, value.as_bytes())
-        };
+
+        let (rsp, rx) = oneshot::channel();
+        self.db_tx
+            .send(DbCmd::Set {
+                identifier: schema_name.clone(),
+                key: key.to_string(),
+                value: value.as_bytes().to_vec(),
+                rsp,
+            })
+            .await
+            .map_err(|e| ZbusError::Failed(format!("Failed to send DB command: {}", e)))?;
+        let insert_result = rx
+            .await
+            .map_err(|e| ZbusError::Failed(format!("Failed to receive DB response: {}", e)))?;
+
         match insert_result {
             Ok(_) => {
                 info!("Setting updated: key={}, value={}", key, value);
@@ -302,7 +321,10 @@ impl ConfigServerInterface {
                     Ok(ctxt) => {
                         let key = key.split('.').skip(3).collect::<Vec<&str>>().join(".");
                         info!("Emitting notification for key: {}", key);
-                        if let Err(e) = self.schema_key_changed(&ctxt, &schema_name, &key, &value).await {
+                        if let Err(e) = self
+                            .schema_key_changed(&ctxt, &schema_name, &key, &value)
+                            .await
+                        {
                             error!("Failed to emit notification for key {}: {}", key, e);
                         } else {
                             debug!("Successfully emitted notification for key: {}", key);
@@ -503,7 +525,11 @@ fn get_value_and_locked_by_path<'a>(
 /// * `Some(PathBuf)` - The path to the latest schema file if found
 /// * `None` - If no matching files were found
 fn find_latest_schema_file<P: AsRef<Path>>(directory: P, schema_name: &str) -> Option<PathBuf> {
-    debug!("Searching for latest schema file for schema: {} in dir: {}", schema_name, directory.as_ref().display());
+    debug!(
+        "Searching for latest schema file for schema: {} in dir: {}",
+        schema_name,
+        directory.as_ref().display()
+    );
     let pattern = format!(
         r"^(?P<prefix>\\d+)-?{}\\.(toml|tom)$",
         regex::escape(schema_name)

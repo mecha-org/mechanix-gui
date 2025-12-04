@@ -8,7 +8,7 @@ mod validator;
 use crate::cli::{
     describe_key, get_setting_table, list_keys, list_schemas, set_setting_table, watch_setting,
 };
-use crate::database::DbCmd;
+
 use crate::error::ServerError;
 use crate::server::{ConfigServerInterface, SERVED_AT};
 use crate::validator::validate_schema;
@@ -16,13 +16,11 @@ use anyhow::{Context, Result};
 use clap::{CommandFactory, Parser, Subcommand};
 use dirs::home_dir;
 use log::{debug, error, info, trace, warn};
-use mxconf::database::start_db_actor;
-use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
+use crate::database::{start_db_actor, Database, DbCmd};
+use notify::{recommended_watcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use std::sync::mpsc;
-use std::sync::{Arc, Mutex};
-use tokio::sync::oneshot;
+use tokio::sync::{mpsc, oneshot};
 use zbus::ConnectionBuilder;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -117,11 +115,14 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
 
     let (rsp_tx, rsp_rx) = oneshot::channel();
     // Check if file already exists with same checksum
-    db_tx.send(DbCmd::GET_CHECKSUM {
+    if let Err(er) = db_tx.send(DbCmd::GetChecksum {
         checksum_identifier: CHECKSUM_TREE_NAME.to_string(),
         key: schema_file_name.to_string(),
         rsp: rsp_tx,
-    })?;
+    }).await {
+        error!("Failed to get checksum: {}", er);
+        return Err(anyhow::anyhow!("Failed to get checksum"));
+    }
     if let Some(existing_checksum) = rsp_rx.await? {
         if schema_checksum == existing_checksum {
             info!("TOML file already exists with same checksum");
@@ -138,18 +139,16 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
         Err(e) => return Err(e),
     };
 
-    // Insert the validated file and checksum into the database
-    match db.insert_checksum(schema_file_name, CHECKSUM_TREE_NAME, &schema_checksum) {
-        Ok(()) => (),
-        Err(e) => {
-            return Err(anyhow::anyhow!(
-                "Failed to insert TOML file into database: {}",
-                e
-            ));
-        }
+    //TODO: insert checksum into database
+    if let Err(er) = db_tx.send(DbCmd::InsertChecksum {
+        checksum_identifier: CHECKSUM_TREE_NAME.to_string(),
+        key: schema_file_name.to_string(),
+        value: schema_checksum,
+    }).await {
+        error!("Failed to insert checksum: {}", er);
+        return Err(anyhow::anyhow!("Failed to insert checksum"));
     }
-
-    println!("Checksum inserted into database");
+    println!("toml file processed successfully!");
     Ok(())
 }
 
@@ -278,13 +277,8 @@ async fn start_server() -> Result<(), ServerError> {
         schema_dir.display()
     );
     // Initialize database
-    // let db = Arc::new(Mutex::new(database::Database::new(db_path)));
-    let db = database::Database::new(db_path);
-
+    let db = Database::new(db_path);
     let db_tx = start_db_actor(db); // No Arc returned, just a Sender (Clone)
-
-    // Pass `db_tx.clone()` to wherever you need DB access
-    let watcher_tx = db_tx.clone();
     // Build the connection first
     let conn = match ConnectionBuilder::session() {
         Ok(builder) => match builder.name(CONNECTION_BUS_NAME) {
@@ -301,7 +295,7 @@ async fn start_server() -> Result<(), ServerError> {
 
     // Now build the server struct with the connection
     let config_server = ConfigServerInterface {
-        db: Some(db),
+        db_tx: db_tx.clone(),
         conn: conn.clone(),
         key_file_dir,
         schema_dir,
@@ -319,7 +313,7 @@ async fn start_server() -> Result<(), ServerError> {
     info!("D-Bus server registered at {}", SERVED_AT);
 
     // Set up a file system watcher
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = std::sync::mpsc::channel();
     let mut watcher = match recommended_watcher(tx).context("Failed to create file watcher") {
         Ok(watcher) => watcher,
         Err(e) => {
@@ -332,7 +326,7 @@ async fn start_server() -> Result<(), ServerError> {
     let schema_dir_to_watch = home_dir.join(schema_dir);
     // Watch the schemas directory for changes
     let schemas_dir = Path::new(&schema_dir_to_watch);
-    match watcher.watch(schemas_dir, RecursiveMode::Recursive) {
+    match watcher.watch(schemas_dir, RecursiveMode::NonRecursive) {
         Ok(_) => (),
         Err(e) => {
             error!("Failed to watch schemas directory: {}", e);
@@ -348,12 +342,15 @@ async fn start_server() -> Result<(), ServerError> {
     while let Ok(event_result) = rx.recv() {
         match event_result {
             Ok(event) => {
-                // Process each path in the event
-                for path in &event.paths {
-                    // Only process TOML files
-                    if path.extension() == Some("toml".as_ref()) {
-                        if let Err(err) = process_toml_file(path, db_tx) {
-                            error!("Failed to process TOML file: {}", err);
+                if event.kind.is_create() || event.kind.is_modify() {
+                    info!("File system event =====================: {:?} and paths: {}", event, event.paths.len());
+                    // Process each path in the event
+                    for path in &event.paths {
+                        // Only process TOML files
+                        if path.extension() == Some("toml".as_ref()) {
+                            if let Err(err) = process_toml_file(path, db_tx.clone()).await {
+                                error!("Failed to process TOML file: {}", err);
+                            }
                         }
                     }
                 }
