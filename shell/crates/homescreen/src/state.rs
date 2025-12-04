@@ -6,7 +6,7 @@ use crate::{
     animation_manager::AnimationManagerState,
     config::HomescreenConfig,
     input_manager::InputManagerState,
-    layout_manager::LayoutManagerState,
+    layout_manager::{LayoutManager, LayoutManagerState},
     utils::{grid_bounds_to_pixels, GridBounds},
     widgets::{HomescreenWidget, WidgetData, WidgetId},
 };
@@ -63,15 +63,18 @@ impl HomescreenState {
     ) {
         let bounds = grid_bounds_to_pixels(grid_bounds, &self.config);
         widget.set_bounds(bounds);
+        let widget_id = WidgetId(self.next_widget_id);
         self.widgets.insert(
-            WidgetId(self.next_widget_id),
+            widget_id,
             WidgetData::new(Box::new(widget), page_number, grid_bounds, bounds),
         );
         if page_number >= self.pages.len() {
             self.pages.resize(page_number + 1, Default::default());
         }
-        self.pages[page_number].insert(WidgetId(self.next_widget_id));
+        self.pages[page_number].insert(widget_id);
         self.next_widget_id += 1;
+
+        LayoutManager::register_widget(self, widget_id);
     }
 
     pub fn set_active_page(&mut self, new_page: usize) {
@@ -113,5 +116,32 @@ impl HomescreenState {
         if let Some(widget_data) = self.widgets.get_mut(&widget_id) {
             widget_data.widget_mut().set_bounds(bounds);
         }
+    }
+
+    pub fn pick_widget(&mut self, widget_id: WidgetId) {
+        if let Some(widget_data) = self.widgets.get_mut(&widget_id) {
+            widget_data.start_drag();
+            self.dragging_widget = Some(widget_id);
+        }
+    }
+
+    pub fn drop_widget(&mut self) -> bool {
+        let Some(widget_id) = self.dragging_widget else {
+            return false;
+        };
+
+        let widget_bounds = if let Some(widget_data) = self.widgets.get(&widget_id) {
+            widget_data.widget().get_bounds()
+        } else {
+            return false;
+        };
+
+        if let Some(widget_data) = self.widgets.get_mut(&widget_id) {
+            widget_data.end_drag();
+        }
+
+        let success = LayoutManager::try_drop_widget(self, widget_id, widget_bounds);
+        self.dragging_widget = None;
+        success
     }
 }

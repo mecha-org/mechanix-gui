@@ -97,12 +97,14 @@ impl Default for DragConfig {
 #[derive(Debug, Copy, Clone)]
 pub struct AnimationConfig {
     pub page_snap_velocity: f32,
+    pub widget_snap_velocity: f32,
 }
 
 impl Default for AnimationConfig {
     fn default() -> Self {
         Self {
             page_snap_velocity: 1000.0,
+            widget_snap_velocity: 1000.0,
         }
     }
 }

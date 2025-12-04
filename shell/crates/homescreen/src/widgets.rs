@@ -11,7 +11,7 @@ pub(crate) struct WidgetId(pub usize);
 pub(crate) struct WidgetData {
     widget: Box<dyn HomescreenWidget>,
     page_number: usize,
-    grid_bounds: GridBounds,
+    pub(crate) grid_bounds: GridBounds,
     is_being_dragged: bool,
     bounds: Bounds<Pixels>,
 }
@@ -30,6 +30,18 @@ impl WidgetData {
             is_being_dragged: false,
             bounds,
         }
+    }
+
+    pub fn is_being_dragged(&self) -> bool {
+        self.is_being_dragged
+    }
+
+    pub fn start_drag(&mut self) {
+        self.is_being_dragged = true;
+    }
+
+    pub fn end_drag(&mut self) {
+        self.is_being_dragged = false;
     }
 
     // Getter for widget (no setter - immutable after construction)
@@ -62,7 +74,8 @@ impl WidgetData {
 
 pub struct WidgetWrapper;
 impl WidgetWrapper {
-    pub fn render(widget: &dyn HomescreenWidget) -> impl IntoElement {
+    pub fn render(widget_data: &WidgetData) -> impl IntoElement {
+        let widget = widget_data.widget();
         let mut w = wing();
         w.border_radius(px(12.0));
         let mut element = w

@@ -65,7 +65,7 @@ impl InputManager {
                     && elapsed >= drag_config.widget_drag_time_threshold
                 {
                     if let Some(widget_id) = state.input_manager_state.widget_under_cursor {
-                        state.dragging_widget = Some(widget_id);
+                        state.pick_widget(widget_id);
                         state.input_manager_state.drag_start_position =
                             Some(mouse_move_event.position);
                         return true;
@@ -137,10 +137,8 @@ impl InputManager {
             }
         }
 
-        if let Some(dragging_widget_id) = state.dragging_widget.as_ref() {
-            let dragging_widget = state.widgets.get_mut(dragging_widget_id).unwrap();
-            let bounds = dragging_widget.bounds();
-            dragging_widget.widget_mut().set_bounds(bounds);
+        if state.dragging_widget.is_some() {
+            state.drop_widget();
         }
 
         state.input_manager_state.is_mouse_pressed = false;
@@ -149,6 +147,5 @@ impl InputManager {
         state.input_manager_state.mouse_press_time = None;
         state.input_manager_state.widget_under_cursor = None;
         state.is_page_dragging = false;
-        state.dragging_widget = None;
     }
 }

@@ -22,9 +22,12 @@ impl HomescreenUi {
                 .h(px(state.config.window.height));
 
             for widget_id in widgets.iter() {
-                page = page.child(WidgetWrapper::render(
-                    state.widgets.get(widget_id).unwrap().widget(),
-                ));
+                let widget_data = state.widgets.get(widget_id).unwrap();
+                if !widget_data.is_being_dragged() {
+                    page = page.child(WidgetWrapper::render(widget_data));
+                } else {
+                    element = element.child(WidgetWrapper::render(widget_data));
+                }
             }
             element = element.child(
                 div()
