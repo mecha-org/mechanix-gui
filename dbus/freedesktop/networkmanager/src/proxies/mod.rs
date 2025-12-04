@@ -39,13 +39,16 @@ pub use device as device_proxy;
 use log::{error, info, trace};
 use uuid::Uuid;
 use zbus::{
-    proxy, zvariant::{ObjectPath, Value},
+    proxy,
+    zvariant::{ObjectPath, Value},
     Connection,
 };
 
 use super::interfaces::wireless::RawAccessPointInfo;
+use crate::proxies::wireless::{
+    AccessPointAddedStream, AccessPointRemovedStream, WirelessDeviceProxy,
+};
 use crate::{interfaces::wireless::KnownNetworkResponse, proxies::access_point::AccessPointProxy};
-use crate::proxies::wireless::{AccessPointAddedStream, AccessPointRemovedStream, WirelessDeviceProxy};
 use zbus::proxy::PropertyStream;
 use zbus::zvariant::{OwnedObjectPath, Str};
 
@@ -390,109 +393,124 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
                 )));
             }
         };
-        // Create a proxy for the device.
-
 
         // Create a proxy for the wireless interface.
-        let wireless_proxy =
-            match WirelessDeviceProxy::new(&self.0.connection(), &device).await {
-                Ok(proxy) => proxy,
-                Err(e) => {
-                    error!(
-                                "failed to create wireless proxy for {}, error {}",
-                                device,
-                                e.to_string()
-                            );
-                    return Err(ProxyError::ProxyCreationFailed(format!(
-                        "failed to create wireless proxy for {}, error {}",
-                        device, e.to_string()
-                    )));
-                }
-            };
-        let active_access_point = match get_active_access_point(&self.0.connection(), &wireless_proxy).await {
-            Ok(access_point) => access_point,
+        let wireless_proxy = match WirelessDeviceProxy::new(&self.0.connection(), &device).await {
+            Ok(proxy) => proxy,
             Err(e) => {
                 error!(
-                            "failed to get active access point for {}, error {}",
-                            device,
-                            e.to_string()
-                        );
-                return Err(ProxyError::DbusCallFailed(format!(
-                    "failed to get active access point for {}, error {}",
-                    device, e.to_string()
+                    "failed to create wireless proxy for {}, error {}",
+                    device,
+                    e.to_string()
+                );
+                return Err(ProxyError::ProxyCreationFailed(format!(
+                    "failed to create wireless proxy for {}, error {}",
+                    device,
+                    e.to_string()
                 )));
             }
         };
+        let active_access_point =
+            match get_active_access_point(&self.0.connection(), &wireless_proxy).await {
+                Ok(access_point) => access_point,
+                Err(e) => {
+                    error!(
+                        "failed to get active access point for {}, error {}",
+                        device,
+                        e.to_string()
+                    );
+                    return Err(ProxyError::DbusCallFailed(format!(
+                        "failed to get active access point for {}, error {}",
+                        device,
+                        e.to_string()
+                    )));
+                }
+            };
         let active_ssid_vec = try_property!(active_access_point.ssid(), |e| {
-                        error!("failed to get SSID for access point: {}", e);
-                        Vec::new()
-                    });
+            error!("failed to get SSID for access point: {}", e);
+            Vec::new()
+        });
+        // Get the list of all known networks
+        let known_networks = self.known_networks().await?;
         // Get the list of all access points visible to this device, including hidden ones for which the SSID is not yet known.
         let access_points = match wireless_proxy.get_all_access_points().await {
             Ok(access_points) => access_points,
             Err(e) => {
                 error!(
-                            "failed to get access points for {}, error {}",
-                            device,
-                            e.to_string()
-                        );
+                    "failed to get access points for {}, error {}",
+                    device,
+                    e.to_string()
+                );
                 return Err(ProxyError::DbusCallFailed(format!(
                     "failed to get access points for {}, error {}",
-                    device, e.to_string()
+                    device,
+                    e.to_string()
                 )));
             }
         };
 
+        let mut seen_ssids: Vec<String> = vec![];
         for access_point in access_points {
+            let object_path = access_point.to_string();
             // Create a proxy for the access point.
-            let access_point_proxy = match access_point::AccessPointProxy::new(
-                &self.0.connection(),
-                access_point,
-            )
-                .await
-            {
-                Ok(proxy) => proxy,
-                Err(_) => continue,
-            };
+            let access_point_proxy =
+                match access_point::AccessPointProxy::new(&self.0.connection(), access_point).await
+                {
+                    Ok(proxy) => proxy,
+                    Err(_) => continue,
+                };
 
             // Extract properties from the access point.
             let ssid_vec = try_property!(access_point_proxy.ssid(), |e| {
-                        error!("failed to get SSID for access point: {}", e);
-                        Vec::new()
-                    });
-            let flags = try_property!(access_point_proxy.flags(), |e| {
-                        error!("failed to get flags for access point: {}", e);
-                        0
-                    });
-            let frequency = try_property!(access_point_proxy.frequency(), |e| {
-                        error!("failed to get frequency for access point: {}", e);
-                        0
-                    });
-            let bandwidth = try_property!(access_point_proxy.bandwidth(), |e| {
-                        error!("failed to get bandwidth for access point: {}", e);
-                        0
-                    });
-            let signal_strength = try_property!(access_point_proxy.strength(), |e| {
-                        error!("failed to get signal strength for access point: {}", e);
-                        0
-                    });
-            let hw_address = try_property!(access_point_proxy.hw_address(), |e| {
-                        error!("failed to get hardware address for access point: {}", e);
-                        String::new()
-                    });
+                error!("failed to get SSID for access point: {}", e);
+                Vec::new()
+            });
 
+            // Let's not parse other property if ssid is already seen
+            let ssid = String::from_utf8_lossy(&ssid_vec).to_string();
+            if ssid.is_empty() || seen_ssids.contains(&ssid) {
+                continue;
+            };
+
+            let flags = try_property!(access_point_proxy.flags(), |e| {
+                error!("failed to get flags for access point: {}", e);
+                0
+            });
+            let frequency = try_property!(access_point_proxy.frequency(), |e| {
+                error!("failed to get frequency for access point: {}", e);
+                0
+            });
+            let bandwidth = try_property!(access_point_proxy.bandwidth(), |e| {
+                error!("failed to get bandwidth for access point: {}", e);
+                0
+            });
+            let signal_strength = try_property!(access_point_proxy.strength(), |e| {
+                error!("failed to get signal strength for access point: {}", e);
+                0
+            });
+            let hw_address = try_property!(access_point_proxy.hw_address(), |e| {
+                error!("failed to get hardware address for access point: {}", e);
+                String::new()
+            });
+
+            let is_this_known_network = known_networks
+                .iter()
+                .any(|network | network.ssid == ssid);
             // Build the access point info struct.
             let raw_access_point_info = RawAccessPointInfo {
-                ssid: String::from_utf8_lossy(&ssid_vec).to_string(),
-                is_active: active_ssid_vec == ssid_vec,
+                ssid: ssid.clone(),
+                object_path,
                 flags,
                 frequency,
                 bandwidth,
-                strength: signal_strength,
                 hw_address,
+                strength: signal_strength,
+                is_active: active_ssid_vec == ssid_vec,
+                is_known: is_this_known_network,
                 ..Default::default()
             };
             networks.push(raw_access_point_info);
+            seen_ssids.push(ssid);
         }
         Ok(networks)
     }
@@ -501,9 +519,9 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         info!("listing known networks");
 
         let cn = self.0.connection();
-        
+
         // get known networks
-         let settings_proxy = match settings::SettingsProxy::new(&cn).await {
+        let settings_proxy = match settings::SettingsProxy::new(&cn).await {
             Ok(proxy) => proxy,
             Err(e) => {
                 error!("failed to create settings proxy: {}", e);
@@ -518,11 +536,27 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
 
         let mut known_networks_list: Vec<KnownNetworkResponse> = Vec::new();
 
-        for c in connections {
-            let connection_proxy = connection::ConnectionProxy::new(&cn, c.clone())
-                .await
-                .unwrap();
-            let settings = connection_proxy.get_settings().await.unwrap();
+        for obj_path in connections {
+            let connection_proxy = match connection::ConnectionProxy::new(&cn, obj_path).await {
+                Ok(proxy) => proxy,
+                Err(e) => {
+                    error!("failed to create connection proxy");
+                    return Err(ProxyError::ProxyCreationFailed(format!(
+                        "failed to create connection proxy: {}",
+                        e
+                    )));
+                }
+            };
+            let settings = match connection_proxy.get_settings().await {
+                Ok(settings) => settings,
+                Err(e) => {
+                    error!("error while fetching the settings of connection");
+                    return Err(ProxyError::DbusCallFailed(format!(
+                        "failed to fetch connection settings: {}",
+                        e
+                    )));
+                }
+            };
 
             if !settings.contains_key("802-11-wireless") {
                 continue;
@@ -538,16 +572,14 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
             } else {
                 "WPA-PSK".to_string()
             };
-            let mut flag = false;
-            for network in known_networks_list.iter() {
-                if network.ssid == access_point {
-                    flag = true;
-                    break;
-                }
-            }
-            if flag {
+
+            if known_networks_list
+                .iter()
+                .any(|known_network| known_network.ssid == access_point)
+            {
                 continue;
             }
+
             known_networks_list.push(KnownNetworkResponse {
                 ssid: access_point,
                 flags: security_flags,
@@ -965,21 +997,21 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
         };
 
         // Create a proxy for the wireless interface.
-        let wireless_proxy =
-            match WirelessDeviceProxy::new(&self.0.connection(), &device).await {
-                Ok(proxy) => proxy,
-                Err(e) => {
-                    error!(
-                                "failed to create wireless proxy for {}, error {}",
-                                device,
-                                e.to_string()
-                            );
-                    return Err(ProxyError::ProxyCreationFailed(format!(
-                        "failed to create wireless proxy for {}, error {}",
-                        device, e.to_string()
-                    )));
-                }
-            };
+        let wireless_proxy = match WirelessDeviceProxy::new(&self.0.connection(), &device).await {
+            Ok(proxy) => proxy,
+            Err(e) => {
+                error!(
+                    "failed to create wireless proxy for {}, error {}",
+                    device,
+                    e.to_string()
+                );
+                return Err(ProxyError::ProxyCreationFailed(format!(
+                    "failed to create wireless proxy for {}, error {}",
+                    device,
+                    e.to_string()
+                )));
+            }
+        };
         let active_access_point = match get_active_access_point(&cn, &wireless_proxy).await {
             Ok(access_point) => access_point,
             Err(e) => {
@@ -992,27 +1024,21 @@ impl NetworkManagerInterface for NetworkManagerProxy<'_> {
     }
 }
 
-async fn get_active_access_point<'a>(cn: &Connection, wireless_proxy: &wireless::WirelessDeviceProxy<'_>) -> Result<AccessPointProxy<'a>, ProxyError> {
+async fn get_active_access_point<'a>(
+    cn: &Connection,
+    wireless_proxy: &wireless::WirelessDeviceProxy<'_>,
+) -> Result<AccessPointProxy<'a>, ProxyError> {
     let active_access_point = match wireless_proxy.active_access_point().await {
         Ok(access_point) => access_point,
         Err(e) => {
-            error!(
-                            "failed to get active access point error {}",
-
-                            e.to_string()
-                        );
+            error!("failed to get active access point error {}", e.to_string());
             return Err(ProxyError::DbusCallFailed(format!(
                 "failed to get active access point error {}",
                 e.to_string()
             )));
         }
     };
-    let active_access_point = match AccessPointProxy::new(
-        &cn,
-        active_access_point,
-    )
-        .await
-    {
+    let active_access_point = match AccessPointProxy::new(&cn, active_access_point).await {
         Ok(proxy) => proxy,
         Err(err) => {
             error!("failed to create access point proxy: {}", err);

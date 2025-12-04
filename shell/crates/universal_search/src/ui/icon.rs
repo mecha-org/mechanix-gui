@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use gpui::{prelude::FluentBuilder, *};
 pub const UNIVERSAL_SEARCH_ICONS_DIR: &str = "icons/universal-search/";
 
@@ -8,38 +10,50 @@ pub enum IconName {
     Chromium,
     Firefox,
     Github,
-    FolderMedium,
     Search,
-    FolderSmall,
     XIcon,
-    File,
     ArrowCounterClockWise,
-    Json,
-    Rust,
-    TypeScript,
-    Markdown,
     Navbar,
+    AudioFile,
+    CodeFile,
+    CsvFile,
+    DefaultFolder,
+    DefaultFile,
+    DefaultApp,
+    DocFile,
+    ImageFile,
+    LockedFile,
+    PdfFile,
+    VideoFile,
+    XlsFile,
+    ZipFile,
 }
 
 impl IconName {
     pub fn resolve(&self) -> SharedString {
         let icon_path = match self {
-            IconName::Ardour => "ardour-icon.png",
-            IconName::ArrowUpRight => "arrow-up-right-icon.svg",
-            IconName::Firefox => "firefox-icon.png",
-            IconName::Chromium => "chromium-icon.png",
-            IconName::Github => "github-icon.png",
-            IconName::FolderMedium => "folder-medium-icon.svg",
-            IconName::Search => "search-icon.svg",
-            IconName::FolderSmall => "folder-small-icon.svg",
-            IconName::XIcon => "x-icon.svg",
-            IconName::File => "file-icon.png",
+            IconName::Ardour => "ardour.png",
+            IconName::ArrowUpRight => "arrow-up-right.svg",
+            IconName::Firefox => "firefox.png",
+            IconName::Chromium => "chromium.png",
+            IconName::Github => "github.png",
+            IconName::Search => "search.svg",
+            IconName::XIcon => "x.svg",
             IconName::ArrowCounterClockWise => "arrow-counter-clock-wise.svg",
-            IconName::Json => "json-icon.png",
-            IconName::Rust => "rust-icon.png",
-            IconName::TypeScript => "typescript-icon.png",
-            IconName::Markdown => "markdown-icon.png",
             IconName::Navbar => "navbar.png",
+            IconName::AudioFile => "audio-file.svg",
+            IconName::CodeFile => "code-file.svg",
+            IconName::CsvFile => "csv-file.svg",
+            IconName::DefaultFolder => "default-folder.svg",
+            IconName::DefaultFile => "default-file.svg",
+            IconName::DefaultApp => "default-app.svg",
+            IconName::DocFile => "doc-file.svg",
+            IconName::ImageFile => "image-file.svg",
+            IconName::LockedFile => "locked-file.svg",
+            IconName::PdfFile => "pdf-file.svg",
+            IconName::VideoFile => "video-file.svg",
+            IconName::XlsFile => "xls-file.svg",
+            IconName::ZipFile => "zip-file.svg",
         };
         format!("{}{}", UNIVERSAL_SEARCH_ICONS_DIR, icon_path).into()
     }
@@ -51,7 +65,7 @@ impl RenderOnce for IconName {
     }
 }
 
-#[derive(IntoElement)]
+#[derive(IntoElement, Debug)]
 pub struct Icon {
     path: SharedString,
     size: Option<(Pixels, Pixels)>,
@@ -92,22 +106,31 @@ impl Icon {
 impl RenderOnce for Icon {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl gpui::IntoElement {
         let is_svg = self.path.ends_with(".svg");
+        let is_absolute = self.path.starts_with("/");
+
+        // SVG HANDLING (tint only for relative assets)
         if is_svg {
-            // SVG icon case
-            let base = svg().path(self.path.clone()).w(px(40.0)).h(px(40.0));
+            if !is_absolute {
+                // Relative SVG → render with optional color
+                let svg_el = svg().path(self.path.clone()).w(px(40.)).h(px(40.));
 
-            // Apply color if available
-            let rendered = base
-                .when_some(self.text_color, |this, color| this.text_color(color))
-                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1));
+                let tinted = svg_el
+                    .when_some(self.text_color, |this, color| this.text_color(color))
+                    .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1));
 
-            rendered.into_any_element()
-        } else {
-            // PNG / JPEG icon case
-            img(self.path.clone())
-                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
-                .into_any_element()
+                return tinted.into_any_element();
+            }
         }
+
+        if is_absolute {
+            return img(PathBuf::from(self.path.as_str()))
+                .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
+                .into_any_element();
+        }
+
+        img(self.path.clone())
+            .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))
+            .into_any_element()
     }
 }
 

@@ -7,14 +7,17 @@ use crate::interfaces::wireless::{
 };
 use crate::proxies::NetworkManagerProxy;
 use anyhow::Result;
+use futures::channel::mpsc;
 use futures::executor::ThreadPool;
 use futures::{FutureExt, StreamExt};
 use log::{debug, error, info};
-use std::sync::{mpsc, LazyLock};
+use std::sync::LazyLock;
 use zbus::Connection;
 
 static THREAD_POOL: LazyLock<ThreadPool> =
     LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
+
+const CHANNEL_SIZE: usize = 10;
 
 /// A service wrapper for interacting with a NetworkManager implementation.
 ///
@@ -89,17 +92,19 @@ impl NetworkManagerService {
                 };
 
                 Ok(WirelessNetworkInfo {
+                    access_point_object_path: raw_ap.object_path,
                     ssid: raw_ap.ssid,
                     signal_strength,
                     security,
                     hw_address: raw_ap.hw_address,
                     is_active: raw_ap.is_active,
+                    is_known: raw_ap.is_known,
                 })
             })
             .collect()
     }
 
-        /// List current available saved networks
+    /// List current available saved networks
     pub async fn known_networks(&self) -> Result<Vec<WirelessNetworkInfo>, NetworkManagerError> {
         let known_networks_response = self
             .proxy
@@ -210,14 +215,14 @@ impl NetworkManagerService {
 
     pub async fn stream_device_events(&self) -> mpsc::Receiver<NMState> {
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = mpsc::channel(CHANNEL_SIZE);
 
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_device_events().await {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
-                            if let Err(e) = sender.send(NMState::from(state)) {
+                            if let Err(e) = sender.try_send(NMState::from(state)) {
                                 error!("failed to send device event to receiver: {}", e);
                                 continue;
                             }
@@ -236,7 +241,7 @@ impl NetworkManagerService {
         &self,
     ) -> mpsc::Receiver<Result<AccessPointEvent, NetworkManagerError>> {
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = mpsc::channel(CHANNEL_SIZE);
 
         THREAD_POOL.spawn_ok(async move {
             let (mut access_point_added_stream, mut access_point_removed_stream) =
@@ -259,8 +264,8 @@ impl NetworkManagerService {
                                     continue; // Skip this item
                                 }
                             };
-                            let access_point_path = args.access_point.to_string();
-                            info!("access point added: {}", access_point_path);
+                            let access_point_object_path = args.access_point.to_string();
+                            info!("access point added: {}", access_point_object_path);
 
                             let raw_access_point_info = match proxy.get_access_point_info(&args.access_point).await {
                                 Ok(info) => info,
@@ -270,14 +275,27 @@ impl NetworkManagerService {
                                 }
                             };
 
+                            let protected_or_open = raw_access_point_info
+                            .nm80211_flags()
+                            .contains(NM80211ApFlags::PRIVACY)
+                            .then(|| "Protected".to_string()).unwrap_or("Open".to_string());
+
                             let access_point_event_info = AccessPointEvent {
-                                access_point_path,
+                                object_path: access_point_object_path.clone(),
                                 event_type: EventType::Added,
-                                raw_access_point_info: Some(raw_access_point_info),
+                                wireless_network_info: Some(WirelessNetworkInfo {
+                                    access_point_object_path,
+                                    ssid: raw_access_point_info.ssid,
+                                    signal_strength: raw_access_point_info.strength,
+                                    security: protected_or_open,
+                                    hw_address: raw_access_point_info.hw_address,
+                                    is_active: raw_access_point_info.is_active,
+                                    is_known: raw_access_point_info.is_known,
+                                }),
                                 ..Default::default()
                             };
 
-                            if sender.send(Ok(access_point_event_info)).is_err() {
+                            if sender.try_send(Ok(access_point_event_info)).is_err() {
                                 error!("failed to send access point added: receiver dropped");
                                 continue; // Receiver dropped
                             }
@@ -294,17 +312,17 @@ impl NetworkManagerService {
                                     continue; // Skip this item
                                 }
                             };
-                            let access_point_path = args.access_point.to_string();
-                            debug!("access point removed: {}", access_point_path);
+                            let object_path = args.access_point.to_string();
+                            debug!("access point removed: {}", object_path);
 
                             let access_point_event_info = AccessPointEvent {
-                                access_point_path,
+                                object_path,
                                 event_type: EventType::Removed,
-                                raw_access_point_info: None,
+                                wireless_network_info: None,
                                 ..Default::default()
                             };
 
-                            if sender.send(Ok(access_point_event_info)).is_err() {
+                            if sender.try_send(Ok(access_point_event_info)).is_err() {
                                 error!("failed to send access point added: receiver dropped");
                                 continue; // Receiver dropped
                             }
@@ -319,14 +337,14 @@ impl NetworkManagerService {
     }
     pub async fn stream_wireless_enabled_status(&self) -> mpsc::Receiver<bool> {
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = mpsc::channel(CHANNEL_SIZE);
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_wireless_enabled_status().await {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
                             info!("state updated: {}", state);
-                            if let Err(e) = sender.send(state) {
+                            if let Err(e) = sender.try_send(state) {
                                 error!("failed to send device event to receiver: {}", e);
                                 continue;
                             }
@@ -344,7 +362,7 @@ impl NetworkManagerService {
         println!("service-action:: streaming active network strength");
         info!("service-action:: streaming active network strength");
         let proxy = self.proxy.clone();
-        let (sender, receiver) = mpsc::channel();
+        let (mut sender, receiver) = mpsc::channel(CHANNEL_SIZE);
 
         THREAD_POOL.spawn_ok(async move {
             match proxy.stream_wireless_network_strength().await {
@@ -352,7 +370,7 @@ impl NetworkManagerService {
                     while let Some(event) = stream.next().await {
                         if let Ok(state) = event.get().await {
                             info!("network strength updated: {}", state);
-                            if let Err(e) = sender.send(state) {
+                            if let Err(e) = sender.try_send(state) {
                                 error!("failed to send strength event to receiver: {}", e);
                                 continue;
                             }

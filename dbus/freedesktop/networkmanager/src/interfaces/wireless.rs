@@ -61,6 +61,7 @@ impl From<u32> for NMState {
 /// This struct holds low-level details as reported by the network hardware or driver.
 #[derive(Debug, Clone, Default)]
 pub struct RawAccessPointInfo {
+    pub object_path: String,
     /// Flags indicating access point capabilities.
     pub flags: u32,
     /// WPA-specific flags.
@@ -85,6 +86,8 @@ pub struct RawAccessPointInfo {
     pub strength: u8,
     /// Time (in seconds) since the access point was last seen.
     pub last_seen: i64,
+    /// Whether the network is saved or not.
+    pub is_known: bool
 }
 
 bitflags::bitflags! {
@@ -116,6 +119,7 @@ impl RawAccessPointInfo {
 /// High-level, user-friendly information about a Wireless network.
 #[derive(Debug, Clone)]
 pub struct WirelessNetworkInfo {
+    pub access_point_object_path: String,
     /// SSID (network name) as a UTF-8 string.
     pub ssid: String,
     /// Signal strength (0-100).
@@ -124,8 +128,8 @@ pub struct WirelessNetworkInfo {
     pub security: String,
     /// Hardware (MAC) address of the access point.
     pub hw_address: String,
-
     pub is_active: bool,
+    pub is_known: bool,
     // Additional fields can be added as needed.
 }
 
@@ -149,8 +153,8 @@ pub enum EventType {
 #[derive(Debug, Default)]
 pub struct AccessPointEvent {
     pub event_type: EventType,
-    pub access_point_path: String,
-    pub raw_access_point_info: Option<RawAccessPointInfo>,
+    pub object_path: String,
+    pub wireless_network_info: Option<WirelessNetworkInfo>,
 }
 
 #[derive(Debug, Clone, Default)]

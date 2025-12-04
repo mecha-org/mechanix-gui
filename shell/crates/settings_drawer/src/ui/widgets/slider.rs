@@ -17,11 +17,11 @@ pub enum SliderPattern {
 }
 
 pub struct SliderState {
-    min: f32,
-    max: f32,
-    value: f32,
-    bounds: Bounds<Pixels>,
-    pattern: SliderPattern,
+    pub min: f32,
+    pub max: f32,
+    pub value: f32,
+    pub bounds: Bounds<Pixels>,
+    pub pattern: SliderPattern,
 }
 
 pub enum SliderEvent {
