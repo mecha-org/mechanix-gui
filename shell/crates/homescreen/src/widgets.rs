@@ -12,6 +12,7 @@ pub(crate) struct WidgetData {
     widget: Box<dyn HomescreenWidget>,
     page_number: usize,
     grid_bounds: GridBounds,
+    is_being_dragged: bool,
     bounds: Bounds<Pixels>,
 }
 
@@ -26,6 +27,7 @@ impl WidgetData {
             widget,
             page_number,
             grid_bounds,
+            is_being_dragged: false,
             bounds,
         }
     }

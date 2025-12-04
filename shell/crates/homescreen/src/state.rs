@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::time::Instant;
 
 use gpui::*;
 
@@ -26,6 +25,7 @@ pub struct HomescreenState {
     pub(crate) active_page: usize,
     pub(crate) page_offset: f32,
     pub(crate) is_page_dragging: bool,
+    pub(crate) dragging_widget: Option<WidgetId>,
 }
 
 impl HomescreenState {
@@ -51,6 +51,7 @@ impl HomescreenState {
             active_page: 0,
             page_offset: 0.0,
             is_page_dragging: false,
+            dragging_widget: None,
         }
     }
 

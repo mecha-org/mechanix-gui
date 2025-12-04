@@ -8,6 +8,8 @@ pub struct InputManagerState {
     pub(crate) is_mouse_pressed: bool,
     pub(crate) mouse_press_position: Option<Point<Pixels>>,
     pub(crate) drag_start_position: Option<Point<Pixels>>,
+    pub(crate) mouse_press_time: Option<Instant>,
+    pub(crate) widget_under_cursor: Option<WidgetId>,
 }
 
 impl InputManagerState {
@@ -16,6 +18,8 @@ impl InputManagerState {
             is_mouse_pressed: false,
             mouse_press_position: None,
             drag_start_position: None,
+            mouse_press_time: None,
+            widget_under_cursor: None,
         }
     }
 }
@@ -26,7 +30,11 @@ impl InputManager {
         state.input_manager_state.is_mouse_pressed = true;
         state.input_manager_state.mouse_press_position = Some(mouse_down_event.position);
         state.input_manager_state.drag_start_position = None;
+        state.input_manager_state.mouse_press_time = Some(Instant::now());
+        state.input_manager_state.widget_under_cursor =
+            state.find_widget_under_point(mouse_down_event.position);
         state.is_page_dragging = false;
+        state.dragging_widget = None;
     }
 
     pub fn mouse_move(mouse_move_event: &MouseMoveEvent, state: &mut HomescreenState) -> bool {
@@ -42,9 +50,45 @@ impl InputManager {
 
         let drag_config = &state.config.drag;
 
+        // Calculate movement from initial press position
+        let dx: f32 = (current_position.x - press_position.x).into();
+        let dy: f32 = (current_position.y - press_position.y).into();
+        let movement_distance = (dx * dx + dy * dy).sqrt();
+
+        // Check if we should start widget dragging
+        if state.dragging_widget.is_none() && !state.is_page_dragging {
+            if let Some(press_time) = state.input_manager_state.mouse_press_time {
+                let elapsed = press_time.elapsed();
+
+                // If mouse hasn't moved much and threshold duration has passed, start widget drag
+                if movement_distance < drag_config.drag_initiation_threshold
+                    && elapsed >= drag_config.widget_drag_time_threshold
+                {
+                    if let Some(widget_id) = state.input_manager_state.widget_under_cursor {
+                        state.dragging_widget = Some(widget_id);
+                        state.input_manager_state.drag_start_position =
+                            Some(mouse_move_event.position);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if let Some(dragging_widget_id) = state.dragging_widget.as_ref() {
+            let dragging_widget = state.widgets.get_mut(dragging_widget_id).unwrap();
+            let position = dragging_widget.bounds().origin
+                - state.input_manager_state.drag_start_position.unwrap()
+                + mouse_move_event.position;
+            let mut bounds = dragging_widget.bounds();
+            bounds.origin = position;
+            dragging_widget.widget_mut().set_bounds(bounds);
+            return true;
+        }
+
+        // Otherwise, handle page dragging
         if !state.is_page_dragging {
-            let dx: f32 = (current_position.x - press_position.x).into();
-            if dx.abs() >= drag_config.drag_initiation_threshold {
+            let horizontal_movement = dx.abs();
+            if horizontal_movement >= drag_config.drag_initiation_threshold {
                 state.is_page_dragging = true;
                 state.input_manager_state.drag_start_position = Some(press_position);
             } else {
@@ -71,7 +115,10 @@ impl InputManager {
             let Some(drag_start) = state.input_manager_state.drag_start_position else {
                 state.input_manager_state.is_mouse_pressed = false;
                 state.input_manager_state.mouse_press_position = None;
+                state.input_manager_state.mouse_press_time = None;
+                state.input_manager_state.widget_under_cursor = None;
                 state.is_page_dragging = false;
+                state.dragging_widget = None;
                 return;
             };
 
@@ -90,9 +137,18 @@ impl InputManager {
             }
         }
 
+        if let Some(dragging_widget_id) = state.dragging_widget.as_ref() {
+            let dragging_widget = state.widgets.get_mut(dragging_widget_id).unwrap();
+            let bounds = dragging_widget.bounds();
+            dragging_widget.widget_mut().set_bounds(bounds);
+        }
+
         state.input_manager_state.is_mouse_pressed = false;
         state.input_manager_state.mouse_press_position = None;
         state.input_manager_state.drag_start_position = None;
+        state.input_manager_state.mouse_press_time = None;
+        state.input_manager_state.widget_under_cursor = None;
         state.is_page_dragging = false;
+        state.dragging_widget = None;
     }
 }
