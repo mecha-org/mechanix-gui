@@ -6,6 +6,88 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::sync::{mpsc, oneshot};
 
+
+pub enum DbCmd {
+    GetChecksum {
+        checksum_identifier: String,
+        key: String,
+        rsp: oneshot::Sender<Option<u32>>,
+    },
+    InsertChecksum {
+        checksum_identifier: String,
+        key: String,
+        value: u32,
+    },
+    Get {
+        identifier: String,
+        key: String,
+        rsp: oneshot::Sender<HashMap<String, String>>,
+    },
+    Set {
+        identifier: String,
+        key: String,
+        value: Vec<u8>,
+        rsp: oneshot::Sender<Result<()>>,
+    },
+}
+
+pub fn start_db_actor(mut db: Database) -> mpsc::Sender<DbCmd> {
+    let (tx, mut rx) = mpsc::channel::<DbCmd>(128);
+    tokio::spawn(async move {
+        let mut db = db; // owned by this task
+        while let Some(cmd) = rx.recv().await {
+                match cmd {
+                    DbCmd::GetChecksum {
+                        checksum_identifier,
+                        key,
+                        rsp,
+                    } => match db.get_checksum(&checksum_identifier, &key) {
+                        Ok(checksum) => {
+                            let _ = rsp.send(checksum);
+                        }
+                        Err(e) => {
+                            error!("Failed to get checksum: {}", e);
+                            let _ = rsp.send(None);
+                        }
+                    },
+                    DbCmd::InsertChecksum {
+                        checksum_identifier,
+                        key,
+                        value,
+                    } => match db.insert_checksum(&checksum_identifier, &key, &value) {
+                        Ok(()) => {}
+                        Err(e) => {
+                            error!("Failed to insert checksum: {}", e);
+                        }
+                    },
+                    DbCmd::Get {
+                        identifier,
+                        key,
+                        rsp,
+                    } => match db.get(&identifier, &key) {
+                        Ok(settings) => {
+                            let _ = rsp.send(settings);
+                        }
+                        Err(e) => {
+                            error!("Failed to get settings: {}", e);
+                            let _ = rsp.send(HashMap::new());
+                        }
+                    },
+                    DbCmd::Set {
+                        identifier,
+                        key,
+                        value,
+                        rsp,
+                    } => {
+                        if let Err(err) = rsp.send(db.insert_settings(&identifier, &key, &value)) {
+                            error!("Failed to send an insert result on channel: {:?}", err);
+                        }
+                    }
+                }
+            }
+        });
+    tx
+}
 /// Database struct for storing and retrieving configuration data.
 ///
 /// This struct provides an interface to the underlying sled database,
@@ -261,90 +343,4 @@ impl Database {
             Ok(None)
         }
     }
-}
-// 1) Define your DB commands
-pub enum DbCmd {
-    GetChecksum {
-        checksum_identifier: String,
-        key: String,
-        rsp: oneshot::Sender<Option<u32>>,
-    },
-    InsertChecksum {
-        checksum_identifier: String,
-        key: String,
-        value: u32,
-    },
-    Get {
-        identifier: String,
-        key: String,
-        rsp: oneshot::Sender<HashMap<String, String>>,
-    },
-    Set {
-        identifier: String,
-        key: String,
-        value: Vec<u8>,
-        rsp: oneshot::Sender<Result<()>>,
-    },
-}
-
-// 2) Start the DB actor on a blocking thread
-pub fn start_db_actor(mut db: Database) -> mpsc::Sender<DbCmd> {
-    let (tx, mut rx) = mpsc::channel::<DbCmd>(128);
-    std::thread::spawn(move || {
-        // This thread owns `db`
-        let rt = tokio::runtime::Runtime::new().expect("rt");
-        rt.block_on(async move {
-            while let Some(cmd) = rx.recv().await {
-                match cmd {
-                    DbCmd::GetChecksum {
-                        checksum_identifier,
-                        key,
-                        rsp,
-                    } => match db.get_checksum(&checksum_identifier, &key) {
-                        Ok(checksum) => {
-                            let _ = rsp.send(checksum);
-                        }
-                        Err(e) => {
-                            error!("Failed to get checksum: {}", e);
-                            let _ = rsp.send(None);
-                        }
-                    },
-                    DbCmd::InsertChecksum {
-                        checksum_identifier,
-                        key,
-                        value,
-                    } => match db.insert_checksum(&checksum_identifier, &key, &value) {
-                        Ok(()) => {}
-                        Err(e) => {
-                            error!("Failed to insert checksum: {}", e);
-                        }
-                    },
-                    DbCmd::Get {
-                        identifier,
-                        key,
-                        rsp,
-                    } => match db.get(&identifier, &key) {
-                        Ok(settings) => {
-                            let _ = rsp.send(settings);
-                        }
-                        Err(e) => {
-                            error!("Failed to get settings: {}", e);
-                            let _ = rsp.send(HashMap::new());
-                        }
-                    },
-                    DbCmd::Set {
-                        identifier,
-                        key,
-                        value,
-                        rsp,
-                    } => {
-                       if let Err(err) = rsp.send(db.insert_settings(&identifier, &key, &value)) {
-                           error!("Failed to send an insert result on channel: {:?}", err);
-                       }
-                    }
-                }
-            }
-        });
-    });
-    tx
 }

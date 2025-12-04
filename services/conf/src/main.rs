@@ -278,7 +278,8 @@ async fn start_server() -> Result<(), ServerError> {
     );
     // Initialize database
     let db = Database::new(db_path);
-    let db_tx = start_db_actor(db); // No Arc returned, just a Sender (Clone)
+    // Start the database actor to handle database operations asynchronously
+    let db_tx = start_db_actor(db);
     // Build the connection first
     let conn = match ConnectionBuilder::session() {
         Ok(builder) => match builder.name(CONNECTION_BUS_NAME) {
@@ -343,7 +344,6 @@ async fn start_server() -> Result<(), ServerError> {
         match event_result {
             Ok(event) => {
                 if event.kind.is_create() || event.kind.is_modify() {
-                    info!("File system event =====================: {:?} and paths: {}", event, event.paths.len());
                     // Process each path in the event
                     for path in &event.paths {
                         // Only process TOML files
