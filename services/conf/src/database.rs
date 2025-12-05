@@ -8,20 +8,10 @@ use tokio::sync::{mpsc, oneshot};
 
 
 pub enum DbCmd {
-    GetLastModified {
-        identifier: String,
-        key: String,
-        rsp: oneshot::Sender<Option<String>>,
-    },
-    InsertLastModified {
-        identifier: String,
-        key: String,
-        value: String,
-    },
     Get {
         identifier: String,
         key: String,
-        rsp: oneshot::Sender<HashMap<String, String>>,
+        rsp: oneshot::Sender<HashMap<String, Vec<u8>>>,
     },
     Set {
         identifier: String,
@@ -37,29 +27,6 @@ pub fn start_db_actor(db: Database) -> mpsc::Sender<DbCmd> {
         let mut db = db; // owned by this task
         while let Some(cmd) = rx.recv().await {
                 match cmd {
-                    DbCmd::GetLastModified {
-                        identifier,
-                        key,
-                        rsp,
-                    } => match db.get_last_modified(&identifier, &key) {
-                        Ok(last_modified) => {
-                            let _ = rsp.send(last_modified);
-                        }
-                        Err(e) => {
-                            error!("Failed to get last_modified: {}", e);
-                            let _ = rsp.send(None);
-                        }
-                    },
-                    DbCmd::InsertLastModified {
-                        identifier,
-                        key,
-                        value,
-                    } => match db.insert_last_modified(&identifier, &key, &value) {
-                        Ok(()) => {}
-                        Err(e) => {
-                            error!("Failed to insert last_modified: {}", e);
-                        }
-                    },
                     DbCmd::Get {
                         identifier,
                         key,
@@ -79,7 +46,7 @@ pub fn start_db_actor(db: Database) -> mpsc::Sender<DbCmd> {
                         value,
                         rsp,
                     } => {
-                        if let Err(err) = rsp.send(db.insert_settings(&identifier, &key, &value)) {
+                        if let Err(err) = rsp.send(db.insert(&identifier, &key, &value)) {
                             error!("Failed to send an insert result on channel: {:?}", err);
                         }
                     }
@@ -152,45 +119,6 @@ impl Database {
         Ok(tree)
     }
 
-    /// Insert a last_modified into the database.
-    ///
-    /// This function stores a last_modified value for a schema in the specified last_modified tree.
-    /// last_modifieds are used to detect changes in schema files.
-    ///
-    /// # Arguments
-    ///
-    /// * `last_modified_identifier` - The identifier for the last_modified tree
-    /// * `schema_name` - The name of the schema
-    /// * `last_modified_value` - The last_modified value to store
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(())` if the insertion was successful
-    /// * `Err(...)` if there was an error during insertion
-    pub fn insert_last_modified(
-        &mut self,
-        identifier: &str,
-        schema_name: &str,
-        last_modified: &str,
-    ) -> Result<()> {
-        info!(
-            "Inserting last_modified for schema: {} value: {}",
-            schema_name, last_modified
-        );
-        let last_modified_tree = self.get_tree(identifier)?;
-        // let last_modified_bytes = last_modified.bytes();
-        last_modified_tree
-            .insert(schema_name, last_modified)
-            .with_context(|| {
-                format!(
-                    "Failed to insert last_modified with schema_name: {}",
-                    schema_name
-                )
-            })?;
-        debug!("last_modified inserted for schema: {}", schema_name);
-        Ok(())
-    }
-
     /// Insert a setting into the database.
     ///
     /// This function stores a setting value in the specified schema tree.
@@ -206,7 +134,7 @@ impl Database {
     ///
     /// * `Ok(())` if the insertion was successful
     /// * `Err(...)` if there was an error during insertion
-    pub fn insert_settings(
+    pub fn insert(
         &mut self,
         schema_identifier: &str,
         key: &str,
@@ -238,7 +166,7 @@ impl Database {
     /// * `Ok(None)` if the key is not present in the database
     /// * `Ok(Some(value))` if the key is present, where `value` is the associated value
     /// * `Err(...)` if there was an error during retrieval
-    pub fn get(&self, identifier: &str, key: &str) -> Result<HashMap<String, String>> {
+    pub fn get(&self, identifier: &str, key: &str) -> Result<HashMap<String, Vec<u8>>> {
         debug!("Getting value for key: {} from tree: {}", key, identifier);
         let tree = self.get_tree(identifier)?;
 
@@ -252,7 +180,7 @@ impl Database {
                 .get(key)
                 .with_context(|| format!("Failed to get value with key: {}", key))?
             {
-                results.insert(key.to_string(), String::from_utf8_lossy(&value).to_string());
+                results.insert(key.to_string(), value.to_vec());
             }
             results
         };
@@ -274,7 +202,7 @@ impl Database {
     ///
     /// * `Ok(HashMap<String, String>)` - A map of all key-value pairs in the tree that match the prefix
     /// * `Err(...)` - If there was an error during the scan
-    fn scan_with_prefix(&self, identifier: &str, key: &str) -> Result<HashMap<String, String>> {
+    fn scan_with_prefix(&self, identifier: &str, key: &str) -> Result<HashMap<String, Vec<u8>>> {
         debug!("Prefix scan for key: {} in tree: {}", key, identifier);
         let tree = self.get_tree(identifier)?;
 
@@ -286,8 +214,7 @@ impl Database {
         for result in tree.scan_prefix(prefix.as_bytes()) {
             let (k, v) = result.with_context(|| "Failed to scan key-value pair")?;
             let key_str = String::from_utf8_lossy(&k).to_string();
-            let value_str = String::from_utf8_lossy(&v).to_string();
-            results.insert(key_str, value_str);
+            results.insert(key_str, v.to_vec());
         }
         debug!(
             "Found {} matching entries for prefix {}",
@@ -296,41 +223,5 @@ impl Database {
         );
 
         Ok(results)
-    }
-    /// Retrieve a last_modified from the database.
-    ///
-    /// This function retrieves a last_modified from the specified last_modified tree using the given key.
-    /// last_modifieds are stored as 4-byte little-endian u32 values.
-    /// If the key doesn't exist or the value is not a valid 4-byte last_modified, it returns None.
-    ///
-    /// # Arguments
-    ///
-    /// * `last_modified_identifier` - The identifier of the last_modified tree
-    /// * `key` - The key of the last_modified to retrieve
-    ///
-    /// # Returns
-    ///
-    /// * `Ok(None)` if the key is not present or the value is not a valid last_modified
-    /// * `Ok(Some(last_modified))` if the key is present and the value is a valid last_modified
-    /// * `Err(...)` if there was an error during retrieval
-    pub fn get_last_modified(&self, identifier: &str, key: &str) -> Result<Option<String>> {
-        debug!(
-            "Getting last_modified for key: {} from tree: {}",
-            key, identifier
-        );
-        let tree = self.get_tree(identifier)?;
-        let value_opt = tree
-            .get(key)
-            .with_context(|| format!("Failed to get last_modified with key: {}", key))?;
-        if let Some(value) = value_opt {
-            debug!("last_modified value found for key: {}: {:?}", key, value);
-            Ok(Some(String::from_utf8_lossy(&value).to_string()))
-        } else {
-            warn!(
-                "No last_modified found for key: {} in tree: {}",
-                key, identifier
-            );
-            Ok(None)
-        }
     }
 }

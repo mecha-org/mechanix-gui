@@ -232,9 +232,10 @@ impl ConfigServerInterface {
         let mut results = HashMap::new();
 
         for (k, v) in settings {
-            match validate_value(&schema_as_toml, &k, &v) {
+            let value = String::from_utf8(v).map_err(|e| ZbusError::Failed(format!("Invalid UTF-8: {}", e)))?;
+            match validate_value(&schema_as_toml, &k, &value) {
                 Ok(_) => {
-                    results.insert(k, v);
+                    results.insert(k, value);
                 }
                 Err(e) => {
                     warn!("Validation error for key {}: {}", k, e);

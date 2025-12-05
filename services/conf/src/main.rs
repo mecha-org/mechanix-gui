@@ -114,7 +114,7 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
 
     let (rsp_tx, rsp_rx) = oneshot::channel();
     // Check if a file already exists with the same last_modified timestamp
-    if let Err(er) = db_tx.send(DbCmd::GetLastModified {
+    if let Err(er) = db_tx.send(DbCmd::Get {
         identifier: LAST_MODIFIED_TREE_NAME.to_string(),
         key: schema_file_name.to_string(),
         rsp: rsp_tx,
@@ -122,12 +122,11 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
         error!("Failed to get last_modified: {}", er);
         return Err(anyhow::anyhow!("Failed to get last_modified"));
     }
-    if let Some(existing_last_modified) = rsp_rx.await? {
-        info!("Found existing last_modified: {}", existing_last_modified);
-        if last_modified == existing_last_modified {
-            info!("TOML file already exists and processed successfully. Skipping.");
-            return Ok(());
-        }
+    if rsp_rx.await?
+        .iter()
+        .any(|(k, v)| k == schema_file_name && v.eq_ignore_ascii_case(last_modified.to_be_bytes().as_ref())) {
+        info!("TOML file already exists and processed successfully. Skipping.");
+        return Ok(());
     }
 
     info!("TOML file does not exist or has changed. Processing...");
@@ -140,15 +139,21 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
         Err(e) => return Err(e),
     };
 
-    if let Err(er) = db_tx.send(DbCmd::InsertLastModified {
+    let (rsp_tx, rsp_rx) = oneshot::channel();
+    if let Err(er) = db_tx.send(DbCmd::Set {
         identifier: LAST_MODIFIED_TREE_NAME.to_string(),
         key: schema_file_name.to_string(),
-        value: last_modified,
+        value: last_modified.to_be_bytes().to_vec(),
+        rsp: rsp_tx,
     }).await {
         error!("Failed to insert last_modified: {}", er);
         return Err(anyhow::anyhow!("Failed to insert last_modified"));
     }
-    println!("toml file processed successfully!");
+    if let Err(err) = rsp_rx.await? {
+        error!("Failed to insert last_modified: {}", err);
+        return Err(anyhow::anyhow!("Failed to insert last_modified"));
+    }
+    info!("toml file processed successfully!");
     Ok(())
 }
 
