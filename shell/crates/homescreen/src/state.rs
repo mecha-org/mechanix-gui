@@ -137,7 +137,7 @@ impl HomescreenState {
         };
 
         if let Some(widget_data) = self.widgets.get_mut(&widget_id) {
-            widget_data.end_drag();
+            widget_data.end_drag(self.active_page);
         }
 
         let success = LayoutManager::try_drop_widget(self, widget_id, widget_bounds);

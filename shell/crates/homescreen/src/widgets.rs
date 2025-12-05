@@ -43,9 +43,9 @@ impl WidgetData {
         self.dragged_page = Some(self.page_number);
     }
 
-    pub fn end_drag(&mut self) {
+    pub fn end_drag(&mut self, page_number: usize) {
         self.is_being_dragged = false;
-        self.dragged_page = Some(self.page_number)
+        self.dragged_page = Some(page_number)
     }
 
     // Getter for widget (no setter - immutable after construction)

@@ -60,7 +60,7 @@ impl AnimationManager {
                 let target_page = widget_data.page_number();
                 if dragged_page != target_page {
                     // Calculate the page offset
-                    let page_offset = (dragged_page as f32 - target_page as f32) * screen_width;
+                    let page_offset = -(dragged_page as f32 - target_page as f32) * screen_width;
                     let mut adjusted_bounds = widget_data.bounds();
                     adjusted_bounds.origin.x += px(page_offset);
                     widget_data.widget_mut().set_bounds(adjusted_bounds);
