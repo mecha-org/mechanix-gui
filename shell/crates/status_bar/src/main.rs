@@ -11,11 +11,18 @@ fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
     application.run(|cx| {
         let window_bounds =
-            WindowBounds::Windowed(Bounds::centered(None, size(px(540.0), px(36.0)), cx));
+            WindowBounds::Windowed(Bounds::centered(None, size(px(0.0), px(36.0)), cx));
 
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(window_bounds),
+                kind: WindowKind::LayerShell(layer_shell::LayerShellOptions { 
+                    namespace: "mechanix.status_bar".to_string(), 
+                    layer: layer_shell::Layer::Top, 
+                    anchor: layer_shell::Anchor::RIGHT | layer_shell::Anchor::LEFT | layer_shell::Anchor::TOP, 
+                    exclusive_zone: Some(px(36.0)), 
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             |_window, cx| {
