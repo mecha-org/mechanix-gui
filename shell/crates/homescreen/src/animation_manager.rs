@@ -82,7 +82,6 @@ impl AnimationManager {
                 continue;
             }
 
-            println!("{}", distance);
             // Animate towards target
             needs_animation = true;
             let step = widget_snap_velocity * delta_time;
