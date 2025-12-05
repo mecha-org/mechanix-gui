@@ -17,7 +17,6 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
     on<ToolbarToggle>(_enableToolbar);
     on<UndoUpdate>(_undoCall);
     on<RedoUpdate>(_redoCall);
-    on<PinnedUpdate>(_pinnedCall);
     on<SelectToolbar>(_selectToolbar);
     on<LoadNoteContent>(_onLoadNoteContent);
   }
@@ -35,11 +34,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
       await Future.delayed(const Duration(seconds: 0));
       final content = jsonDecode(note.content);
       emit(
-        state.copyWith(
-          isLoading: false,
-          isPinned: note.isPinned,
-          document: Document.fromJson(content),
-        ),
+        state.copyWith(isLoading: false, document: Document.fromJson(content)),
       );
     } catch (e) {
       emit(state.copyWith(isLoading: false));
@@ -64,13 +59,6 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
   void _redoCall(RedoUpdate event, Emitter<EditorBlocState> emit) {
     if (event.isRedo != state.isRedo) {
       emit(state.copyWith(isRedo: !state.isRedo));
-    }
-  }
-
-  void _pinnedCall(PinnedUpdate event, Emitter<EditorBlocState> emit) {
-    logger.i('pinned call event: ${event.isPinned} state: ${state.isPinned}');
-    if (event.isPinned != state.isPinned) {
-      emit(state.copyWith(isPinned: event.isPinned));
     }
   }
 

@@ -53,8 +53,6 @@ class NotesRepositoryImpl extends NotesRepository {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         plainText: plainText,
-        isPinned: isPinned,
-        tag: tag,
       );
 
       await Hive.box<NoteHive>(Constants.tableName).put(newNote.id, newNote);
@@ -66,7 +64,6 @@ class NotesRepositoryImpl extends NotesRepository {
         title: newNote.title,
         createdAt: newNote.createdAt,
         updatedAt: newNote.updatedAt,
-        isPinned: newNote.isPinned,
       );
     } catch (e) {
       logger.e("Failed to create note: $e");
@@ -124,7 +121,6 @@ class NotesRepositoryImpl extends NotesRepository {
             previousLineType == "code" &&
             lines.isNotEmpty &&
             lines.last.type == "code") {
-          print("merging");
           // Add newline span to separate lines within code block
           lines.last.spans.add(NoteSpan(text: "\n"));
           // Merge current spans into last code block
@@ -241,7 +237,6 @@ class NotesRepositoryImpl extends NotesRepository {
               title: note.title,
               createdAt: note.createdAt,
               updatedAt: note.updatedAt,
-              isPinned: note.isPinned,
               preview: data.map((e) => NoteLine.fromJson(e)).toList(),
             );
           }).toList();
@@ -265,8 +260,6 @@ class NotesRepositoryImpl extends NotesRepository {
     String content,
     String id,
     String plainText,
-    bool isPinned,
-    String tag,
   ) async {
     try {
       await ensureHiveConnected();
@@ -302,8 +295,6 @@ class NotesRepositoryImpl extends NotesRepository {
             updatedAt: DateTime.now(),
             plainText: plainText,
             height: calculatedHeight,
-            isPinned: isPinned,
-            tag: tag,
           );
 
           await notesBox.put(key, updatedNote);
@@ -337,96 +328,6 @@ class NotesRepositoryImpl extends NotesRepository {
       }
     } catch (e) {
       logger.e('Failed to delete notes: $e');
-    }
-  }
-
-  @override
-  Future<void> updateTag(List<String> noteIds, String tag) async {
-    try {
-      await ensureHiveConnected();
-      final notesBox = Hive.box<NoteHive>(Constants.tableName);
-      final now = DateTime.now();
-
-      final updates = <dynamic, NoteHive>{};
-
-      for (final id in noteIds) {
-        final key = notesBox.keys.firstWhere(
-          (k) => notesBox.get(k)?.id == id,
-          orElse: () => null,
-        );
-
-        if (key != null) {
-          final note = notesBox.get(key);
-          if (note != null) {
-            updates[key] = NoteHive(
-              id: note.id,
-              title: note.title,
-              content: note.content,
-              createdAt: note.createdAt,
-              updatedAt: now,
-              plainText: note.plainText,
-              isPinned: note.isPinned,
-              tag: tag,
-              height: note.height,
-              preview: note.preview,
-            );
-          }
-        } else {
-          logger.w('Note with id $id not found');
-        }
-      }
-
-      if (updates.isNotEmpty) {
-        await notesBox.putAll(updates);
-        logger.i('Updated tags for ${updates.length} note(s)');
-      }
-    } catch (e) {
-      logger.e('Failed to update tags: $e');
-      rethrow;
-    }
-  }
-
-  @override
-  Future<void> pinnedNotes(List<String> noteIds, bool isPinned) async {
-    try {
-      await ensureHiveConnected();
-      final notesBox = Hive.box<NoteHive>(Constants.tableName);
-
-      final updates = <dynamic, NoteHive>{};
-
-      for (final id in noteIds) {
-        final key = notesBox.keys.firstWhere(
-          (k) => notesBox.get(k)?.id == id,
-          orElse: () => null,
-        );
-
-        if (key != null) {
-          final note = notesBox.get(key);
-          if (note != null) {
-            updates[key] = NoteHive(
-              id: note.id,
-              title: note.title,
-              content: note.content,
-              createdAt: note.createdAt,
-              updatedAt: note.updatedAt,
-              plainText: note.plainText,
-              isPinned: isPinned,
-              height: note.height,
-              tag: note.tag,
-              preview: note.preview,
-            );
-          }
-        } else {
-          logger.w('Note with id $id not found');
-        }
-      }
-
-      if (updates.isNotEmpty) {
-        await notesBox.putAll(updates);
-        logger.i('Updated pin status for ${updates.length} note(s)');
-      }
-    } catch (e) {
-      logger.e('Failed to update pin status: $e');
     }
   }
 

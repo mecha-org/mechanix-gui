@@ -40,7 +40,6 @@ class NoteMetaData {
   final String title;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final bool isPinned;
   final List<NoteLine> preview;
   final double height;
 
@@ -49,7 +48,6 @@ class NoteMetaData {
     required this.title,
     required this.createdAt,
     required this.updatedAt,
-    required this.isPinned,
     required this.preview,
     required this.height,
   });

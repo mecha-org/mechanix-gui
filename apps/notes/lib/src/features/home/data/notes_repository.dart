@@ -8,23 +8,15 @@ abstract class NotesRepository {
     String title,
     String content,
     String plainText,
-    bool isPinned,
-    String tag,
   );
   Future<void> updateNote(
     String title,
     String content,
     String id,
     String plainText,
-    bool isPinned,
-    String tag,
   );
 
   Future<void> deleteNote(List<String> deleteIds);
-
-  Future<void> updateTag(List<String> noteIds, String tag);
-
-  Future<void> pinnedNotes(List<String> noteIds, bool isPinned);
 
   Future<List<SearchMetaData>> searchNotes(String searchQuery);
 

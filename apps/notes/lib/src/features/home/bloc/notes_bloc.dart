@@ -28,7 +28,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     on<CreateNotes>(_createNote);
     on<UpdateNotes>(_updateNotes);
     on<DeleteNotes>(_deleteNotes);
-    on<UpdateTag>(_updateTag);
     on<SelectNote>(_onSelectNote);
     on<DeselectNote>(_onDeselectNote);
     on<ClearSelection>(_onClearSelection);
@@ -362,8 +361,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         event.title,
         event.content,
         event.plainText,
-        event.isPinned,
-        event.tag,
       );
 
       // Add to _allNotes
@@ -417,8 +414,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
         event.content,
         event.id,
         event.plainText,
-        event.isPinned,
-        event.tag,
       );
       add(LoadNotes());
 
@@ -516,19 +511,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     emit(
       state.copyWith(groupedNotes: updatedGroups, hasMorePages: _hasMorePages),
     );
-  }
-
-  Future<void> _updateTag(UpdateTag event, Emitter<NotesState> emit) async {
-    try {
-      await notesRepository.updateTag(event.noteIds, event.tag);
-
-      // If in search mode, refresh search results
-      if (state.isSearchMode && _currentSearchQuery.isNotEmpty) {
-        add(SearchEvent(_currentSearchQuery));
-      }
-    } catch (e) {
-      logger.e('Tag update failed: $e');
-    }
   }
 
   void _onSelectNote(SelectNote event, Emitter<NotesState> emit) {
