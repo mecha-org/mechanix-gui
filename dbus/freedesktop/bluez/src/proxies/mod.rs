@@ -189,7 +189,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
     /// ```
     async fn get_available_devices(
         &self,
-        discovery_duration: core::time::Duration,
+        discovery_duration: std::time::Duration,
     ) -> Result<Vec<BluetoothDevice>, ProxyError> {
         info!("starting Bluetooth device discovery");
         let cn = &self.0.connection();
@@ -211,7 +211,8 @@ impl<'a> BluezInterface for BluezProxy<'a> {
         }
 
         trace!("discovery started, waiting for devices...");
-        tokio::time::sleep(discovery_duration).await;
+        // tokio::time::sleep(discovery_duration).await;
+        std::thread::sleep(discovery_duration);
         trace!("stopping discovery...");
 
         // Stop the discovery process

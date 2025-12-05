@@ -3,7 +3,7 @@ mod widgets;
 mod modals;
 use crate::events::{BrightnessEvents, NmEvents, VolumeEvents};
 use crate::get_wireless_strength_icon;
-use crate::ui::modals::{SubWindow, WirelessWindow, modal, wireless_modal};
+use crate::ui::modals::{BluetoothWindow, WirelessWindow, BatteryWindow};
 use crate::{
     events::BtEvents,
     ui::{
@@ -11,6 +11,7 @@ use crate::{
         widgets::{IconButton, Slider, SliderEvent, SliderState},
     },
 };
+use bluez::interfaces::device::BluetoothDevice;
 use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
@@ -35,6 +36,7 @@ pub struct BluetoothDetails {
     pub enabled: bool,
     pub devices: u8,
     pub connected_device: Option<String>,
+    pub available_devices: Option<Vec<BluetoothDevice>>,
 }
 
 pub struct SettingsDrawer {
@@ -162,6 +164,7 @@ impl SettingsDrawer {
                 enabled: false,
                 devices: 0,
                 connected_device: None,
+                available_devices: None,
             },
             volume_device_name: "".to_string(),
             open_terminal: false,
@@ -198,7 +201,7 @@ impl Render for SettingsDrawer {
             .w_full()
             .h_full()
             .on_mouse_move(
-                cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                     if let Some(offset) = this.drag_offset {
                         let new_y = event.position.y.to_f64() as f32 - offset;
                         this.position = new_y.clamp(open_y, closed_y);
@@ -255,7 +258,7 @@ impl Render for SettingsDrawer {
                                     .id("settings-drawer-navbar")
                                     .on_mouse_down(
                                         MouseButton::Left,
-                                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                                        cx.listener(|this, event: &MouseDownEvent, _, cx| {
                                             cx.stop_propagation();
                                             this.drag_start_pos = this.position;
                                             this.drag_offset = Some(
@@ -521,27 +524,43 @@ impl SettingsDrawer {
                             .icon_color(rgb(0xF4F4F4))
                             .size((px(24.), px(24.)))
                             .border(px(0.))
-                            .on_click(cx.listener(
+                            .on_click(cx.listener(  // TEMP; TODO: long tress open modal
                                 move |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
                                     println!("power clicked");
+
+                                     let popup_origin = point(
+                                            window_bounds.origin.x,
+                                            window_bounds.origin.y,
+                                        );
+
+                                        let popup_bounds = Bounds {
+                                            origin: popup_origin,
+                                            // size: window_bounds.size,
+                                            size: size(px(476.0), px(180.0)),
+                                        };
                                      
-                                    //     cx.open_window(
-                                    //     WindowOptions {
-                                    //         titlebar: None,
-                                    //         kind: WindowKind::PopUp,
-                                    //         window_bounds: Some(window_bounds),
-                                    //         ..Default::default()
-                                    //     },
-                                    //     |_, cx| {
-                                    //         cx.new(|_| SubWindow {
-                                    //             custom_titlebar: true,
-                                    //         })
-                                    //     },
-                                    // )
-                                    // .unwrap();
+                                        cx.open_window(
+                                        WindowOptions {
+                                            titlebar: None,
+                                            kind: WindowKind::PopUp,
+                                            is_movable: false,
+                                            window_bounds:Some(
+                                                    WindowBounds::Windowed(
+                                                        popup_bounds,
+                                                    ),
+                                                ),
+                                            ..Default::default()
+                                        },
+                                        |_, cx| {
+                                            cx.new(|_| 
+                                               BatteryWindow::new("Battery".to_string())
+                                        )
+                                        },
+                                    )
+                                    .unwrap();
 
                                 },
                             )),
@@ -653,7 +672,7 @@ impl SettingsDrawer {
                             .icon(IconName::Calculator)
                             .icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
-                                |this: &mut SettingsDrawer,
+                                |_,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
@@ -668,7 +687,7 @@ impl SettingsDrawer {
                             .icon_color(rgb(0xF4F4F4))
                             .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
-                                |this: &mut SettingsDrawer,
+                                |_,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
@@ -872,10 +891,6 @@ impl SettingsDrawer {
                                             ..Default::default()
                                         },
                                         |_, cx| {
-                                            // cx.new(|_| WirelessWindow {
-                                            //     title: "Wi-Fi".to_string(),
-                                            //     network_list: this.wireless_details.networks.clone().unwrap(),
-                                            // })
                                             cx.new(|_| 
                                                 WirelessWindow::new("Wi-Fi".to_string(), this.wireless_details.networks.clone().unwrap(), this.nm_tx.clone()) 
                                         )
@@ -892,24 +907,63 @@ impl SettingsDrawer {
                             .size((px(104.), px(104.)))
                             .label(bluetooth_label)
                             .active(self.bluetooth_details.enabled)
-                            .active_icon_color(rgb(0x4892F1))
+                            .active_icon_color(rgb(0xC67600))
                             .active_bg_color(rgb(0x202020))
-                            .on_click(cx.listener(
-                                |this: &mut SettingsDrawer,
+                            // .on_click(cx.listener(
+                            //     |this: &mut SettingsDrawer,
+                            //      _event: &ClickEvent,
+                            //      _window: &mut Window,
+                            //      cx: &mut Context<Self>| {
+                            //         let mut bt_tx = this.bt_tx.clone();
+                            //         let is_enable = this.bluetooth_details.enabled;
+                            //         cx.background_executor()
+                            //             .spawn(async move {
+                            //                 let _ = bt_tx
+                            //                     .send(BtEvents::BluetoothToggle {
+                            //                         enabled: !is_enable,
+                            //                     })
+                            //                     .await;
+                            //             })
+                            //             .detach();
+                            //     },
+                            // )),
+                             .on_click(cx.listener(  // TEMP; TODO: long tress open modal
+                                move |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
-                                    let mut bt_tx = this.bt_tx.clone();
-                                    let is_enable = this.bluetooth_details.enabled;
-                                    cx.background_executor()
-                                        .spawn(async move {
-                                            let _ = bt_tx
-                                                .send(BtEvents::BluetoothToggle {
-                                                    enabled: !is_enable,
-                                                })
-                                                .await;
-                                        })
-                                        .detach();
+                                    println!("bluetooth clicked");
+
+                                     let popup_origin = point(
+                                            window_bounds.origin.x,
+                                            window_bounds.origin.y,
+                                        );
+
+                                        let popup_bounds = Bounds {
+                                            origin: popup_origin,
+                                            size: size(px(476.0), px(338.0)),
+                                        };
+                                     
+                                        cx.open_window(
+                                        WindowOptions {
+                                            titlebar: None,
+                                            kind: WindowKind::PopUp,
+                                            is_movable: false,
+                                            window_bounds:Some(
+                                                    WindowBounds::Windowed(
+                                                        popup_bounds,
+                                                    ),
+                                                ),
+                                            ..Default::default()
+                                        },
+                                        |_, cx| {
+                                            cx.new(|_| 
+                                                BluetoothWindow::new("Bluetooth".to_string(), this.bluetooth_details.available_devices.clone(), this.bt_tx.clone()) 
+                                        )
+                                        },
+                                    )
+                                    .unwrap();
+
                                 },
                             )),
                     )
@@ -921,7 +975,7 @@ impl SettingsDrawer {
                             .icon_color(rgb(0xF4F4F4))
                             .active_icon_color(rgb(0xF4F4F4))
                             .on_click(cx.listener(
-                                |this: &mut SettingsDrawer,
+                                |_,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {

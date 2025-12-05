@@ -1,3 +1,4 @@
+use bluez::interfaces::device::BluetoothDevice;
 use networkmanager::interfaces::wireless::{AccessPointEvent, WirelessNetworkInfo};
 use pulseaudio::service::DeviceInfo;
 use upower::interfaces::device::BatteryState;
@@ -25,8 +26,11 @@ pub enum AppEvents {
     BluetoothEnabled {
         enabled: bool,
     },
-    BluetoothDevices {
+    BluetoothDevicesCount {
         count: u8,
+    },
+    AvailableBluetoothDevices {
+        list: Vec<BluetoothDevice>,
     },
     OutputSoundDevice {
         device_info: DeviceInfo,
@@ -45,6 +49,7 @@ pub enum NmEvents {
 #[derive(Debug)]
 pub enum BtEvents {
     BluetoothToggle { enabled: bool },
+    ConnectDevice { address: String },
 }
 
 #[derive(Debug)]

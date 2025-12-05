@@ -46,3 +46,11 @@ pub fn get_wireless_strength_icon(enable: bool, signal_strength: u8, security: S
         }
     }
 }
+
+pub fn get_bluetooth_icon(connected: bool) -> IconName {
+    if connected {
+        IconName::BluetoothConnected
+    } else {
+        IconName::BluetoothOff
+    }
+}

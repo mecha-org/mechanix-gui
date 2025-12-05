@@ -6,7 +6,7 @@ use bluez::service::BluetoothService;
 async fn main() -> anyhow::Result<()> {
     // Create a channel for sending Bluetooth requests
     let bluetooth_service = BluetoothService::new().await?;
-    let discovery_durations:core::time::Duration = core::time::Duration::from_secs(5);
+    let discovery_durations = std::time::Duration::from_secs(5);
     let available_devices = match bluetooth_service.get_available_devices(discovery_durations).await {
         Ok(devices) => devices,
         Err(e) => {

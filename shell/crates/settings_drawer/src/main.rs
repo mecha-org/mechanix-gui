@@ -42,10 +42,17 @@ fn main() {
                         let mut enable_state_stream = network_manager.stream_wireless_enabled_status().await;
                         let mut device_state_stream = network_manager.stream_device_events().await;
                         let mut active_aceess_point_stream = network_manager.stream_access_point_events().await;
+                        
+                        let list_networks = network_manager.list_networks().await.unwrap();
+                        let _ = app_channel_tx.send(AppEvents::ListWirelessNetworks { list: list_networks } ).await;
 
                         let mut bluetooth_status_stream = bluetooth_manager.stream_bluetooth_enabled_status().await;
                         let mut bluetooth_device_stream = bluetooth_manager.stream_bluetooth_device_status().await;
-                        
+                        //   TODO: stream_bluetooth_device_status - sync added and removed device in bluetooth list
+                        let discovery_durations = std::time::Duration::from_secs(5);
+                        let available_devices = bluetooth_manager.get_available_devices(discovery_durations).await.unwrap();
+                        let _ = app_channel_tx.send(AppEvents::AvailableBluetoothDevices { list: available_devices }).await;
+
                         let pulse_service = PulseAudioService::new().unwrap();
                         let _update_volume_info = update_device_info(&mut app_channel_tx, &pulse_service).await;
 
@@ -60,9 +67,7 @@ fn main() {
                         let _ = app_channel_tx.send(AppEvents::Brightness { value: brightness_percent }).await;
 
 
-                        let list_networks = network_manager.list_networks().await.unwrap();
-                        let _ = app_channel_tx.send(AppEvents::ListWirelessNetworks { list: list_networks } ).await;
-
+                      
                         loop {
                             select! {
                                 // battery events
@@ -127,6 +132,7 @@ fn main() {
 
                                 bluetooth_device_event = bluetooth_device_stream.next() => {
                                     if let Some(_event) = bluetooth_device_event {
+                                        
                                         let _ = sync_bluetooth_connected_status(app_channel_tx.clone(), &bluetooth_manager).await;
                                     }
                                 }
@@ -136,6 +142,16 @@ fn main() {
                                         match event {
                                                 BtEvents::BluetoothToggle { enabled } => {
                                                 let _ = bluetooth_manager.toggle_bluetooth(enabled).await;
+                                            }
+                                            BtEvents::ConnectDevice { address } => {
+                                                let _ = match bluetooth_manager.connect(&address).await {
+                                                    Ok(_) => {
+                                                       println!("Connected to device: {:?}", address);
+                                                    }
+                                                    Err(e) => {
+                                                        eprintln!("Failed to connect to device: {}", e);
+                                                    }
+                                                };
                                             }
                                         }
                                     }
@@ -285,9 +301,23 @@ fn main() {
                                         cx.notify();
                                     });
                                 }
-                                AppEvents::BluetoothDevices { count } => {
+                                AppEvents::BluetoothDevicesCount { count } => {
                                     let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
                                         this.bluetooth_details.devices = count;
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::AvailableBluetoothDevices { list } => {
+                                      let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+                                        // sort the list where connected and paired are first
+                                        let mut sorted_list = list;
+                                        sorted_list.sort_by_key(|b|(
+                                            !b.connected,
+                                            !b.paired
+                                        ));
+                                        sorted_list.retain(|b| !b.name.is_empty());
+                                       
+                                        this.bluetooth_details.available_devices = Some(sorted_list);
                                         cx.notify();
                                     });
                                 }
