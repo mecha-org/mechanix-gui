@@ -8,6 +8,7 @@ import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
+import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -21,7 +22,6 @@ import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
@@ -361,7 +361,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
           titleWidget: selectionMode
               ? Text(
-                  "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
+                  "${selectedPaths.length} Selected",
                   style: context.textTheme.bodySmall,
                 ).padRight(24)
               : ValueListenableBuilder<String>(
@@ -502,16 +502,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     final sizeIcon =
         isDescending ? Images.sortDescending : Images.sortAscending;
 
-    // Calculate offset so menu appears at bottom of screen
-    final screenHeight = MediaQuery.of(context).size.height;
-    final menuHeight = menuItemHeight * 4; // Approximate menu height
     final offset = const Offset(-8, -14);
 
     return MechanixMenu(
-      theme: const MechanixMenuThemeData(
-        // constraints: BoxConstraints(maxWidth: double.infinity),
-        itemHeight: menuItemHeight,
-      ),
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
       animationDuration: const Duration(milliseconds: 300),
@@ -720,7 +713,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.extract,
-            color: isZipFileSelected ? Colors.white70 : Colors.grey,
+            color: isZipFileSelected
+                ? Colors.white70
+                : Theme.of(context).extension<FilesTheme>()!.disableColor,
             height: 20,
           ),
           title: 'Extract',
@@ -732,7 +727,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.compress,
-            color: hasSelection ? Colors.white70 : Colors.grey,
+            color: hasSelection
+                ? Colors.white70
+                : Theme.of(context).extension<FilesTheme>()!.disableColor,
             height: 20,
           ),
           title: 'Compress',
@@ -742,7 +739,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.duplicate,
-            color: isOnlyFileSelected ? Colors.white70 : Colors.grey,
+            color: isOnlyFileSelected
+                ? Colors.white70
+                : Theme.of(context).extension<FilesTheme>()!.disableColor,
             height: 20,
           ),
           title: 'Duplicate',
@@ -754,7 +753,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.rename,
-            color: selectedPaths.length == 1 ? Colors.white70 : Colors.grey,
+            color: selectedPaths.length == 1
+                ? Colors.white70
+                : Theme.of(context).extension<FilesTheme>()!.disableColor,
             height: 20,
           ),
           title: 'Rename',
@@ -793,7 +794,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.info,
-            color: selectedPaths.length == 1 ? Colors.white70 : Colors.grey,
+            color: selectedPaths.length == 1
+                ? Colors.white70
+                : Theme.of(context).extension<FilesTheme>()!.disableColor,
             height: 20,
           ),
           title: 'Properties',
@@ -813,7 +816,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     bool isPasteDisabled = !(state.isCopyMode || state.isMoveMode);
 
     return MechanixMenu(
-      theme: const MechanixMenuThemeData(itemHeight: menuItemHeight),
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
       animationDuration: const Duration(milliseconds: 300),
@@ -831,10 +833,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       items: [
         MechanixMenuItemsType(
           title: "Paste",
-          leading: const Icon(
-            Icons.paste,
-            color: Colors.white70,
-            size: mechanixIconSize,
+          leading: Image.asset(
+            Images.paste,
+            color: isPasteDisabled
+                ? Theme.of(context).extension<FilesTheme>()!.disableColor
+                : Colors.white70,
+            height: mechanixIconSize,
           ),
           disabled: isPasteDisabled,
           onTap: () {
@@ -1909,8 +1913,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     final isSingle = pathsToDelete.length == 1;
     final title = isSingle
-        ? "Delete '${pathsToDelete.first.split('/').last}'"
-        : "Delete ${pathsToDelete.length} selected files";
+        ? "Delete '${pathsToDelete.first.split('/').last}'?"
+        : "Delete ${pathsToDelete.length} files?";
     final message = isSingle
         ? "This action will delete the file permanently"
         : "This action will delete the files permanently";
@@ -1919,61 +1923,73 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (bottomSheetContext) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[850],
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 18,
-                color: Colors.white,
-              ),
+      builder: (bottomSheetContext) {
+        final double bottomSheetWidth =
+            MediaQuery.of(bottomSheetContext).size.width;
+
+        return ClipPath(
+          clipper: TabClipper(shift: bottomSheetWidth * 0.65),
+          child: Container(
+            padding:
+                const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 32),
+            decoration: BoxDecoration(
+              color: Colors.grey[850],
             ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: const TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 16),
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: MechanixOutlinedButton(
-                    label: "Cancel",
-                    textColor: Colors.white,
-                    borderRadius: 50,
-                    borderWidth: 0.5,
-                    onPressed: () => Navigator.pop(bottomSheetContext),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: MechanixElevatedButton(
-                    label: "Delete",
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    borderRadius: 50,
-                    onPressed: () {
-                      Navigator.pop(bottomSheetContext);
-                      BlocProvider.of<FilesBloc>(context)
-                          .add(DeleteEntities(pathsToDelete, controller));
-                      reload();
-                    },
-                  ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  style: const TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: MechanixElevatedButton(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 12),
+                        label: "Cancel",
+                        textColor: Colors.white,
+                        backgroundColor: Colors.grey.shade800,
+                        borderRadius: 8,
+                        onPressed: () => Navigator.pop(bottomSheetContext),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: MechanixElevatedButton(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16, horizontal: 12),
+                        label: "Delete",
+                        backgroundColor: Colors.red.shade700,
+                        textColor: Colors.white,
+                        borderRadius: 8,
+                        onPressed: () {
+                          Navigator.pop(bottomSheetContext);
+                          BlocProvider.of<FilesBloc>(context)
+                              .add(DeleteEntities(pathsToDelete, controller));
+                          reload();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
