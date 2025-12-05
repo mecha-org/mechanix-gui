@@ -50,8 +50,14 @@ fn main() {
                         let mut bluetooth_device_stream = bluetooth_manager.stream_bluetooth_device_status().await;
                         //   TODO: stream_bluetooth_device_status - sync added and removed device in bluetooth list
                         let discovery_durations = std::time::Duration::from_secs(5);
-                        let available_devices = bluetooth_manager.get_available_devices(discovery_durations).await.unwrap();
-                        let _ = app_channel_tx.send(AppEvents::AvailableBluetoothDevices { list: available_devices }).await;
+                        let _ = match bluetooth_manager.get_available_devices(discovery_durations).await{
+                            Ok(devices) => {
+                                let _ = app_channel_tx.send(AppEvents::AvailableBluetoothDevices { list: devices }).await;
+                            },
+                            Err(e) => {
+                                eprintln!("Error getting available devices: {}", e);
+                            }
+                        };
 
                         let pulse_service = PulseAudioService::new().unwrap();
                         let _update_volume_info = update_device_info(&mut app_channel_tx, &pulse_service).await;

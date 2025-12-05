@@ -1,4 +1,4 @@
-pub mod icon;  // check
+pub mod icon;  
 mod widgets;
 mod modals;
 use crate::events::{BrightnessEvents, NmEvents, VolumeEvents};
@@ -49,9 +49,9 @@ pub struct SettingsDrawer {
 
     pub rotation_on: bool,
     pub airplane_mode: bool,
-    pub screen_mirrorring: bool,
+    pub screen_mirroring: bool,
     pub power_mode: PowerMode,
-    pub mincrophone_recoding: bool,
+    pub microphone_recording: bool,
     pub screen_recording: bool,
 
     pub wireless_details: WirelessDetails,
@@ -150,9 +150,9 @@ impl SettingsDrawer {
             open_power_options: false,
             rotation_on: false,
             airplane_mode: false,
-            screen_mirrorring: false,
+            screen_mirroring: false,
             power_mode: PowerMode::Low,
-            mincrophone_recoding: false,
+            microphone_recording: false,
             screen_recording: false,
             wireless_details: WirelessDetails {
                 enabled: true,
@@ -407,21 +407,18 @@ impl SettingsDrawer {
                 .connected_network
                 .clone();
             let wireless_enable = self.wireless_details.enabled;
-        let _ =  match wireless_enable.clone() &&  wireless_connected_network.is_some(){
-            true => {
-                network_label = wireless_connected_network.clone()
+        if wireless_enable && wireless_connected_network.is_some() {
+            network_label = wireless_connected_network.clone()
                 .map(|s| s.ssid)
                 .unwrap_or_else(|| "Wi-Fi".to_string());
 
-                         wireless_icon = if network_label == "Wi-Fi" {IconName::ConnectedWifiOn} 
-                         else {
-
-                            let signal_strength = wireless_connected_network.clone().map(|info| info.signal_strength).unwrap_or_else(|| 0);
-                            get_wireless_strength_icon(wireless_enable, signal_strength, "Open".to_string())  // intentionally open as no lock to show in view
-                         }
-            } ,
-            _ => {}
-        };
+            wireless_icon = if network_label == "Wi-Fi" {
+                IconName::ConnectedWifiOn
+            } else {
+                let signal_strength = wireless_connected_network.clone().map(|info| info.signal_strength).unwrap_or_else(|| 0);
+                get_wireless_strength_icon(wireless_enable, signal_strength, "Open".to_string())  // intentionally open as no lock to show in view
+            };
+        }
 
         let bluetooth_icon = match self.bluetooth_details.enabled {
             true => match self.bluetooth_details.devices > 0 {
@@ -447,7 +444,7 @@ impl SettingsDrawer {
             IconName::RotationOff
         };
 
-        let screen_mirroring_icon = if self.screen_mirrorring {
+        let screen_mirroring_icon = if self.screen_mirroring {
             IconName::ScreenMirroringOn
         } else {
             IconName::ScreenMirroringOff
@@ -614,7 +611,7 @@ impl SettingsDrawer {
                     .child(
                         IconButton::new("id_screen_mirroring")
                             .icon(screen_mirroring_icon)
-                            .active(self.screen_mirrorring)
+                            .active(self.screen_mirroring)
                             .active_icon_color(rgb(0x4892F1))
                             .active_bg_color(rgb(0x202020))
                             .on_click(cx.listener(
@@ -622,7 +619,7 @@ impl SettingsDrawer {
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
-                                    this.screen_mirrorring = !this.screen_mirrorring;
+                                    this.screen_mirroring = !this.screen_mirroring;
                                     cx.notify();
                                 },
                             )),
@@ -638,7 +635,7 @@ impl SettingsDrawer {
                     .child(
                         IconButton::new("id_microphone")
                             .icon(IconName::MicroPhoneOff)
-                            .active(self.mincrophone_recoding)
+                            .active(self.microphone_recording)
                             .active_bg_color(rgb(0x202020))
                             .active_icon_color(rgb(0xFF6560))
                             .on_click(cx.listener(
@@ -646,7 +643,7 @@ impl SettingsDrawer {
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
-                                    this.mincrophone_recoding = !this.mincrophone_recoding;
+                                    this.microphone_recording = !this.microphone_recording;
                                     cx.notify();
                                 },
                             )),
