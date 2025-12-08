@@ -1,3 +1,4 @@
+use bluez::service::{BluetoothEvent, InterfaceEvent};
 use gpui::*;
 use commons::prelude::*;
 use futures::{SinkExt, StreamExt, channel::mpsc, select};
@@ -48,16 +49,8 @@ fn main() {
 
                         let mut bluetooth_status_stream = bluetooth_manager.stream_bluetooth_enabled_status().await;
                         let mut bluetooth_device_stream = bluetooth_manager.stream_bluetooth_device_status().await;
-                        //   TODO: stream_bluetooth_device_status - sync added and removed device in bluetooth list
-                        let discovery_durations = std::time::Duration::from_secs(5);
-                        let _ = match bluetooth_manager.get_available_devices(discovery_durations).await{
-                            Ok(devices) => {
-                                let _ = app_channel_tx.send(AppEvents::AvailableBluetoothDevices { list: devices }).await;
-                            },
-                            Err(e) => {
-                                eprintln!("Error getting available devices: {}", e);
-                            }
-                        };
+                        let _ = get_available_bluetooth_devices(app_channel_tx.clone(), &bluetooth_manager).await;
+
 
                         let pulse_service = PulseAudioService::new().unwrap();
                         let _update_volume_info = update_device_info(&mut app_channel_tx, &pulse_service).await;
@@ -137,9 +130,18 @@ fn main() {
                                 },
 
                                 bluetooth_device_event = bluetooth_device_stream.next() => {
-                                    if let Some(_event) = bluetooth_device_event {
-                                        
-                                        let _ = sync_bluetooth_connected_status(app_channel_tx.clone(), &bluetooth_manager).await;
+                                    if let Some(event) = bluetooth_device_event {
+                                        match event {
+                                            BluetoothEvent { event: InterfaceEvent::DeviceAdded, device: Some(device) } => {
+                                                let _ = app_channel_tx.send(AppEvents::BluetoothAddedEvent { device: device }).await;
+                                            }
+                                            BluetoothEvent { event: InterfaceEvent::DeviceRemoved, device: Some(_) } => {
+                                                let _ = get_available_bluetooth_devices(app_channel_tx.clone(), &bluetooth_manager).await;
+                                            }
+                                            _ => {
+                                                 let _ = sync_bluetooth_connected_status(app_channel_tx.clone(), &bluetooth_manager).await;
+                                            }
+                                        }
                                     }
                                 }
 
@@ -324,6 +326,20 @@ fn main() {
                                         sorted_list.retain(|b| !b.name.is_empty());
                                        
                                         this.bluetooth_details.available_devices = Some(sorted_list);
+                                        cx.notify();
+                                    });
+                                }
+                                AppEvents::BluetoothAddedEvent { device } => {
+                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
+
+                                         let current_devices = this.bluetooth_details.available_devices.clone();
+                                                if let Some(current_devices) = current_devices {
+                                                    let mut available_devices = current_devices.clone();
+                                                    available_devices.push(device);
+                                                    this.bluetooth_details.available_devices = Some(available_devices);
+                                                }
+
+                                      
                                         cx.notify();
                                     });
                                 }

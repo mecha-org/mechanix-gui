@@ -197,7 +197,8 @@ impl Render for BluetoothWindow {
                                         ));
 
                                     if !is_connected && !is_paired {
-                                        // proceed to open settings with params
+                                        // TODO: call pair and connect device
+                                        // TODO: check if device need auth - open portal
                                         bluetooth_div = bluetooth_div.on_click(ctx.listener(
                                             move |_, _, _, _| {
                                                 println!(

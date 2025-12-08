@@ -19,11 +19,11 @@ pub async fn sync_bluetooth_connected_status(
         .await;
 }
 
-pub async fn get_available_devices(
+pub async fn get_available_bluetooth_devices(
     mut tx: mpsc::Sender<AppEvents>,
     bluetooth_manager_service: &BluetoothService,
 ) {
-    let discovery_durations = core::time::Duration::from_secs(5);
+    let discovery_durations = std::time::Duration::from_secs(5);
 
     match bluetooth_manager_service.get_available_devices(discovery_durations).await {
         Ok(devices) => {

@@ -29,6 +29,9 @@ pub enum AppEvents {
     BluetoothDevicesCount {
         count: u8,
     },
+    BluetoothAddedEvent {
+        device: BluetoothDevice,
+    },
     AvailableBluetoothDevices {
         list: Vec<BluetoothDevice>,
     },
