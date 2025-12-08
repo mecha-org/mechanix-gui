@@ -12,11 +12,11 @@ import 'package:mechanix_notes/src/features/home/data/notes_repository_impl.dart
 import 'package:mechanix_notes/src/features/home/home.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:mechanix_notes/src/features/search_notes/presentation/search_notes.dart';
-// import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:watch_it/watch_it.dart';
+import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/pressable_list/mechanix_pressable_list_theme.dart';
 
@@ -66,8 +66,20 @@ class NotesApp extends StatelessWidget with WatchItMixin {
       data: MechanixThemeData(
         mechanixVariant: mechanixVariant,
         extensions: const [
+          // TODO: FIX THEME
+          MechanixFloatingActionBarThemeData(
+            padding: EdgeInsets.all(0),
+            width: double.infinity,
+            // decoration: BoxDecoration(
+            //   color: Colors.pink,
+            // borderRadius: BorderRadius.only(
+            //   topLeft: Radius.circular(12),
+            //   topRight: Radius.circular(12),
+            // ),
+            // ),
+          ),
           MechanixSelectableListThemeData(
-            backgroundColor: NotesColors.backgroundColor,
+            // backgroundColor: NotesColors.backgroundColor,
             checkboxSpacing: EdgeInsets.only(right: 16, left: 6),
             leadingIconPadding: EdgeInsets.zero,
             itemPadding: EdgeInsets.only(
@@ -83,11 +95,44 @@ class NotesApp extends StatelessWidget with WatchItMixin {
           ),
           MechanixNavigationBarThemeData(
             scrolledUnderElevation: 0,
-            titleStyle: TextStyle(fontSize: 24, color: NotesColors.headerColor),
-
+            titleStyle: TextStyle(
+              fontSize: 24,
+              color: NotesColors.secondaryCardColor,
+            ),
             titleSpacing: 16,
             backgroundColor: Colors.transparent,
             elevation: 0,
+          ),
+
+          MechanixBottomBarThemeData(
+            iconTheme: MechanixBottomBarIconThemeData(
+              focusColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              splashColor: Colors.transparent,
+              // iconSize: 28,
+              padding: EdgeInsets.all(0),
+            ),
+
+            // iconTheme: MechanixBottomBarIconThemeData(
+            //   iconSize: 28,
+
+            //   padding: EdgeInsets.all(16),
+            // ),
+            height: 60,
+            decoration: BoxDecoration(
+              color: Color(0xFF2E2E2E),
+              borderRadius: BorderRadius.all(Radius.circular(0)),
+              // borderRadius: BorderRadius.only(
+              //   topLeft: Radius.circular(12),
+              //   topRight: Radius.circular(12),
+              // ),
+              boxShadow: [
+                BoxShadow(offset: Offset(0, 0), color: Color(0x99000000)),
+                BoxShadow(offset: Offset(0, 0), color: Color(0x40000000)),
+                BoxShadow(offset: Offset(0, 0), color: Color(0x40000000)),
+              ],
+            ),
           ),
         ],
       ),
@@ -143,7 +188,6 @@ class MyApp extends StatelessWidget {
       routes: {
         AppRoutes.createEditNotes:
             (context) => const EditorBlocProvider(child: NotesEditor()),
-        AppRoutes.searchNotes: (context) => const SearchNotes(),
       },
     );
   }

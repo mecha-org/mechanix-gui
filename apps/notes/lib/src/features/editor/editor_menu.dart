@@ -5,6 +5,7 @@ import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:widgets/widgets.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class EditorMenu extends StatelessWidget {
@@ -15,6 +16,9 @@ class EditorMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return MechanixMenu(
       dropdownPosition: DropdownPosition.topRight,
+      theme: const MechanixMenuThemeData(
+        dropdownWidth: 135
+      ),
       offset: const Offset(-5, -15),
       buttonIcon: const IconWidget(
         boxHeight: 28,

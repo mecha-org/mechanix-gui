@@ -3,8 +3,8 @@ import 'package:mechanix_notes/src/commons/styles/colors.dart';
 
 class GroupHeaderName extends SliverPersistentHeaderDelegate {
   final String title;
-
-  GroupHeaderName(this.title);
+  final bool isFirst;
+  GroupHeaderName({required this.title, this.isFirst = false});
 
   @override
   Widget build(
@@ -13,7 +13,12 @@ class GroupHeaderName extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     return Container(
-      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 8, top: 12),
+      margin: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: 8,
+        top: isFirst ? 12 : 36,
+      ),
       alignment: Alignment.centerLeft,
       child: Text(
         title,
@@ -28,11 +33,10 @@ class GroupHeaderName extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => 56;
+  double get maxExtent => isFirst ? 56 : 68;
   @override
-  double get minExtent => 56;
+  double get minExtent => isFirst ? 56 : 68;
 
   @override
-  bool shouldRebuild(GroupHeaderName oldDelegate) =>
-      oldDelegate.title != title;
+  bool shouldRebuild(GroupHeaderName oldDelegate) => oldDelegate.title != title;
 }

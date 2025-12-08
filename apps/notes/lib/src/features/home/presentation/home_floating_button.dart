@@ -38,7 +38,12 @@ class HomeFloatingButton extends StatelessWidget {
                   highlightColor: Colors.transparent,
                   padding: const EdgeInsets.all(10),
                   onPressed: hasNotes ? onSearch : null,
+
                   icon: Image.asset(
+                    color:
+                        hasNotes
+                            ? Colors.white
+                            : Theme.of(context).disabledColor,
                     NotesIcon.searchIcon,
                     height: 24,
                     width: 24,

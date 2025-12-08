@@ -180,7 +180,7 @@ class NotePreview extends StatelessWidget {
           // margin: const EdgeInsets.symmetric(vertical: 6),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: NotesColors.codeBlockColor,
+            color: NotesColors.floatingMenuColor,
             borderRadius: BorderRadius.circular(8),
           ),
           child: RichText(

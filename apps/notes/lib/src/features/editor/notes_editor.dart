@@ -9,7 +9,6 @@ import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:widgets/extensions/edge_insets.dart';
 import 'package:widgets/widgets.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar.dart';
 
@@ -93,7 +92,6 @@ class _NotesEditorState extends State<NotesEditor> {
 
       return false;
     } catch (e) {
-      print('Error checking formatting: $e');
       return false;
     }
   }
@@ -174,7 +172,7 @@ class _NotesEditorState extends State<NotesEditor> {
             },
           ),
         ],
-      ).padSymmetric(vertical: 15, horizontal: 24),
+      ),
     );
   }
 

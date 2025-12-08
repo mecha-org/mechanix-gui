@@ -79,16 +79,21 @@ class LabelScrollBarState extends State<LabelScrollBar> {
 
     final newSectionInfos = <SectionInfo>[];
     double currentOffset = 0;
-    const headerHeight = 56.0;
+    const firstHeaderHeight = 56.0;
+    const headerHeight = 68.0;
     const mainAxisSpacing = 12.0;
 
-    for (final group in widget.groupedNotes) {
+    for (int i = 0; i < widget.groupedNotes.length; i++) {
+      final group = widget.groupedNotes[i];
       if (group.notes.isEmpty) continue;
 
       final sectionStartOffset = currentOffset;
 
+      // Use different header height for first section
+      final currentHeaderHeight = i == 0 ? firstHeaderHeight : headerHeight;
+
       // Add header height
-      currentOffset += headerHeight;
+      currentOffset += currentHeaderHeight;
 
       // Calculate grid height for this section
       final itemHeights = group.notes.map((note) => note.height).toList();
@@ -99,11 +104,12 @@ class LabelScrollBarState extends State<LabelScrollBar> {
       );
 
       currentOffset += gridHeight;
+
       newSectionInfos.add(
         SectionInfo(
           label: group.label,
           offset: sectionStartOffset,
-          height: headerHeight + gridHeight,
+          height: currentHeaderHeight + gridHeight,
         ),
       );
     }

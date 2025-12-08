@@ -3,36 +3,25 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 
 final quillEditorStyle = DefaultStyles(
-  bold: const TextStyle(
-    fontWeight: FontWeight.w700,
-    // fontSize: 18,
-    // height: 1.4,
-    // letterSpacing: 0,
-  ),
+  bold: const TextStyle(fontWeight: FontWeight.w700),
   italic: const TextStyle(
+    fontWeight: FontWeight.w400,
     fontStyle: FontStyle.italic,
-    // fontWeight: FontWeight.w400,
-    // height: 1.4,
-    // letterSpacing: 0,
-    // fontSize: 18,
   ),
   underline: const TextStyle(
     decoration: TextDecoration.underline,
     fontWeight: FontWeight.w400,
-    // height: 1.45,
-    // letterSpacing: 0,
-    // fontSize: 18,
   ),
   paragraph: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w400,
       color: NotesColors.titleTextColor,
-      height: 1.35, // Word-like line spacing
+      height: 1.45, // Word-like line spacing
       letterSpacing: 0.0,
     ),
     HorizontalSpacing(0, 0), // Standard margins
-    VerticalSpacing(2, 14), // Paragraph spacing
+    VerticalSpacing(0, 0), // Paragraph spacing
     VerticalSpacing(0, 0), // No additional line spacing here
     null,
   ),
@@ -47,7 +36,7 @@ final quillEditorStyle = DefaultStyles(
       letterSpacing: 0,
     ),
     HorizontalSpacing(0, 0), // Standard margins
-    VerticalSpacing(2, 14),
+    VerticalSpacing(0, 0),
     VerticalSpacing(0, 0),
     null,
   ),
@@ -62,7 +51,7 @@ final quillEditorStyle = DefaultStyles(
       letterSpacing: 0,
     ),
     HorizontalSpacing(0, 0), // Standard margins
-    VerticalSpacing(2, 14),
+    VerticalSpacing(0, 0),
     VerticalSpacing(0, 0),
     null,
   ),
@@ -76,7 +65,7 @@ final quillEditorStyle = DefaultStyles(
       height: 1.2,
       letterSpacing: 0.2,
     ),
-    HorizontalSpacing(12, 12),
+    HorizontalSpacing(0,0),
     VerticalSpacing(14, 8),
     VerticalSpacing(0, 0),
     null,
@@ -91,7 +80,7 @@ final quillEditorStyle = DefaultStyles(
       height: 1.2,
       letterSpacing: 0.2,
     ),
-    HorizontalSpacing(12, 12),
+    HorizontalSpacing(0, 0),
     VerticalSpacing(14, 8),
     VerticalSpacing(0, 0),
     null,
@@ -104,7 +93,7 @@ final quillEditorStyle = DefaultStyles(
       height: 1.2,
       fontStyle: FontStyle.italic,
     ),
-    HorizontalSpacing(24, 12), // Indented left margin
+    HorizontalSpacing(0, 0), // Indented left margin
     VerticalSpacing(8, 8),
     VerticalSpacing(0, 0),
     BoxDecoration(
@@ -122,8 +111,8 @@ final quillEditorStyle = DefaultStyles(
       letterSpacing: -0.4,
     ),
     HorizontalSpacing(0, 0),
-    VerticalSpacing(2, 14),
-    VerticalSpacing(2, 2),
+    VerticalSpacing(0, 0),
+    VerticalSpacing(0, 0),
 
     BoxDecoration(
       color: NotesColors.cardColor,
@@ -135,54 +124,22 @@ final quillEditorStyle = DefaultStyles(
   // Inline code
   // Add inside DefaultStyles
   inlineCode: InlineCodeStyle(
-    backgroundColor: NotesColors.codeBlockColor, // dark background
+    backgroundColor: NotesColors.floatingMenuColor, // dark background
     radius: const Radius.circular(4), // rounded edges
     style: const TextStyle(
-      fontSize: 14,
       color: NotesColors.titleTextColor, // light text
-      height: 1.2,
-    ),
-    header1: const TextStyle(
-      fontSize: 22,
-      color: NotesColors.titleTextColor,
-      fontWeight: FontWeight.w600,
-    ),
-    header2: const TextStyle(
-      fontSize: 20,
-      color: NotesColors.titleTextColor,
-      fontWeight: FontWeight.w600,
-    ),
-    header3: const TextStyle(
-      fontSize: 18,
-      color: NotesColors.titleTextColor,
-      fontWeight: FontWeight.w600,
-    ),
-    header4: const TextStyle(
-      fontSize: 16,
-      color: NotesColors.titleTextColor,
-      fontWeight: FontWeight.w600,
-    ),
-    header5: const TextStyle(
-      fontSize: 14,
-      color: NotesColors.titleTextColor,
-      fontWeight: FontWeight.w600,
-    ),
-    header6: const TextStyle(
-      fontSize: 13,
-      color: NotesColors.titleTextColor,
-      fontWeight: FontWeight.w600,
+      height: 1.45,
     ),
   ),
 
   // Text alignment styles
-  align: const DefaultTextBlockStyle(
-    TextStyle(fontSize: 16, color: NotesColors.titleTextColor, height: 1.2),
-    HorizontalSpacing(12, 12),
-    VerticalSpacing(6, 6),
-    VerticalSpacing(0, 0),
-    null,
-  ),
-
+  // align: const DefaultTextBlockStyle(
+  //   TextStyle(fontSize: 16, color: NotesColors.titleTextColor, height: 1.2),
+  //   HorizontalSpacing(12, 12),
+  //   VerticalSpacing(6, 6),
+  //   VerticalSpacing(0, 0),
+  //   null,
+  // ),
   lists: const DefaultListBlockStyle(
     TextStyle(color: NotesColors.titleTextColor, fontWeight: FontWeight.w400),
     HorizontalSpacing(0, 0), // Standard margins
@@ -192,10 +149,6 @@ final quillEditorStyle = DefaultStyles(
     null,
   ),
 
-  // Inline text styles - Word-like formatting
-  // bold: TextStyle(fontWeight: FontWeight.bold, color: NotesColors.titleTextColor),
-
-  // italic: TextStyle(fontStyle: FontStyle.italic, color: NotesColors.titleTextColor),
   strikeThrough: const TextStyle(
     decoration: TextDecoration.lineThrough,
     decorationColor: NotesColors.strikeThroughColor,
@@ -212,11 +165,11 @@ final quillEditorStyle = DefaultStyles(
   // Color and size variations
   color: NotesColors.titleTextColor, // Default text color
   // Indent styles for nested content
-  indent: const DefaultTextBlockStyle(
-    TextStyle(fontSize: 16, color: NotesColors.titleTextColor, height: 1.2),
-    HorizontalSpacing(36, 12), // Increased left margin for indent
-    VerticalSpacing(6, 6),
-    VerticalSpacing(0, 0),
-    null,
-  ),
+  // indent: const DefaultTextBlockStyle(
+  //   TextStyle(fontSize: 16, color: NotesColors.titleTextColor, height: 1.2),
+  //   HorizontalSpacing(36, 12), // Increased left margin for indent
+  //   VerticalSpacing(6, 6),
+  //   VerticalSpacing(0, 0),
+  //   null,
+  // ),
 );

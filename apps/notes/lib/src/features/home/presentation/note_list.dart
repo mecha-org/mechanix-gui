@@ -92,8 +92,8 @@ class _NoteListState extends State<NoteList> {
             physics: const AlwaysScrollableScrollPhysics(),
             cacheExtent: 800,
             slivers: [
-              for (final group in widget.groupedNotes)
-                ..._buildGroupSection(group),
+              for (int i = 0; i < widget.groupedNotes.length; i++)
+                ..._buildGroupSection(widget.groupedNotes[i], i == 0),
             ],
           ),
         ),
@@ -146,7 +146,7 @@ class _NoteListState extends State<NoteList> {
     );
   }
 
-  List<Widget> _buildGroupSection(GroupedNotes group) {
+  List<Widget> _buildGroupSection(GroupedNotes group, bool isFirst) {
     if (group.notes.isEmpty) return [];
 
     final itemHeights = group.notes.map((note) => note.height).toList();
@@ -154,7 +154,7 @@ class _NoteListState extends State<NoteList> {
     return [
       SliverPersistentHeader(
         pinned: false,
-        delegate: GroupHeaderName(group.label),
+        delegate: GroupHeaderName(title: group.label, isFirst: isFirst),
       ),
 
       SliverPadding(

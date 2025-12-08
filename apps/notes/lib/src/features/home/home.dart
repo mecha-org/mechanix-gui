@@ -7,6 +7,7 @@ import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/bottom_menu/bottom_menu.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/home/presentation/empty_notes.dart';
+import 'package:mechanix_notes/src/features/home/presentation/home_floating_button.dart';
 import 'package:mechanix_notes/src/features/home/presentation/loading_notes.dart';
 import 'package:mechanix_notes/src/features/home/presentation/note_list.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_notes.dart';
@@ -82,7 +83,14 @@ class _HomePageState extends State<HomePage>
                     )
                     : const SizedBox.shrink(key: ValueKey('no_menu')),
           ),
-
+          floatingActionButton: BlocSelector<NotesBloc, NotesState, bool>(
+            selector: (state) => state.groupedNotes.isEmpty,
+            builder:
+                (context, hasNotes) =>
+                    hasNotes
+                        ? const HomeFloatingButton()
+                        : const SizedBox.shrink(),
+          ),
           // App bar with smooth fade animation
           appBar:
               isSearchPage
@@ -209,7 +217,7 @@ class _HomePageState extends State<HomePage>
                         if (groupedNotes.isEmpty) {
                           return FadeTransition(
                             opacity: _fadeAnimation,
-                            child: const EmptyNotes()
+                            child: const EmptyNotes(),
                           );
                         }
 

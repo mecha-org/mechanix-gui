@@ -82,7 +82,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       emit(state.copyWith(isLoading: true));
 
       final notesList = await notesRepository.getAllNotes();
-
+      await Future.delayed(const Duration(seconds: 1));
       _allNotes = notesList;
 
       _resetPagination();
