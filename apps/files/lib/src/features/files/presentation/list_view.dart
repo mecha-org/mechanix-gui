@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
+import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -95,13 +96,24 @@ Widget buildListView(
                     title,
                     overflow: TextOverflow.ellipsis,
                     maxLines: 1,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: const Color(0xFFD2D2D2),
+                      fontWeight: FontWeight.w400,
+                      fontFamily: Theme.of(context)
+                          .extension<FilesTheme>()!
+                          .defaultFontFamily,
+                    ),
                   ),
                   trailing: Text(
                     formatModifiedTime(modified),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: const Color(0xFF717171),
+                      fontWeight: FontWeight.w400,
+                      fontFamily: Theme.of(context)
+                          .extension<FilesTheme>()!
+                          .defaultFontFamily,
                     ),
                   ),
                   onTap: () {

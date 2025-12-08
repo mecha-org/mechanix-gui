@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:math' as Math;
 
 import 'package:archive/archive.dart';
 import 'package:file/file.dart';
@@ -38,6 +39,14 @@ String formatModifiedTime(DateTime modified) {
 String formatDateTime(DateTime dateTime) {
   final formatter = DateFormat('dd-MM-yyyy, hh:mm a');
   return formatter.format(dateTime).toLowerCase();
+}
+
+String formatBytes(int bytes, [int decimals = 2]) {
+  if (bytes <= 0) return "0 B";
+  const suffixes = ["B", "KB", "MB", "GB", "TB"];
+  final i = (bytes == 0) ? 0 : (Math.log(bytes) / Math.log(1024)).floor();
+  final size = bytes / Math.pow(1024, i);
+  return "${size.toStringAsFixed(decimals)} ${suffixes[i]}";
 }
 
 void _navigateToDirectory(

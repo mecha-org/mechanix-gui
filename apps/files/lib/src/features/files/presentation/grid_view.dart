@@ -137,13 +137,17 @@ Widget buildGridView(
                         Flexible(
                           child: Text(
                             title,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.white,
-                            ),
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: const Color(0xFFD2D2D2),
+                              fontWeight: FontWeight.w400,
+                              fontFamily: Theme.of(context)
+                                  .extension<FilesTheme>()!
+                                  .defaultFontFamily,
+                            ),
                           ),
                         ),
                       ],

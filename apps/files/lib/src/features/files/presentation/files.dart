@@ -15,12 +15,13 @@ import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/conflict_resolution_bottomsheet.dart';
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
+import 'package:mechanix_files/src/features/files/presentation/file_details_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/constants.dart';
 import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
-import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
@@ -33,7 +34,6 @@ import 'grid_view.dart';
 import 'list_view.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
-import 'dart:math' as Math;
 import 'package:widgets/mechanix.dart';
 
 class FileExplorerPage extends StatefulWidget {
@@ -257,83 +257,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (sheetContext) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: SafeArea(
-                      top: false,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '‘$fileName’ already exists',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'What would you like to do?',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: MechanixOutlinedButton(
-                                  label: "Cancel",
-                                  textColor: Colors.white,
-                                  borderRadius: 50,
-                                  borderWidth: 0.5,
-                                  onPressed: () {
-                                    context.read<FilesBloc>().add(
-                                          ContinueCopyWithConflictResolution(
-                                            sourcePaths: state.conflictingPaths,
-                                            destinationPath:
-                                                state.conflictDestinationPath,
-                                            strategy:
-                                                ConflictResolutionStrategy.skip,
-                                            controller: controller,
-                                          ),
-                                        );
-                                    Navigator.pop(sheetContext);
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: MechanixElevatedButton(
-                                  label: "Replace",
-                                  backgroundColor: Colors.blue,
-                                  textColor: Colors.white,
-                                  borderRadius: 50,
-                                  onPressed: () {
-                                    context.read<FilesBloc>().add(
-                                          ContinueCopyWithConflictResolution(
-                                            sourcePaths: state.conflictingPaths,
-                                            destinationPath:
-                                                state.conflictDestinationPath,
-                                            strategy: ConflictResolutionStrategy
-                                                .replace,
-                                            controller: controller,
-                                          ),
-                                        );
-                                    Navigator.pop(sheetContext);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  return ConflictResolutionBottomSheet(
+                    conflictingPaths: state.conflictingPaths,
+                    destinationPath: state.conflictDestinationPath,
+                    controller: controller,
                   );
                 },
               );
@@ -362,7 +289,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           titleWidget: selectionMode
               ? Text(
                   "${selectedPaths.length} Selected",
-                  style: context.textTheme.bodySmall,
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: const Color(0xFFD2D2D2),
+                    fontWeight: FontWeight.w600,
+                    fontFamily: Theme.of(context)
+                        .extension<FilesTheme>()!
+                        .defaultFontFamily,
+                  ),
                 ).padRight(24)
               : ValueListenableBuilder<String>(
                   valueListenable: controller.getPathNotifier,
@@ -370,7 +304,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     final title = widget.title == "Recent"
                         ? "Recents"
                         : (path == '/' ? "Root" : getCurrentFolderName(path));
-                    return Text(title, style: context.textTheme.bodySmall);
+                    return Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: const Color(0xFFD2D2D2),
+                        fontWeight: FontWeight.w600,
+                        fontFamily: Theme.of(context)
+                            .extension<FilesTheme>()!
+                            .defaultFontFamily,
+                      ),
+                    );
                   },
                 ),
         ),
@@ -665,7 +609,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               },
             ),
             BottomBarButton(
-              iconPath: Images.share,
+              iconWidget: IconWidget(
+                iconPath: Images.share,
+                iconColor: Colors.grey.shade600,
+              ),
               onPressed: () {},
               isDisabled: true, //TODO : add share functionality
             ),
@@ -1498,139 +1445,19 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     final bloc = context.read<FilesBloc>();
     bloc.add(FetchFileDetails(path));
 
-    final fileItem = FileItem(
-      name: p.basename(path),
-      type: p.extension(path) == '' ? 'dir' : p.extension(path),
-      modified: DateTime.now(),
-    );
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (bottomSheetContext) {
-        return BlocProvider.value(
-          value: bloc,
-          child: BlocBuilder<FilesBloc, FilesState>(
-            builder: (context, state) {
-              final details = state.fileDetails;
-              final hidden = p.basename(path).startsWith('.') ? 'Yes' : 'No';
-              var readable = '-';
-              var writable = '-';
-
-              if (details != null) {
-                final mode = details.mode;
-                readable = (mode & 0x100) != 0 ? 'Yes' : 'No';
-                writable = (mode & 0x80) != 0 ? 'Yes' : 'No';
-              }
-
-              if (details == null) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[800],
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(12)),
-                  ),
-                  child: const SizedBox(
-                    height: 100,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                );
-              }
-
-              final items = [
-                buildDetailRow("Type", details.type.toString()),
-                buildDetailRow("Size", formatBytes(details.size)),
-                buildDetailRow("Modified", formatDateTime(details.modified)),
-                buildDetailRow("Accessed", formatDateTime(details.accessed)),
-                buildDetailRow("Changed", formatDateTime(details.changed)),
-                buildDetailRow("Readable", readable),
-                buildDetailRow("Writable", writable),
-                buildDetailRow("Hidden", hidden),
-              ];
-
-              return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Image.asset(fileItem.iconPath, width: 28, height: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          fileItem.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.white,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      )
-                    ]),
-                    const SizedBox(height: 12),
-                    MechanixSimpleListTheme(
-                      style: const MechanixSimpleListThemeData(
-                        itemPadding: EdgeInsets.zero,
-                        backgroundColor: Colors.transparent,
-                        widgetMargin: EdgeInsets.only(bottom: 8),
-                      ),
-                      child: MechanixSimpleList.builder(
-                          isDividerRequired: false,
-                          padding: EdgeInsets.zero,
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            return items[index];
-                          }),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[700],
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                        ).copyWith(
-                          splashFactory: NoSplash
-                              .splashFactory, // Disable ripple animation
-                        ),
-                        onPressed: () => Navigator.of(bottomSheetContext).pop(),
-                        child: const Text("Close"),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+      barrierColor: Colors.transparent,
+      enableDrag: false,
+      builder: (sheetContext) {
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.pop(sheetContext),
+          child: FileDetailsDialog(path: path),
         );
       },
-    );
-  }
-
-  Widget buildDetailRow(String title, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title,
-              style: const TextStyle(color: Colors.white, fontSize: 14)),
-          Text(value,
-              style: const TextStyle(color: Colors.white70, fontSize: 12)),
-        ],
-      ),
     );
   }
 
@@ -1928,7 +1755,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             MediaQuery.of(bottomSheetContext).size.width;
 
         return ClipPath(
-          clipper: TabClipper(shift: bottomSheetWidth * 0.65),
+          clipper: TabClipper(shift: bottomSheetWidth * 0.5),
           child: Container(
             padding:
                 const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 32),
@@ -2027,12 +1854,4 @@ List<FileItem> getFilesAtPath(
   }
 
   return items;
-}
-
-String formatBytes(int bytes, [int decimals = 2]) {
-  if (bytes <= 0) return "0 B";
-  const suffixes = ["B", "KB", "MB", "GB", "TB"];
-  final i = (bytes == 0) ? 0 : (Math.log(bytes) / Math.log(1024)).floor();
-  final size = bytes / Math.pow(1024, i);
-  return "${size.toStringAsFixed(decimals)} ${suffixes[i]}";
 }

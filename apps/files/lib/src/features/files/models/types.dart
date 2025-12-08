@@ -1,6 +1,5 @@
 import 'dart:io' as io;
 
-import 'package:file/file.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 
