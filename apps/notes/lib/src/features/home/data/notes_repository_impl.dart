@@ -506,7 +506,6 @@ class NotesRepositoryImpl extends NotesRepository {
         return EditorPayload(
           id: note.id,
           content: note.content,
-          isPinned: note.isPinned,
         );
       }
 

@@ -57,6 +57,7 @@ class _BottomMenuState extends State<BottomMenu> {
 
   @override
   void dispose() {
+    print("BottomMenu disposed");
     super.dispose();
   }
 
