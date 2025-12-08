@@ -51,7 +51,6 @@ fn main() {
                         let mut bluetooth_device_stream = bluetooth_manager.stream_bluetooth_device_status().await;
                         let _ = get_available_bluetooth_devices(app_channel_tx.clone(), &bluetooth_manager).await;
 
-
                         let pulse_service = PulseAudioService::new().unwrap();
                         let _update_volume_info = update_device_info(&mut app_channel_tx, &pulse_service).await;
 
@@ -62,10 +61,8 @@ fn main() {
                                 0
                             }
                         };
-                        let brightness_percent = if brightness_value > 0 {u8_to_percent(brightness_value, MAX_DEVICE_BRIGHTNESS) } else {0.0};
+                        let brightness_percent = if brightness_value > 0 {u8_to_percent(brightness_value, MAX_DEVICE_BRIGHTNESS) } else {MAX_DEVICE_BRIGHTNESS as f32};
                         let _ = app_channel_tx.send(AppEvents::Brightness { value: brightness_percent }).await;
-
-
                       
                         loop {
                             select! {
@@ -208,19 +205,10 @@ fn main() {
                                 brightness_event = brightness_rx.next() => {
                                 match brightness_event {
                                     Some(BrightnessEvents::BrightnessChanged { value }) => {
-                                        let value = if value < DEFAULT_MIN_BRIGHTNESS { DEFAULT_MIN_BRIGHTNESS } else { value };
-                                        let value = percent_to_u8(value, MAX_DEVICE_BRIGHTNESS);
-                                        match display_client::set_brightness(value).await {
-                                            Ok(_) => {
-                                                if let Ok(value) = display_client::get_brightness().await {
-                                                    let value = u8_to_percent(value, MAX_DEVICE_BRIGHTNESS);
-                                                    let _ = app_channel_tx.send(AppEvents::Brightness { value }).await;
-                                                }
-                                            }
-                                            Err(e) => {
-                                                eprintln!("Error setting brightness: {:?}", e);
-                                            }
-                                        }
+
+                                        let value = if value <= DEFAULT_MIN_BRIGHTNESS { DEFAULT_MIN_BRIGHTNESS } else { value };
+                                        let value_u8 = percent_to_u8(value.clone(), MAX_DEVICE_BRIGHTNESS);
+                                        display_client::set_brightness(value_u8).await.unwrap();
                                     }
                                     None => break,
                                  }

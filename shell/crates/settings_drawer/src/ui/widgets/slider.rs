@@ -1,14 +1,18 @@
 use gpui::*;
 
-const DOT_SIZE: f32 = 2.0;
-const DOT_GAP: f32 = 7.0;
+const DOT_SIZE: f32 = 3.0;
+const DOT_GAP: f32 = 6.0;
 const BAR_SEGMENT_WIDTH: f32 = 2.0;
 const BAR_GAP_WIDTH: f32 = 4.0;
 const INACTIVE_DOT_COLOR: u32 = 0x797979;
 const INACTIVE_BAR_COLOR: u32 = 0x4D4D4D;
 const ACTIVE_FILL_COLOR: u32 = 0xE9E9E9;
 const ACTIVE_BAR_COLOR: u32 = 0xFFFFFF;
-const BG_COLOR: u32 = 0x202020;
+const BG_COLOR: u32 = 0x151515;
+
+const DOTS_COLUMN_IMAGE_PATH: &str = "icons/settings-drawer/slider-gray-dot-column.png";
+const DOTS_COLUMN_FILLED_IMAGE_PATH: &str = "icons/settings-drawer/slider-orange-dot-column.png";
+// const GRAY_DOT_GRID_IMAGE_PATH: &str = "icons/settings-drawer/gray-dot-grid.png";
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum SliderPattern {
@@ -148,8 +152,8 @@ impl RenderOnce for Slider {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let state = self.state.read(cx);
 
-        let width = self.width.unwrap_or(172.0);
-        let height = self.height.unwrap_or(56.0);
+        let width = self.width.unwrap_or(167.0);
+        let height = self.height.unwrap_or(66.0);
         let active_width = state.value_to_pixels(width);
         let pattern = state.pattern;
 
@@ -166,17 +170,15 @@ impl RenderOnce for Slider {
                 SliderPattern::Dots => {
                     let unit_size = DOT_SIZE + DOT_GAP;
                     let columns = (width / unit_size).floor() as usize;
-                    let rows = (height / unit_size).floor() as usize;
 
-                    let dot_grid = (0..rows).map(|_| {
-                        let row_dots = (0..columns).map(|_| {
-                            div()
-                                .w(px(DOT_SIZE))
-                                .h(px(DOT_SIZE))
-                                .bg(rgb(INACTIVE_DOT_COLOR))
-                        });
-                        div().flex().flex_row().gap(px(DOT_GAP))
-                        .children(row_dots)
+                    // Use repeating dots column image instead of generating individual dots
+                    let dot_grid = (0..columns).map(|_| {
+                        div().w(px(DOT_SIZE)).h_full().child(
+                            img(DOTS_COLUMN_IMAGE_PATH)
+                                .w_full()
+                                .h_full()
+                                .object_fit(gpui::ObjectFit::None),
+                        )
                     });
 
                     div()
@@ -192,12 +194,16 @@ impl RenderOnce for Slider {
                                 .w_full()
                                 .h_full()
                                 .flex()
-                                .flex_col()
+                                .flex_row()
                                 .gap(px(DOT_GAP))
                                 .bg(rgb(BG_COLOR))
-                                // .p(px(DOT_GAP))
-                                .py(px(DOT_GAP))
                                 .children(dot_grid)
+                                // .child(
+                                //       img(GRAY_DOT_GRID_IMAGE_PATH)
+                                //     .w_full()
+                                //     .h_full()
+                                //     .object_fit(gpui::ObjectFit::None),
+                                // )
                                 .on_mouse_down(
                                     MouseButton::Left,
                                     window.listener_for(
@@ -254,8 +260,21 @@ impl RenderOnce for Slider {
                                 .top_0()
                                 .h_full()
                                 .w(px(active_width.max(0.0)))
-                                .rounded(px(2.))
-                                .bg(rgb(ACTIVE_FILL_COLOR)),
+                                // .rounded(px(2.))
+                                // .bg(rgb(ACTIVE_FILL_COLOR)),
+                                .overflow_hidden()
+                                .flex()
+                                .flex_row()
+                                .gap(px(DOT_GAP))
+                                // Repeat the colored dots column images for active fill
+                                .children((0..columns).map(|_| {
+                                    div().w(px(DOT_SIZE)).h_full().child(
+                                        img(DOTS_COLUMN_FILLED_IMAGE_PATH)
+                                            .w_full()
+                                            .h_full()
+                                            .object_fit(gpui::ObjectFit::None),
+                                    )
+                                })),
                         )
                 }
                 SliderPattern::Bars => {

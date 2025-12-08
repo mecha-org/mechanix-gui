@@ -3,6 +3,7 @@ mod widgets;
 mod modals;
 use crate::events::{BrightnessEvents, NmEvents, VolumeEvents};
 use crate::get_wireless_strength_icon;
+use crate::services::DEFAULT_MIN_BRIGHTNESS;
 use crate::ui::modals::{BluetoothWindow, WirelessWindow, BatteryWindow};
 use crate::{
     events::BtEvents,
@@ -106,6 +107,12 @@ impl SettingsDrawer {
                             .await;
                     })
                     .detach();
+
+                    // Update the slider state
+                      let value = if *value <= DEFAULT_MIN_BRIGHTNESS { DEFAULT_MIN_BRIGHTNESS } else { *value };
+                    this.brightness_slider_state.update(cx, |state, _cx| {
+                        state.value = value.clamp(state.min, state.max);
+                    });
 
                 cx.notify();
             },
@@ -522,7 +529,7 @@ impl SettingsDrawer {
                             .size((px(24.), px(24.)))
                             .border(px(0.))
                             .on_click(cx.listener(  // TEMP; TODO: long tress open modal
-                                move |this: &mut SettingsDrawer,
+                                move |_,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
@@ -699,7 +706,7 @@ impl SettingsDrawer {
                     .grid()
                     .grid_cols(4)
                     .gap_4()
-                    .h(px(72.0))
+                    .h(px(88.0))
                     .child(
                         div()
                             .flex()
@@ -709,7 +716,7 @@ impl SettingsDrawer {
                             .text_color(rgb(0xF4F4F4))
                             .text_lg()
                             .col_span(2)
-                            .bg(rgb(0x202020))
+                            .bg(rgb(0x151515))
                             .rounded(px(8.))
                             .child(
                                 div()
@@ -722,9 +729,10 @@ impl SettingsDrawer {
                                     .child(
                                         IconButton::new("id_brightness")
                                             .icon(brightness_icon)
-                                            .icon_color(rgb(0xF4F4F4))
-                                            .size((px(36.), px(36.)))
-                                            .bg_color(rgb(0x202020))
+                                            .icon_color(rgb(0xC67600))
+                                            .size((px(32.), px(32.)))
+                                            .bg_color(rgb(0x151515))
+                                            .active_bg_color(rgb(0x151515))
                                             .border(px(0.))
                                             .on_click(cx.listener(|_, _, _, _| {
                                                 println!("brightness clicked");
@@ -735,14 +743,13 @@ impl SettingsDrawer {
                                             .flex()
                                             .justify_center()
                                             .items_center()
-                                            .w(px(172.0))
+                                            .w(px(167.0))
                                             .child(
                                                 Slider::new(
                                                     "brightness-slider",
                                                     &self.brightness_slider_state,
                                                 )
-                                                .width(172.0)
-                                                .height(56.0),
+                                                .height(66.0),
                                             ),
                                     ),
                             ),
@@ -770,10 +777,10 @@ impl SettingsDrawer {
                                     .child(
                                         IconButton::new("id_volume")
                                             .icon(volume_icon)
-                                            .icon_color(rgb(0xF4F4F4))
-                                            .size((px(36.), px(36.)))
-                                            .bg_color(rgb(0x202020))
-                                            .active_bg_color(rgb(0x202020))
+                                            .icon_color(rgb(0xC67600))
+                                            .size((px(32.), px(32.)))
+                                            .bg_color(rgb(0x151515))
+                                            .active_bg_color(rgb(0x151515))
                                             .border(px(0.))
                                             .on_click(cx.listener(
                                         |this: &mut SettingsDrawer,
@@ -811,13 +818,13 @@ impl SettingsDrawer {
                                             .flex()
                                             .justify_center()
                                             .items_end()
-                                            .w(px(172.0))
+                                            .w(px(167.0))
                                             .child(
                                                 Slider::new(
                                                     "volume-slider",
                                                     &self.volume_slider_state,
                                                 )
-                                                .width(172.0),
+                                                .height(66.0),
                                             ),
                                     ),
                             ),
