@@ -26,30 +26,36 @@
 //!
 //! This abstraction makes it easy to swap out or mock Bluetooth backends for testing or platform support.
 
-use crate::errors::BluezError;
-use std::sync::{mpsc, LazyLock};
-
 use super::interfaces::{device::BluetoothDevice, BluezInterface};
+use crate::errors::BluezError;
 use crate::proxies::BluezProxy;
 use anyhow::Result;
 use futures::executor::ThreadPool;
 use futures::{SinkExt, StreamExt};
 use log::{error, info};
+use std::sync::LazyLock;
 use zbus::export::ordered_stream::OrderedStreamExt;
 use zbus::Connection;
 
 static THREAD_POOL: LazyLock<ThreadPool> =
     LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
+
+#[derive(Debug, Clone)]
+pub enum InterfaceEvent {
+    DeviceAdded,
+    DeviceRemoved,
+}
+
+#[derive(Debug, Clone)]
+pub struct BluetoothEvent {
+    pub event: InterfaceEvent,
+    pub device: Option<BluetoothDevice>,
+}
 #[derive(Clone)]
 pub struct BluetoothService {
     proxy: BluezProxy<'static>,
 }
 
-#[derive(Debug, Clone)]
-pub enum BluetoothEvent {
-    DeviceAdded,
-    DeviceRemoved,
-}
 impl BluetoothService {
     /// Creates a new `BluetoothService` wrapping the given Bluetooth interface implementation.
     pub async fn new() -> Result<Self, BluezError> {
@@ -189,36 +195,41 @@ impl BluetoothService {
                     loop {
                         tokio::select! {
                             // Handle InterfacesAdded events
-                            Some(_event) = OrderedStreamExt::next(&mut added) => {
-                                let event = BluetoothEvent::DeviceAdded;
-                                // // Add your device-added logic here
-                                match sender.send(event).await {
-                                    Ok(r) => r,
-                                    Err(e) => {
-                                        error!("failed to send device added event to receiver: {}", e);
-                                        continue;
+                            Some(event) = OrderedStreamExt::next(&mut added) => {
+                              let args = event.args().unwrap();
+                                let interfaces = args.interfaces;
+                                // Check if the Device1 interface was added
+                                if let Some(device_props) = interfaces.get("org.bluez.Device1") {
+                                     if let Some(device_props) = BluetoothDevice::from_properties(device_props) {
+                                        println!("found device: {:?}", device_props);
+                                        let payload = BluetoothEvent {
+                                            event: InterfaceEvent::DeviceAdded,
+                                            device: Some(device_props),
+                                        };
+                                        // Add your device-added logic here
+                                        match sender.send(payload).await {
+                                            Ok(r) => r,
+                                            Err(e) => {
+                                                error!("failed to send device added event to receiver: {}", e);
+                                                continue;
+                                            }
+                                        };
                                     }
-                                };
-
-                                // if let Err(e) = sender.send(event) {
-                                // error!("failed to send device added event to receiver: {}", e);
-                                // continue;
-                                // }
+                                }
                             }
                             // Handle InterfacesRemoved events
                             Some(_event) = OrderedStreamExt::next(&mut removed) => {
-                                let event = BluetoothEvent::DeviceRemoved;
-                                match sender.send(event).await {
+                                let payload = BluetoothEvent {
+                                    event: InterfaceEvent::DeviceRemoved,
+                                    device: None,
+                                };
+                                match sender.send(payload).await {
                                     Ok(r) => r,
                                     Err(e) => {
                                         error!("failed to send device removed event to receiver: {}", e);
                                         continue;
                                     }
                                 };
-                                // if let Err(e) = sender.send(event) {
-                                // error!("failed to send device removed event to receiver: {}", e);
-                                // continue;
-                                // }
                             }
                             // Exit condition
                             else => break,

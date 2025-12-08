@@ -39,7 +39,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 futures = "0.3.31"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "0b9026321c4f86334cbbf16d18bc323f22bef9ac", features = [
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "4befccfeabd43168264a89afe735a8599a94a662", features = [
     "wayland",
     "linux-impeller",
 ] }
