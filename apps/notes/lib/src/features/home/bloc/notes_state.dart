@@ -9,6 +9,8 @@ class NotesState extends Equatable {
   final List<GroupedNotes> groupedNotes;
   final bool isDragging;
   // Search state
+
+  final bool isSearchPage;
   final bool isSearchMode;
   final bool isSearchLoading;
   final bool isSearchLoadingMore;
@@ -27,6 +29,7 @@ class NotesState extends Equatable {
     this.groupedNotes = const [],
     this.isDragging = false,
     // Search
+    this.isSearchPage = false,
     this.isSearchMode = false,
     this.isSearchLoading = false,
     this.isSearchLoadingMore = false,
@@ -44,6 +47,7 @@ class NotesState extends Equatable {
     bool? hasMorePages,
     bool? isDragging,
     List<GroupedNotes>? groupedNotes,
+    bool? isSearchPage,
     bool? isSearchMode,
     bool? isSearchLoading,
     bool? isSearchLoadingMore,
@@ -58,6 +62,7 @@ class NotesState extends Equatable {
       hasMorePages: hasMorePages ?? this.hasMorePages,
       isDragging: isDragging ?? this.isDragging,
       groupedNotes: groupedNotes ?? this.groupedNotes,
+      isSearchPage: isSearchPage ?? this.isSearchPage,
       isSearchMode: isSearchMode ?? this.isSearchMode,
       isSearchLoading: isSearchLoading ?? this.isSearchLoading,
       isSearchLoadingMore: isSearchLoadingMore ?? this.isSearchLoadingMore,
@@ -75,6 +80,7 @@ class NotesState extends Equatable {
     hasMorePages,
     isDragging,
     groupedNotes,
+    isSearchPage,
     isSearchMode,
     isSearchLoading,
     isSearchLoadingMore,

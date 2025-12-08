@@ -39,6 +39,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     on<LoadNotes>(_onLoadNotes);
     on<LoadNextChunk>(_onLoadNextChunk);
     on<DragUpdate>(_dragUpdate);
+    on<SearchPageToggle>(_onSearchPageToggle);
   }
 
   // Reset all pagination state
@@ -71,6 +72,7 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     logger.i('Initializing notes BLoC');
     _resetPagination();
     _resetSearchPagination();
+
     add(LoadNotes());
   }
 
@@ -493,7 +495,6 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       final filteredNotes =
           group.notes.where((note) => !deletedSet.contains(note.id)).toList();
 
-      // Only keep groups that still have notes
       if (filteredNotes.isNotEmpty) {
         updatedGroups.add(
           GroupedNotes(
@@ -505,7 +506,11 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
       }
     }
 
-    // Recalculate if there are more pages
+    // **FIX: Load more notes if we deleted everything that was displayed**
+    if (updatedGroups.isEmpty && _noteIndex < _allNotes.length) {
+      _loadTimeBasedNotes(updatedGroups, pageSize);
+    }
+
     _hasMorePages = _hasMoreNotesToLoad();
 
     emit(
@@ -561,5 +566,9 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
 
   void _dragUpdate(DragUpdate event, Emitter<NotesState> emit) {
     emit(state.copyWith(isDragging: event.isDragging));
+  }
+
+  void _onSearchPageToggle(SearchPageToggle event, Emitter<NotesState> emit) {
+    emit(state.copyWith(isSearchPage: event.isSearchPage));
   }
 }

@@ -6,8 +6,6 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/content_editor.dart';
 import 'package:mechanix_notes/src/features/editor/editor_bottom_bar.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar_selection.dart';
-import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -16,8 +14,8 @@ import 'package:widgets/widgets.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar.dart';
 
 class NotesEditor extends StatefulWidget {
-  final NoteMetaData? note;
-  const NotesEditor({super.key, this.note});
+  final String? noteId;
+  const NotesEditor({super.key, this.noteId});
 
   @override
   State<NotesEditor> createState() => _NotesEditorState();
@@ -25,8 +23,12 @@ class NotesEditor extends StatefulWidget {
 
 class _NotesEditorState extends State<NotesEditor> {
   final FocusNode _focusNode = FocusNode();
+
+  /// Flag to apply style to first new line
   bool _isFormatting = false;
+
   final FloatingActionBarController floatingBar = FloatingActionBarController();
+
   final QuillController _controller = QuillController(
     document: Document(),
     selection: const TextSelection.collapsed(offset: 0),
@@ -50,10 +52,10 @@ class _NotesEditorState extends State<NotesEditor> {
   @override
   void initState() {
     super.initState();
-    final isEditing = widget.note != null;
+    final bool isEditing = widget.noteId != null;
 
     if (isEditing) {
-      context.read<EditorBloc>().add(LoadNoteContent(noteId: widget.note!.id));
+      context.read<EditorBloc>().add(LoadNoteContent(noteId: widget.noteId!));
     } else {
       _openKeyboardAfterLoad();
     }
@@ -69,7 +71,37 @@ class _NotesEditorState extends State<NotesEditor> {
     });
   }
 
+  // Helper method to check if a line has restricted formatting
+  bool _hasRestrictedFormatting(int offset) {
+    try {
+      final line = _controller.document.queryChild(offset).node;
+
+      // Check for restricted attributes
+      final restrictedAttributes = [
+        Attribute.ul.key, // Bullet list
+        Attribute.ol.key, // Numbered list
+        Attribute.checked.key, // Checked checkbox
+        Attribute.unchecked.key, // Unchecked checkbox
+        Attribute.codeBlock.key, // Code block
+      ];
+
+      for (final attrKey in restrictedAttributes) {
+        if (line?.style.attributes.containsKey(attrKey) ?? false) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      print('Error checking formatting: $e');
+      return false;
+    }
+  }
+
   void _onControllerChange() {
+    context.read<EditorBloc>().add(UndoUpdate(isUndo: _controller.hasUndo));
+    context.read<EditorBloc>().add(RedoUpdate(isRedo: _controller.hasRedo));
+
     if (_isFormatting) return;
 
     final sel = _controller.selection;
@@ -84,14 +116,16 @@ class _NotesEditorState extends State<NotesEditor> {
     if (firstNewLineIndex == -1) return;
 
     if (pos == firstNewLineIndex + 1 && !_isFormatting) {
-      // ← SET THE FLAG BEFORE FORMATTING
+      // Check if the first line has restricted formatting
+      if (_hasRestrictedFormatting(0)) {
+        return;
+      }
       setState(() {
         _isFormatting = true;
       });
 
       try {
         _controller.formatText(0, firstNewLineIndex, Attribute.h1);
-        // _controller.formatText(0, firstNewLineIndex);
       } finally {
         // ← ALWAYS RESET THE FLAG
         setState(() {
@@ -99,9 +133,6 @@ class _NotesEditorState extends State<NotesEditor> {
         });
       }
     }
-
-    context.read<EditorBloc>().add(UndoUpdate(isUndo: _controller.hasUndo));
-    context.read<EditorBloc>().add(RedoUpdate(isRedo: _controller.hasRedo));
   }
 
   void toolbarSelection(ToolbarEnum value) {
@@ -117,7 +148,7 @@ class _NotesEditorState extends State<NotesEditor> {
       bottomNavigationBar: EditorBottomBar(
         controller: _controller,
         focusNode: _focusNode,
-        note: widget.note,
+        noteId: widget.noteId,
       ),
       body: Column(
         children: [
@@ -142,35 +173,6 @@ class _NotesEditorState extends State<NotesEditor> {
               );
             },
           ),
-
-          // Toolbar
-          BlocSelector<EditorBloc, EditorBlocState, ToolbarEnum>(
-            selector: (state) => state.selectedToolbar,
-            builder:
-                (context, selectedToolbar) => ToolbarSelection(
-                  selectedToolbar: selectedToolbar,
-                  focusNode: _focusNode,
-                  controller: _controller,
-                ),
-          ),
-
-          // BlocListener<EditorBloc, EditorBlocState>(
-          //   listenWhen:
-          //       (previous, current) =>
-          //           previous.toolbarToggle != current.toolbarToggle,
-          //   listener: (context, state) {
-          //     if (state.toolbarToggle) {
-          //       floatingBar.open();
-          //     } else {
-          //       floatingBar.close();
-          //     }
-          //   },
-          //   child: EditorBottomMenu(
-          //     barController: floatingBar,
-          //     controller: _controller,
-          //     onToolbarSelection: toolbarSelection,
-          //   ),
-          // ),
         ],
       ).padSymmetric(vertical: 15, horizontal: 24),
     );

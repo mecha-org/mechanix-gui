@@ -72,3 +72,8 @@ class DragUpdate extends NotesEvent {
   final bool isDragging;
   DragUpdate(this.isDragging);
 }
+
+class SearchPageToggle extends NotesEvent {
+  final bool isSearchPage;
+  SearchPageToggle({required this.isSearchPage});
+}

@@ -5,29 +5,29 @@ import 'package:mechanix_notes/src/commons/styles/colors.dart';
 final quillEditorStyle = DefaultStyles(
   bold: const TextStyle(
     fontWeight: FontWeight.w700,
-    fontSize: 18,
-    height: 1.4,
-    letterSpacing: 0,
+    // fontSize: 18,
+    // height: 1.4,
+    // letterSpacing: 0,
   ),
   italic: const TextStyle(
     fontStyle: FontStyle.italic,
-    fontWeight: FontWeight.w400,
-    height: 1.4,
-    letterSpacing: 0,
-    fontSize: 18,
+    // fontWeight: FontWeight.w400,
+    // height: 1.4,
+    // letterSpacing: 0,
+    // fontSize: 18,
   ),
   underline: const TextStyle(
     decoration: TextDecoration.underline,
     fontWeight: FontWeight.w400,
-    height: 1.45,
-    letterSpacing: 0,
-    fontSize: 18,
+    // height: 1.45,
+    // letterSpacing: 0,
+    // fontSize: 18,
   ),
   paragraph: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w400,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       height: 1.35, // Word-like line spacing
       letterSpacing: 0.0,
     ),
@@ -42,7 +42,7 @@ final quillEditorStyle = DefaultStyles(
     TextStyle(
       fontSize: 24,
       fontWeight: FontWeight.w700,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       height: 1.3,
       letterSpacing: 0,
     ),
@@ -57,7 +57,7 @@ final quillEditorStyle = DefaultStyles(
     TextStyle(
       fontSize: 20,
       fontWeight: FontWeight.w700,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       height: 1.25,
       letterSpacing: 0,
     ),
@@ -72,7 +72,7 @@ final quillEditorStyle = DefaultStyles(
     TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w600,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       height: 1.2,
       letterSpacing: 0.2,
     ),
@@ -100,7 +100,7 @@ final quillEditorStyle = DefaultStyles(
   quote: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 16,
-      color: NotesColors.editorTextColor, // Slightly dimmed for quotes
+      color: NotesColors.titleTextColor, // Slightly dimmed for quotes
       height: 1.2,
       fontStyle: FontStyle.italic,
     ),
@@ -114,7 +114,6 @@ final quillEditorStyle = DefaultStyles(
 
   // Code block - Word-like style
   code: const DefaultTextBlockStyle(
-
     TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w500,
@@ -140,75 +139,67 @@ final quillEditorStyle = DefaultStyles(
     radius: const Radius.circular(4), // rounded edges
     style: const TextStyle(
       fontSize: 14,
-      color: NotesColors.editorTextColor, // light text
+      color: NotesColors.titleTextColor, // light text
       height: 1.2,
     ),
     header1: const TextStyle(
       fontSize: 22,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       fontWeight: FontWeight.w600,
     ),
     header2: const TextStyle(
       fontSize: 20,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       fontWeight: FontWeight.w600,
     ),
     header3: const TextStyle(
       fontSize: 18,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       fontWeight: FontWeight.w600,
     ),
     header4: const TextStyle(
       fontSize: 16,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       fontWeight: FontWeight.w600,
     ),
     header5: const TextStyle(
       fontSize: 14,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       fontWeight: FontWeight.w600,
     ),
     header6: const TextStyle(
       fontSize: 13,
-      color: NotesColors.editorTextColor,
+      color: NotesColors.titleTextColor,
       fontWeight: FontWeight.w600,
     ),
   ),
 
   // Text alignment styles
   align: const DefaultTextBlockStyle(
-    TextStyle(fontSize: 16, color: NotesColors.editorTextColor, height: 1.2),
+    TextStyle(fontSize: 16, color: NotesColors.titleTextColor, height: 1.2),
     HorizontalSpacing(12, 12),
     VerticalSpacing(6, 6),
     VerticalSpacing(0, 0),
     null,
   ),
 
-  // lists: DefaultListBlockStyle(
-  //   const TextStyle(fontSize: 15, color: Colors.white),
-  //   const HorizontalSpacing(6.0, 0.0), // horizontal spacing
-  //   const VerticalSpacing(6.0, 10.0),
-  //   const VerticalSpacing(2, 2),
-  //   BoxDecoration(),
-  //   Cheeee(context: context, isChecked: true, onChanged: (value) {}),
-  //   numberPointWidthBuilder:
-  //       (fontSize, count) =>
-  //           TextBlockUtils.defaultNumberPointWidthBuilder(fontSize, count),
-  //   indentWidthBuilder: TextBlockUtils.defaultIndentWidthBuilder,
-  //   // numberPointWidthBuilder: TextBlockUtils.defaultNumberPointWidthBuilder(
-  //   //   16.0,
-  //   //   1,
-  //   // ),
-  // ),
+  lists: const DefaultListBlockStyle(
+    TextStyle(color: NotesColors.titleTextColor, fontWeight: FontWeight.w400),
+    HorizontalSpacing(0, 0), // Standard margins
+    VerticalSpacing(0, 10),
+    VerticalSpacing(0, 10),
+    null,
+    null,
+  ),
 
   // Inline text styles - Word-like formatting
-  // bold: TextStyle(fontWeight: FontWeight.bold, color: NotesColors.editorTextColor),
+  // bold: TextStyle(fontWeight: FontWeight.bold, color: NotesColors.titleTextColor),
 
-  // italic: TextStyle(fontStyle: FontStyle.italic, color: NotesColors.editorTextColor),
+  // italic: TextStyle(fontStyle: FontStyle.italic, color: NotesColors.titleTextColor),
   strikeThrough: const TextStyle(
     decoration: TextDecoration.lineThrough,
-    decorationColor: NotesColors.editorTextColor,
-    color: NotesColors.editorTextColor,
+    decorationColor: NotesColors.strikeThroughColor,
+    color: NotesColors.strikeThroughColor,
   ),
 
   // Link style
@@ -219,10 +210,10 @@ final quillEditorStyle = DefaultStyles(
   ),
 
   // Color and size variations
-  color: NotesColors.editorTextColor, // Default text color
+  color: NotesColors.titleTextColor, // Default text color
   // Indent styles for nested content
   indent: const DefaultTextBlockStyle(
-    TextStyle(fontSize: 16, color: NotesColors.editorTextColor, height: 1.2),
+    TextStyle(fontSize: 16, color: NotesColors.titleTextColor, height: 1.2),
     HorizontalSpacing(36, 12), // Increased left margin for indent
     VerticalSpacing(6, 6),
     VerticalSpacing(0, 0),

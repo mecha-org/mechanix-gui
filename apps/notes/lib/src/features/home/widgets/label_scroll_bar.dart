@@ -355,7 +355,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 width: 6,
                                 height: scrollbarHeight,
                                 decoration: BoxDecoration(
-                                  color: NotesColors.tooltipColor,
+                                  color: NotesColors.titleTextColor,
                                   borderRadius: BorderRadius.circular(3),
                                 ),
                               ),
@@ -380,7 +380,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: NotesColors.tooltipColor,
+                                color: NotesColors.titleTextColor,
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               child: Text(

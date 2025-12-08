@@ -19,9 +19,9 @@ class ToolbarSelection extends StatelessWidget {
   Widget selectToolbar() {
     switch (selectedToolbar) {
       case ToolbarEnum.align:
-        return AlignmentToolbar(controller: controller, focusNode: focusNode);
+        return AlignmentToolbar(controller: controller);
       case ToolbarEnum.text:
-        return TextEditorToolbar(controller: controller, focusNode: focusNode);
+        return TextEditorToolbar(controller: controller);
       case ToolbarEnum.none:
         return const SizedBox.shrink();
     }

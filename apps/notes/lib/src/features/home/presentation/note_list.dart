@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
+import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/home/presentation/home_floating_button.dart';
@@ -14,13 +15,11 @@ import 'package:mechanix_notes/src/features/home/widgets/sliver_grid.dart';
 class NoteList extends StatefulWidget {
   final bool isSelectionMode;
   final List<GroupedNotes> groupedNotes;
-  final ScrollController controller;
 
   const NoteList({
     super.key,
     required this.isSelectionMode,
     required this.groupedNotes,
-    required this.controller,
   });
 
   @override
@@ -28,14 +27,32 @@ class NoteList extends StatefulWidget {
 }
 
 class _NoteListState extends State<NoteList> {
+  late final ScrollController _scrollController;
+
   @override
   void initState() {
     super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (!position.hasPixels || !position.hasContentDimensions) return;
+
+    final maxScroll = position.maxScrollExtent;
+    final currentScroll = position.pixels;
+    // Trigger near bottom
+    if (currentScroll >= 0.8 * maxScroll) {
+      context.read<NotesBloc>().add(LoadNextChunk());
+    }
   }
 
   @override
   void dispose() {
-    widget.controller.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -71,7 +88,7 @@ class _NoteListState extends State<NoteList> {
             dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
           ),
           child: CustomScrollView(
-            controller: widget.controller,
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             cacheExtent: 800,
             slivers: [
@@ -93,6 +110,7 @@ class _NoteListState extends State<NoteList> {
                       : const SizedBox.shrink(),
         ),
 
+        // backdrop during dragging
         BlocSelector<NotesBloc, NotesState, bool>(
           selector: (state) => state.isDragging,
           builder:
@@ -100,7 +118,7 @@ class _NoteListState extends State<NoteList> {
                 child:
                     value
                         ? IgnorePointer(
-                          ignoring: true, // don't block taps
+                          ignoring: false, // don't block taps
                           child: Container(
                             color: Colors.black.withValues(alpha: 0.5),
                           ),
@@ -119,7 +137,7 @@ class _NoteListState extends State<NoteList> {
             builder:
                 (context, isDragging) => LabelScrollBar(
                   isDragging: isDragging,
-                  scrollController: widget.controller,
+                  scrollController: _scrollController,
                   groupedNotes: widget.groupedNotes,
                 ),
           ),

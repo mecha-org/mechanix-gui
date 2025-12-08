@@ -7,10 +7,9 @@ import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
+import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_bar.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_highlight.dart';
-import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 
 class SearchNotes extends StatefulWidget {
   const SearchNotes({super.key});
@@ -57,109 +56,104 @@ class _SearchNotesState extends State<SearchNotes> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NotesBloc, NotesState>(
-      builder: (context, state) {
-        return Scaffold(
-          appBar: const MechanixNavigationBar(
-            title: "Search Notes",
-            theme: MechanixNavigationBarThemeData(
-              titleSpacing: 2,
-              titleStyle: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ),
-          body: Stack(
+    return BlocSelector<NotesBloc, NotesState, List<SearchMetaData>>(
+      selector: (state) => state.searchedNotes,
+      builder: (context, searchedNotes) {
+        return Container(
+          padding: const EdgeInsets.only(top: 12, bottom: 16),
+          child: Stack(
             children: [
-              ListView.builder(
-                controller: _scrollController,
-                itemCount: state.searchedNotes.length,
-                prototypeItem: const SizedBox(height: 70),
-                padding: const EdgeInsets.only(top: 0),
-                itemBuilder: (context, index) {
-                  final note = state.searchedNotes[index];
-                  return GestureDetector(
-                    onTap: () {
-                      _openNote(context, note.id);
-                    },
-                    child: Container(
-                      height: 58,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 6,
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: NotesColors.cardColor,
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // MAIN TEXT – expands and takes remaining space
-                          Expanded(
-                            flex: 1,
-                            child: SearchHighlight(
-                              text: note.text,
-                              query: searchQuery,
-                              isTitle: note.isTitle,
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          // COUNT – fixed size
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: NotesColors.highlightTextColor.withValues(
-                                alpha: 0.65,
-                              ),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                            child: Text(
-                              note.availableCount.toString(),
-                              style: const TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-
-                          // DATE – wraps its content but never overflows
-                          IntrinsicWidth(
-                            child: Text(
-                              CommonHelper.formatDateTime(note.updatedAt),
-                              textAlign: TextAlign.end,
-                              style: const TextStyle(
-                                overflow: TextOverflow.ellipsis,
-                                color: NotesColors.labelColor,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ),
-                        ],
+              if (searchedNotes.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    child: Text(
+                      searchQuery.isEmpty
+                          ? "Start typing to search notes..."
+                          : "No Notes Found.",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: NotesColors.labelColor,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                ),
+
+              if (searchedNotes.isNotEmpty)
+                ListView.builder(
+                  controller: _scrollController,
+                  itemCount: searchedNotes.length,
+                  prototypeItem: const SizedBox(height: 70),
+                  padding: const EdgeInsets.only(top: 0),
+                  itemBuilder: (context, index) {
+                    final note = searchedNotes[index];
+                    return GestureDetector(
+                      onTap: () => _openNote(context, note.id),
+                      child: Container(
+                        height: 58,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: NotesColors.cardColor,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: SearchHighlight(
+                                text: note.text,
+                                query: searchQuery,
+                                isTitle: note.isTitle,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: NotesColors.highlightTextColor
+                                    .withValues(alpha: 0.65),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(note.availableCount.toString()),
+                            ),
+                            const SizedBox(width: 8),
+                            IntrinsicWidth(
+                              child: Text(
+                                CommonHelper.formatDateTime(note.updatedAt),
+                                textAlign: TextAlign.end,
+                                style: const TextStyle(
+                                  color: NotesColors.labelColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 30,
                 child: Center(
                   child: SearchInputBar(
-                    onChanged:
-                        (val) => setState(() {
-                          searchQuery = val;
-                        }),
+                    onChanged: (val) {
+                      setState(() {
+                        searchQuery = val;
+                      });
+                    },
                   ),
                 ),
               ),

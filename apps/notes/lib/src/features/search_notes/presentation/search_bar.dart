@@ -46,7 +46,9 @@ class _SearchInputBarState extends State<SearchInputBar> {
   }
 
   void clearSearch() {
-    _onSearchChanged('');
+    context.read<NotesBloc>().add(ClearSearch());
+    context.read<NotesBloc>().add(SearchPageToggle(isSearchPage: false));
+    widget.onChanged('');
   }
 
   @override

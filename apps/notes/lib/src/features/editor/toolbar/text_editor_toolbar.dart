@@ -1,24 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
-import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
-import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/editor_icon_button.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_container.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar/toolbar_row.dart';
-import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
+import 'package:mechanix_notes/src/features/editor/toolbar/focus_preserve_button.dart';
 
 class TextEditorToolbar extends StatefulWidget {
   final QuillController controller;
-  final FocusNode focusNode;
 
-  const TextEditorToolbar({
-    super.key,
-    required this.controller,
-    required this.focusNode,
-  });
+  const TextEditorToolbar({super.key, required this.controller});
   @override
   State<TextEditorToolbar> createState() => _TextEditorToolbarState();
 }
@@ -27,31 +17,14 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
   @override
   void initState() {
     super.initState();
-    widget.focusNode.addListener(focusListener);
   }
 
   @override
   void dispose() {
-    widget.focusNode.removeListener(focusListener);
     super.dispose();
   }
 
-  void focusListener() {
-    if (widget.focusNode.hasFocus) {
-      context.read<EditorBloc>().add(
-        SelectToolbar(activeToolbar: ToolbarEnum.none),
-      );
-    }
-  }
-
-  void requestFocus() {
-    if (!widget.focusNode.hasFocus) {
-      widget.focusNode.requestFocus();
-    }
-  }
-
   void toggleList(Attribute attribute) {
-    requestFocus();
     final attrs = widget.controller.getSelectionStyle().attributes;
     final currentAttr = attrs[attribute.key];
 
@@ -68,7 +41,6 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
   }
 
   void textSizeFormat(Attribute attribute) {
-    requestFocus();
     final currentSize =
         widget.controller
             .getSelectionStyle()
@@ -86,8 +58,6 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
   }
 
   void backgroundColorFormat() {
-    requestFocus();
-
     final currentBg =
         widget.controller
             .getSelectionStyle()
@@ -116,107 +86,100 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, child) {
-        return ToolbarContainer(
-          width: 540,
-          height: 44,
-          child: [
-            ToolbarRow(
-              child: [
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: widget.controller
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          spacing: 28,
+          children: [
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected: widget.controller.getSelectionStyle().containsKey(
+                  Attribute.bold.key,
+                ),
+                iconPath: NotesIcon.boldIcon,
+                onPressed: () => toggleList(Attribute.bold),
+              ),
+            ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected: widget.controller.getSelectionStyle().containsKey(
+                  Attribute.italic.key,
+                ),
+                iconPath: NotesIcon.italicIcon,
+                onPressed: () {
+                  toggleList(Attribute.italic);
+                },
+              ),
+            ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected: widget.controller.getSelectionStyle().containsKey(
+                  Attribute.underline.key,
+                ),
+                iconPath: NotesIcon.textUnderlineIcon,
+                onPressed: () {
+                  toggleList(Attribute.underline);
+                },
+              ),
+            ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected: widget.controller.getSelectionStyle().containsKey(
+                  Attribute.background.key,
+                ),
+                iconPath: NotesIcon.highlightIcon,
+                onPressed: () {
+                  backgroundColorFormat();
+                },
+              ),
+            ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected: widget.controller.getSelectionStyle().containsKey(
+                  Attribute.inlineCode.key,
+                ),
+                iconPath: NotesIcon.inlineCodeIcon,
+                onPressed: () {
+                  toggleList(Attribute.inlineCode);
+                },
+              ),
+            ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected:
+                    widget.controller
                         .getSelectionStyle()
-                        .containsKey(Attribute.bold.key),
-                    iconPath: NotesIcon.boldIcon,
-                    onPressed: () => toggleList(Attribute.bold),
-                  ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: widget.controller
+                        .attributes[Attribute.header.key]
+                        ?.value ==
+                    1,
+                iconPath: NotesIcon.h1Icon,
+                onPressed: () => toggleList(Attribute.h1),
+              ),
+            ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected:
+                    widget.controller
                         .getSelectionStyle()
-                        .containsKey(Attribute.italic.key),
-                    iconPath: NotesIcon.italicIcon,
-                    onPressed: () {
-                      toggleList(Attribute.italic);
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: widget.controller
-                        .getSelectionStyle()
-                        .containsKey(Attribute.underline.key),
-                    iconPath: NotesIcon.textUnderlineIcon,
-                    onPressed: () {
-                      toggleList(Attribute.underline);
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: widget.controller
-                        .getSelectionStyle()
-                        .containsKey(Attribute.background.key),
-                    iconPath: NotesIcon.highlightIcon,
-                    onPressed: () {
-                      backgroundColorFormat();
-                    },
-                  ),
-                ),
-
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected: widget.controller
-                        .getSelectionStyle()
-                        .containsKey(Attribute.inlineCode.key),
-                    iconPath: NotesIcon.inlineCodeIcon,
-                    onPressed: () {
-                      toggleList(Attribute.inlineCode);
-                    },
-                  ),
-                ),
-
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected:
-                        widget.controller
-                            .getSelectionStyle()
-                            .attributes[Attribute.header.key]
-                            ?.value ==
-                        1,
-                    iconPath: NotesIcon.h1Icon,
-                    onPressed: () => toggleList(Attribute.h1),
-                  ),
-                ),
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected:
-                        widget.controller
-                            .getSelectionStyle()
-                            .attributes[Attribute.header.key]
-                            ?.value ==
-                        2,
-                    iconPath: NotesIcon.h2Icon,
-                    onPressed: () => toggleList(Attribute.h2),
-                  ),
-                ),
-
-                Expanded(
-                  child: EditorIconButton(
-                    isSelected:
-                        widget.controller
-                                    .getSelectionStyle()
-                                    .attributes[Attribute.header.key]
-                                    ?.key ==
-                                "header"
-                            ? false
-                            : true,
-                    iconPath: NotesIcon.normalTextIcon,
-                    onPressed: () => textSizeFormat(const SizeAttribute("18")),
-                  ),
-                ),
-              ],
+                        .attributes[Attribute.header.key]
+                        ?.value ==
+                    2,
+                iconPath: NotesIcon.h2Icon,
+                onPressed: () => toggleList(Attribute.h2),
+              ),
+            ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected:
+                    widget.controller
+                                .getSelectionStyle()
+                                .attributes[Attribute.header.key]
+                                ?.key ==
+                            "header"
+                        ? false
+                        : true,
+                iconPath: NotesIcon.normalTextIcon,
+                onPressed: () => textSizeFormat(const SizeAttribute("18")),
+              ),
             ),
           ],
         );
@@ -224,3 +187,4 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
     );
   }
 }
+
