@@ -75,6 +75,7 @@ mode = "dark"
 
 - One schema per **namespace** (e.g., `org.mechanix.launcher`)
 - Written in **TOML**
+- To Register a new schema, place a new TOML file in `/usr/share/mxconf/schemas`.
 
 ### Example Schema: `org.mechanix.launcher`
 
