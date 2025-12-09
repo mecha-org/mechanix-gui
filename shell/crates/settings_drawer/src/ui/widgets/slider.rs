@@ -2,12 +2,12 @@ use gpui::*;
 
 const DOT_SIZE: f32 = 3.0;
 const DOT_GAP: f32 = 6.0;
-const BAR_SEGMENT_WIDTH: f32 = 2.0;
-const BAR_GAP_WIDTH: f32 = 4.0;
+const BAR_SEGMENT_WIDTH: f32 = 2.2;
+const BAR_GAP_WIDTH: f32 = 5.0;
 const INACTIVE_DOT_COLOR: u32 = 0x797979;
-const INACTIVE_BAR_COLOR: u32 = 0x4D4D4D;
+const INACTIVE_BAR_COLOR: u32 = 0x3A3A3A;
 const ACTIVE_FILL_COLOR: u32 = 0xE9E9E9;
-const ACTIVE_BAR_COLOR: u32 = 0xFFFFFF;
+const ACTIVE_BAR_COLOR: u32 = 0xC67600;
 const BG_COLOR: u32 = 0x151515;
 
 const DOTS_COLUMN_IMAGE_PATH: &str = "icons/settings-drawer/slider-gray-dot-column.png";

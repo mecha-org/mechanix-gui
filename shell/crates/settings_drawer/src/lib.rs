@@ -1,10 +1,12 @@
 mod events;
 pub mod services;
 mod ui;
+mod constants;
 
 pub mod prelude {
     pub use crate::events::{AppEvents, BrightnessEvents, BtEvents, NmEvents, VolumeEvents};
     pub use crate::ui::SettingsDrawer;
+    pub use crate::constants::*;
 }
 
 use crate::ui::icon::IconName;

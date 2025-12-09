@@ -3,6 +3,7 @@ mod widgets;
 mod modals;
 use crate::events::{BrightnessEvents, NmEvents, VolumeEvents};
 use crate::get_wireless_strength_icon;
+use crate::prelude::*;
 use crate::services::DEFAULT_MIN_BRIGHTNESS;
 use crate::ui::modals::{BluetoothWindow, WirelessWindow, BatteryWindow};
 use crate::{
@@ -64,7 +65,7 @@ pub struct SettingsDrawer {
     pub brightness_slider_value: f32,
     pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
-    pub volume_device_name: String,
+    pub volume_device_name: Option<String>,
     pub volume_mute: bool,
 
     pub show_wireless_modal : bool,
@@ -129,7 +130,7 @@ impl SettingsDrawer {
                 let SliderEvent::Change(value) = event;
                 this.volume_slider_value = *value;
 
-                let sink_name = this.volume_device_name.clone();
+                let sink_name = this.volume_device_name.clone().unwrap_or_else(|| "default".to_string());
                 let volume = *value;
                 let mut volume_tx_1 = volume_tx_for_slider.clone();
 
@@ -144,6 +145,13 @@ impl SettingsDrawer {
                             .await;
                     })
                     .detach();
+
+                    // Update the slider state
+                    this.volume_mute = *value <= 0.0;
+                    this.volume_slider_value = if this.volume_mute { 0.0 } else { *value };
+                    this.volume_slider_state.update(cx, |state, _cx| {
+                        state.value = value.clamp(state.min, state.max);
+                    });
 
                 cx.notify();
             });
@@ -173,7 +181,7 @@ impl SettingsDrawer {
                 connected_device: None,
                 available_devices: None,
             },
-            volume_device_name: "".to_string(),
+            volume_device_name: None,
             open_terminal: false,
             cell_signal: false,
             brightness_slider_state: brightness_slider,
@@ -396,6 +404,11 @@ impl SettingsDrawer {
             } else {
                 IconName::VolumeHigh
             }
+        };
+        let volume_icon_color = if self.volume_mute {
+            MUTE_SOUND_COLOR
+        } else {
+            UNMUTE_SOUND_COLOR
         };
 
         let brightness_icon =
@@ -729,7 +742,7 @@ impl SettingsDrawer {
                                     .child(
                                         IconButton::new("id_brightness")
                                             .icon(brightness_icon)
-                                            .icon_color(rgb(0xC67600))
+                                            .icon_color(rgb(BRIGHTNESS_ICON_COLOR))
                                             .size((px(32.), px(32.)))
                                             .bg_color(rgb(0x151515))
                                             .active_bg_color(rgb(0x151515))
@@ -764,7 +777,7 @@ impl SettingsDrawer {
                             .text_color(rgb(0xF4F4F4))
                             .text_lg()
                             .col_span(2)
-                            .bg(rgb(0x202020))
+                            .bg(rgb(0x151515))
                             .rounded(px(8.))
                             .child(
                                 div()
@@ -777,7 +790,7 @@ impl SettingsDrawer {
                                     .child(
                                         IconButton::new("id_volume")
                                             .icon(volume_icon)
-                                            .icon_color(rgb(0xC67600))
+                                            .icon_color(rgb(volume_icon_color))
                                             .size((px(32.), px(32.)))
                                             .bg_color(rgb(0x151515))
                                             .active_bg_color(rgb(0x151515))
@@ -790,13 +803,13 @@ impl SettingsDrawer {
                                             let mut volume_tx = this.volume_tx.clone();
                                             this.volume_mute = !this.volume_mute;
                                             let is_mute = this.volume_mute;
-                                            let sink_name = this.volume_device_name.clone();
+                                            let sink_name = this.volume_device_name.clone().unwrap_or_else(|| "default".to_string());
 
                                             if is_mute {
                                                 cx.background_executor()
                                                 .spawn(async move {
                                                     let _ = volume_tx
-                                                        .send(VolumeEvents::MuteSink { name: sink_name })
+                                                        .send(VolumeEvents::MuteSink { name: sink_name.clone() })
                                                         .await;
                                                 })
                                                 .detach();
@@ -804,7 +817,7 @@ impl SettingsDrawer {
                                                 cx.background_executor()
                                                 .spawn(async move {
                                                     let _ = volume_tx
-                                                        .send(VolumeEvents::UnmuteSink { name: sink_name })
+                                                        .send(VolumeEvents::UnmuteSink { name: sink_name.clone() })
                                                         .await;
                                                 })
                                                 .detach();

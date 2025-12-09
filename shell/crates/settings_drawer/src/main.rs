@@ -167,10 +167,7 @@ fn main() {
                                     match volume_event {
                                         Some(VolumeEvents::VolumeChanged { name, value }) => {
                                             match pulse_service.handle.set_sink_volume_by_name(&name, &value).await {
-                                                Ok(_) => {
-                                                    update_device_info(&mut app_channel_tx, &pulse_service).await;
-
-                                                }
+                                                Ok(_) => (),
                                                 Err(e) => {
                                                     eprintln!("Failed to set volume: {}", e);
                                                 }
@@ -341,7 +338,7 @@ fn main() {
                                         let device_info = Some(device_info).clone().unwrap();
                                         this.volume_mute = device_info.mute;
                                         this.volume_slider_value = if this.volume_mute { 0.0 } else { device_info.volume as f32 };
-                                        this.volume_device_name = device_info.name.unwrap_or_else(|| "default".to_string());
+                                        this.volume_device_name = device_info.name;
                                         this.volume_slider_state.update(cx, |state, _cx| {
                                             state.value = this
                                                 .volume_slider_value
