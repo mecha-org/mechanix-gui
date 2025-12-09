@@ -208,7 +208,12 @@ fn main() {
 
                                         let value = if value <= DEFAULT_MIN_BRIGHTNESS { DEFAULT_MIN_BRIGHTNESS } else { value };
                                         let value_u8 = percent_to_u8(value.clone(), MAX_DEVICE_BRIGHTNESS);
-                                        display_client::set_brightness(value_u8).await.unwrap();
+                                        match display_client::set_brightness(value_u8).await {
+                                            Ok(_) => (),
+                                            Err(e) => {
+                                                eprintln!("Failed to set brightness: {}", e);
+                                            }
+                                        }
                                     }
                                     None => break,
                                  }
