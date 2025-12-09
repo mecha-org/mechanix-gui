@@ -105,7 +105,8 @@ class CancelMoveMode extends FilesEvent {}
 
 class SortFiles extends FilesEvent {
   final String sortBy; // e.g., 'name', 'size_asc', 'type', etc.
-  SortFiles(this.sortBy);
+  final bool isAscending; // true / false
+  SortFiles(this.sortBy, this.isAscending);
 }
 
 class FetchFileDetails extends FilesEvent {

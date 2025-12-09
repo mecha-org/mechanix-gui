@@ -119,15 +119,14 @@ SortBy sortByFromKey(String key) {
       return SortBy.modTime;
     case 'accessed_time':
       return SortBy.accessedTime;
-    case 'size_asc':
-    case 'size_desc':
+    case 'size':
       return SortBy.size;
     default:
       return SortBy.name;
   }
 }
 
-String keyFromSort(SortBy sortBy, bool ascending) {
+String keyFromSort(SortBy sortBy) {
   switch (sortBy) {
     case SortBy.name:
       return 'name';
@@ -138,8 +137,10 @@ String keyFromSort(SortBy sortBy, bool ascending) {
     case SortBy.accessedTime:
       return 'accessed_time';
     case SortBy.size:
-      return ascending ? 'size_asc' : 'size_desc';
+      return 'size';
   }
 }
+
+bool toggleAscending(bool current) => !current;
 
 const double menuItemHeight = 42.0;

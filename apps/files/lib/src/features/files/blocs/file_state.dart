@@ -22,6 +22,7 @@ class FilesState extends Equatable {
   final List<String> movedPaths;
 
   final String currentSortBy;
+  final bool isAscending;
 
   final FileStat? fileDetails;
 
@@ -49,6 +50,7 @@ class FilesState extends Equatable {
     this.isMoveMode = false,
     this.movedPaths = const [],
     required this.currentSortBy,
+    required this.isAscending,
     this.fileDetails,
     this.showHiddenFiles = false,
     this.compressionStatus = FileCompressionStatus.idle,
@@ -71,6 +73,7 @@ class FilesState extends Equatable {
     bool? isMoveMode,
     List<String>? movedPaths,
     String? currentSortBy,
+    bool? isAscending,
     FileStat? fileDetails,
     bool? showHiddenFiles,
     // Compression
@@ -91,6 +94,7 @@ class FilesState extends Equatable {
       isMoveMode: isMoveMode ?? this.isMoveMode,
       movedPaths: movedPaths ?? this.movedPaths,
       currentSortBy: currentSortBy ?? this.currentSortBy,
+      isAscending: isAscending ?? this.isAscending,
       fileDetails: fileDetails ?? this.fileDetails,
       showHiddenFiles: showHiddenFiles ?? this.showHiddenFiles,
       compressionStatus: compressionStatus ?? this.compressionStatus,

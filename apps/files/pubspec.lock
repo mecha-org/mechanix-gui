@@ -954,7 +954,7 @@ packages:
     description:
       path: "flutter/widgets"
       ref: refactor
-      resolved-ref: "37bb3377c9e69feb5341b6c1e17ff4138260a2aa"
+      resolved-ref: "7c6bc1986c66ec388e74b982c8820fd843fe7da8"
       url: "https://github.com/ojas-mecha/mechanix-ui.git"
     source: git
     version: "0.0.1"

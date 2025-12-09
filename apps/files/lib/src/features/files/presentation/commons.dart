@@ -455,3 +455,38 @@ Future<String> getUniqueExtractPath(String basePath) async {
     count++;
   }
 }
+
+List<FileItem> getFilesAtPath(
+    List<FileItem> path, List<FileSystemEntity> fileSystemList) {
+  // Build full path from root and path list
+  String currentPath = '/';
+  for (final item in path) {
+    currentPath = p.join(currentPath, item.name);
+  }
+
+  final List<FileItem> items = [];
+
+  try {
+    for (final entity in fileSystemList) {
+      final String name = p.basename(entity.path);
+      if (name.isEmpty) continue;
+
+      final stat = entity.statSync();
+      final modifiedTime = stat.modified;
+
+      if (entity is Directory) {
+        items.add(FileItem(name: name, type: 'dir', modified: modifiedTime));
+      } else if (entity is File) {
+        final ext = p.extension(name);
+        items.add(FileItem(
+            name: name,
+            type: ext.isNotEmpty ? ext : 'file',
+            modified: modifiedTime));
+      }
+    }
+  } catch (e) {
+    print('Error reading directory at $currentPath: $e');
+  }
+
+  return items;
+}

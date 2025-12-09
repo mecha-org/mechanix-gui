@@ -23,8 +23,11 @@ class FileManagerController {
 
   final List<FileSystemEntity> _currentEntities = [];
 
-  bool _sizeAscending = true; // new flag for size order
-  bool get isSizeAscending => _sizeAscending;
+  bool _ascending = true;
+  bool get isAscending => _ascending;
+
+  bool get hasSortApplied => _hasSortApplied;
+  bool _hasSortApplied = false;
 
   SortBy get sortedBy => _sort.value;
 
@@ -184,14 +187,14 @@ class FileManagerController {
     reload(); // Reapply filtering
   }
 
-  void sortBy(SortBy sortBy, {bool? sizeAscending}) {
-    if (sortBy == SortBy.size) {
-      // Flip direction if tapping size again
-      if (sizeAscending == null && _sort.value == SortBy.size) {
-        _sizeAscending = !_sizeAscending;
-      } else if (sizeAscending != null) {
-        _sizeAscending = sizeAscending;
-      }
+  void sortBy(SortBy sortBy, {bool? isAscending}) {
+    _hasSortApplied = true;
+    // If tapping same field → toggle
+    if (sortBy == _sort.value) {
+      _ascending = isAscending ?? !_ascending;
+    } else {
+      // New field → default ascending unless specified
+      _ascending = isAscending ?? true;
     }
 
     _sort.value = sortBy;
@@ -211,7 +214,7 @@ class FileManagerController {
           if (b is Directory && a is! Directory) return 1;
 
           // If both are the same type, sort by name
-          return aName.compareTo(bName);
+          return _ascending ? aName.compareTo(bName) : bName.compareTo(aName);
 
         case SortBy.type:
           if (a is Directory && b is! Directory) return -1;
@@ -220,16 +223,17 @@ class FileManagerController {
           // Same type
           final aType = a is Directory ? 'dir' : p.extension(a.path);
           final bType = b is Directory ? 'dir' : p.extension(b.path);
-          final typeCompare = aType.compareTo(bType);
+          final typeCompare =
+              _ascending ? aType.compareTo(bType) : bType.compareTo(aType);
           if (typeCompare != 0) return typeCompare;
 
           // Secondary: by name
           final aName = p.basename(a.path).toLowerCase();
           final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
+          return _ascending ? aName.compareTo(bName) : bName.compareTo(aName);
 
         case SortBy.size:
-          if (_sizeAscending) {
+          if (_ascending) {
             // Group folders first
             if (a is Directory && b is! Directory) return -1;
             if (b is Directory && a is! Directory) return 1;
@@ -270,12 +274,12 @@ class FileManagerController {
         case SortBy.modTime:
           final aTime = a.statSync().modified;
           final bTime = b.statSync().modified;
-          return bTime.compareTo(aTime);
+          return _ascending ? aTime.compareTo(bTime) : bTime.compareTo(aTime);
 
         case SortBy.accessedTime:
           final aTime = a.statSync().accessed;
           final bTime = b.statSync().accessed;
-          return bTime.compareTo(aTime);
+          return _ascending ? aTime.compareTo(bTime) : bTime.compareTo(aTime);
 
         default:
           return 0;

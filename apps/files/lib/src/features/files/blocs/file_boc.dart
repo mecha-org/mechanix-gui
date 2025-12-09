@@ -24,6 +24,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             loading: false,
             error: null,
             currentSortBy: '',
+            isAscending: false,
             conflictDestinationPath: '')) {
     on<InitializeFiles>(_onInitializeFiles);
     on<CreateFolder>(_onCreateFolder);
@@ -321,16 +322,31 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     ));
   }
 
-  Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
-    logger.d("Sort by : ${event.sortBy}");
-    final prefs = await SharedPreferences
-        .getInstance(); // Get shared preferences instance
-    await prefs.setString(
-        'sort_mode', event.sortBy); // Save sort mode to shared preferences
+  // Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
+  //   logger.d("Sort by : ${event.sortBy}");
+  //   final prefs = await SharedPreferences
+  //       .getInstance(); // Get shared preferences instance
+  //   await prefs.setString(
+  //       'sort_mode', event.sortBy); // Save sort mode to shared preferences
 
-    emit(state.copyWith(
-      currentSortBy: event.sortBy,
-    ));
+  //   emit(state.copyWith(
+  //     currentSortBy: event.sortBy,
+  //   ));
+  // }
+  Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
+    logger.d("Sort by : ${event.sortBy}, asc: ${event.isAscending}");
+
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('sort_mode', event.sortBy);
+    await prefs.setBool('sort_ascending', event.isAscending);
+
+    emit(
+      state.copyWith(
+        currentSortBy: event.sortBy,
+        isAscending: event.isAscending,
+      ),
+    );
   }
 
   Future<void> _onFetchFileDetails(
