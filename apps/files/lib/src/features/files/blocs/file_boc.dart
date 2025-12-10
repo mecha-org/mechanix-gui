@@ -82,9 +82,19 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       CreateFolder event, Emitter<FilesState> emit) async {
     try {
       emit(state.copyWith(loading: true));
+
       logger.i("Creating folder: ${event.folderName} in ${event.path}");
+
+      // Create folder
       await fileRepository.createFolder(event.path, event.folderName);
+
+      // Mark this folder as new (important!)
+      final newFolderPath = "${event.path}/${event.folderName}";
+      event.controller.markNewFolder(newFolderPath);
+
+      // Reload file list AFTER tagging the new folder
       await event.controller.reload();
+
       emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: e.toString(), loading: false));
@@ -322,17 +332,6 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     ));
   }
 
-  // Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
-  //   logger.d("Sort by : ${event.sortBy}");
-  //   final prefs = await SharedPreferences
-  //       .getInstance(); // Get shared preferences instance
-  //   await prefs.setString(
-  //       'sort_mode', event.sortBy); // Save sort mode to shared preferences
-
-  //   emit(state.copyWith(
-  //     currentSortBy: event.sortBy,
-  //   ));
-  // }
   Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
     logger.d("Sort by : ${event.sortBy}, asc: ${event.isAscending}");
 

@@ -40,6 +40,22 @@ class FileManagerController {
     _path.value = path;
   }
 
+  String? newFolderPath;
+
+  /// Mark the given folder path as the "new" folder and refresh the list.
+  /// Call this *before* reloading so the UI can place it at the top immediately.
+  void markNewFolder(String path) {
+    newFolderPath = path;
+    // Re-apply sort/filter so UI picks up this change
+    _applySearchFilter();
+  }
+
+  /// Clear the "new folder" flag (e.g. when rename overlay closes)
+  void clearNewFolder() {
+    newFolderPath = null;
+    _applySearchFilter();
+  }
+
   /// ValueNotifier of the current directory's basename
   ///
   /// ie:

@@ -41,6 +41,15 @@ Widget buildListView(
         );
       }
 
+      // Move newly created folder to top
+      if (controller.newFolderPath != null) {
+        entities.sort((a, b) {
+          if (a.path == controller.newFolderPath) return -1;
+          if (b.path == controller.newFolderPath) return 1;
+          return 0;
+        });
+      }
+
       return ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
           dragDevices: {
@@ -57,12 +66,15 @@ Widget buildListView(
             final title = FileManager.basename(entity);
             final modified = entity.statSync().modified;
             final isSelected = selectedPaths.contains(entity.path);
+            final isNew = entity.path == controller.newFolderPath;
 
             return GestureDetector(
               onSecondaryTap: () => state?.toggleSelection(entity.path),
               onLongPress: () => state?.toggleSelection(entity.path),
               child: Container(
-                color: isSelected ? Colors.grey[900] : Colors.transparent,
+                decoration: BoxDecoration(
+                  color: isNew ? const Color(0xFF2A2A2A) : Colors.transparent,
+                ),
                 child: ListTile(
                   minTileHeight: 65,
                   leading: Row(
@@ -270,6 +282,15 @@ Widget buildListViewMove(
         );
       }
 
+      // Move newly created folder to top
+      if (controller.newFolderPath != null) {
+        entities.sort((a, b) {
+          if (a.path == controller.newFolderPath) return -1;
+          if (b.path == controller.newFolderPath) return 1;
+          return 0;
+        });
+      }
+
       return ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
           dragDevices: {
@@ -286,6 +307,7 @@ Widget buildListViewMove(
             final title = FileManager.basename(entity);
             final modified = entity.statSync().modified;
             final isSelected = selectedPaths.contains(entity.path);
+            final isNew = entity.path == controller.newFolderPath;
 
             final isDirectory = FileManager.isDirectory(entity);
             final isDisabled = !isDirectory; // disable if file
@@ -300,7 +322,9 @@ Widget buildListViewMove(
                 child: IgnorePointer(
                   ignoring: isDisabled, // block interaction
                   child: Container(
-                    color: isSelected ? Colors.grey[900] : Colors.transparent,
+                    decoration: BoxDecoration(
+                      color: isNew ? Colors.grey.shade800 : Colors.transparent,
+                    ),
                     child: ListTile(
                       minTileHeight: 65,
                       leading: Row(

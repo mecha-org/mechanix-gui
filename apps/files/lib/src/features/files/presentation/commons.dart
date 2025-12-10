@@ -456,6 +456,24 @@ Future<String> getUniqueExtractPath(String basePath) async {
   }
 }
 
+Future<String> generateUniqueFolderName(String basePath) async {
+  const String baseName = "New Folder";
+
+  // First check the default folder name
+  String candidate = p.join(basePath, baseName);
+
+  int counter = 1;
+
+  // If "New Folder" exists, try "New Folder (1)", "New Folder (2)"...
+  while (await io.Directory(candidate).exists()) {
+    candidate = p.join(basePath, '$baseName ($counter)');
+    counter++;
+  }
+
+  // Only return the folder name, not full path
+  return p.basename(candidate);
+}
+
 List<FileItem> getFilesAtPath(
     List<FileItem> path, List<FileSystemEntity> fileSystemList) {
   // Build full path from root and path list

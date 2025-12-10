@@ -66,6 +66,12 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
   bool showHomeView = false;
   bool isSearching = false;
+  bool isCreateFolder = false;
+
+  bool showRenameBar = false;
+  String renameText = "";
+  String createdFolderPath = "";
+  String originalFolderName = "";
 
   @override
   void initState() {
@@ -212,6 +218,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                     },
                   ),
                 ),
+              ] else if (showRenameBar) ...[
+                _buildRenameDialog()
               ] else ...[
                 // Entire MechanixBottomBar must be inside Row children
                 Expanded(
@@ -254,7 +262,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
-                        onPressed: () {},
+                        onPressed: () async {
+                          await createFolderAndRename();
+                        },
                       ),
                     ],
                   ).padLeft(16).padRight(16),
@@ -322,6 +332,77 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> createFolderAndRename() async {
+    final path = controller.getCurrentPath;
+    final bloc = context.read<FilesBloc>();
+
+    // Generate safe name
+    final folderName = await generateUniqueFolderName(path);
+    final newPath = p.join(path, folderName);
+
+    bloc.add(CreateFolder(
+      path: path,
+      folderName: folderName,
+      controller: controller,
+    ));
+
+    // Wait for folder to appear in UI (optional small delay)
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    // Store rename target + default rename text
+    setState(() {
+      createdFolderPath = newPath;
+      renameText = folderName;
+      originalFolderName = folderName;
+      showRenameBar = true;
+      isCreateFolder = false;
+    });
+  }
+
+  Widget _buildRenameDialog() {
+    final bool isEmpty = renameText.trim().isEmpty;
+    final bool isSame = renameText.trim() == originalFolderName.trim();
+    final bool showCheck = !isEmpty && !isSame; // valid new name
+
+    return Expanded(
+      child: MechanixTextInputTheme(
+        style: MechanixTextInputThemeData(
+          fillColor: const Color(0xFF151515),
+          borderSide: const BorderSide(color: Color(0xFF151515)),
+          focusedBorderSide: const BorderSide(color: Color(0xFF151515)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: MechanixTextInput.textInput(
+          initialValue: renameText,
+          onChanged: (v) => setState(() => renameText = v),
+          anchorWidget: showCheck
+              ? IconButton(
+                  icon: const Icon(Icons.check, color: Colors.white),
+                  onPressed: () {
+                    final filesBloc = context.read<FilesBloc>();
+                    filesBloc.add(
+                      Rename(
+                        oldPath: createdFolderPath,
+                        newName: renameText,
+                        controller: controller,
+                      ),
+                    );
+                    setState(() => showRenameBar = false);
+                    controller.clearNewFolder();
+                  },
+                )
+              : IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () {
+                    setState(() => showRenameBar = false);
+                    controller.clearNewFolder();
+                  },
+                ),
+        ),
+      ),
     );
   }
 
@@ -420,36 +501,6 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         ),
       ),
     );
-  }
-
-  OverlayEntry? _searchOverlayEntry;
-  void showSearchBottomSheet(
-      BuildContext context, ValueNotifier<String> searchQuery) {
-    final overlay = Overlay.of(context);
-
-    _searchOverlayEntry = OverlayEntry(
-      builder: (ctx) => Positioned(
-        // left: 0,
-        // right: 0,
-        // bottom: 0,
-        child: Material(
-          // <-- ADD THIS
-          color: Colors.transparent, // no background, keeps your design
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            child: SizedBox(
-              height: 48,
-              child: MechanixTextInput.search(
-                hintText: "Type here",
-                onChanged: (query) => controller.search(query),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    overlay.insert(_searchOverlayEntry!);
   }
 
   TextStyle _regularStyle(BuildContext context) => TextStyle(
