@@ -1,30 +1,67 @@
-mod handlers;
+mod errors;
+pub mod handlers;
+mod interfaces;
 
-use crate::handlers::display::DisplayInterface;
-use crate::handlers::hw_buttons::HwButtonHandler;
+use crate::interfaces::freedesktop::FreedesktopNotificationService;
+use crate::interfaces::mechanix::MechanixNotificationService;
 use anyhow::Result;
-use log::{error, info};
+use log::info;
+use zbus::object_server::SignalEmitter;
+use zbus::zvariant::ObjectPath;
+use zbus::Connection;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     env_logger::init();
-    let mut handles: Vec<tokio::task::JoinHandle<()>> = Vec::new();
-    let display = DisplayInterface::new();
-    let display_handler = tokio::spawn(async move {
-        display.watch_brightness().await;
-    });
-    handles.push(display_handler);
-    let hw_button = HwButtonHandler::new();
-    let hw_button_handler = tokio::spawn(async move {
-        hw_button.run().await;
-    });
-    handles.push(hw_button_handler);
-    // Wait for SIGINT (Ctrl+C)
-    match tokio::signal::ctrl_c().await {
-        Ok(()) => {
-            info!("Received SIGINT, shutting down");
-        }
-        Err(e) => error!("Failed to receive SIGINT: {}", e),
-    }
+    info!("desktop session service: initializing...");
+
+    // Setup freedesktop notification service
+    let (freedesktop_connection, _service, receiver) =
+        FreedesktopNotificationService::create_connection()
+            .await
+            .map_err(|e| {
+                zbus::Error::Failure(format!("Failed to create freedesktop connection: {}", e))
+            })?;
+
+    let freedesktop_signal_emitter = SignalEmitter::from_parts(
+        freedesktop_connection.clone(),
+        ObjectPath::try_from("/org/freedesktop/Notifications")
+            .map_err(|e| zbus::Error::Failure(format!("Invalid object path: {}", e)))?,
+    );
+
+    // Setup mechanix notification service
+    let mut notificationbus = MechanixNotificationService::new_from_database()
+        .await
+        .expect("Unable to initialize notificaion Service");
+    let notifications_clone = notificationbus.notifications.clone();
+
+    notificationbus.set_signal_emmiter(freedesktop_signal_emitter);
+    let connection = Connection::session().await?;
+
+    connection
+        .object_server()
+        .at("/org/mechanix/NotificationManager", notificationbus.clone())
+        .await?;
+
+    connection
+        .request_name("org.mechanix.NotificationManager")
+        .await?;
+
+    // gets the signal emitter for org.mechanix.NotificationManager
+    let mechanix_signal_emitter = SignalEmitter::from_parts(
+        connection.clone(),
+        ObjectPath::try_from("/org/mechanix/NotificationManager")
+            .map_err(|e| zbus::Error::Failure(format!("Invalid object path: {}", e)))?,
+    );
+
+    // starts event handling
+    MechanixNotificationService::handle_event(
+        receiver,
+        mechanix_signal_emitter,
+        notifications_clone,
+    )
+    .await;
+
+    std::future::pending::<()>().await;
     Ok(())
 }
