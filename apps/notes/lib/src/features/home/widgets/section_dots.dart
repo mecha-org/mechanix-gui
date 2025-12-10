@@ -1,4 +1,3 @@
-
 // Separate widget for section dots
 import 'package:flutter/material.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
@@ -40,6 +39,12 @@ class SectionDotsWidget extends StatelessWidget {
     final section = sections[index];
     final relativePosition = section.offset / totalContentHeight;
     final topPosition = relativePosition * availableHeight;
+    // for equal height section
+    // double gap = sections.length > 1
+    //     ? availableHeight / (sections.length - 1)
+    //     : 0.0;
+
+    // double y = i * gap;
 
     final isActive = index == currentSection;
     final isHovered = hoveredDotIndex == index;

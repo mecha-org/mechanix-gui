@@ -52,9 +52,10 @@ dependencies:
   # widgets:
   #   path: /home/dhanish/Desktop/mecha/minesh/mechanix-ui/flutter/widgets
   watch_it: ^1.7.0
-  image_picker: ^1.2.0
-  media_kit: ^1.2.0
-  media_kit_libs_audio: ^1.0.6
+  # image_picker: ^1.2.0
+  # media_kit: ^1.2.0
+  # media_kit_libs_audio: ^1.0.6
+  # file_picker: ^10.2.0
   path: ^1.9.1
   record: ^6.1.1
   path_provider: ^2.1.5
@@ -89,7 +90,6 @@ flutter:
   assets:
     - assets/images/add_icon.png
     - assets/images/back_icon.png
-    - assets/images/bookmark_icon.png
     - assets/images/search_icon.png
     - assets/images/delete_icon.png
     - assets/images/share_icon.png
@@ -97,45 +97,40 @@ flutter:
     - assets/images/undo_icon.png
     - assets/images/redo_icon.png
     - assets/images/text_style_icon.png
-    - assets/images/toolbar_disable_icon.png
-    - assets/images/toolbar_enable_icon.png
-    - assets/images/center_align_icon.png
     - assets/images/bullet_icon.png
     - assets/images/checkbox_list_icon.png
     - assets/images/code_block_icon.png
-    - assets/images/indent_increase_icon.png
-    - assets/images/indent_decrease_icon.png
-    - assets/images/quote_icon.png
-    - assets/images/right_align_icon.png
-    - assets/images/left_align_icon.png
     - assets/images/number_icon.png
     - assets/images/three_dot_icon.png
     - assets/images/bold_icon.png
     - assets/images/italic_icon.png
-    - assets/images/strike_through_icon.png
     - assets/images/text_underline_icon.png
     - assets/images/h1_icon.png
     - assets/images/h2_icon.png
-    - assets/images/t1_icon.png
-    - assets/images/t2_icon.png
-    - assets/images/audio_icon.png
-    - assets/images/table_icon.png
-    - assets/images/gallery_upload_icon.png
-    - assets/images/pin_icon.png
-    - assets/images/unpinned_icon.png
     - assets/images/clear_selection_icon.png
-    - assets/images/pinned_filled_icon.png
     - assets/images/menu_icon.png
     - assets/images/close_icon.png
     - assets/images/highlight_icon.png
     - assets/images/inline_code_icon.png
     - assets/images/normal_text.png
+    - assets/images/slider.png
+    - assets/images/copy_icon.png
+    - assets/images/cut_icon.png
+    - assets/images/paste_icon.png
+    - assets/images/select_all.png
+    - assets/images/select_all_option.png
     - assets/screenshots/notes1.png
     - assets/screenshots/notes2.png
     - assets/screenshots/notes3.png
     - assets/screenshots/notes4.png
     - assets/screenshots/notes5.png
     - assets/screenshots/notes6.png
+
+  fonts:
+    - family: Geist Mono
+      fonts:
+        - asset: assets/fonts/GeistMono-Medium.ttf
+          style: normal    
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -11,6 +11,7 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/editor_menu.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/alignment_toolbar.dart';
+import 'package:mechanix_notes/src/features/editor/toolbar/focus_preserve_button.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/text_editor_toolbar.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
@@ -42,59 +43,79 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
       FloatingActionBarController();
 
   void _saveNotes(BuildContext context) {
-    String title = "";
-    final content = jsonEncode(widget.controller.document.toDelta().toJson());
     final plainText = widget.controller.document.toPlainText();
-    final firstNewLineIndex = plainText.indexOf('\n');
-    if (firstNewLineIndex != -1) {
-      title = plainText.substring(0, firstNewLineIndex);
+    final trimmedText = plainText.trim();
+
+    // Don't save if there's no actual content
+    if (trimmedText.isEmpty) {
+      Navigator.pop(context);
+      return;
     }
 
-    if (plainText.isNotEmpty && plainText != '\n') {
-      if (widget.noteId != null && widget.noteId!.isNotEmpty) {
-        context.read<NotesBloc>().add(
-          UpdateNotes(
-            id: widget.noteId!,
-            content: content,
-            title: title,
-            plainText: plainText,
-          ),
-        );
-      } else {
-        context.read<NotesBloc>().add(CreateNotes(title, content, plainText));
-      }
+    String title = "";
+    final content = jsonEncode(widget.controller.document.toDelta().toJson());
+    final firstNewLineIndex = plainText.indexOf('\n');
+
+    if (firstNewLineIndex != -1) {
+      title = plainText.substring(0, firstNewLineIndex).trim();
+    } else {
+      title = trimmedText; // Use entire text as title if no newline
     }
+
+    if (widget.noteId != null && widget.noteId!.isNotEmpty) {
+      context.read<NotesBloc>().add(
+        UpdateNotes(
+          id: widget.noteId!,
+          content: content,
+          title: title,
+          plainText: plainText,
+        ),
+      );
+    } else {
+      context.read<NotesBloc>().add(CreateNotes(title, content, plainText));
+    }
+
+    context.read<NotesBloc>().add(LoadNotes());
     Navigator.pop(context);
   }
 
-  void toolbarSelection(
-    BuildContext context,
-    ToolbarEnum value,
-    ToolbarEnum currentValue,
-  ) {
-    print("toolbarSelection value: $value currentValue: $currentValue");
+  void requestFocus() {
+    if (!widget.focusNode.hasFocus) widget.focusNode.requestFocus();
+  }
 
-    if (value == currentValue) {
-      context.read<EditorBloc>().add(
-        SelectToolbar(activeToolbar: ToolbarEnum.none),
-      );
-    }
-
-    if (value != currentValue) {
-      context.read<EditorBloc>().add(SelectToolbar(activeToolbar: value));
-      if (value == ToolbarEnum.align) {
-        textEditorController.close();
-      } else if (value == ToolbarEnum.text) {
+  void onPress(ToolbarEnum oldValue, ToolbarEnum newValue) {
+    requestFocus();
+    if (oldValue == ToolbarEnum.none) {
+      context.read<EditorBloc>().add(SelectToolbar(activeToolbar: newValue));
+    } else {
+      if (oldValue == ToolbarEnum.align) {
         alignEditorController.close();
+        context.read<EditorBloc>().add(
+          SelectToolbar(activeToolbar: ToolbarEnum.text),
+        );
+      } else {
+        textEditorController.close();
+        context.read<EditorBloc>().add(
+          SelectToolbar(activeToolbar: ToolbarEnum.align),
+        );
       }
     }
   }
 
+  void onClose(ToolbarEnum currentValue) {
+    requestFocus();
+    context.read<EditorBloc>().add(
+      SelectToolbar(activeToolbar: ToolbarEnum.none),
+    );
+  }
+
   void _undoCall() {
+    requestFocus();
     widget.controller.undo();
   }
 
   void _redoCall() {
+    requestFocus();
     widget.controller.redo();
   }
 
@@ -107,11 +128,24 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
           theme:
               toolbarSelected != ToolbarEnum.none
                   ? const MechanixBottomBarThemeData(
-                    iconTheme: MechanixBottomBarIconThemeData(
-                      buttonMargin: EdgeInsets.all(10),
-                    ),
+                    height: 60,
                     decoration: BoxDecoration(
+                      color: Color(0xFF2E2E2E),
                       borderRadius: BorderRadius.all(Radius.circular(0)),
+                      boxShadow: [
+                        BoxShadow(
+                          offset: Offset(0, 0),
+                          color: Color(0x99000000),
+                        ),
+                        BoxShadow(
+                          offset: Offset(0, 0),
+                          color: Color(0x40000000),
+                        ),
+                        BoxShadow(
+                          offset: Offset(0, 0),
+                          color: Color(0x40000000),
+                        ),
+                      ],
                     ),
                   )
                   : null,
@@ -135,29 +169,34 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
           centerWidget: [
             BottomBarButton.extension(
               outsideClickDisabled: true,
+
               floatingActionBarTheme: const MechanixFloatingActionBarThemeData(
                 decoration: BoxDecoration(
                   color: NotesColors.floatingMenuColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
                 ),
               ),
-              onExtensionClose:
-                  () => toolbarSelection(
-                    context,
-                    ToolbarEnum.text,
-                    toolbarSelected,
-                  ),
-              onPressed: () {
-                toolbarSelection(context, ToolbarEnum.text, toolbarSelected);
+              onExtensionClose: () {
+                onClose(toolbarSelected);
               },
-              dropdownPosition: DropdownPosition.topCenter,
-              offset: const Offset(92, -8),
 
-              // floatingActionBarController: textEditorController,
-              menuButton: IconWidget(
+              onPressed: () {
+                onPress(toolbarSelected, ToolbarEnum.text);
+              },
+              isSelected: toolbarSelected == ToolbarEnum.text,
+              iconTheme: MechanixBottomBarIconThemeData(
+                activeButtonDecoration: BoxDecoration(
+                  color: NotesColors.cardColor.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              dropdownPosition: DropdownPosition.topCenter,
+              offset: const Offset(90, -8),
+              floatingActionBarController: textEditorController,
+              iconWidget: IconWidget(
                 iconPath: NotesIcon.textStyleIcon,
                 iconHeight: 28,
                 iconWidth: 28,
@@ -170,7 +209,10 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
 
               extensionWidgets: [
                 BottomBarButton.widget(
-                  widget: TextEditorToolbar(controller: widget.controller),
+                  widget: TextEditorToolbar(
+                    controller: widget.controller,
+                    focusNode: widget.focusNode,
+                  ),
                 ),
               ],
             ),
@@ -180,57 +222,41 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
                 decoration: BoxDecoration(
                   color: NotesColors.floatingMenuColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
                 ),
               ),
-              offset: const Offset(32, -8),
+
+              offset: const Offset(30, -8),
               outsideClickDisabled: true,
-              onExtensionClose:
-                  () => toolbarSelection(
-                    context,
-                    ToolbarEnum.none,
-                    toolbarSelected,
-                  ),
-              onPressed:
-                  () => toolbarSelection(
-                    context,
-                    ToolbarEnum.align,
-                    toolbarSelected,
-                  ),
-              // floatingActionBarController: alignEditorController,
-              menuButton: GestureDetector(
-                child: Container(
-                  height: 44,
-                  width: 44,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color:
-                        toolbarSelected == ToolbarEnum.align
-                            ? NotesColors.cardColor.withValues(alpha: 0.5)
-                            : Colors.transparent,
-                  ),
-                  child: Image.asset(NotesIcon.menuIcon, height: 28, width: 28),
+              isSelected: toolbarSelected == ToolbarEnum.align,
+
+              onExtensionClose: () => onClose(toolbarSelected),
+              onPressed: () => onPress(toolbarSelected, ToolbarEnum.align),
+              floatingActionBarController: alignEditorController,
+              iconTheme: MechanixBottomBarIconThemeData(
+                activeButtonDecoration: BoxDecoration(
+                  color: NotesColors.cardColor.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              // IconWidget(
-              //   iconPath: NotesIcon.menuIcon,
-              //   iconHeight: 28,
-              //   iconWidth: 28,
-              //   boxHeight: 44,
-              //   boxWidth: 44,
-              //   activeIconColor: NotesColors.secondaryTextColor,
-              //   isActive: true,
-              //   iconColor:
-              //       toolbarSelected == ToolbarEnum.align
-              //           ? NotesColors.secondaryTextColor
-              //           : Colors.white,
-              // ),
+              iconWidget: IconWidget(
+                iconPath: NotesIcon.menuIcon,
+                iconHeight: 28,
+                iconWidth: 28,
+                boxHeight: 44,
+                boxWidth: 44,
+                activeIconColor: NotesColors.secondaryTextColor,
+                isActive: toolbarSelected == ToolbarEnum.align,
+                iconColor: Colors.white,
+              ),
               extensionWidgets: [
                 BottomBarButton.widget(
-                  widget: AlignmentToolbar(controller: widget.controller),
+                  widget: AlignmentToolbar(
+                    focusNode: widget.focusNode,
+                    controller: widget.controller,
+                  ),
                 ),
               ],
             ),
@@ -238,18 +264,20 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
               widget: BlocSelector<EditorBloc, EditorBlocState, bool>(
                 selector: (state) => state.isUndo,
                 builder:
-                    (context, isUndo) => IconButton(
-                      icon: Image.asset(
-                        NotesIcon.undoIcon,
-                        width: 28,
-                        height: 28,
-                        color:
-                            isUndo
-                                ? Colors.white
-                                : Theme.of(context).disabledColor,
+                    (context, isUndo) => FocusPreserveButton(
+                      child: IconButton(
+                        icon: Image.asset(
+                          NotesIcon.undoIcon,
+                          width: 28,
+                          height: 28,
+                          color:
+                              isUndo
+                                  ? Colors.white
+                                  : Theme.of(context).disabledColor,
+                        ),
+                        iconSize: 44,
+                        onPressed: isUndo ? _undoCall : null,
                       ),
-                      iconSize: 44,
-                      onPressed: isUndo ? _undoCall : null,
                     ),
               ),
             ),
@@ -257,24 +285,31 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
               widget: BlocSelector<EditorBloc, EditorBlocState, bool>(
                 selector: (state) => state.isRedo,
                 builder:
-                    (context, isRedo) => IconButton(
-                      icon: Image.asset(
-                        NotesIcon.redoIcon,
-                        width: 28,
-                        height: 28,
-                        color:
-                            isRedo
-                                ? Colors.white
-                                : Theme.of(context).disabledColor,
+                    (context, isRedo) => FocusPreserveButton(
+                      child: IconButton(
+                        icon: Image.asset(
+                          NotesIcon.redoIcon,
+                          width: 28,
+                          height: 28,
+                          color:
+                              isRedo
+                                  ? Colors.white
+                                  : Theme.of(context).disabledColor,
+                        ),
+                        iconSize: 44,
+                        onPressed: isRedo ? _redoCall : null,
                       ),
-                      iconSize: 44,
-                      onPressed: isRedo ? _redoCall : null,
                     ),
               ),
             ),
           ],
           anchorWidget: [
-            BottomBarButton.widget(widget: EditorMenu(noteId: widget.noteId)),
+            BottomBarButton.widget(
+              widget: EditorMenu(
+                noteId: widget.noteId,
+                onTapFocus: requestFocus,
+              ),
+            ),
           ],
         );
       },

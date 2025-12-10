@@ -79,7 +79,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
 
     final newSectionInfos = <SectionInfo>[];
     double currentOffset = 0;
-    const firstHeaderHeight = 56.0;
+    const firstHeaderHeight = 44.0;
     const headerHeight = 68.0;
     const mainAxisSpacing = 12.0;
 

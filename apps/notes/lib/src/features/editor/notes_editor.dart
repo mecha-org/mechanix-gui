@@ -65,7 +65,7 @@ class _NotesEditorState extends State<NotesEditor> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 100));
       _focusNode.requestFocus();
     });
   }
@@ -169,6 +169,17 @@ class _NotesEditorState extends State<NotesEditor> {
                 controller: _controller,
                 focusNode: _focusNode,
               );
+            },
+          ),
+
+          // Extra Height on Toolbar Selection
+          BlocSelector<EditorBloc, EditorBlocState, bool>(
+            selector: (state) => state.selectedToolbar != ToolbarEnum.none,
+            builder: (context, state) {
+              if (state) {
+                return const SizedBox(height: 80);
+              }
+              return const SizedBox.shrink();
             },
           ),
         ],

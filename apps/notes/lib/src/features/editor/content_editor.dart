@@ -4,6 +4,7 @@ import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/commons/styles/quill_editor_styles.dart';
 import 'package:mechanix_notes/src/features/editor/leading_widget/bullet_list_builder.dart';
 import 'package:mechanix_notes/src/features/editor/leading_widget/number_list_builder.dart';
+import 'package:mechanix_notes/src/features/editor/selection_options.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/focus_preserve_button.dart';
 
 class ContentEditor extends StatelessWidget {
@@ -27,13 +28,13 @@ class ContentEditor extends StatelessWidget {
           padding: const EdgeInsets.only(
             top: 15,
             bottom: 15,
-            right: 0,
-            left: 0,
+            right: 24,
+            left: 24,
           ),
           expands: false,
-          maxContentWidth: 492,
+          maxContentWidth: double.infinity,
           scrollable: true,
-          enableSelectionToolbar: false,
+          enableSelectionToolbar: true,
 
           customLeadingBlockBuilder: (Node node, LeadingConfig config) {
             final attr = config.attribute;
@@ -129,19 +130,27 @@ class ContentEditor extends StatelessWidget {
             return null;
           },
 
-          // spaceShortcutEvents: [
-          //   formatHyphenToBulletList,
-          //   formatHeaderToHeaderStyle,
-          //   formatHeader2ToHeaderStyle,
-          //   formatHeader3ToHeaderStyle,
-          //   formatOrderedNumberToList,
-          // ],
-          // characterShortcutEvents: [
-          //   formatStrikeToStrikethrough,
-          //   formatDoubleUnderscoresToBold,
-          //   formatAsterisksToItalic,
-          //   formatDoubleAsterisksToBold,
-          // ],
+          contextMenuBuilder: (context, rawEditorState) {
+            return AdaptiveTextSelectionToolbar(
+              anchors: rawEditorState.contextMenuAnchors,
+              children: const [
+                SelectionOptions()
+              ],
+            );
+          },
+          spaceShortcutEvents: [
+            formatHyphenToBulletList,
+            formatHeaderToHeaderStyle,
+            formatHeader2ToHeaderStyle,
+            formatHeader3ToHeaderStyle,
+            formatOrderedNumberToList,
+          ],
+          characterShortcutEvents: [
+            formatStrikeToStrikethrough,
+            formatDoubleUnderscoresToBold,
+            formatAsterisksToItalic,
+            formatDoubleAsterisksToBold,
+          ],
           customStyles: quillEditorStyle,
           enableScribble: false,
           autoFocus: false,

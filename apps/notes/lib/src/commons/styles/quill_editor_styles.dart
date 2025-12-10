@@ -4,14 +4,8 @@ import 'package:mechanix_notes/src/commons/styles/colors.dart';
 
 final quillEditorStyle = DefaultStyles(
   bold: const TextStyle(fontWeight: FontWeight.w700),
-  italic: const TextStyle(
-    fontWeight: FontWeight.w400,
-    fontStyle: FontStyle.italic,
-  ),
-  underline: const TextStyle(
-    decoration: TextDecoration.underline,
-    fontWeight: FontWeight.w400,
-  ),
+  italic: const TextStyle(fontStyle: FontStyle.italic),
+  underline: const TextStyle(decoration: TextDecoration.underline),
   paragraph: const DefaultTextBlockStyle(
     TextStyle(
       fontSize: 18,
@@ -36,7 +30,7 @@ final quillEditorStyle = DefaultStyles(
       letterSpacing: 0,
     ),
     HorizontalSpacing(0, 0), // Standard margins
-    VerticalSpacing(0, 0),
+    VerticalSpacing(10, 10),
     VerticalSpacing(0, 0),
     null,
   ),
@@ -51,7 +45,7 @@ final quillEditorStyle = DefaultStyles(
       letterSpacing: 0,
     ),
     HorizontalSpacing(0, 0), // Standard margins
-    VerticalSpacing(0, 0),
+    VerticalSpacing(5, 5),
     VerticalSpacing(0, 0),
     null,
   ),
@@ -65,8 +59,8 @@ final quillEditorStyle = DefaultStyles(
       height: 1.2,
       letterSpacing: 0.2,
     ),
-    HorizontalSpacing(0,0),
-    VerticalSpacing(14, 8),
+    HorizontalSpacing(0, 0),
+    VerticalSpacing(2, 2),
     VerticalSpacing(0, 0),
     null,
   ),
@@ -109,9 +103,10 @@ final quillEditorStyle = DefaultStyles(
       color: NotesColors.codeBlockTextColor,
       height: 1.35,
       letterSpacing: -0.4,
+      fontFamily: 'Geist Mono',
     ),
     HorizontalSpacing(0, 0),
-    VerticalSpacing(0, 0),
+    VerticalSpacing(16, 16),
     VerticalSpacing(0, 0),
 
     BoxDecoration(
@@ -127,8 +122,11 @@ final quillEditorStyle = DefaultStyles(
     backgroundColor: NotesColors.floatingMenuColor, // dark background
     radius: const Radius.circular(4), // rounded edges
     style: const TextStyle(
+      fontWeight: FontWeight.w400,
+      fontSize: 16,
       color: NotesColors.titleTextColor, // light text
       height: 1.45,
+      fontFamily: 'Geist Mono',
     ),
   ),
 

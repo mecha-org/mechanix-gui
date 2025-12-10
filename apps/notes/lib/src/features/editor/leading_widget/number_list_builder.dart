@@ -8,9 +8,8 @@ class NumberListBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.only(top: 2, right: 0),
+      alignment: Alignment.topRight,
+      padding: const EdgeInsets.only(top: 2, right: 10),
       child: Text(
         "$number.",
         style: const TextStyle(

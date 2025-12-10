@@ -57,7 +57,6 @@ class _BottomMenuState extends State<BottomMenu> {
 
   @override
   void dispose() {
-    print("BottomMenu disposed");
     super.dispose();
   }
 
@@ -72,9 +71,7 @@ class _BottomMenuState extends State<BottomMenu> {
         BottomBarButton(
           iconTheme: const MechanixBottomBarIconThemeData(
             iconSize: Size(28, 28),
-            buttonMargin: EdgeInsets.only(left: 12, bottom: 4, top: 4),
             iconBoxSize: Size(44, 44),
-            buttonDecoration: BoxDecoration(color: Colors.transparent),
           ),
           onPressed: clearSelection,
           iconPath: NotesIcon.backIcon,
@@ -82,22 +79,34 @@ class _BottomMenuState extends State<BottomMenu> {
       ],
       centerWidget: [
         BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            iconSize: Size(28, 28),
+            iconBoxSize: Size(44, 44),
+          ),
+
           onPressed: selectAll,
           iconPath: NotesIcon.selectAllIcon,
         ),
 
-        BottomBarButton(onPressed: () => {}, iconPath: NotesIcon.shareIcon),
+        BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            iconSize: Size(28, 28),
+            iconBoxSize: Size(44, 44),
+          ),
+
+          onPressed: () => {},
+          iconPath: NotesIcon.shareIcon,
+        ),
 
         BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            iconSize: Size(28, 28),
+            iconBoxSize: Size(44, 44),
+          ),
+
           onPressed: () => onDeleteRemoveSelection(context),
           iconPath: NotesIcon.deleteIcon,
         ),
-      ],
-      anchorWidget: [
-        // BottomBarButton(
-        //   onPressed: onDeleteRemoveSelection,
-        //   iconPath: NotesIcon.deleteIcon,
-        // ),
       ],
     );
   }

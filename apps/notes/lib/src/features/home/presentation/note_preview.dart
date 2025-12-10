@@ -164,9 +164,7 @@ class NotePreview extends StatelessWidget {
                   ? Color(int.parse(span.color!))
                   : NotesColors.labelColor,
           backgroundColor:
-              span.background != null
-                  ? Color(int.parse(span.background!))
-                  : null,
+              span.background != null ? NotesColors.highlightColorFormat : null,
         ),
       );
     }).toList();
@@ -238,9 +236,7 @@ class NotePreview extends StatelessWidget {
             if (span.strike) TextDecoration.lineThrough,
           ]),
           backgroundColor:
-              span.background != null
-                  ? Color(int.parse(span.background!))
-                  : null,
+              span.background != null ? NotesColors.highlightColorFormat : null,
         ),
       );
     }).toList();
@@ -267,9 +263,7 @@ class NotePreview extends StatelessWidget {
                   ? Color(int.parse(span.color!))
                   : NotesColors.labelColor,
           backgroundColor:
-              span.background != null
-                  ? Color(int.parse(span.background!))
-                  : null,
+              span.background != null ? NotesColors.highlightColorFormat : null,
         ),
       );
     }).toList();

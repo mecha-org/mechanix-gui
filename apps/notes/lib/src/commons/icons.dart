@@ -24,5 +24,9 @@ class NotesIcon {
   static const highlightIcon = 'assets/images/highlight_icon.png';
   static const inlineCodeIcon = 'assets/images/inline_code_icon.png';
   static const normalTextIcon = 'assets/images/normal_text.png';
-  static const slider='assets/images/slider.png';
+  static const slider = 'assets/images/slider.png';
+  static const copyIcon = 'assets/images/copy_icon.png';
+  static const cutIcon = 'assets/images/cut_icon.png';
+  static const pasteIcon = 'assets/images/paste_icon.png';
+  static const selectAllOptionIcon = 'assets/images/select_all_option.png';
 }

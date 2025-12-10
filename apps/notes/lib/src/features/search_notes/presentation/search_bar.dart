@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
-import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
+import 'package:widgets/widgets.dart';
 
 class SearchInputBar extends StatefulWidget {
   final ValueChanged<String> onChanged;
@@ -61,16 +61,13 @@ class _SearchInputBarState extends State<SearchInputBar> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      width: 508,
-      child: MechanixSearchBar(
-        focusNode: _focusNode,
-        onChanged: (val) => _onSearchChanged(val),
-        autoFocus: false,
-        hintText: "Search notes...",
-        onCloseIconPress: clearSearch,
-      ),
+    return MechanixTextInput.search(
+      canRequestFocus: true,
+      autofocus: false,
+      focusNode: _focusNode,
+      hintText: "Search here",
+      onClear: clearSearch,
+      onChanged: (val) => _onSearchChanged(val),
     );
   }
 }

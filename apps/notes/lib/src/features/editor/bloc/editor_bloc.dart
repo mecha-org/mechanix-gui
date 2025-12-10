@@ -63,13 +63,7 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
   }
 
   void _selectToolbar(SelectToolbar event, Emitter<EditorBlocState> emit) {
-    logger.i(
-      'select toolbar event: ${event.activeToolbar} state: ${state.selectedToolbar}',
-    );
-    if (event.activeToolbar == state.selectedToolbar) {
-      emit(state.copyWith(selectedToolbar: ToolbarEnum.none));
-      return;
-    }
+    logger.i('select toolbar event: ${event.activeToolbar}');
     emit(state.copyWith(selectedToolbar: event.activeToolbar));
   }
 }

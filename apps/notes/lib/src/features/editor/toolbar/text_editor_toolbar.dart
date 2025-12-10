@@ -7,8 +7,13 @@ import 'package:mechanix_notes/src/features/editor/toolbar/focus_preserve_button
 
 class TextEditorToolbar extends StatefulWidget {
   final QuillController controller;
+  final FocusNode focusNode;
 
-  const TextEditorToolbar({super.key, required this.controller});
+  const TextEditorToolbar({
+    super.key,
+    required this.controller,
+    required this.focusNode,
+  });
   @override
   State<TextEditorToolbar> createState() => _TextEditorToolbarState();
 }
@@ -24,7 +29,14 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
     super.dispose();
   }
 
+  void requestFocus() {
+    if (!widget.focusNode.hasFocus) {
+      widget.focusNode.requestFocus();
+    }
+  }
+
   void toggleList(Attribute attribute) {
+    requestFocus();
     final attrs = widget.controller.getSelectionStyle().attributes;
     final currentAttr = attrs[attribute.key];
 
@@ -41,6 +53,7 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
   }
 
   void textSizeFormat(Attribute attribute) {
+    requestFocus();
     final currentSize =
         widget.controller
             .getSelectionStyle()
@@ -58,6 +71,7 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
   }
 
   void backgroundColorFormat() {
+    requestFocus();
     final currentBg =
         widget.controller
             .getSelectionStyle()
@@ -88,7 +102,7 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
       builder: (context, child) {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
-          spacing: 28,
+          spacing: 24,
           children: [
             FocusPreserveButton(
               child: EditorIconButton(
@@ -132,17 +146,9 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
                 },
               ),
             ),
-            FocusPreserveButton(
-              child: EditorIconButton(
-                isSelected: widget.controller.getSelectionStyle().containsKey(
-                  Attribute.inlineCode.key,
-                ),
-                iconPath: NotesIcon.inlineCodeIcon,
-                onPressed: () {
-                  toggleList(Attribute.inlineCode);
-                },
-              ),
-            ),
+            // Divider
+            Container(color: NotesColors.dividerColor, height: 24, width: 1),
+
             FocusPreserveButton(
               child: EditorIconButton(
                 isSelected:
@@ -181,10 +187,20 @@ class _TextEditorToolbarState extends State<TextEditorToolbar> {
                 onPressed: () => textSizeFormat(const SizeAttribute("18")),
               ),
             ),
+            FocusPreserveButton(
+              child: EditorIconButton(
+                isSelected: widget.controller.getSelectionStyle().containsKey(
+                  Attribute.inlineCode.key,
+                ),
+                iconPath: NotesIcon.inlineCodeIcon,
+                onPressed: () {
+                  toggleList(Attribute.inlineCode);
+                },
+              ),
+            ),
           ],
         );
       },
     );
   }
 }
-

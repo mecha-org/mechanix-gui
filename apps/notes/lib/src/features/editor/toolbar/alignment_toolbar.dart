@@ -8,11 +8,13 @@ import 'package:mechanix_notes/src/features/editor/toolbar/focus_preserve_button
 class AlignmentToolbar extends StatefulWidget {
   final QuillController controller;
   final OverlayEntry? entry;
+  final FocusNode focusNode;
   final VoidCallback? onClose;
 
   const AlignmentToolbar({
     super.key,
     required this.controller,
+    required this.focusNode,
     this.entry,
     this.onClose,
   });
@@ -32,7 +34,14 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
     super.dispose();
   }
 
+  void requestFocus() {
+    if (!widget.focusNode.hasFocus) {
+      widget.focusNode.requestFocus();
+    }
+  }
+
   void toggleList(Attribute attribute) {
+    requestFocus();
     final selection = widget.controller.selection;
     final attrs = widget.controller.getSelectionStyle().attributes;
     final currentAttr = attrs[attribute.key];
@@ -42,10 +51,6 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
       widget.controller.formatSelection(attribute);
     }
     widget.controller.updateSelection(selection, ChangeSource.local);
-  }
-
-  void toggleIndent({bool increase = true}) {
-    widget.controller.indentSelection(increase);
   }
 
   bool isSelectionStyleApplied(

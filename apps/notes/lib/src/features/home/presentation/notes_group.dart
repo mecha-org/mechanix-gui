@@ -33,9 +33,9 @@ class GroupHeaderName extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent => isFirst ? 56 : 68;
+  double get maxExtent => isFirst ? 44 : 68;
   @override
-  double get minExtent => isFirst ? 56 : 68;
+  double get minExtent => isFirst ? 44 : 68;
 
   @override
   bool shouldRebuild(GroupHeaderName oldDelegate) => oldDelegate.title != title;
