@@ -1,13 +1,13 @@
 use std::rc::Rc;
 
-use crate::ui::icon::Icon;
+use crate::{prelude::*, ui::icon::Icon};
 use gpui::{prelude::FluentBuilder, *};
 
-const ICON_COLOR: u32 = 0x4D4D4D; // default - gray | custom can be - white or active - blue
-const ACTIVE_ICON_COLOR: u32 = 0xF4F4F4; // default - white | custom can be - blue
-const ACTIVE_BG_COLOR: u32 = 0x363636;
-const BG_COLOR: u32 = 0x181818;
-const BORDER_COLOR: u32 = 0x202020;
+const ICON_COLOR: u32 = DARK_NEUTRAL_100; // default - gray | custom can be - white or active - amber
+const ACTIVE_ICON_COLOR: u32 = AMBER_600; // default - gray | custom can be - amber
+const ACTIVE_ICON_BG_COLOR: u32 = 0xC6760040; // for pressed
+const BG_COLOR: u32 = DARK_NEUTRAL_900;
+const BORDER_COLOR: u32 = AMBER_1000;
 
 #[derive(IntoElement)]
 pub struct IconButton {
@@ -108,15 +108,22 @@ impl RenderOnce for IconButton {
             .w(px(84.0))
             .h(px(84.0))
             .rounded(px(8.0))
-            .border(px(1.))
-            .border_color(rgb(BORDER_COLOR))
-            .active(|this| this.bg(
-                if let Some(active_bg_color) = self.active_bg_color {
-                    active_bg_color
-                } else {
-                    rgb(ACTIVE_BG_COLOR).into()
-                }
-            )) // GPUI's active state
+            .border(if self.active { px(1.5) } else { px(0.) })
+            .border_color(rgb(BORDER_COLOR)) // KEEP THIS
+            .active(|this| {
+                // todo: update icon color
+                let mut style = this.clone();
+                style = style
+                    .clone()
+                    .bg(if let Some(active_bg_color) = self.active_bg_color {
+                        active_bg_color
+                    } else {
+                        rgba(ACTIVE_ICON_BG_COLOR).into()
+                    })
+                    .border(px(1.5))
+                    .border_color(rgb(BORDER_COLOR));
+                style
+            }) // GPUI's active state
             .items_center()
             .justify_center()
             .when(!self.pressed && !self.active, |this| {
@@ -137,6 +144,15 @@ impl RenderOnce for IconButton {
                 this.on_click(move |event, window, cx| (on_click)(event, window, cx))
             })
             .when_some(self.icon, |this, icon| {
+                // todo: check if this.active is true - update icon color
+                // let child = this.active(|style| {
+                //     style.text_color(if let Some(active_icon_color) = self.active_icon_color {
+                //         active_icon_color
+                //     } else {
+                //         rgb(ACTIVE_ICON_COLOR).into()
+                //     })
+                // });
+
                 let color: Hsla = if self.active {
                     if let Some(active_icon_color) = self.active_icon_color {
                         active_icon_color
@@ -160,7 +176,7 @@ impl RenderOnce for IconButton {
                 .justify_center()
                 .child(label)
                 .text_sm()
-                .text_color(rgb(0xF4F4F4))
+                .text_color(rgb(DARK_NEUTRAL_100))
         } else {
             main
         }

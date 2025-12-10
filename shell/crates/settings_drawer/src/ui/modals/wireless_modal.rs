@@ -3,13 +3,14 @@ use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
 
 use crate::{
-    events::NmEvents,
-    get_wireless_strength_icon,
-    ui::{
+    events::NmEvents, get_wireless_strength_icon, prelude::*, ui::{
         icon::{Icon, IconName},
-        widgets::IconButton,
-    },
+    }
 };
+
+const ROW_HEIGHT: f32 = 60.0;
+const HEADER_HEIGHT: f32 = 60.0;
+const FOOTER_HEIGHT: f32 = 60.0;
 
 pub struct WirelessWindow {
     pub title: String,
@@ -43,12 +44,8 @@ impl WirelessWindow {
     fn calculate_scroll_bounds(
         &self,
         content_height: Pixels,
-        window_height: Pixels,
+        container_height: Pixels,
     ) -> (Pixels, Pixels) {
-        let header_height = px(60.); // Height of your header
-        let padding = px(32.); // Total padding (p_4 is 16px * 2)
-        let container_height = window_height - header_height - padding;
-
         let max_scroll = px(0.);
         let min_scroll = container_height - content_height;
 
@@ -60,17 +57,21 @@ impl WirelessWindow {
     }
 
     fn estimate_content_height(&self) -> Pixels {
-        let item_height = px(60.); // Height of each network item
-        let gap = px(8.); // gap_2 is 8px
+        let item_height = px(ROW_HEIGHT);
+        let gap = px(8.);
         let item_count = self.network_list.len() as f32;
 
-        item_count * item_height + (item_count - 1.0).max(0.0) * gap
+        if item_count == 0.0 {
+            px(0.)
+        } else {
+            item_count * item_height + (item_count - 1.0) * gap
+        }
     }
 
     fn on_mouse_down(
         &mut self,
         event: &MouseDownEvent,
-        _window: &mut Window,
+        _: &mut Window,
         cx: &mut Context<Self>,
     ) {
         self.drag_start_y = event.position.y;
@@ -92,10 +93,12 @@ impl WirelessWindow {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
             let window_height = window.bounds().size.height;
+            
+            let container_height = window_height - px(8.) - px(HEADER_HEIGHT) - px(FOOTER_HEIGHT);
             let content_height = self.estimate_content_height();
 
             let (min_scroll, max_scroll) =
-                self.calculate_scroll_bounds(content_height, window_height);
+                self.calculate_scroll_bounds(content_height, container_height);
 
             self.scroll_offset = (self.last_scroll_offset + delta_y).clamp(min_scroll, max_scroll);
 
@@ -109,54 +112,53 @@ impl Render for WirelessWindow {
         div()
             .flex()
             .flex_col()
-            .bg(rgb(0x151515))
+            .bg(rgb(DARK_NEUTRAL_900))
             .size_full()
-            .p_4()
+            .border_1()
+            .rounded_xl()
+            .border_color(rgb(AMBER_900))
+            // Header  
             .child(
-                // Header
                 div()
                     .flex()
                     .flex_row()
                     .items_center()
                     .justify_between()
                     .w_full()
-                    .h(px(60.))
+                    .p_4()
+                    .h(px(HEADER_HEIGHT))
+                    .border_b_1()
+                    .bg(rgb(DARK_NEUTRAL_800))
+                    .flex_shrink_0()  
                     .child(
                         div()
                             .text_size(px(20.))
-                            .font_weight(FontWeight::BOLD)
-                            .text_color(rgb(0xE1E1E1))
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(rgb(DARK_NEUTRAL_0))
                             .child(self.title.clone()),
                     )
-                    .child(
-                        IconButton::new("id_settings")
-                            .icon(IconName::Settings)
-                            .icon_color(rgb(0xF4F4F4))
-                            .size((px(36.), px(36.)))
-                            .border(px(0.))
-                            .on_click(ctx.listener(|_, _, _, _| {
-                                println!("settings clicked");
-                            })),
-                    ),
             )
+            // Scrollable container  
             .child(
-                // Scrollable container
                 div()
                     .flex()
                     .flex_col()
-                    .overflow_hidden()
                     .flex_1()
+                    .overflow_hidden()  
+                    .relative()  
                     .on_mouse_down(MouseButton::Left, ctx.listener(Self::on_mouse_down))
                     .on_mouse_up(MouseButton::Left, ctx.listener(Self::on_mouse_up))
                     .on_mouse_move(ctx.listener(Self::on_mouse_move))
                     .child(
-                        // Content with scroll offset
+                        // Content with scroll offset 
                         div()
+                            .absolute()  
+                            .top(self.scroll_offset)  
+                            .left(px(0.))
+                            .right(px(0.))
                             .flex()
                             .flex_col()
                             .gap_2()
-                            .top(self.scroll_offset)
-                            .relative()
                             .children(self.network_list.iter().enumerate().map(
                                 |(idx, network)| {
                                     let ssid = network.ssid.clone();
@@ -164,43 +166,84 @@ impl Render for WirelessWindow {
                                     let is_known = network.is_known;
                                     let nm_tx = self.nm_tx.clone();
                                     let icon_color = if network.is_active {
-                                        rgb(0xC67600)
+                                        rgb(AMBER_600)
                                     } else {
-                                        rgb(0xD2D2D2)
-                                    };                                    
-
-                                    let mut network_div = div()
+                                        rgb(DARK_NEUTRAL_100)
+                                    };         
+                                    let wifi_icon = get_wireless_strength_icon(
+                                        network.is_active,
+                                        network.signal_strength,
+                                        network.security.clone(),
+                                    );                      
+                           
+                                    let mut network_div = if is_active {
+                                        div()
                                         .id(("network_item", idx))
                                         .flex()
                                         .items_center()
                                         .justify_between()
-                                        .h(px(60.))
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .bg(rgba(AMBER_600_10))
+                                        .border_y_1()
+                                        .border_color(rgb(AMBER_900))
                                         .child(
                                             div()
                                                 .flex()
                                                 .flex_row()
-                                                .text_color(rgb(0xD2D2D2))
-                                                .text_lg()
-                                                .text_align(TextAlign::Left)
+                                                .items_center()
                                                 .child(
                                                     div().pr_2().child(
-                                                        Icon::new(get_wireless_strength_icon(
-                                                            network.is_active,
-                                                            network.signal_strength,
-                                                            network.security.clone(),
-                                                        ))
+                                                        Icon::new(wifi_icon)
                                                         .size((px(28.), px(28.)))
                                                         .text_color(icon_color),
                                                     ),
                                                 )
-                                                .child(network.ssid.clone()),
+                                                .child(
+                                                    div()
+                                                    .text_color(icon_color)
+                                                    .text_lg()
+                                                    .child(network.ssid.clone())
+                                                    ),
                                         )
-                                        .child(div().text_color(rgb(0x8F8F8F)).text_base().child(
-                                            if network.is_active { "Connected" } else { "" },
-                                        ));
+                                        .child( 
+                                            Icon::new(IconName::ConnectedIcon)
+                                                .size((px(24.), px(24.)))
+                                                .text_color(rgb(AMBER_600))
+                                        )
+                                    } 
+                                    else {
+                                        div()
+                                        .id(("network_item", idx))
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .rounded_md()
+                                        .bg(rgb(DARK_NEUTRAL_900))
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .items_center()
+                                                .child(
+                                                    div().pr_2().child(
+                                                        Icon::new(wifi_icon)
+                                                        .size((px(28.), px(28.)))
+                                                        .text_color(icon_color),
+                                                    ),
+                                                )
+                                                 .child(
+                                                    div()
+                                                    .text_color(icon_color)
+                                                    .text_lg()
+                                                    .child(network.ssid.clone())
+                                                    ),
+                                        )
+                                    };
 
                                     if !is_active && !is_known {
-                                        // proceed to open settings with params
                                         network_div = network_div.on_click(ctx.listener(
                                             move |_, _, _, _| {
                                                 println!(
@@ -210,13 +253,10 @@ impl Render for WirelessWindow {
                                             },
                                         ));
                                     } else if !is_active && is_known {
-                                        // proceed to connect
                                         let ssid_clone = ssid.clone();
                                         let nm_tx_clone = nm_tx.clone();
 
-                                        network_div =
-                                            network_div
-                                            .on_click(ctx.listener(
+                                        network_div = network_div.on_click(ctx.listener(
                                             move |_,
                                             _event: &ClickEvent,
                                             window: &mut Window,
@@ -229,18 +269,47 @@ impl Render for WirelessWindow {
                                                         let _ = nm_tx
                                                             .send(NmEvents::ConnectKnownNetwork { name: ssid })
                                                             .await;
-
                                                     })
                                                     .detach();
                                                 window.remove_window();
                                             },
-                                        ))
+                                        ));
                                     }
 
                                     network_div
                                 },
                             )),
                     ),
+            )
+            // Footer  
+            .child(
+                div()
+                    .id("id_settings")
+                    .flex()
+                    .flex_row()
+                    .items_center()
+                    .justify_start()
+                    .border_t_1()
+                    .border_color(rgb(DARK_NEUTRAL_700))
+                    .h(px(FOOTER_HEIGHT))
+                    .p_4()
+                    .flex_shrink_0()  
+                    .child(
+                        Icon::new(IconName::Settings)
+                            .size((px(28.), px(28.)))
+                            .text_color(rgb(AMBER_600)),
+                    )
+                    .child(
+                        div()
+                            .text_size(px(18.))
+                            .pl_2()
+                            .font_weight(FontWeight::NORMAL)
+                            .text_color(rgb(AMBER_600))
+                            .child("Settings"),
+                    )
+                    .on_click(ctx.listener(|_, _, _, _| {
+                        println!("settings clicked");
+                    }))
             )
     }
 }
