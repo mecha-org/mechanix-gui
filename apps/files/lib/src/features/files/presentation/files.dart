@@ -416,6 +416,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 focusedBorderSide: const BorderSide(color: Color(0xFF151515)),
                 borderRadius: BorderRadius.circular(8),
               ),
+              cursorColor:
+                  Theme.of(context).extension<FilesTheme>()!.primaryColor,
               autofocus: false,
               prefixIcon: const IconWidget(
                 iconPath: Images.search,
@@ -633,6 +635,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           isSelected: selectionMode,
           onPressed: () {
             if (!selectionMode) enableSelect();
+            isSelectionActionMenuOpen = false;
           },
           onExtensionClose: () {
             if (selectionMode) clearSelection();
@@ -1150,6 +1153,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: MechanixTextInput.textInput(
+                        cursorColor: Theme.of(context)
+                            .extension<FilesTheme>()!
+                            .primaryColor,
                         initialValue: defaultZipName,
                         onChanged: (v) {
                           setState(() {
@@ -1537,6 +1543,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: MechanixTextInput.textInput(
+                        cursorColor: Theme.of(context)
+                            .extension<FilesTheme>()!
+                            .primaryColor,
                         onChanged: (v) {
                           setState(() {
                             folderName = v;
@@ -1620,12 +1629,46 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 18,
-                    color: Colors.white,
+                RichText(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  text: TextSpan(
+                    children: isSingle
+                        ? [
+                            const TextSpan(
+                              text: "Delete ",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  "'${pathsToDelete.first.split('/').last}' ?",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ]
+                        : [
+                            const TextSpan(
+                              text: "Delete ",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            TextSpan(
+                              text: "'${pathsToDelete.length}' files?",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1637,25 +1680,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: MechanixElevatedButton(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 12),
-                        label: "Cancel",
-                        textColor: Colors.white,
-                        backgroundColor: Colors.grey.shade800,
-                        borderRadius: 8,
-                        onPressed: () => Navigator.pop(bottomSheetContext),
-                      ),
-                    ),
+                        child: MechanixFilledButton(
+                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      theme: buttonThemeData(context,
+                          type: MechanixButtonType.cancel),
+                      label: "Cancel",
+                    )),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: MechanixElevatedButton(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 12),
+                      child: MechanixFilledButton(
+                        theme: buttonThemeData(context,
+                            type: MechanixButtonType.delete),
                         label: "Delete",
-                        backgroundColor: Colors.red.shade700,
-                        textColor: Colors.white,
-                        borderRadius: 8,
                         onPressed: () {
                           Navigator.pop(bottomSheetContext);
                           BlocProvider.of<FilesBloc>(context)

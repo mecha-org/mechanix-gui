@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
+import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/mechanix.dart';
 
@@ -43,12 +43,20 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '‘$fileName’ already exists',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.white,
+              RichText(
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: fileName,
+                      style: boldStyle(context),
+                    ),
+                    TextSpan(
+                      text: " already exists",
+                      style: regularStyle(context),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
@@ -60,12 +68,10 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: MechanixElevatedButton(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 12),
+                    child: MechanixFilledButton(
+                      theme: buttonThemeData(context,
+                          type: MechanixButtonType.cancel),
                       label: "Cancel",
-                      textColor: Colors.white,
-                      borderRadius: 8,
                       onPressed: () {
                         context.read<FilesBloc>().add(
                               ContinueCopyWithConflictResolution(
@@ -81,15 +87,10 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: MechanixElevatedButton(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 12),
+                    child: MechanixFilledButton(
+                      theme: buttonThemeData(context,
+                          type: MechanixButtonType.action),
                       label: "Replace",
-                      backgroundColor: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .primaryColor,
-                      textColor: Colors.white,
-                      borderRadius: 8,
                       onPressed: () {
                         context.read<FilesBloc>().add(
                               ContinueCopyWithConflictResolution(

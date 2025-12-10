@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -201,6 +202,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                           color: Color(0xFF151515),
                         ),
                         borderRadius: BorderRadius.circular(8)),
+                    cursorColor:
+                        Theme.of(context).extension<FilesTheme>()!.primaryColor,
                     prefixIcon: const IconWidget(
                       iconPath: Images.search,
                       iconColor: Color(0xFFD2D2D2),
@@ -292,41 +295,36 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                     children: [
                       TextSpan(
                         text: "Moving ",
-                        style: _regularStyle(context),
+                        style: regularStyle(context),
                       ),
                       TextSpan(
                         text: "$selectedCount $itemLabel",
-                        style: _boldStyle(context),
+                        style: boldStyle(context),
                       ),
                     ],
                   ),
                 ),
               ),
-              MechanixElevatedButton(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              MechanixFilledButton(
+                theme: buttonThemeData(context,
+                    type: MechanixButtonType.cancel, size: const Size(94, 40)),
                 label: "Cancel",
-                textColor: const Color(0xFFE9E9E9),
-                backgroundColor: const Color(0xFF3A3A3A),
-                borderRadius: 8,
                 onPressed: () => Navigator.pop(context),
               ),
               const SizedBox(width: 10),
-              MechanixElevatedButton(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              MechanixFilledButton(
+                theme: buttonThemeData(context,
+                    type: showHomeView
+                        ? MechanixButtonType.disable
+                        : MechanixButtonType.action,
+                    size: const Size(94, 40)),
                 label: "Move",
-                textColor: showHomeView
-                    ? const Color(0xFFD2D2D2) // Disabled text color
-                    : const Color(0xFFE9E9E9), // Normal text color
-                backgroundColor: showHomeView
-                    ? const Color(0xFF585858) // Disabled background
-                    : Theme.of(context).extension<FilesTheme>()!.primaryColor,
-                borderRadius: 8,
-                onPressed: () {
-                  handlePaste(context, widget.filesBloc.state);
-                  Navigator.pop(context, true);
-                },
+                onPressed: showHomeView
+                    ? null
+                    : () {
+                        handlePaste(context, widget.filesBloc.state);
+                        Navigator.pop(context, true);
+                      },
               )
             ],
           ),
@@ -376,6 +374,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: MechanixTextInput.textInput(
+          cursorColor: Theme.of(context).extension<FilesTheme>()!.primaryColor,
           initialValue: renameText,
           onChanged: (v) => setState(() => renameText = v),
           anchorWidget: showCheck
@@ -503,22 +502,6 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     );
   }
 
-  TextStyle _regularStyle(BuildContext context) => TextStyle(
-        color: Colors.white70,
-        fontSize: 20,
-        fontWeight: FontWeight.w400,
-        fontFamily:
-            Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
-      );
-
-  TextStyle _boldStyle(BuildContext context) => TextStyle(
-        color: Colors.white70,
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        fontFamily:
-            Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
-      );
-
   Future<void> handlePaste(BuildContext context, FilesState state) async {
     final targetPath = currentPath;
     final bloc = BlocProvider.of<FilesBloc>(context);
@@ -574,69 +557,87 @@ Future<void> handleConflictsSequentially(
 
   for (final conflict in conflicts) {
     if (!context.mounted) return;
+
+    final double sheetWidth = MediaQuery.of(context).size.width;
+
     final strategy = await showModalBottomSheet<ConflictResolutionStrategy>(
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[850],
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '“${conflict.fileName}” already exists',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                const Text('What would you like to do?'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: MechanixElevatedButton(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 12),
-                        label: "Cancel",
-                        textColor: Colors.white,
-                        borderRadius: 8,
-                        onPressed: () {
-                          totalMovedCount--;
-                          Navigator.pop(
-                            sheetContext,
-                            ConflictResolutionStrategy.skip,
-                          );
-                        },
-                      ),
+        return ClipPath(
+          clipper: TabClipper(shift: sheetWidth * 0.65),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[850],
+            ),
+            padding: const EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              top: 32,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: conflict.fileName,
+                          style: boldStyle(context),
+                        ),
+                        TextSpan(
+                          text: " already exists",
+                          style: regularStyle(context),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: MechanixElevatedButton(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 12),
-                        label: "Replace",
-                        backgroundColor: Theme.of(context)
-                            .extension<FilesTheme>()!
-                            .primaryColor,
-                        textColor: Colors.white,
-                        borderRadius: 8,
-                        onPressed: () => Navigator.pop(
-                          sheetContext,
-                          ConflictResolutionStrategy.replace,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'What would you like to do?',
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: MechanixFilledButton(
+                          onPressed: () {
+                            totalMovedCount--;
+                            Navigator.pop(
+                              sheetContext,
+                              ConflictResolutionStrategy.skip,
+                            );
+                          },
+                          theme: buttonThemeData(context,
+                              type: MechanixButtonType.cancel),
+                          label: "Cancel",
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: MechanixFilledButton(
+                          theme: buttonThemeData(context,
+                              type: MechanixButtonType.action),
+                          label: "Replace",
+                          onPressed: () => Navigator.pop(
+                            sheetContext,
+                            ConflictResolutionStrategy.replace,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -663,64 +664,73 @@ Future<void> handleConflictsSequentially(
           .timeout(const Duration(seconds: 5));
     } catch (e) {
       logger.i(
-          'Warning: waiting for conflict resolution timed out for ${conflict.fileName}: $e');
+        'Warning: waiting for conflict resolution timed out for ${conflict.fileName}: $e',
+      );
     }
   }
 }
 
 Future<void> showInvalidMoveSheet(
-    BuildContext context, int movePathCount) async {
+  BuildContext context,
+  int movePathCount,
+) async {
+  final double sheetWidth = MediaQuery.of(context).size.width;
+
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
-      return Container(
-        decoration: BoxDecoration(
-          color: Colors.grey[850],
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        padding: const EdgeInsets.all(16),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "You cannot move a file over itself",
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: MechanixElevatedButton(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 12),
-                      label: "Cancel",
-                      textColor: Colors.white,
-                      borderRadius: 8,
-                      onPressed: () => Navigator.pop(sheetContext),
+      return ClipPath(
+        clipper: TabClipper(shift: sheetWidth * 0.65),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[850],
+          ),
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            top: 32,
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "You cannot move a file over itself",
+                  style: regularStyle(context),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: MechanixFilledButton(
+                        theme: buttonThemeData(
+                          context,
+                          type: MechanixButtonType.cancel,
+                        ),
+                        label: "Cancel",
+                        onPressed: () => Navigator.pop(sheetContext),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: MechanixElevatedButton(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 12),
-                      label: movePathCount > 1 ? "Skip All" : "Skip",
-                      backgroundColor: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .primaryColor,
-                      textColor: Colors.white,
-                      borderRadius: 8,
-                      onPressed: () => Navigator.pop(sheetContext),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: MechanixFilledButton(
+                        theme: buttonThemeData(
+                          context,
+                          type: MechanixButtonType.action,
+                        ),
+                        label: movePathCount > 1 ? "Skip All" : "Skip",
+                        onPressed: () => Navigator.pop(sheetContext),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       );

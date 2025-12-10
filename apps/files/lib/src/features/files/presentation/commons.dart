@@ -7,6 +7,7 @@ import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
@@ -18,6 +19,7 @@ import 'package:mechanix_files/src/features/preview/presentation/excel_viewer.da
 import 'package:mechanix_files/src/features/preview/presentation/image_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/pdf_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/video_player.dart';
+import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
@@ -508,3 +510,68 @@ List<FileItem> getFilesAtPath(
 
   return items;
 }
+
+enum MechanixButtonType {
+  action,
+  delete,
+  cancel,
+  disable,
+}
+
+MechanixFilledButtonThemeData buttonThemeData(
+  BuildContext context, {
+  MechanixButtonType type = MechanixButtonType.action,
+  Size size = const Size(246, 40),
+}) {
+  Color backgroundColor;
+  bool isDisabled = type == MechanixButtonType.disable;
+
+  switch (type) {
+    case MechanixButtonType.delete:
+      backgroundColor = const Color(0xFFD3002A); // red
+      break;
+
+    case MechanixButtonType.cancel:
+      backgroundColor = const Color(0xFF3A3A3A); // dark grey
+      break;
+
+    case MechanixButtonType.disable:
+      backgroundColor = const Color(0xFF585858); // dark grey
+      break;
+
+    case MechanixButtonType.action:
+    default:
+      backgroundColor = Theme.of(context)
+          .extension<FilesTheme>()!
+          .primaryColor; // theme primary
+      break;
+  }
+
+  return MechanixFilledButtonThemeData(
+    buttonSize: size,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      color: backgroundColor,
+    ),
+    textStyle: TextStyle(
+        color: isDisabled ? const Color(0xFFD2D2D2) : const Color(0xFFE9E9E9),
+        fontSize: 18,
+        fontWeight: FontWeight.w400,
+        fontFamily:
+            Theme.of(context).extension<FilesTheme>()!.defaultFontFamily),
+  );
+}
+
+TextStyle regularStyle(BuildContext context) => TextStyle(
+      color: Colors.white70,
+      fontSize: 20,
+      fontWeight: FontWeight.w400,
+      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
+    );
+
+TextStyle boldStyle(BuildContext context) => TextStyle(
+      color: Colors.white70,
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
+    );
