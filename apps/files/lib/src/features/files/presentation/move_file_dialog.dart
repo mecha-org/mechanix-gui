@@ -148,8 +148,12 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final isHomePageDir =
         isHomeDir || isDownloadsDir || isDocumentsDir || isAtRoot;
 
-    final selectedCount = widget.selectedCount;
-    final itemLabel = selectedCount > 1 ? "items" : "item";
+    final selectedPaths = widget.filesBloc.state.movedPaths;
+
+    final selectedCount = selectedPaths.length;
+    final label = selectedCount > 1
+        ? " $selectedCount items"
+        : " '${selectedPaths.first.split('/').last}'";
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -180,7 +184,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         Expanded(
           child: showHomeView
               ? buildHomeView(context)
-              : buildListViewMove(context, _scrollController, controller),
+              : buildListViewMoveAndExtract(
+                  context, _scrollController, controller),
         ),
 
         const SizedBox(height: 18),
@@ -298,7 +303,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         style: regularStyle(context),
                       ),
                       TextSpan(
-                        text: "$selectedCount $itemLabel",
+                        text: label,
                         style: boldStyle(context),
                       ),
                     ],
@@ -309,7 +314,10 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 theme: buttonThemeData(context,
                     type: MechanixButtonType.cancel, size: const Size(94, 40)),
                 label: "Cancel",
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  widget.filesBloc.add(CancelMoveMode());
+                  Navigator.pop(context);
+                },
               ),
               const SizedBox(width: 10),
               MechanixFilledButton(
@@ -713,7 +721,11 @@ Future<void> showInvalidMoveSheet(
                           type: MechanixButtonType.cancel,
                         ),
                         label: "Cancel",
-                        onPressed: () => Navigator.pop(sheetContext),
+                        onPressed: () {
+                          final bloc = BlocProvider.of<FilesBloc>(context);
+                          bloc.add(CancelMoveMode());
+                          Navigator.pop(sheetContext);
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),

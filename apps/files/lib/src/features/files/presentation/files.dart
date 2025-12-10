@@ -26,8 +26,6 @@ import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 import 'view_mode_notifier.dart';
 import 'grid_view.dart';
@@ -250,7 +248,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             if (!state.loading &&
                 state.conflictingPaths.isNotEmpty &&
                 state.isCopyMode) {
-              final fileName = p.basename(state.conflictingPaths.first);
               showModalBottomSheet<ConflictResolutionStrategy>(
                 context: context,
                 useRootNavigator: true,
@@ -287,7 +284,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
             child: MechanixNavigationBar(
               automaticallyImplyLeading: false,
-              theme: const MechanixNavigationBarThemeData(),
+              theme: const MechanixNavigationBarThemeData(
+                scrolledUnderElevation: 0,
+              ),
               titleWidget: selectionMode
                   ? Text(
                       "${selectedPaths.length} Selected",
@@ -720,7 +719,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
           title: 'Extract',
           onTap: () {
-            handleExtractHere(context, selectedPaths);
+            handleExtraction(context, selectedPaths);
           },
           disabled: !isZipFileSelected,
         ),
@@ -1012,7 +1011,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         filesBloc: filesBloc,
                         selectedCount: selectedPaths.length,
                         reload: reload,
-                        currentPath: currentPath,
+                        currentPath: controller.getPathNotifier.value,
                         rootContext: context,
                       ),
                     ),
@@ -1236,194 +1235,112 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
   }
 
-  Future<void> handleExtractHere(
-    BuildContext context,
-    Set<String> selectedPaths,
-  ) async {
-    final bloc = context.read<FilesBloc>();
-
-    for (final fullPath in selectedPaths) {
-      bloc.add(StartExtractMode(fullPath));
-
-      // Validate zip
-      if (!isZipFileValid(fullPath)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "ZIP file is corrupted or invalid",
-              style: TextStyle(color: Colors.red),
-            ),
-            backgroundColor: Colors.white,
-          ),
-        );
-        continue;
-      }
-
-      final currentDir = fullPath.substring(0, fullPath.lastIndexOf('/'));
-      final zipName = p.basenameWithoutExtension(fullPath);
-      final baseExtractPath = p.join(currentDir, zipName);
-
-      final uniqueExtractPath = await getUniqueExtractPath(baseExtractPath);
-
-      final completer = Completer<void>();
-
-      bloc.add(
-        ExtractZipTo(
-          fullPath,
-          uniqueExtractPath,
-          completer,
-        ),
-      );
-
-      await completer.future;
-
-      final fileName = p.basename(fullPath);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Finished extracting $fileName",
-              style: const TextStyle(color: Colors.white)),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.grey[800],
-        ),
-      );
-    }
-
-    // End extract mode ONCE
-    bloc.add(CancelExtractMode());
-
-    controller.reload();
-    clearSelection();
-  }
-
-  void handleExtract(String zipFilePath) {
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
-
-    // Start extract mode with the tapped file
-    filesBloc.add(StartExtractMode(zipFilePath));
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[850],
-      isScrollControlled: true,
+  Widget _buildCustomExtractSheet() {
+    final filesBloc = context.read<FilesBloc>();
+    return Builder(
       builder: (context) {
-        return SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        final screenHeight = MediaQuery.of(context).size.height;
+        final sheetWidth = MediaQuery.of(context).size.width;
+
+        return GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Stack(
             children: [
-              const Text(
-                'Extract to...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ).padLeft(18).padBottom(4).padTop(14),
-              MechanixSectionListTheme(
-                style: MechanixSectionListThemeData(
-                  height: 42,
-                  dividerPadding: EdgeInsets.zero,
-                  widgetPadding: EdgeInsets.zero,
-                  backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
-                ),
-                child: MechanixSectionList(
-                  sectionListItems: [
-                    SectionListItems(
-                      title: "Home directory",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        homeDir,
-                        "Home",
-                        filesBloc,
-                        () => reload(),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  onTap: () {}, // block outside taps
+                  child: ClipPath(
+                    clipper: TabClipper(shift: sheetWidth * 0.70),
+                    child: Container(
+                      height: screenHeight * 0.98,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF2E2E2E),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
                       ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.home,
-                        iconColor: Colors.blueAccent,
+                      child: ExtractBottomSheetContent(
+                        filesBloc: filesBloc,
+                        selectedCount: selectedPaths.length,
+                        reload: reload,
+                        currentPath: controller.getPathNotifier.value,
+                        rootContext: context,
                       ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
                     ),
-                    SectionListItems(
-                      title: "Downloads",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        downloadsDir,
-                        "Downloads",
-                        filesBloc,
-                        () => reload(),
-                      ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.downloads,
-                        iconColor: Colors.deepPurpleAccent,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                    SectionListItems(
-                      title: "Documents",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        documentsDir,
-                        "Documents",
-                        filesBloc,
-                        () => reload(),
-                      ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.homeDocuments,
-                        iconColor: Colors.orangeAccent,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                    SectionListItems(
-                      title: "Root (/)",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        "/",
-                        "Root",
-                        filesBloc,
-                        () => reload(),
-                      ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.hardDrive,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
         );
       },
-    ).whenComplete(() {
-      // Only clear selection if needed when bottom sheet closes
-      clearSelection();
-    });
+    );
   }
 
-  Widget _trailingIcon() {
-    return SizedBox(
-      child: const Icon(
-        size: 16,
-        Icons.arrow_forward_ios,
-        color: Colors.grey,
-      ).padAll(4),
-    );
+  void handleExtraction(BuildContext context, Set<String> selectedPaths) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _closeFabMenuProgrammatically();
+    });
+
+    final filesBloc = context.read<FilesBloc>();
+    filesBloc.add(StartExtractMode(selectedPaths.toList()));
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      enableDrag: true,
+      barrierColor: Colors.black54,
+      builder: (_) {
+        return BlocProvider.value(
+          value: filesBloc, // keep same bloc instance
+          child: BlocListener<FilesBloc, FilesState>(
+            listenWhen: (prev, curr) =>
+                prev.extractStatus != curr.extractStatus &&
+                curr.extractStatus == FileExtractStatus.completed,
+            listener: (context, state) async {
+              final rootContext = Navigator.of(context).context;
+              if (!rootContext.mounted) return;
+
+              final s = state.extractSuccessCount;
+              final f = state.extractFailureCount;
+
+              String msg;
+              if (f == 0) {
+                msg = "Extracted $s file${s > 1 ? 's' : ''} successfully";
+              } else if (s == 0) {
+                msg = "Failed to extract $f file${f > 1 ? 's' : ''}";
+              } else {
+                msg = "$s extracted successfully • $f failed";
+              }
+
+              // Show final summary
+              ScaffoldMessenger.of(rootContext).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    msg,
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.grey[800],
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+
+              // Exit extract mode
+              filesBloc.add(CancelExtractMode());
+              reload();
+            },
+            child: _buildCustomExtractSheet(),
+          ),
+        );
+      },
+    ).whenComplete(() {
+      clearSelection();
+    });
   }
 
   void handleProperties() {
@@ -1602,9 +1519,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     final pathsToDelete = selectedPaths.toList();
 
     final isSingle = pathsToDelete.length == 1;
-    final title = isSingle
-        ? "Delete '${pathsToDelete.first.split('/').last}'?"
-        : "Delete ${pathsToDelete.length} files?";
     final message = isSingle
         ? "This action will delete the file permanently"
         : "This action will delete the files permanently";

@@ -176,40 +176,6 @@ void handleTap(
     );
     return;
   }
-
-  if (fileType == '.zip') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-    final state = context.findAncestorStateOfType<FileExplorerPageState>();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[850],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              minTileHeight: 20,
-              leading: const Icon(Icons.drive_file_move, color: Colors.white70),
-              title: const Text("Extract to...",
-                  style: TextStyle(color: Colors.white, fontSize: 14)),
-              onTap: () {
-                Navigator.pop(ctx);
-
-                // Handle extraction
-                state?.handleExtract(fullPath);
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    return;
-  }
 }
 
 void handleFileTap(
@@ -317,91 +283,7 @@ void handleFileTap(
   if (fileType == '.zip') {
     context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
     final state = context.findAncestorStateOfType<FileExplorerPageState>();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[850],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              minTileHeight: 20,
-              leading: const Icon(Icons.folder_zip, color: Colors.white70),
-              title: const Text("Extract here",
-                  style: TextStyle(color: Colors.white, fontSize: 14)),
-              onTap: () async {
-                Navigator.pop(ctx);
-
-                // Validate zip file
-                if (!isZipFileValid(fullPath)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "ZIP file is corrupted or invalid",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                  );
-                  return;
-                }
-
-                // Extract in same folder
-                final currentDir =
-                    fullPath.substring(0, fullPath.lastIndexOf('/'));
-                final zipName = p.basenameWithoutExtension(fullPath);
-                final baseExtractPath = p.join(currentDir, zipName);
-
-                // Ensure unique extraction path
-                final uniqueExtractPath =
-                    await getUniqueExtractPath(baseExtractPath);
-                final bloc = context.read<FilesBloc>();
-                final completer = Completer<void>();
-                bloc.add(StartExtractMode(fullPath));
-
-                bloc.add(ExtractZipTo(
-                  fullPath,
-                  uniqueExtractPath,
-                  completer,
-                ));
-                await completer.future;
-                bloc.add(CancelExtractMode());
-
-                // reload after extraction
-                controller.reload();
-
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(
-                    content: const Text("Finished extracting",
-                        style: TextStyle(color: Colors.white)),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: Colors.grey[800],
-                  ),
-                );
-              },
-            ),
-            const Divider(height: 1, color: Colors.white24),
-            ListTile(
-              minTileHeight: 20,
-              leading: const Icon(Icons.drive_file_move, color: Colors.white70),
-              title: const Text("Extract to...",
-                  style: TextStyle(color: Colors.white, fontSize: 14)),
-              onTap: () {
-                Navigator.pop(ctx);
-
-                // Handle extraction
-                state?.handleExtract(fullPath);
-              },
-            ),
-          ],
-        );
-      },
-    );
-
+    state?.handleExtraction(context, {fullPath});
     return;
   }
 }

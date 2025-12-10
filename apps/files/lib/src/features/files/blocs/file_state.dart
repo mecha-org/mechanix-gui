@@ -8,6 +8,12 @@ enum FileCompressionStatus {
   failure,
 }
 
+enum FileExtractStatus {
+  none,
+  inProgress,
+  completed,
+}
+
 class FilesState extends Equatable {
   final bool loading;
   final List<FileSystemEntity> fileSystemList;
@@ -34,7 +40,11 @@ class FilesState extends Equatable {
   final String? compressionError;
 
   final bool isExtractMode;
-  final String zipFilePath;
+  final List<String> zipFilePaths;
+  final int extractSuccessCount;
+  final int extractFailureCount;
+  final FileExtractStatus extractStatus;
+  final String? extractError;
 
   final int currentPage;
   final bool hasMorePages;
@@ -57,7 +67,11 @@ class FilesState extends Equatable {
     this.compressedZipPath,
     this.compressionError,
     this.isExtractMode = false,
-    this.zipFilePath = '',
+    this.extractStatus = FileExtractStatus.none,
+    this.extractSuccessCount = 0,
+    this.extractFailureCount = 0,
+    this.extractError,
+    this.zipFilePaths = const [],
     this.currentPage = 1,
     this.hasMorePages = true,
   });
@@ -81,7 +95,11 @@ class FilesState extends Equatable {
     String? compressedZipPath,
     String? compressionError,
     bool? isExtractMode,
-    String? zipFilePath,
+    FileExtractStatus? extractStatus,
+    int? extractSuccessCount,
+    int? extractFailureCount,
+    String? extractError,
+    List<String>? zipFilePaths,
     int? currentPage,
     bool? hasMorePages,
   }) {
@@ -101,7 +119,11 @@ class FilesState extends Equatable {
       compressedZipPath: compressedZipPath ?? this.compressedZipPath,
       compressionError: compressionError ?? this.compressionError,
       isExtractMode: isExtractMode ?? this.isExtractMode,
-      zipFilePath: zipFilePath ?? this.zipFilePath,
+      extractStatus: extractStatus ?? this.extractStatus,
+      extractSuccessCount: extractSuccessCount ?? this.extractSuccessCount,
+      extractFailureCount: extractFailureCount ?? this.extractFailureCount,
+      extractError: extractError ?? this.extractError,
+      zipFilePaths: zipFilePaths ?? this.zipFilePaths,
       conflictingPaths: conflictingPaths ?? this.conflictingPaths,
       conflictDestinationPath:
           conflictDestinationPath ?? this.conflictDestinationPath,
@@ -125,7 +147,9 @@ class FilesState extends Equatable {
         compressedZipPath,
         compressionError,
         isExtractMode,
-        zipFilePath,
+        extractStatus,
+        extractError,
+        zipFilePaths,
         conflictingPaths,
         conflictDestinationPath,
         currentPage,

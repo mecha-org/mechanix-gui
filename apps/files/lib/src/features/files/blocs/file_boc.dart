@@ -7,7 +7,6 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
-import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -49,6 +48,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     on<CompressEntitiesEvent>(_onCompressEntities);
     on<ExtractZipTo>(_onExtractZipTo);
+    on<ExtractZipBatchCompleted>(_onExtractZipBatchCompleted);
     on<StartExtractMode>(_onStartExtractMode);
     on<CancelExtractMode>(_onCancelExtractMode);
 
@@ -123,7 +123,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       emit(state.copyWith(loading: true));
       await fileRepository.renameEntity(event.oldPath, event.newName);
-      await event.controller!.reload();
+      await event.controller.reload();
       emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: 'Failed to rename item: $e', loading: false));
@@ -407,41 +407,40 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     }
   }
 
-  Future<void> _onExtractZipTo(
-    ExtractZipTo event,
-    Emitter<FilesState> emit,
-  ) async {
-    emit(state.copyWith(loading: true));
+  void _onExtractZipTo(ExtractZipTo event, Emitter<FilesState> emit) async {
     try {
-      var targetDir = event.targetPath;
-      if (targetDir.isEmpty) {
-        targetDir = p.dirname(event.zipFilePath);
-      }
-
-      await fileRepository.extractZip(event.zipFilePath, targetDir);
-
-      if (!(event.completer?.isCompleted ?? true)) {
-        event.completer?.complete();
-      }
+      await fileRepository.extractZip(event.zipPath, event.targetPath);
+      event.completer.complete('success');
     } catch (e) {
-      if (!(event.completer?.isCompleted ?? true)) {
-        event.completer?.completeError(e);
-      }
-      emit(state.copyWith(error: 'Failed to extract ZIP: $e', loading: false));
+      event.completer.complete('failure');
     }
+  }
+
+  void _onExtractZipBatchCompleted(
+    ExtractZipBatchCompleted event,
+    Emitter<FilesState> emit,
+  ) {
+    emit(state.copyWith(
+      extractStatus: FileExtractStatus.completed,
+      extractSuccessCount: event.successCount,
+      extractFailureCount: event.failureCount,
+    ));
   }
 
   void _onStartExtractMode(StartExtractMode event, Emitter<FilesState> emit) {
     emit(state.copyWith(
       isExtractMode: true,
-      zipFilePath: event.zipFilePath,
+      zipFilePaths: event.zipFilePaths,
+      extractStatus: FileExtractStatus.inProgress,
+      extractError: null,
     ));
   }
 
   void _onCancelExtractMode(CancelExtractMode event, Emitter<FilesState> emit) {
     emit(state.copyWith(
       isExtractMode: false,
-      zipFilePath: '',
+      zipFilePaths: [],
+      extractStatus: FileExtractStatus.none,
     ));
   }
 

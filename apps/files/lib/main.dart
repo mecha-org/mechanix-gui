@@ -9,7 +9,6 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository_impl.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
-import 'package:mechanix_files/src/features/files/presentation/file_search.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
@@ -95,7 +94,6 @@ class MainApp extends StatelessWidget {
         home: const FileHomePage(),
         routes: {
           AppRoutes.files: (context) => const FileHomePage(),
-          AppRoutes.searchFiles: (context) => const FileSearchPage(),
         },
       ),
     );
