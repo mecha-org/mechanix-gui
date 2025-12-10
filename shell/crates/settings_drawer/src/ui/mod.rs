@@ -7,7 +7,7 @@ use crate::get_wireless_strength_icon;
 use crate::prelude::*;
 use crate::services::DEFAULT_MIN_BRIGHTNESS;
 use crate::ui::icon::Icon;
-use crate::ui::modals::{BluetoothWindow, WirelessWindow, BatteryWindow};
+use crate::ui::modals::{BluetoothWindow, WirelessWindow, PerformanceWindow};
 use crate::{
     events::BtEvents,
     ui::{
@@ -486,38 +486,38 @@ impl SettingsDrawer {
                                 .text_color(rgb(0xF4F4F4))
                                 .size((px(24.), px(24.)))
                         )
-                        .on_click(cx.listener(
-                            move |_,
-                                    _event: &ClickEvent,
-                                    _window: &mut Window,
-                                    cx: &mut Context<Self>| {
-                                println!("power clicked");
+                        // .on_click(cx.listener(
+                        //     move |_,
+                        //             _event: &ClickEvent,
+                        //             _window: &mut Window,
+                        //             cx: &mut Context<Self>| {
+                        //         println!("power clicked");
 
-                                let popup_origin =
-                                    point(window_bounds.origin.x, window_bounds.origin.y);
+                        //         let popup_origin =
+                        //             point(window_bounds.origin.x, window_bounds.origin.y);
 
-                                let popup_bounds = Bounds {
-                                    origin: popup_origin,
-                                    size: size(px(476.0), px(180.0)),
-                                };
+                        //         let popup_bounds = Bounds {
+                        //             origin: popup_origin,
+                        //             size: size(px(476.0), px(180.0)),
+                        //         };
 
-                                cx.open_window(
-                                    WindowOptions {
-                                        titlebar: None,
-                                        kind: WindowKind::PopUp,
-                                        is_movable: false,
-                                        window_bounds: Some(WindowBounds::Windowed(
-                                            popup_bounds,
-                                        )),
-                                        ..Default::default()
-                                    },
-                                    |_, cx| {
-                                        cx.new(|_| BatteryWindow::new("Battery".to_string()))
-                                    },
-                                )
-                                .unwrap();
-                            },
-                        )),
+                        //         cx.open_window(
+                        //             WindowOptions {
+                        //                 titlebar: None,
+                        //                 kind: WindowKind::PopUp,
+                        //                 is_movable: false,
+                        //                 window_bounds: Some(WindowBounds::Windowed(
+                        //                     popup_bounds,
+                        //                 )),
+                        //                 ..Default::default()
+                        //             },
+                        //             |_, cx| {
+                        //                 cx.new(|_| BatteryWindow::new("Battery".to_string()))
+                        //             },
+                        //         )
+                        //         .unwrap();
+                        //     },
+                        // )),
                     ),
             )
             .child(
@@ -748,63 +748,63 @@ impl SettingsDrawer {
                             .active(self.bluetooth_details.enabled)
                             .active_icon_color(rgb(AMBER_600))  
                             .active_bg_color(rgba(AMBER_600_10))
-                            .on_click(cx.listener(
-                                |this: &mut SettingsDrawer,
-                                 _event: &ClickEvent,
-                                 _window: &mut Window,
-                                 cx: &mut Context<Self>| {
-                                    let mut bt_tx = this.bt_tx.clone();
-                                    let is_enable = this.bluetooth_details.enabled;
-                                    cx.background_executor()
-                                        .spawn(async move {
-                                            let _ = bt_tx
-                                                .send(BtEvents::BluetoothToggle {
-                                                    enabled: !is_enable,
-                                                })
-                                                .await;
-                                        })
-                                        .detach();
-                                },
-                            )),
-                            //  .on_click(cx.listener(  // TEMP; TODO: long press open modal
-                            //     move |this: &mut SettingsDrawer,
+                            // .on_click(cx.listener(
+                            //     |this: &mut SettingsDrawer,
                             //      _event: &ClickEvent,
                             //      _window: &mut Window,
                             //      cx: &mut Context<Self>| {
-                            //         println!("bluetooth clicked");
-
-                            //          let popup_origin = point(
-                            //                 window_bounds.origin.x,
-                            //                 window_bounds.origin.y,
-                            //             );
-
-                            //             let popup_bounds = Bounds {
-                            //                 origin: popup_origin,
-                            //                 size: size(px(476.0), px(338.0)),
-                            //             };
-                                     
-                            //             cx.open_window(
-                            //             WindowOptions {
-                            //                 titlebar: None,
-                            //                 kind: WindowKind::PopUp,
-                            //                 is_movable: false,
-                            //                 window_bounds:Some(
-                            //                         WindowBounds::Windowed(
-                            //                             popup_bounds,
-                            //                         ),
-                            //                     ),
-                            //                 ..Default::default()
-                            //             },
-                            //             |_, cx| {
-                            //                 cx.new(|_| 
-                            //                     BluetoothWindow::new("Bluetooth".to_string(), this.bluetooth_details.available_devices.clone(), this.bt_tx.clone()) 
-                            //             )
-                            //             },
-                            //         )
-                            //         .unwrap();
-
+                            //         let mut bt_tx = this.bt_tx.clone();
+                            //         let is_enable = this.bluetooth_details.enabled;
+                            //         cx.background_executor()
+                            //             .spawn(async move {
+                            //                 let _ = bt_tx
+                            //                     .send(BtEvents::BluetoothToggle {
+                            //                         enabled: !is_enable,
+                            //                     })
+                            //                     .await;
+                            //             })
+                            //             .detach();
                             //     },
                             // )),
+                             .on_click(cx.listener(  // TEMP; TODO: long press open modal
+                                move |this: &mut SettingsDrawer,
+                                 _event: &ClickEvent,
+                                 _window: &mut Window,
+                                 cx: &mut Context<Self>| {
+                                    println!("bluetooth clicked");
+
+                                     let popup_origin = point(
+                                            window_bounds.origin.x,
+                                            window_bounds.origin.y,
+                                        );
+
+                                        let popup_bounds = Bounds {
+                                            origin: popup_origin,
+                                            size: size(px(476.0), px(338.0)),
+                                        };
+                                     
+                                        cx.open_window(
+                                        WindowOptions {
+                                            titlebar: None,
+                                            kind: WindowKind::PopUp,
+                                            is_movable: false,
+                                            window_bounds:Some(
+                                                    WindowBounds::Windowed(
+                                                        popup_bounds,
+                                                    ),
+                                                ),
+                                            ..Default::default()
+                                        },
+                                        |_, cx| {
+                                            cx.new(|_| 
+                                                BluetoothWindow::new("Bluetooth".to_string(), this.bluetooth_details.available_devices.clone(), this.bt_tx.clone()) 
+                                        )
+                                        },
+                                    )
+                                    .unwrap();
+
+                                },
+                            )),
                     )
                     .child(
                         IconButton::new("id_power_mode")
@@ -814,9 +814,37 @@ impl SettingsDrawer {
                             .icon_color(power_mode_icon_color)
                             .active_icon_color(rgb(AMBER_600))  
                             .active_bg_color(rgba(AMBER_600_10))
-                            .on_click(cx.listener(|_, _, _, _| {
-                                println!("power mode clicked--open modal!");
-                            })),
+                             .on_click(cx.listener(  // TEMP; TODO: long press open modal
+                                move |this: &mut SettingsDrawer,
+                                 _event: &ClickEvent,
+                                 _window: &mut Window,
+                                 cx: &mut Context<Self>| {
+                                    println!("performance mode clicked");
+
+                                       let popup_bounds = Bounds::centered(None, size(px(476.0), px(400.0)), cx);
+                                     
+                                        cx.open_window(
+                                        WindowOptions {
+                                            titlebar: None,
+                                            kind: WindowKind::PopUp,
+                                            is_movable: false,
+                                            window_bounds:Some(
+                                                    WindowBounds::Windowed(
+                                                        popup_bounds,
+                                                    ),
+                                                ),
+                                            ..Default::default()
+                                        },
+                                        |_, cx| {
+                                            cx.new(|_| 
+                                                PerformanceWindow::new("Battery".to_string())
+                                        )
+                                        },
+                                    )
+                                    .unwrap();
+
+                                },
+                            )),
                     )
                     .child(
                         IconButton::new("id_cell_signal")
