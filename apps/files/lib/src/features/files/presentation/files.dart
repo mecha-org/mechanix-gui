@@ -1139,9 +1139,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.of(ctx).viewInsets.bottom,
                   ),
-                  child: Container(
+                  child: SizedBox(
                     height: 60,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: MechanixTextInputTheme(
                       style: MechanixTextInputThemeData(
                         fillColor: const Color(0xFF151515),
@@ -1527,9 +1526,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.of(ctx).viewInsets.bottom,
                   ),
-                  child: Container(
+                  child: SizedBox(
                     height: 60,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: MechanixTextInputTheme(
                       style: MechanixTextInputThemeData(
                         fillColor: const Color(0xFF151515),
