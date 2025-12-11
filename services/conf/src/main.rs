@@ -8,6 +8,7 @@ mod validator;
 use crate::cli::{
     describe_key, get_setting_table, list_keys, list_schemas, set_setting_table, watch_setting,
 };
+
 use crate::error::ServerError;
 use crate::server::{ConfigServerInterface, SERVED_AT};
 use crate::validator::validate_schema;
@@ -15,11 +16,11 @@ use anyhow::{Context, Result};
 use clap::{CommandFactory, Parser, Subcommand};
 use dirs::home_dir;
 use log::{debug, error, info, trace, warn};
-use notify::{recommended_watcher, Event, RecursiveMode, Watcher};
+use crate::database::{start_db_actor, Database, DbCmd};
+use notify::{recommended_watcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use std::sync::mpsc;
-use std::sync::{Arc, Mutex};
+use tokio::sync::{mpsc, oneshot};
 use zbus::ConnectionBuilder;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -76,7 +77,7 @@ enum Commands {
     /// The schema and key to describe
     Describe { schema: String, key: String },
 }
-const CHECKSUM_TREE_NAME: &str = "schema_checksum";
+const LAST_MODIFIED_TREE_NAME: &str = "schema_last_modified";
 const CONNECTION_BUS_NAME: &str = "org.mechanix.MxConf";
 const SCHEMA_DIR: &str = "/usr/share/mxconf/schemas";
 const DEFAULT_PROFILE_PATH: &str = "/etc/mxconf/profile/default.toml";
@@ -94,7 +95,7 @@ const DB_PATH: &str = ".config/mxconf";
 ///
 /// * `Ok(())` if the file was processed successfully
 /// * `Err(...)` if there was an error during processing
-fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> {
+async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result<()> {
     info!("Processing TOML file: {}", path.display());
     let application_schema_str = utils::read_application_schema(&path.display().to_string())?;
 
@@ -106,20 +107,29 @@ fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> 
         .context("Failed to convert filename to string")?;
 
     validator::validate_schema_name(schema_file_name)?;
+    let last_modified = utils::get_last_modified_timestamp(path)?;
     let schema_toml: toml::Value = application_schema_str
         .parse()
         .context("Unable to parse TOML")?;
-    let schema_checksum = validator::generate_checksum(&schema_file_name, &schema_toml)
-        .context("Unable to generate checksum")?;
 
-    // Check if file already exists with same checksum
-    if let Some(existing_checksum) = db.get_checksum(CHECKSUM_TREE_NAME, schema_file_name)? {
-        if schema_checksum == existing_checksum {
-            info!("TOML file already exists with same checksum");
-            return Ok(());
-        }
+    let (rsp_tx, rsp_rx) = oneshot::channel();
+    // Check if a file already exists with the same last_modified timestamp
+    if let Err(er) = db_tx.send(DbCmd::Get {
+        identifier: LAST_MODIFIED_TREE_NAME.to_string(),
+        key: schema_file_name.to_string(),
+        rsp: rsp_tx,
+    }).await {
+        error!("Failed to get last_modified: {}", er);
+        return Err(anyhow::anyhow!("Failed to get last_modified"));
+    }
+    if rsp_rx.await?
+        .iter()
+        .any(|(k, v)| k == schema_file_name && v.eq_ignore_ascii_case(last_modified.to_be_bytes().as_ref())) {
+        info!("TOML file already exists and processed successfully. Skipping.");
+        return Ok(());
     }
 
+    info!("TOML file does not exist or has changed. Processing...");
     // Validate the application schema file
     match validate_schema(&schema_toml).map_err(|err| anyhow::anyhow!("Validation error: {}", err))
     {
@@ -129,51 +139,23 @@ fn process_toml_file(path: &PathBuf, db: &mut database::Database) -> Result<()> 
         Err(e) => return Err(e),
     };
 
-    // Insert the validated file and checksum into the database
-    match db.insert_checksum(schema_file_name, CHECKSUM_TREE_NAME, &schema_checksum) {
-        Ok(()) => (),
-        Err(e) => {
-            return Err(anyhow::anyhow!(
-                "Failed to insert TOML file into database: {}",
-                e
-            ));
-        }
+    let (rsp_tx, rsp_rx) = oneshot::channel();
+    if let Err(er) = db_tx.send(DbCmd::Set {
+        identifier: LAST_MODIFIED_TREE_NAME.to_string(),
+        key: schema_file_name.to_string(),
+        value: last_modified.to_be_bytes().to_vec(),
+        rsp: rsp_tx,
+    }).await {
+        error!("Failed to insert last_modified: {}", er);
+        return Err(anyhow::anyhow!("Failed to insert last_modified"));
     }
-
-    println!("Checksum inserted into database");
+    if let Err(err) = rsp_rx.await? {
+        error!("Failed to insert last_modified: {}", err);
+        return Err(anyhow::anyhow!("Failed to insert last_modified"));
+    }
+    info!("toml file processed successfully!");
     Ok(())
 }
-
-/// Handle a file system event
-///
-/// # Arguments
-///
-/// * `event` - The file system event to handle
-/// * `db` - The database instance to store validated files
-///
-/// # Returns
-///
-/// * `Ok(())` if the event was handled successfully
-/// * `Err(...)` if there was an error during handling
-fn handle_event(event: Event, db: &mut database::Database) -> Result<()> {
-    debug!("Received event: {:?}", event.kind);
-    // Only process file creation events
-    if event.kind.is_create() || event.kind.is_modify() {
-        debug!("Event received: {:?}", event.kind);
-        // Process each path in the event
-        for path in &event.paths {
-            // Only process TOML files
-            if path.extension() == Some("toml".as_ref()) {
-                if let Err(err) = process_toml_file(path, db) {
-                    error!("Failed to process TOML file: {}", err);
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
 
 /// Load the profile, which contains user and system settings
 mod profile {
@@ -300,8 +282,9 @@ async fn start_server() -> Result<(), ServerError> {
         schema_dir.display()
     );
     // Initialize database
-    let db = Arc::new(Mutex::new(database::Database::new(db_path)));
-
+    let db = Database::new(db_path);
+    // Start the database actor to handle database operations asynchronously
+    let db_tx = start_db_actor(db);
     // Build the connection first
     let conn = match ConnectionBuilder::session() {
         Ok(builder) => match builder.name(CONNECTION_BUS_NAME) {
@@ -318,7 +301,7 @@ async fn start_server() -> Result<(), ServerError> {
 
     // Now build the server struct with the connection
     let config_server = ConfigServerInterface {
-        db: Arc::clone(&db),
+        db_tx: db_tx.clone(),
         conn: conn.clone(),
         key_file_dir,
         schema_dir,
@@ -336,7 +319,7 @@ async fn start_server() -> Result<(), ServerError> {
     info!("D-Bus server registered at {}", SERVED_AT);
 
     // Set up a file system watcher
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = std::sync::mpsc::channel();
     let mut watcher = match recommended_watcher(tx).context("Failed to create file watcher") {
         Ok(watcher) => watcher,
         Err(e) => {
@@ -349,7 +332,7 @@ async fn start_server() -> Result<(), ServerError> {
     let schema_dir_to_watch = home_dir.join(schema_dir);
     // Watch the schemas directory for changes
     let schemas_dir = Path::new(&schema_dir_to_watch);
-    match watcher.watch(schemas_dir, RecursiveMode::Recursive) {
+    match watcher.watch(schemas_dir, RecursiveMode::NonRecursive) {
         Ok(_) => (),
         Err(e) => {
             error!("Failed to watch schemas directory: {}", e);
@@ -360,19 +343,21 @@ async fn start_server() -> Result<(), ServerError> {
         "Watching schemas directory: {}",
         schema_dir_to_watch.display()
     );
+
     // Process events as they come in
     while let Ok(event_result) = rx.recv() {
         match event_result {
             Ok(event) => {
-                let mut db_guard = match db.lock() {
-                    Ok(guard) => guard,
-                    Err(e) => {
-                        error!("Failed to lock database: {}", e);
-                        continue;
+                if event.kind.is_create() || event.kind.is_modify() {
+                    // Process each path in the event
+                    for path in &event.paths {
+                        // Only process TOML files
+                        if path.extension() == Some("toml".as_ref()) {
+                            if let Err(err) = process_toml_file(path, db_tx.clone()).await {
+                                error!("Failed to process TOML file: {}", err);
+                            }
+                        }
                     }
-                };
-                if let Err(err) = handle_event(event, &mut db_guard) {
-                    error!("Error handling event: {}", err);
                 }
             }
             Err(err) => error!("Error receiving event: {}", err),

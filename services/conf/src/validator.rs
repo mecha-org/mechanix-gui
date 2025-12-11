@@ -1,5 +1,4 @@
 use crate::error::ValidatorError;
-use anyhow::Context;
 use log::{debug, error, info, trace};
 use regex::Regex;
 use toml::Value;
@@ -366,20 +365,4 @@ pub fn validate_schema_name(schema_name: &str) -> anyhow::Result<(), ValidatorEr
         return Err(ValidatorError::InvalidSchemaName(schema_name.to_string()));
     }
     Ok(())
-}
-
-pub fn generate_checksum(namespace: &str, schema_toml: &Value) -> anyhow::Result<u32> {
-    debug!("Generating checksum for namespace: {}", namespace);
-    // Convert to JSON
-    let application_schema =
-        serde_json::to_value(&schema_toml).context("Unable to convert TOML to JSON")?;
-    let application_schema_bytes =
-        serde_json::to_vec(&application_schema).context("Unable to convert JSON to bytes")?;
-    // Generate checksum
-    let mut hasher = crc32fast::Hasher::new();
-    hasher.update(namespace.as_bytes());
-    hasher.update(&application_schema_bytes);
-    let checksum = hasher.finalize();
-    info!("Generated checksum: {:08x} for namespace: {}", checksum, namespace);
-    Ok(checksum)
 }
