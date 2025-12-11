@@ -199,7 +199,7 @@ impl Render for BluetoothWindow {
                                                     .text_color(icon_color)
                                                     .text_lg()
                                                     .child(name.clone())
-                                                    ),
+                                                ),
                                         )
                                         .child( 
                                             Icon::new(IconName::ConnectedIcon)
@@ -234,7 +234,7 @@ impl Render for BluetoothWindow {
                                                     .text_color(icon_color)
                                                     .text_lg()
                                                     .child(name.clone())
-                                                    ),
+                                                ),
                                         )
                                     };
 

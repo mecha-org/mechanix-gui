@@ -7,7 +7,7 @@ use crate::get_wireless_strength_icon;
 use crate::prelude::*;
 use crate::services::DEFAULT_MIN_BRIGHTNESS;
 use crate::ui::icon::Icon;
-use crate::ui::modals::{BluetoothWindow, ExtendScreenOptions, PerformanceWindow, SoundWindow, WirelessWindow};
+use crate::ui::modals::{BluetoothWindow, DisplayWindow, ExtendScreenOptions, PerformanceWindow, SoundWindow, WirelessWindow};
 use crate::{
     events::BtEvents,
     ui::{
@@ -72,6 +72,9 @@ pub struct SettingsDrawer {
 
     pub brightness_slider_state: Entity<SliderState>,
     pub brightness_slider_value: f32,
+    pub auto_brightness: bool,
+    pub dark_mode: bool,
+
     pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
     pub volume_device_name: Option<String>,
@@ -195,6 +198,8 @@ impl SettingsDrawer {
             cell_signal: false,
             brightness_slider_state: brightness_slider,
             brightness_slider_value: 0.0,
+            auto_brightness: false,
+            dark_mode: false,
 
             volume_slider_state: volume_slider,
             volume_slider_value: 0.0,
@@ -901,31 +906,6 @@ impl SettingsDrawer {
                             .col_span(2)
                             .bg(rgb(DARK_NEUTRAL_900))
                             .rounded(px(8.))
-                            .on_click(cx.listener(  // todo: create new window
-                                move |_,
-                                 _event: &ClickEvent,
-                                 _window: &mut Window,
-                                 cx: &mut Context<Self>| {
-                                    let popup_bounds = Bounds::centered(None, size(px(MODAL_SIZE.0), px(MODAL_SIZE.1)), cx);    
-                                    cx.open_window(
-                                    WindowOptions {
-                                        titlebar: None,
-                                        kind: WindowKind::PopUp,
-                                        is_movable: false,
-                                        window_bounds:Some(
-                                                WindowBounds::Windowed(
-                                                    popup_bounds,
-                                                ),
-                                            ),
-                                        ..Default::default()
-                                    },
-                                    |_, cx| {
-                                        cx.new(|_| 
-                                            SoundWindow::new("Display brightness".to_string())
-                                        )
-                                    }).unwrap();
-                                },
-                            ))
                             .child(
                                 div()
                                     .flex()
@@ -942,9 +922,31 @@ impl SettingsDrawer {
                                             .bg_color(rgb(DARK_NEUTRAL_900))
                                             .active_bg_color(rgb(DARK_NEUTRAL_900))
                                             .border(px(0.))
-                                            .on_click(cx.listener(|_, _, _, _| {
-                                                println!("brightness clicked");
-                                            })),
+                                           .on_click(cx.listener(  // todo: show modal on long press
+                                                move |this: &mut SettingsDrawer,
+                                                _event: &ClickEvent,
+                                                _window: &mut Window,
+                                                cx: &mut Context<Self>| {
+                                                    let popup_bounds = Bounds::centered(None, size(px(MODAL_SIZE.0), px(MODAL_SIZE.1)), cx);    
+                                                    cx.open_window(
+                                                    WindowOptions {
+                                                        titlebar: None,
+                                                        kind: WindowKind::PopUp,
+                                                        is_movable: false,
+                                                        window_bounds:Some(
+                                                                WindowBounds::Windowed(
+                                                                    popup_bounds,
+                                                                ),
+                                                            ),
+                                                        ..Default::default()
+                                                            },
+                                                            |_, cx| {
+                                                                cx.new(|_| 
+                                                                    DisplayWindow::new("Display brightness".to_string(), this.auto_brightness, this.dark_mode)
+                                                                )
+                                                            }).unwrap();
+                                                        },
+                                    ))
                                     )
                                     .child(
                                         div()

@@ -20,6 +20,15 @@ fn main() {
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(window_bounds),
+                // kind: WindowKind::LayerShell(LayerShellOptions {
+                //     namespace: "mechanix.settings_drawer".to_string(),
+                //     layer: Layer::Top,
+                //     anchor: Anchor::LEFT | Anchor::TOP | Anchor::RIGHT | Anchor::BOTTOM,
+                //     keyboard_interactivity: KeyboardInteractivity::None,
+                //     margin: None,
+                //     exclusive_zone: None,
+                //     ..Default::default()
+                // }),
                 ..Default::default()
             },
             |_window, cx| {

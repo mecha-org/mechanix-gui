@@ -204,7 +204,7 @@ impl Render for WirelessWindow {
                                                     .text_color(icon_color)
                                                     .text_lg()
                                                     .child(network.ssid.clone())
-                                                    ),
+                                                ),
                                         )
                                         .child( 
                                             Icon::new(IconName::ConnectedIcon)

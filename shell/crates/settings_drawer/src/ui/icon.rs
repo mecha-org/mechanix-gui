@@ -61,6 +61,8 @@ pub enum IconName {
     MirrorScreen,
     ExtendedOnly,
     SecondScreen,
+    AutoBrightness,
+    DarkMode,
 }
 
 impl IconName {
@@ -124,6 +126,8 @@ impl IconName {
             IconName::MirrorScreen => "mirror-screen.svg",
             IconName::ExtendedOnly => "extended-only.svg",
             IconName::SecondScreen => "second-screen.svg",
+            IconName::AutoBrightness => "auto-brightness.svg",
+            IconName::DarkMode => "dark-mode.svg",
         };
 
         format!("{}{icon_path}", SETTINGS_DRAWER_ICONS_DIR).into()

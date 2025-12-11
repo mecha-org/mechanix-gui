@@ -65,7 +65,7 @@ impl Render for ExtendScreenOptions {
         div()
             .flex()
             .flex_col()
-            .bg(rgb(0x151515))
+            .bg(rgb(DARK_NEUTRAL_900))
             .size_full()
             .border_1()
             .rounded_xl()
@@ -134,8 +134,6 @@ impl Render for ExtendScreenOptions {
                                 div()
                                     .flex()
                                     .flex_row()
-                                    .text_color(rgb(0xD2D2D2))
-                                    .text_lg()
                                     .text_align(TextAlign::Left)
                                     .child(
                                         div().pr_2().child(
@@ -144,7 +142,14 @@ impl Render for ExtendScreenOptions {
                                                 .text_color(icon_color),
                                         ),
                                     )
-                                    .child(ex.text.clone()),
+                                    .child(
+                                        div()
+                                            .text_lg()
+                                            .pl_2()
+                                            .font_weight(FontWeight::NORMAL)
+                                            .text_color(icon_color)
+                                            .child(ex.text.clone()),
+                                    ),
                             )
                             .child(if ex.is_active { connect_div } else { div() })
                     } else {
@@ -159,8 +164,6 @@ impl Render for ExtendScreenOptions {
                                 div()
                                     .flex()
                                     .flex_row()
-                                    .text_color(rgb(0xD2D2D2))
-                                    .text_lg()
                                     .text_align(TextAlign::Left)
                                     .child(
                                         div().pr_2().child(
@@ -169,7 +172,14 @@ impl Render for ExtendScreenOptions {
                                                 .text_color(icon_color),
                                         ),
                                     )
-                                    .child(ex.text.clone()),
+                                    .child(
+                                        div()
+                                            .text_lg()
+                                            .pl_2()
+                                            .font_weight(FontWeight::NORMAL)
+                                            .text_color(icon_color)
+                                            .child(ex.text.clone()),
+                                    ),
                             )
                             .on_click(ctx.listener(move |_, _, _, _| {
                                 println!("option clicked...");

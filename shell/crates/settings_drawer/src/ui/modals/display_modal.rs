@@ -5,57 +5,30 @@ use crate::{
     prelude::*,
     ui::{
         icon::{Icon, IconName},
-        widgets::IconButton,
+        widgets::{Switch, SwitchSize},
     },
 };
 
 const ROW_HEIGHT: f32 = 60.0;
 
-#[derive(Debug, Clone, PartialEq, Default)]
-enum OutputType {
-    #[default]
-    SystemSpeaker,
-    ExternalSpeaker,
-    Headphone,
-}
-
-#[derive(Debug)]
-struct SinkDevice {
-    name: String,
-    device_type: OutputType,
-    is_active: bool,
-}
-
-pub struct SoundWindow {
+pub struct DisplayWindow {
     pub title: String,
+    pub auto_brightness: bool,
+    pub dark_mode: bool,
 }
 
-impl SoundWindow {
-    pub fn new(title: String) -> Self {
-        Self { title }
+impl DisplayWindow {
+    pub fn new(title: String, auto_brightness: bool, dark_mode: bool) -> Self {
+        Self {
+            title,
+            auto_brightness: false,
+            dark_mode: false,
+        }
     }
 }
 
-impl Render for SoundWindow {
+impl Render for DisplayWindow {
     fn render(&mut self, _window: &mut Window, ctx: &mut Context<Self>) -> impl IntoElement {
-        let sink_list = vec![
-            SinkDevice {
-                name: "System speaker".to_string(),
-                device_type: OutputType::SystemSpeaker,
-                is_active: true,
-            },
-            SinkDevice {
-                name: "Headphones".to_string(),
-                device_type: OutputType::Headphone,
-                is_active: false,
-            },
-            SinkDevice {
-                name: "External speaker".to_string(),
-                device_type: OutputType::ExternalSpeaker,
-                is_active: false,
-            },
-        ];
-
         div()
             .flex()
             .flex_col()
@@ -85,105 +58,93 @@ impl Render for SoundWindow {
                             .child(self.title.clone()),
                     ),
             )
-            .child(div().flex().flex_col().flex_1().relative().children(
-                sink_list.iter().enumerate().map(|(idx, sink)| {
-                    let is_active = sink.is_active;
-
-                    let icon_color = if is_active {
-                        rgb(AMBER_600)
-                    } else {
-                        rgb(DARK_NEUTRAL_0)
-                    };
-                    let mut icon = IconName::SystemSpeaker;
-
-                    match sink.device_type {
-                        OutputType::SystemSpeaker => icon = IconName::SystemSpeaker,
-                        OutputType::ExternalSpeaker => icon = IconName::ExternalSpeaker,
-                        OutputType::Headphone => icon = IconName::Headphone,
-                    }
-
-                    let connect_div = div().child(
-                        Icon::new(IconName::ConnectedIcon)
-                            .size((px(24.), px(24.)))
-                            .text_color(rgb(AMBER_600)),
-                    );
-
-                    let main_div = if is_active {
+            .child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .flex_1()
+                    .relative()
+                    .child(
                         div()
-                            .id(("sink", idx))
                             .flex()
+                            .flex_row()
                             .items_center()
                             .justify_between()
-                            .h(px(60.))
-                            .px_4()
-                            .bg(if is_active {
-                                rgba(AMBER_600_10)
-                            } else {
-                                rgba(AMBER_900)
-                            })
+                            .p_4()
+                            .flex_shrink_0()
                             .border_y_1()
-                            .border_color(rgb(AMBER_900))
+                            .border_color(rgb(DARK_NEUTRAL_700))
                             .child(
                                 div()
                                     .flex()
                                     .flex_row()
-                                    .text_color(rgb(AMBER_600))
-                                    .text_lg()
                                     .text_align(TextAlign::Left)
                                     .child(
-                                        div().pr_2().child(
-                                            Icon::new(icon)
-                                                .size((px(28.), px(28.)))
-                                                .text_color(icon_color),
-                                        ),
+                                        Icon::new(IconName::AutoBrightness)
+                                            .size((px(28.), px(28.)))
+                                            .text_color(rgb(AMBER_600)),
                                     )
                                     .child(
                                         div()
                                             .text_lg()
                                             .pl_2()
                                             .font_weight(FontWeight::NORMAL)
-                                            .text_color(icon_color)
-                                            .child(sink.name.clone()),
+                                            .text_color(rgb(AMBER_600))
+                                            .child("Auto brightness"),
                                     ),
                             )
-                            .child(if sink.is_active { connect_div } else { div() })
-                    } else {
+                            .child(
+                                div().child(
+                                    Switch::new("auto_brightness_switch")
+                                        .checked(self.auto_brightness)
+                                        .size(SwitchSize::Medium)
+                                        .on_click(ctx.listener(move |view, checked, _, cx| {
+                                            view.auto_brightness = *checked;
+                                            cx.notify();
+                                        })),
+                                ),
+                            ),
+                    )
+                    .child(
                         div()
-                            .id(("mode", idx))
                             .flex()
+                            .flex_row()
                             .items_center()
                             .justify_between()
-                            .h(px(60.))
-                            .px_4()
+                            .p_4()
+                            .flex_shrink_0()
                             .child(
                                 div()
                                     .flex()
                                     .flex_row()
                                     .text_align(TextAlign::Left)
                                     .child(
-                                        div().pr_2().child(
-                                            Icon::new(icon)
-                                                .size((px(28.), px(28.)))
-                                                .text_color(icon_color),
-                                        ),
+                                        Icon::new(IconName::DarkMode)
+                                            .size((px(28.), px(28.)))
+                                            .text_color(rgb(DARK_NEUTRAL_0)),
                                     )
                                     .child(
                                         div()
                                             .text_lg()
                                             .pl_2()
                                             .font_weight(FontWeight::NORMAL)
-                                            .text_color(icon_color)
-                                            .child(sink.name.clone()),
+                                            .text_color(rgb(DARK_NEUTRAL_0))
+                                            .child("Dark mode"),
                                     ),
                             )
-                            .on_click(ctx.listener(move |_, _, _, _| {
-                                println!("sink device clicked...");
-                            }))
-                    };
-
-                    main_div
-                }),
-            ))
+                            .child(
+                                div().child(
+                                    Switch::new("dark_mode_switch")
+                                        .checked(self.dark_mode)
+                                        .size(SwitchSize::Medium)
+                                        .on_click(ctx.listener(move |view, checked, _, cx| {
+                                            view.dark_mode = *checked;
+                                            cx.notify();
+                                        })),
+                                ),
+                            ),
+                    ),
+            )
             // Footer
             .child(
                 div()
