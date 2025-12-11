@@ -1,0 +1,53 @@
+[status_bar.layer_shell]
+layer = "overlay"
+anchor = ["right", "left", "top"]
+namespace = "mechanix.status.bar"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 300.0 }
+
+[settings_drawer]
+navbar_size = { width = 180.0, height = 29.0 }
+
+[settings_drawer.layer_shell]
+layer = "top"
+anchor = ["bottom"]
+namespace = "mechanix.settings.drawer"
+exclusive_zone = -1.0
+size = { width = 540.0, height = 620.0 }
+
+[running_apps]
+navbar_size = { width = 180.0, height = 29.0 }
+
+[running_apps.layer_shell]
+layer = "top"
+anchor = ["top"]
+namespace = "mechanix.running.apps"
+exclusive_zone = -1.0
+size = { width = 540.0, height = 620.0 }
+
+[universal_search]
+navbar_size = { width = 180.0, height = 29.0 }
+
+[universal_search.layer_shell]
+layer = "top"
+anchor = ["bottom"]
+namespace = "mechanix.universal.search"
+exclusive_zone = -1.0
+size = { width = 540.0, height = 620.0 }
+
+[homescreen]
+status_bar_size = { width = 540.0, height = 36.0 }
+
+[homescreen.layer_shell]
+layer = "bottom"
+anchor = ["top", "left", "right", "bottom"]
+namespace = "mechanix.homescreen"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }
+
+[app_drawer.layer_shell]
+layer = "top"
+anchor = ["top"]
+namespace = "mechanix.app.drawer"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }

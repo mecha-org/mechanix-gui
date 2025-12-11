@@ -20,3 +20,6 @@ rust-embed = { workspace = true }
 anyhow = { workspace = true }
 chrono = { version = "0.4", features = ["clock"] }
 futures = "0.3.31"
+settings = { path = "../settings" }
+shell_state = { path = "../shell_state" }
+theme = { path = "../theme" }

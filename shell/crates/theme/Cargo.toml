@@ -1,6 +1,6 @@
 
 [package]
-name = "universal_search"
+name = "theme"
 edition = "2024"
 version.workspace = true
 authors.workspace = true
@@ -12,10 +12,9 @@ keywords.workspace = true
 
 [dependencies]
 gpui = { workspace = true }
-rust-embed = { workspace = true }
-anyhow = { workspace = true }
-commons = { path = "../commons" }
-mxsearch = { path = "../../../services/search/server" }
-unicode-segmentation = "1.12.0"
-freedesktop-icons = "0.4.0"
 settings = { path = "../settings" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+palette = { version = "0.7.6", features = ["serializing"] }
+dispatcher = { path = "../dispatcher" }
+futures = { workspace = true }

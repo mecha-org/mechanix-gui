@@ -11,6 +11,6 @@ zbus = { workspace = true }
 anyhow = { workspace = true }
 futures = { workspace = true }
 thiserror = { workspace = true }
-notify = { version = "8.2.0"}
+notify = { version = "8.2.0" }
 dirs = { version = "6.0.0" }
-tantivy = { git = "https://github.com/quickwit-oss/tantivy.git", branch = "main" }
+tantivy = { version = "0.25.0" }
