@@ -1,14 +1,15 @@
 use desktop_dbus::MechanixNotificationService;
 use futures::{channel::mpsc, select, SinkExt, StreamExt};
 use gpui::*;
-use notifications::prelude::{AppEvents, StatusBar};
+use commons::assets::Assets;
+use notifications::prelude::{AppEvents, NotificationStory};
+use notifications::notification_widget::{Notification, NotificationList};
 
 fn main() {
-    let application = gpui::Application::new();
+    let application = gpui::Application::new().with_assets(Assets{});
     application.run(|cx| {
         let window_bounds =
             WindowBounds::Windowed(Bounds::centered(None, size(px(0.0), px(310.0)), cx));
-
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(window_bounds),
@@ -23,7 +24,7 @@ fn main() {
                 }),
                 ..Default::default()
             },
-            |_window, cx| {
+            |window, cx| {
                 let (mut app_channel_tx, mut app_channel_rx) = mpsc::channel::<AppEvents>(120);
                 let executor = cx.background_executor();
 
@@ -40,31 +41,45 @@ fn main() {
                                         let _ = app_channel_tx.send(AppEvents::NotificationReceived { notification }).await;
                                     }
                                 },
-
                             }
                         }
                     })
                     .detach();
 
-                cx.new(|cx| {
-                    cx.spawn(async move |app, cx| {
+
+                // inside the window builder closure
+                let notification_list = cx.new(|cx| NotificationList::new(window, cx));
+
+                // Start a UI task on the window context that receives events from the background channel
+                let list_for_events = notification_list.clone();
+                notification_list.update(cx, |_, cx| {
+                    cx.spawn_in(window, async move |_, cx| {
                         while let Some(event) = app_channel_rx.next().await {
                             match event {
                                 AppEvents::NotificationReceived { notification } => {
-                                    let _ = app.update(cx, |this: &mut StatusBar, cx| {
-                                        this.notification_list = "".to_string();
-                                        cx.notify();
+                                    let title = format!("{}:{}",notification.app_name, notification.summary); // adapt fields to your type
+                                    let body = notification.body.clone();
+
+                                    let _ = list_for_events.update_in(cx, |list, window, cx| {
+                                        list.push(
+                                            Notification::new()
+                                                .title(title.clone())
+                                                .message(body.clone())
+                                                .autohide(true),
+                                            window,
+                                            cx,
+                                        );
                                     });
                                 }
                             }
                         }
-                    })
-                    .detach();
-                    StatusBar::new()
-                })
+                    }).detach();
+                });
+                
+                cx.new(|_| NotificationStory::new(notification_list))
             },
         )
-        .unwrap();
+            .unwrap();
         cx.activate(true);
     });
 }

@@ -1,14 +1,16 @@
 use gpui::{prelude::FluentBuilder, *};
-pub const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
+pub const STATUS_BAR_ICONS_DIR: &str = "icons/notifications/";
 
 #[derive(IntoElement, Clone, Debug)]
 pub enum IconName {
-    WirelessOn,
+    Info,
+    Close
 }
 impl IconName {
     pub fn resolve(&self) -> SharedString {
         let icon_path = match self {
-            IconName::WirelessOn => "wireless-on.svg",
+            IconName::Info => "wireless-on.svg",
+            IconName::Close => "close.svg",
         };
         format!("{}{}", STATUS_BAR_ICONS_DIR, icon_path).into()
     }
@@ -38,6 +40,7 @@ impl Default for Icon {
         }
     }
 }
+
 
 impl Icon {
     pub fn new(name: IconName) -> Self {

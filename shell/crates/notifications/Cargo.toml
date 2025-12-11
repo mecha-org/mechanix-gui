@@ -13,3 +13,7 @@ keywords.workspace = true
 gpui = { workspace = true }
 futures = { workspace = true }
 desktop_dbus = { path = "../../../dbus/mechanix/desktop"}
+commons = { path = "../commons"}
+smol = "2.0.2"
+uuid = "1.18.1"
+tracing = "0.1.41"
