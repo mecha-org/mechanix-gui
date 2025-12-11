@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:file/local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,18 +64,22 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Future<void> _onInitializeFiles(
-      InitializeFiles event, Emitter<FilesState> emit) async {
+    InitializeFiles event,
+    Emitter<FilesState> emit,
+  ) async {
     emit(state.copyWith(loading: true));
 
     final prefs = await SharedPreferences.getInstance();
-    logger.d('sort_mode: ${prefs.getString('sort_mode')}');
-    logger.d('show_hidden_files: ${prefs.getBool('show_hidden_files')}');
 
-    final savedSort = prefs.getString('sort_mode') ?? 'name';
+    final savedSort =
+        prefs.getString('sort_mode') ?? keyFromSort(SortBy.modTime);
+    final savedAscending = prefs.getBool('sort_ascending') ?? false;
     final savedHidden = prefs.getBool('show_hidden_files') ?? false;
 
     emit(state.copyWith(
+      loading: false,
       currentSortBy: savedSort,
+      isAscending: savedAscending,
       showHiddenFiles: savedHidden,
     ));
   }

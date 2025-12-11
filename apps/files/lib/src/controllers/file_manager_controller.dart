@@ -395,7 +395,10 @@ class FileManagerController {
     _debounce?.cancel();
   }
 
-  void syncSettings({required bool showHidden, required String sortMode}) {
+  void syncSettings(
+      {required bool showHidden,
+      required String sortMode,
+      required bool isAscending}) {
     showHiddenFiles = showHidden;
 
     // Convert string from prefs to SortBy enum
@@ -416,6 +419,8 @@ class FileManagerController {
       default:
         _sort.value = SortBy.name;
     }
+
+    _ascending = isAscending;
 
     // Apply immediately to existing files
     _applySearchFilter();

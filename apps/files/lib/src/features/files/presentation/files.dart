@@ -175,7 +175,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 context: context,
                 barrierColor: Colors.black.withOpacity(0.2),
                 barrierDismissible: false,
-                builder: (_) => buildLoadingDialog("Compressing..."),
+                builder: (_) => buildLoadingDialog(context, "Compressing..."),
               );
             } else if (state.compressionStatus ==
                     FileCompressionStatus.success ||
@@ -222,24 +222,24 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           },
         ),
         // Loading indicator for general loading states
-        // BlocListener<FilesBloc, FilesState>(
-        //   listenWhen: (previous, current) =>
-        //       previous.loading != current.loading,
-        //   listener: (context, state) async {
-        //     if (state.loading && !isLoadingDialogShown) {
-        //       isLoadingDialogShown = true;
-        //       await showDialog(
-        //         context: context,
-        //         barrierColor: Colors.black.withOpacity(0.2),
-        //         barrierDismissible: false,
-        //         builder: (_) => buildLoadingDialog("Loading..."),
-        //       );
-        //       isLoadingDialogShown = false;
-        //     } else if (!state.loading && isLoadingDialogShown) {
-        //       Navigator.of(context, rootNavigator: true).pop();
-        //     }
-        //   },
-        // ),
+        BlocListener<FilesBloc, FilesState>(
+          listenWhen: (previous, current) =>
+              previous.loading != current.loading,
+          listener: (context, state) async {
+            if (state.loading && !isLoadingDialogShown) {
+              isLoadingDialogShown = true;
+              await showDialog(
+                context: context,
+                barrierColor: Colors.black.withOpacity(0.2),
+                barrierDismissible: false,
+                builder: (_) => buildLoadingDialog(context, "Loading..."),
+              );
+              isLoadingDialogShown = false;
+            } else if (!state.loading && isLoadingDialogShown) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+          },
+        ),
         // // Copy: Show conflict resolution dialog
         BlocListener<FilesBloc, FilesState>(
           listenWhen: (prev, curr) =>
@@ -268,11 +268,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         BlocListener<FilesBloc, FilesState>(
           listenWhen: (prev, curr) =>
               prev.showHiddenFiles != curr.showHiddenFiles ||
-              prev.currentSortBy != curr.currentSortBy,
+              prev.currentSortBy != curr.currentSortBy ||
+              prev.isAscending != curr.isAscending,
           listener: (context, state) {
             controller.syncSettings(
               showHidden: state.showHiddenFiles,
               sortMode: state.currentSortBy,
+              isAscending: state.isAscending,
             );
           },
         ),
