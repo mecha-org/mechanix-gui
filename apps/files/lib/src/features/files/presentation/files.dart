@@ -981,47 +981,28 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   Widget _buildCustomMoveSheet() {
     final filesBloc = context.read<FilesBloc>();
-    return Builder(
-      builder: (context) {
-        final screenHeight = MediaQuery.of(context).size.height;
-        final sheetWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final sheetWidth = MediaQuery.of(context).size.width;
 
-        return GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: GestureDetector(
-                  onTap: () {}, // block outside taps
-                  child: ClipPath(
-                    clipper: TabClipper(shift: sheetWidth * 0.70),
-                    child: Container(
-                      height: screenHeight * 0.98,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2E2E2E),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: MoveBottomSheetContent(
-                        filesBloc: filesBloc,
-                        selectedCount: selectedPaths.length,
-                        reload: reload,
-                        currentPath: controller.getPathNotifier.value,
-                        rootContext: context,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    return ClipPath(
+      clipper: TabClipper(shift: sheetWidth * 0.70),
+      child: Container(
+        height: screenHeight * 0.98,
+        decoration: const BoxDecoration(
+          color: Color(0xFF2E2E2E),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
           ),
-        );
-      },
+        ),
+        child: MoveBottomSheetContent(
+          filesBloc: filesBloc,
+          selectedCount: selectedPaths.length,
+          reload: reload,
+          currentPath: controller.getPathNotifier.value,
+          rootContext: context,
+        ),
+      ),
     );
   }
 
@@ -1237,47 +1218,28 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   Widget _buildCustomExtractSheet() {
     final filesBloc = context.read<FilesBloc>();
-    return Builder(
-      builder: (context) {
-        final screenHeight = MediaQuery.of(context).size.height;
-        final sheetWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final sheetWidth = MediaQuery.of(context).size.width;
 
-        return GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Stack(
-            children: [
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: GestureDetector(
-                  onTap: () {}, // block outside taps
-                  child: ClipPath(
-                    clipper: TabClipper(shift: sheetWidth * 0.70),
-                    child: Container(
-                      height: screenHeight * 0.98,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2E2E2E),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: ExtractBottomSheetContent(
-                        filesBloc: filesBloc,
-                        selectedCount: selectedPaths.length,
-                        reload: reload,
-                        currentPath: controller.getPathNotifier.value,
-                        rootContext: context,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+    return ClipPath(
+      clipper: TabClipper(shift: sheetWidth * 0.70),
+      child: Container(
+        height: screenHeight * 0.98,
+        decoration: const BoxDecoration(
+          color: Color(0xFF2E2E2E),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
           ),
-        );
-      },
+        ),
+        child: ExtractBottomSheetContent(
+          filesBloc: filesBloc,
+          selectedCount: selectedPaths.length,
+          reload: reload,
+          currentPath: controller.getPathNotifier.value,
+          rootContext: context,
+        ),
+      ),
     );
   }
 
@@ -1306,16 +1268,19 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               final rootContext = Navigator.of(context).context;
               if (!rootContext.mounted) return;
 
-              final s = state.extractSuccessCount;
-              final f = state.extractFailureCount;
+              final successCount = state.extractSuccessCount;
+              final failureCount = state.extractFailureCount;
 
               String msg;
-              if (f == 0) {
-                msg = "Extracted $s file${s > 1 ? 's' : ''} successfully";
-              } else if (s == 0) {
-                msg = "Failed to extract $f file${f > 1 ? 's' : ''}";
+              if (failureCount == 0) {
+                msg =
+                    "Extracted $successCount file${successCount > 1 ? 's' : ''} successfully";
+              } else if (successCount == 0) {
+                msg =
+                    "Failed to extract $failureCount file${failureCount > 1 ? 's' : ''}";
               } else {
-                msg = "$s extracted successfully • $f failed";
+                msg =
+                    "$successCount extracted successfully • $failureCount failed";
               }
 
               // Show final summary
