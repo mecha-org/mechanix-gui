@@ -54,6 +54,13 @@ pub enum IconName {
     CellSignalWarning,
     Navbar,
     ConnectedIcon,
+    SystemSpeaker,
+    Headphone,
+    ExternalSpeaker,
+    ExtendedDetected,
+    MirrorScreen,
+    ExtendedOnly,
+    SecondScreen,
 }
 
 impl IconName {
@@ -110,6 +117,13 @@ impl IconName {
             IconName::CellSignalWarning => "cell-signal-warning.svg",
             IconName::Navbar => "navbar.png",
             IconName::ConnectedIcon => "connected_icon.svg",
+            IconName::SystemSpeaker => "system-speaker.svg",
+            IconName::Headphone => "headphone.svg",
+            IconName::ExternalSpeaker => "external-speaker.svg",
+            IconName::ExtendedDetected => "extended-detected.svg",
+            IconName::MirrorScreen => "mirror-screen.svg",
+            IconName::ExtendedOnly => "extended-only.svg",
+            IconName::SecondScreen => "second-screen.svg",
         };
 
         format!("{}{icon_path}", SETTINGS_DRAWER_ICONS_DIR).into()

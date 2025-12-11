@@ -7,7 +7,7 @@ use crate::get_wireless_strength_icon;
 use crate::prelude::*;
 use crate::services::DEFAULT_MIN_BRIGHTNESS;
 use crate::ui::icon::Icon;
-use crate::ui::modals::{BluetoothWindow, WirelessWindow, PerformanceWindow};
+use crate::ui::modals::{BluetoothWindow, ExtendScreenOptions, PerformanceWindow, SoundWindow, WirelessWindow};
 use crate::{
     events::BtEvents,
     ui::{
@@ -23,6 +23,8 @@ use upower::interfaces::device::BatteryState;
 
 const NAVBAR_SIZE: (f32, f32) = (180., 29.);
 const APP_SIZE: (f32, f32) = (540., 620.);
+const MODAL_SIZE: (f32, f32) = (478., 392.); 
+
 pub enum PowerMode {
     High,
     Balanced,
@@ -435,6 +437,7 @@ impl SettingsDrawer {
             IconName::RotationOff
         };
 
+        // Add extened screen icons when extended screen is detected
         let screen_mirroring_icon = if self.screen_mirroring {
             IconName::ScreenMirroringOn
         } else {
@@ -572,15 +575,44 @@ impl SettingsDrawer {
                             .active(self.screen_mirroring)
                             .active_icon_color(rgb(AMBER_600))  
                             .active_bg_color(rgba(AMBER_600_10))
-                            .on_click(cx.listener(
-                                |this: &mut SettingsDrawer,
-                                 _event: &ClickEvent,
-                                 _window: &mut Window,
-                                 cx: &mut Context<Self>| {
-                                    this.screen_mirroring = !this.screen_mirroring;
-                                    cx.notify();
+                            // .on_click(cx.listener(  // toggle
+                            //     |this: &mut SettingsDrawer,
+                            //      _event: &ClickEvent,
+                            //      _window: &mut Window,
+                            //      cx: &mut Context<Self>| {
+                            //         this.screen_mirroring = !this.screen_mirroring;
+                            //         cx.notify();
+                            //     },
+                            // )),
+                            .on_click(cx.listener(  // long press
+                            move |_,
+                                _event: &ClickEvent,
+                                _window: &mut Window,
+                                cx: &mut Context<Self>| {
+                                
+                                let popup_bounds = Bounds::centered(None, size(px(MODAL_SIZE.0), px(MODAL_SIZE.1)), cx);    
+                                
+                                cx.open_window(
+                                WindowOptions {
+                                    titlebar: None,
+                                    kind: WindowKind::PopUp,
+                                    is_movable: false,
+                                    window_bounds:Some(
+                                            WindowBounds::Windowed(
+                                                popup_bounds,
+                                            ),
+                                        ),
+                                    ..Default::default()
                                 },
-                            )),
+                                |_, cx| {
+                                    cx.new(|_| 
+                                        ExtendScreenOptions::new("Extended Screen".to_string())
+                                    )
+                                },
+                                ).unwrap();
+
+                            },
+                        ))
                     )
                     .child(
                            IconButton::new("id_terminal")
@@ -714,8 +746,7 @@ impl SettingsDrawer {
                                  cx: &mut Context<Self>| {
                                     println!("wireless clicked");
 
-                                        let popup_bounds = Bounds::centered(None, size(px(476.0), px(400.0)), cx);
-                                     
+                                        let popup_bounds = Bounds::centered(None, size(px(MODAL_SIZE.0), px(MODAL_SIZE.1)), cx);    
                                         cx.open_window(
                                         WindowOptions {
                                             
@@ -814,35 +845,29 @@ impl SettingsDrawer {
                             .icon_color(power_mode_icon_color)
                             .active_icon_color(rgb(AMBER_600))  
                             .active_bg_color(rgba(AMBER_600_10))
-                             .on_click(cx.listener(  // TEMP; TODO: long press open modal
+                            .on_click(cx.listener(  
                                 move |this: &mut SettingsDrawer,
                                  _event: &ClickEvent,
                                  _window: &mut Window,
                                  cx: &mut Context<Self>| {
-                                    println!("performance mode clicked");
-
-                                       let popup_bounds = Bounds::centered(None, size(px(476.0), px(400.0)), cx);
-                                     
-                                        cx.open_window(
-                                        WindowOptions {
-                                            titlebar: None,
-                                            kind: WindowKind::PopUp,
-                                            is_movable: false,
-                                            window_bounds:Some(
-                                                    WindowBounds::Windowed(
-                                                        popup_bounds,
-                                                    ),
+                                    let popup_bounds = Bounds::centered(None, size(px(MODAL_SIZE.0), px(MODAL_SIZE.1)), cx);    
+                                    cx.open_window(
+                                    WindowOptions {
+                                        titlebar: None,
+                                        kind: WindowKind::PopUp,
+                                        is_movable: false,
+                                        window_bounds:Some(
+                                                WindowBounds::Windowed(
+                                                    popup_bounds,
                                                 ),
-                                            ..Default::default()
-                                        },
-                                        |_, cx| {
-                                            cx.new(|_| 
-                                                PerformanceWindow::new("Battery".to_string())
-                                        )
-                                        },
-                                    )
-                                    .unwrap();
-
+                                            ),
+                                        ..Default::default()
+                                    },
+                                    |_, cx| {
+                                        cx.new(|_| 
+                                            PerformanceWindow::new("Battery".to_string())
+                                            
+                                    )}).unwrap();
                                 },
                             )),
                     )
@@ -867,6 +892,7 @@ impl SettingsDrawer {
                     )
                     .child(
                           div()
+                            .id("id_display")
                             .flex()
                             .items_center()
                             .w_full()
@@ -875,6 +901,31 @@ impl SettingsDrawer {
                             .col_span(2)
                             .bg(rgb(DARK_NEUTRAL_900))
                             .rounded(px(8.))
+                            .on_click(cx.listener(  // todo: create new window
+                                move |_,
+                                 _event: &ClickEvent,
+                                 _window: &mut Window,
+                                 cx: &mut Context<Self>| {
+                                    let popup_bounds = Bounds::centered(None, size(px(MODAL_SIZE.0), px(MODAL_SIZE.1)), cx);    
+                                    cx.open_window(
+                                    WindowOptions {
+                                        titlebar: None,
+                                        kind: WindowKind::PopUp,
+                                        is_movable: false,
+                                        window_bounds:Some(
+                                                WindowBounds::Windowed(
+                                                    popup_bounds,
+                                                ),
+                                            ),
+                                        ..Default::default()
+                                    },
+                                    |_, cx| {
+                                        cx.new(|_| 
+                                            SoundWindow::new("Display brightness".to_string())
+                                        )
+                                    }).unwrap();
+                                },
+                            ))
                             .child(
                                 div()
                                     .flex()
@@ -913,6 +964,7 @@ impl SettingsDrawer {
                     )
                     .child(
                         div()
+                            .id("id_sound")
                             .flex()
                             .items_center()
                             .justify_center()
@@ -922,6 +974,34 @@ impl SettingsDrawer {
                             .col_span(2)
                             .bg(rgb(DARK_NEUTRAL_900))
                             .rounded(px(8.))
+                            .on_click(cx.listener(  
+                                move |_,
+                                 _event: &ClickEvent,
+                                 _window: &mut Window,
+                                 cx: &mut Context<Self>| {
+                                    let popup_bounds = Bounds::centered(None, size(px(476.0), px(400.0)), cx);
+                                     
+                                    cx.open_window(
+                                    WindowOptions {
+                                        titlebar: None,
+                                        kind: WindowKind::PopUp,
+                                        is_movable: false,
+                                        window_bounds:Some(
+                                                WindowBounds::Windowed(
+                                                    popup_bounds,
+                                                ),
+                                            ),
+                                        ..Default::default()
+                                    },
+                                    |_, cx| {
+                                        cx.new(|_| 
+                                            SoundWindow::new("Sound".to_string())
+                                        )
+                                    },
+                                    ).unwrap();
+
+                                },
+                            ))
                             .child(
                                 div()
                                     .flex()
