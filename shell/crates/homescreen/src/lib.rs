@@ -1,4 +1,7 @@
+use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
+use settings::prelude::*;
+use status_bar::prelude::status_bar_components;
 
 mod animation_manager;
 mod config;
@@ -18,10 +21,15 @@ use crate::widgets::demo_widget::DemoWidget;
 
 pub struct Homescreen {
     state: HomescreenState,
+    status_bar_size: Size<Pixels>,
 }
 
 impl Homescreen {
-    pub fn new(_cx: &mut Context<Self>, config: HomescreenConfig) -> Self {
+    pub fn new(
+        _cx: &mut Context<Self>,
+        config: HomescreenConfig,
+        status_bar_size: Size<Pixels>,
+    ) -> Self {
         let mut state = HomescreenState::new(config);
         state.create_widget(
             DemoWidget::new("Sunrise", rgb(0xff6b6b), rgb(0xff5252), true),
@@ -224,7 +232,10 @@ impl Homescreen {
             },
         );
 
-        Self { state }
+        Self {
+            state,
+            status_bar_size,
+        }
     }
 
     fn handle_mouse_down(
@@ -265,6 +276,7 @@ impl Render for Homescreen {
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl gpui::IntoElement {
+        let status_bar_size = self.status_bar_size;
         let is_animating = AnimationManager::animate(&mut self.state);
         if is_animating {
             window.request_animation_frame();
@@ -273,14 +285,63 @@ impl Render for Homescreen {
         div()
             .size_full()
             .bg(rgb(0x1a1a1a))
+            .flex()
+            .flex_col()
             .on_mouse_down(MouseButton::Left, cx.listener(Self::handle_mouse_down))
             .on_mouse_move(cx.listener(Self::handle_mouse_move))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::handle_mouse_up))
+            .child(status_bar_components(cx, status_bar_size, true))
             .child(HomescreenUi::render(&self.state))
     }
 }
 
 pub mod prelude {
     pub use crate::config::*;
+    pub use crate::run_app;
     pub use crate::Homescreen;
+}
+
+pub fn run_app(cx: &mut App) {
+    let HomescreenSettings {
+        status_bar_size,
+        layer_shell,
+        ..
+    } = Settings::global(cx).homescreen.clone();
+
+    let LayerShellSettings {
+        size,
+        layer,
+        anchor,
+        namespace,
+        ..
+    } = layer_shell;
+    let config = HomescreenConfig::new(size);
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+
+    cx.open_window(
+        WindowOptions {
+            window_bounds: Some(window_bounds),
+            window_background: WindowBackgroundAppearance::Transparent,
+            kind: WindowKind::LayerShell(LayerShellOptions {
+                namespace,
+                layer,
+                anchor,
+                keyboard_interactivity: KeyboardInteractivity::None,
+                margin: None,
+                exclusive_zone: None,
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        |window, cx| {
+            let mut regions = Vec::new();
+            regions.push(Bounds {
+                origin: point(px(0.), px(0.)),
+                size: size,
+            });
+            window.set_input_regions(Some(regions));
+            cx.new(|cx| Homescreen::new(cx, config, status_bar_size))
+        },
+    )
+    .unwrap();
 }

@@ -1,9 +1,23 @@
+use gpui::{Pixels, Size};
+
 #[derive(Default, Debug, Copy, Clone)]
 pub struct HomescreenConfig {
     pub window: WindowConfig,
     pub grid: GridConfig,
     pub drag: DragConfig,
     pub animation: AnimationConfig,
+}
+
+impl HomescreenConfig {
+    pub fn new(size: Size<Pixels>) -> Self {
+        Self {
+            window: WindowConfig {
+                width: size.width.to_f64() as f32,
+                height: size.height.to_f64() as f32,
+            },
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -15,8 +29,8 @@ pub struct WindowConfig {
 impl Default for WindowConfig {
     fn default() -> Self {
         Self {
-            height: 540.0,
             width: 540.0,
+            height: 620.0,
         }
     }
 }

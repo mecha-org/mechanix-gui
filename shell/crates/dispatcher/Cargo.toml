@@ -1,8 +1,9 @@
+
 [package]
-name = "homescreen"
+name = "dispatcher"
+edition = "2024"
 version.workspace = true
 authors.workspace = true
-edition.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
@@ -11,8 +12,6 @@ keywords.workspace = true
 
 [dependencies]
 gpui = { workspace = true }
-rust-embed = { workspace = true }
-anyhow = { workspace = true }
-commons = { path = "../commons" }
-settings = { path = "../settings" }
-status_bar = { path = "../status_bar" }
+crossbeam-channel = { workspace = true }
+mxconf_dbus = { path = "../../../dbus/mechanix/mxconf" }
+futures = { workspace = true }
