@@ -344,7 +344,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
         MechanixMenuItemsType(
           title: "Delete",
           leading: Image.asset(
-            Images.createFolder,
+            Images.delete,
             color: Colors.white70,
             height: mechanixIconSize,
           ),
