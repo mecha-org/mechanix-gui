@@ -207,16 +207,15 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                           _lastVolume = volume; // store last non-zero volume
                         }
 
-                        return GestureDetector(
-                          onTap: () {
+                        return IconButton(
+                          onPressed: () {
                             if (isMuted) {
-                              player.setVolume(
-                                  _lastVolume); // restore previous volume
+                              player.setVolume(_lastVolume); // restore
                             } else {
                               player.setVolume(0.0); // mute
                             }
                           },
-                          child: Image.asset(
+                          icon: Image.asset(
                             isMuted ? Images.mute : Images.volume,
                             width: 24,
                             height: 24,
