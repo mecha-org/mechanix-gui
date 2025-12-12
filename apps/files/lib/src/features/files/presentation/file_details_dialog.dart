@@ -84,29 +84,37 @@ class FileDetailsDialog extends StatelessWidget {
                                       .defaultFontFamily,
                                 ),
                               ),
-                              Row(
-                                children: [
-                                  Text(
-                                    fileItem.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w500,
-                                      fontFamily: Theme.of(context)
-                                          .extension<FilesTheme>()!
-                                          .defaultFontFamily,
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 260),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        fileItem.name,
+                                        maxLines: 1,
+                                        textAlign: TextAlign.right, // important
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: Theme.of(context)
+                                              .extension<FilesTheme>()!
+                                              .defaultFontFamily,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Image.asset(
-                                    fileItem.iconPath,
-                                    width: 24,
-                                    height: 24,
-                                  ),
-                                ],
-                              )
+                                    const SizedBox(width: 8),
+                                    Image.asset(
+                                      fileItem.iconPath,
+                                      width: 24,
+                                      height: 24,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),

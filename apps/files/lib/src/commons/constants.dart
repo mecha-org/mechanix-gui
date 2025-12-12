@@ -47,4 +47,9 @@ class Images {
   static const String checkCircle = 'assets/images/check_circle.png';
   static const String share = 'assets/images/share.png';
   static const String duplicate = 'assets/images/duplicate.png';
+  static const String musicNote = 'assets/images/music_note.png';
+  static const String play = 'assets/images/play.png';
+  static const String pause = 'assets/images/pause.png';
+  static const String volume = 'assets/images/volume.png';
+  static const String mute = 'assets/images/mute.png';
 }

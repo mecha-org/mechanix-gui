@@ -120,6 +120,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       emit(state.copyWith(loading: true));
       await fileRepository.deleteEntities(event.entitiesPath);
       await event.controller.reload();
+      emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: 'Failed to delete: $e', loading: false));
     }

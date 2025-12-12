@@ -112,7 +112,8 @@ void handleTap(
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AudioPlayerOverlay(filePath: fullPath),
+      builder: (_) =>
+          AudioPlayerOverlay(rootContext: context, filePath: fullPath),
     );
     return;
   }
@@ -215,7 +216,8 @@ void handleFileTap(
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AudioPlayerOverlay(filePath: fullPath),
+      builder: (_) =>
+          AudioPlayerOverlay(rootContext: context, filePath: fullPath),
     );
     return;
   }

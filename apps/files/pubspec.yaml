@@ -132,6 +132,11 @@ flutter:
     - assets/images/check_circle.png
     - assets/images/share.png
     - assets/images/duplicate.png
+    - assets/images/music_note.png
+    - assets/images/play.png
+    - assets/images/pause.png
+    - assets/images/volume.png
+    - assets/images/mute.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

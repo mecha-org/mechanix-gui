@@ -898,7 +898,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
           onTap: () {
             actionTaken = true;
-            _showDetailsDialog(context, currentPath);
+            showDetailsDialog(context, currentPath);
             clearSelection();
           },
         ),
@@ -1076,7 +1076,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void handleDelete() {
-    _confirmDelete(context, selectedPaths);
+    confirmDelete(context, selectedPaths);
     clearSelection();
   }
 
@@ -1313,7 +1313,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   void handleProperties() {
     if (selectedPaths.length == 1) {
       final selectedPath = selectedPaths.first;
-      _showDetailsDialog(context, selectedPath);
+      showDetailsDialog(context, selectedPath);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1348,7 +1348,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     BlocProvider.of<FilesBloc>(context).add(SortFiles(value, isAscending));
   }
 
-  void _showDetailsDialog(BuildContext context, String path) {
+  void showDetailsDialog(BuildContext context, String path) {
     final bloc = context.read<FilesBloc>();
     bloc.add(FetchFileDetails(path));
 
@@ -1387,15 +1387,15 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     });
   }
 
-  void showRenameSheet({required String initialName}) {
+  Future<String?> showRenameSheet({required String initialName}) async {
     String folderName = initialName;
     final filesBloc = BlocProvider.of<FilesBloc>(context);
     final oldPath = p.join(controller.getCurrentPath, initialName);
 
+    final completer = Completer<String?>();
     controller.markNewFolder(oldPath);
 
     final overlay = Overlay.of(context);
-
     OverlayEntry? entry;
 
     entry = OverlayEntry(
@@ -1442,12 +1442,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                     color: Colors.white),
                                 onPressed: () {
                                   entry?.remove();
-                                  filesBloc.add(Rename(
-                                    oldPath: oldPath,
-                                    newName: folderName,
-                                    controller: controller,
-                                  ));
+                                  filesBloc.add(
+                                    Rename(
+                                      oldPath: oldPath,
+                                      newName: folderName,
+                                      controller: controller,
+                                    ),
+                                  );
                                   controller.clearNewFolder();
+
+                                  // Return new name
+                                  completer.complete(folderName);
                                 },
                               )
                             : IconButton(
@@ -1456,6 +1461,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                 onPressed: () {
                                   entry?.remove();
                                   controller.clearNewFolder();
+
+                                  // Return null (cancel)
+                                  completer.complete(null);
                                 },
                               ),
                       ),
@@ -1470,6 +1478,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
 
     overlay.insert(entry);
+
+    return completer.future;
   }
 
   void _toggleHiddenFiles() {
@@ -1482,7 +1492,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     controller.reload();
   }
 
-  void _confirmDelete(BuildContext context, Set<String> selectedPaths) {
+  void confirmDelete(BuildContext context, Set<String> selectedPaths) {
     final pathsToDelete = selectedPaths.toList();
 
     final isSingle = pathsToDelete.length == 1;
