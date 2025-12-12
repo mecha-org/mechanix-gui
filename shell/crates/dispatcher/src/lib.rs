@@ -1,10 +1,10 @@
-use async_broadcast::broadcast;
+use crossbeam_channel::{Receiver, bounded};
 use futures::StreamExt;
 use gpui::*;
 use mxconf_dbus::watch_setting;
 
 #[derive(Clone)]
-pub struct Dispatcher(pub async_broadcast::Receiver<Message>);
+pub struct Dispatcher(pub Receiver<Message>);
 
 impl Global for Dispatcher {}
 
@@ -20,7 +20,7 @@ pub enum Message {
 }
 
 pub fn init(cx: &mut App) {
-    let (tx, rx) = broadcast::<Message>(120);
+    let (tx, rx) = bounded::<Message>(120);
     cx.set_global(Dispatcher(rx));
 
     cx.background_executor()
@@ -35,13 +35,10 @@ pub fn init(cx: &mut App) {
                     //keyboard.general.always_on
                     match signal_key.as_str() {
                         "keyboard.general.always_on" => {
-                            match tx
-                                .broadcast(Message::SetKeyboardAlwayson(match value.as_str() {
-                                    "true" => true,
-                                    _ => false,
-                                }))
-                                .await
-                            {
+                            match tx.send(Message::SetKeyboardAlwayson(match value.as_str() {
+                                "true" => true,
+                                _ => false,
+                            })) {
                                 Ok(_) => {
                                     println!("message broadcasted");
                                 }
@@ -62,5 +59,5 @@ pub fn init(cx: &mut App) {
 
 pub mod prelude {
     pub use crate::Message;
-    pub use async_broadcast::Receiver;
+    pub use crossbeam_channel::Receiver;
 }

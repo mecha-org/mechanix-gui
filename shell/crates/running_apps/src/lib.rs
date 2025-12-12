@@ -135,7 +135,7 @@ fn run_dispatcher_listener(
     _app_channel_tx: tokio::sync::mpsc::Sender<AppMessage>,
 ) -> impl Future<Output = ()> {
     async move {
-        while let Ok(message) = dispatcher_rx.recv().await {
+        while let Ok(message) = dispatcher_rx.try_recv() {
             match message {
                 _ => {}
             }

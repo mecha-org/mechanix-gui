@@ -53,5 +53,5 @@ pulseaudio = { path = "dbus/freedesktop/pulseaudio" }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 toml = { version = "0.9.8", features = ["serde"] }
-async-broadcast = "0.7.2"
+crossbeam-channel = "0.5.15"
 dirs = "6.0.0"

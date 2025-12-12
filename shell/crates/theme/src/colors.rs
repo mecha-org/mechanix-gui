@@ -71,11 +71,6 @@ impl ThemeColors {
             ..
         } = colors;
 
-        println!(
-            "Setting colors: {:#?} {:#?} {:#?}",
-            accent_color, foreground_color, background_color
-        );
-
         self.accent_0 = oklcha_to_rgba(accent_color.lighten_fixed(0.6));
         self.accent_100 = oklcha_to_rgba(accent_color.lighten_fixed(0.5));
         self.accent_200 = oklcha_to_rgba(accent_color.lighten_fixed(0.4));
