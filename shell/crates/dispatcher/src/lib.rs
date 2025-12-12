@@ -10,7 +10,12 @@ impl Global for Dispatcher {}
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    SetTheme(SharedString),
+    SetThemeMode(String),
+    SetThemeColors {
+        accent: String,
+        background: String,
+        foreground: String,
+    },
     SetKeyboardAlwayson(bool),
 }
 

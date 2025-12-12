@@ -12,9 +12,6 @@ keywords.workspace = true
 
 [dependencies]
 gpui = { workspace = true }
-settings = { path = "../settings" }
-serde = { workspace = true }
-serde_json = { workspace = true }
 palette = { version = "0.7.6", features = ["serializing"] }
 dispatcher = { path = "../dispatcher" }
 futures = { workspace = true }
