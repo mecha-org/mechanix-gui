@@ -74,6 +74,9 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, child) {
+        final isChecked =
+            isSelectionStyleApplied(Attribute.list, 'unchecked') ||
+            isSelectionStyleApplied(Attribute.list, 'checked');
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           spacing: 28,
@@ -98,10 +101,7 @@ class _AlignmentToolbarState extends State<AlignmentToolbar> {
 
             FocusPreserveButton(
               child: EditorIconButton(
-                isSelected: isSelectionStyleApplied(
-                  Attribute.list,
-                  'unchecked',
-                ),
+                isSelected: isChecked,
                 iconPath: NotesIcon.checkboxListIcon,
                 onPressed: () {
                   toggleList(Attribute.unchecked);

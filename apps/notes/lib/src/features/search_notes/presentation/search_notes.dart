@@ -65,7 +65,6 @@ class _SearchNotesState extends State<SearchNotes> {
         return Column(
           children: [
             const SizedBox(height: 12),
-
             Expanded(
               child:
                   searchedNotes.isEmpty
@@ -73,7 +72,7 @@ class _SearchNotesState extends State<SearchNotes> {
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 80),
                           child: Text(
-                            searchQuery.isEmpty
+                            searchQuery.trim().length > 2
                                 ? "Start typing to search notes..."
                                 : "No Notes Found.",
                             style: const TextStyle(
@@ -84,87 +83,92 @@ class _SearchNotesState extends State<SearchNotes> {
                           ),
                         ),
                       )
-                      : ScrollConfiguration(
-                        behavior: const ScrollBehavior().copyWith(
-                          overscroll: false,
-                          scrollbars: true,
-                          dragDevices: {
-                            PointerDeviceKind.touch,
-                            PointerDeviceKind.mouse,
-                          },
-                        ),
-                        child: ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          controller: _scrollController,
-                          itemCount: searchedNotes.length,
-                          prototypeItem: const SizedBox(height: 70),
-                          padding: const EdgeInsets.only(top: 0),
-                          itemBuilder: (context, index) {
-                            final note = searchedNotes[index];
+                      : Scrollbar(
+                        controller: _scrollController,
 
-                            return MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: GestureDetector(
-                                onTap: () => _openNote(context, note.id),
-                                child: Container(
-                                  height: 58,
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 6,
-                                  ),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: NotesColors.cardColor,
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                        child: SearchHighlight(
-                                          text: note.text,
-                                          query: searchQuery,
-                                          isTitle: note.isTitle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: NotesColors.highlightTextColor
-                                              .withValues(alpha: 0.65),
-                                          borderRadius: BorderRadius.circular(
-                                            3,
+                        child: ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(context).copyWith(
+                            dragDevices: {
+                              PointerDeviceKind.touch,
+                              PointerDeviceKind.mouse,
+                            },
+                            scrollbars:
+                                false, // Disable default, use Scrollbar widget instead
+                          ),
+                          child: ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            controller: _scrollController,
+                            itemCount: searchedNotes.length,
+                            prototypeItem: const SizedBox(height: 70),
+                            padding: const EdgeInsets.only(top: 0),
+                            itemBuilder: (context, index) {
+                              final note = searchedNotes[index];
+
+                              return MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  onTap: () => _openNote(context, note.id),
+                                  child: Container(
+                                    height: 58,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 6,
+                                    ),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: NotesColors.cardColor,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                          child: SearchHighlight(
+                                            text: note.text,
+                                            query: searchQuery,
+                                            isTitle: note.isTitle,
                                           ),
                                         ),
-                                        child: Text(
-                                          note.availableCount.toString(),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      IntrinsicWidth(
-                                        child: Text(
-                                          CommonHelper.formatDateTime(
-                                            note.updatedAt,
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
                                           ),
-                                          textAlign: TextAlign.end,
-                                          style: const TextStyle(
-                                            color: NotesColors.labelColor,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w400,
+                                          decoration: BoxDecoration(
+                                            color: NotesColors
+                                                .highlightTextColor
+                                                .withValues(alpha: 0.65),
+                                            borderRadius: BorderRadius.circular(
+                                              3,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            note.availableCount.toString(),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 8),
+                                        IntrinsicWidth(
+                                          child: Text(
+                                            CommonHelper.formatDateTime(
+                                              note.updatedAt,
+                                            ),
+                                            textAlign: TextAlign.end,
+                                            style: const TextStyle(
+                                              color: NotesColors.labelColor,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
             ),

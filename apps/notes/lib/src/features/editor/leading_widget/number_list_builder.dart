@@ -9,7 +9,7 @@ class NumberListBuilder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.topRight,
-      padding: const EdgeInsets.only(top: 2, right: 10),
+      padding: const EdgeInsets.only(top: 2, right: 14),
       child: Text(
         "$number.",
         style: const TextStyle(

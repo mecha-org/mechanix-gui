@@ -35,7 +35,6 @@ class ContentEditor extends StatelessWidget {
           maxContentWidth: double.infinity,
           scrollable: true,
           enableSelectionToolbar: true,
-
           customLeadingBlockBuilder: (Node node, LeadingConfig config) {
             final attr = config.attribute;
 
@@ -133,9 +132,7 @@ class ContentEditor extends StatelessWidget {
           contextMenuBuilder: (context, rawEditorState) {
             return AdaptiveTextSelectionToolbar(
               anchors: rawEditorState.contextMenuAnchors,
-              children: const [
-                SelectionOptions()
-              ],
+              children: const [SelectionOptions()],
             );
           },
           spaceShortcutEvents: [

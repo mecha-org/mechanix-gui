@@ -7,7 +7,7 @@ class BulletListBuilder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 0, top: 12),
+      padding: const EdgeInsets.only(right: 0, top: 15),
       child: Container(
         width: 4,
         height: 4,

@@ -5,16 +5,9 @@ class CommonHelper {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
 
-    // Recents < 3 hours
-    if (diff.inHours < 3) {
-      if (diff.inMinutes < 1) {
-        return "Just now";
-      } else if (diff.inMinutes < 60) {
-        return "${diff.inMinutes} minutes ago";
-      } else {
-        final hours = diff.inHours;
-        return "$hours hour${hours > 1 ? 's' : ''} ago";
-      }
+    // Less than 1 hour → Just now
+    if (diff.inMinutes < 60) {
+      return "Just now";
     }
 
     final yesterday = now.subtract(const Duration(days: 1));
@@ -29,15 +22,54 @@ class CommonHelper {
         yesterday.month == dateTime.month &&
         yesterday.day == dateTime.day;
 
-    final time = DateFormat('h.mm a').format(dateTime);
+    final time24 = DateFormat('HH:mm').format(dateTime);
 
     if (isToday) {
-      return "Today, $time";
+      return "Today, $time24";
     } else if (isYesterday) {
-      return "Yesterday, $time";
-    } else {
-      final date = DateFormat('MMM d, yyyy').format(dateTime);
-      return "$date, $time";
+      return "Yesterday, $time24";
+    }
+
+    // If same year → "Nov 2"
+    if (now.year == dateTime.year) {
+      return DateFormat('MMM d').format(dateTime);
+    }
+
+    // If different year → "Nov 2, 2024"
+    return DateFormat('MMM d, yyyy').format(dateTime);
+  }
+
+  static String formatSectionLabel(String label) {
+    final now = DateTime.now();
+    final currentYear = now.year;
+
+    // These labels should remain as they are
+    const fixedLabels = {
+      "Today",
+      "Yesterday",
+      "Recent",
+      "This Week",
+      "This Month",
+      "Last Month",
+    };
+
+    if (fixedLabels.contains(label)) {
+      return label; // Do not change
+    }
+
+    // Handle labels like: January 2025
+    try {
+      final parsedDate = DateFormat("MMMM yyyy").parse(label);
+      final monthShort = DateFormat("MMM").format(parsedDate);
+
+      if (parsedDate.year == currentYear) {
+        return monthShort; // Jan
+      } else {
+        return "$monthShort ${parsedDate.year}"; // Jan 2024
+      }
+    } catch (_) {
+      // If parsing fails, just return the label
+      return label;
     }
   }
 }

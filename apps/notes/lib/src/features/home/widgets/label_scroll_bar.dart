@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_notes/src/commons/common_helper.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
@@ -107,7 +108,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
 
       newSectionInfos.add(
         SectionInfo(
-          label: group.label,
+          label: CommonHelper.formatSectionLabel(group.label),
           offset: sectionStartOffset,
           height: currentHeaderHeight + gridHeight,
         ),
@@ -362,7 +363,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 height: scrollbarHeight,
                                 decoration: BoxDecoration(
                                   color: NotesColors.titleTextColor,
-                                  borderRadius: BorderRadius.circular(3),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
                             ),

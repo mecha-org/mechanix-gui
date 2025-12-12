@@ -15,7 +15,6 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:watch_it/watch_it.dart';
-import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/pressable_list/mechanix_pressable_list_theme.dart';
@@ -96,43 +95,15 @@ class NotesApp extends StatelessWidget with WatchItMixin {
           MechanixNavigationBarThemeData(
             scrolledUnderElevation: 0,
             titleStyle: TextStyle(
-              fontSize: 24,
-              color: NotesColors.secondaryCardColor,
+              fontSize: 32,
+              height: 1.3,
+              letterSpacing: -1.1,
+              fontWeight: FontWeight.w600,
+              color: NotesColors.highlightTextColor,
             ),
             titleSpacing: 16,
             backgroundColor: Colors.transparent,
             elevation: 0,
-          ),
-
-          MechanixBottomBarThemeData(
-            iconTheme: MechanixBottomBarIconThemeData(
-              focusColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              splashColor: Colors.transparent,
-              // iconSize: 28,
-              padding: EdgeInsets.all(0),
-            ),
-
-            // iconTheme: MechanixBottomBarIconThemeData(
-            //   iconSize: 28,
-
-            //   padding: EdgeInsets.all(16),
-            // ),
-            height: 60,
-            decoration: BoxDecoration(
-              color: Color(0xFF2E2E2E),
-              borderRadius: BorderRadius.all(Radius.circular(0)),
-              // borderRadius: BorderRadius.only(
-              //   topLeft: Radius.circular(12),
-              //   topRight: Radius.circular(12),
-              // ),
-              boxShadow: [
-                BoxShadow(offset: Offset(0, 0), color: Color(0x99000000)),
-                BoxShadow(offset: Offset(0, 0), color: Color(0x40000000)),
-                BoxShadow(offset: Offset(0, 0), color: Color(0x40000000)),
-              ],
-            ),
           ),
         ],
       ),
@@ -172,6 +143,11 @@ class MyApp extends StatelessWidget {
       theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
 
       darkTheme: darkTheme.copyWith(
+        scrollbarTheme: const ScrollbarThemeData(
+          radius: Radius.circular(4),
+          thickness: WidgetStatePropertyAll(6),
+          thumbColor: WidgetStatePropertyAll(NotesColors.titleTextColor),
+        ),
         scaffoldBackgroundColor: Colors.black,
         textSelectionTheme: TextSelectionThemeData(
           cursorColor: NotesColors.secondaryCardColor,

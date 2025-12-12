@@ -141,8 +141,8 @@ final quillEditorStyle = DefaultStyles(
   lists: const DefaultListBlockStyle(
     TextStyle(color: NotesColors.titleTextColor, fontWeight: FontWeight.w400),
     HorizontalSpacing(0, 0), // Standard margins
-    VerticalSpacing(0, 10),
-    VerticalSpacing(0, 10),
+    VerticalSpacing(5, 5),
+    VerticalSpacing(5, 5),
     null,
     null,
   ),
