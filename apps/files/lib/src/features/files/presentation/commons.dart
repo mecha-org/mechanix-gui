@@ -124,7 +124,7 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VideoPlayer(filePath: fullPath),
+        builder: (_) => VideoPlayer(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -228,7 +228,7 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VideoPlayer(filePath: fullPath),
+        builder: (_) => VideoPlayer(rootContext: context, filePath: fullPath),
       ),
     );
     return;

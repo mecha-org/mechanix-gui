@@ -572,6 +572,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     return MechanixBottomBar(
       leadingWidget: [
         BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+              padding: EdgeInsets.only(left: 12)),
           iconPath: Images.back,
           onPressed: () {
             selectionMode
