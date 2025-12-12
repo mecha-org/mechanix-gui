@@ -36,7 +36,6 @@ log = { version = "0.4.27" }
 anyhow = { version = "1.0.99" }
 zbus = "4.1.2"
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = { version = "1.0.144" }
 futures = "0.3.31"
 futures-timer = "3.0.3"
 thiserror = "2.0.12"
