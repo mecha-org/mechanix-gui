@@ -14,4 +14,4 @@ zbus = { workspace = true }
 toml = "0.9.5"
 crc32fast = "1.5.0"
 dirs = { version = "6.0.0" }
-tantivy = { git = "https://github.com/quickwit-oss/tantivy.git", branch = "main" }
+tantivy = { version = "0.25.0" }

@@ -12,15 +12,16 @@ keywords.workspace = true
 
 [dependencies]
 gpui = { workspace = true }
-rust-embed = { workspace = true }
-anyhow = { workspace = true }
-futures = { workspace = true }
 commons = { path = "../commons" }
+settings = { path = "../settings" }
+theme = { path = "../theme" }
 status_bar = { path = "../status_bar" }
 settings_drawer = { path = "../settings_drawer" }
 universal_search = { path = "../universal_search" }
 running_apps = { path = "../running_apps" }
-types = { path = "../types" }
+homescreen = { path = "../homescreen" }
+dispatcher = { path = "../dispatcher" }
+shell_state = { path = "../shell_state" }
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"
