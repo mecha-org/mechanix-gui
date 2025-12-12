@@ -41,7 +41,8 @@ impl MechanixNotificationService {
         info!("notification service created successfully");
         Ok(Self { proxy })
     }
-    pub async fn stream_notification(&self) -> mpsc::Receiver<Notification> {
+    /// Returns a stream of notifications received from the dbus service.
+    pub async fn stream_receive_notification(&self) -> mpsc::Receiver<(u32, Notification)> {
         let proxy = self.proxy.clone();
         let (mut sender, receiver) = mpsc::channel(CHANNEL_SIZE);
         THREAD_POOL.spawn_ok(async move {
@@ -49,7 +50,7 @@ impl MechanixNotificationService {
                 Ok(mut stream) => {
                     while let Some(event) = stream.next().await {
                         if let Ok(args) = event.args() {
-                            if let Err(e) = sender.try_send(args.notification) {
+                            if let Err(e) = sender.try_send((args.id, args.notification)) {
                                 error!("failed to send notification to receiver: {}", e);
                                 continue;
                             }
@@ -58,6 +59,30 @@ impl MechanixNotificationService {
                 }
                 Err(e) => {
                     error!("Failed to get the stream of notification: {}", e);
+                }
+            }
+        });
+        receiver
+    }
+    
+    /// Returns a stream of notifications closed from the dbus service.
+    pub async fn stream_close_notification(&self) -> mpsc::Receiver<u32> {
+        let proxy = self.proxy.clone();
+        let (mut sender, receiver) = mpsc::channel(CHANNEL_SIZE);
+        THREAD_POOL.spawn_ok(async move {
+            match proxy.receive_notification_closed().await {
+                Ok(mut stream) => {
+                    while let Some(event) = stream.next().await {
+                        if let Ok(args) = event.args() {
+                            if let Err(e) = sender.try_send(args.id) {
+                                error!("failed to send a close signal to receiver: {}", e);
+                                continue;
+                            }
+                        }
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to get the stream of a close signal: {}", e);
                 }
             }
         });

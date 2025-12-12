@@ -7,7 +7,7 @@ use std::{
 
 use gpui::{
     div, prelude::FluentBuilder, px, rgb, Animation, AnimationExt, AnyElement, App,
-    AppContext, ClickEvent, Context, DismissEvent, ElementId, Entity,
+    AppContext, Context, DismissEvent, ElementId, Entity,
     EventEmitter, FontWeight, InteractiveElement as _, IntoElement, ParentElement as _, Render,
     SharedString, StatefulInteractiveElement, StyleRefinement, Styled, Subscription, Window,
 };
@@ -99,7 +99,7 @@ impl From<(NotificationType, SharedString)> for Notification {
     }
 }
 
-struct DefaultIdType;
+pub struct DefaultIdType;
 
 impl Notification {
     /// Create a new notification.
@@ -412,11 +412,11 @@ impl NotificationList {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        println!("inserted");
         let notification = notification.into();
         let id = notification.id.clone();
         let autohide = notification.autohide;
 
+        println!("inserting with notification id:  {:?}", id);
         // Remove the notification by id, for keep unique.
         self.notifications.retain(|note| note.read(cx).id != id);
 
@@ -458,6 +458,16 @@ impl NotificationList {
             n.update(cx, |note, cx| note.dismiss(window, cx))
         }
         cx.notify();
+    }
+    pub fn close_by_key(
+        &mut self,
+        key: impl Into<ElementId>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        // Build the same composite id used by Notification::id1()
+        let id_tuple = (TypeId::of::<Notification>(), key.into());
+        self.close(id_tuple, window, cx);
     }
 
     pub fn clear(&mut self, _: &mut Window, cx: &mut Context<Self>) {
