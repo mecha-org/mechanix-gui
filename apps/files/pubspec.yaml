@@ -65,6 +65,7 @@ dependencies:
       ref: refactor
   watch_it: ^1.7.0
   path_provider: ^2.1.5
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:
@@ -137,6 +138,13 @@ flutter:
     - assets/images/pause.png
     - assets/images/volume.png
     - assets/images/mute.png
+    - assets/images/crop.png
+    - assets/images/rotate_right.png
+    - assets/images/mirror_vertical.png
+    - assets/images/mirror_horizontal.png
+    - assets/images/redo.png
+    - assets/images/undo.png
+    - assets/images/check.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

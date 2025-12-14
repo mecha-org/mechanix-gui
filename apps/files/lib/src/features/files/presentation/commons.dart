@@ -172,7 +172,8 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ImageViewerPage(imagePath: fullPath),
+        builder: (_) =>
+            ImageViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -276,7 +277,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ImageViewerPage(imagePath: fullPath),
+        builder: (_) =>
+            ImageViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;

@@ -52,4 +52,11 @@ class Images {
   static const String pause = 'assets/images/pause.png';
   static const String volume = 'assets/images/volume.png';
   static const String mute = 'assets/images/mute.png';
+  static const String crop = 'assets/images/crop.png';
+  static const String rotateRight = 'assets/images/rotate_right.png';
+  static const String mirrorVertical = 'assets/images/mirror_vertical.png';
+  static const String mirrorHorizontal = 'assets/images/mirror_horizontal.png';
+  static const String redo = 'assets/images/redo.png';
+  static const String undo = 'assets/images/undo.png';
+  static const String check = 'assets/images/check.png';
 }
