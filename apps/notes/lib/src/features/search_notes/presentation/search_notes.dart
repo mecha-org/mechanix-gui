@@ -75,7 +75,8 @@ class _SearchNotesState extends State<SearchNotes> {
                             searchQuery.trim().length > 2
                                 ? "Start typing to search notes..."
                                 : "No Notes Found.",
-                            style: const TextStyle(
+                            style:
+                             const TextStyle(
                               fontSize: 16,
                               color: NotesColors.labelColor,
                               fontWeight: FontWeight.w400,

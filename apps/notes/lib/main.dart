@@ -24,7 +24,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeHive();
   Hive.registerAdapter(NoteHiveAdapter());
-  // MediaKit.ensureInitialized();
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -143,11 +142,22 @@ class MyApp extends StatelessWidget {
       theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
 
       darkTheme: darkTheme.copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        splashFactory: NoSplash.splashFactory,
+        iconButtonTheme: const IconButtonThemeData(
+          style: ButtonStyle(
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: WidgetStatePropertyAll(Colors.transparent),
+          ),
+        ),
         scrollbarTheme: const ScrollbarThemeData(
           radius: Radius.circular(4),
           thickness: WidgetStatePropertyAll(6),
           thumbColor: WidgetStatePropertyAll(NotesColors.titleTextColor),
         ),
+
         scaffoldBackgroundColor: Colors.black,
         textSelectionTheme: TextSelectionThemeData(
           cursorColor: NotesColors.secondaryCardColor,

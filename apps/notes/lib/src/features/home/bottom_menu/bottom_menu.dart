@@ -28,10 +28,10 @@ class _BottomMenuState extends State<BottomMenu> {
 
     final isSingle = notesToDelete.length == 1;
     final title =
-        "Delete ${isSingle ? "this Note?" : "${notesToDelete.length} Notes ?"}";
+        "Delete ${isSingle ? "this note?" : "${notesToDelete.length} notes?"}";
 
     final message =
-        "This action will delete the note${isSingle ? "" : "s"} permanently";
+        "This action will delete ${isSingle ? 'this note' : 'these notes'} permanently.";
 
     showModalBottomSheet(
       context: context,

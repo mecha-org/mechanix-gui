@@ -17,4 +17,5 @@ class NotesColors {
   static const Color checkboxBorderColor = Color(0xFFF0F0F0);
   static const Color strikeThroughColor = Color(0xFF797979);
   static const Color dividerColor = Color(0xFF585858);
+  static const Color bottomSheetColor = Color(0xFFF00000);
 }

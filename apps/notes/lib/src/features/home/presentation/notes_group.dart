@@ -26,7 +26,7 @@ class GroupHeaderName extends SliverPersistentHeaderDelegate {
           fontSize: 18,
           color: NotesColors.labelColor,
           fontWeight: FontWeight.w500,
-          height: 1.35,
+          height: 1.45,
         ),
       ),
     );

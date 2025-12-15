@@ -54,12 +54,20 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
 
     String title = "";
     final content = jsonEncode(widget.controller.document.toDelta().toJson());
-    final firstNewLineIndex = plainText.indexOf('\n');
 
-    if (firstNewLineIndex != -1) {
-      title = plainText.substring(0, firstNewLineIndex).trim();
-    } else {
-      title = trimmedText; // Use entire text as title if no newline
+    // Split by newlines and find the first non-empty line
+    final lines = plainText.split('\n');
+    for (final line in lines) {
+      final trimmedLine = line.trim();
+      if (trimmedLine.isNotEmpty) {
+        title = trimmedLine;
+        break;
+      }
+    }
+
+    // If no non-empty line found (shouldn't happen due to trimmedText check, but safe fallback)
+    if (title.isEmpty) {
+      title = trimmedText.replaceAll('\n', ' ').trim();
     }
 
     if (widget.noteId != null && widget.noteId!.isNotEmpty) {

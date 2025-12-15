@@ -6,6 +6,7 @@ import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
+import 'package:mechanix_notes/src/features/home/presentation/app_title.dart';
 import 'package:mechanix_notes/src/features/home/presentation/home_floating_button.dart';
 import 'package:mechanix_notes/src/features/home/presentation/note_card.dart';
 import 'package:mechanix_notes/src/features/home/presentation/notes_group.dart';
@@ -26,14 +27,32 @@ class NoteList extends StatefulWidget {
   State<NoteList> createState() => _NoteListState();
 }
 
-class _NoteListState extends State<NoteList> {
+class _NoteListState extends State<NoteList>
+    with SingleTickerProviderStateMixin {
   late final ScrollController _scrollController;
+  late final AnimationController _fabAnimationController;
+  late final Animation<double> _fabAnimation;
+
+  bool _isScrolling = false;
+  DateTime? _lastScrollTime;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+
+    // Animation controller for FAB fade
+    _fabAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: 1.0, // Start fully visible
+    );
+
+    _fabAnimation = CurvedAnimation(
+      parent: _fabAnimationController,
+      curve: Curves.easeInOut,
+    );
   }
 
   void _onScroll() {
@@ -41,9 +60,29 @@ class _NoteListState extends State<NoteList> {
     final position = _scrollController.position;
     if (!position.hasPixels || !position.hasContentDimensions) return;
 
+    // Track scrolling state
+    _lastScrollTime = DateTime.now();
+
+    if (!_isScrolling) {
+      _isScrolling = true;
+      _fabAnimationController.reverse(); // Fade out
+    }
+
+    // Check if scroll stopped after a delay
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (_lastScrollTime != null &&
+          DateTime.now().difference(_lastScrollTime!) >
+              const Duration(milliseconds: 100)) {
+        if (_isScrolling) {
+          _isScrolling = false;
+          _fabAnimationController.forward(); // Fade in
+        }
+      }
+    });
+
+    // Trigger pagination near bottom
     final maxScroll = position.maxScrollExtent;
     final currentScroll = position.pixels;
-    // Trigger near bottom
     if (currentScroll >= 0.8 * maxScroll) {
       context.read<NotesBloc>().add(LoadNextChunk());
     }
@@ -53,6 +92,7 @@ class _NoteListState extends State<NoteList> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _fabAnimationController.dispose();
     super.dispose();
   }
 
@@ -92,20 +132,30 @@ class _NoteListState extends State<NoteList> {
             physics: const AlwaysScrollableScrollPhysics(),
             cacheExtent: 800,
             slivers: [
+              // Add "Notes" title as first sliver if showTitle is true
+              if (!widget.isSelectionMode)
+                const SliverToBoxAdapter(child: AppTitle()),
+
+              // Add all note groups
               for (int i = 0; i < widget.groupedNotes.length; i++)
                 ..._buildGroupSection(widget.groupedNotes[i], i == 0),
             ],
           ),
         ),
+
+        // Floating button with fade animation
         BlocSelector<NotesBloc, NotesState, bool>(
           selector: (state) => state.isSelectionMode,
           builder:
               (context, value) =>
                   !value
-                      ? const Positioned(
+                      ? Positioned(
                         bottom: 16,
                         right: 16,
-                        child: HomeFloatingButton(),
+                        child: FadeTransition(
+                          opacity: _fabAnimation,
+                          child: const HomeFloatingButton(),
+                        ),
                       )
                       : const SizedBox.shrink(),
         ),

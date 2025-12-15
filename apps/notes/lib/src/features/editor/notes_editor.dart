@@ -25,6 +25,9 @@ class _NotesEditorState extends State<NotesEditor> {
 
   /// Flag to apply style to first new line
   bool _isFormatting = false;
+  
+  /// Flag to track if initial H1 has been applied
+  bool _initialH1Applied = false;
 
   final FloatingActionBarController floatingBar = FloatingActionBarController();
 
@@ -55,10 +58,33 @@ class _NotesEditorState extends State<NotesEditor> {
 
     if (isEditing) {
       context.read<EditorBloc>().add(LoadNoteContent(noteId: widget.noteId!));
+      _initialH1Applied = true; // Skip auto-formatting for existing notes
     } else {
       _openKeyboardAfterLoad();
+      // Apply H1 formatting to the first line immediately
+      _applyInitialH1();
     }
     _controller.addListener(_onControllerChange);
+  }
+
+  void _applyInitialH1() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialH1Applied) return;
+      
+      setState(() {
+        _isFormatting = true;
+        _initialH1Applied = true;
+      });
+
+      try {
+        // Apply H1 to the first line (position 0)
+        _controller.formatSelection(Attribute.h1);
+      } finally {
+        setState(() {
+          _isFormatting = false;
+        });
+      }
+    });
   }
 
   void _openKeyboardAfterLoad() {
@@ -163,6 +189,7 @@ class _NotesEditorState extends State<NotesEditor> {
                   _controller.document != state.document) {
                 // Load document into controller only once
                 _controller.document = state.document!;
+                _initialH1Applied = true; // Mark as applied for loaded documents
               }
 
               return ContentEditor(

@@ -6,6 +6,7 @@ import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/bottom_menu/bottom_menu.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
+import 'package:mechanix_notes/src/features/home/presentation/app_title.dart';
 import 'package:mechanix_notes/src/features/home/presentation/empty_notes.dart';
 import 'package:mechanix_notes/src/features/home/presentation/home_floating_button.dart';
 import 'package:mechanix_notes/src/features/home/presentation/loading_notes.dart';
@@ -91,11 +92,10 @@ class _HomePageState extends State<HomePage>
                         ? const HomeFloatingButton()
                         : const SizedBox.shrink(),
           ),
-          // App bar with smooth fade animation
+          // App bar only shows in selection mode
           appBar:
-              isSearchPage
-                  ? null
-                  : PreferredSize(
+              ((isSelectionMode && !isSearchPage)
+                  ? PreferredSize(
                     preferredSize: const Size.fromHeight(48),
                     child: BlocSelector<NotesBloc, NotesState, List<String>>(
                       selector: (state) => state.selectedNoteIds,
@@ -120,33 +120,25 @@ class _HomePageState extends State<HomePage>
                             );
                           },
                           child: MechanixNavigationBar(
-                            key: ValueKey(isSelectionMode),
+                            key: const ValueKey('selection_mode'),
                             height: 48,
                             automaticallyImplyLeading: false,
-                            theme: MechanixNavigationBarThemeData(
-                              titleStyle:
-                                  isSelectionMode
-                                      ? const TextStyle(
-                                        color: NotesColors.titleTextColor,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w500,
-                                      )
-                                      : const TextStyle(
-                                        fontSize: 28,
-                                        color: NotesColors.secondaryTextColor,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.3,
-                                      ),
+                            theme: const MechanixNavigationBarThemeData(
+                              titleStyle: TextStyle(
+                                color: NotesColors.titleTextColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                height: 1.3,
+                                letterSpacing: -1.1,
+                              ),
                             ),
-                            title:
-                                isSelectionMode
-                                    ? "${selectedNoteIds.length} Selected"
-                                    : "Notes",
+                            title: "${selectedNoteIds.length}   Selected",
                           ),
                         );
                       },
                     ),
-                  ),
+                  )
+                  : null),
 
           // Animated body with smooth vertical slide transition
           body: AnimatedSwitcher(
@@ -203,25 +195,38 @@ class _HomePageState extends State<HomePage>
                       builder: (context, data) {
                         final isLoading = data.item1;
                         final groupedNotes = data.item2;
-                        // Animated loading state
+
+                        // Animated loading state - show "Notes" title
                         if (isLoading) {
                           return Center(
                             child: FadeTransition(
                               opacity: _fadeAnimation,
-                              child: const LoadingNotes(),
+                              child: Column(
+                                children: [
+                                  if (!isSelectionMode) const AppTitle(),
+                                  const Expanded(
+                                    child: Center(child: LoadingNotes()),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }
 
-                        // Animated empty state
+                        // Animated empty state - show "Notes" title
                         if (groupedNotes.isEmpty) {
                           return FadeTransition(
                             opacity: _fadeAnimation,
-                            child: const EmptyNotes(),
+                            child: Column(
+                              children: [
+                                if (!isSelectionMode) const AppTitle(),
+                                const Expanded(child: EmptyNotes()),
+                              ],
+                            ),
                           );
                         }
 
-                        // Animated note list
+                        // Animated note list with scrollable title
                         return FadeTransition(
                           opacity: _fadeAnimation,
                           child: NoteList(
