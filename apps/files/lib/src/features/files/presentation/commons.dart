@@ -136,7 +136,7 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(filePath: fullPath),
+        builder: (_) => PdfViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -241,7 +241,7 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(filePath: fullPath),
+        builder: (_) => PdfViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;

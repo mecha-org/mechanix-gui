@@ -1,17 +1,28 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 
 /// A StatefulWidget to view PDF files with search and password protection support.
 class PdfViewerPage extends StatefulWidget {
-  final String filePath;
+  final BuildContext rootContext;
+  String filePath;
 
-  const PdfViewerPage({super.key, required this.filePath});
+  PdfViewerPage({super.key, required this.rootContext, required this.filePath});
 
   @override
   State<PdfViewerPage> createState() => _PdfViewerPageState();
@@ -27,6 +38,16 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   int? currentMatchIndex;
   List<PdfTextRangeWithFragments> matches = [];
 
+  bool isMenuOpen = false;
+  String title = '';
+
+  OverlayEntry? _searchOverlayEntry;
+  int _currentPage = 1;
+  int _pageCount = 0;
+
+  OverlayEntry? _pageBubbleOverlay;
+  Timer? _hideBubbleTimer;
+
   @override
   void initState() {
     super.initState();
@@ -39,10 +60,16 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         matches = _searcher.matches;
       });
     });
+
+    _controller.addListener(_onPageChanged);
   }
 
   @override
   void dispose() {
+    _hideBubbleTimer?.cancel();
+    _pageBubbleOverlay?.remove();
+    _controller.removeListener(_onPageChanged);
+
     _searcher.dispose();
     super.dispose();
   }
@@ -66,12 +93,12 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   /// Prompts the user for a password if the PDF is password-protected
   /// TODO: Implement password validation logic for wrong password
   Future<String?> _passwordProvider() async {
-    bool obscureText = true;
     String password = '';
+    bool obscureText = true;
 
     final result = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (bottomSheetContext) {
         return StatefulBuilder(
@@ -89,107 +116,46 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
                 ),
                 child: Container(
-                  padding: const EdgeInsets.all(20),
+                  height: 60,
                   decoration: const BoxDecoration(
-                    color: Colors.transparent,
+                    color: Color(0xFF151515),
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(12)),
                   ),
-                  child: MechanixTextInputTheme(
-                    style: MechanixTextInputThemeData(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Enter password',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
+                  child: Center(
+                    child: MechanixTextInput.password(
+                      autofocus: true,
+                      isPasswordField: obscureText,
+                      theme: MechanixTextInputThemeData(
+                        fillColor: const Color(0xFF151515),
+                        borderSide: const BorderSide(color: Color(0xFF151515)),
+                        focusedBorderSide:
+                            const BorderSide(color: Color(0xFF151515)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      cursorColor: Theme.of(context)
+                          .extension<FilesTheme>()!
+                          .primaryColor,
+                      prefixIcon:
+                          const IconWidget.fromIconData(icon: Icon(Icons.lock)),
+                      hintText: 'Enter PDF password',
+                      onChanged: (value) {
+                        password = value;
+                      },
+                      anchorWidget: Padding(
+                        padding: const EdgeInsets.only(left: 4.0, right: 4.0),
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            color: Colors.white70,
+                            size: 24,
                           ),
-                        ).padBottom(12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: MechanixTextInput.password(
-                                isPasswordField: obscureText,
-                                onChanged: (value) {
-                                  password = value;
-                                },
-                                inputDecoration: InputDecoration(
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 16),
-                                  filled: true,
-                                  fillColor: const Color(0xFF2C2C2E),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(50),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  hintText: "Password here",
-                                  hintStyle:
-                                      const TextStyle(color: Colors.white54),
-                                  prefixIcon: const Icon(Icons.lock_outline,
-                                      color: Colors.white54),
-                                  prefixIconConstraints: const BoxConstraints(
-                                    minWidth: 40,
-                                    minHeight: 40,
-                                  ),
-                                  suffixIcon: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          obscureText
-                                              ? Icons.visibility_off
-                                              : Icons.visibility,
-                                          color: Colors.white54,
-                                        ),
-                                        onPressed: () {
-                                          setModalState(() {
-                                            obscureText = !obscureText;
-                                          });
-                                        },
-                                      ),
-                                      Container(
-                                        width: 1,
-                                        height: 28,
-                                        color: Colors.white24,
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 8),
-                                      ),
-                                      OutlinedButton(
-                                        style: OutlinedButton.styleFrom(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 14))
-                                            .copyWith(
-                                          splashFactory: NoSplash
-                                              .splashFactory, // Disable ripple animation
-                                        ),
-                                        onPressed: () {
-                                          password = '';
-                                          Navigator.of(bottomSheetContext)
-                                              .pop();
-                                        },
-                                        child: const Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                        ),
-                                      ).padRight(6),
-                                    ],
-                                  ),
-                                  suffixIconConstraints: const BoxConstraints(
-                                    minWidth: 80,
-                                    minHeight: 40,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          onPressed: () {
+                            password = '';
+                            Navigator.of(bottomSheetContext).pop();
+                          },
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -202,8 +168,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
     if (!mounted) return null;
 
-    if (result == null) {
-      Navigator.of(context).pop();
+    if (result == null || result.isEmpty) {
+      Navigator.of(context).pop(); // close PDF if cancelled
       return null;
     }
 
@@ -213,66 +179,135 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: isSearching ? _buildSearchAppBar() : _buildNormalAppBar(),
-      body: ContainerWidget(
-        child: Stack(
-          children: [
-            // Display the PDF viewer
-            PdfViewer.file(
-              widget.filePath,
-              controller: _controller,
-              passwordProvider: _passwordProvider,
-              firstAttemptByEmptyPassword: true,
-              params: PdfViewerParams(
-                enableTextSelection: true,
-                maxScale: 4.0,
-                minScale: 1.0,
+        appBar: isSearching ? _buildSearchAppBar() : _buildNormalAppBar(),
+        body: ContainerWidget(
+          child: Stack(
+            children: [
+              // Display the PDF viewer
+              PdfViewer.file(
+                widget.filePath,
+                controller: _controller,
+                passwordProvider: _passwordProvider,
+                firstAttemptByEmptyPassword: true,
+                params: PdfViewerParams(
+                  backgroundColor: Colors.black,
+                  enableTextSelection: true,
+                  maxScale: 4.0,
+                  minScale: 1.0,
 
-                // Optional: highlight search matches
-                pageOverlaysBuilder: (context, pageRect, page) {
-                  return [
-                    CustomPaint(
-                      size: pageRect.size,
-                      painter: _PdfSearchHighlightPainter(
-                        searcher: _searcher,
-                        page: page,
+                  // Optional: highlight search matches
+                  pageOverlaysBuilder: (context, pageRect, page) {
+                    return [
+                      CustomPaint(
+                        size: pageRect.size,
+                        painter: _PdfSearchHighlightPainter(
+                          searcher: _searcher,
+                          page: page,
+                        ),
                       ),
-                    ),
-                  ];
-                },
+                    ];
+                  },
+                ),
+                initialPageNumber: 1,
               ),
-              initialPageNumber: 1,
+            ],
+          ),
+        ),
+        bottomNavigationBar: _buildBottomBar(context));
+  }
+
+  void _onPageChanged() {
+    final page = _controller.pageNumber;
+    final count = _controller.pageCount ?? 0;
+
+    if (page == null || page == _currentPage) return;
+
+    setState(() {
+      _currentPage = page;
+      _pageCount = count;
+    });
+
+    _showPageBubble();
+  }
+
+  void _showPageBubble() {
+    _pageBubbleOverlay?.remove();
+
+    final overlay = Overlay.of(context);
+    if (overlay == null) return;
+
+    _pageBubbleOverlay = OverlayEntry(
+      builder: (_) => Positioned(
+        bottom: 80, // above bottom bar
+        left: 0,
+        right: 0,
+        child: IgnorePointer(
+          child: Center(
+            child: AnimatedOpacity(
+              opacity: 1,
+              duration: const Duration(milliseconds: 150),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Page $_currentPage of $_pageCount',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );
+
+    overlay.insert(_pageBubbleOverlay!);
+
+    _hideBubbleTimer?.cancel();
+    _hideBubbleTimer = Timer(const Duration(seconds: 2), _hidePageBubble);
+  }
+
+  void _hidePageBubble() {
+    _pageBubbleOverlay?.remove();
+    _pageBubbleOverlay = null;
   }
 
   /// Normal app bar with file name and search icon
   PreferredSizeWidget _buildNormalAppBar() {
-    return MechanixNavigationBar(
-      theme: const MechanixNavigationBarThemeData(titleSpacing: 0),
-      leadingWidget: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
-        onPressed: () => Navigator.pop(context),
-        highlightColor: Colors.transparent,
-      ),
-      titleWidget: Text(
-        p.basename(widget.filePath),
-        style: context.textTheme.bodySmall,
-      ),
-      actionWidgets: [
-        IconButton(
-          icon: const Icon(Icons.search, color: Colors.white),
-          onPressed: () {
-            setState(() {
-              isSearching = true;
-              searchController.clear();
-            });
-          },
+    title = title = p.basename(widget.filePath);
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          scrolledUnderElevation: 0,
+          title: Text(
+            title,
+            style: TextStyle(
+              color: const Color(0xFFD2D2D2),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              fontFamily:
+                  Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
-      ],
+      ),
     );
   }
 
@@ -341,6 +376,211 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         ),
       ],
     );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return Container(
+      color: Colors.grey.shade900,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MechanixBottomBar(
+            leadingWidget: [
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    padding: EdgeInsets.only(left: 12)),
+                iconPath: Images.back,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+            centerWidgetSpacing: 30,
+            centerWidget: [
+              BottomBarButton(
+                iconPath: Images.search,
+                onPressed: () {
+                  showPdfSearchBottomSheet(context);
+                },
+              ),
+              BottomBarButton(
+                iconPath: Images.copy,
+                onPressed: () {
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleCopy();
+                },
+              ),
+              BottomBarButton(
+                iconPath: Images.move,
+                onPressed: () {
+                  Navigator.pop(context);
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleMove();
+                },
+              ),
+              BottomBarButton(
+                iconWidget: IconWidget(
+                  iconPath: Images.share,
+                  iconColor: Colors.grey.shade600,
+                ),
+                onPressed: () {},
+                isDisabled: true, //TODO : add share functionality
+              ),
+            ],
+            anchorWidget: [
+              BottomBarButton.widget(widget: buildActionsMenu(context)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildActionsMenu(BuildContext context) {
+    final offset = const Offset(-8, -14);
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return MechanixMenu(
+      offset: offset,
+      dropdownPosition: DropdownPosition.topRight,
+      animationDuration: const Duration(milliseconds: 300),
+      buttonIcon: IconWidget(
+          iconPath: Images.dots,
+          iconColor: isMenuOpen
+              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
+              : Colors.white70),
+      openMenu: () {
+        setState(() => isMenuOpen = true);
+      },
+      closeMenu: () {
+        setState(() => isMenuOpen = false);
+      },
+      items: [
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.rename,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          title: 'Rename',
+          onTap: () async {
+            final oldPath = widget.filePath;
+
+            // Wait for rename result
+            final newPath = await state?.showRenameSheet(
+              initialName: p.basename(oldPath),
+            );
+
+            // If user canceled : do nothing
+            if (newPath == null) return;
+
+            // If rename succeeded : update title + filepath
+            setState(() {
+              title = p.basename(newPath);
+            });
+
+            // Also update widget.filePath for correct behavior
+            widget.filePath = newPath;
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Properties",
+          leading: Image.asset(
+            Images.info,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            state?.showDetailsDialog(widget.rootContext, widget.filePath);
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Delete",
+          leading: Image.asset(
+            Images.delete,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            state?.confirmDelete(widget.rootContext, {widget.filePath});
+          },
+        ),
+      ],
+    ).padRight(8);
+  }
+
+  void showPdfSearchBottomSheet(BuildContext context) {
+    final overlay = Overlay.of(context);
+    if (overlay == null) return;
+
+    _searchOverlayEntry?.remove();
+
+    _searchOverlayEntry = OverlayEntry(
+      builder: (ctx) => Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: SizedBox(
+            height: 60,
+            child: MechanixTextInput.search(
+              theme: MechanixTextInputThemeData(
+                fillColor: const Color(0xFF151515),
+                borderSide: const BorderSide(color: Color(0xFF151515)),
+                focusedBorderSide: const BorderSide(color: Color(0xFF151515)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              cursorColor:
+                  Theme.of(context).extension<FilesTheme>()!.primaryColor,
+              autofocus: true,
+              prefixIcon: const IconWidget(
+                iconPath: Images.search,
+                iconColor: Color(0xFFD2D2D2),
+                iconHeight: 24,
+                iconWidth: 24,
+              ),
+              hintText: "Search in PDF",
+              onChanged: _onPdfSearchChanged,
+              onClear: _clearPdfSearch,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_searchOverlayEntry!);
+  }
+
+  void _onPdfSearchChanged(String query) {
+    if (query.trim().isEmpty) {
+      setState(() {
+        matches = [];
+        currentMatchIndex = null;
+      });
+      return;
+    }
+
+    _searcher.startTextSearch(
+      query,
+      caseInsensitive: true,
+      goToFirstMatch: true,
+    );
+  }
+
+  void _clearPdfSearch() {
+    _searcher.startTextSearch('');
+
+    setState(() {
+      matches = [];
+      currentMatchIndex = null;
+    });
+
+    _searchOverlayEntry?.remove();
+    _searchOverlayEntry = null;
   }
 }
 
