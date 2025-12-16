@@ -347,35 +347,41 @@ class NotesRepositoryImpl extends NotesRepository {
       final List<SearchMetaData> searchResults = [];
 
       for (final note in box.values) {
-        final plainTextLower = note.plainText.toLowerCase();
-
         // Split plainText into lines
         final lines = note.plainText.split('\n');
-        final firstLine = lines.isNotEmpty ? lines.first.trim() : '';
-        final hasTitle = firstLine.isNotEmpty;
 
-        // Separate title and content
+        // Find the first non-empty line as title
         String titleText = '';
-        String contentText = '';
         String titleLower = '';
+        int titleLineIndex = -1;
+
+        for (int i = 0; i < lines.length; i++) {
+          final trimmedLine = lines[i].trim();
+          if (trimmedLine.isNotEmpty) {
+            titleText = trimmedLine;
+            titleLower = trimmedLine.toLowerCase();
+            titleLineIndex = i;
+            break;
+          }
+        }
+
+        final hasTitle = titleText.isNotEmpty;
+
+        // Content is everything after the title line
+        String contentText = '';
         String contentLower = '';
-        if (hasTitle) {
-          titleText = firstLine;
-          titleLower = firstLine.toLowerCase();
-          // Content is everything after the first line
-          contentText =
-              lines.length > 1 ? lines.sublist(1).join('\n').trim() : '';
+
+        if (hasTitle && titleLineIndex < lines.length - 1) {
+          // Join all lines after the title line
+          contentText = lines.sublist(titleLineIndex + 1).join('\n').trim();
           contentLower = contentText.toLowerCase();
-        } else {
-          // No title, everything is content
-          contentText = note.plainText;
-          contentLower = plainTextLower;
         }
 
         // Count occurrences in title and content
         final titleMatches =
             hasTitle ? _countOccurrences(titleLower, query) : 0;
-        final contentMatches = _countOccurrences(contentLower, query);
+        final contentMatches =
+            contentText.isNotEmpty ? _countOccurrences(contentLower, query) : 0;
         final totalCount = titleMatches + contentMatches;
 
         // Skip if no matches found
@@ -391,6 +397,8 @@ class NotesRepositoryImpl extends NotesRepository {
               updatedAt: note.updatedAt,
               isTitle: true,
               availableCount: totalCount,
+              titleMatchCount: titleMatches,
+              contentMatchCount: contentMatches,
             ),
           );
         }
@@ -406,12 +414,32 @@ class NotesRepositoryImpl extends NotesRepository {
               updatedAt: note.updatedAt,
               isTitle: false,
               availableCount: totalCount,
+              titleMatchCount: titleMatches,
+              contentMatchCount: contentMatches,
             ),
           );
         }
       }
 
-      searchResults.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      // Ranking algorithm:
+      // 1. Sort by total match count (descending)
+      // 2. If equal, prioritize content matches over title matches
+      // 3. If still equal, sort by updated date (most recent first)
+      searchResults.sort((a, b) {
+        // First: Compare total match counts
+        final countComparison = b.availableCount.compareTo(a.availableCount);
+        if (countComparison != 0) return countComparison;
+
+        // Second: Prioritize content matches
+        // Higher content match count = better rank
+        final contentComparison = b.contentMatchCount.compareTo(
+          a.contentMatchCount,
+        );
+        if (contentComparison != 0) return contentComparison;
+
+        // Third: Sort by updated date (most recent first)
+        return b.updatedAt.compareTo(a.updatedAt);
+      });
 
       logger.i(
         "Found ${searchResults.length} search results matching '$query'",
@@ -448,15 +476,11 @@ class NotesRepositoryImpl extends NotesRepository {
   ) {
     if (originalText.isEmpty || query.isEmpty) return originalText;
 
-    const int leftWords = 2; // Words to show on left each side
-    const int rightWords = 3; // Words to show on right each side
+    const int leftChars = 10; // Characters to show on left
+    const int rightChars = 20; // Characters to show on right
     const String ellipsis = "...";
 
-    // Find first occurrence
-    final matchIndex = lowerText.indexOf(query);
-    if (matchIndex == -1) return originalText;
-
-    // Split into words and clean
+    // Split into words and clean (removes \n and multiple spaces)
     final words =
         originalText
             .split(RegExp(r'\s+'))
@@ -465,33 +489,27 @@ class NotesRepositoryImpl extends NotesRepository {
 
     if (words.isEmpty) return originalText;
 
-    // Find which word contains the match
-    int matchWordIndex = -1;
-    int currentPos = 0;
+    // Reconstruct clean text with single spaces
+    final cleanText = words.join(' ');
+    final cleanLowerText = cleanText.toLowerCase();
 
-    for (int i = 0; i < words.length; i++) {
-      final wordEnd = currentPos + words[i].length;
-      if (matchIndex >= currentPos && matchIndex < wordEnd) {
-        matchWordIndex = i;
-        break;
-      }
-      currentPos = wordEnd + 1; // +1 for space
-    }
+    // Find first occurrence in clean text
+    final matchIndex = cleanLowerText.indexOf(query);
+    if (matchIndex == -1) return cleanText;
 
-    if (matchWordIndex == -1) return originalText.trim();
+    // Calculate start and end positions
+    final matchEnd = matchIndex + query.length;
+    final start = (matchIndex - leftChars).clamp(0, cleanText.length);
+    final end = (matchEnd + rightChars).clamp(0, cleanText.length);
 
-    // Extract words around match
-    int start = (matchWordIndex - leftWords).clamp(0, words.length);
-    int end = (matchWordIndex + rightWords + 1).clamp(0, words.length);
-
-    final extractedWords = words.sublist(start, end);
-    String result = extractedWords.join(' ');
+    // Extract substring
+    String result = cleanText.substring(start, end);
 
     // Add ellipsis
     if (start > 0) result = ellipsis + result;
-    if (end < words.length) result = result + ellipsis;
+    if (end < cleanText.length) result = result + ellipsis;
 
-    return result;
+    return result.trim();
   }
 
   @override
@@ -503,10 +521,7 @@ class NotesRepositoryImpl extends NotesRepository {
 
       if (note != null) {
         logger.i('Note found: $noteId');
-        return EditorPayload(
-          id: note.id,
-          content: note.content,
-        );
+        return EditorPayload(id: note.id, content: note.content);
       }
 
       logger.w('Note not found: $noteId');

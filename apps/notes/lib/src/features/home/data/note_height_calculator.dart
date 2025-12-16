@@ -5,8 +5,8 @@ import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 
 class NoteHeightCalculator {
   // UI Constants - Match exactly with your NotePreview widget
-  static const double baseFontSize = 14.0;
-  static const double lineHeight = 1.5;
+  static const double baseFontSize = 16.0;
+  static const double lineHeight = 1.4;
   static const double baseLineHeight = baseFontSize * lineHeight; // 21px
 
   // Preview constraints
@@ -18,7 +18,7 @@ class NoteHeightCalculator {
   static const double h2FontSize = 16.0;
 
   // Code block styling (from NotePreview _buildCodeBlock)
-  static const double codeFontSize = 14.0;
+  static const double codeFontSize = 16.0;
   static const double codeLineHeight = 1.4;
   static const double codePadding = 30.0; // 8px top + 8px bottom
   static const double codeMarginVertical =

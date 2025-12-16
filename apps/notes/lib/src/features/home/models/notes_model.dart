@@ -59,6 +59,8 @@ class SearchMetaData {
   final DateTime updatedAt;
   final bool isTitle;
   final int availableCount;
+  final int titleMatchCount;
+  final int contentMatchCount;
 
   SearchMetaData({
     required this.id,
@@ -66,6 +68,8 @@ class SearchMetaData {
     required this.updatedAt,
     required this.isTitle,
     required this.availableCount,
+    required this.titleMatchCount,
+    required this.contentMatchCount,
   });
 }
 

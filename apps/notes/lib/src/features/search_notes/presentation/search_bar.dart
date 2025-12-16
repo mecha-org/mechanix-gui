@@ -42,6 +42,10 @@ class _SearchInputBarState extends State<SearchInputBar> {
     _debounceTimer = Timer(Constants.debounceDuration, () {
       if (val.trim().length > 2) {
         context.read<NotesBloc>().add(SearchEvent(val));
+      } else {
+        if (context.read<NotesBloc>().state.searchedNotes.isNotEmpty) {
+          context.read<NotesBloc>().add(SearchEvent(''));
+        }
       }
       widget.onChanged(val);
     });

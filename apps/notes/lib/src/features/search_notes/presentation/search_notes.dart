@@ -72,12 +72,11 @@ class _SearchNotesState extends State<SearchNotes> {
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 80),
                           child: Text(
-                            searchQuery.trim().length > 2
+                            searchQuery.trim().length < 2
                                 ? "Start typing to search notes..."
                                 : "No Notes Found.",
-                            style:
-                             const TextStyle(
-                              fontSize: 16,
+                            style: const TextStyle(
+                              fontSize: 18,
                               color: NotesColors.labelColor,
                               fontWeight: FontWeight.w400,
                             ),
@@ -135,7 +134,6 @@ class _SearchNotesState extends State<SearchNotes> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 6,
-                                            vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
                                             color: NotesColors

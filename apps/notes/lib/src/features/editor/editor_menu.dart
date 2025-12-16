@@ -17,6 +17,7 @@ class EditorMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MechanixMenu(
+      animationDuration: const Duration(milliseconds: 100),
       topTabWidth: 10,
       topTabRightSideShiftLength: 50,
       dropdownPosition: DropdownPosition.topRight,

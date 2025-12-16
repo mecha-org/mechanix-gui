@@ -50,9 +50,6 @@ class EditorIconButton extends StatelessWidget {
 
         splashRadius: 24,
         iconSize: 24,
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
       ),
     );
   }

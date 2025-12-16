@@ -48,6 +48,8 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
 
     // Don't save if there's no actual content
     if (trimmedText.isEmpty) {
+      textEditorController.close();
+      alignEditorController.close();
       Navigator.pop(context);
       return;
     }
@@ -84,6 +86,8 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
     }
 
     context.read<NotesBloc>().add(LoadNotes());
+    textEditorController.close();
+    alignEditorController.close();
     Navigator.pop(context);
   }
 
@@ -125,6 +129,13 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
   void _redoCall() {
     requestFocus();
     widget.controller.redo();
+  }
+
+  @override
+  void dispose() {
+    textEditorController.dispose();
+    alignEditorController.dispose();
+    super.dispose();
   }
 
   @override

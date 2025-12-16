@@ -10,6 +10,7 @@ final quillEditorStyle = DefaultStyles(
     TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w400,
+      fontFamily: "Overused Grotesk",
       color: NotesColors.titleTextColor,
       height: 1.45, // Word-like line spacing
       letterSpacing: 0.0,
@@ -27,6 +28,7 @@ final quillEditorStyle = DefaultStyles(
       fontWeight: FontWeight.w700,
       color: NotesColors.titleTextColor,
       height: 1.3,
+      fontFamily: "Overused Grotesk",
       letterSpacing: 0,
     ),
     HorizontalSpacing(0, 0), // Standard margins
@@ -41,6 +43,7 @@ final quillEditorStyle = DefaultStyles(
       fontSize: 20,
       fontWeight: FontWeight.w700,
       color: NotesColors.titleTextColor,
+      fontFamily: "Overused Grotesk",
       height: 1.25,
       letterSpacing: 0,
     ),
@@ -55,6 +58,7 @@ final quillEditorStyle = DefaultStyles(
     TextStyle(
       fontSize: 18,
       fontWeight: FontWeight.w600,
+      fontFamily: "Overused Grotesk",
       color: NotesColors.titleTextColor,
       height: 1.2,
       letterSpacing: 0.2,
@@ -70,6 +74,7 @@ final quillEditorStyle = DefaultStyles(
     TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w400,
+      fontFamily: "Overused Grotesk",
       color: NotesColors.secondaryTextColor,
       height: 1.2,
       letterSpacing: 0.2,
@@ -85,6 +90,7 @@ final quillEditorStyle = DefaultStyles(
       fontSize: 16,
       color: NotesColors.titleTextColor, // Slightly dimmed for quotes
       height: 1.2,
+      fontFamily: "Overused Grotesk",
       fontStyle: FontStyle.italic,
     ),
     HorizontalSpacing(0, 0), // Indented left margin
@@ -139,10 +145,14 @@ final quillEditorStyle = DefaultStyles(
   //   null,
   // ),
   lists: const DefaultListBlockStyle(
-    TextStyle(color: NotesColors.titleTextColor, fontWeight: FontWeight.w400),
+    TextStyle(
+      color: NotesColors.titleTextColor,
+      fontWeight: FontWeight.w400,
+      fontFamily: "Overused Grotesk",
+    ),
     HorizontalSpacing(0, 0), // Standard margins
-    VerticalSpacing(5, 5),
-    VerticalSpacing(5, 5),
+    VerticalSpacing(2, 2),
+    VerticalSpacing(2, 2),
     null,
     null,
   ),
@@ -150,6 +160,7 @@ final quillEditorStyle = DefaultStyles(
   strikeThrough: const TextStyle(
     decoration: TextDecoration.lineThrough,
     decorationColor: NotesColors.strikeThroughColor,
+    fontFamily: "Overused Grotesk",
     color: NotesColors.strikeThroughColor,
   ),
 
@@ -158,6 +169,7 @@ final quillEditorStyle = DefaultStyles(
     color: Color(0xFF4A9EFF),
     decoration: TextDecoration.underline,
     decorationColor: Color(0xFF4A9EFF),
+    fontFamily: "Overused Grotesk",
   ),
 
   // Color and size variations

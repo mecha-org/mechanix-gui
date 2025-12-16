@@ -8,6 +8,7 @@ final titleStyle = const TextStyle(
   fontSize: 18,
   overflow: TextOverflow.ellipsis,
   fontWeight: FontWeight.w500,
+  fontFamily: "Overused Grotesk",
 );
 
 final normalStyle = const TextStyle(
@@ -15,4 +16,5 @@ final normalStyle = const TextStyle(
   color: NotesColors.labelColor,
   overflow: TextOverflow.ellipsis,
   fontWeight: FontWeight.w400,
+  fontFamily: "Overused Grotesk",
 );

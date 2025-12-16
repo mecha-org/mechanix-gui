@@ -33,9 +33,6 @@ class HomeFloatingButton extends StatelessWidget {
                   color: NotesColors.secondaryButtonColor,
                 ),
                 child: IconButton(
-                  hoverColor: Colors.transparent,
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
                   padding: const EdgeInsets.all(10),
                   onPressed: hasNotes ? onSearch : null,
 
@@ -57,9 +54,6 @@ class HomeFloatingButton extends StatelessWidget {
             color: NotesColors.secondaryCardColor,
           ),
           child: IconButton(
-            hoverColor: Colors.transparent,
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
             iconSize: 56,
             padding: const EdgeInsets.all(15),
             onPressed: createNote,

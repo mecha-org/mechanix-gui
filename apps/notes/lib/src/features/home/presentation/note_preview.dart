@@ -18,12 +18,7 @@ class NotePreview extends StatelessWidget {
       TextSpan(children: _buildInline(lines)),
       maxLines: maxLines,
       overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
-        fontSize: 14,
-        color: NotesColors.labelColor,
-        height: 1.5,
-        letterSpacing: -0.1,
-      ),
+      style: const TextStyle(fontSize: 16, color: NotesColors.labelColor),
     );
   }
 
@@ -47,6 +42,7 @@ class NotePreview extends StatelessWidget {
               text: "$numberedListCounter. ",
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
+                fontSize: 16,
                 color: NotesColors.labelColor,
               ),
             ),
@@ -62,7 +58,6 @@ class NotePreview extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: NotesColors.labelColor,
-
                 fontSize: 16,
               ),
             ),
