@@ -88,4 +88,10 @@ impl MechanixNotificationService {
         });
         receiver
     }
+    pub async fn send_action_invoke(&self, id: u32, action_key: &str) -> Result<(), MechanixNotificationError> {
+        let proxy = self.proxy.clone();
+        proxy.invoke_action(id, action_key)
+            .await
+            .map_err(|e| MechanixNotificationError::CreateProxyError(e.to_string()))
+    }
 }

@@ -1,12 +1,11 @@
-use std::collections::HashMap;
-use zvariant::{ OwnedValue, Structure, Type };
-use std::path::{PathBuf,Path};
-use std::fs;
+use freedesktop_icons::lookup;
 use gdk_pixbuf::Pixbuf;
 use glib::Bytes;
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::time::Duration;
 use zbus::export::serde::{Deserialize, Serialize};
-use freedesktop_icons::lookup;
+use zvariant::{OwnedValue, Structure, Type};
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Notification {
     pub app_name: String,
@@ -47,9 +46,8 @@ impl Notification {
         Hints::from_hashmap(&self.hints)
     }
 
-    pub fn get_expire_timeout(&self)-> std::time::Duration
-    {
-        if self.expire_timeout ==0 || self.is_resident() {
+    pub fn get_expire_timeout(&self) -> std::time::Duration {
+        if self.expire_timeout == 0 || self.is_resident() {
             Duration::from_millis(0 as u64)
         } else if self.expire_timeout == -1 {
             Duration::from_millis(DEFAULT_EXPIRE_TIMEOUT as u64)
@@ -62,10 +60,8 @@ impl Notification {
     pub fn is_resident(&self) -> bool {
         for (key, value) in &self.hints {
             if key == "resident" {
-                if
-                    let Ok(resident) = <zvariant::OwnedValue as TryInto<bool>>::try_into(
-                        value.try_clone().unwrap()
-                    )
+                if let Ok(resident) =
+                    <zvariant::OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap())
                 {
                     return resident;
                 }
@@ -78,10 +74,8 @@ impl Notification {
     pub fn is_transient(&self) -> bool {
         for (key, value) in &self.hints {
             if key == "transient" {
-                if
-                    let Ok(transient) = <zvariant::OwnedValue as TryInto<bool>>::try_into(
-                        value.try_clone().unwrap()
-                    )
+                if let Ok(transient) =
+                    <zvariant::OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap())
                 {
                     return transient;
                 }
@@ -133,7 +127,7 @@ impl Image {
         match self {
             Image::Name(name) => {
                 // Look up icon in theme and sav
-                if let Some(icon) = lookup("firefox").find() {
+                if let Some(icon) = lookup(name).find() {
                     // Get the best matching file path (there can be multiple for different sizes/types)
                     if let source_path = icon {
                         std::fs::copy(&source_path, &path)?;
@@ -163,6 +157,31 @@ impl Image {
             }
         }
     }
+    pub fn resolve_path(&self) -> Result<Option<PathBuf>, Box<dyn std::error::Error>> {
+        match self {
+            Image::Name(name) => {
+                // Look up icon in theme and sav
+                if let Some(icon) = lookup(name).find() {
+                    // Get the best matching file path (there can be multiple for different sizes/types)
+                    return Ok(Some(icon));
+                }
+                Ok(None)
+            }
+            Image::File(file_path) => {
+                Ok(Some(file_path.clone()))
+            }
+            // #todo support other formats .jpeg and .webp .svg when using savev
+            Image::Data(pixbuf) => {
+                // let extension = path
+                //     .extension()
+                //     .and_then(|ext| ext.to_str())
+                //     .unwrap_or("png");
+                //
+                // pixbuf.savev(&path, extension, &[])?;
+                Ok(None)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -183,46 +202,36 @@ impl Hints {
         for (key, value) in hints {
             match key.as_str() {
                 "action-icons" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<bool>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::ActionIcons(val));
                     }
                 }
                 "category" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<String>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<String>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::Category(val));
                     }
                 }
                 "desktop-entry" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<String>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<String>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::DesktopEntry(val));
                     }
                 }
                 "image-path" | "image_path" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<String>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<String>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::Image(Image::File(PathBuf::from(val))));
                     }
                 }
                 "image-data" | "image_data" | "icon_data" => {
-                    if
-                        let Ok(structure) = <OwnedValue as TryInto<Structure>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(structure) =
+                        <OwnedValue as TryInto<Structure>>::try_into(value.try_clone().unwrap())
                     {
                         if let Ok(pixbuf) = Self::parse_image_data_to_pixbuf(structure) {
                             parsed_hints.push(Hint::Image(Image::Data(pixbuf)));
@@ -230,82 +239,64 @@ impl Hints {
                     }
                 }
                 "resident" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<bool>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::Resident(val));
                     }
                 }
                 "sound-file" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<String>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<String>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::SoundFile(PathBuf::from(val)));
                     }
                 }
                 "sound-name" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<String>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<String>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::SoundName(val));
                     }
                 }
                 "suppress-sound" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<bool>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::SuppressSound(val));
                     }
                 }
                 "transient" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<bool>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::Transient(val));
                     }
                 }
                 "urgency" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<u8>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<u8>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::Urgency(val));
                     }
                 }
                 "sender-pid" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<u32>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<u32>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::SenderPID(val));
                     }
                 }
                 "x" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<i32>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<i32>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::X(val));
                     }
                 }
                 "y" => {
-                    if
-                        let Ok(val) = <OwnedValue as TryInto<i32>>::try_into(
-                            value.try_clone().unwrap()
-                        )
+                    if let Ok(val) =
+                        <OwnedValue as TryInto<i32>>::try_into(value.try_clone().unwrap())
                     {
                         parsed_hints.push(Hint::Y(val));
                     }
@@ -321,7 +312,7 @@ impl Hints {
     }
 
     fn parse_image_data_to_pixbuf(
-        structure: Structure
+        structure: Structure,
     ) -> Result<Pixbuf, Box<dyn std::error::Error>> {
         let fields = structure.into_fields();
         if fields.len() != 7 {
@@ -362,7 +353,7 @@ impl Hints {
             bits_per_sample,
             width,
             height,
-            rowstride
+            rowstride,
         );
 
         Ok(pixbuf)

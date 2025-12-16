@@ -5,7 +5,7 @@ use futures::StreamExt;
 #[tokio::main]
 async fn main() -> Result<()> {
     let notification_service = desktop_dbus::MechanixNotificationService::new().await?;
-    let mut stream = notification_service.stream_notification().await;
+    let mut stream = notification_service.stream_receive_notification().await;
     while let Some(notification) = stream.next().await {
         println!("Notification received: {notification:?}");
     }

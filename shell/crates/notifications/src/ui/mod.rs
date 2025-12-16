@@ -24,20 +24,20 @@ impl Render for NotificationStory {
             .size_full()
             // Mount the list so its `render` runs and updates are visible
             .child(self.notification_list.clone())
-            .child(
-                div()
-                    .id("close")
-                    .child(
-                        Icon::new(IconName::Close)
-                            .size((px(20.), px(20.)))
-                            .text_color(rgb(0xf4f4f4)),
-                    )
-                    .on_click(cx.listener(|this, _, window, cx| {
-                        let notification = Notification::info("Hello from info!");
-                        this.notification_list.update(cx, |list, cx| {
-                            list.push(notification, window, cx);
-                        });
-                    }))
-            )
+            // .child(
+            //     div()
+            //         .id("close")
+            //         .child(
+            //             Icon::new(IconName::Close)
+            //                 .size((px(20.), px(20.)))
+            //                 .text_color(rgb(0xf4f4f4)),
+            //         )
+            //         .on_click(cx.listener(|this, _, window, cx| {
+            //             let notification = Notification::info("Hello from info!");
+            //             this.notification_list.update(cx, |list, cx| {
+            //                 list.push(notification, window, cx);
+            //             });
+            //         }))
+            // )
     }
 }

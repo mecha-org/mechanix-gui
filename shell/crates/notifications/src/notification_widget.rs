@@ -5,12 +5,7 @@ use std::{
     time::Duration,
 };
 
-use gpui::{
-    div, prelude::FluentBuilder, px, rgb, Animation, AnimationExt, AnyElement, App,
-    AppContext, Context, DismissEvent, ElementId, Entity,
-    EventEmitter, FontWeight, InteractiveElement as _, IntoElement, ParentElement as _, Render,
-    SharedString, StatefulInteractiveElement, StyleRefinement, Styled, Subscription, Window,
-};
+use gpui::{div, img, prelude::FluentBuilder, px, rgb, Animation, AnimationExt, AnyElement, App, AppContext, ClickEvent, Context, DismissEvent, Div, ElementId, Entity, EventEmitter, FontWeight, Img, InteractiveElement as _, IntoElement, ParentElement as _, Render, SharedString, Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Subscription, Window};
 use smol::Timer;
 
 use crate::ui::icon::{Icon, IconName};
@@ -19,6 +14,7 @@ use crate::ui::icon::{Icon, IconName};
 pub enum NotificationType {
     #[default]
     Info,
+    Application,
     // Success,
     // Warning,
     // Error,
@@ -28,6 +24,7 @@ impl NotificationType {
     fn icon(&self, cx: &App) -> Icon {
         match self {
             Self::Info => Icon::new(IconName::Info).text_color(rgb(0xf4f4f4)),
+            Self::Application => Icon::new(IconName::Application).text_color(rgb(0xf4f4f4)),
         }
     }
 }
@@ -61,11 +58,13 @@ pub struct Notification {
     type_: Option<NotificationType>,
     title: Option<SharedString>,
     message: Option<SharedString>,
+    // Store a path to the raster image; build gpui::img in render.
+    icon_img: Option<std::path::PathBuf>,
     icon: Option<Icon>,
     autohide: bool,
-    // action_builder: Option<Rc<dyn Fn(&mut Self, &mut Window, &mut Context<Self>) -> Button>>,
+    action_builder: Option<Rc<dyn Fn(&mut Self, &mut Window, &mut Context<Self>) -> Stateful<Div>>>,
     content_builder: Option<Rc<dyn Fn(&mut Self, &mut Window, &mut Context<Self>) -> AnyElement>>,
-    // on_click: Option<Rc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
+    on_click: Option<Rc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
     closing: bool,
 }
 
@@ -116,10 +115,11 @@ impl Notification {
             message: None,
             type_: None,
             icon: None,
+            icon_img: None,
             autohide: false,
-            // action_builder: None,
+            action_builder: None,
             content_builder: None,
-            // on_click: None,
+            on_click: None,
             closing: false,
         }
     }
@@ -191,6 +191,14 @@ impl Notification {
         self
     }
 
+    /// Set the raster image path as icon of the notification.
+    /// Pass an absolute or asset path to an image file (png/jpg/webp/bmp/gif/svg*).
+    /// The widget will construct a gpui::img from this path.
+    pub fn icon_img(mut self, icon_img_path: impl Into<std::path::PathBuf>) -> Self {
+        self.icon_img = Some(icon_img_path.into());
+        self
+    }
+
     /// Set the type of the notification, default is NotificationType::Info.
     pub fn with_type(mut self, type_: NotificationType) -> Self {
         self.type_ = Some(type_);
@@ -204,22 +212,22 @@ impl Notification {
     }
 
     /// Set the click callback of the notification.
-    // pub fn on_click(
-    //     mut self,
-    //     on_click: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
-    // ) -> Self {
-    //     self.on_click = Some(Rc::new(on_click));
-    //     self
-    // }
-    //
-    // /// Set the action button of the notification.
-    // pub fn action<F>(mut self, action: F) -> Self
-    // where
-    //     F: Fn(&mut Self, &mut Window, &mut Context<Self>) -> Button + 'static,
-    // {
-    //     self.action_builder = Some(Rc::new(action));
-    //     self
-    // }
+    pub fn on_click(
+        mut self,
+        on_click: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_click = Some(Rc::new(on_click));
+        self
+    }
+
+    /// Set the action button of the notification.
+    pub fn action<F>(mut self, action: F) -> Self
+    where
+        F: Fn(&mut Self, &mut Window, &mut Context<Self>) -> Stateful<Div> + 'static,
+    {
+        self.action_builder = Some(Rc::new(action));
+        self
+    }
 
     /// Dismiss the notification.
     pub fn dismiss(&mut self, _: &mut Window, cx: &mut Context<Self>) {
@@ -266,15 +274,19 @@ impl Render for Notification {
             .content_builder
             .clone()
             .map(|builder| builder(self, window, cx));
-        // let action = self.action_builder.clone().map(|builder| builder(self, window, cx).small().mr_3p5());
+        let action = self
+            .action_builder
+            .clone()
+            .map(|builder| builder(self, window, cx));
 
         let closing = self.closing;
         // let icon = match self.type_ {
-        //     None => self.icon.clone(),
+        //     None => self.icon_img.clone(),
         //     Some(type_) => Some(type_.icon(cx)),
         // };
-        // let has_icon = icon.is_some();
-
+        let has_icon = self.icon_img.is_some();
+        let icon_path = self.icon_img.clone();
+        println!("is there icon or not: {:?}", has_icon);
         div()
             .id("notification")
             .group("")
@@ -282,8 +294,8 @@ impl Render for Notification {
             .relative()
             .w_112()
             .border_1()
-            .border_color(rgb(0xf4f4f4))
-            .bg(rgb(0x4d4d4d))
+            .border_color(rgb(0xff9500))
+            .bg(rgb(0x1a1a1a))
             .rounded(px(12.0))
             .shadow_md()
             .py_3p5()
@@ -292,38 +304,53 @@ impl Render for Notification {
             .flex()
             .flex_row()
             .items_center()
-            // .when_some(icon, |this, icon| {
-            //     this.child(div().absolute().py_3p5().left_4().child(icon))
-            // })
+            .when_some(icon_path, |this, path| {
+                this.child(
+                    div()
+                        .w(px(28.0))
+                        .h(px(28.0))
+                        // .shrink_0()
+                        .mr_3()
+                        .items_center()
+                        .justify_center()
+                        .child(img(path).size_7())
+                )
+            })
             .child(
                 div()
                     .flex()
                     .flex_col()
                     .flex_1()
                     .overflow_hidden()
-                    // .when(has_icon, |this| this.pl_6())
+                    .text_color(rgb(0xe9e9e9))
                     .when_some(self.title.clone(), |this, title| {
                         this.child(
                             div()
                                 .text_sm()
                                 .font_weight(FontWeight::SEMIBOLD)
+                                // Brighter title for emphasis
+                                .text_color(rgb(0xf4f4f4))
                                 .child(title),
                         )
                     })
                     .when_some(self.message.clone(), |this, message| {
-                        this.child(div().text_sm().child(message))
+                        this.child(
+                            div()
+                                .text_sm()
+                                // Slightly muted body text for hierarchy
+                                .text_color(rgb(0xd0d0d0))
+                                .child(message),
+                        )
                     })
-                    .when_some(content, |this, content| this.child(content)),
+                    .when_some(content, |this, content| this.child(content))
+                    .when_some(action, |this, action| this.child(action)),
             )
-            // .when_some(action, |this, action| {
-            //     this.child(action)
-            // })
-            // .when_some(self.on_click.clone(), |this, on_click| {
-            //     this.on_click(cx.listener(move |view, event, window, cx| {
-            //         view.dismiss(window, cx);
-            //         on_click(event, window, cx);
-            //     }))
-            // })
+            .when_some(self.on_click.clone(), |this, on_click| {
+                this.on_click(cx.listener(move |view, event, window, cx| {
+                    view.dismiss(window, cx);
+                    on_click(event, window, cx);
+                }))
+            })
             .child(
                 div()
                     .flex()

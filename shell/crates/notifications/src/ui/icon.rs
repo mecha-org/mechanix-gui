@@ -4,13 +4,18 @@ pub const STATUS_BAR_ICONS_DIR: &str = "icons/notifications/";
 #[derive(IntoElement, Clone, Debug)]
 pub enum IconName {
     Info,
-    Close
+    Close,
+    Application,
+
 }
 impl IconName {
     pub fn resolve(&self) -> SharedString {
         let icon_path = match self {
-            IconName::Info => "wireless-on.svg",
+            IconName::Info => "info.svg",
             IconName::Close => "close.svg",
+            IconName::Application => "audacity.svg",
+        
+
         };
         format!("{}{}", STATUS_BAR_ICONS_DIR, icon_path).into()
     }
@@ -29,6 +34,18 @@ pub struct Icon {
     size: Option<(Pixels, Pixels)>,
     text_color: Option<Hsla>,
 }
+
+impl Clone for Icon {
+    fn clone(&self) -> Self {
+        Self {
+            main: svg(),
+            path: self.path.clone(),
+            size: self.size.clone(),
+            text_color: self.text_color.clone(),
+        }
+    }
+}
+
 
 impl Default for Icon {
     fn default() -> Self {
