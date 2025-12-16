@@ -42,15 +42,12 @@ dependencies:
   hive: ^2.2.3
   flutter_quill: ^11.4.2
   flutter_quill_extensions: ^11.0.0
-  file_picker: ^10.2.0
   widgets:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       # url: https://github.com/DhanishMecha/mechanix-ui.git
       path: flutter/widgets
       ref: main
-  # widgets:
-  #   path: /home/dhanish/Desktop/mecha/minesh/mechanix-ui/flutter/widgets
   watch_it: ^1.7.0
   # image_picker: ^1.2.0
   # media_kit: ^1.2.0
