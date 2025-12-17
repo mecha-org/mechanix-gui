@@ -266,6 +266,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
                           CodeField(
                         controller: _codeController,
+                        cursorColor: FilesThemeConstants.primaryColor,
                         textStyle: const TextStyle(fontFamily: 'monospace'),
                       ),
                     ),
@@ -487,9 +488,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           title: "Edit",
           leading: IconWidget(
             iconPath: Images.edit,
-            iconColor: _isEditing
-                ? FilesThemeConstants.primaryColor
-                : FilesThemeConstants.titleTextColor,
+            iconColor:
+                _isEditing ? FilesThemeConstants.primaryColor : Colors.white70,
           ),
           isSelected: _isEditing,
           onTap: () {
