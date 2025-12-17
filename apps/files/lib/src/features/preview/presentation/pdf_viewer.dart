@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
@@ -14,7 +15,6 @@ import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 
 /// A StatefulWidget to view PDF files with search and password protection support.
@@ -75,7 +75,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   /// Navigate to next search match
-  void _next() async {
+  void _nextMatch() async {
     final index = await _searcher.goToNextMatch();
     setState(() {
       currentMatchIndex = index;
@@ -83,7 +83,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   /// Navigate to previous search match
-  void _prev() async {
+  void _prevMatch() async {
     final index = await _searcher.goToPrevMatch();
     setState(() {
       currentMatchIndex = index;
@@ -105,7 +105,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           builder: (context, setModalState) {
             return RawKeyboardListener(
               focusNode: FocusNode(),
-              autofocus: true,
+              autofocus: false,
               onKey: (event) {
                 if (event.isKeyPressed(LogicalKeyboardKey.enter)) {
                   Navigator.of(bottomSheetContext).pop(password);
@@ -124,7 +124,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   ),
                   child: Center(
                     child: MechanixTextInput.password(
-                      autofocus: true,
+                      autofocus: false,
                       isPasswordField: obscureText,
                       theme: MechanixTextInputThemeData(
                         fillColor: const Color(0xFF151515),
@@ -136,14 +136,13 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                       cursorColor: Theme.of(context)
                           .extension<FilesTheme>()!
                           .primaryColor,
-                      prefixIcon:
-                          const IconWidget.fromIconData(icon: Icon(Icons.lock)),
+                      prefixIcon: const IconWidget(iconPath: Images.lock),
                       hintText: 'Enter PDF password',
                       onChanged: (value) {
                         password = value;
                       },
                       anchorWidget: Padding(
-                        padding: const EdgeInsets.only(left: 4.0, right: 4.0),
+                        padding: const EdgeInsets.only(left: 2.0, right: 2.0),
                         child: IconButton(
                           icon: const Icon(
                             Icons.close,
@@ -179,7 +178,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: isSearching ? _buildSearchAppBar() : _buildNormalAppBar(),
+        appBar: _buildNormalAppBar(),
         body: ContainerWidget(
           child: Stack(
             children: [
@@ -194,8 +193,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   enableTextSelection: true,
                   maxScale: 4.0,
                   minScale: 1.0,
-
-                  // Optional: highlight search matches
+                  errorBannerBuilder: (context, error, stack, document) {
+                    return const SizedBox.shrink();
+                  },
                   pageOverlaysBuilder: (context, pageRect, page) {
                     return [
                       CustomPaint(
@@ -285,6 +285,11 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   /// Normal app bar with file name and search icon
   PreferredSizeWidget _buildNormalAppBar() {
     title = title = p.basename(widget.filePath);
+    final hasMatches = matches.isNotEmpty;
+    final index = currentMatchIndex ?? 0;
+
+    final canNavPrev = hasMatches && index > 0;
+    final canNavNext = hasMatches && index < matches.length - 1;
 
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
@@ -306,75 +311,45 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           ),
           backgroundColor: Colors.transparent,
           elevation: 0,
+          actions: !hasMatches
+              ? null
+              : [
+                  // Match counter
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Center(
+                      child: Text(
+                        hasMatches
+                            ? '${index + 1} of ${matches.length}'
+                            : '0 of 0',
+                        style: TextStyle(
+                          color: FilesThemeConstants.labelColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: Theme.of(context)
+                              .extension<FilesTheme>()!
+                              .defaultFontFamily,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  searchNavButton(
+                    icon: Icons.keyboard_arrow_up,
+                    onTap: canNavPrev ? _prevMatch : null,
+                    context: context,
+                  ),
+
+                  searchNavButton(
+                    icon: Icons.keyboard_arrow_down,
+                    onTap: canNavNext ? _nextMatch : null,
+                    context: context,
+                  ),
+
+                  const SizedBox(width: 8),
+                ],
         ),
       ),
-    );
-  }
-
-  /// App bar shown while searching, with search input and match controls
-  PreferredSizeWidget _buildSearchAppBar() {
-    final matchLabel = matches.isNotEmpty && currentMatchIndex != null
-        ? '${currentMatchIndex! + 1} of ${matches.length}'
-        : '';
-
-    return MechanixNavigationBar(
-      theme: const MechanixNavigationBarThemeData(titleSpacing: 0),
-      leadingWidget: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Colors.blue, size: 16),
-        onPressed: () {
-          setState(() {
-            isSearching = false;
-            searchController.clear();
-            _searcher.startTextSearch('',
-                caseInsensitive: true); // clear matches
-          });
-        },
-        highlightColor: Colors.transparent,
-      ),
-      titleWidget: Row(
-        children: [
-          // Search input field
-          Expanded(
-            child: TextField(
-              controller: searchController,
-              autofocus: true,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Search',
-                hintStyle: TextStyle(color: Colors.white70),
-                border: InputBorder.none,
-              ),
-              onChanged: (value) {
-                _searcher.startTextSearch(
-                  value,
-                  caseInsensitive: true,
-                  goToFirstMatch: true,
-                );
-              },
-            ),
-          ),
-
-          // Match count label
-          if (matchLabel.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: Text(
-                matchLabel,
-                style: const TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-            ),
-        ],
-      ),
-      actionWidgets: [
-        IconButton(
-          icon: const Icon(Icons.navigate_before, color: Colors.white),
-          onPressed: _prev,
-        ),
-        IconButton(
-          icon: const Icon(Icons.navigate_next, color: Colors.white),
-          onPressed: _next,
-        ),
-      ],
     );
   }
 
@@ -528,15 +503,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           child: SizedBox(
             height: 60,
             child: MechanixTextInput.search(
-              theme: MechanixTextInputThemeData(
-                fillColor: const Color(0xFF151515),
-                borderSide: const BorderSide(color: Color(0xFF151515)),
-                focusedBorderSide: const BorderSide(color: Color(0xFF151515)),
-                borderRadius: BorderRadius.circular(8),
-              ),
               cursorColor:
                   Theme.of(context).extension<FilesTheme>()!.primaryColor,
-              autofocus: true,
+              autofocus: false,
               prefixIcon: const IconWidget(
                 iconPath: Images.search,
                 iconColor: Color(0xFFD2D2D2),
@@ -556,7 +525,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   void _onPdfSearchChanged(String query) {
-    if (query.trim().isEmpty) {
+    if (query.trim().isEmpty || query.trim().length < 3) {
+      _searcher.startTextSearch('');
       setState(() {
         matches = [];
         currentMatchIndex = null;
@@ -564,11 +534,13 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       return;
     }
 
-    _searcher.startTextSearch(
-      query,
-      caseInsensitive: true,
-      goToFirstMatch: true,
-    );
+    if (query.trim().length > 2) {
+      _searcher.startTextSearch(
+        query,
+        caseInsensitive: true,
+        goToFirstMatch: true,
+      );
+    }
   }
 
   void _clearPdfSearch() {

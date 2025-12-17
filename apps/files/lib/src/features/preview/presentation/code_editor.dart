@@ -16,12 +16,24 @@ import 'package:highlight/languages/ruby.dart';
 import 'package:highlight/languages/xml.dart';
 import 'package:highlight/languages/rust.dart';
 import 'package:highlight/languages/javascript.dart';
+import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:path/path.dart' as p;
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
+import 'package:widgets/constants.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class CodeEditorPage extends StatefulWidget {
-  final String filePath;
-  const CodeEditorPage({super.key, required this.filePath});
+  final BuildContext rootContext;
+  String filePath;
+
+  CodeEditorPage(
+      {super.key, required this.rootContext, required this.filePath});
 
   @override
   State<CodeEditorPage> createState() => _CodeEditorPageState();
@@ -33,6 +45,15 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
   late String _code;
   late CodeController _codeController;
+  String title = '';
+  bool isMenuOpen = false;
+
+  OverlayEntry? _searchOverlayEntry;
+  String _searchQuery = '';
+
+  List<int> _matchIndexes = [];
+  int _currentMatchIndex = -1;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -142,47 +163,496 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       );
     }
 
+    title = p.basename(widget.filePath);
+    final hasMatches = _matchIndexes.isNotEmpty;
+    final index = _currentMatchIndex;
+
+    final canNavPrev = hasMatches && index > 0;
+    final canNavNext = hasMatches && index < _matchIndexes.length - 1;
+
     return Scaffold(
-        appBar: MechanixNavigationBar(
-          title: p.basename(widget.filePath),
-          actionWidgets: [
-            if (_isEditing) ...[
-              IconButton(icon: const Icon(Icons.save), onPressed: _save),
-              IconButton(
-                icon: const Icon(Icons.cancel),
-                onPressed: () => setState(() => _isEditing = false),
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 18, right: 16),
+            child: AppBar(
+              automaticallyImplyLeading: false,
+              scrolledUnderElevation: 0,
+              title: Text(
+                title,
+                style: TextStyle(
+                  color: const Color(0xFFD2D2D2),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: Theme.of(context)
+                      .extension<FilesTheme>()!
+                      .defaultFontFamily,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ] else
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => setState(() => _isEditing = true),
-              ),
-          ],
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              actions: !hasMatches
+                  ? null
+                  : [
+                      // Match counter
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Center(
+                          child: Text(
+                            hasMatches
+                                ? '${index + 1} of ${_matchIndexes.length}'
+                                : '0 of 0',
+                            style: TextStyle(
+                              color: FilesThemeConstants.labelColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: Theme.of(context)
+                                  .extension<FilesTheme>()!
+                                  .defaultFontFamily,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      searchNavButton(
+                        icon: Icons.keyboard_arrow_up,
+                        onTap: canNavPrev ? _prevMatch : null,
+                        context: context,
+                      ),
+
+                      searchNavButton(
+                        icon: Icons.keyboard_arrow_down,
+                        onTap: canNavNext ? _nextMatch : null,
+                        context: context,
+                      ),
+
+                      const SizedBox(width: 8),
+                    ],
+            ),
+          ),
         ),
         body: Padding(
-          padding: const EdgeInsets.all(12),
-          child: _isEditing
-              ? SingleChildScrollView(
-                  child: CodeTheme(
-                    data: CodeThemeData(styles: monokaiTheme),
-                    child: CodeField(
-                      controller: _codeController,
-                      textStyle: const TextStyle(fontFamily: 'monospace'),
+            padding: const EdgeInsets.all(12),
+            child: _isEditing
+                ? SingleChildScrollView(
+                    child: CodeTheme(
+                      data: CodeThemeData(styles: monokaiTheme),
+                      child:
+                          // TextField(
+                          //   controller: _codeController,
+                          //   cursorColor: FilesThemeConstants.primaryColor,
+                          //   contextMenuBuilder: (context, editableTextState) {
+                          //     return AdaptiveTextSelectionToolbar(
+                          //       anchors: editableTextState.contextMenuAnchors,
+                          //       children: const [SelectionOptions()],
+                          //     );
+                          //   },
+                          // )
+
+                          CodeField(
+                        controller: _codeController,
+                        textStyle: const TextStyle(fontFamily: 'monospace'),
+                      ),
                     ),
-                  ),
-                )
-              : InteractiveViewer(
-                  constrained: false,
-                  child: HighlightView(
-                    _code,
-                    // language: languageName,
-                    language: _getLanguageName(
-                        p.extension(widget.filePath).replaceAll('.', '')),
-                    theme: monokaiTheme,
-                    padding: const EdgeInsets.all(12),
-                    textStyle: const TextStyle(fontFamily: 'monospace'),
-                  ),
-                ),
-        ));
+                  )
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        controller: _scrollController,
+                        child: SizedBox(
+                          width: constraints.maxWidth,
+                          child: InteractiveViewer(
+                            constrained: true,
+                            minScale: 1,
+                            maxScale: 4,
+                            child: Stack(
+                              children: [
+                                HighlightView(
+                                  _code,
+                                  language: _getLanguageName(
+                                    p
+                                        .extension(widget.filePath)
+                                        .replaceAll('.', ''),
+                                  ),
+                                  theme: monokaiTheme,
+                                  padding: const EdgeInsets.all(12),
+                                  textStyle: const TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 14,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                if (_searchQuery.isNotEmpty)
+                                  Positioned.fill(
+                                    child: IgnorePointer(
+                                      child: CustomPaint(
+                                        painter: _SearchHighlightPainter(
+                                          code: _code,
+                                          search: _searchQuery,
+                                          textStyle: const TextStyle(
+                                            fontFamily: 'monospace',
+                                            fontSize: 14,
+                                            height: 1.4,
+                                          ),
+                                          padding: const EdgeInsets.all(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  )),
+        bottomNavigationBar: _buildBottomBar(context));
   }
+
+  Widget _buildBottomBar(BuildContext context) {
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return Container(
+      color: Colors.grey.shade900,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MechanixBottomBar(
+            theme: const MechanixBottomBarThemeData(),
+            leadingWidget: [
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    padding: EdgeInsets.only(left: 12)),
+                iconPath: Images.back,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+            centerWidgetSpacing: 30,
+            centerWidget: [
+              BottomBarButton(
+                iconWidget: IconWidget(
+                  iconPath: Images.search,
+                  iconColor: _isEditing
+                      ? FilesThemeConstants.disableColor
+                      : FilesThemeConstants.titleTextColor,
+                ),
+                iconPath: Images.search,
+                isDisabled: _isEditing,
+                onPressed: () {
+                  _showSearchOverlay(context);
+                },
+              ),
+              BottomBarButton(
+                iconPath: Images.copy,
+                onPressed: () {
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleCopy();
+                },
+              ),
+              BottomBarButton(
+                iconPath: Images.move,
+                onPressed: () {
+                  Navigator.pop(context);
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleMove();
+                },
+              ),
+              BottomBarButton(
+                iconWidget: IconWidget(
+                  iconPath: Images.share,
+                  iconColor: Colors.grey.shade600,
+                ),
+                onPressed: () {},
+                isDisabled: true, //TODO : add share functionality
+              ),
+              BottomBarButton(
+                //TODO: update according to design
+                iconTheme: const MechanixBottomBarIconThemeData(),
+                iconWidget: IconWidget(
+                  iconPath: Images.rename,
+                  iconColor: _isEditing
+                      ? FilesThemeConstants.primaryColor
+                      : FilesThemeConstants.titleTextColor,
+                ),
+                isSelected: _isEditing,
+                onPressed: () {
+                  if (!_isEditing) {
+                    setState(() => _isEditing = true);
+                  }
+                },
+              ),
+            ],
+            anchorWidget: [
+              BottomBarButton.widget(widget: buildActionsMenu(context)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildActionsMenu(BuildContext context) {
+    final offset = const Offset(-8, -14);
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return MechanixMenu(
+      offset: offset,
+      dropdownPosition: DropdownPosition.topRight,
+      animationDuration: const Duration(milliseconds: 300),
+      buttonIcon: IconWidget(
+          iconPath: Images.dots,
+          iconColor: isMenuOpen
+              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
+              : Colors.white70),
+      openMenu: () {
+        setState(() => isMenuOpen = true);
+      },
+      closeMenu: () {
+        setState(() => isMenuOpen = false);
+      },
+      items: [
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.rename,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          title: 'Rename',
+          onTap: () async {
+            final oldPath = widget.filePath;
+
+            // Wait for rename result
+            final newPath = await state?.showRenameSheet(
+              initialName: p.basename(oldPath),
+            );
+
+            // If user canceled : do nothing
+            if (newPath == null) return;
+
+            // If rename succeeded : update title + filepath
+            setState(() {
+              title = p.basename(newPath);
+            });
+
+            // Also update widget.filePath for correct behavior
+            widget.filePath = newPath;
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Properties",
+          leading: Image.asset(
+            Images.info,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            state?.showDetailsDialog(widget.rootContext, widget.filePath);
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Delete",
+          leading: Image.asset(
+            Images.delete,
+            color: Colors.white70,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            state?.confirmDelete(widget.rootContext, {widget.filePath});
+          },
+        ),
+      ],
+    ).padRight(8);
+  }
+
+  void _onSearchChanged(String query) {
+    final trimmed = query.trim();
+
+    _searchQuery = trimmed;
+    _matchIndexes.clear();
+    _currentMatchIndex = -1;
+
+    if (query.trim().isEmpty) {
+      setState(() {});
+      return;
+    }
+
+    // Disable search under 3 chars
+    if (trimmed.length > 2) {
+      final text = _codeController.text.toLowerCase();
+      final search = trimmed.toLowerCase();
+
+      int index = 0;
+      while ((index = text.indexOf(search, index)) != -1) {
+        _matchIndexes.add(index);
+        index += search.length;
+      }
+
+      if (_matchIndexes.isNotEmpty) {
+        _currentMatchIndex = 0;
+        _jumpToMatch();
+      }
+
+      setState(() {});
+    }
+  }
+
+  void _jumpToMatch() {
+    if (_matchIndexes.isEmpty) return;
+
+    final matchIndex = _matchIndexes[_currentMatchIndex];
+
+    // Count how many lines before the match
+    final beforeText = _code.substring(0, matchIndex);
+    final lineIndex = '\n'.allMatches(beforeText).length;
+
+    const double lineHeight = 14 * 1.4; // fontSize * height
+    const double topPadding = 12;
+
+    final offset = lineIndex * lineHeight + topPadding;
+
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _nextMatch() {
+    if (_matchIndexes.isEmpty) return;
+
+    setState(() {
+      _currentMatchIndex = (_currentMatchIndex + 1) % _matchIndexes.length;
+    });
+
+    _jumpToMatch();
+  }
+
+  void _prevMatch() {
+    if (_matchIndexes.isEmpty) return;
+
+    setState(() {
+      _currentMatchIndex = (_currentMatchIndex - 1 + _matchIndexes.length) %
+          _matchIndexes.length;
+    });
+
+    _jumpToMatch();
+  }
+
+  void _showSearchOverlay(BuildContext context) {
+    final overlay = Overlay.of(context);
+    if (overlay == null) return;
+
+    _searchOverlayEntry?.remove();
+
+    _searchOverlayEntry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: SizedBox(
+            height: 60,
+            child: MechanixTextInput.search(
+              autofocus: false,
+              hintText: "Search in file",
+              cursorColor:
+                  Theme.of(context).extension<FilesTheme>()!.primaryColor,
+              prefixIcon: const IconWidget(
+                iconPath: Images.search,
+                iconColor: Color(0xFFD2D2D2),
+                iconHeight: 24,
+                iconWidth: 24,
+              ),
+              onChanged: _onSearchChanged,
+              onClear: _clearSearch,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_searchOverlayEntry!);
+  }
+
+  void _clearSearch() {
+    _searchQuery = '';
+    _matchIndexes.clear();
+    _currentMatchIndex = -1;
+
+    _searchOverlayEntry?.remove();
+    _searchOverlayEntry = null;
+
+    setState(() {});
+  }
+}
+
+class _SearchHighlightPainter extends CustomPainter {
+  final String code;
+  final String search;
+  final TextStyle textStyle;
+  final EdgeInsets padding;
+
+  _SearchHighlightPainter({
+    required this.code,
+    required this.search,
+    required this.textStyle,
+    required this.padding,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (search.isEmpty) return;
+
+    final paint = Paint()..color = Colors.yellow.withOpacity(0.35);
+
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      textScaleFactor: 1.0,
+    );
+
+    final lines = code.split('\n');
+    final query = search.toLowerCase();
+    final lineHeight = textStyle.fontSize! * textStyle.height!;
+
+    double y = padding.top;
+
+    for (final line in lines) {
+      final lower = line.toLowerCase();
+      int start = 0;
+
+      while (true) {
+        final index = lower.indexOf(query, start);
+        if (index == -1) break;
+
+        final before = line.substring(0, index);
+        final match = line.substring(index, index + search.length);
+
+        textPainter.text = TextSpan(text: before, style: textStyle);
+        textPainter.layout();
+
+        final x = padding.left + textPainter.width;
+
+        textPainter.text = TextSpan(text: match, style: textStyle);
+        textPainter.layout();
+
+        canvas.drawRect(
+          Rect.fromLTWH(x, y, textPainter.width, lineHeight),
+          paint,
+        );
+
+        start = index + search.length;
+      }
+
+      y += lineHeight;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SearchHighlightPainter old) =>
+      old.search != search || old.code != code;
 }

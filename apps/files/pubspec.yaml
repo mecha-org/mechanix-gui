@@ -145,6 +145,8 @@ flutter:
     - assets/images/redo.png
     - assets/images/undo.png
     - assets/images/check.png
+    - assets/images/cut.png
+    - assets/images/lock.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

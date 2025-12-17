@@ -34,7 +34,7 @@ String formatModifiedTime(DateTime modified) {
   if (isSameDay) {
     return DateFormat.jm().format(modified); // e.g., 12:30 PM
   } else {
-    return DateFormat('dd-MMM-yyyy').format(modified); // e.g., 20-Jul-2025
+    return DateFormat('dd MMM yyyy').format(modified); // e.g., 20-Jul-2025
   }
 }
 
@@ -100,7 +100,8 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CodeEditorPage(filePath: fullPath),
+        builder: (_) =>
+            CodeEditorPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -205,7 +206,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CodeEditorPage(filePath: fullPath),
+        builder: (_) =>
+            CodeEditorPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -461,3 +463,50 @@ TextStyle boldStyle(BuildContext context) => TextStyle(
       fontWeight: FontWeight.w600,
       fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
     );
+
+Widget searchNavButton({
+  required IconData icon,
+  required VoidCallback? onTap,
+  required BuildContext context,
+}) {
+  final isEnabled = onTap != null;
+  final primary = Theme.of(context).extension<FilesTheme>()!.primaryColor;
+
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.all(6),
+      decoration: isEnabled
+          ? BoxDecoration(
+              color: isEnabled
+                  ? const Color.fromRGBO(34, 34, 34, 1)
+                  : Colors.white10,
+              borderRadius: BorderRadius.circular(6),
+            )
+          : null,
+      child: Icon(
+        icon,
+        size: 24,
+        color: isEnabled ? primary : Colors.white38,
+      ),
+    ),
+  );
+}
+
+Future<String> generateUniqueZipName({
+  required String destinationDir,
+  required String baseName,
+}) async {
+  int index = 0;
+  String name;
+  String fullPath;
+
+  do {
+    name = index == 0 ? '$baseName.zip' : '$baseName ($index).zip';
+    fullPath = p.join(destinationDir, name);
+    index++;
+  } while (await io.File(fullPath).exists());
+
+  return name;
+}

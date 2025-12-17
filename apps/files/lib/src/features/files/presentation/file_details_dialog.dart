@@ -86,7 +86,7 @@ class FileDetailsDialog extends StatelessWidget {
                               ),
                               ConstrainedBox(
                                 constraints:
-                                    const BoxConstraints(maxWidth: 260),
+                                    const BoxConstraints(maxWidth: 220),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [

@@ -399,8 +399,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   OverlayEntry? _searchOverlayEntry;
 
   void showSearchBottomSheet(
-      BuildContext context, ValueNotifier<String> searchQuery) {
+    BuildContext context,
+    ValueNotifier<String> searchQuery,
+  ) {
     final overlay = Overlay.of(context);
+    if (overlay == null) return;
+
+    _searchOverlayEntry?.remove();
 
     _searchOverlayEntry = OverlayEntry(
       builder: (ctx) => Positioned(
@@ -408,17 +413,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         right: 0,
         bottom: 0,
         child: Material(
+          color: Colors.transparent,
           child: SizedBox(
             height: 60,
             child: MechanixTextInput.search(
-              theme: MechanixTextInputThemeData(
-                fillColor: const Color(0xFF151515),
-                borderSide: const BorderSide(color: Color(0xFF151515)),
-                focusedBorderSide: const BorderSide(color: Color(0xFF151515)),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              cursorColor:
-                  Theme.of(context).extension<FilesTheme>()!.primaryColor,
               autofocus: false,
               prefixIcon: const IconWidget(
                 iconPath: Images.search,
@@ -427,7 +425,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 iconWidth: 24,
               ),
               hintText: "Search here",
-              onChanged: (query) => controller.search(query),
+              onChanged: (query) {
+                searchQuery.value = query;
+
+                if (query.trim().length > 2) {
+                  controller.search(query.trim());
+                }
+              },
               onClear: () {
                 clearSearch();
                 _buildBottomActionMenuBar(context);
@@ -452,7 +456,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     _searchOverlayEntry = null;
 
     // Reload directory content when clearing search
-    controller.reload();
+    controller.search('');
   }
 
   /// Shows bottom sheet for selecting sort mode
@@ -477,6 +481,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       dropdownPosition: DropdownPosition.topRight,
       animationDuration: const Duration(milliseconds: 300),
       buttonIcon: IconWidget(
+        iconWidth: 28,
+        iconHeight: 28,
         iconPath: Images.sortAscending,
         iconColor: isSortMenuOpen
             ? Theme.of(context).extension<FilesTheme>()!.primaryColor
@@ -573,7 +579,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       leadingWidget: [
         BottomBarButton(
           iconTheme: const MechanixBottomBarIconThemeData(
-              padding: EdgeInsets.only(left: 12)),
+            padding: EdgeInsets.only(left: 12),
+            iconSize: Size(28, 28),
+          ),
           iconPath: Images.back,
           onPressed: () {
             selectionMode
@@ -585,6 +593,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       centerWidgetSpacing: 28,
       centerWidget: [
         BottomBarButton(
+          iconTheme:
+              const MechanixBottomBarIconThemeData(iconSize: Size(28, 28)),
           iconWidget: IconWidget(
             iconPath: Images.search,
             iconColor: selectionMode ? Colors.grey.shade600 : Colors.white,
@@ -602,7 +612,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               return IconButton(
                 icon: Image.asset(
                   isList ? Images.list : Images.grid,
-                  height: 24,
+                  height: 28,
                 ),
                 onPressed: () {
                   viewModeNotifier.value = !viewModeNotifier.value;
@@ -628,9 +638,11 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           iconTheme: const MechanixBottomBarIconThemeData(),
           outsideClickDisabled: true,
           floatingActionBarController: _fabController,
-          offset: const Offset(-100, -6),
+          offset: const Offset(-110, -6),
           iconWidget: IconWidget(
             iconPath: Images.checkCircle,
+            iconWidth: 28,
+            iconHeight: 28,
             iconColor: selectionMode
                 ? Theme.of(context).extension<FilesTheme>()!.primaryColor
                 : Colors.white70,
@@ -695,17 +707,23 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     // Check if selected files are ZIP files
     final isZipFileSelected = selectedPaths.isNotEmpty &&
         selectedPaths.every((p) => p.toLowerCase().endsWith('.zip'));
-    final isOnlyFileSelected = selectedPaths.length ==
-        1; // TODO: and check selected path is file or folder
+
+    final isSingleSelection = selectedPaths.length == 1;
+    final selectedPath = isSingleSelection ? selectedPaths.first : null;
+    final isFileSelected = isSingleSelection &&
+        FileSystemEntity.typeSync(selectedPath!) == FileSystemEntityType.file;
 
     return MechanixMenu(
       dropdownPosition: DropdownPosition.topRight,
       offset: offset,
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconColor: isSelectionActionMenuOpen
-              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-              : Colors.white70),
+        iconPath: Images.dots,
+        iconColor: isSelectionActionMenuOpen
+            ? Theme.of(context).extension<FilesTheme>()!.primaryColor
+            : Colors.white70,
+        iconHeight: 28,
+        iconWidth: 28,
+      ),
       openMenu: () {
         setState(() => isSelectionActionMenuOpen = true);
       },
@@ -742,16 +760,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.duplicate,
-            color: isOnlyFileSelected
+            color: isFileSelected
                 ? Colors.white70
                 : Theme.of(context).extension<FilesTheme>()!.disableColor,
             height: 20,
           ),
           title: 'Duplicate',
-          onTap: isOnlyFileSelected
-              ? () => ()
-              : null, // TODO: add duplicate functionality
-          disabled: !isOnlyFileSelected,
+          onTap: isFileSelected
+              ? () {
+                  handleDuplicate(selectedPath);
+                }
+              : null,
+          disabled: !isFileSelected,
         ),
         MechanixMenuItemsType(
           leading: Image.asset(
@@ -824,10 +844,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       dropdownPosition: DropdownPosition.topRight,
       animationDuration: const Duration(milliseconds: 300),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconColor: isFolderActionMenuOpen
-              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-              : Colors.white70),
+        iconPath: Images.dots,
+        iconColor: isFolderActionMenuOpen
+            ? Theme.of(context).extension<FilesTheme>()!.primaryColor
+            : Colors.white70,
+        iconHeight: 28,
+        iconWidth: 28,
+      ),
       openMenu: () {
         setState(() => isFolderActionMenuOpen = true);
       },
@@ -1204,17 +1227,82 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     overlay.insert(entry);
   }
 
+  Future<void> handleDuplicate(String sourcePath) async {
+    final file = File(sourcePath);
+    if (!await file.exists()) return;
+
+    final dirPath = p.dirname(sourcePath);
+    final baseName = p.basenameWithoutExtension(sourcePath);
+    final ext = p.extension(sourcePath);
+
+    String newName = '$baseName (Copy)$ext';
+    String newPath = p.join(dirPath, newName);
+
+    int copyIndex = 2;
+
+    // If "(Copy)" already exists → "(Copy 2)", "(Copy 3)", etc.
+    while (await File(newPath).exists()) {
+      newName = '$baseName (Copy $copyIndex)$ext';
+      newPath = p.join(dirPath, newName);
+      copyIndex++;
+    }
+
+    try {
+      await file.copy(newPath);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Duplicated as '$newName'",
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.grey[800],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      reload(); // refresh list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Failed to duplicate file",
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    } finally {
+      clearSelection();
+    }
+  }
+
   void handleCompress() async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _closeFabMenuProgrammatically();
     });
+
     if (selectedPaths.isEmpty) return;
 
     final destinationDirPath = p.dirname(selectedPaths.first);
-    const defaultZipName = "Archive.zip";
+
+    String baseZipName;
+
+    if (selectedPaths.length == 1) {
+      // Single file → filename.zip
+      final singlePath = selectedPaths.first;
+      baseZipName = p.basenameWithoutExtension(singlePath);
+    } else {
+      // Multiple files → Archive.zip
+      baseZipName = 'Archive';
+    }
+
+    final uniqueZipName = await generateUniqueZipName(
+      destinationDir: destinationDirPath,
+      baseName: baseZipName,
+    );
 
     showCompressOverlay(
-      defaultZipName: defaultZipName,
+      defaultZipName: uniqueZipName,
       destinationDirPath: destinationDirPath,
       selectedPaths: selectedPaths.toList(),
     );
@@ -1444,6 +1532,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                     color: Colors.white),
                                 onPressed: () {
                                   entry?.remove();
+
+                                  final newFullPath = p.join(
+                                    p.dirname(oldPath),
+                                    folderName,
+                                  );
+
                                   filesBloc.add(
                                     Rename(
                                       oldPath: oldPath,
@@ -1451,10 +1545,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                       controller: controller,
                                     ),
                                   );
+
                                   controller.clearNewFolder();
 
-                                  // Return new name
-                                  completer.complete(folderName);
+                                  completer.complete(newFullPath);
                                 },
                               )
                             : IconButton(
@@ -1554,7 +1648,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                               ),
                             ),
                             TextSpan(
-                              text: "'${pathsToDelete.length}' files?",
+                              text: "${pathsToDelete.length} files?",
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 18,
@@ -1589,7 +1683,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                           Navigator.pop(bottomSheetContext);
                           BlocProvider.of<FilesBloc>(context)
                               .add(DeleteEntities(pathsToDelete, controller));
-                          reload();
                         },
                       ),
                     ),

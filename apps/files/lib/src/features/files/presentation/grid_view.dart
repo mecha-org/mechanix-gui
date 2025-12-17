@@ -19,6 +19,7 @@ Widget buildGridView(
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
+  final isSearching = state?.isSearching ?? false;
 
   final screenWidth = MediaQuery.of(context).size.width;
   final crossAxisCount =
@@ -31,7 +32,7 @@ Widget buildGridView(
         // Show message if folder is empty
         return Center(
           child: Text(
-            "Folder is empty",
+            isSearching ? "No results found" : "Folder is empty",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.grey,
                 ),
@@ -70,23 +71,30 @@ Widget buildGridView(
                 return GestureDetector(
                     onTap: () async {
                       if (isSelectionMode) {
-                        // Select / unselect instead of opening
-                        state?.toggleSelection(fullPath);
+                        state?.toggleSelection(entity.path);
                         return;
                       }
 
                       if (FileManager.isDirectory(entity)) {
                         await controller.openDirectory(entity);
                         scrollController.jumpTo(0);
+
+                        if (isSearching) {
+                          state?.clearSearch();
+                        }
                       } else {
                         handleFileTap(
                           context,
                           entity,
-                          fullPath,
+                          entity.path,
                           isSelectionMode,
                           state,
                           controller,
                         );
+
+                        if (isSearching) {
+                          state?.clearSearch();
+                        }
                       }
                     },
                     onLongPress: () => state?.toggleSelection(fullPath),

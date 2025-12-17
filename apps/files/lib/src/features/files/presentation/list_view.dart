@@ -29,7 +29,7 @@ Widget buildListView(
         // Show message if folder is empty
         return Center(
           child: Text(
-            "Folder is empty",
+            isSearching ? "No results found" : "Folder is empty",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.grey,
                 ),
@@ -69,7 +69,11 @@ Widget buildListView(
               onLongPress: () => state?.toggleSelection(entity.path),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isNew ? const Color(0xFF2A2A2A) : Colors.transparent,
+                  color: isNew
+                      ? const Color(0xFF2A2A2A)
+                      : isSelected
+                          ? Colors.grey[900]
+                          : Colors.transparent,
                 ),
                 child: ListTile(
                   minTileHeight: 65,
@@ -123,20 +127,19 @@ Widget buildListView(
                           .defaultFontFamily,
                     ),
                   ),
-                  onTap: () {
+                  onTap: () async {
                     if (isSelectionMode) {
-                      // Select / unselect item instead of opening
                       state?.toggleSelection(entity.path);
                       return;
                     }
 
-                    if (isSearching) {
-                      state?.clearSearch();
-                    }
-
                     if (FileManager.isDirectory(entity)) {
-                      controller.openDirectory(entity);
+                      await controller.openDirectory(entity);
                       scrollController.jumpTo(0);
+
+                      if (isSearching) {
+                        state?.clearSearch();
+                      }
                     } else {
                       handleFileTap(
                         context,
@@ -146,6 +149,10 @@ Widget buildListView(
                         state,
                         controller,
                       );
+
+                      if (isSearching) {
+                        state?.clearSearch();
+                      }
                     }
                   },
                 ),

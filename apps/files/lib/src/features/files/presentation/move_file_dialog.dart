@@ -198,15 +198,6 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               if (isSearching) ...[
                 Expanded(
                   child: MechanixTextInput.search(
-                    theme: MechanixTextInputThemeData(
-                        fillColor: const Color(0xFF151515),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF151515),
-                        ),
-                        focusedBorderSide: const BorderSide(
-                          color: Color(0xFF151515),
-                        ),
-                        borderRadius: BorderRadius.circular(8)),
                     cursorColor:
                         Theme.of(context).extension<FilesTheme>()!.primaryColor,
                     prefixIcon: const IconWidget(
@@ -216,13 +207,19 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                       iconWidth: 24,
                     ),
                     hintText: "Search here",
-                    onChanged: (query) => controller.search(query),
+                    onChanged: (query) {
+                      searchQuery.value = query;
+
+                      if (query.trim().length > 2) {
+                        controller.search(query.trim());
+                      }
+                    },
                     onClear: () {
                       setState(() {
                         isSearching = false;
                         searchQuery.value = "";
                       });
-                      controller.reload();
+                      controller.search('');
                     },
                   ),
                 ),
