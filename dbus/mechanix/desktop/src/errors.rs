@@ -24,4 +24,6 @@ pub enum MechanixNotificationError {
     /// The string contains additional context or the underlying error message.
     #[error("failed to create network_manager proxy {0:?}")]
     CreateProxyError(String),
+    #[error("failed to get all notifications {0:?}")]
+    GetAllNotificationsFailed(String),
 }

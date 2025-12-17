@@ -5,7 +5,13 @@ use std::{
     time::Duration,
 };
 
-use gpui::{div, img, prelude::FluentBuilder, px, rgb, Animation, AnimationExt, AnyElement, App, AppContext, ClickEvent, Context, DismissEvent, Div, ElementId, Entity, EventEmitter, FontWeight, Img, InteractiveElement as _, IntoElement, ParentElement as _, Render, SharedString, Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Subscription, Window};
+use gpui::{
+    div, img, prelude::FluentBuilder, px, rgb, Animation, AnimationExt, AnyElement, App,
+    AppContext, ClickEvent, Context, DismissEvent, Div, Element, ElementId,
+    Entity, EventEmitter, FontWeight, Img, InteractiveElement as _, IntoElement,
+    MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement as _, Point, Render,
+    SharedString, Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Subscription, Window,
+};
 use smol::Timer;
 
 use crate::ui::icon::{Icon, IconName};
@@ -66,6 +72,15 @@ pub struct Notification {
     content_builder: Option<Rc<dyn Fn(&mut Self, &mut Window, &mut Context<Self>) -> AnyElement>>,
     on_click: Option<Rc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
     closing: bool,
+    // swipe-to-dismiss state
+    dragging: bool,
+    drag_start: Point<gpui::Pixels>,
+    drag_dx: f32,
+    drag_moved: bool,
+    snapping_back: bool,
+    snap_from: f32,
+    anim_epoch: u64,
+    close_dir: f32,
 }
 
 impl From<String> for Notification {
@@ -121,6 +136,17 @@ impl Notification {
             content_builder: None,
             on_click: None,
             closing: false,
+            dragging: false,
+            drag_start: Point {
+                x: px(0.0),
+                y: px(0.0),
+            },
+            drag_dx: 0.0,
+            drag_moved: false,
+            snapping_back: false,
+            snap_from: 0.0,
+            anim_epoch: 0,
+            close_dir: 1.0,
         }
     }
 
@@ -136,27 +162,6 @@ impl Notification {
             .message(message)
             .with_type(NotificationType::Info)
     }
-
-    /// Create a success notification with the given message.
-    // pub fn success(message: impl Into<SharedString>) -> Self {
-    //     Self::new()
-    //         .message(message)
-    //         .with_type(NotificationType::Success)
-    // }
-    //
-    // /// Create a warning notification with the given message.
-    // pub fn warning(message: impl Into<SharedString>) -> Self {
-    //     Self::new()
-    //         .message(message)
-    //         .with_type(NotificationType::Warning)
-    // }
-    //
-    // /// Create an error notification with the given message.
-    // pub fn error(message: impl Into<SharedString>) -> Self {
-    //     Self::new()
-    //         .message(message)
-    //         .with_type(NotificationType::Error)
-    // }
 
     /// Set the type for unique identification of the notification.
     ///
@@ -280,6 +285,12 @@ impl Render for Notification {
             .map(|builder| builder(self, window, cx));
 
         let closing = self.closing;
+        let dragging = self.dragging;
+        let drag_dx = self.drag_dx;
+        let snapping_back = self.snapping_back;
+        let snap_from = self.snap_from;
+        let anim_epoch = self.anim_epoch;
+        let close_dir = self.close_dir;
         // let icon = match self.type_ {
         //     None => self.icon_img.clone(),
         //     Some(type_) => Some(type_.icon(cx)),
@@ -290,7 +301,6 @@ impl Render for Notification {
         div()
             .id("notification")
             .group("")
-            .occlude()
             .relative()
             .w_112()
             .border_1()
@@ -313,7 +323,7 @@ impl Render for Notification {
                         .mr_3()
                         .items_center()
                         .justify_center()
-                        .child(img(path).size_7())
+                        .child(img(path).size_7()),
                 )
             })
             .child(
@@ -321,6 +331,7 @@ impl Render for Notification {
                     .flex()
                     .flex_col()
                     .flex_1()
+                    .min_w(px(0.0))
                     .overflow_hidden()
                     .text_color(rgb(0xe9e9e9))
                     .when_some(self.title.clone(), |this, title| {
@@ -330,6 +341,7 @@ impl Render for Notification {
                                 .font_weight(FontWeight::SEMIBOLD)
                                 // Brighter title for emphasis
                                 .text_color(rgb(0xf4f4f4))
+                                .whitespace_normal()
                                 .child(title),
                         )
                     })
@@ -339,6 +351,7 @@ impl Render for Notification {
                                 .text_sm()
                                 // Slightly muted body text for hierarchy
                                 .text_color(rgb(0xd0d0d0))
+                                .whitespace_normal()
                                 .child(message),
                         )
                     })
@@ -347,10 +360,84 @@ impl Render for Notification {
             )
             .when_some(self.on_click.clone(), |this, on_click| {
                 this.on_click(cx.listener(move |view, event, window, cx| {
+                    // Prevent accidental clicks when user was dragging
+                    if view.drag_moved {
+                        // reset the flag after suppressing a click
+                        view.drag_moved = false;
+                        return;
+                    }
                     view.dismiss(window, cx);
                     on_click(event, window, cx);
                 }))
             })
+            // Swipe-to-dismiss handlers
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, e: &MouseDownEvent, _window, cx| {
+                    this.dragging = true;
+                    this.drag_moved = false;
+                    this.snapping_back = false;
+                    this.drag_start = e.position;
+                    this.drag_dx = 0.0;
+                    cx.notify();
+                }),
+            )
+            .on_mouse_move(cx.listener(|this, e: &MouseMoveEvent, _window, cx| {
+                println!("MOUSE MOVE");
+                if this.dragging {
+                    let dx = e.position.x - this.drag_start.x; // Pixels
+                    // start suppressing click after a small slop
+                    if dx.abs() > px(3.0) {
+                        this.drag_moved = true;
+                    }
+                    // store as f32 for animation math
+                    this.drag_dx = dx.into();
+                    cx.notify();
+                }
+            }))
+            .on_mouse_up(
+                MouseButton::Left,
+                cx.listener(|this, _e: &MouseUpEvent, window, cx| {
+                    println!("MOUSE DOWN");
+                    if !this.dragging {
+                        return;
+                    }
+                    this.dragging = false;
+
+                    let threshold: f32 = 80.0;
+                    let dx = this.drag_dx;
+                    this.drag_dx = 0.0;
+
+                    if dx.abs() >= threshold {
+                        // swipe dismiss in the dragged direction
+                        this.close_dir = if dx < 0.0 { -1.0 } else { 1.0 };
+                        this.dismiss(window, cx);
+                    } else {
+                        // snap back with a short animation
+                        this.snapping_back = true;
+                        this.snap_from = dx;
+                        this.anim_epoch = this.anim_epoch.wrapping_add(1);
+                        let epoch = this.anim_epoch;
+                        cx.notify();
+
+                        cx.spawn(async move |view, cx| {
+                            Timer::after(Duration::from_millis(200)).await;
+                            cx.update(|cx| {
+                                if let Some(view) = view.upgrade() {
+                                    view.update(cx, |this, _| {
+                                        // Only clear if no new animation started
+                                        if this.anim_epoch == epoch {
+                                            this.snapping_back = false;
+                                            this.snap_from = 0.0;
+                                        }
+                                    });
+                                }
+                            })
+                        })
+                        .detach();
+                    }
+                }),
+            )
             .child(
                 div()
                     .flex()
@@ -373,18 +460,38 @@ impl Render for Notification {
                     ),
             )
             .with_animation(
-                ElementId::NamedInteger("slide-down".into(), closing as u64),
+                ElementId::NamedInteger("notif-anim".into(), (closing as u64) + anim_epoch),
                 Animation::new(Duration::from_secs_f64(0.25))
                     .with_easing(cubic_bezier(0.4, 0., 0.2, 1.)),
                 move |this, delta| {
                     if closing {
-                        let x_offset = px(0.) + delta * px(45.);
+                        // Slide out in the swipe direction with fade
+                        let x_offset = delta * px(120.) * close_dir;
                         let opacity = 1. - delta;
-                        this.left(px(0.) + x_offset)
+                        this.left(x_offset)
                             .shadow_none()
                             .opacity(opacity)
                             .when(opacity < 0.85, |this| this.shadow_none())
+                    } else if dragging {
+                        // Follow finger: translate horizontally; reduce opacity slightly by distance
+                        let dist = drag_dx.abs().min(180.0);
+                        let fade = (dist / 180.0) * 0.6; // up to 40% fade
+                        let opacity = 1.0 - fade;
+                        this.left(px(drag_dx))
+                            .opacity(opacity)
+                            .when(opacity < 0.85, |this| this.shadow_none())
+                    } else if snapping_back && snap_from != 0.0 {
+                        // Animate back to origin from last drag offset
+                        let start_dist = snap_from.abs().min(180.0);
+                        let start_fade = (start_dist / 180.0) * 0.6;
+                        let start_opacity = 1.0 - start_fade;
+                        let x = px(snap_from * (1.0 - delta));
+                        let opacity = start_opacity + (1.0 - start_opacity) * delta;
+                        this.left(x)
+                            .opacity(opacity)
+                            .when(opacity < 0.85, |this| this.shadow_none())
                     } else {
+                        // Entrance animation (slide down + fade in)
                         let y_offset = px(-45.) + delta * px(45.);
                         let opacity = delta;
                         this.top(px(0.) + y_offset)
@@ -530,5 +637,833 @@ impl Render for NotificationList {
                 .gap_3()
                 .children(items),
         )
+    }
+}
+
+// ================= Notification Center (grouped list) =================
+
+#[derive(Clone)]
+pub struct NotificationGroupItem {
+    pub id: u64,
+    pub app_name: SharedString,
+    pub time_ago: SharedString,
+    pub preview: SharedString,
+    pub count: u32,
+    pub has_thumbnail: bool,
+    // Add a list of all notifications in this group
+    pub items: Vec<NotificationItem>,
+}
+
+#[derive(Clone)]
+pub struct NotificationItem {
+    pub id: u64,
+    pub preview: SharedString,
+    pub has_thumbnail: bool,
+}
+
+pub struct NotificationCenter {
+    groups: Vec<NotificationGroupItem>,
+    rows: Vec<RowState>,
+    clearing: bool,
+    // Track which groups are expanded
+    expanded_groups: HashMap<u64, bool>,
+    // Track state for individual notification items
+    item_states: HashMap<u64, ItemState>,
+}
+
+#[derive(Clone, Copy)]
+struct RowState {
+    id: u64,
+    // swipe-to-dismiss state for center rows
+    dragging: bool,
+    drag_start: Point<gpui::Pixels>,
+    drag_dx: f32,
+    drag_moved: bool,
+    snapping_back: bool,
+    snap_from: f32,
+    anim_epoch: u64,
+    closing: bool,
+    close_dir: f32,
+}
+
+#[derive(Clone, Copy)]
+struct ItemState {
+    id: u64,
+    dragging: bool,
+    drag_start: Point<gpui::Pixels>,
+    drag_dx: f32,
+    drag_moved: bool,
+    snapping_back: bool,
+    snap_from: f32,
+    anim_epoch: u64,
+    closing: bool,
+    close_dir: f32,
+}
+
+impl RowState {
+    fn new(id: u64) -> Self {
+        Self {
+            id,
+            dragging: false,
+            drag_start: Point {
+                x: px(0.0),
+                y: px(0.0),
+            },
+            drag_dx: 0.0,
+            drag_moved: false,
+            snapping_back: false,
+            snap_from: 0.0,
+            anim_epoch: 0,
+            closing: false,
+            close_dir: 1.0,
+        }
+    }
+}
+
+impl ItemState {
+    fn new(id: u64) -> Self {
+        Self {
+            id,
+            dragging: false,
+            drag_start: Point {
+                x: px(0.0),
+                y: px(0.0),
+            },
+            drag_dx: 0.0,
+            drag_moved: false,
+            snapping_back: false,
+            snap_from: 0.0,
+            anim_epoch: 0,
+            closing: false,
+            close_dir: 1.0,
+        }
+    }
+}
+
+impl NotificationCenter {
+    pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
+        // Demo data with multiple items per group
+        let mut next_id = 1u64;
+        let groups = vec![
+            NotificationGroupItem {
+                id: { let v = next_id; next_id += 1; v },
+                app_name: "Files".into(),
+                time_ago: "· 3h".into(),
+                preview: "Content of notification goes here, maximum length of 484px".into(),
+                count: 1,
+                has_thumbnail: false,
+                items: vec![
+                    NotificationItem {
+                        id: next_id,
+                        preview: "Content of notification goes here, maximum length of 484px".into(),
+                        has_thumbnail: false,
+                    }
+                ],
+            },
+            NotificationGroupItem {
+                id: { let v = next_id; next_id += 1; v },
+                app_name: "Ardour".into(),
+                time_ago: "· 4h".into(),
+                preview: "Content of notification goes here, maximum length of 484px, and has a two line type content.".into(),
+                count: 3,
+                has_thumbnail: false,
+                items: vec![
+                    NotificationItem {
+                        id: next_id + 1,
+                        preview: "First notification from Ardour".into(),
+                        has_thumbnail: false,
+                    },
+                    NotificationItem {
+                        id: next_id + 2,
+                        preview: "Second notification from Ardour".into(),
+                        has_thumbnail: false,
+                    },
+                    NotificationItem {
+                        id: next_id + 3,
+                        preview: "Third notification from Ardour with longer text content".into(),
+                        has_thumbnail: false,
+                    },
+                ],
+            },
+            NotificationGroupItem {
+                id: { let v = next_id; next_id += 1; v },
+                app_name: "Sofia Marrakesh".into(),
+                time_ago: "· 6h".into(),
+                preview: "Content of notification goes here, maximum length of 402 px, and has a two line + image type content.".into(),
+                count: 4,
+                has_thumbnail: true,
+                items: vec![
+                    NotificationItem {
+                        id: next_id + 4,
+                        preview: "Message from Sofia: Hey, how are you?".into(),
+                        has_thumbnail: true,
+                    },
+                    NotificationItem {
+                        id: next_id + 5,
+                        preview: "Sofia shared a photo with you".into(),
+                        has_thumbnail: true,
+                    },
+                    NotificationItem {
+                        id: next_id + 6,
+                        preview: "Sofia: Are you free this weekend?".into(),
+                        has_thumbnail: false,
+                    },
+                    NotificationItem {
+                        id: next_id + 7,
+                        preview: "Sofia sent you a location".into(),
+                        has_thumbnail: false,
+                    },
+                ],
+            },
+        ];
+        let rows = groups.iter().map(|g| RowState::new(g.id)).collect();
+        Self {
+            groups,
+            rows,
+            clearing: false,
+            expanded_groups: HashMap::new(),
+            item_states: HashMap::new(),
+        }
+    }
+
+    fn toggle_group(&mut self, group_id: u64, cx: &mut Context<Self>) {
+        let is_expanded = self
+            .expanded_groups
+            .get(&group_id)
+            .copied()
+            .unwrap_or(false);
+        self.expanded_groups.insert(group_id, !is_expanded);
+        cx.notify();
+    }
+}
+
+impl Render for NotificationCenter {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        // Header - updated styling
+        let header = div()
+            .flex()
+            .flex_row()
+            .items_center()
+            .justify_between()
+            .px_4()
+            .pt_4()
+            .pb_3()
+            .child(
+                div()
+                    .text_color(rgb(0xe5e5e5))
+                    .text_base()
+                    .font_weight(FontWeight::MEDIUM)
+                    .child("Notifications"),
+            )
+            .child(
+                div()
+                    .id("clear-all")
+                    .text_sm()
+                    .text_color(rgb(0xa0a0a0))
+                    .cursor_pointer()
+                    .child("Clear all")
+                    .on_click(cx.listener(|this, _, _window, cx| {
+                        if this.clearing {
+                            return;
+                        }
+                        this.clearing = true;
+                        cx.notify();
+
+                        cx.spawn(async move |view, cx| {
+                            Timer::after(Duration::from_millis(475)).await;
+                            cx.update(|cx| {
+                                if let Some(view) = view.upgrade() {
+                                    view.update(cx, |this, _| {
+                                        this.groups.clear();
+                                        this.clearing = false;
+                                    });
+                                }
+                            })
+                        })
+                        .detach();
+                    })),
+            );
+
+        // Groups list - updated styling
+        let mut list = div().flex().flex_col().gap_2p5().px_3().pb_3();
+        let clearing = self.clearing;
+
+        for (idx, g) in self.groups.iter().enumerate() {
+            let st = self
+                .rows
+                .iter()
+                .find(|s| s.id == g.id)
+                .cloned()
+                .unwrap_or(RowState::new(g.id));
+            let is_expanded = self.expanded_groups.get(&g.id).copied().unwrap_or(false);
+
+            // Main card with stacked appearance using layered divs
+            let mut row = div().relative().flex().flex_col();
+
+            // Build stacked effect from back to front (only show when NOT expanded)
+            if !is_expanded {
+                // Back layer (third card hint) - only if count > 2
+                if g.count > 2 {
+                    row = row.child(
+                        div()
+                            .absolute()
+                            .top(px(0.0))
+                            .left(px(16.0))
+                            .right(px(16.0))
+                            .h(px(9.0))
+                            .rounded_t(px(12.0))
+                            .border_t_1()
+                            .border_l_1()
+                            .border_r_1()
+                            .border_color(rgb(0xb87d00))
+                            .bg(rgb(0x241b12)),
+                    );
+                }
+
+                // Middle layer (second card hint) - if count > 1
+                if g.count > 1 {
+                    row = row.child(
+                        div()
+                            .absolute()
+                            .top(px(6.0))
+                            .left(px(8.0))
+                            .right(px(8.0))
+                            .h(px(9.0))
+                            .rounded_t(px(12.0))
+                            .border_t_1()
+                            .border_l_1()
+                            .border_r_1()
+                            .border_color(rgb(0xb87d00))
+                            .bg(rgb(0x2a2015)),
+                    );
+                }
+            }
+
+            // Calculate top margin for main card based on stack count (only when not expanded)
+            let card_top_offset = if is_expanded {
+                px(0.0)
+            } else if g.count > 2 {
+                px(12.0)
+            } else if g.count > 1 {
+                px(12.0)
+            } else {
+                px(0.0)
+            };
+
+            // Helper function to create a notification card
+            let create_card = |item_preview: SharedString,
+                               item_has_thumbnail: bool,
+                               show_header: bool,
+                               item_idx: usize,
+                               group_id: u64,
+                               item_id: u64| {
+                let mut card = div()
+                    .id("nc-card")
+                    .relative()
+                    .border_1()
+                    .border_color(rgb(0xb87d00))
+                    .bg(rgb(0x2f2217))
+                    .rounded(px(12.0))
+                    .px_4()
+                    .py_3()
+                    .flex()
+                    .flex_col()
+                    .gap_2();
+
+                // Top line: icon + name · time (only for first card or when collapsed)
+                if show_header {
+                    let top = div()
+                        .flex()
+                        .flex_row()
+                        .items_center()
+                        .justify_between()
+                        .child(
+                            div()
+                                .flex()
+                                .flex_row()
+                                .items_center()
+                                .gap_2()
+                                .child(
+                                    div()
+                                        .w(px(24.0))
+                                        .h(px(24.0))
+                                        .rounded(px(6.0))
+                                        .bg(rgb(0xff9500))
+                                        .flex()
+                                        .items_center()
+                                        .justify_center()
+                                        .child(
+                                            Icon::new(IconName::Application)
+                                                .size((px(16.), px(16.)))
+                                                .text_color(rgb(0xffffff)),
+                                        ),
+                                )
+                                .child(div().text_sm().text_color(rgb(0xe0e0e0)).child(format!(
+                                    "{} {}",
+                                    g.app_name,
+                                    g.time_ago.clone()
+                                ))),
+                        )
+                        .when(g.count > 0 && !is_expanded, |this| {
+                            this.child(
+                                div()
+                                    .rounded(px(10.0))
+                                    .border_1()
+                                    .border_color(rgb(0xff9500))
+                                    .bg(rgb(0x1a1a1a))
+                                    .text_color(rgb(0xff9500))
+                                    .text_xs()
+                                    .px_2()
+                                    .py_0p5()
+                                    .font_weight(FontWeight::MEDIUM)
+                                    .child(format!("{}", g.count)),
+                            )
+                        });
+                    card = card.child(top);
+                }
+
+                // Body with preview text and optional thumbnail
+                let mut body = div()
+                    .text_sm()
+                    .text_color(rgb(0xc0c0c0))
+                    .flex()
+                    .flex_row()
+                    .items_start()
+                    .gap_3();
+
+                body = body.child(
+                    div()
+                        .flex_1()
+                        .min_w(px(0.0))
+                        .whitespace_normal()
+                        .child(item_preview),
+                );
+
+                if item_has_thumbnail {
+                    body = body.child(
+                        div()
+                            .w(px(44.0))
+                            .h(px(44.0))
+                            .rounded(px(8.0))
+                            .bg(rgb(0x404040))
+                            .flex_shrink_0(),
+                    );
+                }
+
+                card = card.child(body);
+
+                // Make clickable to expand/collapse (only for first card with count > 1 and not expanded)
+                if show_header && g.count > 1 && !is_expanded {
+                    card = card
+                        .cursor_pointer()
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            this.toggle_group(group_id, cx);
+                        }));
+                } else if show_header && g.count > 1 && is_expanded {
+                    // Also make it clickable when expanded to allow collapsing
+                    card = card
+                        .cursor_pointer()
+                        .on_click(cx.listener(move |this, _, _, cx| {
+                            this.toggle_group(group_id, cx);
+                        }));
+                }
+
+                card
+            };
+
+            // Render cards based on expanded state
+            if is_expanded && g.items.len() > 1 {
+                // Show all notifications in the stack with staggered animation
+                for (item_idx, item) in g.items.iter().enumerate() {
+                    // Get or create item state
+                    let item_state = self
+                        .item_states
+                        .get(&item.id)
+                        .copied()
+                        .unwrap_or(ItemState::new(item.id));
+
+                    let mut card = create_card(
+                        item.preview.clone(),
+                        item.has_thumbnail,
+                        item_idx == 0, // Only show header for first card
+                        item_idx,
+                        g.id,
+                        item.id,
+                    );
+
+                    // Add swipe handlers for expanded items (not the first one with header)
+                    if item_idx > 0 {
+                        let item_id = item.id;
+                        let group_id = g.id;
+
+                        card = card
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this, e: &MouseDownEvent, _window, cx| {
+                                    let state = this
+                                        .item_states
+                                        .entry(item_id)
+                                        .or_insert(ItemState::new(item_id));
+                                    state.dragging = true;
+                                    state.drag_moved = false;
+                                    state.snapping_back = false;
+                                    state.drag_start = e.position;
+                                    state.drag_dx = 0.0;
+                                    cx.notify();
+                                }),
+                            )
+                            .on_mouse_move(cx.listener(
+                                move |this, e: &MouseMoveEvent, _window, cx| {
+                                    if let Some(state) = this.item_states.get_mut(&item_id) {
+                                        if state.dragging {
+                                            let dx = e.position.x - state.drag_start.x;
+                                            if dx.abs() > px(3.0) {
+                                                state.drag_moved = true;
+                                            }
+                                            state.drag_dx = dx.into();
+                                            cx.notify();
+                                        }
+                                    }
+                                },
+                            ))
+                            .on_mouse_up(
+                                MouseButton::Left,
+                                cx.listener(move |this, _e: &MouseUpEvent, _window, cx| {
+                                    if let Some(state) = this.item_states.get_mut(&item_id) {
+                                        if !state.dragging {
+                                            return;
+                                        }
+                                        state.dragging = false;
+
+                                        let threshold: f32 = 80.0;
+                                        let dx = state.drag_dx;
+                                        state.drag_dx = 0.0;
+
+                                        if dx.abs() >= threshold {
+                                            // Swipe dismiss
+                                            state.close_dir = if dx < 0.0 { -1.0 } else { 1.0 };
+                                            state.closing = true;
+                                            cx.notify();
+
+                                            let removing_item_id = item_id;
+                                            let target_group_id = group_id;
+                                            cx.spawn(async move |view, cx| {
+                                                Timer::after(Duration::from_millis(150)).await;
+                                                cx.update(|cx| {
+                                                    if let Some(view) = view.upgrade() {
+                                                        view.update(cx, |this, cx| {
+                                                            // Find the group and remove the item
+                                                            if let Some(group) = this
+                                                                .groups
+                                                                .iter_mut()
+                                                                .find(|g| g.id == target_group_id)
+                                                            {
+                                                                if let Some(pos) = group
+                                                                    .items
+                                                                    .iter()
+                                                                    .position(|i| {
+                                                                        i.id == removing_item_id
+                                                                    })
+                                                                {
+                                                                    group.items.remove(pos);
+                                                                    group.count = group
+                                                                        .count
+                                                                        .saturating_sub(1);
+
+                                                                    // Update the preview to the first remaining item
+                                                                    if let Some(first) =
+                                                                        group.items.first()
+                                                                    {
+                                                                        group.preview =
+                                                                            first.preview.clone();
+                                                                        group.has_thumbnail =
+                                                                            first.has_thumbnail;
+                                                                    }
+
+                                                                    // If only one item left, collapse the group
+                                                                    if group.items.len() <= 1 {
+                                                                        this.expanded_groups
+                                                                            .insert(
+                                                                                target_group_id,
+                                                                                false,
+                                                                            );
+                                                                    }
+                                                                }
+                                                            }
+                                                            this.item_states
+                                                                .remove(&removing_item_id);
+                                                            cx.notify();
+                                                        });
+                                                    }
+                                                })
+                                            })
+                                            .detach();
+                                        } else {
+                                            // Snap back
+                                            state.snapping_back = true;
+                                            state.snap_from = dx;
+                                            state.anim_epoch = state.anim_epoch.wrapping_add(1);
+                                            let target_item_id = item_id;
+                                            let epoch = state.anim_epoch;
+                                            cx.notify();
+
+                                            cx.spawn(async move |view, cx| {
+                                                Timer::after(Duration::from_millis(200)).await;
+                                                cx.update(|cx| {
+                                                    if let Some(view) = view.upgrade() {
+                                                        view.update(cx, |this, _| {
+                                                            if let Some(state) = this
+                                                                .item_states
+                                                                .get_mut(&target_item_id)
+                                                            {
+                                                                if state.anim_epoch == epoch {
+                                                                    state.snapping_back = false;
+                                                                    state.snap_from = 0.0;
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                })
+                                            })
+                                            .detach();
+                                        }
+                                    }
+                                }),
+                            );
+                    }
+
+                    let card_with_margin = if item_idx == 0 {
+                        card.mt(card_top_offset)
+                    } else {
+                        card.mt_2() // spacing between expanded cards
+                    };
+
+                    // Animation for expanded items
+                    let anim_id = ElementId::NamedInteger(
+                        "nc-expanded-item".into(),
+                        item_state.anim_epoch * 100000 + item.id,
+                    );
+
+                    row = row.child(
+                        card_with_margin.with_animation(
+                            anim_id,
+                            Animation::new(Duration::from_millis(300))
+                                .with_easing(cubic_bezier(0.4, 0.0, 0.2, 1.0)),
+                            move |this, delta| {
+                                if item_state.closing {
+                                    // Slide out
+                                    let x_offset = delta * px(120.) * item_state.close_dir;
+                                    let opacity = 1.0 - delta;
+                                    this.left(x_offset).opacity(opacity)
+                                } else if item_state.dragging {
+                                    // Follow finger
+                                    let dist = item_state.drag_dx.abs().min(180.0);
+                                    let fade = (dist / 180.0) * 0.6;
+                                    let opacity = 1.0 - fade;
+                                    this.left(px(item_state.drag_dx)).opacity(opacity)
+                                } else if item_state.snapping_back && item_state.snap_from != 0.0 {
+                                    // Snap back
+                                    let start_dist = item_state.snap_from.abs().min(180.0);
+                                    let start_fade = (start_dist / 180.0) * 0.6;
+                                    let start_opacity = 1.0 - start_fade;
+                                    let x = px(item_state.snap_from * (1.0 - delta));
+                                    let opacity = start_opacity + (1.0 - start_opacity) * delta;
+                                    this.left(x).opacity(opacity)
+                                } else {
+                                    // Staggered fade-in on expand
+                                    let delay = (item_idx as f32) * 0.08;
+                                    let progress =
+                                        ((delta - delay) / (1.0 - delay)).clamp(0.0, 1.0);
+                                    let y_offset = px(-20.0) * (1.0 - progress);
+                                    this.top(y_offset).opacity(progress)
+                                }
+                            },
+                        ),
+                    );
+                }
+            } else {
+                // Collapsed state - show only the first notification
+                let card = create_card(
+                    g.preview.clone(),
+                    g.has_thumbnail,
+                    true,
+                    0,
+                    g.id,
+                    g.items.first().map(|i| i.id).unwrap_or(0),
+                )
+                .mt(card_top_offset);
+
+                // Add swipe handlers for collapsed card
+                let row_id = g.id;
+                let card = card
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(move |this, e: &MouseDownEvent, _window, cx| {
+                            if let Some(st) = this.rows.iter_mut().find(|s| s.id == row_id) {
+                                st.dragging = true;
+                                st.drag_moved = false;
+                                st.snapping_back = false;
+                                st.drag_start = e.position;
+                                st.drag_dx = 0.0;
+                                cx.notify();
+                            }
+                        }),
+                    )
+                    .on_mouse_move(cx.listener(move |this, e: &MouseMoveEvent, _window, cx| {
+                        if let Some(st) = this.rows.iter_mut().find(|s| s.id == row_id) {
+                            if st.dragging {
+                                let dx = e.position.x - st.drag_start.x;
+                                if dx.abs() > px(3.0) {
+                                    st.drag_moved = true;
+                                }
+                                st.drag_dx = dx.into();
+                                cx.notify();
+                            }
+                        }
+                    }))
+                    .on_mouse_up(
+                        MouseButton::Left,
+                        cx.listener(move |this, _e: &MouseUpEvent, window, cx| {
+                            if let Some(st) = this.rows.iter_mut().find(|s| s.id == row_id) {
+                                if !st.dragging {
+                                    return;
+                                }
+                                st.dragging = false;
+
+                                // Check if this was a tap (no significant drag)
+                                if !st.drag_moved {
+                                    st.drag_dx = 0.0;
+                                    return; // Let the on_click handler deal with it
+                                }
+
+                                let threshold: f32 = 80.0;
+                                let dx = st.drag_dx;
+                                st.drag_dx = 0.0;
+                                if dx.abs() >= threshold {
+                                    st.close_dir = if dx < 0.0 { -1.0 } else { 1.0 };
+                                    st.closing = true;
+                                    cx.notify();
+                                    let removing_id = row_id;
+                                    cx.spawn(async move |view, cx| {
+                                        Timer::after(Duration::from_millis(150)).await;
+                                        cx.update(|cx| {
+                                            if let Some(view) = view.upgrade() {
+                                                view.update(cx, |this, _| {
+                                                    if let Some(pos) = this
+                                                        .groups
+                                                        .iter()
+                                                        .position(|g| g.id == removing_id)
+                                                    {
+                                                        this.groups.remove(pos);
+                                                    }
+                                                    if let Some(pos) = this
+                                                        .rows
+                                                        .iter()
+                                                        .position(|s| s.id == removing_id)
+                                                    {
+                                                        this.rows.remove(pos);
+                                                    }
+                                                });
+                                            }
+                                        })
+                                    })
+                                    .detach();
+                                } else {
+                                    st.snapping_back = true;
+                                    st.snap_from = dx;
+                                    st.anim_epoch = st.anim_epoch.wrapping_add(1);
+                                    let target_id = row_id;
+                                    let epoch = st.anim_epoch;
+                                    cx.notify();
+                                    cx.spawn(async move |view, cx| {
+                                        Timer::after(Duration::from_millis(200)).await;
+                                        cx.update(|cx| {
+                                            if let Some(view) = view.upgrade() {
+                                                view.update(cx, |this, _| {
+                                                    if let Some(st) = this
+                                                        .rows
+                                                        .iter_mut()
+                                                        .find(|s| s.id == target_id)
+                                                    {
+                                                        if st.anim_epoch == epoch {
+                                                            st.snapping_back = false;
+                                                            st.snap_from = 0.0;
+                                                        }
+                                                    }
+                                                });
+                                            }
+                                        })
+                                    })
+                                    .detach();
+                                }
+                            }
+                        }),
+                    );
+
+                row = row.child(card);
+            }
+
+            // Animation wrapper for the entire row
+            let i = idx as u64;
+            list = list.child(
+                row.with_animation(
+                    ElementId::NamedInteger(
+                        "nc-row".into(),
+                        if clearing {
+                            1_000_000 + st.anim_epoch + i
+                        } else {
+                            st.anim_epoch + i
+                        },
+                    ),
+                    Animation::new(Duration::from_millis(450))
+                        .with_easing(cubic_bezier(0.4, 0.0, 0.2, 1.0)),
+                    move |this, delta| {
+                        if clearing {
+                            let opacity = 1.0 - delta;
+                            this.opacity(opacity)
+                        } else if st.closing {
+                            let x_offset = delta * px(120.) * st.close_dir;
+                            let opacity = 1.0 - delta;
+                            this.left(x_offset).opacity(opacity)
+                        } else if st.dragging {
+                            let dist = st.drag_dx.abs().min(180.0);
+                            let fade = (dist / 180.0) * 0.6;
+                            let opacity = 1.0 - fade;
+                            this.left(px(st.drag_dx)).opacity(opacity)
+                        } else if st.snapping_back && st.snap_from != 0.0 {
+                            let start_dist = st.snap_from.abs().min(180.0);
+                            let start_fade = (start_dist / 180.0) * 0.6;
+                            let start_opacity = 1.0 - start_fade;
+                            let x = px(st.snap_from * (1.0 - delta));
+                            let opacity = start_opacity + (1.0 - start_opacity) * delta;
+                            this.left(x).opacity(opacity)
+                        } else {
+                            let step = 0.12;
+                            let start = (i as f32) * step;
+                            let denom = (1.0 - start).max(0.0001);
+                            let local = ((delta - start) / denom).clamp(0.0, 1.0);
+                            this.opacity(local)
+                        }
+                    },
+                ),
+            );
+        }
+
+        // Main container
+        div()
+            .absolute()
+            .top(px(60.0))
+            .left(px(16.0))
+            .right(px(16.0))
+            .child(
+                div()
+                    .rounded(px(14.0))
+                    .bg(rgb(0x1a1a1a))
+                    .border_1()
+                    .border_color(rgb(0x2a2a2a))
+                    .shadow_lg()
+                    .child(header)
+                    .child(list),
+            )
     }
 }

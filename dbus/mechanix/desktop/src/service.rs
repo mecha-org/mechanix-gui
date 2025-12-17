@@ -8,6 +8,7 @@ use log::{error, info};
 use mechanix_session_services::Notification;
 use std::sync::LazyLock;
 use zbus::Connection;
+use std::collections::HashMap;
 
 static THREAD_POOL: LazyLock<ThreadPool> =
     LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
@@ -64,6 +65,14 @@ impl MechanixNotificationService {
         });
         receiver
     }
+    /// Fetch all notifications from the service (unread list for Notification Center)
+    pub async fn fetch_all(&self) -> Result<HashMap<u32, Notification>, MechanixNotificationError> {
+        self
+            .proxy
+            .get_all_notifications()
+            .await
+            .map_err(|e| MechanixNotificationError::CreateProxyError(e.to_string()))
+    }
     
     /// Returns a stream of notifications closed from the dbus service.
     pub async fn stream_close_notification(&self) -> mpsc::Receiver<u32> {
@@ -93,5 +102,10 @@ impl MechanixNotificationService {
         proxy.invoke_action(id, action_key)
             .await
             .map_err(|e| MechanixNotificationError::CreateProxyError(e.to_string()))
+    }
+    pub async fn get_all_notifications(&self) -> Result<HashMap<u32, Notification>, MechanixNotificationError> {
+        let proxy = self.proxy.clone();
+        proxy.get_all_notifications().await
+            .map_err(|e| MechanixNotificationError::GetAllNotificationsFailed(e.to_string()))
     }
 }

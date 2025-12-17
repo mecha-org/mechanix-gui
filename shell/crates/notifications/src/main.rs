@@ -2,15 +2,36 @@ use commons::assets::Assets;
 use desktop_dbus::MechanixNotificationService;
 use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
 use gpui::*;
-use notifications::notification_widget::{Notification, NotificationList};
+use notifications::notification_widget::{Notification, NotificationList, NotificationCenter};
 use notifications::prelude::icon::{Icon, IconName};
-use notifications::prelude::{AppEvents, NotificationStory};
+use notifications::prelude::AppEvents;
+
+// Root view to compose NotificationCenter (background) and the toast NotificationList (overlay)
+struct Root {
+    center: Entity<NotificationCenter>,
+    list: Entity<NotificationList>,
+}
+
+impl Root {
+    fn new(center: Entity<NotificationCenter>, list: Entity<NotificationList>) -> Self {
+        Self { center, list }
+    }
+}
+
+impl Render for Root {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        // Put the toast list last so it sits on top (its own render positions it absolutely)
+        div()
+            .child(self.center.clone())
+            .child(self.list.clone())
+    }
+}
 
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
     application.run(|cx| {
         let window_bounds =
-            WindowBounds::Windowed(Bounds::centered(None, size(px(0.0), px(310.0)), cx));
+            WindowBounds::Windowed(Bounds::centered(None, size(px(0.0), px(0.0)), cx));
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(window_bounds),
@@ -202,7 +223,12 @@ fn main() {
                         }
                     }).detach();
                 });
-                cx.new(|_| NotificationStory::new(notification_list))
+                // Mount both by returning an Entity root that composes them.
+                // This avoids returning a raw Div (which isn't an Entity) from the window builder.
+                {
+                    let center = cx.new(|cx| NotificationCenter::new(window, cx));
+                    cx.new(|_| Root::new(center, notification_list))
+                }
             },
         )
             .unwrap();
@@ -224,32 +250,3 @@ fn parse_actions(actions: Vec<String>) -> Vec<(String, String)> {
         .collect();
     parsed_actions
 }
-// fn lookup_icon(
-//     icon_name: &str,
-//     search_result_type: &SearchResultType,
-//     asset_server: &AssetServer,
-// ) -> Handle<Image> {
-//     let icon = lookup(&icon_name)
-//         .with_size(84)
-//         .with_theme("Papirus")
-//         .find()
-//         .unwrap_or_default()
-//         .into_os_string()
-//         .into_string()
-//         .unwrap();
-//     let default_icon = match search_result_type {
-//         SearchResultType::App => Path::new("icons/default_app_icon.png"),
-//         SearchResultType::File => Path::new("icons/default_file_icon.png"),
-//         SearchResultType::Action => Path::new("icons/rotation_on.png"),
-//     };
-//
-//     let path = Path::new(&icon);
-//     match path.extension() {
-//         Some(ext) if ext == "svg" => asset_server.load(AssetPath::from_path(default_icon)),
-//         Some(ext) if ext == "png" => asset_server.load(AssetPath::from_path(path)),
-//         _ => {
-//             println!("Unsupported icon format: {:?}", path.extension());
-//             asset_server.load(AssetPath::from_path(default_icon))
-//         }
-//     }
-// }
