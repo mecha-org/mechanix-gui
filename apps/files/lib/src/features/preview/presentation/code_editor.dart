@@ -42,6 +42,7 @@ class CodeEditorPage extends StatefulWidget {
 class _CodeEditorPageState extends State<CodeEditorPage> {
   bool _initialized = false;
   bool _isEditing = false;
+  bool _isFileChanged = false;
 
   late String _code;
   late CodeController _codeController;
@@ -73,7 +74,19 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       language: language,
     );
 
+    _codeController.addListener(_onCodeChanged);
+
     setState(() => _initialized = true);
+  }
+
+  void _onCodeChanged() {
+    final changed = _codeController.text != _code;
+
+    if (changed != _isFileChanged) {
+      setState(() {
+        _isFileChanged = changed;
+      });
+    }
   }
 
   Mode _getLanguage(String ext) {
@@ -142,6 +155,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
     setState(() {
       _code = updated;
+      _isFileChanged = false;
       _isEditing = false;
     });
 
@@ -205,7 +219,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                                 : '0 of 0',
                             style: TextStyle(
                               color: FilesThemeConstants.labelColor,
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.w500,
                               fontFamily: Theme.of(context)
                                   .extension<FilesTheme>()!
@@ -307,7 +321,69 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                       );
                     },
                   )),
-        bottomNavigationBar: _buildBottomBar(context));
+        bottomNavigationBar: _isEditing
+            ? _buildEditingBottomBar(context)
+            : _buildBottomBar(context));
+  }
+
+  Widget _buildEditingBottomBar(BuildContext context) {
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return Container(
+      color: Colors.grey.shade900,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MechanixBottomBar(
+            theme: const MechanixBottomBarThemeData(),
+            leadingWidget: [
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
+                iconPath: Images.back,
+                onPressed: () {
+                  setState(() => _isEditing = false);
+                  _buildBottomBar(context);
+                },
+              ),
+            ],
+            anchorWidget: [
+              BottomBarButton.widget(
+                widget: MechanixFilledButton(
+                  theme: buttonThemeData(context,
+                      type: MechanixButtonType.cancel,
+                      size: const Size(94, 40)),
+                  label: "Cancel",
+                  onPressed: () {
+                    setState(() => _isEditing = false);
+                    _buildBottomBar(context);
+                  },
+                ),
+              ),
+              BottomBarButton.widget(
+                  widget: Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: MechanixFilledButton(
+                        theme: buttonThemeData(context,
+                            type: _isFileChanged
+                                ? MechanixButtonType.action
+                                : MechanixButtonType.disable,
+                            size: const Size(94, 40)),
+                        label: "Save",
+                        onPressed: !_isFileChanged
+                            ? null
+                            : () {
+                                _save();
+                                setState(() => _isEditing = false);
+                                _buildBottomBar(context);
+                              },
+                      ))),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBottomBar(BuildContext context) {
@@ -324,7 +400,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             leadingWidget: [
               BottomBarButton(
                 iconTheme: const MechanixBottomBarIconThemeData(
-                    padding: EdgeInsets.only(left: 12)),
+                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
                 iconPath: Images.back,
                 onPressed: () => Navigator.pop(context),
               ),
@@ -334,17 +410,20 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
               BottomBarButton(
                 iconWidget: IconWidget(
                   iconPath: Images.search,
+                  iconHeight: 28,
+                  iconWidth: 28,
                   iconColor: _isEditing
                       ? FilesThemeConstants.disableColor
                       : FilesThemeConstants.titleTextColor,
                 ),
-                iconPath: Images.search,
                 isDisabled: _isEditing,
                 onPressed: () {
                   _showSearchOverlay(context);
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconPath: Images.copy,
                 onPressed: () {
                   state?.selectedPaths = {widget.filePath};
@@ -352,6 +431,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconPath: Images.move,
                 onPressed: () {
                   Navigator.pop(context);
@@ -360,28 +441,14 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconWidget: IconWidget(
                   iconPath: Images.share,
                   iconColor: Colors.grey.shade600,
                 ),
                 onPressed: () {},
                 isDisabled: true, //TODO : add share functionality
-              ),
-              BottomBarButton(
-                //TODO: update according to design
-                iconTheme: const MechanixBottomBarIconThemeData(),
-                iconWidget: IconWidget(
-                  iconPath: Images.rename,
-                  iconColor: _isEditing
-                      ? FilesThemeConstants.primaryColor
-                      : FilesThemeConstants.titleTextColor,
-                ),
-                isSelected: _isEditing,
-                onPressed: () {
-                  if (!_isEditing) {
-                    setState(() => _isEditing = true);
-                  }
-                },
               ),
             ],
             anchorWidget: [
@@ -404,6 +471,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       animationDuration: const Duration(milliseconds: 300),
       buttonIcon: IconWidget(
           iconPath: Images.dots,
+          iconHeight: 28,
+          iconWidth: 28,
           iconColor: isMenuOpen
               ? Theme.of(context).extension<FilesTheme>()!.primaryColor
               : Colors.white70),
@@ -414,6 +483,24 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         setState(() => isMenuOpen = false);
       },
       items: [
+        MechanixMenuItemsType(
+          title: "Edit",
+          leading: IconWidget(
+            iconPath: Images.edit,
+            iconColor: _isEditing
+                ? FilesThemeConstants.primaryColor
+                : FilesThemeConstants.titleTextColor,
+          ),
+          isSelected: _isEditing,
+          onTap: () {
+            if (!_isEditing) {
+              setState(() {
+                isMenuOpen = false;
+                _isEditing = true;
+              });
+            }
+          },
+        ),
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.rename,

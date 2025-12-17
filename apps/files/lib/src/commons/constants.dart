@@ -63,6 +63,7 @@ class Images {
   static const String check = 'assets/images/check.png';
   static const String cut = 'assets/images/cut.png';
   static const String lock = 'assets/images/lock.png';
+  static const String edit = 'assets/images/edit.png';
 }
 
 class FilesThemeConstants {

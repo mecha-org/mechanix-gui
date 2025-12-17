@@ -166,6 +166,8 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       animationDuration: const Duration(milliseconds: 300),
       buttonIcon: IconWidget(
           iconPath: Images.dots,
+          iconHeight: 28,
+          iconWidth: 28,
           iconColor: isMenuOpen
               ? Theme.of(context).extension<FilesTheme>()!.primaryColor
               : Colors.white70),

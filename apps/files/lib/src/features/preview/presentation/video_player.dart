@@ -252,7 +252,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
             leadingWidget: [
               BottomBarButton(
                 iconTheme: const MechanixBottomBarIconThemeData(
-                    padding: EdgeInsets.only(left: 12)),
+                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
                 iconPath: Images.back,
                 onPressed: () => Navigator.pop(context),
               ),
@@ -260,6 +260,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
             centerWidgetSpacing: 30,
             centerWidget: [
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconPath: Images.copy,
                 onPressed: () {
                   state?.selectedPaths = {widget.filePath};
@@ -267,6 +269,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconPath: Images.move,
                 onPressed: () {
                   Navigator.pop(context);
@@ -275,6 +279,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconWidget: IconWidget(
                   iconPath: Images.share,
                   iconColor: Colors.grey.shade600,
@@ -303,6 +309,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
       animationDuration: const Duration(milliseconds: 300),
       buttonIcon: IconWidget(
           iconPath: Images.dots,
+          iconHeight: 28,
+          iconWidth: 28,
           iconColor: isMenuOpen
               ? Theme.of(context).extension<FilesTheme>()!.primaryColor
               : Colors.white70),

@@ -597,6 +597,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               const MechanixBottomBarIconThemeData(iconSize: Size(28, 28)),
           iconWidget: IconWidget(
             iconPath: Images.search,
+            iconHeight: 28,
+            iconWidth: 28,
             iconColor: selectionMode ? Colors.grey.shade600 : Colors.white,
           ),
           onPressed: () {

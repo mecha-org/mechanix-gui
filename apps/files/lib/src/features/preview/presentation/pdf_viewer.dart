@@ -324,7 +324,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                             : '0 of 0',
                         style: TextStyle(
                           color: FilesThemeConstants.labelColor,
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w500,
                           fontFamily: Theme.of(context)
                               .extension<FilesTheme>()!
@@ -366,7 +366,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             leadingWidget: [
               BottomBarButton(
                 iconTheme: const MechanixBottomBarIconThemeData(
-                    padding: EdgeInsets.only(left: 12)),
+                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
                 iconPath: Images.back,
                 onPressed: () => Navigator.pop(context),
               ),
@@ -374,12 +374,16 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
             centerWidgetSpacing: 30,
             centerWidget: [
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconPath: Images.search,
                 onPressed: () {
                   showPdfSearchBottomSheet(context);
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconPath: Images.copy,
                 onPressed: () {
                   state?.selectedPaths = {widget.filePath};
@@ -387,6 +391,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconPath: Images.move,
                 onPressed: () {
                   Navigator.pop(context);
@@ -395,6 +401,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 },
               ),
               BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
                 iconWidget: IconWidget(
                   iconPath: Images.share,
                   iconColor: Colors.grey.shade600,
@@ -423,6 +431,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       animationDuration: const Duration(milliseconds: 300),
       buttonIcon: IconWidget(
           iconPath: Images.dots,
+          iconWidth: 28,
+          iconHeight: 28,
           iconColor: isMenuOpen
               ? Theme.of(context).extension<FilesTheme>()!.primaryColor
               : Colors.white70),
