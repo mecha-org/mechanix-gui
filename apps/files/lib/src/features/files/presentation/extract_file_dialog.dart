@@ -372,6 +372,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         ),
         child: MechanixTextInput.textInput(
           cursorColor: Theme.of(context).extension<FilesTheme>()!.primaryColor,
+          autofocus: true,
           initialValue: renameText,
           onChanged: (v) => setState(() => renameText = v),
           anchorWidget: showCheck

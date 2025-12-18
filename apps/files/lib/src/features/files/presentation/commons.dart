@@ -31,10 +31,14 @@ String formatModifiedTime(DateTime modified) {
       now.month == modified.month &&
       now.day == modified.day;
 
+  final isSameYear = now.year == modified.year;
+
   if (isSameDay) {
     return DateFormat.jm().format(modified); // e.g., 12:30 PM
+  } else if (isSameYear) {
+    return DateFormat('dd MMM').format(modified); // e.g., 20 Jul
   } else {
-    return DateFormat('dd MMM yyyy').format(modified); // e.g., 20-Jul-2025
+    return DateFormat('dd MMM yyyy').format(modified); // e.g., 20 Jul 2025
   }
 }
 

@@ -93,7 +93,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ],
-      centerWidgetSpacing: 30,
+      centerWidgetSpacing: 20,
       centerWidget: [
         BottomBarButton(
           iconTheme:

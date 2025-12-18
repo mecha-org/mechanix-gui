@@ -379,6 +379,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
           borderRadius: BorderRadius.circular(8),
         ),
         child: MechanixTextInput.textInput(
+          autofocus: true,
           cursorColor: Theme.of(context).extension<FilesTheme>()!.primaryColor,
           initialValue: renameText,
           onChanged: (v) => setState(() => renameText = v),

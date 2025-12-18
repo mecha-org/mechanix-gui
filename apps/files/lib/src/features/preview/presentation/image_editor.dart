@@ -114,21 +114,21 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
 
   void rotateRight() {
     if (_image == null) return;
-    _exitCropMode();
+    _commitCropIfAny();
     _pushToUndo();
     _commitImage(img.copyRotate(_image!, angle: 90));
   }
 
   void mirrorHorizontal() {
     if (_image == null) return;
-    _exitCropMode();
+    _commitCropIfAny();
     _pushToUndo();
     _commitImage(img.flipVertical(_image!));
   }
 
   void mirrorVertical() {
     if (_image == null) return;
-    _exitCropMode();
+    _commitCropIfAny();
     _pushToUndo();
     _commitImage(img.flipHorizontal(_image!));
   }
@@ -142,19 +142,26 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
 
       setState(() {
         _displayedImageRect = rect;
-
         cropRect = Rect.fromLTRB(
           _cropMargin,
           _cropMargin,
           rect.width - _cropMargin,
           rect.height - _cropMargin,
         );
-
         _isCropping = true;
       });
-
       return;
     }
+
+    // Apply crop
+    _commitCropIfAny();
+  }
+
+  void _commitCropIfAny() {
+    if (!_isCropping ||
+        cropRect == null ||
+        _displayedImageRect == null ||
+        _image == null) return;
 
     final scaleX = _image!.width / _displayedImageRect!.width;
     final scaleY = _image!.height / _displayedImageRect!.height;
@@ -167,25 +174,33 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
       height: (cropRect!.height * scaleY).round(),
     );
 
-    setState(() {
-      _image = cropped;
-      _imageBytes = Uint8List.fromList(img.encodePng(cropped));
-      _isCropping = false;
-      cropRect = null;
-      _displayedImageRect = null;
-    });
+    _pushToUndo(); // history
+    _commitImage(cropped); // new base image
 
-    _pushToUndo();
-    _commitImage(cropped);
+    _exitCropMode(); // UI reset only
   }
 
   Future<void> saveImage() async {
+    if (_image == null) return;
+
+    // Ensure any active crop is committed
+    _commitCropIfAny();
+
     final state =
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
     final dir = p.dirname(widget.imagePath);
-    final imageName = p.basenameWithoutExtension(widget.imagePath);
-    final file =
-        File('$dir/${imageName}_${DateTime.now().millisecondsSinceEpoch}.png');
+    final originalName = p.basenameWithoutExtension(widget.imagePath);
+
+    final now = DateTime.now();
+    final date =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final time = '${now.hour.toString().padLeft(2, '0')}:'
+        '${now.minute.toString().padLeft(2, '0')}:'
+        '${now.second.toString().padLeft(2, '0')}';
+
+    final fileName = '$originalName – Edited $date $time.png';
+    final file = File(p.join(dir, fileName));
 
     await file.writeAsBytes(img.encodePng(_image!));
 
@@ -193,15 +208,16 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Saved to ${file.path}',
-            style: const TextStyle(color: Colors.white)),
+        content: Text(
+          'Saved to ${file.path}',
+          style: const TextStyle(color: Colors.white),
+        ),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),
     );
 
     state?.reload();
-
     widget.onClose();
   }
 
@@ -378,7 +394,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
   }
 
   Widget _buildEditorBar() {
-    const double iconGap = 46;
+    const double iconGap = 38;
     const double sidePadding = 16;
 
     return Container(

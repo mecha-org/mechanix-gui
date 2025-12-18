@@ -504,7 +504,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             isDisabled: true),
         _buildSortMenuItem(context,
             key: 'accessed_time',
-            label: 'Date last opened',
+            label: 'Date accessed',
             currentSort: currentSort,
             isAscending: effectiveAscending),
         _buildSortMenuItem(context,
@@ -1162,6 +1162,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: MechanixTextInput.textInput(
+                        autofocus: true,
                         cursorColor: Theme.of(context)
                             .extension<FilesTheme>()!
                             .primaryColor,
@@ -1519,6 +1520,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: MechanixTextInput.textInput(
+                        autofocus: true,
                         cursorColor: Theme.of(context)
                             .extension<FilesTheme>()!
                             .primaryColor,

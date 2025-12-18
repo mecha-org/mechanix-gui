@@ -33,8 +33,6 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
   late final StreamSubscription<bool> _playingSub;
   late final StreamSubscription<Duration> _positionSub;
   late final StreamSubscription<Duration> _durationSub;
-  bool _showTimeBubble = false;
-  Timer? _bubbleTimer;
   double _lastVolume = 1.0; // default fallback
 
   bool isMenuOpen = false;
@@ -69,21 +67,12 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
     if (mounted) setState(() => _playerReady = true);
   }
 
-  void _showBubble() {
-    setState(() => _showTimeBubble = true);
-    _bubbleTimer?.cancel();
-    _bubbleTimer = Timer(const Duration(seconds: 1), () {
-      if (mounted) setState(() => _showTimeBubble = false);
-    });
-  }
-
   @override
   void dispose() {
     _playingSub.cancel();
     _positionSub.cancel();
     _durationSub.cancel();
     player.dispose();
-    _bubbleTimer?.cancel();
     super.dispose();
   }
 
@@ -192,7 +181,6 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                         thumbColor: const Color(0xFFD2D2D2),
                         onChanged: (v) {
                           player.seek(Duration(milliseconds: v.toInt()));
-                          _showBubble();
                         },
                       ),
                     )),
@@ -226,15 +214,14 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                   ],
                 ),
               ),
-              if (_showTimeBubble)
-                Positioned(
-                  top: -42, // float upward
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _buildTimeBubble(),
-                  ),
+              Positioned(
+                top: -42, // float upward
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _buildTimeBubble(),
                 ),
+              ),
             ],
           ),
           MechanixBottomBar(

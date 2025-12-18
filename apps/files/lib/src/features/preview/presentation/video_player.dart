@@ -41,8 +41,6 @@ class _VideoPlayerState extends State<VideoPlayer> {
   late final StreamSubscription<Duration> _positionSub;
   late final StreamSubscription<Duration?> _durationSub;
 
-  bool _showTimeBubble = false;
-  Timer? _bubbleTimer;
   double _lastVolume = 1.0;
 
   bool isMenuOpen = false;
@@ -82,21 +80,12 @@ class _VideoPlayerState extends State<VideoPlayer> {
     }
   }
 
-  void _showBubble() {
-    setState(() => _showTimeBubble = true);
-    _bubbleTimer?.cancel();
-    _bubbleTimer = Timer(const Duration(seconds: 1), () {
-      if (mounted) setState(() => _showTimeBubble = false);
-    });
-  }
-
   @override
   void dispose() {
     _playingSub.cancel();
     _positionSub.cancel();
     _durationSub.cancel();
     player.dispose();
-    _bubbleTimer?.cancel();
     super.dispose();
   }
 
@@ -203,7 +192,6 @@ class _VideoPlayerState extends State<VideoPlayer> {
                           thumbColor: Colors.white,
                           onChanged: (v) {
                             player.seek(Duration(milliseconds: v.toInt()));
-                            _showBubble();
                           },
                         ),
                       ),
@@ -235,15 +223,14 @@ class _VideoPlayerState extends State<VideoPlayer> {
                   ],
                 ),
               ),
-              if (_showTimeBubble)
-                Positioned(
-                  top: -42,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _buildTimeBubble(),
-                  ),
+              Positioned(
+                top: -42,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _buildTimeBubble(),
                 ),
+              ),
             ],
           ),
 
