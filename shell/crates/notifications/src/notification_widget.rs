@@ -456,7 +456,10 @@ impl Render for Notification {
                                     .size((px(20.), px(20.)))
                                     .text_color(rgb(0xf4f4f4)),
                             )
-                            .on_click(cx.listener(|this, _, window, cx| this.dismiss(window, cx))),
+                            .on_click(cx.listener(|this, _, window, cx| {
+                                println!("CANCELLED CLICKED");
+                                this.dismiss(window, cx)
+                            })),
                     ),
             )
             .with_animation(
@@ -739,93 +742,102 @@ impl ItemState {
         }
     }
 }
+// Struct to represent the database notification
+#[derive(Clone, Debug)]
+pub struct DbNotification {
+    pub id: u32,
+    pub app_name: String,
+    pub app_icon: String,
+    pub summary: String,
+    pub body: String,
+    pub actions: Vec<String>,
+    pub hints: HashMap<String, String>,
+}
 
 impl NotificationCenter {
     pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
-        // Demo data with multiple items per group
-        let mut next_id = 1u64;
-        let groups = vec![
-            NotificationGroupItem {
-                id: { let v = next_id; next_id += 1; v },
-                app_name: "Files".into(),
-                time_ago: "· 3h".into(),
-                preview: "Content of notification goes here, maximum length of 484px".into(),
-                count: 1,
-                has_thumbnail: false,
-                items: vec![
-                    NotificationItem {
-                        id: next_id,
-                        preview: "Content of notification goes here, maximum length of 484px".into(),
-                        has_thumbnail: false,
-                    }
-                ],
-            },
-            NotificationGroupItem {
-                id: { let v = next_id; next_id += 1; v },
-                app_name: "Ardour".into(),
-                time_ago: "· 4h".into(),
-                preview: "Content of notification goes here, maximum length of 484px, and has a two line type content.".into(),
-                count: 3,
-                has_thumbnail: false,
-                items: vec![
-                    NotificationItem {
-                        id: next_id + 1,
-                        preview: "First notification from Ardour".into(),
-                        has_thumbnail: false,
-                    },
-                    NotificationItem {
-                        id: next_id + 2,
-                        preview: "Second notification from Ardour".into(),
-                        has_thumbnail: false,
-                    },
-                    NotificationItem {
-                        id: next_id + 3,
-                        preview: "Third notification from Ardour with longer text content".into(),
-                        has_thumbnail: false,
-                    },
-                ],
-            },
-            NotificationGroupItem {
-                id: { let v = next_id; next_id += 1; v },
-                app_name: "Sofia Marrakesh".into(),
-                time_ago: "· 6h".into(),
-                preview: "Content of notification goes here, maximum length of 402 px, and has a two line + image type content.".into(),
-                count: 4,
-                has_thumbnail: true,
-                items: vec![
-                    NotificationItem {
-                        id: next_id + 4,
-                        preview: "Message from Sofia: Hey, how are you?".into(),
-                        has_thumbnail: true,
-                    },
-                    NotificationItem {
-                        id: next_id + 5,
-                        preview: "Sofia shared a photo with you".into(),
-                        has_thumbnail: true,
-                    },
-                    NotificationItem {
-                        id: next_id + 6,
-                        preview: "Sofia: Are you free this weekend?".into(),
-                        has_thumbnail: false,
-                    },
-                    NotificationItem {
-                        id: next_id + 7,
-                        preview: "Sofia sent you a location".into(),
-                        has_thumbnail: false,
-                    },
-                ],
-            },
-        ];
-        let rows = groups.iter().map(|g| RowState::new(g.id)).collect();
         Self {
-            groups,
-            rows,
+            groups: vec![],
+            rows: vec![],
             clearing: false,
             expanded_groups: HashMap::new(),
             item_states: HashMap::new(),
         }
     }
+    
+    // Call this method to populate from your database
+    pub fn load_from_database(
+        &mut self,
+        notifications: Vec<DbNotification>,
+        cx: &mut Context<Self>,
+    ) {
+        println!(
+            "Loading {} notifications from database",
+            notifications.len()
+        );
+        // Group notifications by app_name
+        let mut grouped: HashMap<String, Vec<DbNotification>> = HashMap::new();
 
+        for notif in notifications {
+            grouped
+                .entry(notif.app_name.clone())
+                .or_insert_with(Vec::new)
+                .push(notif);
+        }
+
+        // Convert to NotificationGroupItem
+        let mut next_id = 1u64;
+        self.groups = grouped
+            .into_iter()
+            .map(|(app_name, mut notifs)| {
+                // Sort by id descending (newest first)
+                notifs.sort_by(|a, b| b.id.cmp(&a.id));
+
+                let count = notifs.len();
+                let first = notifs.first().unwrap();
+
+                // Extract thumbnail from hints if available
+                let has_thumbnail = first.hints.contains_key("image-path")
+                    || first.hints.contains_key("image_path");
+
+                // Format time ago (you'll need to calculate this based on timestamp)
+                let time_ago = "· now".to_string(); // Replace with actual time calculation
+
+                // Create items for the group
+                let items: Vec<NotificationItem> = notifs
+                    .iter()
+                    .map(|n| {
+                        let item_has_thumbnail = n.hints.contains_key("image-path")
+                            || n.hints.contains_key("image_path");
+
+                        NotificationItem {
+                            id: next_id + n.id as u64,
+                            preview: format_notification_body(&n.summary, &n.body),
+                            has_thumbnail: item_has_thumbnail,
+                        }
+                    })
+                    .collect();
+
+                let group_id = next_id;
+                next_id += 1000; // Leave space for item IDs
+
+                NotificationGroupItem {
+                    id: group_id,
+                    app_name: format_notification_name(&first.app_name),
+                    time_ago: time_ago.into(),
+                    preview: format_notification_body(&first.summary, &first.body),
+                    count: count as u32,
+                    has_thumbnail,
+                    items,
+                }
+            })
+            .collect();
+
+        // Initialize row states
+        self.rows = self.groups.iter().map(|g| RowState::new(g.id)).collect();
+
+        cx.notify();
+    }
     fn toggle_group(&mut self, group_id: u64, cx: &mut Context<Self>) {
         let is_expanded = self
             .expanded_groups
@@ -834,6 +846,37 @@ impl NotificationCenter {
             .unwrap_or(false);
         self.expanded_groups.insert(group_id, !is_expanded);
         cx.notify();
+    }
+}
+
+// Helper function to format notification preview
+fn format_notification_name(app_name: &str) -> SharedString {
+    if app_name.is_empty() {
+        app_name.to_string().into()
+    } else {
+        // Limit body to reasonable length
+        let preview = if app_name.len() > 30 {
+            format!("{}...", &app_name[..30])
+        } else {
+            format!("{}", app_name)
+        };
+        preview.into()
+    }
+}
+
+// Helper function to format notification preview
+fn format_notification_body(summary: &str, body: &str) -> SharedString {
+    if body.is_empty() {
+        summary.to_string().into()
+    } else {
+        // Limit body to reasonable length
+        let body_clean = body.replace('\n', " ");
+        let preview = if body_clean.len() > 100 {
+            format!("{}: {}...", summary, &body_clean[..97])
+        } else {
+            format!("{}: {}", summary, body_clean)
+        };
+        preview.into()
     }
 }
 
@@ -1140,6 +1183,7 @@ impl Render for NotificationCenter {
                                         state.drag_dx = 0.0;
 
                                         if dx.abs() >= threshold {
+                                            println!("THE THRESHOLD HAS BEEN CROSSED-------------------");
                                             // Swipe dismiss
                                             state.close_dir = if dx < 0.0 { -1.0 } else { 1.0 };
                                             state.closing = true;

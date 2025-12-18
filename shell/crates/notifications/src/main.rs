@@ -2,7 +2,7 @@ use commons::assets::Assets;
 use desktop_dbus::MechanixNotificationService;
 use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
 use gpui::*;
-use notifications::notification_widget::{Notification, NotificationList, NotificationCenter};
+use notifications::notification_widget::{Notification, NotificationList, NotificationCenter, DbNotification};
 use notifications::prelude::icon::{Icon, IconName};
 use notifications::prelude::AppEvents;
 
@@ -50,11 +50,61 @@ fn main() {
                 let (mut app_channel_tx, mut app_channel_rx) = mpsc::channel::<AppEvents>(120);
                 // Channel for UI -> backend events (e.g., action invoked)
                 let (ui_channel_tx, mut ui_channel_rx) = mpsc::channel::<AppEvents>(120);
-                let executor = cx.background_executor();
 
+                // Load unread notifications
+                let notification_list = cx.new(|cx| NotificationList::new(window, cx));
+                // Create the NotificationCenter entity here so we can update it later
+                let center = cx.new(|cx| NotificationCenter::new(window, cx));
+
+                // Keep a clone to update center from the background task
+                let center_for_fetch = center.clone();
+                let ui_tx_for_ui_task = ui_channel_tx.clone();
+
+                // Fetch unread notifications by spawning a UI-bound task using the center's Context
+                let _ = center.update(cx, |_, cx: &mut Context<NotificationCenter>| {
+                    cx.spawn_in(window, async move |_, cx| {
+                        if let Ok(notification_service) = MechanixNotificationService::new().await {
+                            if let Ok(all) = notification_service.fetch_all().await {
+                                // Map HashMap<u32, Notification> -> Vec<DbNotification>
+                                let mut vec_items: Vec<DbNotification> = Vec::new();
+                                for (id, n) in all {
+                                    let mut hints: std::collections::HashMap<String, String> =
+                                        std::collections::HashMap::new();
+                                    if let Some(image) = n.get_image() {
+                                        if let Ok(opt_path) = image.resolve_path() {
+                                            if let Some(path) = opt_path {
+                                                hints.insert(
+                                                    "image-path".to_string(),
+                                                    path.to_string_lossy().to_string(),
+                                                );
+                                            }
+                                        }
+                                    }
+                                    vec_items.push(DbNotification {
+                                        id,
+                                        app_name: n.app_name.clone(),
+                                        app_icon: n.app_icon.clone(),
+                                        summary: n.summary.clone(),
+                                        body: n.body.clone(),
+                                        actions: n.actions.clone(),
+                                        hints,
+                                    });
+                                }
+
+                                let _ = center_for_fetch.update(cx, |center: &mut NotificationCenter, cx: &mut Context<NotificationCenter>| {
+                                    center.load_from_database(vec_items, cx);
+                                });
+                            }
+                        }
+                    })
+                    .detach();
+                });
+
+                let executor = cx.background_executor();
                 executor
                     .spawn(async move {
                         let notification_service = MechanixNotificationService::new().await.unwrap();
+
                         let mut notification_received_stream = notification_service.stream_receive_notification().await;
                         let mut notification_closed_stream = notification_service.stream_close_notification().await;
 
@@ -85,9 +135,6 @@ fn main() {
                     })
                     .detach();
 
-
-                // inside the window builder closure
-                let notification_list = cx.new(|cx| NotificationList::new(window, cx));
 
                 // Start a UI task on the window context that receives events from the background channel
                 let list_for_events = notification_list.clone();
@@ -226,7 +273,6 @@ fn main() {
                 // Mount both by returning an Entity root that composes them.
                 // This avoids returning a raw Div (which isn't an Entity) from the window builder.
                 {
-                    let center = cx.new(|cx| NotificationCenter::new(window, cx));
                     cx.new(|_| Root::new(center, notification_list))
                 }
             },
