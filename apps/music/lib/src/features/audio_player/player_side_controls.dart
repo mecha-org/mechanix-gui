@@ -25,7 +25,7 @@ class PlayerSideControls extends StatelessWidget {
               iconPath:
                   isFavorited
                       ? MusicIcons.filledFavouriteIcon
-                      : MusicIcons.favouriteIcon,
+                      : MusicIcons.favouritesIcon,
               color: isFavorited ? Colors.red : Colors.white,
             ),
           ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_event.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
 
 class PlayerControls extends StatelessWidget {
   final bool isPlaying;
@@ -24,7 +24,7 @@ class PlayerControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40,vertical: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [

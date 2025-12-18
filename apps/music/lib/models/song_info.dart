@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:hive/hive.dart';
 
 part 'song_info.g.dart';
@@ -7,7 +6,6 @@ part 'song_info.g.dart';
 class SongInfo extends HiveObject {
   @HiveField(0)
   String id;
-
   @HiveField(1)
   String path;
   @HiveField(2)
@@ -21,20 +19,19 @@ class SongInfo extends HiveObject {
   @HiveField(6)
   bool isFavourite;
   @HiveField(7)
-  Uint8List? artwork;
-
+  String? artworkPath;
   @HiveField(8)
   int index;
 
   SongInfo({
     required this.id,
+    required this.index,
     required this.path,
     required this.title,
     required this.artist,
     this.album,
     this.duration,
-    this.artwork,
-    required this.index,
+    this.artworkPath,
     this.isFavourite = false,
   });
 }
