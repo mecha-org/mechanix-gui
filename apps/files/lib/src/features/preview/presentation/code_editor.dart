@@ -23,8 +23,8 @@ import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 

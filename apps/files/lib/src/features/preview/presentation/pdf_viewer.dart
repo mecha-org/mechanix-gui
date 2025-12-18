@@ -11,11 +11,10 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
-import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 
 /// A StatefulWidget to view PDF files with search and password protection support.
 class PdfViewerPage extends StatefulWidget {
@@ -105,7 +104,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           builder: (context, setModalState) {
             return RawKeyboardListener(
               focusNode: FocusNode(),
-              autofocus: false,
+              autofocus: true,
               onKey: (event) {
                 if (event.isKeyPressed(LogicalKeyboardKey.enter)) {
                   Navigator.of(bottomSheetContext).pop(password);
@@ -124,15 +123,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   ),
                   child: Center(
                     child: MechanixTextInput.password(
-                      autofocus: false,
+                      autofocus: true,
                       isPasswordField: obscureText,
-                      theme: MechanixTextInputThemeData(
-                        fillColor: const Color(0xFF151515),
-                        borderSide: const BorderSide(color: Color(0xFF151515)),
-                        focusedBorderSide:
-                            const BorderSide(color: Color(0xFF151515)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
                       cursorColor: Theme.of(context)
                           .extension<FilesTheme>()!
                           .primaryColor,

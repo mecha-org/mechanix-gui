@@ -8,8 +8,8 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class FileHomePage extends StatefulWidget {
   final String title;

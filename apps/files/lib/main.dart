@@ -13,8 +13,8 @@ import 'package:mechanix_files/src/features/files/data/recent_file_manager_repos
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 Future<void> main() async {
   di.registerSingleton(ThemeToggle());

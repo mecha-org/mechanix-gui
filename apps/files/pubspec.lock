@@ -953,9 +953,9 @@ packages:
     dependency: "direct main"
     description:
       path: "flutter/widgets"
-      ref: refactor
-      resolved-ref: "0659636c157b028124df046994932332014a0eb6"
-      url: "https://github.com/ojas-mecha/mechanix-ui.git"
+      ref: main
+      resolved-ref: "64ae7b36c0b59792e3999d48405e8f926b90ba6b"
+      url: "https://github.com/mecha-org/mechanix.dart.git"
     source: git
     version: "0.0.1"
   win32:

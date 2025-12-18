@@ -57,12 +57,12 @@ dependencies:
   intl: ^0.20.2
   widgets:
     git:
-      # url: https://github.com/mecha-org/mechanix.dart.git
-      # path: flutter/widgets
-      # ref: main
-      url: https://github.com/ojas-mecha/mechanix-ui.git
+      url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: refactor
+      ref: main
+      # url: https://github.com/ojas-mecha/mechanix-ui.git
+      # path: flutter/widgets
+      # ref: refactor
   watch_it: ^1.7.0
   path_provider: ^2.1.5
   image: ^4.3.0

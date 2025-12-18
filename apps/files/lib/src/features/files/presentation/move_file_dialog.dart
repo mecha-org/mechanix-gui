@@ -16,10 +16,9 @@ import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
-import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 final logger = Logger();
 var totalMovedCount = 0;
@@ -371,42 +370,34 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final bool showCheck = !isEmpty && !isSame; // valid new name
 
     return Expanded(
-      child: MechanixTextInputTheme(
-        style: MechanixTextInputThemeData(
-          fillColor: const Color(0xFF151515),
-          borderSide: const BorderSide(color: Color(0xFF151515)),
-          focusedBorderSide: const BorderSide(color: Color(0xFF151515)),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: MechanixTextInput.textInput(
-          autofocus: true,
-          cursorColor: Theme.of(context).extension<FilesTheme>()!.primaryColor,
-          initialValue: renameText,
-          onChanged: (v) => setState(() => renameText = v),
-          anchorWidget: showCheck
-              ? IconButton(
-                  icon: const Icon(Icons.check, color: Colors.white),
-                  onPressed: () {
-                    final filesBloc = context.read<FilesBloc>();
-                    filesBloc.add(
-                      Rename(
-                        oldPath: createdFolderPath,
-                        newName: renameText,
-                        controller: controller,
-                      ),
-                    );
-                    setState(() => showRenameBar = false);
-                    controller.clearNewFolder();
-                  },
-                )
-              : IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () {
-                    setState(() => showRenameBar = false);
-                    controller.clearNewFolder();
-                  },
-                ),
-        ),
+      child: MechanixTextInput.textInput(
+        autofocus: true,
+        cursorColor: Theme.of(context).extension<FilesTheme>()!.primaryColor,
+        initialValue: renameText,
+        onChanged: (v) => setState(() => renameText = v),
+        anchorWidget: showCheck
+            ? IconButton(
+                icon: const Icon(Icons.check, color: Colors.white),
+                onPressed: () {
+                  final filesBloc = context.read<FilesBloc>();
+                  filesBloc.add(
+                    Rename(
+                      oldPath: createdFolderPath,
+                      newName: renameText,
+                      controller: controller,
+                    ),
+                  );
+                  setState(() => showRenameBar = false);
+                  controller.clearNewFolder();
+                },
+              )
+            : IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  setState(() => showRenameBar = false);
+                  controller.clearNewFolder();
+                },
+              ),
       ),
     );
   }

@@ -20,13 +20,12 @@ import 'package:mechanix_files/src/features/files/presentation/extract_file_dial
 import 'package:mechanix_files/src/features/files/presentation/file_details_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/constants.dart';
-import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
-import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 import 'view_mode_notifier.dart';
 import 'grid_view.dart';
 import 'list_view.dart';
@@ -1153,70 +1152,61 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   ),
                   child: SizedBox(
                     height: 60,
-                    child: MechanixTextInputTheme(
-                      style: MechanixTextInputThemeData(
-                        fillColor: const Color(0xFF151515),
-                        borderSide: const BorderSide(color: Color(0xFF151515)),
-                        focusedBorderSide:
-                            const BorderSide(color: Color(0xFF151515)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: MechanixTextInput.textInput(
-                        autofocus: true,
-                        cursorColor: Theme.of(context)
-                            .extension<FilesTheme>()!
-                            .primaryColor,
-                        initialValue: defaultZipName,
-                        onChanged: (v) {
-                          setState(() {
-                            currentName = v;
-                          });
-                        },
-                        anchorWidget: showCheck
-                            ? IconButton(
-                                icon: const Icon(Icons.check,
-                                    color: Colors.white),
-                                onPressed: () async {
-                                  final trimmed = currentName.trim();
+                    child: MechanixTextInput.textInput(
+                      autofocus: true,
+                      cursorColor: Theme.of(context)
+                          .extension<FilesTheme>()!
+                          .primaryColor,
+                      initialValue: defaultZipName,
+                      onChanged: (v) {
+                        setState(() {
+                          currentName = v;
+                        });
+                      },
+                      anchorWidget: showCheck
+                          ? IconButton(
+                              icon:
+                                  const Icon(Icons.check, color: Colors.white),
+                              onPressed: () async {
+                                final trimmed = currentName.trim();
 
-                                  if (trimmed.isEmpty) return;
+                                if (trimmed.isEmpty) return;
 
-                                  final zipPath = p.join(
-                                    destinationDirPath,
-                                    trimmed.endsWith('.zip')
-                                        ? trimmed
-                                        : '$trimmed.zip',
-                                  );
+                                final zipPath = p.join(
+                                  destinationDirPath,
+                                  trimmed.endsWith('.zip')
+                                      ? trimmed
+                                      : '$trimmed.zip',
+                                );
 
-                                  final exists = await File(zipPath).exists();
-                                  if (exists) {
-                                    setState(() {
-                                      currentName = "";
-                                    });
-                                    return;
-                                  }
+                                final exists = await File(zipPath).exists();
+                                if (exists) {
+                                  setState(() {
+                                    currentName = "";
+                                  });
+                                  return;
+                                }
 
-                                  entry?.remove();
+                                entry?.remove();
 
-                                  filesBloc.add(
-                                    CompressEntitiesEvent(
-                                      sourcePaths: selectedPaths.toList(),
-                                      destinationZipPath: zipPath,
-                                      controller: controller,
-                                    ),
-                                  );
+                                filesBloc.add(
+                                  CompressEntitiesEvent(
+                                    sourcePaths: selectedPaths.toList(),
+                                    destinationZipPath: zipPath,
+                                    controller: controller,
+                                  ),
+                                );
 
-                                  clearSelection();
-                                },
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.close,
-                                    color: Colors.white),
-                                onPressed: () {
-                                  entry?.remove();
-                                },
-                              ),
-                      ),
+                                clearSelection();
+                              },
+                            )
+                          : IconButton(
+                              icon:
+                                  const Icon(Icons.close, color: Colors.white),
+                              onPressed: () {
+                                entry?.remove();
+                              },
+                            ),
                     ),
                   ),
                 );
@@ -1511,62 +1501,53 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   ),
                   child: SizedBox(
                     height: 60,
-                    child: MechanixTextInputTheme(
-                      style: MechanixTextInputThemeData(
-                        fillColor: const Color(0xFF151515),
-                        borderSide: const BorderSide(color: Color(0xFF151515)),
-                        focusedBorderSide:
-                            const BorderSide(color: Color(0xFF151515)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: MechanixTextInput.textInput(
-                        autofocus: true,
-                        cursorColor: Theme.of(context)
-                            .extension<FilesTheme>()!
-                            .primaryColor,
-                        onChanged: (v) {
-                          setState(() {
-                            folderName = v;
-                          });
-                        },
-                        initialValue: initialName,
-                        anchorWidget: showCheck
-                            ? IconButton(
-                                icon: const Icon(Icons.check,
-                                    color: Colors.white),
-                                onPressed: () {
-                                  entry?.remove();
+                    child: MechanixTextInput.textInput(
+                      autofocus: true,
+                      cursorColor: Theme.of(context)
+                          .extension<FilesTheme>()!
+                          .primaryColor,
+                      onChanged: (v) {
+                        setState(() {
+                          folderName = v;
+                        });
+                      },
+                      initialValue: initialName,
+                      anchorWidget: showCheck
+                          ? IconButton(
+                              icon:
+                                  const Icon(Icons.check, color: Colors.white),
+                              onPressed: () {
+                                entry?.remove();
 
-                                  final newFullPath = p.join(
-                                    p.dirname(oldPath),
-                                    folderName,
-                                  );
+                                final newFullPath = p.join(
+                                  p.dirname(oldPath),
+                                  folderName,
+                                );
 
-                                  filesBloc.add(
-                                    Rename(
-                                      oldPath: oldPath,
-                                      newName: folderName,
-                                      controller: controller,
-                                    ),
-                                  );
+                                filesBloc.add(
+                                  Rename(
+                                    oldPath: oldPath,
+                                    newName: folderName,
+                                    controller: controller,
+                                  ),
+                                );
 
-                                  controller.clearNewFolder();
+                                controller.clearNewFolder();
 
-                                  completer.complete(newFullPath);
-                                },
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.close,
-                                    color: Colors.white),
-                                onPressed: () {
-                                  entry?.remove();
-                                  controller.clearNewFolder();
+                                completer.complete(newFullPath);
+                              },
+                            )
+                          : IconButton(
+                              icon:
+                                  const Icon(Icons.close, color: Colors.white),
+                              onPressed: () {
+                                entry?.remove();
+                                controller.clearNewFolder();
 
-                                  // Return null (cancel)
-                                  completer.complete(null);
-                                },
-                              ),
-                      ),
+                                // Return null (cancel)
+                                completer.complete(null);
+                              },
+                            ),
                     ),
                   ),
                 );
