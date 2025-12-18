@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
@@ -289,23 +290,44 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
           child: Row(
             children: [
               Expanded(
-                child: RichText(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: "Moving ",
-                        style: regularStyle(context),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final prefix = 'Moving ';
+                    final prefixStyle = regularStyle(context);
+                    final labelStyle = boldStyle(context);
+
+                    // Measure prefix width
+                    final prefixWidth = textWidth(prefix, prefixStyle);
+
+                    // Remaining width for label
+                    final availableWidth = (constraints.maxWidth - prefixWidth)
+                        .clamp(0.0, double.infinity);
+
+                    final truncatedLabel = middleEllipsisString(
+                      label,
+                      availableWidth,
+                      labelStyle,
+                    );
+
+                    return RichText(
+                      maxLines: 1,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: prefix,
+                            style: prefixStyle,
+                          ),
+                          TextSpan(
+                            text: truncatedLabel,
+                            style: labelStyle,
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: label,
-                        style: boldStyle(context),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
+              const SizedBox(width: 8),
               MechanixFilledButton(
                 theme: buttonThemeData(context,
                     type: MechanixButtonType.cancel, size: const Size(94, 40)),
@@ -581,26 +603,47 @@ Future<void> handleConflictsSequentially(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RichText(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: conflict.fileName,
-                          style: boldStyle(context),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final fileStyle = boldStyle(context);
+                      final suffixStyle = regularStyle(context);
+                      const suffix = ' already exists';
+
+                      // Measure suffix width
+                      final suffixWidth = textWidth(suffix, suffixStyle);
+
+                      // Remaining width for filename
+                      final availableWidth =
+                          (constraints.maxWidth - suffixWidth)
+                              .clamp(0.0, double.infinity);
+
+                      final truncatedName = middleEllipsisString(
+                        conflict.fileName,
+                        availableWidth,
+                        fileStyle,
+                      );
+
+                      return RichText(
+                        maxLines: 1,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: truncatedName,
+                              style: fileStyle,
+                            ),
+                            TextSpan(
+                              text: suffix,
+                              style: suffixStyle,
+                            ),
+                          ],
                         ),
-                        TextSpan(
-                          text: " already exists",
-                          style: regularStyle(context),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 8),
                   const Text(
                     'What would you like to do?',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
                   Row(

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' as io;
 import 'dart:math' as Math;
+import 'dart:ui' as ui;
 
 import 'package:archive/archive.dart';
 import 'package:file/file.dart';
@@ -468,6 +469,13 @@ TextStyle boldStyle(BuildContext context) => TextStyle(
       fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
     );
 
+TextStyle previewTitleStyle(BuildContext context) => TextStyle(
+      color: const Color(0xFFD2D2D2),
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
+    );
+
 Widget searchNavButton({
   required IconData icon,
   required VoidCallback? onTap,
@@ -513,4 +521,14 @@ Future<String> generateUniqueZipName({
   } while (await io.File(fullPath).exists());
 
   return name;
+}
+
+double textWidth(String text, TextStyle style) {
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: style),
+    maxLines: 1,
+    textDirection: ui.TextDirection.ltr,
+  )..layout();
+
+  return painter.width;
 }

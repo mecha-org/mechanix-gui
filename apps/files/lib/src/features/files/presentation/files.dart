@@ -8,6 +8,7 @@ import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
@@ -1601,72 +1602,94 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                RichText(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  text: TextSpan(
-                    children: isSingle
-                        ? [
-                            const TextSpan(
-                              text: "Delete ",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white70,
-                              ),
-                            ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const baseStyle = TextStyle(
+                      fontSize: 20,
+                      color: Colors.white70,
+                    );
+
+                    const boldStyleText = TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      color: Colors.white,
+                    );
+
+                    if (isSingle) {
+                      final rawName = pathsToDelete.first.split('/').last;
+
+                      final prefixWidth = textWidth("Delete '", baseStyle);
+                      final suffixWidth = textWidth("' ?", baseStyle);
+                      final availableWidth =
+                          constraints.maxWidth - prefixWidth - suffixWidth;
+
+                      final truncatedName = middleEllipsisString(
+                        rawName,
+                        availableWidth,
+                        boldStyleText,
+                      );
+
+                      return RichText(
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        text: TextSpan(
+                          children: [
+                            const TextSpan(text: "Delete ", style: baseStyle),
                             TextSpan(
-                              text:
-                                  "'${pathsToDelete.first.split('/').last}' ?",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ]
-                        : [
-                            const TextSpan(
-                              text: "Delete ",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            TextSpan(
-                              text: "${pathsToDelete.length} files?",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18,
-                                color: Colors.white,
-                              ),
+                              text: "'$truncatedName' ?",
+                              style: boldStyleText,
                             ),
                           ],
-                  ),
+                        ),
+                      );
+                    }
+
+                    // Multi-file case
+                    return RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        children: [
+                          const TextSpan(text: "Delete ", style: baseStyle),
+                          TextSpan(
+                            text: "${pathsToDelete.length} files?",
+                            style: boldStyleText,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 8),
                 Text(
                   message,
-                  style: const TextStyle(color: Colors.white70),
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                        child: MechanixFilledButton(
-                      onPressed: () => Navigator.pop(bottomSheetContext),
-                      theme: buttonThemeData(context,
-                          type: MechanixButtonType.cancel),
-                      label: "Cancel",
-                    )),
+                      child: MechanixFilledButton(
+                        onPressed: () => Navigator.pop(bottomSheetContext),
+                        theme: buttonThemeData(
+                          context,
+                          type: MechanixButtonType.cancel,
+                        ),
+                        label: "Cancel",
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: MechanixFilledButton(
-                        theme: buttonThemeData(context,
-                            type: MechanixButtonType.delete),
+                        theme: buttonThemeData(
+                          context,
+                          type: MechanixButtonType.delete,
+                        ),
                         label: "Delete",
                         onPressed: () {
                           Navigator.pop(bottomSheetContext);
-                          BlocProvider.of<FilesBloc>(context)
+                          context
+                              .read<FilesBloc>()
                               .add(DeleteEntities(pathsToDelete, controller));
                         },
                       ),

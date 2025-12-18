@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -43,26 +44,45 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              RichText(
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: fileName,
-                      style: boldStyle(context),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  const suffixText = ' already exists';
+
+                  final suffixStyle = regularStyle(context);
+                  final nameStyle = boldStyle(context);
+
+                  final suffixWidth = textWidth(suffixText, suffixStyle);
+
+                  final availableForName = constraints.maxWidth - suffixWidth;
+
+                  final truncatedName = middleEllipsisString(
+                    fileName,
+                    availableForName,
+                    nameStyle,
+                  );
+
+                  return RichText(
+                    maxLines: 1,
+                    overflow: TextOverflow.clip,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: truncatedName,
+                          style: nameStyle,
+                        ),
+                        TextSpan(
+                          text: suffixText,
+                          style: suffixStyle,
+                        ),
+                      ],
                     ),
-                    TextSpan(
-                      text: " already exists",
-                      style: regularStyle(context),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
               const SizedBox(height: 8),
               const Text(
                 'What would you like to do?',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
               const SizedBox(height: 16),
               Row(

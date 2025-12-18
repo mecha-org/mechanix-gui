@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -91,11 +92,9 @@ class FileDetailsDialog extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     Flexible(
-                                      child: Text(
+                                      child: MiddleEllipsisText(
                                         fileItem.name,
-                                        maxLines: 1,
-                                        textAlign: TextAlign.right, // important
-                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.right,
                                         style: TextStyle(
                                           color: Colors.white70,
                                           fontSize: 20,

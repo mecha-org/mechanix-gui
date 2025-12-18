@@ -2,7 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/features/preview/presentation/image_editor.dart';
 import 'package:path/path.dart' as p;
@@ -44,18 +46,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
-            title: Text(
-              title,
-              style: TextStyle(
-                color: const Color(0xFFD2D2D2),
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                fontFamily: Theme.of(context)
-                    .extension<FilesTheme>()!
-                    .defaultFontFamily,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
+            title: MiddleEllipsisText(title, style: previewTitleStyle(context)),
             backgroundColor: Colors.transparent,
             elevation: 0,
           ),

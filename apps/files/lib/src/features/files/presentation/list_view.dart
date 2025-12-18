@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
@@ -103,10 +104,8 @@ Widget buildListView(
                       ),
                     ],
                   ),
-                  title: Text(
+                  title: MiddleEllipsisText(
                     title,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
                     style: TextStyle(
                       fontSize: 18,
                       color: const Color(0xFFD2D2D2),
@@ -233,7 +232,17 @@ Widget buildListViewForRecentFiles(
                 ),
               ],
             ),
-            title: Text(file.name),
+            title: MiddleEllipsisText(
+              file.name,
+              style: TextStyle(
+                fontSize: 18,
+                color: const Color(0xFFD2D2D2),
+                fontWeight: FontWeight.w400,
+                fontFamily: Theme.of(context)
+                    .extension<FilesTheme>()!
+                    .defaultFontFamily,
+              ),
+            ),
             trailing: file.modified != null
                 ? Text(
                     formatModifiedTime(file.modified!),
@@ -357,10 +366,8 @@ Widget buildListViewMoveAndExtract(
                           ),
                         ],
                       ),
-                      title: Text(
+                      title: MiddleEllipsisText(
                         title,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
                         style: TextStyle(
                           fontSize: 18,
                           color: const Color(0xFFD2D2D2),

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -281,23 +282,40 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
           child: Row(
             children: [
               Expanded(
-                child: RichText(
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: "Extracting ",
-                        style: regularStyle(context),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final prefix = 'Extracting ';
+                    final prefixWidth =
+                        textWidth(prefix, regularStyle(context));
+
+                    final availableWidth = constraints.maxWidth - prefixWidth;
+
+                    final truncatedLabel = middleEllipsisString(
+                      label,
+                      availableWidth,
+                      boldStyle(context),
+                    );
+
+                    return RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.clip, // important!
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: prefix,
+                            style: regularStyle(context),
+                          ),
+                          TextSpan(
+                            text: truncatedLabel,
+                            style: boldStyle(context),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: label,
-                        style: boldStyle(context),
-                      ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
+              const SizedBox(width: 8),
               MechanixFilledButton(
                 theme: buttonThemeData(context,
                     type: MechanixButtonType.cancel, size: const Size(94, 40)),
