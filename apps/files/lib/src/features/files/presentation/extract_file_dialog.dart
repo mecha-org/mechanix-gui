@@ -181,7 +181,10 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         ),
 
         const SizedBox(height: 18),
-        const Divider(),
+        const Divider(
+          height: 1,
+          color: FilesThemeConstants.dividerColor,
+        ),
         // Navigation bar
         SizedBox(
           height: 60,

@@ -323,7 +323,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
     return Container(
-      color: Colors.grey.shade900,
+      color: FilesThemeConstants.bottomSheetBackgroundColor,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -383,7 +383,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
     return Container(
-      color: Colors.grey.shade900,
+      color: FilesThemeConstants.bottomSheetBackgroundColor,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

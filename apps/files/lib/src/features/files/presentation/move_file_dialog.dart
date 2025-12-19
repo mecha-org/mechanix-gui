@@ -189,8 +189,10 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         ),
 
         const SizedBox(height: 18),
-        const Divider(),
-        // Navigation bar
+        const Divider(
+          height: 1,
+          color: FilesThemeConstants.dividerColor,
+        ), // Navigation bar
         SizedBox(
           height: 60,
           child: Row(

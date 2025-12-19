@@ -576,6 +576,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   Widget _buildBottomActionMenuBar(BuildContext context) {
     return MechanixBottomBar(
+      theme: MechanixBottomBarThemeData(
+        decoration: BoxDecoration(
+            color: FilesThemeConstants.bottomBarColor,
+            borderRadius: selectionMode
+                ? null
+                : const BorderRadius.only(
+                    topLeft: Radius.circular(8), topRight: Radius.circular(8))),
+      ),
       leadingWidget: [
         BottomBarButton(
           iconTheme: const MechanixBottomBarIconThemeData(
@@ -637,10 +645,22 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
         ),
         BottomBarButton.extension(
+          floatingActionBarTheme: const MechanixFloatingActionBarThemeData(
+            barMainAxisAlignment: MainAxisAlignment.center,
+            width: double.infinity,
+            barSpacing: 30,
+            decoration: BoxDecoration(
+              color: FilesThemeConstants.floatingMenuColor,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+          ),
           iconTheme: const MechanixBottomBarIconThemeData(),
           outsideClickDisabled: true,
           floatingActionBarController: _fabController,
-          offset: const Offset(-110, -6),
+          offset: const Offset(-108, -4),
           iconWidget: IconWidget(
             iconPath: Images.checkCircle,
             iconWidth: 28,
@@ -659,12 +679,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             isFolderActionMenuOpen =
                 false; // TODO: Temporary fix - to show inactive menu button color
           },
-          floatingActionBarTheme: MechanixFloatingActionBarThemeData(
-            barMainAxisAlignment: MainAxisAlignment.center,
-            decoration: BoxDecoration(color: Colors.grey.shade900),
-            width: double.infinity,
-            barSpacing: 30,
-          ),
           extensionWidgets: [
             BottomBarButton(
               iconPath: Images.copy,
@@ -1018,7 +1032,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       child: Container(
         height: screenHeight * 0.98,
         decoration: const BoxDecoration(
-          color: Color(0xFF2E2E2E),
+          color: FilesThemeConstants.bottomSheetBackgroundColor,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(12),
@@ -1312,7 +1326,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       child: Container(
         height: screenHeight * 0.98,
         decoration: const BoxDecoration(
-          color: Color(0xFF2E2E2E),
+          color: FilesThemeConstants.bottomSheetBackgroundColor,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(12),

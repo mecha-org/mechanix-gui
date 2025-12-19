@@ -71,11 +71,13 @@ class FilesThemeConstants {
   static const Color titleTextColor = Color(0xFFD2D2D2);
   static const Color floatingMenuColor = Color(0xFF222222);
   static const Color floatingMenuBorderColor = Color(0xFF3A3A3A);
-  static const Color dividerColor = Color(0xFF585858);
+  static const Color dividerColor = Color(0xFF464646);
   static const Color primaryColor = Color(0xFFAA6400);
   static const Color disableColor = Color(0xFF585858);
   static const Color sectionListBackgroundColor = Color(0xFF151515);
   static const Color thumbColor = Color(0xFF8F8F8F);
+  static const Color bottomBarColor = Color(0xFF2E2E2E);
+  static const Color bottomSheetBackgroundColor = Color(0xFF2E2E2E);
 
   static const String fontFamily = 'Overused Grotesk';
 }

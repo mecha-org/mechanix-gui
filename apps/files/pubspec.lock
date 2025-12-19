@@ -472,6 +472,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
+  oklch:
+    dependency: transitive
+    description:
+      name: oklch
+      sha256: "238158812d43a67f1cdaa029de4ffdb9d285d9ef1e3e054c28e3936cfdb2f1d5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   package_info_plus:
     dependency: transitive
     description:
@@ -954,7 +962,7 @@ packages:
     description:
       path: "flutter/widgets"
       ref: main
-      resolved-ref: "64ae7b36c0b59792e3999d48405e8f926b90ba6b"
+      resolved-ref: "485eceea85d6cde2f8bc85ccd908a60d02cd5cb9"
       url: "https://github.com/mecha-org/mechanix.dart.git"
     source: git
     version: "0.0.1"

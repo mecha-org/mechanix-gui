@@ -123,7 +123,11 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
     return Container(
-      color: Colors.grey.shade900,
+      decoration: const BoxDecoration(
+        color: FilesThemeConstants.floatingMenuColor,
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -216,6 +220,11 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
             ],
           ),
           MechanixBottomBar(
+            theme: const MechanixBottomBarThemeData(
+                decoration: BoxDecoration(
+              color: FilesThemeConstants.bottomBarColor,
+              borderRadius: null,
+            )),
             leadingWidget: [
               BottomBarButton(
                 iconTheme: const MechanixBottomBarIconThemeData(

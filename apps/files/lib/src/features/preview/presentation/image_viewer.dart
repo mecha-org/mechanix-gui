@@ -76,6 +76,14 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
     return MechanixBottomBar(
+      theme: MechanixBottomBarThemeData(
+          decoration: BoxDecoration(
+              color: FilesThemeConstants.bottomBarColor,
+              borderRadius: _isEditing
+                  ? null
+                  : const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      topRight: Radius.circular(8)))),
       leadingWidget: [
         BottomBarButton(
           iconTheme: const MechanixBottomBarIconThemeData(

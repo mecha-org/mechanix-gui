@@ -399,7 +399,11 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
 
     return Container(
       height: 44,
-      color: const Color(0xFF222222),
+      decoration: const BoxDecoration(
+        color: FilesThemeConstants.floatingMenuColor,
+        borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+      ),
       child: Stack(
         children: [
           Align(
