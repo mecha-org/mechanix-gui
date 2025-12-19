@@ -20,12 +20,6 @@ class RedoUpdate extends EditorEvent {
   RedoUpdate({required this.isRedo});
 }
 
-class PinnedUpdate extends EditorEvent {
-  final bool isPinned;
-
-  PinnedUpdate({required this.isPinned});
-}
-
 class SelectToolbar extends EditorEvent {
   final ToolbarEnum activeToolbar;
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_notes/src/commons/styles/colors.dart';
 
 class EditorIconButton extends StatelessWidget {
   final bool isSelected;
@@ -17,42 +18,38 @@ class EditorIconButton extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 40,
-        height: 40,
-        margin: border != null ? null : const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF48494B) : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
-
-          // border: border,
-        ),
-        child: IconButton(
-          onPressed: onPressed,
-          icon:
-              iconPath.isNotEmpty
-                  ? Image.asset(
-                    iconPath,
-                    height: 22,
-                    width: 22,
-                    color: Colors.white,
-                  )
-                  : icon!,
-          padding: EdgeInsets.zero,
-          style: ButtonStyle(
-            // fixedSize: WidgetStateProperty<Size>.resolveWith( Size),
-            fixedSize: WidgetStateProperty.resolveWith<Size?>(
-              (states) => const Size(20, 20),
-            ),
+    return Container(
+      width: 32,
+      height: 32,
+      // margin: border != null ? null : const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        // border: border,
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon:
+            iconPath.isNotEmpty
+                ? Image.asset(
+                  iconPath,
+                  height: 24,
+                  width: 24,
+                  color:
+                      isSelected
+                          ? NotesColors.secondaryTextColor
+                          : Colors.white,
+                )
+                : icon!,
+        padding: EdgeInsets.zero,
+        style: ButtonStyle(
+          // fixedSize: WidgetStateProperty<Size>.resolveWith( Size),
+          fixedSize: WidgetStateProperty.resolveWith<Size?>(
+            (states) => const Size(20, 20),
           ),
-
-          splashRadius: 22,
-          iconSize: 22,
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          hoverColor: Colors.transparent,
         ),
+
+        splashRadius: 24,
+        iconSize: 24,
       ),
     );
   }

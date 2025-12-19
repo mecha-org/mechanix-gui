@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_notes/app_routes.dart';
-import 'package:mechanix_notes/src/commons/icons.dart';
 import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/bottom_menu/bottom_menu.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
+import 'package:mechanix_notes/src/features/home/presentation/app_title.dart';
+import 'package:mechanix_notes/src/features/home/presentation/empty_notes.dart';
+import 'package:mechanix_notes/src/features/home/presentation/home_floating_button.dart';
+import 'package:mechanix_notes/src/features/home/presentation/loading_notes.dart';
 import 'package:mechanix_notes/src/features/home/presentation/note_list.dart';
+import 'package:mechanix_notes/src/features/search_notes/presentation/search_notes.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,276 +23,219 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  final ScrollController _scrollController = ScrollController();
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
 
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    _animationController.forward();
     context.read<NotesBloc>().add(LoadNotes());
-
-    _scrollController.addListener(_onScroll);
-  }
-
-  void onSelect(BuildContext context, String id, List<String> selectedNoteIds) {
-    if (selectedNoteIds.contains(id)) {
-      context.read<NotesBloc>().add(DeselectNote(id));
-    } else {
-      context.read<NotesBloc>().add(SelectNote(id));
-    }
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final position = _scrollController.position;
-    if (!position.hasPixels || !position.hasContentDimensions) return;
-
-    final maxScroll = position.maxScrollExtent;
-    final currentScroll = position.pixels;
-
-    // Trigger near bottom
-    if (currentScroll >= 0.8 * maxScroll) {
-      context.read<NotesBloc>().add(LoadNextChunk());
-      // notesController.loadNextChunk();
-    }
-  }
-
-  void onDeselect(BuildContext context) {
-    context.read<NotesBloc>().add(ClearSelection());
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
-    // notesController.dispose();
+    _animationController.dispose();
     super.dispose();
-  }
-
-  void selectAll() {
-    context.read<NotesBloc>().add(SelectAllNotes());
-  }
-
-  void onDeleteRemoveSelection(
-    BuildContext context,
-    List<String> selectedNoteIds,
-  ) {
-    context.read<NotesBloc>().add(
-      DeleteNotes(deleteIds: selectedNoteIds.toList()),
-    );
-    context.read<NotesBloc>().add(ClearSelection());
-  }
-
-  void onSearch() {
-    Navigator.pushNamed(context, AppRoutes.searchNotes);
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NotesBloc, NotesState>(
-      buildWhen:
-          (previous, current) =>
-              previous.isSelectionMode != current.isSelectionMode,
-      builder: (context, state) {
+    return BlocSelector<NotesBloc, NotesState, Tuple2<bool, bool>>(
+      selector: (state) => Tuple2(state.isSearchPage, state.isSelectionMode),
+      builder: (context, data) {
+        final isSearchPage = data.item1;
+        final isSelectionMode = data.item2;
+
         return Scaffold(
-          floatingActionButton:
-              !state.isSelectionMode
-                  ? Padding(
-                    padding: const EdgeInsets.only(bottom: 36, right: 20),
-                    child: SizedBox(
-                      height: 64,
-                      width: 64,
-                      child: FloatingActionButton(
-                        onPressed: () {
-                          Navigator.pushNamed(
-                            context,
-                            AppRoutes.createEditNotes,
-                          );
-                        },
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(36),
-                        ),
-                        backgroundColor: NotesColors.floatingButtonColor,
-                        child: SizedBox(
-                          height: 28,
-                          width: 28,
-                          child: Image.asset(NotesIcon.addIcon),
-                        ),
-                      ),
-                    ),
-                  )
-                  : null,
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(50),
-            child: BlocSelector<NotesBloc, NotesState, List<String>>(
-              selector: (state) => state.selectedNoteIds,
-              builder: (context, selectedNoteIds) {
-                return MechanixNavigationBar(
-                  automaticallyImplyLeading: false,
-                  title: "Notes",
-                  titleSpacing: 20,
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                  actionWidgets: [
-                    if (state.isSelectionMode &&
-                        selectedNoteIds.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          Text(
-                            "${selectedNoteIds.length} Selected",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                          ).padRight(10),
-                          // if (selectedNoteIds.length != groupedNotes.length)
-                          IconButton(
-                            onPressed: selectAll,
-                            icon: SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: Image.asset(NotesIcon.selectAllIcon),
-                            ),
-                          ),
-                        ],
-                      ).padRight(10),
-                    ] else
-                      IconButton(
-                        onPressed: onSearch,
-                        icon: Image.asset(NotesIcon.searchIcon),
-                      ).padRight(10),
-                  ],
-                  titleStyle: const TextStyle(
-                    fontSize: 24,
-                    color: NotesColors.headerColor,
-                  ),
-                );
-              },
-            ),
-          ),
-
-          body: BlocSelector<NotesBloc, NotesState, List<String>>(
-            selector: (state) => state.selectedNoteIds,
-            builder: (context, selectedNoteIds) {
-              return Stack(
-                children: [
-                  BlocSelector<
-                    NotesBloc,
-                    NotesState,
-                    Tuple2<bool, List<GroupedNotes>>
-                  >(
-                    selector:
-                        (state) => Tuple2(state.isLoading, state.groupedNotes),
-                    builder: (context, data) {
-                      if (data.item2.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          height: 64,
-                          child: MechanixPressableList(
-                            itemPadding: const EdgeInsets.all(10),
-                            onTap:
-                                () => Navigator.pushNamed(
-                                  context,
-                                  AppRoutes.createEditNotes,
-                                ),
-                            leadingIcon: Image.asset(
-                              NotesIcon.addIcon,
-                              height: 18,
-                              width: 18,
-                            ),
-                            isSelected: true,
-                            title: "Add a new Note",
-                            titleTextStyle: const TextStyle(
-                              color: NotesColors.secondaryTextColor,
-                              fontSize: 16,
-                            ),
-                          ),
-                        );
-                      }
-                      //     if (!isLoading) {
-                      return Positioned.fill(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: NoteList(
-                            controller: _scrollController,
-                            isSelectionMode: state.isSelectionMode,
-                            selectedNotes: selectedNoteIds,
-                            onSelect:
-                                (id) => onSelect(context, id, selectedNoteIds),
-                            groupedNotes: data.item2,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // ValueListenableBuilder<bool>(
-                  //   valueListenable: notesController.isLoading,
-                  //   builder: (context, isLoading, _) {
-                  //     if (!isLoading) {
-                  //       return ValueListenableBuilder<List<GroupedNotes>>(
-                  //         valueListenable: notesController.groupedNotes,
-                  //         builder: (context, groupedNotes, _) {
-                  //           return Positioned.fill(
-                  //             child: Padding(
-                  //               padding: const EdgeInsets.all(16),
-                  //               child: NoteList(
-                  //                 controller: _scrollController,
-                  //                 isSelectionMode: state.isSelectionMode,
-                  //                 selectedNotes: selectedNoteIds,
-                  //                 onSelect:
-                  //                     (id) => onSelect(
-                  //                       context,
-                  //                       id,
-                  //                       selectedNoteIds,
-                  //                     ),
-                  //                 groupedNotes: groupedNotes,
-                  //               ),
-                  //             ),
-                  //           );
-                  //         },
-                  //       );
-                  //     }
-                  //     return Positioned.fill(
-                  //       child: Center(
-                  //         child: Container(
-                  //           padding: const EdgeInsets.all(12),
-                  //           decoration: BoxDecoration(
-                  //             color: Colors.black54,
-                  //             borderRadius: BorderRadius.circular(8),
-                  //           ),
-                  //           child: const SizedBox(
-                  //             height: 20,
-                  //             width: 20,
-                  //             child: CircularProgressIndicator(
-                  //               strokeWidth: 2,
-                  //               valueColor: AlwaysStoppedAnimation<Color>(
-                  //                 Colors.white,
-                  //               ),
-                  //             ),
-                  //           ),
-                  //         ),
-                  //       ),
-                  //     );
-                  //   },
-                  // ),
-
-                  // Floating bottom menu
-                  if (state.isSelectionMode)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 30,
-                      child: Center(
-                        child: BottomMenu(
-                          selectedNotes: selectedNoteIds,
-                          isSelectionMode: state.isSelectionMode,
-                        ),
-                      ),
-                    ),
-                ],
+          // Animated bottom navigation bar
+          bottomNavigationBar: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) {
+              return SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 1),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: Curves.easeInOut),
+                ),
+                child: FadeTransition(opacity: animation, child: child),
               );
             },
+            child:
+                (isSelectionMode && !isSearchPage)
+                    ? BottomMenu(
+                      key: const ValueKey('bottom_menu'),
+                      isSelectionMode: isSelectionMode,
+                    )
+                    : const SizedBox.shrink(key: ValueKey('no_menu')),
+          ),
+          floatingActionButton: BlocSelector<NotesBloc, NotesState, bool>(
+            selector: (state) => state.groupedNotes.isEmpty,
+            builder:
+                (context, hasNotes) =>
+                    hasNotes
+                        ? const HomeFloatingButton()
+                        : const SizedBox.shrink(),
+          ),
+          // App bar only shows in selection mode
+          appBar:
+              ((isSelectionMode && !isSearchPage)
+                  ? PreferredSize(
+                    preferredSize: const Size.fromHeight(48),
+                    child: BlocSelector<NotesBloc, NotesState, List<String>>(
+                      selector: (state) => state.selectedNoteIds,
+                      builder: (context, selectedNoteIds) {
+                        return AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, -0.2),
+                                  end: Offset.zero,
+                                ).animate(
+                                  CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut,
+                                  ),
+                                ),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: MechanixNavigationBar(
+                            key: const ValueKey('selection_mode'),
+                            height: 48,
+                            automaticallyImplyLeading: false,
+                            theme: const MechanixNavigationBarThemeData(
+                              titleStyle: TextStyle(
+                                color: NotesColors.titleTextColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                height: 1.3,
+                                letterSpacing: -1.1,
+                              ),
+                            ),
+                            title: "${selectedNoteIds.length}   Selected",
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                  : null),
+
+          // Animated body with smooth vertical slide transition
+          body: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 400),
+            switchInCurve: Curves.easeInOutCubic,
+            switchOutCurve: Curves.easeInOutCubic,
+            transitionBuilder: (child, animation) {
+              // Check which page is being shown
+              final isSearchChild =
+                  (child.key as ValueKey).value == 'search_page';
+
+              // Reverse animation for exit
+              final offsetAnimation = Tween<Offset>(
+                begin:
+                    isSearchChild
+                        ? const Offset(0, 1) // Search slides up from bottom
+                        : const Offset(
+                          0,
+                          -1,
+                        ), // Notes slides down from top when returning
+                end: Offset.zero,
+              ).animate(
+                CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeInOutCubic,
+                ),
+              );
+
+              return SlideTransition(
+                position: offsetAnimation,
+                child: FadeTransition(
+                  opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: const Interval(0.3, 1.0, curve: Curves.easeIn),
+                    ),
+                  ),
+                  child: child,
+                ),
+              );
+            },
+            child:
+                isSearchPage
+                    ? const SearchNotes(key: ValueKey('search_page'))
+                    : BlocSelector<
+                      NotesBloc,
+                      NotesState,
+                      Tuple2<bool, List<GroupedNotes>>
+                    >(
+                      key: const ValueKey('notes_content'),
+                      selector:
+                          (state) =>
+                              Tuple2(state.isLoading, state.groupedNotes),
+                      builder: (context, data) {
+                        final isLoading = data.item1;
+                        final groupedNotes = data.item2;
+
+                        // Animated loading state - show "Notes" title
+                        if (isLoading) {
+                          return Center(
+                            child: FadeTransition(
+                              opacity: _fadeAnimation,
+                              child: Column(
+                                children: [
+                                  if (!isSelectionMode) const AppTitle(),
+                                  const Expanded(
+                                    child: Center(child: LoadingNotes()),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }
+
+                        // Animated empty state - show "Notes" title
+                        if (groupedNotes.isEmpty) {
+                          return FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: Column(
+                              children: [
+                                if (!isSelectionMode) const AppTitle(),
+                                const Expanded(child: EmptyNotes()),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // Animated note list with scrollable title
+                        return FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: NoteList(
+                            isSelectionMode: isSelectionMode,
+                            groupedNotes: groupedNotes,
+                          ),
+                        );
+                      },
+                    ),
           ),
         );
       },
