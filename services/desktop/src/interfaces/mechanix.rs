@@ -189,6 +189,19 @@ impl MechanixNotificationService {
         if self.is_notification_resident(id).await{
             return Err(fdo::Error::Failed("Resident Notification can only be closed by Sender".to_string()));
         }
+
+        // Remove the notification
+        {
+            let mut notifs = self.notifications.write().await;
+            notifs.remove(&id);
+        }
+
+        if let Err(e) = remove_notification_from_db(id).await {
+            eprintln!("Failed to remove notification from database: {}", e);
+        } else {
+            println!("Notification {} removed from database", id);
+        }
+
         if let Some(emitter) = &self.freedesktop_signal_emitter {
             FreedesktopNotificationService::notification_closed(emitter, id, reason).await.map_err(
                 |e| fdo::Error::Failed(format!("Failed to close notification: {}", e))
