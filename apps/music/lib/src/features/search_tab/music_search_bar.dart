@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_event.dart';
-import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
 
 class MusicSearchBar extends StatefulWidget {
   const MusicSearchBar({super.key});
@@ -40,14 +39,14 @@ class _MusicSearchBarState extends State<MusicSearchBar> {
     return SizedBox(
       height: 56,
       width: 508,
-      child: MechanixSearchBar(
-        controller: _titleController,
-        onChanged: (value) => searchSongs(),
-        autoFocus: true,
-        hintText: "Song Name",
-        onBackwardIconPress: _handleBackwardPress,
-        onCloseIconPress: () => _titleController.clear(),
-      ),
+      // child: MechanixSearchBar(
+      //   controller: _titleController,
+      //   onChanged: (value) => searchSongs(),
+      //   autoFocus: true,
+      //   hintText: "Song Name",
+      //   onBackwardIconPress: _handleBackwardPress,
+      //   onCloseIconPress: () => _titleController.clear(),
+      // ),
     );
   }
 }

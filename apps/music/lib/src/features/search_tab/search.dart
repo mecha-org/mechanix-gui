@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
-import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_event.dart';
-import 'package:mechanix_music/src/features/bloc/songs_state.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/features/presentation/song_list_view.dart';
-import 'package:mechanix_music/src/features/search/music_search_bar.dart';
+import 'package:mechanix_music/src/features/search_tab/music_search_bar.dart';
 import 'package:widgets/mechanix.dart';
 
 class SearchPage extends StatefulWidget {
@@ -35,10 +35,10 @@ class _SearchPageState extends State<SearchPage> {
           backgroundColor: Colors.black,
           appBar: MechanixNavigationBar(
             title: "Search Song",
-            titleStyle: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.normal,
-            ),
+            // titleStyle: const TextStyle(
+            //   fontSize: 18,
+            //   fontWeight: FontWeight.normal,
+            // ),
           ),
           body: Stack(
             children: [

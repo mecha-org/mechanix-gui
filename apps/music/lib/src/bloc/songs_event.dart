@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_music/models/models.dart';
+import 'package:mechanix_music/models/song_info.dart';
 
 abstract class SongsEvent extends Equatable {
   const SongsEvent();
@@ -23,11 +25,8 @@ class SearchSong extends SongsEvent {
 }
 
 class PlaySong extends SongsEvent {
-  final int index;
-  const PlaySong(this.index);
-
-  @override
-  List<Object?> get props => [index];
+  final SongInfo song;
+  const PlaySong(this.song);
 }
 
 class TogglePlayPause extends SongsEvent {}
@@ -37,7 +36,7 @@ class PlayNext extends SongsEvent {}
 class ShuffleToggle extends SongsEvent {}
 
 // class  ToggleRepeat extends SongsEvent {}
-class FavouriteToggle extends SongsEvent {}
+// class FavouriteToggle extends SongsEvent {}
 
 class PlayPrevious extends SongsEvent {}
 
@@ -78,3 +77,25 @@ class ToggleShuffle extends SongsEvent {}
 
 // Enum for repeat modes
 enum RepeatMode { none, one, all }
+
+class MusicTabSwitch extends SongsEvent {
+  final MusicTabs musicTab;
+  const MusicTabSwitch(this.musicTab);
+}
+
+class FavouriteToggle extends SongsEvent {
+  final SongInfo songInfo;
+  const FavouriteToggle(this.songInfo);
+}
+
+class DeleteSong extends SongsEvent {
+  final SongInfo songInfo;
+  const DeleteSong(this.songInfo);
+}
+
+class PlaybackCompleted extends SongsEvent {}
+
+class AddToQueue extends SongsEvent {
+  final SongInfo songInfo;
+  const AddToQueue(this.songInfo);
+}

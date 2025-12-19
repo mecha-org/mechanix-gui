@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:media_kit/media_kit.dart';
 import 'songs_event.dart'; // Import for RepeatMode enum
@@ -19,6 +20,7 @@ class SongsState extends Equatable {
   final Duration duration;
   final RepeatMode repeatMode;
   final bool isShuffled;
+  final MusicTabs musicTab;
 
   const SongsState({
     this.songs = const [],
@@ -35,6 +37,7 @@ class SongsState extends Equatable {
     this.currentSong,
     this.repeatMode = RepeatMode.none,
     this.isShuffled = false,
+    this.musicTab = MusicTabs.music,
   });
 
   SongsState copyWith({
@@ -52,6 +55,7 @@ class SongsState extends Equatable {
     SongInfo? currentSong,
     RepeatMode? repeatMode,
     bool? isShuffled,
+    MusicTabs? musicTab,
   }) {
     return SongsState(
       songs: songs ?? this.songs,
@@ -68,6 +72,7 @@ class SongsState extends Equatable {
       currentSong: currentSong ?? this.currentSong,
       repeatMode: repeatMode ?? this.repeatMode,
       isShuffled: isShuffled ?? this.isShuffled,
+      musicTab: musicTab ?? this.musicTab,
     );
   }
 
@@ -87,5 +92,6 @@ class SongsState extends Equatable {
     currentSong,
     repeatMode,
     isShuffled,
+    musicTab,
   ];
 }
