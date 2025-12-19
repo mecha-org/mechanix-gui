@@ -108,4 +108,11 @@ impl MechanixNotificationService {
         proxy.get_all_notifications().await
             .map_err(|e| MechanixNotificationError::GetAllNotificationsFailed(e.to_string()))
     }
+    pub async fn close_notification(&self, id: u32, reason_id: u32) -> Result<(), MechanixNotificationError> {
+        let proxy = self.proxy.clone();
+        proxy.close_notification_with_reason(id, reason_id).await
+            .map_err(|e| MechanixNotificationError::CloseNotificationActionFailed(e.to_string()))
+    }
+
+
 }

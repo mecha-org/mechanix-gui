@@ -26,4 +26,9 @@ pub enum MechanixNotificationError {
     CreateProxyError(String),
     #[error("failed to get all notifications {0:?}")]
     GetAllNotificationsFailed(String),
+    #[error("failed to get close notification with reason {0:?}")]
+    CloseNotificationActionFailed(String),
+
+
+
 }

@@ -2,7 +2,9 @@ use commons::assets::Assets;
 use desktop_dbus::MechanixNotificationService;
 use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
 use gpui::*;
-use notifications::notification_widget::{Notification, NotificationList, NotificationCenter, DbNotification};
+use notifications::notification_widget::{
+    DbNotification, Notification, NotificationCenter, NotificationList, UserDismissedEvent,
+};
 use notifications::prelude::icon::{Icon, IconName};
 use notifications::prelude::AppEvents;
 
@@ -21,9 +23,7 @@ impl Root {
 impl Render for Root {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         // Put the toast list last so it sits on top (its own render positions it absolutely)
-        div()
-            .child(self.center.clone())
-            .child(self.list.clone())
+        div().child(self.center.clone()).child(self.list.clone())
     }
 }
 
@@ -97,7 +97,7 @@ fn main() {
                             }
                         }
                     })
-                    .detach();
+                        .detach();
                 });
 
                 let executor = cx.background_executor();
@@ -123,12 +123,30 @@ fn main() {
                                     }
                                 },
                                 ui_event = ui_channel_rx.next() => {
-                                    if let Some(AppEvents::ActionInvoked { id, action_id }) = ui_event {
-                                        // Forward the action invoke to the DBus notification service
-                                        if let Err(err) = notification_service.send_action_invoke(id, &action_id).await {
-                                            eprintln!("Failed to send action invoke for {} ({}): {:?}", id, action_id, err);
+                                    match ui_event {
+                                        Some(AppEvents::ActionInvoked { id, action_id }) => {
+                                            // Forward the action invoke to the DBus notification service
+                                            if let Err(err) = notification_service.send_action_invoke(id, &action_id).await {
+                                                eprintln!("Failed to send action invoke for {} ({}): {:?}", id, action_id, err);
+                                            }
+                                        }
+                                        Some(AppEvents::UserCloseNotification { id, reason }) => {
+                                            // Forward the action invoke to the DBus notification service
+                                            if let Err(err) = notification_service.close_notification(id, reason).await {
+                                                eprintln!("Failed to send close notification for {} : {:?}", id, err);
+                                            }
+                                        }
+                                        Some(other_event) => {
+                                            // Optional: handle or ignore other AppEvents variants
+                                            println!("Unhandled UI event: {:?}", other_event);
+                                        }
+
+                                        None => {
+                                            // Channel closed
+                                            println!("UI channel closed");
                                         }
                                     }
+
                                 }
                             }
                         }
@@ -138,8 +156,37 @@ fn main() {
 
                 // Start a UI task on the window context that receives events from the background channel
                 let list_for_events = notification_list.clone();
+
+                cx.subscribe(&notification_list, move |_list_handle, event: &UserDismissedEvent, cx| {
+                    println!("USER DISMISSED EVENT RECEIVED from list in main.rs: {}", event.id);
+                    let mut tx = ui_tx_for_ui_task.clone();
+                    let id = event.id;
+                    cx.background_executor()
+                        .spawn(async move {
+                            let _ = tx
+                                .send(AppEvents::UserCloseNotification { id, reason: 2 })
+                                .await;
+                        })
+                        .detach();
+                }).detach();
+
+                let ui_tx_for_center = ui_channel_tx.clone();
+                cx.subscribe(&center, move |_center_handle, event: &UserDismissedEvent, cx| {
+                    println!("USER DISMISSED EVENT RECEIVED from a center: {}", event.id);
+                    let mut tx = ui_tx_for_center.clone();
+                    let id = event.id;
+                    cx.background_executor()
+                        .spawn(async move {
+                            let _ = tx
+                                .send(AppEvents::UserCloseNotification { id, reason: 2 })
+                                .await;
+                        })
+                        .detach();
+                }).detach();
+
                 // Clone the UI->backend sender into the UI task
                 let ui_tx_for_ui_task = ui_channel_tx.clone();
+                let center_for_visibility = center.clone();
                 notification_list.update(cx, |_, cx| {
                     cx.spawn_in(window, async move |_, cx| {
                         while let Some(event) = app_channel_rx.next().await {
@@ -159,7 +206,34 @@ fn main() {
                                             }
                                         }
                                     }
-                                    println!("ICON PATH: {:?}",icon_path);
+                                    println!("ICON PATH: {:?}", icon_path);
+
+                                    let mut hints: std::collections::HashMap<String, String> =
+                                        std::collections::HashMap::new();
+                                    if let Some(ref path) = icon_path {
+                                        hints.insert(
+                                            "image-path".to_string(),
+                                            path.to_string_lossy().to_string(),
+                                        );
+                                    }
+
+                                    let db_notif = DbNotification {
+                                        id,
+                                        app_name: notification.app_name.clone(),
+                                        app_icon: notification.app_icon.clone(),
+                                        summary: notification.summary.clone(),
+                                        body: notification.body.clone(),
+                                        actions: notification.actions.clone(),
+                                        hints,
+                                    };
+
+                                    if center_for_visibility.read_with(cx, |center, _| center.is_visible()).unwrap_or(false) {
+                                        let _ = center_for_visibility.update(cx, |center, cx| {
+                                            center.add_db_notification(db_notif, cx);
+                                        });
+                                        continue;
+                                    }
+
                                     // Clone into a separate variable that we can move into the UI closure
                                     let actions_pairs = parsed_actions.clone();
                                     // Capture id and a sender clone for click handlers
@@ -170,6 +244,7 @@ fn main() {
                                             {
                                                 let base = Notification::new()
                                                     .id1::<Notification>(key_id)
+                                                    .db_id(notif_id)
                                                     .title(title.clone())
                                                     .on_click(move |event, window, cx| {
                                                         println!("Notification clicked: {}", id);
@@ -252,11 +327,11 @@ fn main() {
                                                     }
                                                     row
                                                 }),
-                                                    window,
-                                                    cx,
-                                                );
-                                                        });
-                                                    }
+                                            window,
+                                            cx,
+                                        );
+                                    });
+                                }
                                 AppEvents::CloseNotification { id } => {
                                     let _ = list_for_events.update_in(cx, |list, window, cx| {
                                         let key_ss: SharedString = id.to_string().into();
@@ -266,6 +341,7 @@ fn main() {
                                 }
                                 // UI side should not receive ActionInvoked, but handle gracefully
                                 AppEvents::ActionInvoked { .. } => {}
+                                AppEvents::UserCloseNotification { .. } => {}
                             }
                         }
                     }).detach();

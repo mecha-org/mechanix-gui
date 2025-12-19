@@ -16,6 +16,9 @@ use smol::Timer;
 
 use crate::ui::icon::{Icon, IconName};
 
+pub struct UserDismissedEvent {
+    pub id: u32,
+}
 #[derive(Debug, Clone, Copy, Default)]
 pub enum NotificationType {
     #[default]
@@ -60,6 +63,7 @@ pub struct Notification {
     ///
     /// None means the notification will be added to the end of the list.
     id: NotificationId,
+    db_id: u32,
     style: StyleRefinement,
     type_: Option<NotificationType>,
     title: Option<SharedString>,
@@ -125,6 +129,7 @@ impl Notification {
 
         Self {
             id: id.into(),
+            db_id: 0,
             style: StyleRefinement::default(),
             title: None,
             message: None,
@@ -153,6 +158,11 @@ impl Notification {
     /// Set the message of the notification, default is None.
     pub fn message(mut self, message: impl Into<SharedString>) -> Self {
         self.message = Some(message.into());
+        self
+    }
+
+    pub fn db_id(mut self, db_id: u32) -> Self {
+        self.db_id = db_id;
         self
     }
 
@@ -234,7 +244,7 @@ impl Notification {
         self
     }
 
-    /// Dismiss the notification.
+    /// `Dismiss` the notification.
     pub fn dismiss(&mut self, _: &mut Window, cx: &mut Context<Self>) {
         if self.closing {
             return;
@@ -266,7 +276,9 @@ impl Notification {
         self
     }
 }
+
 impl EventEmitter<DismissEvent> for Notification {}
+impl EventEmitter<UserDismissedEvent> for Notification {}
 impl FluentBuilder for Notification {}
 impl Styled for Notification {
     fn style(&mut self) -> &mut StyleRefinement {
@@ -297,7 +309,6 @@ impl Render for Notification {
         // };
         let has_icon = self.icon_img.is_some();
         let icon_path = self.icon_img.clone();
-        println!("is there icon or not: {:?}", has_icon);
         div()
             .id("notification")
             .group("")
@@ -383,7 +394,6 @@ impl Render for Notification {
                 }),
             )
             .on_mouse_move(cx.listener(|this, e: &MouseMoveEvent, _window, cx| {
-                println!("MOUSE MOVE");
                 if this.dragging {
                     let dx = e.position.x - this.drag_start.x; // Pixels
                     // start suppressing click after a small slop
@@ -398,7 +408,6 @@ impl Render for Notification {
             .on_mouse_up(
                 MouseButton::Left,
                 cx.listener(|this, _e: &MouseUpEvent, window, cx| {
-                    println!("MOUSE DOWN");
                     if !this.dragging {
                         return;
                     }
@@ -412,6 +421,7 @@ impl Render for Notification {
                         // swipe dismiss in the dragged direction
                         this.close_dir = if dx < 0.0 { -1.0 } else { 1.0 };
                         this.dismiss(window, cx);
+                        cx.emit(UserDismissedEvent { id: this.db_id });
                     } else {
                         // snap back with a short animation
                         this.snapping_back = true;
@@ -457,8 +467,8 @@ impl Render for Notification {
                                     .text_color(rgb(0xf4f4f4)),
                             )
                             .on_click(cx.listener(|this, _, window, cx| {
-                                println!("CANCELLED CLICKED");
-                                this.dismiss(window, cx)
+                                this.dismiss(window, cx);
+                                cx.emit(UserDismissedEvent { id: this.db_id });
                             })),
                     ),
             )
@@ -559,13 +569,22 @@ impl NotificationList {
 
         let notification = cx.new(|_| notification);
 
-        self._subscriptions.insert(
-            id.clone(),
-            cx.subscribe(&notification, move |view, _, _: &DismissEvent, cx| {
-                view.notifications.retain(|note| id != note.read(cx).id);
-                view._subscriptions.remove(&id);
-            }),
-        );
+        let id_for_dismiss = id.clone();
+        cx.subscribe(&notification, move |view, _, _: &DismissEvent, cx| {
+            view.notifications
+                .retain(|note| id_for_dismiss != note.read(cx).id);
+            view._subscriptions.remove(&id_for_dismiss);
+        })
+        .detach();
+
+        let id_for_user_dismiss = id.clone();
+        cx.subscribe(
+            &notification,
+            move |view, _, event: &UserDismissedEvent, cx| {
+                cx.emit(UserDismissedEvent { id: event.id });
+            },
+        )
+        .detach();
 
         self.notifications.push_back(notification.clone());
         if autohide {
@@ -617,13 +636,14 @@ impl NotificationList {
     }
 }
 
+impl EventEmitter<DismissEvent> for NotificationList {}
+impl EventEmitter<UserDismissedEvent> for NotificationList {}
 impl Render for NotificationList {
     fn render(
         &mut self,
         window: &mut gpui::Window,
         cx: &mut gpui::Context<Self>,
     ) -> impl IntoElement {
-        println!("rendered");
         let size = window.viewport_size();
         let items = self.notifications.iter().rev().take(10).rev().cloned();
 
@@ -660,11 +680,13 @@ pub struct NotificationGroupItem {
 #[derive(Clone)]
 pub struct NotificationItem {
     pub id: u64,
+    pub db_id: u32,
     pub preview: SharedString,
     pub has_thumbnail: bool,
 }
 
 pub struct NotificationCenter {
+    pub is_visible: bool,
     groups: Vec<NotificationGroupItem>,
     rows: Vec<RowState>,
     clearing: bool,
@@ -757,6 +779,7 @@ pub struct DbNotification {
 impl NotificationCenter {
     pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
         Self {
+            is_visible: true    ,
             groups: vec![],
             rows: vec![],
             clearing: false,
@@ -764,7 +787,93 @@ impl NotificationCenter {
             item_states: HashMap::new(),
         }
     }
-    
+}
+
+impl EventEmitter<UserDismissedEvent> for NotificationCenter {}
+
+impl NotificationCenter {
+    pub fn set_visible(&mut self, visible: bool) {
+        self.is_visible = visible;
+    }
+
+    pub fn is_visible(&self) -> bool {
+        self.is_visible
+    }
+
+    fn bump_row_animation(&mut self, group_id: u64) {
+        if let Some(row) = self.rows.iter_mut().find(|r| r.id == group_id) {
+            row.anim_epoch = row.anim_epoch.wrapping_add(1);
+        }
+    }
+    pub fn add_db_notification(&mut self, notif: DbNotification, cx: &mut Context<Self>) {
+        let app_name_formatted = format_notification_name(&notif.app_name);
+        
+        // Try to find an existing group for this app
+        if let Some(group) = self.groups.iter_mut().find(|g| g.app_name == app_name_formatted) {
+            let item_has_thumbnail = notif.hints.contains_key("image-path")
+                || notif.hints.contains_key("image_path");
+            
+            let new_item = NotificationItem {
+                id: group.id + 1 + notif.id as u64, // Use group id + db_id as a base for unique UI id
+                db_id: notif.id,
+                preview: format_notification_body(&notif.summary, &notif.body),
+                has_thumbnail: item_has_thumbnail,
+            };
+            
+            // Insert at index 0 (latest first)
+            group.items.insert(0, new_item);
+            group.count += 1;
+            
+            // Update group preview and thumbnail from the latest notification
+            group.preview = format_notification_body(&notif.summary, &notif.body);
+            group.has_thumbnail = item_has_thumbnail;
+            group.time_ago = "· now".into();
+            
+            // Move the updated group to the top of the groups list
+            let group_id = group.id;
+            if let Some(pos) = self.groups.iter().position(|g| g.id == group_id) {
+                let g = self.groups.remove(pos);
+                self.groups.insert(0, g);
+            }
+            self.bump_row_animation(group_id);
+        } else {
+            // Create a new group if it doesn't exist
+            let mut next_id = self.groups.iter().map(|g| g.id).max().unwrap_or(0) + 1000;
+            
+            let item_has_thumbnail = notif.hints.contains_key("image-path")
+                || notif.hints.contains_key("image_path");
+            
+            let new_item = NotificationItem {
+                id: next_id + notif.id as u64,
+                db_id: notif.id,
+                preview: format_notification_body(&notif.summary, &notif.body),
+                has_thumbnail: item_has_thumbnail,
+            };
+            
+            let new_group = NotificationGroupItem {
+                id: next_id,
+                app_name: app_name_formatted,
+                time_ago: "· now".into(),
+                preview: format_notification_body(&notif.summary, &notif.body),
+                count: 1,
+                has_thumbnail: item_has_thumbnail,
+                items: vec![new_item],
+            };
+            
+            // Insert at the beginning of groups
+            self.groups.insert(0, new_group);
+            
+            // Add a corresponding row state
+            self.rows.insert(0, RowState::new(next_id));
+            // Trigger entrance animation
+            if let Some(row) = self.rows.first_mut() {
+                row.anim_epoch = row.anim_epoch.wrapping_add(1);
+            }
+        }
+        
+        cx.notify();
+    }
+
     // Call this method to populate from your database
     pub fn load_from_database(
         &mut self,
@@ -812,6 +921,7 @@ impl NotificationCenter {
 
                         NotificationItem {
                             id: next_id + n.id as u64,
+                            db_id: n.id,
                             preview: format_notification_body(&n.summary, &n.body),
                             has_thumbnail: item_has_thumbnail,
                         }
@@ -909,6 +1019,14 @@ impl Render for NotificationCenter {
                         if this.clearing {
                             return;
                         }
+
+                        // Emit dismissal events for all notifications in all groups
+                        for group in &this.groups {
+                            for item in &group.items {
+                                cx.emit(UserDismissedEvent { id: item.db_id });
+                            }
+                        }
+
                         this.clearing = true;
                         cx.notify();
 
@@ -1137,6 +1255,7 @@ impl Render for NotificationCenter {
                     // Add swipe handlers for expanded items (not the first one with header)
                     if item_idx > 0 {
                         let item_id = item.id;
+                        let item_db_id = item.db_id;
                         let group_id = g.id;
 
                         card = card
@@ -1183,7 +1302,6 @@ impl Render for NotificationCenter {
                                         state.drag_dx = 0.0;
 
                                         if dx.abs() >= threshold {
-                                            println!("THE THRESHOLD HAS BEEN CROSSED-------------------");
                                             // Swipe dismiss
                                             state.close_dir = if dx < 0.0 { -1.0 } else { 1.0 };
                                             state.closing = true;
@@ -1213,6 +1331,11 @@ impl Render for NotificationCenter {
                                                                     group.count = group
                                                                         .count
                                                                         .saturating_sub(1);
+
+                                                                    // Emit user dismissed event
+                                                                    cx.emit(UserDismissedEvent {
+                                                                        id: item_db_id,
+                                                                    });
 
                                                                     // Update the preview to the first remaining item
                                                                     if let Some(first) =
@@ -1392,13 +1515,19 @@ impl Render for NotificationCenter {
                                         Timer::after(Duration::from_millis(150)).await;
                                         cx.update(|cx| {
                                             if let Some(view) = view.upgrade() {
-                                                view.update(cx, |this, _| {
+                                                view.update(cx, |this, cx| {
                                                     if let Some(pos) = this
                                                         .groups
                                                         .iter()
                                                         .position(|g| g.id == removing_id)
                                                     {
-                                                        this.groups.remove(pos);
+                                                        let group = this.groups.remove(pos);
+                                                        // Emit user dismissed event for all items in the group
+                                                        for item in group.items {
+                                                            cx.emit(UserDismissedEvent {
+                                                                id: item.db_id,
+                                                            });
+                                                        }
                                                     }
                                                     if let Some(pos) = this
                                                         .rows
