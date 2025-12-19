@@ -1,3 +1,4 @@
+use std::time::{SystemTime, UNIX_EPOCH};
 use commons::assets::Assets;
 use desktop_dbus::MechanixNotificationService;
 use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
@@ -67,10 +68,12 @@ fn main() {
                             if let Ok(all) = notification_service.fetch_all().await {
                                 // Map HashMap<u32, Notification> -> Vec<DbNotification>
                                 let mut vec_items: Vec<DbNotification> = Vec::new();
-                                for (id, n) in all {
+                                for (id, stored_notification) in all {
+                                    let notification  = stored_notification.notification;
+                                    let received_at = stored_notification.received_at;
                                     let mut hints: std::collections::HashMap<String, String> =
                                         std::collections::HashMap::new();
-                                    if let Some(image) = n.get_image() {
+                                    if let Some(image) = notification.get_image() {
                                         if let Ok(opt_path) = image.resolve_path() {
                                             if let Some(path) = opt_path {
                                                 hints.insert(
@@ -82,11 +85,12 @@ fn main() {
                                     }
                                     vec_items.push(DbNotification {
                                         id,
-                                        app_name: n.app_name.clone(),
-                                        app_icon: n.app_icon.clone(),
-                                        summary: n.summary.clone(),
-                                        body: n.body.clone(),
-                                        actions: n.actions.clone(),
+                                        app_name: notification.app_name.clone(),
+                                        app_icon: notification.app_icon.clone(),
+                                        summary: notification.summary.clone(),
+                                        body: notification.body.clone(),
+                                        actions: notification.actions.clone(),
+                                        received_at: Some(received_at),
                                         hints,
                                     });
                                 }
@@ -224,6 +228,7 @@ fn main() {
                                         summary: notification.summary.clone(),
                                         body: notification.body.clone(),
                                         actions: notification.actions.clone(),
+                                        received_at: Some(epoch_seconds()),
                                         hints,
                                     };
 
@@ -371,4 +376,12 @@ fn parse_actions(actions: Vec<String>) -> Vec<(String, String)> {
         })
         .collect();
     parsed_actions
+}
+
+/// helper returning epoch seconds
+fn epoch_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs()
 }

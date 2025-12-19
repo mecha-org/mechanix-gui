@@ -1,10 +1,3 @@
-use std::{
-    any::TypeId,
-    collections::{HashMap, VecDeque},
-    rc::Rc,
-    time::Duration,
-};
-
 use gpui::{
     div, img, prelude::FluentBuilder, px, rgb, Animation, AnimationExt, AnyElement, App,
     AppContext, ClickEvent, Context, DismissEvent, Div, Element, ElementId,
@@ -13,6 +6,13 @@ use gpui::{
     SharedString, Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Subscription, Window,
 };
 use smol::Timer;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    any::TypeId,
+    collections::{HashMap, VecDeque},
+    rc::Rc,
+    time::Duration,
+};
 
 use crate::ui::icon::{Icon, IconName};
 
@@ -264,7 +264,7 @@ impl Notification {
                 }
             })
         })
-        .detach()
+            .detach()
     }
 
     /// Set the content of the notification.
@@ -444,7 +444,7 @@ impl Render for Notification {
                                 }
                             })
                         })
-                        .detach();
+                            .detach();
                     }
                 }),
             )
@@ -575,7 +575,7 @@ impl NotificationList {
                 .retain(|note| id_for_dismiss != note.read(cx).id);
             view._subscriptions.remove(&id_for_dismiss);
         })
-        .detach();
+            .detach();
 
         let id_for_user_dismiss = id.clone();
         cx.subscribe(
@@ -584,7 +584,7 @@ impl NotificationList {
                 cx.emit(UserDismissedEvent { id: event.id });
             },
         )
-        .detach();
+            .detach();
 
         self.notifications.push_back(notification.clone());
         if autohide {
@@ -598,7 +598,7 @@ impl NotificationList {
                     tracing::error!("failed to auto hide notification: {:?}", err);
                 }
             })
-            .detach();
+                .detach();
         }
         cx.notify();
     }
@@ -774,12 +774,13 @@ pub struct DbNotification {
     pub body: String,
     pub actions: Vec<String>,
     pub hints: HashMap<String, String>,
+    pub received_at: Option<u64>,
 }
 
 impl NotificationCenter {
     pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
         Self {
-            is_visible: true    ,
+            is_visible: false,
             groups: vec![],
             rows: vec![],
             clearing: false,
@@ -807,28 +808,37 @@ impl NotificationCenter {
     }
     pub fn add_db_notification(&mut self, notif: DbNotification, cx: &mut Context<Self>) {
         let app_name_formatted = format_notification_name(&notif.app_name);
-        
+        let current_timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs();
+
+        let time_ago: SharedString = time_ago(current_timestamp, notif.received_at.unwrap_or(0)).into();
         // Try to find an existing group for this app
-        if let Some(group) = self.groups.iter_mut().find(|g| g.app_name == app_name_formatted) {
-            let item_has_thumbnail = notif.hints.contains_key("image-path")
-                || notif.hints.contains_key("image_path");
-            
+        if let Some(group) = self
+            .groups
+            .iter_mut()
+            .find(|g| g.app_name == app_name_formatted)
+        {
+            let item_has_thumbnail =
+                notif.hints.contains_key("image-path") || notif.hints.contains_key("image_path");
+
             let new_item = NotificationItem {
                 id: group.id + 1 + notif.id as u64, // Use group id + db_id as a base for unique UI id
                 db_id: notif.id,
                 preview: format_notification_body(&notif.summary, &notif.body),
                 has_thumbnail: item_has_thumbnail,
             };
-            
+
             // Insert at index 0 (latest first)
             group.items.insert(0, new_item);
             group.count += 1;
-            
+
             // Update group preview and thumbnail from the latest notification
             group.preview = format_notification_body(&notif.summary, &notif.body);
             group.has_thumbnail = item_has_thumbnail;
-            group.time_ago = "· now".into();
-            
+            group.time_ago = format!("· {}", time_ago).into();
+
             // Move the updated group to the top of the groups list
             let group_id = group.id;
             if let Some(pos) = self.groups.iter().position(|g| g.id == group_id) {
@@ -838,31 +848,31 @@ impl NotificationCenter {
             self.bump_row_animation(group_id);
         } else {
             // Create a new group if it doesn't exist
-            let mut next_id = self.groups.iter().map(|g| g.id).max().unwrap_or(0) + 1000;
-            
-            let item_has_thumbnail = notif.hints.contains_key("image-path")
-                || notif.hints.contains_key("image_path");
-            
+            let next_id = self.groups.iter().map(|g| g.id).max().unwrap_or(0) + 1000;
+
+            let item_has_thumbnail =
+                notif.hints.contains_key("image-path") || notif.hints.contains_key("image_path");
+
             let new_item = NotificationItem {
                 id: next_id + notif.id as u64,
                 db_id: notif.id,
                 preview: format_notification_body(&notif.summary, &notif.body),
                 has_thumbnail: item_has_thumbnail,
             };
-            
+
             let new_group = NotificationGroupItem {
                 id: next_id,
                 app_name: app_name_formatted,
-                time_ago: "· now".into(),
                 preview: format_notification_body(&notif.summary, &notif.body),
                 count: 1,
                 has_thumbnail: item_has_thumbnail,
                 items: vec![new_item],
+                time_ago: format!("· {}", time_ago).into(),
             };
-            
+
             // Insert at the beginning of groups
             self.groups.insert(0, new_group);
-            
+
             // Add a corresponding row state
             self.rows.insert(0, RowState::new(next_id));
             // Trigger entrance animation
@@ -870,7 +880,7 @@ impl NotificationCenter {
                 row.anim_epoch = row.anim_epoch.wrapping_add(1);
             }
         }
-        
+
         cx.notify();
     }
 
@@ -886,6 +896,11 @@ impl NotificationCenter {
         );
         // Group notifications by app_name
         let mut grouped: HashMap<String, Vec<DbNotification>> = HashMap::new();
+
+        let current_timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs();
 
         for notif in notifications {
             grouped
@@ -910,7 +925,7 @@ impl NotificationCenter {
                     || first.hints.contains_key("image_path");
 
                 // Format time ago (you'll need to calculate this based on timestamp)
-                let time_ago = "· now".to_string(); // Replace with actual time calculation
+                let time_ago = format!("· {}", time_ago(current_timestamp, first.received_at.unwrap_or(0)));
 
                 // Create items for the group
                 let items: Vec<NotificationItem> = notifs
@@ -942,6 +957,13 @@ impl NotificationCenter {
                 }
             })
             .collect();
+
+        // Sort groups by the most recent notification ID
+        self.groups.sort_by(|a, b| {
+            let a_newest = a.items.first().map(|i| i.db_id).unwrap_or(0);
+            let b_newest = b.items.first().map(|i| i.db_id).unwrap_or(0);
+            b_newest.cmp(&a_newest)
+        });
 
         // Initialize row states
         self.rows = self.groups.iter().map(|g| RowState::new(g.id)).collect();
@@ -987,6 +1009,17 @@ fn format_notification_body(summary: &str, body: &str) -> SharedString {
             format!("{}: {}", summary, body_clean)
         };
         preview.into()
+    }
+}
+
+/// returns a "time ago" string for a given epoch timestamp
+fn time_ago(crn_time: u64, ts: u64) -> String {
+    let diff = crn_time.saturating_sub(ts);
+    match diff {
+        0..=59 => "now".to_string(),
+        60..=3599 => format!("{}m", diff / 60),
+        3600..=86399 => format!("{}hr", diff / 3600),
+        _ => format!("{}d", diff / 86_400),
     }
 }
 
@@ -1041,7 +1074,7 @@ impl Render for NotificationCenter {
                                 }
                             })
                         })
-                        .detach();
+                            .detach();
                     })),
             );
 
@@ -1364,7 +1397,7 @@ impl Render for NotificationCenter {
                                                     }
                                                 })
                                             })
-                                            .detach();
+                                                .detach();
                                         } else {
                                             // Snap back
                                             state.snapping_back = true;
@@ -1392,7 +1425,7 @@ impl Render for NotificationCenter {
                                                     }
                                                 })
                                             })
-                                            .detach();
+                                                .detach();
                                         }
                                     }
                                 }),
@@ -1458,7 +1491,7 @@ impl Render for NotificationCenter {
                     g.id,
                     g.items.first().map(|i| i.id).unwrap_or(0),
                 )
-                .mt(card_top_offset);
+                    .mt(card_top_offset);
 
                 // Add swipe handlers for collapsed card
                 let row_id = g.id;
@@ -1540,7 +1573,7 @@ impl Render for NotificationCenter {
                                             }
                                         })
                                     })
-                                    .detach();
+                                        .detach();
                                 } else {
                                     st.snapping_back = true;
                                     st.snap_from = dx;
@@ -1567,7 +1600,7 @@ impl Render for NotificationCenter {
                                             }
                                         })
                                     })
-                                    .detach();
+                                        .detach();
                                 }
                             }
                         }),

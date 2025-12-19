@@ -1,6 +1,7 @@
 use mechanix_session_services::Notification;
 use std::collections::HashMap;
 use zbus::proxy;
+use mechanix_session_services::interfaces::mechanix::StoredNotification;
 
 #[proxy(
     interface = "org.mechanix.NotificationManager",
@@ -12,7 +13,7 @@ pub trait MechanixNotification {
     fn close_notification_with_reason(&self, id: u32, reason: u32) -> zbus::Result<()>;
 
     /// GetAllNotifications method
-    fn get_all_notifications(&self) -> zbus::Result<HashMap<u32, Notification>>;
+    fn get_all_notifications(&self) -> zbus::Result<HashMap<u32, StoredNotification>>;
 
     /// GetVersion method
     fn get_version(&self) -> zbus::Result<String>;

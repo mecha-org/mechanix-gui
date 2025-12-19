@@ -1,24 +1,31 @@
 use zbus::{ object_server::SignalEmitter, Connection, interface, fdo };
-use zvariant::ObjectPath;
+use zvariant::{ObjectPath, Type};
 use crate::interfaces::freedesktop::FreedesktopNotificationService;
 use crate::interfaces::freedesktop::{ FreedesktopNotificationEvent };
 use std::sync::{Arc, LazyLock};
 use std::collections::HashMap;
+use std::time::{SystemTime, UNIX_EPOCH};
 use futures::channel::mpsc::Receiver;
 use futures::executor::ThreadPool;
 use futures_util::StreamExt;
 use log::info;
+use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use crate::handlers::notification::Notification;
 use crate::interfaces::database::{add_notification_to_db, get_all_notifications_from_db, remove_notification_from_db};
 
+#[derive(Serialize, Deserialize, Clone, Debug, Type)]
+pub struct StoredNotification {
+    pub notification: Notification,
+    pub received_at: u64,
+}
 static THREAD_POOL: LazyLock<ThreadPool> =
     LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
 #[derive(Debug, Clone)]
 pub struct MechanixNotificationService {
    pub freedesktop_signal_emitter: Option<SignalEmitter<'static>>,
     // Add shared storage for notifications as HashMap
-    pub notifications: Arc<RwLock<HashMap<u32, Notification>>>,
+    pub notifications: Arc<RwLock<HashMap<u32, StoredNotification>>>,
 }
 
 impl MechanixNotificationService {
@@ -32,8 +39,8 @@ impl MechanixNotificationService {
     // Helper method to check if notification is resident
     async fn is_notification_resident(&self, id: u32) -> bool {
         let notifications = self.notifications.read().await;
-        if let Some(notification) = notifications.get(&id) {
-            notification.is_resident();
+        if let Some(stored_notification) = notifications.get(&id) {
+            stored_notification.notification.is_resident();
         }
         false
     }
@@ -54,22 +61,26 @@ impl MechanixNotificationService {
     pub async fn handle_event(
         mut event_receiver: Receiver<FreedesktopNotificationEvent>,
         signal_emitter: SignalEmitter<'static>,
-        notifications: Arc<RwLock<HashMap<u32, Notification>>>
+        notifications: Arc<RwLock<HashMap<u32, StoredNotification>>>
     ) {
         THREAD_POOL.spawn_ok(async move {
             while let Some(event) = event_receiver.next().await {
                 match event {
                     FreedesktopNotificationEvent::Notify(id, notification) => {
+                        let store_notification = StoredNotification {
+                            notification: notification.clone(),
+                            received_at: epoch_seconds(),
+                        };
                         /// Store the notification
                         {
                             let mut notifs = notifications.write().await;
-                            notifs.insert(id, notification.clone());
+                            notifs.insert(id, store_notification.clone());
                         }
 
                         /// Store in database
-                        // "transient": BOOLEAN	=> When set the server will treat the notification as transient and by-pass the server's persistence capability, if it should exist. 
+                        // "transient": BOOLEAN	=> When set the server will treat the notification as transient and by-pass the server's persistence capability, if it should exist.
                         if !notification.is_transient() {
-                            if let Err(e) = add_notification_to_db(id, &notification).await {
+                            if let Err(e) = add_notification_to_db(id, &store_notification).await {
                                 eprintln!("Failed to add notification to database: {}", e);
                             }
                             else{
@@ -212,7 +223,7 @@ impl MechanixNotificationService {
     }
 
     /// Get all active notifications
-    async fn get_all_notifications(&self) -> HashMap<u32, Notification> {
+    async fn get_all_notifications(&self) -> HashMap<u32, StoredNotification> {
         let notifications = self.notifications.read().await;
 
         // If no notifications in memory, load from database
@@ -247,4 +258,13 @@ impl MechanixNotificationService {
 
     #[zbus(signal)]
     async fn notification_closed(signal_ctxt: &SignalEmitter<'_>, id: u32) -> zbus::Result<()>;
+}
+
+
+/// helper returning epoch seconds
+fn epoch_seconds() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs()
 }
