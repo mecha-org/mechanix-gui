@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/models.dart';
-import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
@@ -9,8 +8,8 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/bottom_menu.dart';
 import 'package:mechanix_music/src/features/home/mini_player.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 
 class BottomBar extends StatelessWidget {
   const BottomBar({super.key});
@@ -21,15 +20,8 @@ class BottomBar extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-        MiniPlayer(
-          currentSong: SongInfo(
-            id: "asdas",
-            index: 1,
-            path: "",
-            title: "Dancing Flames (Urban Pulse)",
-            artist: "Sophie Lane",
-          ),
-        ),
+        const MiniPlayer(),
+
         BlocSelector<SongsBloc, SongsState, MusicTabs>(
           selector: (state) => state.musicTab,
           builder:

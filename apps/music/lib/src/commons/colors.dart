@@ -7,4 +7,5 @@ class MusicColors {
   static const secondaryTextColor = Color(0xFFA4A4A4);
   static const deleteColor = Color(0xFFFF0000);
   static const backgroundColor = Color(0xFF222222);
+  static const borderColor = Color(0xFFC67600);
 }

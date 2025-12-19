@@ -1,89 +1,106 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
+import 'package:mechanix_music/src/features/home/widgets/artwork_duration_border.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
+import 'package:tuple/tuple.dart';
 
 class MiniPlayer extends StatelessWidget {
-  final SongInfo currentSong;
   final VoidCallback? onTap;
 
-  const MiniPlayer({super.key, required this.currentSong, this.onTap});
+  const MiniPlayer({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: MusicColors.backgroundColor,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(8),
-          topRight: Radius.circular(8),
-        ),
-      ),
-      child: Row(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              RepaintBoundary(
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Transform.scale(
-                    scaleX: 1, // anti-clockwise
-                    child: CircularProgressIndicator(
-                      value: 20,
-                      strokeWidth: 2.18,
-                      backgroundColor: Colors.transparent,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.red,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              ArtworkIcon(size: 35, artworkPath: currentSong.artworkPath),
-            ],
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  currentSong.title,
-                  style: const TextStyle(
-                    color: MusicColors.primaryTextColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  currentSong.artist,
-                  style: const TextStyle(
-                    color: MusicColors.secondaryTextColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300,
-                  ),
-                ),
-              ],
+    return BlocSelector<SongsBloc, SongsState, Tuple2<bool, SongInfo?>>(
+      selector: (state) => Tuple2(state.isPlaying, state.currentSong),
+      builder: (context, state) {
+        final bool isPlaying = state.item1;
+        final SongInfo? currentSong = state.item2;
+
+        if (currentSong == null) return const SizedBox.shrink();
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: const BoxDecoration(
+            color: MusicColors.backgroundColor,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
             ),
           ),
-          IconButton(
-            onPressed: onTap,
-            icon: Image.asset(MusicIcons.prevIcon, width: 20, height: 20),
+          child: Row(
+            children: [
+              // Animated circular progress with artwork
+              AnimatedCircularProgress(
+                player: context.read<SongsBloc>().player,
+                size: 52,
+                strokeWidth: 2.18,
+                progressColor: MusicColors.borderColor,
+                backgroundColor: Colors.transparent,
+                child: ArtworkIcon(
+                  size: 35,
+                  artworkPath: currentSong.artworkPath,
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      overflow: TextOverflow.ellipsis,
+                      currentSong.title,
+                      style: const TextStyle(
+                        color: MusicColors.primaryTextColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      overflow: TextOverflow.ellipsis,
+                      currentSong.artist,
+                      style: const TextStyle(
+                        color: MusicColors.secondaryTextColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              IconButton(
+                onPressed:
+                    () => {context.read<SongsBloc>().add(PlayPrevious())},
+                icon: Image.asset(MusicIcons.prevIcon, width: 20, height: 20),
+              ),
+
+              IconButton(
+                onPressed:
+                    () => context.read<SongsBloc>().add(TogglePlayPause()),
+                icon: Image.asset(
+                  isPlaying ? MusicIcons.pauseIcon : MusicIcons.playIcon,
+                  width: 28,
+                  height: 28,
+                ),
+              ),
+
+              IconButton(
+                onPressed: () => {context.read<SongsBloc>().add(PlayNext())},
+                icon: Image.asset(MusicIcons.nextIcon, width: 20, height: 20),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: onTap,
-            icon: Image.asset(MusicIcons.pauseIcon, width: 28, height: 28),
-          ),
-          IconButton(
-            onPressed: onTap,
-            icon: Image.asset(MusicIcons.nextIcon, width: 20, height: 20),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

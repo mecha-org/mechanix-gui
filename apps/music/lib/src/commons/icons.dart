@@ -20,4 +20,5 @@ class MusicIcons {
   static const playlistIcon = 'assets/images/playlist.png';
   static const homeIcon = 'assets/images/home.png';
   static const pauseIcon = 'assets/images/pause.png';
+  static const swipeDeleteIcon = 'assets/images/swipe_delete.png';
 }

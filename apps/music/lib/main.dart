@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
+import 'package:mechanix_music/src/features/home/data/songs_repository_impl.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:mechanix_music/app_routes.dart';
 import 'package:mechanix_music/models/song_info.dart';
@@ -19,7 +21,25 @@ void main() async {
   await initializeHive();
   MediaKit.ensureInitialized();
 
-  runApp(BlocProvider(create: (context) => SongsBloc(), child: MainApp()));
+  runApp(
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<SongsRepository>(
+          create: (_) => SongsRepositoryImpl(),
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create:
+                (context) =>
+                    SongsBloc(songsRepository: context.read<SongsRepository>()),
+          ),
+        ],
+        child: MainApp(),
+      ),
+    ),
+  );
 }
 
 Future<void> initializeHive() async {

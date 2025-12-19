@@ -34,4 +34,28 @@ class SongInfo extends HiveObject {
     this.artworkPath,
     this.isFavourite = false,
   });
+
+  SongInfo copyWith({
+    String? id,
+    int? index,
+    String? path,
+    String? title,
+    String? artist,
+    String? album,
+    String? duration,
+    String? artworkPath,
+    bool? isFavourite,
+  }) {
+    return SongInfo(
+      id: id ?? this.id,
+      index: index ?? this.index,
+      path: path ?? this.path,
+      title: title ?? this.title,
+      artist: artist ?? this.artist,
+      album: album ?? this.album,
+      duration: duration ?? this.duration,
+      isFavourite: isFavourite ?? this.isFavourite,
+      artworkPath: artworkPath ?? this.artworkPath,
+    );
+  }
 }

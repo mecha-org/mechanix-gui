@@ -1,4 +1,4 @@
-#  🎶 Music App
+# 🎶 Music App
 
 A lightweight and efficient music player application built with Flutter for Embedded Linux devices.
 
@@ -7,51 +7,68 @@ A lightweight and efficient music player application built with Flutter for Embe
 ## Install Guide
 
 ### Pre-requisites:
+
 - To install flutter, follow this : [https://docs.flutter.dev/install](https://docs.flutter.dev/install)
 - To install flutter-elinux, follow this : [https://github.com/sony/flutter-elinux](https://github.com/sony/flutter-elinux)
 
 ### Steps to run Settings App:
+
 1. Clone the repository :
-    ```bash
-    $ git clone https://github.com/mecha-org/mechanix-gui.git
-    $ cd apps/music
-    ```
+   ```bash
+   $ git clone https://github.com/mecha-org/mechanix-gui.git
+   $ cd apps/music
+   ```
 2. Install Flutter dependencies:
 
-    For flutter-elinux:
-    ```bash
-    $ flutter-elinux pub get
-    ```
+   For flutter-elinux:
 
-    For flutter:
-    ```bash
-    $ flutter pub get
-    ```
+   ```bash
+   $ flutter-elinux pub get
+   ```
+
+   For flutter:
+
+   ```bash
+   $ flutter pub get
+   ```
+
 3. Build and Run:
 
-    For flutter-elinux:
-    ```bash
-    $ flutter-elinux build
-    $ flutter-elinux run
-    ```
+   For flutter-elinux:
 
-    For flutter:
-    ```bash
-    $ flutter build
-    $ flutter run
-    ```
+   ```bash
+   $ flutter-elinux build
+   $ flutter-elinux run
+   ```
+
+   For flutter:
+
+   ```bash
+   $ flutter build
+   $ flutter run
+   ```
 
 ## 🚀 Features
 
 ### 🎵 Core Playback Controls
+
 - **Play/Pause**: Start and stop your music seamlessly
 - **Next Track**: Skip to the following song
 - **Previous Track**: Go back to the previous song
 - **Progress Bar**: Visual timeline of current track
+
+## 🎵 Music Features Implemented
+
+- Play songs
+- Pause playback
+- Next track
+- Previous track
+- Song list view
+- Add songs to favourites
+- Remove songs from favourites
 
 ### App Screenshots
 
 <img src="./assets/screenshots/music4.jpeg" alt="App Screenshot" width="540" height="620">
 
 <img src="./assets/screenshots/music2.jpeg" alt="App Screenshot" width="540" height="620">
-
