@@ -1,3 +1,4 @@
+
 import 'package:hive/hive.dart';
 
 part 'note_hive.g.dart';
@@ -28,6 +29,12 @@ class NoteHive extends HiveObject {
   @HiveField(7)
   String tag;
 
+  @HiveField(8)
+  String preview;
+  
+  @HiveField(9)
+  double height;
+
   NoteHive({
     required this.id,
     required this.title,
@@ -37,5 +44,7 @@ class NoteHive extends HiveObject {
     required this.plainText,
     this.isPinned = false,
     this.tag = 'none',
+    required this.preview,
+    required this.height,
   });
 }

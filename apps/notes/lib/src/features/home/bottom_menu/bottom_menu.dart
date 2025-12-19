@@ -1,37 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_notes/src/commons/delete_bottom_sheet.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
-import 'package:mechanix_notes/src/commons/notes_fab_icon.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
-import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
-import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/floatingActionButton/mechanix_fab_items.dart';
+import 'package:widgets/widgets.dart';
+import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
 
 class BottomMenu extends StatefulWidget {
   final bool isSelectionMode;
-  // final bool isPinnedSelected;
-  final List<String> selectedNotes;
-  // final VoidCallback onDelete;
 
-  const BottomMenu({
-    super.key,
-    required this.isSelectionMode,
-    required this.selectedNotes,
-    // required this.isPinnedSelected,
-    // required this.onDelete,
-  });
+  const BottomMenu({super.key, required this.isSelectionMode});
 
   @override
   State<BottomMenu> createState() => _BottomMenuState();
 }
 
 class _BottomMenuState extends State<BottomMenu> {
-  final LayerLink tagLayer = LayerLink();
+  @override
+  void initState() {
+    super.initState();
+  }
 
-  void onDeleteRemoveSelection() {
-    context.read<NotesBloc>().add(DeleteNotes(deleteIds: widget.selectedNotes));
-    clearSelection();
+  void confirmDelete(BuildContext context) {
+    final notesToDelete = context.read<NotesBloc>().state.selectedNoteIds;
+
+    final isSingle = notesToDelete.length == 1;
+    final title =
+        "Delete ${isSingle ? "this note?" : "${notesToDelete.length} notes?"}";
+
+    final message =
+        "This action will delete ${isSingle ? 'this note' : 'these notes'} permanently.";
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (bottomSheetContext) {
+        return DeleteBottomSheet(
+          title: title,
+          message: message,
+          bottomSheetContext: bottomSheetContext,
+        );
+      },
+    );
+  }
+
+  void onDeleteRemoveSelection(BuildContext context) {
+    confirmDelete(context);
   }
 
   void clearSelection() {
@@ -39,49 +56,58 @@ class _BottomMenuState extends State<BottomMenu> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return BlocSelector<NotesBloc, NotesState, bool?>(
-      selector: (state) => state.isPinnedSelected,
-      builder: (context, isPinnedSelected) {
-        return SizedBox(
-          width: 278,
-          height: 52,
-          child: MechanixFloatingActionMenu(
-            height: 52,
-            backgroundColor: const Color(0xFF48494B),
-            items: [
-              MechanixFabItem(
-                iconSize: 24,
-                iconWidget: NotesFabIcon(
-                  iconPath:
-                      isPinnedSelected!
-                          ? NotesIcon.unPinnedIcon
-                          : NotesIcon.pinIcon,
-                ),
-                onTap: () {
-                  context.read<NotesBloc>().add(
-                    PinnedNotes(
-                      noteIds: widget.selectedNotes,
-                      isPinned: !isPinnedSelected,
-                    ),
-                  );
-                },
-              ),
+  void dispose() {
+    super.dispose();
+  }
 
-              MechanixFabItem(
-                iconWidget: const NotesFabIcon(iconPath: NotesIcon.deleteIcon),
-                onTap: () => onDeleteRemoveSelection(),
-              ),
-              MechanixFabItem(
-                onTap: () => clearSelection(),
-                iconWidget: const NotesFabIcon(
-                  iconPath: NotesIcon.clearSelectionIcon,
-                ),
-              ),
-            ],
+  void selectAll() {
+    context.read<NotesBloc>().add(SelectAllNotes());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MechanixBottomBar(
+      leadingWidget: [
+        BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            iconSize: Size(28, 28),
+            iconBoxSize: Size(44, 44),
           ),
-        );
-      },
+          onPressed: clearSelection,
+          iconPath: NotesIcon.backIcon,
+        ),
+      ],
+      centerWidget: [
+        BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            iconSize: Size(28, 28),
+            iconBoxSize: Size(44, 44),
+          ),
+
+          onPressed: selectAll,
+          iconPath: NotesIcon.selectAllIcon,
+        ),
+
+        BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            iconSize: Size(28, 28),
+            iconBoxSize: Size(44, 44),
+          ),
+
+          onPressed: () => {},
+          iconPath: NotesIcon.shareIcon,
+        ),
+
+        BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            iconSize: Size(28, 28),
+            iconBoxSize: Size(44, 44),
+          ),
+
+          onPressed: () => onDeleteRemoveSelection(context),
+          iconPath: NotesIcon.deleteIcon,
+        ),
+      ],
     );
   }
 }

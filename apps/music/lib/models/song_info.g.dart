@@ -18,13 +18,13 @@ class SongInfoAdapter extends TypeAdapter<SongInfo> {
     };
     return SongInfo(
       id: fields[0] as String,
+      index: fields[8] as int,
       path: fields[1] as String,
       title: fields[2] as String,
       artist: fields[3] as String,
       album: fields[4] as String?,
       duration: fields[5] as String?,
-      artwork: fields[7] as Uint8List?,
-      index: fields[8] as int,
+      artworkPath: fields[7] as String?,
       isFavourite: fields[6] as bool,
     );
   }
@@ -48,7 +48,7 @@ class SongInfoAdapter extends TypeAdapter<SongInfo> {
       ..writeByte(6)
       ..write(obj.isFavourite)
       ..writeByte(7)
-      ..write(obj.artwork)
+      ..write(obj.artworkPath)
       ..writeByte(8)
       ..write(obj.index);
   }
