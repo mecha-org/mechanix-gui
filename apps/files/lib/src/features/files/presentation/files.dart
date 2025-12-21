@@ -1525,6 +1525,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         setState(() {
                           folderName = v;
                         });
+
+                        controller.setLiveRename(oldPath, v);
                       },
                       initialValue: initialName,
                       anchorWidget: showCheck
@@ -1547,6 +1549,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                   ),
                                 );
 
+                                controller.clearLiveRename();
                                 controller.clearNewFolder();
 
                                 completer.complete(newFullPath);
@@ -1557,8 +1560,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                                   const Icon(Icons.close, color: Colors.white),
                               onPressed: () {
                                 entry?.remove();
+                                controller.clearLiveRename();
                                 controller.clearNewFolder();
-
                                 // Return null (cancel)
                                 completer.complete(null);
                               },

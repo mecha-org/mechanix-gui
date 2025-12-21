@@ -56,6 +56,28 @@ class FileManagerController {
     _applySearchFilter();
   }
 
+  String? _renamingPath;
+  String? _renamingValue;
+
+  void setLiveRename(String path, String value) {
+    _renamingPath = path;
+    _renamingValue = value;
+    _applySearchFilter();
+  }
+
+  void clearLiveRename() {
+    _renamingPath = null;
+    _renamingValue = null;
+    _applySearchFilter();
+  }
+
+  String getDisplayName(FileSystemEntity entity) {
+    if (entity.path == _renamingPath && _renamingValue != null) {
+      return _renamingValue!;
+    }
+    return p.basename(entity.path);
+  }
+
   /// ValueNotifier of the current directory's basename
   ///
   /// ie:

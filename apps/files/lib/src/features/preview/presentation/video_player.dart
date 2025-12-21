@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io' show FileSystemEntity, File;
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/services/media_kit_manager.dart';
@@ -46,7 +48,6 @@ class _VideoPlayerState extends State<VideoPlayer> {
   double _lastVolume = 1.0;
 
   bool isMenuOpen = false;
-  String title = "";
 
   @override
   void initState() {
@@ -78,7 +79,6 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
     if (mounted) {
       setState(() => _playerReady = true);
-      title = p.basename(widget.filePath);
     }
   }
 
@@ -104,6 +104,11 @@ class _VideoPlayerState extends State<VideoPlayer> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final explorerState =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    final controller = explorerState?.controller;
+
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: Padding(
@@ -111,7 +116,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
         child: AppBar(
           automaticallyImplyLeading: false,
           scrolledUnderElevation: 0,
-          title: MiddleEllipsisText(title, style: previewTitleStyle(context)),
+          title: _buildTitle(controller),
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
@@ -126,6 +131,26 @@ class _VideoPlayerState extends State<VideoPlayer> {
         borderRadius: BorderRadius.circular(12),
         child: Video(controller: videoController, controls: NoVideoControls),
       ),
+    );
+  }
+
+  Widget _buildTitle(FileManagerController? controller) {
+    if (controller == null) {
+      return MiddleEllipsisText(
+        p.basename(widget.filePath),
+        style: previewTitleStyle(context),
+      );
+    }
+
+    return ValueListenableBuilder<List<FileSystemEntity>>(
+      valueListenable: controller.paginatedEntities,
+      builder: (_, __, ___) {
+        final title = controller.getDisplayName(File(widget.filePath));
+        return MiddleEllipsisText(
+          title,
+          style: previewTitleStyle(context),
+        );
+      },
     );
   }
 
@@ -326,11 +351,6 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
             // If user canceled : do nothing
             if (newPath == null) return;
-
-            // If rename succeeded : update title + filepath
-            setState(() {
-              title = p.basename(newPath);
-            });
 
             // Also update widget.filePath for correct behavior
             widget.filePath = newPath;

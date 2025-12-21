@@ -15,8 +15,6 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/preview/presentation/audio_player.dart';
 import 'package:mechanix_files/src/features/preview/presentation/code_editor.dart';
-import 'package:mechanix_files/src/features/preview/presentation/csv_viewer.dart';
-import 'package:mechanix_files/src/features/preview/presentation/excel_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/image_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/pdf_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/video_player.dart';
@@ -148,30 +146,6 @@ void handleTap(
     return;
   }
 
-  if (fileType == '.xlsx') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ExcelViewer(filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
-  if (fileType == '.csv') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CsvViewer(filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
   if (imageFileTypes.contains(fileType)) {
     context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
 
@@ -249,30 +223,6 @@ void handleFileTap(
       context,
       MaterialPageRoute(
         builder: (_) => PdfViewerPage(rootContext: context, filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
-  if (fileType == '.xlsx') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ExcelViewer(filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
-  if (fileType == '.csv') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CsvViewer(filePath: fullPath),
       ),
     );
     return;

@@ -146,7 +146,7 @@ Widget buildGridView(
                             title,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 16,
                               color: const Color(0xFFD2D2D2),
                               fontWeight: FontWeight.w400,
                               fontFamily: Theme.of(context)

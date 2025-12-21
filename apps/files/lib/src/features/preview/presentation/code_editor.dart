@@ -19,6 +19,7 @@ import 'package:highlight/languages/javascript.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:path/path.dart' as p;
@@ -47,7 +48,6 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
   late String _code;
   late CodeController _codeController;
-  String title = '';
   bool isMenuOpen = false;
 
   OverlayEntry? _searchOverlayEntry;
@@ -178,7 +178,11 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       );
     }
 
-    title = p.basename(widget.filePath);
+    final explorerState =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    final controller = explorerState?.controller;
+
     final hasMatches = _matchIndexes.isNotEmpty;
     final index = _currentMatchIndex;
 
@@ -193,8 +197,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             child: AppBar(
               automaticallyImplyLeading: false,
               scrolledUnderElevation: 0,
-              title:
-                  MiddleEllipsisText(title, style: previewTitleStyle(context)),
+              title: _buildTitle(controller),
               backgroundColor: Colors.transparent,
               elevation: 0,
               actions: !hasMatches
@@ -316,6 +319,26 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         bottomNavigationBar: _isEditing
             ? _buildEditingBottomBar(context)
             : _buildBottomBar(context));
+  }
+
+  Widget _buildTitle(FileManagerController? controller) {
+    if (controller == null) {
+      return MiddleEllipsisText(
+        p.basename(widget.filePath),
+        style: previewTitleStyle(context),
+      );
+    }
+
+    return ValueListenableBuilder<List<FileSystemEntity>>(
+      valueListenable: controller.paginatedEntities,
+      builder: (_, __, ___) {
+        final title = controller.getDisplayName(File(widget.filePath));
+        return MiddleEllipsisText(
+          title,
+          style: previewTitleStyle(context),
+        );
+      },
+    );
   }
 
   Widget _buildEditingBottomBar(BuildContext context) {
@@ -509,11 +532,6 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
             // If user canceled : do nothing
             if (newPath == null) return;
-
-            // If rename succeeded : update title + filepath
-            setState(() {
-              title = p.basename(newPath);
-            });
 
             // Also update widget.filePath for correct behavior
             widget.filePath = newPath;

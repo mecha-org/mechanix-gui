@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
@@ -38,7 +39,6 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
   double _lastVolume = 1.0; // default fallback
 
   bool isMenuOpen = false;
-  String title = '';
 
   @override
   void initState() {
@@ -80,7 +80,15 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    title = p.basename(widget.filePath);
+    final explorerState =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    final controller = explorerState?.controller;
+
+    final title = controller != null
+        ? controller.getDisplayName(File(widget.filePath))
+        : p.basename(widget.filePath);
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
@@ -314,11 +322,6 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
             // If user canceled : do nothing
             if (newPath == null) return;
-
-            // If rename succeeded : update title + filepath
-            setState(() {
-              title = p.basename(newPath);
-            });
 
             // Also update widget.filePath for correct behavior
             widget.filePath = newPath;

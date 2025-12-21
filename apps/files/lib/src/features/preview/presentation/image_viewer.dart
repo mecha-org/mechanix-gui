@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/features/preview/presentation/image_editor.dart';
@@ -32,12 +33,15 @@ class ImageViewerPage extends StatefulWidget {
 class _ImageViewerPageState extends State<ImageViewerPage> {
   bool get isSvg => widget.filePath.toLowerCase().endsWith('.svg');
   bool isMenuOpen = false;
-  String title = '';
   bool _isEditing = false;
 
   @override
   Widget build(BuildContext context) {
-    title = p.basename(widget.filePath);
+    final explorerState =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    final controller = explorerState?.controller;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
@@ -46,7 +50,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
-            title: MiddleEllipsisText(title, style: previewTitleStyle(context)),
+            title: _buildTitle(controller),
             backgroundColor: Colors.transparent,
             elevation: 0,
           ),
@@ -68,6 +72,26 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
                   imagePath: widget.filePath,
                 )),
       bottomNavigationBar: _buildBottomBar(context),
+    );
+  }
+
+  Widget _buildTitle(FileManagerController? controller) {
+    if (controller == null) {
+      return MiddleEllipsisText(
+        p.basename(widget.filePath),
+        style: previewTitleStyle(context),
+      );
+    }
+
+    return ValueListenableBuilder<List<FileSystemEntity>>(
+      valueListenable: controller.paginatedEntities,
+      builder: (_, __, ___) {
+        final title = controller.getDisplayName(File(widget.filePath));
+        return MiddleEllipsisText(
+          title,
+          style: previewTitleStyle(context),
+        );
+      },
     );
   }
 
@@ -194,11 +218,6 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
 
             // If user canceled : do nothing
             if (newPath == null) return;
-
-            // If rename succeeded : update title + filepath
-            setState(() {
-              title = p.basename(newPath);
-            });
 
             // Also update widget.filePath for correct behavior
             widget.filePath = newPath;

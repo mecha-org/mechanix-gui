@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show FileSystemEntity, File;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +7,7 @@ import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -39,7 +41,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   List<PdfTextRangeWithFragments> matches = [];
 
   bool isMenuOpen = false;
-  String title = '';
 
   OverlayEntry? _searchOverlayEntry;
   int _currentPage = 1;
@@ -277,7 +278,11 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   /// Normal app bar with file name and search icon
   PreferredSizeWidget _buildNormalAppBar() {
-    title = title = p.basename(widget.filePath);
+    final explorerState =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    final controller = explorerState?.controller;
+
     final hasMatches = matches.isNotEmpty;
     final index = currentMatchIndex ?? 0;
 
@@ -291,7 +296,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         child: AppBar(
           automaticallyImplyLeading: false,
           scrolledUnderElevation: 0,
-          title: MiddleEllipsisText(title, style: previewTitleStyle(context)),
+          title: _buildTitle(controller),
           backgroundColor: Colors.transparent,
           elevation: 0,
           actions: !hasMatches
@@ -333,6 +338,26 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTitle(FileManagerController? controller) {
+    if (controller == null) {
+      return MiddleEllipsisText(
+        p.basename(widget.filePath),
+        style: previewTitleStyle(context),
+      );
+    }
+
+    return ValueListenableBuilder<List<FileSystemEntity>>(
+      valueListenable: controller.paginatedEntities,
+      builder: (_, __, ___) {
+        final title = controller.getDisplayName(File(widget.filePath));
+        return MiddleEllipsisText(
+          title,
+          style: previewTitleStyle(context),
+        );
+      },
     );
   }
 
@@ -443,11 +468,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
             // If user canceled : do nothing
             if (newPath == null) return;
-
-            // If rename succeeded : update title + filepath
-            setState(() {
-              title = p.basename(newPath);
-            });
 
             // Also update widget.filePath for correct behavior
             widget.filePath = newPath;
