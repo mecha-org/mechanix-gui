@@ -578,7 +578,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
-            color: FilesThemeConstants.bottomBarColor,
+            color: context.colorScheme.secondary,
             borderRadius: selectionMode
                 ? null
                 : const BorderRadius.only(
@@ -645,13 +645,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
         ),
         BottomBarButton.extension(
-          floatingActionBarTheme: const MechanixFloatingActionBarThemeData(
+          floatingActionBarTheme: MechanixFloatingActionBarThemeData(
             barMainAxisAlignment: MainAxisAlignment.center,
             width: double.infinity,
             barSpacing: 30,
             decoration: BoxDecoration(
-              color: FilesThemeConstants.floatingMenuColor,
-              borderRadius: BorderRadius.only(
+              color: context.colorScheme.tertiary,
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
               ),

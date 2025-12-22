@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 
 class ImageEditorPage extends StatefulWidget {
@@ -389,19 +390,19 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
           );
         },
       ),
-      bottomNavigationBar: _buildEditorBar(),
+      bottomNavigationBar: _buildEditorBar(context),
     );
   }
 
-  Widget _buildEditorBar() {
+  Widget _buildEditorBar(BuildContext context) {
     const double iconGap = 38;
     const double sidePadding = 16;
 
     return Container(
       height: 44,
-      decoration: const BoxDecoration(
-        color: FilesThemeConstants.floatingMenuColor,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: context.colorScheme.tertiary,
+        borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(8), topRight: Radius.circular(8)),
       ),
       child: Stack(

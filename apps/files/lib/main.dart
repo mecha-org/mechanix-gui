@@ -44,21 +44,19 @@ class MechanixFilesApp extends StatelessWidget with WatchItMixin {
   @override
   Widget build(BuildContext context) {
     final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
-    final mechanixVariant =
-        watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
 
     return MechanixTheme(
       data: MechanixThemeData(
-        mechanixVariant: mechanixVariant,
+        mechanixVariant: MechanixVariant.amber,
         extensions: [
           const FilesTheme(),
-          const MechanixSectionListThemeData(
+          MechanixSectionListThemeData(
             backgroundColor: WidgetStatePropertyAll(
-              FilesThemeConstants.sectionListBackgroundColor,
+              context.colorScheme.tertiary,
             ),
             titleTextStyle: TextStyle(
               fontSize: 18,
-              color: FilesThemeConstants.titleTextColor,
+              color: context.colorScheme.onSurface,
               fontWeight: FontWeight.w500,
               fontFamily: FilesThemeConstants.fontFamily,
             ),
@@ -119,15 +117,14 @@ class MainApp extends StatelessWidget {
           ),
           scaffoldBackgroundColor: Colors.black,
           textSelectionTheme: TextSelectionThemeData(
-            cursorColor: FilesThemeConstants.primaryColor,
-            selectionColor:
-                FilesThemeConstants.primaryColor.withValues(alpha: 0.4),
-            selectionHandleColor: FilesThemeConstants.primaryColor,
+            cursorColor: context.colorScheme.primary,
+            selectionColor: context.colorScheme.primary.withValues(alpha: 0.4),
+            selectionHandleColor: context.colorScheme.primary,
           ),
-          scrollbarTheme: const ScrollbarThemeData(
-            radius: Radius.circular(4),
-            thickness: WidgetStatePropertyAll(6),
-            thumbColor: WidgetStatePropertyAll(FilesThemeConstants.thumbColor),
+          scrollbarTheme: ScrollbarThemeData(
+            radius: const Radius.circular(4),
+            thickness: const WidgetStatePropertyAll(6),
+            thumbColor: WidgetStatePropertyAll(context.colorScheme.onSurface),
           ),
           pageTransitionsTheme: const PageTransitionsTheme(
             builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},

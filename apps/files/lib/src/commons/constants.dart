@@ -69,7 +69,6 @@ class Images {
 class FilesThemeConstants {
   static const Color labelColor = Color(0xFF8F8F8F);
   static const Color titleTextColor = Color(0xFFD2D2D2);
-  static const Color floatingMenuColor = Color(0xFF222222);
   static const Color floatingMenuBorderColor = Color(0xFF3A3A3A);
   static const Color dividerColor = Color(0xFF464646);
   static const Color primaryColor = Color(0xFFAA6400);
