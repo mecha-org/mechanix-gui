@@ -5,7 +5,7 @@ import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.da
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 
 class BluetoothDeviceDiscoverable extends StatefulWidget {
@@ -18,7 +18,6 @@ class BluetoothDeviceDiscoverable extends StatefulWidget {
 
 class _BluetoothDeviceDiscoverableState
     extends State<BluetoothDeviceDiscoverable> {
-
   // @override
   // void initState() {
   //   super.initState();
@@ -28,12 +27,14 @@ class _BluetoothDeviceDiscoverableState
   Widget build(BuildContext context) {
     return BlocBuilder<BluetoothBloc, BluetoothState>(
       builder: (context, state) {
-        print("state.bluetoothAdapter?.discoverable ${state.bluetoothAdapter?.discoverable}");
+        print(
+            "state.bluetoothAdapter?.discoverable ${state.bluetoothAdapter?.discoverable}");
         return Scaffold(
           appBar: PreferredSize(
               preferredSize: const Size.fromHeight(52),
               child: MechanixNavigationBar(
-                      title: (state.bluetoothAdapter?.alias != null && state.bluetoothAdapter?.alias != '')
+                      title: (state.bluetoothAdapter?.alias != null &&
+                              state.bluetoothAdapter?.alias != '')
                           ? '${state.bluetoothAdapter?.alias}'
                           : 'Bluetooth')
                   .padHorizontal(12)),
@@ -48,14 +49,14 @@ class _BluetoothDeviceDiscoverableState
                         title: 'Device discoverable to everyone',
                         trailing: MechanixSwitch(
                             allowDrag: false,
-                            value: state.bluetoothAdapter?.discoverable ?? false,
+                            value:
+                                state.bluetoothAdapter?.discoverable ?? false,
                             activeText: 'OFF',
                             inactiveText: 'ON',
                             onChanged: (value) {
                               context
                                   .read<BluetoothBloc>()
                                   .add(DiscoveryEnabled(value));
-                           
                             }))
                   ]).padTop(8),
             ),

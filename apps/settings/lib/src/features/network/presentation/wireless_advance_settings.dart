@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_settings.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class WirelessAdvanceSettings extends StatelessWidget {
   const WirelessAdvanceSettings({super.key});

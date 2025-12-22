@@ -11,7 +11,7 @@ import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.d
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:mechanix_settings/src/features/bluetooth/models/device_type.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 
 class BluetoothDeviceInfo extends StatefulWidget {
   const BluetoothDeviceInfo({super.key});
@@ -45,29 +45,32 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
             child: MechanixNavigationBar(
               title: state.selectedDevice?.alias ?? state.selectedDevice?.name,
               actionWidgets: [
-                if(state.selectedDevice != null && (state.selectedDevice!.connected || state.selectedDevice!.paired))
-                IconButton(
-                  onPressed: () => onForgetNetworkClick(state.selectedDevice),
-                  style: ButtonStyle(
-                    iconColor: WidgetStateProperty.all(Colors.white),
-                    backgroundColor: WidgetStateProperty.all(const Color(0xFFB71C1C)),
-                    shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                if (state.selectedDevice != null &&
+                    (state.selectedDevice!.connected ||
+                        state.selectedDevice!.paired))
+                  IconButton(
+                    onPressed: () => onForgetNetworkClick(state.selectedDevice),
+                    style: ButtonStyle(
+                      iconColor: WidgetStateProperty.all(Colors.white),
+                      backgroundColor:
+                          WidgetStateProperty.all(const Color(0xFFB71C1C)),
+                      shape: WidgetStateProperty.all(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      minimumSize: WidgetStateProperty.all(const Size(32, 32)),
+                      fixedSize: WidgetStateProperty.all(const Size(32, 32)),
+                      padding: WidgetStateProperty.all(EdgeInsets.zero),
+                    ),
+                    icon: Center(
+                      child: CustomIcon(
+                        icon: Image.asset(Images.trash),
+                        width: 15,
+                        height: 17,
                       ),
                     ),
-                    minimumSize: WidgetStateProperty.all(const Size(32, 32)),
-                    fixedSize: WidgetStateProperty.all(const Size(32, 32)),
-                    padding: WidgetStateProperty.all(EdgeInsets.zero),
-                  ),
-                  icon: Center(
-                    child: CustomIcon(
-                      icon: Image.asset(Images.trash),
-                      width: 15,
-                      height: 17,
-                    ),
-                  ),
-                ).padRight(16)
+                  ).padRight(16)
               ],
             ).padHorizontal(12),
           ),
@@ -120,7 +123,6 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                         ),
                       ),
                     ),
-
                 ],
               ).padTop(8),
             ),

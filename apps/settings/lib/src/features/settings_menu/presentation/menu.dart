@@ -3,7 +3,7 @@ import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class SettingMenu extends StatelessWidget {
   const SettingMenu({super.key});

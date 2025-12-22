@@ -15,8 +15,8 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_s
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class NetworkDetails extends StatefulWidget {
   const NetworkDetails({super.key});

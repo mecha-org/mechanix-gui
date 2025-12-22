@@ -3,23 +3,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
+import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
-import 'package:mechanix_settings/src/commons/styles/color.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class SavedNetworkDetails extends StatefulWidget {
-  const SavedNetworkDetails({
-    this.network,
-    super.key});
-    final SavedWirelessNetwork? network;
-    
+  const SavedNetworkDetails({this.network, super.key});
+  final SavedWirelessNetwork? network;
 
   @override
   State<SavedNetworkDetails> createState() => _SavedNetworkDetailsState();
@@ -93,7 +90,8 @@ class _SavedNetworkDetailsState extends State<SavedNetworkDetails> {
                   },
                   style: ButtonStyle(
                     iconColor: WidgetStateProperty.all(Colors.white),
-                    backgroundColor: WidgetStateProperty.all(const Color(0xFFB71C1C)),
+                    backgroundColor:
+                        WidgetStateProperty.all(const Color(0xFFB71C1C)),
                     shape: WidgetStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),

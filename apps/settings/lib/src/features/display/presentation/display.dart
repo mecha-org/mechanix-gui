@@ -6,7 +6,7 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dar
 import 'package:mechanix_settings/src/features/display/bloc/display_bloc.dart';
 import 'package:mechanix_settings/src/features/display/models/types.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/slider/mechanix_slider_theme.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';

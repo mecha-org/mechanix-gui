@@ -9,7 +9,7 @@ import 'package:mechanix_settings/src/features/battery/models/types.dart';
 import 'package:mechanix_settings/src/features/battery/presentation/battery_indicator.dart';
 import 'package:upower/upower.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class Battery extends StatefulWidget {
   const Battery({super.key});

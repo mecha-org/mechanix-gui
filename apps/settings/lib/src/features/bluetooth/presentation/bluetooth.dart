@@ -11,8 +11,8 @@ import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.d
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/bluetooth_device_list.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
@@ -81,7 +81,9 @@ class _BluetoothState extends State<Bluetooth> {
                           trailing: Row(
                             children: [
                               CustomTrailingText(
-                                      title: state.bluetoothAdapter != null && state.bluetoothAdapter!.discoverable
+                                      title: state.bluetoothAdapter != null &&
+                                              state.bluetoothAdapter!
+                                                  .discoverable
                                           ? 'Yes'
                                           : 'No')
                                   .padRight(8),
@@ -109,8 +111,7 @@ class _BluetoothState extends State<Bluetooth> {
                       ),
                     ],
                   ),
-                if (state.isPowered &&
-                    connectedAndPairedDevices.isNotEmpty)
+                if (state.isPowered && connectedAndPairedDevices.isNotEmpty)
                   BluetoothDeviceList(
                     isPaired: true,
                     devices: connectedAndPairedDevices,

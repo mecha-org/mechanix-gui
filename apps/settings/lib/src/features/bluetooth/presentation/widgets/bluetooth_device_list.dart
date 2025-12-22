@@ -7,7 +7,7 @@ import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.da
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class BluetoothDeviceList extends StatefulWidget {
   const BluetoothDeviceList({
@@ -49,20 +49,20 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
   }) {
     final devicesList = devices
         .map((device) => SectionListItems(
-            title: device.name,
-            defaultTrailingIcon: false,
-            onTap: () => onDeviceTap(device),
-            leading: IconWidget(
-              iconPath: Images.audioHeadset,
-              isActive: device.connected && device.paired,
-            ),
-            trailing: device.connected
-                ? IconButton(
-                    onPressed: () => onSettingsTap(device),
-                    icon: const IconWidget(iconPath: Images.settings),
-                  )
-                : null,
-          ))
+              title: device.name,
+              defaultTrailingIcon: false,
+              onTap: () => onDeviceTap(device),
+              leading: IconWidget(
+                iconPath: Images.audioHeadset,
+                isActive: device.connected && device.paired,
+              ),
+              trailing: device.connected
+                  ? IconButton(
+                      onPressed: () => onSettingsTap(device),
+                      icon: const IconWidget(iconPath: Images.settings),
+                    )
+                  : null,
+            ))
         .toList();
 
     return devicesList;
