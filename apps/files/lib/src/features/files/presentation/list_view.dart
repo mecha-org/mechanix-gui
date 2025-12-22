@@ -78,7 +78,9 @@ Widget buildListView(
                           : Colors.transparent,
                 ),
                 child: ListTile(
-                  minTileHeight: 65,
+                  minTileHeight: 36,
+                  contentPadding: const EdgeInsets.only(
+                      bottom: 10, top: 10, left: 16, right: 16),
                   leading: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -206,7 +208,9 @@ Widget buildListViewForRecentFiles(
           onSecondaryTap: () => state?.toggleSelection(fullPath),
           onLongPress: () => state?.toggleSelection(fullPath),
           child: ListTile(
-            minTileHeight: 65,
+            minTileHeight: 36,
+            contentPadding:
+                const EdgeInsets.only(bottom: 10, top: 10, left: 16, right: 16),
             leading: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -247,9 +251,13 @@ Widget buildListViewForRecentFiles(
             trailing: file.modified != null
                 ? Text(
                     formatModifiedTime(file.modified!),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: const Color(0xFF717171),
+                      fontWeight: FontWeight.w400,
+                      fontFamily: Theme.of(context)
+                          .extension<FilesTheme>()!
+                          .defaultFontFamily,
                     ),
                   )
                 : null,
@@ -339,7 +347,9 @@ Widget buildListViewMoveAndExtract(
                       color: isNew ? Colors.grey.shade800 : Colors.transparent,
                     ),
                     child: ListTile(
-                      minTileHeight: 65,
+                      minTileHeight: 36,
+                      contentPadding: const EdgeInsets.only(
+                          bottom: 10, top: 10, left: 16, right: 16),
                       leading: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

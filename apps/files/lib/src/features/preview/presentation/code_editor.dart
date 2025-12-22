@@ -30,6 +30,13 @@ import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
+final pureBlackTheme = {
+  ...monokaiTheme,
+  'root': const TextStyle(
+    backgroundColor: Colors.black,
+  ),
+};
+
 class CodeEditorPage extends StatefulWidget {
   final BuildContext rootContext;
   String filePath;
@@ -240,82 +247,71 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             ),
           ),
         ),
-        body: Padding(
-            padding: const EdgeInsets.all(12),
-            child: _isEditing
-                ? SingleChildScrollView(
-                    child: CodeTheme(
-                      data: CodeThemeData(styles: monokaiTheme),
-                      child:
-                          // TextField(
-                          //   controller: _codeController,
-                          //   cursorColor: FilesThemeConstants.primaryColor,
-                          //   contextMenuBuilder: (context, editableTextState) {
-                          //     return AdaptiveTextSelectionToolbar(
-                          //       anchors: editableTextState.contextMenuAnchors,
-                          //       children: const [SelectionOptions()],
-                          //     );
-                          //   },
-                          // )
-
-                          CodeField(
-                        controller: _codeController,
-                        cursorColor: FilesThemeConstants.primaryColor,
-                        textStyle: const TextStyle(fontFamily: 'monospace'),
-                      ),
+        body: _isEditing
+            ? SingleChildScrollView(
+                child: CodeTheme(
+                  data: CodeThemeData(styles: pureBlackTheme),
+                  child: CodeField(
+                    controller: _codeController,
+                    cursorColor: FilesThemeConstants.primaryColor,
+                    textStyle: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 14,
                     ),
-                  )
-                : LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        controller: _scrollController,
-                        child: SizedBox(
-                          width: constraints.maxWidth,
-                          child: InteractiveViewer(
-                            constrained: true,
-                            minScale: 1,
-                            maxScale: 4,
-                            child: Stack(
-                              children: [
-                                HighlightView(
-                                  _code,
-                                  language: _getLanguageName(
-                                    p
-                                        .extension(widget.filePath)
-                                        .replaceAll('.', ''),
-                                  ),
-                                  theme: monokaiTheme,
-                                  padding: const EdgeInsets.all(12),
-                                  textStyle: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 14,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                if (_searchQuery.isNotEmpty)
-                                  Positioned.fill(
-                                    child: IgnorePointer(
-                                      child: CustomPaint(
-                                        painter: _SearchHighlightPainter(
-                                          code: _code,
-                                          search: _searchQuery,
-                                          textStyle: const TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 14,
-                                            height: 1.4,
-                                          ),
-                                          padding: const EdgeInsets.all(12),
-                                        ),
+                  ),
+                ),
+              )
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    controller: _scrollController,
+                    child: SizedBox(
+                      width: constraints.maxWidth,
+                      child: InteractiveViewer(
+                        constrained: true,
+                        minScale: 1,
+                        maxScale: 4,
+                        child: Stack(
+                          children: [
+                            HighlightView(
+                              _code,
+                              language: _getLanguageName(
+                                p
+                                    .extension(widget.filePath)
+                                    .replaceAll('.', ''),
+                              ),
+                              theme: monokaiTheme,
+                              padding: const EdgeInsets.all(12),
+                              textStyle: const TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 14,
+                                height: 1.4,
+                              ),
+                            ),
+                            if (_searchQuery.isNotEmpty)
+                              Positioned.fill(
+                                child: IgnorePointer(
+                                  child: CustomPaint(
+                                    painter: _SearchHighlightPainter(
+                                      code: _code,
+                                      search: _searchQuery,
+                                      textStyle: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 14,
+                                        height: 1.4,
                                       ),
+                                      padding: const EdgeInsets.all(12),
                                     ),
                                   ),
-                              ],
-                            ),
-                          ),
+                                ),
+                              ),
+                          ],
                         ),
-                      );
-                    },
-                  )),
+                      ),
+                    ),
+                  );
+                },
+              ),
         bottomNavigationBar: _isEditing
             ? _buildEditingBottomBar(context)
             : _buildBottomBar(context));
