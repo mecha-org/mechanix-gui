@@ -17,3 +17,4 @@ commons = { path = "../commons"}
 smol = "2.0.2"
 uuid = "1.18.1"
 tracing = "0.1.41"
+regex = "1.11.3"

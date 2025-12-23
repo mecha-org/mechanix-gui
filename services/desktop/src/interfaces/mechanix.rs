@@ -1,5 +1,5 @@
 use zbus::{ object_server::SignalEmitter, Connection, interface, fdo };
-use zvariant::{ObjectPath, Type};
+use zvariant::{ObjectPath, Type, Value};
 use crate::interfaces::freedesktop::FreedesktopNotificationService;
 use crate::interfaces::freedesktop::{ FreedesktopNotificationEvent };
 use std::sync::{Arc, LazyLock};
@@ -11,12 +11,18 @@ use futures_util::StreamExt;
 use log::info;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-use crate::handlers::notification::Notification;
+use crate::handlers::notification::{Notification, SerializableNotification};
 use crate::interfaces::database::{add_notification_to_db, get_all_notifications_from_db, remove_notification_from_db};
 
 #[derive(Serialize, Deserialize, Clone, Debug, Type)]
 pub struct StoredNotification {
     pub notification: Notification,
+    pub received_at: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Type)]
+pub struct DatabaseNotification {
+    pub notification: SerializableNotification,
     pub received_at: u64,
 }
 static THREAD_POOL: LazyLock<ThreadPool> =
@@ -46,7 +52,26 @@ impl MechanixNotificationService {
     }
 
     pub async fn new_from_database() -> Result<Self, Box<dyn std::error::Error>> {
-        let existing_notifications = get_all_notifications_from_db().await?;
+        let existing_db_notifications = get_all_notifications_from_db().await.expect("Failed to get notifications from database - load issue");
+        let mut existing_notifications = HashMap::new();
+
+        for (id, db_notif) in existing_db_notifications {
+            let notification = Notification {
+                app_name: db_notif.notification.app_name,
+                replaces_id: db_notif.notification.replaces_id,
+                app_icon: db_notif.notification.app_icon,
+                summary: db_notif.notification.summary,
+                body: db_notif.notification.body,
+                actions: db_notif.notification.actions,
+                hints: db_notif.notification.hints.into_iter().map(|(k, v)| (k, Value::from(v).try_to_owned().unwrap().into())).collect(),
+                expire_timeout: db_notif.notification.expire_timeout,
+            };
+            existing_notifications.insert(id, StoredNotification {
+                notification,
+                received_at: db_notif.received_at,
+            });
+        }
+
         Ok(Self {
             freedesktop_signal_emitter: None,
             notifications: Arc::new(RwLock::new(existing_notifications)),
@@ -71,16 +96,20 @@ impl MechanixNotificationService {
                             notification: notification.clone(),
                             received_at: epoch_seconds(),
                         };
-                        /// Store the notification
+                        // Store the notification
                         {
                             let mut notifs = notifications.write().await;
                             notifs.insert(id, store_notification.clone());
                         }
 
-                        /// Store in database
+                        // Store in database
                         // "transient": BOOLEAN	=> When set the server will treat the notification as transient and by-pass the server's persistence capability, if it should exist.
                         if !notification.is_transient() {
-                            if let Err(e) = add_notification_to_db(id, &store_notification).await {
+                            let db_notification = DatabaseNotification {
+                                notification: notification.to_serializable(),
+                                received_at: store_notification.received_at,
+                            };
+                            if let Err(e) = add_notification_to_db(id, &db_notification).await {
                                 eprintln!("Failed to add notification to database: {}", e);
                             }
                             else{
@@ -90,7 +119,7 @@ impl MechanixNotificationService {
                         else{
                             println!("Notification {}, is transient, will not be stored in databse",&id);
                         }
-                        info!("Notification {:?} received, sending signal to freedesktop service", notification);
+                        info!("Notification:app_name {:?}", notification.app_name);
                         let _ = Self::notification_received(
                             &signal_emitter,
                             id,
@@ -225,28 +254,7 @@ impl MechanixNotificationService {
     /// Get all active notifications
     async fn get_all_notifications(&self) -> HashMap<u32, StoredNotification> {
         let notifications = self.notifications.read().await;
-
-        // If no notifications in memory, load from database
-        if notifications.is_empty() {
-            drop(notifications); // Release read lock
-
-            match get_all_notifications_from_db().await {
-                Ok(db_notifications) => {
-                    if !db_notifications.is_empty() {
-                        println!("Loaded {} notifications from database", db_notifications.len());
-                        db_notifications
-                    } else {
-                        HashMap::new()
-                    }
-                }
-                Err(e) => {
-                    eprintln!("Failed to load notifications from database: {}", e);
-                    HashMap::new()
-                }
-            }
-        } else {
-            notifications.clone()
-        }
+        notifications.clone()
     }
 
     #[zbus(signal)]

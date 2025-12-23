@@ -15,6 +15,7 @@ use std::{
 };
 
 use crate::ui::icon::{Icon, IconName};
+use std::path::PathBuf;
 
 pub struct UserDismissedEvent {
     pub id: u32,
@@ -285,6 +286,179 @@ impl Styled for Notification {
         &mut self.style
     }
 }
+
+use regex::Regex;
+
+#[derive(Debug, Clone)]
+enum MarkupNode {
+    Text(String),
+    Link { text: String, url: String },
+    LineBreak,
+}
+
+/// Parse HTML-style href links and standalone URLs into structured nodes
+fn parse_markup(input: &str) -> Vec<MarkupNode> {
+    let mut nodes = Vec::new();
+
+    // Split by line breaks
+    let lines: Vec<&str> = input.split('\n').collect();
+
+    for (line_idx, line) in lines.iter().enumerate() {
+        if line_idx > 0 {
+            nodes.push(MarkupNode::LineBreak);
+        }
+
+        let mut remaining = line.to_string();
+
+        // Parse HTML-style links: <a href="url">text</a>
+        let link_regex = Regex::new(r#"<a\s+href=["']([^"']+)["']>([^<]+)</a>"#).unwrap();
+
+        while !remaining.is_empty() {
+            if let Some(captures) = link_regex.captures(&remaining) {
+                let full_match = captures.get(0).unwrap();
+                let url = captures.get(1).unwrap().as_str().to_string();
+                let text = captures.get(2).unwrap().as_str().to_string();
+
+                // Add text before the link
+                let before = &remaining[..full_match.start()];
+                if !before.is_empty() {
+                    nodes.extend(parse_urls_in_text(before));
+                }
+
+                // Add the link
+                nodes.push(MarkupNode::Link { text, url });
+
+                // Continue with remaining text
+                remaining = remaining[full_match.end()..].to_string();
+            } else {
+                // No more HTML links, check for standalone URLs
+                nodes.extend(parse_urls_in_text(&remaining));
+                break;
+            }
+        }
+    }
+
+    nodes
+}
+
+/// Parse standalone URLs in plain text
+fn parse_urls_in_text(text: &str) -> Vec<MarkupNode> {
+    let mut nodes = Vec::new();
+
+    // Regex to match URLs (simplified version)
+    let url_regex = Regex::new(
+        r"(https?://[^\s]+)"
+    ).unwrap();
+
+    let mut last_end = 0;
+
+    for captures in url_regex.captures_iter(text) {
+        let full_match = captures.get(0).unwrap();
+        let url = full_match.as_str().to_string();
+
+        // Add text before the URL
+        let before = &text[last_end..full_match.start()];
+        if !before.is_empty() {
+            nodes.push(MarkupNode::Text(before.to_string()));
+        }
+
+        // Add the URL as a link
+        nodes.push(MarkupNode::Link {
+            text: url.clone(),
+            url,
+        });
+
+        last_end = full_match.end();
+    }
+
+    // Add remaining text
+    if last_end < text.len() {
+        let remaining = &text[last_end..];
+        if !remaining.is_empty() {
+            nodes.push(MarkupNode::Text(remaining.to_string()));
+        }
+    }
+
+    // If no URLs found, return the whole text
+    if nodes.is_empty() && !text.is_empty() {
+        nodes.push(MarkupNode::Text(text.to_string()));
+    }
+
+    nodes
+}
+
+/// Render parsed markup nodes as GPUI elements
+pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
+    let mut container = div()
+        .flex()
+        .flex_col()
+        .gap_1()
+        .w_full()
+        .overflow_hidden();
+
+    let mut current_line = div()
+        .flex()
+        .flex_row()
+        .flex_wrap()
+        .gap_1()
+        .w_full()
+        .overflow_hidden();
+
+    let mut has_content = false;
+
+    for node in nodes {
+        match node {
+            MarkupNode::Text(text) => {
+                current_line = current_line.child(
+                    div()
+                        .text_sm()
+                        .text_color(rgb(0xc0c0c0))
+                        .overflow_hidden()
+                        .child(text.clone())
+                );
+                has_content = true;
+            }
+            MarkupNode::Link { text, url } => {
+                let _url_clone = url.clone();
+                current_line = current_line.child(
+                    div()
+                        .id("link")
+                        .text_sm()
+                        .text_color(rgb(0x5ab0ff))
+                        .underline()
+                        .cursor_pointer()
+                        .overflow_hidden()
+                        .child(text.clone())
+                        .on_click(move |_, _, cx| {
+                            // Open URL in default browser
+                            // open::that(&url_clone).ok();
+                        })
+                );
+                has_content = true;
+            }
+            MarkupNode::LineBreak => {
+                if has_content {
+                    container = container.child(current_line);
+                    current_line = div()
+                        .flex()
+                        .flex_row()
+                        .flex_wrap()
+                        .gap_1()
+                        .w_full()
+                        .overflow_hidden();
+                    has_content = false;
+                }
+            }
+        }
+    }
+
+    // Add the last line if it has content
+    if has_content {
+        container = container.child(current_line);
+    }
+
+    container
+}
 impl Render for Notification {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let content = self
@@ -356,15 +530,19 @@ impl Render for Notification {
                                 .child(title),
                         )
                     })
+                    // .when_some(self.message.clone(), |this, message| {
+                    //     this.child(
+                    //         div()
+                    //             .text_sm()
+                    //             // Slightly muted body text for hierarchy
+                    //             .text_color(rgb(0xd0d0d0))
+                    //             .whitespace_normal()
+                    //             .child(message),
+                    //     )
+                    // })
                     .when_some(self.message.clone(), |this, message| {
-                        this.child(
-                            div()
-                                .text_sm()
-                                // Slightly muted body text for hierarchy
-                                .text_color(rgb(0xd0d0d0))
-                                .whitespace_normal()
-                                .child(message),
-                        )
+                        let parsed = parse_markup(message.as_ref());
+                        this.child(render_markup(&parsed, cx))
                     })
                     .when_some(content, |this, content| this.child(content))
                     .when_some(action, |this, action| this.child(action)),
@@ -605,25 +783,30 @@ impl NotificationList {
 
     pub(crate) fn close(
         &mut self,
+        db_id: u32,
         id: impl Into<NotificationId>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let id: NotificationId = id.into();
-        if let Some(n) = self.notifications.iter().find(|n| n.read(cx).id == id) {
+        if let Some(n) = self.notifications.iter().find(|n| n.read(cx).db_id == db_id) {
+            println!("Closing notification with db_id: {}", db_id);
             n.update(cx, |note, cx| note.dismiss(window, cx))
+        } else {
+            println!("Notification with db_id: {} not found", db_id);
         }
         cx.notify();
     }
     pub fn close_by_key(
         &mut self,
         key: impl Into<ElementId>,
+        db_id: u32,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         // Build the same composite id used by Notification::id1()
         let id_tuple = (TypeId::of::<Notification>(), key.into());
-        self.close(id_tuple, window, cx);
+        self.close(db_id, id_tuple, window, cx);
     }
 
     pub fn clear(&mut self, _: &mut Window, cx: &mut Context<Self>) {
@@ -669,10 +852,12 @@ impl Render for NotificationList {
 pub struct NotificationGroupItem {
     pub id: u64,
     pub app_name: SharedString,
+    pub app_summary: SharedString,
     pub time_ago: SharedString,
     pub preview: SharedString,
     pub count: u32,
     pub has_thumbnail: bool,
+    pub icon_path: Option<std::path::PathBuf>,
     // Add a list of all notifications in this group
     pub items: Vec<NotificationItem>,
 }
@@ -683,6 +868,7 @@ pub struct NotificationItem {
     pub db_id: u32,
     pub preview: SharedString,
     pub has_thumbnail: bool,
+    pub icon_path: Option<std::path::PathBuf>,
 }
 
 pub struct NotificationCenter {
@@ -780,7 +966,7 @@ pub struct DbNotification {
 impl NotificationCenter {
     pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
         Self {
-            is_visible: false,
+            is_visible: true,
             groups: vec![],
             rows: vec![],
             clearing: false,
@@ -808,6 +994,7 @@ impl NotificationCenter {
     }
     pub fn add_db_notification(&mut self, notif: DbNotification, cx: &mut Context<Self>) {
         let app_name_formatted = format_notification_name(&notif.app_name);
+        let app_summary = format_notification_summary(&notif.summary);
         let current_timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards")
@@ -818,25 +1005,33 @@ impl NotificationCenter {
         if let Some(group) = self
             .groups
             .iter_mut()
-            .find(|g| g.app_name == app_name_formatted)
+            .find(|g| g.app_summary == app_summary)
         {
             let item_has_thumbnail =
                 notif.hints.contains_key("image-path") || notif.hints.contains_key("image_path");
 
-            let new_item = NotificationItem {
+            let mut new_item = NotificationItem {
                 id: group.id + 1 + notif.id as u64, // Use group id + db_id as a base for unique UI id
                 db_id: notif.id,
-                preview: format_notification_body(&notif.summary, &notif.body),
+                preview: format_notification_body(&app_name_formatted, &notif.body),
                 has_thumbnail: item_has_thumbnail,
+                icon_path: None,
             };
+
+            if let Some(image_path) = notif.hints.get("image-path").or_else(|| notif.hints.get("image_path")) {
+                new_item.icon_path = Some(std::path::PathBuf::from(image_path));
+            }
 
             // Insert at index 0 (latest first)
             group.items.insert(0, new_item);
             group.count += 1;
 
             // Update group preview and thumbnail from the latest notification
-            group.preview = format_notification_body(&notif.summary, &notif.body);
+            group.preview = format_notification_body(&app_name_formatted, &notif.body);
             group.has_thumbnail = item_has_thumbnail;
+            if let Some(image_path) = notif.hints.get("image-path").or_else(|| notif.hints.get("image_path")) {
+                group.icon_path = Some(std::path::PathBuf::from(image_path));
+            }
             group.time_ago = format!("· {}", time_ago).into();
 
             // Move the updated group to the top of the groups list
@@ -853,22 +1048,33 @@ impl NotificationCenter {
             let item_has_thumbnail =
                 notif.hints.contains_key("image-path") || notif.hints.contains_key("image_path");
 
-            let new_item = NotificationItem {
+            let mut new_item = NotificationItem {
                 id: next_id + notif.id as u64,
                 db_id: notif.id,
-                preview: format_notification_body(&notif.summary, &notif.body),
+                preview: format_notification_body(&notif.app_name, &notif.body),
                 has_thumbnail: item_has_thumbnail,
+                icon_path: None,
             };
 
-            let new_group = NotificationGroupItem {
+            if let Some(image_path) = notif.hints.get("image-path").or_else(|| notif.hints.get("image_path")) {
+                new_item.icon_path = Some(std::path::PathBuf::from(image_path));
+            }
+
+            let mut new_group = NotificationGroupItem {
                 id: next_id,
                 app_name: app_name_formatted,
-                preview: format_notification_body(&notif.summary, &notif.body),
+                app_summary,
+                preview: format_notification_body(&notif.app_name, &notif.body),
                 count: 1,
                 has_thumbnail: item_has_thumbnail,
                 items: vec![new_item],
                 time_ago: format!("· {}", time_ago).into(),
+                icon_path: None,
             };
+
+            if let Some(image_path) = notif.hints.get("image-path").or_else(|| notif.hints.get("image_path")) {
+                new_group.icon_path = Some(std::path::PathBuf::from(image_path));
+            }
 
             // Insert at the beginning of groups
             self.groups.insert(0, new_group);
@@ -903,8 +1109,9 @@ impl NotificationCenter {
             .as_secs();
 
         for notif in notifications {
+            let app_summary = format_notification_summary(&notif.summary).to_string();
             grouped
-                .entry(notif.app_name.clone())
+                .entry(app_summary.clone())
                 .or_insert_with(Vec::new)
                 .push(notif);
         }
@@ -926,7 +1133,7 @@ impl NotificationCenter {
 
                 // Format time ago (you'll need to calculate this based on timestamp)
                 let time_ago = format!("· {}", time_ago(current_timestamp, first.received_at.unwrap_or(0)));
-
+                let app_summary = format_notification_summary(&first.summary);
                 // Create items for the group
                 let items: Vec<NotificationItem> = notifs
                     .iter()
@@ -934,27 +1141,40 @@ impl NotificationCenter {
                         let item_has_thumbnail = n.hints.contains_key("image-path")
                             || n.hints.contains_key("image_path");
 
-                        NotificationItem {
+                        let mut item = NotificationItem {
                             id: next_id + n.id as u64,
                             db_id: n.id,
-                            preview: format_notification_body(&n.summary, &n.body),
+                            preview: format_notification_body(&n.app_name, &n.body),
                             has_thumbnail: item_has_thumbnail,
+                            icon_path: None,
+                        };
+
+                        if let Some(image_path) = n.hints.get("image-path").or_else(|| n.hints.get("image_path")) {
+                            item.icon_path = Some(std::path::PathBuf::from(image_path));
                         }
+                        item
                     })
                     .collect();
 
                 let group_id = next_id;
                 next_id += 1000; // Leave space for item IDs
 
-                NotificationGroupItem {
+                let mut group = NotificationGroupItem {
                     id: group_id,
                     app_name: format_notification_name(&first.app_name),
+                    app_summary,
                     time_ago: time_ago.into(),
-                    preview: format_notification_body(&first.summary, &first.body),
+                    preview: format_notification_body(&first.app_name, &first.body),
                     count: count as u32,
                     has_thumbnail,
                     items,
+                    icon_path: None,
+                };
+
+                if let Some(image_path) = first.hints.get("image-path").or_else(|| first.hints.get("image_path")) {
+                    group.icon_path = Some(std::path::PathBuf::from(image_path));
                 }
+                group
             })
             .collect();
 
@@ -979,6 +1199,38 @@ impl NotificationCenter {
         self.expanded_groups.insert(group_id, !is_expanded);
         cx.notify();
     }
+
+    pub fn remove_db_notification(&mut self, db_id: u32, cx: &mut Context<Self>) {
+        let mut group_to_remove = None;
+
+        for (group_pos, group) in self.groups.iter_mut().enumerate() {
+            if let Some(item_pos) = group.items.iter().position(|i| i.db_id == db_id) {
+                let item = group.items.remove(item_pos);
+                group.count = group.count.saturating_sub(1);
+                self.item_states.remove(&item.id);
+
+                if group.items.is_empty() {
+                    group_to_remove = Some(group_pos);
+                } else {
+                    // Update group preview to the next available item
+                    if let Some(first) = group.items.first() {
+                        group.preview = first.preview.clone();
+                        group.has_thumbnail = first.has_thumbnail;
+                        group.icon_path = first.icon_path.clone();
+                    }
+                }
+                break;
+            }
+        }
+
+        if let Some(group_pos) = group_to_remove {
+            let group = self.groups.remove(group_pos);
+            self.rows.retain(|r| r.id != group.id);
+            self.expanded_groups.remove(&group.id);
+        }
+
+        cx.notify();
+    }
 }
 
 // Helper function to format notification preview
@@ -997,20 +1249,29 @@ fn format_notification_name(app_name: &str) -> SharedString {
 }
 
 // Helper function to format notification preview
-fn format_notification_body(summary: &str, body: &str) -> SharedString {
+fn format_notification_body(app_name: &str, body: &str) -> SharedString {
     if body.is_empty() {
-        summary.to_string().into()
+        app_name.to_string().into()
     } else {
         // Limit body to reasonable length
         let body_clean = body.replace('\n', " ");
         let preview = if body_clean.len() > 100 {
-            format!("{}: {}...", summary, &body_clean[..97])
+            format!("{}: {}...", app_name, &body_clean[..97])
         } else {
-            format!("{}: {}", summary, body_clean)
+            format!("{}: {}", app_name, body_clean)
         };
         preview.into()
     }
 }
+fn format_notification_summary(summary: &str) -> SharedString {
+    summary
+        .split('(')
+        .next()
+        .unwrap_or(summary)  // fallback (very defensive)
+        .trim()
+        .to_string().into()
+}
+
 
 /// returns a "time ago" string for a given epoch timestamp
 fn time_ago(crn_time: u64, ts: u64) -> String {
@@ -1025,8 +1286,8 @@ fn time_ago(crn_time: u64, ts: u64) -> String {
 
 impl Render for NotificationCenter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        // Header - updated styling
-        let header = div()
+            // Header - updated styling
+        let mut header = div()
             .flex()
             .flex_row()
             .items_center()
@@ -1040,8 +1301,10 @@ impl Render for NotificationCenter {
                     .text_base()
                     .font_weight(FontWeight::MEDIUM)
                     .child("Notifications"),
-            )
-            .child(
+            );
+
+        if !self.groups.is_empty() {
+            header = header.child(
                 div()
                     .id("clear-all")
                     .text_sm()
@@ -1077,6 +1340,7 @@ impl Render for NotificationCenter {
                             .detach();
                     })),
             );
+        }
 
         // Groups list - updated styling
         let mut list = div().flex().flex_col().gap_2p5().px_3().pb_3();
@@ -1145,8 +1409,9 @@ impl Render for NotificationCenter {
             };
 
             // Helper function to create a notification card
-            let create_card = |item_preview: SharedString,
+            let mut create_card = |item_preview: SharedString,
                                item_has_thumbnail: bool,
+                               item_icon_path: Option<std::path::PathBuf>,
                                show_header: bool,
                                item_idx: usize,
                                group_id: u64,
@@ -1186,15 +1451,20 @@ impl Render for NotificationCenter {
                                         .flex()
                                         .items_center()
                                         .justify_center()
-                                        .child(
-                                            Icon::new(IconName::Application)
-                                                .size((px(16.), px(16.)))
-                                                .text_color(rgb(0xffffff)),
-                                        ),
+                                        .when_some(item_icon_path.clone().or_else(|| g.icon_path.clone()), |this, path| {
+                                            this.child(img(path).size_full().rounded(px(6.0)))
+                                        })
+                                        .when(item_icon_path.is_none() && g.icon_path.is_none(), |this| {
+                                            this.child(
+                                                Icon::new(IconName::Application)
+                                                    .size((px(16.), px(16.)))
+                                                    .text_color(rgb(0xffffff)),
+                                            )
+                                        }),
                                 )
                                 .child(div().text_sm().text_color(rgb(0xe0e0e0)).child(format!(
                                     "{} {}",
-                                    g.app_name,
+                                    g.app_summary,
                                     g.time_ago.clone()
                                 ))),
                         )
@@ -1233,6 +1503,15 @@ impl Render for NotificationCenter {
                         .child(item_preview),
                 );
 
+                // let parsed = parse_markup(item_preview.as_ref());
+                // body = body.child(
+                //     div()
+                //         .flex_1()
+                //         .min_w(px(0.0))
+                //         .child(render_markup(&parsed, cx))
+                // );
+
+
                 if item_has_thumbnail {
                     body = body.child(
                         div()
@@ -1240,7 +1519,9 @@ impl Render for NotificationCenter {
                             .h(px(44.0))
                             .rounded(px(8.0))
                             .bg(rgb(0x404040))
-                            .flex_shrink_0(),
+                            .when_some(item_icon_path.clone().or_else(|| g.icon_path.clone()), |this, path| {
+                                this.child(img(path).size_full().rounded(px(8.0)))
+                            })
                     );
                 }
 
@@ -1279,6 +1560,7 @@ impl Render for NotificationCenter {
                     let mut card = create_card(
                         item.preview.clone(),
                         item.has_thumbnail,
+                        item.icon_path.clone(),
                         item_idx == 0, // Only show header for first card
                         item_idx,
                         g.id,
@@ -1486,6 +1768,7 @@ impl Render for NotificationCenter {
                 let card = create_card(
                     g.preview.clone(),
                     g.has_thumbnail,
+                    g.icon_path.clone(),
                     true,
                     0,
                     g.id,

@@ -26,6 +26,7 @@ serde.workspace = true
 freedesktop-icons = "0.4.0"
 serde_json = "1.0.145"
 sled = "0.34.7"
+uuid = { version = "1.19.0", features = ["v4"]}
 
 [lib]
 name = "mechanix_session_services"

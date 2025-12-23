@@ -1,4 +1,3 @@
-use std::time::{SystemTime, UNIX_EPOCH};
 use commons::assets::Assets;
 use desktop_dbus::MechanixNotificationService;
 use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
@@ -8,6 +7,7 @@ use notifications::notification_widget::{
 };
 use notifications::prelude::icon::{Icon, IconName};
 use notifications::prelude::AppEvents;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // Root view to compose NotificationCenter (background) and the toast NotificationList (overlay)
 struct Root {
@@ -162,7 +162,7 @@ fn main() {
                 let list_for_events = notification_list.clone();
 
                 cx.subscribe(&notification_list, move |_list_handle, event: &UserDismissedEvent, cx| {
-                    println!("USER DISMISSED EVENT RECEIVED from list in main.rs: {}", event.id);
+                    println!("USER DISMISSED EVENT RECEIVED: {}", event.id);
                     let mut tx = ui_tx_for_ui_task.clone();
                     let id = event.id;
                     cx.background_executor()
@@ -338,10 +338,18 @@ fn main() {
                                     });
                                 }
                                 AppEvents::CloseNotification { id } => {
+                                    println!("Close notification signal received: {}", id);
+
+                                    // Close in the toast list
                                     let _ = list_for_events.update_in(cx, |list, window, cx| {
                                         let key_ss: SharedString = id.to_string().into();
                                         let key_id = ElementId::Name(key_ss);
-                                        let _ = list.close_by_key(key_id, window, cx);
+                                        let _ = list.close_by_key(key_id, id, window, cx);
+                                    });
+
+                                    // Also close in the Notification Center
+                                    let _ = center_for_visibility.update(cx, |center, cx| {
+                                        center.remove_db_notification(id, cx);
                                     });
                                 }
                                 // UI side should not receive ActionInvoked, but handle gracefully

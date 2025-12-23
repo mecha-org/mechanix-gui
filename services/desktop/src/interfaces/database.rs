@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use serde_json;
-use crate::handlers::notification::Notification;
-use crate::interfaces::mechanix::StoredNotification;
+use crate::interfaces::mechanix::DatabaseNotification;
 
 /// Database file constant: Path where the database will be stored.
 pub const DATABASE_PATH: &str = "notifications.db";
@@ -10,7 +9,7 @@ pub const DATABASE_PATH: &str = "notifications.db";
 /// `if let Err(e) = add_notification_to_db(id, &notification).await { eprintln!("Failed to add notification to database: {}", e);}`
 pub async fn add_notification_to_db(
     id: u32,
-    notification: &StoredNotification
+    notification: &DatabaseNotification
 ) -> Result<(), Box<dyn std::error::Error>> {
     let db = sled::open(DATABASE_PATH)?;
     let notification_bytes = serde_json::to_vec(notification)?;
@@ -34,7 +33,7 @@ pub async fn remove_notification_from_db(id: u32) -> Result<bool, Box<dyn std::e
 
 /// Get all notifications from database
 pub async fn get_all_notifications_from_db() -> Result<
-    HashMap<u32, StoredNotification>,
+    HashMap<u32, DatabaseNotification>,
     Box<dyn std::error::Error>
 > {
     let db = sled::open(DATABASE_PATH)?;
@@ -50,7 +49,7 @@ pub async fn get_all_notifications_from_db() -> Result<
         let id = u32::from_be_bytes(id_bytes);
 
         /// Deserialize notification from JSON
-        let notification: StoredNotification = serde_json::from_slice(&value)?;
+        let notification: DatabaseNotification = serde_json::from_slice(&value)?;
         notifications.insert(id, notification);
     }
     db.flush()?;

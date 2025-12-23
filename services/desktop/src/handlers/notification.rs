@@ -18,6 +18,59 @@ pub struct Notification {
     pub expire_timeout: i32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Type)]
+pub struct SerializableNotification {
+    pub app_name: String,
+    pub replaces_id: u32,
+    pub app_icon: String,
+    pub summary: String,
+    pub body: String,
+    pub actions: Vec<String>,
+    pub hints: HashMap<String, String>,
+    pub expire_timeout: i32,
+}
+
+impl Notification {
+    pub fn to_serializable(&self) -> SerializableNotification {
+        let mut serializable_hints = HashMap::new();
+
+        // Resolve image path if present in hints or app_icon
+        if let Some(image) = self.get_image() {
+            if let Ok(Some(path)) = image.resolve_path() {
+                serializable_hints.insert("image-path".to_string(), path.to_string_lossy().to_string());
+            }
+        }
+
+        // Convert other useful hints to string if needed
+        for (key, value) in &self.hints {
+            if key == "image-data" || key == "image_data" || key == "icon_data" || key == "image-path" || key == "image_path" {
+                continue; // Already handled or problematic
+            }
+
+            if let Ok(v) = <OwnedValue as TryInto<String>>::try_into(value.try_clone().unwrap()) {
+                 serializable_hints.insert(key.clone(), v);
+            } else if let Ok(v) = <OwnedValue as TryInto<u32>>::try_into(value.try_clone().unwrap()) {
+                 serializable_hints.insert(key.clone(), v.to_string());
+            } else if let Ok(v) = <OwnedValue as TryInto<bool>>::try_into(value.try_clone().unwrap()) {
+                 serializable_hints.insert(key.clone(), v.to_string());
+            } else if let Ok(v) = <OwnedValue as TryInto<i32>>::try_into(value.try_clone().unwrap()) {
+                 serializable_hints.insert(key.clone(), v.to_string());
+            }
+        }
+
+        SerializableNotification {
+            app_name: self.app_name.clone(),
+            replaces_id: self.replaces_id,
+            app_icon: self.app_icon.clone(),
+            summary: self.summary.clone(),
+            body: self.body.clone(),
+            actions: self.actions.clone(),
+            hints: serializable_hints,
+            expire_timeout: self.expire_timeout,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Hints(Vec<Hint>);
 
@@ -172,13 +225,14 @@ impl Image {
             }
             // #todo support other formats .jpeg and .webp .svg when using savev
             Image::Data(pixbuf) => {
-                // let extension = path
-                //     .extension()
-                //     .and_then(|ext| ext.to_str())
-                //     .unwrap_or("png");
-                //
-                // pixbuf.savev(&path, extension, &[])?;
-                Ok(None)
+                let temp_dir = std::env::temp_dir().join("mechanix-notifications");
+                if !temp_dir.exists() {
+                    std::fs::create_dir_all(&temp_dir)?;
+                }
+                let file_name = format!("notification-{}.png", uuid::Uuid::new_v4());
+                let path = temp_dir.join(file_name);
+                pixbuf.savev(&path, "png", &[])?;
+                Ok(Some(path))
             }
         }
     }
