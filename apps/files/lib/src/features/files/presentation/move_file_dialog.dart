@@ -8,7 +8,6 @@ import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
@@ -132,9 +131,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
   TextStyle listItemTitleTextStyle(BuildContext context) {
     return TextStyle(
       fontSize: 18,
-      color: const Color(0xFFD2D2D2),
+      color: context.colorScheme.onSurface,
       fontWeight: FontWeight.w500,
-      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
     );
   }
 
@@ -170,12 +168,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   ? "Root"
                   : getCurrentFolderName(currentPath),
               style: TextStyle(
-                color: const Color(0xFFD2D2D2),
+                color: context.colorScheme.onSurface,
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                fontFamily: Theme.of(context)
-                    .extension<FilesTheme>()!
-                    .defaultFontFamily,
               ),
             ),
           ),
@@ -189,9 +184,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         ),
 
         const SizedBox(height: 18),
-        const Divider(
+        Divider(
           height: 1,
-          color: FilesThemeConstants.dividerColor,
+          color: context.colorScheme.surfaceDim,
         ), // Navigation bar
         SizedBox(
           height: 60,
@@ -200,11 +195,10 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               if (isSearching) ...[
                 Expanded(
                   child: MechanixTextInput.search(
-                    cursorColor:
-                        Theme.of(context).extension<FilesTheme>()!.primaryColor,
-                    prefixIcon: const IconWidget(
+                    cursorColor: context.colorScheme.primaryFixed,
+                    prefixIcon: IconWidget(
                       iconPath: Images.search,
-                      iconColor: Color(0xFFD2D2D2),
+                      iconColor: context.colorScheme.onSurface,
                       iconHeight: 24,
                       iconWidth: 24,
                     ),
@@ -241,9 +235,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                     ],
                     anchorWidget: [
                       BottomBarButton(
-                        iconWidget: const IconWidget(
+                        iconWidget: IconWidget(
                           iconPath: Images.search,
-                          iconColor: Color(0xFFD2D2D2),
+                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -252,9 +246,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         },
                       ),
                       BottomBarButton(
-                        iconWidget: const IconWidget(
+                        iconWidget: IconWidget(
                           iconPath: Images.home,
-                          iconColor: Color(0xFFD2D2D2),
+                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 24,
                           iconWidth: 24,
                         ),
@@ -263,9 +257,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         },
                       ),
                       BottomBarButton(
-                        iconWidget: const IconWidget(
+                        iconWidget: IconWidget(
                           iconPath: Images.createFolder,
-                          iconColor: Color(0xFFD2D2D2),
+                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -285,9 +279,10 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         Container(
           height: 60,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: const BoxDecoration(
-            color: Color(0xFF222222),
-            borderRadius: BorderRadius.vertical(bottom: Radius.circular(12)),
+          decoration: BoxDecoration(
+            color: context.colorScheme.tertiary,
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(12)),
           ),
           child: Row(
             children: [
@@ -396,12 +391,13 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     return Expanded(
       child: MechanixTextInput.textInput(
         autofocus: true,
-        cursorColor: Theme.of(context).extension<FilesTheme>()!.primaryColor,
+        cursorColor: context.colorScheme.primaryFixed,
         initialValue: renameText,
         onChanged: (v) => setState(() => renameText = v),
         anchorWidget: showCheck
             ? IconButton(
-                icon: const Icon(Icons.check, color: Colors.white),
+                icon: Icon(Icons.check,
+                    color: context.colorScheme.surfaceContainerLowest),
                 onPressed: () {
                   final filesBloc = context.read<FilesBloc>();
                   filesBloc.add(
@@ -416,7 +412,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 },
               )
             : IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: Icon(Icons.close,
+                    color: context.colorScheme.surfaceContainerLowest),
                 onPressed: () {
                   setState(() => showRenameBar = false);
                   controller.clearNewFolder();
@@ -442,10 +439,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: const Color(0xFFD2D2D2),
-                  fontFamily: Theme.of(context)
-                      .extension<FilesTheme>()!
-                      .defaultFontFamily,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
             ),
@@ -498,11 +492,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                   titleTextStyle: TextStyle(
                     fontSize: 18,
-                    color: const Color(0xFF8F8F8F),
+                    color: context.colorScheme.surfaceDim,
                     fontWeight: FontWeight.w500,
-                    fontFamily: Theme.of(context)
-                        .extension<FilesTheme>()!
-                        .defaultFontFamily,
                   ),
                 ),
                 sectionListItems: [
@@ -562,7 +553,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
       SnackBar(
         content: Text(
             "Moved $movePathCount item${movePathCount > 1 ? 's' : ''} to '$folderName'",
-            style: const TextStyle(color: Colors.white)),
+            style:
+                TextStyle(color: context.colorScheme.surfaceContainerLowest)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),
@@ -643,9 +635,10 @@ Future<void> handleConflictsSequentially(
                     },
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'What would you like to do?',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                    style: TextStyle(
+                        color: context.colorScheme.onSurface, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
                   Row(

@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
@@ -22,6 +21,7 @@ Widget buildListView(
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
   final isSearching = state?.isSearching ?? false;
+  ScrollController _scrollController;
 
   return ValueListenableBuilder<List<io.FileSystemEntity>>(
     valueListenable: controller.paginatedEntities,
@@ -72,9 +72,9 @@ Widget buildListView(
               child: Container(
                 decoration: BoxDecoration(
                   color: isNew
-                      ? const Color(0xFF2A2A2A)
+                      ? context.colorScheme.tertiary
                       : isSelected
-                          ? Colors.grey[900]
+                          ? context.colorScheme.tertiary
                           : Colors.transparent,
                 ),
                 child: ListTile(
@@ -111,22 +111,16 @@ Widget buildListView(
                     title,
                     style: TextStyle(
                       fontSize: 18,
-                      color: const Color(0xFFD2D2D2),
+                      color: context.colorScheme.onSurface,
                       fontWeight: FontWeight.w400,
-                      fontFamily: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .defaultFontFamily,
                     ),
                   ),
                   trailing: Text(
                     formatModifiedTime(modified),
                     style: TextStyle(
                       fontSize: 16,
-                      color: const Color(0xFF717171),
+                      color: context.colorScheme.surfaceContainerHigh,
                       fontWeight: FontWeight.w400,
-                      fontFamily: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .defaultFontFamily,
                     ),
                   ),
                   onTap: () async {
@@ -241,11 +235,8 @@ Widget buildListViewForRecentFiles(
               file.name,
               style: TextStyle(
                 fontSize: 18,
-                color: const Color(0xFFD2D2D2),
+                color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w400,
-                fontFamily: Theme.of(context)
-                    .extension<FilesTheme>()!
-                    .defaultFontFamily,
               ),
             ),
             trailing: file.modified != null
@@ -253,11 +244,8 @@ Widget buildListViewForRecentFiles(
                     formatModifiedTime(file.modified!),
                     style: TextStyle(
                       fontSize: 16,
-                      color: const Color(0xFF717171),
+                      color: context.colorScheme.surfaceContainerHigh,
                       fontWeight: FontWeight.w400,
-                      fontFamily: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .defaultFontFamily,
                     ),
                   )
                 : null,
@@ -295,7 +283,7 @@ Widget buildListViewMoveAndExtract(
         // Show message if folder is empty
         return Center(
           child: Text(
-            "Folder is empty",
+            isSearching ? "No results found" : "Folder is empty",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.grey,
                 ),
@@ -381,22 +369,16 @@ Widget buildListViewMoveAndExtract(
                         title,
                         style: TextStyle(
                           fontSize: 18,
-                          color: const Color(0xFFD2D2D2),
+                          color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w400,
-                          fontFamily: Theme.of(context)
-                              .extension<FilesTheme>()!
-                              .defaultFontFamily,
                         ),
                       ),
                       trailing: Text(
                         formatModifiedTime(modified),
                         style: TextStyle(
                           fontSize: 16,
-                          color: const Color(0xFF717171),
+                          color: context.colorScheme.surfaceContainerHigh,
                           fontWeight: FontWeight.w400,
-                          fontFamily: Theme.of(context)
-                              .extension<FilesTheme>()!
-                              .defaultFontFamily,
                         ),
                       ),
                       onTap: () {

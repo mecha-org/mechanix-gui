@@ -8,7 +8,6 @@ import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
@@ -18,6 +17,7 @@ import 'package:mechanix_files/src/features/preview/presentation/code_editor.dar
 import 'package:mechanix_files/src/features/preview/presentation/image_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/pdf_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/video_player.dart';
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
@@ -375,55 +375,50 @@ MechanixFilledButtonThemeData buttonThemeData(
       break;
 
     case MechanixButtonType.cancel:
-      backgroundColor = const Color(0xFF3A3A3A); // dark grey
+      backgroundColor = context.colorScheme.secondary; // dark grey
       break;
 
     case MechanixButtonType.disable:
-      backgroundColor = const Color(0xFF585858); // dark grey
+      backgroundColor = context.colorScheme.surfaceContainerHigh; // dark grey
       break;
 
     case MechanixButtonType.action:
     default:
-      backgroundColor = Theme.of(context)
-          .extension<FilesTheme>()!
-          .primaryColor; // theme primary
+      backgroundColor = context.colorScheme.primaryFixed; // theme primary
       break;
   }
 
   return MechanixFilledButtonThemeData(
-    buttonSize: size,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(8),
-      color: backgroundColor,
-    ),
-    textStyle: TextStyle(
-        color: isDisabled ? const Color(0xFFD2D2D2) : const Color(0xFFE9E9E9),
+      buttonSize: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: backgroundColor,
+      ),
+      textStyle: TextStyle(
+        color: isDisabled
+            ? context.colorScheme.onSurface
+            : context.colorScheme.surfaceContainerLowest,
         fontSize: 18,
         fontWeight: FontWeight.w400,
-        fontFamily:
-            Theme.of(context).extension<FilesTheme>()!.defaultFontFamily),
-  );
+      ));
 }
 
 TextStyle regularStyle(BuildContext context) => TextStyle(
-      color: Colors.white70,
+      color: context.colorScheme.onSurface,
       fontSize: 20,
       fontWeight: FontWeight.w400,
-      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
     );
 
 TextStyle boldStyle(BuildContext context) => TextStyle(
-      color: Colors.white70,
+      color: context.colorScheme.onSurface,
       fontSize: 20,
       fontWeight: FontWeight.w600,
-      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
     );
 
 TextStyle previewTitleStyle(BuildContext context) => TextStyle(
-      color: const Color(0xFFD2D2D2),
+      color: context.colorScheme.primary,
       fontSize: 20,
       fontWeight: FontWeight.w600,
-      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
     );
 
 Widget searchNavButton({
@@ -432,7 +427,7 @@ Widget searchNavButton({
   required BuildContext context,
 }) {
   final isEnabled = onTap != null;
-  final primary = Theme.of(context).extension<FilesTheme>()!.primaryColor;
+  final primary = context.colorScheme.primaryFixed;
 
   return GestureDetector(
     onTap: onTap,
@@ -442,16 +437,15 @@ Widget searchNavButton({
       decoration: isEnabled
           ? BoxDecoration(
               color: isEnabled
-                  ? const Color.fromRGBO(34, 34, 34, 1)
-                  : Colors.white10,
+                  ? context.colorScheme.onPrimary
+                  : context.colorScheme.tertiary,
               borderRadius: BorderRadius.circular(6),
             )
           : null,
-      child: Icon(
-        icon,
-        size: 24,
-        color: isEnabled ? primary : Colors.white38,
-      ),
+      child: Icon(icon,
+          size: 24,
+          color:
+              isEnabled ? primary : context.colorScheme.surfaceContainerHigh),
     ),
   );
 }

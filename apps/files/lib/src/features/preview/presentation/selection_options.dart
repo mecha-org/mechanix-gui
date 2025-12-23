@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:widgets/mechanix.dart';
 
 class SelectionOptions extends StatelessWidget {
   const SelectionOptions({super.key});
@@ -11,9 +12,9 @@ class SelectionOptions extends StatelessWidget {
         width: 252,
         height: 44,
         padding: const EdgeInsets.all(4),
-        decoration: const BoxDecoration(
-          color: FilesThemeConstants.floatingMenuColor,
-          boxShadow: [
+        decoration: BoxDecoration(
+          color: context.colorScheme.tertiary,
+          boxShadow: const [
             BoxShadow(
               offset: Offset(0, 0),
               blurRadius: 8,

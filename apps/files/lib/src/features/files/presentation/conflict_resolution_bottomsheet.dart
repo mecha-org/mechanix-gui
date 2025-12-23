@@ -80,9 +80,10 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'What would you like to do?',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(
+                    color: context.colorScheme.onSurface, fontSize: 16),
               ),
               const SizedBox(height: 16),
               Row(

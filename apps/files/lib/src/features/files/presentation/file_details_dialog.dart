@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/mechanix.dart';
 
 class FileDetailsDialog extends StatelessWidget {
   final String path;
@@ -77,12 +77,10 @@ class FileDetailsDialog extends StatelessWidget {
                               Text(
                                 "Properties",
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
-                                  fontFamily: Theme.of(context)
-                                      .extension<FilesTheme>()!
-                                      .defaultFontFamily,
                                 ),
                               ),
                               ConstrainedBox(
@@ -96,12 +94,9 @@ class FileDetailsDialog extends StatelessWidget {
                                         fileItem.name,
                                         textAlign: TextAlign.right,
                                         style: TextStyle(
-                                          color: Colors.white70,
+                                          color: context.colorScheme.onSurface,
                                           fontSize: 20,
                                           fontWeight: FontWeight.w500,
-                                          fontFamily: Theme.of(context)
-                                              .extension<FilesTheme>()!
-                                              .defaultFontFamily,
                                         ),
                                       ),
                                     ),
@@ -144,19 +139,15 @@ Widget buildDetailRow(
       children: [
         Text(title,
             style: TextStyle(
-              color: Colors.white70,
+              color: context.colorScheme.onSurface,
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              fontFamily:
-                  Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
             )),
         Text(value,
             style: TextStyle(
-              color: Colors.white70,
+              color: context.colorScheme.onSurface,
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              fontFamily:
-                  Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
             )),
       ],
     ),

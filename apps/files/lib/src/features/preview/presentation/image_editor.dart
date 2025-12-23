@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:path/path.dart' as p;
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 
 class ImageEditorPage extends StatefulWidget {
@@ -210,7 +211,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
       SnackBar(
         content: Text(
           'Saved to ${file.path}',
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: context.colorScheme.surfaceContainerLowest),
         ),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
@@ -325,9 +326,10 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
   @override
   Widget build(BuildContext context) {
     if (_imageBytes == null) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(color: Colors.white),
+          child: CircularProgressIndicator(
+              color: context.colorScheme.surfaceContainerLowest),
         ),
       );
     }
@@ -389,19 +391,19 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
           );
         },
       ),
-      bottomNavigationBar: _buildEditorBar(),
+      bottomNavigationBar: _buildEditorBar(context),
     );
   }
 
-  Widget _buildEditorBar() {
+  Widget _buildEditorBar(BuildContext context) {
     const double iconGap = 38;
     const double sidePadding = 16;
 
     return Container(
       height: 44,
-      decoration: const BoxDecoration(
-        color: FilesThemeConstants.floatingMenuColor,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: context.colorScheme.tertiary,
+        borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(8), topRight: Radius.circular(8)),
       ),
       child: Stack(
@@ -418,7 +420,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
                       iconPath: Images.undo,
                       iconColor: _undoStack.isEmpty
                           ? Colors.grey
-                          : const Color(0xFFD2D2D2),
+                          : context.colorScheme.onSurface,
                     ),
                     _undoStack.isEmpty ? null : undo,
                   ),
@@ -428,7 +430,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
                       iconPath: Images.redo,
                       iconColor: _redoStack.isEmpty
                           ? Colors.grey
-                          : const Color(0xFFD2D2D2),
+                          : context.colorScheme.onSurface,
                     ),
                     _redoStack.isEmpty ? null : redo,
                   ),
@@ -444,33 +446,33 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _iconButton(
-                    const IconWidget(
+                    IconWidget(
                       iconPath: Images.rotateRight,
-                      iconColor: Color(0xFFD2D2D2),
+                      iconColor: context.colorScheme.onSurface,
                     ),
                     rotateRight,
                   ),
                   const SizedBox(width: iconGap),
                   _iconButton(
-                    const IconWidget(
+                    IconWidget(
                       iconPath: Images.mirrorVertical,
-                      iconColor: Color(0xFFD2D2D2),
+                      iconColor: context.colorScheme.onSurface,
                     ),
                     mirrorVertical,
                   ),
                   const SizedBox(width: iconGap),
                   _iconButton(
-                    const IconWidget(
+                    IconWidget(
                       iconPath: Images.mirrorHorizontal,
-                      iconColor: Color(0xFFD2D2D2),
+                      iconColor: context.colorScheme.onSurface,
                     ),
                     mirrorHorizontal,
                   ),
                   const SizedBox(width: iconGap),
                   _iconButton(
-                    const IconWidget(
+                    IconWidget(
                       iconPath: Images.crop,
-                      iconColor: Color(0xFFD2D2D2),
+                      iconColor: context.colorScheme.onSurface,
                     ),
                     onCropPressed,
                   ),

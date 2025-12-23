@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/app_route.dart';
 import 'package:mechanix_files/load_settings.dart';
-import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
@@ -13,8 +11,6 @@ import 'package:mechanix_files/src/features/files/data/recent_file_manager_repos
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 Future<void> main() async {
   di.registerSingleton(ThemeToggle());
@@ -44,32 +40,10 @@ class MechanixFilesApp extends StatelessWidget with WatchItMixin {
   @override
   Widget build(BuildContext context) {
     final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
-    final mechanixVariant =
-        watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
 
     return MechanixTheme(
-      data: MechanixThemeData(
-        mechanixVariant: mechanixVariant,
-        extensions: [
-          const FilesTheme(),
-          const MechanixSectionListThemeData(
-            backgroundColor: WidgetStatePropertyAll(
-              FilesThemeConstants.sectionListBackgroundColor,
-            ),
-            titleTextStyle: TextStyle(
-              fontSize: 18,
-              color: FilesThemeConstants.titleTextColor,
-              fontWeight: FontWeight.w500,
-              fontFamily: FilesThemeConstants.fontFamily,
-            ),
-          ),
-          MechanixTextInputThemeData(
-            fillColor: const Color(0xFF151515),
-            borderSide: const BorderSide(color: Color(0xFF151515)),
-            focusedBorderSide: const BorderSide(color: Color(0xFF151515)),
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ],
+      data: const MechanixThemeData(
+        mechanixVariant: MechanixVariant.amber,
       ),
       builder: (context, mechanix, child) => MainApp(
         darkTheme: mechanix.darkTheme,
@@ -118,17 +92,6 @@ class MainApp extends StatelessWidget {
             ),
           ),
           scaffoldBackgroundColor: Colors.black,
-          textSelectionTheme: TextSelectionThemeData(
-            cursorColor: FilesThemeConstants.primaryColor,
-            selectionColor:
-                FilesThemeConstants.primaryColor.withValues(alpha: 0.4),
-            selectionHandleColor: FilesThemeConstants.primaryColor,
-          ),
-          scrollbarTheme: const ScrollbarThemeData(
-            radius: Radius.circular(4),
-            thickness: WidgetStatePropertyAll(6),
-            thumbColor: WidgetStatePropertyAll(FilesThemeConstants.thumbColor),
-          ),
           pageTransitionsTheme: const PageTransitionsTheme(
             builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
           ),

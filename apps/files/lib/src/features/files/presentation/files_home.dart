@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
@@ -48,10 +47,8 @@ class FileHomePageState extends State<FileHomePage> {
           "Files",
           style: TextStyle(
             fontSize: 24,
-            color: const Color(0xFFD2D2D2),
+            color: context.colorScheme.primary,
             fontWeight: FontWeight.w600,
-            fontFamily:
-                Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
           ),
         ),
       ),
@@ -92,11 +89,8 @@ class FileHomePageState extends State<FileHomePage> {
                 theme: MechanixSectionListThemeData(
                   titleTextStyle: TextStyle(
                     fontSize: 18,
-                    color: const Color(0xFF8F8F8F),
+                    color: context.colorScheme.surfaceDim,
                     fontWeight: FontWeight.w500,
-                    fontFamily: Theme.of(context)
-                        .extension<FilesTheme>()!
-                        .defaultFontFamily,
                   ),
                 ),
                 sectionListItems: [
@@ -118,9 +112,8 @@ class FileHomePageState extends State<FileHomePage> {
   TextStyle listItemTitleTextStyle(BuildContext context) {
     return TextStyle(
       fontSize: 18,
-      color: const Color(0xFFD2D2D2),
+      color: context.colorScheme.onSurface,
       fontWeight: FontWeight.w500,
-      fontFamily: Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
     );
   }
 

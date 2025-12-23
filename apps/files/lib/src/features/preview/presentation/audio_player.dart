@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/services/media_kit_manager.dart';
@@ -119,9 +118,10 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
       ),
       bottomNavigationBar: _playerReady
           ? _buildBottomBar(context)
-          : const Padding(
-              padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(color: Colors.white),
+          : Padding(
+              padding: const EdgeInsets.all(20),
+              child: CircularProgressIndicator(
+                  color: context.colorScheme.surfaceContainerLowest),
             ),
     );
   }
@@ -131,9 +131,9 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: FilesThemeConstants.floatingMenuColor,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: context.colorScheme.tertiary,
+        borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(8), topRight: Radius.circular(8)),
       ),
       child: Column(
@@ -177,11 +177,9 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                         value: _position.inMilliseconds
                             .toDouble()
                             .clamp(0, _duration.inMilliseconds.toDouble()),
-                        activeColor: Theme.of(context)
-                            .extension<FilesTheme>()!
-                            .primaryColor,
-                        inactiveColor: const Color(0xFF464646),
-                        thumbColor: const Color(0xFFD2D2D2),
+                        activeColor: context.colorScheme.primaryFixed,
+                        inactiveColor: context.colorScheme.surfaceContainerHigh,
+                        thumbColor: context.colorScheme.onSurface,
                         onChanged: (v) {
                           player.seek(Duration(milliseconds: v.toInt()));
                         },
@@ -228,9 +226,9 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
             ],
           ),
           MechanixBottomBar(
-            theme: const MechanixBottomBarThemeData(
+            theme: MechanixBottomBarThemeData(
                 decoration: BoxDecoration(
-              color: FilesThemeConstants.bottomBarColor,
+              color: context.colorScheme.secondary,
               borderRadius: null,
             )),
             leadingWidget: [
@@ -296,8 +294,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           iconWidth: 28,
           iconHeight: 28,
           iconColor: isMenuOpen
-              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-              : Colors.white70),
+              ? context.colorScheme.primaryFixed
+              : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -308,7 +306,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.rename,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           title: 'Rename',
@@ -331,7 +329,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           title: "Properties",
           leading: Image.asset(
             Images.info,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -342,7 +340,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           title: "Delete",
           leading: Image.asset(
             Images.delete,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -365,10 +363,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
         "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
         style: TextStyle(
           fontSize: 16,
-          color: const Color(0xFFFFFFFF),
+          color: context.colorScheme.surfaceContainerLowest,
           fontWeight: FontWeight.w500,
-          fontFamily:
-              Theme.of(context).extension<FilesTheme>()!.defaultFontFamily,
         ),
       ),
     );

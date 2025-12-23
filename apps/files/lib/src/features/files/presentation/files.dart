@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
@@ -10,7 +9,6 @@ import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
@@ -173,7 +171,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             if (state.compressionStatus == FileCompressionStatus.inProgress) {
               showDialog(
                 context: context,
-                barrierColor: Colors.black.withOpacity(0.2),
+                barrierColor: context.colorScheme.surface.withOpacity(0.2),
                 barrierDismissible: false,
                 builder: (_) => buildLoadingDialog(context, "Compressing..."),
               );
@@ -196,8 +194,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               if (state.compressionStatus == FileCompressionStatus.success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Compression complete',
-                        style: TextStyle(color: Colors.white)),
+                    content: Text('Compression complete',
+                        style: TextStyle(
+                            color: context.colorScheme.surfaceContainerLowest)),
                     duration: const Duration(seconds: 2),
                     backgroundColor: Colors.grey[800],
                   ),
@@ -230,7 +229,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               isLoadingDialogShown = true;
               await showDialog(
                 context: context,
-                barrierColor: Colors.black.withOpacity(0.2),
+                barrierColor: context.colorScheme.surface.withOpacity(0.2),
                 barrierDismissible: false,
                 builder: (_) => buildLoadingDialog(context, "Loading..."),
               );
@@ -294,11 +293,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       "${selectedPaths.length} Selected",
                       style: TextStyle(
                         fontSize: 20,
-                        color: const Color(0xFFD2D2D2),
+                        color: context.colorScheme.primary,
                         fontWeight: FontWeight.w600,
-                        fontFamily: Theme.of(context)
-                            .extension<FilesTheme>()!
-                            .defaultFontFamily,
                       ),
                     ).padRight(24)
                   : ValueListenableBuilder<String>(
@@ -309,15 +305,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             : (path == '/'
                                 ? "Root"
                                 : getCurrentFolderName(path));
-                        return Text(
+                        return MiddleEllipsisText(
                           title,
                           style: TextStyle(
                             fontSize: 24,
-                            color: const Color(0xFFD2D2D2),
+                            color: context.colorScheme.primary,
                             fontWeight: FontWeight.w600,
-                            fontFamily: Theme.of(context)
-                                .extension<FilesTheme>()!
-                                .defaultFontFamily,
                           ),
                         );
                       },
@@ -418,9 +411,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             height: 60,
             child: MechanixTextInput.search(
               autofocus: false,
-              prefixIcon: const IconWidget(
+              prefixIcon: IconWidget(
                 iconPath: Images.search,
-                iconColor: Color(0xFFD2D2D2),
+                iconColor: context.colorScheme.onSurface,
                 iconHeight: 24,
                 iconWidth: 24,
               ),
@@ -485,8 +478,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         iconHeight: 28,
         iconPath: Images.sortAscending,
         iconColor: isSortMenuOpen
-            ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-            : const Color(0xFFD2D2D2),
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
       ),
       openMenu: () => setState(() => isSortMenuOpen = true),
       closeMenu: () => setState(() => isSortMenuOpen = false),
@@ -542,7 +535,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           icon,
           width: 20,
           height: 20,
-          color: Theme.of(context).extension<FilesTheme>()!.primaryColor,
+          color: context.colorScheme.primaryFixed,
         ),
       );
     }
@@ -578,7 +571,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
-            color: FilesThemeConstants.bottomBarColor,
+            color: context.colorScheme.secondary,
             borderRadius: selectionMode
                 ? null
                 : const BorderRadius.only(
@@ -607,7 +600,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             iconPath: Images.search,
             iconHeight: 28,
             iconWidth: 28,
-            iconColor: selectionMode ? Colors.grey.shade600 : Colors.white,
+            iconColor: selectionMode
+                ? context.colorScheme.surfaceContainerHigh
+                : context.colorScheme.surfaceContainerLowest,
           ),
           onPressed: () {
             setState(() => isSearching = true);
@@ -645,13 +640,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ),
         ),
         BottomBarButton.extension(
-          floatingActionBarTheme: const MechanixFloatingActionBarThemeData(
+          floatingActionBarTheme: MechanixFloatingActionBarThemeData(
             barMainAxisAlignment: MainAxisAlignment.center,
             width: double.infinity,
             barSpacing: 30,
             decoration: BoxDecoration(
-              color: FilesThemeConstants.floatingMenuColor,
-              borderRadius: BorderRadius.only(
+              color: context.colorScheme.tertiary,
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
               ),
@@ -666,8 +661,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             iconWidth: 28,
             iconHeight: 28,
             iconColor: selectionMode
-                ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-                : Colors.white70,
+                ? context.colorScheme.primaryFixed
+                : context.colorScheme.onSurface,
           ),
           isSelected: selectionMode,
           onPressed: () {
@@ -735,8 +730,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       buttonIcon: IconWidget(
         iconPath: Images.dots,
         iconColor: isSelectionActionMenuOpen
-            ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-            : Colors.white70,
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
         iconHeight: 28,
         iconWidth: 28,
       ),
@@ -751,8 +746,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           leading: Image.asset(
             Images.extract,
             color: isZipFileSelected
-                ? Colors.white70
-                : Theme.of(context).extension<FilesTheme>()!.disableColor,
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
             height: 20,
           ),
           title: 'Extract',
@@ -765,8 +760,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           leading: Image.asset(
             Images.compress,
             color: hasSelection
-                ? Colors.white70
-                : Theme.of(context).extension<FilesTheme>()!.disableColor,
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
             height: 20,
           ),
           title: 'Compress',
@@ -777,8 +772,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           leading: Image.asset(
             Images.duplicate,
             color: isFileSelected
-                ? Colors.white70
-                : Theme.of(context).extension<FilesTheme>()!.disableColor,
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
             height: 20,
           ),
           title: 'Duplicate',
@@ -793,8 +788,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           leading: Image.asset(
             Images.rename,
             color: selectedPaths.length == 1
-                ? Colors.white70
-                : Theme.of(context).extension<FilesTheme>()!.disableColor,
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
             height: 20,
           ),
           title: 'Rename',
@@ -811,7 +806,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           title: "Select all",
           leading: Image.asset(
             Images.listChecks,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -824,7 +819,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               : "Show Hidden Files",
           leading: Image.asset(
             controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -835,8 +830,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           leading: Image.asset(
             Images.info,
             color: selectedPaths.length == 1
-                ? Colors.white70
-                : Theme.of(context).extension<FilesTheme>()!.disableColor,
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
             height: 20,
           ),
           title: 'Properties',
@@ -862,8 +857,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       buttonIcon: IconWidget(
         iconPath: Images.dots,
         iconColor: isFolderActionMenuOpen
-            ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-            : Colors.white70,
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
         iconHeight: 28,
         iconWidth: 28,
       ),
@@ -879,8 +874,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           leading: Image.asset(
             Images.paste,
             color: isPasteDisabled
-                ? Theme.of(context).extension<FilesTheme>()!.disableColor
-                : Colors.white70,
+                ? context.colorScheme.surfaceContainerHigh
+                : context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           disabled: isPasteDisabled,
@@ -895,7 +890,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           title: "New Folder",
           leading: Image.asset(
             Images.createFolder,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -908,7 +903,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           title: "Select all",
           leading: Image.asset(
             Images.listChecks,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -922,7 +917,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               : "Show Hidden Files",
           leading: Image.asset(
             controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -934,7 +929,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           title: "Properties",
           leading: Image.asset(
             Images.info,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -1031,9 +1026,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       clipper: TabClipper(shift: sheetWidth * 0.70),
       child: Container(
         height: screenHeight * 0.98,
-        decoration: const BoxDecoration(
-          color: FilesThemeConstants.bottomSheetBackgroundColor,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: context.colorScheme.secondary,
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(12),
           ),
@@ -1096,7 +1091,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         totalMovedCount > 0
                             ? "Moved $totalMovedCount item${totalMovedCount > 1 ? 's' : ''} to '$folderName'"
                             : "No items were moved",
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(
+                            color: context.colorScheme.surfaceContainerLowest),
                       ),
                       duration: const Duration(seconds: 2),
                       backgroundColor: Colors.grey[800],
@@ -1129,7 +1125,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       SnackBar(
         content: Text(
             "Copied ${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''}",
-            style: const TextStyle(color: Colors.white)),
+            style:
+                TextStyle(color: context.colorScheme.surfaceContainerLowest)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),
@@ -1169,9 +1166,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     height: 60,
                     child: MechanixTextInput.textInput(
                       autofocus: true,
-                      cursorColor: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .primaryColor,
+                      cursorColor: context.colorScheme.primaryFixed,
                       initialValue: defaultZipName,
                       onChanged: (v) {
                         setState(() {
@@ -1180,8 +1175,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       },
                       anchorWidget: showCheck
                           ? IconButton(
-                              icon:
-                                  const Icon(Icons.check, color: Colors.white),
+                              icon: Icon(Icons.check,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
                               onPressed: () async {
                                 final trimmed = currentName.trim();
 
@@ -1216,8 +1212,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                               },
                             )
                           : IconButton(
-                              icon:
-                                  const Icon(Icons.close, color: Colors.white),
+                              icon: Icon(Icons.close,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
                               onPressed: () {
                                 entry?.remove();
                               },
@@ -1262,7 +1259,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         SnackBar(
           content: Text(
             "Duplicated as '$newName'",
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: context.colorScheme.surfaceContainerLowest),
           ),
           backgroundColor: Colors.grey[800],
           duration: const Duration(seconds: 2),
@@ -1325,9 +1322,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       clipper: TabClipper(shift: sheetWidth * 0.70),
       child: Container(
         height: screenHeight * 0.98,
-        decoration: const BoxDecoration(
-          color: FilesThemeConstants.bottomSheetBackgroundColor,
-          borderRadius: BorderRadius.only(
+        decoration: BoxDecoration(
+          color: context.colorScheme.secondary,
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(12),
           ),
@@ -1386,10 +1383,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               // Show final summary
               ScaffoldMessenger.of(rootContext).showSnackBar(
                 SnackBar(
-                  content: Text(
-                    msg,
-                    style: const TextStyle(color: Colors.white),
-                  ),
+                  content: Text(msg,
+                      style: TextStyle(
+                        color: context.colorScheme.surfaceContainerLowest,
+                      )),
                   backgroundColor: Colors.grey[800],
                   duration: const Duration(seconds: 2),
                 ),
@@ -1415,8 +1412,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Select a single item to view details",
-              style: TextStyle(color: Colors.white)),
+          content: Text("Select a single item to view details",
+              style:
+                  TextStyle(color: context.colorScheme.surfaceContainerLowest)),
           duration: const Duration(seconds: 1),
           backgroundColor: Colors.grey[800],
         ),
@@ -1518,9 +1516,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     height: 60,
                     child: MechanixTextInput.textInput(
                       autofocus: true,
-                      cursorColor: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .primaryColor,
+                      cursorColor: context.colorScheme.primaryFixed,
                       onChanged: (v) {
                         setState(() {
                           folderName = v;
@@ -1531,8 +1527,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       initialValue: initialName,
                       anchorWidget: showCheck
                           ? IconButton(
-                              icon:
-                                  const Icon(Icons.check, color: Colors.white),
+                              icon: Icon(Icons.check,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
                               onPressed: () {
                                 entry?.remove();
 
@@ -1556,8 +1553,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                               },
                             )
                           : IconButton(
-                              icon:
-                                  const Icon(Icons.close, color: Colors.white),
+                              icon: Icon(Icons.close,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
                               onPressed: () {
                                 entry?.remove();
                                 controller.clearLiveRename();
@@ -1621,15 +1619,15 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               children: [
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    const baseStyle = TextStyle(
+                    var baseStyle = TextStyle(
                       fontSize: 20,
-                      color: Colors.white70,
+                      color: context.colorScheme.onSurface,
                     );
 
-                    const boldStyleText = TextStyle(
+                    var boldStyleText = TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 20,
-                      color: Colors.white,
+                      color: context.colorScheme.onSurface,
                     );
 
                     if (isSingle) {
@@ -1651,7 +1649,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         overflow: TextOverflow.clip,
                         text: TextSpan(
                           children: [
-                            const TextSpan(text: "Delete ", style: baseStyle),
+                            TextSpan(text: "Delete ", style: baseStyle),
                             TextSpan(
                               text: "'$truncatedName' ?",
                               style: boldStyleText,
@@ -1667,7 +1665,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       overflow: TextOverflow.ellipsis,
                       text: TextSpan(
                         children: [
-                          const TextSpan(text: "Delete ", style: baseStyle),
+                          TextSpan(text: "Delete ", style: baseStyle),
                           TextSpan(
                             text: "${pathsToDelete.length} files?",
                             style: boldStyleText,
@@ -1680,7 +1678,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 const SizedBox(height: 8),
                 Text(
                   message,
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(
+                      color: context.colorScheme.onSurface, fontSize: 16),
                 ),
                 const SizedBox(height: 16),
                 Row(

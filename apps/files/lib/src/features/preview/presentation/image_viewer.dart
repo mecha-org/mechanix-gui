@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
@@ -102,7 +101,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
           decoration: BoxDecoration(
-              color: FilesThemeConstants.bottomBarColor,
+              color: context.colorScheme.secondary,
               borderRadius: _isEditing
                   ? null
                   : const BorderRadius.only(
@@ -136,8 +135,8 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
             iconColor: isSvg
                 ? Colors.grey
                 : _isEditing
-                    ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-                    : Colors.white70,
+                    ? context.colorScheme.primaryFixed
+                    : context.colorScheme.onSurface,
             iconHeight: 28.0,
             iconWidth: 28.0,
           ),
@@ -192,8 +191,8 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           iconHeight: 28,
           iconWidth: 28,
           iconColor: isMenuOpen
-              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-              : Colors.white70),
+              ? context.colorScheme.primaryFixed
+              : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -204,7 +203,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.rename,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           title: 'Rename',
@@ -227,7 +226,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           title: "Properties",
           leading: Image.asset(
             Images.info,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -238,7 +237,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           title: "Delete",
           leading: Image.asset(
             Images.delete,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -261,7 +260,7 @@ class _RasterViewer extends StatelessWidget {
     return Center(
       child: PhotoView(
         imageProvider: FileImage(File(imagePath)),
-        backgroundDecoration: const BoxDecoration(color: Colors.black),
+        backgroundDecoration: BoxDecoration(color: context.colorScheme.surface),
         minScale: PhotoViewComputedScale.contained,
         maxScale: PhotoViewComputedScale.covered * 2,
       ),
@@ -279,7 +278,8 @@ class _SvgViewer extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: PhotoView.customChild(
-          backgroundDecoration: const BoxDecoration(color: Colors.black),
+          backgroundDecoration:
+              BoxDecoration(color: context.colorScheme.surface),
           minScale: PhotoViewComputedScale.contained,
           maxScale: PhotoViewComputedScale.covered * 2,
           child: SvgPicture.file(

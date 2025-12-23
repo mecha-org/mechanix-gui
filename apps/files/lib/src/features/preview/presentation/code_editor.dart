@@ -18,7 +18,6 @@ import 'package:highlight/languages/rust.dart';
 import 'package:highlight/languages/javascript.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
@@ -169,8 +168,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text("Saved successfully",
-            style: TextStyle(color: Colors.white)),
+        content: Text("Saved successfully",
+            style:
+                TextStyle(color: context.colorScheme.surfaceContainerLowest)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),
@@ -219,12 +219,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                                 ? '${index + 1} of ${_matchIndexes.length}'
                                 : '0 of 0',
                             style: TextStyle(
-                              color: FilesThemeConstants.labelColor,
+                              color: context.colorScheme.surfaceContainerHigh,
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
-                              fontFamily: Theme.of(context)
-                                  .extension<FilesTheme>()!
-                                  .defaultFontFamily,
                             ),
                           ),
                         ),
@@ -253,7 +250,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                   data: CodeThemeData(styles: pureBlackTheme),
                   child: CodeField(
                     controller: _codeController,
-                    cursorColor: FilesThemeConstants.primaryColor,
+                    cursorColor: context.colorScheme.primaryFixed,
                     textStyle: const TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 14,
@@ -342,7 +339,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
     return Container(
-      color: FilesThemeConstants.bottomSheetBackgroundColor,
+      color: context.colorScheme.secondary,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -402,7 +399,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
     return Container(
-      color: FilesThemeConstants.bottomSheetBackgroundColor,
+      color: context.colorScheme.secondary,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -424,8 +421,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                   iconHeight: 28,
                   iconWidth: 28,
                   iconColor: _isEditing
-                      ? FilesThemeConstants.disableColor
-                      : FilesThemeConstants.titleTextColor,
+                      ? context.surfaceContainerHigh
+                      : context.colorScheme.onSurface,
                 ),
                 isDisabled: _isEditing,
                 onPressed: () {
@@ -485,8 +482,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           iconHeight: 28,
           iconWidth: 28,
           iconColor: isMenuOpen
-              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-              : Colors.white70),
+              ? context.colorScheme.primaryFixed
+              : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -498,8 +495,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           title: "Edit",
           leading: IconWidget(
             iconPath: Images.edit,
-            iconColor:
-                _isEditing ? FilesThemeConstants.primaryColor : Colors.white70,
+            iconColor: _isEditing
+                ? context.colorScheme.primaryFixed
+                : context.colorScheme.onSurface,
           ),
           isSelected: _isEditing,
           onTap: () {
@@ -514,7 +512,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.rename,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           title: 'Rename',
@@ -537,7 +535,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           title: "Properties",
           leading: Image.asset(
             Images.info,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -548,7 +546,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           title: "Delete",
           leading: Image.asset(
             Images.delete,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -652,11 +650,10 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             child: MechanixTextInput.search(
               autofocus: false,
               hintText: "Search in file",
-              cursorColor:
-                  Theme.of(context).extension<FilesTheme>()!.primaryColor,
-              prefixIcon: const IconWidget(
+              cursorColor: context.colorScheme.primaryFixed,
+              prefixIcon: IconWidget(
                 iconPath: Images.search,
-                iconColor: Color(0xFFD2D2D2),
+                iconColor: context.colorScheme.onSurface,
                 iconHeight: 24,
                 iconWidth: 24,
               ),
