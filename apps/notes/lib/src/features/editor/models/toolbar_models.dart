@@ -1,7 +1,7 @@
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
 
-enum ToolbarEnum { text, align, add, none }
+enum ToolbarEnum { text, align, none }
 
 class ToolbarItem {
   final Attribute attribute;
@@ -30,10 +30,5 @@ List<ToolbarItem> kTextEditingToolbarItems = [
     attribute: Attribute.underline,
     key: Attribute.underline.key,
     iconPath: NotesIcon.textUnderlineIcon,
-  ),
-  ToolbarItem(
-    attribute: Attribute.strikeThrough,
-    key: Attribute.strikeThrough.key,
-    iconPath: NotesIcon.strikeThroughIcon,
   ),
 ];

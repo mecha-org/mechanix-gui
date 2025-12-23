@@ -6,7 +6,6 @@ import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
 class EditorBlocState extends Equatable {
   final bool isUndo;
   final bool isRedo;
-  final bool isPinned;
   final bool toolbarToggle;
   final ToolbarEnum selectedToolbar;
   final Document? document;
@@ -15,8 +14,7 @@ class EditorBlocState extends Equatable {
   const EditorBlocState({
     this.isUndo = false,
     this.isRedo = false,
-    this.isPinned = false,
-    this.toolbarToggle = true,
+    this.toolbarToggle = false,
     this.document,
     this.isLoading = false,
     required this.selectedToolbar,
@@ -25,7 +23,6 @@ class EditorBlocState extends Equatable {
   EditorBlocState copyWith({
     bool? isUndo,
     bool? isRedo,
-    bool? isPinned,
     bool? toolbarToggle,
     LayerLink? linkLayer,
     LayerLink? optionsLayer,
@@ -36,7 +33,6 @@ class EditorBlocState extends Equatable {
     return EditorBlocState(
       isUndo: isUndo ?? this.isUndo,
       isRedo: isRedo ?? this.isRedo,
-      isPinned: isPinned ?? this.isPinned,
       toolbarToggle: toolbarToggle ?? this.toolbarToggle,
       selectedToolbar: selectedToolbar ?? this.selectedToolbar,
       isLoading: isLoading ?? this.isLoading,
@@ -48,7 +44,6 @@ class EditorBlocState extends Equatable {
   List<Object?> get props => [
     isUndo,
     isRedo,
-    isPinned,
     toolbarToggle,
     selectedToolbar,
     isLoading,

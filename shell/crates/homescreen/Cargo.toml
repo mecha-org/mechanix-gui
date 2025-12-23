@@ -14,3 +14,5 @@ gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
 commons = { path = "../commons" }
+settings = { path = "../settings" }
+status_bar = { path = "../status_bar" }

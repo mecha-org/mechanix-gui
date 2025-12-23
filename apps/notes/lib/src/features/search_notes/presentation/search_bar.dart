@@ -4,17 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
-import 'package:widgets/widgets/searchbar/mechanix_search_bar.dart';
+import 'package:widgets/widgets.dart';
 
 class SearchInputBar extends StatefulWidget {
-  const SearchInputBar({super.key});
+  final ValueChanged<String> onChanged;
+
+  const SearchInputBar({super.key, required this.onChanged});
 
   @override
   State<SearchInputBar> createState() => _SearchInputBarState();
 }
 
 class _SearchInputBarState extends State<SearchInputBar> {
-  final TextEditingController _titleController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   Timer? _debounceTimer;
 
@@ -33,41 +34,46 @@ class _SearchInputBarState extends State<SearchInputBar> {
     });
   }
 
-  void _onSearchChanged() {
+  void _onSearchChanged(String val) {
     // Cancel any running timer
     _debounceTimer?.cancel();
 
     // Start a new timer
     _debounceTimer = Timer(Constants.debounceDuration, () {
-      context.read<NotesBloc>().add(SearchEvent(_titleController.text));
+      if (val.trim().length > 2) {
+        context.read<NotesBloc>().add(SearchEvent(val));
+      } else {
+        if (context.read<NotesBloc>().state.searchedNotes.isNotEmpty) {
+          context.read<NotesBloc>().add(SearchEvent(''));
+        }
+      }
+      widget.onChanged(val);
     });
   }
 
   void clearSearch() {
-    _titleController.clear();
-    _onSearchChanged();
+    context.read<NotesBloc>().add(ClearSearch());
+    context.read<NotesBloc>().add(SearchPageToggle(isSearchPage: false));
+    widget.onChanged('');
   }
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    _titleController.dispose();
+    // _titleController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      width: 508,
-      child: MechanixSearchBar(
-        controller: _titleController,
-        onChanged: (_) => _onSearchChanged(),
-        autoFocus: false,
-        hintText: "Search notes...",
-        onCloseIconPress: clearSearch,
-      ),
+    return MechanixTextInput.search(
+      canRequestFocus: true,
+      autofocus: false,
+      focusNode: _focusNode,
+      hintText: "Search here",
+      onClear: clearSearch,
+      onChanged: (val) => _onSearchChanged(val),
     );
   }
 }

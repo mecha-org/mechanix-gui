@@ -4,18 +4,17 @@ import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
 import 'package:mechanix_notes/src/features/editor/content_editor.dart';
-import 'package:mechanix_notes/src/features/editor/editor_bar.dart';
-import 'package:mechanix_notes/src/features/editor/editor_bottom_menu.dart';
+import 'package:mechanix_notes/src/features/editor/editor_bottom_bar.dart';
 import 'package:mechanix_notes/src/features/editor/models/toolbar_models.dart';
-import 'package:mechanix_notes/src/features/editor/toolbar_selection.dart';
-import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import "package:path/path.dart" as path;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:widgets/widgets.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar.dart';
 
 class NotesEditor extends StatefulWidget {
-  final NoteMetaData? note;
-  const NotesEditor({super.key, this.note});
+  final String? noteId;
+  const NotesEditor({super.key, this.noteId});
 
   @override
   State<NotesEditor> createState() => _NotesEditorState();
@@ -23,6 +22,14 @@ class NotesEditor extends StatefulWidget {
 
 class _NotesEditorState extends State<NotesEditor> {
   final FocusNode _focusNode = FocusNode();
+
+  /// Flag to apply style to first new line
+  bool _isFormatting = false;
+  
+  /// Flag to track if initial H1 has been applied
+  bool _initialH1Applied = false;
+
+  final FloatingActionBarController floatingBar = FloatingActionBarController();
 
   final QuillController _controller = QuillController(
     document: Document(),
@@ -47,28 +54,109 @@ class _NotesEditorState extends State<NotesEditor> {
   @override
   void initState() {
     super.initState();
-    final isEditing = widget.note != null;
+    final bool isEditing = widget.noteId != null;
 
     if (isEditing) {
-      context.read<EditorBloc>().add(LoadNoteContent(noteId: widget.note!.id));
+      context.read<EditorBloc>().add(LoadNoteContent(noteId: widget.noteId!));
+      _initialH1Applied = true; // Skip auto-formatting for existing notes
     } else {
       _openKeyboardAfterLoad();
+      // Apply H1 formatting to the first line immediately
+      _applyInitialH1();
     }
     _controller.addListener(_onControllerChange);
+  }
+
+  void _applyInitialH1() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _initialH1Applied) return;
+      
+      setState(() {
+        _isFormatting = true;
+        _initialH1Applied = true;
+      });
+
+      try {
+        // Apply H1 to the first line (position 0)
+        _controller.formatSelection(Attribute.h1);
+      } finally {
+        setState(() {
+          _isFormatting = false;
+        });
+      }
+    });
   }
 
   void _openKeyboardAfterLoad() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
 
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 100));
       _focusNode.requestFocus();
     });
+  }
+
+  // Helper method to check if a line has restricted formatting
+  bool _hasRestrictedFormatting(int offset) {
+    try {
+      final line = _controller.document.queryChild(offset).node;
+
+      // Check for restricted attributes
+      final restrictedAttributes = [
+        Attribute.ul.key, // Bullet list
+        Attribute.ol.key, // Numbered list
+        Attribute.checked.key, // Checked checkbox
+        Attribute.unchecked.key, // Unchecked checkbox
+        Attribute.codeBlock.key, // Code block
+      ];
+
+      for (final attrKey in restrictedAttributes) {
+        if (line?.style.attributes.containsKey(attrKey) ?? false) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 
   void _onControllerChange() {
     context.read<EditorBloc>().add(UndoUpdate(isUndo: _controller.hasUndo));
     context.read<EditorBloc>().add(RedoUpdate(isRedo: _controller.hasRedo));
+
+    if (_isFormatting) return;
+
+    final sel = _controller.selection;
+    if (!sel.isCollapsed) return;
+
+    final pos = sel.baseOffset;
+    if (pos < 0) return;
+
+    final plain = _controller.document.toPlainText();
+    final firstNewLineIndex = plain.indexOf('\n');
+
+    if (firstNewLineIndex == -1) return;
+
+    if (pos == firstNewLineIndex + 1 && !_isFormatting) {
+      // Check if the first line has restricted formatting
+      if (_hasRestrictedFormatting(0)) {
+        return;
+      }
+      setState(() {
+        _isFormatting = true;
+      });
+
+      try {
+        _controller.formatText(0, firstNewLineIndex, Attribute.h1);
+      } finally {
+        // ← ALWAYS RESET THE FLAG
+        setState(() {
+          _isFormatting = false;
+        });
+      }
+    }
   }
 
   void toolbarSelection(ToolbarEnum value) {
@@ -81,62 +169,54 @@ class _NotesEditorState extends State<NotesEditor> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: EditorBar(controller: _controller, note: widget.note),
+      bottomNavigationBar: EditorBottomBar(
+        controller: _controller,
+        focusNode: _focusNode,
+        noteId: widget.noteId,
       ),
-      body: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-          toolbarSelection(ToolbarEnum.none);
-        },
-        child: Stack(
-          children: [
-            // Main content
-            BlocBuilder<EditorBloc, EditorBlocState>(
-              buildWhen:
-                  (previous, current) =>
-                      previous.isLoading != current.isLoading,
-              builder: (context, state) {
-                if (state.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      body: Column(
+        children: [
+          // Main content
+          BlocBuilder<EditorBloc, EditorBlocState>(
+            buildWhen:
+                (previous, current) => previous.isLoading != current.isLoading,
+            builder: (context, state) {
+              if (state.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-                if (state.document != null &&
-                    _controller.document != state.document) {
-                  // Load document into controller only once
-                  _controller.document = state.document!;
-                }
+              if (state.document != null &&
+                  _controller.document != state.document) {
+                // Load document into controller only once
+                _controller.document = state.document!;
+                _initialH1Applied = true; // Mark as applied for loaded documents
+              }
 
-                return ContentEditor(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                );
-              },
-            ),
+              return ContentEditor(
+                controller: _controller,
+                focusNode: _focusNode,
+              );
+            },
+          ),
 
-            // Toolbar
-            BlocSelector<EditorBloc, EditorBlocState, ToolbarEnum>(
-              selector: (state) => state.selectedToolbar,
-              builder:
-                  (context, selectedToolbar) => ToolbarSelection(
-                    selectedToolbar: selectedToolbar,
-                    focusNode: _focusNode,
-                    controller: _controller,
-                  ),
-            ),
-            EditorBottomMenu(
-              controller: _controller,
-              onToolbarSelection: toolbarSelection,
-            ),
-          ],
-        ),
+          // Extra Height on Toolbar Selection
+          BlocSelector<EditorBloc, EditorBlocState, bool>(
+            selector: (state) => state.selectedToolbar != ToolbarEnum.none,
+            builder: (context, state) {
+              if (state) {
+                return const SizedBox(height: 80);
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
       ),
     );
   }
 
   @override
   void dispose() {
+    floatingBar.dispose();
     _controller.removeListener(_onControllerChange);
     _controller.dispose();
     _focusNode.dispose();

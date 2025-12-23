@@ -1,0 +1,20 @@
+
+[package]
+name = "shell_state"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+gpui = { workspace = true }
+networkmanager = { workspace = true }
+bluez = { workspace = true }
+upower = { workspace = true }
+chrono = { version = "0.4", features = ["clock"] }
+futures = { workspace = true }
+futures-timer = { workspace = true }

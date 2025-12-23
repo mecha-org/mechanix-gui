@@ -14,6 +14,7 @@ keywords.workspace = true
 gpui = { workspace = true }
 rust-embed = { workspace = true }
 anyhow = { workspace = true }
+toml = { workspace = true }
 rand = "0.8"
 
 [[example]]

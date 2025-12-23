@@ -91,23 +91,23 @@ class _PlayerVinylState extends State<PlayerVinyl>
                         child: SizedBox(
                           width: 300,
                           height: 300,
-                          child:
-                              widget.songDetails.artwork != null
-                                  ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(300),
-                                    child: Image.memory(
-                                      widget.songDetails.artwork!,
-                                      width: 300,
-                                      height: 300,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                  : Image.asset(
-                                    MusicIcons.audioImage,
-                                    width: 300,
-                                    height: 300,
-                                    fit: BoxFit.cover,
-                                  ),
+                          // child:
+                          //     widget.songDetails.artwork != null
+                          //         ? ClipRRect(
+                          //           borderRadius: BorderRadius.circular(300),
+                          //           child: Image.memory(
+                          //             widget.songDetails.artwork!,
+                          //             width: 300,
+                          //             height: 300,
+                          //             fit: BoxFit.cover,
+                          //           ),
+                          //         )
+                          //         : Image.asset(
+                          //           MusicIcons.audioImage,
+                          //           width: 300,
+                          //           height: 300,
+                          //           fit: BoxFit.cover,
+                          //         ),
                         ),
                       );
                     },
