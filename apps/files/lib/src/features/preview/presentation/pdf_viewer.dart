@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
@@ -119,7 +118,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 child: Container(
                   height: 60,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF151515),
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(12)),
                   ),
@@ -127,9 +125,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                     child: MechanixTextInput.password(
                       autofocus: true,
                       isPasswordField: obscureText,
-                      cursorColor: Theme.of(context)
-                          .extension<FilesTheme>()!
-                          .primaryColor,
+                      cursorColor: context.colorScheme.primaryFixed,
                       prefixIcon: const IconWidget(iconPath: Images.lock),
                       hintText: 'Enter PDF password',
                       onChanged: (value) {
@@ -138,9 +134,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                       anchorWidget: Padding(
                         padding: const EdgeInsets.only(left: 2.0, right: 2.0),
                         child: IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.close,
-                            color: Colors.white70,
+                            color: context.colorScheme.onSurface,
                             size: 24,
                           ),
                           onPressed: () {
@@ -183,7 +179,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 passwordProvider: _passwordProvider,
                 firstAttemptByEmptyPassword: true,
                 params: PdfViewerParams(
-                  backgroundColor: Colors.black,
+                  backgroundColor: context.colorScheme.surface,
                   enableTextSelection: true,
                   maxScale: 4.0,
                   minScale: 1.0,
@@ -246,13 +242,13 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: context.colorScheme.surface.withOpacity(0.7),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   'Page $_currentPage of $_pageCount',
-                  style: const TextStyle(
-                    color: Colors.white70,
+                  style: TextStyle(
+                    color: context.colorScheme.onSurface,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     decoration: TextDecoration.none,
@@ -311,12 +307,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                             ? '${index + 1} of ${matches.length}'
                             : '0 of 0',
                         style: TextStyle(
-                          color: FilesThemeConstants.labelColor,
+                          color: context.colorScheme.surfaceContainerHigh,
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
-                          fontFamily: Theme.of(context)
-                              .extension<FilesTheme>()!
-                              .defaultFontFamily,
                         ),
                       ),
                     ),
@@ -442,8 +435,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           iconWidth: 28,
           iconHeight: 28,
           iconColor: isMenuOpen
-              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-              : Colors.white70),
+              ? context.colorScheme.primaryFixed
+              : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -454,7 +447,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.rename,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           title: 'Rename',
@@ -477,7 +470,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           title: "Properties",
           leading: Image.asset(
             Images.info,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -488,7 +481,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           title: "Delete",
           leading: Image.asset(
             Images.delete,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -516,12 +509,11 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           child: SizedBox(
             height: 60,
             child: MechanixTextInput.search(
-              cursorColor:
-                  Theme.of(context).extension<FilesTheme>()!.primaryColor,
+              cursorColor: context.colorScheme.primaryFixed,
               autofocus: false,
-              prefixIcon: const IconWidget(
+              prefixIcon: IconWidget(
                 iconPath: Images.search,
-                iconColor: Color(0xFFD2D2D2),
+                iconColor: context.colorScheme.onSurface,
                 iconHeight: 24,
                 iconWidth: 24,
               ),

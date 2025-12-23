@@ -3,7 +3,6 @@ import 'dart:io' show FileSystemEntity, File;
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
@@ -179,7 +178,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                       padding: EdgeInsets.zero,
                       icon: Icon(
                         _isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Colors.white,
+                        color: context.colorScheme.surfaceContainerLowest,
                         size: 28,
                       ),
                       onPressed: () =>
@@ -206,11 +205,10 @@ class _VideoPlayerState extends State<VideoPlayer> {
                           value: _position.inMilliseconds
                               .toDouble()
                               .clamp(0, _duration.inMilliseconds.toDouble()),
-                          activeColor: Theme.of(context)
-                              .extension<FilesTheme>()!
-                              .primaryColor,
-                          inactiveColor: const Color(0xFF464646),
-                          thumbColor: Colors.white,
+                          activeColor: context.colorScheme.primaryFixed,
+                          inactiveColor:
+                              context.colorScheme.surfaceContainerHigh,
+                          thumbColor: context.colorScheme.onSurface,
                           onChanged: (v) {
                             player.seek(Duration(milliseconds: v.toInt()));
                           },
@@ -233,7 +231,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                           padding: EdgeInsets.zero,
                           icon: Icon(
                             muted ? Icons.volume_off : Icons.volume_up,
-                            color: Colors.white,
+                            color: context.colorScheme.surfaceContainerLowest,
                             size: 24,
                           ),
                           onPressed: () =>
@@ -257,9 +255,9 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
           // Bottom menu bar same as audio
           MechanixBottomBar(
-            theme: const MechanixBottomBarThemeData(
+            theme: MechanixBottomBarThemeData(
                 decoration: BoxDecoration(
-              color: FilesThemeConstants.bottomBarColor,
+              color: context.colorScheme.secondary,
               borderRadius: null,
             )),
             leadingWidget: [
@@ -325,8 +323,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
           iconHeight: 28,
           iconWidth: 28,
           iconColor: isMenuOpen
-              ? Theme.of(context).extension<FilesTheme>()!.primaryColor
-              : Colors.white70),
+              ? context.colorScheme.primaryFixed
+              : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -337,7 +335,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
         MechanixMenuItemsType(
           leading: Image.asset(
             Images.rename,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           title: 'Rename',
@@ -360,7 +358,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
           title: "Properties",
           leading: Image.asset(
             Images.info,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -371,7 +369,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
           title: "Delete",
           leading: Image.asset(
             Images.delete,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
@@ -392,7 +390,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
       ),
       child: Text(
         "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
-        style: const TextStyle(color: Colors.white, fontSize: 16),
+        style: TextStyle(
+            color: context.colorScheme.surfaceContainerLowest, fontSize: 16),
       ),
     );
   }

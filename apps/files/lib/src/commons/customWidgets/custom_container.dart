@@ -12,35 +12,3 @@ class ContainerWidget extends StatelessWidget {
     );
   }
 }
-
-class FixedHeightRow extends StatelessWidget {
-  final Widget child;
-  final bool? showTopBorder;
-  final bool? showBottomBorder;
-
-  const FixedHeightRow({
-    super.key,
-    required this.child,
-    this.showTopBorder = false,
-    this.showBottomBorder = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 60,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        border: Border(
-          top: showTopBorder ?? false
-              ? const BorderSide(width: 1.0, color: Colors.grey)
-              : BorderSide.none,
-          bottom: showBottomBorder ?? true
-              ? const BorderSide(width: 1.0, color: Colors.grey)
-              : BorderSide.none,
-        ),
-      ),
-      child: child,
-    );
-  }
-}

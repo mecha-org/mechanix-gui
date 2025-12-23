@@ -122,7 +122,7 @@ String middleEllipsisString(
 
   int low = 0;
   int high = base.length;
-  String best = text;
+  String finalText = text;
 
   while (low <= high) {
     final mid = (low + high) ~/ 2;
@@ -137,10 +137,10 @@ String middleEllipsisString(
     if (painter.didExceedMaxLines) {
       high = mid - 1;
     } else {
-      best = candidate;
+      finalText = candidate;
       low = mid + 1;
     }
   }
 
-  return best;
+  return finalText;
 }

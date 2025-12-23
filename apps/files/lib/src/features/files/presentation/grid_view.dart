@@ -4,10 +4,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/styles/file_theme_extenstions.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:widgets/mechanix.dart';
 import '../../../controllers/file_manager.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
@@ -113,9 +113,7 @@ Widget buildGridView(
                                 borderRadius: BorderRadius.circular(14),
                                 border: isSelected
                                     ? Border.all(
-                                        color: Theme.of(context)
-                                            .extension<FilesTheme>()!
-                                            .primaryColor,
+                                        color: context.colorScheme.primaryFixed,
                                         width: 1,
                                       )
                                     : null,
@@ -147,11 +145,8 @@ Widget buildGridView(
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
-                              color: const Color(0xFFD2D2D2),
+                              color: context.colorScheme.onSurface,
                               fontWeight: FontWeight.w400,
-                              fontFamily: Theme.of(context)
-                                  .extension<FilesTheme>()!
-                                  .defaultFontFamily,
                             ),
                           ),
                         ),
@@ -262,11 +257,8 @@ Widget buildGridViewForRecentFiles(
                       file.name,
                       style: TextStyle(
                         fontSize: 18,
-                        color: const Color(0xFFD2D2D2),
+                        color: context.colorScheme.onSurface,
                         fontWeight: FontWeight.w400,
-                        fontFamily: Theme.of(context)
-                            .extension<FilesTheme>()!
-                            .defaultFontFamily,
                       ),
                       textAlign: TextAlign.center,
                     ),
