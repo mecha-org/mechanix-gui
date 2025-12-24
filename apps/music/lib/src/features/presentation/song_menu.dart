@@ -45,7 +45,11 @@ class SongMenu extends StatelessWidget {
         iconPath: MusicIcons.threeDotIcon,
       ),
       items: [
-        const MechanixMenuItemsType(
+        MechanixMenuItemsType(
+          onTap:
+              () => context.read<SongsBloc>().add(
+                AddToQueue(song, playNext: true),
+              ),
           title: "Play Next",
           leading: IconWidget(
             iconPath: MusicIcons.playNextIcon,

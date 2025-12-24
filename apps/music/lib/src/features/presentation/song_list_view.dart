@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/models/song_info.dart';
-import 'package:mechanix_music/src/features/presentation/song_tile.dart';
+import 'package:mechanix_music/src/features/presentation/swipeable_list.dart';
 
 class SongsListView extends StatelessWidget {
   final List<SongInfo> songs;
@@ -18,7 +18,7 @@ class SongsListView extends StatelessWidget {
       ) {
         final song = songs[index];
 
-        return SongTile(song: song);
+        return SwipeableList(song: song);
       }),
     );
   }

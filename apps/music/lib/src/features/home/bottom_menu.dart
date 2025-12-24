@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
@@ -17,10 +20,10 @@ class BottomMenu extends StatelessWidget {
       topTabRightSideShiftLength: 80,
       dropdownPosition: DropdownPosition.topRight,
       padding: const EdgeInsets.only(top: 0),
-      theme: const MechanixMenuThemeData(
-        dropdownWidth: 180,
-        buttonMargin: EdgeInsets.only(right: 12),
-      ),
+      // theme: const MechanixMenuThemeData(
+      //   dropdownWidth: 180,
+      //   buttonMargin: EdgeInsets.only(right: 12),
+      // ),
       offset: const Offset(-5, -15),
       buttonIcon: const IconWidget(
         boxHeight: 24,
@@ -31,8 +34,11 @@ class BottomMenu extends StatelessWidget {
         iconPath: MusicIcons.threeDotIcon,
       ),
       items: [
-        const MechanixMenuItemsType(
-          title: "Add Playlist",
+        MechanixMenuItemsType(
+          onTap: () {
+            context.read<SongsBloc>().add(AddPlaylist());
+          },
+          title: "New Playlist",
           leading: IconWidget(
             iconPath: MusicIcons.addToPlaylistIcon,
             iconColor: Colors.white,

@@ -3,7 +3,8 @@ import 'package:mechanix_music/src/commons/colors.dart';
 
 class TitleWidget extends StatelessWidget {
   final String title;
-  const TitleWidget({super.key, required this.title});
+  final TextStyle? textStyle;
+  const TitleWidget({super.key, required this.title, this.textStyle});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +18,7 @@ class TitleWidget extends StatelessWidget {
           height: 1.25,
           letterSpacing: -1.1,
           fontWeight: FontWeight.w600,
-        ),
+        ).merge(textStyle),
       ),
     );
   }
