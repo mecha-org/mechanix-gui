@@ -1,3 +1,4 @@
+pub mod constants;
 mod events;
 pub mod services;
 mod ui;
@@ -6,25 +7,32 @@ use bluez::service::BluetoothService;
 use events::*;
 use futures::{SinkExt, StreamExt, channel::mpsc, select};
 use gpui::{
-    layer_shell::{ KeyboardInteractivity, LayerShellOptions},
+    layer_shell::{KeyboardInteractivity, LayerShellOptions},
     *,
 };
 use networkmanager::{interfaces::wireless::NMState, service::NetworkManagerService};
 use pulseaudio::service::PulseAudioService;
 use services::*;
+use settings::prelude::*;
+use shell_state::{ShellState, ShellStateMessage};
 use system_dbus::display_client;
 use ui::*;
 use upower::service::UPowerService;
-use settings::prelude::*;   
+
+use crate::ui::icon::IconName;
 
 pub mod prelude {
-    pub use crate::events::{AppEvents, BrightnessEvents, BtEvents, NmEvents, VolumeEvents};
+    pub use crate::constants::*;
+    pub use crate::events::{AppEvents, BrightnessEvents, VolumeEvents};
     pub use crate::run_app;
     pub use crate::ui::SettingsDrawer;
 }
 
 pub fn run_app(cx: &mut App) {
-    let SettingsDrawerSettings { layer_shell, navbar_size } = Settings::global(cx).settings_drawer.clone();
+    let SettingsDrawerSettings {
+        layer_shell,
+        navbar_size,
+    } = Settings::global(cx).settings_drawer.clone();
     let LayerShellSettings {
         size,
         layer,
@@ -33,275 +41,117 @@ pub fn run_app(cx: &mut App) {
         exclusive_zone,
     } = layer_shell;
     let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
-     cx.open_window(
-            WindowOptions {
-                window_bounds: Some(window_bounds),
-                window_background: WindowBackgroundAppearance::Transparent,
-                kind: WindowKind::LayerShell(LayerShellOptions {
-                    namespace,
-                    layer,
-                    anchor,
-                    keyboard_interactivity: KeyboardInteractivity::None,
-                    exclusive_zone: Some(exclusive_zone),
-                    ..Default::default()
-                }),
+    cx.open_window(
+        WindowOptions {
+            window_bounds: Some(window_bounds),
+            window_background: WindowBackgroundAppearance::Transparent,
+            kind: WindowKind::LayerShell(LayerShellOptions {
+                namespace,
+                layer,
+                anchor,
+                keyboard_interactivity: KeyboardInteractivity::None,
+                exclusive_zone: Some(exclusive_zone),
                 ..Default::default()
-            },
-            |window, cx| {
-                let mut regions = Vec::new();
-                regions.push(Bounds {
-                    origin: point(
-                        size.width - navbar_size.width,
-                        size.height - navbar_size.height,
-                    ),
-                    size: gpui::size(navbar_size.width, navbar_size.height),
-                });
-                window.set_input_regions(Some(regions));
+            }),
+            ..Default::default()
+        },
+        |window, cx| {
+            let mut regions = Vec::new();
+            regions.push(Bounds {
+                origin: point(
+                    size.width - navbar_size.width,
+                    size.height - navbar_size.height,
+                ),
+                size: gpui::size(navbar_size.width, navbar_size.height),
+            });
+            window.set_input_regions(Some(regions));
 
-                let (mut app_channel_tx, mut app_channel_rx) = mpsc::channel::<AppEvents>(120);
-                let (nm_tx, mut nm_rx) = mpsc::channel::<NmEvents>(128);
-                let (bt_tx, mut bt_rx) = mpsc::channel::<BtEvents>(128);
-                let (volume_tx, mut volume_rx) = mpsc::channel::<VolumeEvents>(128);
-                let (brightness_tx, mut brightness_rx) = mpsc::channel::<BrightnessEvents>(128);
-                let executor = cx.background_executor();
+            cx.new(|cx| {
+                cx.observe_global::<ShellState>(|this: &mut SettingsDrawer, cx| {
+                    let ShellState {
+                        current_time_date,
+                        wireless_details,
+                        bluetooth_details,
+                        battery_percent,
+                        nm_tx,
+                        bt_tx,
+                        ..
+                    } = ShellState::global(cx).clone();
 
-                executor
-                    .spawn(async move{
+                    this.current_time_date = current_time_date;
+                    this.battery_percent = battery_percent;
+                    this.wireless_details.enabled = wireless_details.enabled;
+                    this.wireless_details.connected_network = wireless_details.connected_network;
 
-                        let battery_manager = UPowerService::new().await.unwrap();
-                        let network_manager = NetworkManagerService::new().await.unwrap();
-                        let bluetooth_manager = BluetoothService::new().await.unwrap();
-                        
-                        let mut battery_status_stream = battery_manager.stream_device_state().await;
-                        let mut battery_percentage_stream = battery_manager.stream_device_percentage().await;
+                    let mut sorted_list = wireless_details.networks.unwrap_or_else(|| vec![]);
+                    sorted_list.sort_by_key(|n| (!n.is_active, !n.is_known));
+                    sorted_list.retain(|n| !n.ssid.is_empty());
+                    this.wireless_details.networks = Some(sorted_list);
 
-                        let mut enable_state_stream = network_manager.stream_wireless_enabled_status().await;
-                        let mut device_state_stream = network_manager.stream_device_events().await;
+                    this.bluetooth_details.enabled = bluetooth_details.enabled;
+                    this.bluetooth_details.connected_devices = bluetooth_details.connected_devices;
+                    this.bluetooth_details.available_devices =
+                        bluetooth_details.available_devices.clone();
 
-                        let mut bluetooth_status_stream = bluetooth_manager.stream_bluetooth_enabled_status().await;
-                        let mut bluetooth_device_stream = bluetooth_manager.stream_bluetooth_device_status().await;
-                        
-                        let pulse_service = PulseAudioService::new().unwrap();
-                        let _update_volume_info = update_device_info(&mut app_channel_tx, &pulse_service).await;
-
-                        let brightness_value = match display_client::get_brightness().await {
-                            Ok(value) => value,
-                            Err(e) => {
-                                eprintln!("Error getting brightness: {}", e);
-                                0
-                            }
-                        };
-                        let brightness_percent = if brightness_value > 0 {u8_to_percent(brightness_value, MAX_DEVICE_BRIGHTNESS) } else {0.0};
-                        let _ = app_channel_tx.send(AppEvents::Brightness { value: brightness_percent }).await;
-
-                        loop {
-                            select! {
-                                // battery events
-                                battery_state = battery_status_stream.next() => {
-                                    if let Some(state) = battery_state {
-                                        let _ = app_channel_tx.send(AppEvents::BatteryStateChanged { state }).await;
-                                    }
-                                },
-
-                                battery_percentage = battery_percentage_stream.next() => {
-                                    if let Some(percentage) = battery_percentage {
-                                        let value = percentage as u8;
-                                        let _ = app_channel_tx.send(AppEvents::BatteryPercentageChanged { value }).await;
-                                    }
-                                }
-
-                                // network events
-                                event = nm_rx.next() => {
-                                    if let Some(NmEvents::WirelessToggle { enabled }) = event {
-                                        let _ = network_manager.toggle_wireless(enabled).await;
-                                    }
-                                },
-
-                                enable_state = enable_state_stream.next() => {
-                                    if let Some(is_enabled) = enable_state {
-                                        let _ = app_channel_tx.send(AppEvents::WirelessStatusChanged { enabled: is_enabled }).await;
-                                    }
-                                },
-
-                                device_state = device_state_stream.next() => {
-                                    if let Some(nm_state) = device_state {
-                                    match nm_state {
-                                            NMState::ConnectedGlobal | NMState::ConnectedLocal=> {
-                                                let _ = sync_connected_network(app_channel_tx.clone(), &network_manager.clone()).await;
-                                            }
-                                            _ => {}
-                                        }
-                                    }
-                                }
-
-                                // bluetooth events
-                                bluetooth_enabled = bluetooth_status_stream.next() => {
-                                    if let Some(enabled) = bluetooth_enabled {
-                                        let _ = app_channel_tx.send(AppEvents::BluetoothEnabled { enabled }).await;
-                                    }
-                                },
-
-                                bluetooth_device_event = bluetooth_device_stream.next() => {
-                                    if let Some(_event) = bluetooth_device_event {
-                                        let _ = sync_bluetooth_connected_status(app_channel_tx.clone(), &bluetooth_manager).await;
-                                    }
-                                }
-
-                                event = bt_rx.next() => {
-                                    if let Some(event) = event  {
-                                        match event {
-                                                BtEvents::BluetoothToggle { enabled } => {
-                                                let _ = bluetooth_manager.toggle_bluetooth(enabled).await;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // volume events
-                                volume_event = volume_rx.next() => {
-                                    match volume_event {
-                                        Some(VolumeEvents::VolumeChanged { name, value }) => {
-                                            match pulse_service.handle.set_sink_volume_by_name(&name, &value).await {
-                                                Ok(_) => {
-                                                    update_device_info(&mut app_channel_tx, &pulse_service).await;
-
-                                                }
-                                                Err(e) => {
-                                                    eprintln!("Failed to set volume: {}", e);
-                                                }
-                                            }
-                                        }
-                                        Some(VolumeEvents::MuteSink { name }) => {
-                                            match pulse_service.handle.set_sink_mute_by_name(&name).await {
-                                                Ok(_) => {
-                                                    update_device_info(&mut app_channel_tx, &pulse_service).await;
-                                                }
-                                                Err(e) => {
-                                                    eprintln!("Failed to set mute: {}", e);
-                                                }
-                                            }
-                                        }
-                                        Some(VolumeEvents::UnmuteSink { name }) => {
-                                            match pulse_service.handle.set_sink_unmute_by_name(&name).await {
-                                                Ok(_) => {
-                                                update_device_info(&mut app_channel_tx, &pulse_service).await; 
-                                                }
-                                                Err(e) => {
-                                                    eprintln!("Failed to unset mute: {}", e);
-                                                }
-                                            }
-                                        }
-                                        None => break,
-                                    }
-                                
-                                }
-
-                                // brightness events
-                                brightness_event = brightness_rx.next() => {
-                                match brightness_event {
-                                    Some(BrightnessEvents::BrightnessChanged { value }) => {
-                                        let value = if value < DEFAULT_MIN_BRIGHTNESS { DEFAULT_MIN_BRIGHTNESS } else { value };
-                                        let value = percent_to_u8(value, MAX_DEVICE_BRIGHTNESS);
-                                        match display_client::set_brightness(value).await {
-                                            Ok(_) => {
-                                                if let Ok(value) = display_client::get_brightness().await {
-                                                    let value = u8_to_percent(value, MAX_DEVICE_BRIGHTNESS);
-                                                    let _ = app_channel_tx.send(AppEvents::Brightness { value }).await;
-                                                }
-                                            }
-                                            Err(e) => {
-                                                eprintln!("Error setting brightness: {:?}", e);
-                                            }
-                                        }
-                                    }
-                                    None => break,
-                                 }
-                                }
-
-
-                            }
-                        }
-                    })
-                    .detach();
-
-
-                cx.new(|cx| {
-                    cx.spawn(async move |app, cx| {
-                        while let Some(event) = app_channel_rx.next().await {
-                            match event {
-                                AppEvents::BatteryStateChanged { state } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.battery_state = state;
-                                        cx.notify();
-                                    });
-                                }
-                                AppEvents::BatteryPercentageChanged { value } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.battery_percent = value;
-                                        cx.notify();
-                                    });
-                                }
-                                AppEvents::WirelessStatusChanged { enabled } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.wireless_details.enabled = enabled;
-                                        cx.notify();
-                                    });
-                                } 
-                                AppEvents::ConnectedNetwork { network } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.wireless_details.connected_network = network;
-                                        cx.notify();
-                                    });
-                                }
-                                AppEvents::BluetoothEnabled { enabled } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.bluetooth_details.enabled = enabled;
-                                        cx.notify();
-                                    });
-                                }
-                                AppEvents::BluetoothDevices { count } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.bluetooth_details.devices = count;
-                                        cx.notify();
-                                    });
-                                }
-                                AppEvents::OutputSoundDevice { device_info } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        let device_info = Some(device_info).clone().unwrap();
-                                        this.volume_mute = device_info.mute;
-                                        this.volume_slider_value = if this.volume_mute { 0.0 } else { device_info.volume as f32 };
-                                        this.volume_device_name = device_info.name.unwrap_or_else(|| "default".to_string());
-                                        this.volume_slider_state.update(cx, |state, _cx| {
-                                            state.value = this
-                                                .volume_slider_value
-                                                .clamp(state.min, state.max);
-                                        });
-                                        cx.notify();
-                                    });
-                                }
-                                AppEvents::Brightness { value } => {
-                                    let _ = app.update(cx, |this: &mut SettingsDrawer, cx| {
-                                        this.brightness_slider_value = value;
-                                        this.brightness_slider_state.update(cx, |state, _cx| {
-                                            state.value = value.clamp(state.min, state.max);
-                                        });
-                                        cx.notify();
-                                    });
-                                }
-                            }
-                        }
-                    })
-                    .detach();
-
-                    SettingsDrawer::new(
-                        cx,
-                        nm_tx.clone(),
-                        bt_tx.clone(),
-                        volume_tx.clone(),
-                        brightness_tx.clone(),
-                    )
+                    this.nm_tx = nm_tx;
+                    this.bt_tx = bt_tx;
                 })
+                .detach();
+
+                SettingsDrawer::new(
+                    cx,
+                    // bt_tx.clone(),
+                    // volume_tx.clone(),
+                    // brightness_tx.clone(),
+                )
+            })
+        },
+    )
+    .unwrap();
+}
+
+pub fn get_wireless_strength_icon(enable: bool, signal_strength: u8, security: String) -> IconName {
+    if enable {
+        match security.as_str() {
+            "Open" => match signal_strength {
+                0 => IconName::ConnectedWifiOn,
+                0..=30 => IconName::ConnectedWifiLow,
+                31..=60 => IconName::ConnectedWifiMedium,
+                61..=100 => IconName::ConnectedWifiHigh,
+                _ => IconName::ConnectedWifiWarning,
             },
-        )
-        .unwrap();
+            "Protected" => match signal_strength {
+                0..=30 => IconName::ConnectedWifiLowLocked,
+                31..=60 => IconName::ConnectedWifiMediumLocked,
+                61..=100 => IconName::ConnectedWifiHighLocked,
+                _ => IconName::ConnectedWifiWarning,
+            },
+            _ => IconName::ConnectedWifiWarning,
+        }
+    } else {
+        match security.as_str() {
+            "Open" => match signal_strength {
+                0 => IconName::WifiOn,
+                0..=30 => IconName::WifiLow,
+                31..=60 => IconName::WifiMedium,
+                61..=100 => IconName::WifiHigh,
+                _ => IconName::WifiWarning,
+            },
+            "Protected" => match signal_strength {
+                0..=30 => IconName::WifiLowLocked,
+                31..=60 => IconName::WifiMediumLocked,
+                61..=100 => IconName::WifiHighLocked,
+                _ => IconName::WifiWarning,
+            },
+            _ => IconName::WifiWarning,
+        }
+    }
+}
+
+pub fn get_bluetooth_icon(connected: bool) -> IconName {
+    if connected {
+        IconName::BluetoothConnected
+    } else {
+        IconName::BluetoothOff
+    }
 }

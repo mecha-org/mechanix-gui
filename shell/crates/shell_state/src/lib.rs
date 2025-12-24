@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use bluez::service::BluetoothService;
+use bluez::{interfaces::device::BluetoothDevice, service::{BluetoothEvent, BluetoothService, InterfaceEvent}};
 use chrono::Local;
 use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
 use futures_timer::Delay;
@@ -18,12 +18,14 @@ use upower::{
 pub struct WirelessDetails {
     pub enabled: bool,
     pub connected_network: Option<WirelessNetworkInfo>,
+    pub networks: Option<Vec<WirelessNetworkInfo>>,
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct BluetoothDetails {
     pub enabled: bool,
     pub connected_devices: u8,
+    pub available_devices: Option<Vec<BluetoothDevice>>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -35,7 +37,36 @@ pub struct ShellState {
     pub battery_level: BatteryLevel,
     pub battery_percent: u8,
     pub status_bar_entity: Option<EntityId>,
+    pub nm_tx: Option<mpsc:: Sender<NmMessage>>,
+    pub bt_tx: Option<mpsc:: Sender<BtMessage>>,
+   
 }
+
+pub enum NmMessage {
+    ToggleWireless { enabled: bool },
+    ConnectKnownNetwork { name: String },
+}
+
+
+#[derive(Debug)]
+pub enum BtMessage {
+    ToggleBluetooth { enabled: bool },
+    ConnectDevice { address: String },
+}
+
+#[derive(Debug)]
+pub enum VolumeMessage {
+    VolumeChanged { name: String, value: f32 },
+    MuteSink { name: String },
+    UnmuteSink { name: String },
+}
+
+#[derive(Debug)]
+pub enum BrightnessMessage {
+    BrightnessChanged { value: f32 },
+}
+
+
 
 impl Global for ShellState {}
 
@@ -55,6 +86,19 @@ impl ShellState {
             ..Default::default()
         }
     }
+
+    pub async fn toggle_wireless(&self, enabled: bool) {
+        let _ =  self.nm_tx
+        .clone()
+        .unwrap()
+        .send(NmMessage::ToggleWireless { enabled: enabled }).await;
+    }
+
+    pub async fn toggle_bluetooth(&self, enabled: bool) {
+        let _ = self.bt_tx.clone().unwrap().send(BtMessage::ToggleBluetooth { enabled: enabled }).await;
+    }
+
+
 }
 
 pub struct ShellStateManager {}
@@ -64,11 +108,21 @@ impl ShellStateManager {
         Self {}
     }
 
+ 
     pub fn run(cx: &mut App) {
         let (mut message_tx, mut message_rx) = mpsc::channel::<ShellStateMessage>(10);
+
+        let (mut nm_tx, mut nm_rx) = mpsc::channel::<NmMessage>(10);
+        let (mut bt_tx, mut bt_rx) = mpsc::channel::<BtMessage>(10);
+
+        // ShellState::global_mut(cx).message_tx = Some(message_tx.clone());
+        ShellState::global_mut(cx).nm_tx = Some(nm_tx.clone());
+        ShellState::global_mut(cx).bt_tx = Some(bt_tx.clone());
+
         cx.spawn(async move |app| {
+           
             while let Some(message) = message_rx.next().await {
-                _ = app.update(|cx| {
+                _ = app.update( |cx| {
                     match message {
                         ShellStateMessage::WirelessStatusChanged { enabled } => {
                             ShellState::global_mut(cx).wireless_details.enabled = enabled;
@@ -98,6 +152,23 @@ impl ShellStateManager {
                                 .bluetooth_details
                                 .connected_devices = count;
                         }
+                        ShellStateMessage::AvailableBluetoothDevices { list } => {
+                            ShellState::global_mut(cx)
+                                .bluetooth_details
+                                .available_devices = Some(list);
+                        }
+                        ShellStateMessage::BluetoothAddedEvent { device } => {
+                            let current_devices = ShellState::global_mut(cx)
+                                .bluetooth_details
+                                .available_devices.clone();
+                                if let Some(current_devices) = current_devices {
+                                    let mut available_devices = current_devices.clone();
+                                    available_devices.push(device);
+                                    ShellState::global_mut(cx)
+                                        .bluetooth_details
+                                        .available_devices = Some(available_devices);
+                                }
+                        }
                         ShellStateMessage::BatteryStateChanged { state } => {
                             ShellState::global_mut(cx).battery_state = state;
                         }
@@ -119,6 +190,12 @@ impl ShellStateManager {
                                 .wireless_details
                                 .connected_network = network;
                         }
+                        ShellStateMessage::ListWirelessNetworks { list } => {
+                            ShellState::global_mut(cx)
+                                .wireless_details
+                                .networks = Some(list);
+                        }
+                        _ => {}
                     };
                 });
             }
@@ -133,6 +210,7 @@ impl ShellStateManager {
                 let _ = message_tx.send(ShellStateMessage::TimeUpdated).await;
 
                 let network_manager = NetworkManagerService::new().await.unwrap();
+
                 let bluetooth_manager = BluetoothService::new().await.unwrap();
                 let battery_manager = UPowerService::new().await.unwrap();
 
@@ -150,6 +228,7 @@ impl ShellStateManager {
                     bluetooth_manager.stream_bluetooth_enabled_status().await;
                 let mut bluetooth_device_stream =
                     bluetooth_manager.stream_bluetooth_device_status().await;
+                let _ = get_available_bluetooth_devices(message_tx.clone(), &bluetooth_manager).await;
 
                 loop {
                     select!{
@@ -192,24 +271,44 @@ impl ShellStateManager {
                             match nm_state {
                                             NMState::ConnectedGlobal | NMState::ConnectedLocal=> {
                                                 match network_manager.list_networks().await {
-        Ok(result) => {
-            let connected_network = result.iter().find(|n| n.is_active && !n.ssid.is_empty()).cloned();
-            let _ = message_tx
-                .send(ShellStateMessage::ConnectedNetwork {
-                    network: connected_network,
-                })
-                .await;
-        }
-        Err(e) => {
-            eprintln!("Failed to get active network: {}", e);
-            return;
-        }
-    };
+                                                    Ok(result) => {
+                                                        let connected_network = result.iter().find(|n| n.is_active && !n.ssid.is_empty()).cloned();
+                                                       
+                                                        let _ = message_tx
+                                                            .send(ShellStateMessage::ListWirelessNetworks { list: result.clone() })
+                                                            .await;
+                                                       
+                                                        let _ = message_tx
+                                                            .send(ShellStateMessage::ConnectedNetwork {
+                                                                network: connected_network,
+                                                            })
+                                                            .await;
+                                                    }
+                                                    Err(e) => {
+                                                        eprintln!("Failed to get active network: {}", e);
+                                                        return;
+                                                    }
+                                                };
                                             }
                                             _ => {}
                                         }
                                     }
                         }
+
+                  
+                        event = nm_rx.next() => {
+                            if let Some(event) = event {
+                                match event {
+                                   NmMessage::ToggleWireless { enabled } => {
+                                        let _ = network_manager.toggle_wireless(enabled).await;
+                                   }
+                                   NmMessage::ConnectKnownNetwork { name } => {
+                                       let _ = network_manager.connect_to_saved_network(&name.clone()).await;
+                                   }
+                                }
+                            }
+                        }
+
 
                         // bluetooth events
                         bluetooth_enabled = bluetooth_status_stream.next() => {
@@ -219,19 +318,50 @@ impl ShellStateManager {
                         },
 
                         bluetooth_device_event = bluetooth_device_stream.next() => {
-                            if let Some(_event) = bluetooth_device_event {
-                                let count = match bluetooth_manager.get_connected_devices().await {
-        Ok(r) => r.len(),
-        Err(e) => {
-            eprintln!("Failed to get connected devices: {}", e);
-            return;
-        }
-    };
+                            if let Some(event) = bluetooth_device_event {
+                                match event{
+                                    BluetoothEvent { event: InterfaceEvent::DeviceAdded, device: Some(device) } => {
+                                        let _ = message_tx.send(ShellStateMessage::BluetoothAddedEvent { device: device }).await;
+                                    }
+                                    BluetoothEvent { event: InterfaceEvent::DeviceRemoved, device: Some(_) } => {
+                                        let _ = get_available_bluetooth_devices(message_tx.clone(), &bluetooth_manager).await;
+                                    }
+                                    _ => {
+                                       let count = match bluetooth_manager.get_connected_devices().await {
+                                            Ok(r) => r.len(),
+                                            Err(e) => {
+                                                    eprintln!("Failed to get connected devices: {}", e);
+                                                    return;
+                                        
+                                        }
+                            };
 
-    let _ = message_tx.send(ShellStateMessage::BluetoothDevices { count: count as u8 }).await;
+                            let _ = message_tx.send(ShellStateMessage::BluetoothDevices { count: count as u8 }).await;
+                           
+                                    }
+                                }
                             }
                         }
 
+                        event = bt_rx.next() => {
+                            if let Some(event) = event {
+                                match event {
+                                    BtMessage::ToggleBluetooth { enabled } => {
+                                        let _ = bluetooth_manager.toggle_bluetooth(enabled).await;
+                                    }
+                                    BtMessage::ConnectDevice { address } => {
+                                                let _ = match bluetooth_manager.connect(&address).await {
+                                                    Ok(_) => {
+                                                       println!("Connected to device: {:?}", address);
+                                                    }
+                                                    Err(e) => {
+                                                        eprintln!("Failed to connect to device: {}", e);
+                                                    }
+                                                };
+                                            } 
+                                }
+                            }
+                        }
                         _ = time_event => {
                             let _ = message_tx.send(ShellStateMessage::TimeUpdated).await;
                             time_event = Delay::new(event_after).fuse();
@@ -244,6 +374,25 @@ impl ShellStateManager {
     }
 }
 
+
+pub async fn get_available_bluetooth_devices(
+    mut tx: mpsc::Sender<ShellStateMessage>,
+    bluetooth_manager_service: &BluetoothService,
+) {
+    let discovery_durations = std::time::Duration::from_secs(5);
+
+    match bluetooth_manager_service.get_available_devices(discovery_durations).await {
+        Ok(devices) => {
+            let _ = tx.send(ShellStateMessage::AvailableBluetoothDevices { list: devices }).await;
+        }
+        Err(e) => {
+            eprintln!("Failed to get available devices: {}", e);
+            return;
+        }
+    };
+}
+
+
 pub enum ShellStateMessage {
     WirelessStatusChanged {
         enabled: bool,
@@ -254,11 +403,23 @@ pub enum ShellStateMessage {
     ConnectedNetwork {
         network: Option<WirelessNetworkInfo>,
     },
+    ListWirelessNetworks {
+        list: Vec<WirelessNetworkInfo>,
+    }, 
+    NetworkEnabled {
+        enabled: bool,
+    },
     BluetoothEnabled {
         enabled: bool,
     },
     BluetoothDevices {
         count: u8,
+    },
+    AvailableBluetoothDevices {
+        list: Vec<BluetoothDevice>,
+    },
+    BluetoothAddedEvent {
+        device: BluetoothDevice,
     },
     BatteryLevelChanged {
         level: BatteryLevel,

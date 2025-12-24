@@ -15,6 +15,23 @@ pub async fn sync_bluetooth_connected_status(
     };
 
     let _ = tx
-        .send(AppEvents::BluetoothDevices { count: count as u8 })
+        .send(AppEvents::BluetoothDevicesCount { count: count as u8 })
         .await;
+}
+
+pub async fn get_available_bluetooth_devices(
+    mut tx: mpsc::Sender<AppEvents>,
+    bluetooth_manager_service: &BluetoothService,
+) {
+    let discovery_durations = std::time::Duration::from_secs(5);
+
+    match bluetooth_manager_service.get_available_devices(discovery_durations).await {
+        Ok(devices) => {
+            let _ = tx.send(AppEvents::AvailableBluetoothDevices { list: devices }).await;
+        }
+        Err(e) => {
+            eprintln!("Failed to get available devices: {}", e);
+            return;
+        }
+    };
 }
