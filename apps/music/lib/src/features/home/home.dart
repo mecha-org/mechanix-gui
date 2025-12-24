@@ -1,14 +1,15 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_music/app_routes.dart';
-import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
-import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_event.dart';
-import 'package:mechanix_music/src/features/bloc/songs_state.dart';
-import 'package:mechanix_music/src/features/home/mini_player.dart';
-import 'package:mechanix_music/src/features/presentation/song_list_view.dart';
-import 'package:widgets/extensions/edge_insets.dart';
+import 'package:mechanix_music/models/models.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
+import 'package:mechanix_music/src/features/favourites_tab/favourites_tab.dart';
+import 'package:mechanix_music/src/features/home/bottom_bar.dart';
+import 'package:mechanix_music/src/features/home/home_tab/home_tab.dart';
+import 'package:mechanix_music/src/features/music_tab/music_tab.dart';
+import 'package:mechanix_music/src/features/playlist_tab/playlist_tab.dart';
+import 'package:mechanix_music/src/features/search_tab/search_tab.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,69 +23,20 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        title: const Text("Music"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              Navigator.pushNamed(context, AppRoutes.searchPage);
-            },
-          ).padRight(5),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<SongsBloc>().add(ScanSongs());
-            },
-          ).padRight(5),
-        ],
-      ),
+      bottomNavigationBar: const BottomBar(),
       body: BlocBuilder<SongsBloc, SongsState>(
+        buildWhen: (p, c) => p.musicTab != c.musicTab,
         builder: (context, state) {
-          return Stack(
-            children: [
-              // Song list with padding at bottom so it's not hidden by MiniPlayer
-              Positioned.fill(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      SongsListView(
-                        songs: state.songs,
-                        onSongTap: (song) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => AudioPlayer(songDetails: song),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 80), // space for MiniPlayer
-                    ],
-                  ),
-                ),
-              ),
-
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child:
-                    state.currentSong != null
-                        ? MiniPlayer(
-                          currentPosition: state.position,
-                          totalDuration: state.duration,
-                          isPlaying: state.isPlaying,
-                          currentIndex: state.currentIndex,
-                          currentSong: state.currentSong!,
-                        )
-                        : SizedBox.shrink(),
-              ),
-            ],
-          );
+          if (state.musicTab == MusicTabs.search) {
+            return SearchTab();
+          } else if (state.musicTab == MusicTabs.music) {
+            return MusicTab();
+          } else if (state.musicTab == MusicTabs.playlists) {
+            return PlaylistTab();
+          } else if (state.musicTab == MusicTabs.favorites) {
+            return FavouritesTab();
+          }
+          return HomeTab();
         },
       ),
     );

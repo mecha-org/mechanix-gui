@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
-import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_event.dart';
-import 'package:mechanix_music/src/features/bloc/songs_state.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'player_header.dart';
 import 'player_vinyl.dart';
 import 'player_side_controls.dart';
@@ -20,8 +20,6 @@ class AudioPlayer extends StatefulWidget {
 
 class _AudioPlayerState extends State<AudioPlayer>
     with TickerProviderStateMixin {
-  // bool isPlaying = true;
-  // bool isShuffled = false;
   bool isRepeating = false;
   bool isFavorited = false;
   double currentPosition = 0.0;

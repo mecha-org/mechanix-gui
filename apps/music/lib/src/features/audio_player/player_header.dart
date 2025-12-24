@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
-import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
-import 'package:mechanix_music/src/features/bloc/songs_event.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:widgets/mechanix.dart';
 
 class PlayerHeader extends StatelessWidget {
@@ -24,7 +24,7 @@ class PlayerHeader extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.only(left: 20,right: 20, bottom: 0,top:20),
+      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 0, top: 20),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

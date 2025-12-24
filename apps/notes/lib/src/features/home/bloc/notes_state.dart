@@ -2,52 +2,74 @@ import 'package:equatable/equatable.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 
 class NotesState extends Equatable {
+  // Main list state
   final bool isLoading;
   final bool isLoadingMore;
-  final bool? isPinnedSelected;
-  // final List<NoteMetaData> notes;
-  final List<NoteMetaData> pinnedNotes;
+  final bool hasMorePages;
+  final List<GroupedNotes> groupedNotes;
+  final bool isDragging;
+  // Search state
+
+  final bool isSearchPage;
+  final bool isSearchMode;
+  final bool isSearchLoading;
+  final bool isSearchLoadingMore;
+  final bool hasMoreSearchResults;
+  final List<SearchMetaData> searchedNotes;
+
+  // Selection state
   final bool isSelectionMode;
   final List<String> selectedNoteIds;
-  final List<GroupedNotes> groupedNotes;
-  final List<NoteMetaData> searchedNotes;
-  final bool hasMorePages;
 
   const NotesState({
-    // required this.notes,
+    // Main list
     this.isLoading = false,
-    this.isLoadingMore= false,
+    this.isLoadingMore = false,
+    this.hasMorePages = true,
+    this.groupedNotes = const [],
+    this.isDragging = false,
+    // Search
+    this.isSearchPage = false,
+    this.isSearchMode = false,
+    this.isSearchLoading = false,
+    this.isSearchLoadingMore = false,
+    this.hasMoreSearchResults = false,
+    this.searchedNotes = const [],
+
+    // Selection
     this.isSelectionMode = false,
     this.selectedNoteIds = const [],
-    this.pinnedNotes = const [],
-    this.groupedNotes = const [],
-    this.isPinnedSelected = false,
-    this.searchedNotes = const [],
-    this.hasMorePages = true,
   });
 
   NotesState copyWith({
     bool? isLoading,
     bool? isLoadingMore,
-    List<NoteMetaData>? pinnedNotes,
     bool? hasMorePages,
+    bool? isDragging,
     List<GroupedNotes>? groupedNotes,
+    bool? isSearchPage,
+    bool? isSearchMode,
+    bool? isSearchLoading,
+    bool? isSearchLoadingMore,
+    bool? hasMoreSearchResults,
+    List<SearchMetaData>? searchedNotes,
     bool? isSelectionMode,
     List<String>? selectedNoteIds,
-    bool? isPinnedSelected,
-    List<NoteMetaData>? searchedNotes,
   }) {
     return NotesState(
       isLoading: isLoading ?? this.isLoading,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
       hasMorePages: hasMorePages ?? this.hasMorePages,
-      // notes: notes ?? this.notes,
-      pinnedNotes: pinnedNotes ?? this.pinnedNotes,
+      isDragging: isDragging ?? this.isDragging,
+      groupedNotes: groupedNotes ?? this.groupedNotes,
+      isSearchPage: isSearchPage ?? this.isSearchPage,
+      isSearchMode: isSearchMode ?? this.isSearchMode,
+      isSearchLoading: isSearchLoading ?? this.isSearchLoading,
+      isSearchLoadingMore: isSearchLoadingMore ?? this.isSearchLoadingMore,
+      hasMoreSearchResults: hasMoreSearchResults ?? this.hasMoreSearchResults,
+      searchedNotes: searchedNotes ?? this.searchedNotes,
       isSelectionMode: isSelectionMode ?? this.isSelectionMode,
       selectedNoteIds: selectedNoteIds ?? this.selectedNoteIds,
-      groupedNotes: groupedNotes ?? this.groupedNotes,
-      isPinnedSelected: isPinnedSelected ?? this.isPinnedSelected,
-      searchedNotes: searchedNotes ?? this.searchedNotes,
     );
   }
 
@@ -55,13 +77,16 @@ class NotesState extends Equatable {
   List<Object?> get props => [
     isLoading,
     isLoadingMore,
-    isPinnedSelected,
-    // notes,
-    pinnedNotes,
+    hasMorePages,
+    isDragging,
+    groupedNotes,
+    isSearchPage,
+    isSearchMode,
+    isSearchLoading,
+    isSearchLoadingMore,
+    hasMoreSearchResults,
+    searchedNotes,
     isSelectionMode,
     selectedNoteIds,
-    groupedNotes,
-    searchedNotes,
-    hasMorePages,
   ];
 }

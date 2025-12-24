@@ -1,26 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:mechanix_music/src/features/home/custom_slider.dart';
+import 'package:mechanix_music/models/playlist_info.dart';
+import 'package:mechanix_music/models/recently_played.dart';
+import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
+import 'package:mechanix_music/src/features/home/data/songs_repository_impl.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:mechanix_music/app_routes.dart';
 import 'package:mechanix_music/models/song_info.dart';
-import 'package:mechanix_music/src/features/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/features/home/home.dart';
-import 'package:mechanix_music/src/features/search/search.dart';
+import 'package:mechanix_music/src/features/search_tab/search.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/theme/mechanix_theme.dart';
+import 'package:widgets/theme/variants.dart';
 import 'package:widgets/widgets/theme/theme_toggle.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
   Hive.registerAdapter(SongInfoAdapter());
+  Hive.registerAdapter(RecentlyPlayedAdapter());
+  Hive.registerAdapter(PlaylistInfoAdapter());
   await initializeHive();
   MediaKit.ensureInitialized();
-
-  runApp(BlocProvider(create: (context) => SongsBloc(), child: MusicApp()));
+  runApp(
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<SongsRepository>(
+          create: (_) => SongsRepositoryImpl(),
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create:
+                (context) =>
+                    SongsBloc(songsRepository: context.read<SongsRepository>()),
+          ),
+        ],
+        child: MainApp(),
+      ),
+    ),
+  );
 }
 
 Future<void> initializeHive() async {
@@ -28,8 +51,8 @@ Future<void> initializeHive() async {
   await Hive.initFlutter(appDir.path);
 }
 
-class MusicApp extends StatelessWidget with WatchItMixin {
-  MusicApp({super.key});
+class MainApp extends StatelessWidget with WatchItMixin {
+  MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +62,9 @@ class MusicApp extends StatelessWidget with WatchItMixin {
     );
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant, extensions: [
-        ],
-      ),
+      data: MechanixThemeData(mechanixVariant: MechanixVariant.amber),
       builder:
-          (context, mechanix, child) => MyApp(
+          (context, mechanix, child) => MusicApp(
             darkTheme: mechanix.darkTheme,
             lightTheme: mechanix.lightTheme,
             themeMode: themeMode,
@@ -52,8 +73,8 @@ class MusicApp extends StatelessWidget with WatchItMixin {
   }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({
+class MusicApp extends StatelessWidget {
+  const MusicApp({
     super.key,
     required this.lightTheme,
     required this.darkTheme,
@@ -71,16 +92,25 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: lightTheme,
       darkTheme: darkTheme.copyWith(
-        pageTransitionsTheme: PageTransitionsTheme(
-          builders: {TargetPlatform.linux: SlideLeftTransitionsBuilder()},
-        ),
-        iconButtonTheme: IconButtonThemeData(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        splashFactory: NoSplash.splashFactory,
+        iconButtonTheme: const IconButtonThemeData(
           style: ButtonStyle(
-            shadowColor: WidgetStatePropertyAll(Colors.transparent),
+            splashFactory: NoSplash.splashFactory,
             overlayColor: WidgetStatePropertyAll(Colors.transparent),
-            backgroundColor: WidgetStatePropertyAll(Colors.transparent),
-            surfaceTintColor: WidgetStatePropertyAll(Colors.transparent),
           ),
+        ),
+
+        scrollbarTheme: const ScrollbarThemeData(
+          radius: Radius.circular(4),
+          thickness: WidgetStatePropertyAll(6),
+          thumbColor: WidgetStatePropertyAll(MusicColors.scrollBarColor),
+        ),
+
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
         ),
       ),
       themeMode: themeMode,

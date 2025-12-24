@@ -17,7 +17,6 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
     on<ToolbarToggle>(_enableToolbar);
     on<UndoUpdate>(_undoCall);
     on<RedoUpdate>(_redoCall);
-    on<PinnedUpdate>(_pinnedCall);
     on<SelectToolbar>(_selectToolbar);
     on<LoadNoteContent>(_onLoadNoteContent);
   }
@@ -31,14 +30,11 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
 
       final note = await notesRepository.findById(event.noteId);
       if (note == null) return;
-
+      // to simulate a loading state for smoother UI
+      await Future.delayed(const Duration(seconds: 0));
       final content = jsonDecode(note.content);
       emit(
-        state.copyWith(
-          isLoading: false,
-          isPinned: note.isPinned,
-          document: Document.fromJson(content),
-        ),
+        state.copyWith(isLoading: false, document: Document.fromJson(content)),
       );
     } catch (e) {
       emit(state.copyWith(isLoading: false));
@@ -66,21 +62,8 @@ class EditorBloc extends Bloc<EditorEvent, EditorBlocState> {
     }
   }
 
-  void _pinnedCall(PinnedUpdate event, Emitter<EditorBlocState> emit) {
-    logger.i('pinned call event: ${event.isPinned} state: ${state.isPinned}');
-    if (event.isPinned != state.isPinned) {
-      emit(state.copyWith(isPinned: event.isPinned));
-    }
-  }
-
   void _selectToolbar(SelectToolbar event, Emitter<EditorBlocState> emit) {
-    logger.i(
-      'select toolbar event: ${event.activeToolbar} state: ${state.selectedToolbar}',
-    );
-    if (event.activeToolbar == state.selectedToolbar) {
-      emit(state.copyWith(selectedToolbar: ToolbarEnum.none));
-      return;
-    }
+    logger.i('select toolbar event: ${event.activeToolbar}');
     emit(state.copyWith(selectedToolbar: event.activeToolbar));
   }
 }

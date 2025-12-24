@@ -3,28 +3,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
+import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository.dart';
 import 'package:mechanix_notes/src/features/home/data/notes_repository_impl.dart';
 import 'package:mechanix_notes/src/features/home/home.dart';
-import 'package:mechanix_notes/src/constants/constants.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:mechanix_notes/src/features/search_notes/presentation/search_notes.dart';
-// import 'package:media_kit/media_kit.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:watch_it/watch_it.dart';
+import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
+import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
+import 'package:widgets/widgets/pressable_list/mechanix_pressable_list_theme.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
   WidgetsFlutterBinding.ensureInitialized();
   await initializeHive();
   Hive.registerAdapter(NoteHiveAdapter());
-  // MediaKit.ensureInitialized();
-  await Hive.openBox<NoteHive>(Constants.tableName);
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -62,7 +61,51 @@ class NotesApp extends StatelessWidget with WatchItMixin {
     );
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant),
+      data: MechanixThemeData(
+        mechanixVariant: mechanixVariant,
+        extensions: const [
+          // TODO: FIX THEME
+          MechanixFloatingActionBarThemeData(
+            padding: EdgeInsets.all(0),
+            width: double.infinity,
+            // decoration: BoxDecoration(
+            //   color: Colors.pink,
+            // borderRadius: BorderRadius.only(
+            //   topLeft: Radius.circular(12),
+            //   topRight: Radius.circular(12),
+            // ),
+            // ),
+          ),
+          MechanixSelectableListThemeData(
+            // backgroundColor: NotesColors.backgroundColor,
+            checkboxSpacing: EdgeInsets.only(right: 16, left: 6),
+            leadingIconPadding: EdgeInsets.zero,
+            itemPadding: EdgeInsets.only(
+              left: 16,
+              right: 12,
+              top: 10,
+              bottom: 10,
+            ),
+            titleTextStyle: TextStyle(
+              fontSize: 16,
+              color: NotesColors.titleTextColor,
+            ),
+          ),
+          MechanixNavigationBarThemeData(
+            scrolledUnderElevation: 0,
+            titleStyle: TextStyle(
+              fontSize: 32,
+              height: 1.3,
+              letterSpacing: -1.1,
+              fontWeight: FontWeight.w600,
+              color: NotesColors.highlightTextColor,
+            ),
+            titleSpacing: 16,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+        ],
+      ),
       builder:
           (context, mechanix, child) => MyApp(
             darkTheme: mechanix.darkTheme,
@@ -99,10 +142,28 @@ class MyApp extends StatelessWidget {
       theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
 
       darkTheme: darkTheme.copyWith(
-        scaffoldBackgroundColor: Colors.black,
-        textSelectionTheme: const TextSelectionThemeData(
-          cursorColor: Colors.white,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        splashFactory: NoSplash.splashFactory,
+        iconButtonTheme: const IconButtonThemeData(
+          style: ButtonStyle(
+            splashFactory: NoSplash.splashFactory,
+            overlayColor: WidgetStatePropertyAll(Colors.transparent),
+          ),
         ),
+        scrollbarTheme: const ScrollbarThemeData(
+          radius: Radius.circular(4),
+          thickness: WidgetStatePropertyAll(6),
+          thumbColor: WidgetStatePropertyAll(NotesColors.titleTextColor),
+        ),
+
+        scaffoldBackgroundColor: Colors.black,
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: NotesColors.secondaryCardColor,
+          selectionColor: NotesColors.secondaryCardColor.withValues(alpha: 0.4),
+        ),
+        // this is temporary fix
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
         ),
@@ -113,7 +174,6 @@ class MyApp extends StatelessWidget {
       routes: {
         AppRoutes.createEditNotes:
             (context) => const EditorBlocProvider(child: NotesEditor()),
-        AppRoutes.searchNotes: (context) => const SearchNotes(),
       },
     );
   }
