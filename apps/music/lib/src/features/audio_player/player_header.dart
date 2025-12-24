@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
-import 'package:mechanix_music/src/bloc/songs_bloc.dart';
-import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:widgets/mechanix.dart';
 
 class PlayerHeader extends StatelessWidget {
@@ -18,7 +15,7 @@ class PlayerHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     void onBackPressed() {
       if (songDetails.isFavourite != isFavorited) {
-        context.read<SongsBloc>().add(FavouriteToggle());
+        // context.read<SongsBloc>().add(FavouriteToggle());
       }
       Navigator.pop(context);
     }

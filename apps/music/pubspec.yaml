@@ -51,6 +51,9 @@ dependencies:
       ref: main
   watch_it: ^1.7.0
   sleek_circular_slider: ^2.1.0
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  tuple: ^2.0.2
 
 dev_dependencies:
   flutter_test:
@@ -103,6 +106,8 @@ flutter:
     - assets/images/next_page.png
     - assets/images/previous_page.png
     - assets/images/check_icon.png
+    - assets/images/add.png
+    - assets/images/plus.png
 
     - assets/screenshots/music1.jpeg
     - assets/screenshots/music2.jpeg

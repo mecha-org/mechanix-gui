@@ -49,7 +49,11 @@ class BottomBar extends StatelessWidget {
                                         iconSize: Size(28, 28),
                                         iconBoxSize: Size(44, 44),
                                       ),
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    if (Navigator.canPop(context)) {
+                                      Navigator.pop(context);
+                                    }
+                                  },
 
                                   iconPath: MusicIcons.backIcon,
                                 ),

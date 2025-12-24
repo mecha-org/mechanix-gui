@@ -97,5 +97,38 @@ class PlaybackCompleted extends SongsEvent {}
 
 class AddToQueue extends SongsEvent {
   final SongInfo songInfo;
-  const AddToQueue(this.songInfo);
+  final bool playNext;
+  const AddToQueue(this.songInfo, {this.playNext = false});
+}
+
+class RecentSongs extends SongsEvent {}
+
+class BottomBarToggle extends SongsEvent {}
+
+class CreatePlaylist extends SongsEvent {
+  final String playlistName;
+  const CreatePlaylist(this.playlistName);
+}
+
+class LoadPlaylist extends SongsEvent {}
+
+class PlaylistViewMode extends SongsEvent {
+  final PlaylistViewEnum playlistViewMode;
+  const PlaylistViewMode(this.playlistViewMode);
+}
+
+class DeletePlaylist extends SongsEvent {
+  final String playlistId;
+  const DeletePlaylist(this.playlistId);
+}
+
+class AddToPlaylist extends SongsEvent {
+  final String songIds;
+  final List<String> playlistId;
+  const AddToPlaylist({required this.songIds, required this.playlistId});
+}
+
+class GetPlaylistSongs extends SongsEvent {
+  final String playlistId;
+  const GetPlaylistSongs(this.playlistId);
 }

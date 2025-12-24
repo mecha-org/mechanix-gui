@@ -5,6 +5,7 @@ import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
+import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/mechanix_menu.dart';
@@ -18,6 +19,15 @@ class SongMenu extends StatelessWidget {
     required this.song,
     required this.onToggleFavourite,
   });
+  void _showAddToPlaylistSheet(BuildContext context) {
+    context.read<SongsBloc>().add(LoadPlaylist());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddToPlaylistSheet(song: song),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +70,6 @@ class SongMenu extends StatelessWidget {
           onTap: () {
             context.read<SongsBloc>().add(AddToQueue(song));
           },
-
           title: "Add to queue",
           leading: const IconWidget(
             iconPath: MusicIcons.queueIcon,
@@ -68,7 +77,7 @@ class SongMenu extends StatelessWidget {
           ),
         ),
         MechanixMenuItemsType(
-          onTap: () {},
+          onTap: () => _showAddToPlaylistSheet(context),
           title: "Add to playlist",
           leading: const IconWidget(
             iconPath: MusicIcons.addToPlaylistIcon,

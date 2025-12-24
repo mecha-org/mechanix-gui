@@ -35,7 +35,7 @@ class _AudioPlayerState extends State<AudioPlayer>
     );
 
     isFavorited = widget.songDetails.isFavourite;
-    context.read<SongsBloc>().add(PlaySong(widget.songDetails.index));
+    // context.read<SongsBloc>().add(PlaySong(widget.songDetails.index));
     // _startProgressTimer();
   }
 

@@ -286,8 +286,10 @@ class SongsRepositoryImpl extends SongsRepository {
     try {
       await ensureRecentlyPlayedConnected();
       final box = Hive.box<RecentlyPlayed>(TableName.recentlyPlayedTable);
+      final recentSongs = box.values.toList();
+      recentSongs.sort((a, b) => b.lastPlayedAt.compareTo(a.lastPlayedAt));
 
-      return box.values.map((e) => e.song).toList();
+      return recentSongs.map((e) => e.song).toList();
     } catch (e, stack) {
       logger.e("Error getting recently played", error: e, stackTrace: stack);
       return [];
@@ -328,6 +330,115 @@ class SongsRepositoryImpl extends SongsRepository {
     } catch (_) {
       logger.e("Error creating playlist");
       return false;
+    }
+  }
+
+  @override
+  Future<bool> deletePlaylist(String playlistId) async {
+    try {
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+
+      final playlist = playlistBox.get(playlistId);
+      if (playlist == null) {
+        logger.w("Playlist not found: $playlistId");
+        return false;
+      }
+
+      // 1️⃣ Delete playlist
+      await playlistBox.delete(playlistId);
+
+      // 2️⃣ Update only affected songs
+      for (final songId in playlist.songIds) {
+        final song = songsBox.get(songId);
+        if (song == null) continue;
+
+        final updatedSong = song.copyWith(
+          playlistIds:
+              song.playlistIds.where((id) => id != playlistId).toList(),
+        );
+
+        await songsBox.put(songId, updatedSong);
+      }
+
+      logger.i("Playlist deleted & songs updated: $playlistId");
+      return true;
+    } catch (e, stack) {
+      logger.e("Error deleting playlist: $e", stackTrace: stack);
+      return false;
+    }
+  }
+
+  @override
+  Future<SongInfo?> addToPlaylist(
+    List<String> playlistId,
+    String songInfo,
+  ) async {
+    try {
+      await ensurePlaylistConnected();
+      await ensureHiveConnected();
+
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final songInfoBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+
+      final song = songInfoBox.get(songInfo);
+
+      if (song != null) {
+        // Track which playlists to add
+        final updatedPlaylistIds = List<String>.from(song.playlistIds);
+
+        // Process each playlist
+        for (final pId in playlistId) {
+          final playlist = playlistBox.get(pId);
+
+          if (playlist != null) {
+            // Check if song is already in this playlist
+            final isSongInPlaylist = playlist.songIds.contains(songInfo);
+
+            if (!isSongInPlaylist) {
+              // Add song to playlist only if not already present
+              final updatedPlaylist = playlist.copyWith(
+                songIds: [...playlist.songIds, songInfo],
+              );
+              await playlistBox.put(pId, updatedPlaylist);
+            }
+
+            // Add playlist to song (if not already there)
+            if (!updatedPlaylistIds.contains(pId)) {
+              updatedPlaylistIds.add(pId);
+            }
+          }
+        }
+
+        // Update the song with all playlist changes
+        final updatedSong = song.copyWith(playlistIds: updatedPlaylistIds);
+        await songInfoBox.put(songInfo, updatedSong);
+        return updatedSong;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<List<SongInfo>> getPlaylistSongs(String playlistId) async {
+    try {
+      await ensurePlaylistConnected();
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+
+      final playlist = playlistBox.get(playlistId);
+
+      if (playlist == null) {
+        logger.w("Playlist not found: $playlistId");
+        return [];
+      }
+
+      final songInfoBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+      return playlist.songIds.map((id) => songInfoBox.get(id)!).toList();
+    } catch (e, stack) {
+      logger.e("Error getting playlist songs", error: e, stackTrace: stack);
+      return [];
     }
   }
 }

@@ -1,8 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_music/models/models.dart';
+import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:media_kit/media_kit.dart';
-import 'songs_event.dart'; // Import for RepeatMode enum
 
 class SongsState extends Equatable {
   final List<SongInfo> songs;
@@ -21,6 +22,11 @@ class SongsState extends Equatable {
   final RepeatMode repeatMode;
   final bool isShuffled;
   final MusicTabs musicTab;
+  final List<SongInfo> recentlyPlayedSongs;
+  final BottomBarView bottomBarView;
+  final List<PlaylistInfo> playlists;
+  final PlaylistViewEnum playlistView;
+  final List<SongInfo> playlistSongs;
 
   const SongsState({
     this.songs = const [],
@@ -38,6 +44,11 @@ class SongsState extends Equatable {
     this.repeatMode = RepeatMode.none,
     this.isShuffled = false,
     this.musicTab = MusicTabs.music,
+    this.recentlyPlayedSongs = const [],
+    this.bottomBarView = BottomBarView.normal,
+    this.playlists = const [],
+    this.playlistView = PlaylistViewEnum.list,
+    this.playlistSongs = const [],
   });
 
   SongsState copyWith({
@@ -56,6 +67,11 @@ class SongsState extends Equatable {
     RepeatMode? repeatMode,
     bool? isShuffled,
     MusicTabs? musicTab,
+    List<SongInfo>? recentlyPlayedSongs,
+    BottomBarView? bottomBarView,
+    List<PlaylistInfo>? playlists,
+    PlaylistViewEnum? playlistView,
+    List<SongInfo>? playlistSongs,
   }) {
     return SongsState(
       songs: songs ?? this.songs,
@@ -73,6 +89,11 @@ class SongsState extends Equatable {
       repeatMode: repeatMode ?? this.repeatMode,
       isShuffled: isShuffled ?? this.isShuffled,
       musicTab: musicTab ?? this.musicTab,
+      recentlyPlayedSongs: recentlyPlayedSongs ?? this.recentlyPlayedSongs,
+      bottomBarView: bottomBarView ?? this.bottomBarView,
+      playlists: playlists ?? this.playlists,
+      playlistView: playlistView ?? this.playlistView,
+      playlistSongs: playlistSongs ?? this.playlistSongs,
     );
   }
 
@@ -93,5 +114,10 @@ class SongsState extends Equatable {
     repeatMode,
     isShuffled,
     musicTab,
+    recentlyPlayedSongs,
+    bottomBarView,
+    playlists,
+    playlistView,
+    playlistSongs,
   ];
 }

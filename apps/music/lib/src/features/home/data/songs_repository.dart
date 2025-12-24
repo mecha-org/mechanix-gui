@@ -10,4 +10,10 @@ abstract class SongsRepository {
   Future<List<SongInfo>> getRecentlyPlayed();
   Future<bool> createPlaylist(String playlistName);
   Future<List<PlaylistInfo>> getPlaylist();
+  Future<bool> deletePlaylist(String playlistId);
+  Future<SongInfo?> addToPlaylist(
+    List<String> playlistId,
+    String songId,
+  );
+  Future<List<SongInfo>> getPlaylistSongs(String playlistId);
 }

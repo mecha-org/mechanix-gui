@@ -24,4 +24,6 @@ class MusicIcons {
   static const previousPageIcon = 'assets/images/previous_page.png';
   static const nextPageIcon = 'assets/images/next_page.png';
   static const checkIcon = 'assets/images/check_icon.png';
+  static const addIcon= 'assets/images/add.png';
+  static const plusIcon= 'assets/images/plus.png';
 }
