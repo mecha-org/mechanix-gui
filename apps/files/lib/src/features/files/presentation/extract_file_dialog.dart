@@ -178,7 +178,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         const SizedBox(height: 18),
         Divider(
           height: 1,
-          color: context.colorScheme.surfaceDim,
+          color: context.colorScheme.surfaceContainerLow,
         ),
         // Navigation bar
         SizedBox(
@@ -481,7 +481,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                   titleTextStyle: TextStyle(
                     fontSize: 18,
-                    color: context.colorScheme.surfaceDim,
+                    color: context.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

@@ -89,7 +89,7 @@ class FileHomePageState extends State<FileHomePage> {
                 theme: MechanixSectionListThemeData(
                   titleTextStyle: TextStyle(
                     fontSize: 18,
-                    color: context.colorScheme.surfaceDim,
+                    color: context.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

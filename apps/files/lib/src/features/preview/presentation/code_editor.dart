@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
-import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:highlight/highlight_core.dart';
 import 'package:highlight/languages/dart.dart';
@@ -21,6 +20,7 @@ import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.da
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
+import 'package:mechanix_files/src/features/preview/presentation/confirmation_dialog.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
@@ -49,7 +49,6 @@ class CodeEditorPage extends StatefulWidget {
 
 class _CodeEditorPageState extends State<CodeEditorPage> {
   bool _initialized = false;
-  bool _isEditing = false;
   bool _isFileChanged = false;
 
   late String _code;
@@ -62,6 +61,12 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
   List<int> _matchIndexes = [];
   int _currentMatchIndex = -1;
   final ScrollController _scrollController = ScrollController();
+
+  // Undo / Redo
+  final List<_EditorSnapshot> _undoStack = [];
+  final List<_EditorSnapshot> _redoStack = [];
+
+  bool _isInternalChange = false;
 
   @override
   void initState() {
@@ -82,18 +87,74 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     );
 
     _codeController.addListener(_onCodeChanged);
+    _undoStack.clear();
+    _redoStack.clear();
+
+    _undoStack.add(
+      _EditorSnapshot(
+        code,
+        const TextSelection.collapsed(offset: 0),
+      ),
+    );
 
     setState(() => _initialized = true);
   }
 
   void _onCodeChanged() {
-    final changed = _codeController.text != _code;
+    if (_isInternalChange) return;
 
-    if (changed != _isFileChanged) {
-      setState(() {
-        _isFileChanged = changed;
-      });
+    final currentText = _codeController.text;
+    final currentSelection = _codeController.selection;
+
+    final last = _undoStack.last;
+
+    if (last.text != currentText) {
+      _undoStack.add(
+        _EditorSnapshot(currentText, currentSelection),
+      );
+      _redoStack.clear();
     }
+
+    final changed = currentText != _code;
+    if (changed != _isFileChanged) {
+      setState(() => _isFileChanged = changed);
+    }
+  }
+
+  void _undo() {
+    if (_undoStack.length <= 1) return;
+
+    _isInternalChange = true;
+
+    final current = _undoStack.removeLast();
+    _redoStack.add(current);
+
+    final previous = _undoStack.last;
+
+    _codeController.value = TextEditingValue(
+      text: previous.text,
+      selection: previous.selection,
+    );
+
+    _isInternalChange = false;
+    setState(() {});
+  }
+
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+
+    _isInternalChange = true;
+
+    final next = _redoStack.removeLast();
+    _undoStack.add(next);
+
+    _codeController.value = TextEditingValue(
+      text: next.text,
+      selection: next.selection,
+    );
+
+    _isInternalChange = false;
+    setState(() {});
   }
 
   Mode _getLanguage(String ext) {
@@ -163,7 +224,6 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     setState(() {
       _code = updated;
       _isFileChanged = false;
-      _isEditing = false;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -197,121 +257,75 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     final canNavNext = hasMatches && index < _matchIndexes.length - 1;
 
     return Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.only(top: 18, right: 16),
-            child: AppBar(
-              automaticallyImplyLeading: false,
-              scrolledUnderElevation: 0,
-              title: _buildTitle(controller),
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              actions: !hasMatches
-                  ? null
-                  : [
-                      // Match counter
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Center(
-                          child: Text(
-                            hasMatches
-                                ? '${index + 1} of ${_matchIndexes.length}'
-                                : '0 of 0',
-                            style: TextStyle(
-                              color: context.colorScheme.surfaceContainerHigh,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 12, right: 16),
+              child: AppBar(
+                automaticallyImplyLeading: false,
+                scrolledUnderElevation: 0,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                title: _buildTitle(controller),
+                actions: !hasMatches
+                    ? null
+                    : [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Center(
+                            child: Text(
+                              '${index + 1} of ${_matchIndexes.length}',
+                              style: TextStyle(
+                                color: context.colorScheme.surfaceContainerHigh,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
-                      ),
+                        searchNavButton(
+                          icon: Icons.keyboard_arrow_up,
+                          onTap: canNavPrev ? _prevMatch : null,
+                          context: context,
+                        ),
+                        searchNavButton(
+                          icon: Icons.keyboard_arrow_down,
+                          onTap: canNavNext ? _nextMatch : null,
+                          context: context,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+              ),
+            ),
 
-                      searchNavButton(
-                        icon: Icons.keyboard_arrow_up,
-                        onTap: canNavPrev ? _prevMatch : null,
-                        context: context,
-                      ),
-
-                      searchNavButton(
-                        icon: Icons.keyboard_arrow_down,
-                        onTap: canNavNext ? _nextMatch : null,
-                        context: context,
-                      ),
-
-                      const SizedBox(width: 8),
-                    ],
+            /// Divider between AppBar & body
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: context.colorScheme.tertiary,
+            ),
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        child: CodeTheme(
+          data: CodeThemeData(styles: pureBlackTheme),
+          child: CodeField(
+            controller: _codeController,
+            cursorColor: context.colorScheme.primaryFixed,
+            textStyle: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 14,
             ),
           ),
         ),
-        body: _isEditing
-            ? SingleChildScrollView(
-                child: CodeTheme(
-                  data: CodeThemeData(styles: pureBlackTheme),
-                  child: CodeField(
-                    controller: _codeController,
-                    cursorColor: context.colorScheme.primaryFixed,
-                    textStyle: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              )
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    controller: _scrollController,
-                    child: SizedBox(
-                      width: constraints.maxWidth,
-                      child: InteractiveViewer(
-                        constrained: true,
-                        minScale: 1,
-                        maxScale: 4,
-                        child: Stack(
-                          children: [
-                            HighlightView(
-                              _code,
-                              language: _getLanguageName(
-                                p
-                                    .extension(widget.filePath)
-                                    .replaceAll('.', ''),
-                              ),
-                              theme: monokaiTheme,
-                              padding: const EdgeInsets.all(12),
-                              textStyle: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 14,
-                                height: 1.4,
-                              ),
-                            ),
-                            if (_searchQuery.isNotEmpty)
-                              Positioned.fill(
-                                child: IgnorePointer(
-                                  child: CustomPaint(
-                                    painter: _SearchHighlightPainter(
-                                      code: _code,
-                                      search: _searchQuery,
-                                      textStyle: const TextStyle(
-                                        fontFamily: 'monospace',
-                                        fontSize: 14,
-                                        height: 1.4,
-                                      ),
-                                      padding: const EdgeInsets.all(12),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-        bottomNavigationBar: _isEditing
-            ? _buildEditingBottomBar(context)
-            : _buildBottomBar(context));
+      ),
+      bottomNavigationBar: _buildBottomBar(context),
+    );
   }
 
   Widget _buildTitle(FileManagerController? controller) {
@@ -331,66 +345,6 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           style: previewTitleStyle(context),
         );
       },
-    );
-  }
-
-  Widget _buildEditingBottomBar(BuildContext context) {
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
-
-    return Container(
-      color: context.colorScheme.secondary,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MechanixBottomBar(
-            theme: const MechanixBottomBarThemeData(),
-            leadingWidget: [
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
-                iconPath: Images.back,
-                onPressed: () {
-                  setState(() => _isEditing = false);
-                  _buildBottomBar(context);
-                },
-              ),
-            ],
-            anchorWidget: [
-              BottomBarButton.widget(
-                widget: MechanixFilledButton(
-                  theme: buttonThemeData(context,
-                      type: MechanixButtonType.cancel,
-                      size: const Size(94, 40)),
-                  label: "Cancel",
-                  onPressed: () {
-                    setState(() => _isEditing = false);
-                    _buildBottomBar(context);
-                  },
-                ),
-              ),
-              BottomBarButton.widget(
-                  widget: Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: MechanixFilledButton(
-                        theme: buttonThemeData(context,
-                            type: _isFileChanged
-                                ? MechanixButtonType.action
-                                : MechanixButtonType.disable,
-                            size: const Size(94, 40)),
-                        label: "Save",
-                        onPressed: !_isFileChanged
-                            ? null
-                            : () {
-                                _save();
-                                setState(() => _isEditing = false);
-                                _buildBottomBar(context);
-                              },
-                      ))),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
@@ -416,50 +370,51 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             centerWidgetSpacing: 30,
             centerWidget: [
               BottomBarButton(
-                iconWidget: IconWidget(
-                  iconPath: Images.search,
-                  iconHeight: 28,
-                  iconWidth: 28,
-                  iconColor: _isEditing
+                iconTheme: MechanixBottomBarIconThemeData(
+                  iconSize: const Size(28, 28),
+                  iconColor: _undoStack.length <= 1
                       ? context.surfaceContainerHigh
                       : context.colorScheme.onSurface,
                 ),
-                isDisabled: _isEditing,
-                onPressed: () {
-                  _showSearchOverlay(context);
-                },
+                iconPath: Images.undo,
+                isDisabled: _undoStack.length <= 1,
+                onPressed: _undoStack.length <= 1 ? null : _undo,
               ),
               BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28)),
-                iconPath: Images.copy,
-                onPressed: () {
-                  state?.selectedPaths = {widget.filePath};
-                  state?.handleCopy();
-                },
-              ),
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28)),
-                iconPath: Images.move,
-                onPressed: () {
-                  Navigator.pop(context);
-                  state?.selectedPaths = {widget.filePath};
-                  state?.handleMove();
-                },
-              ),
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28)),
-                iconWidget: IconWidget(
-                  iconPath: Images.share,
-                  iconColor: Colors.grey.shade600,
+                iconTheme: MechanixBottomBarIconThemeData(
+                  iconSize: const Size(28, 28),
+                  iconColor: _redoStack.isEmpty
+                      ? context.surfaceContainerHigh // disabled color
+                      : context.colorScheme.onSurface, // enabled color
                 ),
-                onPressed: () {},
-                isDisabled: true, //TODO : add share functionality
+                iconPath: Images.redo,
+                isDisabled: _redoStack.isEmpty,
+                onPressed: _redoStack.isEmpty ? null : _redo,
               ),
             ],
+            anchorWidgetSpacing: 0,
             anchorWidget: [
+              BottomBarButton.widget(
+                  widget: MechanixFilledButton(
+                theme: buttonThemeData(context,
+                    type: _isFileChanged
+                        ? MechanixButtonType.action
+                        : MechanixButtonType.disable,
+                    size: const Size(94, 40)),
+                label: "Save",
+                onPressed: !_isFileChanged
+                    ? null
+                    : () async {
+                        final confirmed = await _confirmSave(context);
+
+                        if (!confirmed) {
+                          _discardChanges();
+                          return;
+                        }
+
+                        await _save();
+                      },
+              )),
               BottomBarButton.widget(widget: buildActionsMenu(context)),
             ],
           ),
@@ -492,22 +447,49 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       },
       items: [
         MechanixMenuItemsType(
-          title: "Edit",
-          leading: IconWidget(
-            iconPath: Images.edit,
-            iconColor: _isEditing
-                ? context.colorScheme.primaryFixed
-                : context.colorScheme.onSurface,
+          title: "Search",
+          leading: Image.asset(
+            Images.search,
+            height: mechanixIconSize,
           ),
-          isSelected: _isEditing,
           onTap: () {
-            if (!_isEditing) {
-              setState(() {
-                isMenuOpen = false;
-                _isEditing = true;
-              });
-            }
+            _showSearchOverlay(context);
           },
+        ),
+        MechanixMenuItemsType(
+          title: "Copy",
+          leading: Image.asset(
+            Images.copy,
+            height: mechanixIconSize,
+            color: context.colorScheme.onSurface,
+          ),
+          onTap: () {
+            state?.selectedPaths = {widget.filePath};
+            state?.handleCopy();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Move",
+          leading: Image.asset(
+            Images.move,
+            height: mechanixIconSize,
+            color: context.colorScheme.onSurface,
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            state?.selectedPaths = {widget.filePath};
+            state?.handleMove();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Share",
+          leading: Image.asset(
+            Images.share,
+            height: mechanixIconSize,
+            color: Colors.grey.shade600,
+          ),
+          disabled: true,
+          onTap: null,
         ),
         MechanixMenuItemsType(
           leading: Image.asset(
@@ -558,6 +540,19 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     ).padRight(8);
   }
 
+  Future<bool> _confirmSave(BuildContext context) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ConfirmationBottomSheet(
+        filePath: widget.filePath,
+      ),
+    );
+
+    return result ?? false;
+  }
+
   void _onSearchChanged(String query) {
     final trimmed = query.trim();
 
@@ -588,6 +583,32 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
       setState(() {});
     }
+  }
+
+  void _discardChanges() {
+    _isInternalChange = true;
+
+    _codeController.value = TextEditingValue(
+      text: _code, // last saved content
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+
+    _undoStack
+      ..clear()
+      ..add(
+        _EditorSnapshot(
+          _code,
+          const TextSelection.collapsed(offset: 0),
+        ),
+      );
+
+    _redoStack.clear();
+
+    _isInternalChange = false;
+
+    setState(() {
+      _isFileChanged = false;
+    });
   }
 
   void _jumpToMatch() {
@@ -744,4 +765,11 @@ class _SearchHighlightPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SearchHighlightPainter old) =>
       old.search != search || old.code != code;
+}
+
+class _EditorSnapshot {
+  final String text;
+  final TextSelection selection;
+
+  _EditorSnapshot(this.text, this.selection);
 }

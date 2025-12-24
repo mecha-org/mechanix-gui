@@ -332,7 +332,9 @@ Widget buildListViewMoveAndExtract(
                   ignoring: isDisabled, // block interaction
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isNew ? Colors.grey.shade800 : Colors.transparent,
+                      color: isNew
+                          ? context.colorScheme.surfaceContainerLow
+                          : Colors.transparent,
                     ),
                     child: ListTile(
                       minTileHeight: 36,

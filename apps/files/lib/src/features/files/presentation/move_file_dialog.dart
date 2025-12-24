@@ -186,7 +186,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         const SizedBox(height: 18),
         Divider(
           height: 1,
-          color: context.colorScheme.surfaceDim,
+          color: context.colorScheme.surfaceContainerLow,
         ), // Navigation bar
         SizedBox(
           height: 60,
@@ -492,7 +492,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                   titleTextStyle: TextStyle(
                     fontSize: 18,
-                    color: context.colorScheme.surfaceDim,
+                    color: context.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
