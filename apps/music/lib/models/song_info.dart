@@ -22,6 +22,8 @@ class SongInfo extends HiveObject {
   String? artworkPath;
   @HiveField(8)
   int index;
+  @HiveField(9)
+  List<String> playlistIds = [];
 
   SongInfo({
     required this.id,
@@ -33,6 +35,7 @@ class SongInfo extends HiveObject {
     this.duration,
     this.artworkPath,
     this.isFavourite = false,
+    this.playlistIds = const [],
   });
 
   SongInfo copyWith({
@@ -45,6 +48,7 @@ class SongInfo extends HiveObject {
     String? duration,
     String? artworkPath,
     bool? isFavourite,
+    List<String>? playlistIds,
   }) {
     return SongInfo(
       id: id ?? this.id,
@@ -56,6 +60,7 @@ class SongInfo extends HiveObject {
       duration: duration ?? this.duration,
       isFavourite: isFavourite ?? this.isFavourite,
       artworkPath: artworkPath ?? this.artworkPath,
+      playlistIds: playlistIds ?? this.playlistIds,
     );
   }
 }

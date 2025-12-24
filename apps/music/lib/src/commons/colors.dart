@@ -8,4 +8,6 @@ class MusicColors {
   static const deleteColor = Color(0xFFFF0000);
   static const backgroundColor = Color(0xFF222222);
   static const borderColor = Color(0xFFC67600);
+  static const textColor = Color(0xFF8F8F8F);
+  static const disabledColor = Color(0xFF585858);
 }

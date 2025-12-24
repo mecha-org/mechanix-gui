@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:audio_metadata_extractor/audio_metadata_extractor.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/web.dart';
+import 'package:mechanix_music/models/playlist_info.dart';
+import 'package:mechanix_music/models/recently_played.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
@@ -17,6 +19,18 @@ class SongsRepositoryImpl extends SongsRepository {
   Future<void> ensureHiveConnected() async {
     if (!Hive.isBoxOpen(TableName.songsInfoTable)) {
       await Hive.openBox<SongInfo>(TableName.songsInfoTable);
+    }
+  }
+
+  Future<void> ensureRecentlyPlayedConnected() async {
+    if (!Hive.isBoxOpen(TableName.recentlyPlayedTable)) {
+      await Hive.openBox<RecentlyPlayed>(TableName.recentlyPlayedTable);
+    }
+  }
+
+  Future<void> ensurePlaylistConnected() async {
+    if (!Hive.isBoxOpen(TableName.playlistTable)) {
+      await Hive.openBox<PlaylistInfo>(TableName.playlistTable);
     }
   }
 
@@ -220,6 +234,99 @@ class SongsRepositoryImpl extends SongsRepository {
       return true;
     } catch (e) {
       logger.e("Error toggling favourite: $e");
+      return false;
+    }
+  }
+
+  @override
+  Future<void> addToRecentlyPlayed(SongInfo songInfo) async {
+    try {
+      logger.i("Adding song to recently played ${songInfo.id}");
+
+      if (!Hive.isBoxOpen(TableName.recentlyPlayedTable)) {
+        await Hive.openBox<RecentlyPlayed>(TableName.recentlyPlayedTable);
+      }
+
+      final box = Hive.box<RecentlyPlayed>(TableName.recentlyPlayedTable);
+
+      final String key = songInfo.id;
+
+      // 1️⃣ If already exists → update timestamp
+      if (box.containsKey(key)) {
+        final existing = box.get(key);
+        if (existing != null) {
+          await box.put(key, existing.copyWith(lastPlayedAt: DateTime.now()));
+        }
+        return;
+      }
+
+      // 2️⃣ If limit exceeded → remove oldest
+      if (box.length >= 30) {
+        // Find the oldest entry
+        final oldestEntry = box.toMap().entries.reduce((a, b) {
+          return a.value.lastPlayedAt.isBefore(b.value.lastPlayedAt) ? a : b;
+        });
+
+        await box.delete(oldestEntry.key);
+      }
+
+      // 3️⃣ Insert new song
+      await box.put(
+        key,
+        RecentlyPlayed(song: songInfo, lastPlayedAt: DateTime.now()),
+      );
+      logger.i("Song added to recently played");
+    } catch (e, stack) {
+      logger.e("Error adding to recently played", error: e, stackTrace: stack);
+    }
+  }
+
+  @override
+  Future<List<SongInfo>> getRecentlyPlayed() async {
+    try {
+      await ensureRecentlyPlayedConnected();
+      final box = Hive.box<RecentlyPlayed>(TableName.recentlyPlayedTable);
+
+      return box.values.map((e) => e.song).toList();
+    } catch (e, stack) {
+      logger.e("Error getting recently played", error: e, stackTrace: stack);
+      return [];
+    }
+  }
+
+  @override
+  Future<List<PlaylistInfo>> getPlaylist() async {
+    try {
+      await ensurePlaylistConnected();
+      final box = Hive.box<PlaylistInfo>(TableName.playlistTable);
+
+      return box.values.toList();
+    } catch (e, stack) {
+      logger.e("Error getting playlist", error: e, stackTrace: stack);
+      return [];
+    }
+  }
+
+  @override
+  Future<bool> createPlaylist(String playlistName) async {
+    await ensurePlaylistConnected();
+    try {
+      final createdPlaylist = PlaylistInfo(
+        createdAt: DateTime.now(),
+        id: uuid.v4(),
+        name: playlistName,
+        songIds: [],
+        updatedAt: DateTime.now(),
+        coverImagePath: null,
+      );
+
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      await playlistBox.put(createdPlaylist.id, createdPlaylist);
+
+      logger.i("Playlist created: $playlistName");
+      return true;
+    } catch (_) {
+      logger.e("Error creating playlist");
       return false;
     }
   }
