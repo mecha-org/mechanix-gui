@@ -81,7 +81,6 @@ flutter:
     - assets/images/add_to_playlist.png
     - assets/images/add_to_queue.png
     - assets/images/play_next.png
-    - assets/images/favorite.png
     - assets/images/filled_favourite.png
     - assets/images/search.png
     - assets/images/audio_image.png
@@ -90,6 +89,21 @@ flutter:
     - assets/images/prev.png
     - assets/images/next.png
     - assets/images/repeat.png
+    - assets/images/back_icon.png
+    - assets/images/three_dot_icon.png
+    - assets/images/list_view.png
+    - assets/images/playlist.png
+    - assets/images/queue.png
+    - assets/images/delete.png
+    - assets/images/music.png
+    - assets/images/favourites.png
+    - assets/images/home.png
+    - assets/images/pause.png
+    - assets/images/swipe_delete.png
+    - assets/images/next_page.png
+    - assets/images/previous_page.png
+    - assets/images/check_icon.png
+
     - assets/screenshots/music1.jpeg
     - assets/screenshots/music2.jpeg
     - assets/screenshots/music3.jpeg

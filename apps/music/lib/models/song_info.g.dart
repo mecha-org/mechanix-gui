@@ -26,13 +26,14 @@ class SongInfoAdapter extends TypeAdapter<SongInfo> {
       duration: fields[5] as String?,
       artworkPath: fields[7] as String?,
       isFavourite: fields[6] as bool,
+      playlistIds: (fields[9] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, SongInfo obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class SongInfoAdapter extends TypeAdapter<SongInfo> {
       ..writeByte(7)
       ..write(obj.artworkPath)
       ..writeByte(8)
-      ..write(obj.index);
+      ..write(obj.index)
+      ..writeByte(9)
+      ..write(obj.playlistIds);
   }
 
   @override

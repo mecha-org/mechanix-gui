@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:mechanix_music/models/playlist_info.dart';
+import 'package:mechanix_music/models/recently_played.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository_impl.dart';
@@ -12,15 +14,17 @@ import 'package:mechanix_music/src/features/home/home.dart';
 import 'package:mechanix_music/src/features/search_tab/search.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/theme/mechanix_theme.dart';
+import 'package:widgets/theme/variants.dart';
 import 'package:widgets/widgets/theme/theme_toggle.dart';
 import 'package:path_provider/path_provider.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
   Hive.registerAdapter(SongInfoAdapter());
+  Hive.registerAdapter(RecentlyPlayedAdapter());
+  Hive.registerAdapter(PlaylistInfoAdapter());
   await initializeHive();
   MediaKit.ensureInitialized();
-
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -58,7 +62,7 @@ class MainApp extends StatelessWidget with WatchItMixin {
     );
 
     return MechanixTheme(
-      data: MechanixThemeData(mechanixVariant: mechanixVariant),
+      data: MechanixThemeData(mechanixVariant: MechanixVariant.amber),
       builder:
           (context, mechanix, child) => MusicApp(
             darkTheme: mechanix.darkTheme,
