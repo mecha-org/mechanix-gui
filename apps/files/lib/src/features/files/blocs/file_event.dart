@@ -105,7 +105,8 @@ class CancelMoveMode extends FilesEvent {}
 
 class SortFiles extends FilesEvent {
   final String sortBy; // e.g., 'name', 'size_asc', 'type', etc.
-  SortFiles(this.sortBy);
+  final bool isAscending; // true / false
+  SortFiles(this.sortBy, this.isAscending);
 }
 
 class FetchFileDetails extends FilesEvent {
@@ -131,16 +132,34 @@ class CompressEntitiesEvent extends FilesEvent {
 }
 
 class ExtractZipTo extends FilesEvent {
-  final String zipFilePath;
+  final String zipPath;
   final String targetPath;
-  final Completer<void>? completer;
+  final Completer completer;
+  final int index;
+  final int total;
 
-  ExtractZipTo(this.zipFilePath, this.targetPath, this.completer);
+  ExtractZipTo(
+    this.zipPath,
+    this.targetPath,
+    this.completer, {
+    required this.index,
+    required this.total,
+  });
+}
+
+class ExtractZipBatchCompleted extends FilesEvent {
+  final int successCount;
+  final int failureCount;
+
+  ExtractZipBatchCompleted({
+    required this.successCount,
+    required this.failureCount,
+  });
 }
 
 class StartExtractMode extends FilesEvent {
-  final String zipFilePath;
-  StartExtractMode(this.zipFilePath);
+  final List<String> zipFilePaths;
+  StartExtractMode(this.zipFilePaths);
 }
 
 class CancelExtractMode extends FilesEvent {}

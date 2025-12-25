@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:widgets/mechanix.dart';
 
 class CustomCircleCheckbox extends StatelessWidget {
   final bool isChecked;
@@ -20,18 +21,21 @@ class CustomCircleCheckbox extends StatelessWidget {
         height: 22,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: isChecked ? Colors.blue : Colors.transparent,
+          color:
+              isChecked ? context.colorScheme.primaryFixed : Colors.transparent,
           border: Border.all(
-            color: isChecked ? Colors.blue : Colors.grey.shade600,
+            color: isChecked
+                ? context.colorScheme.primaryFixed
+                : context.colorScheme.surfaceContainerHigh,
             width: 2.5,
           ),
         ),
         child: isChecked
-            ? const Center(
+            ? Center(
                 child: Icon(
                   Icons.check,
                   size: 16,
-                  color: Colors.white,
+                  color: context.colorScheme.surface,
                 ),
               )
             : null,

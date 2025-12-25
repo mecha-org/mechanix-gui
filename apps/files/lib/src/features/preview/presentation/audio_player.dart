@@ -1,18 +1,33 @@
 import 'dart:async';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/services/media_kit_manager.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:path/path.dart' as p;
+import 'package:widgets/constants.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
+
+import '../../../commons/constants.dart';
 
 class AudioPlayerOverlay extends StatefulWidget {
-  final String filePath;
-  const AudioPlayerOverlay({super.key, required this.filePath});
+  final BuildContext rootContext;
+  String filePath;
+  AudioPlayerOverlay(
+      {super.key, required this.filePath, required this.rootContext});
 
   @override
   State<AudioPlayerOverlay> createState() => _AudioPlayerOverlayState();
 }
 
 class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
+  bool _playerReady = false;
   late final Player player;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
@@ -20,6 +35,9 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
   late final StreamSubscription<bool> _playingSub;
   late final StreamSubscription<Duration> _positionSub;
   late final StreamSubscription<Duration> _durationSub;
+  double _lastVolume = 1.0; // default fallback
+
+  bool isMenuOpen = false;
 
   @override
   void initState() {
@@ -30,7 +48,10 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
   Future<void> _initializePlayer() async {
     await MediaKitManager.init();
     player = Player();
-    player.open(Media(widget.filePath));
+    await player.open(Media(widget.filePath));
+
+    // Get actual volume from the player
+    _lastVolume = player.state.volume;
 
     _playingSub = player.stream.playing.listen((playing) {
       if (mounted) setState(() => _isPlaying = playing);
@@ -43,6 +64,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
     _durationSub = player.stream.duration.listen((dur) {
       if (mounted) setState(() => _duration = dur);
     });
+
+    if (mounted) setState(() => _playerReady = true);
   }
 
   @override
@@ -56,75 +79,306 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Material(
-        elevation: 10,
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.deepPurple,
+    final explorerState =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    final controller = explorerState?.controller;
+
+    final title = controller != null
+        ? controller.getDisplayName(File(widget.filePath))
+        : p.basename(widget.filePath);
+
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+          child: AppBar(
+            automaticallyImplyLeading: false,
+            scrolledUnderElevation: 0,
+            title: MiddleEllipsisText(title, style: previewTitleStyle(context)),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+        ),
+      ),
+      body: Center(
         child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          width: 200,
+          height: 200,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade900,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: const EdgeInsets.all(60),
+          child: Image.asset(
+            Images.musicNote,
+          ),
+        ),
+      ),
+      bottomNavigationBar: _playerReady
+          ? _buildBottomBar(context)
+          : Padding(
+              padding: const EdgeInsets.all(20),
+              child: CircularProgressIndicator(
+                  color: context.colorScheme.surfaceContainerLowest),
+            ),
+    );
+  }
+
+  Widget _buildBottomBar(BuildContext context) {
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.tertiary,
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.music_note, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      widget.filePath.split('/').last,
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      icon: Image.asset(
+                        _isPlaying ? Images.pause : Images.play,
+                        width: 24,
+                        height: 24,
+                      ),
+                      onPressed: () {
+                        _isPlaying ? player.pause() : player.play();
+                      },
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Expanded(
+                        child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 6,
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 8,
+                        ),
+                        overlayShape: const RoundSliderOverlayShape(
+                          overlayRadius: 0,
+                        ),
+                      ),
+                      child: Slider(
+                        min: 0,
+                        max: _duration.inMilliseconds
+                            .toDouble()
+                            .clamp(1, double.infinity),
+                        value: _position.inMilliseconds
+                            .toDouble()
+                            .clamp(0, _duration.inMilliseconds.toDouble()),
+                        activeColor: context.colorScheme.primaryFixed,
+                        inactiveColor: context.colorScheme.surfaceContainerHigh,
+                        thumbColor: context.colorScheme.onSurface,
+                        onChanged: (v) {
+                          player.seek(Duration(milliseconds: v.toInt()));
+                        },
+                      ),
+                    )),
+                    const SizedBox(width: 6),
+                    StreamBuilder<double>(
+                      stream: player.stream.volume,
+                      builder: (_, snapshot) {
+                        final volume = snapshot.data ?? _lastVolume;
+                        final isMuted = volume == 0.0;
+
+                        if (!isMuted) {
+                          _lastVolume = volume; // store last non-zero volume
+                        }
+
+                        return IconButton(
+                          onPressed: () {
+                            if (isMuted) {
+                              player.setVolume(_lastVolume); // restore
+                            } else {
+                              player.setVolume(0.0); // mute
+                            }
+                          },
+                          icon: Image.asset(
+                            isMuted ? Images.mute : Images.volume,
+                            width: 24,
+                            height: 24,
+                          ),
+                        );
+                      },
+                    )
+                  ],
+                ),
               ),
-              Slider(
-                activeColor: Colors.white,
-                thumbColor: Colors.white,
-                inactiveColor: Colors.white24,
-                min: 0,
-                max: _duration.inMilliseconds
-                    .toDouble()
-                    .clamp(1, double.infinity),
-                value: _position.inMilliseconds
-                    .toDouble()
-                    .clamp(0, _duration.inMilliseconds.toDouble()),
-                onChanged: (value) =>
-                    player.seek(Duration(milliseconds: value.toInt())),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _formatDuration(_position),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                  IconButton(
-                    icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Colors.white),
-                    onPressed: () =>
-                        _isPlaying ? player.pause() : player.play(),
-                  ),
-                  Text(
-                    _formatDuration(_duration),
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ],
+              Positioned(
+                top: -42, // float upward
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _buildTimeBubble(),
+                ),
               ),
             ],
           ),
+          MechanixBottomBar(
+            theme: MechanixBottomBarThemeData(
+                decoration: BoxDecoration(
+              color: context.colorScheme.secondary,
+              borderRadius: null,
+            )),
+            leadingWidget: [
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
+                iconPath: Images.back,
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+            centerWidgetSpacing: 30,
+            centerWidget: [
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
+                iconPath: Images.copy,
+                onPressed: () {
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleCopy();
+                },
+              ),
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
+                iconPath: Images.move,
+                onPressed: () {
+                  Navigator.pop(context);
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleMove();
+                },
+              ),
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
+                iconWidget: IconWidget(
+                  iconPath: Images.share,
+                  iconColor: Colors.grey.shade600,
+                ),
+                onPressed: () {},
+                isDisabled: true, //TODO : add share functionality
+              ),
+            ],
+            anchorWidget: [
+              BottomBarButton.widget(widget: buildActionsMenu(context)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildActionsMenu(BuildContext context) {
+    final offset = const Offset(-8, -14);
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return MechanixMenu(
+      offset: offset,
+      dropdownPosition: DropdownPosition.topRight,
+      animationDuration: const Duration(milliseconds: 300),
+      buttonIcon: IconWidget(
+          iconPath: Images.dots,
+          iconWidth: 28,
+          iconHeight: 28,
+          iconColor: isMenuOpen
+              ? context.colorScheme.primaryFixed
+              : context.colorScheme.onSurface),
+      openMenu: () {
+        setState(() => isMenuOpen = true);
+      },
+      closeMenu: () {
+        setState(() => isMenuOpen = false);
+      },
+      items: [
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.rename,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          title: 'Rename',
+          onTap: () async {
+            final oldPath = widget.filePath;
+
+            // Wait for rename result
+            final newPath = await state?.showRenameSheet(
+              initialName: p.basename(oldPath),
+            );
+
+            // If user canceled : do nothing
+            if (newPath == null) return;
+
+            // Also update widget.filePath for correct behavior
+            widget.filePath = newPath;
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Properties",
+          leading: Image.asset(
+            Images.info,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            state?.showDetailsDialog(widget.rootContext, widget.filePath);
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Delete",
+          leading: Image.asset(
+            Images.delete,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            state?.confirmDelete(widget.rootContext, {widget.filePath});
+          },
+        ),
+      ],
+    ).padRight(8);
+  }
+
+  Widget _buildTimeBubble() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color.fromRGBO(70, 70, 70, 0.6),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
+        style: TextStyle(
+          fontSize: 16,
+          color: context.colorScheme.surfaceContainerLowest,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 
-  String _formatDuration(Duration d) =>
-      '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
+  String _formatHMS(Duration d) {
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+    if (hours > 0) {
+      return "${hours.toString().padLeft(2, '0')}:$minutes:$seconds";
+    } else {
+      return "$minutes:$seconds";
+    }
+  }
 }

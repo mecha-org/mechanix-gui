@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:file/local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
@@ -24,6 +25,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
             loading: false,
             error: null,
             currentSortBy: '',
+            isAscending: false,
             conflictDestinationPath: '')) {
     on<InitializeFiles>(_onInitializeFiles);
     on<CreateFolder>(_onCreateFolder);
@@ -48,6 +50,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     on<CompressEntitiesEvent>(_onCompressEntities);
     on<ExtractZipTo>(_onExtractZipTo);
+    on<ExtractZipBatchCompleted>(_onExtractZipBatchCompleted);
     on<StartExtractMode>(_onStartExtractMode);
     on<CancelExtractMode>(_onCancelExtractMode);
 
@@ -61,18 +64,22 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Future<void> _onInitializeFiles(
-      InitializeFiles event, Emitter<FilesState> emit) async {
+    InitializeFiles event,
+    Emitter<FilesState> emit,
+  ) async {
     emit(state.copyWith(loading: true));
 
     final prefs = await SharedPreferences.getInstance();
-    logger.d('sort_mode: ${prefs.getString('sort_mode')}');
-    logger.d('show_hidden_files: ${prefs.getBool('show_hidden_files')}');
 
-    final savedSort = prefs.getString('sort_mode') ?? 'name';
+    final savedSort =
+        prefs.getString('sort_mode') ?? keyFromSort(SortBy.modTime);
+    final savedAscending = prefs.getBool('sort_ascending') ?? false;
     final savedHidden = prefs.getBool('show_hidden_files') ?? false;
 
     emit(state.copyWith(
+      loading: false,
       currentSortBy: savedSort,
+      isAscending: savedAscending,
       showHiddenFiles: savedHidden,
     ));
   }
@@ -81,9 +88,19 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       CreateFolder event, Emitter<FilesState> emit) async {
     try {
       emit(state.copyWith(loading: true));
+
       logger.i("Creating folder: ${event.folderName} in ${event.path}");
+
+      // Create folder
       await fileRepository.createFolder(event.path, event.folderName);
+
+      // Mark this folder as new (important!)
+      final newFolderPath = "${event.path}/${event.folderName}";
+      event.controller.markNewFolder(newFolderPath);
+
+      // Reload file list AFTER tagging the new folder
       await event.controller.reload();
+
       emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: e.toString(), loading: false));
@@ -103,6 +120,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       emit(state.copyWith(loading: true));
       await fileRepository.deleteEntities(event.entitiesPath);
       await event.controller.reload();
+      emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: 'Failed to delete: $e', loading: false));
     }
@@ -112,7 +130,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       emit(state.copyWith(loading: true));
       await fileRepository.renameEntity(event.oldPath, event.newName);
-      await event.controller!.reload();
+      await event.controller.reload();
       emit(state.copyWith(loading: false));
     } catch (e) {
       emit(state.copyWith(error: 'Failed to rename item: $e', loading: false));
@@ -322,15 +340,19 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
-    logger.d("Sort by : ${event.sortBy}");
-    final prefs = await SharedPreferences
-        .getInstance(); // Get shared preferences instance
-    await prefs.setString(
-        'sort_mode', event.sortBy); // Save sort mode to shared preferences
+    logger.d("Sort by : ${event.sortBy}, asc: ${event.isAscending}");
 
-    emit(state.copyWith(
-      currentSortBy: event.sortBy,
-    ));
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('sort_mode', event.sortBy);
+    await prefs.setBool('sort_ascending', event.isAscending);
+
+    emit(
+      state.copyWith(
+        currentSortBy: event.sortBy,
+        isAscending: event.isAscending,
+      ),
+    );
   }
 
   Future<void> _onFetchFileDetails(
@@ -392,41 +414,40 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     }
   }
 
-  Future<void> _onExtractZipTo(
-    ExtractZipTo event,
-    Emitter<FilesState> emit,
-  ) async {
-    emit(state.copyWith(loading: true));
+  void _onExtractZipTo(ExtractZipTo event, Emitter<FilesState> emit) async {
     try {
-      var targetDir = event.targetPath;
-      if (targetDir.isEmpty) {
-        targetDir = p.dirname(event.zipFilePath);
-      }
-
-      await fileRepository.extractZip(event.zipFilePath, targetDir);
-
-      if (!(event.completer?.isCompleted ?? true)) {
-        event.completer?.complete();
-      }
+      await fileRepository.extractZip(event.zipPath, event.targetPath);
+      event.completer.complete('success');
     } catch (e) {
-      if (!(event.completer?.isCompleted ?? true)) {
-        event.completer?.completeError(e);
-      }
-      emit(state.copyWith(error: 'Failed to extract ZIP: $e', loading: false));
+      event.completer.complete('failure');
     }
+  }
+
+  void _onExtractZipBatchCompleted(
+    ExtractZipBatchCompleted event,
+    Emitter<FilesState> emit,
+  ) {
+    emit(state.copyWith(
+      extractStatus: FileExtractStatus.completed,
+      extractSuccessCount: event.successCount,
+      extractFailureCount: event.failureCount,
+    ));
   }
 
   void _onStartExtractMode(StartExtractMode event, Emitter<FilesState> emit) {
     emit(state.copyWith(
       isExtractMode: true,
-      zipFilePath: event.zipFilePath,
+      zipFilePaths: event.zipFilePaths,
+      extractStatus: FileExtractStatus.inProgress,
+      extractError: null,
     ));
   }
 
   void _onCancelExtractMode(CancelExtractMode event, Emitter<FilesState> emit) {
     emit(state.copyWith(
       isExtractMode: false,
-      zipFilePath: '',
+      zipFilePaths: [],
+      extractStatus: FileExtractStatus.none,
     ));
   }
 

@@ -1,16 +1,31 @@
 import 'dart:async';
+import 'dart:io' show FileSystemEntity, File;
 import 'package:flutter/material.dart';
+import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
+import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/services/media_kit_manager.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:path/path.dart' as p;
+import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
-
-enum ZoomMode { stretch, original }
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class VideoPlayer extends StatefulWidget {
-  final String filePath;
+  final BuildContext rootContext;
+  String filePath;
 
-  const VideoPlayer({super.key, required this.filePath});
+  VideoPlayer({
+    super.key,
+    required this.filePath,
+    required this.rootContext,
+  });
 
   @override
   State<VideoPlayer> createState() => _VideoPlayerState();
@@ -19,367 +34,373 @@ class VideoPlayer extends StatefulWidget {
 class _VideoPlayerState extends State<VideoPlayer> {
   late final Player player;
   late final VideoController videoController;
-  final ValueNotifier<bool> isLooping = ValueNotifier(false);
-  double _lastVolume = 50; // Store user's volume before muting
 
-  bool _controlsVisible = true;
-  Timer? _hideControlsTimer;
+  bool _playerReady = false;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+  bool _isPlaying = false;
 
-  final bool _showOptions = false;
-  double _playbackRate = 1.0;
-  ZoomMode _zoomMode = ZoomMode.original;
-
-  Duration _currentPosition = Duration.zero;
-  Duration _totalDuration = Duration.zero;
-
+  late final StreamSubscription<bool> _playingSub;
   late final StreamSubscription<Duration> _positionSub;
   late final StreamSubscription<Duration?> _durationSub;
 
-  bool _isPlaying = false;
-  late final StreamSubscription<bool> _playingSub;
+  double _lastVolume = 1.0;
 
-  double _localVolume = 50; // Default volume at 50%
-  bool _isPlayerDisposed = false;
-  bool _isInitialized = false;
+  bool isMenuOpen = false;
 
   @override
   void initState() {
     super.initState();
-    _initializePlayer();
+    _initVideoPlayer();
   }
 
-  Future<void> _initializePlayer() async {
+  Future<void> _initVideoPlayer() async {
     await MediaKitManager.init();
     player = Player();
     videoController = VideoController(player);
+
     await player.open(Media(widget.filePath));
 
-    _positionSub = player.stream.position.listen((position) {
-      if (!mounted) return;
-      setState(() => _currentPosition = position);
+    _lastVolume = player.state.volume;
+
+    // Streams
+    _playingSub = player.stream.playing.listen((v) {
+      if (mounted) setState(() => _isPlaying = v);
     });
 
-    _durationSub = player.stream.duration.listen((duration) {
-      if (!mounted) return;
-      setState(() => _totalDuration = duration ?? Duration.zero);
+    _positionSub = player.stream.position.listen((pos) {
+      if (mounted) setState(() => _position = pos);
     });
 
-    _playingSub = player.stream.playing.listen((playing) {
-      if (!mounted) return;
-      setState(() => _isPlaying = playing);
+    _durationSub = player.stream.duration.listen((dur) {
+      if (mounted) setState(() => _duration = dur ?? Duration.zero);
     });
 
-    if (!mounted) return;
-    setState(() => _isInitialized = true);
-  }
-
-  void _startHideTimer() {
-    _hideControlsTimer?.cancel();
-    _hideControlsTimer = Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      setState(() {
-        _controlsVisible = false;
-      });
-    });
-  }
-
-  void _handleGesture() {
-    setState(() {
-      _controlsVisible = true;
-    });
-    _startHideTimer(); // Restart the timer to auto-hide again
+    if (mounted) {
+      setState(() => _playerReady = true);
+    }
   }
 
   @override
   void dispose() {
+    _playingSub.cancel();
     _positionSub.cancel();
     _durationSub.cancel();
-    _playingSub.cancel();
-
-    // Don't call player.dispose() here if already done in _backNavigation
-    if (!_isPlayerDisposed) {
-      player.dispose();
-    }
-
-    _hideControlsTimer?.cancel();
+    player.dispose();
     super.dispose();
   }
 
-  void _backNavigation() async {
-    if (!_isPlayerDisposed) {
-      await player.pause();
-      await player.dispose();
-      _isPlayerDisposed = true;
-    }
-    if (mounted) Navigator.pop(context);
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: _buildAppBar(context),
+      body: _playerReady
+          ? Center(child: _buildVideo())
+          : const Center(child: CircularProgressIndicator()),
+      bottomNavigationBar:
+          _playerReady ? _buildBottomBar(context) : const SizedBox(),
+    );
   }
 
-  void _showBottomOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.black.withOpacity(0.6),
-      builder: (_) {
-        return StatefulBuilder(
-          builder: (_, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: SingleChildScrollView(
-                child: _buildOptionsPanel(setModalState),
-              ),
-            );
-          },
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final explorerState =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    final controller = explorerState?.controller;
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(60),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+        child: AppBar(
+          automaticallyImplyLeading: false,
+          scrolledUnderElevation: 0,
+          title: _buildTitle(controller),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideo() {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Video(controller: videoController, controls: NoVideoControls),
+      ),
+    );
+  }
+
+  Widget _buildTitle(FileManagerController? controller) {
+    if (controller == null) {
+      return MiddleEllipsisText(
+        p.basename(widget.filePath),
+        style: previewTitleStyle(context),
+      );
+    }
+
+    return ValueListenableBuilder<List<FileSystemEntity>>(
+      valueListenable: controller.paginatedEntities,
+      builder: (_, __, ___) {
+        final title = controller.getDisplayName(File(widget.filePath));
+        return MiddleEllipsisText(
+          title,
+          style: previewTitleStyle(context),
         );
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (!_isInitialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+  Widget _buildBottomBar(BuildContext context) {
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
-    return Scaffold(
-      body: Listener(
-        behavior: HitTestBehavior.opaque, // ensures all taps are detected
-        onPointerDown: (_) => _handleGesture(),
-        onPointerMove: (_) => _handleGesture(),
-        child: Stack(
-          children: [
-            // Video content with optional zoom styling
-            Center(
-              child: _buildZoomedVideo(),
-            ),
-
-            // Back button & title (only visible when _controlsVisible)
-            if (_controlsVisible)
-              Positioned(
-                top: 30,
-                left: 16,
-                right: 16,
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colorScheme.tertiary,
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
+                    // Play / Pause
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios,
-                          color: Colors.blue, size: 16),
-                      onPressed: _backNavigation,
+                      padding: EdgeInsets.zero,
+                      icon: Icon(
+                        _isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: context.colorScheme.surfaceContainerLowest,
+                        size: 28,
+                      ),
+                      onPressed: () =>
+                          _isPlaying ? player.pause() : player.play(),
                     ),
-                    const SizedBox(width: 8),
+
+                    const SizedBox(width: 6),
+
+                    // Seek slider
                     Expanded(
-                      child: Text(
-                        widget.filePath.split('/').last,
-                        style: context.textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 6,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 8),
+                          overlayShape:
+                              const RoundSliderOverlayShape(overlayRadius: 0),
+                        ),
+                        child: Slider(
+                          min: 0,
+                          max: _duration.inMilliseconds
+                              .toDouble()
+                              .clamp(1, double.infinity),
+                          value: _position.inMilliseconds
+                              .toDouble()
+                              .clamp(0, _duration.inMilliseconds.toDouble()),
+                          activeColor: context.colorScheme.primaryFixed,
+                          inactiveColor:
+                              context.colorScheme.surfaceContainerHigh,
+                          thumbColor: context.colorScheme.onSurface,
+                          onChanged: (v) {
+                            player.seek(Duration(milliseconds: v.toInt()));
+                          },
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
 
-            // Right-side control buttons (only visible when _controlsVisible || _showOptions)
-            if (_controlsVisible || _showOptions)
-              Positioned(
-                right: 16,
-                top: MediaQuery.of(context).size.height * 0.3,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
+                    const SizedBox(width: 6),
+
+                    // Volume mute/unmute
                     StreamBuilder<double>(
                       stream: player.stream.volume,
-                      builder: (_, snapshot) {
-                        final volume = snapshot.data ?? _lastVolume;
-                        final isMuted = volume == 0;
+                      builder: (_, snap) {
+                        final volume = snap.data ?? _lastVolume;
+                        final muted = volume == 0;
 
-                        // Update _lastVolume only when not muted
-                        if (!isMuted) {
-                          _lastVolume = volume;
-                        }
+                        if (!muted) _lastVolume = volume;
 
-                        return _circularIconButton(
-                          icon: isMuted ? Icons.volume_off : Icons.volume_up,
-                          onPressed: () {
-                            if (isMuted) {
-                              player.setVolume(_lastVolume);
-                            } else {
-                              player.setVolume(0);
-                            }
-                          },
+                        return IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: Icon(
+                            muted ? Icons.volume_off : Icons.volume_up,
+                            color: context.colorScheme.surfaceContainerLowest,
+                            size: 24,
+                          ),
+                          onPressed: () =>
+                              player.setVolume(muted ? _lastVolume : 0.0),
                         );
                       },
-                    ),
-                    const SizedBox(height: 8),
-                    if (_showOptions) _buildOptionsPanel((_) {}),
-                    _circularIconButton(
-                      icon: Icons.more_horiz,
-                      onPressed: () => _showBottomOptions(context),
-                    ),
+                    )
                   ],
                 ),
               ),
+              Positioned(
+                top: -42,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: _buildTimeBubble(),
+                ),
+              ),
+            ],
+          ),
 
-            if (_controlsVisible && !_showOptions)
-              Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _circularIconButton(
-                      icon: Icons.replay_10,
-                      onPressed: () {
-                        final newPosition =
-                            _currentPosition - const Duration(seconds: 10);
-                        player.seek(newPosition > Duration.zero
-                            ? newPosition
-                            : Duration.zero);
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    _circularIconButton(
-                      icon: _isPlaying ? Icons.pause : Icons.play_arrow,
-                      onPressed: () {
-                        if (_isPlaying) {
-                          player.pause();
-                        } else {
-                          player.play();
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 16),
-                    _circularIconButton(
-                      icon: Icons.forward_10,
-                      onPressed: () {
-                        final newPosition =
-                            _currentPosition + const Duration(seconds: 10);
-                        player.seek(newPosition < _totalDuration
-                            ? newPosition
-                            : _totalDuration);
-                      },
-                    ),
-                  ],
-                ),
+          // Bottom menu bar same as audio
+          MechanixBottomBar(
+            theme: MechanixBottomBarThemeData(
+                decoration: BoxDecoration(
+              color: context.colorScheme.secondary,
+              borderRadius: null,
+            )),
+            leadingWidget: [
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
+                iconPath: Images.back,
+                onPressed: () => Navigator.pop(context),
               ),
-          ],
-        ),
+            ],
+            centerWidgetSpacing: 30,
+            centerWidget: [
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
+                iconPath: Images.copy,
+                onPressed: () {
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleCopy();
+                },
+              ),
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
+                iconPath: Images.move,
+                onPressed: () {
+                  Navigator.pop(context);
+                  state?.selectedPaths = {widget.filePath};
+                  state?.handleMove();
+                },
+              ),
+              BottomBarButton(
+                iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28)),
+                iconWidget: IconWidget(
+                  iconPath: Images.share,
+                  iconColor: Colors.grey.shade600,
+                ),
+                onPressed: () {},
+                isDisabled: true, //TODO : add share functionality
+              ),
+            ],
+            anchorWidget: [
+              BottomBarButton.widget(widget: buildActionsMenu(context)),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildOptionsPanel(void Function(void Function()) setModalState) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('Playback speed', style: TextStyle(color: Colors.white70)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [0.5, 1.0, 1.25, 1.5, 2.0].map((rate) {
-            return ChoiceChip(
-              label: Text(
-                rate.toStringAsFixed(2).replaceAll(RegExp(r'\.0+$'), ''),
-                style: const TextStyle(color: Colors.white),
-              ),
-              selected: _playbackRate == rate,
-              onSelected: (_) {
-                player.setRate(rate);
-                setState(() => _playbackRate = rate);
-                setModalState(() {}); // Triggers UI update inside bottom sheet
-              },
-              selectedColor: Colors.blue,
-              backgroundColor: Colors.white24,
+  Widget buildActionsMenu(BuildContext context) {
+    final offset = const Offset(-8, -14);
+    final state =
+        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+
+    return MechanixMenu(
+      offset: offset,
+      dropdownPosition: DropdownPosition.topRight,
+      animationDuration: const Duration(milliseconds: 300),
+      buttonIcon: IconWidget(
+          iconPath: Images.dots,
+          iconHeight: 28,
+          iconWidth: 28,
+          iconColor: isMenuOpen
+              ? context.colorScheme.primaryFixed
+              : context.colorScheme.onSurface),
+      openMenu: () {
+        setState(() => isMenuOpen = true);
+      },
+      closeMenu: () {
+        setState(() => isMenuOpen = false);
+      },
+      items: [
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.rename,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          title: 'Rename',
+          onTap: () async {
+            final oldPath = widget.filePath;
+
+            // Wait for rename result
+            final newPath = await state?.showRenameSheet(
+              initialName: p.basename(oldPath),
             );
-          }).toList(),
+
+            // If user canceled : do nothing
+            if (newPath == null) return;
+
+            // Also update widget.filePath for correct behavior
+            widget.filePath = newPath;
+          },
         ),
-        const SizedBox(height: 16),
-        const Text('Zoom', style: TextStyle(color: Colors.white70)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          children: ZoomMode.values.map((mode) {
-            IconData icon = mode == ZoomMode.stretch
-                ? Icons.open_in_full
-                : Icons.fullscreen;
-            return ChoiceChip(
-              label: Icon(icon, color: Colors.white),
-              selected: _zoomMode == mode,
-              onSelected: (_) {
-                setState(() => _zoomMode = mode);
-                setModalState(() {});
-              },
-              selectedColor: Colors.blue,
-              backgroundColor: Colors.white24,
-            );
-          }).toList(),
+        MechanixMenuItemsType(
+          title: "Properties",
+          leading: Image.asset(
+            Images.info,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            state?.showDetailsDialog(widget.rootContext, widget.filePath);
+          },
         ),
-        const SizedBox(height: 16),
-        const Text('Volume', style: TextStyle(color: Colors.white70)),
-        const SizedBox(height: 8),
-        StreamBuilder<double>(
-          stream: player.stream.volume,
-          builder: (_, snapshot) {
-            final volume = snapshot.data ?? _lastVolume;
-            return Slider(
-              value: volume.clamp(0, 100),
-              min: 0,
-              max: 100,
-              divisions: 20,
-              //label: '${volume.round()}%',
-              onChanged: (value) {
-                // Only update UI during dragging
-                setModalState(() {
-                  _localVolume = value;
-                });
-              },
-              onChangeEnd: (value) {
-                // Apply volume to player once user finishes sliding
-                player.setVolume(value);
-                setState(() {
-                  _lastVolume = value;
-                });
-              },
-              activeColor: Colors.blue,
-              inactiveColor: Colors.white24,
-            );
+        MechanixMenuItemsType(
+          title: "Delete",
+          leading: Image.asset(
+            Images.delete,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            state?.confirmDelete(widget.rootContext, {widget.filePath});
           },
         ),
       ],
-    );
+    ).padRight(8);
   }
 
-  Widget _buildZoomedVideo() {
-    final video = Video(
-      controller: videoController,
-    );
-
-    switch (_zoomMode) {
-      case ZoomMode.original:
-        return SizedBox.expand(child: video);
-
-      case ZoomMode.stretch:
-        return Center(
-          child: Transform.scale(
-            scale: 1.2,
-            child: video,
-          ),
-        );
-    }
-  }
-
-  Widget _circularIconButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
+  Widget _buildTimeBubble() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
-        shape: BoxShape.circle,
+        color: const Color.fromRGBO(70, 70, 70, 0.6),
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: IconButton(
-        icon: Icon(icon, size: 30, color: Colors.white),
-        onPressed: onPressed,
+      child: Text(
+        "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
+        style: TextStyle(
+            color: context.colorScheme.surfaceContainerLowest, fontSize: 16),
       ),
     );
+  }
+
+  String _formatHMS(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+    return h > 0 ? "$h:$m:$s" : "$m:$s";
   }
 }

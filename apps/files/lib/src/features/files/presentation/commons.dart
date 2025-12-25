@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:math' as Math;
+import 'dart:ui' as ui;
 
 import 'package:archive/archive.dart';
 import 'package:file/file.dart';
@@ -12,11 +14,11 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/preview/presentation/audio_player.dart';
 import 'package:mechanix_files/src/features/preview/presentation/code_editor.dart';
-import 'package:mechanix_files/src/features/preview/presentation/csv_viewer.dart';
-import 'package:mechanix_files/src/features/preview/presentation/excel_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/image_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/pdf_viewer.dart';
 import 'package:mechanix_files/src/features/preview/presentation/video_player.dart';
+import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
@@ -28,16 +30,28 @@ String formatModifiedTime(DateTime modified) {
       now.month == modified.month &&
       now.day == modified.day;
 
+  final isSameYear = now.year == modified.year;
+
   if (isSameDay) {
     return DateFormat.jm().format(modified); // e.g., 12:30 PM
+  } else if (isSameYear) {
+    return DateFormat('dd MMM').format(modified); // e.g., 20 Jul
   } else {
-    return DateFormat('dd-MMM-yyyy').format(modified); // e.g., 20-Jul-2025
+    return DateFormat('dd MMM yyyy').format(modified); // e.g., 20 Jul 2025
   }
 }
 
 String formatDateTime(DateTime dateTime) {
   final formatter = DateFormat('dd-MM-yyyy, hh:mm a');
   return formatter.format(dateTime).toLowerCase();
+}
+
+String formatBytes(int bytes, [int decimals = 2]) {
+  if (bytes <= 0) return "0 B";
+  const suffixes = ["B", "KB", "MB", "GB", "TB"];
+  final i = (bytes == 0) ? 0 : (Math.log(bytes) / Math.log(1024)).floor();
+  final size = bytes / Math.pow(1024, i);
+  return "${size.toStringAsFixed(decimals)} ${suffixes[i]}";
 }
 
 void _navigateToDirectory(
@@ -89,7 +103,8 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CodeEditorPage(filePath: fullPath),
+        builder: (_) =>
+            CodeEditorPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -101,7 +116,8 @@ void handleTap(
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AudioPlayerOverlay(filePath: fullPath),
+      builder: (_) =>
+          AudioPlayerOverlay(rootContext: context, filePath: fullPath),
     );
     return;
   }
@@ -112,7 +128,7 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VideoPlayer(filePath: fullPath),
+        builder: (_) => VideoPlayer(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -124,31 +140,7 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
-  if (fileType == '.xlsx') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ExcelViewer(filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
-  if (fileType == '.csv') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CsvViewer(filePath: fullPath),
+        builder: (_) => PdfViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -160,43 +152,10 @@ void handleTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ImageViewerPage(imagePath: fullPath),
+        builder: (_) =>
+            ImageViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
-    return;
-  }
-
-  if (fileType == '.zip') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-    final state = context.findAncestorStateOfType<FileExplorerPageState>();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[850],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              minTileHeight: 20,
-              leading: const Icon(Icons.drive_file_move, color: Colors.white70),
-              title: const Text("Extract to...",
-                  style: TextStyle(color: Colors.white, fontSize: 14)),
-              onTap: () {
-                Navigator.pop(ctx);
-
-                // Handle extraction
-                state?.handleExtract(fullPath);
-              },
-            ),
-          ],
-        );
-      },
-    );
-
     return;
   }
 }
@@ -226,7 +185,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CodeEditorPage(filePath: fullPath),
+        builder: (_) =>
+            CodeEditorPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -238,7 +198,8 @@ void handleFileTap(
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AudioPlayerOverlay(filePath: fullPath),
+      builder: (_) =>
+          AudioPlayerOverlay(rootContext: context, filePath: fullPath),
     );
     return;
   }
@@ -249,7 +210,7 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VideoPlayer(filePath: fullPath),
+        builder: (_) => VideoPlayer(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -261,31 +222,7 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
-  if (fileType == '.xlsx') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ExcelViewer(filePath: fullPath),
-      ),
-    );
-    return;
-  }
-
-  if (fileType == '.csv') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CsvViewer(filePath: fullPath),
+        builder: (_) => PdfViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -297,7 +234,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ImageViewerPage(imagePath: fullPath),
+        builder: (_) =>
+            ImageViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -306,91 +244,7 @@ void handleFileTap(
   if (fileType == '.zip') {
     context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
     final state = context.findAncestorStateOfType<FileExplorerPageState>();
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[850],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              minTileHeight: 20,
-              leading: const Icon(Icons.folder_zip, color: Colors.white70),
-              title: const Text("Extract here",
-                  style: TextStyle(color: Colors.white, fontSize: 14)),
-              onTap: () async {
-                Navigator.pop(ctx);
-
-                // Validate zip file
-                if (!isZipFileValid(fullPath)) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "ZIP file is corrupted or invalid",
-                        style: TextStyle(color: Colors.red),
-                      ),
-                      backgroundColor: Colors.white,
-                    ),
-                  );
-                  return;
-                }
-
-                // Extract in same folder
-                final currentDir =
-                    fullPath.substring(0, fullPath.lastIndexOf('/'));
-                final zipName = p.basenameWithoutExtension(fullPath);
-                final baseExtractPath = p.join(currentDir, zipName);
-
-                // Ensure unique extraction path
-                final uniqueExtractPath =
-                    await getUniqueExtractPath(baseExtractPath);
-                final bloc = context.read<FilesBloc>();
-                final completer = Completer<void>();
-                bloc.add(StartExtractMode(fullPath));
-
-                bloc.add(ExtractZipTo(
-                  fullPath,
-                  uniqueExtractPath,
-                  completer,
-                ));
-                await completer.future;
-                bloc.add(CancelExtractMode());
-
-                // reload after extraction
-                controller.reload();
-
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(
-                    content: const Text("Finished extracting",
-                        style: TextStyle(color: Colors.white)),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: Colors.grey[800],
-                  ),
-                );
-              },
-            ),
-            const Divider(height: 1, color: Colors.white24),
-            ListTile(
-              minTileHeight: 20,
-              leading: const Icon(Icons.drive_file_move, color: Colors.white70),
-              title: const Text("Extract to...",
-                  style: TextStyle(color: Colors.white, fontSize: 14)),
-              onTap: () {
-                Navigator.pop(ctx);
-
-                // Handle extraction
-                state?.handleExtract(fullPath);
-              },
-            ),
-          ],
-        );
-      },
-    );
-
+    state?.handleExtraction(context, {fullPath});
     return;
   }
 }
@@ -445,4 +299,180 @@ Future<String> getUniqueExtractPath(String basePath) async {
     }
     count++;
   }
+}
+
+Future<String> generateUniqueFolderName(String basePath) async {
+  const String baseName = "New Folder";
+
+  // First check the default folder name
+  String candidate = p.join(basePath, baseName);
+
+  int counter = 1;
+
+  // If "New Folder" exists, try "New Folder (1)", "New Folder (2)"...
+  while (await io.Directory(candidate).exists()) {
+    candidate = p.join(basePath, '$baseName ($counter)');
+    counter++;
+  }
+
+  // Only return the folder name, not full path
+  return p.basename(candidate);
+}
+
+List<FileItem> getFilesAtPath(
+    List<FileItem> path, List<FileSystemEntity> fileSystemList) {
+  // Build full path from root and path list
+  String currentPath = '/';
+  for (final item in path) {
+    currentPath = p.join(currentPath, item.name);
+  }
+
+  final List<FileItem> items = [];
+
+  try {
+    for (final entity in fileSystemList) {
+      final String name = p.basename(entity.path);
+      if (name.isEmpty) continue;
+
+      final stat = entity.statSync();
+      final modifiedTime = stat.modified;
+
+      if (entity is Directory) {
+        items.add(FileItem(name: name, type: 'dir', modified: modifiedTime));
+      } else if (entity is File) {
+        final ext = p.extension(name);
+        items.add(FileItem(
+            name: name,
+            type: ext.isNotEmpty ? ext : 'file',
+            modified: modifiedTime));
+      }
+    }
+  } catch (e) {
+    print('Error reading directory at $currentPath: $e');
+  }
+
+  return items;
+}
+
+enum MechanixButtonType {
+  action,
+  delete,
+  cancel,
+  disable,
+}
+
+MechanixFilledButtonThemeData buttonThemeData(
+  BuildContext context, {
+  MechanixButtonType type = MechanixButtonType.action,
+  Size size = const Size(246, 40),
+}) {
+  Color backgroundColor;
+  bool isDisabled = type == MechanixButtonType.disable;
+
+  switch (type) {
+    case MechanixButtonType.delete:
+      backgroundColor = const Color(0xFFD3002A); // red
+      break;
+
+    case MechanixButtonType.cancel:
+      backgroundColor = context.colorScheme.secondary; // dark grey
+      break;
+
+    case MechanixButtonType.disable:
+      backgroundColor = context.colorScheme.surfaceContainerHigh; // dark grey
+      break;
+
+    case MechanixButtonType.action:
+    default:
+      backgroundColor = context.colorScheme.primaryFixed; // theme primary
+      break;
+  }
+
+  return MechanixFilledButtonThemeData(
+      buttonSize: size,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: backgroundColor,
+      ),
+      textStyle: TextStyle(
+        color: isDisabled
+            ? context.colorScheme.onSurface
+            : context.colorScheme.surfaceContainerLowest,
+        fontSize: 18,
+        fontWeight: FontWeight.w400,
+      ));
+}
+
+TextStyle regularStyle(BuildContext context) => TextStyle(
+      color: context.colorScheme.onSurface,
+      fontSize: 20,
+      fontWeight: FontWeight.w400,
+    );
+
+TextStyle boldStyle(BuildContext context) => TextStyle(
+      color: context.colorScheme.onSurface,
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    );
+
+TextStyle previewTitleStyle(BuildContext context) => TextStyle(
+      color: context.colorScheme.primary,
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+    );
+
+Widget searchNavButton({
+  required IconData icon,
+  required VoidCallback? onTap,
+  required BuildContext context,
+}) {
+  final isEnabled = onTap != null;
+  final primary = context.colorScheme.primaryFixed;
+
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.all(6),
+      decoration: isEnabled
+          ? BoxDecoration(
+              color: isEnabled
+                  ? context.colorScheme.onPrimary
+                  : context.colorScheme.tertiary,
+              borderRadius: BorderRadius.circular(6),
+            )
+          : null,
+      child: Icon(icon,
+          size: 24,
+          color:
+              isEnabled ? primary : context.colorScheme.surfaceContainerHigh),
+    ),
+  );
+}
+
+Future<String> generateUniqueZipName({
+  required String destinationDir,
+  required String baseName,
+}) async {
+  int index = 0;
+  String name;
+  String fullPath;
+
+  do {
+    name = index == 0 ? '$baseName.zip' : '$baseName ($index).zip';
+    fullPath = p.join(destinationDir, name);
+    index++;
+  } while (await io.File(fullPath).exists());
+
+  return name;
+}
+
+double textWidth(String text, TextStyle style) {
+  final painter = TextPainter(
+    text: TextSpan(text: text, style: style),
+    maxLines: 1,
+    textDirection: ui.TextDirection.ltr,
+  )..layout();
+
+  return painter.width;
 }

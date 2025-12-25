@@ -62,9 +62,10 @@ dependencies:
       ref: main
       # url: https://github.com/ojas-mecha/mechanix-ui.git
       # path: flutter/widgets
-      # ref: refactor
+      # ref: theme-update
   watch_it: ^1.7.0
   path_provider: ^2.1.5
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:
@@ -128,6 +129,25 @@ flutter:
     - assets/images/downloads.png
     - assets/images/refresh.png
     - assets/images/terminal.png
+    - assets/images/code.png
+    - assets/images/check_circle.png
+    - assets/images/share.png
+    - assets/images/duplicate.png
+    - assets/images/music_note.png
+    - assets/images/play.png
+    - assets/images/pause.png
+    - assets/images/volume.png
+    - assets/images/mute.png
+    - assets/images/crop.png
+    - assets/images/rotate_right.png
+    - assets/images/mirror_vertical.png
+    - assets/images/mirror_horizontal.png
+    - assets/images/redo.png
+    - assets/images/undo.png
+    - assets/images/check.png
+    - assets/images/cut.png
+    - assets/images/lock.png
+    - assets/images/edit.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
