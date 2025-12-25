@@ -6,6 +6,7 @@ pub enum IconName {
     Info,
     Close,
     Application,
+    Navbar,
 
 }
 impl IconName {
@@ -14,6 +15,7 @@ impl IconName {
             IconName::Info => "info.svg",
             IconName::Close => "close.svg",
             IconName::Application => "audacity.svg",
+            IconName::Navbar => "navbar.png",
         
 
         };

@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use std::time::Duration;
 use zbus::export::serde::{Deserialize, Serialize};
 use zvariant::{OwnedValue, Structure, Type};
+
+// check for types: https://specifications.freedesktop.org/notification/1.2/protocol.html#id-1.10.3.3.4
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub struct Notification {
     pub app_name: String,

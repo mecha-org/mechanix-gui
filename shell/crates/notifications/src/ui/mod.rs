@@ -1,7 +1,5 @@
 use gpui::{Context, IntoElement, Render, Window, *};
-use crate::notification_widget::{Notification, NotificationList};
-use crate::ui::icon::{Icon, IconName};
-
+use crate::widgets::NotificationList;
 
 pub mod icon;
 
