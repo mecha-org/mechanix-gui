@@ -3,7 +3,7 @@ use gpui::*;
 use shell_state::NmMessage;
 
 use crate::{
-    get_wireless_strength_icon, prelude::*, ui::{icon::{Icon, IconName}}
+    helper::get_wireless_strength_icon, prelude::*, ui::icon::{Icon, IconName},
 };
 
 const HEADER_HEIGHT: f32 = 60.0;
@@ -14,7 +14,7 @@ pub trait ScrollBehavior {
     fn scroll_offset(&self) -> Pixels;
     fn set_scroll_offset(&mut self, offset: Pixels);
     fn is_dragging(&self) -> bool;
-    
+
     fn calculate_scroll_bounds(
         &self,
         content_height: Pixels,
@@ -110,7 +110,7 @@ impl ScrollBehavior for WirelessModalScroll {
     ) {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
-            
+
             let container_height = window_height - px(HEADER_HEIGHT) - px(FOOTER_HEIGHT);
             let content_height = self.estimate_content_height(list_count);
 
@@ -123,7 +123,6 @@ impl ScrollBehavior for WirelessModalScroll {
 }
 
 impl SettingsDrawer {
- 
     pub fn render_wireless_modal(
         &mut self,
         cx: &mut gpui::Context<SettingsDrawer>,
@@ -148,8 +147,8 @@ impl SettingsDrawer {
                     .flex_col()
                     .flex_1()
                     .relative()
-                    .overflow_hidden()   
-                    .bg(rgb(DARK_NEUTRAL_900))   
+                    .overflow_hidden()
+                    .bg(rgb(DARK_NEUTRAL_900))
                     .on_mouse_down(MouseButton::Left, cx.listener(move |this, event: &MouseDownEvent, _window, cx| {
                         cx.stop_propagation();
                         this.wireless_modal_scroll.on_mouse_down(event);
@@ -183,13 +182,13 @@ impl SettingsDrawer {
                                         rgb(AMBER_600)
                                     } else {
                                         rgb(DARK_NEUTRAL_100)
-                                    };         
+                                    };
                                     let wifi_icon = get_wireless_strength_icon(
                                         network.is_active,
                                         network.signal_strength,
                                         network.security.clone(),
-                                    );                      
-                           
+                                    );
+
                                     let connect_div = div().child(
                                         Icon::new(IconName::ConnectedIcon)
                                             .size((px(24.), px(24.)))
@@ -198,66 +197,65 @@ impl SettingsDrawer {
 
                                     let mut network_div = if is_active {
                                         div()
-                                        .id(("network_item", idx))
-                                        .flex()
-                                        .items_center()
-                                        .justify_between()
-                                        .h(px(ROW_HEIGHT))
-                                        .px_4()
-                                        .bg(rgba(AMBER_600_10))
-                                        .border_y_1()
-                                        .border_color(rgb(AMBER_900))
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .flex_row()
-                                                .text_align(TextAlign::Left)
-                                                .child(
-                                                    div().pr_2().child(
-                                                        Icon::new(wifi_icon)
-                                                        .size((px(28.), px(28.)))
-                                                        .text_color(icon_color),
+                                            .id(("network_item", idx))
+                                            .flex()
+                                            .items_center()
+                                            .justify_between()
+                                            .h(px(ROW_HEIGHT))
+                                            .px_4()
+                                            .bg(rgba(AMBER_600_10))
+                                            .border_y_1()
+                                            .border_color(rgb(AMBER_900))
+                                            .child(
+                                                div()
+                                                    .flex()
+                                                    .flex_row()
+                                                    .text_align(TextAlign::Left)
+                                                    .child(
+                                                        div().pr_2().child(
+                                                            Icon::new(wifi_icon)
+                                                                .size((px(28.), px(28.)))
+                                                                .text_color(icon_color),
+                                                        ),
+                                                    )
+                                                    .child(
+                                                        div()
+                                                            .pl_2()
+                                                            .font_weight(FontWeight::NORMAL)
+                                                            .text_color(icon_color)
+                                                            .child(network.ssid.clone())
                                                     ),
-                                                )
-                                                .child(
-                                                    div()
-                                                    .pl_2()
-                                                    .font_weight(FontWeight::NORMAL)
-                                                    .text_color(icon_color)
-                                                    .child(network.ssid.clone())
-                                                ),
-                                        )
-                                        .child(connect_div)
-                                    } 
-                                    else {
+                                            )
+                                            .child(connect_div)
+                                    } else {
                                         div()
-                                        .id(("network_item", idx))
-                                        .flex()
-                                        .items_center()
-                                        .justify_between()
-                                        .h(px(ROW_HEIGHT))
-                                        .px_4()
-                                        .hover(|style| style.bg(rgba(AMBER_600_10)))
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .flex_row()
-                                                .text_align(TextAlign::Left)
-                                                .child(
-                                                    div().pr_2().child(
-                                                        Icon::new(wifi_icon)
-                                                        .size((px(28.), px(28.)))
-                                                        .text_color(icon_color),
+                                            .id(("network_item", idx))
+                                            .flex()
+                                            .items_center()
+                                            .justify_between()
+                                            .h(px(ROW_HEIGHT))
+                                            .px_4()
+                                            .hover(|style| style.bg(rgba(AMBER_600_10)))
+                                            .child(
+                                                div()
+                                                    .flex()
+                                                    .flex_row()
+                                                    .text_align(TextAlign::Left)
+                                                    .child(
+                                                        div().pr_2().child(
+                                                            Icon::new(wifi_icon)
+                                                                .size((px(28.), px(28.)))
+                                                                .text_color(icon_color),
+                                                        ),
+                                                    )
+                                                    .child(
+                                                        div()
+                                                            .pl_2()
+                                                            .font_weight(FontWeight::NORMAL)
+                                                            .text_color(icon_color)
+                                                            .child(network.ssid.clone())
                                                     ),
-                                                )
-                                                .child(
-                                                    div()
-                                                    .pl_2()
-                                                    .font_weight(FontWeight::NORMAL)
-                                                    .text_color(icon_color)
-                                                    .child(network.ssid.clone())
-                                                ),
-                                        )
+                                            )
                                     };
 
                                     if !is_active && !is_known {
@@ -271,16 +269,16 @@ impl SettingsDrawer {
                                         ));
                                     } else if !is_active && is_known {
                                         let ssid_clone = ssid.clone();
-                                         let nm_tx_clone = self.nm_tx.clone().unwrap();
+                                        let nm_tx_clone = self.nm_tx.clone().unwrap();
 
                                         network_div = network_div.on_click(cx.listener(
                                             move |this: &mut SettingsDrawer,
-                                            _event: &ClickEvent,
-                                            _window: &mut Window,
-                                            cx: &mut Context<Self>| {
+                                                  _event: &ClickEvent,
+                                                  _window: &mut Window,
+                                                  cx: &mut Context<Self>| {
                                                 let ssid = ssid_clone.clone();
                                                 let mut nm_tx = nm_tx_clone.clone();
-                                                
+
                                                 cx.background_executor()
                                                     .spawn(async move {
                                                         let _ = nm_tx
@@ -288,7 +286,7 @@ impl SettingsDrawer {
                                                             .await;
                                                     })
                                                     .detach();
-                                                    Self::start_close_animation(this, cx);
+                                                Self::start_close_animation(this, cx);
 
                                                 cx.notify();
                                             },
@@ -301,7 +299,7 @@ impl SettingsDrawer {
                     ),
             )
             .child(
-               self.render_settings_div(cx)
+                self.render_settings_div(cx)
             )
             .into_any()
     }

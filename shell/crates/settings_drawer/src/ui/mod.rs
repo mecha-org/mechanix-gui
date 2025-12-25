@@ -1,13 +1,12 @@
-use gpui::prelude::FluentBuilder;
-use shell_state::{BtMessage, NmMessage, ShellState, ShellStateMessage};
 pub mod icon;
 mod modals;
 mod widgets;
+use gpui::prelude::FluentBuilder;
+use shell_state::DEFAULT_MIN_BRIGHTNESS;
+use shell_state::{BrightnessMessage, BtMessage, NmMessage, ShellState, VolumeMessage};
+
 use crate::constants::*;
-use crate::events::{BrightnessEvents, VolumeEvents};
-use crate::get_wireless_strength_icon;
-use crate::prelude::*;
-use crate::services::DEFAULT_MIN_BRIGHTNESS;
+use crate::helper::get_wireless_strength_icon;
 use crate::ui::icon::Icon;
 use crate::ui::modals::*;
 use crate::ui::{
@@ -76,19 +75,21 @@ pub struct SettingsDrawer {
     pub battery_percent: u8,
     pub cell_signal: bool,
 
-    // pub brightness_slider_state: Entity<SliderState>,
+    pub brightness_slider_state: Entity<SliderState>,
     pub brightness_slider_value: f32,
     pub auto_brightness: bool,
     pub dark_mode: bool,
 
-    // pub volume_slider_state: Entity<SliderState>,
+    pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
     pub volume_device_name: Option<String>,
     pub volume_mute: bool,
 
     pub nm_tx: Option<mpsc::Sender<NmMessage>>,
     pub bt_tx: Option<mpsc::Sender<BtMessage>>,
-    // pub volume_tx: mpsc::Sender<VolumeEvents>,
+    pub volume_tx: Option<mpsc::Sender<VolumeMessage>>,
+    pub brightness_tx: Option<mpsc::Sender<BrightnessMessage>>,
+
     pub open_modal: bool,
     pub animation_progress: f32,
     pub animation_state: ModalAnimationState,
@@ -121,86 +122,81 @@ pub enum ModalKind {
 }
 
 impl SettingsDrawer {
-    pub fn new(
-        cx: &mut Context<Self>,
-        // volume_tx: mpsc::Sender<VolumeEvents>,
-        // brightness_tx: mpsc::Sender<BrightnessEvents>,
-    ) -> Self {
-        // let volume_tx_for_slider = volume_tx.clone();
-        // let brightness_slider = cx.new(|_| SliderState::new());
-        // let b_subscription = cx.subscribe(
-        //     &brightness_slider,
-        //     move |this, _, event: &SliderEvent, cx| {
-        //         let SliderEvent::Change(value) = event;
-        //         this.brightness_slider_value = *value;
+    pub fn new(cx: &mut Context<Self>) -> Self {
+        let brightness_slider = cx.new(|_| SliderState::new());
+        let volume_slider = cx.new(|_| {
+            SliderState::new()
+                .default_value(0.)
+                .pattern(widgets::SliderPattern::Bars)
+        });
 
-        //         let mut brightness_tx = brightness_tx.clone();
-        //         let brightness_value = *value;
-        //         cx.background_executor()
-        //             .spawn(async move {
-        //                 let _ = brightness_tx
-        //                     .send(BrightnessEvents::BrightnessChanged {
-        //                         value: brightness_value,
-        //                     })
-        //                     .await;
-        //             })
-        //             .detach();
+        let b_subscription = cx.subscribe(
+            &brightness_slider,
+            move |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = event;
+                this.brightness_slider_value = *value;
 
-        //         // Update the slider state
-        //         let value = if *value <= DEFAULT_MIN_BRIGHTNESS {
-        //             DEFAULT_MIN_BRIGHTNESS
-        //         } else {
-        //             *value
-        //         };
-        //         this.brightness_slider_state.update(cx, |state, _cx| {
-        //             state.value = value.clamp(state.min, state.max);
-        //         });
+                let mut brightness_tx = this.brightness_tx.clone().unwrap();
+                let brightness_value = *value;
+                cx.background_executor()
+                    .spawn(async move {
+                        let _ = brightness_tx
+                            .send(BrightnessMessage::BrightnessChanged {
+                                value: brightness_value,
+                            })
+                            .await;
+                    })
+                    .detach();
 
-        //         cx.notify();
-        //     },
-        // );
+                // Update the slider state
+                let value = if *value <= DEFAULT_MIN_BRIGHTNESS {
+                    DEFAULT_MIN_BRIGHTNESS
+                } else {
+                    *value
+                };
+                this.brightness_slider_state.update(cx, |state, _cx| {
+                    state.value = value.clamp(state.min, state.max);
+                });
 
-        // let volume_slider = cx.new(|_| {
-        //     SliderState::new()
-        //         .default_value(0.)
-        //         .pattern(widgets::SliderPattern::Bars)
-        // });
+                cx.notify();
+            },
+        );
 
-        // let c_subscription =
-        //     cx.subscribe(&volume_slider, move |this, _, event: &SliderEvent, cx| {
-        //         let SliderEvent::Change(value) = event;
-        //         this.volume_slider_value = *value;
+        let c_subscription =
+            cx.subscribe(&volume_slider, move |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = event;
+                this.volume_slider_value = *value;
 
-        //         let sink_name = this
-        //             .volume_device_name
-        //             .clone()
-        //             .unwrap_or_else(|| "default".to_string());
-        //         let volume = *value;
-        //         let mut volume_tx_1 = volume_tx_for_slider.clone();
+                let sink_name = this
+                    .volume_device_name
+                    .clone()
+                    .unwrap_or_else(|| "default".to_string());
+                let volume = *value;
+                let mut volume_tx_1 = this.volume_tx.clone().unwrap();
 
-        //         let _ = cx
-        //             .background_executor()
-        //             .spawn(async move {
-        //                 let _ = volume_tx_1
-        //                     .send(VolumeEvents::VolumeChanged {
-        //                         name: sink_name,
-        //                         value: volume,
-        //                     })
-        //                     .await;
-        //             })
-        //             .detach();
+                let _ = cx
+                    .background_executor()
+                    .spawn(async move {
+                        let _ = volume_tx_1
+                            .send(VolumeMessage::VolumeChanged {
+                                name: sink_name,
+                                value: volume,
+                            })
+                            .await;
+                    })
+                    .detach();
 
-        //         // Update the slider state
-        //         this.volume_mute = *value <= 0.0;
-        //         this.volume_slider_value = if this.volume_mute { 0.0 } else { *value };
-        //         this.volume_slider_state.update(cx, |state, _cx| {
-        //             state.value = value.clamp(state.min, state.max);
-        //         });
+                // Update the slider state
+                this.volume_mute = *value <= 0.0;
+                this.volume_slider_value = if this.volume_mute { 0.0 } else { *value };
+                this.volume_slider_state.update(cx, |state, _cx| {
+                    state.value = value.clamp(state.min, state.max);
+                });
 
-        //         cx.notify();
-        //     });
+                cx.notify();
+            });
 
-        // let mut _subscriptions = vec![b_subscription, c_subscription];
+        let mut _subscriptions = vec![b_subscription, c_subscription];
 
         Self {
             current_time_date: "".to_string(),
@@ -227,17 +223,18 @@ impl SettingsDrawer {
             volume_device_name: None,
             open_terminal: false,
             cell_signal: false,
-            // brightness_slider_state: brightness_slider,
+            brightness_slider_state: brightness_slider,
             brightness_slider_value: 0.0,
             auto_brightness: false,
             dark_mode: false,
 
-            // volume_slider_state: volume_slider,
+            volume_slider_state: volume_slider,
             volume_slider_value: 0.0,
             volume_mute: false,
             nm_tx: None,
             bt_tx: None,
-            // volume_tx,
+            volume_tx: None,
+            brightness_tx: None,
             open_modal: false,
             animation_progress: 0.0,
             animation_state: ModalAnimationState::None,
@@ -451,7 +448,6 @@ impl SettingsDrawer {
         window: &mut Window,
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
-        let window_bounds = window.bounds();
 
         if matches!(
             self.animation_state,
@@ -884,33 +880,33 @@ impl SettingsDrawer {
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
             // // // 10% - ok - keeping while it is active
-            // .on_click(cx.listener(
-            //     // keep this - quick click
-            //     |this: &mut SettingsDrawer,
-            //      _event: &ClickEvent,
-            //      _window: &mut Window,
-            //      cx: &mut Context<Self>| {
-            //         let shell_state = ShellState::global(cx).clone();
-            //         let is_enable = this.wireless_details.enabled;
-            //         this.wireless_details.enabled = !is_enable;
-            //         cx.background_executor()
-            //             .spawn(async move {
-            //                 shell_state.toggle_wireless(!is_enable).await;
-            //             })
-            //             .detach();
-            //         cx.notify();
-            //     },
-            // ))
             .on_click(cx.listener(
-                // TODO: long press open modal
-                move |this: &mut SettingsDrawer,
-                      _event: &ClickEvent,
-                      window: &mut Window,
-                      cx: &mut Context<Self>| {
-                    this.current_modal = ModalKind::WirelessModal;
-                    Self::start_animation(this, _event, window, cx);
+                // keep this - quick click
+                |this: &mut SettingsDrawer,
+                 _event: &ClickEvent,
+                 _window: &mut Window,
+                 cx: &mut Context<Self>| {
+                    let shell_state = ShellState::global(cx).clone();
+                    let is_enable = this.wireless_details.enabled;
+                    this.wireless_details.enabled = !is_enable;
+                    cx.background_executor()
+                        .spawn(async move {
+                            shell_state.toggle_wireless(!is_enable).await;
+                        })
+                        .detach();
+                    cx.notify();
                 },
             ))
+        // .on_click(cx.listener(
+        //     // TODO: long press open modal
+        //     move |this: &mut SettingsDrawer,
+        //           _event: &ClickEvent,
+        //           window: &mut Window,
+        //           cx: &mut Context<Self>| {
+        //         this.current_modal = ModalKind::WirelessModal;
+        //         Self::start_animation(this, _event, window, cx);
+        //     },
+        // ))
     }
 
     fn render_bluetooth(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1073,11 +1069,12 @@ impl SettingsDrawer {
                     .justify_center()
                     .items_center()
                     .w(px(width))
-                    .pl_2(), // .child(
-                             //     Slider::new("brightness-slider", &self.brightness_slider_state)
-                             //         .height(66.0)
-                             //         .width(width),
-                             // ),
+                    .pl_2()
+                    .child(
+                        Slider::new("brightness-slider", &self.brightness_slider_state)
+                            .height(66.0)
+                            .width(width),
+                    ),
             )
     }
 
@@ -1118,52 +1115,59 @@ impl SettingsDrawer {
                     Self::start_animation(this, _event, _window, cx);
                 },
             ))
-            // .child(
-            //     IconButton::new("id_mute_volume")
-            //         .icon(volume_icon)
-            //         .icon_color(rgb(volume_icon_color))
-            //         .size((px(32.), px(32.)))
-            //         .bg_color(rgb(DARK_NEUTRAL_900))
-            //         .active_bg_color(rgb(DARK_NEUTRAL_900))
-            //         .border(px(0.))
-            //         .on_click(cx.listener(
-            //             |this: &mut SettingsDrawer,
-            //              _event: &ClickEvent,
-            //              _window: &mut Window,
-            //              cx: &mut Context<Self>| {
-            //                 let mut volume_tx = this.volume_tx.clone();
-            //                 this.volume_mute = !this.volume_mute;
-            //                 let is_mute = this.volume_mute;
-            //                 let sink_name = this
-            //                     .volume_device_name
-            //                     .clone()
-            //                     .unwrap_or_else(|| "default".to_string());
-            //                 if is_mute {
-            //                     cx.background_executor()
-            //                         .spawn(async move {
-            //                             let _ = volume_tx
-            //                                 .send(VolumeEvents::MuteSink {
-            //                                     name: sink_name.clone(),
-            //                                 })
-            //                                 .await;
-            //                         })
-            //                         .detach();
-            //                 } else {
-            //                     cx.background_executor()
-            //                         .spawn(async move {
-            //                             let _ = volume_tx
-            //                                 .send(VolumeEvents::UnmuteSink {
-            //                                     name: sink_name.clone(),
-            //                                 })
-            //                                 .await;
-            //                         })
-            //                         .detach();
-            //                 }
-            //             },
-            //         )),
-            // )
             .child(
-                div().flex().justify_center().items_end().w(px(167.0)), // .child(Slider::new("volume-slider", &self.volume_slider_state).height(66.0)),
+                IconButton::new("id_mute_volume")
+                    .icon(volume_icon)
+                    .icon_color(rgb(volume_icon_color))
+                    .size((px(32.), px(32.)))
+                    .bg_color(rgb(DARK_NEUTRAL_900))
+                    .active_bg_color(rgb(DARK_NEUTRAL_900))
+                    .border(px(0.))
+                    .on_click(cx.listener(
+                        |this: &mut SettingsDrawer,
+                         _event: &ClickEvent,
+                         _window: &mut Window,
+                         cx: &mut Context<Self>| {
+                            let mut volume_tx = this.volume_tx.clone().unwrap();
+
+                            this.volume_mute = !this.volume_mute;
+                            let is_mute = this.volume_mute;
+                            let sink_name = this
+                                .volume_device_name
+                                .clone()
+                                .unwrap_or_else(|| "default".to_string());
+
+                            if is_mute {
+                                cx.background_executor()
+                                    .spawn(async move {
+                                        let _ = volume_tx
+                                            .send(VolumeMessage::MuteSink {
+                                                name: sink_name.clone(),
+                                            })
+                                            .await;
+                                    })
+                                    .detach();
+                            } else {
+                                cx.background_executor()
+                                    .spawn(async move {
+                                        let _ = volume_tx
+                                            .send(VolumeMessage::UnmuteSink {
+                                                name: sink_name.clone(),
+                                            })
+                                            .await;
+                                    })
+                                    .detach();
+                            }
+                        },
+                    )),
+            )
+            .child(
+                div()
+                    .flex()
+                    .justify_center()
+                    .items_end()
+                    .w(px(167.0))
+                    .child(Slider::new("volume-slider", &self.volume_slider_state).height(66.0)),
             )
     }
 }

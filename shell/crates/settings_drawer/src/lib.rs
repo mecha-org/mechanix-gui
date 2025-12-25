@@ -1,29 +1,17 @@
 pub mod constants;
-mod events;
-pub mod services;
+pub mod helper;
 mod ui;
 
-use bluez::service::BluetoothService;
-use events::*;
-use futures::{SinkExt, StreamExt, channel::mpsc, select};
 use gpui::{
     layer_shell::{KeyboardInteractivity, LayerShellOptions},
     *,
 };
-use networkmanager::{interfaces::wireless::NMState, service::NetworkManagerService};
-use pulseaudio::service::PulseAudioService;
-use services::*;
 use settings::prelude::*;
-use shell_state::{ShellState, ShellStateMessage};
-use system_dbus::display_client;
+use shell_state::ShellState;
 use ui::*;
-use upower::service::UPowerService;
-
-use crate::ui::icon::IconName;
 
 pub mod prelude {
     pub use crate::constants::*;
-    pub use crate::events::{AppEvents, BrightnessEvents, VolumeEvents};
     pub use crate::run_app;
     pub use crate::ui::SettingsDrawer;
 }
@@ -75,6 +63,8 @@ pub fn run_app(cx: &mut App) {
                         battery_percent,
                         nm_tx,
                         bt_tx,
+                        volume_tx,
+                        brightness_tx,
                         ..
                     } = ShellState::global(cx).clone();
 
@@ -93,65 +83,24 @@ pub fn run_app(cx: &mut App) {
                     this.bluetooth_details.available_devices =
                         bluetooth_details.available_devices.clone();
 
+                    this.brightness_slider_value = ShellState::global(cx).brightness_value;
+                    this.brightness_slider_state.update(cx, |state, _cx| {
+                        state.value = this
+                            .brightness_slider_value
+                            .clone()
+                            .clamp(state.min, state.max);
+                    });
+
                     this.nm_tx = nm_tx;
                     this.bt_tx = bt_tx;
+                    this.volume_tx = volume_tx;
+                    this.brightness_tx = brightness_tx;
                 })
                 .detach();
 
-                SettingsDrawer::new(
-                    cx,
-                    // bt_tx.clone(),
-                    // volume_tx.clone(),
-                    // brightness_tx.clone(),
-                )
+                SettingsDrawer::new(cx)
             })
         },
     )
     .unwrap();
-}
-
-pub fn get_wireless_strength_icon(enable: bool, signal_strength: u8, security: String) -> IconName {
-    if enable {
-        match security.as_str() {
-            "Open" => match signal_strength {
-                0 => IconName::ConnectedWifiOn,
-                0..=30 => IconName::ConnectedWifiLow,
-                31..=60 => IconName::ConnectedWifiMedium,
-                61..=100 => IconName::ConnectedWifiHigh,
-                _ => IconName::ConnectedWifiWarning,
-            },
-            "Protected" => match signal_strength {
-                0..=30 => IconName::ConnectedWifiLowLocked,
-                31..=60 => IconName::ConnectedWifiMediumLocked,
-                61..=100 => IconName::ConnectedWifiHighLocked,
-                _ => IconName::ConnectedWifiWarning,
-            },
-            _ => IconName::ConnectedWifiWarning,
-        }
-    } else {
-        match security.as_str() {
-            "Open" => match signal_strength {
-                0 => IconName::WifiOn,
-                0..=30 => IconName::WifiLow,
-                31..=60 => IconName::WifiMedium,
-                61..=100 => IconName::WifiHigh,
-                _ => IconName::WifiWarning,
-            },
-            "Protected" => match signal_strength {
-                0..=30 => IconName::WifiLowLocked,
-                31..=60 => IconName::WifiMediumLocked,
-                61..=100 => IconName::WifiHighLocked,
-                _ => IconName::WifiWarning,
-            },
-            _ => IconName::WifiWarning,
-        }
-    }
-}
-
-pub fn get_bluetooth_icon(connected: bool) -> IconName {
-    if connected {
-        IconName::BluetoothConnected
-    } else {
-        IconName::BluetoothOff
-    }
 }
