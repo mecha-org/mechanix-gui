@@ -18,7 +18,7 @@ use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
 
-const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+const NAVBAR_SIZE: (f32, f32) = (198.5, 28.29);
 const APP_SIZE: (f32, f32) = (540., 620.);
 
 const MIN_MODAL_SIZE_1: (f32, f32) = (133., 110.);
