@@ -61,6 +61,7 @@ pub fn run_app(cx: &mut App) {
                         wireless_details,
                         bluetooth_details,
                         battery_percent,
+                        sound_device_info,
                         nm_tx,
                         bt_tx,
                         volume_tx,
@@ -83,6 +84,16 @@ pub fn run_app(cx: &mut App) {
                     this.bluetooth_details.available_devices =
                         bluetooth_details.available_devices.clone();
 
+                    let sound_device = Some(sound_device_info).clone().unwrap();
+                    this.volume_device_name = sound_device.name;
+                    this.volume_mute = sound_device.mute;
+                    this.volume_slider_value = if this.volume_mute { 0.0 } else { sound_device.volume as f32 };
+                    this.volume_slider_state.update(cx, |state, _cx| {
+                        state.value = this
+                            .volume_slider_value
+                            .clamp(state.min, state.max);
+                    });
+
                     this.brightness_slider_value = ShellState::global(cx).brightness_value;
                     this.brightness_slider_state.update(cx, |state, _cx| {
                         state.value = this
@@ -95,6 +106,8 @@ pub fn run_app(cx: &mut App) {
                     this.bt_tx = bt_tx;
                     this.volume_tx = volume_tx;
                     this.brightness_tx = brightness_tx;
+                    cx.notify();
+
                 })
                 .detach();
 

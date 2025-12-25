@@ -22,12 +22,6 @@ pub async fn sync_connected_network(
             let connected_network = result.iter().find(|n| n.is_active).cloned();
             let is_connected = result.iter().any(|n| n.is_active && !n.ssid.is_empty()); // IMP
 
-            println!(
-                "sync_connected_network: is_connected = {}, connected_network = {:?}",
-                is_connected,
-                connected_network.as_ref().map(|n| &n.ssid)
-            );
-
             let _ = message_tx
                 .send(ShellStateMessage::ConnectedNetwork {
                     network: if is_connected {

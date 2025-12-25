@@ -1104,17 +1104,17 @@ impl SettingsDrawer {
             .items_center()
             .justify_start()
             .pl_2()
-            .on_click(cx.listener(
-                //  TODO: long press open modal
-                move |this: &mut SettingsDrawer,
-                      _event: &ClickEvent,
-                      _window: &mut Window,
-                      cx: &mut Context<Self>| {
-                    println!("volume clicked");
-                    this.current_modal = ModalKind::SoundModal;
-                    Self::start_animation(this, _event, _window, cx);
-                },
-            ))
+            // .on_click(cx.listener(
+            //     //  TODO: long press open modal
+            //     move |this: &mut SettingsDrawer,
+            //           _event: &ClickEvent,
+            //           _window: &mut Window,
+            //           cx: &mut Context<Self>| {
+            //         println!("volume clicked");
+            //         this.current_modal = ModalKind::SoundModal;
+            //         Self::start_animation(this, _event, _window, cx);
+            //     },
+            // ))
             .child(
                 IconButton::new("id_mute_volume")
                     .icon(volume_icon)

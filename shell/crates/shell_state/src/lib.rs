@@ -43,7 +43,7 @@ pub struct ShellState {
     pub battery_level: BatteryLevel,
     pub battery_percent: u8,
     pub status_bar_entity: Option<EntityId>,
-    pub sound_device_info: Option<DeviceInfo>,
+    pub sound_device_info: DeviceInfo,
     pub brightness_value: f32,
     pub nm_tx: Option<mpsc:: Sender<NmMessage>>,
     pub bt_tx: Option<mpsc:: Sender<BtMessage>>,
@@ -185,7 +185,7 @@ impl ShellStateManager {
                             }
                         }
                         ShellStateMessage::OutputSoundDevice { device_info } => {
-                            ShellState::global_mut(cx).sound_device_info = Some(device_info);
+                            ShellState::global_mut(cx).sound_device_info = device_info;
                         }
                         ShellStateMessage::Brightness { value } => {
                             ShellState::global_mut(cx).brightness_value = value;
