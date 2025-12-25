@@ -82,7 +82,7 @@ impl NotificationList {
                 if let Err(err) =
                     notification.update_in(cx, |note, window, cx| note.dismiss(window, cx))
                 {
-                    tracing::error!("failed to auto hide notification: {:?}", err);
+                    eprintln!("failed to auto hide notification: {:?}", err);
                 }
             })
             .detach();
