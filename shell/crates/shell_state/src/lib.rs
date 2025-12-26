@@ -1,7 +1,6 @@
 use std::time::Duration;
-
-use bluez::service::BluetoothService;
-use chrono::Local;
+use bluez::{interfaces::device::BluetoothDevice, service::{BluetoothEvent, BluetoothService, InterfaceEvent}};
+use pulseaudio::service::{DeviceInfo, PulseAudioService};
 use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
 use futures_timer::Delay;
 use gpui::*;
@@ -9,21 +8,30 @@ use networkmanager::{
     interfaces::wireless::{NMState, WirelessNetworkInfo},
     service::NetworkManagerService,
 };
+use system_dbus::display_client;
 use upower::{
     interfaces::device::{BatteryLevel, BatteryState},
     service::UPowerService,
 };
 
+pub mod messages;
+pub mod helper;
+pub use messages::*;
+pub use helper::*;
+
+
 #[derive(Debug, Default, Clone)]
 pub struct WirelessDetails {
     pub enabled: bool,
     pub connected_network: Option<WirelessNetworkInfo>,
+    pub networks: Option<Vec<WirelessNetworkInfo>>,
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct BluetoothDetails {
     pub enabled: bool,
     pub connected_devices: u8,
+    pub available_devices: Option<Vec<BluetoothDevice>>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -35,7 +43,14 @@ pub struct ShellState {
     pub battery_level: BatteryLevel,
     pub battery_percent: u8,
     pub status_bar_entity: Option<EntityId>,
+    pub sound_device_info: DeviceInfo,
+    pub brightness_value: f32,
+    pub nm_tx: Option<mpsc:: Sender<NmMessage>>,
+    pub bt_tx: Option<mpsc:: Sender<BtMessage>>,
+    pub volume_tx: Option<mpsc:: Sender<VolumeMessage>>,
+    pub brightness_tx: Option<mpsc:: Sender<BrightnessMessage>>,
 }
+
 
 impl Global for ShellState {}
 
@@ -55,6 +70,19 @@ impl ShellState {
             ..Default::default()
         }
     }
+
+    pub async fn toggle_wireless(&self, enabled: bool) {
+        let _ =  self.nm_tx
+        .clone()
+        .unwrap()
+        .send(NmMessage::ToggleWireless { enabled: enabled }).await;
+    }
+
+    pub async fn toggle_bluetooth(&self, enabled: bool) {
+        let _ = self.bt_tx.clone().unwrap().send(BtMessage::ToggleBluetooth { enabled: enabled }).await;
+    }
+
+
 }
 
 pub struct ShellStateManager {}
@@ -64,13 +92,28 @@ impl ShellStateManager {
         Self {}
     }
 
+ 
     pub fn run(cx: &mut App) {
-        let (mut message_tx, mut message_rx) = mpsc::channel::<ShellStateMessage>(10);
+        let (mut message_tx, mut message_rx) = mpsc::channel::<ShellStateMessage>(210);
+
+        let (nm_tx, mut nm_rx) = mpsc::channel::<NmMessage>(210);
+        let (bt_tx, mut bt_rx) = mpsc::channel::<BtMessage>(210);
+        let (volume_tx, mut volume_rx) = mpsc::channel::<VolumeMessage>(210);
+        let (brightness_tx, mut brightness_rx) = mpsc::channel::<BrightnessMessage>(210);
+
+        // ShellState::global_mut(cx).message_tx = Some(message_tx.clone());
+        ShellState::global_mut(cx).nm_tx = Some(nm_tx.clone());
+        ShellState::global_mut(cx).bt_tx = Some(bt_tx.clone());
+        ShellState::global_mut(cx).volume_tx = Some(volume_tx.clone());
+        ShellState::global_mut(cx).brightness_tx = Some(brightness_tx.clone());
+
         cx.spawn(async move |app| {
+           
             while let Some(message) = message_rx.next().await {
-                _ = app.update(|cx| {
+                _ = app.update( |cx| {
                     match message {
                         ShellStateMessage::WirelessStatusChanged { enabled } => {
+                            
                             ShellState::global_mut(cx).wireless_details.enabled = enabled;
                             if !enabled {
                                 ShellState::global_mut(cx)
@@ -90,6 +133,16 @@ impl ShellStateManager {
                                     .connected_network = Some(connected_network);
                             }
                         }
+                        ShellStateMessage::ConnectedNetwork { network } => {
+                            ShellState::global_mut(cx)
+                                .wireless_details
+                                .connected_network = network;
+                        }
+                        ShellStateMessage::ListWirelessNetworks { list } => {
+                            ShellState::global_mut(cx)
+                                .wireless_details
+                                .networks = Some(list);
+                        }
                         ShellStateMessage::BluetoothEnabled { enabled } => {
                             ShellState::global_mut(cx).bluetooth_details.enabled = enabled;
                         }
@@ -97,6 +150,23 @@ impl ShellStateManager {
                             ShellState::global_mut(cx)
                                 .bluetooth_details
                                 .connected_devices = count;
+                        }
+                        ShellStateMessage::AvailableBluetoothDevices { list } => {
+                            ShellState::global_mut(cx)
+                                .bluetooth_details
+                                .available_devices = Some(list);
+                        }
+                        ShellStateMessage::BluetoothAddedEvent { device } => {
+                            let current_devices = ShellState::global_mut(cx)
+                                .bluetooth_details
+                                .available_devices.clone();
+                                if let Some(current_devices) = current_devices {
+                                    let mut available_devices = current_devices.clone();
+                                    available_devices.push(device);
+                                    ShellState::global_mut(cx)
+                                        .bluetooth_details
+                                        .available_devices = Some(available_devices);
+                                }
                         }
                         ShellStateMessage::BatteryStateChanged { state } => {
                             ShellState::global_mut(cx).battery_state = state;
@@ -114,11 +184,13 @@ impl ShellStateManager {
                                 cx.notify(entity);
                             }
                         }
-                        ShellStateMessage::ConnectedNetwork { network } => {
-                            ShellState::global_mut(cx)
-                                .wireless_details
-                                .connected_network = network;
+                        ShellStateMessage::OutputSoundDevice { device_info } => {
+                            ShellState::global_mut(cx).sound_device_info = device_info;
                         }
+                        ShellStateMessage::Brightness { value } => {
+                            ShellState::global_mut(cx).brightness_value = value;
+                        }
+                        _ => {}
                     };
                 });
             }
@@ -133,6 +205,7 @@ impl ShellStateManager {
                 let _ = message_tx.send(ShellStateMessage::TimeUpdated).await;
 
                 let network_manager = NetworkManagerService::new().await.unwrap();
+
                 let bluetooth_manager = BluetoothService::new().await.unwrap();
                 let battery_manager = UPowerService::new().await.unwrap();
 
@@ -150,6 +223,27 @@ impl ShellStateManager {
                     bluetooth_manager.stream_bluetooth_enabled_status().await;
                 let mut bluetooth_device_stream =
                     bluetooth_manager.stream_bluetooth_device_status().await;
+
+                let _ = get_available_bluetooth_devices(message_tx.clone(), &bluetooth_manager).await;
+
+                let pulse_manager = PulseAudioService::new().unwrap();
+                let _= update_device_info(&mut message_tx, &pulse_manager).await;
+
+                let brightness_value = match display_client::get_brightness().await {
+                    Ok(value) => value,
+                    Err(e) => {
+                        eprintln!("Error getting brightness: {}", e);
+                        0
+                    }
+                };
+
+                let brightness_percent = if brightness_value > 0 {
+                    u8_to_percent(brightness_value, MAX_DEVICE_BRIGHTNESS)
+                } else {
+                    MAX_DEVICE_BRIGHTNESS as f32
+                };
+                let _ = message_tx.send(ShellStateMessage::Brightness { value: brightness_percent }).await;
+
 
                 loop {
                     select!{
@@ -190,28 +284,30 @@ impl ShellStateManager {
                         device_state = device_state_stream.next() => {
                             if let Some(nm_state) = device_state {
                             match nm_state {
-                                            NMState::ConnectedGlobal | NMState::ConnectedLocal=> {
-                                                match network_manager.list_networks().await {
-        Ok(result) => {
-            let connected_network = result.iter().find(|n| n.is_active && !n.ssid.is_empty()).cloned();
-            let _ = message_tx
-                .send(ShellStateMessage::ConnectedNetwork {
-                    network: connected_network,
-                })
-                .await;
-        }
-        Err(e) => {
-            eprintln!("Failed to get active network: {}", e);
-            return;
-        }
-    };
-                                            }
-                                            _ => {}
-                                        }
+                                    NMState::ConnectedGlobal | NMState::ConnectedLocal=> {
+                                        let _ = sync_connected_network(message_tx.clone(), &network_manager.clone()).await;
                                     }
+                                     _ => {}
+                                }
+                            }
                         }
 
-                        // bluetooth events
+                  
+                        event = nm_rx.next() => {
+                            if let Some(event) = event {
+                                match event {
+                                   NmMessage::ToggleWireless { enabled } => {
+                                        let _ = network_manager.toggle_wireless(enabled).await;
+                                   }
+                                   NmMessage::ConnectKnownNetwork { name } => {
+                                       let _ = network_manager.connect_to_saved_network(&name.clone()).await;
+                                   }
+                                }
+                            }
+                        }
+
+
+                        // // bluetooth events
                         bluetooth_enabled = bluetooth_status_stream.next() => {
                             if let Some(enabled) = bluetooth_enabled {
                                 let _ = message_tx.send(ShellStateMessage::BluetoothEnabled { enabled }).await;
@@ -219,19 +315,97 @@ impl ShellStateManager {
                         },
 
                         bluetooth_device_event = bluetooth_device_stream.next() => {
-                            if let Some(_event) = bluetooth_device_event {
-                                let count = match bluetooth_manager.get_connected_devices().await {
-        Ok(r) => r.len(),
-        Err(e) => {
-            eprintln!("Failed to get connected devices: {}", e);
-            return;
-        }
-    };
-
-    let _ = message_tx.send(ShellStateMessage::BluetoothDevices { count: count as u8 }).await;
+                            if let Some(event) = bluetooth_device_event {
+                                match event {
+                                    BluetoothEvent { event: InterfaceEvent::DeviceAdded, device: Some(device) } => {
+                                        let _ = message_tx.send(ShellStateMessage::BluetoothAddedEvent { device: device }).await;
+                                    }
+                                    BluetoothEvent { event: InterfaceEvent::DeviceRemoved, device: Some(_) } => {
+                                        let _ = get_available_bluetooth_devices(message_tx.clone(), &bluetooth_manager).await;
+                                    }
+                                    _ => {
+                                        let _ = sync_bluetooth_connected_status(message_tx.clone(), &bluetooth_manager).await;
+                                    }
+                                }
                             }
                         }
 
+                        event = bt_rx.next() => {
+                            if let Some(event) = event {
+                                match event {
+                                    BtMessage::ToggleBluetooth { enabled } => {
+                                        let _ = bluetooth_manager.toggle_bluetooth(enabled).await;
+                                    }
+                                    BtMessage::ConnectDevice { address } => {
+                                                let _ = match bluetooth_manager.connect(&address).await {
+                                                    Ok(_) => {
+                                                       println!("Connected to device: {:?}", address);
+                                                    }
+                                                    Err(e) => {
+                                                        eprintln!("Failed to connect to device: {}", e);
+                                                    }
+                                                };
+                                            }
+                                }
+                            }
+                        }
+
+
+                        // volume events
+                        volume_event = volume_rx.next() => {
+                            match volume_event {
+                                Some(VolumeMessage::VolumeChanged { name, value }) => {
+                                    match pulse_manager.handle.set_sink_volume_by_name(&name, &value).await {
+                                        Ok(_) => (),
+                                        Err(e) => {
+                                            eprintln!("Failed to set volume: {}", e);
+                                        }
+                                    }
+                                }
+                                Some(VolumeMessage::MuteSink { name }) => {
+                                    match pulse_manager.handle.set_sink_mute_by_name(&name).await {
+                                        Ok(_) => {
+                                            update_device_info(&mut message_tx, &pulse_manager).await;
+                                        }
+                                        Err(e) => {
+                                            eprintln!("Failed to set mute: {}", e);
+                                        }
+                                    }
+                                }
+                                Some(VolumeMessage::UnmuteSink { name }) => {
+                                    match pulse_manager.handle.set_sink_unmute_by_name(&name).await {
+                                        Ok(_) => {
+                                        update_device_info(&mut message_tx, &pulse_manager).await; 
+                                        }
+                                        Err(e) => {
+                                            eprintln!("Failed to unset mute: {}", e);
+                                        }
+                                    }
+                                }
+                                None => break,
+                            }
+                        
+                        }
+
+                        // brightness events
+                        brightness_event = brightness_rx.next() => {
+                        match brightness_event {
+                            Some(BrightnessMessage::BrightnessChanged { value }) => {
+
+                                let value = if value <= DEFAULT_MIN_BRIGHTNESS { DEFAULT_MIN_BRIGHTNESS } else { value };
+                                let value_u8 = percent_to_u8(value.clone(), MAX_DEVICE_BRIGHTNESS);
+                                match display_client::set_brightness(value_u8).await {
+                                    Ok(_) => (),
+                                    Err(e) => {
+                                        eprintln!("Failed to set brightness: {}", e);
+                                    }
+                                }
+                            }
+                            None => break,
+                            }
+                        }
+
+                        
                         _ = time_event => {
                             let _ = message_tx.send(ShellStateMessage::TimeUpdated).await;
                             time_event = Delay::new(event_after).fuse();
@@ -244,38 +418,8 @@ impl ShellStateManager {
     }
 }
 
-pub enum ShellStateMessage {
-    WirelessStatusChanged {
-        enabled: bool,
-    },
-    WirelessStrength {
-        strength: u8,
-    },
-    ConnectedNetwork {
-        network: Option<WirelessNetworkInfo>,
-    },
-    BluetoothEnabled {
-        enabled: bool,
-    },
-    BluetoothDevices {
-        count: u8,
-    },
-    BatteryLevelChanged {
-        level: BatteryLevel,
-    },
-    BatteryStateChanged {
-        state: BatteryState,
-    },
-    BatteryPercentageChanged {
-        value: u8,
-    },
-    TimeUpdated,
-}
 
-pub fn get_current_datetime() -> String {
-    let now = Local::now();
-    format!("{}", now.format("%H:%M"))
-}
+
 
 pub fn init(cx: &mut App) {
     let shell_state = ShellState::new();

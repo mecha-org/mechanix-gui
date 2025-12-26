@@ -211,7 +211,7 @@ impl<'a> BluezInterface for BluezProxy<'a> {
         }
 
         trace!("discovery started, waiting for devices...");
-        tokio::time::sleep(discovery_duration).await;
+        std::thread::sleep(discovery_duration);
         trace!("stopping discovery...");
 
         // Stop the discovery process
