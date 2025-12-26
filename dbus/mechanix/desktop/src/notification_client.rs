@@ -1,14 +1,14 @@
-use mechanix_session_services::Notification;
+use session_service::Notification;
 use std::collections::HashMap;
 use zbus::proxy;
-use mechanix_session_services::interfaces::mechanix::StoredNotification;
+use session_service::interfaces::mechanix::StoredNotification;
 
 #[proxy(
     interface = "org.mechanix.NotificationManager",
     default_service = "org.mechanix.NotificationManager",
     default_path = "/org/mechanix/NotificationManager"
 )]
-pub trait MechanixNotification {
+pub trait Notification {
     /// CloseNotificationWithReason method
     fn close_notification_with_reason(&self, id: u32, reason: u32) -> zbus::Result<()>;
 

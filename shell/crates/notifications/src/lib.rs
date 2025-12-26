@@ -1,6 +1,6 @@
 use crate::events::AppEvents;
 use crate::prelude::icon::{Icon, IconName};
-use desktop_dbus::MechanixNotificationService;
+use desktop_dbus::NotificationService;
 use futures::channel::mpsc;
 use futures::{select, SinkExt, StreamExt};
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
@@ -15,7 +15,7 @@ use crate::widgets::prelude::{DbNotification, NotificationCenter, NotificationLi
 mod events;
 mod ui;
 mod helper;
-mod widgets;
+pub mod widgets;
 
 pub mod prelude {
     pub use crate::events::AppEvents;
@@ -72,7 +72,7 @@ pub fn run_app(cx: &mut App) {
             // Fetch unread notifications by spawning a UI-bound task using the center's Context
             let _ = center.update(cx, |_, cx: &mut Context<NotificationCenter>| {
                 cx.spawn_in(window, async move |_, cx| {
-                    if let Ok(notification_service) = MechanixNotificationService::new().await {
+                    if let Ok(notification_service) = NotificationService::new().await {
                         if let Ok(all) = notification_service.fetch_all().await {
                             // Map HashMap<u32, Notification> -> Vec<DbNotification>
                             let mut vec_items: Vec<DbNotification> = Vec::new();
@@ -115,7 +115,7 @@ pub fn run_app(cx: &mut App) {
             let executor = cx.background_executor();
             executor
                 .spawn(async move {
-                    let notification_service = MechanixNotificationService::new().await.unwrap();
+                    let notification_service = NotificationService::new().await.unwrap();
 
                     let mut notification_received_stream = notification_service.stream_receive_notification().await;
                     let mut notification_closed_stream = notification_service.stream_close_notification().await;

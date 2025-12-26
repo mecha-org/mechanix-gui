@@ -15,7 +15,7 @@
 
 #[derive(Clone, Debug, thiserror::Error)]
 #[non_exhaustive]
-pub enum MechanixNotificationError {
+pub enum NotificationError {
     /// A generic, unspecified error.
     #[error("generic error")]
     Generic,

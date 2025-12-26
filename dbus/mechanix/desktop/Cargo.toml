@@ -15,6 +15,6 @@ log = { workspace = true }
 tokio = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
-mechanix_session_services = { path = "../../../services/desktop"}
+session_service = { path = "../../../services/desktop"}
 futures = { version = "0.3.31", features = ["thread-pool"] }
 zbus = { version = "5.7.1" }

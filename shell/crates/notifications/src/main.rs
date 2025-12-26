@@ -1,13 +1,12 @@
 use commons::assets::Assets;
-use desktop_dbus::MechanixNotificationService;
+use desktop_dbus::NotificationService;
 use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
 use gpui::*;
-use notifications::notification_widget::{
-    DbNotification, Notification, NotificationCenter, NotificationList, UserDismissedEvent,
-};
+
 use notifications::prelude::icon::{Icon, IconName};
 use notifications::prelude::AppEvents;
 use std::time::{SystemTime, UNIX_EPOCH};
+use notifications::widgets::{DbNotification, NotificationCenter, NotificationList, NotificationUi, UserDismissedEvent};
 
 // Root view to compose NotificationCenter (background) and the toast NotificationList (overlay)
 struct Root {
@@ -64,7 +63,7 @@ fn main() {
                 // Fetch unread notifications by spawning a UI-bound task using the center's Context
                 let _ = center.update(cx, |_, cx: &mut Context<NotificationCenter>| {
                     cx.spawn_in(window, async move |_, cx| {
-                        if let Ok(notification_service) = MechanixNotificationService::new().await {
+                        if let Ok(notification_service) = NotificationService::new().await {
                             if let Ok(all) = notification_service.fetch_all().await {
                                 // Map HashMap<u32, Notification> -> Vec<DbNotification>
                                 let mut vec_items: Vec<DbNotification> = Vec::new();
@@ -107,7 +106,7 @@ fn main() {
                 let executor = cx.background_executor();
                 executor
                     .spawn(async move {
-                        let notification_service = MechanixNotificationService::new().await.unwrap();
+                        let notification_service = NotificationService::new().await.unwrap();
 
                         let mut notification_received_stream = notification_service.stream_receive_notification().await;
                         let mut notification_closed_stream = notification_service.stream_close_notification().await;
@@ -247,8 +246,8 @@ fn main() {
                                     let _ = list_for_events.update_in(cx, |list, window, cx| {
                                         list.push(
                                             {
-                                                let base = Notification::new()
-                                                    .id1::<Notification>(key_id)
+                                                let base = NotificationUi::new()
+                                                    .id1::<NotificationUi>(key_id)
                                                     .db_id(notif_id)
                                                     .title(title.clone())
                                                     .on_click(move |event, window, cx| {
