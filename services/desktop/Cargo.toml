@@ -1,5 +1,5 @@
 [package]
-name = "mechanix-session-services"
+name = "mechanix_session_services"
 description = "Service for running session services"
 edition.workspace = true
 authors.workspace = true
@@ -11,17 +11,26 @@ keywords.workspace = true
 version = "0.1.1"
 
 [dependencies]
-zbus = { workspace = true }
 anyhow = { workspace = true }
 log = { workspace = true }
 tokio = { workspace = true }
 env_logger = { workspace = true }
 thiserror = { workspace = true }
-mxconf_dbus = { path = "../../dbus/mechanix/mxconf" }
-system_dbus = { path = "../../dbus/mechanix/system" }
-mechanix-hw-buttons = { path = "../../shared/hw-buttons" }
+futures = { version = "0.3.30", features = ["thread-pool"] }
+zbus = { version = "5.7.1" }
+gdk-pixbuf = "0.20.10"
+glib = "0.20.12"
+zvariant = "5.5.3"
 futures-util = "0.3.28"
+serde.workspace = true
+freedesktop-icons = "0.4.0"
+serde_json = "1.0.145"
+sled = "0.34.7"
+uuid = { version = "1.19.0", features = ["v4"]}
 
+[lib]
+name = "mechanix_session_services"
+path = "src/lib.rs"
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"
