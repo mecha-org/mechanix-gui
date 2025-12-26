@@ -185,7 +185,7 @@ impl SettingsDrawer {
                                     } else {
                                         rgb(DARK_NEUTRAL_100)
                                     };
-                                    let wifi_icon = get_wireless_strength_icon(
+                                    let wireless_icon = get_wireless_strength_icon(
                                         network.is_active,
                                         network.signal_strength,
                                         network.security.clone(),
@@ -215,7 +215,7 @@ impl SettingsDrawer {
                                                     .text_align(TextAlign::Left)
                                                     .child(
                                                         div().pr_2().child(
-                                                            Icon::new(wifi_icon)
+                                                            Icon::new(wireless_icon)
                                                                 .size((px(28.), px(28.)))
                                                                 .text_color(icon_color),
                                                         ),
@@ -245,7 +245,7 @@ impl SettingsDrawer {
                                                     .text_align(TextAlign::Left)
                                                     .child(
                                                         div().pr_2().child(
-                                                            Icon::new(wifi_icon)
+                                                            Icon::new(wireless_icon)
                                                                 .size((px(28.), px(28.)))
                                                                 .text_color(icon_color),
                                                         ),
