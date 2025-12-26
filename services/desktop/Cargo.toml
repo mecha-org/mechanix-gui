@@ -1,5 +1,5 @@
 [package]
-name = "session_services"
+name = "session_service"
 description = "Service for running session services"
 edition.workspace = true
 authors.workspace = true
@@ -29,7 +29,7 @@ sled = "0.34.7"
 uuid = { version = "1.19.0", features = ["v4"]}
 
 [[bin]]
-name = "mechanix_session_services"
+name = "mechanix-session-service"
 path = "src/main.rs"
 
 [package.metadata.deb]
@@ -42,7 +42,7 @@ priority = "optional"
 assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
-        "../../target/release/mechanix_session_services",
+        "../../target/release/mechanix-session-service",
         "usr/bin/",
         "755",
     ],

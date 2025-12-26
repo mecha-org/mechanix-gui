@@ -1,7 +1,7 @@
-use session_services::Notification;
+use session_service::Notification;
 use std::collections::HashMap;
 use zbus::proxy;
-use session_services::interfaces::mechanix::StoredNotification;
+use session_service::interfaces::mechanix::StoredNotification;
 
 #[proxy(
     interface = "org.mechanix.NotificationManager",
