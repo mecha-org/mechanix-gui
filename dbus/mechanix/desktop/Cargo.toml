@@ -1,0 +1,20 @@
+[package]
+name = "desktop_dbus"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+log = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+session_service = { path = "../../../services/desktop"}
+futures = { version = "0.3.31", features = ["thread-pool"] }
+zbus = { version = "5.7.1" }

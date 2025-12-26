@@ -2,36 +2,34 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/conflict_resolution_bottomsheet.dart';
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
+import 'package:mechanix_files/src/features/files/presentation/file_details_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/constants.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
-import 'package:widgets/widgets/listItems/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
-import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
-import 'package:widgets/widgets/textInput/mechanix_text_input_theme.dart';
 import 'view_mode_notifier.dart';
 import 'grid_view.dart';
 import 'list_view.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
-import 'dart:math' as Math;
 import 'package:widgets/mechanix.dart';
 
 class FileExplorerPage extends StatefulWidget {
@@ -60,9 +58,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   bool isCopyMode = false;
   bool isMoveMode = false;
   bool isExtractMode = false;
+  bool isHomePageDir = false;
   String zipFilePath = '';
   List<String> copiedPaths = [];
   List<String> movedPaths = [];
+
+  bool isFolderActionMenuOpen = false;
+  bool isSelectionActionMenuOpen = false;
+  bool isSortMenuOpen = false;
 
   final downloadsDir = AppConfig().downloadsDir;
   final documentsDir = AppConfig().documentsDir;
@@ -152,19 +155,11 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     final isDownloadsDir = currentPath == downloadsDir;
     final isHomeDir = currentPath == homeDir;
     final isRecentDir = currentPath == recentDir;
-    final isHomePageDir = isHomeDir ||
+    isHomePageDir = isHomeDir ||
         isDownloadsDir ||
         isDocumentsDir ||
         isAtRoot ||
         isRecentDir;
-
-    void handleBack() {
-      controller.goToParentDirectory();
-    }
-
-    void homeNavigation() {
-      Navigator.pop(context);
-    }
 
     return MultiBlocListener(
       listeners: [
@@ -176,9 +171,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             if (state.compressionStatus == FileCompressionStatus.inProgress) {
               showDialog(
                 context: context,
-                barrierColor: Colors.black.withOpacity(0.2),
+                barrierColor: context.colorScheme.surface.withOpacity(0.2),
                 barrierDismissible: false,
-                builder: (_) => buildLoadingDialog("Compressing..."),
+                builder: (_) => buildLoadingDialog(context, "Compressing..."),
               );
             } else if (state.compressionStatus ==
                     FileCompressionStatus.success ||
@@ -199,8 +194,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               if (state.compressionStatus == FileCompressionStatus.success) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Compression complete',
-                        style: TextStyle(color: Colors.white)),
+                    content: Text('Compression complete',
+                        style: TextStyle(
+                            color: context.colorScheme.surfaceContainerLowest)),
                     duration: const Duration(seconds: 2),
                     backgroundColor: Colors.grey[800],
                   ),
@@ -225,24 +221,24 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           },
         ),
         // Loading indicator for general loading states
-        // BlocListener<FilesBloc, FilesState>(
-        //   listenWhen: (previous, current) =>
-        //       previous.loading != current.loading,
-        //   listener: (context, state) async {
-        //     if (state.loading && !isLoadingDialogShown) {
-        //       isLoadingDialogShown = true;
-        //       await showDialog(
-        //         context: context,
-        //         barrierColor: Colors.black.withOpacity(0.2),
-        //         barrierDismissible: false,
-        //         builder: (_) => buildLoadingDialog("Loading..."),
-        //       );
-        //       isLoadingDialogShown = false;
-        //     } else if (!state.loading && isLoadingDialogShown) {
-        //       Navigator.of(context, rootNavigator: true).pop();
-        //     }
-        //   },
-        // ),
+        BlocListener<FilesBloc, FilesState>(
+          listenWhen: (previous, current) =>
+              previous.loading != current.loading,
+          listener: (context, state) async {
+            if (state.loading && !isLoadingDialogShown) {
+              isLoadingDialogShown = true;
+              await showDialog(
+                context: context,
+                barrierColor: context.colorScheme.surface.withOpacity(0.2),
+                barrierDismissible: false,
+                builder: (_) => buildLoadingDialog(context, "Loading..."),
+              );
+              isLoadingDialogShown = false;
+            } else if (!state.loading && isLoadingDialogShown) {
+              Navigator.of(context, rootNavigator: true).pop();
+            }
+          },
+        ),
         // // Copy: Show conflict resolution dialog
         BlocListener<FilesBloc, FilesState>(
           listenWhen: (prev, curr) =>
@@ -251,90 +247,16 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             if (!state.loading &&
                 state.conflictingPaths.isNotEmpty &&
                 state.isCopyMode) {
-              final fileName = p.basename(state.conflictingPaths.first);
               showModalBottomSheet<ConflictResolutionStrategy>(
                 context: context,
                 useRootNavigator: true,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
                 builder: (sheetContext) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey[850],
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: SafeArea(
-                      top: false,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '‘$fileName’ already exists',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'What would you like to do?',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: MechanixOutlinedButton(
-                                  label: "Cancel",
-                                  textColor: Colors.white,
-                                  borderRadius: 50,
-                                  borderWidth: 0.5,
-                                  onPressed: () {
-                                    context.read<FilesBloc>().add(
-                                          ContinueCopyWithConflictResolution(
-                                            sourcePaths: state.conflictingPaths,
-                                            destinationPath:
-                                                state.conflictDestinationPath,
-                                            strategy:
-                                                ConflictResolutionStrategy.skip,
-                                            controller: controller,
-                                          ),
-                                        );
-                                    Navigator.pop(sheetContext);
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: MechanixElevatedButton(
-                                  label: "Replace",
-                                  backgroundColor: Colors.blue,
-                                  textColor: Colors.white,
-                                  borderRadius: 50,
-                                  onPressed: () {
-                                    context.read<FilesBloc>().add(
-                                          ContinueCopyWithConflictResolution(
-                                            sourcePaths: state.conflictingPaths,
-                                            destinationPath:
-                                                state.conflictDestinationPath,
-                                            strategy: ConflictResolutionStrategy
-                                                .replace,
-                                            controller: controller,
-                                          ),
-                                        );
-                                    Navigator.pop(sheetContext);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                  return ConflictResolutionBottomSheet(
+                    conflictingPaths: state.conflictingPaths,
+                    destinationPath: state.conflictDestinationPath,
+                    controller: controller,
                   );
                 },
               );
@@ -345,24 +267,36 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         BlocListener<FilesBloc, FilesState>(
           listenWhen: (prev, curr) =>
               prev.showHiddenFiles != curr.showHiddenFiles ||
-              prev.currentSortBy != curr.currentSortBy,
+              prev.currentSortBy != curr.currentSortBy ||
+              prev.isAscending != curr.isAscending,
           listener: (context, state) {
             controller.syncSettings(
               showHidden: state.showHiddenFiles,
               sortMode: state.currentSortBy,
+              isAscending: state.isAscending,
             );
           },
         ),
       ],
       child: Scaffold(
-        appBar: MechanixNavigationBar(
-          theme: const MechanixNavigationBarThemeData(
-            titleSpacing: 0,
-          ),
-          titleWidget: selectionMode
-              ? Text("Select", style: context.textTheme.bodySmall)
-              : isSearching
-                  ? Text("Search", style: context.textTheme.bodySmall)
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+            child: MechanixNavigationBar(
+              automaticallyImplyLeading: false,
+              theme: const MechanixNavigationBarThemeData(
+                scrolledUnderElevation: 0,
+              ),
+              titleWidget: selectionMode
+                  ? Text(
+                      "${selectedPaths.length} Selected",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: context.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ).padRight(24)
                   : ValueListenableBuilder<String>(
                       valueListenable: controller.getPathNotifier,
                       builder: (context, path, _) {
@@ -371,67 +305,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             : (path == '/'
                                 ? "Root"
                                 : getCurrentFolderName(path));
-                        return Text(title, style: context.textTheme.bodySmall);
+                        return MiddleEllipsisText(
+                          title,
+                          style: TextStyle(
+                            fontSize: 24,
+                            color: context.colorScheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        );
                       },
                     ),
-          leadingWidget: IconButton(
-            icon:
-                const Icon(Icons.arrow_back_ios, size: 16, color: Colors.blue),
-            onPressed: selectionMode
-                ? clearSelection
-                : isSearching
-                    ? clearSearch
-                    : (isHomePageDir ? homeNavigation : handleBack),
-            highlightColor: Colors.transparent,
-          ).padLeft(8),
-          actionWidgets: selectionMode
-              ? [
-                  Text(
-                    "${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''} selected",
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
-                  ).padRight(24),
-                ]
-              : isSearching
-                  ? null
-                  : [
-                      // View toggle
-                      ValueListenableBuilder<bool>(
-                        valueListenable: viewModeNotifier,
-                        builder: (context, isList, _) {
-                          return IconButton(
-                            icon: Image.asset(
-                              isList ? Images.list : Images.grid,
-                              height: 24,
-                            ),
-                            onPressed: () {
-                              viewModeNotifier.value = !viewModeNotifier.value;
-                            },
-                            highlightColor: Colors.transparent,
-                          );
-                        },
-                      ),
-
-                      // Sort options
-                      BlocSelector<FilesBloc, FilesState, String>(
-                        selector: (state) => state.currentSortBy,
-                        builder: (context, currentSortBy) {
-                          return showSortMenu(context, currentSortBy);
-                        },
-                      ),
-
-                      // Search toggle
-                      IconButton(
-                        icon: const Icon(Icons.search,
-                            color: Colors.white, size: 22),
-                        onPressed: () {
-                          setState(() => isSearching = true);
-                          showSearchBottomSheet(context, searchQuery);
-                        },
-                      ),
-
-                      // More options
-                      buildMoreOptionsMenu(context),
-                    ],
+            ),
+          ),
         ),
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -491,32 +376,59 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             ),
           ],
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton:
-            selectionMode ? _buildFloatingActionMenu(context) : null,
+        bottomSheet: isSearching ? null : _buildBottomActionMenuBar(context),
       ),
     );
+  }
+
+  void handleBack() {
+    controller.goToParentDirectory();
+  }
+
+  void homeNavigation() {
+    Navigator.pop(context);
   }
 
   OverlayEntry? _searchOverlayEntry;
 
   void showSearchBottomSheet(
-      BuildContext context, ValueNotifier<String> searchQuery) {
+    BuildContext context,
+    ValueNotifier<String> searchQuery,
+  ) {
     final overlay = Overlay.of(context);
+    if (overlay == null) return;
+
+    _searchOverlayEntry?.remove();
 
     _searchOverlayEntry = OverlayEntry(
       builder: (ctx) => Positioned(
         left: 0,
         right: 0,
         bottom: 0,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Material(
+          color: Colors.transparent,
           child: SizedBox(
-            height: 48,
-            child: MechanixSearchBar(
-              autoFocus: true,
-              hintText: "Type here",
-              onChanged: (query) => controller.search(query),
+            height: 60,
+            child: MechanixTextInput.search(
+              autofocus: false,
+              prefixIcon: IconWidget(
+                iconPath: Images.search,
+                iconColor: context.colorScheme.onSurface,
+                iconHeight: 24,
+                iconWidth: 24,
+              ),
+              hintText: "Search here",
+              onChanged: (query) {
+                searchQuery.value = query;
+
+                if (query.trim().length > 2) {
+                  controller.search(query.trim());
+                }
+              },
+              onClear: () {
+                clearSearch();
+                _buildBottomActionMenuBar(context);
+              },
             ),
           ),
         ),
@@ -537,48 +449,67 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     _searchOverlayEntry = null;
 
     // Reload directory content when clearing search
-    controller.reload();
+    controller.search('');
   }
 
   /// Shows bottom sheet for selecting sort mode
-  Widget showSortMenu(BuildContext context, String currentSortBy) {
-    final currentSort = sortByFromKey(currentSortBy);
-    final isAscending = controller.isSizeAscending;
-    final selectedKey = keyFromSort(currentSort, isAscending);
-    final isSizeSort = selectedKey.startsWith('size');
-    final isDescending = selectedKey == 'size_desc';
-    final newSizeKey = isDescending ? 'size_asc' : 'size_desc';
-    final sizeIcon =
-        isDescending ? Images.sortDescending : Images.sortAscending;
+  Widget showSortMenu(
+    BuildContext context,
+    String currentSortByFromBloc,
+    bool ascendingFromBloc,
+  ) {
+    // Convert sort key → SortBy enum
+    final currentSort = sortByFromKey(currentSortByFromBloc);
 
-    // Calculate offset so menu appears at bottom of screen
-    final screenHeight = MediaQuery.of(context).size.height;
-    final menuHeight = menuItemHeight * 4; // Approximate menu height
-    final offset = Offset(80, screenHeight - menuHeight - 48);
+    // Decide which ascending value to use:
+    // 1. If controller already has value → use it
+    // 2. Otherwise → use selector (bloc) value
+    final effectiveAscending =
+        controller.hasSortApplied ? controller.isAscending : ascendingFromBloc;
+
+    final offset = const Offset(-8, -14);
 
     return MechanixMenu(
-      theme: const MechanixMenuThemeData(
-        constraints: BoxConstraints(maxWidth: double.infinity),
-        itemHeight: menuItemHeight,
-      ),
       offset: offset,
-      dropdownPosition: DropdownPosition.bottomRight,
+      dropdownPosition: DropdownPosition.topRight,
       animationDuration: const Duration(milliseconds: 300),
-      buttonIcon: const IconWidget(
+      buttonIcon: IconWidget(
+        iconWidth: 28,
+        iconHeight: 28,
         iconPath: Images.sortAscending,
-        iconColor: Colors.white,
+        iconColor: isSortMenuOpen
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
       ),
+      openMenu: () => setState(() => isSortMenuOpen = true),
+      closeMenu: () => setState(() => isSortMenuOpen = false),
       items: [
-        _buildSortMenuItem(context, key: 'name', label: 'Name'),
-        _buildSortMenuItem(
-          context,
-          key: newSizeKey,
-          label: 'Size',
-          trailingIcon:
-              isSizeSort ? Image.asset(sizeIcon, width: 16, height: 16) : null,
-        ),
-        _buildSortMenuItem(context, key: 'type', label: 'Type'),
-        _buildSortMenuItem(context, key: 'mod_time', label: 'File Modified'),
+        _buildSortMenuItem(context,
+            key: 'name',
+            label: 'Name',
+            currentSort: currentSort,
+            isAscending: effectiveAscending),
+        _buildSortMenuItem(context,
+            key: 'type',
+            label: 'Date created',
+            currentSort: currentSort,
+            isAscending: effectiveAscending,
+            isDisabled: true),
+        _buildSortMenuItem(context,
+            key: 'accessed_time',
+            label: 'Date accessed',
+            currentSort: currentSort,
+            isAscending: effectiveAscending),
+        _buildSortMenuItem(context,
+            key: 'mod_time',
+            label: 'Date modified',
+            currentSort: currentSort,
+            isAscending: effectiveAscending),
+        _buildSortMenuItem(context,
+            key: 'size',
+            label: 'Size',
+            currentSort: currentSort,
+            isAscending: effectiveAscending),
       ],
     );
   }
@@ -588,247 +519,298 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     BuildContext context, {
     required String key,
     required String label,
-    Widget? trailingIcon,
+    required SortBy currentSort,
+    required bool isAscending,
+    bool isDisabled = false,
   }) {
-    final selectedKey = keyFromSort(
-      controller.getSortedByNotifier.value,
-      controller.isSizeAscending,
-    );
+    final isSelected = sortByFromKey(key) == currentSort;
 
-    final isSelected = selectedKey == key ||
-        (key.startsWith('size') && selectedKey.startsWith('size'));
+    // If selected → choose correct icon
+    Widget? trailing;
+    if (isSelected) {
+      final icon = isAscending ? Images.sortAscending : Images.sortDescending;
+      trailing = Padding(
+        padding: const EdgeInsets.only(right: 14),
+        child: Image.asset(
+          icon,
+          width: 20,
+          height: 20,
+          color: context.colorScheme.primaryFixed,
+        ),
+      );
+    }
 
     return MechanixMenuItemsType(
       title: label,
-      leading: Icon(
-        isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-        color: isSelected ? Colors.blue : Colors.grey,
-        size: 18,
-      ),
-      trailing: trailingIcon,
+      trailing: trailing,
+      isSelected: isSelected,
+      disabled: isDisabled,
       onTap: () {
         final sortBy = sortByFromKey(key);
-        handleSortMode(sortBy.name);
 
-        // Navigator.of(context).pop();
+        bool nextAscending = isAscending;
 
-        bool? ascending;
-        if (key == 'size_asc') ascending = true;
-        if (key == 'size_desc') ascending = false;
+        // Toggle if same key tapped again
+        if (currentSort == sortBy) {
+          nextAscending = !isAscending;
+        } else {
+          nextAscending = true; // default ASC on first selection
+        }
 
-        controller.sortBy(sortBy, sizeAscending: ascending);
+        controller.sortBy(sortBy, isAscending: nextAscending);
         controller.reload();
+
+        handleSortMode(key, nextAscending);
       },
     );
   }
 
   bool get hasSelection => selectedPaths.isNotEmpty;
 
-  Widget _buildFloatingActionMenu(BuildContext context) {
-    return MechanixFloatingActionBar(
-      theme: MechanixFloatingActionBarThemeData(
-        width: 500,
+  Widget _buildBottomActionMenuBar(BuildContext context) {
+    return MechanixBottomBar(
+      theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
-          color: Colors.grey[800],
-          borderRadius: BorderRadius.circular(50),
-        ),
+            color: context.colorScheme.secondary,
+            borderRadius: selectionMode
+                ? null
+                : const BorderRadius.only(
+                    topLeft: Radius.circular(8), topRight: Radius.circular(8))),
       ),
-      dropdownPosition: DropdownPosition.topCenter,
-      floatingActionBarController: _fabController,
-      isMenuButtonRequired: false,
-      outsideClickDisabled: true,
-      menus: [
-        // Wrap only reactive buttons in ValueListenableBuilder
-        ValueListenableBuilder<bool>(
-          valueListenable: allSelectedNotifier,
-          builder: (context, allSelected, _) {
-            return IconButton(
-              onPressed: onToggleSelectAll,
-              icon: Image.asset(
-                Images.listChecks,
-                color: allSelected ? Colors.blue : Colors.white,
-                height: 20,
-              ),
-            );
-          },
-        ),
-
-        ValueListenableBuilder<bool>(
-          valueListenable: hasSelectionNotifier,
-          builder: (context, hasSelection, _) {
-            return IconButton(
-              onPressed: hasSelection ? handleCopy : null,
-              icon: const ImageIcon(AssetImage(Images.copy), size: 20),
-              color: hasSelection ? Colors.white : Colors.grey,
-            );
-          },
-        ),
-        ValueListenableBuilder<bool>(
-          valueListenable: hasSelectionNotifier,
-          builder: (context, hasSelection, _) {
-            return IconButton(
-              onPressed: hasSelection ? handleDelete : null,
-              icon: const ImageIcon(AssetImage(Images.delete), size: 20),
-              color: hasSelection ? Colors.white : Colors.grey,
-            );
-          },
-        ),
-
-        // Dropdown menu (some items depend on selection)
-        ValueListenableBuilder<bool>(
-          valueListenable: hasSelectionNotifier,
-          builder: (context, hasSelection, _) {
-            return MechanixMenu(
-              dropdownPosition: DropdownPosition.topCenter,
-              buttonIcon: const IconWidget(
-                iconPath: Images.dots,
-                iconColor: Colors.white,
-              ),
-              items: [
-                MechanixMenuItemsType(
-                  leading: Image.asset(
-                    Images.rename,
-                    color: selectedPaths.length == 1
-                        ? Colors.white70
-                        : Colors.grey,
-                    height: 20,
-                  ),
-                  title: 'Rename',
-                  onTap: selectedPaths.length == 1
-                      ? () {
-                          final selectedPath = selectedPaths.first;
-                          _showRenameDialog(selectedPath);
-                        }
-                      : null,
-                  disabled: selectedPaths.length != 1,
-                ),
-                MechanixMenuItemsType(
-                  leading: Image.asset(
-                    Images.move,
-                    color: hasSelection ? Colors.white70 : Colors.grey,
-                    height: 20,
-                  ),
-                  title: 'Move',
-                  onTap: hasSelection ? handleMove : null,
-                  disabled: !hasSelection,
-                ),
-                MechanixMenuItemsType(
-                  leading: Image.asset(
-                    Images.createFolder,
-                    color: Colors.white70,
-                    height: 20,
-                  ),
-                  title: 'Create folder',
-                  onTap: showCreateFolderDialogFloatingMenu,
-                ),
-                MechanixMenuItemsType(
-                  leading: Image.asset(
-                    Images.compress,
-                    color: hasSelection ? Colors.white70 : Colors.grey,
-                    height: 20,
-                  ),
-                  title: 'Compress',
-                  onTap: hasSelection ? handleCompress : null,
-                  disabled: !hasSelection,
-                ),
-                MechanixMenuItemsType(
-                  leading: Image.asset(
-                    Images.info,
-                    color: selectedPaths.length == 1
-                        ? Colors.white70
-                        : Colors.grey,
-                    height: 20,
-                  ),
-                  title: 'Properties',
-                  onTap: selectedPaths.length == 1 ? handleProperties : null,
-                  disabled: selectedPaths.length != 1,
-                ),
-              ],
-            );
-          },
-        ),
-
-        IconButton(
+      leadingWidget: [
+        BottomBarButton(
+          iconTheme: const MechanixBottomBarIconThemeData(
+            padding: EdgeInsets.only(left: 12),
+            iconSize: Size(28, 28),
+          ),
+          iconPath: Images.back,
           onPressed: () {
-            if (mounted) {
-              final bloc = BlocProvider.of<FilesBloc>(context);
-              if (isCopyMode) {
-                bloc.add(CancelCopyMode());
-              } else if (isMoveMode) {
-                bloc.add(CancelMoveMode());
-              } else if (isExtractMode) {
-                bloc.add(CancelExtractMode());
-              }
-              clearSelection();
-            }
+            selectionMode
+                ? clearSelection()
+                : (isHomePageDir ? homeNavigation() : handleBack());
           },
-          icon: const Icon(Icons.close, size: 20),
         ),
+      ],
+      centerWidgetSpacing: 28,
+      centerWidget: [
+        BottomBarButton(
+          iconTheme:
+              const MechanixBottomBarIconThemeData(iconSize: Size(28, 28)),
+          iconWidget: IconWidget(
+            iconPath: Images.search,
+            iconHeight: 28,
+            iconWidth: 28,
+            iconColor: selectionMode
+                ? context.colorScheme.surfaceContainerHigh
+                : context.colorScheme.surfaceContainerLowest,
+          ),
+          onPressed: () {
+            setState(() => isSearching = true);
+            showSearchBottomSheet(context, searchQuery);
+          },
+          isDisabled: selectionMode,
+        ),
+        BottomBarButton.widget(
+          widget: ValueListenableBuilder<bool>(
+            valueListenable: viewModeNotifier,
+            builder: (context, isList, _) {
+              return IconButton(
+                icon: Image.asset(
+                  isList ? Images.list : Images.grid,
+                  height: 28,
+                ),
+                onPressed: () {
+                  viewModeNotifier.value = !viewModeNotifier.value;
+                },
+                highlightColor: Colors.transparent,
+              );
+            },
+          ),
+        ),
+        BottomBarButton.widget(
+          widget: BlocSelector<FilesBloc, FilesState,
+              (String sortBy, bool ascending)>(
+            selector: (state) => (state.currentSortBy, state.isAscending),
+            builder: (context, sortData) {
+              final currentSortBy = sortData.$1;
+              final isAscending = sortData.$2;
+
+              return showSortMenu(context, currentSortBy, isAscending);
+            },
+          ),
+        ),
+        BottomBarButton.extension(
+          floatingActionBarTheme: MechanixFloatingActionBarThemeData(
+            barMainAxisAlignment: MainAxisAlignment.center,
+            width: double.infinity,
+            barSpacing: 30,
+            decoration: BoxDecoration(
+              color: context.colorScheme.tertiary,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+          ),
+          iconTheme: const MechanixBottomBarIconThemeData(),
+          outsideClickDisabled: true,
+          floatingActionBarController: _fabController,
+          offset: const Offset(-108, -4),
+          iconWidget: IconWidget(
+            iconPath: Images.checkCircle,
+            iconWidth: 28,
+            iconHeight: 28,
+            iconColor: selectionMode
+                ? context.colorScheme.primaryFixed
+                : context.colorScheme.onSurface,
+          ),
+          isSelected: selectionMode,
+          onPressed: () {
+            if (!selectionMode) enableSelect();
+            isSelectionActionMenuOpen = false;
+          },
+          onExtensionClose: () {
+            if (selectionMode) clearSelection();
+            isFolderActionMenuOpen =
+                false; // TODO: Temporary fix - to show inactive menu button color
+          },
+          extensionWidgets: [
+            BottomBarButton(
+              iconPath: Images.copy,
+              onPressed: () {
+                hasSelection ? handleCopy() : null;
+              },
+            ),
+            BottomBarButton(
+              iconPath: Images.move,
+              onPressed: () {
+                hasSelection ? handleMove() : null;
+              },
+            ),
+            BottomBarButton(
+              iconWidget: IconWidget(
+                iconPath: Images.share,
+                iconColor: Colors.grey.shade600,
+              ),
+              onPressed: () {},
+              isDisabled: true, //TODO : add share functionality
+            ),
+            BottomBarButton(
+              iconPath: Images.delete,
+              onPressed: () {
+                hasSelection ? handleDelete() : null;
+              },
+            ),
+          ],
+        ),
+      ],
+      anchorWidget: [
+        BottomBarButton.widget(
+            widget: selectionMode
+                ? buildSelectionActionsMenu(context)
+                : buildFolderActionsMenu(context)),
       ],
     );
   }
 
-  Widget buildMoreOptionsMenu(BuildContext context) {
-    final currentPath = controller.getPathNotifier.value;
-    bool actionTaken = false;
-    final state = BlocProvider.of<FilesBloc>(context).state;
-    // Calculate offset so menu appears at bottom of screen
-    final screenHeight = MediaQuery.of(context).size.height;
-    final pasteMenuHeight =
-        state.isCopyMode || state.isMoveMode ? menuItemHeight : 0;
-    final menuHeight =
-        (menuItemHeight * 8) + pasteMenuHeight; // Approximate menu height
-    final offset = Offset(0, screenHeight - menuHeight - 54);
+  Widget buildSelectionActionsMenu(BuildContext context) {
+    final offset = const Offset(-8, -14);
+    // Check if selected files are ZIP files
+    final isZipFileSelected = selectedPaths.isNotEmpty &&
+        selectedPaths.every((p) => p.toLowerCase().endsWith('.zip'));
+
+    final isSingleSelection = selectedPaths.length == 1;
+    final selectedPath = isSingleSelection ? selectedPaths.first : null;
+    final isFileSelected = isSingleSelection &&
+        FileSystemEntity.typeSync(selectedPath!) == FileSystemEntityType.file;
 
     return MechanixMenu(
-      theme: const MechanixMenuThemeData(
-          constraints: BoxConstraints(maxWidth: double.infinity),
-          itemHeight: menuItemHeight),
+      dropdownPosition: DropdownPosition.topRight,
       offset: offset,
-      dropdownPosition: DropdownPosition.bottomRight,
-      animationDuration: const Duration(milliseconds: 300),
-      buttonIcon: const IconWidget(
+      buttonIcon: IconWidget(
         iconPath: Images.dots,
-        iconColor: Colors.white,
+        iconColor: isSelectionActionMenuOpen
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
+        iconHeight: 28,
+        iconWidth: 28,
       ),
+      openMenu: () {
+        setState(() => isSelectionActionMenuOpen = true);
+      },
+      closeMenu: () {
+        setState(() => isSelectionActionMenuOpen = false);
+      },
       items: [
         MechanixMenuItemsType(
-          title: "Select",
+          leading: Image.asset(
+            Images.extract,
+            color: isZipFileSelected
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
+            height: 20,
+          ),
+          title: 'Extract',
+          onTap: () {
+            handleExtraction(context, selectedPaths);
+          },
+          disabled: !isZipFileSelected,
+        ),
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.compress,
+            color: hasSelection
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
+            height: 20,
+          ),
+          title: 'Compress',
+          onTap: hasSelection ? handleCompress : null,
+          disabled: !hasSelection,
+        ),
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.duplicate,
+            color: isFileSelected
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
+            height: 20,
+          ),
+          title: 'Duplicate',
+          onTap: isFileSelected
+              ? () {
+                  handleDuplicate(selectedPath);
+                }
+              : null,
+          disabled: !isFileSelected,
+        ),
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.rename,
+            color: selectedPaths.length == 1
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
+            height: 20,
+          ),
+          title: 'Rename',
+          onTap: selectedPaths.length == 1
+              ? () {
+                  final selectedPath = selectedPaths.first;
+                  showRenameSheet(initialName: p.basename(selectedPath));
+                  clearSelection();
+                }
+              : null,
+          disabled: selectedPaths.length != 1,
+        ),
+        MechanixMenuItemsType(
+          title: "Select all",
           leading: Image.asset(
             Images.listChecks,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
-            actionTaken = true;
-            clearSelection();
-            enableSelect();
-          },
-        ),
-        MechanixMenuItemsType(
-          title: "New Folder",
-          leading: Image.asset(
-            Images.createFolder,
-            color: Colors.white70,
-            height: mechanixIconSize,
-          ),
-          onTap: () {
-            actionTaken = true;
-            showCreateFolderDialog();
-            clearSelection();
-          },
-        ),
-        MechanixMenuItemsType(
-          title: "Refresh",
-          leading: Image.asset(
-            Images.refresh,
-            color: Colors.white70,
-            height: mechanixIconSize,
-          ),
-          onTap: () {
-            actionTaken = true;
-            reload();
-            clearSelection();
+            handleSelectAll();
           },
         ),
         MechanixMenuItemsType(
@@ -837,106 +819,145 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               : "Show Hidden Files",
           leading: Image.asset(
             controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            _toggleHiddenFiles();
+          },
+        ),
+        MechanixMenuItemsType(
+          leading: Image.asset(
+            Images.info,
+            color: selectedPaths.length == 1
+                ? context.colorScheme.onSurface
+                : context.colorScheme.surfaceContainerHigh,
+            height: 20,
+          ),
+          title: 'Properties',
+          onTap: selectedPaths.length == 1 ? handleProperties : null,
+          disabled: selectedPaths.length != 1,
+        ),
+      ],
+    ).padRight(8);
+  }
+
+  Widget buildFolderActionsMenu(BuildContext context) {
+    final currentPath = controller.getPathNotifier.value;
+    bool actionTaken = false;
+
+    final state = BlocProvider.of<FilesBloc>(context).state;
+    final offset = const Offset(-8, -14);
+    bool isPasteDisabled = !(state.isCopyMode || state.isMoveMode);
+
+    return MechanixMenu(
+      offset: offset,
+      dropdownPosition: DropdownPosition.topRight,
+      animationDuration: const Duration(milliseconds: 300),
+      buttonIcon: IconWidget(
+        iconPath: Images.dots,
+        iconColor: isFolderActionMenuOpen
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
+        iconHeight: 28,
+        iconWidth: 28,
+      ),
+      openMenu: () {
+        setState(() => isFolderActionMenuOpen = true);
+      },
+      closeMenu: () {
+        setState(() => isFolderActionMenuOpen = false);
+      },
+      items: [
+        MechanixMenuItemsType(
+          title: "Paste",
+          leading: Image.asset(
+            Images.paste,
+            color: isPasteDisabled
+                ? context.colorScheme.surfaceContainerHigh
+                : context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          disabled: isPasteDisabled,
+          onTap: () {
+            actionTaken = true;
+            handlePaste(context);
+            clearSelection();
+            reload();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "New Folder",
+          leading: Image.asset(
+            Images.createFolder,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            createFolderAndRename();
+            clearSelection();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: "Select all",
+          leading: Image.asset(
+            Images.listChecks,
+            color: context.colorScheme.onSurface,
+            height: mechanixIconSize,
+          ),
+          onTap: () {
+            actionTaken = true;
+            handleSelectAll();
+          },
+        ),
+        MechanixMenuItemsType(
+          title: controller.showHiddenFiles
+              ? "Hide Hidden Files"
+              : "Show Hidden Files",
+          leading: Image.asset(
+            controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
             actionTaken = true;
             _toggleHiddenFiles();
-            clearSelection();
-          },
-        ),
-        MechanixMenuItemsType(
-          title: "Copy",
-          leading: Image.asset(
-            Images.copy,
-            color: Colors.white70,
-            height: mechanixIconSize,
-          ),
-          onTap: () {
-            actionTaken = true;
-            selectedPaths.add(currentPath);
-            handleCopy();
-            clearSelection();
-          },
-        ),
-        MechanixMenuItemsType(
-          title: "Copy Path",
-          leading: const Icon(Icons.copy_all,
-              color: Colors.white70, size: mechanixIconSize),
-          onTap: () {
-            actionTaken = true;
-            copyPath(currentPath);
-            clearSelection();
-          },
-        ),
-        if (state.isCopyMode || state.isMoveMode)
-          MechanixMenuItemsType(
-            title: "Paste",
-            leading: const Icon(Icons.paste, color: Colors.white70),
-            onTap: () {
-              actionTaken = true;
-              handlePaste(context);
-              clearSelection();
-              reload();
-            },
-          ),
-        MechanixMenuItemsType(
-          title: "Open in Terminal",
-          leading: Image.asset(
-            Images.terminal,
-            color: Colors.white70,
-            height: mechanixIconSize,
-          ),
-          onTap: () {
-            actionTaken = true;
-            openInTerminal(currentPath);
-            clearSelection();
           },
         ),
         MechanixMenuItemsType(
           title: "Properties",
           leading: Image.asset(
             Images.info,
-            color: Colors.white70,
+            color: context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
           onTap: () {
             actionTaken = true;
-            _showDetailsDialog(context, currentPath);
+            showDetailsDialog(context, currentPath);
             clearSelection();
           },
         ),
       ],
-    );
+    ).padRight(8);
   }
 
-  void onToggleSelectAll() {
+  void handleSelectAll() {
     final files = controller.paginatedEntities.value; // current page
 
-    final allSelectedNow = selectedPaths.length == files.length;
-
     setState(() {
-      if (allSelectedNow) {
-        selectedPaths.clear();
-      } else {
-        selectedPaths = {for (final f in files) f.path};
-        selectionMode = true;
-      }
+      // Always select ALL files (no toggle)
+      selectedPaths = {for (final f in files) f.path};
+      selectionMode = true;
     });
 
-    // Update notifiers after UI state changes
+    // Update notifiers
     hasSelectionNotifier.value = selectedPaths.isNotEmpty;
-    allSelectedNotifier.value = !allSelectedNow; // toggle value
+    allSelectedNotifier.value = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
-      if (selectionMode) {
-        _openFabMenuProgrammatically();
-      } else {
-        _closeFabMenuProgrammatically();
-      }
+      _openFabMenuProgrammatically();
     });
   }
 
@@ -996,109 +1017,103 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     });
   }
 
+  Widget _buildCustomMoveSheet() {
+    final filesBloc = context.read<FilesBloc>();
+    final screenHeight = MediaQuery.of(context).size.height;
+    final sheetWidth = MediaQuery.of(context).size.width;
+
+    return ClipPath(
+      clipper: TabClipper(shift: sheetWidth * 0.70),
+      child: Container(
+        height: screenHeight * 0.98,
+        decoration: BoxDecoration(
+          color: context.colorScheme.secondary,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+          ),
+        ),
+        child: MoveBottomSheetContent(
+          filesBloc: filesBloc,
+          selectedCount: selectedPaths.length,
+          reload: reload,
+          currentPath: controller.getPathNotifier.value,
+          rootContext: context,
+        ),
+      ),
+    );
+  }
+
   void handleMove() {
-    _closeFabMenuProgrammatically();
-    List<String> selectedPathsList = selectedPaths.toList();
-    final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
-    // Start move mode
-    filesBloc.add(StartMoveMode(selectedPathsList));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _closeFabMenuProgrammatically();
+    });
+
+    final filesBloc = context.read<FilesBloc>();
+    filesBloc.add(StartMoveMode(selectedPaths.toList()));
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[850],
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
-        return SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Select destination',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ).padLeft(18).padBottom(4).padTop(14),
-              MechanixSectionListTheme(
-                style: MechanixSectionListThemeData(
-                  height: 42,
-                  dividerPadding: EdgeInsets.zero,
-                  widgetPadding: EdgeInsets.zero,
-                  backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
-                ),
-                child: MechanixSectionList(
-                  sectionListItems: [
-                    SectionListItems(
-                      title: "Home directory",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(
-                          context, homeDir, "Home", filesBloc, () => reload()),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.home,
-                        iconColor: Colors.blueAccent,
+      enableDrag: true,
+      barrierColor: Colors.black54,
+      builder: (_) {
+        return BlocProvider.value(
+          value: filesBloc, // keep same instance
+          child: BlocListener<FilesBloc, FilesState>(
+            listenWhen: (prev, curr) =>
+                prev.conflictingPaths != curr.conflictingPaths,
+            listener: (context, state) async {
+              if (!state.loading &&
+                  state.conflictingPaths.isNotEmpty &&
+                  state.isMoveMode) {
+                final rootContext = Navigator.of(context).context;
+
+                final conflicts = state.conflictingPaths.map((path) {
+                  return FileConflict(
+                    path: path,
+                    fileName: p.basename(path),
+                    destination: state.conflictDestinationPath,
+                  );
+                }).toList();
+
+                totalMovedCount = state.movedPaths.length;
+
+                await handleConflictsSequentially(rootContext, conflicts);
+
+                if (rootContext.mounted) {
+                  final folderName = p.basename(state.conflictDestinationPath);
+
+                  ScaffoldMessenger.of(rootContext).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        totalMovedCount > 0
+                            ? "Moved $totalMovedCount item${totalMovedCount > 1 ? 's' : ''} to '$folderName'"
+                            : "No items were moved",
+                        style: TextStyle(
+                            color: context.colorScheme.surfaceContainerLowest),
                       ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: Colors.grey[800],
                     ),
-                    SectionListItems(
-                      title: "Downloads",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(context, downloadsDir, "Downloads",
-                          filesBloc, () => reload()),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.downloads,
-                        iconColor: Colors.deepPurpleAccent,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                    SectionListItems(
-                      title: "Documents",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(context, documentsDir, "Documents",
-                          filesBloc, () => reload()),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.homeDocuments,
-                        iconColor: Colors.orangeAccent,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                    SectionListItems(
-                      title: "Root (/)",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onTap(
-                          context, "/", "Root", filesBloc, () => reload()),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.hardDrive,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+                  );
+
+                  // exit move mode
+                  filesBloc.add(CancelMoveMode());
+                  reload();
+                }
+              }
+            },
+            child: _buildCustomMoveSheet(),
           ),
         );
       },
-    ).whenComplete(() {
-      // Clear selection only if needed when bottom sheet is closed
-      clearSelection();
-    });
+    ).whenComplete(() => clearSelection());
   }
 
   void handleDelete() {
-    _confirmDelete(context, selectedPaths);
+    confirmDelete(context, selectedPaths);
     clearSelection();
   }
 
@@ -1110,7 +1125,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       SnackBar(
         content: Text(
             "Copied ${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''}",
-            style: const TextStyle(color: Colors.white)),
+            style:
+                TextStyle(color: context.colorScheme.surfaceContainerLowest)),
         duration: const Duration(seconds: 2),
         backgroundColor: Colors.grey[800],
       ),
@@ -1118,331 +1134,293 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     clearSelection();
   }
 
-  void handleCompress() async {
-    _closeFabMenuProgrammatically();
-    if (selectedPaths.isEmpty) return;
-
-    final destinationDirPath = p.dirname(selectedPaths.first);
-    final defaultZipName = "Archive.zip";
-    String zipName = defaultZipName;
+  void showCompressOverlay({
+    required String defaultZipName,
+    required String destinationDirPath,
+    required List<String> selectedPaths,
+  }) {
+    String currentName = defaultZipName;
     final filesBloc = BlocProvider.of<FilesBloc>(context);
 
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.black,
-      isScrollControlled: true,
-      builder: (bottomSheetContext) {
-        String? errorText;
+    final overlay = Overlay.of(context);
+    OverlayEntry? entry;
 
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: MechanixTextInputTheme(
-                  style: MechanixTextInputThemeData(
-                    borderRadius: BorderRadius.circular(50),
+    entry = OverlayEntry(
+      builder: (ctx) {
+        return Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Material(
+            color: Colors.transparent,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                final bool isEmpty = currentName.trim().isEmpty;
+                final bool showCheck = !isEmpty;
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Compress to...',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ).padBottom(12),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: MechanixTextInput<String>.textInput(
-                              hintText: defaultZipName,
-                              initialValue: defaultZipName,
-                              onChanged: (value) {
-                                zipName = value;
-                                setState(() => errorText = null);
+                  child: SizedBox(
+                    height: 60,
+                    child: MechanixTextInput.textInput(
+                      autofocus: true,
+                      cursorColor: context.colorScheme.primaryFixed,
+                      initialValue: defaultZipName,
+                      onChanged: (v) {
+                        setState(() {
+                          currentName = v;
+                        });
+                      },
+                      anchorWidget: showCheck
+                          ? IconButton(
+                              icon: Icon(Icons.check,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
+                              onPressed: () async {
+                                final trimmed = currentName.trim();
+
+                                if (trimmed.isEmpty) return;
+
+                                final zipPath = p.join(
+                                  destinationDirPath,
+                                  trimmed.endsWith('.zip')
+                                      ? trimmed
+                                      : '$trimmed.zip',
+                                );
+
+                                final exists = await File(zipPath).exists();
+                                if (exists) {
+                                  setState(() {
+                                    currentName = "";
+                                  });
+                                  return;
+                                }
+
+                                entry?.remove();
+
+                                filesBloc.add(
+                                  CompressEntitiesEvent(
+                                    sourcePaths: selectedPaths.toList(),
+                                    destinationZipPath: zipPath,
+                                    controller: controller,
+                                  ),
+                                );
+
+                                clearSelection();
                               },
-                              inputDecoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 16),
-                                filled: true,
-                                fillColor: const Color(0xFF2C2C2E),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(50),
-                                  borderSide: BorderSide.none,
-                                ),
-                                errorText: errorText,
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                      ).copyWith(
-                                        splashFactory: NoSplash.splashFactory,
-                                      ),
-                                      onPressed: () =>
-                                          Navigator.pop(bottomSheetContext),
-                                      child: const Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                        backgroundColor: Colors.grey[800],
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(50),
-                                        ),
-                                      ).copyWith(
-                                        splashFactory: NoSplash.splashFactory,
-                                      ),
-                                      onPressed: () async {
-                                        final trimmedName = zipName.trim();
-
-                                        if (trimmedName.isEmpty) {
-                                          setState(() {
-                                            errorText =
-                                                'ZIP file name cannot be empty';
-                                          });
-                                          return;
-                                        }
-
-                                        final zipPath = p.join(
-                                          destinationDirPath,
-                                          trimmedName.endsWith('.zip')
-                                              ? trimmedName
-                                              : '$trimmedName.zip',
-                                        );
-
-                                        // Async existence check
-                                        final fileExists =
-                                            await File(zipPath).exists();
-                                        if (fileExists) {
-                                          setState(() {
-                                            errorText =
-                                                'A ZIP file with that name already exists';
-                                          });
-                                          return;
-                                        }
-
-                                        // Safe to compress
-                                        filesBloc.add(
-                                          CompressEntitiesEvent(
-                                            sourcePaths: selectedPaths.toList(),
-                                            destinationZipPath: zipPath,
-                                            controller: controller,
-                                          ),
-                                        );
-
-                                        Navigator.pop(bottomSheetContext);
-                                        clearSelection();
-                                      },
-                                      child: const Icon(Icons.check),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                ),
-                              ),
+                            )
+                          : IconButton(
+                              icon: Icon(Icons.close,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
+                              onPressed: () {
+                                entry?.remove();
+                              },
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         );
       },
     );
+
+    overlay.insert(entry);
   }
 
-  void handleExtract(String zipFilePath) {
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
+  Future<void> handleDuplicate(String sourcePath) async {
+    final file = File(sourcePath);
+    if (!await file.exists()) return;
 
-    // Start extract mode with the tapped file
-    filesBloc.add(StartExtractMode(zipFilePath));
+    final dirPath = p.dirname(sourcePath);
+    final baseName = p.basenameWithoutExtension(sourcePath);
+    final ext = p.extension(sourcePath);
+
+    String newName = '$baseName (Copy)$ext';
+    String newPath = p.join(dirPath, newName);
+
+    int copyIndex = 2;
+
+    // If "(Copy)" already exists → "(Copy 2)", "(Copy 3)", etc.
+    while (await File(newPath).exists()) {
+      newName = '$baseName (Copy $copyIndex)$ext';
+      newPath = p.join(dirPath, newName);
+      copyIndex++;
+    }
+
+    try {
+      await file.copy(newPath);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Duplicated as '$newName'",
+            style: TextStyle(color: context.colorScheme.surfaceContainerLowest),
+          ),
+          backgroundColor: Colors.grey[800],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      reload(); // refresh list
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Failed to duplicate file",
+            style: TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    } finally {
+      clearSelection();
+    }
+  }
+
+  void handleCompress() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _closeFabMenuProgrammatically();
+    });
+
+    if (selectedPaths.isEmpty) return;
+
+    final destinationDirPath = p.dirname(selectedPaths.first);
+
+    String baseZipName;
+
+    if (selectedPaths.length == 1) {
+      // Single file → filename.zip
+      final singlePath = selectedPaths.first;
+      baseZipName = p.basenameWithoutExtension(singlePath);
+    } else {
+      // Multiple files → Archive.zip
+      baseZipName = 'Archive';
+    }
+
+    final uniqueZipName = await generateUniqueZipName(
+      destinationDir: destinationDirPath,
+      baseName: baseZipName,
+    );
+
+    showCompressOverlay(
+      defaultZipName: uniqueZipName,
+      destinationDirPath: destinationDirPath,
+      selectedPaths: selectedPaths.toList(),
+    );
+  }
+
+  Widget _buildCustomExtractSheet() {
+    final filesBloc = context.read<FilesBloc>();
+    final screenHeight = MediaQuery.of(context).size.height;
+    final sheetWidth = MediaQuery.of(context).size.width;
+
+    return ClipPath(
+      clipper: TabClipper(shift: sheetWidth * 0.70),
+      child: Container(
+        height: screenHeight * 0.98,
+        decoration: BoxDecoration(
+          color: context.colorScheme.secondary,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+          ),
+        ),
+        child: ExtractBottomSheetContent(
+          filesBloc: filesBloc,
+          selectedCount: selectedPaths.length,
+          reload: reload,
+          currentPath: controller.getPathNotifier.value,
+          rootContext: context,
+        ),
+      ),
+    );
+  }
+
+  void handleExtraction(BuildContext context, Set<String> selectedPaths) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _closeFabMenuProgrammatically();
+    });
+
+    final filesBloc = context.read<FilesBloc>();
+    filesBloc.add(StartExtractMode(selectedPaths.toList()));
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey[850],
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) {
-        return SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Extract to...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
+      enableDrag: true,
+      barrierColor: Colors.black54,
+      builder: (_) {
+        return BlocProvider.value(
+          value: filesBloc, // keep same bloc instance
+          child: BlocListener<FilesBloc, FilesState>(
+            listenWhen: (prev, curr) =>
+                prev.extractStatus != curr.extractStatus &&
+                curr.extractStatus == FileExtractStatus.completed,
+            listener: (context, state) async {
+              final rootContext = Navigator.of(context).context;
+              if (!rootContext.mounted) return;
+
+              final successCount = state.extractSuccessCount;
+              final failureCount = state.extractFailureCount;
+
+              String msg;
+              if (failureCount == 0) {
+                msg =
+                    "Extracted $successCount file${successCount > 1 ? 's' : ''} successfully";
+              } else if (successCount == 0) {
+                msg =
+                    "Failed to extract $failureCount file${failureCount > 1 ? 's' : ''}";
+              } else {
+                msg =
+                    "$successCount extracted successfully • $failureCount failed";
+              }
+
+              // Show final summary
+              ScaffoldMessenger.of(rootContext).showSnackBar(
+                SnackBar(
+                  content: Text(msg,
+                      style: TextStyle(
+                        color: context.colorScheme.surfaceContainerLowest,
+                      )),
+                  backgroundColor: Colors.grey[800],
+                  duration: const Duration(seconds: 2),
                 ),
-              ).padLeft(18).padBottom(4).padTop(14),
-              MechanixSectionListTheme(
-                style: MechanixSectionListThemeData(
-                  height: 42,
-                  dividerPadding: EdgeInsets.zero,
-                  widgetPadding: EdgeInsets.zero,
-                  backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
-                ),
-                child: MechanixSectionList(
-                  sectionListItems: [
-                    SectionListItems(
-                      title: "Home directory",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        homeDir,
-                        "Home",
-                        filesBloc,
-                        () => reload(),
-                      ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.home,
-                        iconColor: Colors.blueAccent,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                    SectionListItems(
-                      title: "Downloads",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        downloadsDir,
-                        "Downloads",
-                        filesBloc,
-                        () => reload(),
-                      ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.downloads,
-                        iconColor: Colors.deepPurpleAccent,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                    SectionListItems(
-                      title: "Documents",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        documentsDir,
-                        "Documents",
-                        filesBloc,
-                        () => reload(),
-                      ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.homeDocuments,
-                        iconColor: Colors.orangeAccent,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                    SectionListItems(
-                      title: "Root (/)",
-                      titleTextStyle: const TextStyle(fontSize: 14),
-                      onTap: () => onItemTap(
-                        context,
-                        "/",
-                        "Root",
-                        filesBloc,
-                        () => reload(),
-                      ),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.hardDrive,
-                      ),
-                      defaultTrailingIcon: false,
-                      trailing: _trailingIcon(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              );
+
+              // Exit extract mode
+              filesBloc.add(CancelExtractMode());
+              reload();
+            },
+            child: _buildCustomExtractSheet(),
           ),
         );
       },
     ).whenComplete(() {
-      // Only clear selection if needed when bottom sheet closes
       clearSelection();
     });
-  }
-
-  Widget _trailingIcon() {
-    return SizedBox(
-      child: const Icon(
-        size: 16,
-        Icons.arrow_forward_ios,
-        color: Colors.grey,
-      ).padAll(4),
-    );
   }
 
   void handleProperties() {
     if (selectedPaths.length == 1) {
       final selectedPath = selectedPaths.first;
-      _showDetailsDialog(context, selectedPath);
+      showDetailsDialog(context, selectedPath);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Select a single item to view details",
-              style: TextStyle(color: Colors.white)),
+          content: Text("Select a single item to view details",
+              style:
+                  TextStyle(color: context.colorScheme.surfaceContainerLowest)),
           duration: const Duration(seconds: 1),
           backgroundColor: Colors.grey[800],
         ),
       );
     }
     clearSelection();
-  }
-
-  /// Opens a terminal window in the given path.
-  /// Tries multiple terminal emulators (gnome-terminal, konsole, xfce4-terminal, xterm).
-  Future<void> openInTerminal(String path) async {
-    final candidates = [
-      ['alacritty', '--working-directory', path],
-      ['gnome-terminal', '--working-directory', path],
-      ['konsole', '--workdir', path],
-      ['xfce4-terminal', '--working-directory', path],
-      ['xterm', '-e', 'cd $path; bash'],
-    ];
-
-    for (final cmd in candidates) {
-      final executable = cmd.first;
-      if (await Process.run('which', [executable])
-          .then((p) => p.exitCode == 0)) {
-        Process.start(executable, cmd.skip(1).toList());
-        return;
-      }
-    }
-
-    throw Exception("No terminal found");
   }
 
   void handlePaste(BuildContext context) {
@@ -1462,568 +1440,143 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     }
   }
 
-  void handleSortMode(String value) {
-    BlocProvider.of<FilesBloc>(context).add(SortFiles(value));
+  void handleSortMode(String value, bool isAscending) {
+    BlocProvider.of<FilesBloc>(context).add(SortFiles(value, isAscending));
   }
 
-  void _showDetailsDialog(BuildContext context, String path) {
+  void showDetailsDialog(BuildContext context, String path) {
     final bloc = context.read<FilesBloc>();
     bloc.add(FetchFileDetails(path));
 
-    final fileItem = FileItem(
-      name: p.basename(path),
-      type: p.extension(path) == '' ? 'dir' : p.extension(path),
-      modified: DateTime.now(),
-    );
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (bottomSheetContext) {
-        return BlocProvider.value(
-          value: bloc,
-          child: BlocBuilder<FilesBloc, FilesState>(
-            builder: (context, state) {
-              final details = state.fileDetails;
-              final hidden = p.basename(path).startsWith('.') ? 'Yes' : 'No';
-              var readable = '-';
-              var writable = '-';
+      barrierColor: Colors.transparent,
+      enableDrag: false,
+      builder: (sheetContext) {
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.pop(sheetContext),
+          child: FileDetailsDialog(path: path),
+        );
+      },
+    );
+  }
 
-              if (details != null) {
-                final mode = details.mode;
-                readable = (mode & 0x100) != 0 ? 'Yes' : 'No';
-                writable = (mode & 0x80) != 0 ? 'Yes' : 'No';
-              }
+  Future<void> createFolderAndRename() async {
+    final path = controller.getCurrentPath;
+    final bloc = context.read<FilesBloc>();
 
-              if (details == null) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[800],
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(12)),
+    final folderName = await generateUniqueFolderName(path);
+
+    // Create the folder
+    bloc.add(CreateFolder(
+      path: path,
+      folderName: folderName,
+      controller: controller,
+    ));
+
+    // After creation, show rename sheet with initial value
+    Future.delayed(const Duration(milliseconds: 200), () {
+      showRenameSheet(initialName: folderName);
+    });
+  }
+
+  Future<String?> showRenameSheet({required String initialName}) async {
+    String folderName = initialName;
+    final filesBloc = BlocProvider.of<FilesBloc>(context);
+    final oldPath = p.join(controller.getCurrentPath, initialName);
+
+    final completer = Completer<String?>();
+    controller.markNewFolder(oldPath);
+
+    final overlay = Overlay.of(context);
+    OverlayEntry? entry;
+
+    entry = OverlayEntry(
+      builder: (ctx) {
+        return Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Material(
+            color: Colors.transparent,
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                final bool isEmpty = folderName.trim().isEmpty;
+                final bool isSame = folderName.trim() == initialName.trim();
+                final bool showCheck = !isEmpty && !isSame;
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
                   ),
-                  child: const SizedBox(
-                    height: 100,
-                    child: Center(child: CircularProgressIndicator()),
+                  child: SizedBox(
+                    height: 60,
+                    child: MechanixTextInput.textInput(
+                      autofocus: true,
+                      cursorColor: context.colorScheme.primaryFixed,
+                      onChanged: (v) {
+                        setState(() {
+                          folderName = v;
+                        });
+
+                        controller.setLiveRename(oldPath, v);
+                      },
+                      initialValue: initialName,
+                      anchorWidget: showCheck
+                          ? IconButton(
+                              icon: Icon(Icons.check,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
+                              onPressed: () {
+                                entry?.remove();
+
+                                final newFullPath = p.join(
+                                  p.dirname(oldPath),
+                                  folderName,
+                                );
+
+                                filesBloc.add(
+                                  Rename(
+                                    oldPath: oldPath,
+                                    newName: folderName,
+                                    controller: controller,
+                                  ),
+                                );
+
+                                controller.clearLiveRename();
+                                controller.clearNewFolder();
+
+                                completer.complete(newFullPath);
+                              },
+                            )
+                          : IconButton(
+                              icon: Icon(Icons.close,
+                                  color: context
+                                      .colorScheme.surfaceContainerLowest),
+                              onPressed: () {
+                                entry?.remove();
+                                controller.clearLiveRename();
+                                controller.clearNewFolder();
+                                // Return null (cancel)
+                                completer.complete(null);
+                              },
+                            ),
+                    ),
                   ),
                 );
-              }
-
-              final items = [
-                buildDetailRow("Type", details.type.toString()),
-                buildDetailRow("Size", formatBytes(details.size)),
-                buildDetailRow("Modified", formatDateTime(details.modified)),
-                buildDetailRow("Accessed", formatDateTime(details.accessed)),
-                buildDetailRow("Changed", formatDateTime(details.changed)),
-                buildDetailRow("Readable", readable),
-                buildDetailRow("Writable", writable),
-                buildDetailRow("Hidden", hidden),
-              ];
-
-              return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(children: [
-                      Image.asset(fileItem.iconPath, width: 28, height: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          fileItem.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                            color: Colors.white,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      )
-                    ]),
-                    const SizedBox(height: 12),
-                    MechanixSimpleListTheme(
-                      style: const MechanixSimpleListThemeData(
-                        itemPadding: EdgeInsets.zero,
-                        backgroundColor: Colors.transparent,
-                        widgetMargin: EdgeInsets.only(bottom: 8),
-                      ),
-                      child: MechanixSimpleList.builder(
-                          isDividerRequired: false,
-                          padding: EdgeInsets.zero,
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            return items[index];
-                          }),
-                    ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[700],
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                          ),
-                        ).copyWith(
-                          splashFactory: NoSplash
-                              .splashFactory, // Disable ripple animation
-                        ),
-                        onPressed: () => Navigator.of(bottomSheetContext).pop(),
-                        child: const Text("Close"),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+              },
+            ),
           ),
         );
       },
     );
-  }
 
-  Widget buildDetailRow(String title, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title,
-              style: const TextStyle(color: Colors.white, fontSize: 14)),
-          Text(value,
-              style: const TextStyle(color: Colors.white70, fontSize: 12)),
-        ],
-      ),
-    );
-  }
+    overlay.insert(entry);
 
-  void showCreateFolderDialogFloatingMenu() {
-    _closeFabMenuProgrammatically();
-    String folderName = ""; // Local variable to track input
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
-    final hasSelection = selectedPaths.isNotEmpty;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (bottomSheetContext) {
-        String? errorText;
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: MechanixTextInputTheme(
-                  style: MechanixTextInputThemeData(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: MechanixTextInput<String>.textInput(
-                              hintText: "New folder",
-                              onChanged: (value) {
-                                folderName = value;
-                                setState(() => errorText = null); // clear error
-                              },
-                              inputDecoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 16),
-                                filled: true,
-                                fillColor: const Color(0xFF2C2C2E),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(50),
-                                  borderSide: BorderSide.none,
-                                ),
-                                errorText: errorText, // show error text
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                      ).copyWith(
-                                        splashFactory: NoSplash.splashFactory,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.of(bottomSheetContext).pop();
-                                      },
-                                      child: const Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                        backgroundColor: Colors.grey[800],
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(50),
-                                        ),
-                                      ).copyWith(
-                                        splashFactory: NoSplash.splashFactory,
-                                      ),
-                                      onPressed: () async {
-                                        final trimmedName = folderName.trim();
-
-                                        if (trimmedName.isEmpty) {
-                                          setState(() => errorText =
-                                              'Folder name cannot be empty');
-                                          return;
-                                        }
-
-                                        final currentPath =
-                                            controller.getPathNotifier.value;
-                                        final newFolderPath =
-                                            '$currentPath/$trimmedName';
-
-                                        // async folder existence check
-                                        final exists =
-                                            await Directory(newFolderPath)
-                                                .exists();
-                                        if (exists) {
-                                          setState(() => errorText =
-                                              'A folder with that name already exists');
-                                          return;
-                                        }
-
-                                        // safe to create
-                                        filesBloc.add(CreateFolder(
-                                          path: currentPath,
-                                          folderName: trimmedName,
-                                          controller: controller,
-                                        ));
-
-                                        // move selected files into the new folder
-                                        if (hasSelection) {
-                                          final newFolderPath =
-                                              '$currentPath/$trimmedName';
-                                          final completer = Completer<void>();
-
-                                          filesBloc.add(Move(
-                                            sourcePaths: selectedPaths.toList(),
-                                            destinationPath: newFolderPath,
-                                            completer: completer,
-                                          ));
-                                          await completer.future;
-                                          filesBloc.add(CancelMoveMode());
-                                          reload();
-                                          clearSelection();
-                                        }
-
-                                        Navigator.of(bottomSheetContext).pop();
-                                      },
-                                      child: const Icon(Icons.check),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void showCreateFolderDialog() {
-    String folderName = ""; // Track input
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
-    final currentPath = controller.getPathNotifier.value;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (bottomSheetContext) {
-        String? errorText;
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: MechanixTextInputTheme(
-                  style: MechanixTextInputThemeData(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      MechanixTextInput<String>.textInput(
-                        hintText: "New folder",
-                        onChanged: (value) {
-                          folderName = value;
-                          setState(() {
-                            errorText = null; // clear previous error
-                          });
-                        },
-                        inputDecoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 16),
-                          filled: true,
-                          fillColor: const Color(0xFF2C2C2E),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(50),
-                            borderSide: BorderSide.none,
-                          ),
-                          errorText: errorText, // shows validation error
-                          suffixIcon: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16))
-                                    .copyWith(
-                                  splashFactory: NoSplash.splashFactory,
-                                ),
-                                onPressed: () {
-                                  Navigator.of(bottomSheetContext).pop();
-                                },
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 16),
-                                  backgroundColor: Colors.grey[800],
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(50),
-                                  ),
-                                ).copyWith(
-                                  splashFactory: NoSplash.splashFactory,
-                                ),
-                                onPressed: () async {
-                                  final trimmedName = folderName.trim();
-
-                                  if (trimmedName.isEmpty) {
-                                    setState(() {
-                                      errorText = 'Folder name cannot be empty';
-                                    });
-                                    return;
-                                  }
-
-                                  final newFolderPath =
-                                      '$currentPath/$trimmedName';
-
-                                  // Async folder existence check
-                                  final exists =
-                                      await Directory(newFolderPath).exists();
-
-                                  if (exists) {
-                                    setState(() {
-                                      errorText =
-                                          'A folder with that name already exists';
-                                    });
-                                    return;
-                                  }
-
-                                  // Folder does not exist, safe to create
-                                  filesBloc.add(CreateFolder(
-                                    path: currentPath,
-                                    folderName: trimmedName,
-                                    controller: controller,
-                                  ));
-
-                                  Navigator.of(bottomSheetContext).pop();
-                                },
-                                child: const Icon(Icons.check),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showRenameDialog(String oldPath) {
-    String newName = p.basename(oldPath);
-    final filesBloc = BlocProvider.of<FilesBloc>(context);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.black,
-      isScrollControlled: true,
-      builder: (bottomSheetContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            final trimmedName = newName.trim();
-            final isSubmitDisabled =
-                trimmedName.isEmpty || trimmedName == p.basename(oldPath);
-
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: MechanixTextInputTheme(
-                  style: MechanixTextInputThemeData(
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Rename \'${p.basename(oldPath)}\'',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ).padBottom(12),
-
-                      // Input field
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: MechanixTextInput<String>.textInput(
-                              initialValue: p.basename(oldPath),
-                              onChanged: (value) {
-                                setState(() {
-                                  newName = value;
-                                });
-                              },
-                              inputDecoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 16),
-                                filled: true,
-                                fillColor: const Color(0xFF2C2C2E),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(50),
-                                  borderSide: BorderSide.none,
-                                ),
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                      ).copyWith(
-                                        splashFactory: NoSplash.splashFactory,
-                                      ),
-                                      onPressed: () =>
-                                          Navigator.of(bottomSheetContext)
-                                              .pop(),
-                                      child: const Icon(
-                                        Icons.close,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 16),
-                                        backgroundColor: isSubmitDisabled
-                                            ? Colors.grey[700]
-                                            : Colors.grey[800],
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(50),
-                                        ),
-                                      ).copyWith(
-                                        splashFactory: NoSplash.splashFactory,
-                                      ),
-                                      onPressed: isSubmitDisabled
-                                          ? null
-                                          : () {
-                                              filesBloc.add(Rename(
-                                                oldPath: oldPath,
-                                                newName: trimmedName,
-                                                controller: controller,
-                                              ));
-                                              Navigator.of(bottomSheetContext)
-                                                  .pop();
-                                              clearSelection();
-                                            },
-                                      child: const Icon(Icons.check),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    clearSelection();
+    return completer.future;
   }
 
   void _toggleHiddenFiles() {
@@ -2036,25 +1589,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     controller.reload();
   }
 
-  Future<void> copyPath(String path) async {
-    await Clipboard.setData(ClipboardData(text: path));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Path copied to clipboard',
-            style: TextStyle(color: Colors.white)),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.grey[800],
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context, Set<String> selectedPaths) {
+  void confirmDelete(BuildContext context, Set<String> selectedPaths) {
     final pathsToDelete = selectedPaths.toList();
 
     final isSingle = pathsToDelete.length == 1;
-    final title = isSingle
-        ? "Delete '${pathsToDelete.first.split('/').last}'"
-        : "Delete ${pathsToDelete.length} selected files";
     final message = isSingle
         ? "This action will delete the file permanently"
         : "This action will delete the files permanently";
@@ -2063,104 +1601,122 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (bottomSheetContext) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[850],
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 18,
-                color: Colors.white,
-              ),
+      builder: (bottomSheetContext) {
+        final double bottomSheetWidth =
+            MediaQuery.of(bottomSheetContext).size.width;
+
+        return ClipPath(
+          clipper: TabClipper(shift: bottomSheetWidth * 0.5),
+          child: Container(
+            padding:
+                const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 32),
+            decoration: BoxDecoration(
+              color: Colors.grey[850],
             ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              style: const TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(height: 16),
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: MechanixOutlinedButton(
-                    label: "Cancel",
-                    textColor: Colors.white,
-                    borderRadius: 50,
-                    borderWidth: 0.5,
-                    onPressed: () => Navigator.pop(bottomSheetContext),
-                  ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    var baseStyle = TextStyle(
+                      fontSize: 20,
+                      color: context.colorScheme.onSurface,
+                    );
+
+                    var boldStyleText = TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                      color: context.colorScheme.onSurface,
+                    );
+
+                    if (isSingle) {
+                      final rawName = pathsToDelete.first.split('/').last;
+
+                      final prefixWidth = textWidth("Delete '", baseStyle);
+                      final suffixWidth = textWidth("' ?", baseStyle);
+                      final availableWidth =
+                          constraints.maxWidth - prefixWidth - suffixWidth;
+
+                      final truncatedName = middleEllipsisString(
+                        rawName,
+                        availableWidth,
+                        boldStyleText,
+                      );
+
+                      return RichText(
+                        maxLines: 1,
+                        overflow: TextOverflow.clip,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(text: "Delete ", style: baseStyle),
+                            TextSpan(
+                              text: "'$truncatedName' ?",
+                              style: boldStyleText,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    // Multi-file case
+                    return RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(text: "Delete ", style: baseStyle),
+                          TextSpan(
+                            text: "${pathsToDelete.length} files?",
+                            style: boldStyleText,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: MechanixElevatedButton(
-                    label: "Delete",
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    borderRadius: 50,
-                    onPressed: () {
-                      Navigator.pop(bottomSheetContext);
-                      BlocProvider.of<FilesBloc>(context)
-                          .add(DeleteEntities(pathsToDelete, controller));
-                      reload();
-                    },
-                  ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  style: TextStyle(
+                      color: context.colorScheme.onSurface, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: MechanixFilledButton(
+                        onPressed: () => Navigator.pop(bottomSheetContext),
+                        theme: buttonThemeData(
+                          context,
+                          type: MechanixButtonType.cancel,
+                        ),
+                        label: "Cancel",
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: MechanixFilledButton(
+                        theme: buttonThemeData(
+                          context,
+                          type: MechanixButtonType.delete,
+                        ),
+                        label: "Delete",
+                        onPressed: () {
+                          Navigator.pop(bottomSheetContext);
+                          context
+                              .read<FilesBloc>()
+                              .add(DeleteEntities(pathsToDelete, controller));
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
-}
-
-List<FileItem> getFilesAtPath(
-    List<FileItem> path, List<FileSystemEntity> fileSystemList) {
-  // Build full path from root and path list
-  String currentPath = '/';
-  for (final item in path) {
-    currentPath = p.join(currentPath, item.name);
-  }
-
-  final List<FileItem> items = [];
-
-  try {
-    for (final entity in fileSystemList) {
-      final String name = p.basename(entity.path);
-      if (name.isEmpty) continue;
-
-      final stat = entity.statSync();
-      final modifiedTime = stat.modified;
-
-      if (entity is Directory) {
-        items.add(FileItem(name: name, type: 'dir', modified: modifiedTime));
-      } else if (entity is File) {
-        final ext = p.extension(name);
-        items.add(FileItem(
-            name: name,
-            type: ext.isNotEmpty ? ext : 'file',
-            modified: modifiedTime));
-      }
-    }
-  } catch (e) {
-    print('Error reading directory at $currentPath: $e');
-  }
-
-  return items;
-}
-
-String formatBytes(int bytes, [int decimals = 2]) {
-  if (bytes <= 0) return "0 B";
-  const suffixes = ["B", "KB", "MB", "GB", "TB"];
-  final i = (bytes == 0) ? 0 : (Math.log(bytes) / Math.log(1024)).floor();
-  final size = bytes / Math.pow(1024, i);
-  return "${size.toStringAsFixed(decimals)} ${suffixes[i]}";
 }

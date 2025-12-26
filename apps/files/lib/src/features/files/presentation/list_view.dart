@@ -1,17 +1,13 @@
 import 'dart:io' as io;
 import 'dart:ui';
 
-import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/controllers/file_manager.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
-import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
-import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
-import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
-import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/mechanix.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
@@ -25,6 +21,7 @@ Widget buildListView(
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
   final isSearching = state?.isSearching ?? false;
+  ScrollController _scrollController;
 
   return ValueListenableBuilder<List<io.FileSystemEntity>>(
     valueListenable: controller.paginatedEntities,
@@ -33,12 +30,21 @@ Widget buildListView(
         // Show message if folder is empty
         return Center(
           child: Text(
-            "Folder is empty",
+            isSearching ? "No results found" : "Folder is empty",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.grey,
                 ),
           ),
         );
+      }
+
+      // Move newly created folder to top
+      if (controller.newFolderPath != null) {
+        entities.sort((a, b) {
+          if (a.path == controller.newFolderPath) return -1;
+          if (b.path == controller.newFolderPath) return 1;
+          return 0;
+        });
       }
 
       return ScrollConfiguration(
@@ -54,77 +60,98 @@ Widget buildListView(
           itemCount: entities.length,
           itemBuilder: (context, index) {
             final entity = entities[index];
-            final title = FileManager.basename(entity);
+            final title = controller.getDisplayName(entity);
+
             final modified = entity.statSync().modified;
             final isSelected = selectedPaths.contains(entity.path);
+            final isNew = entity.path == controller.newFolderPath;
 
             return GestureDetector(
-              onSecondaryTap: () =>
-                  state?.toggleSelection(entity.path), // right-click
-              onLongPress: () =>
-                  state?.toggleSelection(entity.path), // long press
-              child: ListTile(
-                minTileHeight: 65,
-                leading: Row(mainAxisSize: MainAxisSize.min, children: [
-                  if (isSelectionMode)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 16),
-                      child: CustomCircleCheckbox(
-                        isChecked: isSelected,
-                        onTap: () => state?.toggleSelection(entity.path),
+              onSecondaryTap: () => state?.toggleSelection(entity.path),
+              onLongPress: () => state?.toggleSelection(entity.path),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isNew
+                      ? context.colorScheme.tertiary
+                      : isSelected
+                          ? context.colorScheme.tertiary
+                          : Colors.transparent,
+                ),
+                child: ListTile(
+                  minTileHeight: 36,
+                  contentPadding: const EdgeInsets.only(
+                      bottom: 10, top: 10, left: 16, right: 16),
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isSelectionMode)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: CustomCircleCheckbox(
+                            isChecked: isSelected,
+                            onTap: () => state?.toggleSelection(entity.path),
+                          ),
+                        ),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        padding: const EdgeInsets.all(6),
+                        child: Center(
+                          child: Image.asset(
+                            entity.iconPath,
+                            fit: BoxFit.contain,
+                            width: 28,
+                            height: 28,
+                          ),
+                        ),
                       ),
-                    ),
-                  Container(
-                    width: 60,
-                    height: 60,
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Image.asset(
-                        entity.iconPath,
-                        fit: BoxFit.contain,
-                      ),
+                    ],
+                  ),
+                  title: MiddleEllipsisText(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: context.colorScheme.onSurface,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
-                ]),
-                title: Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                trailing: Text(
-                  formatModifiedTime(modified),
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
+                  trailing: Text(
+                    formatModifiedTime(modified),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: context.colorScheme.surfaceContainerHigh,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ),
-                onTap: () {
-                  isSelectionMode
-                      ? state?.clearSelection()
-                      : isSearching
-                          ? state?.clearSearch()
-                          : null;
+                  onTap: () async {
+                    if (isSelectionMode) {
+                      state?.toggleSelection(entity.path);
+                      return;
+                    }
 
-                  if (FileManager.isDirectory(entity)) {
-                    controller.openDirectory(entity);
-                    // Reset scroll to top
-                    scrollController.jumpTo(0);
-                  } else {
-                    handleFileTap(
-                      context,
-                      entity,
-                      entity.path,
-                      isSelectionMode,
-                      state,
-                      controller,
-                    );
-                  }
-                },
+                    if (FileManager.isDirectory(entity)) {
+                      await controller.openDirectory(entity);
+                      scrollController.jumpTo(0);
+
+                      if (isSearching) {
+                        state?.clearSearch();
+                      }
+                    } else {
+                      handleFileTap(
+                        context,
+                        entity,
+                        entity.path,
+                        isSelectionMode,
+                        state,
+                        controller,
+                      );
+
+                      if (isSearching) {
+                        state?.clearSearch();
+                      }
+                    }
+                  },
+                ),
               ),
             );
           },
@@ -175,7 +202,9 @@ Widget buildListViewForRecentFiles(
           onSecondaryTap: () => state?.toggleSelection(fullPath),
           onLongPress: () => state?.toggleSelection(fullPath),
           child: ListTile(
-            minTileHeight: 65,
+            minTileHeight: 36,
+            contentPadding:
+                const EdgeInsets.only(bottom: 10, top: 10, left: 16, right: 16),
             leading: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -188,26 +217,35 @@ Widget buildListViewForRecentFiles(
                     ),
                   ),
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 40,
+                  height: 40,
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
                   child: Center(
-                    child: Image.asset(file.iconPath, fit: BoxFit.contain),
+                    child: Image.asset(
+                      file.iconPath,
+                      fit: BoxFit.contain,
+                      width: 28,
+                      height: 28,
+                    ),
                   ),
                 ),
               ],
             ),
-            title: Text(file.name),
+            title: MiddleEllipsisText(
+              file.name,
+              style: TextStyle(
+                fontSize: 18,
+                color: context.colorScheme.onSurface,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
             trailing: file.modified != null
                 ? Text(
                     formatModifiedTime(file.modified!),
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: context.colorScheme.surfaceContainerHigh,
+                      fontWeight: FontWeight.w400,
                     ),
                   )
                 : null,
@@ -228,204 +266,147 @@ Widget buildListViewForRecentFiles(
   );
 }
 
-Widget buildListViewMove(
-  List<io.FileSystemEntity> foldersList,
+Widget buildListViewMoveAndExtract(
   BuildContext context,
-  String currentPath,
-  FilesBloc filesBloc,
-  VoidCallback onMoveCompleted,
   ScrollController scrollController,
+  FileManagerController controller,
 ) {
-  return ScrollConfiguration(
-    behavior: ScrollConfiguration.of(context).copyWith(
-      dragDevices: {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      },
-    ),
-    child: ListView.separated(
-      controller: scrollController,
-      itemCount: foldersList.length,
-      separatorBuilder: (context, index) => Divider(
-        height: 1,
-        thickness: 1,
-        color: Colors.grey[800],
-      ),
-      itemBuilder: (context, index) {
-        final file = foldersList[index];
-        final folderName = getCurrentFolderName(file.path);
-        final newPath = '$currentPath/$folderName';
-
-        return Container(
-          color: Colors.grey[850],
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            leading: Image.asset(
-              file.iconPath,
-              width: 24,
-              height: 24,
-              fit: BoxFit.contain,
-            ),
-            title: Text(
-              folderName,
-              style: const TextStyle(fontSize: 14, color: Colors.white),
-            ),
-            trailing: trailingIcon(),
-            onTap: () {
-              onTap(context, newPath, folderName, filesBloc, onMoveCompleted);
-              scrollController.jumpTo(0);
-            },
-          ),
-        );
-      },
-    ),
-  );
-}
-
-Widget buildSearchResultsList(
-  List<FileSystemEntity> results,
-  BuildContext context,
-) {
-  final displayedFiles = getFilesAtPath([], results);
   final state = context.findAncestorStateOfType<FileExplorerPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
+  final isSearching = state?.isSearching ?? false;
 
-  return ScrollConfiguration(
-    behavior: ScrollConfiguration.of(context).copyWith(
-      dragDevices: {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      },
-    ),
-    child: ListView.builder(
-      padding: const EdgeInsets.only(bottom: 80),
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final entity = results[index];
-        final file = displayedFiles[index];
-        final fullPath = entity.path;
-        final name = p.basename(fullPath);
-        final isDir = entity is Directory;
-        final isSelected = selectedPaths.contains(fullPath);
+  return ValueListenableBuilder<List<io.FileSystemEntity>>(
+    valueListenable: controller.paginatedEntities,
+    builder: (context, entities, _) {
+      if (entities.isEmpty) {
+        // Show message if folder is empty
+        return Center(
+          child: Text(
+            isSearching ? "No results found" : "Folder is empty",
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: Colors.grey,
+                ),
+          ),
+        );
+      }
 
-        return GestureDetector(
-          onSecondaryTap: () => state?.toggleSelection(fullPath),
-          onLongPress: () => state?.toggleSelection(fullPath),
-          child: ListTile(
-            minVerticalPadding: 12,
-            leading: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isSelectionMode)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: CustomCircleCheckbox(
-                      isChecked: isSelected,
-                      onTap: () => state?.toggleSelection(fullPath),
+      // Move newly created folder to top
+      if (controller.newFolderPath != null) {
+        entities.sort((a, b) {
+          if (a.path == controller.newFolderPath) return -1;
+          if (b.path == controller.newFolderPath) return 1;
+          return 0;
+        });
+      }
+
+      return ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+        ),
+        child: ListView.builder(
+          controller: scrollController,
+          padding: const EdgeInsets.only(bottom: 80),
+          itemCount: entities.length,
+          itemBuilder: (context, index) {
+            final entity = entities[index];
+            final title = FileManager.basename(entity);
+            final modified = entity.statSync().modified;
+            final isSelected = selectedPaths.contains(entity.path);
+            final isNew = entity.path == controller.newFolderPath;
+
+            final isDirectory = FileManager.isDirectory(entity);
+            final isDisabled = !isDirectory; // disable if file
+
+            return GestureDetector(
+              onSecondaryTap:
+                  isDisabled ? null : () => state?.toggleSelection(entity.path),
+              onLongPress:
+                  isDisabled ? null : () => state?.toggleSelection(entity.path),
+              child: Opacity(
+                opacity: isDisabled ? 0.4 : 1, // grey out
+                child: IgnorePointer(
+                  ignoring: isDisabled, // block interaction
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isNew
+                          ? context.colorScheme.surfaceContainerLow
+                          : Colors.transparent,
+                    ),
+                    child: ListTile(
+                      minTileHeight: 36,
+                      contentPadding: const EdgeInsets.only(
+                          bottom: 10, top: 10, left: 16, right: 16),
+                      leading: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isSelectionMode)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: CustomCircleCheckbox(
+                                isChecked: isSelected,
+                                onTap: () =>
+                                    state?.toggleSelection(entity.path),
+                              ),
+                            ),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            padding: const EdgeInsets.all(6),
+                            child: Center(
+                              child: Image.asset(
+                                entity.iconPath,
+                                fit: BoxFit.contain,
+                                width: 28,
+                                height: 28,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      title: MiddleEllipsisText(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: context.colorScheme.onSurface,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      trailing: Text(
+                        formatModifiedTime(modified),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: context.colorScheme.surfaceContainerHigh,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      onTap: () {
+                        if (isSelectionMode) {
+                          state?.toggleSelection(entity.path);
+                          return;
+                        }
+
+                        if (isSearching) {
+                          state?.clearSearch();
+                        }
+
+                        if (isDirectory) {
+                          controller.openDirectory(entity);
+                          scrollController.jumpTo(0);
+                        }
+                      },
                     ),
                   ),
-                Container(
-                  width: 60,
-                  height: 60,
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade900,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Image.asset(file.iconPath,
-                      width: 24, height: 24, fit: BoxFit.contain),
                 ),
-              ],
-            ),
-            title: Text(
-              name,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            subtitle: Text(
-              fullPath,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            onTap: () {
-              handleTap(
-                context,
-                FileItem(name: entity.basename, type: isDir ? 'dir' : 'file'),
-                pathToSegments(p.dirname(fullPath)),
-                fullPath,
-                isSelectionMode,
-                state,
-              );
-            },
-          ),
-        );
-      },
-    ),
-  );
-}
-
-Widget buildListViewExtract(
-  List<io.FileSystemEntity> foldersList,
-  BuildContext context,
-  String currentPath,
-  FilesBloc filesBloc,
-  VoidCallback onMoveCompleted,
-  ScrollController scrollController,
-) {
-  return ScrollConfiguration(
-    behavior: ScrollConfiguration.of(context).copyWith(
-      dragDevices: {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      },
-    ),
-    child: ListView.separated(
-      controller: scrollController,
-      itemCount: foldersList.length,
-      separatorBuilder: (context, index) => Divider(
-        height: 1,
-        thickness: 1,
-        color: Colors.grey[800],
-      ),
-      itemBuilder: (context, index) {
-        final file = foldersList[index];
-        final folderName = getCurrentFolderName(file.path);
-        final newPath = '$currentPath/$folderName';
-
-        return Container(
-          color: Colors.grey[850],
-          height: 50,
-          child: ListTile(
-            dense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            leading: Image.asset(
-              file.iconPath,
-              width: 24,
-              height: 24,
-              fit: BoxFit.contain,
-            ),
-            title: Text(
-              folderName,
-              style: const TextStyle(fontSize: 14, color: Colors.white),
-            ),
-            trailing: trailingIcon(),
-            onTap: () {
-              onItemTap(
-                context,
-                newPath,
-                folderName,
-                filesBloc,
-                onMoveCompleted,
-              );
-              scrollController.jumpTo(0);
-            },
-          ),
-        );
-      },
-    ),
+              ),
+            );
+          },
+        ),
+      );
+    },
   );
 }
 

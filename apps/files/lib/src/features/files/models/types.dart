@@ -1,6 +1,5 @@
 import 'dart:io' as io;
 
-import 'package:file/file.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 
@@ -30,6 +29,7 @@ extension FileItemIcon on FileItem {
     if (videoFileTypes.contains(type)) return Images.videoFile;
     if (type == '.csv') return Images.csvFile;
     if (type == '.zip') return Images.archiveFile;
+    if (textFileTypes.contains(type)) return Images.codeFile;
 
     return Images.file;
   }
@@ -89,17 +89,21 @@ const int pageSize = 20;
 extension FileSystemEntityIcon on io.FileSystemEntity {
   String get iconPath {
     final path = this.path;
-    final ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
+    var ext = path.contains('.') ? path.split('.').last.toLowerCase() : 'dir';
+    ext = ".$ext";
 
-    if (ext == 'dir') return Images.unfoldDir;
-    if (ext == 'pdf') return Images.pdfFile;
-    if (ext == 'xlsx' || ext == 'xls') return Images.excelFile;
-    if (ext == 'txt') return Images.textFile;
+    if (ext == '.dir') return Images.unfoldDir;
+    if (ext == '.pdf') return Images.pdfFile;
+    if (ext == '.xlsx' || ext == '.xls') return Images.excelFile;
+    if (ext == '.txt') return Images.textFile;
     if (imageFileTypes.contains(ext)) return Images.imageFile;
     if (audioFileTypes.contains(ext)) return Images.audioFile;
     if (videoFileTypes.contains(ext)) return Images.videoFile;
-    if (ext == 'csv') return Images.csvFile;
-    if (ext == 'zip' || ext == 'rar' || ext == '7z') return Images.archiveFile;
+    if (ext == '.csv') return Images.csvFile;
+    if (ext == '.zip' || ext == '.rar' || ext == '.7z') {
+      return Images.archiveFile;
+    }
+    if (textFileTypes.contains(ext)) return Images.codeFile;
 
     return Images.file;
   }
@@ -112,26 +116,31 @@ SortBy sortByFromKey(String key) {
     case 'type':
       return SortBy.type;
     case 'mod_time':
-      return SortBy.date;
-    case 'size_asc':
-    case 'size_desc':
+      return SortBy.modTime;
+    case 'accessed_time':
+      return SortBy.accessedTime;
+    case 'size':
       return SortBy.size;
     default:
       return SortBy.name;
   }
 }
 
-String keyFromSort(SortBy sortBy, bool ascending) {
+String keyFromSort(SortBy sortBy) {
   switch (sortBy) {
     case SortBy.name:
       return 'name';
     case SortBy.type:
       return 'type';
-    case SortBy.date:
+    case SortBy.modTime:
       return 'mod_time';
+    case SortBy.accessedTime:
+      return 'accessed_time';
     case SortBy.size:
-      return ascending ? 'size_asc' : 'size_desc';
+      return 'size';
   }
 }
+
+bool toggleAscending(bool current) => !current;
 
 const double menuItemHeight = 42.0;

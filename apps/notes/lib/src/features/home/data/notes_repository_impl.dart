@@ -20,13 +20,7 @@ class NotesRepositoryImpl extends NotesRepository {
   final logger = Logger();
 
   @override
-  Future<NoteMetaData> createNote(
-    String title,
-    content,
-    plainText,
-    bool isPinned,
-    String tag,
-  ) async {
+  Future<NoteMetaData> createNote(String title, content, plainText) async {
     try {
       await ensureHiveConnected();
 
