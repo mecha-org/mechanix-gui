@@ -31,11 +31,11 @@ jobs:
           - name: conf service for mechanix
             package: mxconf
           - name: session dbus service
-            package: mechanix-session-services
+            package: mechanix-session-service
           - name: search service
             package: mxsearch
           - name: system dbus service
-            package: mechanix-system-services
+            package: mechanix-system-service
           - name: extension service
             package: mechanix-extension-service
 
