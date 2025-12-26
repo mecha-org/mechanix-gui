@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
-use crate::{constants::*, prelude::*, ui::icon::Icon};
-use gpui::{prelude::FluentBuilder, *};
+use crate::{constants::*, ui::icon::Icon};
+use gpui::{LongPressEvent, prelude::FluentBuilder, *};
 use theme::prelude::Theme;
 
 const ICON_COLOR: u32 = DARK_NEUTRAL_100; // default - gray | custom can be - white or active - amber
@@ -25,6 +25,8 @@ pub struct IconButton {
     active_bg_color: Option<Hsla>,
     border: Option<Pixels>,
     label: Option<String>,
+    on_long_press: Option<Rc<dyn Fn(&LongPressEvent, &mut Window, &mut App)>>,
+    long_press_duration_ms: Option<u64>,
 }
 
 impl IconButton {
@@ -43,6 +45,8 @@ impl IconButton {
             active_bg_color: None,
             border: None,
             label: None,
+            on_long_press: None,
+            long_press_duration_ms: None,
         }
     }
 
@@ -56,6 +60,25 @@ impl IconButton {
         callback: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
     ) -> Self {
         self.on_click = Some(Rc::new(callback));
+        self
+    }
+
+    // default duration (500ms)
+    pub fn on_long_press(
+        mut self,
+        callback: impl Fn(&LongPressEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_long_press = Some(Rc::new(callback));
+        self
+    }
+
+    pub fn on_long_press_ms(
+        mut self,
+        duration_ms: u64,
+        callback: impl Fn(&LongPressEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.long_press_duration_ms = Some(duration_ms);
+        self.on_long_press = Some(Rc::new(callback));
         self
     }
 
@@ -145,6 +168,15 @@ impl RenderOnce for IconButton {
             })
             .when_some(self.on_click, |this, on_click| {
                 this.on_click(move |event, window, cx| (on_click)(event, window, cx))
+            })
+            .when_some(self.on_long_press.clone(), |this, on_long_press| {
+                if let Some(duration_ms) = self.long_press_duration_ms {
+                    this.on_long_press_ms(duration_ms, move |event, window, cx| {
+                        (on_long_press)(event, window, cx)
+                    })
+                } else {
+                    this.on_long_press(move |event, window, cx| (on_long_press)(event, window, cx))
+                }
             })
             .when_some(self.icon, |this, icon| {
                 // todo: check if this.active is true - update icon color

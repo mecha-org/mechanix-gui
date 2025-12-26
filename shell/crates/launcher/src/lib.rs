@@ -17,7 +17,7 @@ pub fn run() {
 
         status_bar::run_app(cx);
 
-        // homescreen::run_app(cx);
+        homescreen::run_app(cx);
 
         running_apps::run_app(cx);
 

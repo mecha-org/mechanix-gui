@@ -116,7 +116,6 @@ pub enum ModalKind {
 
 impl SettingsDrawer {
     pub fn new(cx: &mut Context<Self>) -> Self {
-
         let ShellState {
             volume_tx,
             brightness_tx,
@@ -238,11 +237,11 @@ impl SettingsDrawer {
         }
     }
 
-    fn start_animation(&mut self, event: &ClickEvent, _: &mut Window, cx: &mut Context<Self>) {
-        let mouse = event.mouse_position().unwrap();
+    fn start_animation(&mut self, event: &LongPressEvent, _: &mut Window, cx: &mut Context<Self>) {
+        let position = event.current_position;
 
         // Start from clicked icon center
-        self.modal_start_center = Self::clicked_item_center(mouse.x.into(), mouse.y.into());
+        self.modal_start_center = Self::clicked_item_center(position.x.into(), position.y.into());
         self.modal_origin_center = self.modal_start_center;
 
         self.modal_current_center = self.modal_start_center;
@@ -721,27 +720,21 @@ impl SettingsDrawer {
             .active(self.screen_mirroring)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
-            // .on_click(cx.listener( // keep this
-            //     |this: &mut SettingsDrawer,
-            //      _event: &MouseUpEvent,
-            //      _window: &mut Window,
-            //      cx: &mut Context<Self>| {
-            //         this.screen_mirroring = !this.screen_mirroring;
-            //         cx.notify();
-            //     },
-            // ))
             .on_click(cx.listener(
-                // TODO: add long press
-                move |this: &mut SettingsDrawer,
-                      _event: &ClickEvent,
-                      _window: &mut Window,
-                      cx: &mut Context<Self>| {
-                    this.current_modal = ModalKind::ScreenMirroring;
-                    Self::start_animation(this, _event, _window, cx);
-
+                |this: &mut SettingsDrawer,
+                 _event: &ClickEvent,
+                 _window: &mut Window,
+                 cx: &mut Context<Self>| {
+                    this.screen_mirroring = !this.screen_mirroring;
                     cx.notify();
                 },
             ))
+            .on_long_press({
+                cx.listener(move |this, event: &LongPressEvent, window, cx| {
+                    this.current_modal = ModalKind::ScreenMirroring;
+                    Self::start_animation(this, event, window, cx);
+                })
+            })
     }
 
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -860,9 +853,9 @@ impl SettingsDrawer {
             .on_click(cx.listener(
                 // keep this - quick click
                 move |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+                      _event: &ClickEvent,
+                      _window: &mut Window,
+                      cx: &mut Context<Self>| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enable = wireless_details.enabled;
                     cx.background_executor()
@@ -873,16 +866,12 @@ impl SettingsDrawer {
                     cx.notify();
                 },
             ))
-        // .on_click(cx.listener(
-        //     // TODO: long press open modal
-        //     move |this: &mut SettingsDrawer,
-        //           _event: &ClickEvent,
-        //           window: &mut Window,
-        //           cx: &mut Context<Self>| {
-        //         this.current_modal = ModalKind::WirelessModal;
-        //         Self::start_animation(this, _event, window, cx);
-        //     },
-        // ))
+            .on_long_press({
+                cx.listener(move |this, event: &LongPressEvent, window, cx| {
+                    this.current_modal = ModalKind::WirelessModal;
+                    Self::start_animation(this, event, window, cx);
+                })
+            })
     }
 
     fn render_bluetooth(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -914,9 +903,9 @@ impl SettingsDrawer {
             .active_bg_color(rgba(AMBER_600_10))
             .on_click(cx.listener(
                 move |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+                      _event: &ClickEvent,
+                      _window: &mut Window,
+                      cx: &mut Context<Self>| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enable = bluetooth_details.enabled;
                     // bluetooth_details.enabled = !is_enable;
@@ -928,16 +917,12 @@ impl SettingsDrawer {
                     cx.notify();
                 },
             ))
-        // .on_click(cx.listener(
-        //     // TODO: add long press open modal
-        //     move |this: &mut SettingsDrawer,
-        //           _event: &ClickEvent,
-        //           _window: &mut Window,
-        //           cx: &mut Context<Self>| {
-        //         this.current_modal = ModalKind::BluetoothModal;
-        //         Self::start_animation(this, _event, _window, cx);
-        //     },
-        // ))
+            .on_long_press({
+                cx.listener(move |this, event: &LongPressEvent, window, cx| {
+                    this.current_modal = ModalKind::BluetoothModal;
+                    Self::start_animation(this, event, window, cx);
+                })
+            })
     }
 
     fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -965,10 +950,16 @@ impl SettingsDrawer {
                       _event: &ClickEvent,
                       _window: &mut Window,
                       cx: &mut Context<Self>| {
-                    this.current_modal = ModalKind::PerformanceModal;
-                    Self::start_animation(this, _event, _window, cx);
+                    // TODO: set power saving mode on click
+                    cx.notify();
                 },
             ))
+            .on_long_press({
+                cx.listener(move |this, event: &LongPressEvent, window, cx| {
+                    this.current_modal = ModalKind::PerformanceModal;
+                    Self::start_animation(this, event, window, cx);
+                })
+            })
     }
 
     fn render_cell_signal(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1004,23 +995,27 @@ impl SettingsDrawer {
             // .bg(colors.background_900)
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
+            // .on_long_press({
+            //     println!("long press display 1");
+            //     cx.listener(move |this, event: &LongPressEvent, window, cx| {
+            //         this.current_modal = ModalKind::DisplayModal;
+            //         Self::start_animation(this, event, window, cx);
+            //     })
+            // })
             .when(!self.open_modal, |this| {
-                this.on_click(cx.listener(
-                    // CHECK - on long press
-                    move |this: &mut SettingsDrawer,
-                          _event: &ClickEvent,
-                          _window: &mut Window,
-                          cx: &mut Context<Self>| {
+                this.on_long_press({
+                    cx.listener(move |this, event: &LongPressEvent, window, cx| {
+                        println!("long press display 11");
+
                         this.current_modal = ModalKind::DisplayModal;
-                        Self::start_animation(this, _event, _window, cx);
-                    },
-                ))
+                        Self::start_animation(this, event, window, cx);
+                    })
+                })
             })
             .child(self.render_brightness_slider(cx, 167.0))
     }
 
     pub fn render_brightness_slider(&self, cx: &mut Context<Self>, width: f32) -> impl IntoElement {
-
         let colors = cx.theme().colors.clone();
         let brightness_icon =
             if self.brightness_slider_value >= 0.0 && self.brightness_slider_value <= 33.0 {
@@ -1074,11 +1069,16 @@ impl SettingsDrawer {
             .col_span(2)
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
+            // .on_long_press({
+            //     cx.listener(move |this, event: &LongPressEvent, window, cx| {
+            //         this.current_modal = ModalKind::SoundModal;
+            //         Self::start_animation(this, event, window, cx);
+            //     })
+            // })
             .child(self.render_volume_slider(cx))
     }
 
     fn render_volume_slider(&self, cx: &mut Context<Self>) -> impl IntoElement {
-
         let volume_icon = if self.volume_mute {
             IconName::VolumeOff
         } else {
@@ -1096,7 +1096,6 @@ impl SettingsDrawer {
             AMBER_600
         };
 
-
         let volume_tx = ShellState::global(cx).volume_tx.clone().unwrap();
         let colors = cx.theme().colors.clone();
 
@@ -1108,17 +1107,6 @@ impl SettingsDrawer {
             .items_center()
             .justify_start()
             .pl_2()
-            // .on_click(cx.listener(
-            //     //  TODO: long press open modal
-            //     move |this: &mut SettingsDrawer,
-            //           _event: &ClickEvent,
-            //           _window: &mut Window,
-            //           cx: &mut Context<Self>| {
-            //         println!("volume clicked");
-            //         this.current_modal = ModalKind::SoundModal;
-            //         Self::start_animation(this, _event, _window, cx);
-            //     },
-            // ))
             .child(
                 IconButton::new("id_mute_volume")
                     .icon(volume_icon)
@@ -1129,9 +1117,9 @@ impl SettingsDrawer {
                     .border(px(0.))
                     .on_click(cx.listener(
                         move |this: &mut SettingsDrawer,
-                         _event: &ClickEvent,
-                         _window: &mut Window,
-                         cx: &mut Context<Self>| {
+                              _event: &ClickEvent,
+                              _window: &mut Window,
+                              cx: &mut Context<Self>| {
                             let mut volume_tx = volume_tx.clone();
 
                             this.volume_mute = !this.volume_mute;
