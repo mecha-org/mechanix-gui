@@ -7,7 +7,6 @@ pub enum IconName {
     Close,
     Application,
     Navbar,
-
 }
 impl IconName {
     pub fn resolve(&self) -> SharedString {
@@ -15,9 +14,7 @@ impl IconName {
             IconName::Info => "info.svg",
             IconName::Close => "close.svg",
             IconName::Application => "audacity.svg",
-            IconName::Navbar => "navbar.png",
-        
-
+            IconName::Navbar => "navbar-gray.png",
         };
         format!("{}{}", STATUS_BAR_ICONS_DIR, icon_path).into()
     }
@@ -48,7 +45,6 @@ impl Clone for Icon {
     }
 }
 
-
 impl Default for Icon {
     fn default() -> Self {
         Self {
@@ -59,7 +55,6 @@ impl Default for Icon {
         }
     }
 }
-
 
 impl Icon {
     pub fn new(name: IconName) -> Self {
