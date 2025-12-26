@@ -66,17 +66,31 @@ impl ThemeColors {
         } = colors;
 
         //For Dark theme
-        self.accent_0 = oklcha_to_rgba(accent_color.lighten_fixed(0.1));
-        self.accent_100 = oklcha_to_rgba(accent_color.lighten_fixed(0.05));
-        self.accent_200 = oklcha_to_rgba(accent_color);
-        self.accent_300 = oklcha_to_rgba(accent_color.darken_fixed(0.05));
-        self.accent_400 = oklcha_to_rgba(accent_color.darken_fixed(0.1));
-        self.accent_500 = oklcha_to_rgba(accent_color.darken_fixed(0.15));
-        self.accent_600 = oklcha_to_rgba(accent_color.darken_fixed(0.20));
-        self.accent_700 = oklcha_to_rgba(accent_color.darken_fixed(0.25));
-        self.accent_800 = oklcha_to_rgba(accent_color.darken_fixed(0.30));
-        self.accent_900 = oklcha_to_rgba(accent_color.darken_fixed(0.35));
-        self.accent_1000 = oklcha_to_rgba(accent_color.darken_fixed(0.40));
+        if mode == ThemeMode::Dark {
+            self.accent_0 = oklcha_to_rgba(accent_color.lighten_fixed(0.1));
+            self.accent_100 = oklcha_to_rgba(accent_color.lighten_fixed(0.05));
+            self.accent_200 = oklcha_to_rgba(accent_color);
+            self.accent_300 = oklcha_to_rgba(accent_color.darken_fixed(0.05));
+            self.accent_400 = oklcha_to_rgba(accent_color.darken_fixed(0.1));
+            self.accent_500 = oklcha_to_rgba(accent_color.darken_fixed(0.15));
+            self.accent_600 = oklcha_to_rgba(accent_color.darken_fixed(0.20));
+            self.accent_700 = oklcha_to_rgba(accent_color.darken_fixed(0.25));
+            self.accent_800 = oklcha_to_rgba(accent_color.darken_fixed(0.30));
+            self.accent_900 = oklcha_to_rgba(accent_color.darken_fixed(0.35));
+            self.accent_1000 = oklcha_to_rgba(accent_color.darken_fixed(0.40));
+        } else {
+            self.accent_0 = oklcha_to_rgba(accent_color.darken_fixed(0.1));
+            self.accent_100 = oklcha_to_rgba(accent_color.darken_fixed(0.05));
+            self.accent_200 = oklcha_to_rgba(accent_color);
+            self.accent_300 = oklcha_to_rgba(accent_color.lighten_fixed(0.05));
+            self.accent_400 = oklcha_to_rgba(accent_color.lighten_fixed(0.1));
+            self.accent_500 = oklcha_to_rgba(accent_color.lighten_fixed(0.15));
+            self.accent_600 = oklcha_to_rgba(accent_color.lighten_fixed(0.20));
+            self.accent_700 = oklcha_to_rgba(accent_color.lighten_fixed(0.25));
+            self.accent_800 = oklcha_to_rgba(accent_color.lighten_fixed(0.30));
+            self.accent_900 = oklcha_to_rgba(accent_color.lighten_fixed(0.35));
+            self.accent_1000 = oklcha_to_rgba(accent_color.lighten_fixed(0.40));
+        }
 
         self.background_0 = oklcha_to_rgba(background_color.lighten_fixed(0.50));
         self.background_100 = oklcha_to_rgba(background_color.lighten_fixed(0.45));
