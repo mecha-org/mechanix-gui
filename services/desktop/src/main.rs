@@ -3,7 +3,7 @@ pub mod handlers;
 mod interfaces;
 
 use crate::interfaces::freedesktop::FreedesktopNotificationService;
-use crate::interfaces::mechanix::MechanixNotificationService;
+use crate::interfaces::mechanix::NotificationService;
 use anyhow::Result;
 use log::info;
 use zbus::object_server::SignalEmitter;
@@ -30,7 +30,7 @@ async fn main() -> Result<()> {
     );
 
     // Setup mechanix notification service
-    let mut notificationbus = MechanixNotificationService::new_from_database()
+    let mut notificationbus = NotificationService::new_from_database()
         .await
         .expect("Unable to initialize notificaion Service");
     let notifications_clone = notificationbus.notifications.clone();
@@ -55,7 +55,7 @@ async fn main() -> Result<()> {
     );
 
     // starts event handling
-    MechanixNotificationService::handle_event(
+    NotificationService::handle_event(
         receiver,
         mechanix_signal_emitter,
         notifications_clone,

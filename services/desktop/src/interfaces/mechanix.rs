@@ -30,13 +30,13 @@ pub struct DatabaseNotification {
 static THREAD_POOL: LazyLock<ThreadPool> =
     LazyLock::new(|| ThreadPool::new().expect("Failed to build pool"));
 #[derive(Debug, Clone)]
-pub struct MechanixNotificationService {
+pub struct NotificationService {
     pub freedesktop_signal_emitter: Option<SignalEmitter<'static>>,
     // Add shared storage for notifications as HashMap
     pub notifications: Arc<RwLock<HashMap<u32, StoredNotification>>>,
 }
 
-impl MechanixNotificationService {
+impl NotificationService {
     pub fn new() -> Self {
         Self {
             freedesktop_signal_emitter: None,
@@ -204,7 +204,7 @@ impl MechanixNotificationService {
 }
 
 #[interface(name = "org.mechanix.NotificationManager")]
-impl MechanixNotificationService {
+impl NotificationService {
     async fn get_version(&self) -> String {
         env!("CARGO_PKG_VERSION").to_string()
     }
