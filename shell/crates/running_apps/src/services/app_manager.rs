@@ -160,11 +160,7 @@ impl AppManagerService {
                             let _ = reply_to.send(res);
                         }
                         AppManagerMessage::MinimizeAll => {
-                            // let _ = minimize_all(self
-                            //      .top_level_sender
-                            //         .as_ref()
-                            //     .unwrap().clone()).await;
-
+                            let _ = self.minimize_all().await;
                         }
                     }
                 }
@@ -283,6 +279,49 @@ impl AppManagerService {
         }
 
         Ok(true)
+    }
+
+    pub async fn minimize_all(&self) -> Result<bool> {
+        for (_, instances) in self.apps.iter() {
+            for (&instance, _) in instances.iter() {
+                let res = self.minimize_app_instance(instance).await;
+                match res {
+                    Ok(_) => {}
+                    Err(_) => {
+                        // error!("error while closing instance of {}", app_id);
+                    }
+                }
+            }
+        }
+
+        Ok(true)
+    }
+
+    pub async fn minimize_app_instance(&self, key: ToplevelKey) -> Result<bool> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.top_level_sender.as_ref().unwrap().send(ToplevelMessage::MinimizeAll {
+            reply_to: tx,
+        }).await;
+
+        let reply = match rx.await {
+            Ok(v) => v,
+            Err(_) =>
+                Err(
+                    ToplevelHandlerError::new(
+                        ToplevelHandlerErrorCodes::UnknownError,
+                        "unable to connect to top level hanler".to_string()
+                    )
+                ),
+        };
+        let is_minimized = match reply {
+            Ok(v) => v,
+            Err(_) => {
+                // error!("error while minimizing app instance {}", e);
+                false
+            }
+        };
+
+        Ok(is_minimized)
     }
 
     pub async fn activate_app_instance(&self, key: ToplevelKey) -> Result<bool> {
