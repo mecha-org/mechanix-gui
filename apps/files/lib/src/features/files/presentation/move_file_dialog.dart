@@ -17,6 +17,7 @@ import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/notification/notification_type.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
@@ -518,7 +519,6 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final targetPath = currentPath;
     final bloc = BlocProvider.of<FilesBloc>(context);
 
-    // Show SnackBar
     final movePathCount = state.movedPaths.length;
     final folderName = targetPath.split('/').last;
 
@@ -549,15 +549,11 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     // safe to reload
     widget.reload();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            "Moved $movePathCount item${movePathCount > 1 ? 's' : ''} to '$folderName'",
-            style:
-                TextStyle(color: context.colorScheme.surfaceContainerLowest)),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.grey[800],
-      ),
+    MechanixNotification.show(
+      context: context,
+      notificationType: NotificationType.success,
+      message:
+          "Moved $movePathCount item${movePathCount > 1 ? 's' : ''} to '$folderName'",
     );
   }
 }
