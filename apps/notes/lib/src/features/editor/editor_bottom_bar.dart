@@ -16,8 +16,8 @@ import 'package:mechanix_notes/src/features/editor/toolbar/text_editor_toolbar.d
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:widgets/widgets.dart';
-import 'package:widgets/widgets/bottomBar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottomBar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 
