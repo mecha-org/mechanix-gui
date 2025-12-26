@@ -6,7 +6,8 @@ use theme::prelude::Theme;
 
 const ICON_COLOR: u32 = DARK_NEUTRAL_100; // default - gray | custom can be - white or active - amber
 const ACTIVE_ICON_COLOR: u32 = AMBER_600; // default - gray | custom can be - amber
-const ACTIVE_ICON_BG_COLOR: u32 = 0xC6760040; // for pressed
+const ACTIVE_ICON_BG_COLOR: u32 = 0xC6760040; // for pressed 
+const LONG_PRESS_ACTIVE_ICON_BG_COLOR: u32 = 0xAA64004D;
 const BG_COLOR: u32 = DARK_NEUTRAL_900;
 const BORDER_COLOR: u32 = AMBER_1000;
 
@@ -137,11 +138,12 @@ impl RenderOnce for IconButton {
             .border(if self.active { px(1.5) } else { px(0.) })
             .border_color(rgb(BORDER_COLOR)) // KEEP THIS
             .active(|this| {
-                // todo: update icon color
                 let mut style = this.clone();
                 style = style
                     .clone()
-                    .bg(if let Some(active_bg_color) = self.active_bg_color {
+                    .bg(if self.on_long_press.is_some() {
+                        rgba(LONG_PRESS_ACTIVE_ICON_BG_COLOR).into()
+                    } else if let Some(active_bg_color) = self.active_bg_color {
                         active_bg_color
                     } else {
                         rgba(ACTIVE_ICON_BG_COLOR).into()
