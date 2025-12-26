@@ -65,7 +65,7 @@ class DeleteBottomSheet extends StatelessWidget {
                         ),
                       ),
                       label: "Cancel",
-                      backgroundColor: Colors.grey.shade800,
+                      // backgroundColor: Colors.grey.shade800,
                       onPressed: () => Navigator.pop(bottomSheetContext),
                     ),
                   ),
