@@ -1,6 +1,6 @@
 use futures::SinkExt;
 use gpui::*;
-use shell_state::NmMessage;
+use shell_state::{NmMessage, ShellState};
 
 use crate::{
     helper::get_wireless_strength_icon, prelude::*, ui::icon::{Icon, IconName},
@@ -127,7 +127,9 @@ impl SettingsDrawer {
         &mut self,
         cx: &mut gpui::Context<SettingsDrawer>,
     ) -> AnyElement {
-        let network_list = self.wireless_details.networks.clone().unwrap_or_default();
+        let wireless_details = ShellState::global(cx).wireless_details.clone();
+        let nm_tx = ShellState::global(cx).nm_tx.clone().unwrap();
+        let network_list = wireless_details.networks.clone().unwrap_or_default();
         let network_count = network_list.len();
 
         div()
@@ -269,7 +271,7 @@ impl SettingsDrawer {
                                         ));
                                     } else if !is_active && is_known {
                                         let ssid_clone = ssid.clone();
-                                        let nm_tx_clone = self.nm_tx.clone().unwrap();
+                                        let nm_tx_clone = nm_tx.clone();
 
                                         network_div = network_div.on_click(cx.listener(
                                             move |this: &mut SettingsDrawer,

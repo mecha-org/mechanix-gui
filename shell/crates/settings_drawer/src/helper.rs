@@ -22,35 +22,35 @@ pub fn get_wireless_strength_icon(
     if enabled {
         if is_protected {
             match level {
-                "low" => IconName::ConnectedWifiLowLocked,
-                "medium" => IconName::ConnectedWifiMediumLocked,
-                "high" => IconName::ConnectedWifiHighLocked,
-                _ => IconName::ConnectedWifiWarning,
+                "low" => IconName::ConnectedWirelessLowLocked,
+                "medium" => IconName::ConnectedWirelessMediumLocked,
+                "high" => IconName::ConnectedWirelessHighLocked,
+                _ => IconName::ConnectedWirelessWarning,
             }
         } else {
             match level {
-                "none" => IconName::ConnectedWifiOn,
-                "low" => IconName::ConnectedWifiLow,
-                "medium" => IconName::ConnectedWifiMedium,
-                "high" => IconName::ConnectedWifiHigh,
-                _ => IconName::ConnectedWifiWarning,
+                "none" => IconName::ConnectedWirelessOn,
+                "low" => IconName::ConnectedWirelessLow,
+                "medium" => IconName::ConnectedWirelessMedium,
+                "high" => IconName::ConnectedWirelessHigh,
+                _ => IconName::ConnectedWirelessWarning,
             }
         }
     } else {
         if is_protected {
             match level {
-                "low" => IconName::WifiLowLocked,
-                "medium" => IconName::WifiMediumLocked,
-                "high" => IconName::WifiHighLocked,
-                _ => IconName::WifiWarning,
+                "low" => IconName::WirelessLowLocked,
+                "medium" => IconName::WirelessMediumLocked,
+                "high" => IconName::WirelessHighLocked,
+                _ => IconName::WirelessWarning,
             }
         } else {
             match level {
-                "none" => IconName::WifiOn,
-                "low" => IconName::WifiLow,
-                "medium" => IconName::WifiMedium,
-                "high" => IconName::WifiHigh,
-                _ => IconName::WifiWarning,
+                "none" => IconName::WirelessOn,
+                "low" => IconName::WirelessLow,
+                "medium" => IconName::WirelessMedium,
+                "high" => IconName::WirelessHigh,
+                _ => IconName::WirelessWarning,
             }
         }
     }

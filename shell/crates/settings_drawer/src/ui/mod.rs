@@ -17,6 +17,7 @@ use bluez::interfaces::device::BluetoothDevice;
 use futures::{SinkExt, channel::mpsc};
 use gpui::*;
 use networkmanager::interfaces::wireless::WirelessNetworkInfo;
+use theme::ActiveTheme;
 
 const NAVBAR_SIZE: (f32, f32) = (198.5, 28.29);
 const APP_SIZE: (f32, f32) = (540., 620.);
@@ -29,6 +30,7 @@ const GRID_COLS: usize = 4;
 const GRID_ROWS: usize = 4;
 const ICON_W: f32 = 104.0;
 const ICON_H: f32 = 104.0;
+const ROW_12_ICON_H: f32 = 88.0;
 
 #[derive(PartialEq)]
 pub enum ModalAnimationState {
@@ -57,7 +59,6 @@ pub struct BluetoothDetails {
 }
 
 pub struct SettingsDrawer {
-    pub current_time_date: String,
     pub open_power_options: bool,
 
     pub rotation_on: bool,
@@ -69,10 +70,7 @@ pub struct SettingsDrawer {
     pub screen_recording: bool,
     pub settings_active: bool,
     // camera
-    pub wireless_details: WirelessDetails,
-    pub bluetooth_details: BluetoothDetails,
     pub power_mode: PowerMode,
-    pub battery_percent: u8,
     pub cell_signal: bool,
 
     pub brightness_slider_state: Entity<SliderState>,
@@ -84,11 +82,6 @@ pub struct SettingsDrawer {
     pub volume_slider_value: f32,
     pub volume_device_name: Option<String>,
     pub volume_mute: bool,
-
-    pub nm_tx: Option<mpsc::Sender<NmMessage>>,
-    pub bt_tx: Option<mpsc::Sender<BtMessage>>,
-    pub volume_tx: Option<mpsc::Sender<VolumeMessage>>,
-    pub brightness_tx: Option<mpsc::Sender<BrightnessMessage>>,
 
     pub open_modal: bool,
     pub animation_progress: f32,
@@ -104,7 +97,7 @@ pub struct SettingsDrawer {
     pub wireless_modal_scroll: WirelessModalScroll,
     pub bluetooth_modal_scroll: BluetoothModalScroll,
 
-    // _subscriptions: Vec<Subscription>,
+    _subscriptions: Vec<Subscription>,
     position: f32,
     drag_offset: Option<f32>,
     drag_start_pos: f32,
@@ -123,6 +116,13 @@ pub enum ModalKind {
 
 impl SettingsDrawer {
     pub fn new(cx: &mut Context<Self>) -> Self {
+
+        let ShellState {
+            volume_tx,
+            brightness_tx,
+            ..
+        } = ShellState::global(cx).clone();
+
         let brightness_slider = cx.new(|_| SliderState::new());
         let volume_slider = cx.new(|_| {
             SliderState::new()
@@ -136,7 +136,7 @@ impl SettingsDrawer {
                 let SliderEvent::Change(value) = event;
                 this.brightness_slider_value = *value;
 
-                let mut brightness_tx = this.brightness_tx.clone().unwrap();
+                let mut brightness_tx = brightness_tx.clone().unwrap();
                 let brightness_value = *value;
                 cx.background_executor()
                     .spawn(async move {
@@ -172,7 +172,7 @@ impl SettingsDrawer {
                     .clone()
                     .unwrap_or_else(|| "default".to_string());
                 let volume = *value;
-                let mut volume_tx_1 = this.volume_tx.clone().unwrap();
+                let mut volume_tx_1 = volume_tx.clone().unwrap();
 
                 let _ = cx
                     .background_executor()
@@ -199,9 +199,7 @@ impl SettingsDrawer {
         let mut _subscriptions = vec![b_subscription, c_subscription];
 
         Self {
-            current_time_date: "".to_string(),
             settings_active: false,
-            battery_percent: 0,
             open_power_options: false,
             rotation_on: false,
             airplane_mode: false,
@@ -209,17 +207,7 @@ impl SettingsDrawer {
             power_mode: PowerMode::Balanced,
             microphone_recording: false,
             screen_recording: false,
-            wireless_details: WirelessDetails {
-                enabled: true,
-                connected_network: None,
-                networks: None,
-            },
-            bluetooth_details: BluetoothDetails {
-                enabled: false,
-                connected_devices: 0,
-                connected_device: None,
-                available_devices: None,
-            },
+
             volume_device_name: None,
             open_terminal: false,
             cell_signal: false,
@@ -231,10 +219,6 @@ impl SettingsDrawer {
             volume_slider_state: volume_slider,
             volume_slider_value: 0.0,
             volume_mute: false,
-            nm_tx: None,
-            bt_tx: None,
-            volume_tx: None,
-            brightness_tx: None,
             open_modal: false,
             animation_progress: 0.0,
             animation_state: ModalAnimationState::None,
@@ -244,7 +228,7 @@ impl SettingsDrawer {
             modal_current_center: (0.0, 0.0),
             modal_target_center: (0.0, 0.0),
 
-            // _subscriptions,
+            _subscriptions,
             current_modal: ModalKind::None,
             wireless_modal_scroll: WirelessModalScroll::new(),
             bluetooth_modal_scroll: BluetoothModalScroll::new(),
@@ -448,6 +432,8 @@ impl SettingsDrawer {
         window: &mut Window,
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+        let current_time_date = ShellState::global(cx).current_time_date.clone();
 
         if matches!(
             self.animation_state,
@@ -509,7 +495,7 @@ impl SettingsDrawer {
                     .w_full()
                     .h_full()
                     .px_8()
-                    .bg(rgb(DARK_NEUTRAL_1000))
+                    .bg(colors.background_1000)
                     .child(
                         // status row
                         div()
@@ -524,9 +510,9 @@ impl SettingsDrawer {
                                 div()
                                     .flex()
                                     .flex_row()
-                                    .child(self.current_time_date.clone())
+                                    .child(current_time_date)
                                     .text_xl()
-                                    .text_color(rgb(TEXT_COLOR)),
+                                    .text_color(colors.foreground_100),
                             )
                             .child(self.render_power_button(cx)),
                     )
@@ -562,20 +548,7 @@ impl SettingsDrawer {
                             .child(self.render_battery_performance(cx))
                             .child(self.render_cell_signal(cx))
                             .child(self.render_brightness_control_div(cx))
-                            .child(
-                                div()
-                                    .id("id_sound")
-                                    .flex()
-                                    .items_center()
-                                    .justify_center()
-                                    .w_full()
-                                    .h_full()
-                                    .text_lg()
-                                    .col_span(2)
-                                    .bg(rgb(DARK_NEUTRAL_900))
-                                    .rounded(px(8.))
-                                    .child(self.render_volume_control(cx)),
-                            ),
+                            .child(self.render_sound_control_div(cx)),
                     )
                     .when(self.open_modal, |content_div| {
                         content_div
@@ -591,7 +564,7 @@ impl SettingsDrawer {
                                     .left(px(0.))
                                     .w_full()
                                     .h_full()
-                                    .bg(rgb(0x000000))
+                                    .bg(colors.background_1000)
                                     .opacity(0.6)
                                     .on_click(cx.listener(
                                         |this: &mut SettingsDrawer, _, widnow, cx| {
@@ -626,7 +599,7 @@ impl SettingsDrawer {
                                             .bg(if self.modal_size.0 == MIN_MODAL_SIZE_1.0 {
                                                 rgba(AMBER_600_10)
                                             } else {
-                                                rgb(DARK_NEUTRAL_900)
+                                                colors.background_900
                                             })
                                             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
                                                 px(16.)
@@ -673,11 +646,12 @@ impl SettingsDrawer {
     }
 
     fn render_power_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         div()
             .id("id_power")
             .child(
                 Icon::new(IconName::Power)
-                    .text_color(rgb(0xF4F4F4))
+                    .text_color(colors.foreground_100)
                     .size((px(24.), px(24.))),
             )
             .on_click(cx.listener(
@@ -689,6 +663,7 @@ impl SettingsDrawer {
     }
 
     fn render_rotation(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         let rotation_icon = if self.rotation_on {
             IconName::RotationOn
         } else {
@@ -696,7 +671,7 @@ impl SettingsDrawer {
         };
 
         IconButton::new("id_rotation")
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             .icon(rotation_icon)
             .active(self.rotation_on)
             .active_icon_color(rgb(AMBER_600))
@@ -715,7 +690,7 @@ impl SettingsDrawer {
     fn render_airplane_mode(&self, cx: &mut Context<Self>) -> impl IntoElement {
         IconButton::new("id_airplane")
             .icon(IconName::Airplane)
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             .icon_color(rgb(DARK_NEUTRAL_100))
             .active(self.airplane_mode)
             .active_icon_color(rgb(DARK_NEUTRAL_0))
@@ -742,7 +717,7 @@ impl SettingsDrawer {
 
         IconButton::new("id_screen_mirroring")
             .icon(screen_mirroring_icon)
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.screen_mirroring)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
@@ -772,7 +747,7 @@ impl SettingsDrawer {
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
         IconButton::new("id_terminal")
             .icon(IconName::Terminal)
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             .icon_color(rgb(DARK_NEUTRAL_100))
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
@@ -787,7 +762,7 @@ impl SettingsDrawer {
     fn render_microphone_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
         IconButton::new("id_microphone")
             .icon(IconName::MicroPhoneOff)
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.microphone_recording)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
@@ -805,7 +780,7 @@ impl SettingsDrawer {
     fn render_screen_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
         IconButton::new("id_screen_recording")
             .icon(IconName::ScreenRecordingOff)
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.screen_recording)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
@@ -823,7 +798,7 @@ impl SettingsDrawer {
     fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
         IconButton::new("id_settings")
             .icon(IconName::Settings)
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
             .on_click(cx.listener(
@@ -837,7 +812,7 @@ impl SettingsDrawer {
     fn render_camera(&self, cx: &mut Context<Self>) -> impl IntoElement {
         IconButton::new("id_camera")
             .icon(IconName::CameraOff)
-            .size((px(104.), px(88.)))
+            .size((px(ICON_W), px(ROW_12_ICON_H)))
             // .icon_color(rgb(AMBER_600)) // on press change ICON CameraON
             .icon_color(rgb(DARK_NEUTRAL_100))
             .active_icon_color(rgb(AMBER_600))
@@ -851,10 +826,12 @@ impl SettingsDrawer {
     }
 
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let mut wireless_icon = IconName::WifiOff;
+        let wireless_details = ShellState::global(cx).wireless_details.clone();
+
+        let mut wireless_icon = IconName::WirelessOff;
         let mut network_label = "Wi-Fi".to_string();
-        let wireless_connected_network = self.wireless_details.connected_network.clone();
-        let wireless_enable = self.wireless_details.enabled;
+        let wireless_connected_network = wireless_details.connected_network.clone();
+        let wireless_enable = wireless_details.enabled;
         if wireless_enable && wireless_connected_network.is_some() {
             network_label = wireless_connected_network
                 .clone()
@@ -862,7 +839,7 @@ impl SettingsDrawer {
                 .unwrap_or_else(|| "Wi-Fi".to_string());
 
             wireless_icon = if network_label == "Wi-Fi" {
-                IconName::ConnectedWifiOn
+                IconName::ConnectedWirelessOn
             } else {
                 let signal_strength = wireless_connected_network
                     .clone()
@@ -874,21 +851,20 @@ impl SettingsDrawer {
 
         IconButton::new("id_wireless")
             .icon(Icon::new(wireless_icon).size((px(36.), px(36.))))
-            .size((px(104.), px(104.)))
-            .active(self.wireless_details.enabled)
+            .size((px(ICON_W), px(ICON_H)))
+            .active(wireless_details.enabled)
             .label(network_label)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
             // // // 10% - ok - keeping while it is active
             .on_click(cx.listener(
                 // keep this - quick click
-                |this: &mut SettingsDrawer,
+                move |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
                  _window: &mut Window,
                  cx: &mut Context<Self>| {
                     let shell_state = ShellState::global(cx).clone();
-                    let is_enable = this.wireless_details.enabled;
-                    this.wireless_details.enabled = !is_enable;
+                    let is_enable = wireless_details.enabled;
                     cx.background_executor()
                         .spawn(async move {
                             shell_state.toggle_wireless(!is_enable).await;
@@ -910,19 +886,20 @@ impl SettingsDrawer {
     }
 
     fn render_bluetooth(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let bluetooth_icon = match self.bluetooth_details.enabled {
-            true => match self.bluetooth_details.connected_devices > 0 {
+        let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
+        let bluetooth_icon = match bluetooth_details.enabled {
+            true => match bluetooth_details.connected_devices > 0 {
                 true => IconName::BluetoothConnected,
                 false => IconName::BluetoothOn,
             },
             false => IconName::BluetoothOff,
         };
-        let bluetooth_label = match self.bluetooth_details.enabled {
+        let bluetooth_label = match bluetooth_details.enabled {
             true => {
-                if self.bluetooth_details.connected_devices == 0 {
+                if bluetooth_details.connected_devices == 0 {
                     "Bluetooth".to_string()
                 } else {
-                    format!("{} Devices", self.bluetooth_details.connected_devices)
+                    format!("{} Devices", bluetooth_details.connected_devices)
                 }
             }
             false => "Bluetooth".to_string(),
@@ -930,19 +907,19 @@ impl SettingsDrawer {
 
         IconButton::new("id_bluetooth")
             .icon(bluetooth_icon)
-            .size((px(104.), px(104.)))
+            .size((px(ICON_W), px(ICON_H)))
             .label(bluetooth_label)
-            .active(self.bluetooth_details.enabled)
+            .active(bluetooth_details.enabled)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
             .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
+                move |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
                  _window: &mut Window,
                  cx: &mut Context<Self>| {
                     let shell_state = ShellState::global(cx).clone();
-                    let is_enable = this.bluetooth_details.enabled;
-                    this.bluetooth_details.enabled = !is_enable;
+                    let is_enable = bluetooth_details.enabled;
+                    // bluetooth_details.enabled = !is_enable;
                     cx.background_executor()
                         .spawn(async move {
                             shell_state.toggle_bluetooth(!is_enable).await;
@@ -964,6 +941,8 @@ impl SettingsDrawer {
     }
 
     fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let battery_percent = ShellState::global(cx).battery_percent.clone();
+
         let power_mode_icon = match self.power_mode {
             PowerMode::High => IconName::PowerModeHigh,
             PowerMode::Balanced => IconName::PowerModeBalanced,
@@ -976,8 +955,8 @@ impl SettingsDrawer {
         };
         IconButton::new("id_power_mode")
             .icon(power_mode_icon)
-            .size((px(104.), px(104.)))
-            .label(format!("{}% ", self.battery_percent))
+            .size((px(ICON_W), px(ICON_H)))
+            .label(format!("{}% ", battery_percent))
             .icon_color(power_mode_icon_color)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
@@ -995,7 +974,7 @@ impl SettingsDrawer {
     fn render_cell_signal(&self, cx: &mut Context<Self>) -> impl IntoElement {
         IconButton::new("id_cell_signal")
             .icon(IconName::CellSignalNone)
-            .size((px(104.), px(104.)))
+            .size((px(ICON_W), px(ICON_H)))
             .label("No SIM")
             .active(self.cell_signal)
             .active_icon_color(rgb(AMBER_600))
@@ -1013,6 +992,7 @@ impl SettingsDrawer {
     }
 
     fn render_brightness_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         div()
             .id("id_display")
             .flex()
@@ -1021,6 +1001,7 @@ impl SettingsDrawer {
             .h_full()
             .text_lg()
             .col_span(2)
+            // .bg(colors.background_900)
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
             .when(!self.open_modal, |this| {
@@ -1039,6 +1020,8 @@ impl SettingsDrawer {
     }
 
     pub fn render_brightness_slider(&self, cx: &mut Context<Self>, width: f32) -> impl IntoElement {
+
+        let colors = cx.theme().colors.clone();
         let brightness_icon =
             if self.brightness_slider_value >= 0.0 && self.brightness_slider_value <= 33.0 {
                 IconName::BrightnessLow
@@ -1078,7 +1061,24 @@ impl SettingsDrawer {
             )
     }
 
-    fn render_volume_control(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_sound_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+        div()
+            .id("id_sound")
+            .flex()
+            .items_center()
+            .justify_center()
+            .w_full()
+            .h_full()
+            .text_lg()
+            .col_span(2)
+            .bg(rgb(DARK_NEUTRAL_900))
+            .rounded(px(8.))
+            .child(self.render_volume_slider(cx))
+    }
+
+    fn render_volume_slider(&self, cx: &mut Context<Self>) -> impl IntoElement {
+
         let volume_icon = if self.volume_mute {
             IconName::VolumeOff
         } else {
@@ -1095,6 +1095,10 @@ impl SettingsDrawer {
         } else {
             AMBER_600
         };
+
+
+        let volume_tx = ShellState::global(cx).volume_tx.clone().unwrap();
+        let colors = cx.theme().colors.clone();
 
         div()
             .id("id_volume")
@@ -1124,11 +1128,11 @@ impl SettingsDrawer {
                     .active_bg_color(rgb(DARK_NEUTRAL_900))
                     .border(px(0.))
                     .on_click(cx.listener(
-                        |this: &mut SettingsDrawer,
+                        move |this: &mut SettingsDrawer,
                          _event: &ClickEvent,
                          _window: &mut Window,
                          cx: &mut Context<Self>| {
-                            let mut volume_tx = this.volume_tx.clone().unwrap();
+                            let mut volume_tx = volume_tx.clone();
 
                             this.volume_mute = !this.volume_mute;
                             let is_mute = this.volume_mute;

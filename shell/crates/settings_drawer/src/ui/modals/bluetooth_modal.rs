@@ -1,6 +1,6 @@
 use futures::SinkExt;
 use gpui::*;
-use shell_state::BtMessage;
+use shell_state::{BtMessage, ShellState};
 
 use crate::{helper::get_bluetooth_icon, prelude::*, ui::icon::{Icon, IconName},
 };
@@ -119,7 +119,9 @@ impl ScrollBehavior for BluetoothModalScroll {
 
 impl SettingsDrawer {
     pub fn render_bluetooth_modal(&mut self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
-        let device_list = self.bluetooth_details.available_devices.clone().unwrap_or_default();
+        let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
+        let bt_tx = ShellState::global(cx).bt_tx.clone().unwrap();
+        let device_list = bluetooth_details.available_devices.clone().unwrap_or_default();
         let device_count = device_list.len();
 
         div()
@@ -263,7 +265,7 @@ impl SettingsDrawer {
                                         ));
                                     } else if !is_connected && is_paired {
                                         let address = bt.address.clone();
-                                        let bt_tx_clone = self.bt_tx.clone().unwrap();
+                                        let bt_tx_clone = bt_tx.clone();
 
                                         bluetooth_div =
                                             bluetooth_div

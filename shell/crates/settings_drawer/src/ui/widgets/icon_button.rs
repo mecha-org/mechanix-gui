@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::{constants::*, prelude::*, ui::icon::Icon};
 use gpui::{prelude::FluentBuilder, *};
+use theme::prelude::Theme;
 
 const ICON_COLOR: u32 = DARK_NEUTRAL_100; // default - gray | custom can be - white or active - amber
 const ACTIVE_ICON_COLOR: u32 = AMBER_600; // default - gray | custom can be - amber
@@ -101,7 +102,9 @@ impl IconButton {
 }
 
 impl RenderOnce for IconButton {
-    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+
         let main = self
             .main
             .flex()

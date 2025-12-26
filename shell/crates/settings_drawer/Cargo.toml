@@ -23,4 +23,5 @@ settings = { path = "../settings" }
 shell_state = { path = "../shell_state" }
 anyhow = { workspace = true }
 futures = "0.3.31"
+theme = { path = "../theme" }
 

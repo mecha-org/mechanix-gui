@@ -57,32 +57,11 @@ pub fn run_app(cx: &mut App) {
             cx.new(|cx| {
                 cx.observe_global::<ShellState>(|this: &mut SettingsDrawer, cx| {
                     let ShellState {
-                        current_time_date,
-                        wireless_details,
-                        bluetooth_details,
-                        battery_percent,
                         sound_device_info,
-                        nm_tx,
-                        bt_tx,
-                        volume_tx,
-                        brightness_tx,
+                        brightness_value,
+
                         ..
                     } = ShellState::global(cx).clone();
-
-                    this.current_time_date = current_time_date;
-                    this.battery_percent = battery_percent;
-                    this.wireless_details.enabled = wireless_details.enabled;
-                    this.wireless_details.connected_network = wireless_details.connected_network;
-
-                    let mut sorted_list = wireless_details.networks.unwrap_or_else(|| vec![]);
-                    sorted_list.sort_by_key(|n| (!n.is_active, !n.is_known));
-                    sorted_list.retain(|n| !n.ssid.is_empty());
-                    this.wireless_details.networks = Some(sorted_list);
-
-                    this.bluetooth_details.enabled = bluetooth_details.enabled;
-                    this.bluetooth_details.connected_devices = bluetooth_details.connected_devices;
-                    this.bluetooth_details.available_devices =
-                        bluetooth_details.available_devices.clone();
 
                     let sound_device = Some(sound_device_info).clone().unwrap();
                     this.volume_device_name = sound_device.name;
@@ -94,7 +73,7 @@ pub fn run_app(cx: &mut App) {
                             .clamp(state.min, state.max);
                     });
 
-                    this.brightness_slider_value = ShellState::global(cx).brightness_value;
+                    this.brightness_slider_value = brightness_value;
                     this.brightness_slider_state.update(cx, |state, _cx| {
                         state.value = this
                             .brightness_slider_value
@@ -102,10 +81,6 @@ pub fn run_app(cx: &mut App) {
                             .clamp(state.min, state.max);
                     });
 
-                    this.nm_tx = nm_tx;
-                    this.bt_tx = bt_tx;
-                    this.volume_tx = volume_tx;
-                    this.brightness_tx = brightness_tx;
                     cx.notify();
 
                 })
