@@ -117,7 +117,7 @@ impl IconName {
             IconName::CellSignalNone => "cell-signal-none.svg",
             IconName::CellSignalHigh => "cell-signal-high.svg",
             IconName::CellSignalWarning => "cell-signal-warning.svg",
-            IconName::Navbar => "navbar.png",
+            IconName::Navbar => "navbar-gray.png",
             IconName::ConnectedIcon => "connected_icon.svg",
             IconName::SystemSpeaker => "system-speaker.svg",
             IconName::Headphone => "headphone.svg",
