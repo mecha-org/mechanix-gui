@@ -108,6 +108,10 @@ flutter:
     - assets/images/check_icon.png
     - assets/images/add.png
     - assets/images/plus.png
+    - assets/images/edit.png
+    - assets/images/playlist_play.png
+    - assets/images/three_line.png
+    - assets/images/remove.png
 
     - assets/screenshots/music1.jpeg
     - assets/screenshots/music2.jpeg

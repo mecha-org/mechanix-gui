@@ -15,7 +15,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   SongsBloc({required this.songsRepository}) : super(const SongsState()) {
     on<ScanSongs>(_onScanSongs);
     on<LoadSongsFromHive>(_onLoadSongsFromHive);
-    // on<SearchSong>(_onSearch);
+    on<SearchSong>(_onSearch);
     on<PlaySong>(_onPlaySong);
     on<TogglePlayPause>(_onTogglePlayPause);
     on<PlayNext>(_onPlayNext);
@@ -29,7 +29,17 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<DeleteSong>(_onDeleteSong);
     on<PlaybackCompleted>(_onPlaybackComplete);
     on<AddToQueue>(_addToQueue);
-
+    on<RecentSongs>(recentlyPlayed);
+    on<BottomBarToggle>(bottomBarView);
+    on<CreatePlaylist>(createPlaylist);
+    on<LoadPlaylist>(loadPlaylist);
+    on<PlaylistViewMode>(playlistViewMode);
+    on<DeletePlaylist>(deletePlaylist);
+    on<AddToPlaylist>(addToPlaylist);
+    on<GetPlaylistSongs>(getPlaylistSongs);
+    on<UpdatedPlaylistSongs>(updatedPlaylistSongs);
+    on<PlayPlaylistSongs>(playPlaylist);
+    on<PausePlaylistSongs>(pausePlaylist);
     _initializePlayerListeners();
     add(LoadSongsFromHive());
   }
@@ -69,7 +79,19 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     if (event.musicTab == MusicTabs.home) {
-      add(ScanSongs());
+      add(LoadPlaylist());
+      // add(ScanSongs());
+    }
+    if (event.musicTab == MusicTabs.playlists) {
+      add(LoadPlaylist());
+    }
+    if (event.musicTab == MusicTabs.search) {
+      return emit(
+        state.copyWith(
+          musicTab: event.musicTab,
+          bottomBarView: BottomBarView.search,
+        ),
+      );
     }
     emit(state.copyWith(musicTab: event.musicTab));
   }
@@ -82,8 +104,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       emit(
         state.copyWith(
           songs: songsScan,
-          currentIndex: -1,
-          playbackQueue: songsScan,
+          playbackQueue: [],
           playlist: null,
           isLoading: false,
           error: null,
@@ -113,7 +134,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         emit(
           state.copyWith(
             songs: songs,
-            playbackQueue: songs,
+            playbackQueue: [],
             playlist: playlist,
             isLoading: false,
             error: null,
@@ -132,36 +153,34 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         );
         logger.i("No songs found in Hive");
       }
+      add(RecentSongs());
     } catch (e) {
       logger.e("Error loading songs from Hive: $e");
       emit(state.copyWith(isLoading: false, error: "Failed to load songs: $e"));
     }
   }
 
-  // Future<void> _onSearch(SearchSong event, Emitter<SongsState> emit) async {
-  //   final logger = Logger();
-  //   logger.i("Search started: ${event.searchQuery}");
-
-  //   if (event.searchQuery.isEmpty) {
-  //     emit(state.copyWith(searchedSongs: []));
-  //     return;
-  //   }
-
-  //   final searchSongs =
-  //       state.songs.where((element) {
-  //         final title = element.title.toLowerCase();
-  //         final artist = element.artist.toLowerCase();
-  //         final album = element.album?.toLowerCase() ?? "";
-  //         final query = event.searchQuery.toLowerCase();
-
-  //         return title.contains(query) ||
-  //             artist.contains(query) ||
-  //             album.contains(query);
-  //       }).toList();
-
-  //   logger.i("Search completed: ${searchSongs.length} results");
-  //   emit(state.copyWith(searchedSongs: searchSongs));
-  // }
+  Future<void> _onSearch(SearchSong event, Emitter<SongsState> emit) async {
+    try {
+      if (event.searchQuery.trim().isEmpty || event.searchQuery.length < 3) {
+        emit(
+          state.copyWith(
+            searchResults: SearchResults(
+              query: event.searchQuery.trim(),
+              songs: [],
+              playlists: [],
+            ),
+          ),
+        );
+      }
+      logger.i("Searching for ${event.searchQuery}");
+      final result = await songsRepository.searchSongs(event.searchQuery);
+      emit(state.copyWith(searchResults: result, error: null));
+      logger.i(
+        "Search results: ${result.playlists.length + result.songs.length}",
+      );
+    } catch (_) {}
+  }
 
   Future<void> _onPlaySong(PlaySong event, Emitter<SongsState> emit) async {
     try {
@@ -172,9 +191,17 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       await player.open(media);
       // Update state with currently playing song
       emit(
-        state.copyWith(currentSong: event.song, isPlaying: true, error: null),
+        state.copyWith(
+          currentSong: event.song,
+          isPlaying: true,
+          error: null,
+          playbackQueue: [],
+          currentPlaylist: const CurrentPlaylist(),
+          musicMode: MusicMode.normal,
+        ),
       );
-
+      await songsRepository.addToRecentlyPlayed(event.song);
+      add(RecentSongs());
       logger.i("Playing song: ${event.song.title}");
     } catch (e) {
       logger.e("Error playing song ${event.song.id}: $e");
@@ -213,7 +240,45 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return;
       }
 
+      if (state.musicMode == MusicMode.playlist) {
+        final playlist = player.state.playlist;
+
+        final int currentIndex = playlist.index;
+
+        // Safety checks
+        if (currentIndex < 0 || currentIndex >= state.playlistSongs.length) {
+          logger.w("Invalid playlist index: $currentIndex");
+          return;
+        }
+
+        // If last song → stop or loop (your choice)
+        if (currentIndex == state.playlistSongs.length - 1) {
+          logger.i("Reached end of playlist");
+          return;
+        }
+
+        final nextIndex = currentIndex + 1;
+        final nextSong = state.playlistSongs[nextIndex];
+
+        // Move player to next track
+        await player.next();
+
+        emit(
+          state.copyWith(
+            currentSong: nextSong,
+            currentPlaylist: state.currentPlaylist.copyWith(
+              currentIndex: nextIndex,
+              currentSongId: nextSong.id,
+            ),
+          ),
+        );
+
+        logger.i("Next song in playlist: ${nextSong.title}");
+        return;
+      }
+
       SongInfo? nextSong;
+      List<SongInfo> updatedQueue = state.playbackQueue;
 
       // Check if current song is in queue
       final queueIndex = state.playbackQueue.indexWhere(
@@ -227,39 +292,30 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           nextSong = state.playbackQueue[queueIndex + 1];
           logger.i("Next from queue: ${nextSong.title}");
         } else {
-          // Last in queue, continue from last queue song's position in main list
+          // Last in queue, EXIT queue, CLEAR IT, and continue from last queue song's position
           final lastQueueSongInList = state.songs.indexWhere(
             (song) => song.id == state.playbackQueue.last.id,
           );
+
           if (lastQueueSongInList != -1) {
             final nextIndex = (lastQueueSongInList + 1) % state.songs.length;
             nextSong = state.songs[nextIndex];
+            updatedQueue = []; // CLEAR THE QUEUE after exiting
             logger.i(
-              "Queue ended, continuing from main list: ${nextSong.title}",
+              "Exited queue forward, CLEARING queue, continuing in main list: ${nextSong.title}",
             );
           }
         }
       } else {
-        // Not in queue, check if next song should be from queue
+        // Currently NOT in queue - stay in main list
         final currentInList = state.songs.indexWhere(
           (song) => song.id == state.currentSong!.id,
         );
 
         if (currentInList != -1) {
-          final naturalNext =
-              state.songs[(currentInList + 1) % state.songs.length];
-
-          // Check if natural next is the first queue song
-          if (state.playbackQueue.isNotEmpty &&
-              naturalNext.id == state.playbackQueue.first.id) {
-            // Enter the queue
-            nextSong = state.playbackQueue.first;
-            logger.i("Entering queue: ${nextSong.title}");
-          } else {
-            // Continue in main list
-            nextSong = naturalNext;
-            logger.i("Next from main list: ${nextSong.title}");
-          }
+          final nextIndex = (currentInList + 1) % state.songs.length;
+          nextSong = state.songs[nextIndex];
+          logger.i("Next from main list: ${nextSong.title}");
         }
       }
 
@@ -271,7 +327,20 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       final media = Media(nextSong.path);
       await player.open(media);
 
-      emit(state.copyWith(currentSong: nextSong, isPlaying: true, error: null));
+      await songsRepository.addToRecentlyPlayed(nextSong);
+      add(RecentSongs());
+      emit(
+        state.copyWith(
+          currentSong: nextSong,
+          playbackQueue: updatedQueue, // Update queue (might be cleared)
+          isPlaying: true,
+          error: null,
+        ),
+      );
+
+      logger.i(
+        "Playing: ${nextSong.title}, Queue length: ${updatedQueue.length}",
+      );
     } catch (e) {
       logger.e("Error playing next song: $e");
       emit(state.copyWith(error: "Failed to play next song: $e"));
@@ -288,6 +357,43 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return;
       }
 
+      if (state.musicMode == MusicMode.playlist) {
+        final playlist = player.state.playlist;
+
+        final int currentIndex = playlist.index;
+
+        // Safety checks
+        if (currentIndex < 0 || currentIndex >= state.playlistSongs.length) {
+          logger.w("Invalid playlist index: $currentIndex");
+          return;
+        }
+
+        // If first song → stop or loop (your choice)
+        if (currentIndex == 0) {
+          logger.i("Reached start of playlist");
+          return;
+        }
+
+        final prevIndex = currentIndex - 1;
+        final prevSong = state.playlistSongs[prevIndex];
+
+        // Move player to previous track
+        await player.previous(); // OR: await player.jump(prevIndex);
+
+        emit(
+          state.copyWith(
+            currentSong: prevSong,
+            currentPlaylist: state.currentPlaylist.copyWith(
+              currentIndex: prevIndex,
+              currentSongId: prevSong.id,
+            ),
+          ),
+        );
+
+        logger.i("Previous song in playlist: ${prevSong.title}");
+        return;
+      }
+
       SongInfo? prevSong;
 
       // Check if current song is in queue
@@ -296,58 +402,39 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       );
 
       if (queueIndex != -1) {
-        // Currently in queue
-        if (queueIndex > 0) {
-          // Not first in queue, play previous from queue
-          prevSong = state.playbackQueue[queueIndex - 1];
-          logger.i("Previous from queue: ${prevSong.title}");
-        } else {
-          // First in queue, go to song before first queue song in main list
-          final firstQueueSongInList = state.songs.indexWhere(
-            (song) => song.id == state.playbackQueue.first.id,
-          );
-          if (firstQueueSongInList != -1) {
-            final prevIndex =
-                (firstQueueSongInList - 1 + state.songs.length) %
-                state.songs.length;
-            prevSong = state.songs[prevIndex];
-            logger.i("Exiting queue, going to main list: ${prevSong.title}");
-          }
+        // 🔹 Currently IN queue
+        if (queueIndex == 0) {
+          // 🚫 First song in queue → do nothing
+          logger.i("At first song in queue, cannot go previous");
+          return;
         }
+
+        // Play previous from queue
+        prevSong = state.playbackQueue[queueIndex - 1];
+        logger.i("Previous from queue: ${prevSong.title}");
       } else {
-        // Not in queue, check if previous song should be from queue
-        final currentInList = state.songs.indexWhere(
+        // 🔹 Currently NOT in queue → main list
+        final currentIndex = state.songs.indexWhere(
           (song) => song.id == state.currentSong!.id,
         );
 
-        if (currentInList != -1) {
-          final naturalPrev =
-              state.songs[(currentInList - 1 + state.songs.length) %
-                  state.songs.length];
-
-          // Check if natural previous is the last queue song
-          if (state.playbackQueue.isNotEmpty &&
-              naturalPrev.id == state.playbackQueue.last.id) {
-            // Enter the queue from the end
-            prevSong = state.playbackQueue.last;
-            logger.i("Entering queue from end: ${prevSong.title}");
-          } else {
-            // Continue in main list
-            prevSong = naturalPrev;
-            logger.i("Previous from main list: ${prevSong.title}");
-          }
+        if (currentIndex <= 0) {
+          // 🚫 First song in main list → do nothing
+          logger.i("At first song in main list, cannot go previous");
+          return;
         }
-      }
 
-      if (prevSong == null) {
-        logger.w("Could not determine previous song");
-        return;
+        prevSong = state.songs[currentIndex - 1];
+        logger.i("Previous from main list: ${prevSong.title}");
       }
 
       final media = Media(prevSong.path);
       await player.open(media);
-
+      await songsRepository.addToRecentlyPlayed(prevSong);
+      add(RecentSongs());
       emit(state.copyWith(currentSong: prevSong, isPlaying: true, error: null));
+
+      logger.i("Playing: ${prevSong.title}");
     } catch (e) {
       logger.e("Error playing previous song: $e");
       emit(state.copyWith(error: "Failed to play previous song: $e"));
@@ -477,6 +564,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       await songsRepository.deleteSong(event.songInfo);
       final updatedSongs =
           state.songs.where((s) => s.id != event.songInfo.id).toList();
+
+      add(RecentSongs());
       emit(state.copyWith(songs: updatedSongs, error: null));
     } catch (e) {
       logger.e("Error deleting song: $e");
@@ -486,22 +575,246 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
   Future<void> _addToQueue(AddToQueue event, Emitter<SongsState> emit) async {
     try {
-      logger.i("Adding song to queue: ${event.songInfo.title}");
+      logger.i(
+        "Adding song to queue: ${event.songInfo.title}, "
+        "playNext: ${event.playNext}",
+      );
+      // If no current song is playing and queue is empty, play this song immediately
+      if (state.currentSong == null && state.playbackQueue.isEmpty) {
+        final media = Media(event.songInfo.path);
+        await player.open(media);
+        await songsRepository.addToRecentlyPlayed(event.songInfo);
+        add(RecentSongs());
+
+        emit(
+          state.copyWith(
+            currentSong: event.songInfo,
+            playbackQueue: [event.songInfo],
+            isPlaying: true,
+            error: null,
+          ),
+        );
+
+        logger.i("No current song, started playing: ${event.songInfo.title}");
+        return;
+      }
+
+      final updatedQueue = List<SongInfo>.from(state.playbackQueue);
+
+      // // 🚫 Avoid duplicates
+      // if (updatedQueue.any((s) => s.id == event.songInfo.id)) {
+      //   logger.i("Song already exists in queue, skipping");
+      //   return;
+      // }
+
+      // Initialize queue with current song if empty
+      if (updatedQueue.isEmpty && state.currentSong != null) {
+        updatedQueue.add(state.currentSong!);
+        logger.i(
+          "Queue was empty, added current song first: ${state.currentSong!.title}",
+        );
+      }
+
+      if (event.playNext) {
+        // ▶️ PLAY NEXT → insert after current song
+        final currentIndex = updatedQueue.indexWhere(
+          (song) => song.id == state.currentSong?.id,
+        );
+
+        if (currentIndex != -1) {
+          updatedQueue.insert(currentIndex + 1, event.songInfo);
+          logger.i("Inserted song as Play Next at index ${currentIndex + 1}");
+        } else {
+          // Safety fallback
+          updatedQueue.add(event.songInfo);
+          logger.w("Current song not found in queue, appended to end");
+        }
+      } else {
+        // ➕ ADD TO QUEUE → append to end
+        updatedQueue.add(event.songInfo);
+        logger.i("Appended song to end of queue");
+      }
+
+      emit(state.copyWith(playbackQueue: updatedQueue, error: null));
+
+      logger.i(
+        "Queue updated successfully. Queue length: ${updatedQueue.length}",
+      );
+    } catch (e) {
+      logger.e(
+        "Error adding song to queue: ${event.songInfo.title}, error: $e",
+      );
+      emit(state.copyWith(error: "Failed to add song to queue: $e"));
+    }
+  }
+
+  Future<void> recentlyPlayed(
+    RecentSongs event,
+    Emitter<SongsState> emit,
+  ) async {
+    final recentlyPlayed = await songsRepository.getRecentlyPlayed();
+    emit(state.copyWith(recentlyPlayedSongs: recentlyPlayed));
+  }
+
+  Future<void> bottomBarView(
+    BottomBarToggle event,
+    Emitter<SongsState> emit,
+  ) async {
+    emit(state.copyWith(bottomBarView: event.bottomBarView));
+  }
+
+  Future<void> createPlaylist(
+    CreatePlaylist event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Creating playlist: ${event.playlistName}");
+    await songsRepository.createPlaylist(event.playlistName);
+    emit(state.copyWith(bottomBarView: BottomBarView.normal));
+    logger.i("Playlist created successfully");
+    add(LoadPlaylist());
+  }
+
+  Future<void> loadPlaylist(
+    LoadPlaylist event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Loading playlist");
+    final playlist = await songsRepository.getPlaylist();
+    emit(
+      state.copyWith(bottomBarView: BottomBarView.normal, playlists: playlist),
+    );
+    logger.i("Playlist loaded successfully");
+  }
+
+  Future<void> playlistViewMode(
+    PlaylistViewMode event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Changing playlist view mode to ${event.playlistViewMode}");
+    emit(state.copyWith(playlistView: event.playlistViewMode));
+  }
+
+  Future<void> deletePlaylist(
+    DeletePlaylist event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Deleting playlist: ${event.playlistId}");
+    final isDeleted = await songsRepository.deletePlaylist(event.playlistId);
+    if (isDeleted) {
+      emit(
+        state.copyWith(
+          playlists:
+              state.playlists.where((p) => p.id != event.playlistId).toList(),
+        ),
+      );
+    }
+    logger.i("Playlist deleted successfully");
+  }
+
+  Future<void> addToPlaylist(
+    AddToPlaylist event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Adding songs to playlist: ${event.songIds}");
+
+    final updatedSongs = await songsRepository.addToPlaylist(
+      event.playlistIds,
+      event.songIds,
+    );
+
+    if (updatedSongs.isNotEmpty) {
+      // Create a map of updated songs for O(1) lookup
+      final updatedSongsMap = {for (var song in updatedSongs) song.id: song};
 
       emit(
         state.copyWith(
-          playbackQueue:
-              state.playbackQueue.isEmpty
-                    ? [event.songInfo]
-                    : state.playbackQueue
-                ..add(event.songInfo),
-          error: null,
+          playlistSongs:
+              event.isMusicList
+                  ? [...state.playlistSongs, ...updatedSongs]
+                  : state.playlistSongs,
+          songs:
+              state.songs.map((song) {
+                // Replace song if it was updated, otherwise keep original
+                return updatedSongsMap[song.id] ?? song;
+              }).toList(),
         ),
       );
-    } catch (e) {
-      logger.e("Adding song to queue: ${event.songInfo.title}");
-      emit(state.copyWith(error: "Failed to add song to queue: $e"));
+      logger.i("${updatedSongs.length} song(s) added to playlist successfully");
+      add(LoadPlaylist());
+    } else {
+      logger.w("No songs were added to playlist");
     }
+  }
+
+  Future<void> getPlaylistSongs(
+    GetPlaylistSongs event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Getting playlist songs: ${event.playlistId}");
+    final playlistSongs = await songsRepository.getPlaylistSongs(
+      event.playlistId,
+    );
+    emit(state.copyWith(playlistSongs: playlistSongs));
+    logger.i("Playlist songs loaded successfully");
+  }
+
+  Future<void> updatedPlaylistSongs(
+    UpdatedPlaylistSongs event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Updating playlist songs: ${event.playlistId}");
+    final isUpdated = await songsRepository.updatePlaylistSongs(
+      event.playlistId,
+      event.orderedSongIds,
+      event.deletedSongIds,
+    );
+    if (isUpdated) {
+      add(GetPlaylistSongs(event.playlistId));
+      add(LoadPlaylist());
+    }
+    // emit(state.copyWith(playlistSongs: playlistSongs));
+    logger.i("Playlist songs updated successfully");
+  }
+
+  Future<void> playPlaylist(
+    PlayPlaylistSongs event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      logger.i("Playing playlist: ${event.playlistId}");
+      final playlist = await songsRepository.getPlaylistSongs(event.playlistId);
+      await player.open(
+        Playlist(playlist.map((song) => Media(song.path)).toList(), index: 0),
+        play: true,
+      );
+      // _streamPlaylistMode();
+
+      emit(
+        state.copyWith(
+          currentSong: playlist.first,
+          currentPlaylist: CurrentPlaylist(
+            playlistId: event.playlistId,
+            currentIndex: 0,
+            currentSongId: state.playlistSongs[0].id,
+          ),
+          isPlaying: true,
+          error: null,
+          playbackQueue: [],
+          musicMode: MusicMode.playlist,
+        ),
+      );
+      logger.i("Playlist played successfully");
+    } catch (_) {}
+  }
+
+  Future<void> pausePlaylist(
+    PausePlaylistSongs event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Pausing playlist");
+    await player.pause();
+    emit(state.copyWith(isPlaying: false));
+    logger.i("Playlist paused successfully");
   }
 
   @override

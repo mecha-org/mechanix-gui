@@ -19,9 +19,6 @@ class SearchSong extends SongsEvent {
   final String searchQuery;
 
   const SearchSong(this.searchQuery);
-
-  @override
-  List<Object?> get props => [searchQuery];
 }
 
 class PlaySong extends SongsEvent {
@@ -103,7 +100,10 @@ class AddToQueue extends SongsEvent {
 
 class RecentSongs extends SongsEvent {}
 
-class BottomBarToggle extends SongsEvent {}
+class BottomBarToggle extends SongsEvent {
+  final BottomBarView bottomBarView;
+  const BottomBarToggle(this.bottomBarView);
+}
 
 class CreatePlaylist extends SongsEvent {
   final String playlistName;
@@ -123,12 +123,36 @@ class DeletePlaylist extends SongsEvent {
 }
 
 class AddToPlaylist extends SongsEvent {
-  final String songIds;
-  final List<String> playlistId;
-  const AddToPlaylist({required this.songIds, required this.playlistId});
+  final List<String> songIds;
+  final List<String> playlistIds;
+  final bool isMusicList;
+  const AddToPlaylist({
+    required this.songIds,
+    required this.playlistIds,
+    this.isMusicList = false,
+  });
 }
 
 class GetPlaylistSongs extends SongsEvent {
   final String playlistId;
   const GetPlaylistSongs(this.playlistId);
 }
+
+class UpdatedPlaylistSongs extends SongsEvent {
+  final String playlistId;
+  final List<String> orderedSongIds;
+  final List<String> deletedSongIds;
+
+  const UpdatedPlaylistSongs({
+    required this.playlistId,
+    required this.orderedSongIds,
+    required this.deletedSongIds,
+  });
+}
+
+class PlayPlaylistSongs extends SongsEvent {
+  final String playlistId;
+  const PlayPlaylistSongs(this.playlistId);
+}
+
+class PausePlaylistSongs extends SongsEvent {}

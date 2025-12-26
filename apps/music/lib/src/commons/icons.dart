@@ -26,4 +26,8 @@ class MusicIcons {
   static const checkIcon = 'assets/images/check_icon.png';
   static const addIcon= 'assets/images/add.png';
   static const plusIcon= 'assets/images/plus.png';
+  static const editIcon= 'assets/images/edit.png';
+  static const playlistPlayIcon= 'assets/images/playlist_play.png';
+  static const threeLineIcon= 'assets/images/three_line.png';
+  static const removeIcon= 'assets/images/remove.png';
 }

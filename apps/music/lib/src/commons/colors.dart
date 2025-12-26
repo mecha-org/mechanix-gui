@@ -12,4 +12,7 @@ class MusicColors {
   static const dividerColor = Color(0xFF464646);
   static const bottomSheetColor = Color(0xFF2E2E2E);
   static const buttonColor = Color(0xFFAA6400);
+  static const tapColor = Color(0xFF3A3A3A);
+  static const buttonBackgroundColor = Color(0xFF151515);
+  static const albumColor = Color(0xFF8B0000);
 }

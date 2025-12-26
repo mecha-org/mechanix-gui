@@ -11,62 +11,96 @@ class SongTile extends StatelessWidget {
   final SongInfo song;
   final bool? enableSwipeDelete;
   final bool isCurrentSong;
+  final bool isDisabled;
+  final bool isSelected;
+  final VoidCallback? onTap;
+  final bool isPaddingRequired;
+  final bool isEditMode;
   const SongTile({
     super.key,
     required this.song,
     this.enableSwipeDelete = true,
     this.isCurrentSong = false,
+    this.isDisabled = false,
+    this.isSelected = false,
+    this.isPaddingRequired = false,
+    this.onTap,
+    this.isEditMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      onTap: () => {context.read<SongsBloc>().add(PlaySong(song))},
-      contentPadding: const EdgeInsets.symmetric(vertical: 7.5),
-      minVerticalPadding: 0,
+    return Opacity(
+      opacity: isDisabled ? 0.5 : 1.0,
+      child: Container(
+        padding:
+            isPaddingRequired
+                ? EdgeInsets.symmetric(horizontal: 16)
+                : EdgeInsets.all(0),
+        color: isSelected ? MusicColors.backgroundColor : Colors.transparent,
+        child: ListTile(
+          onTap:
+              isDisabled
+                  ? null
+                  : onTap ??
+                      () => {context.read<SongsBloc>().add(PlaySong(song))},
+          contentPadding: const EdgeInsets.symmetric(vertical: 7.5),
+          minVerticalPadding: 0,
 
-      leading: ArtworkIcon(artworkPath: song.artworkPath),
+          leading: ArtworkIcon(artworkPath: song.artworkPath),
 
-      title: Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        child: Text(
-          song.title,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 18,
-            height: 1.25,
-            color:
-                isCurrentSong
-                    ? MusicColors.borderColor
-                    : MusicColors.primaryTextColor,
+          title: Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              song.title,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 18,
+                height: 1.25,
+                color:
+                    isCurrentSong
+                        ? MusicColors.borderColor
+                        : MusicColors.primaryTextColor,
+              ),
+            ),
           ),
-        ),
-      ),
 
-      subtitle: Text(
-        song.artist,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontWeight: FontWeight.w300,
-          fontSize: 16,
-          height: 1.25,
-          color: MusicColors.secondaryTextColor,
-        ),
-      ),
-
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // if (isCurrentSong)
-          //   SegmentedBarEqualizer(color: MusicColors.titleColor),
-          const SizedBox(width: 12),
-          SongMenu(
-            song: song,
-            onToggleFavourite:
-                () => {context.read<SongsBloc>().add(FavouriteToggle(song))},
+          subtitle: Text(
+            song.artist,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontWeight: FontWeight.w300,
+              fontSize: 16,
+              height: 1.25,
+              color: MusicColors.secondaryTextColor,
+            ),
           ),
-        ],
+
+          trailing:
+              isEditMode
+                  ? null
+                  : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // if (isCurrentSong)
+                      //   SegmentedBarEqualizer(color: MusicColors.titleColor),
+                      const SizedBox(width: 12),
+
+                      SongMenu(
+                        song: song,
+                        onToggleFavourite:
+                            isDisabled
+                                ? null
+                                : () => {
+                                  context.read<SongsBloc>().add(
+                                    FavouriteToggle(song),
+                                  ),
+                                },
+                      ),
+                    ],
+                  ),
+        ),
       ),
     );
   }

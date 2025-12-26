@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:audio_metadata_extractor/audio_metadata_extractor.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/web.dart';
+import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/recently_played.dart';
 import 'package:mechanix_music/models/song_info.dart';
@@ -16,7 +17,7 @@ class SongsRepositoryImpl extends SongsRepository {
   final logger = Logger();
   final uuid = Uuid();
 
-  Future<void> ensureHiveConnected() async {
+  Future<void> ensureSongsConnected() async {
     if (!Hive.isBoxOpen(TableName.songsInfoTable)) {
       await Hive.openBox<SongInfo>(TableName.songsInfoTable);
     }
@@ -108,7 +109,7 @@ class SongsRepositoryImpl extends SongsRepository {
       }
 
       logger.i("Storing songs in Hive");
-      await ensureHiveConnected();
+      await ensureSongsConnected();
       final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
       await songsBox.clear();
       for (final song in tempInfos) {
@@ -196,7 +197,7 @@ class SongsRepositoryImpl extends SongsRepository {
   Future<List<SongInfo>> getAllSongs() async {
     logger.i("Loading songs from Hive");
     // emit(state.copyWith(isLoading: true, error: null));
-    await ensureHiveConnected();
+    await ensureSongsConnected();
     try {
       final songsBox = await Hive.openBox<SongInfo>(TableName.songsInfoTable);
       final songs = songsBox.values.toList();
@@ -211,14 +212,67 @@ class SongsRepositoryImpl extends SongsRepository {
   Future<SongInfo> deleteSong(SongInfo songInfo) async {
     try {
       logger.i("Deleting song from Hive ${songInfo.id}");
-      await ensureHiveConnected();
+      await ensureSongsConnected();
+
       final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+      final songDetails = songsBox.get(songInfo.id);
+
+      if (songDetails != null && songDetails.playlistIds.isNotEmpty) {
+        await ensurePlaylistConnected();
+        final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+
+        for (final playlistId in songDetails.playlistIds) {
+          final playlist = playlistBox.get(playlistId);
+          if (playlist == null) continue;
+
+          // 🔹 Remove song from playlist
+          final updatedSongIds =
+              playlist.songIds.where((id) => id != songInfo.id).toList();
+
+          String? updatedCoverImagePath = playlist.coverImagePath;
+          for (final songId in playlist.songIds) {
+            final song = songsBox.get(songId);
+            if (song?.artworkPath != null) {
+              updatedCoverImagePath = song!.artworkPath;
+              break;
+            }
+          }
+
+          // // 🔹 If deleted song was cover → pick new one
+          // if (songInfo.artworkPath != null &&
+          //     songInfo.artworkPath == playlist.coverImagePath) {
+          //   updatedCoverImagePath = null;
+
+          //   for (final remainingSongId in updatedSongIds) {
+          //     final remainingSong = songsBox.get(remainingSongId);
+          //     if (remainingSong?.artworkPath != null) {
+          //       updatedCoverImagePath = remainingSong!.artworkPath;
+          //       break;
+          //     }
+          //   }
+          // }
+
+          final updatedPlaylist = playlist.copyWith(
+            songIds: updatedSongIds,
+            coverImagePath: updatedCoverImagePath,
+          );
+
+          await playlistBox.put(playlistId, updatedPlaylist);
+        }
+      }
+
       await songsBox.delete(songInfo.id);
+      await ensureRecentlyPlayedConnected();
+
+      final recentSongs = Hive.box<RecentlyPlayed>(
+        TableName.recentlyPlayedTable,
+      );
+      await recentSongs.delete(songInfo.id);
       logger.i("Deleted song from Hive");
 
       return songInfo;
-    } catch (e) {
-      logger.e("Error deleting song: $e");
+    } catch (e, stack) {
+      logger.e("Error deleting song", error: e, stackTrace: stack);
       return songInfo;
     }
   }
@@ -226,7 +280,7 @@ class SongsRepositoryImpl extends SongsRepository {
   @override
   Future<bool> toggleFavouriteSong(SongInfo songInfo, bool isFavourite) async {
     try {
-      await ensureHiveConnected();
+      await ensureSongsConnected();
       final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
       final updatedSong = songInfo.copyWith(isFavourite: isFavourite);
 
@@ -243,12 +297,9 @@ class SongsRepositoryImpl extends SongsRepository {
     try {
       logger.i("Adding song to recently played ${songInfo.id}");
 
-      if (!Hive.isBoxOpen(TableName.recentlyPlayedTable)) {
-        await Hive.openBox<RecentlyPlayed>(TableName.recentlyPlayedTable);
-      }
+      await ensureRecentlyPlayedConnected();
 
       final box = Hive.box<RecentlyPlayed>(TableName.recentlyPlayedTable);
-
       final String key = songInfo.id;
 
       // 1️⃣ If already exists → update timestamp
@@ -261,7 +312,7 @@ class SongsRepositoryImpl extends SongsRepository {
       }
 
       // 2️⃣ If limit exceeded → remove oldest
-      if (box.length >= 30) {
+      if (box.length >= Constants.recentlyPlayedLimit) {
         // Find the oldest entry
         final oldestEntry = box.toMap().entries.reduce((a, b) {
           return a.value.lastPlayedAt.isBefore(b.value.lastPlayedAt) ? a : b;
@@ -301,8 +352,9 @@ class SongsRepositoryImpl extends SongsRepository {
     try {
       await ensurePlaylistConnected();
       final box = Hive.box<PlaylistInfo>(TableName.playlistTable);
-
-      return box.values.toList();
+      final playlists = box.values.toList();
+      playlists.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return playlists;
     } catch (e, stack) {
       logger.e("Error getting playlist", error: e, stackTrace: stack);
       return [];
@@ -313,16 +365,23 @@ class SongsRepositoryImpl extends SongsRepository {
   Future<bool> createPlaylist(String playlistName) async {
     await ensurePlaylistConnected();
     try {
+      if (playlistName.trim().isEmpty) {
+        return false;
+      }
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      if (playlistBox.values.length >= Constants.playlistLimit) {
+        return false;
+      }
+
       final createdPlaylist = PlaylistInfo(
         createdAt: DateTime.now(),
         id: uuid.v4(),
-        name: playlistName,
+        name: playlistName.trim(),
         songIds: [],
         updatedAt: DateTime.now(),
         coverImagePath: null,
       );
 
-      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
       await playlistBox.put(createdPlaylist.id, createdPlaylist);
 
       logger.i("Playlist created: $playlistName");
@@ -370,54 +429,68 @@ class SongsRepositoryImpl extends SongsRepository {
   }
 
   @override
-  Future<SongInfo?> addToPlaylist(
-    List<String> playlistId,
-    String songInfo,
+  Future<List<SongInfo>> addToPlaylist(
+    List<String> playlistIds,
+    List<String> songIds,
   ) async {
     try {
       await ensurePlaylistConnected();
-      await ensureHiveConnected();
+      await ensureSongsConnected();
 
       final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
       final songInfoBox = Hive.box<SongInfo>(TableName.songsInfoTable);
 
-      final song = songInfoBox.get(songInfo);
+      final updatedSongs = <SongInfo>[];
 
-      if (song != null) {
-        // Track which playlists to add
-        final updatedPlaylistIds = List<String>.from(song.playlistIds);
+      // Process each song
+      for (final songId in songIds) {
+        final song = songInfoBox.get(songId);
 
-        // Process each playlist
-        for (final pId in playlistId) {
-          final playlist = playlistBox.get(pId);
+        if (song != null) {
+          final updatedPlaylistIds = List<String>.from(song.playlistIds);
 
-          if (playlist != null) {
-            // Check if song is already in this playlist
-            final isSongInPlaylist = playlist.songIds.contains(songInfo);
+          // Process each playlist for this song
+          for (final playlistId in playlistIds) {
+            final playlist = playlistBox.get(playlistId);
 
-            if (!isSongInPlaylist) {
-              // Add song to playlist only if not already present
-              final updatedPlaylist = playlist.copyWith(
-                songIds: [...playlist.songIds, songInfo],
-              );
-              await playlistBox.put(pId, updatedPlaylist);
-            }
+            if (playlist != null) {
+              if (playlist.songIds.length >= Constants.maxSongsPerPlaylist) {
+                // Skip this playlist as it's full
+                continue;
+              }
+              // Check if song is already in this playlist
+              if (!playlist.songIds.contains(songId)) {
+                // Add song to playlist
+                final updatedPlaylist =
+                    song.artworkPath != null && song.artworkPath!.isNotEmpty
+                        ? playlist.copyWith(
+                          songIds: [...playlist.songIds, songId],
+                          coverImagePath: song.artworkPath,
+                        )
+                        : playlist.copyWith(
+                          songIds: [...playlist.songIds, songId],
+                          coverImagePath: playlist.coverImagePath,
+                        );
+                await playlistBox.put(playlistId, updatedPlaylist);
+              }
 
-            // Add playlist to song (if not already there)
-            if (!updatedPlaylistIds.contains(pId)) {
-              updatedPlaylistIds.add(pId);
+              // Add playlist to song's list (if not already there)
+              if (!updatedPlaylistIds.contains(playlistId)) {
+                updatedPlaylistIds.add(playlistId);
+              }
             }
           }
-        }
 
-        // Update the song with all playlist changes
-        final updatedSong = song.copyWith(playlistIds: updatedPlaylistIds);
-        await songInfoBox.put(songInfo, updatedSong);
-        return updatedSong;
+          // Update the song with all playlist changes
+          final updatedSong = song.copyWith(playlistIds: updatedPlaylistIds);
+          await songInfoBox.put(songId, updatedSong);
+          updatedSongs.add(updatedSong);
+        }
       }
-      return null;
+
+      return updatedSongs;
     } catch (_) {
-      return null;
+      return [];
     }
   }
 
@@ -439,6 +512,109 @@ class SongsRepositoryImpl extends SongsRepository {
     } catch (e, stack) {
       logger.e("Error getting playlist songs", error: e, stackTrace: stack);
       return [];
+    }
+  }
+
+  @override
+  Future<bool> updatePlaylistSongs(
+    String playlistId,
+    List<String> orderedSongIds,
+    List<String> deletedSongIds,
+  ) async {
+    try {
+      await ensurePlaylistConnected();
+
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final songInfoBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+
+      final playlist = playlistBox.get(playlistId);
+      if (playlist == null) {
+        logger.w("Playlist not found: $playlistId");
+        return false;
+      }
+
+      String? updatedCoverImagePath;
+
+      // 🔁 Handle deleted songs
+      for (final songId in deletedSongIds) {
+        final song = songInfoBox.get(songId);
+        if (song == null) continue;
+
+        // // 🖼️ If deleted song was cover, mark for replacement
+        // if (song.artworkPath != null &&
+        //     song.artworkPath == updatedCoverImagePath) {
+        //   updatedCoverImagePath = null;
+        // }
+
+        final updatedSong = song.copyWith(
+          playlistIds:
+              song.playlistIds.where((id) => id != playlistId).toList(),
+        );
+
+        await songInfoBox.put(songId, updatedSong);
+      }
+
+      // 🔍 Pick new cover from remaining songs (if needed)
+      for (final songId in orderedSongIds) {
+        final song = songInfoBox.get(songId);
+        if (song?.artworkPath != null) {
+          updatedCoverImagePath = song!.artworkPath;
+          break;
+        }
+      }
+
+      // ✅ Final playlist update
+      final updatedPlaylist = playlist.copyWith(
+        songIds: orderedSongIds,
+        coverImagePath: updatedCoverImagePath,
+      );
+
+      await playlistBox.put(playlistId, updatedPlaylist);
+
+      return true;
+    } catch (e, stack) {
+      logger.e("Error updating playlist songs", error: e, stackTrace: stack);
+      return false;
+    }
+  }
+
+  @override
+  Future<SearchResults> searchSongs(String query) async {
+    try {
+      await ensureSongsConnected();
+      await ensurePlaylistConnected();
+
+      final songBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+
+      final lowercaseQuery = query.toLowerCase().trim();
+
+      // Search in songs
+      final matchingSongs =
+          songBox.values.where((song) {
+            return song.title.toLowerCase().contains(lowercaseQuery) ||
+                song.artist.toLowerCase().contains(lowercaseQuery);
+            // (song.album?.toLowerCase().contains(lowercaseQuery) ?? false);
+          }).toList();
+
+      // Search in playlists
+      final matchingPlaylists =
+          playlistBox.values.where((playlist) {
+            return playlist.name.toLowerCase().contains(lowercaseQuery);
+          }).toList();
+
+      // Format the results
+      final List<SongInfo> songResults = matchingSongs;
+      final List<PlaylistInfo> playlistResults = matchingPlaylists;
+
+      return SearchResults(
+        query: query,
+        songs: songResults,
+        playlists: playlistResults,
+      );
+    } catch (e) {
+      print('Error searching: $e');
+      return SearchResults(query: query, songs: [], playlists: []);
     }
   }
 }

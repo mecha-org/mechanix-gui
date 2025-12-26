@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_menu.dart';
 
@@ -28,23 +29,12 @@ class PlaylistTile extends StatelessWidget {
         child: ListTile(
           enabled: !isDisabled, // 👈 disables ripple & gestures
           onTap: isDisabled ? null : onTap,
-
           contentPadding: const EdgeInsets.symmetric(vertical: 7.5),
-          leading: Container(
-            width: 44,
-            height: 44,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDisabled ? MusicColors.dividerColor : Colors.red,
-              borderRadius: const BorderRadius.all(Radius.circular(4)),
-            ),
-            child: Image.asset(
-              MusicIcons.musicIcon,
-              width: 28,
-              height: 28,
-              color: isDisabled ? MusicColors.secondaryTextColor : null,
-            ),
+          leading: _PlaylistCover(
+            playlistInfo: playlistInfo,
+            isDisabled: isDisabled,
           ),
+
           minVerticalPadding: 0,
           title: Text(
             playlistInfo.name,
@@ -59,19 +49,83 @@ class PlaylistTile extends StatelessWidget {
                       : MusicColors.primaryTextColor,
             ),
           ),
-          subtitle: Text(
-            "${playlistInfo.songIds.length} Tracks",
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontWeight: FontWeight.w300,
-              fontSize: 16,
-              height: 1.25,
-              color: MusicColors.secondaryTextColor,
-            ),
-          ),
+          subtitle:
+              isDisabled &&
+                      playlistInfo.songIds.length >=
+                          Constants.maxSongsPerPlaylist
+                  ? Text(
+                    "Playlist limit reached (${Constants.maxSongsPerPlaylist} tracks max)",
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 14,
+                      color: Colors.redAccent,
+                    ),
+                  )
+                  : Text(
+                    "${playlistInfo.songIds.length} Tracks",
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w300,
+                      fontSize: 16,
+                      height: 1.25,
+                      color: MusicColors.secondaryTextColor,
+                    ),
+                  ),
+
           trailing: PlaylistMenu(playlistInfo: playlistInfo),
         ),
       ),
+    );
+  }
+}
+
+class _PlaylistCover extends StatelessWidget {
+  final PlaylistInfo playlistInfo;
+  final bool isDisabled;
+
+  const _PlaylistCover({required this.playlistInfo, required this.isDisabled});
+
+  bool get hasCover =>
+      playlistInfo.coverImagePath != null &&
+      playlistInfo.coverImagePath!.isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
+        color:
+            hasCover
+                ? null
+                : (isDisabled ? MusicColors.dividerColor : Colors.red),
+        image:
+            hasCover
+                ? DecorationImage(
+                  image: AssetImage(playlistInfo.coverImagePath!),
+                  fit: BoxFit.cover,
+                  colorFilter:
+                      isDisabled
+                          ? ColorFilter.mode(
+                            Colors.black.withValues(alpha: 0.4),
+                            BlendMode.darken,
+                          )
+                          : null,
+                )
+                : null,
+      ),
+      child:
+          hasCover
+              ? null
+              : Padding(
+                padding: const EdgeInsets.all(8),
+                child: Image.asset(
+                  MusicIcons.musicIcon,
+                  color: isDisabled ? MusicColors.secondaryTextColor : null,
+                ),
+              ),
     );
   }
 }

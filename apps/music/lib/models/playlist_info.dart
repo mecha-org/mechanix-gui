@@ -46,7 +46,7 @@ class PlaylistInfo extends HiveObject {
       songIds: songIds ?? this.songIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      coverImagePath: coverImagePath ?? this.coverImagePath,
+      coverImagePath: coverImagePath,
     );
   }
 }

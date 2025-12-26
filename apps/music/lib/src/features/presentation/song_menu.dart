@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
@@ -13,12 +14,8 @@ import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class SongMenu extends StatelessWidget {
   final SongInfo song;
-  final VoidCallback onToggleFavourite;
-  const SongMenu({
-    super.key,
-    required this.song,
-    required this.onToggleFavourite,
-  });
+  final VoidCallback? onToggleFavourite;
+  const SongMenu({super.key, required this.song, this.onToggleFavourite});
   void _showAddToPlaylistSheet(BuildContext context) {
     context.read<SongsBloc>().add(LoadPlaylist());
     showModalBottomSheet(
@@ -37,15 +34,6 @@ class SongMenu extends StatelessWidget {
       topTabRightSideShiftLength: 80,
       dropdownPosition: DropdownPosition.centerRight,
 
-      // theme: const MechanixMenuThemeData(
-      //   dropdownWidth: 180,
-      //   titleTextStyle: TextStyle(
-      //     fontSize: 18,
-      //     height: 1.2,
-      //     color: MusicColors.primaryTextColor,
-      //     fontFamily: "Overused Grotesk",
-      //   ),
-      // ),
       buttonIcon: const IconWidget(
         boxHeight: 24,
         boxWidth: 24,
@@ -85,7 +73,7 @@ class SongMenu extends StatelessWidget {
           ),
         ),
         MechanixMenuItemsType(
-          onTap: () => onToggleFavourite(),
+          onTap: () => onToggleFavourite?.call(),
           title:
               song.isFavourite ? "Remove from favourite" : "Add to favourite",
           leading: const IconWidget(

@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/models.dart';
@@ -40,34 +39,5 @@ class _HomePageState extends State<HomePage> {
         },
       ),
     );
-  }
-
-  Widget buildArtworkOrIcon({
-    required Uint8List? artwork,
-    required IconData fallbackIcon,
-    double size = 40,
-    double radius = 8,
-  }) {
-    if (artwork != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: Image.memory(
-          artwork,
-          width: size,
-          height: size,
-          fit: BoxFit.cover,
-        ),
-      );
-    } else {
-      return Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(50),
-        ),
-        child: Icon(fallbackIcon, color: Colors.grey.shade600),
-      );
-    }
   }
 }
