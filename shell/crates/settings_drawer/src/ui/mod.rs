@@ -984,6 +984,7 @@ impl SettingsDrawer {
 
     fn render_brightness_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+
         div()
             .id("id_display")
             .flex()
@@ -995,23 +996,27 @@ impl SettingsDrawer {
             // .bg(colors.background_900)
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
-            // .on_long_press({
-            //     println!("long press display 1");
-            //     cx.listener(move |this, event: &LongPressEvent, window, cx| {
-            //         this.current_modal = ModalKind::DisplayModal;
-            //         Self::start_animation(this, event, window, cx);
+            // .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
+            // .when(!self.open_modal, |this| {
+            //     this.on_long_press({
+            //         cx.listener(move |this, event: &LongPressEvent, window, cx| {
+            //             println!("long press display 11");
+            //
+            //             this.current_modal = ModalKind::DisplayModal;
+            //             Self::start_animation(this, event, window, cx);
+            //         })
             //     })
             // })
-            .when(!self.open_modal, |this| {
-                this.on_long_press({
-                    cx.listener(move |this, event: &LongPressEvent, window, cx| {
-                        println!("long press display 11");
-
-                        this.current_modal = ModalKind::DisplayModal;
-                        Self::start_animation(this, event, window, cx);
-                    })
-                })
-            })
+            // .on_long_press({
+            //     cx.listener(move |this, event: &LongPressEvent, window, cx| {
+            //         if !this.open_modal {
+            //             this.current_modal = ModalKind::DisplayModal;
+            //             Self::start_animation(this, event, window, cx);
+            //         } else {
+            //             this.open_modal = false;
+            //         }
+            //     })
+            // })
             .child(self.render_brightness_slider(cx, 167.0))
     }
 
@@ -1058,6 +1063,12 @@ impl SettingsDrawer {
 
     fn render_sound_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+
+        let long_press_listener = cx.listener(move |this, event: &LongPressEvent, window, cx| {
+            this.current_modal = ModalKind::SoundModal;
+            Self::start_animation(this, event, window, cx);
+        });
+
         div()
             .id("id_sound")
             .flex()
@@ -1069,12 +1080,8 @@ impl SettingsDrawer {
             .col_span(2)
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
-            // .on_long_press({
-            //     cx.listener(move |this, event: &LongPressEvent, window, cx| {
-            //         this.current_modal = ModalKind::SoundModal;
-            //         Self::start_animation(this, event, window, cx);
-            //     })
-            // })
+            .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
+            // .on_long_press(long_press_listener)
             .child(self.render_volume_slider(cx))
     }
 
@@ -1108,13 +1115,14 @@ impl SettingsDrawer {
             .justify_start()
             .pl_2()
             .child(
-                IconButton::new("id_mute_volume")
-                    .icon(volume_icon)
-                    .icon_color(rgb(volume_icon_color))
-                    .size((px(32.), px(32.)))
-                    .bg_color(rgb(DARK_NEUTRAL_900))
-                    .active_bg_color(rgb(DARK_NEUTRAL_900))
-                    .border(px(0.))
+                div()
+                    .id("volume_icon")
+                    .bg(rgb(DARK_NEUTRAL_900))
+                    .child(
+                        Icon::new(volume_icon)
+                            .text_color(rgb(volume_icon_color))
+                            .size((px(32.), px(32.))),
+                    )
                     .on_click(cx.listener(
                         move |this: &mut SettingsDrawer,
                               _event: &ClickEvent,
