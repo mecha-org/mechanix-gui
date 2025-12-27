@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_music/models/models.dart';
+import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
 
 abstract class SongsEvent extends Equatable {
@@ -30,7 +31,11 @@ class TogglePlayPause extends SongsEvent {}
 
 class PlayNext extends SongsEvent {}
 
-class ShuffleToggle extends SongsEvent {}
+class ShuffleToggle extends SongsEvent {
+  final String playlistId;
+  final bool isShuffle;
+  const ShuffleToggle({required this.playlistId, required this.isShuffle});
+}
 
 // class  ToggleRepeat extends SongsEvent {}
 // class FavouriteToggle extends SongsEvent {}
@@ -70,8 +75,6 @@ class SetRepeatMode extends SongsEvent {
   List<Object?> get props => [mode];
 }
 
-class ToggleShuffle extends SongsEvent {}
-
 // Enum for repeat modes
 enum RepeatMode { none, one, all }
 
@@ -81,8 +84,9 @@ class MusicTabSwitch extends SongsEvent {
 }
 
 class FavouriteToggle extends SongsEvent {
-  final SongInfo songInfo;
-  const FavouriteToggle(this.songInfo);
+  final List<String> songIds;
+  final bool isFavourite;
+  const FavouriteToggle({required this.songIds, required this.isFavourite});
 }
 
 class DeleteSong extends SongsEvent {
@@ -152,7 +156,29 @@ class UpdatedPlaylistSongs extends SongsEvent {
 
 class PlayPlaylistSongs extends SongsEvent {
   final String playlistId;
-  const PlayPlaylistSongs(this.playlistId);
+  final bool isShuffle;
+  final int? songIndex;
+  const PlayPlaylistSongs({
+    required this.playlistId,
+    required this.isShuffle,
+    this.songIndex,
+  });
 }
 
 class PausePlaylistSongs extends SongsEvent {}
+
+class StoreSearchItem extends SongsEvent {
+  final SongInfo? song;
+  final PlaylistInfo? playlist;
+
+  const StoreSearchItem({this.song, this.playlist});
+}
+
+class GetSearchedItems extends SongsEvent {}
+
+class ClearSerachItems extends SongsEvent {
+  final String? clearId;
+  final bool clearAll;
+
+  const ClearSerachItems({this.clearId, this.clearAll = false});
+}

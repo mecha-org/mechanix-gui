@@ -5,6 +5,7 @@ import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
+import 'package:mechanix_music/src/features/presentation/equalizer.dart';
 import 'package:mechanix_music/src/features/presentation/song_menu.dart';
 
 class SongTile extends StatelessWidget {
@@ -16,6 +17,7 @@ class SongTile extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isPaddingRequired;
   final bool isEditMode;
+  final bool isMenuRequired;
   const SongTile({
     super.key,
     required this.song,
@@ -26,6 +28,7 @@ class SongTile extends StatelessWidget {
     this.isPaddingRequired = false,
     this.onTap,
     this.isEditMode = false,
+    this.isMenuRequired = true,
   });
 
   @override
@@ -43,7 +46,15 @@ class SongTile extends StatelessWidget {
               isDisabled
                   ? null
                   : onTap ??
-                      () => {context.read<SongsBloc>().add(PlaySong(song))},
+                      () => {
+                        context.read<SongsBloc>().add(PlaySong(song)),
+                        // Navigator.push(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //     builder: (_) => AudioPlayer(songDetails: song),
+                        //   ),
+                        // ),
+                      },
           contentPadding: const EdgeInsets.symmetric(vertical: 7.5),
           minVerticalPadding: 0,
 
@@ -80,11 +91,12 @@ class SongTile extends StatelessWidget {
           trailing:
               isEditMode
                   ? null
-                  : Row(
+                  : isMenuRequired
+                  ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // if (isCurrentSong)
-                      //   SegmentedBarEqualizer(color: MusicColors.titleColor),
+                      if (isCurrentSong)
+                        SegmentedBarEqualizer(color: MusicColors.titleColor),
                       const SizedBox(width: 12),
 
                       SongMenu(
@@ -94,12 +106,16 @@ class SongTile extends StatelessWidget {
                                 ? null
                                 : () => {
                                   context.read<SongsBloc>().add(
-                                    FavouriteToggle(song),
+                                    FavouriteToggle(
+                                      songIds: [song.id],
+                                      isFavourite: !song.isFavourite,
+                                    ),
                                   ),
                                 },
                       ),
                     ],
-                  ),
+                  )
+                  : null,
         ),
       ),
     );

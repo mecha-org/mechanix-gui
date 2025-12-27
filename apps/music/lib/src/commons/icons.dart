@@ -30,4 +30,5 @@ class MusicIcons {
   static const playlistPlayIcon= 'assets/images/playlist_play.png';
   static const threeLineIcon= 'assets/images/three_line.png';
   static const removeIcon= 'assets/images/remove.png';
+  static const closeIcon= 'assets/images/close.png';
 }

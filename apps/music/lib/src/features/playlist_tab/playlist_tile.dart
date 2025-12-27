@@ -10,13 +10,14 @@ class PlaylistTile extends StatelessWidget {
   final bool isSelected;
   final bool isDisabled;
   final VoidCallback? onTap;
-
+  final bool isMenuRequired;
   const PlaylistTile({
     super.key,
     required this.playlistInfo,
     this.isSelected = false,
     this.isDisabled = false,
     this.onTap,
+    this.isMenuRequired = true,
   });
 
   @override
@@ -73,7 +74,8 @@ class PlaylistTile extends StatelessWidget {
                     ),
                   ),
 
-          trailing: PlaylistMenu(playlistInfo: playlistInfo),
+          trailing:
+              isMenuRequired ? PlaylistMenu(playlistInfo: playlistInfo) : null,
         ),
       ),
     );

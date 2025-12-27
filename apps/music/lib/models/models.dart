@@ -14,11 +14,13 @@ class CurrentPlaylist extends Equatable {
   final String? playlistId;
   final int? currentIndex;
   final String? currentSongId;
+  final bool? isShuffle;
 
   const CurrentPlaylist({
     this.playlistId,
     this.currentIndex,
     this.currentSongId,
+    this.isShuffle,
   });
 
   CurrentPlaylist copyWith({
@@ -26,11 +28,13 @@ class CurrentPlaylist extends Equatable {
     List<String>? playlistSongsIds,
     int? currentIndex,
     String? currentSongId,
+    bool? isShuffle = false,
   }) {
     return CurrentPlaylist(
       playlistId: playlistId ?? this.playlistId,
       currentIndex: currentIndex,
       currentSongId: currentSongId,
+      isShuffle: isShuffle ?? this.isShuffle,
     );
   }
 
@@ -39,11 +43,17 @@ class CurrentPlaylist extends Equatable {
       playlistId: other.playlistId,
       currentIndex: other.currentIndex,
       currentSongId: other.currentSongId,
+      isShuffle: other.isShuffle,
     );
   }
 
   @override
-  List<Object?> get props => [playlistId, currentIndex, currentSongId];
+  List<Object?> get props => [
+    playlistId,
+    currentIndex,
+    currentSongId,
+    isShuffle,
+  ];
 }
 
 class SearchResults {

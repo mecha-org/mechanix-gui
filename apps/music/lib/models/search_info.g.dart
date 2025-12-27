@@ -1,50 +1,44 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'playlist_info.dart';
+part of 'search_info.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class PlaylistInfoAdapter extends TypeAdapter<PlaylistInfo> {
+class SearchInfoAdapter extends TypeAdapter<SearchInfo> {
   @override
-  final int typeId = 2;
+  final int typeId = 3;
 
   @override
-  PlaylistInfo read(BinaryReader reader) {
+  SearchInfo read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return PlaylistInfo(
+    return SearchInfo(
       id: fields[0] as String,
-      name: fields[1] as String,
-      songIds: (fields[2] as List).cast<String>(),
-      createdAt: fields[3] as DateTime,
-      updatedAt: fields[4] as DateTime,
-      coverImagePath: fields[5] as String?,
-      isShuffle: fields[6] as bool,
+      isPlaylist: fields[1] as bool,
+      songInfo: fields[2] as SongInfo?,
+      playlistInfo: fields[3] as PlaylistInfo?,
+      createdAt: fields[4] as DateTime,
     );
   }
 
   @override
-  void write(BinaryWriter writer, PlaylistInfo obj) {
+  void write(BinaryWriter writer, SearchInfo obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.name)
+      ..write(obj.isPlaylist)
       ..writeByte(2)
-      ..write(obj.songIds)
+      ..write(obj.songInfo)
       ..writeByte(3)
-      ..write(obj.createdAt)
+      ..write(obj.playlistInfo)
       ..writeByte(4)
-      ..write(obj.updatedAt)
-      ..writeByte(5)
-      ..write(obj.coverImagePath)
-      ..writeByte(6)
-      ..write(obj.isShuffle);
+      ..write(obj.createdAt);
   }
 
   @override
@@ -53,7 +47,7 @@ class PlaylistInfoAdapter extends TypeAdapter<PlaylistInfo> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PlaylistInfoAdapter &&
+      other is SearchInfoAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
@@ -7,9 +6,11 @@ import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
+import 'package:widgets/extensions/color.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/mechanix_menu.dart';
+import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class SongMenu extends StatelessWidget {
@@ -33,6 +34,10 @@ class SongMenu extends StatelessWidget {
       topTabWidth: 10,
       topTabRightSideShiftLength: 80,
       dropdownPosition: DropdownPosition.centerRight,
+      theme: MechanixMenuThemeData(
+        decoration: BoxDecoration(color: context.tertiary),
+        itemBackgroundColor: context.tertiary,
+      ),
 
       buttonIcon: const IconWidget(
         boxHeight: 24,

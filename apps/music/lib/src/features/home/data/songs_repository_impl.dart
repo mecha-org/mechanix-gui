@@ -1,11 +1,11 @@
 import 'dart:io';
-
 import 'package:audio_metadata_extractor/audio_metadata_extractor.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/recently_played.dart';
+import 'package:mechanix_music/models/search_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
@@ -32,6 +32,12 @@ class SongsRepositoryImpl extends SongsRepository {
   Future<void> ensurePlaylistConnected() async {
     if (!Hive.isBoxOpen(TableName.playlistTable)) {
       await Hive.openBox<PlaylistInfo>(TableName.playlistTable);
+    }
+  }
+
+  Future<void> ensureSearchHistoryConnected() async {
+    if (!Hive.isBoxOpen(TableName.searchTable)) {
+      await Hive.openBox<SearchInfo>(TableName.searchTable);
     }
   }
 
@@ -201,6 +207,7 @@ class SongsRepositoryImpl extends SongsRepository {
     try {
       final songsBox = await Hive.openBox<SongInfo>(TableName.songsInfoTable);
       final songs = songsBox.values.toList();
+
       return songs;
     } catch (e) {
       logger.e("Error loading songs from Hive: $e");
@@ -278,13 +285,22 @@ class SongsRepositoryImpl extends SongsRepository {
   }
 
   @override
-  Future<bool> toggleFavouriteSong(SongInfo songInfo, bool isFavourite) async {
+  Future<bool> toggleFavouriteSong(
+    List<String> songIds,
+    bool isFavourite,
+  ) async {
     try {
       await ensureSongsConnected();
       final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
-      final updatedSong = songInfo.copyWith(isFavourite: isFavourite);
 
-      await songsBox.put(updatedSong.id, updatedSong);
+      for (var i = 0; i < songIds.length; i++) {
+        final song = songsBox.get(songIds[i]);
+        if (song != null) {
+          final updatedSong = song.copyWith(isFavourite: isFavourite);
+          await songsBox.put(updatedSong.id, updatedSong);
+        }
+      }
+
       return true;
     } catch (e) {
       logger.e("Error toggling favourite: $e");
@@ -380,6 +396,7 @@ class SongsRepositoryImpl extends SongsRepository {
         songIds: [],
         updatedAt: DateTime.now(),
         coverImagePath: null,
+        isShuffle: false,
       );
 
       await playlistBox.put(createdPlaylist.id, createdPlaylist);
@@ -499,16 +516,18 @@ class SongsRepositoryImpl extends SongsRepository {
     try {
       await ensurePlaylistConnected();
       final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final songInfoBox = Hive.box<SongInfo>(TableName.songsInfoTable);
 
       final playlist = playlistBox.get(playlistId);
-
       if (playlist == null) {
         logger.w("Playlist not found: $playlistId");
         return [];
       }
 
-      final songInfoBox = Hive.box<SongInfo>(TableName.songsInfoTable);
-      return playlist.songIds.map((id) => songInfoBox.get(id)!).toList();
+      return playlist.songIds
+          .map((id) => songInfoBox.get(id))
+          .whereType<SongInfo>() // removes nulls safely
+          .toList();
     } catch (e, stack) {
       logger.e("Error getting playlist songs", error: e, stackTrace: stack);
       return [];
@@ -615,6 +634,138 @@ class SongsRepositoryImpl extends SongsRepository {
     } catch (e) {
       print('Error searching: $e');
       return SearchResults(query: query, songs: [], playlists: []);
+    }
+  }
+
+  @override
+  Future<bool> shuffleToggle(String playlistId, bool isShuffle) async {
+    try {
+      logger.i("Shuffle toggle: $isShuffle");
+
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final playlist = playlistBox.get(playlistId);
+
+      if (playlist == null) {
+        logger.w("Playlist not found: $playlistId");
+        return false;
+      }
+
+      final copyData = playlist.copyWith(isShuffle: isShuffle);
+      await playlistBox.put(
+        playlistId,
+        // playlist.copyWith(isShuffle: isShuffle),
+        copyData,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> storeSearchItem({
+    PlaylistInfo? playlistInfo,
+    SongInfo? songInfo,
+  }) async {
+    try {
+      logger.i("Storing search item");
+      await ensureSearchHistoryConnected();
+      final box = Hive.box<SearchInfo>(TableName.searchTable);
+
+      if (playlistInfo == null && songInfo == null) {
+        return false;
+      }
+
+      // 1️⃣ Check for existing item (dedupe)
+      SearchInfo? existingItem;
+
+      for (final item in box.values) {
+        if (playlistInfo != null &&
+            item.isPlaylist &&
+            item.playlistInfo?.id == playlistInfo.id) {
+          existingItem = item;
+          break;
+        }
+
+        if (songInfo != null &&
+            !item.isPlaylist &&
+            item.songInfo?.id == songInfo.id) {
+          existingItem = item;
+          break;
+        }
+      }
+
+      // 2️⃣ If exists → update timestamp only
+      if (existingItem != null) {
+        existingItem = existingItem.copyWith(createdAt: DateTime.now());
+        await box.put(existingItem.id, existingItem);
+        return true;
+      }
+
+      // 3️⃣ Enforce size limit (remove oldest)
+      if (box.length >= Constants.maxSearchItems) {
+        final oldest = box.values.reduce(
+          (a, b) => a.createdAt.isBefore(b.createdAt) ? a : b,
+        );
+
+        await oldest.delete();
+      }
+
+      // 4️⃣ Insert new item
+      final data = SearchInfo(
+        id: uuid.v4(),
+        createdAt: DateTime.now(),
+        isPlaylist: playlistInfo != null,
+        playlistInfo: playlistInfo,
+        songInfo: songInfo,
+      );
+
+      await box.put(data.id, data);
+
+      return true;
+    } catch (e, stack) {
+      logger.e("Error storing search item", error: e, stackTrace: stack);
+      return false;
+    }
+  }
+
+  @override
+  Future<List<SearchInfo>> getStoredSearchItems() async {
+    try {
+      logger.i("Getting stored search items");
+      await ensureSearchHistoryConnected();
+      final box = Hive.box<SearchInfo>(TableName.searchTable);
+      final searchedItems = box.values.toList();
+      searchedItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return searchedItems;
+    } catch (e, stack) {
+      logger.e(
+        "Error getting stored search items",
+        error: e,
+        stackTrace: stack,
+      );
+      return [];
+    }
+  }
+
+  @override
+  Future<bool> clearSearchItems({
+    String? searchId,
+    required bool clearAll,
+  }) async {
+    try {
+      logger.i("Clearing search history");
+      await ensureSearchHistoryConnected();
+      final box = Hive.box<SearchInfo>(TableName.searchTable);
+      if (searchId != null) {
+        await box.delete(searchId);
+      } else {
+        await box.clear();
+      }
+      return true;
+    } catch (e, stack) {
+      logger.e("Error clearing search history", error: e, stackTrace: stack);
+      return false;
     }
   }
 }

@@ -23,7 +23,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     // on<SeekSong>(_onSeekSong);
     // on<UpdateDuration>(_onUpdateDuration);
     // on<UpdatePosition>(_onUpdatePosition);
-    // on<ShuffleToggle>(_shuffleToggle);
+    on<ShuffleToggle>(_shuffleToggle);
     on<MusicTabSwitch>(_musicTabSwitch);
     on<FavouriteToggle>(_onToggleFavourite);
     on<DeleteSong>(_onDeleteSong);
@@ -40,6 +40,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<UpdatedPlaylistSongs>(updatedPlaylistSongs);
     on<PlayPlaylistSongs>(playPlaylist);
     on<PausePlaylistSongs>(pausePlaylist);
+    on<StoreSearchItem>(storeSearchItem);
+    on<GetSearchedItems>(getStoreSearchItems);
+    on<ClearSerachItems>(clearSearchItem);
     _initializePlayerListeners();
     add(LoadSongsFromHive());
   }
@@ -86,6 +89,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       add(LoadPlaylist());
     }
     if (event.musicTab == MusicTabs.search) {
+      add(GetSearchedItems());
       return emit(
         state.copyWith(
           musicTab: event.musicTab,
@@ -441,13 +445,23 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     }
   }
 
-  // Future<void> _shuffleToggle(
-  //   ShuffleToggle event,
-  //   Emitter<SongsState> emit,
-  // ) async {
-  //   player.setShuffle(state.isShuffled);
-  //   emit(state.copyWith(isShuffled: !state.isShuffled));
-  // }
+  Future<void> _shuffleToggle(
+    ShuffleToggle event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Toggling shuffle ${event.isShuffle} ");
+    final isUpdated = await songsRepository.shuffleToggle(
+      event.playlistId,
+      event.isShuffle,
+    );
+
+    if (isUpdated) {
+      await player.setShuffle(event.isShuffle);
+    }
+    add(LoadPlaylist());
+    // emit(state.copyWith());
+    // logger.i("Shuffle: ${state.isShuffled}");
+  }
 
   // // Future<void> _onToggleRepeat(
   // //   ToggleRepeat event,
@@ -530,28 +544,24 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
-      final newFavouriteValue = !event.songInfo.isFavourite;
-
+      logger.i("Updating Favourites ${event.isFavourite}");
       final isUpdated = await songsRepository.toggleFavouriteSong(
-        event.songInfo,
-        newFavouriteValue,
+        event.songIds,
+        event.isFavourite,
       );
 
       if (!isUpdated) return;
 
-      final updatedSongs =
-          state.songs.map((song) {
-            if (song.id == event.songInfo.id) {
-              return song.copyWith(isFavourite: newFavouriteValue);
-            }
-            return song;
-          }).toList();
+      if (state.playlistSongs.isNotEmpty) {
+        final updatedSongs =
+            state.playlistSongs.map((song) {
+              return song.copyWith(isFavourite: event.isFavourite);
+            }).toList();
 
-      emit(state.copyWith(songs: updatedSongs, error: null));
+        emit(state.copyWith(playlistSongs: updatedSongs, error: null));
+      }
 
-      logger.i(
-        "Favourite updated: ${event.songInfo.title} -> $newFavouriteValue",
-      );
+      logger.i("Favourite updated: ${event.isFavourite}");
     } catch (e) {
       logger.e("Error updating favourite: $e");
       emit(state.copyWith(error: "Failed to update favourite"));
@@ -680,6 +690,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   ) async {
     logger.i("Loading playlist");
     final playlist = await songsRepository.getPlaylist();
+
     emit(
       state.copyWith(bottomBarView: BottomBarView.normal, playlists: playlist),
     );
@@ -763,11 +774,13 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     logger.i("Updating playlist songs: ${event.playlistId}");
+
     final isUpdated = await songsRepository.updatePlaylistSongs(
       event.playlistId,
       event.orderedSongIds,
       event.deletedSongIds,
     );
+
     if (isUpdated) {
       add(GetPlaylistSongs(event.playlistId));
       add(LoadPlaylist());
@@ -781,21 +794,34 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
-      logger.i("Playing playlist: ${event.playlistId}");
+      logger.i(
+        "Playing playlist: ${event.playlistId} index ${event.songIndex!}",
+      );
+      final index = event.songIndex ?? 0;
+      if (state.currentPlaylist.playlistId == event.playlistId &&
+          event.songIndex == null) {
+        return add(TogglePlayPause());
+      }
       final playlist = await songsRepository.getPlaylistSongs(event.playlistId);
+      print("going here ${event.songIndex!}");
       await player.open(
-        Playlist(playlist.map((song) => Media(song.path)).toList(), index: 0),
+        Playlist(
+          playlist.map((song) => Media(song.path)).toList(),
+          index: index,
+        ),
         play: true,
       );
-      // _streamPlaylistMode();
+
+      await player.setPlaylistMode(PlaylistMode.single);
+      await player.setShuffle(event.isShuffle);
 
       emit(
         state.copyWith(
-          currentSong: playlist.first,
+          currentSong: state.playlistSongs[index],
           currentPlaylist: CurrentPlaylist(
             playlistId: event.playlistId,
-            currentIndex: 0,
-            currentSongId: state.playlistSongs[0].id,
+            currentIndex: index,
+            currentSongId: state.playlistSongs[index].id,
           ),
           isPlaying: true,
           error: null,
@@ -815,6 +841,48 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     await player.pause();
     emit(state.copyWith(isPlaying: false));
     logger.i("Playlist paused successfully");
+  }
+
+  Future<void> storeSearchItem(
+    StoreSearchItem event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Storing Search event");
+    try {
+      final isUpdated = await songsRepository.storeSearchItem(
+        playlistInfo: event.playlist,
+        songInfo: event.song,
+      );
+      if (isUpdated) {
+        add(GetSearchedItems());
+      }
+    } catch (_) {}
+  }
+
+  Future<void> getStoreSearchItems(
+    GetSearchedItems event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Getting search history");
+    final storeSearchItems = await songsRepository.getStoredSearchItems();
+    emit(state.copyWith(searchItems: storeSearchItems));
+    logger.i("Search history loaded successfully");
+  }
+
+  Future<void> clearSearchItem(
+    ClearSerachItems event,
+    Emitter<SongsState> emit,
+  ) async {
+    logger.i("Clearing search history");
+    try {
+      final isUpdated = await songsRepository.clearSearchItems(
+        searchId: event.clearId,
+        clearAll: event.clearAll,
+      );
+      if (isUpdated) {
+        add(GetSearchedItems());
+      }
+    } catch (_) {}
   }
 
   @override

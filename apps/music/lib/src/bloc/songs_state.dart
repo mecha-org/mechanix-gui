@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
+import 'package:mechanix_music/models/search_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:media_kit/media_kit.dart';
@@ -27,6 +28,7 @@ class SongsState extends Equatable {
   final List<SongInfo> playlistSongs;
   final MusicMode musicMode;
   final CurrentPlaylist currentPlaylist;
+  final List<SearchInfo> searchItems;
 
   const SongsState({
     this.songs = const [],
@@ -53,6 +55,7 @@ class SongsState extends Equatable {
       playlists: [],
       songs: [],
     ),
+    this.searchItems = const [],
   });
 
   SongsState copyWith({
@@ -77,6 +80,7 @@ class SongsState extends Equatable {
     List<SongInfo>? playlistSongs,
     MusicMode? musicMode,
     CurrentPlaylist? currentPlaylist,
+    List<SearchInfo>? searchItems,
   }) {
     return SongsState(
       songs: songs ?? this.songs,
@@ -99,6 +103,7 @@ class SongsState extends Equatable {
       playlistSongs: playlistSongs ?? this.playlistSongs,
       musicMode: musicMode ?? this.musicMode,
       currentPlaylist: currentPlaylist ?? this.currentPlaylist,
+      searchItems: searchItems ?? this.searchItems,
     );
   }
 
@@ -124,5 +129,6 @@ class SongsState extends Equatable {
     playlistSongs,
     musicMode,
     currentPlaylist,
+    searchItems
   ];
 }

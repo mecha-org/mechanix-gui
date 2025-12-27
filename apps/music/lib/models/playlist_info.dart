@@ -22,6 +22,9 @@ class PlaylistInfo extends HiveObject {
   @HiveField(5)
   String? coverImagePath;
 
+  @HiveField(6)
+  bool isShuffle;
+
   PlaylistInfo({
     required this.id,
     required this.name,
@@ -29,6 +32,7 @@ class PlaylistInfo extends HiveObject {
     required this.createdAt,
     required this.updatedAt,
     this.coverImagePath,
+    required this.isShuffle,
   });
 
   PlaylistInfo copyWith({
@@ -39,6 +43,7 @@ class PlaylistInfo extends HiveObject {
     DateTime? updatedAt,
     String? description,
     String? coverImagePath,
+    bool? isShuffle,
   }) {
     return PlaylistInfo(
       id: id ?? this.id,
@@ -47,6 +52,7 @@ class PlaylistInfo extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       coverImagePath: coverImagePath,
+      isShuffle: isShuffle ?? this.isShuffle,
     );
   }
 }

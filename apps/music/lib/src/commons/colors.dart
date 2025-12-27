@@ -15,4 +15,5 @@ class MusicColors {
   static const tapColor = Color(0xFF3A3A3A);
   static const buttonBackgroundColor = Color(0xFF151515);
   static const albumColor = Color(0xFF8B0000);
+  static const headingTextColor = Color(0xFFFEFEFE);
 }

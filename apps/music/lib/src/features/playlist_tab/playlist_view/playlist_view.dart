@@ -174,7 +174,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                         selector: (state) => state.playlistSongs,
                         builder: (context, songs) {
                           return PlaylistActionsView(
-                            playlistId: widget.playlistInfo.id,
+                            playlistInfo: widget.playlistInfo,
                             onEdit: () => toggleEditMode(songs),
                           );
                         },
@@ -232,6 +232,19 @@ class _PlaylistViewState extends State<PlaylistView> {
                                       builder:
                                           (context, isCurrentSong) => SongTile(
                                             song: displaySongs[index],
+                                            onTap:
+                                                () => context
+                                                    .read<SongsBloc>()
+                                                    .add(
+                                                      PlayPlaylistSongs(
+                                                        playlistId:
+                                                            widget
+                                                                .playlistInfo
+                                                                .id,
+                                                        isShuffle: false,
+                                                        songIndex: index,
+                                                      ),
+                                                    ),
                                             isCurrentSong:
                                                 isCurrentSong &&
                                                 musicMode == MusicMode.playlist,
