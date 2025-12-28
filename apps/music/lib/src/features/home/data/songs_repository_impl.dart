@@ -768,4 +768,79 @@ class SongsRepositoryImpl extends SongsRepository {
       return false;
     }
   }
+
+  @override
+  Future<PlaylistInfo?> getSelectedPlaylist({
+    required String playlistId,
+  }) async {
+    try {
+      await ensurePlaylistConnected();
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final playlist = playlistBox.get(playlistId);
+      if (playlist == null) {
+        logger.w("Playlist not found: $playlistId");
+        return null;
+      }
+      return playlist;
+    } catch (e, stack) {
+      logger.e("Error getting playlist", error: e, stackTrace: stack);
+      return null;
+    }
+  }
+
+  @override
+  Future<List<PlaylistInfo>> searchedPlaylist({required String query}) async {
+    try {
+      logger.i("Searching playlist: $query");
+      if (query.trim().isNotEmpty) {
+        final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+        final searchedPlaylists =
+            playlistBox.values.where((playlist) {
+              return playlist.name.toLowerCase().contains(query.toLowerCase());
+            }).toList();
+        return searchedPlaylists.toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
+  Future<List<SongInfo>> searchedSong({required String query}) async {
+    try {
+      logger.i("Searching song: $query");
+      if (query.trim().isNotEmpty) {
+        final songBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+        final searchedSongs =
+            songBox.values.where((song) {
+              // return song.title.toLowerCase().contains(query.toLowerCase());
+              return song.title.toLowerCase().contains(query.toLowerCase()) ||
+                  song.artist.toLowerCase().contains(query.toLowerCase());
+            }).toList();
+        print("searchedSongs: ${searchedSongs.length}");
+        return searchedSongs.toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
+  Future<List<SongInfo>> getFavouriteSongs() async {
+    try {
+      logger.i("Getting favourite songs");
+      await ensureSongsConnected();
+      final songBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+      final favouriteSongs =
+          songBox.values.where((song) {
+            return song.isFavourite;
+          }).toList();
+      return favouriteSongs;
+    } catch (e, stack) {
+      logger.e("Error getting favourite songs", error: e, stackTrace: stack);
+      return [];
+    }
+  }
 }

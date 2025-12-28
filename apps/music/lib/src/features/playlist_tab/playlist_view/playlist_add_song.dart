@@ -22,46 +22,60 @@ class PlaylistAddSong extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
-      child: Row(
-        spacing: 20,
-        children: [
-          IconButton(
-            iconSize: 44,
-            onPressed:
-                playlistInfo.songIds.length >= Constants.maxSongsPerPlaylist
-                    ? null
-                    : () {
-                      _showAddMusicSheet(context);
-                    },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap:
+              playlistInfo.songIds.length >= Constants.maxSongsPerPlaylist
+                  ? null
+                  : () {
+                    _showAddMusicSheet(context);
+                  },
+          child: Row(
+            spacing: 20,
+            children: [
+              IconButton(
+                iconSize: 44,
+                onPressed:
+                    playlistInfo.songIds.length >= Constants.maxSongsPerPlaylist
+                        ? null
+                        : () {
+                          _showAddMusicSheet(context);
+                        },
 
-            style: ButtonStyle(
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                style: ButtonStyle(
+                  shape: WidgetStatePropertyAll(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  backgroundColor: WidgetStatePropertyAll(
+                    MusicColors.buttonBackgroundColor,
+                  ),
+                ),
+                icon: IconWidget(
+                  iconColor: MusicColors.borderColor,
+                  iconPath: MusicIcons.plusIcon,
+                  iconHeight: 24,
+                  boxHeight: 24,
+                  boxWidth: 24,
+                  iconWidth: 24,
+                ),
               ),
-              backgroundColor: WidgetStatePropertyAll(
-                MusicColors.buttonBackgroundColor,
+              Text(
+                "Add a song",
+                style: TextStyle(
+                  fontSize: 18,
+                  color: MusicColors.disabledColor,
+                  height: 1.3,
+                  // letterSpacing: -1.1,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
-            icon: IconWidget(
-              iconColor: MusicColors.borderColor,
-              iconPath: MusicIcons.plusIcon,
-              iconHeight: 24,
-              boxHeight: 24,
-              boxWidth: 24,
-              iconWidth: 24,
-            ),
+            ],
           ),
-          Text(
-            "Add a song",
-            style: TextStyle(
-              fontSize: 18,
-              color: MusicColors.disabledColor,
-              height: 1.3,
-              // letterSpacing: -1.1,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
 import 'package:mechanix_music/src/features/presentation/equalizer.dart';
 import 'package:mechanix_music/src/features/presentation/song_menu.dart';
@@ -48,12 +49,12 @@ class SongTile extends StatelessWidget {
                   : onTap ??
                       () => {
                         context.read<SongsBloc>().add(PlaySong(song)),
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (_) => AudioPlayer(songDetails: song),
-                        //   ),
-                        // ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AudioPlayer(songDetails: song),
+                          ),
+                        ),
                       },
           contentPadding: const EdgeInsets.symmetric(vertical: 7.5),
           minVerticalPadding: 0,

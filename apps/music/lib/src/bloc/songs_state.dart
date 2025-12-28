@@ -4,11 +4,9 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/search_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
-import 'package:media_kit/media_kit.dart';
 
 class SongsState extends Equatable {
   final List<SongInfo> songs;
-  final Playlist? playlist;
   final List<SongInfo> playbackQueue;
 
   final bool isLoading;
@@ -29,10 +27,14 @@ class SongsState extends Equatable {
   final MusicMode musicMode;
   final CurrentPlaylist currentPlaylist;
   final List<SearchInfo> searchItems;
+  final List<MusicTabs> tabHistory;
+  final PlaylistInfo? selectedPlaylist;
+  final List<PlaylistInfo> searchedPlaylist;
+  final List<SongInfo> searchedSongs;
+  final List<SongInfo> favouriteSongs;
 
   const SongsState({
     this.songs = const [],
-    this.playlist,
     this.playbackQueue = const [],
     this.isLoading = false,
     this.error,
@@ -42,7 +44,7 @@ class SongsState extends Equatable {
     this.currentSong,
     this.repeatMode = RepeatMode.none,
     this.isShuffled = false,
-    this.musicTab = MusicTabs.music,
+    this.musicTab = MusicTabs.home,
     this.recentlyPlayedSongs = const [],
     this.bottomBarView = BottomBarView.normal,
     this.playlists = const [],
@@ -56,11 +58,15 @@ class SongsState extends Equatable {
       songs: [],
     ),
     this.searchItems = const [],
+    this.tabHistory = const [],
+    this.selectedPlaylist,
+    this.searchedPlaylist = const [],
+    this.searchedSongs = const [],
+    this.favouriteSongs = const [],
   });
 
   SongsState copyWith({
     List<SongInfo>? songs,
-    Playlist? playlist,
     List<SongInfo>? playbackQueue,
     List<SongInfo>? originalQueue,
     bool? isLoading,
@@ -81,10 +87,14 @@ class SongsState extends Equatable {
     MusicMode? musicMode,
     CurrentPlaylist? currentPlaylist,
     List<SearchInfo>? searchItems,
+    List<MusicTabs>? tabHistory,
+    PlaylistInfo? selectedPlaylist,
+    List<PlaylistInfo>? searchedPlaylist,
+    List<SongInfo>? searchedSongs,
+    List<SongInfo>? favouriteSongs,
   }) {
     return SongsState(
       songs: songs ?? this.songs,
-      playlist: playlist ?? this.playlist,
       playbackQueue: playbackQueue ?? this.playbackQueue,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
@@ -104,13 +114,17 @@ class SongsState extends Equatable {
       musicMode: musicMode ?? this.musicMode,
       currentPlaylist: currentPlaylist ?? this.currentPlaylist,
       searchItems: searchItems ?? this.searchItems,
+      tabHistory: tabHistory ?? this.tabHistory,
+      selectedPlaylist: selectedPlaylist ?? this.selectedPlaylist,
+      searchedPlaylist: searchedPlaylist ?? this.searchedPlaylist,
+      searchedSongs: searchedSongs ?? this.searchedSongs,
+      favouriteSongs: favouriteSongs ?? this.favouriteSongs,
     );
   }
 
   @override
   List<Object?> get props => [
     songs,
-    playlist,
     playbackQueue,
     isLoading,
     error,
@@ -129,6 +143,11 @@ class SongsState extends Equatable {
     playlistSongs,
     musicMode,
     currentPlaylist,
-    searchItems
+    searchItems,
+    tabHistory,
+    selectedPlaylist,
+    searchedPlaylist,
+    searchedSongs,
+    favouriteSongs,
   ];
 }

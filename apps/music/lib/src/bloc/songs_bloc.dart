@@ -43,8 +43,13 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<StoreSearchItem>(storeSearchItem);
     on<GetSearchedItems>(getStoreSearchItems);
     on<ClearSerachItems>(clearSearchItem);
+    on<BackTabEvent>(onBackTab);
+    on<SelectedPlaylist>(selectedPlaylist);
     _initializePlayerListeners();
     add(LoadSongsFromHive());
+    on<SearchPlaylist>(searchPlaylist);
+    on<SearchedSong>(searchedSong);
+    on<GetFavouritesSongs>(favouritesSongs);
   }
 
   void _initializePlayerListeners() {
@@ -81,23 +86,136 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     MusicTabSwitch event,
     Emitter<SongsState> emit,
   ) async {
-    if (event.musicTab == MusicTabs.home) {
-      add(LoadPlaylist());
-      // add(ScanSongs());
+    // Don't add duplicate if already on this tab
+    if (state.musicTab == event.musicTab) {
+      return;
     }
-    if (event.musicTab == MusicTabs.playlists) {
-      add(LoadPlaylist());
+
+    final updatedHistory = state.tabHistory.toList();
+
+    // Handle tab-specific initialization
+    switch (event.musicTab) {
+      case MusicTabs.home:
+        {
+          add(LoadPlaylist());
+          // Clear history when going to home
+          return emit(
+            state.copyWith(
+              musicTab: MusicTabs.home,
+              tabHistory: [],
+              bottomBarView: BottomBarView.normal,
+            ),
+          );
+        }
+
+      case MusicTabs.playlists:
+        {
+          add(LoadPlaylist());
+          updatedHistory.add(event.musicTab);
+          return emit(
+            state.copyWith(
+              musicTab: MusicTabs.playlists,
+              bottomBarView: BottomBarView.normal,
+              tabHistory: updatedHistory,
+            ),
+          );
+        }
+
+      case MusicTabs.search:
+        {
+          add(GetSearchedItems());
+          // Add current tab to history before switching to search
+          updatedHistory.add(event.musicTab);
+          return emit(
+            state.copyWith(
+              musicTab: MusicTabs.search,
+              bottomBarView: BottomBarView.search,
+              tabHistory: updatedHistory,
+            ),
+          );
+        }
+
+      case MusicTabs.favorites:
+        {
+          add(GetFavouritesSongs());
+          updatedHistory.add(event.musicTab);
+          return emit(
+            state.copyWith(
+              musicTab: MusicTabs.favorites,
+              bottomBarView: BottomBarView.normal,
+              tabHistory: updatedHistory,
+            ),
+          );
+        }
+
+      default:
+        {
+          updatedHistory.add(event.musicTab);
+
+          logger.w(
+            "Switching to tab: ${event.musicTab}, History length: ${updatedHistory.length}",
+          );
+          return emit(
+            state.copyWith(
+              musicTab: event.musicTab,
+              tabHistory: updatedHistory,
+              bottomBarView: BottomBarView.normal,
+            ),
+          );
+        }
     }
-    if (event.musicTab == MusicTabs.search) {
-      add(GetSearchedItems());
+  }
+
+  Future<void> onBackTab(BackTabEvent event, Emitter<SongsState> emit) async {
+    logger.i("Going back to previous tab");
+
+    // If history is empty, go to home
+    if (state.tabHistory.isEmpty || state.tabHistory.length == 1) {
       return emit(
         state.copyWith(
-          musicTab: event.musicTab,
-          bottomBarView: BottomBarView.search,
+          musicTab: MusicTabs.home,
+          tabHistory: [],
+          bottomBarView: BottomBarView.normal,
         ),
       );
     }
-    emit(state.copyWith(musicTab: event.musicTab));
+
+    // Create a mutable copy
+    final updatedHistory = List<MusicTabs>.of(state.tabHistory);
+
+    // Get the previous tab (last item in history)
+    if (updatedHistory.isNotEmpty) updatedHistory.removeLast();
+
+    final previousTab = updatedHistory.last;
+    logger.i(
+      "Navigating back to: $previousTab, Remaining history: ${updatedHistory.length}",
+    );
+
+    // Handle tab-specific logic when going back
+    switch (previousTab) {
+      case MusicTabs.home:
+        add(LoadPlaylist());
+        break;
+      case MusicTabs.playlists:
+        add(LoadPlaylist());
+        break;
+      case MusicTabs.search:
+        add(GetSearchedItems());
+        break;
+      default:
+        break;
+    }
+    // Update state with previous tab and updated history
+    emit(
+      state.copyWith(
+        tabHistory: updatedHistory,
+        musicTab: previousTab,
+        bottomBarView:
+            previousTab == MusicTabs.search
+                ? BottomBarView.search
+                : BottomBarView.normal,
+      ),
+    );
   }
 
   Future<void> _onScanSongs(ScanSongs event, Emitter<SongsState> emit) async {
@@ -109,7 +227,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         state.copyWith(
           songs: songsScan,
           playbackQueue: [],
-          playlist: null,
           isLoading: false,
           error: null,
         ),
@@ -132,14 +249,10 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       final songs = await songsRepository.getAllSongs();
 
       if (songs.isNotEmpty) {
-        final playlist = Playlist(songs.map((s) => Media(s.path)).toList());
-        await player.open(playlist, play: false);
-
         emit(
           state.copyWith(
             songs: songs,
             playbackQueue: [],
-            playlist: playlist,
             isLoading: false,
             error: null,
           ),
@@ -150,7 +263,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           state.copyWith(
             songs: [],
             playbackQueue: [],
-            playlist: null,
             isLoading: false,
             error: null,
           ),
@@ -158,6 +270,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         logger.i("No songs found in Hive");
       }
       add(RecentSongs());
+      add(LoadPlaylist());
     } catch (e) {
       logger.e("Error loading songs from Hive: $e");
       emit(state.copyWith(isLoading: false, error: "Failed to load songs: $e"));
@@ -167,7 +280,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   Future<void> _onSearch(SearchSong event, Emitter<SongsState> emit) async {
     try {
       if (event.searchQuery.trim().isEmpty || event.searchQuery.length < 3) {
-        emit(
+        return emit(
           state.copyWith(
             searchResults: SearchResults(
               query: event.searchQuery.trim(),
@@ -228,8 +341,10 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         await player.pause();
         emit(state.copyWith(isPlaying: false));
       } else {
+        // if (state.musicMode == MusicMode.playlist) {
         await player.play();
         emit(state.copyWith(isPlaying: true));
+        // }
       }
     } catch (e) {
       logger.e("Error toggling play/pause: $e");
@@ -245,39 +360,58 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       }
 
       if (state.musicMode == MusicMode.playlist) {
+        logger.i("Next song in playlist");
+
         final playlist = player.state.playlist;
 
-        final int currentIndex = playlist.index;
+        if (state.currentPlaylist.isShuffle != null &&
+            state.currentPlaylist.isShuffle!) {
+          await player.next();
+          final newIndex = player.state.playlist.index;
+          final nextSong = state.playlistSongs[newIndex];
 
-        // Safety checks
-        if (currentIndex < 0 || currentIndex >= state.playlistSongs.length) {
-          logger.w("Invalid playlist index: $currentIndex");
-          return;
-        }
-
-        // If last song → stop or loop (your choice)
-        if (currentIndex == state.playlistSongs.length - 1) {
-          logger.i("Reached end of playlist");
-          return;
-        }
-
-        final nextIndex = currentIndex + 1;
-        final nextSong = state.playlistSongs[nextIndex];
-
-        // Move player to next track
-        await player.next();
-
-        emit(
-          state.copyWith(
-            currentSong: nextSong,
-            currentPlaylist: state.currentPlaylist.copyWith(
-              currentIndex: nextIndex,
-              currentSongId: nextSong.id,
+          emit(
+            state.copyWith(
+              currentSong: nextSong,
+              currentPlaylist: state.currentPlaylist.copyWith(
+                currentIndex: newIndex,
+                currentSongId: nextSong.id,
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          final int currentIndex = playlist.index;
 
-        logger.i("Next song in playlist: ${nextSong.title}");
+          // Safety checks
+          if (currentIndex < 0 || currentIndex >= state.playlistSongs.length) {
+            logger.w("Invalid playlist index: $currentIndex");
+            return;
+          }
+
+          // If last song → stop or loop (your choice)
+          if (currentIndex == state.playlistSongs.length - 1) {
+            logger.i("Reached end of playlist");
+            if (state.isPlaying) emit(state.copyWith(isPlaying: false));
+
+            return;
+          }
+
+          final nextIndex = currentIndex + 1;
+          final nextSong = state.playlistSongs[nextIndex];
+
+          // Move player to next track
+          await player.next();
+          emit(
+            state.copyWith(
+              currentSong: nextSong,
+              currentPlaylist: state.currentPlaylist.copyWith(
+                currentIndex: nextIndex,
+                currentSongId: nextSong.id,
+              ),
+            ),
+          );
+        }
+
         return;
       }
 
@@ -784,6 +918,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     if (isUpdated) {
       add(GetPlaylistSongs(event.playlistId));
       add(LoadPlaylist());
+      add(SelectedPlaylist(event.playlistId));
     }
     // emit(state.copyWith(playlistSongs: playlistSongs));
     logger.i("Playlist songs updated successfully");
@@ -794,16 +929,14 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
-      logger.i(
-        "Playing playlist: ${event.playlistId} index ${event.songIndex!}",
-      );
+      logger.i("Playing playlist: ${event.playlistId}");
       final index = event.songIndex ?? 0;
       if (state.currentPlaylist.playlistId == event.playlistId &&
           event.songIndex == null) {
         return add(TogglePlayPause());
       }
       final playlist = await songsRepository.getPlaylistSongs(event.playlistId);
-      print("going here ${event.songIndex!}");
+      // print("going here ${event.songIndex!}");
       await player.open(
         Playlist(
           playlist.map((song) => Media(song.path)).toList(),
@@ -812,8 +945,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         play: true,
       );
 
-      await player.setPlaylistMode(PlaylistMode.single);
-      await player.setShuffle(event.isShuffle);
+      // await player.setPlaylistMode(PlaylistMode.single);
+      // await player.setShuffle(event.isShuffle);
 
       emit(
         state.copyWith(
@@ -830,7 +963,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         ),
       );
       logger.i("Playlist played successfully");
-    } catch (_) {}
+    } catch (e) {
+      logger.e("Error playing playlist: $e");
+    }
   }
 
   Future<void> pausePlaylist(
@@ -883,6 +1018,78 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         add(GetSearchedItems());
       }
     } catch (_) {}
+  }
+
+  Future<void> selectedPlaylist(
+    SelectedPlaylist event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      logger.i("Selected playlist: ${event.playlistId}");
+      final playlist = await songsRepository.getSelectedPlaylist(
+        playlistId: event.playlistId,
+      );
+
+      add(MusicTabSwitch(MusicTabs.playlistInfo));
+      emit(state.copyWith(selectedPlaylist: playlist));
+      if (playlist != null) {
+        add(GetPlaylistSongs(playlist.id));
+      }
+    } catch (e) {
+      logger.e("Error getting playlist: $e");
+    }
+  }
+
+  Future<void> searchPlaylist(
+    SearchPlaylist event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      if (event.searchQuery.trim().isNotEmpty) {
+        logger.i("Searching playlist: ${event.searchQuery}");
+        final playlist = await songsRepository.searchedPlaylist(
+          query: event.searchQuery,
+        );
+        emit(state.copyWith(searchedPlaylist: playlist));
+      } else {
+        emit(state.copyWith(searchedPlaylist: []));
+      }
+    } catch (e) {
+      logger.e("Error searching playlist: $e");
+    }
+  }
+
+  Future<void> searchedSong(
+    SearchedSong event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      if (event.searchQuery.trim().isNotEmpty) {
+        logger.i("Searching song: ${event.searchQuery}");
+        final songs = await songsRepository.searchedSong(
+          query: event.searchQuery,
+        );
+        emit(state.copyWith(searchedSongs: songs));
+      } else {
+        emit(state.copyWith(searchedSongs: []));
+      }
+    } catch (e) {
+      logger.e("Error searching song: $e");
+    }
+  }
+
+  Future<void> favouritesSongs(
+    GetFavouritesSongs event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      logger.i("Getting favourite songs");
+      final favouriteSongs = await songsRepository.getFavouriteSongs();
+      emit(state.copyWith(favouriteSongs: favouriteSongs));
+      logger.i("Favourite songs loaded successfully ${favouriteSongs.length}");
+    } catch (e) {
+      logger.e("Error getting favourite songs: $e");
+    }
   }
 
   @override

@@ -14,19 +14,16 @@ class AddMusicInput extends StatefulWidget {
 
 class _AddMusicInputState extends State<AddMusicInput> {
   bool _isSearchActive = false;
-  final TextEditingController _textController = TextEditingController();
 
   @override
   void dispose() {
-    _textController.dispose();
     super.dispose();
   }
 
   void _handlePress() {
-    context.read<SongsBloc>().add(CreatePlaylist(_textController.text));
+    context.read<SongsBloc>().add(SearchedSong(''));
     setState(() {
       _isSearchActive = false;
-      _textController.clear();
     });
   }
 
@@ -41,7 +38,9 @@ class _AddMusicInputState extends State<AddMusicInput> {
         if (_isSearchActive)
           Expanded(
             child: MechanixTextInput.search(
-              onFieldSubmitted: (value) => _handlePress(),
+              autofocus: true,
+              onChanged:
+                  (value) => context.read<SongsBloc>().add(SearchedSong(value)),
               onClear: () => _handlePress(),
             ),
           )

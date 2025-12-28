@@ -15,6 +15,7 @@ class MusicIconButton extends StatelessWidget {
   // Styling
   final Color backgroundColor;
   final BorderRadius borderRadius;
+  final Color? iconColor;
 
   // States
   final bool enabled;
@@ -29,6 +30,7 @@ class MusicIconButton extends StatelessWidget {
     this.backgroundColor = MusicColors.buttonBackgroundColor,
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
     this.enabled = true,
+    this.iconColor,
   });
 
   @override
@@ -46,7 +48,12 @@ class MusicIconButton extends StatelessWidget {
           RoundedRectangleBorder(borderRadius: borderRadius),
         ),
       ),
-      icon: Image.asset(icon, width: iconSize, height: iconSize),
+      icon: Image.asset(
+        icon,
+        width: iconSize,
+        height: iconSize,
+        color: iconColor,
+      ),
     );
   }
 }

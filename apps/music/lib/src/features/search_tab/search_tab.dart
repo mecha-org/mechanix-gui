@@ -12,7 +12,6 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/home/widgets/title_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_tile.dart';
-import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_view.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button.dart';
@@ -120,29 +119,22 @@ class _SearchTabState extends State<SearchTab> {
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final item = searchItems[index];
 
-                        if (item.isPlaylist) {
+                        final playlist = item.playlistInfo;
+                        if (item.isPlaylist && playlist != null) {
                           return Row(
                             children: [
                               Expanded(
                                 child: PlaylistTile(
                                   isMenuRequired: false,
-                                  playlistInfo: item.playlistInfo!,
+                                  playlistInfo: playlist,
                                   onTap: () {
-                                    if (item.playlistInfo != null) {
+                                    {
+                                      context.read<SongsBloc>().add(
+                                        SelectedPlaylist(playlist.id),
+                                      );
                                       context.read<SongsBloc>().add(
                                         StoreSearchItem(
                                           playlist: item.playlistInfo!,
-                                        ),
-                                      );
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (context) => PlaylistView(
-                                                playlistInfo:
-                                                    item.playlistInfo!,
-                                              ),
                                         ),
                                       );
                                     }
@@ -175,18 +167,27 @@ class _SearchTabState extends State<SearchTab> {
 
                         return Row(
                           children: [
-                            Expanded(
-                              child: SongTile(
-                                isMenuRequired: false,
-                                song: song,
-                                isPaddingRequired: true,
-                                onTap: () {
-                                  context.read<SongsBloc>().add(
-                                    StoreSearchItem(song: song),
-                                  );
-                                  context.read<SongsBloc>().add(PlaySong(song));
-                                },
-                              ),
+                            BlocSelector<SongsBloc, SongsState, bool>(
+                              selector:
+                                  (state) => state.currentSong?.id == song.id,
+                              builder: (context, isCurrentSong) {
+                                return Expanded(
+                                  child: SongTile(
+                                    isCurrentSong: isCurrentSong,
+                                    isMenuRequired: false,
+                                    song: song,
+                                    isPaddingRequired: true,
+                                    onTap: () {
+                                      context.read<SongsBloc>().add(
+                                        StoreSearchItem(song: song),
+                                      );
+                                      context.read<SongsBloc>().add(
+                                        PlaySong(song),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
                             ),
                             Container(
                               margin: EdgeInsets.only(right: 16),
@@ -258,16 +259,17 @@ class _SearchTabState extends State<SearchTab> {
                             playlistInfo: playlist,
                             onTap: () {
                               context.read<SongsBloc>().add(
+                                SelectedPlaylist(playlist.id),
+                              );
+                              context.read<SongsBloc>().add(
                                 StoreSearchItem(playlist: playlist),
                               );
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          PlaylistView(playlistInfo: playlist),
-                                ),
-                              );
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (context) => PlaylistView(),
+                              //   ),
+                              // );
                             },
                           ),
                         ),

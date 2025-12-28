@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/src/features/home/home_tab/recent_songs.dart';
+import 'package:mechanix_music/src/features/home/home_tab/top_music.dart';
+import 'package:mechanix_music/src/features/home/home_tab/top_playlists.dart';
 import 'package:mechanix_music/src/features/home/widgets/title_widget.dart';
 import 'package:widgets/mechanix.dart';
 
@@ -23,6 +25,8 @@ class _HomeTabState extends State<HomeTab> {
             textStyle: TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
           ).padOnly(left: 16, top: 12),
           RecentSongs(),
+          TopPlaylists(),
+          TopMusic(),
         ],
       ),
     );

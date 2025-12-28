@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
 
-enum MusicTabs { home, search, music, playlists, favorites }
+enum MusicTabs { home, search, music, playlists, favorites,playlistInfo }
 
 enum BottomBarView { normal, text, search, add }
 

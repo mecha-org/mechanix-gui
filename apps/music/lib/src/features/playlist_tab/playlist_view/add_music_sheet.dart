@@ -8,6 +8,7 @@ import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/add_music_input.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
+import 'package:tuple/tuple.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
 
@@ -22,6 +23,12 @@ class AddMusicSheet extends StatefulWidget {
 
 class _AddMusicSheetState extends State<AddMusicSheet> {
   final List<String> selectedMusic = [];
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<SongsBloc>().add(SearchSong(''));
+  }
 
   void updateSelection(String id) {
     if (selectedMusic.contains(id)) {
@@ -56,7 +63,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Text(
-                  "Playlists",
+                  "My Music",
                   style: TextStyle(
                     fontSize: 24,
                     height: 1.25,
@@ -69,9 +76,15 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
 
               // Playlist list
               Expanded(
-                child: BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
-                  selector: (state) => state.songs,
-                  builder: (context, songs) {
+                child: BlocSelector<
+                  SongsBloc,
+                  SongsState,
+                  Tuple2<List<SongInfo>, List<SongInfo>>
+                >(
+                  selector: (state) => Tuple2(state.songs, state.searchedSongs),
+                  builder: (context, state) {
+                    final songs = state.item1;
+                    final searchedSongs = state.item2;
                     if (songs.isEmpty) {
                       return Center(
                         child: Text(
@@ -83,26 +96,53 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         ),
                       );
                     }
+                    if (searchedSongs.isNotEmpty) {
+                      return ListView.builder(
+                        itemCount: searchedSongs.length,
+                        itemBuilder: (context, index) {
+                          final song = searchedSongs[index];
+                          final isAlreadyInPlaylist = widget
+                              .playlistInfo
+                              .songIds
+                              .contains(song.id);
 
-                    return ListView.builder(
-                      itemCount: songs.length,
-                      itemBuilder: (context, index) {
-                        final song = songs[index];
-                        final isAlreadyInPlaylist = widget.playlistInfo.songIds
-                            .contains(song.id);
+                          return SongTile(
+                            song: song,
+                            isPaddingRequired: true,
+                            isDisabled: isAlreadyInPlaylist,
+                            isSelected: selectedMusic.contains(song.id),
+                            isMenuRequired: false,
+                            onTap:
+                                isAlreadyInPlaylist
+                                    ? null
+                                    : () => updateSelection(song.id),
+                          );
+                        },
+                      );
+                    } else {
+                      return ListView.builder(
+                        itemCount: songs.length,
+                        itemBuilder: (context, index) {
+                          final song = songs[index];
+                          final isAlreadyInPlaylist = widget
+                              .playlistInfo
+                              .songIds
+                              .contains(song.id);
 
-                        return SongTile(
-                          song: song,
-                          isPaddingRequired: true,
-                          isDisabled: isAlreadyInPlaylist,
-                          isSelected: selectedMusic.contains(song.id),
-                          onTap:
-                              isAlreadyInPlaylist
-                                  ? null
-                                  : () => updateSelection(song.id),
-                        );
-                      },
-                    );
+                          return SongTile(
+                            song: song,
+                            isPaddingRequired: true,
+                            isDisabled: isAlreadyInPlaylist,
+                            isSelected: selectedMusic.contains(song.id),
+                            isMenuRequired: false,
+                            onTap:
+                                isAlreadyInPlaylist
+                                    ? null
+                                    : () => updateSelection(song.id),
+                          );
+                        },
+                      );
+                    }
                   },
                 ),
               ),

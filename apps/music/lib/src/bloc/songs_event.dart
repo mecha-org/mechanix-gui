@@ -182,3 +182,22 @@ class ClearSerachItems extends SongsEvent {
 
   const ClearSerachItems({this.clearId, this.clearAll = false});
 }
+
+class BackTabEvent extends SongsEvent {}
+
+class SelectedPlaylist extends SongsEvent {
+  final String playlistId;
+  const SelectedPlaylist(this.playlistId);
+}
+
+class SearchPlaylist extends SongsEvent {
+  final String searchQuery;
+  const SearchPlaylist(this.searchQuery);
+}
+
+class SearchedSong extends SongsEvent {
+  final String searchQuery;
+  const SearchedSong(this.searchQuery);
+}
+
+class GetFavouritesSongs extends SongsEvent {}

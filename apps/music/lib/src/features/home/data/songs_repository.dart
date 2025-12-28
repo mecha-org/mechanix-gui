@@ -34,4 +34,8 @@ abstract class SongsRepository {
 
   Future<List<SearchInfo>> getStoredSearchItems();
   Future<bool> clearSearchItems({String? searchId, required bool clearAll});
+  Future<PlaylistInfo?> getSelectedPlaylist({required String playlistId});
+  Future<List<PlaylistInfo>> searchedPlaylist({required String query});
+  Future<List<SongInfo>> searchedSong({required String query});
+  Future<List<SongInfo>> getFavouriteSongs();
 }

@@ -15,8 +15,10 @@ class PlaylistBottomSheetAdd extends StatefulWidget {
   State<PlaylistBottomSheetAdd> createState() => _PlaylistBottomSheetAddState();
 }
 
+enum ActiveMode { add, search, none }
+
 class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
-  String? _activeMode;
+  ActiveMode _activeMode = ActiveMode.none;
   String textValue = '';
   @override
   void dispose() {
@@ -24,16 +26,20 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
   }
 
   void _handlePress() {
-    context.read<SongsBloc>().add(CreatePlaylist(textValue));
+    if (_activeMode == ActiveMode.search) {
+      context.read<SongsBloc>().add(SearchPlaylist(''));
+    } else {
+      context.read<SongsBloc>().add(CreatePlaylist(textValue));
+    }
     setState(() {
-      _activeMode = null;
+      _activeMode = ActiveMode.none;
       textValue = '';
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_activeMode != null) {
+    if (_activeMode == ActiveMode.add) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 16,
@@ -45,6 +51,32 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
                   (value) => setState(() {
                     textValue = value;
                   }),
+              anchorWidget: MusicIconButton(
+                onPressed: () => _handlePress(),
+                icon: MusicIcons.checkIcon,
+                backgroundColor: Colors.transparent,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    if (_activeMode == ActiveMode.search) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: 16,
+        children: [
+          Expanded(
+            child: MechanixTextInput.search(
+              autofocus: true,
+              onChanged:
+                  (value) =>
+                      context.read<SongsBloc>().add(SearchPlaylist(value)),
+
+              // (value) => setState(() {
+              //   textValue = value;
+              // }),
+              onClear: () => _handlePress(),
               anchorWidget: MusicIconButton(
                 onPressed: () => _handlePress(),
                 icon: MusicIcons.checkIcon,
@@ -73,7 +105,7 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
                         ? null
                         : () {
                           setState(() {
-                            _activeMode = 'add';
+                            _activeMode = ActiveMode.add;
                           });
                         },
                 icon: Image.asset(
@@ -88,7 +120,8 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
           iconSize: 44,
           onPressed: () {
             setState(() {
-              _activeMode = 'search';
+              context.read<SongsBloc>().add(SearchPlaylist(''));
+              _activeMode = ActiveMode.search;
             });
           },
           icon: Image.asset(MusicIcons.searchIcon, width: 28, height: 28),

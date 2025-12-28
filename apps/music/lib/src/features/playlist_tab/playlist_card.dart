@@ -3,12 +3,16 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_menu.dart';
-import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_view.dart';
 
 class PlaylistCard extends StatelessWidget {
+  final VoidCallback onPlaylistTap;
   final PlaylistInfo playlistInfo;
 
-  const PlaylistCard({super.key, required this.playlistInfo});
+  const PlaylistCard({
+    super.key,
+    required this.playlistInfo,
+    required this.onPlaylistTap,
+  });
 
   bool get hasCover =>
       playlistInfo.coverImagePath != null &&
@@ -19,13 +23,13 @@ class PlaylistCard extends StatelessWidget {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
-        onTap:
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PlaylistView(playlistInfo: playlistInfo),
-              ),
-            ),
+        onTap: () => onPlaylistTap(),
+        // () => Navigator.push(
+        //   context,
+        //   MaterialPageRoute(
+        //     builder: (context) => PlaylistView(playlistInfo: playlistInfo),
+        //   ),
+        // ),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
