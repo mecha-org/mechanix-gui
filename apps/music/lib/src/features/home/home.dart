@@ -40,7 +40,14 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      bottomNavigationBar: const BottomBar(),
+      bottomNavigationBar: BlocSelector<SongsBloc, SongsState, BottomBarView>(
+        selector: (state) => state.bottomBarView,
+        builder:
+            (context, bottomBarView) =>
+                bottomBarView == BottomBarView.normal
+                    ? const BottomBar()
+                    : const SizedBox.shrink(),
+      ),
       body: BlocBuilder<SongsBloc, SongsState>(
         buildWhen: (p, c) => p.musicTab != c.musicTab,
         builder: (context, state) {

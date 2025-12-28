@@ -9,6 +9,7 @@ import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/features/home/widgets/title_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_card.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_tile.dart';
+import 'package:mechanix_music/src/features/playlist_tab/add_playlist_bar.dart';
 import 'package:tuple/tuple.dart';
 
 class PlaylistList extends StatefulWidget {
@@ -20,97 +21,176 @@ class PlaylistList extends StatefulWidget {
 
 class _PlaylistListState extends State<PlaylistList> {
   final scrollController = ScrollController();
+  String playlistName = 'New Playlist';
+  BottomBarView? previousBottomBarView;
+
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
+  }
+
+  void _showAddPlaylistBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+
+      builder:
+          (bottomSheetContext) => Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            // padding: const EdgeInsets.all(16),
+            child: AddPlaylistBar(
+              key: const ValueKey('add_playlist'),
+              onChanged: (value) {
+                setState(() {
+                  playlistName = value;
+                });
+              },
+            ),
+          ),
+    ).whenComplete(() {
+      if (mounted) {
+        context.read<SongsBloc>().add(BottomBarToggle(BottomBarView.normal));
+      }
+      // Reset the playlist name when bottom sheet is closed
+      setState(() {
+        playlistName = 'New Playlist';
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scrollbar(
-      controller: scrollController,
-      child: ScrollConfiguration(
-        behavior: const ScrollBehavior().copyWith(
-          overscroll: false,
-          scrollbars: false,
-          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
-        ),
-        child: CustomScrollView(
+    return BlocSelector<
+      SongsBloc,
+      SongsState,
+      Tuple2<BottomBarView, PlaylistViewEnum>
+    >(
+      selector: (state) => Tuple2(state.bottomBarView, state.playlistView),
+      builder: (context, state) {
+        final bottomBarView = state.item1;
+        final playlistView = state.item2;
+
+        // Show bottom sheet when bottomBarView changes to add
+        if (bottomBarView == BottomBarView.add &&
+            previousBottomBarView != BottomBarView.add) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _showAddPlaylistBottomSheet(context);
+          });
+        }
+        previousBottomBarView = bottomBarView;
+
+        return Scrollbar(
           controller: scrollController,
-          slivers: [
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(top: 12, left: 16, right: 16),
-                child: TitleWidget(title: "Playlists"),
-              ),
+          child: ScrollConfiguration(
+            behavior: const ScrollBehavior().copyWith(
+              overscroll: false,
+              scrollbars: false,
+              dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
             ),
+            child: CustomScrollView(
+              controller: scrollController,
+              slivers: [
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 12, left: 16, right: 16),
+                    child: TitleWidget(title: "Playlists"),
+                  ),
+                ),
 
-            BlocSelector<
-              SongsBloc,
-              SongsState,
-              Tuple2<List<PlaylistInfo>, PlaylistViewEnum>
-            >(
-              selector: (state) => Tuple2(state.playlists, state.playlistView),
-              builder: (context, state) {
-                final playlists = state.item1;
-                final viewType = state.item2;
+                BlocSelector<SongsBloc, SongsState, List<PlaylistInfo>>(
+                  selector: (state) => state.playlists,
+                  builder: (context, playlists) {
+                    // Create a new playlist info for preview when in add mode
+                    final newPlaylistInfo =
+                        bottomBarView == BottomBarView.add
+                            ? PlaylistInfo(
+                              id: "newplaylist",
+                              isShuffle: false,
+                              createdAt: DateTime.now(),
+                              name: playlistName,
+                              updatedAt: DateTime.now(),
+                              songIds: [],
+                              coverImagePath: null,
+                            )
+                            : null;
 
-                // Check if it's grid view (adjust the enum value as per your implementation)
-                if (viewType == PlaylistViewEnum.grid) {
-                  return SliverPadding(
-                    padding: EdgeInsets.all(16),
-                    sliver: SliverGrid(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        mainAxisExtent: 164,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        childCount: playlists.length,
-                        (context, index) {
-                          final playlist = playlists[index];
-                          return PlaylistCard(
-                            playlistInfo: playlist,
-                            onPlaylistTap: () {
-                              context.read<SongsBloc>().add(
-                                SelectedPlaylist(playlist.id),
+                    // Combine new playlist with existing playlists for grid/list view
+                    final displayPlaylists =
+                        newPlaylistInfo != null
+                            ? [newPlaylistInfo, ...playlists]
+                            : playlists;
+
+                    return playlistView == PlaylistViewEnum.grid
+                        ? SliverPadding(
+                          padding: const EdgeInsets.all(16),
+                          sliver: SliverGrid(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisExtent: 164,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                ),
+                            delegate: SliverChildBuilderDelegate(
+                              childCount: displayPlaylists.length,
+                              (context, index) {
+                                final playlist = displayPlaylists[index];
+                                final isNewPlaylist =
+                                    playlist.id == "newplaylist";
+
+                                return PlaylistCard(
+                                  playlistInfo: playlist,
+                                  onPlaylistTap:
+                                      isNewPlaylist
+                                          ? () {}
+                                          : () {
+                                            context.read<SongsBloc>().add(
+                                              SelectedPlaylist(playlist.id),
+                                            );
+                                          },
+                                );
+                              },
+                            ),
+                          ),
+                        )
+                        : SliverPrototypeExtentList(
+                          prototypeItem: const SizedBox(height: 79),
+                          delegate: SliverChildBuilderDelegate(
+                            childCount: displayPlaylists.length,
+                            (context, index) {
+                              final playlist = displayPlaylists[index];
+                              final isNewPlaylist =
+                                  playlist.id == "newplaylist";
+
+                              return PlaylistTile(
+                                playlistInfo: playlist,
+                                onTap:
+                                    isNewPlaylist
+                                        ? () {}
+                                        : () {
+                                          context.read<SongsBloc>().add(
+                                            SelectedPlaylist(playlist.id),
+                                          );
+                                        },
                               );
                             },
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                } else {
-                  // List view
-                  return SliverPrototypeExtentList(
-                    prototypeItem: const SizedBox(height: 79),
-                    delegate: SliverChildBuilderDelegate(
-                      childCount: playlists.length,
-                      (context, index) {
-                        final playlist = playlists[index];
-                        return PlaylistTile(
-                          playlistInfo: playlist,
-                          onTap: () {
-                            context.read<SongsBloc>().add(
-                              SelectedPlaylist(playlist.id),
-                            );
-                          },
-                          // () => Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder:
-                          //         (context) =>
-                          //             PlaylistView(playlistInfo: playlist),
-                          //   ),
-                          // ),
+                          ),
                         );
-                      },
-                    ),
-                  );
-                }
-              },
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

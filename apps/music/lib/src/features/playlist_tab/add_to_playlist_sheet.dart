@@ -47,22 +47,15 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return Container(
-          height: constraints.maxHeight,
+          height: constraints.maxHeight * 0.98,
           width: double.infinity,
-          decoration: BoxDecoration(
-            color: context.secondary,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
 
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Title
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Text(
                   "Playlists",
                   style: TextStyle(
@@ -176,7 +169,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                       children: [
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
-                            buttonSize: Size(94, 40),
+                            buttonSize: Size(100, 40),
                           ),
                           label: "Cancel",
                           onPressed: () {
@@ -185,7 +178,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                         ),
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
-                            buttonSize: Size(72, 40),
+                            buttonSize: Size(75, 40),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: MusicColors.titleColor,

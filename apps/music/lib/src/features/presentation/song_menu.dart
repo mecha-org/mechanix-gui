@@ -6,10 +6,8 @@ import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
-import 'package:widgets/extensions/color.dart';
-import 'package:widgets/widgets/icon_widget.dart';
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/mechanix_menu.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
@@ -19,11 +17,12 @@ class SongMenu extends StatelessWidget {
   const SongMenu({super.key, required this.song, this.onToggleFavourite});
   void _showAddToPlaylistSheet(BuildContext context) {
     context.read<SongsBloc>().add(LoadPlaylist());
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AddToPlaylistSheet(song: song),
+
+    MechanixBottomSheet.show(
+      topTabWidth: 370,
+      topTabRightSideShiftLength: 40,
+      context,
+      child: AddToPlaylistSheet(song: song),
     );
   }
 

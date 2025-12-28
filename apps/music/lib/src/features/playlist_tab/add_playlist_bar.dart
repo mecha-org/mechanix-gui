@@ -6,22 +6,28 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:widgets/mechanix.dart';
 
 class AddPlaylistBar extends StatelessWidget {
-  const AddPlaylistBar({super.key});
+  final ValueChanged<String>? onChanged;
+
+  const AddPlaylistBar({super.key, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
-
       children: [
         MechanixTextInput.textInput(
           autofocus: true,
-          getCurrentValue:
-              (value) => {
-                if (value.trim().isNotEmpty)
-                  context.read<SongsBloc>().add(CreatePlaylist(value)),
-              },
+          onChanged: (value) {
+            onChanged?.call(value);
+          },
+          getCurrentValue: (value) {
+            if (value.trim().isNotEmpty) {
+              context.read<SongsBloc>().add(CreatePlaylist(value));
+            }
+            Navigator.of(context).pop();
+          },
+          initialValue: "New Playlist",
           anchorWidget: IconWidget(
             boxHeight: 44,
             boxWidth: 44,

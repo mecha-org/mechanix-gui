@@ -4,6 +4,7 @@ import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/add_music_sheet.dart';
+import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 
 class PlaylistAddSong extends StatelessWidget {
@@ -11,11 +12,11 @@ class PlaylistAddSong extends StatelessWidget {
 
   const PlaylistAddSong({super.key, required this.playlistInfo});
   void _showAddMusicSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AddMusicSheet(playlistInfo: playlistInfo),
+    MechanixBottomSheet.show(
+      topTabWidth: 370,
+      topTabRightSideShiftLength: 40,
+      context,
+      child: AddMusicSheet(playlistInfo: playlistInfo),
     );
   }
 
