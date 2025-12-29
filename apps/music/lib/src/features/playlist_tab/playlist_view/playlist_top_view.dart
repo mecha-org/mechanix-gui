@@ -5,10 +5,8 @@ import 'package:mechanix_music/src/commons/icons.dart';
 
 class PlaylistTopView extends StatelessWidget {
   final PlaylistInfo playlistInfo;
-  const PlaylistTopView({
-    super.key,
-    required this.playlistInfo,
-  });
+
+  const PlaylistTopView({super.key, required this.playlistInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +59,9 @@ class PlaylistTopView extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
-                children: [Text("0 tracks, 0 min"), Text("0 tracks, 0 min")],
+                children: [
+                  Text("${playlistInfo.songIds.length} tracks, 0 min"),
+                ],
               ),
             ),
           ],

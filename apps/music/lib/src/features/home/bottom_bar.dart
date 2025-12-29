@@ -112,16 +112,7 @@ class BottomBar extends StatelessWidget {
 
                     iconPath: MusicIcons.homeIcon,
                   ),
-                  BottomBarButton(
-                    isSelected: state == MusicTabs.search,
-                    onPressed: () {
-                      context.read<SongsBloc>().add(
-                        MusicTabSwitch(MusicTabs.search),
-                      );
-                    },
 
-                    iconPath: MusicIcons.searchIcon,
-                  ),
                   BottomBarButton(
                     isSelected: state == MusicTabs.music,
                     onPressed: () {

@@ -20,9 +20,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<TogglePlayPause>(_onTogglePlayPause);
     on<PlayNext>(_onPlayNext);
     on<PlayPrevious>(_onPlayPrevious);
-    // on<SeekSong>(_onSeekSong);
-    // on<UpdateDuration>(_onUpdateDuration);
-    // on<UpdatePosition>(_onUpdatePosition);
     on<ShuffleToggle>(_shuffleToggle);
     on<MusicTabSwitch>(_musicTabSwitch);
     on<FavouriteToggle>(_onToggleFavourite);
@@ -705,20 +702,42 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
         emit(state.copyWith(playlistSongs: updatedSongs, error: null));
       }
-      if (state.currentSong != null) {
-        emit(
-          state.copyWith(
-            currentSong:
-                state.currentSong != null
-                    ? event.songIds.contains(state.currentSong?.id)
-                        ? state.currentSong?.copyWith(
-                          isFavourite: event.isFavourite,
-                        )
-                        : state.currentSong
-                    : null,
-          ),
-        );
-      }
+      emit(
+        state.copyWith(
+          favouriteSongs:
+              state.favouriteSongs.isNotEmpty
+                  ? state.favouriteSongs
+                      .map(
+                        (song) =>
+                            event.songIds.contains(song.id)
+                                ? song = song.copyWith(
+                                  isFavourite: event.isFavourite,
+                                )
+                                : song,
+                      )
+                      .toList()
+                  : state.favouriteSongs,
+          songs:
+              state.songs
+                  .map(
+                    (song) =>
+                        event.songIds.contains(song.id)
+                            ? song = song.copyWith(
+                              isFavourite: event.isFavourite,
+                            )
+                            : song,
+                  )
+                  .toList(),
+          currentSong:
+              state.currentSong != null
+                  ? event.songIds.contains(state.currentSong?.id)
+                      ? state.currentSong?.copyWith(
+                        isFavourite: event.isFavourite,
+                      )
+                      : state.currentSong
+                  : null,
+        ),
+      );
       logger.i("Favourite updated: ${event.isFavourite}");
     } catch (e) {
       logger.e("Error updating favourite: $e");

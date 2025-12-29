@@ -47,10 +47,7 @@ class AudioPlayerBottomBar extends StatelessWidget {
             centerWidget: [
               BottomBarButton(
                 onPressed: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                  context.read<SongsBloc>().add(MusicTabSwitch(MusicTabs.home));
+                  // context.read<SongsBloc>().add(MusicTabSwitch(MusicTabs.home));
                 },
                 iconTheme: const MechanixBottomBarIconThemeData(
                   iconSize: Size(24, 24),
@@ -90,12 +87,9 @@ class AudioPlayerBottomBar extends StatelessWidget {
 
               BottomBarButton(
                 onPressed: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                  context.read<SongsBloc>().add(
-                    MusicTabSwitch(MusicTabs.favorites),
-                  );
+                  // context.read<SongsBloc>().add(
+                  //   MusicTabSwitch(MusicTabs.favorites),
+                  // );
                 },
                 iconTheme: const MechanixBottomBarIconThemeData(
                   iconSize: Size(24, 24),
@@ -119,7 +113,7 @@ class AudioPlayerBottomBar extends StatelessWidget {
                   iconBoxSize: Size(44, 44),
                   buttonMargin: EdgeInsets.only(right: 12),
                 ),
-                iconPath: MusicIcons.playNextIcon,
+                iconPath: MusicIcons.upcomingIcon,
               ),
             ],
           ),

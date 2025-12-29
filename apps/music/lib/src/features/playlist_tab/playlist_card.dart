@@ -7,11 +7,13 @@ import 'package:mechanix_music/src/features/playlist_tab/playlist_menu.dart';
 class PlaylistCard extends StatelessWidget {
   final VoidCallback onPlaylistTap;
   final PlaylistInfo playlistInfo;
+  final ValueChanged<String> onRenameClick;
 
   const PlaylistCard({
     super.key,
     required this.playlistInfo,
     required this.onPlaylistTap,
+    required this.onRenameClick,
   });
 
   bool get hasCover =>
@@ -24,36 +26,22 @@ class PlaylistCard extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () => onPlaylistTap(),
-        // () => Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => PlaylistView(playlistInfo: playlistInfo),
-        //   ),
-        // ),
+
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: hasCover ? null : Colors.red.withValues(alpha: 0.3),
-            image:
+            image: DecorationImage(
+              image: AssetImage(
                 hasCover
-                    ? DecorationImage(
-                      image: AssetImage(playlistInfo.coverImagePath!),
-                      fit: BoxFit.cover, // 🔥 fills entire container
-                    )
-                    : null,
+                    ? playlistInfo.coverImagePath!
+                    : MusicIcons.playlistCardIcon,
+              ),
+              fit: BoxFit.cover,
+            ),
+            // : null,
           ),
           child: Stack(
             children: [
-              // Fallback icon ONLY when cover is missing
-              if (!hasCover)
-                Center(
-                  child: Image.asset(
-                    MusicIcons.musicIcon,
-                    width: 60,
-                    height: 60,
-                  ),
-                ),
-
               Positioned(
                 left: 12,
                 bottom: 30,
@@ -87,7 +75,10 @@ class PlaylistCard extends StatelessWidget {
               Positioned(
                 right: 4,
                 top: 4,
-                child: PlaylistMenu(playlistInfo: playlistInfo),
+                child: PlaylistMenu(
+                  onRenameClick: onRenameClick,
+                  playlistInfo: playlistInfo,
+                ),
               ),
             ],
           ),

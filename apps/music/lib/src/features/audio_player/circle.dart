@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
+import 'package:mechanix_music/src/commons/colors.dart';
+
 class SemiCircularAudioProgress extends StatefulWidget {
   final Duration currentDuration;
   final Duration totalDuration;
@@ -27,7 +29,6 @@ class SemiCircularAudioProgress extends StatefulWidget {
 class _SemiCircularAudioProgressState extends State<SemiCircularAudioProgress> {
   bool _isDragging = false;
   double _previousAngle = 0.0;
-  int _dragUpdateCount = 0;
   DateTime? _lastDragTime;
 
   @override
@@ -35,52 +36,72 @@ class _SemiCircularAudioProgressState extends State<SemiCircularAudioProgress> {
     return SizedBox(
       width: 360,
       height: 180,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final size = Size(constraints.maxWidth, constraints.maxHeight);
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final size = Size(constraints.maxWidth, constraints.maxHeight);
 
-            return GestureDetector(
+          return MouseRegion(
+            cursor: SystemMouseCursors.click,
+            hitTestBehavior: HitTestBehavior.translucent,
+            child: GestureDetector(
               behavior: HitTestBehavior.translucent,
 
               // 👉 Tap to seek
-              onTapDown:
-                  (d) => _updateDragAngle(d.localPosition, size, isTap: true),
+              onTapDown: (d) {
+                final angle = _calculateAngle(d.localPosition, size);
+                if (angle != null) {
+                  _updateDragAngle(d.localPosition, size, isTap: true);
+                  // Trigger the callbacks for tap
+                  widget.onDragStart();
+                  widget.onDragEnd();
+                }
+              },
 
               // 👉 Drag to seek with velocity tracking
               onPanStart: (d) {
-                setState(() => _isDragging = true);
-                _dragUpdateCount = 0;
-                _lastDragTime = DateTime.now();
-                widget.onDragStart();
-
                 final angle = _calculateAngle(d.localPosition, size);
                 if (angle != null) {
+                  setState(() => _isDragging = true);
+                  _lastDragTime = DateTime.now();
+                  widget.onDragStart();
                   _previousAngle = angle;
                 }
               },
               onPanUpdate: (d) {
-                _updateDragAngle(d.localPosition, size, isTap: false);
+                if (_isDragging) {
+                  _updateDragAngle(d.localPosition, size, isTap: false);
+                }
               },
               onPanEnd: (_) {
-                setState(() => _isDragging = false);
-                _dragUpdateCount = 0;
-                _lastDragTime = null;
-                widget.onDragEnd();
+                if (_isDragging) {
+                  setState(() => _isDragging = false);
+                  _lastDragTime = null;
+                  widget.onDragEnd();
+                }
               },
 
-              child: CustomPaint(
-                size: size,
-                painter: SemiCircularProgressPainter(
-                  currentDuration: widget.currentDuration,
-                  totalDuration: widget.totalDuration,
-                  isDragging: _isDragging,
-                ),
+              child: Stack(
+                children: [
+                  // Invisible hit area overlay
+                  CustomPaint(
+                    size: size,
+                    painter: HitAreaPainter(),
+                  ),
+                  // Actual progress visualization
+                  CustomPaint(
+                    size: size,
+                    painter: SemiCircularProgressPainter(
+                      currentDuration: widget.currentDuration,
+                      totalDuration: widget.totalDuration,
+                      isDragging: _isDragging,
+                      showDebugHitArea: false, // Enable debug visualization
+                    ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -96,9 +117,7 @@ class _SemiCircularAudioProgressState extends State<SemiCircularAudioProgress> {
     final distance = math.sqrt(dx * dx + dy * dy);
     final trackRadius = radius - strokeWidth / 2;
 
-    // 🎯 EXPANDED hit test → Larger drag area for easier interaction
-    if ((distance - trackRadius).abs() > 50) return null;
-
+    // Calculate angle first
     double angle = math.atan2(dy, dx);
 
     // Normalize to 0 → 2π
@@ -106,6 +125,16 @@ class _SemiCircularAudioProgressState extends State<SemiCircularAudioProgress> {
 
     // 🚫 Reject bottom half — ONLY top semi-circle allowed
     if (angle > math.pi) return null;
+
+    // 🎯 EXPANDED hit test → Larger drag area for easier interaction
+    // Allow a 60px band (increased from 50px for better edge detection)
+    const hitAreaWidth = 60.0;
+    
+    // Check if within the hit area band
+    if (distance < trackRadius - hitAreaWidth || 
+        distance > trackRadius + hitAreaWidth) {
+      return null;
+    }
 
     return angle;
   }
@@ -163,11 +192,13 @@ class SemiCircularProgressPainter extends CustomPainter {
   final Duration currentDuration;
   final Duration totalDuration;
   final bool isDragging;
+  final bool showDebugHitArea;
 
   SemiCircularProgressPainter({
     required this.currentDuration,
     required this.totalDuration,
     required this.isDragging,
+    this.showDebugHitArea = false,
   });
 
   @override
@@ -176,10 +207,26 @@ class SemiCircularProgressPainter extends CustomPainter {
     final radius = size.width / 2;
     final strokeWidth = 6.0;
 
+    // 🔴 DEBUG: Draw hit area in red (60px band around the track)
+    if (showDebugHitArea) {
+      final debugPaint = Paint()
+        ..color = Colors.red.withOpacity(0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 120; // 60px on each side = 120px total width
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
+        math.pi,
+        -math.pi,
+        false,
+        debugPaint,
+      );
+    }
+
     // Background track (inactive part)
     final backgroundPaint =
         Paint()
-          ..color = Colors.grey.withOpacity(0.3)
+          ..color = MusicColors.dividerColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round;
@@ -202,7 +249,7 @@ class SemiCircularProgressPainter extends CustomPainter {
     // Active track (progress part)
     final progressPaint =
         Paint()
-          ..color = Colors.white
+          ..color = MusicColors.primaryTextColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round;
@@ -224,7 +271,7 @@ class SemiCircularProgressPainter extends CustomPainter {
 
     final thumbPaint =
         Paint()
-          ..color = Colors.white
+          ..color = MusicColors.primaryTextColor
           ..style = PaintingStyle.fill;
 
     // Draw larger thumb when dragging
@@ -233,21 +280,35 @@ class SemiCircularProgressPainter extends CustomPainter {
 
     // Draw time labels
     final textStyle = TextStyle(
-      color: Colors.white.withOpacity(0.7),
+      color: MusicColors.primaryTextColor,
       fontSize: 12,
       fontWeight: FontWeight.w500,
     );
 
-    // Start time (left)
-    final startTime = _formatDuration(currentDuration);
+    // Calculate positions at the ends of the arc (left and right)
+    final leftAngle = math.pi; // Left side of semi-circle
+    final rightAngle = 0.0; // Right side of semi-circle
+
+    final leftX = center.dx + (radius - strokeWidth / 2) * math.cos(leftAngle);
+    final leftY = center.dy + (radius - strokeWidth / 2) * math.sin(leftAngle);
+
+    final rightX =
+        center.dx + (radius - strokeWidth / 2) * math.cos(rightAngle);
+    final rightY =
+        center.dy + (radius - strokeWidth / 2) * math.sin(rightAngle);
+
+    // Start time (current time - positioned at left end, above the arc)
     final startTextPainter = TextPainter(
-      text: TextSpan(text: startTime, style: textStyle),
+      text: TextSpan(text: "00:00", style: textStyle),
       textDirection: TextDirection.ltr,
     );
     startTextPainter.layout();
-    startTextPainter.paint(canvas, Offset(10, 10));
+    startTextPainter.paint(
+      canvas,
+      Offset(leftX - startTextPainter.width / 2, leftY - 20),
+    );
 
-    // End time (right)
+    // End time (total duration - positioned at right end, above the arc)
     final endTime = _formatDuration(totalDuration);
     final endTextPainter = TextPainter(
       text: TextSpan(text: endTime, style: textStyle),
@@ -256,7 +317,7 @@ class SemiCircularProgressPainter extends CustomPainter {
     endTextPainter.layout();
     endTextPainter.paint(
       canvas,
-      Offset(size.width - endTextPainter.width - 10, 10),
+      Offset(rightX - endTextPainter.width / 2, rightY - 20),
     );
   }
 
@@ -273,4 +334,34 @@ class SemiCircularProgressPainter extends CustomPainter {
         oldDelegate.totalDuration != totalDuration ||
         oldDelegate.isDragging != isDragging;
   }
+}
+
+// Painter for the invisible hit area
+class HitAreaPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, 0);
+    final radius = size.width / 2;
+    final strokeWidth = 6.0;
+
+    // Draw a wide transparent stroke that creates the hit area
+    final hitAreaPaint = Paint()
+      ..color = Colors.transparent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 120; // 60px on each side (increased from 100)
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
+      math.pi,
+      -math.pi,
+      false,
+      hitAreaPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(HitAreaPainter oldDelegate) => false;
+
+  @override
+  bool hitTest(Offset position) => true; // Always return true for hit testing
 }

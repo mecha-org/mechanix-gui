@@ -186,10 +186,30 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      "Add track to playlist",
-                      style: TextStyle(fontSize: 20, height: 1.3),
-                    ),
+                    if (selectedPlaylists.isNotEmpty)
+                      RichText(
+                        text: TextSpan(
+                          style: DefaultTextStyle.of(
+                            context,
+                          ).style.copyWith(fontSize: 20, height: 1.3),
+                          children: [
+                            const TextSpan(text: 'Add track to  '),
+                            TextSpan(
+                              text: '${selectedPlaylists.length} playlists',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const Text(
+                        'Add track to playlist',
+                        style: TextStyle(fontSize: 20, height: 1.3),
+                      ),
+
                     Row(
                       spacing: 12,
                       children: [

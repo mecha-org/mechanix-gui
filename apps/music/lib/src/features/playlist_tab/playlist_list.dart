@@ -23,6 +23,7 @@ class _PlaylistListState extends State<PlaylistList> {
   final scrollController = ScrollController();
   String playlistName = 'New Playlist';
   BottomBarView? previousBottomBarView;
+  String renamePlaylistId = "";
 
   @override
   void dispose() {
@@ -35,7 +36,6 @@ class _PlaylistListState extends State<PlaylistList> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-
       builder:
           (bottomSheetContext) => Container(
             decoration: BoxDecoration(
@@ -45,8 +45,9 @@ class _PlaylistListState extends State<PlaylistList> {
                 topRight: Radius.circular(16),
               ),
             ),
-            // padding: const EdgeInsets.all(16),
             child: AddPlaylistBar(
+              initialValue: playlistName,
+              playlistId: renamePlaylistId.isNotEmpty ? renamePlaylistId : null,
               key: const ValueKey('add_playlist'),
               onChanged: (value) {
                 setState(() {
@@ -62,6 +63,7 @@ class _PlaylistListState extends State<PlaylistList> {
       // Reset the playlist name when bottom sheet is closed
       setState(() {
         playlistName = 'New Playlist';
+        renamePlaylistId = "";
       });
     });
   }
@@ -108,25 +110,44 @@ class _PlaylistListState extends State<PlaylistList> {
                 BlocSelector<SongsBloc, SongsState, List<PlaylistInfo>>(
                   selector: (state) => state.playlists,
                   builder: (context, playlists) {
-                    // Create a new playlist info for preview when in add mode
-                    final newPlaylistInfo =
-                        bottomBarView == BottomBarView.add
-                            ? PlaylistInfo(
-                              id: "newplaylist",
-                              isShuffle: false,
-                              createdAt: DateTime.now(),
-                              name: playlistName,
-                              updatedAt: DateTime.now(),
-                              songIds: [],
-                              coverImagePath: null,
-                            )
-                            : null;
+                    List<PlaylistInfo> displayPlaylists;
 
-                    // Combine new playlist with existing playlists for grid/list view
-                    final displayPlaylists =
-                        newPlaylistInfo != null
-                            ? [newPlaylistInfo, ...playlists]
-                            : playlists;
+                    // Check if we're renaming an existing playlist
+                    final isRenaming = renamePlaylistId.isNotEmpty;
+
+                    if (isRenaming) {
+                      // Show preview of renamed playlist in its current position
+                      displayPlaylists =
+                          playlists.map((playlist) {
+                            if (playlist.id == renamePlaylistId) {
+                              // Return a copy with the preview name
+                              return PlaylistInfo(
+                                id: playlist.id,
+                                isShuffle: playlist.isShuffle,
+                                createdAt: playlist.createdAt,
+                                name: playlistName,
+                                updatedAt: playlist.updatedAt,
+                                songIds: playlist.songIds,
+                                coverImagePath: playlist.coverImagePath,
+                              );
+                            }
+                            return playlist;
+                          }).toList();
+                    } else if (bottomBarView == BottomBarView.add) {
+                      // Create a new playlist info for preview when creating new
+                      final newPlaylistInfo = PlaylistInfo(
+                        id: "newplaylist",
+                        isShuffle: false,
+                        createdAt: DateTime.now(),
+                        name: playlistName,
+                        updatedAt: DateTime.now(),
+                        songIds: [],
+                        coverImagePath: null,
+                      );
+                      displayPlaylists = [newPlaylistInfo, ...playlists];
+                    } else {
+                      displayPlaylists = playlists;
+                    }
 
                     return playlistView == PlaylistViewEnum.grid
                         ? SliverPadding(
@@ -145,17 +166,46 @@ class _PlaylistListState extends State<PlaylistList> {
                                 final playlist = displayPlaylists[index];
                                 final isNewPlaylist =
                                     playlist.id == "newplaylist";
+                                final isBeingRenamed =
+                                    playlist.id == renamePlaylistId;
 
-                                return PlaylistCard(
-                                  playlistInfo: playlist,
-                                  onPlaylistTap:
-                                      isNewPlaylist
-                                          ? () {}
-                                          : () {
-                                            context.read<SongsBloc>().add(
-                                              SelectedPlaylist(playlist.id),
-                                            );
-                                          },
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  decoration:
+                                      isBeingRenamed
+                                          ? BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            border: Border.all(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                              width: 2,
+                                            ),
+                                          )
+                                          : null,
+                                  child: PlaylistCard(
+                                    onRenameClick: (value) {
+                                      setState(() {
+                                        playlistName = playlist.name;
+                                        renamePlaylistId = value;
+                                      });
+                                      context.read<SongsBloc>().add(
+                                        BottomBarToggle(BottomBarView.add),
+                                      );
+                                    },
+                                    playlistInfo: playlist,
+                                    onPlaylistTap:
+                                        isNewPlaylist || isBeingRenamed
+                                            ? () {}
+                                            : () {
+                                              context.read<SongsBloc>().add(
+                                                SelectedPlaylist(playlist.id),
+                                              );
+                                            },
+                                  ),
                                 );
                               },
                             ),
@@ -169,17 +219,49 @@ class _PlaylistListState extends State<PlaylistList> {
                               final playlist = displayPlaylists[index];
                               final isNewPlaylist =
                                   playlist.id == "newplaylist";
+                              final isBeingRenamed =
+                                  playlist.id == renamePlaylistId;
 
-                              return PlaylistTile(
-                                playlistInfo: playlist,
-                                onTap:
-                                    isNewPlaylist
-                                        ? () {}
-                                        : () {
-                                          context.read<SongsBloc>().add(
-                                            SelectedPlaylist(playlist.id),
-                                          );
-                                        },
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                decoration:
+                                    isBeingRenamed
+                                        ? BoxDecoration(
+                                          color: Theme.of(
+                                            context,
+                                          ).primaryColor.withValues(alpha: 0.1),
+                                          border: Border(
+                                            left: BorderSide(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                              width: 4,
+                                            ),
+                                          ),
+                                        )
+                                        : null,
+                                child: PlaylistTile(
+                                  onRenameClick:
+                                      (value) => {
+                                        setState(() {
+                                          playlistName = playlist.name;
+                                          renamePlaylistId = value;
+                                        }),
+                                        context.read<SongsBloc>().add(
+                                          BottomBarToggle(BottomBarView.add),
+                                        ),
+                                      },
+                                  playlistInfo: playlist,
+                                  onTap:
+                                      isNewPlaylist || isBeingRenamed
+                                          ? () {}
+                                          : () {
+                                            context.read<SongsBloc>().add(
+                                              SelectedPlaylist(playlist.id),
+                                            );
+                                          },
+                                ),
                               );
                             },
                           ),

@@ -35,4 +35,5 @@ class MusicIcons {
   static const addSongIcon= 'assets/images/add_song.png';
   static const playlistCardIcon= 'assets/images/playlist_card.png';
   static const renameIcon= 'assets/images/rename.png';
+  static const upcomingIcon= 'assets/images/upcoming.png';
 }

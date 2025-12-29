@@ -9,8 +9,12 @@ import 'package:widgets/widgets/icon_widget.dart';
 
 class PlaylistAddSong extends StatelessWidget {
   final PlaylistInfo playlistInfo;
-
-  const PlaylistAddSong({super.key, required this.playlistInfo});
+  final bool isEditMode;
+  const PlaylistAddSong({
+    super.key,
+    required this.playlistInfo,
+    required this.isEditMode,
+  });
   void _showAddMusicSheet(BuildContext context) {
     MechanixBottomSheet.show(
       topTabWidth: 370,
@@ -24,11 +28,14 @@ class PlaylistAddSong extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverToBoxAdapter(
       child: MouseRegion(
-        cursor: SystemMouseCursors.click,
+        cursor:
+            isEditMode ? SystemMouseCursors.basic : SystemMouseCursors.click,
         child: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap:
-              playlistInfo.songIds.length >= Constants.maxSongsPerPlaylist
+              isEditMode
+                  ? null
+                  : playlistInfo.songIds.length >= Constants.maxSongsPerPlaylist
                   ? null
                   : () {
                     _showAddMusicSheet(context);
@@ -39,7 +46,10 @@ class PlaylistAddSong extends StatelessWidget {
               IconButton(
                 iconSize: 44,
                 onPressed:
-                    playlistInfo.songIds.length >= Constants.maxSongsPerPlaylist
+                    isEditMode
+                        ? null
+                        : playlistInfo.songIds.length >=
+                            Constants.maxSongsPerPlaylist
                         ? null
                         : () {
                           _showAddMusicSheet(context);
@@ -56,7 +66,7 @@ class PlaylistAddSong extends StatelessWidget {
                   ),
                 ),
                 icon: IconWidget(
-                  iconColor: MusicColors.borderColor,
+                  iconColor: isEditMode ? Colors.grey : MusicColors.borderColor,
                   iconPath: MusicIcons.plusIcon,
                   iconHeight: 24,
                   boxHeight: 24,
@@ -65,7 +75,7 @@ class PlaylistAddSong extends StatelessWidget {
                 ),
               ),
               Text(
-                "Add a song",
+                "Add a track",
                 style: TextStyle(
                   fontSize: 18,
                   color: MusicColors.disabledColor,

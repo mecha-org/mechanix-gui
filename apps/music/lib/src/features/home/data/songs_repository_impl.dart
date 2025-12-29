@@ -378,13 +378,32 @@ class SongsRepositoryImpl extends SongsRepository {
   }
 
   @override
-  Future<bool> createPlaylist(String playlistName) async {
+  Future<bool> createUpdatePlaylist(
+    String playlistName,
+    String? playlistId,
+  ) async {
     await ensurePlaylistConnected();
     try {
       if (playlistName.trim().isEmpty) {
         return false;
       }
       final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      if (playlistId != null) {
+        final playlist = playlistBox.get(playlistId);
+        if (playlist == null) {
+          logger.w("Playlist not found: $playlistId");
+          return false;
+        }
+        final updatedPlaylist = playlist.copyWith(
+          name: playlistName.trim(),
+          updatedAt: DateTime.now(),
+          coverImagePath: playlist.coverImagePath,
+        );
+        await playlistBox.put(playlistId, updatedPlaylist);
+        logger.i("Playlist updated: $playlistName");
+        return true;
+      }
+
       if (playlistBox.values.length >= Constants.playlistLimit) {
         return false;
       }
@@ -478,16 +497,10 @@ class SongsRepositoryImpl extends SongsRepository {
               // Check if song is already in this playlist
               if (!playlist.songIds.contains(songId)) {
                 // Add song to playlist
-                final updatedPlaylist =
-                    song.artworkPath != null && song.artworkPath!.isNotEmpty
-                        ? playlist.copyWith(
-                          songIds: [...playlist.songIds, songId],
-                          coverImagePath: song.artworkPath,
-                        )
-                        : playlist.copyWith(
-                          songIds: [...playlist.songIds, songId],
-                          coverImagePath: playlist.coverImagePath,
-                        );
+                final updatedPlaylist = playlist.copyWith(
+                  songIds: [...playlist.songIds, songId],
+                  coverImagePath: playlist.coverImagePath,
+                );
                 await playlistBox.put(playlistId, updatedPlaylist);
               }
 

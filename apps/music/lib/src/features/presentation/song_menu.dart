@@ -72,7 +72,7 @@ class SongMenu extends StatelessWidget {
           onTap: () => _showAddToPlaylistSheet(context),
           title: "Add to playlist",
           leading: const IconWidget(
-            iconPath: MusicIcons.addToPlaylistIcon,
+            iconPath: MusicIcons.addSongIcon,
             iconColor: Colors.white,
           ),
         ),
@@ -84,7 +84,7 @@ class SongMenu extends StatelessWidget {
                 song.isFavourite
                     ? MusicIcons.filledFavouriteIcon
                     : MusicIcons.favouritesIcon,
-            iconColor: song.isFavourite?null:Colors.white,
+            iconColor: song.isFavourite?MusicColors.borderColor:Colors.white,
           ),
         ),
         MechanixMenuItemsType(

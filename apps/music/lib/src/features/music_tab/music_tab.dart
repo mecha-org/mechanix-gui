@@ -29,7 +29,7 @@ class _MusicTabState extends State<MusicTab> {
           dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
         ),
         child: Container(
-          padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 6),
+          padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 0),
           child: CustomScrollView(
             controller: scrollController,
             slivers: [

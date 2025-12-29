@@ -50,7 +50,7 @@ class _MusicSearchBarState extends State<MusicSearchBar> {
   void clearSearch() {
     context.read<SongsBloc>().add(SearchSong(''));
     context.read<SongsBloc>().add(BottomBarToggle(BottomBarView.normal));
-    context.read<SongsBloc>().add(MusicTabSwitch(MusicTabs.home));
+    context.read<SongsBloc>().add(BackTabEvent());
   }
 
   @override

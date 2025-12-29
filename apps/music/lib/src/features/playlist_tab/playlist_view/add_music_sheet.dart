@@ -160,10 +160,29 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Add track to playlist",
-                      style: TextStyle(fontSize: 20, height: 1.3),
-                    ),
+                    if (selectedMusic.isNotEmpty)
+                      RichText(
+                        text: TextSpan(
+                          style: DefaultTextStyle.of(
+                            context,
+                          ).style.copyWith(fontSize: 20, height: 1.3),
+                          children: [
+                            const TextSpan(text: 'Adding '),
+                            TextSpan(
+                              text: '${selectedMusic.length} Tracks',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      const Text(
+                        'Add track to playlist',
+                        style: TextStyle(fontSize: 20, height: 1.3),
+                      ),
                     Row(
                       spacing: 12,
                       children: [

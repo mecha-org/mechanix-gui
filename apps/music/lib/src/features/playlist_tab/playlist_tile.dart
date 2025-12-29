@@ -11,6 +11,8 @@ class PlaylistTile extends StatelessWidget {
   final bool isDisabled;
   final VoidCallback? onTap;
   final bool isMenuRequired;
+  final ValueChanged<String> onRenameClick;
+
   const PlaylistTile({
     super.key,
     required this.playlistInfo,
@@ -18,6 +20,7 @@ class PlaylistTile extends StatelessWidget {
     this.isDisabled = false,
     this.onTap,
     this.isMenuRequired = true,
+    required this.onRenameClick,
   });
 
   @override
@@ -75,7 +78,12 @@ class PlaylistTile extends StatelessWidget {
                   ),
 
           trailing:
-              isMenuRequired ? PlaylistMenu(playlistInfo: playlistInfo) : null,
+              isMenuRequired
+                  ? PlaylistMenu(
+                    playlistInfo: playlistInfo,
+                    onRenameClick: onRenameClick,
+                  )
+                  : null,
         ),
       ),
     );
@@ -99,35 +107,16 @@ class _PlaylistCover extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.all(Radius.circular(4)),
-        color:
+
+        image: DecorationImage(
+          image: AssetImage(
             hasCover
-                ? null
-                : (isDisabled ? MusicColors.dividerColor : Colors.red),
-        image:
-            hasCover
-                ? DecorationImage(
-                  image: AssetImage(playlistInfo.coverImagePath!),
-                  fit: BoxFit.cover,
-                  colorFilter:
-                      isDisabled
-                          ? ColorFilter.mode(
-                            Colors.black.withValues(alpha: 0.4),
-                            BlendMode.darken,
-                          )
-                          : null,
-                )
-                : null,
+                ? playlistInfo.coverImagePath!
+                : MusicIcons.playlistCardIcon,
+          ),
+          fit: BoxFit.cover,
+        ),
       ),
-      child:
-          hasCover
-              ? null
-              : Padding(
-                padding: const EdgeInsets.all(8),
-                child: Image.asset(
-                  MusicIcons.musicIcon,
-                  color: isDisabled ? MusicColors.secondaryTextColor : null,
-                ),
-              ),
     );
   }
 }

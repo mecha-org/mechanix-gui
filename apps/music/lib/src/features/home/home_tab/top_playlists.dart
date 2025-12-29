@@ -90,8 +90,8 @@ class _TopPlaylistsState extends State<TopPlaylists> {
           }
         });
 
-        return SizedBox(
-          height: 260, // Total height: header + list + spacing
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -99,7 +99,7 @@ class _TopPlaylistsState extends State<TopPlaylists> {
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 0,
+                  vertical: 10,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -149,7 +149,7 @@ class _TopPlaylistsState extends State<TopPlaylists> {
 
               // Horizontal Scrollable List - Single Row
               SizedBox(
-                height: 200, // Height for single row of cards
+                height: 164, // Height for single row of cards
                 child: SingleChildScrollView(
                   controller: _scrollController,
                   scrollDirection: Axis.horizontal,
@@ -161,8 +161,9 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                       children: [
                         for (int i = 0; i < playlists.length; i++) ...[
                           SizedBox(
-                            width: 160, // Fixed width for each card
+                            width: 164, // Fixed width for each card
                             child: PlaylistCard(
+                              onRenameClick: (value) {},
                               playlistInfo: playlists[i],
                               onPlaylistTap: () {
                                 context.read<SongsBloc>().add(

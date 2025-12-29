@@ -10,7 +10,7 @@ abstract class SongsRepository {
   Future<bool> toggleFavouriteSong(List<String> songInfo, bool isFavourite);
   Future<void> addToRecentlyPlayed(SongInfo songInfo);
   Future<List<SongInfo>> getRecentlyPlayed();
-  Future<bool> createPlaylist(String playlistName);
+  Future<bool> createUpdatePlaylist(String playlistName, String?playlistId);
   Future<List<PlaylistInfo>> getPlaylist();
   Future<bool> deletePlaylist(String playlistId);
   Future<List<SongInfo>> addToPlaylist(
