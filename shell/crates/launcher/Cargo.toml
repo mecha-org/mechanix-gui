@@ -34,33 +34,33 @@ priority = "optional"
 assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
-        "../../../target/release/launcher",
+        "../../../target/release/mechanix-launcher",
         "usr/bin/",
         "755",
     ],
     [
         "../../../assets/icons/app-drawer/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/app-drawer/",
+        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/app-drawer/",
         "755",
     ],
     [
         "../../../assets/icons/running-apps/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/running-apps/",
+        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/running-apps/",
         "755",
     ],
     [
         "../../../assets/icons/settings-drawer/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/icons/settings-drawer/",
+        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/icons/settings-drawer/",
         "755",
     ],
     [
         "../../../assets/icons/status-bar/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/icons/status-bar/",
+        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/icons/status-bar/",
         "755",
     ],
     [
         "../../../assets/icons/universal-search/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/universal-search/",
+        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/universal-search/",
         "755",
     ],
 ]
