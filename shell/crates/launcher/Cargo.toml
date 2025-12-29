@@ -1,6 +1,6 @@
 
 [package]
-name = "launcher"
+name = "mechanix-launcher"
 edition = "2024"
 version.workspace = true
 authors.workspace = true
