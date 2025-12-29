@@ -996,27 +996,17 @@ impl SettingsDrawer {
             // .bg(colors.background_900)
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
-            // .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
-            // .when(!self.open_modal, |this| {
-            //     this.on_long_press({
-            //         cx.listener(move |this, event: &LongPressEvent, window, cx| {
-            //             println!("long press display 11");
-            //
-            //             this.current_modal = ModalKind::DisplayModal;
-            //             Self::start_animation(this, event, window, cx);
-            //         })
-            //     })
-            // })
-            // .on_long_press({
-            //     cx.listener(move |this, event: &LongPressEvent, window, cx| {
-            //         if !this.open_modal {
-            //             this.current_modal = ModalKind::DisplayModal;
-            //             Self::start_animation(this, event, window, cx);
-            //         } else {
-            //             this.open_modal = false;
-            //         }
-            //     })
-            // })
+            .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
+            .on_long_press({
+                cx.listener(move |this, event: &LongPressEvent, window, cx| {
+                    if !this.open_modal {
+                        this.current_modal = ModalKind::DisplayModal;
+                        Self::start_animation(this, event, window, cx);
+                    } else {
+                        this.open_modal = false;
+                    }
+                })
+            })
             .child(self.render_brightness_slider(cx, 167.0))
     }
 
@@ -1081,7 +1071,7 @@ impl SettingsDrawer {
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
             .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
-            // .on_long_press(long_press_listener)
+            .on_long_press(long_press_listener)
             .child(self.render_volume_slider(cx))
     }
 

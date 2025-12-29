@@ -181,15 +181,6 @@ impl RenderOnce for IconButton {
                 }
             })
             .when_some(self.icon, |this, icon| {
-                // todo: check if this.active is true - update icon color
-                // let child = this.active(|style| {
-                //     style.text_color(if let Some(active_icon_color) = self.active_icon_color {
-                //         active_icon_color
-                //     } else {
-                //         rgb(ACTIVE_ICON_COLOR).into()
-                //     })
-                // });
-
                 let color: Hsla = if self.active {
                     if let Some(active_icon_color) = self.active_icon_color {
                         active_icon_color
