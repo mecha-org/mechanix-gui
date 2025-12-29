@@ -103,7 +103,7 @@ pub struct SettingsDrawer {
     drag_start_pos: f32,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModalKind {
     None,
     WirelessModal,
@@ -644,6 +644,25 @@ impl SettingsDrawer {
             )
     }
 
+    fn open_modal_on_long_press(
+        modal: ModalKind,
+        is_enabled: bool,
+    ) -> impl Fn(&mut Self, &LongPressEvent, &mut Window, &mut Context<Self>) + Clone {
+        move |this, event, window, cx| {
+            if !is_enabled {
+                return;
+            }
+
+            if !this.open_modal {
+                this.current_modal = modal;
+                Self::start_animation(this, event, window, cx);
+            } else {
+                this.open_modal = false;
+            }
+
+        }
+    }
+
     fn render_power_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         div()
@@ -707,7 +726,7 @@ impl SettingsDrawer {
     }
 
     fn render_screen_mirroring(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        // TODO: Add extened screen icons when extended screen is detected
+        // TODO: Add extended screen icons when extended screen is detected
         let screen_mirroring_icon = if self.screen_mirroring {
             IconName::ScreenMirroringOn
         } else {
@@ -729,12 +748,12 @@ impl SettingsDrawer {
                     cx.notify();
                 },
             ))
-            .on_long_press({
-                cx.listener(move |this, event: &LongPressEvent, window, cx| {
-                    this.current_modal = ModalKind::ScreenMirroring;
-                    Self::start_animation(this, event, window, cx);
-                })
-            })
+            .on_long_press(cx.listener(
+                Self::open_modal_on_long_press(
+                    ModalKind::ScreenMirroring,
+                    true,
+                ),
+            ))
     }
 
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -817,30 +836,31 @@ impl SettingsDrawer {
                 },
             ))
     }
-
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let wireless_details = ShellState::global(cx).wireless_details.clone();
 
-        let mut wireless_icon = IconName::WirelessOff;
-        let mut network_label = "Wi-Fi".to_string();
-        let wireless_connected_network = wireless_details.connected_network.clone();
-        let wireless_enable = wireless_details.enabled;
-        if wireless_enable && wireless_connected_network.is_some() {
-            network_label = wireless_connected_network
-                .clone()
-                .map(|s| s.ssid)
-                .unwrap_or_else(|| "Wi-Fi".to_string());
+        let (wireless_icon, network_label) = {
+            let mut icon = IconName::WirelessOff;
+            let mut label = "Wi-Fi".to_string();
 
-            wireless_icon = if network_label == "Wi-Fi" {
-                IconName::ConnectedWirelessOn
-            } else {
-                let signal_strength = wireless_connected_network
-                    .clone()
-                    .map(|info| info.signal_strength)
-                    .unwrap_or_else(|| 0);
-                get_wireless_strength_icon(wireless_enable, signal_strength, "Open".to_string()) // intentionally open as no lock to show in view
-            };
-        }
+            if wireless_details.enabled {
+                if let Some(ref network) = wireless_details.connected_network {
+                    label = network.ssid.clone();
+
+                    icon = if label == "Wi-Fi" {
+                        IconName::ConnectedWirelessOn
+                    } else {
+                        get_wireless_strength_icon(
+                            true,
+                            network.signal_strength,
+                            "Open".to_string(), // intentional: show open in view
+                        )
+                    };
+                }
+            }
+
+            (icon, label)
+        };
 
         IconButton::new("id_wireless")
             .icon(Icon::new(wireless_icon).size((px(36.), px(36.))))
@@ -849,49 +869,49 @@ impl SettingsDrawer {
             .label(network_label)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
-            // // // 10% - ok - keeping while it is active
             .on_click(cx.listener(
-                // keep this - quick click
-                move |this: &mut SettingsDrawer,
-                      _event: &ClickEvent,
-                      _window: &mut Window,
-                      cx: &mut Context<Self>| {
+                move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
-                    let is_enable = wireless_details.enabled;
+                    let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
                     cx.background_executor()
                         .spawn(async move {
-                            shell_state.toggle_wireless(!is_enable).await;
+                            shell_state.toggle_wireless(!is_enabled_now).await;
                         })
                         .detach();
+
                     cx.notify();
                 },
             ))
-            .on_long_press({
-                cx.listener(move |this, event: &LongPressEvent, window, cx| {
-                    this.current_modal = ModalKind::WirelessModal;
-                    Self::start_animation(this, event, window, cx);
-                })
-            })
+            .on_long_press(cx.listener(
+                Self::open_modal_on_long_press(
+                    ModalKind::WirelessModal,
+                    wireless_details.enabled,
+                ),
+            ))
     }
 
     fn render_bluetooth(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
-        let bluetooth_icon = match bluetooth_details.enabled {
-            true => match bluetooth_details.connected_devices > 0 {
-                true => IconName::BluetoothConnected,
-                false => IconName::BluetoothOn,
-            },
-            false => IconName::BluetoothOff,
-        };
-        let bluetooth_label = match bluetooth_details.enabled {
-            true => {
-                if bluetooth_details.connected_devices == 0 {
-                    "Bluetooth".to_string()
-                } else {
-                    format!("{} Devices", bluetooth_details.connected_devices)
-                }
-            }
-            false => "Bluetooth".to_string(),
+
+        let (bluetooth_icon, bluetooth_label) = {
+            let enabled = bluetooth_details.enabled;
+            let connected = bluetooth_details.connected_devices;
+
+            let icon = if !enabled {
+                IconName::BluetoothOff
+            } else if connected > 0 {
+                IconName::BluetoothConnected
+            } else {
+                IconName::BluetoothOn
+            };
+
+            let label = if enabled && connected > 0 {
+                format!("{} Devices", connected)
+            } else {
+                "Bluetooth".to_string()
+            };
+
+            (icon, label)
         };
 
         IconButton::new("id_bluetooth")
@@ -902,30 +922,26 @@ impl SettingsDrawer {
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
             .on_click(cx.listener(
-                move |this: &mut SettingsDrawer,
-                      _event: &ClickEvent,
-                      _window: &mut Window,
-                      cx: &mut Context<Self>| {
+                move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
-                    let is_enable = bluetooth_details.enabled;
-                    // bluetooth_details.enabled = !is_enable;
+                    let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
                     cx.background_executor()
                         .spawn(async move {
-                            shell_state.toggle_bluetooth(!is_enable).await;
+                            shell_state.toggle_bluetooth(!is_enabled_now).await;
                         })
                         .detach();
                     cx.notify();
                 },
             ))
-            .on_long_press({
-                cx.listener(move |this, event: &LongPressEvent, window, cx| {
-                    this.current_modal = ModalKind::BluetoothModal;
-                    Self::start_animation(this, event, window, cx);
-                })
-            })
+            .on_long_press(cx.listener(
+                Self::open_modal_on_long_press(
+                    ModalKind::BluetoothModal,
+                    bluetooth_details.enabled,
+                ),
+            ))
     }
 
-    fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
+  fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let battery_percent = ShellState::global(cx).battery_percent.clone();
 
         let power_mode_icon = match self.power_mode {
@@ -954,12 +970,12 @@ impl SettingsDrawer {
                     cx.notify();
                 },
             ))
-            .on_long_press({
-                cx.listener(move |this, event: &LongPressEvent, window, cx| {
-                    this.current_modal = ModalKind::PerformanceModal;
-                    Self::start_animation(this, event, window, cx);
-                })
-            })
+            .on_long_press(cx.listener(
+                Self::open_modal_on_long_press(
+                    ModalKind::PerformanceModal,
+                    true,
+                ),
+            ))
     }
 
     fn render_cell_signal(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -996,17 +1012,13 @@ impl SettingsDrawer {
             // .bg(colors.background_900)
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
-            .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
-            .on_long_press({
-                cx.listener(move |this, event: &LongPressEvent, window, cx| {
-                    if !this.open_modal {
-                        this.current_modal = ModalKind::DisplayModal;
-                        Self::start_animation(this, event, window, cx);
-                    } else {
-                        this.open_modal = false;
-                    }
-                })
-            })
+            .on_click(cx.listener(|_, _: &ClickEvent, _, _| {}))
+            .on_long_press(cx.listener(
+                Self::open_modal_on_long_press(
+                    ModalKind::DisplayModal,
+                    true,
+                ),
+            ))
             .child(self.render_brightness_slider(cx, 167.0))
     }
 
@@ -1054,11 +1066,6 @@ impl SettingsDrawer {
     fn render_sound_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
 
-        let long_press_listener = cx.listener(move |this, event: &LongPressEvent, window, cx| {
-            this.current_modal = ModalKind::SoundModal;
-            Self::start_animation(this, event, window, cx);
-        });
-
         div()
             .id("id_sound")
             .flex()
@@ -1071,7 +1078,12 @@ impl SettingsDrawer {
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
             .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
-            .on_long_press(long_press_listener)
+            .on_long_press(cx.listener(
+                Self::open_modal_on_long_press(
+                    ModalKind::SoundModal,
+                    true,
+                ),
+            ))
             .child(self.render_volume_slider(cx))
     }
 
