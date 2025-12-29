@@ -31,7 +31,7 @@ jobs:
       matrix:
         include:
           - name: Launcher Crate Build
-            package: launcher
+            package: mechanix-launcher
 
     runs-on: ubicloud-standard-2-arm
     environment: pre-release
@@ -81,6 +81,7 @@ jobs:
             libxkbcommon-x11-dev
             wayland-protocols
             libxkbcommon-tools
+            libgdk-pixbuf-2.0-dev
           )
 
           # Loop over packages and install only available ones
