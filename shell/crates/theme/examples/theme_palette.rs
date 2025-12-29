@@ -80,8 +80,6 @@ impl Render for ThemePalette {
             ("accent 800", colors.accent_800),
             ("accent 900", colors.accent_900),
             ("accent 1000", colors.accent_1000),
-            ("accent 1100", colors.accent_1100),
-            ("accent 1200", colors.accent_1200),
         ];
 
         let background_colors = vec![
@@ -96,8 +94,6 @@ impl Render for ThemePalette {
             ("bg 800", colors.background_800),
             ("bg 900", colors.background_900),
             ("bg 1000", colors.background_1000),
-            ("bg 1100", colors.background_1100),
-            ("bg 1200", colors.background_1200),
         ];
 
         let foreground_colors = vec![
@@ -112,8 +108,6 @@ impl Render for ThemePalette {
             ("fg 800", colors.foreground_800),
             ("fg 900", colors.foreground_900),
             ("fg 1000", colors.foreground_1000),
-            ("fg 1100", colors.foreground_1100),
-            ("fg 1200", colors.foreground_1200),
         ];
 
         div()
