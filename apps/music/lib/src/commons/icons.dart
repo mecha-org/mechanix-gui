@@ -31,4 +31,8 @@ class MusicIcons {
   static const threeLineIcon= 'assets/images/three_line.png';
   static const removeIcon= 'assets/images/remove.png';
   static const closeIcon= 'assets/images/close.png';
+  static const pauseToneArmIcon= 'assets/images/pause_tone_arm.png';
+  static const addSongIcon= 'assets/images/add_song.png';
+  static const playlistCardIcon= 'assets/images/playlist_card.png';
+  static const renameIcon= 'assets/images/rename.png';
 }

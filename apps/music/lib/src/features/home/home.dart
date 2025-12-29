@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
+import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/favourites_tab/favourites_tab.dart';
 import 'package:mechanix_music/src/features/home/bottom_bar.dart';
+import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/home/home_tab/home_tab.dart';
 import 'package:mechanix_music/src/features/music_tab/music_tab.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_tab.dart';
@@ -40,12 +44,25 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      bottomNavigationBar: BlocSelector<SongsBloc, SongsState, BottomBarView>(
-        selector: (state) => state.bottomBarView,
+      bottomNavigationBar: const BottomBar(),
+      floatingActionButton: BlocSelector<SongsBloc, SongsState, MusicTabs>(
+        selector: (state) => state.musicTab,
         builder:
-            (context, bottomBarView) =>
-                bottomBarView == BottomBarView.normal
-                    ? const BottomBar()
+            (context, musicTab) =>
+                [
+                      MusicTabs.music,
+                      MusicTabs.home,
+                      MusicTabs.favorites,
+                      MusicTabs.playlists,
+                    ].contains(musicTab)
+                    ? MusicIconButton(
+                      backgroundColor: MusicColors.disabledColor,
+                      icon: MusicIcons.searchIcon,
+                      onPressed:
+                          () => context.read<SongsBloc>().add(
+                            MusicTabSwitch(MusicTabs.search),
+                          ),
+                    )
                     : const SizedBox.shrink(),
       ),
       body: BlocBuilder<SongsBloc, SongsState>(

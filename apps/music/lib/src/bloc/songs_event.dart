@@ -109,9 +109,10 @@ class BottomBarToggle extends SongsEvent {
   const BottomBarToggle(this.bottomBarView);
 }
 
-class CreatePlaylist extends SongsEvent {
+class CreateUpdatePlaylist extends SongsEvent {
   final String playlistName;
-  const CreatePlaylist(this.playlistName);
+  final String? playlistId;
+  const CreateUpdatePlaylist({required this.playlistName, this.playlistId});
 }
 
 class LoadPlaylist extends SongsEvent {}

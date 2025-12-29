@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/models.dart';
+import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/mechanix.dart';
@@ -20,11 +22,12 @@ class BottomMenu extends StatelessWidget {
     return BlocSelector<
       SongsBloc,
       SongsState,
-      Tuple2<PlaylistViewEnum, MusicTabs>
+      Tuple2<PlaylistViewEnum, List<PlaylistInfo>>
     >(
-      selector: (state) => Tuple2(state.playlistView, state.musicTab),
+      selector: (state) => Tuple2(state.playlistView, state.playlists),
       builder: (context, state) {
         final playlistView = state.item1;
+        final playlists = state.item2;
 
         return MechanixMenu(
           animationDuration: const Duration(milliseconds: 100),
@@ -58,6 +61,7 @@ class BottomMenu extends StatelessWidget {
           ),
           items: [
             MechanixMenuItemsType(
+              disabled: playlists.length >= Constants.playlistLimit,
               onTap: () {
                 context.read<SongsBloc>().add(
                   BottomBarToggle(BottomBarView.add),

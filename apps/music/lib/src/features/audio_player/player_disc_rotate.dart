@@ -2,9 +2,12 @@ import 'dart:math' as math;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/audio_player/circle.dart';
+import 'package:mechanix_music/src/features/audio_player/tone_arm.dart';
 
 class PlayerDiscRotate extends StatefulWidget {
   final SongInfo songDetails;
@@ -23,11 +26,18 @@ class PlayerDiscRotate extends StatefulWidget {
 class _PlayerDiscRotateState extends State<PlayerDiscRotate>
     with SingleTickerProviderStateMixin {
   late AnimationController controller;
-  
-  // Dummy duration variables for testing
+
+  // Real duration variables from audio player
   Duration currentDuration = Duration.zero;
-  Duration totalDuration = const Duration(minutes: 3, seconds: 30); // 3:30 total
-  Timer? _durationTimer;
+  Duration totalDuration = Duration.zero;
+
+  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<Duration?>? _durationSubscription;
+
+  // Drag rotation control
+  bool _isDraggingVinyl = false;
+  double _dragRotationVelocity = 0.0;
+  Timer? _velocityDecayTimer;
 
   @override
   void initState() {
@@ -41,31 +51,35 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
       controller.stop(); // start in paused state if not playing
     }
 
-    // Start the duration timer
-    _startDurationTimer();
+    // Subscribe to real audio player streams
+    _subscribeToPlayerStreams();
   }
 
-  void _startDurationTimer() {
-    _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (widget.isPlaying && currentDuration < totalDuration) {
+  void _subscribeToPlayerStreams() {
+    final player = context.read<SongsBloc>().player;
+
+    // Listen to position changes
+    _positionSubscription = player.stream.position.listen((position) {
+      if (!_isDraggingVinyl) {
         setState(() {
-          currentDuration += const Duration(seconds: 1);
-        });
-      }
-      
-      // Loop back to start when finished
-      if (currentDuration >= totalDuration) {
-        setState(() {
-          currentDuration = Duration.zero;
+          currentDuration = position;
         });
       }
     });
+
+    // Listen to duration changes
+    // _durationSubscription = player.stream.duration.listen((duration) {
+    //   print("duration: $duration");
+    //   setState(() {
+    //     totalDuration = duration;
+    //   });
+    // });
   }
 
   @override
   void didUpdateWidget(covariant PlayerDiscRotate oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isPlaying && !oldWidget.isPlaying) {
+    if (widget.isPlaying && !oldWidget.isPlaying && !_isDraggingVinyl) {
       controller.repeat(); // resume rotation
     } else if (!widget.isPlaying && oldWidget.isPlaying) {
       controller.stop(); // pause rotation, keep current angle
@@ -73,17 +87,85 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
   }
 
   void _handlePositionChange(Duration newPosition) {
+    // Only update the UI during drag, don't seek yet
     setState(() {
       currentDuration = newPosition;
     });
-    print('Position changed to: ${newPosition.inSeconds}s');
-    // Here you would typically seek your audio player to this position
+  }
+
+  void _handleDragStart() {
+    setState(() {
+      _isDraggingVinyl = true;
+      _dragRotationVelocity = 0.0;
+    });
+    controller.stop(); // Stop automatic rotation
+    _velocityDecayTimer?.cancel();
+  }
+
+  void _handleDragUpdate(double angularVelocity) {
+    setState(() {
+      _dragRotationVelocity = angularVelocity;
+    });
+
+    // Manually rotate the disc based on velocity
+    // Positive velocity = clockwise, negative = counter-clockwise
+    final currentValue = controller.value;
+    final increment =
+        angularVelocity * 0.008; // INCREASED scale factor for faster rotation
+    controller.value = (currentValue + increment) % 1.0;
+  }
+
+  void _handleDragEnd() {
+    // Seek the player to the final position when drag is released
+    final player = context.read<SongsBloc>().player;
+    player.seek(currentDuration);
+
+    setState(() {
+      _isDraggingVinyl = false;
+    });
+
+    // Apply momentum/decay effect
+    _startVelocityDecay();
+
+    // Resume normal playback after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (widget.isPlaying && !_isDraggingVinyl) {
+        controller.repeat();
+      }
+    });
+  }
+
+  void _startVelocityDecay() {
+    _velocityDecayTimer?.cancel();
+
+    _velocityDecayTimer = Timer.periodic(const Duration(milliseconds: 16), (
+      timer,
+    ) {
+      if (_dragRotationVelocity.abs() < 0.1) {
+        timer.cancel();
+        _dragRotationVelocity = 0.0;
+        return;
+      }
+
+      // Decay the velocity smoothly
+      setState(() {
+        _dragRotationVelocity *= 0.95;
+      });
+
+      // Continue rotating with decaying velocity
+      final currentValue = controller.value;
+      final increment =
+          _dragRotationVelocity * 0.008; // Match the increased scale
+      controller.value = (currentValue + increment) % 1.0;
+    });
   }
 
   @override
   void dispose() {
     controller.dispose();
-    _durationTimer?.cancel();
+    _positionSubscription?.cancel();
+    _durationSubscription?.cancel();
+    _velocityDecayTimer?.cancel();
     super.dispose();
   }
 
@@ -100,38 +182,39 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
               child: SizedBox(
                 width: 300,
                 height: 300,
-                child: widget.songDetails.artworkPath != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(300),
-                        child: Image.asset(
-                          widget.songDetails.artworkPath!,
+                child:
+                    widget.songDetails.artworkPath != null
+                        ? ClipRRect(
+                          borderRadius: BorderRadius.circular(300),
+                          child: Image.asset(
+                            widget.songDetails.artworkPath!,
+                            width: 300,
+                            height: 300,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                        : Image.asset(
+                          MusicIcons.audioImage,
                           width: 300,
                           height: 300,
                           fit: BoxFit.cover,
                         ),
-                      )
-                    : Image.asset(
-                        MusicIcons.audioImage,
-                        width: 300,
-                        height: 300,
-                        fit: BoxFit.cover,
-                      ),
               ),
             );
           },
         ),
-        Positioned(
-          right: -25,
-          top: -25,
-          child: Image.asset(MusicIcons.toneArm, height: 105, width: 97),
-        ),
+        const ToneArm(),
+
         Positioned(
           bottom: -30,
           left: -30,
           child: SemiCircularAudioProgress(
             currentDuration: currentDuration,
-            totalDuration: totalDuration,
+            totalDuration: context.read<SongsBloc>().player.state.duration,
             onPositionChange: _handlePositionChange,
+            onDragStart: _handleDragStart,
+            onDragUpdate: _handleDragUpdate,
+            onDragEnd: _handleDragEnd,
           ),
         ),
       ],

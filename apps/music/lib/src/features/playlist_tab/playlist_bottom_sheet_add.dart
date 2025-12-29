@@ -9,7 +9,14 @@ import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:widgets/mechanix.dart';
 
 class PlaylistBottomSheetAdd extends StatefulWidget {
-  const PlaylistBottomSheetAdd({super.key});
+  final ValueChanged<String> onDraftChanged;
+  final VoidCallback onDraftCleared;
+
+  const PlaylistBottomSheetAdd({
+    super.key,
+    required this.onDraftChanged,
+    required this.onDraftCleared,
+  });
 
   @override
   State<PlaylistBottomSheetAdd> createState() => _PlaylistBottomSheetAddState();
@@ -20,17 +27,10 @@ enum ActiveMode { add, search, none }
 class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
   ActiveMode _activeMode = ActiveMode.none;
   String textValue = '';
-  @override
-  void dispose() {
-    super.dispose();
-  }
 
-  void _handlePress() {
-    if (_activeMode == ActiveMode.search) {
-      context.read<SongsBloc>().add(SearchPlaylist(''));
-    } else {
-      context.read<SongsBloc>().add(CreatePlaylist(textValue));
-    }
+  void _reset() {
+    widget.onDraftCleared();
+    context.read<SongsBloc>().add(SearchPlaylist(''));
     setState(() {
       _activeMode = ActiveMode.none;
       textValue = '';
@@ -39,20 +39,28 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
 
   @override
   Widget build(BuildContext context) {
+    // ADD MODE
     if (_activeMode == ActiveMode.add) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 16,
         children: [
           Expanded(
             child: MechanixTextInput.textInput(
               autofocus: true,
-              onChanged:
-                  (value) => setState(() {
-                    textValue = value;
-                  }),
+              onChanged: (value) {
+                textValue = value;
+                widget.onDraftChanged(value); // 🔥 live update
+              },
               anchorWidget: MusicIconButton(
-                onPressed: () => _handlePress(),
+                onPressed:
+                    textValue.trim().isEmpty
+                        ? null
+                        : () {
+                          context.read<SongsBloc>().add(
+                            CreateUpdatePlaylist(playlistName: textValue),
+                          );
+                          _reset();
+                        },
                 icon: MusicIcons.checkIcon,
                 backgroundColor: Colors.transparent,
               ),
@@ -61,9 +69,10 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
         ],
       );
     }
+
+    // SEARCH MODE
     if (_activeMode == ActiveMode.search) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 16,
         children: [
           Expanded(
@@ -72,13 +81,9 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
               onChanged:
                   (value) =>
                       context.read<SongsBloc>().add(SearchPlaylist(value)),
-
-              // (value) => setState(() {
-              //   textValue = value;
-              // }),
-              onClear: () => _handlePress(),
+              onClear: _reset,
               anchorWidget: MusicIconButton(
-                onPressed: () => _handlePress(),
+                onPressed: _reset,
                 icon: MusicIcons.checkIcon,
                 backgroundColor: Colors.transparent,
               ),
@@ -88,9 +93,8 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
       );
     }
 
-    // Show buttons by default
+    // DEFAULT MODE
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
       spacing: 16,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -120,7 +124,6 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
           iconSize: 44,
           onPressed: () {
             setState(() {
-              context.read<SongsBloc>().add(SearchPlaylist(''));
               _activeMode = ActiveMode.search;
             });
           },

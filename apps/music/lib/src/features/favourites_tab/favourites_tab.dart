@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/features/home/widgets/title_widget.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
@@ -34,7 +35,9 @@ class _FavouritesTabState extends State<FavouritesTab> {
             controller: scrollController,
             slivers: [
               // Title widget is now part of the scrollable content
-              const SliverToBoxAdapter(child: TitleWidget(title: "Liked Songs")),
+              const SliverToBoxAdapter(
+                child: TitleWidget(title: "Liked Songs"),
+              ),
 
               BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
                 selector: (state) => state.favouriteSongs,
@@ -46,7 +49,19 @@ class _FavouritesTabState extends State<FavouritesTab> {
                         (context, index) {
                           final song = songs[index];
 
-                          return SongTile(song: song);
+                          return BlocSelector<SongsBloc, SongsState, bool>(
+                            selector:
+                                (state) => state.currentSong?.id == song.id,
+                            builder: (context, isCurrentSong) {
+                              return SongTile(
+                                onTap: () {
+                                  context.read<SongsBloc>().add(PlaySong(song));
+                                },
+                                song: song,
+                                isCurrentSong: isCurrentSong,
+                              );
+                            },
+                          );
                         },
                       ),
                     ),

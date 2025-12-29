@@ -7,7 +7,6 @@ import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/bottom_menu.dart';
 import 'package:mechanix_music/src/features/home/mini_player.dart';
-import 'package:mechanix_music/src/features/playlist_tab/add_playlist_bar.dart';
 import 'package:mechanix_music/src/features/search_tab/music_search_bar.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
@@ -21,6 +20,9 @@ class BottomBar extends StatelessWidget {
     return BlocSelector<SongsBloc, SongsState, BottomBarView>(
       selector: (state) => state.bottomBarView,
       builder: (context, bottomBarView) {
+        if (bottomBarView == BottomBarView.add) {
+          return const SizedBox.shrink();
+        }
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           switchInCurve: Curves.easeInOut,
@@ -46,9 +48,7 @@ class BottomBar extends StatelessWidget {
     BottomBarView bottomBarView,
   ) {
     // Use unique keys for AnimatedSwitcher to detect changes
-    if (bottomBarView == BottomBarView.add) {
-      return AddPlaylistBar(key: const ValueKey('add_playlist'));
-    } else if (bottomBarView == BottomBarView.search) {
+    if (bottomBarView == BottomBarView.search) {
       return const MusicSearchBar(key: ValueKey('search_bar'));
     }
 
@@ -63,6 +63,10 @@ class BottomBar extends StatelessWidget {
           builder:
               (context, state) => MechanixBottomBar(
                 theme: MechanixBottomBarThemeData(
+                  iconTheme: MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28),
+                    iconBoxSize: Size(44, 44),
+                  ),
                   decoration: BoxDecoration(
                     color: Color(0xFF2E2E2E),
                     borderRadius: BorderRadius.only(
@@ -71,6 +75,7 @@ class BottomBar extends StatelessWidget {
                     ),
                   ),
                 ),
+
                 leadingWidget:
                     state == MusicTabs.playlistInfo
                         ? [
@@ -104,10 +109,7 @@ class BottomBar extends StatelessWidget {
                       );
                     },
                     isSelected: state == MusicTabs.home,
-                    iconTheme: const MechanixBottomBarIconThemeData(
-                      iconSize: Size(28, 28),
-                      iconBoxSize: Size(44, 44),
-                    ),
+
                     iconPath: MusicIcons.homeIcon,
                   ),
                   BottomBarButton(
@@ -117,10 +119,7 @@ class BottomBar extends StatelessWidget {
                         MusicTabSwitch(MusicTabs.search),
                       );
                     },
-                    iconTheme: const MechanixBottomBarIconThemeData(
-                      iconSize: Size(28, 28),
-                      iconBoxSize: Size(44, 44),
-                    ),
+
                     iconPath: MusicIcons.searchIcon,
                   ),
                   BottomBarButton(
@@ -130,10 +129,7 @@ class BottomBar extends StatelessWidget {
                         MusicTabSwitch(MusicTabs.music),
                       );
                     },
-                    iconTheme: const MechanixBottomBarIconThemeData(
-                      iconSize: Size(28, 28),
-                      iconBoxSize: Size(44, 44),
-                    ),
+
                     iconPath: MusicIcons.musicIcon,
                   ),
                   BottomBarButton(
@@ -145,10 +141,7 @@ class BottomBar extends StatelessWidget {
                         MusicTabSwitch(MusicTabs.playlists),
                       );
                     },
-                    iconTheme: const MechanixBottomBarIconThemeData(
-                      iconSize: Size(28, 28),
-                      iconBoxSize: Size(44, 44),
-                    ),
+
                     iconPath: MusicIcons.playlistIcon,
                   ),
                   BottomBarButton(
@@ -158,10 +151,7 @@ class BottomBar extends StatelessWidget {
                         MusicTabSwitch(MusicTabs.favorites),
                       );
                     },
-                    iconTheme: const MechanixBottomBarIconThemeData(
-                      iconSize: Size(28, 28),
-                      iconBoxSize: Size(44, 44),
-                    ),
+
                     iconPath: MusicIcons.favouritesIcon,
                   ),
                 ],

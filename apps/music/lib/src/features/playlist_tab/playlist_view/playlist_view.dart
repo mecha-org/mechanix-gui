@@ -127,7 +127,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                         builder: (context, songs) {
                           return MechanixFilledButton(
                             theme: MechanixFilledButtonThemeData(
-                              buttonSize: Size(69, 36),
+                              buttonSize: Size(85, 36),
                             ),
                             onPressed: () {
                               toggleEditMode(songs, playlist);
@@ -176,6 +176,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                           builder: (context, songs) {
                             return PlaylistActionsView(
                               playlistInfo: playlist,
+                              isEditMode: isEditMode,
                               onEdit: () => toggleEditMode(songs, playlist),
                             );
                           },
@@ -192,7 +193,10 @@ class _PlaylistViewState extends State<PlaylistView> {
                         // Add song button
                         SliverPadding(
                           padding: EdgeInsets.symmetric(horizontal: 16),
-                          sliver: PlaylistAddSong(playlistInfo: playlist),
+                          sliver: PlaylistAddSong(
+                            playlistInfo: playlist,
+                            isEditMode: isEditMode,
+                          ),
                         ),
 
                         SliverToBoxAdapter(child: SizedBox(height: 16)),
@@ -289,28 +293,14 @@ class _PlaylistViewState extends State<PlaylistView> {
                                                   if (isCurrentSong)
                                                     SizedBox(width: 40)
                                                   else
-                                                    IconButton(
-                                                      disabledColor:
-                                                          Theme.of(
-                                                            context,
-                                                          ).disabledColor,
-                                                      onPressed:
-                                                          isCurrentSong
-                                                              ? null
-                                                              : () => onDelete(
-                                                                index,
-                                                              ),
-                                                      iconSize: 40,
-
-                                                      icon: IconWidget(
-                                                        iconPath:
-                                                            MusicIcons
-                                                                .removeIcon,
-                                                        boxHeight: 24,
-                                                        boxWidth: 24,
-                                                        iconHeight: 24,
-                                                        iconWidth: 24,
-                                                      ),
+                                                    IconWidget(
+                                                      iconPath:
+                                                          MusicIcons
+                                                              .threeLineIcon,
+                                                      boxHeight: 40,
+                                                      boxWidth: 40,
+                                                      iconHeight: 24,
+                                                      iconWidth: 24,
                                                     ),
                                                   SizedBox(width: 8),
                                                   // Song tile
@@ -329,14 +319,28 @@ class _PlaylistViewState extends State<PlaylistView> {
                                                   if (isCurrentSong)
                                                     SizedBox(width: 40)
                                                   else
-                                                    IconWidget(
-                                                      iconPath:
-                                                          MusicIcons
-                                                              .threeLineIcon,
-                                                      boxHeight: 40,
-                                                      boxWidth: 40,
-                                                      iconHeight: 24,
-                                                      iconWidth: 24,
+                                                    IconButton(
+                                                      disabledColor:
+                                                          Theme.of(
+                                                            context,
+                                                          ).disabledColor,
+                                                      onPressed:
+                                                          isCurrentSong
+                                                              ? null
+                                                              : () => onDelete(
+                                                                index,
+                                                              ),
+                                                      iconSize: 40,
+
+                                                      icon: IconWidget(
+                                                        iconPath:
+                                                            MusicIcons
+                                                                .deleteIcon,
+                                                        boxHeight: 24,
+                                                        boxWidth: 24,
+                                                        iconHeight: 24,
+                                                        iconWidth: 24,
+                                                      ),
                                                     ),
                                                 ],
                                               ),

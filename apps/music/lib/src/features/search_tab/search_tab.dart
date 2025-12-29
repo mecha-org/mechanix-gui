@@ -81,7 +81,7 @@ class _SearchTabState extends State<SearchTab> {
                         if (showClearButton)
                           MechanixFilledButton(
                             theme: MechanixFilledButtonThemeData(
-                              buttonSize: const Size(69, 36),
+                              buttonSize: const Size(90, 36),
                             ),
                             onPressed: () {
                               context.read<SongsBloc>().add(
@@ -125,6 +125,7 @@ class _SearchTabState extends State<SearchTab> {
                             children: [
                               Expanded(
                                 child: PlaylistTile(
+                                  onRenameClick: (value) {},
                                   isMenuRequired: false,
                                   playlistInfo: playlist,
                                   onTap: () {
@@ -256,6 +257,7 @@ class _SearchTabState extends State<SearchTab> {
                       if (searchResults.playlists.isNotEmpty) ...[
                         ...searchResults.playlists.map(
                           (playlist) => PlaylistTile(
+                            onRenameClick: (value) {},
                             playlistInfo: playlist,
                             onTap: () {
                               context.read<SongsBloc>().add(

@@ -31,7 +31,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<AddToQueue>(_addToQueue);
     on<RecentSongs>(recentlyPlayed);
     on<BottomBarToggle>(bottomBarView);
-    on<CreatePlaylist>(createPlaylist);
+    on<CreateUpdatePlaylist>(createUpdatePlaylist);
     on<LoadPlaylist>(loadPlaylist);
     on<PlaylistViewMode>(playlistViewMode);
     on<DeletePlaylist>(deletePlaylist);
@@ -373,6 +373,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           emit(
             state.copyWith(
               currentSong: nextSong,
+              isPlaying: player.state.playing,
               currentPlaylist: state.currentPlaylist.copyWith(
                 currentIndex: newIndex,
                 currentSongId: nextSong.id,
@@ -391,7 +392,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           // If last song → stop or loop (your choice)
           if (currentIndex == state.playlistSongs.length - 1) {
             logger.i("Reached end of playlist");
-            if (state.isPlaying) emit(state.copyWith(isPlaying: false));
+            if (state.isPlaying) {
+              emit(state.copyWith(isPlaying: player.state.playing));
+            }
 
             return;
           }
@@ -404,6 +407,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           emit(
             state.copyWith(
               currentSong: nextSong,
+              isPlaying: player.state.playing,
               currentPlaylist: state.currentPlaylist.copyWith(
                 currentIndex: nextIndex,
                 currentSongId: nextSong.id,
@@ -471,7 +475,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         state.copyWith(
           currentSong: nextSong,
           playbackQueue: updatedQueue, // Update queue (might be cleared)
-          isPlaying: true,
+          isPlaying: player.state.playing,
           error: null,
         ),
       );
@@ -521,6 +525,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         emit(
           state.copyWith(
             currentSong: prevSong,
+            isPlaying: player.state.playing,
             currentPlaylist: state.currentPlaylist.copyWith(
               currentIndex: prevIndex,
               currentSongId: prevSong.id,
@@ -570,7 +575,13 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       await player.open(media);
       await songsRepository.addToRecentlyPlayed(prevSong);
       add(RecentSongs());
-      emit(state.copyWith(currentSong: prevSong, isPlaying: true, error: null));
+      emit(
+        state.copyWith(
+          currentSong: prevSong,
+          isPlaying: player.state.playing,
+          error: null,
+        ),
+      );
 
       logger.i("Playing: ${prevSong.title}");
     } catch (e) {
@@ -694,7 +705,20 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
         emit(state.copyWith(playlistSongs: updatedSongs, error: null));
       }
-
+      if (state.currentSong != null) {
+        emit(
+          state.copyWith(
+            currentSong:
+                state.currentSong != null
+                    ? event.songIds.contains(state.currentSong?.id)
+                        ? state.currentSong?.copyWith(
+                          isFavourite: event.isFavourite,
+                        )
+                        : state.currentSong
+                    : null,
+          ),
+        );
+      }
       logger.i("Favourite updated: ${event.isFavourite}");
     } catch (e) {
       logger.e("Error updating favourite: $e");
@@ -807,12 +831,15 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     emit(state.copyWith(bottomBarView: event.bottomBarView));
   }
 
-  Future<void> createPlaylist(
-    CreatePlaylist event,
+  Future<void> createUpdatePlaylist(
+    CreateUpdatePlaylist event,
     Emitter<SongsState> emit,
   ) async {
     logger.i("Creating playlist: ${event.playlistName}");
-    await songsRepository.createPlaylist(event.playlistName);
+    await songsRepository.createUpdatePlaylist(
+      event.playlistName,
+      event.playlistId,
+    );
     emit(state.copyWith(bottomBarView: BottomBarView.normal));
     logger.i("Playlist created successfully");
     add(LoadPlaylist());
@@ -936,7 +963,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return add(TogglePlayPause());
       }
       final playlist = await songsRepository.getPlaylistSongs(event.playlistId);
-      // print("going here ${event.songIndex!}");
       await player.open(
         Playlist(
           playlist.map((song) => Media(song.path)).toList(),

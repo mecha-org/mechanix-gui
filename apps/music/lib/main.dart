@@ -15,6 +15,7 @@ import 'package:watch_it/watch_it.dart';
 import 'package:widgets/extension.dart';
 import 'package:widgets/theme/mechanix_theme.dart';
 import 'package:widgets/theme/variants.dart';
+import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet_theme.dart';
 import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/theme/theme_toggle.dart';
 import 'package:path_provider/path_provider.dart';
@@ -67,6 +68,15 @@ class MainApp extends StatelessWidget with WatchItMixin {
       data: MechanixThemeData(
         mechanixVariant: MechanixVariant.amber,
         extensions: [
+          MechanixBottomSheetThemeData(
+            decoration: BoxDecoration(
+              color: Color(0xFF2E2E2E),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+          ),
           MechanixMenuThemeData(
             decoration: BoxDecoration(color: context.colorScheme.tertiary),
             itemBackgroundColor: context.colorScheme.tertiary,

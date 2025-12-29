@@ -23,6 +23,7 @@ class AddToPlaylistSheet extends StatefulWidget {
 
 class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
   final List<String> selectedPlaylists = [];
+  String draftPlaylistName = '';
 
   @override
   void initState() {
@@ -31,15 +32,23 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
   }
 
   void updateSelection(String id) {
-    if (selectedPlaylists.contains(id)) {
-      setState(() {
-        selectedPlaylists.remove(id);
-      });
-    } else {
-      setState(() {
-        selectedPlaylists.add(id);
-      });
-    }
+    setState(() {
+      selectedPlaylists.contains(id)
+          ? selectedPlaylists.remove(id)
+          : selectedPlaylists.add(id);
+    });
+  }
+
+  void updateDraftName(String value) {
+    setState(() {
+      draftPlaylistName = value;
+    });
+  }
+
+  void clearDraft() {
+    setState(() {
+      draftPlaylistName = '';
+    });
   }
 
   @override
@@ -49,13 +58,15 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
         return Container(
           height: constraints.maxHeight * 0.98,
           width: double.infinity,
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Title
               Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
                 child: Text(
                   "Playlists",
                   style: TextStyle(
@@ -81,7 +92,11 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                   builder: (context, state) {
                     final playlists = state.item1;
                     final searchItem = state.item2;
-                    if (playlists.isEmpty) {
+
+                    final dataSource =
+                        searchItem.isNotEmpty ? searchItem : playlists;
+
+                    if (dataSource.isEmpty && draftPlaylistName.isEmpty) {
                       return Center(
                         child: Text(
                           "No playlists available",
@@ -92,54 +107,61 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                         ),
                       );
                     }
-                    if (searchItem.isNotEmpty) {
-                      return ListView.builder(
-                        itemCount: searchItem.length,
-                        itemBuilder: (context, index) {
-                          final playlist = searchItem[index];
-                          final isAlreadyInPlaylist =
-                              playlist.songIds.length >=
-                                  Constants.maxSongsPerPlaylist ||
-                              widget.song.playlistIds.contains(playlist.id);
 
-                          return PlaylistTile(
-                            playlistInfo: playlist,
-                            isSelected: selectedPlaylists.contains(playlist.id),
-                            isDisabled: isAlreadyInPlaylist,
+                    return Column(
+                      children: [
+                        // Draft Live preview tile
+                        if (draftPlaylistName.isNotEmpty)
+                          PlaylistTile(
+                            onRenameClick: (value) {},
+                            playlistInfo: PlaylistInfo(
+                              createdAt: DateTime.now(),
+                              isShuffle: false,
+                              updatedAt: DateTime.now(),
+                              id: 'draft',
+                              name: draftPlaylistName,
+                              songIds: const [],
+                              coverImagePath: null,
+                            ),
+                            isSelected: false,
+                            isDisabled: false,
                             isMenuRequired: false,
-                            onTap:
-                                isAlreadyInPlaylist
-                                    ? null
-                                    : () => updateSelection(playlist.id),
-                          );
-                        },
-                      );
-                    } else {
-                      return ListView.builder(
-                        itemCount: playlists.length,
-                        itemBuilder: (context, index) {
-                          final playlist = playlists[index];
-                          final isAlreadyInPlaylist =
-                              playlist.songIds.length >=
-                                  Constants.maxSongsPerPlaylist ||
-                              widget.song.playlistIds.contains(playlist.id);
+                            onTap: null,
+                          ),
 
-                          return PlaylistTile(
-                            playlistInfo: playlist,
-                            isSelected: selectedPlaylists.contains(playlist.id),
-                            isDisabled: isAlreadyInPlaylist,
-                            isMenuRequired: false,
-                            onTap:
-                                isAlreadyInPlaylist
-                                    ? null
-                                    : () => updateSelection(playlist.id),
-                          );
-                        },
-                      );
-                    }
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: dataSource.length,
+                            itemBuilder: (context, index) {
+                              final playlist = dataSource[index];
+                              final isAlreadyInPlaylist =
+                                  playlist.songIds.length >=
+                                      Constants.maxSongsPerPlaylist ||
+                                  widget.song.playlistIds.contains(playlist.id);
+
+                              return PlaylistTile(
+                                onRenameClick: (value) {},
+                                playlistInfo: playlist,
+                                isSelected: selectedPlaylists.contains(
+                                  playlist.id,
+                                ),
+                                isDisabled: isAlreadyInPlaylist,
+                                isMenuRequired: false,
+                                onTap:
+                                    isAlreadyInPlaylist
+                                        ? null
+                                        : () => updateSelection(playlist.id),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
                   },
                 ),
               ),
+
+              // Bottom add/search row
               Container(
                 height: 64,
                 decoration: BoxDecoration(
@@ -150,17 +172,21 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                     ),
                   ),
                 ),
-                child: PlaylistBottomSheetAdd(),
+                child: PlaylistBottomSheetAdd(
+                  onDraftChanged: updateDraftName,
+                  onDraftCleared: clearDraft,
+                ),
               ),
 
+              // Footer actions
               Container(
                 color: MusicColors.backgroundColor,
                 height: 60,
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       "Add track to playlist",
                       style: TextStyle(fontSize: 20, height: 1.3),
                     ),
@@ -168,7 +194,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                       spacing: 12,
                       children: [
                         MechanixFilledButton(
-                          theme: MechanixFilledButtonThemeData(
+                          theme: const MechanixFilledButtonThemeData(
                             buttonSize: Size(100, 40),
                           ),
                           label: "Cancel",
@@ -178,22 +204,25 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                         ),
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
-                            buttonSize: Size(75, 40),
+                            buttonSize: const Size(75, 40),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(8),
                               color: MusicColors.titleColor,
                             ),
                           ),
                           label: "Add",
-                          onPressed: () {
-                            context.read<SongsBloc>().add(
-                              AddToPlaylist(
-                                songIds: [widget.song.id],
-                                playlistIds: selectedPlaylists,
-                              ),
-                            );
-                            Navigator.of(context).pop();
-                          },
+                          onPressed:
+                              selectedPlaylists.isEmpty
+                                  ? null
+                                  : () {
+                                    context.read<SongsBloc>().add(
+                                      AddToPlaylist(
+                                        songIds: [widget.song.id],
+                                        playlistIds: selectedPlaylists,
+                                      ),
+                                    );
+                                    Navigator.of(context).pop();
+                                  },
                         ),
                       ],
                     ),

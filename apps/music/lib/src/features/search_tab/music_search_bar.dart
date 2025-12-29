@@ -42,15 +42,7 @@ class _MusicSearchBarState extends State<MusicSearchBar> {
       if (val.trim().length > 2) {
         context.read<SongsBloc>().add(SearchSong(val));
       } else {
-        if (context.read<SongsBloc>().state.searchResults.songs.isNotEmpty ||
-            context
-                .read<SongsBloc>()
-                .state
-                .searchResults
-                .playlists
-                .isNotEmpty) {
-          context.read<SongsBloc>().add(SearchSong(''));
-        }
+        context.read<SongsBloc>().add(SearchSong(''));
       }
     });
   }

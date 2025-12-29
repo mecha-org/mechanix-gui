@@ -7,8 +7,14 @@ import 'package:widgets/mechanix.dart';
 
 class AddPlaylistBar extends StatelessWidget {
   final ValueChanged<String>? onChanged;
-
-  const AddPlaylistBar({super.key, this.onChanged});
+  final String initialValue;
+  final String? playlistId;
+  const AddPlaylistBar({
+    super.key,
+    this.playlistId,
+    this.onChanged,
+    required this.initialValue,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +29,16 @@ class AddPlaylistBar extends StatelessWidget {
           },
           getCurrentValue: (value) {
             if (value.trim().isNotEmpty) {
-              context.read<SongsBloc>().add(CreatePlaylist(value));
+              context.read<SongsBloc>().add(
+                CreateUpdatePlaylist(
+                  playlistName: value,
+                  playlistId: playlistId,
+                ),
+              );
             }
             Navigator.of(context).pop();
           },
-          initialValue: "New Playlist",
+          initialValue: initialValue,
           anchorWidget: IconWidget(
             boxHeight: 44,
             boxWidth: 44,

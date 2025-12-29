@@ -650,7 +650,10 @@ class SongsRepositoryImpl extends SongsRepository {
         return false;
       }
 
-      final copyData = playlist.copyWith(isShuffle: isShuffle);
+      final copyData = playlist.copyWith(
+        isShuffle: isShuffle,
+        coverImagePath: playlist.coverImagePath,
+      );
       await playlistBox.put(
         playlistId,
         // playlist.copyWith(isShuffle: isShuffle),

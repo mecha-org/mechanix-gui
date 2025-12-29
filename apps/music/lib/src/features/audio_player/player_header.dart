@@ -4,11 +4,9 @@ import 'package:mechanix_music/src/commons/colors.dart';
 
 class PlayerHeader extends StatelessWidget {
   final SongInfo songDetails;
-  final bool isFavorited;
   const PlayerHeader({
     super.key,
     required this.songDetails,
-    required this.isFavorited,
   });
 
   @override

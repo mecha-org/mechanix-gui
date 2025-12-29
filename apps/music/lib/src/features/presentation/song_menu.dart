@@ -78,11 +78,13 @@ class SongMenu extends StatelessWidget {
         ),
         MechanixMenuItemsType(
           onTap: () => onToggleFavourite?.call(),
-          title:
-              song.isFavourite ? "Remove from favourite" : "Add to favourite",
-          leading: const IconWidget(
-            iconPath: MusicIcons.favouritesIcon,
-            iconColor: Colors.white,
+          title: song.isFavourite ? "Unlike Track" : "Add to liked",
+          leading: IconWidget(
+            iconPath:
+                song.isFavourite
+                    ? MusicIcons.filledFavouriteIcon
+                    : MusicIcons.favouritesIcon,
+            iconColor: song.isFavourite?null:Colors.white,
           ),
         ),
         MechanixMenuItemsType(

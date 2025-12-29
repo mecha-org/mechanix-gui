@@ -8,7 +8,7 @@ enum BottomBarView { normal, text, search, add }
 
 enum PlaylistViewEnum { grid, list }
 
-enum MusicMode { normal, playlist }
+enum MusicMode { normal, playlist, favorite }
 
 class CurrentPlaylist extends Equatable {
   final String? playlistId;
