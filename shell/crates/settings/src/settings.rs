@@ -280,7 +280,7 @@ where
         };
     }
 
-    if merged.as_array().iter().len() > 0 {
+    if merged.as_array().iter().len() >= 0 {
         merged.clone().try_into().unwrap_or_default()
     } else {
         T::default()

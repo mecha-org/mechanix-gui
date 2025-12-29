@@ -1,42 +1,45 @@
+use crate::config::constants::*;
+use crate::models::models::DragDirection;
+use crate::prelude::app_manager::AppManagerMessage;
+use crate::ui::icon::{Icon, IconName};
+use crate::ui::{CardDragData, RunningApps};
 use gpui::prelude::*;
 use gpui::*;
 use tracing::info;
-use crate::config::constants::*;
-use crate::models::models::{ DragDirection };
-use crate::prelude::app_manager::AppManagerMessage;
-use crate::ui::{ CardDragData, RunningApps };
-use crate::ui::icon::{ Icon, IconName };
 
 impl RunningApps {
     fn on_app_click(&mut self, app_id: String, cx: &mut Context<Self>) {
         let tx_clone = self.message_tx.clone();
         let app_id_clone = app_id.clone();
 
+        // 1. Update internal state and input regions
+        self.show_apps = false;
         cx.background_executor()
             .spawn(async move {
                 let (reply_tx, reply_rx) = tokio::sync::oneshot::channel();
 
-                if
-                    let Err(_) = tx_clone.send(AppManagerMessage::LaunchApp {
+                if let Ok(_) = tx_clone
+                    .send(AppManagerMessage::LaunchApp {
                         app_id: app_id_clone,
                         reply_to: reply_tx,
-                    }).await
+                    })
+                    .await
                 {
-                } else {
                     if let Ok(Ok(success)) = reply_rx.await {
-                        info!("✅ App activated successfully:: {}", success);
+                        info!("✅ App activated successfully: {}", success);
                     }
                 }
             })
             .detach();
 
         cx.stop_propagation();
+        cx.notify();
     }
     fn handle_drag_move(
         &mut self,
         event: &DragMoveEvent<CardDragData>,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        cx: &mut Context<Self>,
     ) {
         if !self.is_dragging {
             return;
@@ -60,7 +63,7 @@ impl RunningApps {
         app_id: usize,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        cx: &mut Context<Self>,
     ) {
         self.is_dragging = true;
         self.is_animating = false;
@@ -82,9 +85,13 @@ impl RunningApps {
 
         div()
             .id(card_id)
-
+            // .on_click(cx.listener(move |view, _, _, cx| {
+            //     view.on_app_click(app_id.clone(), cx);
+            // }))
             .on_click(
-                cx.listener(move |view, _, _, cx| {
+                cx.listener(move |view, _, window, cx| {
+                    view.show_apps = false;
+                    view.update_input_regions(window, false);
                     view.on_app_click(app_id.clone(), cx);
                 })
             )
@@ -99,14 +106,13 @@ impl RunningApps {
                     .absolute()
                     .left_0()
                     .top_0()
-                    .child(Icon::from(IconName::BgApp).size((px(CARD_WIDTH), px(CARD_HEIGHT))))
+                    .child(Icon::from(IconName::BgApp).size((px(CARD_WIDTH), px(CARD_HEIGHT)))),
             )
             .relative()
             .when_some(app_icon_path.clone(), |d, s| {
                 let image_path = std::path::PathBuf::from(s);
                 d.child(img(image_path).w(px(40.0)).h(px(40.0)))
             })
-
             .rounded(px(16.0))
             .top(offset_y)
             .cursor_pointer()
@@ -119,7 +125,7 @@ impl RunningApps {
                 MouseButton::Left,
                 cx.listener(move |view, event, window, cx| {
                     view.handle_card_mouse_down(id, event, window, cx);
-                })
+                }),
             )
             .child(
                 div()
@@ -149,16 +155,16 @@ impl RunningApps {
                                         let image_path = std::path::PathBuf::from(s).clone();
 
                                         d.child(img(image_path).w(px(16.0)).h(px(16.0)))
-                                    })
+                                    }),
                             )
                             .child(
                                 div()
                                     .font_weight(FontWeight(400.0))
                                     .text_size(px(16.0))
                                     .text_color(rgb(0xf4f4f4))
-                                    .when_some(app_name.clone(), |d, s| { d.child(s) })
-                            )
-                    )
+                                    .when_some(app_name.clone(), |d, s| d.child(s)),
+                            ),
+                    ),
             )
     }
 }
