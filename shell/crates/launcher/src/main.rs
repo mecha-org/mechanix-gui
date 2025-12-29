@@ -1,3 +1,3 @@
 fn main() {
-    launcher::run();
+    mechanix_launcher::run();
 }
