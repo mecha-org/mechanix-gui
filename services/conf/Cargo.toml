@@ -1,7 +1,7 @@
 [package]
 name = "mxconf"
 description = "Configuration system for the Mechanix shell, services and gui apps"
-version.workspace = true
+version = "0.0.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -48,4 +48,13 @@ assets = [
         "usr/bin/",
         "755",
     ],
+]
+
+[package.metadata.generate-rpm]
+summary = "Configuration system for the Mechanix shell, services and gui apps"
+license = "MIT" # or workspace override if you have one
+auto-req = "yes"
+assets = [
+    # Binary
+    { source = "../../target/release/mxconf", dest = "/usr/bin/mxconf", mode = "755" },
 ]
