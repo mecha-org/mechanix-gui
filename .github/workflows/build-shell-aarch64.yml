@@ -22,6 +22,7 @@ env:
   MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
   MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
   MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
+  MECHA_PULP_RPMS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}
 
 jobs:
   build:
@@ -31,27 +32,38 @@ jobs:
       matrix:
         include:
           - name: Launcher Crate Build
-            package: mechanix-launcher
+            package: launcher
+            path: shell/crates/launcher
 
-    runs-on: ubicloud-standard-2-arm
+    runs-on: ubuntu-24.04-arm
     environment: pre-release
     continue-on-error: false
     steps:
       - name: Setup | Checkout
         uses: actions/checkout@v4
 
-      - name: Install Rust 1.91.1
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.91.1
+          toolchain: stable
 
-      - name: Install cargo-deb
-        run: cargo install cargo-deb
-
+      - name: Install cargo tools
+        run: |
+          cargo install cargo-deb
+          cargo install cargo-generate-rpm
+      - name: Install Nushell
+        run: |
+          curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
+          echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+          sudo apt update
+          sudo apt install nushell
+      - name: Setup | Pulp CLI
+        run: |
+          pipx install --force pulp-cli[pygments]
+          pipx inject pulp-cli pulp-cli-deb pulp_rpm
       - name: Install dependencies
         run: |
           sudo apt update
-
           # List of packages
           packages=(
             g++
@@ -81,9 +93,9 @@ jobs:
             libxkbcommon-x11-dev
             wayland-protocols
             libxkbcommon-tools
-            libgdk-pixbuf-2.0-dev
+            libgdk-pixbuf-2.0-0
+            libgdk-pixbuf2.0-dev
           )
-
           # Loop over packages and install only available ones
           for pkg in "${packages[@]}"; do
             if apt-cache show "$pkg" > /dev/null 2>&1; then
@@ -93,13 +105,11 @@ jobs:
               echo "[WARN] Package $pkg not found, skipping."
             fi
           done
-
       # Pulp CLI setup
       - name: Setup | Pulp CLI
         run: |
           pipx install --force pulp-cli[pygments]
-          pipx inject pulp-cli pulp-cli-deb
-
+          pipx inject pulp-cli pulp-cli-deb pulp_rpm
       - name: Setup | Pulp CLI Configuration
         run: |
           set -euo pipefail
@@ -110,80 +120,121 @@ jobs:
           # Construct full Pulp API URL (add port)
           PULP_API_URL="${MECHA_PULP_API_URL}:8080"
           echo "[INFO] Using Pulp base URL: $PULP_API_URL"
-
           # Configure Pulp CLI using the correct env vars
           pulp config create \
             --username "$MECHA_PULP_USERNAME" \
             --password "$MECHA_PULP_PASSWORD" \
             --base-url "$PULP_API_URL" \
             --overwrite
-
+      - name: Get Upstream Version ${{ matrix.package }}
+        id: cargo_version
+        shell: bash
+        run: |
+          VERSION=$(cargo metadata --format-version 1 --no-deps --manifest-path ${{ matrix.path }}/Cargo.toml | \
+            jq -r ".packages[] | select(.name == \"${{ matrix.package }}\") | .version")
+          if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
+            echo "[ERROR] Could not resolve version for ${{ matrix.package }}"
+            exit 1
+          fi
+          echo "Detected Version: $VERSION"
+          echo "upstream=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Build ${{ matrix.package }}
         run: |
           cargo --config net.git-fetch-with-cli=true fetch
           cargo build --release --package ${{ matrix.package }}
           ls -la target/release
-
+      - name: Resolve versions [${{ matrix.package }}]
+        id: version_info
+        run: |
+          set -euo pipefail
+          # 1. Resolve DEB Version Info
+          JSON_DEB=$(nu utils/resolve-next-version.nu \
+            --format deb \
+            --name ${{ matrix.package }} \
+            --upstream ${{ steps.cargo_version.outputs.upstream }} | tr -d '\n')
+          # 2. Resolve RPM Version Info
+          JSON_RPM=$(nu utils/resolve-next-version.nu \
+            --format rpm \
+            --name ${{ matrix.package }} \
+            --upstream ${{ steps.cargo_version.outputs.upstream }} | tr -d '\n')
+          echo "DEB JSON: $JSON_DEB"
+          echo "RPM JSON: $JSON_RPM"
+          # Extract revisions using jq
+          DEB_REV=$(echo "$JSON_DEB" | jq -r '.next_revision')
+          RPM_REV=$(echo "$JSON_RPM" | jq -r '.next_revision')
+          # Set outputs for subsequent steps
+          echo "deb_revision=$DEB_REV" >> "$GITHUB_OUTPUT"
+          echo "rpm_revision=$RPM_REV" >> "$GITHUB_OUTPUT"
       - name: Package deb ${{ matrix.package }}
         run: |
           sudo apt install -y fakeroot
-          fakeroot cargo deb --no-build --package ${{ matrix.package }}
+          fakeroot cargo deb --deb-revision "${{ steps.version_info.outputs.deb_revision }}" --no-build --package ${{ matrix.package }}
           ls -la target/debian
-
       - name: Repack DEB natively [${{ matrix.package }}]
         run: |
           set -euo pipefail
           DEB_FILE=$(ls target/debian/${{ matrix.package }}_*.deb | head -n1)
           echo "[INFO] Repacking: $DEB_FILE"
-
           TMPDIR=$(mktemp -d)
           trap 'rm -rf "$TMPDIR"' EXIT
-
           # Extract & repack under fakeroot
           fakeroot dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
           fakeroot dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"  
-
           echo "[INFO] ✅ Repacked: $DEB_FILE"
-
+      - name: Generate RPM [${{ matrix.package }}]
+        run: |
+          # Use the resolved RPM revision for the 'release' field
+          cargo generate-rpm \
+            -s 'release = "${{ steps.version_info.outputs.rpm_revision }}"' \
+            -p "$(pwd)/${{ matrix.path }}"
+          ls -la target/generate-rpm
       - name: Prepare artifacts ${{ matrix.package }}
         run: |
-          mkdir -p build
-          cp target/release/${{ matrix.package }} ./build || true
-          cp target/debian/${{ matrix.package }}_*.deb ./build
-
+          mkdir -p build/deb build/rpm
+          # Copy DEB
+          cp target/debian/${{ matrix.package }}_*.deb ./build/deb/
+          # Copy RPM
+          cp target/generate-rpm/${{ matrix.package }}*.rpm ./build/rpm/
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.package }}-artifacts
           path: ./build/*
 
-      - name: Publish to Pulp ${{ matrix.package }}
+      - name: Publish DEB [${{ matrix.package }}]
         run: |
           set -euo pipefail
-
-          DEB_FILE=$(find ./build -name "${{ matrix.package }}*.deb" -type f | head -n1)
-
+          # Using the package name from matrix
+          DEB_FILE=$(find ./build/deb -name "${{ matrix.package }}*.deb" -type f | head -n1)
+          
           if [ -z "$DEB_FILE" ]; then
-            echo "[ERROR] No .deb file found for ${{ matrix.package }}"
+            echo "[ERROR] No .deb file found"
             exit 1
           fi
-
-          echo "[INFO] 📦 Publishing: $DEB_FILE"
-
-          pulp deb content upload \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --file="$DEB_FILE"
-
-          echo "[INFO] Creating publication..."
+          echo "[INFO] 📦 Publishing DEB: $DEB_FILE"
+          pulp deb content upload --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" --file="$DEB_FILE"
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --signing-service=mecha-pkg-sign \
-            | jq -r '.pulp_href')
-
-          echo "[INFO] Updating distribution..."
+            --signing-service=mecha-pkg-sign | jq -r '.pulp_href')
+            
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-
-          echo "[INFO] ✅ Package ${{ matrix.package }} published successfully!"
+      - name: Publish RPM [${{ matrix.package }}]
+        run: |
+          set -euo pipefail
+          # Using the package name from matrix
+          RPM_FILE=$(find ./build/rpm -name "${{ matrix.package }}*.rpm" -type f | head -n1)
+          if [ -z "$RPM_FILE" ]; then
+            echo "[ERROR] No .rpm file found"
+            exit 1
+          fi
+          echo "[INFO] 📦 Publishing RPM: $RPM_FILE"
+          pulp rpm content upload --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" --file="$RPM_FILE"
+          PUB_HREF=$(pulp rpm publication create \
+            --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
+          pulp rpm distribution update \
+            --name="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --publication="$PUB_HREF"

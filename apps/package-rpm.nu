@@ -54,24 +54,27 @@ def main [
     # Package name
     let pkg_name = $"mechanix-($app_name)"
 
-    # Find Package resolver Script 
     let resolver_script = "../utils/resolve-next-version.nu" | path expand
 
-    # Get full RPM revision from resolver
-    let resolver_output = try {
-        # Call the nu script directly and parse the JSON string into a Nushell record
-        nu $resolver_script --format "rpm" --name $pkg_name --upstream $app_version --base-url "http://pkg.mecha.so" | from json
+    # Get version info from resolver
+    let version_data = try {
+        let resolver_cmd = [
+            "nu"  # Call nu directly
+            $resolver_script
+            "--format" "rpm"
+            "--name" $pkg_name
+            "--upstream" $app_version
+            "--base-url" "http://pkg.mecha.so"
+        ]
+        # Run the command and immediately parse the JSON output
+        ^$resolver_cmd.0 ...($resolver_cmd | drop 1) | from json
     } catch {
-        print "[WARN] Resolver failed or returned invalid JSON, defaulting to revision 1"
-        { next_revision: "1", upstream_version: $app_version }
+        print "[WARN] Resolver failed, defaulting to revision 1"
+        { next_revision: 1, upstream_version: $app_version }
     }
-
-    # Extract version and release from the parsed record
-    let pkg_version = $resolver_output.upstream_version
-    let pkg_release = $resolver_output.next_revision | into string
     
-    print $"[INFO] RPM Version: ($pkg_version)"
-    print $"[INFO] RPM Release: ($pkg_release)"
+    let pkg_version = $version_data.upstream_version
+    let pkg_release = ($version_data.next_revision | save - | into string) # Ensure it's a string
     
     print $"[INFO] RPM Version: ($pkg_version)"
     print $"[INFO] RPM Release: ($pkg_release)"
