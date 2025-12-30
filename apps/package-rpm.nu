@@ -58,28 +58,20 @@ def main [
     let resolver_script = "../utils/resolve-next-version.nu" | path expand
 
     # Get full RPM revision from resolver
-    let rpm_revision_full = try {
-            let resolver_cmd = [
-            $resolver_script
-            "--format" "rpm"
-            "--name" $pkg_name
-            "--upstream" $app_version
-            "--base-url" "http://pkg.mecha.so"
-        ]
-        (^sh -c ($resolver_cmd | str join " ") | str trim | lines | last)
+    let resolver_output = try {
+        # Call the nu script directly and parse the JSON string into a Nushell record
+        nu $resolver_script --format "rpm" --name $pkg_name --upstream $app_version --base-url "http://pkg.mecha.so" | from json
     } catch {
-        print "[WARN] Resolver failed, defaulting to revision 1"
-        $"($app_version)-1"
+        print "[WARN] Resolver failed or returned invalid JSON, defaulting to revision 1"
+        { next_revision: "1", upstream_version: $app_version }
     }
 
-    # Extract numeric release (the part after the dash)
-    let rpm_parts = $rpm_revision_full | split row "-"
-    let pkg_version = $rpm_parts | first
-    let pkg_release = if (($rpm_parts | length) > 1) {
-        $rpm_parts | last
-    } else {
-        "1"
-    }
+    # Extract version and release from the parsed record
+    let pkg_version = $resolver_output.upstream_version
+    let pkg_release = $resolver_output.next_revision | into string
+    
+    print $"[INFO] RPM Version: ($pkg_version)"
+    print $"[INFO] RPM Release: ($pkg_release)"
     
     print $"[INFO] RPM Version: ($pkg_version)"
     print $"[INFO] RPM Release: ($pkg_release)"
