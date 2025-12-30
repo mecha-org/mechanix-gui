@@ -59,12 +59,11 @@ def main [
     # Find Package resolver Script 
     let resolver_script = "../utils/resolve-next-version.nu" | path expand
 
-    # Get version info from resolver and parse as JSON
+   # Get version info from resolver and parse as JSON
     let version_data = try {
-        # Using parenthesized external call. 
-        # Since it's executable and has a shebang, we just call the path.
+        # Using ^ to call the external script directly
         (^$resolver_script 
-            --format "rpm" 
+            --format "rpm"  # Or "deb" for the deb script
             --name $pkg_name 
             --upstream $app_version 
             --base-url "http://pkg.mecha.so" 
@@ -72,14 +71,15 @@ def main [
     } catch {
         print "[WARN] Resolver failed, defaulting to revision 1"
         { 
-            full_version: $"($app_version)-1", 
-            next_revision: 1, 
-            upstream_version: $app_version 
+            upstream_version: $app_version,
+            next_revision: 1,
+            full_version: $"($app_version)-1"
         }
     }
     
-    let pkg_version = $version_data.upstream_version
-    let pkg_release = ($version_data.next_revision | save - | into string) # Ensure it's a string
+    # Safely extract and convert to string
+    let pkg_version = ($version_data.upstream_version | into string)
+    let pkg_release = ($version_data.next_revision | into string)
     
     print $"[INFO] RPM Version: ($pkg_version)"
     print $"[INFO] RPM Release: ($pkg_release)"
