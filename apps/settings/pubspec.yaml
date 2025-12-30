@@ -45,11 +45,10 @@ dependencies:
   bluez: ^0.8.3
   pulseaudio: ^0.0.8
   widgets:
-    # git:
-    #   url: https://github.com/mecha-org/mechanix.dart.git
-    #   path: flutter/widgets
-    #   ref: main
-    path: /home/ojash/mecha/pre-release/mechanix-ui/flutter/widgets
+    git:
+      url: https://github.com/mecha-org/mechanix.dart.git
+      path: flutter/widgets
+      ref: main
 
   watch_it: ^1.7.0
   timezone: ^0.10.1
