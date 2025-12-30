@@ -56,21 +56,26 @@ def main [
 
     let resolver_script = "../utils/resolve-next-version.nu" | path expand
 
-    # Get version info from resolver
+    # Find Package resolver Script 
+    let resolver_script = "../utils/resolve-next-version.nu" | path expand
+
+    # Get version info from resolver and parse as JSON
     let version_data = try {
-        let resolver_cmd = [
-            "nu"  # Call nu directly
-            $resolver_script
-            "--format" "rpm"
-            "--name" $pkg_name
-            "--upstream" $app_version
-            "--base-url" "http://pkg.mecha.so"
-        ]
-        # Run the command and immediately parse the JSON output
-        ^$resolver_cmd.0 ...($resolver_cmd | drop 1) | from json
+        # Using parenthesized external call. 
+        # Since it's executable and has a shebang, we just call the path.
+        (^$resolver_script 
+            --format "rpm" 
+            --name $pkg_name 
+            --upstream $app_version 
+            --base-url "http://pkg.mecha.so" 
+            | from json)
     } catch {
         print "[WARN] Resolver failed, defaulting to revision 1"
-        { next_revision: 1, upstream_version: $app_version }
+        { 
+            full_version: $"($app_version)-1", 
+            next_revision: 1, 
+            upstream_version: $app_version 
+        }
     }
     
     let pkg_version = $version_data.upstream_version
