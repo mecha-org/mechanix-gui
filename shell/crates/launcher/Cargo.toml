@@ -78,7 +78,7 @@ auto-req = "yes"
 
 assets = [
     # Binary
-    { source = "../../../target/release/launcher", dest = "/usr/bin/launcher", mode = "755" },
+    { source = "../../../target/release/mechanix-launcher", dest = "/usr/bin/mechanix-launcher", mode = "755" },
 
     # App drawer icons
     { source = "../../../assets/icons/app-drawer/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/app-drawer/", mode = "755" },
