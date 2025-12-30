@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use gpui::{Bounds, Context, Entity, FocusHandle, Pixels, Point, ShapedLine, SharedString};
-
+use commons::input::TextInput;
 use crate::ui::icon::IconName;
 use mxsearch::{AppInfo, service::MxSearchService}; // Import your service
 
@@ -33,18 +33,6 @@ pub struct DragInfo {
     pub position: Point<Pixels>,
 }
 
-pub struct TextInput {
-    pub focus_handle: FocusHandle,
-    pub content: SharedString,
-    pub placeholder: SharedString,
-    pub selected_range: Range<usize>,
-    pub selection_reversed: bool,
-    pub marked_range: Option<Range<usize>>,
-    pub last_layout: Option<ShapedLine>,
-    pub last_bounds: Option<Bounds<Pixels>>,
-    pub is_selecting: bool,
-    pub on_change: Option<Box<dyn Fn(&mut Self, &mut Context<Self>)>>,
-}
 
 pub struct SearchResults {
     pub name: String,

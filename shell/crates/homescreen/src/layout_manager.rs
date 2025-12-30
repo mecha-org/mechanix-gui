@@ -144,18 +144,34 @@ impl LayoutManager {
         widgets_to_shuffle: Vec<WidgetId>,
         page_number: usize,
     ) -> bool {
+        let last_page_index = state.pages.len() - 1;
         let mut widget_infos: Vec<(WidgetId, gpui::Size<usize>, Point<usize>)> = widgets_to_shuffle
             .iter()
             .filter_map(|&widget_id| {
-                state.widgets.get(&widget_id).map(|widget_data| {
-                    (
+                state.widgets.get(&widget_id).and_then(|widget_data| {
+                    let page = widget_data.page_number();
+
+                    // Skip if it's on page 0 or last page as we have fixed widgets on these pages
+                    if page == 0 || page == last_page_index {
+                        return None;
+                    }
+
+                    Some((
                         widget_id,
                         widget_data.grid_bounds.size,
                         widget_data.grid_bounds.origin,
-                    )
+                    ))
                 })
             })
             .collect();
+
+        // If no widgets are left to shuffle after filtering, we just return true
+        if widget_infos.is_empty() && !widgets_to_shuffle.is_empty() {
+            // This means we tried to shuffle only fixed widgets, which we shouldn't allow
+            // Usually, this case implies the drop failed to find room without moving fixed items.
+            return false;
+        }
+
 
         widget_infos.sort_by_key(|(_, _, origin)| (origin.y, origin.x));
 

@@ -1,5 +1,5 @@
 pub mod icon;
-pub mod input;
+// pub mod input;
 pub mod models;
 
 use std::path::PathBuf;
@@ -7,12 +7,12 @@ use std::path::PathBuf;
 use crate::data::data::*;
 use crate::ui::icon::Icon;
 use crate::ui::models::FileType;
+use commons::input::TextInput;
 use freedesktop_icons::lookup;
 use gpui::*;
 use icon::IconName;
 use models::DragInfo;
 use models::SearchResults;
-use models::TextInput;
 use models::UniversalSearch;
 use mxsearch::service::MxSearchService;
 
@@ -253,77 +253,7 @@ impl Render for UniversalSearch {
         div()
             .w_full()
             .h_full()
-            .on_mouse_move(
-                cx.listener(move |this, event: &MouseMoveEvent, _window, cx| {
-                    if let Some(offset) = this.drag_offset {
-                        let new_y = event.position.y.to_f64() as f32 - offset;
-                        this.position = new_y.clamp(open_y, closed_y);
-                        cx.notify();
-                    }
-                }),
-            )
-            .on_mouse_up(
-                MouseButton::Left,
-                cx.listener(move |this, _, window, cx| {
-                    if this.drag_offset.is_some() {
-                        this.drag_offset = None;
-
-                        let target;
-                        let started_closed = this.drag_start_pos > (closed_y / 2.0);
-
-                        if started_closed {
-                            if this.position < (closed_y - threshold_px) {
-                                target = open_y;
-                                this.update_input_regions(window, false);
-                            } else {
-                                target = closed_y;
-                                this.update_input_regions(window, true);
-                            }
-                        } else {
-                            if this.position > (open_y + threshold_px) {
-                                target = closed_y;
-                                this.update_input_regions(window, true);
-                            } else {
-                                target = open_y;
-                                this.update_input_regions(window, false);
-                            }
-                        }
-                        this.snap_to(target, cx);
-                        cx.notify();
-                    }
-                }),
-            )
-            .child(
-                div()
-                    .w_full()
-                    .h_full()
-                    .absolute()
-                    .top(px(self.position))
-                    .child(
-                        div()
-                            .w_full()
-                            .flex()
-                            .flex_row()
-                            .justify_start()
-                            .h(px(NAVBAR_SIZE.1))
-                            .child(
-                                img(IconName::Navbar.resolve())
-                                    .id("universal-search-navbar")
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        cx.listener(|this, event: &MouseDownEvent, _window, cx| {
-                                            cx.stop_propagation();
-                                            this.drag_start_pos = this.position;
-                                            this.drag_offset = Some(
-                                                event.position.y.to_f64() as f32 - this.position,
-                                            );
-                                            cx.notify();
-                                        }),
-                                    ),
-                            ),
-                    )
-                    .child(self.universal_search_items(cx)),
-            )
+            .child(self.universal_search_items(cx))
     }
 }
 
