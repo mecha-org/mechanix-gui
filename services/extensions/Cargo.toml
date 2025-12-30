@@ -32,3 +32,12 @@ assets = [
         "755",
     ],
 ]
+
+[package.metadata.generate-rpm]
+summary = "Detection Service for the Mechanix Extensions"
+license = "MIT" # or workspace override if you have one
+auto-req = "yes"
+assets = [
+    # Binary
+    { source = "../../target/release/mechanix-extension-service", dest = "/usr/bin/mechanix-extension-service", mode = "755" },
+]

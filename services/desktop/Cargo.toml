@@ -47,3 +47,12 @@ assets = [
         "755",
     ],
 ]
+
+[package.metadata.generate-rpm]
+summary = "Service for running session services"
+license = "MIT" # or workspace override if you have one
+auto-req = "yes"
+assets = [
+    # Binary
+    { source = "../../target/release/mechanix-session-service", dest = "/usr/bin/mechanix-session-service", mode = "755" },
+]
