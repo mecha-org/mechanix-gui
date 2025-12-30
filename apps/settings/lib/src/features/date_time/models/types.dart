@@ -1,4 +1,4 @@
-import 'package:widgets/widgets/wheelScroll/wheel_scroll_options_type.dart';
+import 'package:widgets/widgets/wheel_scroll/wheel_scroll_options_type.dart';
 
 final List<WheelScrollOption<int>> hours12Options = List.generate(12, (index) {
   final hour = index + 1;

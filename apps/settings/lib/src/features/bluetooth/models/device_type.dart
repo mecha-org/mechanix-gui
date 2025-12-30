@@ -29,95 +29,56 @@ class DeviceType extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final icon = IconWidget(
+      iconPath: Images.rightIconArrow,
+      iconWidth: 9,
+      iconHeight: 15,
+      boxWidth: 20,
+      boxHeight: 20,
+      iconColor: context.onSurfaceVariant,
+    );
+
     switch (deviceType) {
       case 'audio-headphones':
         return Row(
           children: [
-            IconWidget(iconPath: Images.audioHeadset).padRight(8),
-            CustomTrailingText(
-              title: 'Headphone',
-            ).padRight(8),
-            IconWidget(
-              iconWidth: 10,
-              iconHeight: 17,
-              iconPath: Images.rightIconArrow,
-            ).padRight(8)
+            const CustomTrailingText(title: 'Headphone').padRight(8),
+            icon
           ],
         );
 
       case 'audio-headset':
         return Row(
           children: [
-            IconWidget(iconPath: Images.audioHeadset).padRight(8),
-            CustomTrailingText(
-              title: 'Headphone',
-            ).padRight(8),
-            IconWidget(
-              iconWidth: 10,
-              iconHeight: 17,
-              iconPath: Images.rightIconArrow,
-            ).padRight(8)
+            const CustomTrailingText(title: 'Headphone').padRight(8),
+            icon
           ],
         );
 
       case 'phone':
         return Row(
           children: [
-            const IconWidget(iconPath: Images.mobile).padRight(8),
-            const CustomTrailingText(
-              title: 'Mobile',
-            ).padRight(8),
-            const IconWidget(
-              iconWidth: 10,
-              iconHeight: 17,
-              iconPath: Images.rightIconArrow,
-            ).padRight(8)
+            const CustomTrailingText(title: 'Mobile').padRight(8),
+            icon
           ],
         );
 
       case 'computer':
         return Row(
-          children: [
-            const IconWidget(iconPath: Images.tv).padRight(8),
-            const CustomTrailingText(
-              title: 'TV',
-            ).padRight(8),
-            const IconWidget(
-              iconWidth: 10,
-              iconHeight: 17,
-              iconPath: Images.rightIconArrow,
-            ).padRight(8)
-          ],
+          children: [const CustomTrailingText(title: 'TV').padRight(8), icon],
         );
 
       case 'multimedia-player':
         return Row(
-          children: [
-            const IconWidget(iconPath: Images.speaker).padRight(8),
-            const CustomTrailingText(
-              title: 'Car',
-            ).padRight(8),
-            const IconWidget(
-              iconWidth: 10,
-              iconHeight: 17,
-              iconPath: Images.rightIconArrow,
-            ).padRight(8)
-          ],
+          children: [const CustomTrailingText(title: 'Car').padRight(8), icon],
         );
-
 
       // TODO: add more device types like mouse , keyboard
       default:
         return Row(
           children: [
-            CustomTrailingText(
-              title: 'Other',
-            ).padRight(8),
-            IconWidget(
-              iconWidth: 10,
-              iconHeight: 17,
-              iconPath: Images.rightIconArrow,
-            ).padRight(8)
+            const CustomTrailingText(title: 'Other').padRight(8),
+            icon
           ],
         );
     }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 
 class ConfigureDnsWidget extends StatefulWidget {

@@ -9,7 +9,12 @@ class BluetoothAdapter {
   bool discovering;
   bool discoverable;
 
-  BluetoothAdapter({required this.name, this.alias, required this.powered, required this.discovering, required this.discoverable});
+  BluetoothAdapter(
+      {required this.name,
+      this.alias,
+      required this.powered,
+      required this.discovering,
+      required this.discoverable});
 
   BluetoothAdapter copyWith({
     String? name,
@@ -73,21 +78,53 @@ enum BluetoothDevice {
   other,
 }
 
-final List<SelectOption<BluetoothDevice>> bluetoothDeviceOptions = [
-  BluetoothDevice.speaker.toSelectOption('Speaker',
-      leading:
-          IconWidget(iconWidth: 16, iconHeight: 20, iconPath: Images.speaker)),
-  BluetoothDevice.headphone.toSelectOption('Headphone',
-      leading: IconWidget(
-          iconWidth: 20, iconHeight: 18, iconPath: Images.audioHeadset)),
-  BluetoothDevice.mobile.toSelectOption('Mobile',
-      leading:
-          IconWidget(iconWidth: 16, iconHeight: 20, iconPath: Images.mobile)),
-  BluetoothDevice.tv.toSelectOption('TV',
-      leading: IconWidget(iconWidth: 20, iconHeight: 20, iconPath: Images.tv)),
-  BluetoothDevice.car.toSelectOption('Car',
-      leading: IconWidget(iconWidth: 24, iconHeight: 20, iconPath: Images.car)),
-  BluetoothDevice.other.toSelectOption(
-    'Other',
-  ),
-];
+List<SelectOption<String>> bluetoothDeviceOptions(String value) => [
+      SelectOption(
+          value: 'speaker',
+          label: "Speaker",
+          leading: IconWidget(
+              isActive: 'Speaker' == value,
+              iconWidth: 16,
+              iconHeight: 20,
+              iconPath: Images.speaker)),
+      SelectOption(
+          value: 'audio-headphone',
+          label: "Headphone",
+          leading: IconWidget(
+              isActive: 'audio-headphone' == value,
+              iconWidth: 16,
+              iconHeight: 20,
+              iconPath: Images.audioHeadset)),
+      SelectOption(
+          value: 'phone',
+          label: "Mobile",
+          leading: IconWidget(
+              isActive: 'phone' == value,
+              iconWidth: 16,
+              iconHeight: 20,
+              iconPath: Images.mobile)),
+      SelectOption(
+          value: 'computer',
+          label: "TV",
+          leading: IconWidget(
+              isActive: 'computer' == value,
+              iconWidth: 16,
+              iconHeight: 20,
+              iconPath: Images.tv)),
+      SelectOption(
+          value: 'multimedia-player',
+          label: "Car",
+          leading: IconWidget(
+              isActive: 'multimedia-player' == value,
+              iconWidth: 16,
+              iconHeight: 20,
+              iconPath: Images.car)),
+      SelectOption(
+          value: 'other',
+          label: "Other",
+          leading: IconWidget(
+              isActive: 'other' == value,
+              iconWidth: 16,
+              iconHeight: 20,
+              iconPath: Images.audioHeadset)),
+    ];
