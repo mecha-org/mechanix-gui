@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
+import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/select/select_type.dart';
@@ -12,8 +16,19 @@ class DeviceTypes extends StatefulWidget {
 }
 
 class _DeviceTypesState extends State<DeviceTypes> {
+  late String selectValue;
 
-  String selectValue = '';
+  @override
+  void initState() {
+    final state = context.read<BluetoothBloc>().state;
+
+    if (state.selectedDevice != null) {
+      setState(() {
+        selectValue = state.selectedDevice?.icon ?? 'other';
+      });
+    }
+    super.initState();
+  }
 
   void onChanged(SelectOption option) {
     setState(() {
@@ -24,17 +39,21 @@ class _DeviceTypesState extends State<DeviceTypes> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(52),
-        child: const MechanixNavigationBar(title: 'Device types').padHorizontal(12),),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(12),
         child: ContainerWidget(
-            child: MechanixSelect(
-                    options: bluetoothDeviceOptions,
-                    onChanged: onChanged,
-                    value: selectValue)
-                .padTop(8)),
+            child: Column(
+          children: [
+            const CustomTitle(title: "Device Types"),
+            MechanixSelect(
+              options: bluetoothDeviceOptions(selectValue),
+              onChanged: onChanged,
+              value: selectValue,
+            ).padTop(8),
+          ],
+        )),
+      ),
+      bottomSheet: MechanixBottomBar(
+        leadingWidget: [context.backButton],
       ),
     );
   }

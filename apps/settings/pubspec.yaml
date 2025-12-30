@@ -45,10 +45,11 @@ dependencies:
   bluez: ^0.8.3
   pulseaudio: ^0.0.8
   widgets:
-    git:
-      url: https://github.com/mecha-org/mechanix.dart.git
-      path: flutter/widgets
-      ref: main
+    # git:
+    #   url: https://github.com/mecha-org/mechanix.dart.git
+    #   path: flutter/widgets
+    #   ref: main
+    path: /home/ojash/mecha/pre-release/mechanix-ui/flutter/widgets
 
   watch_it: ^1.7.0
   timezone: ^0.10.1
@@ -133,6 +134,10 @@ flutter:
     - assets/images/wifi_low.png
     - assets/images/wifi_none.png
     - assets/images/tick_icon.png
+    - assets/images/arrow_counter_clock_wise.png
+    - assets/images/connect_icon.png
+    - assets/images/three_dot_icon.png
+    - assets/images/circular_check_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

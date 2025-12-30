@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/bluetooth_device_list.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
@@ -45,27 +47,28 @@ class _BluetoothState extends State<Bluetooth> {
       ].toList();
 
       return Scaffold(
-        appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(52),
-            child: MechanixNavigationBar(title: "Bluetooth").padHorizontal(12)),
+        // appBar: const PreferredSize(
+        //     preferredSize: Size.fromHeight(52),
+        //     child: MechanixNavigationBar(title: "Bluetooth")),
         body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
           physics: const BouncingScrollPhysics(),
           child: ContainerWidget(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const CustomTitle(title: "Bluetooth"),
                 MechanixSimpleList(
+                    isDividerRequired: false,
                     physics: const BouncingScrollPhysics(),
                     listItems: [
                       SimpleListItems(
                         title: state.bluetoothAdapter?.alias ?? 'Bluetooth',
+                        // titleTextStyle: TextStyle(color: Colors.red),
                         trailing: MechanixSwitch(
                           activeText: 'OFF',
                           inactiveText: 'ON',
-                          style: const MechanixSwitchStyle(
-                            inactiveThumbColor: Color(0xFF989898),
-                            inactiveTrackColor: Color(0xFF252525),
+                          style: MechanixSwitchStyle(
+                            activeTrackColor: context.secondary,
                           ),
                           value: state.isPowered,
                           onChanged: (val) => context
@@ -79,25 +82,25 @@ class _BluetoothState extends State<Bluetooth> {
                           onTap: () => Navigator.pushNamed(
                               context, AppRoutes.bluetoothDiscoverable),
                           trailing: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              CustomTrailingText(
-                                      title: state.bluetoothAdapter != null &&
-                                              state.bluetoothAdapter!
-                                                  .discoverable
-                                          ? 'Yes'
-                                          : 'No')
+                              Text(state.bluetoothAdapter != null &&
+                                          state.bluetoothAdapter!.discoverable
+                                      ? 'Yes'
+                                      : 'No')
                                   .padRight(8),
-                              CustomIcon(
-                                icon: Image.asset(Images.rightIconArrow),
-                                height: 16,
-                                width: 16,
-                              ).padRight(8),
+                              IconWidget(
+                                iconPath: Images.rightIconArrow,
+                                iconWidth: 9,
+                                iconHeight: 15,
+                                boxWidth: 20,
+                                boxHeight: 20,
+                                iconColor: context.onSurfaceVariant,
+                              ),
                             ],
                           ),
                         )
                     ]),
-
-                // paired
                 if (state.isPowered && state.devices.isEmpty)
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
@@ -107,7 +110,7 @@ class _BluetoothState extends State<Bluetooth> {
                         title: '',
                         backgroundColor: Colors.transparent,
                         defaultTrailingIcon: false,
-                        leading: CustomLoader(),
+                        leading: const CustomLoader(),
                       ),
                     ],
                   ),
@@ -116,8 +119,6 @@ class _BluetoothState extends State<Bluetooth> {
                     isPaired: true,
                     devices: connectedAndPairedDevices,
                   ),
-
-                // availble
                 if (state.isPowered && state.devices.isEmpty)
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
@@ -127,7 +128,7 @@ class _BluetoothState extends State<Bluetooth> {
                         title: '',
                         backgroundColor: Colors.transparent,
                         defaultTrailingIcon: false,
-                        leading: CustomLoader(),
+                        leading: const CustomLoader(),
                       ),
                     ],
                   ),
@@ -136,9 +137,46 @@ class _BluetoothState extends State<Bluetooth> {
                     isPaired: false,
                     devices: newDevices,
                   ),
+                MechanixSimpleList(
+                  listItems: [
+                    SimpleListItems(
+                      title: 'Manage Device',
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.manageDevice);
+                      },
+                      trailing: IconWidget(
+                        iconPath: Images.rightIconArrow,
+                        iconWidth: 9,
+                        iconHeight: 15,
+                        boxWidth: 20,
+                        boxHeight: 20,
+                        iconColor: context.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                )
               ],
             ),
-          ).padTop(8),
+          ),
+        ),
+        bottomSheet: MechanixBottomBar(
+          leadingWidget: [
+            context.backButton,
+          ],
+          anchorWidget: [
+            BottomBarButton(
+              onPressed: () {
+                context.read<BluetoothBloc>().add(RefreshDeviceList());
+              },
+              iconTheme: const MechanixBottomBarIconThemeData(
+                buttonSize: Size(44, 44),
+                iconBoxSize: Size(28, 28),
+                iconSize: Size(21.88, 21.45),
+                buttonMargin: EdgeInsets.only(right: 12),
+              ),
+              iconPath: Images.arrowCounterClockWise,
+            )
+          ],
         ),
       );
     });

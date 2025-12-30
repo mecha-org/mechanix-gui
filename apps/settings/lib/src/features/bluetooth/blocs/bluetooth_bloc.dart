@@ -212,8 +212,18 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
         "BLOC::_onGetRefreshDeviceList:: Loading available Bluetooth devices...");
     emit(state.copyWith(loading: true));
     try {
+      if (_bluetoothDeviceAddedStream != null) {
+        await _bluetoothDeviceAddedStream?.cancel();
+        _bluetoothDeviceAddedStream = null;
+      }
+      if (_bluetoothDeviceRemovedStream != null) {
+        await _bluetoothDeviceRemovedStream?.cancel();
+        _bluetoothDeviceRemovedStream = null;
+      }
+      // bluetoothRepository.close();
+
       await bluetoothRepository.startDiscovery();
-      await Future.delayed(Duration(seconds: 8));
+      await Future.delayed(const Duration(seconds: 8));
 
       var allDevices = await bluetoothRepository.getDevices();
 

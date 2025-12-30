@@ -1,17 +1,21 @@
-import 'package:bluez/bluez.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:mechanix_settings/src/features/bluetooth/models/device_type.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/forget_device.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
+import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class BluetoothDeviceInfo extends StatefulWidget {
   const BluetoothDeviceInfo({super.key});
@@ -21,67 +25,20 @@ class BluetoothDeviceInfo extends StatefulWidget {
 }
 
 class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
-  void onForgetNetworkClick(BlueZDevice? device) {
-    if (device != null) {
-      context.read<BluetoothBloc>().add(RemoveDevice(device.address));
-      Navigator.pop(context);
-    }
-  }
-
-  void onUnLinkClick(BlueZDevice? device) {
-    if (device != null) {
-      context.read<BluetoothBloc>().add(DisconnectDevice(device.address));
-      Navigator.pop(context);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BluetoothBloc, BluetoothState>(
       builder: (context, state) {
         return Scaffold(
-          appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(52),
-            child: MechanixNavigationBar(
-              title: state.selectedDevice?.alias ?? state.selectedDevice?.name,
-              actionWidgets: [
-                if (state.selectedDevice != null &&
-                    (state.selectedDevice!.connected ||
-                        state.selectedDevice!.paired))
-                  IconButton(
-                    onPressed: () => onForgetNetworkClick(state.selectedDevice),
-                    style: ButtonStyle(
-                      iconColor: WidgetStateProperty.all(Colors.white),
-                      backgroundColor:
-                          WidgetStateProperty.all(const Color(0xFFB71C1C)),
-                      shape: WidgetStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      minimumSize: WidgetStateProperty.all(const Size(32, 32)),
-                      fixedSize: WidgetStateProperty.all(const Size(32, 32)),
-                      padding: WidgetStateProperty.all(EdgeInsets.zero),
-                    ),
-                    icon: Center(
-                      child: CustomIcon(
-                        icon: Image.asset(Images.trash),
-                        width: 15,
-                        height: 17,
-                      ),
-                    ),
-                  ).padRight(16)
-              ],
-            ).padHorizontal(12),
-          ),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 children: [
+                  CustomTitle(title: state.selectedDevice?.alias ?? ''),
                   MechanixSimpleList(
                     physics: const NeverScrollableScrollPhysics(),
+                    isDividerRequired: false,
                     listItems: [
                       SimpleListItems(
                         title: 'Device Name',
@@ -97,35 +54,88 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                           deviceType: state.selectedDevice?.icon ?? '',
                         ),
                       ),
+                      SimpleListItems(
+                        title: 'Device Status',
+                        trailing: state.selectedDevice!.connected
+                            ? Text(
+                                "Connected",
+                                style: TextStyle(color: context.primary),
+                              )
+                            : Text(
+                                "Disconnected",
+                                style:
+                                    TextStyle(color: context.onSurfaceVariant),
+                              ),
+                      ),
                     ],
                   ),
-                  if (state.selectedDevice != null &&
-                      (state.selectedDevice!.connected ||
-                          state.selectedDevice!.paired))
-                    SizedBox(
-                      child: TextButton.icon(
-                        onPressed: () => onUnLinkClick(state.selectedDevice),
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
-                            context.colorScheme.secondary,
-                          ),
-                        ),
-                        label: Text(
-                          'Unlink Device',
-                          style:
-                              TextStyle(color: context.colorScheme.onSurface),
-                        ).padVertical(16),
-                        icon: const IconWidget(
-                          iconPath: Images.unlinkIcon,
-                          iconHeight: 16,
-                          iconWidth: 16,
-                          iconColor: Colors.white,
-                        ),
-                      ),
-                    ),
                 ],
               ).padTop(8),
             ),
+          ),
+          bottomSheet: MechanixBottomBar(
+            leadingWidget: [context.backButton],
+            centerWidget: [
+              if (state.selectedDevice != null)
+                state.selectedDevice!.connected
+                    ? BottomBarButton.widget(
+                        widget: TextButton.icon(
+                          onPressed: () {
+                            context.read<BluetoothBloc>().add(DisconnectDevice(
+                                state.selectedDevice?.address ?? ''));
+                          },
+                          icon: const IconWidget(
+                            iconPath: Images.unlinkIcon,
+                            iconHeight: 16,
+                            iconWidth: 16,
+                            iconColor: Colors.white,
+                          ),
+                          label: Text(
+                            "Disconnect",
+                            style: TextStyle(color: context.onSurface),
+                          ),
+                        ),
+                      )
+                    : BottomBarButton.widget(
+                        widget: TextButton.icon(
+                          onPressed: () {
+                            if (state.selectedDevice != null &&
+                                state.selectedDevice!.paired) {
+                              context.read<BluetoothBloc>().add(ConnectDevice(
+                                  state.selectedDevice?.address ?? ''));
+                            } else {
+                              context.read<BluetoothBloc>().add(PairDevice(
+                                  state.selectedDevice?.address ?? ''));
+                            }
+                          },
+                          icon: const IconWidget(
+                            iconPath: Images.connectIcon,
+                            iconHeight: 16,
+                            iconWidth: 16,
+                          ),
+                          label: const Text("Connect"),
+                        ),
+                      )
+            ],
+            anchorWidget: [
+              BottomBarButton.widget(
+                widget: MechanixMenu(
+                  offset: const Offset(0, -13),
+                  dropdownPosition: DropdownPosition.topRight,
+                  items: [
+                    MechanixMenuItemsType(
+                      title: "Forget",
+                      onTap: () {
+                        forgetDeviceBottomSheet(
+                            context: context,
+                            state: state,
+                            device: state.selectedDevice);
+                      },
+                    ),
+                  ],
+                ).padRight(12),
+              ),
+            ],
           ),
         );
       },
