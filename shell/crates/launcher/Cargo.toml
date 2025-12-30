@@ -1,8 +1,9 @@
 
 [package]
 name = "mechanix-launcher"
+description = "Launcher application"
 edition = "2024"
-version.workspace = true
+version = "0.0.1"
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -40,27 +41,32 @@ assets = [
     ],
     [
         "../../../assets/icons/app-drawer/*",
-        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/app-drawer/",
+        "usr/share/mechanix/shell/launcher/assets/icons/app-drawer/",
         "755",
     ],
     [
         "../../../assets/icons/running-apps/*",
-        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/running-apps/",
+        "usr/share/mechanix/shell/launcher/assets/icons/running-apps/",
         "755",
     ],
     [
         "../../../assets/icons/settings-drawer/*",
-        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/icons/settings-drawer/",
+        "usr/share/mechanix/shell/launcher/assets/icons/settings-drawer/",
         "755",
     ],
     [
         "../../../assets/icons/status-bar/*",
-        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/icons/status-bar/",
+        "usr/share/mechanix/shell/launcher/assets/icons/status-bar/",
         "755",
     ],
     [
         "../../../assets/icons/universal-search/*",
-        "usr/share/mechanix/shell/mechanix-launcher/assets/icons/universal-search/",
+        "usr/share/mechanix/shell/launcher/assets/icons/universal-search/",
         "755",
     ],
+    [
+        "../../../assets/icons/notifications/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/notifications/",
+        "755",
+    ]
 ]

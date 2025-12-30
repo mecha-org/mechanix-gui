@@ -1,6 +1,7 @@
 [package]
 name = "session_service"
 description = "Service for running session services"
+version = "0.0.1"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -8,7 +9,6 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
-version = "0.1.1"
 
 [dependencies]
 anyhow = { workspace = true }
