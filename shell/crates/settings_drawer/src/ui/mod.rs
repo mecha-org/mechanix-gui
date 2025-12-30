@@ -1,6 +1,7 @@
 pub mod icon;
 mod modals;
 mod widgets;
+use commons::widgets::{WingSide, wing};
 use gpui::prelude::FluentBuilder;
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, BtMessage, NmMessage, ShellState, VolumeMessage};
@@ -101,6 +102,7 @@ pub struct SettingsDrawer {
     position: f32,
     drag_offset: Option<f32>,
     drag_start_pos: f32,
+    pub is_visible: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -234,6 +236,7 @@ impl SettingsDrawer {
             position: Self::closed_pos(),
             drag_offset: None,
             drag_start_pos: 0.0,
+            is_visible: false,
         }
     }
 
@@ -345,8 +348,30 @@ impl Render for SettingsDrawer {
                             .justify_end()
                             .h(px(NAVBAR_SIZE.1))
                             .child(
-                                img(IconName::Navbar.resolve())
-                                    .id("settings-drawer-navbar")
+                                div()
+                                    .id("right-wing")
+                                    .child({
+                                        let mut w = wing();
+                                        w.upper_wing_size(size(
+                                            px(NAVBAR_SIZE.0),
+                                            px(NAVBAR_SIZE.1),
+                                        ));
+                                        w.upper_wing_side(WingSide::Right);
+
+                                        w.border_radius(px(2.));
+                                        w.border_width(px(2.));
+
+                                        w.w(px(NAVBAR_SIZE.0))
+                                            .h(px(NAVBAR_SIZE.1))
+                                            .bg(if (self.is_visible) {
+                                                rgb(0x000000)
+                                            } else {
+                                                rgb(0x151515)
+                                            })
+                                            .when(!self.is_visible, |w| {
+                                                w.border_2().border_color(rgba(0xAA640033))
+                                            })
+                                    })
                                     .on_mouse_down(
                                         MouseButton::Left,
                                         cx.listener(|this, event: &MouseDownEvent, _, cx| {
@@ -376,6 +401,12 @@ impl SettingsDrawer {
         let duration_ms = 250.0; // Animation speed
         let start_time = std::time::Instant::now();
 
+        if target == 0.0 {
+            self.is_visible = true;
+        } else if target == Self::closed_pos() {
+            self.is_visible = false;
+        }
+
         cx.spawn(
             async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
                 loop {
@@ -385,6 +416,11 @@ impl SettingsDrawer {
                     if elapsed >= duration_ms {
                         this.update(cx, |this, cx| {
                             this.position = target;
+                            if target == 0.0 {
+                                this.is_visible = true;
+                            } else if target == Self::closed_pos() {
+                                this.is_visible = false;
+                            }
                             cx.notify();
                         })
                         .ok();
@@ -397,6 +433,11 @@ impl SettingsDrawer {
 
                     this.update(cx, |this, cx| {
                         this.position = current;
+                        if current < (Self::closed_pos() / 2.0) {
+                            this.is_visible = true;
+                        } else {
+                            this.is_visible = false;
+                        }
                         cx.notify();
                     })
                     .ok();
@@ -659,7 +700,6 @@ impl SettingsDrawer {
             } else {
                 this.open_modal = false;
             }
-
         }
     }
 
@@ -748,12 +788,10 @@ impl SettingsDrawer {
                     cx.notify();
                 },
             ))
-            .on_long_press(cx.listener(
-                Self::open_modal_on_long_press(
-                    ModalKind::ScreenMirroring,
-                    true,
-                ),
-            ))
+            .on_long_press(cx.listener(Self::open_modal_on_long_press(
+                ModalKind::ScreenMirroring,
+                true,
+            )))
     }
 
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -869,8 +907,8 @@ impl SettingsDrawer {
             .label(network_label)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
-            .on_click(cx.listener(
-                move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
+            .on_click(
+                cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
                     cx.background_executor()
@@ -880,14 +918,12 @@ impl SettingsDrawer {
                         .detach();
 
                     cx.notify();
-                },
-            ))
-            .on_long_press(cx.listener(
-                Self::open_modal_on_long_press(
-                    ModalKind::WirelessModal,
-                    wireless_details.enabled,
-                ),
-            ))
+                }),
+            )
+            .on_long_press(cx.listener(Self::open_modal_on_long_press(
+                ModalKind::WirelessModal,
+                wireless_details.enabled,
+            )))
     }
 
     fn render_bluetooth(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -921,8 +957,8 @@ impl SettingsDrawer {
             .active(bluetooth_details.enabled)
             .active_icon_color(rgb(AMBER_600))
             .active_bg_color(rgba(AMBER_600_10))
-            .on_click(cx.listener(
-                move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
+            .on_click(
+                cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
                     cx.background_executor()
@@ -931,17 +967,15 @@ impl SettingsDrawer {
                         })
                         .detach();
                     cx.notify();
-                },
-            ))
-            .on_long_press(cx.listener(
-                Self::open_modal_on_long_press(
-                    ModalKind::BluetoothModal,
-                    bluetooth_details.enabled,
-                ),
-            ))
+                }),
+            )
+            .on_long_press(cx.listener(Self::open_modal_on_long_press(
+                ModalKind::BluetoothModal,
+                bluetooth_details.enabled,
+            )))
     }
 
-  fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let battery_percent = ShellState::global(cx).battery_percent.clone();
 
         let power_mode_icon = match self.power_mode {
@@ -970,12 +1004,10 @@ impl SettingsDrawer {
                     cx.notify();
                 },
             ))
-            .on_long_press(cx.listener(
-                Self::open_modal_on_long_press(
-                    ModalKind::PerformanceModal,
-                    true,
-                ),
-            ))
+            .on_long_press(cx.listener(Self::open_modal_on_long_press(
+                ModalKind::PerformanceModal,
+                true,
+            )))
     }
 
     fn render_cell_signal(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1013,12 +1045,10 @@ impl SettingsDrawer {
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
             .on_click(cx.listener(|_, _: &ClickEvent, _, _| {}))
-            .on_long_press(cx.listener(
-                Self::open_modal_on_long_press(
-                    ModalKind::DisplayModal,
-                    true,
-                ),
-            ))
+            .on_long_press(cx.listener(Self::open_modal_on_long_press(
+                ModalKind::DisplayModal,
+                true,
+            )))
             .child(self.render_brightness_slider(cx, 167.0))
     }
 
@@ -1078,12 +1108,7 @@ impl SettingsDrawer {
             .bg(rgb(DARK_NEUTRAL_900))
             .rounded(px(8.))
             .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
-            .on_long_press(cx.listener(
-                Self::open_modal_on_long_press(
-                    ModalKind::SoundModal,
-                    true,
-                ),
-            ))
+            .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
             .child(self.render_volume_slider(cx))
     }
 

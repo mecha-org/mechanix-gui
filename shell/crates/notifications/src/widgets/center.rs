@@ -7,7 +7,8 @@ use crate::ui::icon::{Icon, IconName};
 use crate::widgets::notification::{
     DbNotification, NotificationId, NotificationUi, UserDismissedEvent,
 };
-use commons::widgets::wing;
+use commons::widgets::{WingSide, wing};
+use gpui::rgba;
 use gpui::{
     Animation, AnimationExt, AnyElement, App, AppContext, AsyncApp, Bounds, ClickEvent, Context,
     DismissEvent, Div, Element, ElementId, Entity, EventEmitter, FontWeight, Img,
@@ -585,16 +586,16 @@ impl NotificationCenter {
     }
 
     pub fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.position;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
         if target == 0.0 {
             self.is_visible = true;
         } else if target == Self::closed_pos() {
             self.is_visible = false;
         }
-
-        let start = self.position;
-        let change = target - start;
-        let duration_ms = 250.0; // Animation speed
-        let start_time = std::time::Instant::now();
 
         cx.spawn(
             async move |this: WeakEntity<NotificationCenter>, cx: &mut AsyncApp| {
@@ -714,13 +715,19 @@ impl Render for NotificationCenter {
                                             px(NAVBAR_SIZE.0),
                                             px(NAVBAR_SIZE.1),
                                         ));
-                                        w.w(px(NAVBAR_SIZE.0)).h(px(NAVBAR_SIZE.1)).bg(
-                                            if (self.is_visible) {
+                                        w.border_radius(px(2.));
+                                        w.border_width(px(2.));
+                                        w.upper_wing_side(WingSide::Left);
+                                        w.w(px(NAVBAR_SIZE.0))
+                                            .h(px(NAVBAR_SIZE.1))
+                                            .bg(if (self.is_visible) {
                                                 rgb(0x000000)
                                             } else {
                                                 rgb(0x151515)
-                                            },
-                                        )
+                                            })
+                                            .when(!self.is_visible, |w| {
+                                                w.border_2().border_color(rgba(0xAA640033))
+                                            })
                                     })
                                     .on_mouse_down(
                                         MouseButton::Left,
