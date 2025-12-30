@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Mechanix Settings
+GenericName=Mechanix Settings
+Comment=Settings app
+Type=Application
+TryExec=mechanix_settings -b /usr/share/mechanix/mechanix-settings-beta/ -w 540 -h 620 -k -s 1
+Exec=mechanix_settings -b /usr/share/mechanix/mechanix-settings-beta/ -w 540 -h 620 -k -s 1
+Icon=mechanix_settings
+Terminal=false
+Categories=System;
