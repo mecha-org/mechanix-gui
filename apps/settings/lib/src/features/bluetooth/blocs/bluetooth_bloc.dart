@@ -324,6 +324,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
 
   void _setDeviceDiscoverable(
       DiscoveryEnabled event, Emitter<BluetoothState> emit) async {
+    emit(state.copyWith(isDiscoveryEnabled: event.isDiscoverable));
     await bluetoothRepository.setDiscoverable(event.isDiscoverable);
     logger.i('BLOC:: SET Device discoverable: ${event.isDiscoverable}');
   }
