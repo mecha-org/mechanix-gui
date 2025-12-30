@@ -22,6 +22,7 @@ env:
   MECHA_PULP_PASSWORD: ${{ secrets.MECHA_PULP_PASSWORD }}
   MECHA_PULP_API_URL: ${{ vars.MECHA_PULP_API_URL }}
   MECHA_PULP_DEBS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}
+  MECHA_PULP_RPMS_REPOSITORY_NAME: ${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}
 
 jobs:
   # Detect which apps have changed
@@ -49,7 +50,6 @@ jobs:
               - 'apps/files/**'
             music:
               - 'apps/music/**'
-
   build:
     name: ${{ matrix.name }}
     needs: detect-changes
@@ -77,7 +77,7 @@ jobs:
             folder: music
             binary: mechanix_music
 
-    runs-on: ubicloud-standard-2-arm
+    runs-on: ubuntu-24.04-arm
     environment: pre-release
     continue-on-error: true
 
@@ -89,7 +89,6 @@ jobs:
           sudo apt install -y git tar unzip curl clang cmake pkg-config \
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
             libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
-
       # Install NuShell
       - name: Install Nushell
         run: |
@@ -97,7 +96,6 @@ jobs:
           echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
           sudo apt update
           sudo apt install nushell
-
       # Add Comet repository
       - name: Add Comet repository
         run: |
@@ -106,12 +104,18 @@ jobs:
           echo "deb [signed-by=/usr/share/keyrings/comet-deb.gpg] http://pkg.mecha.so/debian pulp upload" | \
             sudo tee /etc/apt/sources.list.d/comet.list
           sudo apt update
-
+        # Add RPM Packaging Tools
+      - name: Install RPM Packaging Tools
+        run: |
+          sudo apt install -y rpm build-essential \
+          rpm2cpio \
+          rpmlint \
+          dnf
       # Checkout repository
       - name: Setup | Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full history for git operations
+          fetch-depth: 0 # Fetch full history for git operations
 
       # Install Flutter eLinux
       - name: Install Flutter eLinux
@@ -121,26 +125,32 @@ jobs:
             sudo mv flutter-elinux /opt/
           fi
           echo "PATH=$PATH:/opt/flutter-elinux/bin" >> $GITHUB_ENV
-
       # Build the app (ALWAYS)
       - name: Build ${{ matrix.name }}
         working-directory: apps/${{ matrix.folder }}
         run: |
           flutter-elinux pub get
           flutter-elinux build elinux --release
-
+      # Update NuShell script permissions
+      - name: Update NuShell script permissions
+        run: |
+          chmod +x apps/*.nu
+          chmod +x utils/*.nu
       # Move entire bundle to ./build/<binary>
       - name: Prepare build folder ${{ matrix.name }}
         run: |
           mkdir -p ./build/${{ matrix.binary }}
           cp -r "apps/${{ matrix.folder }}/build/elinux/arm64/release/bundle/"* "./build/${{ matrix.binary }}/"
-
       # Package Debian using Nushell script (ALWAYS)
       - name: Package Debian ${{ matrix.name }}
         working-directory: apps
         run: |
           nu package-deb.nu "${{ matrix.folder }}" "../build/deb"
-
+      # Package RPM using Nushell script
+      - name: Package RPM ${{ matrix.name }}
+        working-directory: apps
+        run: |
+          nu package-rpm.nu "${{ matrix.folder }}" "../build/rpm"
       # List artifacts
       - name: List artifacts ${{ matrix.name }}
         run: ls -la ./build/deb/
@@ -149,8 +159,8 @@ jobs:
       - name: Setup | Pulp CLI
         run: |
           pipx install --force pulp-cli[pygments]
-          pipx inject pulp-cli pulp-cli-deb
-
+          # Added pulp-cli-rpm here
+          pipx inject pulp-cli pulp-cli-deb pulp-cli-rpm
       - name: Configure Pulp CLI
         run: |
           set -euo pipefail
@@ -161,46 +171,55 @@ jobs:
             --base-url "$PULP_API_URL" \
             --overwrite
 
-      # Publish .deb to Pulp (ONLY IF CHANGED or MANUAL TRIGGER)
-      - name: Publish to Pulp [${{ matrix.app }}]
-        if: |          
-          (matrix.app == 'settings' && needs.detect-changes.outputs.settings == 'true') ||
-          (matrix.app == 'notes' && needs.detect-changes.outputs.notes == 'true') ||
-          (matrix.app == 'files' && needs.detect-changes.outputs.files == 'true') ||
-          (matrix.app == 'music' && needs.detect-changes.outputs.music == 'true')
+      - name: Check Publish Condition
+        id: check_publish
         run: |
-          set -euo pipefail
+          SHOULD_PUBLISH="false"
+          if [[ "${{ matrix.app }}" == "settings" && "${{ needs.detect-changes.outputs.settings }}" == "true" ]]; then SHOULD_PUBLISH="true"; fi
+          if [[ "${{ matrix.app }}" == "notes" && "${{ needs.detect-changes.outputs.notes }}" == "true" ]]; then SHOULD_PUBLISH="true"; fi
+          if [[ "${{ matrix.app }}" == "files" && "${{ needs.detect-changes.outputs.files }}" == "true" ]]; then SHOULD_PUBLISH="true"; fi
+          if [[ "${{ matrix.app }}" == "music" && "${{ needs.detect-changes.outputs.music }}" == "true" ]]; then SHOULD_PUBLISH="true"; fi
 
+          echo "should_publish=$SHOULD_PUBLISH" >> $GITHUB_OUTPUT
+
+      - name: Publish DEB
+        if: steps.check_publish.outputs.should_publish == 'true'
+        run: |
           DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" -type f | head -n1)
-          
-          if [ -z "$DEB_FILE" ]; then
-            echo "[ERROR] No .deb file found for mechanix-${{ matrix.app }}"
-            exit 1
-          fi
-          
-          echo "[INFO] 📦 Publishing: $DEB_FILE"
-          
-          pulp deb content upload \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --file="$DEB_FILE"
-          
-          echo "[INFO] Creating publication..."
+          echo "[INFO] 📦 Publishing DEB: $DEB_FILE"
+
+          pulp deb content upload --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" --file="$DEB_FILE"
+
           PUB_HREF=$(pulp deb publication create \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --signing-service=mecha-pkg-sign \
-            | jq -r '.pulp_href')
-          
-          echo "[INFO] Updating distribution..."
+            --signing-service=mecha-pkg-sign | jq -r '.pulp_href')
+            
           pulp deb distribution update \
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-          
-          echo "[INFO] ✅ Package ${{ matrix.app }} published successfully!"
 
-      # Upload full artifacts (ALWAYS)
-      - name: Upload artifact ${{ matrix.name }}
+      - name: Publish RPM
+        if: steps.check_publish.outputs.should_publish == 'true'
+        run: |
+          RPM_FILE=$(find ./build/rpm -name "mechanix-${{ matrix.app }}*.rpm" -type f | head -n1)
+          echo "[INFO] 📦 Publishing RPM: $RPM_FILE"
+
+          pulp rpm content upload --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" --file="$RPM_FILE"
+
+          PUB_HREF=$(pulp rpm publication create \
+            --repository="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" | jq -r '.pulp_href')
+
+          pulp rpm distribution update \
+            --name="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --base-path="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
+            --publication="$PUB_HREF"
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.binary }}
-          path: ./build/${{ matrix.binary }}/
+          path: |
+            ./build/${{ matrix.binary }}/
+            ./build/deb/*.deb
+            ./build/rpm/*.rpm
