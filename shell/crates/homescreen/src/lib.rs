@@ -17,7 +17,9 @@ use crate::config::HomescreenConfig;
 use crate::input_manager::InputManager;
 use crate::state::*;
 use crate::ui::HomescreenUi;
+use crate::widgets::app_drawer::AppDrawerWidget;
 use crate::widgets::demo_widget::DemoWidget;
+use crate::widgets::universal_search::UniversalSearchWidget;
 
 pub struct Homescreen {
     state: HomescreenState,
@@ -31,50 +33,60 @@ impl Homescreen {
         status_bar_size: Size<Pixels>,
     ) -> Self {
         let mut state = HomescreenState::new(config);
+
+        // Add the Universal Search Widget to Page 0
         state.create_widget(
-            DemoWidget::new("Sunrise", rgb(0xff6b6b), rgb(0xff5252), true),
+            UniversalSearchWidget::new(_cx),
             0,
             Bounds {
                 origin: point(0, 0),
-                size: size(1, 1),
+                size: size(4, 4), // Adjust size as needed for a search bar
             },
         );
-
-        state.create_widget(
-            DemoWidget::new("Ocean", rgb(0x4ecdc4), rgb(0x45b7aa), true),
-            0,
-            Bounds {
-                origin: point(2, 0),
-                size: size(2, 2),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Forest", rgb(0x95e1d3), rgb(0x7ed6c5), false),
-            0,
-            Bounds {
-                origin: point(0, 2),
-                size: size(1, 2),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Lavender", rgb(0xc7b3ff), rgb(0xb59fff), true),
-            0,
-            Bounds {
-                origin: point(1, 3),
-                size: size(2, 1),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Sky", rgb(0x5fa8d3), rgb(0x4a90bb), true),
-            0,
-            Bounds {
-                origin: point(1, 0),
-                size: size(1, 2),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Sunrise", rgb(0xff6b6b), rgb(0xff5252), true),
+        //     0,
+        //     Bounds {
+        //         origin: point(0, 0),
+        //         size: size(1, 1),
+        //     },
+        // );
+        //
+        // state.create_widget(
+        //     DemoWidget::new("Ocean", rgb(0x4ecdc4), rgb(0x45b7aa), true),
+        //     0,
+        //     Bounds {
+        //         origin: point(2, 0),
+        //         size: size(2, 2),
+        //     },
+        // );
+        //
+        // state.create_widget(
+        //     DemoWidget::new("Forest", rgb(0x95e1d3), rgb(0x7ed6c5), false),
+        //     0,
+        //     Bounds {
+        //         origin: point(0, 2),
+        //         size: size(1, 2),
+        //     },
+        // );
+        //
+        // state.create_widget(
+        //     DemoWidget::new("Lavender", rgb(0xc7b3ff), rgb(0xb59fff), true),
+        //     0,
+        //     Bounds {
+        //         origin: point(1, 3),
+        //         size: size(2, 1),
+        //     },
+        // );
+        //
+        // state.create_widget(
+        //     DemoWidget::new("Sky", rgb(0x5fa8d3), rgb(0x4a90bb), true),
+        //     0,
+        //     Bounds {
+        //         origin: point(1, 0),
+        //         size: size(1, 2),
+        //     },
+        // );
 
         // PAGE 1 - New widgets
         state.create_widget(
@@ -229,6 +241,15 @@ impl Homescreen {
             Bounds {
                 origin: point(0, 2),
                 size: size(1, 1),
+            },
+        );
+
+        state.create_widget(
+            AppDrawerWidget::new(_cx),
+            4,
+            Bounds {
+                origin: point(0, 0),
+                size: size(4, 4), // Full screen widget
             },
         );
 

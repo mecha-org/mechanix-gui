@@ -3,17 +3,15 @@ use gpui::*;
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-
+use commons::prelude::TextInput;
 use crate::models::AppDrawerState;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
 use crate::ui::utils::prelude::{DesktopApp, DesktopApps};
 use crate::ui::widgets::BottomSheetKind;
 use crate::ui::widgets::{IconButton, SubWindow};
-use input::TextInput;
 
 pub mod icon;
-pub mod input;
 pub mod utils;
 mod widgets;
 
