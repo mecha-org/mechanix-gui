@@ -8,12 +8,13 @@ class PlaylistCard extends StatelessWidget {
   final VoidCallback onPlaylistTap;
   final PlaylistInfo playlistInfo;
   final ValueChanged<String> onRenameClick;
-
+  final bool isActive;
   const PlaylistCard({
     super.key,
     required this.playlistInfo,
     required this.onPlaylistTap,
     required this.onRenameClick,
+    this.isActive = false,
   });
 
   bool get hasCover =>
@@ -49,11 +50,14 @@ class PlaylistCard extends StatelessWidget {
                 child: Text(
                   playlistInfo.name,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: 18,
                     height: 1.25,
-                    color: MusicColors.primaryTextColor,
+                    color:
+                        isActive
+                            ? MusicColors.borderColor
+                            : MusicColors.primaryTextColor,
                   ),
                 ),
               ),

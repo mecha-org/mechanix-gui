@@ -12,11 +12,9 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/features/home/home.dart';
 import 'package:watch_it/watch_it.dart';
-import 'package:widgets/extension.dart';
 import 'package:widgets/theme/mechanix_theme.dart';
 import 'package:widgets/theme/variants.dart';
 import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet_theme.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/theme/theme_toggle.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -77,10 +75,10 @@ class MainApp extends StatelessWidget with WatchItMixin {
               ),
             ),
           ),
-          MechanixMenuThemeData(
-            decoration: BoxDecoration(color: context.colorScheme.tertiary),
-            itemBackgroundColor: context.colorScheme.tertiary,
-          ),
+          // MechanixMenuThemeData(
+          //   decoration: BoxDecoration(color: context.colorScheme.tertiary),
+          //   itemBackgroundColor: context.colorScheme.tertiary,
+          // ),
         ],
       ),
       builder:

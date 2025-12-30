@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
@@ -97,7 +98,14 @@ class SongTile extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (isCurrentSong)
-                        SegmentedBarEqualizer(color: MusicColors.titleColor),
+                        BlocSelector<SongsBloc, SongsState, bool>(
+                          selector: (state) => state.isPlaying,
+                          builder:
+                              (context, isPlaying) => SegmentedBarEqualizer(
+                                isPlaying: isPlaying,
+                                color: MusicColors.titleColor,
+                              ),
+                        ),
                       const SizedBox(width: 12),
 
                       SongMenu(

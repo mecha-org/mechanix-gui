@@ -12,6 +12,7 @@ import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_actions_view.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_add_song.dart';
+import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_heading.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_top_view.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 import 'package:tuple/tuple.dart';
@@ -138,16 +139,8 @@ class _PlaylistViewState extends State<PlaylistView> {
                       ),
                     ],
                   ).padSymmetric(horizontal: 16)
-                  : Text(
-                    playlist.name,
-                    style: const TextStyle(
-                      color: MusicColors.primaryTextColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 24,
-                      letterSpacing: -1.1,
-                      height: 1.25,
-                    ),
-                  ).padLeft(16),
+                  : PlaylistHeading(playlist: playlist),
+
               const SizedBox(height: 16),
 
               /// 🔹 Scrollable content

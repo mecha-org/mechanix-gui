@@ -99,7 +99,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                               .playlistInfo
                               .songIds
                               .contains(song.id);
-
+                          if (isAlreadyInPlaylist) return SizedBox.shrink();
                           return SongTile(
                             song: song,
                             isPaddingRequired: true,
@@ -122,6 +122,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                               .playlistInfo
                               .songIds
                               .contains(song.id);
+                          if (isAlreadyInPlaylist) return SizedBox.shrink();
 
                           return SongTile(
                             song: song,

@@ -186,25 +186,45 @@ class _PlaylistListState extends State<PlaylistList> {
                                             ),
                                           )
                                           : null,
-                                  child: PlaylistCard(
-                                    onRenameClick: (value) {
-                                      setState(() {
-                                        playlistName = playlist.name;
-                                        renamePlaylistId = value;
-                                      });
-                                      context.read<SongsBloc>().add(
-                                        BottomBarToggle(BottomBarView.add),
-                                      );
-                                    },
-                                    playlistInfo: playlist,
-                                    onPlaylistTap:
-                                        isNewPlaylist || isBeingRenamed
-                                            ? () {}
-                                            : () {
-                                              context.read<SongsBloc>().add(
-                                                SelectedPlaylist(playlist.id),
-                                              );
-                                            },
+                                  child: BlocSelector<
+                                    SongsBloc,
+                                    SongsState,
+                                    bool
+                                  >(
+                                    selector:
+                                        (state) =>
+                                            state.currentPlaylist.playlistId ==
+                                            playlist.id,
+                                    builder:
+                                        (context, isCurrentPlaylist) =>
+                                            PlaylistCard(
+                                              isActive: isCurrentPlaylist,
+                                              onRenameClick: (value) {
+                                                setState(() {
+                                                  playlistName = playlist.name;
+                                                  renamePlaylistId = value;
+                                                });
+                                                context.read<SongsBloc>().add(
+                                                  BottomBarToggle(
+                                                    BottomBarView.add,
+                                                  ),
+                                                );
+                                              },
+                                              playlistInfo: playlist,
+                                              onPlaylistTap:
+                                                  isNewPlaylist ||
+                                                          isBeingRenamed
+                                                      ? () {}
+                                                      : () {
+                                                        context
+                                                            .read<SongsBloc>()
+                                                            .add(
+                                                              SelectedPlaylist(
+                                                                playlist.id,
+                                                              ),
+                                                            );
+                                                      },
+                                            ),
                                   ),
                                 );
                               },
@@ -241,26 +261,45 @@ class _PlaylistListState extends State<PlaylistList> {
                                           ),
                                         )
                                         : null,
-                                child: PlaylistTile(
-                                  onRenameClick:
-                                      (value) => {
-                                        setState(() {
-                                          playlistName = playlist.name;
-                                          renamePlaylistId = value;
-                                        }),
-                                        context.read<SongsBloc>().add(
-                                          BottomBarToggle(BottomBarView.add),
-                                        ),
-                                      },
-                                  playlistInfo: playlist,
-                                  onTap:
-                                      isNewPlaylist || isBeingRenamed
-                                          ? () {}
-                                          : () {
-                                            context.read<SongsBloc>().add(
-                                              SelectedPlaylist(playlist.id),
-                                            );
-                                          },
+                                child: BlocSelector<
+                                  SongsBloc,
+                                  SongsState,
+                                  bool
+                                >(
+                                  selector:
+                                      (state) =>
+                                          state.currentPlaylist.playlistId ==
+                                          playlist.id,
+                                  builder:
+                                      (
+                                        context,
+                                        isCurrentPlaylist,
+                                      ) => PlaylistTile(
+                                        isActive: isCurrentPlaylist,
+                                        onRenameClick:
+                                            (value) => {
+                                              setState(() {
+                                                playlistName = playlist.name;
+                                                renamePlaylistId = value;
+                                              }),
+                                              context.read<SongsBloc>().add(
+                                                BottomBarToggle(
+                                                  BottomBarView.add,
+                                                ),
+                                              ),
+                                            },
+                                        playlistInfo: playlist,
+                                        onTap:
+                                            isNewPlaylist || isBeingRenamed
+                                                ? () {}
+                                                : () {
+                                                  context.read<SongsBloc>().add(
+                                                    SelectedPlaylist(
+                                                      playlist.id,
+                                                    ),
+                                                  );
+                                                },
+                                      ),
                                 ),
                               );
                             },

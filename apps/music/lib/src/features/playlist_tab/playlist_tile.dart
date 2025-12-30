@@ -12,6 +12,7 @@ class PlaylistTile extends StatelessWidget {
   final VoidCallback? onTap;
   final bool isMenuRequired;
   final ValueChanged<String> onRenameClick;
+  final bool isActive;
 
   const PlaylistTile({
     super.key,
@@ -21,6 +22,7 @@ class PlaylistTile extends StatelessWidget {
     this.onTap,
     this.isMenuRequired = true,
     required this.onRenameClick,
+    this.isActive = false,
   });
 
   @override
@@ -48,7 +50,9 @@ class PlaylistTile extends StatelessWidget {
               fontSize: 18,
               height: 1.25,
               color:
-                  isDisabled
+                  isActive
+                      ? MusicColors.borderColor
+                      : isDisabled
                       ? MusicColors.secondaryTextColor
                       : MusicColors.primaryTextColor,
             ),

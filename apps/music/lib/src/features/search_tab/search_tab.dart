@@ -256,23 +256,33 @@ class _SearchTabState extends State<SearchTab> {
 
                       if (searchResults.playlists.isNotEmpty) ...[
                         ...searchResults.playlists.map(
-                          (playlist) => PlaylistTile(
-                            onRenameClick: (value) {},
-                            playlistInfo: playlist,
-                            onTap: () {
-                              context.read<SongsBloc>().add(
-                                SelectedPlaylist(playlist.id),
-                              );
-                              context.read<SongsBloc>().add(
-                                StoreSearchItem(playlist: playlist),
-                              );
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => PlaylistView(),
-                              //   ),
-                              // );
-                            },
+                          (
+                            playlist,
+                          ) => BlocSelector<SongsBloc, SongsState, bool>(
+                            selector:
+                                (state) =>
+                                    state.currentPlaylist.playlistId ==
+                                    playlist.id,
+                            builder:
+                                (context, isCurrentPlaylist) => PlaylistTile(
+                                  isActive: isCurrentPlaylist,
+                                  onRenameClick: (value) {},
+                                  playlistInfo: playlist,
+                                  onTap: () {
+                                    context.read<SongsBloc>().add(
+                                      SelectedPlaylist(playlist.id),
+                                    );
+                                    context.read<SongsBloc>().add(
+                                      StoreSearchItem(playlist: playlist),
+                                    );
+                                    // Navigator.push(
+                                    //   context,
+                                    //   MaterialPageRoute(
+                                    //     builder: (context) => PlaylistView(),
+                                    //   ),
+                                    // );
+                                  },
+                                ),
                           ),
                         ),
                       ],

@@ -27,7 +27,12 @@ class MiniPlayer extends StatelessWidget {
         if (currentSong == null) return const SizedBox.shrink();
 
         return Container(
-          padding: const EdgeInsets.only(left: 12,right: 12, bottom: 8,top: 0),
+          padding: const EdgeInsets.only(
+            left: 12,
+            right: 12,
+            bottom: 8,
+            top: 6,
+          ),
           decoration: const BoxDecoration(
             color: MusicColors.backgroundColor,
             borderRadius: BorderRadius.only(

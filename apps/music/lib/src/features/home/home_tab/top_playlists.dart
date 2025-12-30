@@ -162,14 +162,22 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                         for (int i = 0; i < playlists.length; i++) ...[
                           SizedBox(
                             width: 164, // Fixed width for each card
-                            child: PlaylistCard(
-                              onRenameClick: (value) {},
-                              playlistInfo: playlists[i],
-                              onPlaylistTap: () {
-                                context.read<SongsBloc>().add(
-                                  SelectedPlaylist(playlists[i].id),
-                                );
-                              },
+                            child: BlocSelector<SongsBloc, SongsState, bool>(
+                              selector:
+                                  (state) =>
+                                      state.currentPlaylist.playlistId ==
+                                      playlists[i].id,
+                              builder:
+                                  (context, isCurrentPlaylist) => PlaylistCard(
+                                    isActive: isCurrentPlaylist,
+                                    onRenameClick: (value) {},
+                                    playlistInfo: playlists[i],
+                                    onPlaylistTap: () {
+                                      context.read<SongsBloc>().add(
+                                        SelectedPlaylist(playlists[i].id),
+                                      );
+                                    },
+                                  ),
                             ),
                           ),
                           if (i < playlists.length - 1)

@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 
 class SegmentedBarEqualizer extends StatefulWidget {
   final Color color;
+  final bool isPlaying;
 
-  const SegmentedBarEqualizer({super.key, required this.color});
+  const SegmentedBarEqualizer({
+    super.key,
+    required this.color,
+    required this.isPlaying,
+  });
 
   @override
   State<SegmentedBarEqualizer> createState() => _SegmentedBarEqualizerState();
@@ -25,11 +30,29 @@ class _SegmentedBarEqualizerState extends State<SegmentedBarEqualizer>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    );
 
-    // Pre-calculate phase offsets (cheap randomness)
     final rand = Random();
     _barPhases = List.generate(numberOfBars, (_) => rand.nextDouble());
+
+    if (widget.isPlaying) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant SegmentedBarEqualizer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.isPlaying != widget.isPlaying) {
+      if (widget.isPlaying) {
+        // Resume from current value
+        _controller.repeat(reverse: true);
+      } else {
+        // Freeze at current frame
+        _controller.stop(canceled: false);
+      }
+    }
   }
 
   @override
@@ -60,9 +83,8 @@ class _SegmentedBarEqualizerState extends State<SegmentedBarEqualizer>
   }
 
   Widget _buildBar(int barIndex) {
-    // Phase-shifted sine wave (cheap + smooth)
     final t = (_controller.value + _barPhases[barIndex]) % 1.0;
-    final normalized = (sin(t * pi) + 1) / 2; // 0 → 1
+    final normalized = (sin(t * pi) + 1) / 2;
 
     final activeSegments = (normalized * segmentsPerBar).round().clamp(
       0,

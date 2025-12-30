@@ -11,7 +11,6 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class BottomMenu extends StatelessWidget {
@@ -38,13 +37,13 @@ class BottomMenu extends StatelessWidget {
           dropdownPosition: DropdownPosition.topRight,
           padding: const EdgeInsets.only(top: 0),
 
-          theme: MechanixMenuThemeData(
-            decoration: BoxDecoration(
-              color: context.tertiary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            itemBackgroundColor: context.tertiary,
-          ),
+          // theme: MechanixMenuThemeData(
+          //   decoration: BoxDecoration(
+          //     color: context.tertiary,
+          //     borderRadius: BorderRadius.circular(8),
+          //   ),
+          //   itemBackgroundColor: context.tertiary,
+          // ),
 
           // theme: const MechanixMenuThemeData(
           //   buttonMargin: EdgeInsets.only(right: 12),
