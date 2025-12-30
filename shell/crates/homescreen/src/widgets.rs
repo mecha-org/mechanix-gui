@@ -4,6 +4,8 @@ use gpui::*;
 use crate::utils::GridBounds;
 
 pub mod demo_widget;
+pub mod universal_search;
+pub mod app_drawer;
 
 #[derive(Copy, Clone, Hash, Debug, PartialEq, Eq)]
 pub(crate) struct WidgetId(pub usize);

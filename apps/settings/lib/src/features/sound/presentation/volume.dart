@@ -7,7 +7,7 @@ import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_state.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class VolumeWidget extends StatefulWidget {
   const VolumeWidget({super.key});

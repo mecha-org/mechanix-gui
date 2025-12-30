@@ -11,7 +11,7 @@ import 'package:mechanix_settings/src/features/date_time/models/types.dart';
 import 'package:mechanix_settings/src/features/display/models/types.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:widgets/widgets/wheelScroll/wheel_scroll_options_type.dart';
+import 'package:widgets/widgets/wheel_scroll/wheel_scroll_options_type.dart';
 
 class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
   final logger = Logger();

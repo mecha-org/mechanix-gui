@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class SettingMenu extends StatelessWidget {
   const SettingMenu({super.key});
@@ -15,92 +16,67 @@ class SettingMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(52),
-          child: const MechanixNavigationBar(
-            title: "Settings",
-          ).padHorizontal(12)),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
         physics: const BouncingScrollPhysics(),
         child: ContainerWidget(
           child: Column(
             children: [
-              // UpdateCard(),
+              const CustomTitle(title: 'Settings', fontSize: 32),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
                   title: 'Connectivity',
                   sectionListItems: [
-                    SectionListItems(
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Network',
                       onTap: () => onTap(context, AppRoutes.wireless),
-                      leading: const IconWidget(
-                        iconWidth: 22,
-                        iconHeight: 18,
-                        iconPath: Images.wifi,
-                      ),
+                      iconPath: Images.wifi,
                     ),
-                    SectionListItems(
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Bluetooth',
                       onTap: () => onTap(context, AppRoutes.bluetooth),
-                      leading: const IconWidget(
-                        iconHeight: 20,
-                        iconWidth: 20,
-                        iconPath: Images.bluetooth,
-                      ),
+                      iconPath: Images.bluetooth,
                     ),
                   ]).padVertical(8),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
                   title: 'Device',
                   sectionListItems: [
-                    SectionListItems(
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Battery',
                       onTap: () => onTap(context, AppRoutes.battery),
-                      leading: const IconWidget(
-                        iconWidth: 23,
-                        iconHeight: 13,
-                        iconPath: Images.battery,
-                      ),
+                      iconPath: Images.battery,
                     ),
-                    SectionListItems(
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Date & Time',
                       onTap: () => onTap(context, AppRoutes.dateTime),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.dateTime,
-                      ),
+                      iconPath: Images.dateTime,
                     ),
-                    SectionListItems(
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Display',
                       onTap: () => onTap(context, AppRoutes.display),
-                      leading: const IconWidget(
-                        iconWidth: 20,
-                        iconHeight: 20,
-                        iconPath: Images.display,
-                      ),
+                      iconPath: Images.display,
                     ),
-                    SectionListItems(
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Sound & Haptics',
                       onTap: () => onTap(context, AppRoutes.sound),
-                      leading: const IconWidget(
-                        iconWidth: 18,
-                        iconHeight: 20,
-                        iconPath: Images.sound,
-                      ),
+                      iconPath: Images.sound,
                     ),
                   ]),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
                   title: 'System',
                   sectionListItems: [
-                    SectionListItems(
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'About',
                       onTap: () => onTap(context, AppRoutes.about),
-                      leading: const IconWidget(
-                        iconPath: Images.cometIcon,
-                      ),
+                      iconPath: Images.cometIcon,
                     ),
                   ]),
             ],
