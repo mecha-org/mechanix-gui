@@ -12,21 +12,17 @@ class ToneArm extends StatelessWidget {
     return BlocSelector<SongsBloc, SongsState, bool>(
       selector: (state) => state.isPlaying,
       builder: (context, isPlaying) {
-        return isPlaying
-            ? Positioned(
-              right: -25,
-              top: -25,
-              child: Image.asset(MusicIcons.toneArm, height: 105, width: 97),
-            )
-            : Positioned(
-              right: -25,
-              top: -25,
-              child: Image.asset(
-                MusicIcons.pauseToneArmIcon,
-                height: 129,
-                width: 46,
-              ),
-            );
+        return Positioned(
+          right: -25,
+          top: -10,
+          child: AnimatedRotation(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topRight, // pivot point
+            turns: isPlaying ? 0.0 : -0.1,
+            child: Image.asset(MusicIcons.toneArm, height: 105, width: 97),
+          ),
+        );
       },
     );
   }

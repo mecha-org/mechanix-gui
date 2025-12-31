@@ -23,7 +23,7 @@ class AddMusicSheet extends StatefulWidget {
 
 class _AddMusicSheetState extends State<AddMusicSheet> {
   final List<String> selectedMusic = [];
-
+  String searchQuery = '';
   @override
   void initState() {
     super.initState();
@@ -83,6 +83,17 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                       return Center(
                         child: Text(
                           "No songs available",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: MusicColors.secondaryTextColor,
+                          ),
+                        ),
+                      );
+                    }
+                    if (searchedSongs.isEmpty && searchQuery.isNotEmpty) {
+                      return Center(
+                        child: Text(
+                          "No songs found",
                           style: TextStyle(
                             fontSize: 16,
                             color: MusicColors.secondaryTextColor,
@@ -151,7 +162,12 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                     ),
                   ),
                 ),
-                child: AddMusicInput(),
+                child: AddMusicInput(
+                  onSearch:
+                      (value) => setState(() {
+                        searchQuery = value;
+                      }),
+                ),
               ),
 
               Container(
@@ -190,6 +206,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
                             buttonSize: Size(100, 40),
+                            pressedButtonColor: MusicColors.bottomSheetColor,
                           ),
                           label: "Cancel",
                           onPressed: () {
@@ -199,10 +216,8 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
                             buttonSize: Size(75, 40),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: MusicColors.titleColor,
-                            ),
+                            buttonColor: MusicColors.buttonColor,
+                            pressedButtonColor: MusicColors.titleColor,
                           ),
                           label: "Add",
                           onPressed: () {

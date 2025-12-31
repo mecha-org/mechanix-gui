@@ -48,6 +48,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<SearchedSong>(searchedSong);
     on<GetFavouritesSongs>(favouritesSongs);
     on<AddPlaylistToQueue>(_addPlaylistToQueue);
+    on<PlayFavoriteSongs>(playFavouriteSongs);
+    on<ToggleScrolling>(toggleScrolling);
+    add(ScanSongs());
   }
 
   void _initializePlayerListeners() {
@@ -229,6 +232,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           error: null,
         ),
       );
+      add(LoadPlaylist());
       logger.i("Songs scanning completed");
     } catch (e) {
       logger.e("Error scanning songs: $e");
@@ -411,6 +415,66 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return;
       }
 
+      // // ============================================================================
+      // // FAVORITES MODE - Behaves like normal mode with favorites list
+      // // ============================================================================
+      if (state.musicMode == MusicMode.favorite) {
+        logger.i("Next song in favorites");
+
+        final currentInFavorites = state.favouriteSongs.indexWhere(
+          (song) => song.id == state.currentSong!.id,
+        );
+
+        if (currentInFavorites == -1) {
+          logger.w(
+            "Current song not found in favorites, switching to main list",
+          );
+          // Fall through to normal mode logic
+        } else if (currentInFavorites == state.favouriteSongs.length - 1) {
+          // Last song in favorites → loop to first or stop
+          logger.i("Reached end of favorites, looping to first");
+          final nextSong = state.favouriteSongs.first;
+
+          final media = Media(nextSong.path);
+          await player.open(media, play: state.isPlaying);
+
+          await songsRepository.addToRecentlyPlayed(nextSong);
+          add(RecentSongs());
+
+          emit(
+            state.copyWith(
+              currentSong: nextSong,
+              isPlaying: player.state.playing,
+              error: null,
+            ),
+          );
+
+          logger.i("Playing first favorite: ${nextSong.title}");
+          return;
+        } else {
+          // Play next from favorites
+          final nextIndex = currentInFavorites + 1;
+          final nextSong = state.favouriteSongs[nextIndex];
+
+          final media = Media(nextSong.path);
+          await player.open(media, play: state.isPlaying);
+
+          await songsRepository.addToRecentlyPlayed(nextSong);
+          add(RecentSongs());
+
+          emit(
+            state.copyWith(
+              currentSong: nextSong,
+              isPlaying: player.state.playing,
+              error: null,
+            ),
+          );
+
+          logger.i("Next from favorites: ${nextSong.title}");
+          return;
+        }
+      }
+
       // ============================================================================
       // NORMAL MODE - Using currentIndex
       // ============================================================================
@@ -519,7 +583,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
         // Play previous song manually
         final media = Media(prevSong.path);
-        await player.open(media, play: true);
+        await player.open(media, play: state.isPlaying);
 
         await songsRepository.addToRecentlyPlayed(prevSong);
         add(RecentSongs());
@@ -537,6 +601,47 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
         logger.i("Previous song in playlist: ${prevSong.title}");
         return;
+      }
+
+      // // ============================================================================
+      // // FAVORITES MODE - Behaves like normal mode with favorites list
+      // // ============================================================================
+      if (state.musicMode == MusicMode.favorite) {
+        logger.i("Previous song in favorites");
+
+        final currentInFavorites = state.favouriteSongs.indexWhere(
+          (song) => song.id == state.currentSong!.id,
+        );
+
+        if (currentInFavorites == -1) {
+          logger.w("Current song not found in favorites, cannot go back");
+          return;
+        } else if (currentInFavorites == 0) {
+          // First song in favorites → do nothing or loop to last
+          logger.i("At first song in favorites, cannot go previous");
+          return;
+        } else {
+          // Play previous from favorites
+          final prevIndex = currentInFavorites - 1;
+          final prevSong = state.favouriteSongs[prevIndex];
+
+          final media = Media(prevSong.path);
+          await player.open(media, play: state.isPlaying);
+
+          await songsRepository.addToRecentlyPlayed(prevSong);
+          add(RecentSongs());
+
+          emit(
+            state.copyWith(
+              currentSong: prevSong,
+              isPlaying: player.state.playing,
+              error: null,
+            ),
+          );
+
+          logger.i("Previous from favorites: ${prevSong.title}");
+          return;
+        }
       }
 
       // ============================================================================
@@ -880,6 +985,61 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return;
       }
 
+      // // ============================================================================
+      // // FAVORITES MODE → Convert to Queue Mode
+      // // ============================================================================
+      if (state.musicMode == MusicMode.favorite) {
+        logger.i("Converting favorites mode to queue mode");
+
+        // Find current song position in favorites
+        final currentFavoriteIndex = state.favouriteSongs.indexWhere(
+          (song) => song.id == state.currentSong?.id,
+        );
+
+        List<SongInfo> updatedQueue;
+        int newCurrentIndex;
+
+        if (currentFavoriteIndex != -1) {
+          // Build queue from remaining favorites (from current onwards)
+          final remainingFavorites =
+              state.favouriteSongs.sublist(currentFavoriteIndex).toList();
+          updatedQueue = List<SongInfo>.from(remainingFavorites);
+          newCurrentIndex = 0; // Current song is now at index 0
+        } else {
+          // Current song not in favorites, start fresh with current song
+          updatedQueue = [state.currentSong!];
+          newCurrentIndex = 0;
+        }
+
+        if (event.playNext) {
+          // Insert after current song (index 0)
+          updatedQueue.insert(1, event.songInfo);
+          logger.i(
+            "Inserted song as Play Next at index 1 after converting from favorites",
+          );
+        } else {
+          // Append to end
+          updatedQueue.add(event.songInfo);
+          logger.i(
+            "Appended song to end of queue after converting from favorites",
+          );
+        }
+
+        emit(
+          state.copyWith(
+            playbackQueue: updatedQueue,
+            currentIndex: newCurrentIndex,
+            musicMode: MusicMode.normal, // Switch to normal mode
+            error: null,
+          ),
+        );
+
+        logger.i(
+          "Converted favorites to queue. Queue length: ${updatedQueue.length}, currentIndex: $newCurrentIndex",
+        );
+        return;
+      }
+
       // ============================================================================
       // NORMAL MODE - Regular queue handling
       // ============================================================================
@@ -1022,15 +1182,26 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
       emit(
         state.copyWith(
+          selectedPlaylist:
+              state.selectedPlaylist != null &&
+                      event.playlistIds.contains(state.selectedPlaylist!.id)
+                  ? state.selectedPlaylist!.copyWith(
+                    songIds: [
+                      ...state.selectedPlaylist!.songIds,
+                      ...event.songIds,
+                    ],
+                  )
+                  : state.selectedPlaylist,
+
           playlistSongs:
               event.isMusicList
                   ? [...state.playlistSongs, ...updatedSongs]
                   : state.playlistSongs,
+
           songs:
-              state.songs.map((song) {
-                // Replace song if it was updated, otherwise keep original
-                return updatedSongsMap[song.id] ?? song;
-              }).toList(),
+              state.songs
+                  .map((song) => updatedSongsMap[song.id] ?? song)
+                  .toList(),
         ),
       );
       logger.i("${updatedSongs.length} song(s) added to playlist successfully");
@@ -1256,31 +1427,37 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     }
   }
 
-  // Future<void> playFavouriteSongs(
-  //   PlayFavoriteSongs event,
-  //   Emitter<SongsState> emit,
-  // ) async {
-  //   try {
-  //     logger.i("Playing favourite songs");
+  Future<void> playFavouriteSongs(
+    PlayFavoriteSongs event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      logger.i("Playing favourite song: ${event.song.title}");
 
-  //     await player.open(Media(event.song.path));
+      await player.open(Media(event.song.path));
 
-  //     final updatedQueue = state.favouriteSongs;
-  //     await songsRepository.addToRecentlyPlayed(event.song);
-  //     add(RecentSongs());
-  //     emit(
-  //       state.copyWith(
-  //         isPlaying: true,
-  //         playbackQueue: updatedQueue,
-  //         currentSong: event.song,
-  //         musicMode: MusicMode.favorite,
-  //       ),
-  //     );
-  //     logger.i("Favourite songs played successfully");
-  //   } catch (e) {
-  //     logger.e("Error playing favourite songs: $e");
-  //   }
-  // }
+      await songsRepository.addToRecentlyPlayed(event.song);
+      add(RecentSongs());
+
+      emit(
+        state.copyWith(
+          isPlaying: true,
+          currentSong: event.song,
+          musicMode: MusicMode.favorite,
+          playbackQueue: [], // Clear queue
+          currentIndex: null, // Not using currentIndex in favorites mode
+          currentPlaylist: const CurrentPlaylist(), // Clear playlist
+          playlistSongs: [], // Clear playlist songs
+          error: null,
+        ),
+      );
+
+      logger.i("Favourite song playing successfully in favorites mode");
+    } catch (e) {
+      logger.e("Error playing favourite song: $e");
+      emit(state.copyWith(error: "Failed to play favourite song: $e"));
+    }
+  }
 
   Future<void> _addPlaylistToQueue(
     AddPlaylistToQueue event,
@@ -1379,6 +1556,61 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       }
 
       // ============================================================================
+      // FAVORITES MODE → Convert to Queue Mode and add playlist songs
+      // ============================================================================
+      if (state.musicMode == MusicMode.favorite) {
+        logger.i("Converting favorites mode to queue mode and adding playlist");
+
+        // Find current song position in favorites
+        final currentFavoriteIndex = state.favouriteSongs.indexWhere(
+          (song) => song.id == state.currentSong?.id,
+        );
+
+        List<SongInfo> updatedQueue;
+        int newCurrentIndex;
+
+        if (currentFavoriteIndex != -1) {
+          // Build queue from remaining favorites (from current onwards)
+          final remainingFavorites =
+              state.favouriteSongs.sublist(currentFavoriteIndex).toList();
+          updatedQueue = List<SongInfo>.from(remainingFavorites);
+          newCurrentIndex = 0;
+        } else {
+          // Current song not in favorites, start fresh with current song
+          updatedQueue = [state.currentSong!];
+          newCurrentIndex = 0;
+        }
+
+        if (event.playNext) {
+          // Insert entire playlist after current song (index 0)
+          updatedQueue.insertAll(1, playlistSongs);
+          logger.i(
+            "Inserted ${playlistSongs.length} songs as Play Next at index 1 after converting from favorites",
+          );
+        } else {
+          // Append entire playlist to end
+          updatedQueue.addAll(playlistSongs);
+          logger.i(
+            "Appended ${playlistSongs.length} songs to end of queue after converting from favorites",
+          );
+        }
+
+        emit(
+          state.copyWith(
+            playbackQueue: updatedQueue,
+            currentIndex: newCurrentIndex,
+            musicMode: MusicMode.normal, // Switch to normal mode
+            error: null,
+          ),
+        );
+
+        logger.i(
+          "Converted favorites to queue and added playlist. Queue length: ${updatedQueue.length}",
+        );
+        return;
+      }
+
+      // ============================================================================
       // NORMAL MODE - Add playlist songs to existing queue
       // ============================================================================
       final updatedQueue = List<SongInfo>.from(state.playbackQueue);
@@ -1424,6 +1656,15 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       );
       emit(state.copyWith(error: "Failed to add playlist to queue: $e"));
     }
+  }
+
+  Future<void> toggleScrolling(
+    ToggleScrolling event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(isScrolling: event.isScrolling));
+    } catch (_) {}
   }
 
   @override

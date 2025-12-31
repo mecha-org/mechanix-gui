@@ -20,6 +20,7 @@ class SongTile extends StatelessWidget {
   final bool isPaddingRequired;
   final bool isEditMode;
   final bool isMenuRequired;
+  final bool isDeleteMenu;
   const SongTile({
     super.key,
     required this.song,
@@ -31,6 +32,7 @@ class SongTile extends StatelessWidget {
     this.onTap,
     this.isEditMode = false,
     this.isMenuRequired = true,
+    this.isDeleteMenu = false,
   });
 
   @override
@@ -45,7 +47,7 @@ class SongTile extends StatelessWidget {
         color: isSelected ? MusicColors.backgroundColor : Colors.transparent,
         child: ListTile(
           onTap:
-              isDisabled
+              isDisabled || isEditMode
                   ? null
                   : onTap ??
                       () => {
@@ -109,6 +111,7 @@ class SongTile extends StatelessWidget {
                       const SizedBox(width: 12),
 
                       SongMenu(
+                        isDeleteMenu: isDeleteMenu,
                         song: song,
                         onToggleFavourite:
                             isDisabled

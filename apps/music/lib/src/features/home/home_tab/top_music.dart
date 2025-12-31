@@ -22,7 +22,7 @@ class _TopMusicState extends State<TopMusic> {
     const pageSize = 3;
     final List<List<SongInfo>> pages = [];
 
-    for (int i = 0; i < songs.length; i += pageSize) {
+    for (int i = 0; i < (songs.length >= 9 ? 9 : songs.length); i += pageSize) {
       pages.add(
         songs.sublist(
           i,
@@ -85,6 +85,7 @@ class _TopMusicState extends State<TopMusic> {
                       ),
                     ),
                     Row(
+                      spacing: 12,
                       children: [
                         IconButton(
                           icon: Image.asset(
@@ -110,7 +111,10 @@ class _TopMusicState extends State<TopMusic> {
                                     : MusicColors.disabledColor,
                           ),
                           iconSize: 40,
-                          onPressed: () => _scrollRight(pages.length),
+                          onPressed:
+                              currentPage < pages.length - 1
+                                  ? null
+                                  : () => _scrollRight(pages.length),
                         ),
                       ],
                     ),
@@ -125,14 +129,20 @@ class _TopMusicState extends State<TopMusic> {
                   controller: _pageController,
                   padEnds: false,
                   itemCount: pages.length,
+                  physics: const PageScrollPhysics(),
                   onPageChanged: (index) {
                     setState(() => currentPage = index);
                   },
                   itemBuilder: (context, pageIndex) {
                     final pageSongs = pages[pageIndex];
+                    final isLastPage = pageIndex == pages.length - 1;
 
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 16, right: 8),
+                    return Container(
+                      margin: EdgeInsets.symmetric(horizontal: 10),
+                      padding: EdgeInsets.only(
+                        left: 16,
+                        right: isLastPage ? 16 : 8, // Full padding on last page
+                      ),
                       child: Column(
                         children:
                             pageSongs.map((song) {

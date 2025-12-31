@@ -36,4 +36,6 @@ class MusicIcons {
   static const playlistCardIcon= 'assets/images/playlist_card.png';
   static const renameIcon= 'assets/images/rename.png';
   static const upcomingIcon= 'assets/images/upcoming.png';
+  static const toneCircleIcon= 'assets/images/tone_circle.png';
+  static const backgroundSliderIcon= 'assets/images/background_slider.png';
 }

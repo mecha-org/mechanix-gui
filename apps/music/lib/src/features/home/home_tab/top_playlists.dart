@@ -114,6 +114,7 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                       ),
                     ),
                     Row(
+                      spacing: 12,
                       children: [
                         IconButton(
                           icon: Image.asset(
@@ -154,7 +155,7 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                   controller: _scrollController,
                   scrollDirection: Axis.horizontal,
                   physics:
-                      const NeverScrollableScrollPhysics(), // Disable manual scroll
+                      const PageScrollPhysics(), // Disable manual scroll
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
@@ -169,6 +170,9 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                                       playlists[i].id,
                               builder:
                                   (context, isCurrentPlaylist) => PlaylistCard(
+                                    isDeletePlaylist: false,
+                                    isLiked: true,
+                                    isRenamePlaylist: false,
                                     isActive: isCurrentPlaylist,
                                     onRenameClick: (value) {},
                                     playlistInfo: playlists[i],

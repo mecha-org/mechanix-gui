@@ -123,7 +123,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                               songIds: const [],
                               coverImagePath: null,
                             ),
-                            isSelected: false,
+                            isSelected: true,
                             isDisabled: false,
                             isMenuRequired: false,
                             onTap: null,
@@ -193,9 +193,10 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                             context,
                           ).style.copyWith(fontSize: 20, height: 1.3),
                           children: [
-                            const TextSpan(text: 'Add track to  '),
+                            const TextSpan(text: 'Add track to '),
                             TextSpan(
-                              text: '${selectedPlaylists.length} playlists',
+                              text:
+                                  '${selectedPlaylists.length} playlist${selectedPlaylists.length == 1 ? '' : 's'}',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -225,10 +226,8 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
                             buttonSize: const Size(75, 40),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: MusicColors.titleColor,
-                            ),
+                            buttonColor: MusicColors.buttonColor,
+                            pressedButtonColor: MusicColors.titleColor,
                           ),
                           label: "Add",
                           onPressed:

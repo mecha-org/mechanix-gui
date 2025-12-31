@@ -69,7 +69,10 @@ class BottomMenu extends StatelessWidget {
               title: "New Playlist",
               leading: IconWidget(
                 iconPath: MusicIcons.addToPlaylistIcon,
-                iconColor: Colors.white,
+                iconColor:
+                    playlists.length >= Constants.playlistLimit
+                        ? Colors.grey
+                        : Colors.white,
               ),
             ),
             MechanixMenuItemsType(

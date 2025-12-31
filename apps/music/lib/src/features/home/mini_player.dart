@@ -73,6 +73,7 @@ class MiniPlayer extends StatelessWidget {
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
                     onTap:
                         () => Navigator.push(
                           context,

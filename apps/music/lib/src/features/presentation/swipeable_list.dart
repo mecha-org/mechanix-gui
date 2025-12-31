@@ -4,6 +4,7 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
+import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 
@@ -25,9 +26,15 @@ class SwipeableList extends StatelessWidget {
             // Optional confirmation (recommended)
             return true;
           },
-          onDismissed: (_) => {context.read<SongsBloc>().add(DeleteSong(song))},
-
-          child: SongTile(song: song, isCurrentSong: isCurrentSong),
+          onDismissed:
+              isCurrentSong
+                  ? (_) => {context.read<SongsBloc>().add(DeleteSong(song))}
+                  : null,
+          child: SongTile(
+            song: song,
+            isCurrentSong: isCurrentSong,
+            isDeleteMenu: true,
+          ),
         );
       },
     );
@@ -42,7 +49,7 @@ class _DeleteBackground extends StatelessWidget {
     return Container(
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: 24),
-      color: Color.fromRGBO(211, 0, 0, 0.1),
+      color: MusicColors.buttonBackgroundColor,
       child: Image.asset(MusicIcons.swipeDeleteIcon, width: 20, height: 20),
     );
   }

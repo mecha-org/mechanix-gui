@@ -13,6 +13,8 @@ class PlaylistTile extends StatelessWidget {
   final bool isMenuRequired;
   final ValueChanged<String> onRenameClick;
   final bool isActive;
+  final bool isRenamePlaylist;
+  final bool isDeletePlaylist;
 
   const PlaylistTile({
     super.key,
@@ -23,6 +25,8 @@ class PlaylistTile extends StatelessWidget {
     this.isMenuRequired = true,
     required this.onRenameClick,
     this.isActive = false,
+    this.isRenamePlaylist = true,
+    this.isDeletePlaylist = false,
   });
 
   @override
@@ -84,6 +88,9 @@ class PlaylistTile extends StatelessWidget {
           trailing:
               isMenuRequired
                   ? PlaylistMenu(
+                    isDeletePlaylist: isDeletePlaylist,
+                    isLiked: true,
+                    isRenamePlaylist: isRenamePlaylist,
                     playlistInfo: playlistInfo,
                     onRenameClick: onRenameClick,
                   )

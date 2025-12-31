@@ -125,6 +125,7 @@ class _SearchTabState extends State<SearchTab> {
                             children: [
                               Expanded(
                                 child: PlaylistTile(
+                                  isRenamePlaylist: false,
                                   onRenameClick: (value) {},
                                   isMenuRequired: false,
                                   playlistInfo: playlist,
@@ -265,6 +266,7 @@ class _SearchTabState extends State<SearchTab> {
                                     playlist.id,
                             builder:
                                 (context, isCurrentPlaylist) => PlaylistTile(
+                                  isRenamePlaylist: false,
                                   isActive: isCurrentPlaylist,
                                   onRenameClick: (value) {},
                                   playlistInfo: playlist,

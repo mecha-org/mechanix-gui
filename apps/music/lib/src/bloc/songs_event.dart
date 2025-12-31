@@ -202,3 +202,19 @@ class SearchedSong extends SongsEvent {
 }
 
 class GetFavouritesSongs extends SongsEvent {}
+
+class PlayFavoriteSongs extends SongsEvent {
+  final SongInfo song;
+  const PlayFavoriteSongs({required this.song});
+}
+
+class AddPlaylistToQueue extends SongsEvent {
+  final String playlistId;
+  final bool playNext; // true = play next, false = add to end
+
+  const AddPlaylistToQueue({required this.playlistId, this.playNext = false});
+}
+class ToggleScrolling extends SongsEvent {
+  final bool isScrolling;
+  const ToggleScrolling(this.isScrolling);
+}

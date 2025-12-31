@@ -39,9 +39,41 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
 
   @override
   Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) {
+              final isInput = child.key != const ValueKey('default');
+
+              final slideAnimation = Tween<Offset>(
+                begin:
+                    isInput
+                        ? const Offset(1.0, 0.0) // from right
+                        : const Offset(-1.0, 0.0), // to right
+                end: Offset.zero,
+              ).animate(animation);
+
+              return SlideTransition(
+                position: slideAnimation,
+                child: FadeTransition(opacity: animation, child: child),
+              );
+            },
+            child: _buildContent(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     // ADD MODE
     if (_activeMode == ActiveMode.add) {
       return Row(
+        key: const ValueKey('add'),
         spacing: 16,
         children: [
           Expanded(
@@ -49,20 +81,23 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
               autofocus: true,
               onChanged: (value) {
                 textValue = value;
-                widget.onDraftChanged(value); // 🔥 live update
+                widget.onDraftChanged(value);
               },
-              anchorWidget: MusicIconButton(
-                onPressed:
-                    textValue.trim().isEmpty
-                        ? null
-                        : () {
-                          context.read<SongsBloc>().add(
-                            CreateUpdatePlaylist(playlistName: textValue),
-                          );
-                          _reset();
-                        },
-                icon: MusicIcons.checkIcon,
-                backgroundColor: Colors.transparent,
+              anchorWidget: Container(
+                margin: EdgeInsets.only(left: 5),
+                child: MusicIconButton(
+                  onPressed:
+                      textValue.trim().isEmpty
+                          ? null
+                          : () {
+                            context.read<SongsBloc>().add(
+                              CreateUpdatePlaylist(playlistName: textValue),
+                            );
+                            _reset();
+                          },
+                  icon: MusicIcons.checkIcon,
+                  backgroundColor: Colors.transparent,
+                ),
               ),
             ),
           ),
@@ -73,6 +108,7 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
     // SEARCH MODE
     if (_activeMode == ActiveMode.search) {
       return Row(
+        key: const ValueKey('search'),
         spacing: 16,
         children: [
           Expanded(
@@ -95,6 +131,7 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
 
     // DEFAULT MODE
     return Row(
+      key: const ValueKey('default'),
       spacing: 16,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -107,11 +144,9 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
                 onPressed:
                     isLimitReached
                         ? null
-                        : () {
-                          setState(() {
-                            _activeMode = ActiveMode.add;
-                          });
-                        },
+                        : () => setState(() {
+                          _activeMode = ActiveMode.add;
+                        }),
                 icon: Image.asset(
                   MusicIcons.addIcon,
                   width: 28,
@@ -120,14 +155,13 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
                 ),
               ),
         ),
-        IconButton(
-          iconSize: 44,
-          onPressed: () {
-            setState(() {
-              _activeMode = ActiveMode.search;
-            });
-          },
-          icon: Image.asset(MusicIcons.searchIcon, width: 28, height: 28),
+        Container(
+          margin: EdgeInsets.only(right: 5),
+          child: IconButton(
+            iconSize: 44,
+            onPressed: () => setState(() => _activeMode = ActiveMode.search),
+            icon: Image.asset(MusicIcons.searchIcon, width: 28, height: 28),
+          ),
         ),
       ],
     );

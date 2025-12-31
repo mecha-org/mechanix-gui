@@ -12,7 +12,6 @@ import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 class PlayerSideControls extends StatelessWidget {
   final bool isFavorited;
   final SongInfo songDetails;
-
   const PlayerSideControls({
     super.key,
     required this.isFavorited,
@@ -77,7 +76,7 @@ class PlayerSideControls extends StatelessWidget {
           ),
 
           MusicIconButton(
-            onPressed: ()=>_showAddToPlaylistSheet(context),
+            onPressed: () => _showAddToPlaylistSheet(context),
 
             backgroundColor: Colors.transparent,
             icon: MusicIcons.addSongIcon,

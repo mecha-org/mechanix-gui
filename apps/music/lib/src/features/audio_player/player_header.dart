@@ -12,7 +12,7 @@ class PlayerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(top: 20, left: 12, right: 12),
+      padding: const EdgeInsets.only(top: 20, left: 30, right: 30),
       alignment: Alignment.center,
       child: Column(
         children: [

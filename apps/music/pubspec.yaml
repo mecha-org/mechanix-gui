@@ -113,6 +113,13 @@ flutter:
     - assets/images/three_line.png
     - assets/images/remove.png
     - assets/images/close.png
+    - assets/images/pause_tone_arm.png
+    - assets/images/add_song.png
+    - assets/images/playlist_card.png
+    - assets/images/rename.png
+    - assets/images/upcoming.png
+    - assets/images/tone_circle.png
+    - assets/images/background_slider.png
 
     - assets/screenshots/music1.jpeg
     - assets/screenshots/music2.jpeg

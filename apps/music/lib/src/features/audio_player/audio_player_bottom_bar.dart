@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
@@ -11,7 +10,13 @@ import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 
 class AudioPlayerBottomBar extends StatelessWidget {
-  const AudioPlayerBottomBar({super.key});
+  final ValueChanged<bool> togglePlayer;
+  final bool isUpcomingTrackWindow;
+  const AudioPlayerBottomBar({
+    super.key,
+    required this.togglePlayer,
+    required this.isUpcomingTrackWindow,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +37,7 @@ class AudioPlayerBottomBar extends StatelessWidget {
               BottomBarButton(
                 disabledColor: Theme.of(context).disabledColor,
                 iconTheme: MechanixBottomBarIconThemeData(
+                  buttonMargin: EdgeInsets.only(left: 10),
                   iconSize: Size(24, 24),
                   iconBoxSize: Size(44, 44),
                 ),
@@ -100,14 +106,8 @@ class AudioPlayerBottomBar extends StatelessWidget {
             ],
             anchorWidget: [
               BottomBarButton(
-                onPressed: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                  context.read<SongsBloc>().add(
-                    MusicTabSwitch(MusicTabs.favorites),
-                  );
-                },
+                isSelected: isUpcomingTrackWindow,
+                onPressed: () => togglePlayer(!isUpcomingTrackWindow),
                 iconTheme: const MechanixBottomBarIconThemeData(
                   iconSize: Size(28, 28),
                   iconBoxSize: Size(44, 44),

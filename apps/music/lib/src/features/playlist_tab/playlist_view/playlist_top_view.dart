@@ -6,7 +6,10 @@ import 'package:mechanix_music/src/commons/icons.dart';
 class PlaylistTopView extends StatelessWidget {
   final PlaylistInfo playlistInfo;
 
-  const PlaylistTopView({super.key, required this.playlistInfo});
+  const PlaylistTopView({
+    super.key,
+    required this.playlistInfo,
+  });
 
   @override
   Widget build(BuildContext context) {

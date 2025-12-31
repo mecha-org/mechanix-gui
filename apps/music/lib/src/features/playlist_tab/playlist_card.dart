@@ -8,6 +8,10 @@ class PlaylistCard extends StatelessWidget {
   final VoidCallback onPlaylistTap;
   final PlaylistInfo playlistInfo;
   final ValueChanged<String> onRenameClick;
+  final bool isDeletePlaylist;
+  final bool isRenamePlaylist;
+  final bool isLiked;
+
   final bool isActive;
   const PlaylistCard({
     super.key,
@@ -15,6 +19,9 @@ class PlaylistCard extends StatelessWidget {
     required this.onPlaylistTap,
     required this.onRenameClick,
     this.isActive = false,
+    this.isDeletePlaylist = true,
+    this.isRenamePlaylist = true,
+    this.isLiked = true,
   });
 
   bool get hasCover =>
@@ -80,6 +87,9 @@ class PlaylistCard extends StatelessWidget {
                 right: 4,
                 top: 4,
                 child: PlaylistMenu(
+                  isDeletePlaylist: isDeletePlaylist,
+                  isRenamePlaylist: isRenamePlaylist,
+                  isLiked: isLiked,
                   onRenameClick: onRenameClick,
                   playlistInfo: playlistInfo,
                 ),

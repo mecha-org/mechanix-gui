@@ -160,7 +160,9 @@ class _PlaylistViewState extends State<PlaylistView> {
                       controller: scrollController,
                       slivers: [
                         //Top View
-                        PlaylistTopView(playlistInfo: playlist),
+                        PlaylistTopView(
+                          playlistInfo: playlist,
+                        ),
 
                         SliverToBoxAdapter(child: SizedBox(height: 16)),
                         // Audio Actions
@@ -257,19 +259,23 @@ class _PlaylistViewState extends State<PlaylistView> {
                               // Edit mode - reorderable list with delete
                               return SliverPadding(
                                 padding: EdgeInsets.only(left: 16, right: 16),
-                                sliver: SliverToBoxAdapter(
-                                  child: ReorderableListView.builder(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    buildDefaultDragHandles: false,
-                                    itemCount: displaySongs.length,
-                                    onReorder: (oldIndex, newIndex) {
-                                      onReorder(oldIndex, newIndex);
-                                    },
-                                    itemBuilder: (context, index) {
-                                      return ReorderableDragStartListener(
-                                        key: ValueKey(displaySongs[index].id),
-                                        index: index,
+                                sliver: SliverReorderableList(
+                                  proxyDecorator: (child, index, animation) {
+                                    return Material(
+                                      color: Colors.transparent,
+                                      elevation: 6,
+                                      child: SizedBox(height: 79, child: child),
+                                    );
+                                  },
+                                  itemCount: displaySongs.length,
+                                  onReorder: (oldIndex, newIndex) {
+                                    onReorder(oldIndex, newIndex);
+                                  },
+                                  itemBuilder: (context, index) {
+                                    return ReorderableDragStartListener(
+                                      key: ValueKey(displaySongs[index].id),
+                                      index: index,
+                                      child: Material(
                                         child: BlocSelector<
                                           SongsBloc,
                                           SongsState,
@@ -283,24 +289,22 @@ class _PlaylistViewState extends State<PlaylistView> {
                                               (context, isCurrentSong) => Row(
                                                 children: [
                                                   // Delete icon on left
-                                                  if (isCurrentSong)
-                                                    SizedBox(width: 40)
-                                                  else
-                                                    IconWidget(
-                                                      iconPath:
-                                                          MusicIcons
-                                                              .threeLineIcon,
-                                                      boxHeight: 40,
-                                                      boxWidth: 40,
-                                                      iconHeight: 24,
-                                                      iconWidth: 24,
-                                                    ),
+                                                  IconWidget(
+                                                    iconPath:
+                                                        MusicIcons
+                                                            .threeLineIcon,
+                                                    boxHeight: 40,
+                                                    boxWidth: 40,
+                                                    iconHeight: 24,
+                                                    iconWidth: 24,
+                                                  ),
                                                   SizedBox(width: 8),
                                                   // Song tile
                                                   Expanded(
                                                     child: SongTile(
                                                       song: displaySongs[index],
                                                       isEditMode: true,
+
                                                       isCurrentSong:
                                                           isCurrentSong &&
                                                           musicMode ==
@@ -338,9 +342,9 @@ class _PlaylistViewState extends State<PlaylistView> {
                                                 ],
                                               ),
                                         ),
-                                      );
-                                    },
-                                  ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               );
                             }

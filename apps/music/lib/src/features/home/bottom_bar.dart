@@ -31,8 +31,8 @@ class BottomBar extends StatelessWidget {
             // Slide transition from bottom
             return SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(0.0, 0.3),
-                end: Offset.zero,
+                begin: const Offset(0.0, 1.0), // Start from below the screen
+                end: Offset.zero, // End at normal position
               ).animate(animation),
               child: FadeTransition(opacity: animation, child: child),
             );
@@ -82,6 +82,7 @@ class BottomBar extends StatelessWidget {
                           BottomBarButton(
                             isDisabled: state == MusicTabs.home,
                             iconTheme: MechanixBottomBarIconThemeData(
+                              buttonMargin: const EdgeInsets.only(left: 10),
                               iconSize: Size(28, 28),
                               iconBoxSize: Size(44, 44),
                               iconColor:

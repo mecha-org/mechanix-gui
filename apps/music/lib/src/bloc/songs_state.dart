@@ -8,7 +8,6 @@ import 'package:mechanix_music/src/bloc/songs_event.dart';
 class SongsState extends Equatable {
   final List<SongInfo> songs;
   final List<SongInfo> playbackQueue;
-
   final bool isLoading;
   final String? error;
   final SearchResults searchResults;
@@ -32,6 +31,8 @@ class SongsState extends Equatable {
   final List<PlaylistInfo> searchedPlaylist;
   final List<SongInfo> searchedSongs;
   final List<SongInfo> favouriteSongs;
+  final int? currentIndex;
+  final bool isScrolling;
 
   const SongsState({
     this.songs = const [],
@@ -63,12 +64,13 @@ class SongsState extends Equatable {
     this.searchedPlaylist = const [],
     this.searchedSongs = const [],
     this.favouriteSongs = const [],
+    this.currentIndex,
+    this.isScrolling = false,
   });
 
   SongsState copyWith({
     List<SongInfo>? songs,
     List<SongInfo>? playbackQueue,
-    List<SongInfo>? originalQueue,
     bool? isLoading,
     String? error,
     SearchResults? searchResults,
@@ -92,6 +94,8 @@ class SongsState extends Equatable {
     List<PlaylistInfo>? searchedPlaylist,
     List<SongInfo>? searchedSongs,
     List<SongInfo>? favouriteSongs,
+    int? currentIndex,
+    bool? isScrolling,
   }) {
     return SongsState(
       songs: songs ?? this.songs,
@@ -119,6 +123,8 @@ class SongsState extends Equatable {
       searchedPlaylist: searchedPlaylist ?? this.searchedPlaylist,
       searchedSongs: searchedSongs ?? this.searchedSongs,
       favouriteSongs: favouriteSongs ?? this.favouriteSongs,
+      currentIndex: currentIndex ?? this.currentIndex,
+      isScrolling: isScrolling ?? this.isScrolling,
     );
   }
 
@@ -149,5 +155,7 @@ class SongsState extends Equatable {
     searchedPlaylist,
     searchedSongs,
     favouriteSongs,
+    currentIndex,
+    isScrolling,
   ];
 }

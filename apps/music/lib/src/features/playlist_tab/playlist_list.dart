@@ -13,21 +13,22 @@ import 'package:mechanix_music/src/features/playlist_tab/add_playlist_bar.dart';
 import 'package:tuple/tuple.dart';
 
 class PlaylistList extends StatefulWidget {
-  const PlaylistList({super.key});
+  final ScrollController scrollController;
+
+  const PlaylistList({super.key, required this.scrollController});
 
   @override
   State<PlaylistList> createState() => _PlaylistListState();
 }
 
 class _PlaylistListState extends State<PlaylistList> {
-  final scrollController = ScrollController();
   String playlistName = 'New Playlist';
   BottomBarView? previousBottomBarView;
   String renamePlaylistId = "";
 
   @override
   void dispose() {
-    scrollController.dispose();
+    // scrollController.dispose();
     super.dispose();
   }
 
@@ -90,7 +91,7 @@ class _PlaylistListState extends State<PlaylistList> {
         previousBottomBarView = bottomBarView;
 
         return Scrollbar(
-          controller: scrollController,
+          controller: widget.scrollController,
           child: ScrollConfiguration(
             behavior: const ScrollBehavior().copyWith(
               overscroll: false,
@@ -98,7 +99,8 @@ class _PlaylistListState extends State<PlaylistList> {
               dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
             ),
             child: CustomScrollView(
-              controller: scrollController,
+              controller: widget.scrollController,
+              physics: const BouncingScrollPhysics(),
               slivers: [
                 const SliverToBoxAdapter(
                   child: Padding(
@@ -275,6 +277,9 @@ class _PlaylistListState extends State<PlaylistList> {
                                         context,
                                         isCurrentPlaylist,
                                       ) => PlaylistTile(
+                                        isDeletePlaylist: true,
+                                        isSelected:
+                                            isNewPlaylist || isBeingRenamed,
                                         isActive: isCurrentPlaylist,
                                         onRenameClick:
                                             (value) => {
@@ -307,6 +312,7 @@ class _PlaylistListState extends State<PlaylistList> {
                         );
                   },
                 ),
+                const SliverToBoxAdapter(child: SizedBox(height: 60)),
               ],
             ),
           ),

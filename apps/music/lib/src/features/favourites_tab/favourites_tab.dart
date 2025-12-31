@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
@@ -17,7 +19,39 @@ class FavouritesTab extends StatefulWidget {
 }
 
 class _FavouritesTabState extends State<FavouritesTab> {
-  final scrollController = ScrollController();
+  final ScrollController scrollController = ScrollController();
+  Timer? _scrollEndTimer;
+  bool _isScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // Scroll start (fire once)
+    if (!_isScrolling) {
+      _isScrolling = true;
+      context.read<SongsBloc>().add(ToggleScrolling(true));
+    }
+
+    // Scroll end debounce
+    _scrollEndTimer?.cancel();
+    _scrollEndTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      _isScrolling = false;
+      context.read<SongsBloc>().add(ToggleScrolling(false));
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollEndTimer?.cancel();
+    scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scrollbar(
@@ -30,8 +64,9 @@ class _FavouritesTabState extends State<FavouritesTab> {
           dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
         ),
         child: Container(
-          padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 6),
+          padding: EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 0),
           child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
             controller: scrollController,
             slivers: [
               // Title widget is now part of the scrollable content
@@ -51,11 +86,15 @@ class _FavouritesTabState extends State<FavouritesTab> {
 
                           return BlocSelector<SongsBloc, SongsState, bool>(
                             selector:
-                                (state) => state.currentSong?.id == song.id,
+                                (state) =>
+                                    state.currentSong?.id == song.id &&
+                                    state.musicMode == MusicMode.favorite,
                             builder: (context, isCurrentSong) {
                               return SongTile(
                                 onTap: () {
-                                  context.read<SongsBloc>().add(PlaySong(song));
+                                  context.read<SongsBloc>().add(
+                                    PlayFavoriteSongs(song: song),
+                                  );
                                 },
                                 song: song,
                                 isCurrentSong: isCurrentSong,
@@ -66,6 +105,7 @@ class _FavouritesTabState extends State<FavouritesTab> {
                       ),
                     ),
               ),
+              const SliverToBoxAdapter(child: SizedBox(height: 60)),
             ],
           ),
         ),
