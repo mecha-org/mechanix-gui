@@ -24,7 +24,6 @@ class SettingMenu extends StatelessWidget {
               const CustomTitle(title: 'Settings', fontSize: 32),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
-                  title: 'Connectivity',
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
@@ -41,7 +40,6 @@ class SettingMenu extends StatelessWidget {
                   ]).padVertical(8),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
-                  title: 'Device',
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
@@ -70,7 +68,6 @@ class SettingMenu extends StatelessWidget {
                   ]),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
-                  title: 'System',
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,

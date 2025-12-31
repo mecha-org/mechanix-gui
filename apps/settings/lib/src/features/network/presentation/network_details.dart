@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_text_button.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/commons/styles/color.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
@@ -15,6 +16,7 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_s
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
@@ -74,82 +76,16 @@ class _NetworkDetailsState extends State<NetworkDetails> {
         }
 
         return Scaffold(
-          appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(52),
-              child: MechanixNavigationBar(
-                      title: state.selectedNMAccessPoint != null
-                          ? utf8.decode(state.selectedNMAccessPoint!.ssid)
-                          : '',
-                      actionWidgets: (state.selectedAccessPoint!.isActive ||
-                              state.selectedAccessPoint!.isSaved)
-                          ? [
-                              IconButton(
-                                onPressed: () => {
-                                  showDeleteDialog(utf8.decode(
-                                      state.selectedNMAccessPoint!.ssid)),
-                                },
-                                style: ButtonStyle(
-                                  iconColor:
-                                      WidgetStateProperty.all(Colors.white),
-                                  backgroundColor: WidgetStateProperty.all(
-                                      Color(0xFFB71C1C)),
-                                  shape: WidgetStateProperty.all(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                  ),
-                                  minimumSize:
-                                      WidgetStateProperty.all(Size(32, 32)),
-                                  fixedSize:
-                                      WidgetStateProperty.all(Size(32, 32)),
-                                  padding:
-                                      WidgetStateProperty.all(EdgeInsets.zero),
-                                ),
-                                icon: Center(
-                                  child: CustomIcon(
-                                    icon: Image.asset(Images.trash),
-                                    width: 15,
-                                    height: 17,
-                                  ),
-                                ),
-                              ).padRight(16)
-                            ]
-                          : [
-                              TextButton.icon(
-                                onPressed: () => onNetworkTap(
-                                    context, state.selectedAccessPoint),
-                                style: ButtonStyle(
-                                  backgroundColor:
-                                      const WidgetStatePropertyAll<Color>(
-                                          Color(0xFF044DDF)),
-                                  shape: WidgetStatePropertyAll<
-                                      RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: const BorderSide(),
-                                    ),
-                                  ),
-                                ),
-                                icon: const IconWidget(
-                                  iconColor: Colors.white,
-                                  iconPath: Images.addRoundedSquare,
-                                  iconHeight: 20,
-                                  iconWidth: 20,
-                                ),
-                                label: Text(
-                                  "Join Network",
-                                  style: context.textTheme.labelMedium
-                                      ?.copyWith(color: Colors.white),
-                                ),
-                              ).padRight(16)
-                            ])
-                  .padHorizontal(12)),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 children: [
+                  CustomTitle(
+                    title: state.selectedNMAccessPoint != null
+                        ? utf8.decode(state.selectedNMAccessPoint!.ssid)
+                        : '',
+                  ),
                   const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -299,6 +235,24 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                 ],
               ).padTop(8),
             ),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
+            centerWidget: [
+              BottomBarButton.widget(
+                widget: TextButton.icon(
+                  onPressed: () =>
+                      onNetworkTap(context, state.selectedAccessPoint),
+                  icon: const IconWidget(
+                    // iconColor: Colors.white,
+                    iconPath: Images.addRoundedSquare,
+                    iconHeight: 20,
+                    iconWidth: 20,
+                  ),
+                  label: const Text("Join Network"),
+                ),
+              )
+            ],
           ),
         );
       },
