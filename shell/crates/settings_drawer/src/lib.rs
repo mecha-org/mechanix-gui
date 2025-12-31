@@ -59,18 +59,19 @@ pub fn run_app(cx: &mut App) {
                     let ShellState {
                         sound_device_info,
                         brightness_value,
-
                         ..
                     } = ShellState::global(cx).clone();
 
                     let sound_device = Some(sound_device_info).clone().unwrap();
                     this.volume_device_name = sound_device.name;
                     this.volume_mute = sound_device.mute;
-                    this.volume_slider_value = if this.volume_mute { 0.0 } else { sound_device.volume as f32 };
+                    this.volume_slider_value = if this.volume_mute {
+                        0.0
+                    } else {
+                        sound_device.volume as f32
+                    };
                     this.volume_slider_state.update(cx, |state, _cx| {
-                        state.value = this
-                            .volume_slider_value
-                            .clamp(state.min, state.max);
+                        state.value = this.volume_slider_value.clamp(state.min, state.max);
                     });
 
                     this.brightness_slider_value = brightness_value;
@@ -82,7 +83,6 @@ pub fn run_app(cx: &mut App) {
                     });
 
                     cx.notify();
-
                 })
                 .detach();
 

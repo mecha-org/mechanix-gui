@@ -22,6 +22,8 @@ pub struct Settings {
     pub app_drawer: AppDrawerSettings,
     #[serde(default)]
     pub homescreen: HomescreenSettings,
+    #[serde(default)]
+    pub power_options: PowerOptionsSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -206,6 +208,27 @@ impl Default for HomescreenSettings {
                 layer: Layer::Bottom,
                 anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
                 namespace: "mechanix.homescreen".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
+        }
+    }
+}
+
+/// Power options settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct PowerOptionsSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for PowerOptionsSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Top,
+                anchor: Anchor::TOP,
+                namespace: "mechanix.power.options".into(),
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },

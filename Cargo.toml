@@ -41,7 +41,7 @@ futures = "0.3.31"
 futures-timer = "3.0.3"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "67f5ea290ceb813242dab65f695214e59e3335b6", features = [
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "7da85902b7f136c56ad838607589efe6377c319a", features = [
     "wayland",
     "linux-impeller",
 ] }
