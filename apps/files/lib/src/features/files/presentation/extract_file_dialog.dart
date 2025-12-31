@@ -1,94 +1,131 @@
 import 'dart:async';
 import 'dart:io' as io;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
-import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/extension.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar.dart';
+import 'package:widgets/widgets/filled_button/mechanix_filled_button.dart';
 import 'package:widgets/widgets/icon_widget.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
-import 'package:widgets/widgets/search_bar/mechanix_search_bar.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
+import 'package:widgets/widgets/text_input/mechanix_text_input.dart';
 
-class ExtractBottomSheet extends StatefulWidget {
-  final String path;
-  final String title;
+var totalExtractedCount = 0;
+
+class ExtractBottomSheetContent extends StatefulWidget {
   final FilesBloc filesBloc;
-  final FilesBloc filesBlocMainContext;
-  final VoidCallback onExtractCompleted;
+  final int selectedCount;
+  final VoidCallback reload;
+  final String currentPath;
+  final BuildContext rootContext;
 
-  const ExtractBottomSheet({
-    super.key,
-    required this.path,
-    required this.title,
+  const ExtractBottomSheetContent({
     required this.filesBloc,
-    required this.filesBlocMainContext,
-    required this.onExtractCompleted,
+    required this.selectedCount,
+    required this.reload,
+    required this.currentPath,
+    required this.rootContext,
+    super.key,
   });
 
   @override
-  State<ExtractBottomSheet> createState() => _ExtractBottomSheetState();
+  State<ExtractBottomSheetContent> createState() =>
+      ExtractBottomSheetContentState();
 }
 
-class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
+class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
   final FileManagerController controller = FileManagerController();
-  late String currentPath;
-  bool isSearching = false;
-  final FocusNode _searchFocusNode = FocusNode();
-
+  final ScrollController _scrollController = ScrollController();
+  String currentPath = "";
+  final ValueNotifier<String> searchQuery = ValueNotifier("");
   final downloadsDir = AppConfig().downloadsDir;
   final documentsDir = AppConfig().documentsDir;
   final homeDir = AppConfig().homeDir;
-  final recentDir = AppConfig().recentDir;
 
-  Future<void> _loadFiles() async {
-    await controller.openDirectory(io.Directory(widget.path));
-  }
+  bool showHomeView = false;
+  bool isSearching = false;
+  bool isCreateFolder = false;
+
+  bool showRenameBar = false;
+  String renameText = "";
+  String createdFolderPath = "";
+  String originalFolderName = "";
 
   @override
   void initState() {
     super.initState();
-    currentPath = widget.path;
-    _loadFiles();
+
+    currentPath = widget.currentPath;
+
+    _scrollController.addListener(_onScroll);
+
+    controller.openDirectory(io.Directory(widget.currentPath));
 
     controller.getPathNotifier.addListener(() {
       setState(() {
         currentPath = controller.getPathNotifier.value;
       });
     });
+
+    searchQuery.addListener(() {
+      if (searchQuery.value.isEmpty) {
+        controller.reload();
+      }
+    });
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (!position.hasPixels || !position.hasContentDimensions) return;
+
+    final maxScroll = position.maxScrollExtent;
+    final currentScroll = position.pixels;
+
+    // Trigger near bottom
+    if (currentScroll >= 0.8 * maxScroll) {
+      controller.loadNextChunk();
+    }
   }
 
   @override
   void dispose() {
-    _searchFocusNode.dispose();
+    searchQuery.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
-  /// Requests focus on the search field after the page has fully built.
-  /// Optional [delayMillis] can be used to adjust the delay before focusing.
-  void focusSearchField({int delayMillis = 300}) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
+  void handleBack() {
+    controller.goToParentDirectory();
+  }
 
-      // Wait for optional delay to ensure page transition is complete
-      await Future.delayed(Duration(milliseconds: delayMillis));
-
-      if (mounted) {
-        FocusScope.of(context).requestFocus(_searchFocusNode);
-      }
+  void homeNavigation() {
+    setState(() {
+      showHomeView = true;
     });
+  }
+
+  TextStyle listItemTitleTextStyle(BuildContext context) {
+    return TextStyle(
+      fontSize: 18,
+      color: context.colorScheme.onSurface,
+      fontWeight: FontWeight.w500,
+    );
   }
 
   @override
@@ -98,390 +135,410 @@ class _ExtractBottomSheetState extends State<ExtractBottomSheet> {
     final isDocumentsDir = currentPath == documentsDir;
     final isDownloadsDir = currentPath == downloadsDir;
     final isHomeDir = currentPath == homeDir;
-    final isRecentDir = currentPath == recentDir;
-    final isHomePageDir = isHomeDir ||
-        isDownloadsDir ||
-        isDocumentsDir ||
-        isAtRoot ||
-        isRecentDir;
+    final isHomePageDir =
+        isHomeDir || isDownloadsDir || isDocumentsDir || isAtRoot;
 
-    return ValueListenableBuilder<List<io.FileSystemEntity>>(
-      valueListenable: controller.paginatedEntities,
-      builder: (context, entities, _) {
-        final foldersList = entities
-            .where((file) =>
-                file is io.Directory &&
-                !p
-                    .basename(file.path)
-                    .startsWith('.')) // exclude hidden folders
-            .toList();
+    final selectedPaths = widget.filesBloc.state.zipFilePaths;
 
-        if (foldersList.length < pageSize) {
-          controller.loadNextChunk();
-        }
+    final selectedCount = selectedPaths.length;
+    final label = selectedCount > 1
+        ? " $selectedCount items"
+        : " '${selectedPaths.first.split('/').last}'";
 
-        final itemCount = foldersList.length;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 18),
 
-        // Base height logic
-        double minChildSize;
-        double initialChildSize;
-        double maxChildSize = 0.7;
-
-        if (itemCount <= 2) {
-          minChildSize = 0.35;
-          initialChildSize = 0.4;
-        } else if (itemCount <= 5) {
-          minChildSize = 0.4;
-          initialChildSize = 0.5;
-        } else if (itemCount <= 10) {
-          minChildSize = 0.5;
-          initialChildSize = 0.6;
-        } else {
-          minChildSize = 0.6;
-          initialChildSize = 0.7;
-        }
-
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: initialChildSize,
-          minChildSize: minChildSize,
-          maxChildSize: maxChildSize,
-          builder: (context, sheetController) {
-            // Scroll controller listener
-            sheetController.addListener(() {
-              final maxScroll = sheetController.position.maxScrollExtent;
-              final currentScroll = sheetController.position.pixels;
-
-              if (currentScroll >= 0.8 * maxScroll) {
-                controller.loadNextChunk();
-              }
-            });
-
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[850],
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(16)),
+        // Title
+        if (!showHomeView)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Text(
+              currentPath == '/' || currentPath.isEmpty
+                  ? "Root"
+                  : getCurrentFolderName(currentPath),
+              style: TextStyle(
+                color: context.colorScheme.onSurface,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MechanixNavigationBar(
-                    theme: MechanixNavigationBarThemeData(
-                        backgroundColor: Colors.grey[850], titleSpacing: 0),
-                    leadingWidget: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios,
-                        size: 20,
-                        color: Colors.blue,
-                      ),
-                      onPressed: () {
-                        if (isHomePageDir) {
-                          Navigator.pop(context);
-                          extractMainBottomSheet(
-                              widget.onExtractCompleted, controller);
-                        } else {
-                          controller.goToParentDirectory();
-                        }
-                      },
-                    ),
-                    title:
-                        isAtRoot ? "Root" : getCurrentFolderName(currentPath),
-                    actionWidgets: [
-                      if (!isSearching)
-                        IconButton(
-                          icon: const Icon(Icons.search, color: Colors.white),
-                          onPressed: () {
-                            setState(() {
-                              isSearching = true;
-                              // _searchFocusNode.requestFocus();
-                            });
-                          },
-                        ),
-                    ],
-                  ).padTop(8),
-                  Expanded(
-                    child: buildListViewExtract(
-                      foldersList,
-                      context,
-                      currentPath,
-                      widget.filesBloc,
-                      widget.onExtractCompleted,
-                      sheetController,
-                    ),
-                  ),
-                  if (isSearching)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 12),
-                      child: SizedBox(
-                        height: 48,
-                        child: MechanixSearchBar(
-                          focusNode: _searchFocusNode,
-                          autoFocus: false,
-                          hintText: "Type here",
-                          onChanged: (query) {
-                            controller.search(query);
-                          },
-                          showDefaultTrailing: true,
-                          onCloseIconPress: () {
-                            setState(() {
-                              isSearching = false;
-                            });
-                          },
-                        ),
-                      ),
-                    )
-                  else
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[850],
-                        borderRadius: const BorderRadius.vertical(
-                            bottom: Radius.circular(16)),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(
-                                    color: Colors.white70, width: 0.4),
-                                backgroundColor: Colors.transparent,
-                              ),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Icon(Icons.close,
-                                  color: Colors.white70),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[800],
-                              ),
-                              onPressed: () {
-                                handleExtract(context, widget.filesBloc.state);
+            ),
+          ),
 
-                                Navigator.pop(context, true);
-                              },
-                              child: const Icon(Icons.check,
-                                  color: Colors.white70),
-                            ),
+        // Folder list
+        Expanded(
+          child: showHomeView
+              ? buildHomeView(context)
+              : buildListViewMoveAndExtract(
+                  context, _scrollController, controller),
+        ),
+
+        const SizedBox(height: 18),
+        Divider(
+          height: 1,
+          color: context.colorScheme.surfaceContainerLow,
+        ),
+        // Navigation bar
+        SizedBox(
+          height: 60,
+          child: Row(
+            children: [
+              if (isSearching) ...[
+                Expanded(
+                  child: MechanixTextInput.search(
+                    cursorColor: context.colorScheme.primaryFixed,
+                    prefixIcon: IconWidget(
+                      iconPath: Images.search,
+                      iconColor: context.colorScheme.onSurface,
+                      iconHeight: 24,
+                      iconWidth: 24,
+                    ),
+                    hintText: "Search here",
+                    onChanged: (query) {
+                      searchQuery.value = query;
+
+                      if (query.trim().length > 2) {
+                        controller.search(query.trim());
+                      }
+                    },
+                    onClear: () {
+                      setState(() {
+                        isSearching = false;
+                        searchQuery.value = "";
+                      });
+                      controller.search('');
+                    },
+                  ),
+                ),
+              ] else if (showRenameBar) ...[
+                _buildRenameDialog()
+              ] else ...[
+                // Entire MechanixBottomBar must be inside Row children
+                Expanded(
+                  child: MechanixBottomBar(
+                    leadingWidget: [
+                      BottomBarButton(
+                        iconPath: Images.back,
+                        onPressed: () {
+                          (isHomePageDir ? homeNavigation() : handleBack());
+                        },
+                      ),
+                    ],
+                    anchorWidget: [
+                      BottomBarButton(
+                        iconWidget: IconWidget(
+                          iconPath: Images.search,
+                          iconColor: context.colorScheme.onSurface,
+                          iconHeight: 28,
+                          iconWidth: 28,
+                        ),
+                        onPressed: () {
+                          setState(() => isSearching = true);
+                        },
+                      ),
+                      BottomBarButton(
+                        iconWidget: IconWidget(
+                          iconPath: Images.home,
+                          iconColor: context.colorScheme.onSurface,
+                          iconHeight: 24,
+                          iconWidth: 24,
+                        ),
+                        onPressed: () {
+                          setState(() => showHomeView = true);
+                        },
+                      ),
+                      BottomBarButton(
+                        iconWidget: IconWidget(
+                          iconPath: Images.createFolder,
+                          iconColor: context.colorScheme.onSurface,
+                          iconHeight: 28,
+                          iconWidth: 28,
+                        ),
+                        onPressed: () async {
+                          await createFolderAndRename();
+                        },
+                      ),
+                    ],
+                  ).padLeft(16).padRight(16),
+                ),
+              ]
+            ],
+          ),
+        ),
+
+        // Bottom bar
+        Container(
+          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: context.colorScheme.tertiary,
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(12)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final prefix = 'Extracting ';
+                    final prefixWidth =
+                        textWidth(prefix, regularStyle(context));
+
+                    final availableWidth = constraints.maxWidth - prefixWidth;
+
+                    final truncatedLabel = middleEllipsisString(
+                      label,
+                      availableWidth,
+                      boldStyle(context),
+                    );
+
+                    return RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.clip, // important!
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: prefix,
+                            style: regularStyle(context),
+                          ),
+                          TextSpan(
+                            text: truncatedLabel,
+                            style: boldStyle(context),
                           ),
                         ],
                       ),
-                    ),
-                ],
+                    );
+                  },
+                ),
               ),
-            );
-          },
-        );
-      },
+              const SizedBox(width: 8),
+              MechanixFilledButton(
+                theme: buttonThemeData(context,
+                    type: MechanixButtonType.cancel, size: const Size(94, 40)),
+                label: "Cancel",
+                onPressed: () {
+                  widget.filesBloc.add(CancelExtractMode());
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(width: 10),
+              MechanixFilledButton(
+                theme: buttonThemeData(context,
+                    type: showHomeView
+                        ? MechanixButtonType.disable
+                        : MechanixButtonType.action,
+                    size: const Size(94, 40)),
+                label: "Extract",
+                onPressed: showHomeView
+                    ? null
+                    : () {
+                        handleExtract(context, widget.filesBloc.state);
+                        Navigator.pop(context, true);
+                      },
+              )
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  void extractMainBottomSheet(
-      onExtractCompleted, FileManagerController controller) {
-    final filesBloc = BlocProvider.of<FilesBloc>(context); // get bloc
+  Future<void> createFolderAndRename() async {
+    final path = controller.getCurrentPath;
+    final bloc = context.read<FilesBloc>();
 
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[850],
-      isScrollControlled: true,
-      builder: (context) {
-        return SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Extract to',
+    // Generate safe name
+    final folderName = await generateUniqueFolderName(path);
+    final newPath = p.join(path, folderName);
+
+    bloc.add(CreateFolder(
+      path: path,
+      folderName: folderName,
+      controller: controller,
+    ));
+
+    // Wait for folder to appear in UI (optional small delay)
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    // Store rename target + default rename text
+    setState(() {
+      createdFolderPath = newPath;
+      renameText = folderName;
+      originalFolderName = folderName;
+      showRenameBar = true;
+      isCreateFolder = false;
+    });
+  }
+
+  Widget _buildRenameDialog() {
+    final bool isEmpty = renameText.trim().isEmpty;
+    final bool isSame = renameText.trim() == originalFolderName.trim();
+    final bool showCheck = !isEmpty && !isSame; // valid new name
+
+    return Expanded(
+      child: MechanixTextInput.textInput(
+        cursorColor: context.colorScheme.primaryFixed,
+        autofocus: true,
+        initialValue: renameText,
+        onChanged: (v) => setState(() => renameText = v),
+        anchorWidget: showCheck
+            ? IconButton(
+                icon: Icon(Icons.check,
+                    color: context.colorScheme.surfaceContainerLowest),
+                onPressed: () {
+                  final filesBloc = context.read<FilesBloc>();
+                  filesBloc.add(
+                    Rename(
+                      oldPath: createdFolderPath,
+                      newName: renameText,
+                      controller: controller,
+                    ),
+                  );
+                  setState(() => showRenameBar = false);
+                  controller.clearNewFolder();
+                },
+              )
+            : IconButton(
+                icon: Icon(Icons.close,
+                    color: context.colorScheme.surfaceContainerLowest),
+                onPressed: () {
+                  setState(() => showRenameBar = false);
+                  controller.clearNewFolder();
+                },
+              ),
+      ),
+    );
+  }
+
+  Widget buildHomeView(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Title
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                "Files",
                 style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ).padLeft(18).padBottom(4).padTop(14),
-              MechanixSectionListTheme(
-                style: MechanixSectionListThemeData(
-                  height: 42,
-                  dividerPadding: EdgeInsets.zero,
-                  widgetPadding: EdgeInsets.zero,
-                  backgroundColor: WidgetStateProperty.all(Colors.grey[850]),
-                ),
-                child: MechanixSectionList(
-                  sectionListItems: [
-                    SectionListItems(
-                        title: "Home directory",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onItemTap(context, homeDir, "Home",
-                            filesBloc, onExtractCompleted),
-                        leading: const IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.home,
-                          iconColor: Colors.blueAccent,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: const Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
-                    SectionListItems(
-                        title: "Downloads",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onItemTap(context, downloadsDir,
-                            "Downloads", filesBloc, onExtractCompleted),
-                        leading: const IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.downloads,
-                          iconColor: Colors.deepPurpleAccent,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: const Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
-                    SectionListItems(
-                        title: "Documents",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onItemTap(context, documentsDir,
-                            "Documents", filesBloc, onExtractCompleted),
-                        leading: const IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.homeDocuments,
-                          iconColor: Colors.orangeAccent,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: const Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
-                    SectionListItems(
-                        title: "Root (/)",
-                        titleTextStyle: const TextStyle(fontSize: 14),
-                        onTap: () => onItemTap(context, "/", "Root", filesBloc,
-                            onExtractCompleted),
-                        leading: const IconWidget(
-                          iconWidth: 20,
-                          iconHeight: 20,
-                          iconPath: Images.hardDrive,
-                        ),
-                        defaultTrailingIcon: false,
-                        trailing: SizedBox(
-                          child: const Icon(
-                            size: 16,
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey,
-                          ).padAll(4),
-                        )),
-                  ],
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: context.colorScheme.onSurface,
                 ),
               ),
-            ],
-          ),
-        );
-      },
+            ),
+
+            // Home directory
+            MechanixSectionList(
+                theme: MechanixSectionListThemeData(
+                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                ),
+                sectionListItems: [
+                  SectionListItems(
+                    title: "Home directory",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(homeDir));
+                    },
+                    leading: Image.asset(Images.home, height: 20, width: 20),
+                  ),
+
+                  // Downloads
+                  SectionListItems(
+                    title: "Downloads",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(downloadsDir));
+                    },
+                    leading:
+                        Image.asset(Images.downloads, height: 24, width: 24),
+                  ),
+
+                  // Documents
+                  SectionListItems(
+                    title: "Documents",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(documentsDir));
+                    },
+                    leading: Image.asset(Images.homeDocuments,
+                        height: 24, width: 24),
+                  ),
+                ]),
+
+            // Root dir
+            MechanixSectionList(
+                title: 'Hard Drive',
+                theme: MechanixSectionListThemeData(
+                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                  titleTextStyle: TextStyle(
+                    fontSize: 18,
+                    color: context.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                sectionListItems: [
+                  SectionListItems(
+                    title: "Root (/)",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory("/"));
+                    },
+                    leading:
+                        Image.asset(Images.hardDrive, height: 24, width: 24),
+                  ),
+                ]),
+          ],
+        ),
+      ),
     );
   }
 
   Future<void> handleExtract(BuildContext context, FilesState state) async {
-    String targetPath = currentPath;
-    final bloc = BlocProvider.of<FilesBloc>(context);
-    final completer = Completer<void>();
+    final bloc = context.read<FilesBloc>();
+    final zipPaths = state.zipFilePaths;
 
-    // Validate zip file
-    if (!isZipFileValid(state.zipFilePath)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "ZIP file is corrupted or invalid",
-            style: TextStyle(color: Colors.red),
-          ),
-          backgroundColor: Colors.white,
-        ),
-      );
-      return;
+    int success = 0;
+    int failed = 0;
+
+    for (int i = 0; i < zipPaths.length; i++) {
+      final completer = Completer<String>();
+
+      final zipPath = zipPaths[i];
+      final zipName = p.basenameWithoutExtension(zipPath);
+
+      final uniquePath =
+          await getUniqueExtractPath(p.join(currentPath, zipName));
+
+      bloc.add(ExtractZipTo(
+        zipPath,
+        uniquePath,
+        completer,
+        index: i,
+        total: zipPaths.length,
+      ));
+
+      String status = await completer.future;
+
+      if (status == 'success') {
+        success++;
+      } else {
+        failed++;
+      }
     }
 
-    // Create unique destination folder if one already exists
-    final zipName = p.basenameWithoutExtension(state.zipFilePath);
-    final baseExtractPath = p.join(targetPath, zipName);
-    final uniqueExtractPath = await getUniqueExtractPath(baseExtractPath);
-
-    bloc.add(ExtractZipTo(
-      state.zipFilePath,
-      uniqueExtractPath,
-      completer,
+    bloc.add(ExtractZipBatchCompleted(
+      successCount: success,
+      failureCount: failed,
     ));
-
-    await completer.future;
-    bloc.add(CancelExtractMode());
-
-    // widget.onExtractCompleted();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Finished extracting",
-            style: TextStyle(color: Colors.white)),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.grey[800],
-      ),
-    );
   }
-}
-
-void onItemTap(
-  BuildContext context,
-  String path,
-  String title,
-  FilesBloc filesBlocMain,
-  VoidCallback onExtractCompleted,
-) {
-  final localBloc = FilesBloc(
-    fileRepository: filesBlocMain.fileRepository,
-    recentFilesManager: filesBlocMain.recentFilesManager,
-  );
-
-// Clone the state
-  localBloc.emit(
-    localBloc.state.copyWith(
-      zipFilePath: filesBlocMain.state.zipFilePath,
-    ),
-  );
-  // Close any existing bottom sheet
-  Navigator.pop(context, true);
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (_) => BlocProvider.value(
-      value: localBloc,
-      child: ExtractBottomSheet(
-        path: path,
-        title: title,
-        filesBloc: localBloc,
-        filesBlocMainContext: filesBlocMain,
-        onExtractCompleted: onExtractCompleted,
-      ),
-    ),
-  );
 }

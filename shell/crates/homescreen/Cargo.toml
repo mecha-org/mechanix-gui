@@ -16,3 +16,5 @@ anyhow = { workspace = true }
 commons = { path = "../commons" }
 settings = { path = "../settings" }
 status_bar = { path = "../status_bar" }
+universal_search = { path = "../universal_search" }
+app_drawer = { path = "../app_drawer" }

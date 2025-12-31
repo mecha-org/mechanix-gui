@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 class Images {
   static const String back = 'assets/images/back.png';
   static const String add = 'assets/images/add.png';
@@ -43,4 +45,23 @@ class Images {
   static const String downloads = 'assets/images/downloads.png';
   static const String terminal = 'assets/images/terminal.png';
   static const String refresh = 'assets/images/refresh.png';
+  static const String codeFile = 'assets/images/code.png';
+  static const String checkCircle = 'assets/images/check_circle.png';
+  static const String share = 'assets/images/share.png';
+  static const String duplicate = 'assets/images/duplicate.png';
+  static const String musicNote = 'assets/images/music_note.png';
+  static const String play = 'assets/images/play.png';
+  static const String pause = 'assets/images/pause.png';
+  static const String volume = 'assets/images/volume.png';
+  static const String mute = 'assets/images/mute.png';
+  static const String crop = 'assets/images/crop.png';
+  static const String rotateRight = 'assets/images/rotate_right.png';
+  static const String mirrorVertical = 'assets/images/mirror_vertical.png';
+  static const String mirrorHorizontal = 'assets/images/mirror_horizontal.png';
+  static const String redo = 'assets/images/redo.png';
+  static const String undo = 'assets/images/undo.png';
+  static const String check = 'assets/images/check.png';
+  static const String cut = 'assets/images/cut.png';
+  static const String lock = 'assets/images/lock.png';
+  static const String edit = 'assets/images/edit.png';
 }

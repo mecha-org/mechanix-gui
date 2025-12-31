@@ -1,8 +1,9 @@
 
 [package]
-name = "launcher"
+name = "mechanix-launcher"
+description = "Launcher application"
 edition = "2024"
-version.workspace = true
+version = "0.0.1"
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
@@ -19,6 +20,7 @@ status_bar = { path = "../status_bar" }
 settings_drawer = { path = "../settings_drawer" }
 universal_search = { path = "../universal_search" }
 running_apps = { path = "../running_apps" }
+notifications = { path = "../notifications" }
 homescreen = { path = "../homescreen" }
 dispatcher = { path = "../dispatcher" }
 shell_state = { path = "../shell_state" }
@@ -33,7 +35,7 @@ priority = "optional"
 assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
-        "../../../target/release/launcher",
+        "../../../target/release/mechanix-launcher",
         "usr/bin/",
         "755",
     ],
@@ -49,12 +51,12 @@ assets = [
     ],
     [
         "../../../assets/icons/settings-drawer/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/icons/settings-drawer/",
+        "usr/share/mechanix/shell/launcher/assets/icons/settings-drawer/",
         "755",
     ],
     [
         "../../../assets/icons/status-bar/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/icons/status-bar/",
+        "usr/share/mechanix/shell/launcher/assets/icons/status-bar/",
         "755",
     ],
     [
@@ -62,4 +64,38 @@ assets = [
         "usr/share/mechanix/shell/launcher/assets/icons/universal-search/",
         "755",
     ],
+    [
+        "../../../assets/icons/notifications/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/notifications/",
+        "755",
+    ]
+]
+
+[package.metadata.generate-rpm]
+summary = "Launcher application"
+license = "MIT"                  # or workspace override if you have one
+auto-req = "yes"
+
+assets = [
+    # Binary
+    { source = "../../../target/release/mechanix-launcher", dest = "/usr/bin/mechanix-launcher", mode = "755" },
+
+    # App drawer icons
+    { source = "../../../assets/icons/app-drawer/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/app-drawer/", mode = "755" },
+
+    # Running apps icons
+    { source = "../../../assets/icons/running-apps/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/running-apps/", mode = "755" },
+
+    # Settings drawer icons
+    { source = "../../../assets/icons/settings-drawer/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/settings-drawer/", mode = "755" },
+
+
+    # Status bar icons
+    { source = "../../../assets/icons/status-bar/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/status-bar/", mode = "755" },
+
+    # Universal search icons
+    { source = "../../../assets/icons/universal-search/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/universal-search/", mode = "755" },
+
+    # Notifications icons
+    { source = "../../../assets/icons/notifications/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/notifications/", mode = "755" },
 ]

@@ -1,3 +1,4 @@
+use std::os::linux::raw::stat;
 use std::time::Instant;
 
 use gpui::*;
@@ -59,16 +60,24 @@ impl InputManager {
         let dy: f32 = (current_position.y - press_position.y).into();
         let movement_distance = (dx * dx + dy * dy).sqrt();
 
-        // Check if we should start widget dragging
+        // Check if we should start widget dragging and prevent dragging of fixed widgets
         if state.dragging_widget.is_none() && !state.is_page_dragging {
             if let Some(press_time) = state.input_manager_state.mouse_press_time {
                 let elapsed = press_time.elapsed();
 
-                // If mouse hasn't moved much and threshold duration has passed, start widget drag
                 if movement_distance < drag_config.drag_initiation_threshold
                     && elapsed >= drag_config.widget_drag_time_threshold
                 {
                     if let Some(widget_id) = state.input_manager_state.widget_under_cursor {
+                        // Check if the widget is on the first or last page
+                        if let Some(widget_data) = state.widgets.get(&widget_id) {
+                            let page = widget_data.page_number();
+                            // Page 0 and Pages.len()-1 are our fixed widgets
+                            if page == 0 || page == state.pages.len() - 1 {
+                                return false; // Prevent dragging
+                            }
+                        }
+
                         state.pick_widget(widget_id);
                         state.input_manager_state.drag_start_position =
                             Some(mouse_move_event.position);
@@ -157,7 +166,6 @@ impl InputManager {
             state.page_offset = horizontal_offset;
             return true;
         }
-
         false
     }
 

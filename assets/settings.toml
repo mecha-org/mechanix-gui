@@ -12,7 +12,7 @@ navbar_size = { width = 180.0, height = 29.0 }
 layer = "top"
 anchor = ["bottom"]
 namespace = "mechanix.settings.drawer"
-exclusive_zone = -1.0
+exclusive_zone = 29.0
 size = { width = 540.0, height = 620.0 }
 
 [running_apps]

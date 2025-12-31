@@ -21,4 +21,7 @@ class MusicIcons {
   static const homeIcon = 'assets/images/home.png';
   static const pauseIcon = 'assets/images/pause.png';
   static const swipeDeleteIcon = 'assets/images/swipe_delete.png';
+  static const previousPageIcon = 'assets/images/previous_page.png';
+  static const nextPageIcon = 'assets/images/next_page.png';
+  static const checkIcon = 'assets/images/check_icon.png';
 }

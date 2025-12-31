@@ -6,7 +6,7 @@ import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-enum SortBy { name, date, type, size }
+enum SortBy { name, modTime, accessedTime, type, size }
 
 class FileManagerController {
   final logger = Logger();
@@ -23,8 +23,11 @@ class FileManagerController {
 
   final List<FileSystemEntity> _currentEntities = [];
 
-  bool _sizeAscending = true; // new flag for size order
-  bool get isSizeAscending => _sizeAscending;
+  bool _ascending = true;
+  bool get isAscending => _ascending;
+
+  bool get hasSortApplied => _hasSortApplied;
+  bool _hasSortApplied = false;
 
   SortBy get sortedBy => _sort.value;
 
@@ -35,6 +38,44 @@ class FileManagerController {
 
   void _updatePath(String path) {
     _path.value = path;
+  }
+
+  String? newFolderPath;
+
+  /// Mark the given folder path as the "new" folder and refresh the list.
+  /// Call this *before* reloading so the UI can place it at the top immediately.
+  void markNewFolder(String path) {
+    newFolderPath = path;
+    // Re-apply sort/filter so UI picks up this change
+    _applySearchFilter();
+  }
+
+  /// Clear the "new folder" flag (e.g. when rename overlay closes)
+  void clearNewFolder() {
+    newFolderPath = null;
+    _applySearchFilter();
+  }
+
+  String? _renamingPath;
+  String? _renamingValue;
+
+  void setLiveRename(String path, String value) {
+    _renamingPath = path;
+    _renamingValue = value;
+    _applySearchFilter();
+  }
+
+  void clearLiveRename() {
+    _renamingPath = null;
+    _renamingValue = null;
+    _applySearchFilter();
+  }
+
+  String getDisplayName(FileSystemEntity entity) {
+    if (entity.path == _renamingPath && _renamingValue != null) {
+      return _renamingValue!;
+    }
+    return p.basename(entity.path);
   }
 
   /// ValueNotifier of the current directory's basename
@@ -184,14 +225,14 @@ class FileManagerController {
     reload(); // Reapply filtering
   }
 
-  void sortBy(SortBy sortBy, {bool? sizeAscending}) {
-    if (sortBy == SortBy.size) {
-      // Flip direction if tapping size again
-      if (sizeAscending == null && _sort.value == SortBy.size) {
-        _sizeAscending = !_sizeAscending;
-      } else if (sizeAscending != null) {
-        _sizeAscending = sizeAscending;
-      }
+  void sortBy(SortBy sortBy, {bool? isAscending}) {
+    _hasSortApplied = true;
+    // If tapping same field → toggle
+    if (sortBy == _sort.value) {
+      _ascending = isAscending ?? !_ascending;
+    } else {
+      // New field → default ascending unless specified
+      _ascending = isAscending ?? true;
     }
 
     _sort.value = sortBy;
@@ -211,7 +252,7 @@ class FileManagerController {
           if (b is Directory && a is! Directory) return 1;
 
           // If both are the same type, sort by name
-          return aName.compareTo(bName);
+          return _ascending ? aName.compareTo(bName) : bName.compareTo(aName);
 
         case SortBy.type:
           if (a is Directory && b is! Directory) return -1;
@@ -220,16 +261,17 @@ class FileManagerController {
           // Same type
           final aType = a is Directory ? 'dir' : p.extension(a.path);
           final bType = b is Directory ? 'dir' : p.extension(b.path);
-          final typeCompare = aType.compareTo(bType);
+          final typeCompare =
+              _ascending ? aType.compareTo(bType) : bType.compareTo(aType);
           if (typeCompare != 0) return typeCompare;
 
           // Secondary: by name
           final aName = p.basename(a.path).toLowerCase();
           final bName = p.basename(b.path).toLowerCase();
-          return aName.compareTo(bName);
+          return _ascending ? aName.compareTo(bName) : bName.compareTo(aName);
 
         case SortBy.size:
-          if (_sizeAscending) {
+          if (_ascending) {
             // Group folders first
             if (a is Directory && b is! Directory) return -1;
             if (b is Directory && a is! Directory) return 1;
@@ -267,10 +309,15 @@ class FileManagerController {
             return aName.compareTo(bName);
           }
 
-        case SortBy.date:
+        case SortBy.modTime:
           final aTime = a.statSync().modified;
           final bTime = b.statSync().modified;
-          return bTime.compareTo(aTime);
+          return _ascending ? aTime.compareTo(bTime) : bTime.compareTo(aTime);
+
+        case SortBy.accessedTime:
+          final aTime = a.statSync().accessed;
+          final bTime = b.statSync().accessed;
+          return _ascending ? aTime.compareTo(bTime) : bTime.compareTo(aTime);
 
         default:
           return 0;
@@ -370,13 +417,19 @@ class FileManagerController {
     _debounce?.cancel();
   }
 
-  void syncSettings({required bool showHidden, required String sortMode}) {
+  void syncSettings(
+      {required bool showHidden,
+      required String sortMode,
+      required bool isAscending}) {
     showHiddenFiles = showHidden;
 
     // Convert string from prefs to SortBy enum
     switch (sortMode) {
-      case 'date':
-        _sort.value = SortBy.date;
+      case 'modTime':
+        _sort.value = SortBy.modTime;
+        break;
+      case 'accessedTime':
+        _sort.value = SortBy.accessedTime;
         break;
       case 'type':
         _sort.value = SortBy.type;
@@ -388,6 +441,8 @@ class FileManagerController {
       default:
         _sort.value = SortBy.name;
     }
+
+    _ascending = isAscending;
 
     // Apply immediately to existing files
     _applySearchFilter();

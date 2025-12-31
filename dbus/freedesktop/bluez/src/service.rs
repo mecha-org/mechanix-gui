@@ -97,7 +97,7 @@ impl BluetoothService {
     /// * `Err` if scanning fails.
     pub async fn get_available_devices(
         &self,
-        discovery_duration: core::time::Duration,
+        discovery_duration: std::time::Duration,
     ) -> Result<Vec<BluetoothDevice>, BluezError> {
         self.proxy
             .get_available_devices(discovery_duration)

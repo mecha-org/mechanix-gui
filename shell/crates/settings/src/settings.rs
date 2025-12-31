@@ -17,6 +17,8 @@ pub struct Settings {
     #[serde(default)]
     pub universal_search: UniversalSearchSettings,
     #[serde(default)]
+    pub notifications: NotificationSettings,
+    #[serde(default)]
     pub app_drawer: AppDrawerSettings,
     #[serde(default)]
     pub homescreen: HomescreenSettings,
@@ -141,6 +143,30 @@ impl Default for UniversalSearchSettings {
     }
 }
 
+/// Notification settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct NotificationSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub navbar_size: Size<Pixels>,
+}
+
+impl Default for NotificationSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Top,
+                anchor: Anchor::BOTTOM,
+                namespace: "mechanix.notifications".into(),
+                exclusive_zone: px(-1.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
+            navbar_size: Size::new(px(180.0), px(29.0)),
+        }
+    }
+}
+
 /// App drawer settings
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct AppDrawerSettings {
@@ -254,7 +280,7 @@ where
         };
     }
 
-    if merged.as_array().iter().len() > 0 {
+    if merged.as_array().iter().len() >= 0 {
         merged.clone().try_into().unwrap_or_default()
     } else {
         T::default()

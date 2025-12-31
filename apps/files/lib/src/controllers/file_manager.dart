@@ -231,10 +231,12 @@ class _FileManagerState extends State<FileManager> {
         return entitys.sortByName;
       case SortBy.size:
         return entitys.sortBySize;
-      case SortBy.date:
-        return entitys.sortByDate;
+      case SortBy.modTime:
+        return entitys.sortByDateModfied;
       case SortBy.type:
         return entitys.sortByType;
+      case SortBy.accessedTime:
+        return entitys.sortByDateAccessed;
     }
   }
 
@@ -397,12 +399,28 @@ extension FileSystemEntityExtensions on List<FileSystemEntity> {
     return [...dirs, ...files];
   }
 
-  Future<List<FileSystemEntity>> get sortByDate async {
+  Future<List<FileSystemEntity>> get sortByDateModfied async {
     final List<_PathStat> _pathStat = [];
 
     for (final entity in this) {
       final stat = await entity.stat();
       _pathStat.add(_PathStat(entity.path, stat.modified));
+    }
+
+    _pathStat.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+
+    return _pathStat
+        .map((pathStat) =>
+            this.firstWhere((entity) => entity.path == pathStat.path))
+        .toList();
+  }
+
+  Future<List<FileSystemEntity>> get sortByDateAccessed async {
+    final List<_PathStat> _pathStat = [];
+
+    for (final entity in this) {
+      final stat = await entity.stat();
+      _pathStat.add(_PathStat(entity.path, stat.accessed));
     }
 
     _pathStat.sort((a, b) => b.dateTime.compareTo(a.dateTime));

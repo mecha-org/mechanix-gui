@@ -1,13 +1,15 @@
 use std::rc::Rc;
 
-use crate::ui::icon::Icon;
-use gpui::{prelude::FluentBuilder, *};
+use crate::{constants::*, ui::icon::Icon};
+use gpui::{LongPressEvent, prelude::FluentBuilder, *};
+use theme::prelude::Theme;
 
-const ICON_COLOR: u32 = 0x4D4D4D; // default - gray | custom can be - white or active - blue
-const ACTIVE_ICON_COLOR: u32 = 0xF4F4F4; // default - white | custom can be - blue
-const ACTIVE_BG_COLOR: u32 = 0x363636;
-const BG_COLOR: u32 = 0x181818;
-const BORDER_COLOR: u32 = 0x202020;
+const ICON_COLOR: u32 = DARK_NEUTRAL_100; // default - gray | custom can be - white or active - amber
+const ACTIVE_ICON_COLOR: u32 = AMBER_600; // default - gray | custom can be - amber
+const ACTIVE_ICON_BG_COLOR: u32 = 0xC6760040; // for pressed 
+const LONG_PRESS_ACTIVE_ICON_BG_COLOR: u32 = 0xAA64004D;
+const BG_COLOR: u32 = DARK_NEUTRAL_900;
+const BORDER_COLOR: u32 = AMBER_1000;
 
 #[derive(IntoElement)]
 pub struct IconButton {
@@ -24,6 +26,8 @@ pub struct IconButton {
     active_bg_color: Option<Hsla>,
     border: Option<Pixels>,
     label: Option<String>,
+    on_long_press: Option<Rc<dyn Fn(&LongPressEvent, &mut Window, &mut App)>>,
+    long_press_duration_ms: Option<u64>,
 }
 
 impl IconButton {
@@ -42,6 +46,8 @@ impl IconButton {
             active_bg_color: None,
             border: None,
             label: None,
+            on_long_press: None,
+            long_press_duration_ms: None,
         }
     }
 
@@ -55,6 +61,25 @@ impl IconButton {
         callback: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
     ) -> Self {
         self.on_click = Some(Rc::new(callback));
+        self
+    }
+
+    // default duration (500ms)
+    pub fn on_long_press(
+        mut self,
+        callback: impl Fn(&LongPressEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_long_press = Some(Rc::new(callback));
+        self
+    }
+
+    pub fn on_long_press_ms(
+        mut self,
+        duration_ms: u64,
+        callback: impl Fn(&LongPressEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.long_press_duration_ms = Some(duration_ms);
+        self.on_long_press = Some(Rc::new(callback));
         self
     }
 
@@ -101,22 +126,32 @@ impl IconButton {
 }
 
 impl RenderOnce for IconButton {
-    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+
         let main = self
             .main
             .flex()
             .w(px(84.0))
             .h(px(84.0))
             .rounded(px(8.0))
-            .border(px(1.))
-            .border_color(rgb(BORDER_COLOR))
-            .active(|this| this.bg(
-                if let Some(active_bg_color) = self.active_bg_color {
-                    active_bg_color
-                } else {
-                    rgb(ACTIVE_BG_COLOR).into()
-                }
-            )) // GPUI's active state
+            .border(if self.active { px(1.5) } else { px(0.) })
+            .border_color(rgb(BORDER_COLOR)) // KEEP THIS
+            .active(|this| {
+                let mut style = this.clone();
+                style = style
+                    .clone()
+                    .bg(if self.on_long_press.is_some() {
+                        rgba(LONG_PRESS_ACTIVE_ICON_BG_COLOR).into()
+                    } else if let Some(active_bg_color) = self.active_bg_color {
+                        active_bg_color
+                    } else {
+                        rgba(ACTIVE_ICON_BG_COLOR).into()
+                    })
+                    .border(px(1.5))
+                    .border_color(rgb(BORDER_COLOR));
+                style
+            }) // GPUI's active state
             .items_center()
             .justify_center()
             .when(!self.pressed && !self.active, |this| {
@@ -136,7 +171,25 @@ impl RenderOnce for IconButton {
             .when_some(self.on_click, |this, on_click| {
                 this.on_click(move |event, window, cx| (on_click)(event, window, cx))
             })
+            .when_some(self.on_long_press.clone(), |this, on_long_press| {
+                if let Some(duration_ms) = self.long_press_duration_ms {
+                    this.on_long_press_ms(duration_ms, move |event, window, cx| {
+                        (on_long_press)(event, window, cx)
+                    })
+                } else {
+                    this.on_long_press(move |event, window, cx| (on_long_press)(event, window, cx))
+                }
+            })
             .when_some(self.icon, |this, icon| {
+                // todo: check if this.active is true - update icon color
+                // let child = this.active(|style| {
+                //     style.text_color(if let Some(active_icon_color) = self.active_icon_color {
+                //         active_icon_color
+                //     } else {
+                //         rgb(ACTIVE_ICON_COLOR).into()
+                //     })
+                // });
+
                 let color: Hsla = if self.active {
                     if let Some(active_icon_color) = self.active_icon_color {
                         active_icon_color
@@ -160,7 +213,7 @@ impl RenderOnce for IconButton {
                 .justify_center()
                 .child(label)
                 .text_sm()
-                .text_color(rgb(0xF4F4F4))
+                .text_color(rgb(DARK_NEUTRAL_100))
         } else {
             main
         }

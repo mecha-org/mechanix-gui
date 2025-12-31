@@ -47,6 +47,7 @@ impl Render for RunningApps {
                         } else {
                             //short swipe
                             //Mimize all apps
+                            this.send_minimize_all_apps(cx);
                         }
                         this.bar_drag_start_y = None;
                         this.snap_bar_to(0.0, cx);
@@ -234,6 +235,15 @@ impl RunningApps {
     //         }
     //     }).detach();
     // }
+
+    fn send_minimize_all_apps(&self, cx: &mut Context<Self>) {
+        let tx = self.message_tx.clone();
+        cx.background_executor()
+            .spawn(async move {
+                let _ = tx.send(AppManagerMessage::MinimizeAll).await;
+            })
+            .detach();
+    }
 
     fn snap_bar_to(&mut self, target: f32, cx: &mut Context<Self>) {
         let start = self.bar_drag_offset;

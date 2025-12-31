@@ -10,6 +10,7 @@ members = [
     "shared/hw-buttons",
     "dbus/freedesktop/*",
     "dbus/mechanix/mxconf",
+    "dbus/mechanix/desktop",
     "dbus/mechanix/extensions",
     "dbus/mechanix/system",
 ]
@@ -40,7 +41,7 @@ futures = "0.3.31"
 futures-timer = "3.0.3"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { git = "https://github.com/akshayr-mecha/zed.git", rev = "1a05d7eaf01d4e1e7fbc8bc71c84f88560524c1b", features = [
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "67f5ea290ceb813242dab65f695214e59e3335b6", features = [
     "wayland",
     "linux-impeller",
 ] }
