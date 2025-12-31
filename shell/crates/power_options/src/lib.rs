@@ -6,7 +6,7 @@ use settings::prelude::{LayerShellSettings, PowerOptionsSettings, Settings};
 
 mod ui;
 
-use crate::ui::PowerOptions;
+use crate::ui::*;
 
 pub mod prelude {
     pub use crate::run_app;

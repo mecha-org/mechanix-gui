@@ -1,5 +1,5 @@
 use gpui::{prelude::FluentBuilder, *};
-pub const ICONS_DIR: &str = "icons/power-options";
+pub const ICONS_DIR: &str = "icons/power-options/";
 
 #[derive(IntoElement, Clone)]
 pub enum IconName {
