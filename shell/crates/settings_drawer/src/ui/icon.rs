@@ -4,7 +4,7 @@ pub const SETTINGS_DRAWER_ICONS_DIR: &str = "icons/settings-drawer/";
 #[derive(IntoElement, Clone)]
 pub enum IconName {
     Settings,
-    Power,
+    PowerOff,
     HighPower,
     SavingPower,
     RotationOn,
@@ -69,7 +69,7 @@ impl IconName {
     pub fn resolve(self) -> SharedString {
         let icon_path = match self {
             IconName::Settings => "settings.svg",
-            IconName::Power => "power.svg",
+            IconName::PowerOff => "power-off.svg",
             IconName::HighPower => "high-performance.svg",
             IconName::SavingPower => "low-performance.svg",
             IconName::PowerModeHigh => "power-mode-high.svg",

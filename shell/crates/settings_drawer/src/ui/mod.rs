@@ -2,6 +2,7 @@ pub mod icon;
 mod modals;
 mod widgets;
 use commons::widgets::{WingSide, wing};
+use dispatcher::{Dispatcher, Message};
 use gpui::prelude::FluentBuilder;
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
@@ -23,7 +24,7 @@ const APP_SIZE: (f32, f32) = (540., 620.);
 
 const MIN_MODAL_SIZE_1: (f32, f32) = (133., 110.);
 const MIN_MODAL_SIZE_2: (f32, f32) = (203., 168.);
-const FINAL_MODAL_SIZE: (f32, f32) = (478., 392.);
+pub const FINAL_MODAL_SIZE: (f32, f32) = (478., 392.);
 
 const GRID_COLS: usize = 4;
 const GRID_ROWS: usize = 4;
@@ -690,13 +691,25 @@ impl SettingsDrawer {
         div()
             .id("id_power")
             .child(
-                Icon::new(IconName::Power)
+                Icon::new(IconName::PowerOff)
                     .text_color(colors.foreground_100)
                     .size((px(24.), px(24.))),
             )
             .on_click(cx.listener(
                 move |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
                     println!("power clicked");
+                    let dispatcher_tx = Dispatcher::global(cx).channel().0.clone();
+
+                    println!("checking dispatcher {} ", dispatcher_tx.is_empty());
+
+                    // here send message to show power options
+                    let _ = dispatcher_tx.try_send(Message::ShowPowerOptions(true));
+                    // cx.background_executor()
+                    //     .spawn(async move {
+                    //         let _ = dispatcher_tx.send(Message::ShowPowerOptions(true));
+                    //     })
+                    //     .detach();
+
                     cx.notify();
                 },
             ))
