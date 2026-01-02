@@ -92,7 +92,7 @@ impl Default for RunningAppsSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(300.0)),
             },
-            navbar_size: Size::new(px(180.0), px(29.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
         }
     }
 }
@@ -116,7 +116,7 @@ impl Default for SettingsDrawerSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(180.0), px(29.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
         }
     }
 }
@@ -140,7 +140,7 @@ impl Default for UniversalSearchSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(180.0), px(29.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
         }
     }
 }
@@ -164,7 +164,7 @@ impl Default for NotificationSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(180.0), px(29.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
         }
     }
 }
@@ -226,7 +226,7 @@ impl Default for PowerOptionsSettings {
     fn default() -> Self {
         Self {
             layer_shell: LayerShellSettings {
-                layer: Layer::Top,
+                layer: Layer::Overlay,
                 anchor: Anchor::TOP,
                 namespace: "mechanix.power.options".into(),
                 exclusive_zone: px(0.0),

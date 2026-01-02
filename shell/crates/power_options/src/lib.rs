@@ -39,7 +39,7 @@ pub fn run_app(cx: &mut App) {
         |window, cx| {
             let mut regions = Vec::new();
             regions.push(Bounds {
-                origin: point(size.width, size.height),
+                origin: point(px(0.0), px(0.0)),
                 size: gpui::size(size.width, size.height),
             });
             window.set_input_regions(Some(regions));

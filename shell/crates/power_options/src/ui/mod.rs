@@ -1,11 +1,8 @@
 use gpui::{Size, prelude::FluentBuilder, *};
 
 use crate::ui::icon::{Icon, IconName};
-use theme::ActiveTheme;
 pub mod icon;
 
-const WING_WIDTH: f32 = 180.;
-const WING_HEIGHT: f32 = 38.;
 const CARD_WIDTH: f32 = 540.;
 const CARD_HEIGHT: f32 = 620.;
 
@@ -20,15 +17,17 @@ pub struct PowerOptions {
     position_y: f32, // Current Y position of the swipe card
 
     // Animation state
-    initial_height: f32, // Height of the amber card during initial animation
+    initial_height: f32,
     is_initial_animation_done: bool,
 
     // Thresholds
     drag_threshold: f32,
     max_drag_distance: f32,
 
-    // swipe upwards- go back
+    // For upward swipe detection
     drag_start_y: f32,
+    drag_start_mouse_y: f32, // Track actual mouse Y position at start
+    is_dragging: bool,
 }
 
 impl PowerOptions {
@@ -42,25 +41,24 @@ impl PowerOptions {
             is_initial_animation_done: false,
             drag_threshold: 200.0,
             max_drag_distance: CARD_HEIGHT,
-
             drag_start_y: 0.0,
+            drag_start_mouse_y: 0.0,
+            is_dragging: false,
         };
 
-        // Start initial reveal animation
         this.animate_initial_reveal(cx);
         this
     }
 
     fn handle_upward_swipe(&mut self, cx: &mut Context<Self>) {
-        // Go back / close
-        println!("Go back=====>");
-        // self.snap_to(0.0, cx);
+        println!("Go back - close power options");
+        self.snap_to(0.0, cx);
     }
 
     fn animate_initial_reveal(&mut self, cx: &mut Context<Self>) {
-        let start_height = 0.0; // Start from very top
-        let target_height = CARD_HEIGHT / 2.0; // Go to half of card height (310px)
-        let duration_ms = 1000.0; // Smooth animation duration
+        let start_height = 0.0;
+        let target_height = CARD_HEIGHT / 2.0;
+        let duration_ms = 1000.0;
         let start_time = std::time::Instant::now();
 
         cx.spawn(
@@ -79,7 +77,7 @@ impl PowerOptions {
                     }
 
                     let t = (elapsed / duration_ms).clamp(0.0, 1.0);
-                    let ease = 1.0 - (1.0 - t).powi(3); // Cubic ease-out
+                    let ease = 1.0 - (1.0 - t).powi(3);
                     let current_height = start_height + (target_height - start_height) * ease;
 
                     this.update(cx, |this, cx| {
@@ -112,8 +110,6 @@ impl PowerOptions {
                         this.update(cx, |this, cx| {
                             this.position_y = target;
 
-                            // Only trigger power off if the card is swiped ALL the way to bottom
-                            // The card reaches bottom when: initial_height + position_y >= CARD_HEIGHT
                             let total_height = this.initial_height + target;
                             if total_height >= CARD_HEIGHT {
                                 this.power_off = true;
@@ -127,7 +123,7 @@ impl PowerOptions {
                     }
 
                     let t = (elapsed / duration_ms).clamp(0.0, 1.0);
-                    let ease = 1.0 - (1.0 - t).powi(3); // Cubic ease-out
+                    let ease = 1.0 - (1.0 - t).powi(3);
                     let current = start + (change * ease);
 
                     this.update(cx, |this, cx| {
@@ -152,23 +148,18 @@ impl Render for PowerOptions {
         let max_drag = self.max_drag_distance;
         let threshold = self.drag_threshold;
         let initial_h = self.initial_height;
-        // let colors = cx.theme().colors.clone();
 
-        // Calculate dynamic height for the amber card
         let amber_card_height = if self.is_initial_animation_done {
-            // After initial animation, expand based on drag
             self.initial_height + self.position_y
         } else {
-            // During initial animation
             self.initial_height
         };
 
-        // Calculate arrow height - shrinks as card approaches bottom
         let arrow_height = if self.is_initial_animation_done {
             let remaining = CARD_HEIGHT - amber_card_height;
             remaining.min(60.0).max(0.0)
         } else {
-            0.0 // Hidden during initial animation
+            0.0
         };
 
         div()
@@ -178,50 +169,35 @@ impl Render for PowerOptions {
             .w(px(CARD_WIDTH))
             .h(px(CARD_HEIGHT))
             .bg(rgb(0x1a1a1a))
-            // Mouse move listener on parent container
             .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                 if let Some(offset) = this.drag_offset {
                     let new_y = event.position.y.to_f64() as f32 - offset;
-
-                    // The maximum drag should be limited so total height doesn't exceed CARD_HEIGHT
                     let max_position = CARD_HEIGHT - initial_h;
                     this.position_y = new_y.clamp(0.0, max_position);
                     cx.notify();
                 }
             }))
-            // Mouse up listener on parent container
             .on_mouse_up(
                 MouseButton::Left,
-                cx.listener(move |this, _, window, cx| {
+                cx.listener(move |this, event: &MouseUpEvent, window, cx| {
                     if this.drag_offset.is_some() {
                         this.drag_offset = None;
+                        this.is_dragging = false;
 
-                        let upward_distance = this.drag_start_y - this.position_y;
-                        if upward_distance > 50.0 {
-                            // Swiped upward significantly
+                        let current_mouse_y = event.position.y.to_f64() as f32;
+                        let mouse_delta = current_mouse_y - this.drag_start_mouse_y;
+
+                        if mouse_delta < -50.0 {
                             this.handle_upward_swipe(cx);
-                            this.snap_to(0.0, cx);
-                            cx.notify();
                             return;
                         }
 
-                        // After initial animation, card is at 310px (CARD_HEIGHT / 2)
-                        // Remaining space from 310 to 620 is also 310px
-                        // If dragged more than half of remaining (155px), snap to bottom
-                        let remaining_space = CARD_HEIGHT - initial_h; // 310px remaining
-                        let half_remaining = remaining_space / 2.0; // 155px threshold
+                        let remaining_space = CARD_HEIGHT - initial_h;
+                        let half_remaining = remaining_space / 2.0;
 
-                        println!(
-                            "position_y: {}, half_remaining: {}, remaining_space: {}",
-                            this.position_y, half_remaining, remaining_space
-                        );
-
-                        // Determine snap target
                         let target = if this.position_y >= half_remaining {
-                            // Dragged more than half of remaining space - snap to bottom
-                            remaining_space // This will make total height = 620
+                            remaining_space
                         } else {
-                            // Dragged less than half - snap back to initial position
                             0.0
                         };
 
@@ -231,7 +207,7 @@ impl Render for PowerOptions {
                 }),
             )
             .child(
-                // Upper swipe area - THE DRAGGABLE CARD
+                // Upper swipe area
                 div()
                     .id("power-off-swipe-area")
                     .h(px(amber_card_height))
@@ -241,7 +217,6 @@ impl Render for PowerOptions {
                     .flex()
                     .items_center()
                     .justify_center()
-                    // Only enable dragging after initial animation
                     .when(self.is_initial_animation_done, |this| {
                         this.on_mouse_down(
                             MouseButton::Left,
@@ -250,8 +225,10 @@ impl Render for PowerOptions {
 
                                 this.drag_start_y = this.position_y;
                                 this.drag_start_pos = this.position_y;
+                                this.drag_start_mouse_y = event.position.y.to_f64() as f32;
                                 this.drag_offset =
                                     Some(event.position.y.to_f64() as f32 - this.position_y);
+                                this.is_dragging = true;
 
                                 cx.notify();
                             }),
@@ -278,7 +255,7 @@ impl Render for PowerOptions {
                     }),
             )
             .child(
-                // Swipe indicator - shrinks and disappears as card approaches bottom
+                // Swipe indicator
                 div()
                     .h(px(arrow_height))
                     .w_full()
@@ -295,6 +272,25 @@ impl Render for PowerOptions {
                         )
                     }),
             )
-            .child(div().flex_1().w_full().bg(rgb(0x000000)))
+            .child(div().flex_1().w_full().bg(rgb(0x000000)).when(
+                self.is_initial_animation_done,
+                |div| {
+                    div.on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                            cx.stop_propagation();
+
+                            this.drag_start_y = this.position_y;
+                            this.drag_start_pos = this.position_y;
+                            this.drag_start_mouse_y = event.position.y.to_f64() as f32;
+                            this.drag_offset =
+                                Some(event.position.y.to_f64() as f32 - this.position_y);
+                            this.is_dragging = true;
+
+                            cx.notify();
+                        }),
+                    )
+                },
+            ))
     }
 }
