@@ -8,10 +8,6 @@ applications:
     binary: mechanix_files   
     maintainer: "Yogita Hiray <yogitah@mechasystems.com>"
     dependencies:
-      # libc6 (>= 2.38), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)
-      - libc6 (>= 2.38)
-      - libgcc-s1 (>= 3.0)
-      - libstdc++6 (>= 13.1)
       - libflutter-elinux-wayland-dev
       - libflutter-engine-dev      
   - name: music
@@ -20,10 +16,6 @@ applications:
     description: "A music player for Mechanix OS."
     maintainer: "Dhanish Patel <dhanishp@ext.mechasystems.com>" 
     dependencies:
-    # libc6 (>= 2.38), libgcc-s1 (>= 3.0), libstdc++6 (>= 13.1)
-      - libc6 (>= 2.38)
-      - libgcc-s1 (>= 3.0)
-      - libstdc++6 (>= 13.1)
       - libflutter-elinux-wayland-dev
       - libflutter-engine-dev      
   - name: notes
@@ -31,9 +23,6 @@ applications:
     binary: mechanix_notes    
     maintainer: "Dhanish Patel <dhanishp@mechasystems.com>"
     dependencies:
-      - libc6 (>= 2.38)
-      - libgcc-s1 (>= 3.0)
-      - libstdc++6 (>= 13.1)
       - libflutter-elinux-wayland-dev
       - libflutter-engine-dev
   - name: settings
@@ -41,8 +30,5 @@ applications:
     binary: mechanix_settings
     maintainer: "Yogita Hiray <yogitah@mechasystems.com>"
     dependencies:
-      - libc6 (>= 2.38)
-      - libgcc-s1 (>= 3.0)
-      - libstdc++6 (>= 13.1)
       - libflutter-elinux-wayland-dev
       - libflutter-engine-dev

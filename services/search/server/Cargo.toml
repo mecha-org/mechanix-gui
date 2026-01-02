@@ -34,3 +34,12 @@ assets = [
     ],
 
 ]
+
+[package.metadata.generate-rpm]
+summary = "Search service for the Mechanix shell"
+license = "MIT" # or workspace override if you have one
+auto-req = "yes"
+assets = [
+    # Binary
+    { source = "../../../target/release/mxsearch", dest = "/usr/bin/mxsearch", mode = "755" },
+]
