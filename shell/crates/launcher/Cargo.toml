@@ -25,6 +25,7 @@ notifications = { path = "../notifications" }
 homescreen = { path = "../homescreen" }
 dispatcher = { path = "../dispatcher" }
 shell_state = { path = "../shell_state" }
+hardware_buttons = { path = "../hardware_buttons" }
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"

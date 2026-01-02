@@ -1,0 +1,21 @@
+[package]
+name = "hardware_buttons"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+gpui = { workspace = true }
+anyhow = { workspace = true }
+futures = { workspace = true }
+futures-util = "0.3.31"
+futures-timer = { workspace = true }
+log = { workspace = true }
+mechanix-hw-buttons = { path = "../../../shared/hw-buttons" }
+zbus = { workspace = true }
+power_options = { path = "../power_options" }
